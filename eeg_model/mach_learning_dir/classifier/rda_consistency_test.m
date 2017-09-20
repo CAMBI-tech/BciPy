@@ -6,7 +6,7 @@ clear classes
 % discriminant analysis and currently RSVPKeyboard implementation.
 % mse is the mean squared error of all possible parameters to be checked.
 
-mod1 = py.importlib.import_module('classifier');
+mod1 = py.importlib.import_module('function_classifier');
 py.reload(mod1);
 mod = py.importlib.import_module('demo');
 py.reload(mod);
