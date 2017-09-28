@@ -1,5 +1,5 @@
 clear all
-close all
+%close all
 clear classes
 
 % Tests the results between the python implementation of regularized

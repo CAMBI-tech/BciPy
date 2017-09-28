@@ -5,7 +5,17 @@ from sklearn.decomposition import PCA
 class PrincipalComponentAnalysis(PCA):
     """ Principal component analysis implementation using the scikit-learn
         PCA object. The object is consistent, therefore kept as is.
-        For reference check scikit-learn/decomposition/PCA """
+        For reference check scikit-learn/decomposition/PCA
+        Attr:
+            n_components(int): Number of components in PCA
+            copy(bool): Saves the matrix if  True and updates on each fit()
+            whiten(bool): Whitens the PCA matrix to form a tigth frame
+            svd_solver(string): SV Decomposition solver metgod
+            tol=var_tol(float): Unfortunately I re-implemented it
+                Tolarance to the singular values of the matrix
+            random_state(seed): Random state seed
+
+        """
 
     def __init__(self, n_components=None, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='auto',

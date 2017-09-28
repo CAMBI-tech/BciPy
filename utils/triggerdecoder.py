@@ -2,10 +2,7 @@
 designed to return required values in required format (trialwise) for 
 RSVPKeyboard"""
 
-import sys
 import numpy as np
-import scipy.io as sio
-import matplotlib.pyplot as plt
 
 
 def trigger_decoder(x, trigger_partitioner):

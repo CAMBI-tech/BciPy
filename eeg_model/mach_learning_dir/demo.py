@@ -7,8 +7,6 @@ from function_classifier import RegularizedDiscriminantAnalysis
 from function_dim_reduction import PrincipalComponentAnalysis
 import numpy as np
 
-pca = PrincipalComponentAnalysis()
-
 dim_x = 16
 num_x_p = 2000
 num_x_n = 1000

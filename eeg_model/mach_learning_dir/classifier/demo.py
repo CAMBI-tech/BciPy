@@ -1,11 +1,8 @@
 import sys
-import scipy.optimize
-from sklearn import metrics
 
 sys.path.append('.\eeg_model\mach_learning_dir\classifier')
 from function_classifier import RegularizedDiscriminantAnalysis
 import numpy as np
-
 
 # Function required for matlab file which checks consistency
 def test_rda(x, y, z):
@@ -36,3 +33,4 @@ def test_rda(x, y, z):
 #
 # z = rda.fit_transform(x, y)
 # rda.fit(x, y)
+

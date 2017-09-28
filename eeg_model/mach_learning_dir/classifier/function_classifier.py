@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize
 from sklearn import metrics
-from sklearn.model_selection import train_test_split
 
 
 class RegularizedDiscriminantAnalysis(object):
@@ -37,6 +36,7 @@ class RegularizedDiscriminantAnalysis(object):
     # TODO: Make it more modular
 
     def fit(self, x, y, p=[], op_type='cost_auc'):
+        # TODO: SHOULD WE HAVE A TRAIN TEST SPLIT HERE?
         """ Fits the model to provided (x,y) = (data,obs) couples
             Args:
                 x(ndarray[float]): N x k data array
@@ -107,8 +107,8 @@ class RegularizedDiscriminantAnalysis(object):
         asd = 1
 
     def transform(self, x):
-        # TODO: Implement predict method
-        return 0
+        val = self.get_proba(x)
+        return val
 
     def get_proba(self, x):
         """ Gets -log likelihoods for each class
@@ -132,7 +132,8 @@ class RegularizedDiscriminantAnalysis(object):
         return neg_log_l
 
     def fit_transform(self, x, y, p=[]):
-        """ Fits the model to provided (x,y) = (data,obs) couples
+        """ Fits the model to provided (x,y) = (data,obs) couples and
+        returns the negative log likelihoods.
             Args:
                 x(ndarray[float]): N x k data array
                 y(ndarray[int]): N x k observation (class) array
@@ -143,7 +144,7 @@ class RegularizedDiscriminantAnalysis(object):
                 neg_log_l(ndarray[float]): N x c negative log likelihood array
                 """
 
-        self.fit_param(x, y, p)
+        self.fit(x, y, p)
         neg_log_l = self.get_proba(x)
         return neg_log_l
 
@@ -192,12 +193,16 @@ class RegularizedDiscriminantAnalysis(object):
                 -auc(float): negative AUC value for current setup
                 """
 
-        x1, x2, y1, y2 = train_test_split(x, y, test_size=0.1)
+        # x1, x2, y1, y2 = train_test_split(x, y, test_size=0.1)
         self.lam = lam
         self.gam = gam
-        self.fit_param(x1, y1, self.prior)
-        fpr, tpr, _ = metrics.roc_curve(y2, self.get_proba(x2)[:, 1],
-                                        pos_label=1)
+        # self.fit_param(x1, y1, self.prior)
+        self.fit_param(x, y, self.prior)
+        # sc = self.get_proba(x2)
+        sc = self.get_proba(x)
+        sc = np.dot(np.array([-1, 1]), sc.transpose())
+        # fpr, tpr, _ = metrics.roc_curve(y2, sc, pos_label=1)
+        fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
         auc = metrics.auc(fpr, tpr)
 
         return -auc
