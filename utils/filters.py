@@ -3,6 +3,7 @@
 from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.io as sio
 
 
 def test_filter(num_taps, bands, desired, grid_density):
@@ -10,10 +11,11 @@ def test_filter(num_taps, bands, desired, grid_density):
     bands = bands[0]
     desired = desired[0]
     bp_flt = signal.remez(num_taps, bands, desired, weight=None, Hz=1,
-                          type='bandpass', maxiter=25 * 200,
+                          type='bandpass', maxiter=25,
                           grid_density=grid_density)
 
     return bp_flt
+
 
 # num_taps = 153
 # fs = 256
@@ -49,3 +51,20 @@ def test_filter(num_taps, bands, desired, grid_density):
 # plt.xlabel('Frequency [rad/sample]')
 # plt.show()
 #
+# dat = sio.loadmat('C:\Users\Aziz\Desktop\GIT\TMbci\utils\sample_dat.mat')
+# x = dat['x']
+# x = x * np.power(10, 6)
+#
+# y = []
+# for idx in range(x.shape[1]):
+#     y.append(np.convolve(x[:, idx], bp_flt))
+# y = np.asarray(y)
+# y = y.transpose()
+#
+# plt.subplot(2, 1, 1)
+# plt.plot(x[:, 1:6])
+# plt.title('Original data')
+# plt.subplot(2, 1, 2)
+# plt.plot(y[:, 1:6])
+# plt.title('Filtered data')
+# plt.show()

@@ -1,5 +1,5 @@
 clear all
-%close all
+close all
 clear classes
 
 % Compares the results for a FIR linear phase bandpass filter between
@@ -9,7 +9,7 @@ clear classes
 mod1 = py.importlib.import_module('filters');
 py.reload(mod1);
 
-fs = 256;
+fs = 300;
 
 Fstop1 = 0.07;             % First Stopband Frequency
 Fpass1 = 2.15;             % First Passband Frequency
@@ -18,7 +18,7 @@ Fstop2 = 44;               % Second Stopband Frequency
 Dstop1 = 0.0039810717055;  % First Stopband Attenuation
 Dpass  = 0.19879359342;    % Passband Ripple
 Dstop2 = 0.0039810717055;  % Second Stopband Attenuation
-dens   = 20;               % Density Factor
+dens   = 10;               % Density Factor
 
 % Calculate the order from the parameters using FIRPMORD.
 bands = [Fstop1 Fpass1 Fpass2 Fstop2]/(fs/2);
@@ -30,6 +30,8 @@ bands = [0, bands, 0.5 * 2]/2;
 % Unfortunately the python code can cross validate and update filter length
 % based on specification. Assuming filter is going to be optimal and stays
 % the same we can accept the length is known.
+
+n = n + 1 * (mod(n,2)==0);
 r_val = py.filters.test_filter(toggleNumpy(n),toggleNumpy(bands),toggleNumpy(gain),toggleNumpy(dens));
 b_py = toggleNumpy(r_val);
 
@@ -55,3 +57,35 @@ title('MATLAB implementation')
 subplot(2,1,2)
 grpdelay(b_py,1)
 title('Python implementation')
+
+load sample_dat
+g = grpdelay(b_py,1);
+g = round(g(1));
+ch = 1:4;
+x = x*10^3;
+y= filter(b,1,x,[],1);
+y_py = filter(b_py,1,x,[],1);
+
+figure()
+subplot(3,1,1)
+plot((1:length(x))/fs,x(:,ch),'linewidth',2)
+xlim([0,2])
+xlabel('time[s]')
+ylabel('ampl [mV]')
+subplot(3,1,2)
+plot((1:length(y))/fs,y(:,ch),'linewidth',2)
+xlim([0,2])
+xlabel('time[s]')
+ylabel('ampl [mV]')
+subplot(3,1,3)
+plot((1:length(y_py))/fs,y_py(:,ch),'linewidth',2)
+xlim([0,2])
+xlabel('time[s]')
+ylabel('ampl [mV]')
+
+figure()
+subplot(2,1,1)
+plot((1:length(y_py))/fs,y_py(:,ch)-y(:,ch),'linewidth',2)
+xlim([0,2])
+xlabel('time[s]')
+ylabel('ampl [mV]')

@@ -1,4 +1,4 @@
-from __init__ import PipelineWrapper
+from wrapper import PipelineWrapper
 import sys
 
 sys.path.append('.\eeg_model\mach_learning_dir\dimensionality_reduction')
@@ -26,3 +26,4 @@ model = PipelineWrapper()
 model.add(pca)
 model.add(rda)
 arg = model.fit_transform(x, y)
+
