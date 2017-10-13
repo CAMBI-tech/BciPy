@@ -178,13 +178,13 @@ gui_fx.addButton(
     textSize=convertToWidth(20)
 )
 #View signals button
-gui_fx.addButton(
-    mainWindowWidthHalf, mainWindowHeightHalf - convertToHeight(50),
-    convertToWidth(400), convertToHeight(75), (40, 40, 40, 255),
-    (219, 219, 219, 255), (89, 89, 89, 255), 'View Signals', 2,
-    functionCall="runExecutable", functionArg=[environ['USERPROFILE'] + "\\Desktop", 'exe_name', True],
-    textSize=convertToWidth(20)
-)
+# gui_fx.addButton(
+#     mainWindowWidthHalf, mainWindowHeightHalf - convertToHeight(50),
+#     convertToWidth(400), convertToHeight(75), (40, 40, 40, 255),
+#     (219, 219, 219, 255), (89, 89, 89, 255), 'View Signals', 2,
+#     functionCall="runExecutable", functionArg=[environ['USERPROFILE'] + "\\Desktop", 'exe_name', True],
+#     textSize=convertToWidth(20)
+# )
 #Configure parameters button
 gui_fx.addButton(
     mainWindowWidthHalf - convertToWidth(155),
