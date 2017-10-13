@@ -161,5 +161,5 @@ for idx_o in range(len(task_text)):
 win.close()
 
 # Print intervals
-intervalsMS = np.array(win.frameIntervals) * 1000
-print(intervalsMS)
+# intervalsMS = np.array(win.frameIntervals) * 1000
+# print(intervalsMS)

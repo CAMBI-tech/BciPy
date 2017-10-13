@@ -154,5 +154,5 @@ win.close()
 file.close()
 
 # Print intervals
-intervalsMS = np.array(win.frameIntervals) * 1000
-print(intervalsMS)
+# intervalsMS = np.array(win.frameIntervals) * 1000
+# print(intervalsMS)
