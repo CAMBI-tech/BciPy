@@ -6,6 +6,7 @@ from __future__ import division
 from psychopy import visual, core, event
 from rsvp_disp_modes import CopyPhraseTask
 import numpy as np
+from trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -39,6 +40,7 @@ color_bar_bg = 'green'
 # Initialize Stimulus
 # TODO: Find a smart way to discriminate image input from text
 is_txt_sti = 1
+
 
 if is_txt_sti:
     ele_sti = [
@@ -84,7 +86,7 @@ task_color = [['white'] * 5 + ['green'] * 2 + ['red'],
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window
-win = visual.Window(size=[1920, 1080], fullscr=True, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 900], screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg', useFBO=True,
                     waitBlanking=True)
@@ -95,8 +97,9 @@ print frameRate
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
+experiment_clock = core.MonotonicClock(start_time=None)
 
-rsvp = CopyPhraseTask(window=win, clock=clock, static_text_task=text_task,
+rsvp = CopyPhraseTask(window=win, clock=clock, experiment_clock=experiment_clock, static_text_task=text_task,
                       static_color_task=color_task,
                       text_information=text_text,
                       color_information=color_text, pos_information=pos_text,
@@ -116,6 +119,7 @@ rsvp = CopyPhraseTask(window=win, clock=clock, static_text_task=text_task,
                       is_txt_sti=is_txt_sti)
 
 counter = 0
+file = open('copy_phrase_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     rsvp.bg.reset_weights()
@@ -129,11 +133,14 @@ for idx_o in range(len(task_text)):
         rsvp.ele_list_sti = ele_sti[counter]
         if is_txt_sti:
             rsvp.color_list_sti = color_sti[counter]
+
         rsvp.time_list_sti = timing_sti[counter]
 
         #
         core.wait(.4)
-        rsvp.do_sequence()
+        sequence_timing = rsvp.do_sequence()
+
+        _write_triggers_from_sequence_copy_phrase(sequence_timing, file, text_task, task_text[idx_o])
 
         # Get parameters from Bar Graph and schedule
         rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],

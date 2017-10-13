@@ -95,8 +95,11 @@ print frameRate
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
+experiment_clock = core.MonotonicClock(start_time=None)
+
 
 rsvp = FreeSpellingTask(window=win, clock=clock,
+                        experiment_clock=experiment_clock,
                         text_information=text_text,
                         color_information=color_text, pos_information=pos_text,
                         height_information=txt_height,
@@ -130,7 +133,8 @@ for idx_o in range(len(task_text)):
     rsvp.ele_list_sti = ele_sti[counter]
     if is_txt_sti:
         rsvp.color_list_sti = color_sti[counter]
-        rsvp.time_list_sti = timing_sti[counter]
+    
+    rsvp.time_list_sti = timing_sti[counter]
 
     core.wait(.4)
     rsvp.do_sequence()

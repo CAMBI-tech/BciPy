@@ -25,7 +25,7 @@ class CopyPhraseTask(DisplayRSVP):
             sti(visual_Text_Stimuli): stimuli text
             bg(BarGraph): bar graph display unit in display """
 
-    def __init__(self, window, clock, static_text_task='COPY_PHRASE',
+    def __init__(self, window, clock, experiment_clock, static_text_task='COPY_PHRASE',
                  static_color_task='White',
                  text_information='Press Space Bar to Pause',
                  color_information='White', pos_information=(0, -.9),
@@ -57,6 +57,7 @@ class CopyPhraseTask(DisplayRSVP):
         pos_task = (x_pos_task, static_pos_task[1] - height_task)
 
         super(CopyPhraseTask, self).__init__(window, clock,
+                                             experiment_clock,
                                              color_task=color_task,
                                              font_task=font_task,
                                              pos_task=pos_task,
@@ -102,7 +103,7 @@ class FreeSpellingTask(DisplayRSVP):
             sti(visual_Text_Stimuli): stimuli text
             bg(BarGraph): bar graph display unit in display """
 
-    def __init__(self, window, clock,
+    def __init__(self, window, clock, experiment_clock,
                  text_information='Press Space Bar to Pause',
                  color_information='White', pos_information=(0, -.9),
                  height_information=0.2, font_information='Times',
@@ -127,6 +128,7 @@ class FreeSpellingTask(DisplayRSVP):
         pos_task = (x_pos_task, 1 - height_task)
 
         super(FreeSpellingTask, self).__init__(window, clock,
+                                               experiment_clock,
                                                color_task=color_task,
                                                font_task=font_task,
                                                pos_task=pos_task,
@@ -173,6 +175,7 @@ class CalibrationTask(DisplayRSVP):
             bg(BarGraph): bar graph display unit in display """
 
     def __init__(self, window, clock,
+                 experiment_clock,
                  text_information='Press Space Bar to Pause',
                  color_information='White', pos_information=(0, -.9),
                  height_information=0.2, font_information='Times',
@@ -197,6 +200,7 @@ class CalibrationTask(DisplayRSVP):
         pos_task = (x_pos_task, 1 - height_task)
 
         super(CalibrationTask, self).__init__(window, clock,
+                                              experiment_clock,
                                               color_task=color_task,
                                               font_task=font_task,
                                               pos_task=pos_task,

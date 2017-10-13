@@ -4,8 +4,10 @@
 
 from __future__ import division
 from psychopy import visual, core, event
-from .rsvp_disp_modes import CalibrationTask
+from rsvp_disp_modes import CalibrationTask
 import numpy as np
+import pdb
+from trigger_helpers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -84,9 +86,9 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window
-win = visual.Window(size=[1920, 1080], fullscr=False, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
-                    colorSpace='rgb', blendMode='avg', useFBO=True,
+                    colorSpace='rgb', blendMode='avg',
                     waitBlanking=True)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
@@ -95,8 +97,10 @@ print frameRate
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
+experiment_clock = core.MonotonicClock(start_time=None)
 
 rsvp = CalibrationTask(window=win, clock=clock,
+                       experiment_clock=experiment_clock,
                        text_information=text_text,
                        color_information=color_text, pos_information=pos_text,
                        height_information=txt_height,
@@ -115,6 +119,7 @@ rsvp = CalibrationTask(window=win, clock=clock,
                        is_txt_sti=is_txt_sti)
 
 counter = 0
+file = open('calibration_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     rsvp.bg.reset_weights()
@@ -127,22 +132,28 @@ for idx_o in range(len(task_text)):
     rsvp.ele_list_sti = ele_sti[counter]
     if is_txt_sti:
         rsvp.color_list_sti = color_sti[counter]
-        rsvp.time_list_sti = timing_sti[counter]
+      
+    rsvp.time_list_sti = timing_sti[counter]
 
     core.wait(.4)
-    rsvp.do_sequence()
+    sequence_timing = rsvp.do_sequence()
+
+    _write_triggers_from_sequence_calibration(sequence_timing, file)
 
     # Get parameters from Bar Graph and schedule
     rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
                         weight=dummy_bar_schedule_p[counter])
 
     core.wait(.5)
+
     if show_bg:
         rsvp.show_bar_graph()
 
     counter += 1
 
+# close the window and file
 win.close()
+file.close()
 
 # Print intervals
 intervalsMS = np.array(win.frameIntervals) * 1000

@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import division
 from psychopy import visual, core, event
 import numpy as np
 import string
+import pdb
 
 
 class DisplayRSVP(object):
@@ -15,7 +18,7 @@ class DisplayRSVP(object):
             bg(BarGraph): bar graph display unit in display
             trialClock(core_clock): timer for presentation """
 
-    def __init__(self, window, clock, color_task=['white'], font_task='Times',
+    def __init__(self, window, clock, experiment_clock, color_task=['white'], font_task='Times',
                  pos_task=(-.8, .9), task_height=0.2, text_task='1/100',
                  color_text=['white'], text_text=['Information Text'],
                  font_text=['Times'], pos_text=[(.8, .9)], height_text=[0.2],
@@ -66,6 +69,7 @@ class DisplayRSVP(object):
         self.is_txt_sti = is_txt_sti
 
         self.trialClock = clock
+        self.expClock = experiment_clock
 
         # Length of the stimuli (number of flashes)
         self.len_sti = len(ele_list_sti)
@@ -148,6 +152,10 @@ class DisplayRSVP(object):
     def do_sequence(self):
         """ Animates a sequence  """
 
+        # init an array for timing information
+        timing = []
+
+        # Do the sequence
         for idx in range(len(self.ele_list_sti)):
             self.trialClock.start(self.time_list_sti[idx])
             if self.is_txt_sti:
@@ -159,11 +167,15 @@ class DisplayRSVP(object):
             self.draw_static()
             self.sti.draw()
 
+            timing.append((self.sti.text, self.expClock.getTime()))
+
             self.win.flip()
             self.trialClock.complete()
 
         self.draw_static()
         self.win.flip()
+
+        return timing
 
     def show_bar_graph(self):
         """ Animates Bar Graph """
