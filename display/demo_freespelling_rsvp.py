@@ -6,6 +6,7 @@ from __future__ import division
 from psychopy import visual, core, event
 from rsvp_disp_modes import FreeSpellingTask
 import numpy as np
+from trigger_helpers import _write_triggers_from_sequence_free_spell
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -84,13 +85,13 @@ ele_list_dec = [None, ['[L]'], ['[O]'], ['[L]']]
 ele_list_dec_time = [[0], [2], [2], [2]]
 
 # Initialize Window
-win = visual.Window(size=[1920, 1080], fullscr=True, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
-                    colorSpace='rgb', blendMode='avg', useFBO=True,
+                    colorSpace='rgb', blendMode='avg',
                     waitBlanking=True)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
-visual.useFBO = False
+
 print frameRate
 
 # Initialize Clock
@@ -119,6 +120,7 @@ rsvp = FreeSpellingTask(window=win, clock=clock,
 
 counter = 0
 decision_made = 0
+file = open('free_spell_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     if decision_made == 1:
@@ -137,7 +139,10 @@ for idx_o in range(len(task_text)):
     rsvp.time_list_sti = timing_sti[counter]
 
     core.wait(.4)
-    rsvp.do_sequence()
+    
+    sequence_timing = rsvp.do_sequence()
+
+    _write_triggers_from_sequence_free_spell(sequence_timing, file)
 
     # Get parameters from Bar Graph and schedule
     rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
