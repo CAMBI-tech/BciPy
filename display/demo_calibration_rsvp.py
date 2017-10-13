@@ -92,7 +92,7 @@ win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
                     waitBlanking=True)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
-visual.useFBO = False
+
 print frameRate
 
 # Initialize Clock
