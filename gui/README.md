@@ -19,12 +19,13 @@ Both wxPython and pyglet are dependencies of Psychopy.
 ---------------
 Name | Description
 ------------- | -------------
-convertinitojson.py | Converts ini files in 'static' folder to single JSON file.
-gui_fx.py  | All GUI execution code
-parameters.json  | Parameters file containing all parameter names, default values, suggested values, etc.
+utility/gui_fx.py  | All GUI execution code
+utility/parameters.json  | Parameters file containing all parameter names, default values, suggested values, etc.
 RSVPKeyboard.py | Registration of all GUI elements
+testing/pytestfile.py | Pytest test file
+testing/testfile.py | Temporary placeholder Python script to use where other scripts will eventually be added
 
-The 'static' folder contains images and old ini files.
+The 'static' folder contains images.
 
 ## Installation
 ------------
@@ -41,8 +42,6 @@ To run the GUI:
 To run the included test file, cd into the 'testing' directory, then run:  
 `py.test pytestfile.py`
 
-## Source
-----------
 
-- Source Code: https://bitbucket.org/smektala/ohsu-rsvp-gui/src
-- Issue Tracker: https://bitbucket.org/smektala/ohsu-rsvp-gui/issues
+Initially written by. Dani Smektala under the supervision of Tab Memmott @ OHSU
+
