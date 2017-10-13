@@ -13,7 +13,6 @@ from rsvp_disp import DisplayRSVP
     Functions:
         update_task_state: update task information of the module """
 
-
 class CopyPhraseTask(DisplayRSVP):
     """ Copy Phrase Task object of RSVP
         Attr:
@@ -153,17 +152,6 @@ class FreeSpellingTask(DisplayRSVP):
                                                color_bar_bg=color_bar_bg,
                                                is_txt_sti=is_txt_sti)
 
-    def update_task_state(self, text, color_list):
-        """ Updates task state of Free Spelling Task by removing letters or
-            appending to the right.
-            Args:
-                text(string): new text for task state
-                color_list(list[string]): list of colors for each """
-        tmp = visual.TextStim(self.win, font=self.task.font, text=text)
-        x_pos_task = tmp.boundingBox[0] / self.win.size[0] - 1
-        pos_task = (x_pos_task, 1 - self.task.height)
-
-        self.update_task(text=text, color_list=color_list, pos=pos_task)
 
 
 class CalibrationTask(DisplayRSVP):
@@ -224,15 +212,3 @@ class CalibrationTask(DisplayRSVP):
                                               font_bg_txt=font_bg_txt,
                                               color_bar_bg=color_bar_bg,
                                               is_txt_sti=is_txt_sti)
-
-    def update_task_state(self, text, color_list):
-        """ Updates task state of Calibration Task by removing letters or
-            appending to the right.
-            Args:
-                text(string): new text for task state
-                color_list(list[string]): list of colors for each """
-        tmp = visual.TextStim(self.win, font=self.task.font, text=text)
-        x_pos_task = tmp.boundingBox[0] / self.win.size[0] - 1
-        pos_task = (x_pos_task, 1 - self.task.height)
-
-        self.update_task(text=text, color_list=color_list, pos=pos_task)

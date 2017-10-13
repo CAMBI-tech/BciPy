@@ -167,7 +167,12 @@ class DisplayRSVP(object):
             self.draw_static()
             self.sti.draw()
 
-            timing.append((self.sti.text, self.expClock.getTime()))
+            if self.is_txt_sti:
+                timing.append((self.sti.text, self.expClock.getTime()))
+            else:
+                end = self.sti.image.rfind('.')
+                start= self.sti.image.rfind('\\') + 1
+                timing.append((self.sti.image[start:end], self.expClock.getTime()))
 
             self.win.flip()
             self.trialClock.complete()
@@ -184,6 +189,19 @@ class DisplayRSVP(object):
             self.draw_static()
             self.bg.animate(idx)
             self.win.flip()
+
+    def update_task_state(self, text, color_list):
+        """ Updates task state of Free Spelling Task by removing letters or
+            appending to the right.
+            Args:
+                text(string): new text for task state
+                color_list(list[string]): list of colors for each """
+        tmp = visual.TextStim(self.win, font=self.task.font, text=text)
+        x_pos_task = tmp.boundingBox[0] / self.win.size[0] - 1
+        pos_task = (x_pos_task, 1 - self.task.height)
+
+        self.update_task(text=text, color_list=color_list, pos=pos_task)
+
 
 
 class MultiColorText(object):

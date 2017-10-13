@@ -118,7 +118,6 @@ rsvp = CalibrationTask(window=win, clock=clock,
                        color_bar_bg=color_bar_bg,
                        is_txt_sti=is_txt_sti)
 
-counter = 0
 file = open('calibration_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
@@ -129,11 +128,12 @@ for idx_o in range(len(task_text)):
     rsvp.sti.height = sti_height
 
     # Schedule a sequence
-    rsvp.ele_list_sti = ele_sti[counter]
+    rsvp.ele_list_sti = ele_sti[idx_o]
+
     if is_txt_sti:
-        rsvp.color_list_sti = color_sti[counter]
-      
-    rsvp.time_list_sti = timing_sti[counter]
+        rsvp.color_list_sti = color_sti[idx_o]
+    rsvp.time_list_sti = timing_sti[idx_o]
+
 
     core.wait(.4)
     sequence_timing = rsvp.do_sequence()
@@ -141,15 +141,13 @@ for idx_o in range(len(task_text)):
     _write_triggers_from_sequence_calibration(sequence_timing, file)
 
     # Get parameters from Bar Graph and schedule
-    rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
-                        weight=dummy_bar_schedule_p[counter])
+    rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[idx_o],
+                        weight=dummy_bar_schedule_p[idx_o])
 
     core.wait(.5)
 
     if show_bg:
         rsvp.show_bar_graph()
-
-    counter += 1
 
 # close the window and file
 win.close()

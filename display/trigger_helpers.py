@@ -8,14 +8,13 @@ def _write_triggers_from_sequence_calibration(array, file):
 		# extract the letter and timing from the array
 		(letter, time) = i
 
-
 		# determine what the trigger are
 		if x == 0:
 			targetness = 'first_pres_target'
 			target_letter = letter
-		elif letter == '+':
+		elif x == 1:
 			targetness = 'fixation'
-		elif x >0 and target_letter == letter:
+		elif x > 1 and target_letter == letter:
 			targetness = 'target'
 		else:
 			targetness = 'nontarget'
