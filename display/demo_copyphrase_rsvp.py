@@ -46,8 +46,8 @@ if is_txt_sti:
     ele_sti = [
         ['+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
         ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
+        ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'R', '<', 'A', 'Z'],
+        ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'R']]
     color_sti = [['red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white', 'white']] * 4
 else:
@@ -86,13 +86,13 @@ task_color = [['white'] * 5 + ['green'] * 2 + ['red'],
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window
-win = visual.Window(size=[500, 900], screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
-                    colorSpace='rgb', blendMode='avg', useFBO=True,
+                    colorSpace='rgb', blendMode='avg',
                     waitBlanking=True)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
-visual.useFBO = False
+
 print frameRate
 
 # Initialize Clock
@@ -161,5 +161,5 @@ for idx_o in range(len(task_text)):
 win.close()
 
 # Print intervals
-intervalsMS = np.array(win.frameIntervals) * 1000
-print(intervalsMS)
+# intervalsMS = np.array(win.frameIntervals) * 1000
+# print(intervalsMS)

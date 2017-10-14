@@ -92,7 +92,7 @@ win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
                     waitBlanking=True)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
-visual.useFBO = False
+
 print frameRate
 
 # Initialize Clock
@@ -154,5 +154,5 @@ win.close()
 file.close()
 
 # Print intervals
-intervalsMS = np.array(win.frameIntervals) * 1000
-print(intervalsMS)
+# intervalsMS = np.array(win.frameIntervals) * 1000
+# print(intervalsMS)
