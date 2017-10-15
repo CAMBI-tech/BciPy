@@ -6,7 +6,7 @@ def init_save_data_structure(data_save_path, user_information, parameters_used):
 	''' 
 		data_save_path: string of path to save our data in
 		user_information: string of user name / realted information
-		parameters_used: a path to parameters file for th experiment
+		parameters_used: a path to parameters file for the experiment
 
 	'''
 
@@ -38,6 +38,3 @@ def complete_save_data_structure(path):
 
 
 	return path
-
-# test it works
-init_save_data_structure('data/', 'user', '../gui/utility/parameters.json')
