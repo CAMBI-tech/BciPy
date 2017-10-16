@@ -28,8 +28,8 @@ labelCache = {}
 #index of buttons currently displayed on the screen
 buttonsOnScreen = []
 
-mainWindowWidth = 640
-mainWindowHeight = 480
+main_window_width = 640
+main_window_height = 480
 
 #which button is currently moused over, if any
 mouseOnButton = 1000
@@ -81,7 +81,7 @@ def moveScrollBar(barId, moveAmount):
     for eachBar in scrollBars:
         if(eachBar[0].scrollId == barId):
             eachBar[0].relativeYPos = moveAmount
-            barAmount = int((moveAmount*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/(640.0 if eachBar[0].isHorizontal else 480.0))*(mainWindowWidth if eachBar[0].isHorizontal else mainWindowHeight)))
+            barAmount = int((moveAmount*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/(640.0 if eachBar[0].isHorizontal else 480.0))*(main_window_width if eachBar[0].isHorizontal else main_window_height)))
             eachBar[0].yPos = barAmount
 
 #searches human-readable parameter names for values that contain the text
@@ -95,12 +95,12 @@ def searchParameters(readPath, scrollBar, inputName):
         if(ospath.isfile(readPath)):
             with codecsopen(str(readPath), 'r', encoding='utf-8') as f:
                 try:
-                    fileData = jsonload(f)
+                    file_data = jsonload(f)
                     searchItems = []
-                    for jsonItem in fileData:
-                        readableCaption = fileData[jsonItem]["readableName"]
-                        if str.lower(str(searchText)) in str.lower(str(readableCaption)):
-                            searchItems.append(jsonItem)
+                    for json_item in file_data:
+                        readable_caption = file_data[json_item]["readableName"]
+                        if str.lower(str(searchText)) in str.lower(str(readable_caption)):
+                            searchItems.append(json_item)
                     for eachBar in scrollBars:
                         if(eachBar[0].scrollId == scrollBar):
                             finalTempHeight = False
@@ -120,9 +120,9 @@ def searchParameters(readPath, scrollBar, inputName):
                                             for eachItem in searchItems:
                                                 if((eachInput[0].name if isInput else eachInput[0].attachedValueName) == eachItem):
                                                     #Position that the scrolling content should be at in order to display the given parameter at the top of the window
-                                                    tempHeight = abs((eachInput[2] if isInput else eachInput[0].centery) - int((385/480.0)*mainWindowHeight))
+                                                    tempHeight = abs((eachInput[2] if isInput else eachInput[0].centery) - int((385/480.0)*main_window_height))
                                                     #Amount the scroll bar should move from the top in order to match the content height
-                                                    barAmount = int((tempHeight*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/480.0)*mainWindowHeight))
+                                                    barAmount = int((tempHeight*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/480.0)*main_window_height))
                                                     if(repeatCounter == 0):
                                                         #tests if an input field has already been found (not looking for the lowest input field possible)
                                                         if(isInput and valueFound == False):
@@ -151,8 +151,8 @@ def searchParameters(readPath, scrollBar, inputName):
                                 if(selectedButton != False):
                                     addButton(
                                         selectedButton[0].centerx, selectedButton[0].centery,
-                                        selectedButton[0].width + int((10/640.0)*mainWindowWidth),
-                                        int((50/480.0)*mainWindowHeight), (40, 40, 40, 255),
+                                        selectedButton[0].width + int((10/640.0)*main_window_width),
+                                        int((50/480.0)*main_window_height), (40, 40, 40, 255),
                                         (255, 215, 38, 5), (255, 204, 0, 255),
                                         '',
                                         scrollBar, scrollBar=scrollBar, isTemp=True
@@ -160,8 +160,8 @@ def searchParameters(readPath, scrollBar, inputName):
                                 elif(selectedInput != False):
                                     addButton(
                                         selectedInput[1], selectedInput[2],
-                                        selectedInput[3] + int((10/640.0)*mainWindowWidth),
-                                        int((50/480.0)*mainWindowHeight), (40, 40, 40, 255),
+                                        selectedInput[3] + int((10/640.0)*main_window_width),
+                                        int((50/480.0)*main_window_height), (40, 40, 40, 255),
                                         (255, 215, 38, 5), (255, 204, 0, 255),
                                         '',
                                         scrollBar, scrollBar=scrollBar, isTemp=True
@@ -209,8 +209,8 @@ def dropItems(textBoxName, windowId, fileName, readValues):
                         userArray = f.readlines()
                     else:
                         try:
-                            fileData = jsonload(f)
-                            userArray = fileData[textBoxName][readValues]
+                            file_data = jsonload(f)
+                            userArray = file_data[textBoxName][readValues]
                         except ValueError:
                             warn('File ' + str(fileName) + ' is an invalid JSON file.')
                     for counter2 in range(0, (len(userArray))):
@@ -219,13 +219,13 @@ def dropItems(textBoxName, windowId, fileName, readValues):
                                 inputFields[counter][1],
                                 (inputFields[counter][2] - (inputFields[counter][4]) - ((counter2 - 1) * 10)) - counter2*20,
                                 inputFields[counter][3],
-                                int((20/480.0)*mainWindowHeight), (40, 40, 40, 255),
+                                int((20/480.0)*main_window_height), (40, 40, 40, 255),
                                 (219, 219, 219, 255), (89, 89, 89, 255),
                                 userArray[counter2].replace("\n", '').replace("'u", ''),
                                 windowId, functionCall="changeInputText",
                                 functionArg=[textBoxName, userArray[counter2].replace("\n", '').replace("'u", '')],
                                 scrollBar=windowId,
-                                textSize=int((10/640.0)*mainWindowWidth), isTemp=True,
+                                textSize=int((10/640.0)*main_window_width), isTemp=True,
                                 prioritizeTask=True, fontName='Arial'
                             )
                         else:
@@ -233,16 +233,16 @@ def dropItems(textBoxName, windowId, fileName, readValues):
                                 inputFields[counter][1],
                                 (inputFields[counter][2] - (inputFields[counter][4]) - ((counter2 - 1) * 10)) - counter2*20,
                                 inputFields[counter][3],
-                                int((20/480.0)*mainWindowHeight), (40, 40, 40, 255),
+                                int((20/480.0)*main_window_height), (40, 40, 40, 255),
                                 (219, 219, 219, 255), (89, 89, 89, 255),
                                 str(userArray[counter2]).replace("\n", '').replace("'u", ''),
                                 windowId, functionCall="changeInputText",
                                 functionArg=[textBoxName, str(userArray[counter2]).replace("\n", '').replace("'u", '')],
                                 scrollBar=windowId,
-                                textSize=int((10/640.0)*mainWindowWidth), isTemp=True,
+                                textSize=int((10/640.0)*main_window_width), isTemp=True,
                                 prioritizeTask=True, fontName='Arial'
                             )
-                        scrollBars[barIndex][0].addToContentHeight((10/640.0)*mainWindowWidth)
+                        scrollBars[barIndex][0].addToContentHeight((10/640.0)*main_window_width)
                     f.close()
             else:
                 warn("File " + str(fileName) + " could not be found.")
@@ -282,8 +282,8 @@ def displayHelpPointers(fileName, helpId):
     if(ospath.isfile(fileName)):
         with codecsopen(fileName, 'r', encoding='utf-8') as f:
             try:
-                fileData = jsonload(f)
-                mouseHelp = fileData[helpId]["helpTip"]
+                file_data = jsonload(f)
+                mouseHelp = file_data[helpId]["helpTip"]
                 f.close()
             except ValueError:
                 warn('File ' + str(fileName) + ' was an invalid JSON file.')
@@ -309,11 +309,11 @@ def testValues(inputVariables, valueArray, typeArray, functionCaller):
     return True
 
 #adds a button to the array of buttons
-def addButton(xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, displayWindow, openWindow=0, functionCall=0, functionArg=0, textSize=12, scrollBar=False, isTemp=False, prioritizeTask=False, fontName='Verdana'):
+def addButton(xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, openWindow=0, functionCall=0, functionArg=0, textSize=12, scrollBar=False, isTemp=False, prioritizeTask=False, fontName='Verdana'):
     global buttons
     shouldAdd = testValues(locals(), getargspec(addButton)[0], [int, int, int, int, tuple, tuple, tuple, [str, unicode], int, int, [int, str], [int, list, tuple], int, [bool, int], bool, bool, str], 'addButton')
     if(shouldAdd):
-        return buttons.append((xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, displayWindow, openWindow, functionCall, functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
+        return buttons.append((xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, openWindow, functionCall, functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
 
 def addWindow(newWindow):
     global windows
@@ -423,7 +423,7 @@ def drawSwitch(windowWidth, windowHeight, switch, scrollId):
                         centerx = centerx + eachScrollBar[0].relativeYPos
                     else:
                         centery = centery + eachScrollBar[0].relativeYPos
-        if(centery <= mainWindowHeight and centery >= 0):
+        if(centery <= main_window_height and centery >= 0):
             drawButton(
                 switch.centerx, centery, switch.width, switch.height, \
                 (30, 28, 24, 255), (48, 51, 50, 255), (15, 15, 14, 255), '', 1, \
@@ -526,19 +526,19 @@ def readValuesFromFile(sectionNames, fieldNames, fileName=None):
             if(ospath.isfile(readPath)):
                 with codecsopen(str(readPath), 'r', encoding='utf-8') as f:
                     try:
-                        fileData = jsonload(f)
+                        file_data = jsonload(f)
                         for counter3 in range(0, len(sectionNames)):
                             sectionName = sectionNames[counter3]
                             for counter in range(0, (len(fieldNames))):
                                 for counter2 in range(0, len(inputFields)):
                                     if(counter != len(fieldNames)):
                                         if(fieldNames[counter] == inputFields[counter2][0].name and sectionName == inputFields[counter2][0].sectionName):
-                                            inputFields[counter2][0].text = fileData[inputFields[counter2][0].name]["value"]
+                                            inputFields[counter2][0].text = file_data[inputFields[counter2][0].name]["value"]
                                             counter = len(fieldNames)
                                 for counter2 in range(0, len(switches)):
                                     if(counter != len(fieldNames)):
                                         if(switches[counter2][0].attachedValueName == fieldNames[counter] and sectionName == switches[counter2][0].sectionName):
-                                            switches[counter2][0].booleanValue = (True if (fileData[(fieldNames[counter])]["value"]) == 'true' else False)
+                                            switches[counter2][0].booleanValue = (True if (file_data[(fieldNames[counter])]["value"]) == 'true' else False)
                                             counter = len(fieldNames)
                     except ValueError:
                         warn('File ' + str(readPath) + " is an invalid JSON file.")
@@ -658,20 +658,20 @@ class ScrollBar():
     def translateBarToMovement(self, barAmount):
         #a/b = c/d ad = bc
         #barAmount/height = x/contentHeight barAmount*contentHeight = height*x x=(barAmount*contentHeight)/height
-        self.relativeYPos = (barAmount*(self.contentHeight/(640.0 if self.isHorizontal else 480.0))*(mainWindowWidth if self.isHorizontal else mainWindowHeight))/(self.height - scrollBarHeight)
+        self.relativeYPos = (barAmount*(self.contentHeight/(640.0 if self.isHorizontal else 480.0))*(main_window_width if self.isHorizontal else main_window_height))/(self.height - scrollBarHeight)
         return self.relativeYPos
 
 #window that opens when a button is pressed. window id is used to determine what should display in the window
 class MenuWindow(pyglet.window.Window):
     def __init__(self, par2WindowId, par3Title):
-        global mainWindowWidth
-        global mainWindowHeight
+        global main_window_width
+        global main_window_height
         platform = pyglet.window.get_platform()
         display = platform.get_default_display()
         screen = display.get_default_screen()
         self.windowId = par2WindowId
-        mainWindowWidth = int((screen.width/3)*2)
-        mainWindowHeight = int((screen.height/4)*3)
+        main_window_width = int((screen.width/3)*2)
+        main_window_height = int((screen.height/4)*3)
         super(MenuWindow, self).__init__(caption=(par3Title if(par3Title != ' ') else ("Window " + str(par2WindowId))), width=int((screen.width/3)*2), height=int((screen.height/4)*3))
 
     #draws all input fields
@@ -787,7 +787,7 @@ class MenuWindow(pyglet.window.Window):
         returnTrue = True
         for counter in range(0, (len(switches))):
             if(switches[counter][1] == self.windowId):
-                if(not drawSwitch(mainWindowWidth, mainWindowHeight, switches[counter][0], switches[counter][2])):
+                if(not drawSwitch(main_window_width, main_window_height, switches[counter][0], switches[counter][2])):
                     returnTrue = False
         return returnTrue
 
@@ -800,7 +800,7 @@ class MenuWindow(pyglet.window.Window):
         super(MenuWindow, self).clear()
 
         #background
-        drawButton(mainWindowWidth/2, mainWindowHeight/2, mainWindowWidth, mainWindowHeight, (16, 19, 22, 255), (16, 19, 22, 255), (16, 19, 22, 255), '', 0, False)
+        drawButton(main_window_width/2, main_window_height/2, main_window_width, main_window_height, (16, 19, 22, 255), (16, 19, 22, 255), (16, 19, 22, 255), '', 0, False)
 
         if(not self.drawInputFields()):
             returnTrue = False
@@ -817,7 +817,7 @@ class MenuWindow(pyglet.window.Window):
 
         #draws a help tip box at the location of the mouse pointer if mouseHelp is set
         if(mouseHelp != False):
-            if(not drawButton(int(mouseX - (50/640.0)*mainWindowWidth), int(mouseY - ((10*(len(mouseHelp)/10.0 + 1) + 15)/960.0)*mainWindowHeight), int((100/640.0)*mainWindowWidth), int(((10*(len(mouseHelp)/10.0 + 1) + 15)/480.0)*mainWindowHeight), (11, 4, 22, 255), (224, 217, 204, 255), (56, 55, 58, 255), mouseHelp, int((9/640.0)*mainWindowWidth), 0, fontName='Arial')):
+            if(not drawButton(int(mouseX - (50/640.0)*main_window_width), int(mouseY - ((10*(len(mouseHelp)/10.0 + 1) + 15)/960.0)*main_window_height), int((100/640.0)*main_window_width), int(((10*(len(mouseHelp)/10.0 + 1) + 15)/480.0)*main_window_height), (11, 4, 22, 255), (224, 217, 204, 255), (56, 55, 58, 255), mouseHelp, int((9/640.0)*main_window_width), 0, fontName='Arial')):
                 returnTrue = False
         return returnTrue
 
