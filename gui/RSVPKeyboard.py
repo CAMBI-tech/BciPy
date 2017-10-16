@@ -1,11 +1,12 @@
-from codecs import open as codecsopen
-from json import load as jsonload
+
 from os import environ
 import pyglet
 from warnings import warn
 from sys import path
 path.append('utility')
+path.append('../io')
 import utility.gui_fx as gui_fx
+from load import load_json_parameters
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
 gui_fx.addWindow(main_window)
@@ -50,14 +51,12 @@ gui_fx.addText(
 )
 windowThreeBar.addToContentHeight(60)
 windowFourBar.addToContentHeight(60)
-with codecsopen("utility/parameters.json", 'r', encoding='utf-8') as f:
-    fileData = []
-    try:
-        fileData = jsonload(f)
-    except ValueError:
-        warn("Parameters file is formatted incorrectly!", Warning)
-    counterbci = 0
-    counteradv = 0
+
+path = "utility/parameters.json"
+fileData = load_json_parameters(path)
+
+counterbci = 0
+counteradv = 0
 #valuesArray contains the names of all the values in the config file, so that
 #those names can be passed to the save/load data functions called by buttons.
 valuesArray = []
@@ -146,7 +145,7 @@ for jsonItem in fileData:
         windowThreeBar.addToContentHeight(35)
     else:
         windowFourBar.addToContentHeight(35)
-f.close()
+
 
 
 #register all the buttons for all the windows here.
