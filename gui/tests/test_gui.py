@@ -25,8 +25,8 @@ def teardown_function(function):
     gui_fx.shiftPressed = True
     gui_fx.windows = []
     gui_fx.buttonsOnScreen = []
-    gui_fx.mainWindowHeight = 480
-    gui_fx.mainWindowWidth = 640
+    gui_fx.main_window_height = 480
+    gui_fx.main_window_width = 640
 
 def test_changeInputText():
     '''Tests that the function changeInputText can change the text of an input field'''
@@ -283,7 +283,7 @@ def test_addScroll():
 def test_addImage():
     '''Tests whether a valid image can be added'''
     gui_fx.addImage(
-        100, 100, "../static/images/OHSU-RGB-4C-REV.png", 0,
+        100, 100, "static/images/OHSU-RGB-4C-REV.png", 0,
         float(39), float(67), False
     )
     assert len(gui_fx.images) == 1
@@ -327,7 +327,7 @@ def test_runPythonFileShouldFail():
 
 def test_runPythonFile():
     '''Tests whether a valid python file can be run from the runPythonFile function'''
-    assert gui_fx.runPythonFile("testfile.py") == True
+    assert gui_fx.runPythonFile("gui/tests/testfile.py") == True
 
 def test_runExecutableShouldFail():
     '''Tests whether an attempt is made to run an invalid executable from the runExecutable function'''
@@ -337,9 +337,9 @@ def test_createMessageBoxShouldFail():
     '''Tests whether a message box can be created with invalid arguments'''
     assert gui_fx.createMessageBox('test', 'test', 'string') == None
 
-#def test_createMessageBox():
-    '''Tests whether a message box can be created with valid arguments'''
-    #assert gui_fx.createMessageBox('title', 'test', wx.OK) == True
+# def test_createMessageBox():
+#     '''Tests whether a message box can be created with valid arguments'''
+#     assert gui_fx.createMessageBox('title', 'test', wx.OK) == True
 
 def test_drawButtonShouldFail():
     '''Tests whether a button with invalid arguments is drawn'''
@@ -466,7 +466,7 @@ def test_drawImages():
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
     gui_fx.addImage(
-        100, 100, "../static/images/OHSU-RGB-4C-REV.png", 0,
+        100, 100, "static/images/OHSU-RGB-4C-REV.png", 0,
         float(39), float(67), False
     )
     assert main_window.drawImages() == True

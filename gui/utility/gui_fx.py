@@ -589,7 +589,7 @@ def runExecutable(execPath, fileName, isParameter):
         chdir(execPath)
         subprocess.call(fileName)
         chdir(ospath.dirname(dir_path))
-    except WindowsError:
+    except Exception:
         warn("Could not find executable " + fileName + " in path " + execPath)
         chdir(ospath.dirname(dir_path))
 
