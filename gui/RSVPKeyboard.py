@@ -4,7 +4,7 @@ import pyglet
 from warnings import warn
 from sys import path
 path.append('utility')
-path.append('../io')
+path.append('io/')
 import utility.gui_fx as gui_fx
 from load import load_json_parameters
 
@@ -52,7 +52,7 @@ gui_fx.addText(
 windowThreeBar.addToContentHeight(60)
 windowFourBar.addToContentHeight(60)
 
-path = "utility/parameters.json"
+path = "parameters/parameters.json"
 fileData = load_json_parameters(path)
 
 counterbci = 0
@@ -92,7 +92,7 @@ for jsonItem in fileData:
         convertToWidth(20), convertToHeight(20),
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '?',
         displayWindow, functionCall="displayHelpPointers",
-        functionArg=("utility/parameters.json", jsonItem),
+        functionArg=(path, jsonItem),
         scrollBar=displayWindow, textSize=convertToWidth(12)
     )
     value = fileData[jsonItem]["value"]
@@ -129,7 +129,7 @@ for jsonItem in fileData:
                 convertToWidth(30), convertToHeight(30),
                 (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '',
                 displayWindow, functionCall="dropItems",
-                functionArg=[jsonItem, displayWindow, "utility/parameters.json", "recommended_values"],
+                functionArg=[jsonItem, displayWindow, path, "recommended_values"],
                 scrollBar = displayWindow, textSize=convertToWidth(22)
             )
             gui_fx.addImage(
@@ -286,7 +286,7 @@ gui_fx.addButton(
     mainWindowHeightHalf + convertToHeight(90),
     convertToWidth(60), convertToHeight(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 3,
-    functionCall="searchParameters", functionArg=['utility/parameters.json', 3, 'search'],
+    functionCall="searchParameters", functionArg=[path, 3, 'search'],
     textSize=convertToWidth(8), scrollBar=100
 )
 #Search advanced parameters button
@@ -295,7 +295,7 @@ gui_fx.addButton(
     mainWindowHeightHalf + convertToHeight(90),
     convertToWidth(60), convertToHeight(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 4,
-    functionCall="searchParameters", functionArg=['utility/parameters.json', 4, 'advancedsearch'],
+    functionCall="searchParameters", functionArg=[path, 4, 'advancedsearch'],
     textSize=convertToWidth(8)
 )
 #Retract options menu
