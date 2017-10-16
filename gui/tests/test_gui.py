@@ -3,7 +3,7 @@ import os
 import pyglet
 import pytest
 import sys
-sys.path.append('../utility')
+sys.path.append('gui/utility')
 import gui_fx
 import wx
 from warnings import simplefilter

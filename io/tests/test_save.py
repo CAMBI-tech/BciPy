@@ -1,7 +1,7 @@
 import datetime, errno, os, pytest, shutil, sys, unittest
 
 # add previous dirs to python path for importing of modules
-sys.path.append('..')
+sys.path.append('io/')
 
 from save import init_save_data_structure
 
@@ -11,9 +11,9 @@ class TestSave(unittest.TestCase):
 	def setUp(self):
 		# set up the needed paths and initial data save structure
 
-		self.data_save_path = 'test_files/data/'
+		self.data_save_path = 'data/'
 		self.user_information = 'test_user_001'
-		self.parameters_used = 'test_files/parameters.json'
+		self.parameters_used = 'parameters/parameters.json'
 
 		self.save_folder_name = init_save_data_structure(
 			self.data_save_path,
