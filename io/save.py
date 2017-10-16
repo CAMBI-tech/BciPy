@@ -25,17 +25,20 @@ def init_save_data_structure(data_save_path, user_information, parameters_used):
 	except OSError as e:
 		# If the error is anything other than the file already existing, raise an error
 	    if e.errno != errno.EEXIST:
-	        raise
+	        raise e
 
 	    # since this is only called on init, we can just make another instance for this user
 	    os.makedirs(save_folder_run_name)
 	    os.makedirs(helper_folder_name)
-	try:
 
+	try:
 		# put in static things
 		copy2(parameters_used, save_folder_run_name)
-	except Exception as e:
-		print e
+
+	# catch IO exceptions
+	except IOError as e:
+		if e.errno == 2:
+			raise e
 
 	# return path for completion or other data type saving needs
 	return save_folder_run_name
