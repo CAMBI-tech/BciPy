@@ -48,8 +48,8 @@ class TestSave(unittest.TestCase):
 				'doesnotexit.json')
 
 		# catch the exception and make sure it's as expected
-		except Exception as e:
-			self.assertEqual(e.strerror, 'No such file or directory')
+		except Exception as error:
+			self.assertEqual(error.strerror, 'No such file or directory')
 
 
 	def test_init_save_data_structure_makes_helpers_folder(self):
@@ -61,7 +61,7 @@ class TestSave(unittest.TestCase):
 		try:
 		    os.makedirs(helper_folder_name)
 
-		except OSError as e:
+		except OSError as error:
 			# assert the error returned, is that the dir exists.
-		    self.assertEqual(e.errno, errno.EEXIST)
+		    self.assertEqual(error.errno, errno.EEXIST)
 

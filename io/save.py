@@ -22,10 +22,10 @@ def init_save_data_structure(data_save_path, user_information, parameters_used):
 	    os.makedirs(save_folder_run_name)
 	    os.makedirs(helper_folder_name)
 
-	except OSError as e:
+	except OSError as error:
 		# If the error is anything other than the file already existing, raise an error
-	    if e.errno != errno.EEXIST:
-	        raise e
+	    if error.errno != errno.EEXIST:
+	        raise error
 
 	    # since this is only called on init, we can just make another instance for this user
 	    os.makedirs(save_folder_run_name)
@@ -36,9 +36,9 @@ def init_save_data_structure(data_save_path, user_information, parameters_used):
 		copy2(parameters_used, save_folder_run_name)
 
 	# catch IO exceptions
-	except IOError as e:
-		if e.errno == 2:
-			raise e
+	except IOError as error:
+		if error.errno == 2:
+			raise error
 
 	# return path for completion or other data type saving needs
 	return save_folder_run_name

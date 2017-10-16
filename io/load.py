@@ -13,6 +13,8 @@ def load_json_parameters(path):
 	        warn("Parameters file is formatted incorrectly!", Warning)
 	        raise error
 
+	f.close()
+
 	return parameters
 
 def load_experimental_data():
