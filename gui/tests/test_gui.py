@@ -30,17 +30,17 @@ def teardown_function(function):
     gui_fx.main_window_width = 640
 
 
-def test_changeInputText():
-    '''Tests that the function changeInputText can change the text of an input field'''
+def test_change_input_text():
+    '''Tests that the function change_input_text can change the text of an input field'''
     gui_fx.add_input(
         gui_fx.InputField('test_id', False, False), 100, 100, 100, 100, 0, 16
     )
-    gui_fx.changeInputText('test_id', "some_test_text")
+    gui_fx.change_input_text('test_id', "some_test_text")
     assert gui_fx.inputFields[0][0].text == "some_test_text"
 
 
-def test_dropItems():
-    '''Tests that the dropItems function can create a drop-down list of buttons based on values in a text or json file, and that those items can be removed'''
+def test_drop_items():
+    '''Tests that the drop_items function can create a drop-down list of buttons based on values in a text or json file, and that those items can be removed'''
     gui_fx.add_scroll((gui_fx.ScrollBar(640, 0), 0))
     gui_fx.add_input(
         gui_fx.InputField('test_id', False, False), 100, 100, 100, 100, 0, 16
@@ -49,14 +49,14 @@ def test_dropItems():
     #test standard text file
     output.write('1\n2\n3\n4\n5\n6\n')
     output.close()
-    gui_fx.dropItems('test_id', 0, 'test.txt', False)
+    gui_fx.drop_items('test_id', 0, 'test.txt', False)
     assert len(gui_fx.buttons) == 6
     #test json file
     gui_fx.buttons = []
     output = open(str('test.txt'), 'w')
     output.write('{"test_id":{"test_values": ["1", "2", "3"]}}')
     output.close()
-    gui_fx.dropItems('test_id', 0, 'test.txt', "test_values")
+    gui_fx.drop_items('test_id', 0, 'test.txt', "test_values")
     os.remove('test.txt')
     assert len(gui_fx.buttons) == 3
     gui_fx.remove_dropdown_list()
@@ -64,8 +64,8 @@ def test_dropItems():
     assert len(gui_fx.buttons) == 0
 
 
-def test_setTrialType():
-    '''Tests that the setTrialType function can add a newly entered user to the users.txt file, and that it will not add that user more than once'''
+def test_set_trial_type():
+    '''Tests that the set_trial_type function can add a newly entered user to the users.txt file, and that it will not add that user more than once'''
     gui_fx.add_input(
         gui_fx.InputField('user_id', False, False), 100, 100, 100, 100, 0, 100
     )
@@ -81,13 +81,13 @@ def test_setTrialType():
         output = open(str('users.txt'), 'a')
     output.write("")
     output.close()
-    gui_fx.setTrialType(6)
+    gui_fx.set_trial_type(6)
     output = open(str('users.txt'), 'r')
     newData = output.read()
     output.close()
     #tests whether the data was written
     assert newData == "test\n"
-    gui_fx.setTrialType(6)
+    gui_fx.set_trial_type(6)
     output = open(str('users.txt'), 'r')
     newData = output.read()
     output.close()
@@ -98,19 +98,19 @@ def test_setTrialType():
     output.close()
     os.remove('users.txt')
 
-def test_displayHelpPointers():
-    '''Tests that the displayHelpPointers function can read a help tip from a json file and display it'''
+def test_display_help_pointers():
+    '''Tests that the display_help_pointers function can read a help tip from a json file and display it'''
     output = open(str('test.txt'), 'w')
     output.write('{"test_id":{"helpTip":"thisisahelptip"}}')
     output.close()
-    gui_fx.displayHelpPointers("test.txt", "test_id")
+    gui_fx.display_help_pointers("test.txt", "test_id")
     os.remove("test.txt")
     assert gui_fx.mouseHelp == "thisisahelptip"
 
-def test_displayHelpPointersShouldFail():
+def test_display_help_pointersShouldFail():
     '''Tests various fail cases for displaying help pointers'''
-    gui_fx.displayHelpPointers("invalid.txt", "test_id")
-    gui_fx.displayHelpPointers("pytestfile.py", "test_id")
+    gui_fx.display_help_pointers("invalid.txt", "test_id")
+    gui_fx.display_help_pointers("pytestfile.py", "test_id")
     assert gui_fx.mouseHelp == False
 
 def test_writeValuesToFile():
@@ -121,8 +121,8 @@ def test_writeValuesToFile():
     gui_fx.add_input(
         gui_fx.InputField('testInputTwo', 'test_section_2', False), 100, 100, 100, 100, 0, 100
     )
-    gui_fx.changeInputText('testInputOne', 'testone')
-    gui_fx.changeInputText('testInputTwo', 'testtwo')
+    gui_fx.change_input_text('testInputOne', 'testone')
+    gui_fx.change_input_text('testInputTwo', 'testtwo')
     gui_fx.writeValuesToFile(['test_section_1', 'test_section_2'], ['testInputOne', 'testInputTwo'], "test.txt")
     output = open(str('test.txt'), 'r')
     tempData = output.read()
@@ -147,7 +147,7 @@ def test_read_values_from_file():
 
 def test_onMouseMotion():
     '''Tests that the on_mouse_motion function correctly determines whether the mouse cursor is over a button'''
-    gui_fx.addButton(
+    gui_fx.add_button(
         1, 1, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
@@ -227,17 +227,17 @@ def test_onClose():
     assert len(gui_fx.windows) == 0
     main_window.close()
 
-def test_addButton():
+def test_add_button():
     '''Tests whether a button with correct parameters can be added'''
-    gui_fx.addButton(
+    gui_fx.add_button(
         0, 0, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
     assert len(gui_fx.buttons) == 1
 
-def test_addButtonShouldFail():
+def test_add_buttonShouldFail():
     '''Tests whether a button with incorrect parameters can be added. This should throw a warning.'''
-    gui_fx.addButton(
+    gui_fx.add_button(
         'test', 'test', 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
@@ -307,15 +307,15 @@ def test_add_switch():
 
 def test_draw_buttons():
     '''Tests whether buttons on screen are drawn'''
-    gui_fx.addButton(
+    gui_fx.add_button(
         1, 1, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
-    gui_fx.addButton(
+    gui_fx.add_button(
         1, 1, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
-    gui_fx.addButton(
+    gui_fx.add_button(
         1, 1, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
@@ -360,13 +360,13 @@ def test_draw_bar():
     '''Tests whether a scroll bar with valid arguments is drawn'''
     assert gui_fx.draw_bar(10, 10, gui_fx.ScrollBar(640, 0)) == True
 
-def test_testValues():
-    '''Tests whether testValues returns true for a function with valid arguments'''
-    assert gui_fx.testValues({'test1': 10, 'test2': [10, 15, 24], 'test3': 'This is a string'}, ['test1', 'test2', 'test3'], [int, list, str], 'test_testValues') == True
+def test_test_values():
+    '''Tests whether test_values returns true for a function with valid arguments'''
+    assert gui_fx.test_values({'test1': 10, 'test2': [10, 15, 24], 'test3': 'This is a string'}, ['test1', 'test2', 'test3'], [int, list, str], 'test_test_values') == True
 
-def test_testValuesShouldFail():
-    '''Tests whether testValues returns false for a function with invalid arguments'''
-    assert gui_fx.testValues({'test1': 10, 'test2': [10, 15, 24], 'test3': 'This is a string'}, ['test1', 'test2', 'test3'], [int, str, str], 'test_testValues') == False
+def test_test_valuesShouldFail():
+    '''Tests whether test_values returns false for a function with invalid arguments'''
+    assert gui_fx.test_values({'test1': 10, 'test2': [10, 15, 24], 'test3': 'This is a string'}, ['test1', 'test2', 'test3'], [int, str, str], 'test_test_values') == False
 
 def test_addToContentHeight():
     '''Tests whether addToContentHeight sets a scroll bar's height to the correct value'''
@@ -457,7 +457,7 @@ def test_on_draw():
     gui_fx.add_input(
         gui_fx.InputField('test_id', False, False), 100, 100, 100, 100, 0, 16
     )
-    gui_fx.addButton(
+    gui_fx.add_button(
         0, 0, 100, 100,
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
@@ -475,18 +475,18 @@ def test_draw_images():
     assert main_window.draw_images() == True
     main_window.close()
 
-def test_insertSymbolAtIndex():
+def test_insert_symbol_at_index():
     '''Tests whether a symbol can be inserted into a string at a given index'''
     gui_fx.add_input(
         gui_fx.InputField('test_id', False, False), 100, 100, 100, 100, 0, 16
     )
     gui_fx.inputFields[0][0].text = "here is some test text"
     gui_fx.typingCursorPos = 7
-    gui_fx.insertSymbolAtIndex("n't", 0)
+    gui_fx.insert_symbol_at_index("n't", 0)
     assert gui_fx.inputFields[0][0].text == "here isn't some test text"
 
-def test_searchParameters():
-    '''Tests whether the searchParameters function finds a given input field'''
+def test_search_parameters():
+    '''Tests whether the search_parameters function finds a given input field'''
     gui_fx.add_input(
         gui_fx.InputField('test_id', False, False), 100, 610, 100, 100, 0, 16, 0
     )
@@ -502,6 +502,6 @@ def test_searchParameters():
     output = open(str('test.json'), 'w')
     output.write('{\n  "test_id": {\n    "readableName": "testone"\n  }, \n  "test_id2": {\n    "readableName": "testtwo"\n  }\n}')
     output.close()
-    gui_fx.searchParameters("test.json", 0, "testsearch")
+    gui_fx.search_parameters("test.json", 0, "testsearch")
     os.remove('test.json')
     assert gui_fx.scroll_bars[0][0].yPos != 0

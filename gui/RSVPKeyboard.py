@@ -94,14 +94,14 @@ for json_item in file_data:
         window_four_bar.addToContentHeight(35)
 
     # adds help button for each parameter
-    gui_fx.addButton(
+    gui_fx.add_button(
         main_window_width_half + covert_to_width(220),
         covert_to_height((section_counter) - (window_three_bar.contentHeight
                          if (section_boolean)
                          else window_four_bar.contentHeight)) + main_window_height,
         covert_to_width(20), covert_to_height(20),
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '?',
-        display_window, functionCall="displayHelpPointers",
+        display_window, functionCall="display_help_pointers",
         functionArg=(path, json_item),
         scrollBar=display_window, textSize=covert_to_width(12)
     )
@@ -138,14 +138,14 @@ for json_item in file_data:
 
         # adds a drop-down list of recommended values for a parameter if needed
         if(file_data[json_item]["recommended_values"] != ''):
-            gui_fx.addButton(
+            gui_fx.add_button(
                 main_window_width_half + covert_to_width(185),
                 covert_to_height((section_counter) - (window_three_bar.contentHeight
                                  if (section_boolean)
                                  else window_four_bar.contentHeight)) + main_window_height,
                 covert_to_width(30), covert_to_height(30),
                 (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '',
-                display_window, functionCall="dropItems",
+                display_window, functionCall="drop_items",
                 functionArg=[json_item, display_window, path, "recommended_values"],
                 scrollBar=display_window, textSize=covert_to_width(22)
             )
@@ -178,17 +178,17 @@ for json_item in file_data:
 # function name to call (str), function arguments (list), text size (int),
 # scroll bar id (int)
 # Extend options menu
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(235),
     main_window_height_half + covert_to_height(210),
     covert_to_width(100), covert_to_height(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Show Options', 3,
-    functionCall="moveMenu", functionArg=[100, covert_to_width(90)],
+    functionCall="move_menu", functionArg=[100, covert_to_width(90)],
     textSize=covert_to_width(8)
 )
 
 # Presentation mode button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half, main_window_height_half + covert_to_height(50),
     covert_to_width(400), covert_to_height(75), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Presentation Mode', 2,
@@ -196,7 +196,7 @@ gui_fx.addButton(
     textSize=covert_to_width(20)
 )
 # View signals button- path the executable for viewing quality of signals
-# gui_fx.addButton(
+# gui_fx.add_button(
 #     main_window_width_half, main_window_height_half - covert_to_height(50),
 #     covert_to_width(400), covert_to_height(75), (40, 40, 40, 255),
 #     (219, 219, 219, 255), (89, 89, 89, 255), 'View Signals', 2,
@@ -206,7 +206,7 @@ gui_fx.addButton(
 # )
 
 # Configure parameters button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(155),
     main_window_height_half - covert_to_height(150),
     covert_to_width(300), covert_to_height(70),
@@ -215,7 +215,7 @@ gui_fx.addButton(
 )
 
 # Save values button
-gui_fx.addButton(
+gui_fx.add_button(
     0,
     main_window_height_half - covert_to_height(100),
     covert_to_width(150), covert_to_height(60), (40, 40, 40, 255),
@@ -226,7 +226,7 @@ gui_fx.addButton(
 )
 
 # Load values button
-gui_fx.addButton(
+gui_fx.add_button(
     0,
     main_window_height_half - covert_to_height(170),
     covert_to_width(150), covert_to_height(60), (40, 40, 40, 255),
@@ -237,7 +237,7 @@ gui_fx.addButton(
 )
 
 # Advanced options button
-gui_fx.addButton(
+gui_fx.add_button(
     0,
     main_window_height_half + covert_to_height(30),
     covert_to_width(150), covert_to_height(50), (40, 40, 40, 255),
@@ -246,66 +246,66 @@ gui_fx.addButton(
 )
 
 # Free spell button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half, main_window_height_half - covert_to_height(40),
     covert_to_width(100), covert_to_height(90),
     (25, 20, 1, 255), (239, 212, 105, 255), (255, 236, 160, 255), 'Free Spell',
-    0, functionCall="setTrialType", functionArg=[3],
+    0, functionCall="set_trial_type", functionArg=[3],
     textSize=covert_to_width(12)
 )
 
 # FRP Calibration button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(110),
     main_window_height_half - covert_to_height(40),
     covert_to_width(100), covert_to_height(90),
     (25, 20, 1, 255), (239, 146, 40, 255), (255, 190, 117, 255),
-    'FRP Calibration', 0, functionCall="setTrialType", functionArg=[2],
+    'FRP Calibration', 0, functionCall="set_trial_type", functionArg=[2],
     textSize=covert_to_width(12)
 )
 
 # Copy phrase button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half + covert_to_width(110),
     main_window_height_half - covert_to_height(40),
     covert_to_width(100), covert_to_height(90),
     (25, 20, 1, 255), (117, 173, 48, 255), (186, 232, 129, 255), 'Copy Phrase',
-    0, functionCall="setTrialType", functionArg=[4],
+    0, functionCall="set_trial_type", functionArg=[4],
     textSize=covert_to_width(12)
 )
 
 # ERP calibration button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(220),
     main_window_height_half - covert_to_height(40),
     covert_to_width(100), covert_to_height(90),
     (25, 20, 1, 255), (221, 37, 56, 255), (245, 101, 71, 255),
-    'ERP Calibration', 0, functionCall="setTrialType", functionArg=[1],
+    'ERP Calibration', 0, functionCall="set_trial_type", functionArg=[1],
     textSize=covert_to_width(12)
 )
 
 # Mastery task button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half + covert_to_width(220),
     main_window_height_half - covert_to_height(40),
     covert_to_width(100), covert_to_height(90),
     (25, 20, 1, 255), (62, 161, 232, 255), (81, 217, 255, 255), 'Mastery Task',
-    0, functionCall="setTrialType", functionArg=[5],
+    0, functionCall="set_trial_type", functionArg=[5],
     textSize=covert_to_width(12)
 )
 
 # Drop-down list button for user ids
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half + covert_to_width(122),
     main_window_height_half + covert_to_height(100),
     covert_to_width(40), covert_to_height(40),
     (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0,
-    functionCall="dropItems", functionArg=['user_id', 0, "users.txt", False],
+    functionCall="drop_items", functionArg=['user_id', 0, "users.txt", False],
     textSize=covert_to_width(22)
 )
 
 # Calculate AUC button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half + covert_to_width(155),
     main_window_height_half - covert_to_height(150),
     covert_to_width(300), covert_to_height(70),
@@ -315,32 +315,32 @@ gui_fx.addButton(
 )
 
 # Search parameters button
-gui_fx.addButton(
+gui_fx.add_button(
     0,
     main_window_height_half + covert_to_height(90),
     covert_to_width(60), covert_to_height(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 3,
-    functionCall="searchParameters", functionArg=[path, 3, 'search'],
+    functionCall="search_parameters", functionArg=[path, 3, 'search'],
     textSize=covert_to_width(8), scrollBar=100
 )
 
 # Search advanced parameters button
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(230),
     main_window_height_half + covert_to_height(90),
     covert_to_width(60), covert_to_height(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 4,
-    functionCall="searchParameters", functionArg=[path, 4, 'advancedsearch'],
+    functionCall="search_parameters", functionArg=[path, 4, 'advancedsearch'],
     textSize=covert_to_width(8)
 )
 
 # Retract options menu
-gui_fx.addButton(
+gui_fx.add_button(
     main_window_width_half - covert_to_width(325),
     main_window_height_half + covert_to_height(210),
     covert_to_width(100), covert_to_height(30), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Hide Options', 3,
-    functionCall="moveMenu", functionArg=[100, covert_to_width(90)],
+    functionCall="move_menu", functionArg=[100, covert_to_width(90)],
     textSize=covert_to_width(8), scrollBar=100
 )
 option_tab_bar.addToContentHeight(20)

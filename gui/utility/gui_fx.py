@@ -214,33 +214,33 @@ def drop_items(text_box_name, windowId, filename, readValues):
     global scroll_bars
     for counter in range(0, len(scroll_bars)):
         if(scroll_bars[counter][0].scroll_id == windowId):
-            barIndex = counter
+            bar_index = counter
             counter = len(scroll_bars)
     for counter in range(0, (len(inputFields))):
         if(inputFields[counter][0].name == text_box_name):
             if(ospath.isfile(filename)):
                 with codecsopen(filename, 'r', encoding='utf-8') as f:
-                    userArray = []
+                    user_array = []
                     # determines whether content should be read as a json file
                     if(readValues == False):
-                        userArray = f.readlines()
+                        user_array = f.readlines()
                     else:
                         try:
                             file_data = jsonload(f)
-                            userArray = file_data[text_box_name][readValues]
+                            user_array = file_data[text_box_name][readValues]
                         except ValueError:
                             warn('File ' + str(filename) + ' is an invalid JSON file.')
-                    for counter2 in range(0, (len(userArray))):
-                        if(isinstance(userArray[counter2], basestring)):
+                    for counter2 in range(0, (len(user_array))):
+                        if(isinstance(user_array[counter2], basestring)):
                             add_button(
                                 inputFields[counter][1],
                                 (inputFields[counter][2] - (inputFields[counter][4]) - ((counter2 - 1) * 10)) - counter2*20,
                                 inputFields[counter][3],
                                 int((20/480.0)*main_window_height), (40, 40, 40, 255),
                                 (219, 219, 219, 255), (89, 89, 89, 255),
-                                userArray[counter2].replace("\n", '').replace("'u", ''),
+                                user_array[counter2].replace("\n", '').replace("'u", ''),
                                 windowId, functionCall="change_input_text",
-                                functionArg=[text_box_name, userArray[counter2].replace("\n", '').replace("'u", '')],
+                                functionArg=[text_box_name, user_array[counter2].replace("\n", '').replace("'u", '')],
                                 scrollBar=windowId,
                                 textSize=int((10/640.0)*main_window_width), isTemp=True,
                                 prioritizeTask=True, fontName='Arial'
@@ -252,14 +252,14 @@ def drop_items(text_box_name, windowId, filename, readValues):
                                 inputFields[counter][3],
                                 int((20/480.0)*main_window_height), (40, 40, 40, 255),
                                 (219, 219, 219, 255), (89, 89, 89, 255),
-                                str(userArray[counter2]).replace("\n", '').replace("'u", ''),
+                                str(user_array[counter2]).replace("\n", '').replace("'u", ''),
                                 windowId, functionCall="change_input_text",
-                                functionArg=[text_box_name, str(userArray[counter2]).replace("\n", '').replace("'u", '')],
+                                functionArg=[text_box_name, str(user_array[counter2]).replace("\n", '').replace("'u", '')],
                                 scrollBar=windowId,
                                 textSize=int((10/640.0)*main_window_width), isTemp=True,
                                 prioritizeTask=True, fontName='Arial'
                             )
-                        scroll_bars[barIndex][0].addToContentHeight((10/640.0)*main_window_width)
+                        scroll_bars[bar_index][0].addToContentHeight((10/640.0)*main_window_width)
                     f.close()
             else:
                 warn("File " + str(filename) + " could not be found.")
@@ -278,8 +278,8 @@ def set_trial_type(numId):
                 add_window(new_window)
                 if(ospath.isfile("users.txt")):
                     with codecsopen("users.txt", 'r', encoding='utf-8') as f:
-                        userArray = f.readlines()
-                        for eachItem in userArray:
+                        user_array = f.readlines()
+                        for eachItem in user_array:
                             if(eachItem.replace("\n", '').replace("'u", '') == userId):
                                 f.close()
                                 return
@@ -310,58 +310,90 @@ def display_help_pointers(filename, helpId):
         warn('File ' + str(filename) + ' could not be found.')
 
 
-
 # tests wheter a set of arguments passed to a function are of the correct types
 def test_values(inputVariables, valueArray, typeArray, functionCaller):
     for counter in range(0, len(valueArray)):
         if(isinstance(typeArray[counter], list)):
-            possibleVariableTypes = typeArray[counter]
+            possible_variable_types = typeArray[counter]
             passed = False
-            for variableType in possibleVariableTypes:
-                if(isinstance(inputVariables.get(valueArray[counter]), variableType)):
+            for variableType in possible_variable_types:
+                if(isinstance(
+                   inputVariables.get(valueArray[counter]), variableType)):
                     passed = True
-            if(passed == False):
-                warn('Argument ' + str(valueArray[counter]) + ' passed to ' + str(functionCaller) + ' was of incorrect type' + str(type(inputVariables.get(valueArray[counter]))) + ' and should be of type ' + str(possibleVariableTypes))
+            if(passed is False):
+                warn(
+                    'Argument ' +
+                    str(valueArray[counter]) +
+                    ' passed to ' +
+                    str(functionCaller) +
+                    ' was of incorrect type' +
+                    str(type(inputVariables.get(valueArray[counter]))) +
+                    ' and should be of type ' + str(possible_variable_types))
                 return False
         else:
-            if(not isinstance(inputVariables.get(valueArray[counter]), typeArray[counter])):
-                warn('Argument ' + str(valueArray[counter]) + ' passed to ' + str(functionCaller) + ' was of incorrect type ' + str(type(inputVariables.get(valueArray[counter]))) + ' and should be of type ' + str(typeArray[counter]))
+            if(not isinstance(
+               inputVariables.get(valueArray[counter]), typeArray[counter])):
+                warn('Argument ' + str(valueArray[counter]) +
+                     ' passed to ' +
+                     str(functionCaller) +
+                     ' was of incorrect type ' +
+                     str(type(inputVariables.get(valueArray[counter]))) +
+                     ' and should be of type ' + str(typeArray[counter]))
                 return False
     return True
 
 
 # adds a button to the array of buttons
-def add_button(xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, open_window=0, functionCall=0, functionArg=0, textSize=12, scrollBar=False, isTemp=False, prioritizeTask=False, fontName='Verdana'):
+def add_button(xpos, ypos, width, height,
+               tcolor, bcolor, lcolor, caption,
+               display_window, open_window=0, functionCall=0,
+               functionArg=0, textSize=12, scrollBar=False,
+               isTemp=False, prioritizeTask=False, fontName='Verdana'):
     global buttons
-    should_add = test_values(locals(), getargspec(add_button)[0], [int, int, int, int, tuple, tuple, tuple, [str, unicode], int, int, [int, str], [int, list, tuple], int, [bool, int], bool, bool, str], 'add_button')
+    should_add = test_values(locals(), getargspec(add_button)[0], [
+        int, int, int, int, tuple, tuple, tuple, [str, unicode],
+        int, int, [int, str], [int, list, tuple],
+        int, [bool, int], bool, bool, str], 'add_button')
     if(should_add):
-        return buttons.append((xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, open_window, functionCall, functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
+        return buttons.append((
+            xpos, ypos, width, height,
+            tcolor, bcolor, lcolor, caption,
+            display_window, open_window, functionCall,
+            functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
 
 
 def add_window(newWindow):
     global windows
-    should_add = test_values(locals(), getargspec(add_window)[0], [gui_fx.MenuWindow], 'add_window')
+    should_add = test_values(
+        locals(), getargspec(add_window)[0], [gui_fx.MenuWindow], 'add_window')
     if(should_add):
         return windows.append(newWindow)
 
 
-def add_input(inputObject, xpos, ypos, width, height, windowid, textsize, scrollBar=False):
+def add_input(inputObject, xpos, ypos, width,
+              height, windowid, textsize, scrollBar=False):
     global windows
-    should_add = test_values(locals(), getargspec(add_input)[0], [gui_fx.InputField, int, int, int, int, int, int, int], 'add_input')
+    should_add = test_values(locals(), getargspec(
+        add_input)[0],
+        [gui_fx.InputField, int, int, int, int, int, int, int], 'add_input')
     if(should_add):
-        return inputFields.append((inputObject, xpos, ypos, width, height, windowid, textsize, scrollBar))
+        return inputFields.append((
+            inputObject, xpos, ypos, width, height, windowid, textsize, scrollBar))
 
 
 def add_text(xpos, ypos, color, size, text, window, scrollBar=False):
     global textBoxes
-    should_add = test_values(locals(), getargspec(add_text)[0], [int, int, tuple, int, [str, unicode], int, [bool, int]], 'add_text')
+    should_add = test_values(locals(), getargspec(add_text)[0], [
+        int, int, tuple, int, [str, unicode], int, [bool, int]], 'add_text')
     if(should_add):
-        return textBoxes.append((xpos, ypos, color, size, text, window, scrollBar))
+        return textBoxes.append((xpos, ypos, color,
+                                 size, text, window, scrollBar))
 
 
 def add_scroll(newBar):
     global scroll_bars
-    should_add = test_values(locals(), getargspec(add_scroll)[0], [tuple], 'add_scroll')
+    should_add = test_values(locals(), getargspec(add_scroll)[0],
+                             [tuple], 'add_scroll')
     if(should_add):
         newBar[0].baseContentHeight = newBar[0].contentHeight
         return scroll_bars.append(newBar)
@@ -369,34 +401,51 @@ def add_scroll(newBar):
 
 def add_image(centerx, centery, filename, windowId, sizex, sizey, scrollBar):
     global images
-    should_add = test_values(locals(), getargspec(add_image)[0], [[int, float], [int, float], str, int, float, float, [int, bool]], 'add_image')
+    should_add = test_values(locals(), getargspec(add_image)[0], [[int, float],
+                             [int, float], str, int, float, float,
+                             [int, bool]], 'add_image')
     if(should_add):
         try:
-            theImage = pyglet.image.load(filename)
-            sprite = pyglet.sprite.Sprite(theImage, x=centerx, y=centery)
-            sprite.scale = sizex / theImage.width
-            return images.append((sprite, windowId, scrollBar, centery, centerx))
+            image = pyglet.image.load(filename)
+            sprite = pyglet.sprite.Sprite(image, x=centerx, y=centery)
+            sprite.scale = sizex / image.width
+            return images.append((sprite, windowId, scrollBar,
+                                  centery, centerx))
         except IOError:
             warn("File '" + filename + "' not found!")
 
+
 def add_switch(newSwitch):
     global switches
-    should_add = test_values(locals(), getargspec(add_switch)[0], [tuple], 'add_switch')
+    should_add = test_values(locals(), getargspec(add_switch)[0],
+                             [tuple], 'add_switch')
     if(should_add):
         return switches.append(newSwitch)
 
-#draws a button
-def draw_button(centerx, centery, width, height, textColor, buttonColor, outlineColor, text, textSize, scroll_id, fontName='Verdana'):
-    if(test_values(locals(), getargspec(draw_button)[0], [[float, int], [float, int], [float, int], [float, int], tuple, tuple, tuple, [str, unicode], int, int, str], 'draw_button')):
-        if(buttonColor[3] == 255):
-            bottomColor = (buttonColor[0] - 15, buttonColor[1] - 15, buttonColor[2] - 15, buttonColor[3]) if ((buttonColor[0] - 15)  >= 0 and (buttonColor[1] - 15)  >= 0 and (buttonColor[2] - 15) >= 0) else buttonColor
-            vertex_list = pyglet.graphics.vertex_list(4, ('v2f', ((centerx - (width / 2)), (centery - (height / 2)),
-                (centerx + (width / 2)), (centery - (height / 2)),
-                (centerx + (width / 2)), (centery + (height / 2)),
-                (centerx - (width / 2)), (centery + (height / 2)))
-                ),
-                ('c4B', bottomColor + bottomColor + buttonColor + buttonColor)
-                )
+
+# draws a button
+def draw_button(centerx, centery, width, height,
+                textColor, button_color, outlineColor,
+                text, textSize, scroll_id, fontName='Verdana'):
+    if(test_values(locals(), getargspec(draw_button)[0], [[float, int],
+                   [float, int], [float, int], [float, int],
+                   tuple, tuple, tuple,
+                   [str, unicode], int, int, str], 'draw_button')):
+        if(button_color[3] == 255):
+            bottom_color = (button_color[0] - 15, button_color[1] - 15,
+                            button_color[2] - 15, button_color[3]) \
+                if ((button_color[0] - 15) >= 0 and
+                    (button_color[1] - 15) >= 0 and
+                    (button_color[2] - 15) >= 0) else button_color
+            vertex_list = pyglet.graphics.vertex_list(
+                4,
+                ('v2f',
+                    ((centerx - (width / 2)), (centery - (height / 2)),
+                     (centerx + (width / 2)), (centery - (height / 2)),
+                     (centerx + (width / 2)), (centery + (height / 2)),
+                     (centerx - (width / 2)), (centery + (height / 2)))),
+                ('c4B',
+                    bottom_color + bottom_color + button_color + button_color))
             vertex_list.draw(pyglet.gl.GL_QUADS)
         vertex_list = pyglet.graphics.vertex_list(
             4,
@@ -404,34 +453,42 @@ def draw_button(centerx, centery, width, height, textColor, buttonColor, outline
                 ((centerx - (width / 2)), (centery - (height / 2)),
                     (centerx + (width / 2)), (centery - (height / 2)),
                     (centerx + (width / 2)), (centery + (height / 2)),
-                    (centerx - (width / 2)), (centery + (height / 2)))
-            ),
-            ('c4B', outlineColor + outlineColor + outlineColor + outlineColor)
-            )
+                    (centerx - (width / 2)), (centery + (height / 2)))),
+            ('c4B', outlineColor + outlineColor + outlineColor + outlineColor))
         vertex_list.draw(pyglet.gl.GL_LINE_LOOP)
-        draw_text(centerx, centery, textColor, textSize, text, scroll_id, width, fontName)
+        draw_text(centerx, centery, textColor, textSize, text,
+                  scroll_id, width, fontName)
         return True
     else:
         warn("Button with caption " + str(text) + " was not drawn.")
         return False
 
-#parameters: width of window, height of window, scrollBar class
+
+# parameters: width of window, height of window, scrollBar class
 def draw_bar(windowWidth, windowHeight, bar):
-    if(test_values(locals(), getargspec(draw_bar)[0], [int, int, gui_fx.ScrollBar], 'draw_bar')):
-        vertex_list = pyglet.graphics.vertex_list(4, ('v2f', ((windowWidth), (windowHeight),
-        (windowWidth - (windowWidth/30)), (windowHeight),
-        (windowWidth - (windowWidth/30)), (0),
-        (windowWidth), (0))
-        ),
-        ('c4B', (173, 173, 173, 255, 173, 173, 173, 255, 173, 173, 173, 255, 173, 173, 173, 255))
+    if(test_values(locals(), getargspec(draw_bar)[0],
+                   [int, int, gui_fx.ScrollBar], 'draw_bar')):
+        vertex_list = pyglet.graphics.vertex_list(
+            4,
+            ('v2f', ((windowWidth), (windowHeight),
+             (windowWidth - (windowWidth / 30)), (windowHeight),
+             (windowWidth - (windowWidth / 30)), (0),
+             (windowWidth), (0))),
+            ('c4B',
+                (173, 173, 173, 255, 173, 173, 173, 255, 173,
+                 173, 173, 255, 173, 173, 173, 255))
         )
         vertex_list.draw(pyglet.gl.GL_QUADS)
-        vertex_list = pyglet.graphics.vertex_list(4, ('v2f', ((windowWidth), (windowHeight - bar.yPos),
-        (windowWidth - (windowWidth/30)), (windowHeight - bar.yPos),
-        (windowWidth - (windowWidth/30)), (windowHeight - bar.yPos - scrollBarHeight),
-        (windowWidth), (windowHeight - bar.yPos - scrollBarHeight))
-        ),
-        ('c4B', (235, 235, 235, 255, 235, 235, 235, 255, 235, 235, 235, 255, 235, 235, 235, 255))
+        vertex_list = pyglet.graphics.vertex_list(
+            4,
+            ('v2f', ((windowWidth), (windowHeight - bar.yPos),
+             (windowWidth - (windowWidth / 30)), (windowHeight - bar.yPos),
+             (windowWidth - (windowWidth / 30)), (
+                windowHeight - bar.yPos - scrollBarHeight),
+             (windowWidth), (windowHeight - bar.yPos - scrollBarHeight))),
+            ('c4B',
+                (235, 235, 235, 255, 235, 235, 235, 255, 235,
+                 235, 235, 255, 235, 235, 235, 255))
         )
         vertex_list.draw(pyglet.gl.GL_QUADS)
         return True
@@ -439,13 +496,15 @@ def draw_bar(windowWidth, windowHeight, bar):
         warn("Scroll bar failed to draw")
         return False
 
-#draws a switch, with the button color varying depending on how the switch is set
+
+# draws a switch, with the button color varying depending on how the switch
 def draw_switch(windowWidth, windowHeight, switch, scroll_id):
-    if(test_values(locals(), getargspec(draw_switch)[0], [int, int, gui_fx.BooleanSwitch, int], 'draw_switch')):
-        #temp y position that is altered if the switch is attached to a scroll bar
+    if(test_values(locals(), getargspec(draw_switch)[0],
+                   [int, int, gui_fx.BooleanSwitch, int], 'draw_switch')):
+        # tmp y position that is altered when switch is attached to a scrollbar
         centery = switch.centery
         centerx = switch.centerx
-        if(scroll_id != False):
+        if(scroll_id is not False):
             for eachScrollBar in scroll_bars:
                 if(eachScrollBar[0].scroll_id == scroll_id):
                     if(eachScrollBar[0].isHorizontal):
@@ -454,22 +513,26 @@ def draw_switch(windowWidth, windowHeight, switch, scroll_id):
                         centery = centery + eachScrollBar[0].relativeYPos
         if(centery <= main_window_height and centery >= 0):
             draw_button(
-                switch.centerx, centery, switch.width, switch.height, \
-                (30, 28, 24, 255), (48, 51, 50, 255), (15, 15, 14, 255), '', 1, \
+                switch.centerx, centery, switch.width, switch.height,
+                (30, 28, 24, 255), (48, 51, 50, 255), (15, 15, 14, 255), '', 1,
                 scroll_id
             )
             draw_button(
-                switch.centerx - int(switch.width/4), centery, \
-                int(switch.width*0.45), int(switch.height*0.85), (30, 28, 24, 255) \
-                 if switch.booleanValue else (242, 237, 208, 255), (102, 186, 50, 255) \
-                 if switch.booleanValue else (27, 40, 11, 255), (15, 15, 14, 255), \
-                 'True', switch.textSize, scroll_id, 'Arial'
-             )
+                switch.centerx - int(switch.width / 4), centery,
+                int(switch.width * 0.45), int(
+                    switch.height * 0.85), (30, 28, 24, 255)
+                if switch.booleanValue
+                else (242, 237, 208, 255), (102, 186, 50, 255)
+                if switch.booleanValue
+                else (27, 40, 11, 255), (15, 15, 14, 255),
+                'True', switch.textSize, scroll_id, 'Arial')
             draw_button(
-                switch.centerx + int(switch.width/4), centery, \
-                int(switch.width*0.45), int(switch.height*0.85), \
-                (242, 237, 208, 255)  if switch.booleanValue else (30, 28, 24, 255), \
-                (56, 13, 7, 255) if switch.booleanValue else (219, 30, 30, 255), \
+                switch.centerx + int(switch.width / 4), centery,
+                int(switch.width * 0.45), int(switch.height * 0.85),
+                (242, 237, 208, 255) if switch.booleanValue
+                else (30, 28, 24, 255),
+                (56, 13, 7, 255) if switch.booleanValue
+                else (219, 30, 30, 255),
                 (15, 15, 14, 255), 'False', switch.textSize, scroll_id, 'Arial'
             )
             return True
@@ -477,28 +540,33 @@ def draw_switch(windowWidth, windowHeight, switch, scroll_id):
         warn("Switch failed to draw")
         return False
 
+
 # draws text
-def draw_text(centerx, centery, textColor, textSize, text, scroll_id = False, buttonWidth = 0, fontName = 'Verdana'):
+def draw_text(centerx, centery, textColor, textSize, text,
+              scroll_id=False, buttonWidth=0, fontName='Verdana'):
     global labelCache
-    if(test_values(locals(), getargspec(draw_text)[0], [[float, int], [float, int], tuple, int, [unicode, str], [int, bool], [int, float], str], 'draw_text')):
-        labelName = text + str(textSize) + str(textColor)
-        if (labelName) in labelCache:
+    if(test_values(locals(), getargspec(draw_text)[0],
+                   [[float, int], [float, int],
+                   tuple, int, [unicode, str],
+                   [int, bool], [int, float], str], 'draw_text')):
+        label_name = text + str(textSize) + str(textColor)
+        if (label_name) in labelCache:
             if((isinstance(scroll_id, bool))):
-                labelCache[labelName].draw()
+                labelCache[label_name].draw()
             else:
-                labelCache[labelName].x=centerx
-                labelCache[labelName].y=centery
-                labelCache[labelName].anchor_x='center'
-                labelCache[labelName].anchor_y='center'
-                labelCache[labelName].draw()
+                labelCache[label_name].x = centerx
+                labelCache[label_name].y = centery
+                labelCache[label_name].anchor_x = 'center'
+                labelCache[label_name].anchor_y = 'center'
+                labelCache[label_name].draw()
         else:
             label = pyglet.text.Label(
-                text, font_name = fontName, font_size=textSize, x=centerx, \
-                y=centery, anchor_x='center', anchor_y='center', \
-                color=textColor, multiline = True if buttonWidth != 0 else False, \
-                width = buttonWidth if buttonWidth != 0 else None, align='center'
+                text, font_name=fontName, font_size=textSize, x=centerx,
+                y=centery, anchor_x='center', anchor_y='center',
+                color=textColor, multiline=True if buttonWidth != 0 else False,
+                width=buttonWidth if buttonWidth != 0 else None, align='center'
             )
-            labelCache[labelName] = label
+            labelCache[label_name] = label
             label.draw()
         return True
     else:
@@ -506,17 +574,19 @@ def draw_text(centerx, centery, textColor, textSize, text, scroll_id = False, bu
         return False
 
 
-# writes the values of all current input boxes to a file. Parameters: name of config section, list of names of values to be written
+# writes the values of all current input boxes to a file. Parameters: name of
+# config section, list of names of values to be written
 def writeValuesToFile(section_names, field_names, filename=None):
     try:
-        dialog = wx.FileDialog(wxWindow, "Save Config As...", executable, ".json", "", wx.FD_SAVE)
-        if(filename == None):
+        dialog = wx.FileDialog(wxWindow, "Save Config As...",
+                               executable, ".json", "", wx.FD_SAVE)
+        if(filename is None):
             result = dialog.ShowModal()
-            outputPath = dialog.GetDirectory() + "\\" + dialog.Getfilename()
+            output_path = dialog.GetDirectory() + "\\" + dialog.Getfilename()
         else:
             result = None
-            outputPath = filename
-        if (result == wx.ID_OK or filename != None):
+            output_path = filename
+        if (result == wx.ID_OK or filename is not None):
             objects_list = OrderedDict()
             for counter3 in range(0, len(section_names)):
                 section_name = section_names[counter3]
@@ -530,10 +600,10 @@ def writeValuesToFile(section_names, field_names, filename=None):
                         if(eachSwitch[0].attachedValueName == field_names[counter] and section_name == eachSwitch[0].section_name):
                             d['value'] = 'true' if eachSwitch[0].booleanValue else 'false'
                             objects_list[eachSwitch[0].attachedValueName] = d
-            if(ospath.isfile(outputPath)):
-                output = open(str(outputPath), 'w')
+            if(ospath.isfile(output_path)):
+                output = open(str(output_path), 'w')
             else:
-                output = open(str(outputPath), 'a')
+                output = open(str(output_path), 'a')
             j = jsondumps(objects_list, indent=2)
             output.write(j)
             output.close()
@@ -627,8 +697,9 @@ def run_executable(execPath, filename, isParameter):
         warn("Could not find executable " + filename + " in path " + execPath)
         chdir(ospath.dirname(dir_path))
 
-#removes drop-down items that are on the screen. Called when the user clicks
-#anywhere after opening a drop-down list.
+
+# removes drop-down items that are on the screen. Called when the user clicks
+# anywhere after opening a drop-down list.
 def remove_dropdown_list():
     buttonTrueIndex = []
     for counter in range(0, (len(buttons))):
@@ -670,21 +741,21 @@ class InputField():
 
 class ScrollBar():
     def __init__(self, par2WindowHeight, theID, relativeYPos = 0, visible=True, horizontal=False):
-        #current position of the scroller
+        # current position of the scroller
         self.yPos = 0
-        #position of the content being scrolled
+        # position of the content being scrolled
         self.relativeYPos = relativeYPos
-        #actual height of the bar
+        # actual height of the bar
         self.height = par2WindowHeight
-        #height of the content being scrolled
+        # height of the content being scrolled
         self.contentHeight = 0
-        #is the scroll bar visible- used for scrolling drop-down lists
+        # is the scroll bar visible- used for scrolling drop-down lists
         self.isVisible = visible
-        #the height of any content before drop-down menus are addedHeight
+        # the height of any content before drop-down menus are addedHeight
         self.baseContentHeight = 0
-        #does the bar scroll horizontally?
+        # does the bar scroll horizontally?
         self.isHorizontal = horizontal
-        #the id of this bar
+        # the id of this bar
         self.scroll_id = theID
 
     def addToContentHeight(self, addedHeight):
@@ -720,10 +791,10 @@ class MenuWindow(pyglet.window.Window):
         returnTrue = True
         for counter in range(0, (len(inputFields))):
             if(counter == currentActiveInputField):
-                mainButtonColor = (207, 207, 207, 255)
+                mainbutton_color = (207, 207, 207, 255)
                 text = inputFields[counter][0].text[:typingCursorPos] + "|" + inputFields[counter][0].text[typingCursorPos:]
             else:
-                mainButtonColor = (247, 247, 247, 255)
+                mainbutton_color = (247, 247, 247, 255)
                 text = inputFields[counter][0].text
             if(inputFields[counter][5] == self.windowId):
                 scroll_id = inputFields[counter][7]
@@ -740,7 +811,7 @@ class MenuWindow(pyglet.window.Window):
                 if(tempWidth < len(text) * inputFields[counter][6] * 0.7):
                     tempWidth = len(text) * inputFields[counter][6] * 0.7
                 if(centery < self.height and centery > 0 and centerx < self.width and centerx > 0):
-                    if(not draw_button(centerx, centery, tempWidth, inputFields[counter][4], (0, 0, 0, 255), mainButtonColor, (117, 117, 117, 255), text, inputFields[counter][6], scroll_id, 'Arial')):
+                    if(not draw_button(centerx, centery, tempWidth, inputFields[counter][4], (0, 0, 0, 255), mainbutton_color, (117, 117, 117, 255), text, inputFields[counter][6], scroll_id, 'Arial')):
                         returnTrue = False
         return returnTrue
 
@@ -771,9 +842,9 @@ class MenuWindow(pyglet.window.Window):
         buttonsOnScreen = []
         for counter in range(0, (len(buttons))):
             if(mouseOnButton == counter):
-                mainButtonColor = (max(0, buttons[counter][5][0] - 40), max(0, buttons[counter][5][1] - 40), max(0, buttons[counter][5][2] - 40), buttons[counter][5][3])
+                mainbutton_color = (max(0, buttons[counter][5][0] - 40), max(0, buttons[counter][5][1] - 40), max(0, buttons[counter][5][2] - 40), buttons[counter][5][3])
             else:
-                mainButtonColor = buttons[counter][5]
+                mainbutton_color = buttons[counter][5]
             if(buttons[counter][8] == self.windowId):
                 scroll_id = buttons[counter][13]
                 centery = buttons[counter][1]
@@ -787,7 +858,7 @@ class MenuWindow(pyglet.window.Window):
                                 centery = centery + eachScrollBar[0].relativeYPos
                 if(centery < self.height and centery > 0 and centerx < self.width and centerx > 0):
                     buttonsOnScreen.append(counter)
-                    if(not draw_button(centerx, centery, buttons[counter][2], buttons[counter][3], buttons[counter][4], mainButtonColor, buttons[counter][6], buttons[counter][7], buttons[counter][12], scroll_id, buttons[counter][16])):
+                    if(not draw_button(centerx, centery, buttons[counter][2], buttons[counter][3], buttons[counter][4], mainbutton_color, buttons[counter][6], buttons[counter][7], buttons[counter][12], scroll_id, buttons[counter][16])):
                         returnTrue = False
         return returnTrue
 
@@ -860,7 +931,6 @@ class MenuWindow(pyglet.window.Window):
             if(not draw_button(int(mouseX - (50/640.0)*main_window_width), int(mouseY - ((10*(len(mouseHelp)/10.0 + 1) + 15)/960.0)*main_window_height), int((100/640.0)*main_window_width), int(((10*(len(mouseHelp)/10.0 + 1) + 15)/480.0)*main_window_height), (11, 4, 22, 255), (224, 217, 204, 255), (56, 55, 58, 255), mouseHelp, int((9/640.0)*main_window_width), 0, fontName='Arial')):
                 returnTrue = False
         return returnTrue
-
 
     # determines which, if any, button the mouse is over
     def on_mouse_motion(self, x, y, dx, dy):
