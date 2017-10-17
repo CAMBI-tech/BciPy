@@ -3,10 +3,11 @@
 
 
 from __future__ import division
-from psychopy import visual, core, event
+
+from psychopy import visual, core
+
 from rsvp_disp_modes import CopyPhraseTask
-import numpy as np
-from trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from utils.trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
 # Initialize Stimulus Parameters
 # Task Bar

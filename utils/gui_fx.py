@@ -1,15 +1,17 @@
+import subprocess
 from codecs import open as codecsopen
 from collections import OrderedDict
 from inspect import getargspec
-from json import load as jsonload
 from json import dumps as jsondumps
-from os import path as ospath
+from json import load as jsonload
 from os import chdir
+from os import path as ospath
 from sys import executable
 from warnings import warn
-import subprocess
+
 import pyglet
 import wx
+
 import gui_fx
 
 #arrays of buttons, windows, text, input fields, scroll bars, etc on the screen

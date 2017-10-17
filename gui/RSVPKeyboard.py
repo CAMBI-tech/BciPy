@@ -1,11 +1,12 @@
 from codecs import open as codecsopen
 from json import load as jsonload
-from os import environ
-import pyglet
-from warnings import warn
 from sys import path
+from warnings import warn
+
+import pyglet
+
 path.append('utility')
-import utility.gui_fx as gui_fx
+import utils.gui_fx as gui_fx
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
 gui_fx.addWindow(main_window)
@@ -334,7 +335,7 @@ gui_fx.addInput(
 #advanced parameters search menu
 gui_fx.addInput(
     gui_fx.InputField('advancedsearch', False, False), mainWindowWidthHalf - convertToWidth(230),
-    mainWindowHeightHalf + convertToHeight(130), convertToWidth(150), convertToHeight(40), 4,
+                                                       mainWindowHeightHalf + convertToHeight(130), convertToWidth(150), convertToHeight(40), 4,
     convertToWidth(10)
 )
 
