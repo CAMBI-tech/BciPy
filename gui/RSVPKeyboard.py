@@ -7,16 +7,11 @@ from warnings import warn
 
 import pyglet
 
-path.append('utils')
-import utils.gui_fx as gui_fx
+path.append('utils/')
+import gui_fx
 
-
-# from load import load_json_parameters
-
-# import pyglet
-
-# import utility.gui_fx as gui_fx
-
+path.append('io/')
+from load import load_json_parameters
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
 gui_fx.add_window(main_window)
@@ -376,19 +371,12 @@ gui_fx.add_input(
     main_window_height_half + covert_to_height(130), covert_to_width(150), covert_to_height(40), 3,
     covert_to_width(10), scrollBar=100
 )
-<<<<<<< HEAD
-#advanced parameters search menu
-gui_fx.addInput(
-    gui_fx.InputField('advancedsearch', False, False), mainWindowWidthHalf - convertToWidth(230),
-                                                       mainWindowHeightHalf + convertToHeight(130), convertToWidth(150), convertToHeight(40), 4,
-    convertToWidth(10)
-=======
+
 # advanced parameters search menu
 gui_fx.add_input(
     gui_fx.InputField('advancedsearch', False, False), main_window_width_half - covert_to_width(230),
     main_window_height_half + covert_to_height(130), covert_to_width(150), covert_to_height(40), 4,
     covert_to_width(10)
->>>>>>> IO
 )
 
 # register text to be displayed here.

@@ -8,7 +8,7 @@ import numpy as np
 from psychopy import visual, core
 
 from rsvp_disp_modes import CalibrationTask
-from utils.trigger_helpers import _write_triggers_from_sequence_calibration
+from trigger_helpers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
 # Task Bar
