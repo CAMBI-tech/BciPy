@@ -4,9 +4,14 @@
 
 from __future__ import division
 from psychopy import visual, core, event
+
+from sys import path
+
+path.append('display/')
 from rsvp_disp_modes import CalibrationTask
 import numpy as np
-import pdb
+
+
 from trigger_helpers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
