@@ -9,7 +9,7 @@ import pyglet
 import utility.gui_fx as gui_fx
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
-gui_fx.addWindow(main_window)
+gui_fx.add_window(main_window)
 
 main_window_width = main_window.width
 main_window_height = main_window.height
@@ -43,12 +43,12 @@ def covert_to_width(input_number):
 # This is used to calculate how much they should scroll relative to the
 # movement of the bar.
 
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half + covert_to_width(10),
     main_window_height - covert_to_height(20),
     (247, 247, 247, 255), covert_to_width(20), "Parameters", 3, 3
 )
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half + covert_to_width(10),
     main_window_height - covert_to_height(20),
     (247, 247, 247, 255), covert_to_width(20), "Advanced Options", 4, 4
@@ -79,7 +79,7 @@ for json_item in file_data:
     readable_caption = file_data[json_item]["readableName"]
     isNumeric = file_data[json_item]["isNumeric"]
     # adds name of each parameter above its input box
-    gui_fx.addText(
+    gui_fx.add_text(
         main_window_width_half + covert_to_width(10),
         covert_to_height((section_counter) - (window_three_bar.contentHeight
                          if (section_boolean)
@@ -123,7 +123,7 @@ for json_item in file_data:
         )
     else:
         # Adds an input field if an input field is needed
-        gui_fx.addInput(
+        gui_fx.add_input(
             gui_fx.InputField(json_item, section_string, True
                               if isNumeric == "true"
                               else False),
@@ -149,7 +149,7 @@ for json_item in file_data:
                 functionArg=[json_item, display_window, path, "recommended_values"],
                 scrollBar=display_window, textSize=covert_to_width(22)
             )
-            gui_fx.addImage(
+            gui_fx.add_image(
                 main_window_width_half + covert_to_width(172),
                 covert_to_height((section_counter) - (window_three_bar.contentHeight
                                  if (section_boolean)
@@ -354,20 +354,20 @@ option_tab_bar.addToContentHeight(20)
 # parameters: inputField data, x center pos, y center pos, width, height, display
 # window, text size, scroll bar id (if any)
 # User id input field
-gui_fx.addInput(
+gui_fx.add_input(
     gui_fx.InputField('user_id', False, False), main_window_width_half,
     main_window_height_half + covert_to_height(100),
     covert_to_width(300), covert_to_height(50), 0,
     covert_to_width(14)
 )
 # main parameters search menu
-gui_fx.addInput(
+gui_fx.add_input(
     gui_fx.InputField('search', False, False), 0,
     main_window_height_half + covert_to_height(130), covert_to_width(150), covert_to_height(40), 3,
     covert_to_width(10), scrollBar=100
 )
 # advanced parameters search menu
-gui_fx.addInput(
+gui_fx.add_input(
     gui_fx.InputField('advancedsearch', False, False), main_window_width_half - covert_to_width(230),
     main_window_height_half + covert_to_height(130), covert_to_width(150), covert_to_height(40), 4,
     covert_to_width(10)
@@ -378,29 +378,29 @@ gui_fx.addInput(
 # to window size.
 # paramenters, x position, y position, color, size, text, display window, scroll
 # bar id (if any)
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half, main_window_height_half + covert_to_height(150),
     (247, 247, 247, 255), covert_to_width(18),
     "Enter or select a user ID:", 0
 )
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half, main_window_height_half + covert_to_height(200),
     (247, 247, 247, 255), covert_to_width(18),
     "RSVP Keyboard", 0
 )
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half, main_window_height_half + covert_to_height(40),
     (247, 247, 247, 255), covert_to_width(18), "Select type of trial:", 0
 )
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half, main_window_height_half + covert_to_height(150),
     (247, 247, 247, 255), covert_to_width(21), "Select Mode:", 2
 )
-gui_fx.addText(
+gui_fx.add_text(
     0, main_window_height_half + covert_to_height(170),
     (247, 247, 247, 255), covert_to_width(11), "Search Parameters", 3, scrollBar=100
 )
-gui_fx.addText(
+gui_fx.add_text(
     main_window_width_half - covert_to_width(230), main_window_height_half + covert_to_height(160),
     (247, 247, 247, 255), covert_to_width(8), "Search Advanced Parameters", 4
 )
@@ -408,19 +408,19 @@ gui_fx.addText(
 # register images.
 # Position, width, and height should be relative to the window size.
 # parameters: x position, y position, file name, display window, width, height, scroll bar
-gui_fx.addImage(
+gui_fx.add_image(
     main_window_width_half + covert_to_width(260),
     main_window_height_half + covert_to_height(140),
     "static/images/OHSU-RGB-4C-REV.png", 0,
     float(covert_to_width(39)), float(covert_to_height(67)), False
 )
-gui_fx.addImage(
+gui_fx.add_image(
     main_window_width_half - covert_to_width(305),
     main_window_height_half + covert_to_height(115),
     "static/images/northeasternuniversity_logoseal.png", 0,
     float(covert_to_width(87)), float(covert_to_height(88)), False
 )
-gui_fx.addImage(
+gui_fx.add_image(
     main_window_width_half + covert_to_width(105),
     main_window_height_half + (80/480.0)*main_window_height,
     "static/images/triangle.png", 0,
@@ -428,12 +428,12 @@ gui_fx.addImage(
 )
 
 #real scroll bar registration
-#AddScroll takes the scroll bar itself and the id of the attached window as
+#add_scroll takes the scroll bar itself and the id of the attached window as
 #parameters.
-gui_fx.addScroll((window_three_bar, 3))
-gui_fx.addScroll((window_zero_bar, 0))
-gui_fx.addScroll((window_four_bar, 4))
-gui_fx.addScroll((option_tab_bar, 3))
+gui_fx.add_scroll((window_three_bar, 3))
+gui_fx.add_scroll((window_zero_bar, 0))
+gui_fx.add_scroll((window_four_bar, 4))
+gui_fx.add_scroll((option_tab_bar, 3))
 
 if __name__ == '__main__':
     pyglet.app.run()

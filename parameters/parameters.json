@@ -379,8 +379,8 @@
   "simulation.exporttoexcel.filename": {
     "value": "[]",
     "section": "advanced_config",
-    "readableName": "Export to Excel Filename",
-    "helpTip": "Export to Excel Filename",
+    "readableName": "Export to Excel filename",
+    "helpTip": "Export to Excel filename",
     "recommended_values": [
       "[]"
     ],
