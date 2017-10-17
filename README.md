@@ -55,11 +55,12 @@ You are ready to run RSVP Keyboard.
 - display: handles display of stimuli on screen, passing back stimuli timing
 - eeg_model: trains and classifies eeg responses based on eeg and triggers
 - gui: end-user interface into system
-- io: input/output functions
+- io: input/output functions needed for system
 - language_model
-- parameters
-- static
+- parameters: json file for parameters
+- static: images, misc manuals, and readable texts for gui
 
-- bci_main: executor of experiment. 
+- bci_main: executor of experiments. 
+
 
 
