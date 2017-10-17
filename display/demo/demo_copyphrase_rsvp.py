@@ -141,7 +141,7 @@ for idx_o in range(len(task_text)):
         core.wait(.4)
         sequence_timing = rsvp.do_sequence()
 
-        _write_triggers_from_sequence_copy_phrase(sequence_timing, file, text_task, task_text[idx_o])
+        # _write_triggers_from_sequence_copy_phrase(sequence_timing, file, text_task, task_text[idx_o])
 
         # Get parameters from Bar Graph and schedule
         rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],

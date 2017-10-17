@@ -121,7 +121,7 @@ rsvp = FreeSpellingTask(window=win, clock=clock,
 
 counter = 0
 decision_made = 0
-file = open('free_spell_trigger_file.txt','w') 
+file = open('free_spell_trigger_file.txt', 'w')
 for idx_o in range(len(task_text)):
 
     if decision_made == 1:
@@ -143,7 +143,8 @@ for idx_o in range(len(task_text)):
     
     sequence_timing = rsvp.do_sequence()
 
-    _write_triggers_from_sequence_free_spell(sequence_timing, file)
+#     # if wanting to test triggers from display
+    # _write_triggers_from_sequence_free_spell(sequence_timing, file)
 
     # Get parameters from Bar Graph and schedule
     rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
