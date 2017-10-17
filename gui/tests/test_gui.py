@@ -10,6 +10,7 @@ from warnings import simplefilter
 
 simplefilter = simplefilter('ignore')
 
+
 def teardown_function(function):
     gui_fx.inputFields = []
     gui_fx.scrollBars = []
@@ -28,6 +29,7 @@ def teardown_function(function):
     gui_fx.main_window_height = 480
     gui_fx.main_window_width = 640
 
+
 def test_changeInputText():
     '''Tests that the function changeInputText can change the text of an input field'''
     gui_fx.addInput(
@@ -35,6 +37,7 @@ def test_changeInputText():
     )
     gui_fx.changeInputText('test_id', "some_test_text")
     assert gui_fx.inputFields[0][0].text == "some_test_text"
+
 
 def test_dropItems():
     '''Tests that the dropItems function can create a drop-down list of buttons based on values in a text or json file, and that those items can be removed'''
@@ -56,8 +59,8 @@ def test_dropItems():
     gui_fx.dropItems('test_id', 0, 'test.txt', "test_values")
     os.remove('test.txt')
     assert len(gui_fx.buttons) == 3
-    gui_fx.removeDropDownList()
-    #test whether removeDropDownList removes items
+    gui_fx.remove_dropdown_list()
+    #test whether remove_dropdown_list removes items
     assert len(gui_fx.buttons) == 0
 
 
@@ -127,8 +130,8 @@ def test_writeValuesToFile():
     assert tempData == '{\n  "testInputOne": {\n    "value": "testone"\n  }, \n  "testInputTwo": {\n    "value": "testtwo"\n  }\n}'
     os.remove("test.txt")
 
-def test_readValuesFromFile():
-    '''Tests that the readValuesFromFile function readds the correct values from a json file and writes them to the correct input boxes'''
+def test_read_values_from_file():
+    '''Tests that the read_values_from_file function readds the correct values from a json file and writes them to the correct input boxes'''
     gui_fx.addInput(
         gui_fx.InputField('testInputOne', 'test_section_1', False), 100, 100, 100, 100, 0, 100
     )
@@ -138,7 +141,7 @@ def test_readValuesFromFile():
     output = open(str('test.txt'), 'w')
     output.write('{\n  "testInputOne": {\n    "value": "testone"\n  }, \n  "testInputTwo": {\n    "value": "testtwo"\n  }\n}')
     output.close()
-    gui_fx.readValuesFromFile(['test_section_1', 'test_section_2'], ['testInputOne', 'testInputTwo'], "test.txt")
+    gui_fx.read_values_from_file(['test_section_1', 'test_section_2'], ['testInputOne', 'testInputTwo'], "test.txt")
     assert (gui_fx.inputFields[0][0].text == 'testone' and gui_fx.inputFields[1][0].text == 'testtwo')
     os.remove("test.txt")
 
@@ -151,7 +154,7 @@ def test_onMouseMotion():
     gui_fx.mouseX = 50
     gui_fx.mouseY = 50
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
-    main_window.drawButtons()
+    main_window.draw_buttons()
     main_window.on_mouse_motion(50, 50, 0, 0)
     assert gui_fx.mouseOnButton == 0
     main_window.close()
@@ -179,8 +182,8 @@ def test_onMousePress():
     gui_fx.addInput(
         gui_fx.InputField('user_id', False, False), 100, 100, 100, 100, 0, 100
     )
-    gui_fx.addSwitch(
-        (gui_fx.boolean_switch(-100, -100, 100, 100, 'test', 'false', 100, 'test'), 0, 0)
+    gui_fx.add_switch(
+        (gui_fx.BooleanSwitch(-100, -100, 100, 100, 'test', 'false', 100, 'test'), 0, 0)
     )
     gui_fx.mouseX = 50
     gui_fx.mouseY = 50
@@ -296,13 +299,13 @@ def test_addNonexistentImage():
     )
     assert len(gui_fx.images) == 0
 
-def test_addSwitch():
+def test_add_switch():
     '''Tests whether a valid switch can be added'''
-    gui_fx.addSwitch(
-        (gui_fx.boolean_switch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
+    gui_fx.add_switch(
+        (gui_fx.BooleanSwitch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
     )
 
-def test_drawButtons():
+def test_draw_buttons():
     '''Tests whether buttons on screen are drawn'''
     gui_fx.addButton(
         1, 1, 100, 100,
@@ -317,45 +320,45 @@ def test_drawButtons():
         (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), '', 0
     )
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
-    main_window.drawButtons()
+    main_window.draw_buttons()
     assert len(gui_fx.buttonsOnScreen) == 3
     main_window.close()
 
-def test_runPythonFileShouldFail():
-    '''Tests whether an attempt is made to run an invalid python file from the runPythonFile function'''
-    assert gui_fx.runPythonFile("../users.txt") == None
+def test_run_python_fileShouldFail():
+    '''Tests whether an attempt is made to run an invalid python file from the run_python_file function'''
+    assert gui_fx.run_python_file("../users.txt") == None
 
-def test_runPythonFile():
-    '''Tests whether a valid python file can be run from the runPythonFile function'''
-    assert gui_fx.runPythonFile("gui/tests/testfile.py") == True
+def test_run_python_file():
+    '''Tests whether a valid python file can be run from the run_python_file function'''
+    assert gui_fx.run_python_file("gui/tests/testfile.py") == True
 
-def test_runExecutableShouldFail():
-    '''Tests whether an attempt is made to run an invalid executable from the runExecutable function'''
-    assert gui_fx.runExecutable('\\test', 'test.exe', False) == None
+def test_run_executableShouldFail():
+    '''Tests whether an attempt is made to run an invalid executable from the run_executable function'''
+    assert gui_fx.run_executable('\\test', 'test.exe', False) == None
 
-def test_createMessageBoxShouldFail():
+def test_create_message_boxShouldFail():
     '''Tests whether a message box can be created with invalid arguments'''
-    assert gui_fx.createMessageBox('test', 'test', 'string') == None
+    assert gui_fx.create_message_box('test', 'test', 'string') == None
 
-# def test_createMessageBox():
+# def test_create_message_box():
 #     '''Tests whether a message box can be created with valid arguments'''
-#     assert gui_fx.createMessageBox('title', 'test', wx.OK) == True
+#     assert gui_fx.create_message_box('title', 'test', wx.OK) == True
 
-def test_drawButtonShouldFail():
+def test_draw_buttonshouldFail():
     '''Tests whether a button with invalid arguments is drawn'''
-    assert gui_fx.drawButton('test', 'test', 'test', 'test', 'test', 'test', 'test', 'test', 'test', 'test') == False
+    assert gui_fx.draw_button('test', 'test', 'test', 'test', 'test', 'test', 'test', 'test', 'test', 'test') == False
 
-def test_drawButton():
+def test_draw_button():
     '''Tests whether a button with valid arguments is drawn'''
-    assert gui_fx.drawButton(10, 10, 10, 10, (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), 'test', 10, 0) == True
+    assert gui_fx.draw_button(10, 10, 10, 10, (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), 'test', 10, 0) == True
 
-def test_drawBarShouldFail():
+def test_draw_barShouldFail():
     '''Tests whether a scroll bar with invalid arguments is drawn'''
-    assert gui_fx.drawBar('test', 'test', 'test') == False
+    assert gui_fx.draw_bar('test', 'test', 'test') == False
 
-def test_drawBar():
+def test_draw_bar():
     '''Tests whether a scroll bar with valid arguments is drawn'''
-    assert gui_fx.drawBar(10, 10, gui_fx.ScrollBar(640, 0)) == True
+    assert gui_fx.draw_bar(10, 10, gui_fx.ScrollBar(640, 0)) == True
 
 def test_testValues():
     '''Tests whether testValues returns true for a function with valid arguments'''
@@ -386,66 +389,66 @@ def test_translateBarToMovement():
     #only get first decimal place because the relative y pos here is a repeating decimal
     assert str(gui_fx.scrollBars[0][0].relativeYPos)[:3] == "0.3"
 
-def test_drawSwitch():
+def test_draw_switch():
     '''Tests whether a switch with correct parameters is drawn'''
-    assert gui_fx.drawSwitch(10, 10, gui_fx.boolean_switch(100, 100, 100, 100, 'test', 'false', 100, 'test'), 0) == True
+    assert gui_fx.draw_switch(10, 10, gui_fx.BooleanSwitch(100, 100, 100, 100, 'test', 'false', 100, 'test'), 0) == True
 
-def test_drawSwitchShouldFail():
+def test_draw_switchShouldFail():
     '''Tests whether a switch with incorrect parameters can be drawn'''
-    assert gui_fx.drawSwitch(10, 10, (gui_fx.boolean_switch(100, 100, 100, 100, 'test', 'false', 100, 'test'), 0, 'test'), 0) == False
+    assert gui_fx.draw_switch(10, 10, (gui_fx.BooleanSwitch(100, 100, 100, 100, 'test', 'false', 100, 'test'), 0, 'test'), 0) == False
 
-def test_drawText():
+def test_draw_text():
     '''Tests whether text with correct parameters is drawn'''
-    assert gui_fx.drawText(10, 10, (0, 0, 0, 0), 10, 'test', 10) == True
+    assert gui_fx.draw_text(10, 10, (0, 0, 0, 0), 10, 'test', 10) == True
 
-def test_drawTextShouldFail():
+def test_draw_textShouldFail():
     '''Tests whether text with incorrect parameters is drawn'''
-    assert gui_fx.drawText(10, 10, 'test', 10, 'test', 10) == False
+    assert gui_fx.draw_text(10, 10, 'test', 10, 'test', 10) == False
 
-def test_drawInputFields():
+def test_draw_input_fields():
     '''Tests whehter valid input fields are successfully drawn on the screen'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
     gui_fx.addInput(
         gui_fx.InputField('test_id', False, False), 100, 100, 100, 100, 0, 16
     )
-    assert main_window.drawInputFields() == True
+    assert main_window.draw_input_fields() == True
     main_window.close()
 
-def test_drawTextBoxes():
+def test_draw_text_boxes():
     '''Tests whether valid text boxes are successfully drawn on the screen'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
     gui_fx.addText(
         100, 100, (247, 247, 247, 255), 100, "Parameters", 3, 3
     )
-    assert main_window.drawTextBoxes() == True
+    assert main_window.draw_text_boxes() == True
     main_window.close()
 
-def test_drawScrollBars():
+def test_draw_scroll_bars():
     '''Tests whether valid scroll bars are successfully drawn on the screen'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
     gui_fx.addScroll((gui_fx.ScrollBar(640, 0), 0))
-    assert main_window.drawScrollBars() == True
+    assert main_window.draw_scroll_bars() == True
     main_window.close()
 
-def test_drawSwitches():
+def test_draw_switches():
     '''Tests whether valid switches are successfully drawn on the screen'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
-    gui_fx.addSwitch(
-        (gui_fx.boolean_switch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
+    gui_fx.add_switch(
+        (gui_fx.BooleanSwitch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
     )
-    assert main_window.drawSwitches() == True
+    assert main_window.draw_switches() == True
     main_window.close()
 
 def test_on_draw():
     '''Tests whether the window's on_draw function returns true'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
-    gui_fx.addSwitch(
-        (gui_fx.boolean_switch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
+    gui_fx.add_switch(
+        (gui_fx.BooleanSwitch(100, 100, 100, 100, 'test', True, 19, 'test'), 0, 0)
     )
     gui_fx.addScroll((gui_fx.ScrollBar(640, 0), 0))
     gui_fx.addText(
@@ -461,7 +464,7 @@ def test_on_draw():
     assert main_window.on_draw() == True
     main_window.close()
 
-def test_drawImages():
+def test_draw_images():
     '''Tests whether valid images are successfully drawn on the screen'''
     main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
     gui_fx.addWindow(main_window)
@@ -469,7 +472,7 @@ def test_drawImages():
         100, 100, "static/images/OHSU-RGB-4C-REV.png", 0,
         float(39), float(67), False
     )
-    assert main_window.drawImages() == True
+    assert main_window.draw_images() == True
     main_window.close()
 
 def test_insertSymbolAtIndex():

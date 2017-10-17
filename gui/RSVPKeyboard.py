@@ -110,8 +110,8 @@ for json_item in file_data:
         valueBoolean = True if (value == 'true') else False
 
         # adds a switch instead of the input box for the parameter if it is a boolean
-        gui_fx.addSwitch(
-            (gui_fx.boolean_switch(
+        gui_fx.add_switch(
+            (gui_fx.BooleanSwitch(
                 main_window_width_half + covert_to_width(10),
                 covert_to_height((section_counter) - (window_three_bar.contentHeight
                                  if (section_boolean)
@@ -192,7 +192,7 @@ gui_fx.addButton(
     main_window_width_half, main_window_height_half + covert_to_height(50),
     covert_to_width(400), covert_to_height(75), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Presentation Mode', 2,
-    functionCall="runPythonFile", functionArg=['testing/testfile.py'],
+    functionCall="run_python_file", functionArg=['testing/testfile.py'],
     textSize=covert_to_width(20)
 )
 # View signals button- path the executable for viewing quality of signals
@@ -200,7 +200,7 @@ gui_fx.addButton(
 #     main_window_width_half, main_window_height_half - covert_to_height(50),
 #     covert_to_width(400), covert_to_height(75), (40, 40, 40, 255),
 #     (219, 219, 219, 255), (89, 89, 89, 255), 'View Signals', 2,
-#     functionCall="runExecutable",
+#     functionCall="run_executable",
 #     functionArg=[environ['USERPROFILE'] + "\\Desktop", 'exe_name', True],
 #     textSize=covert_to_width(20)
 # )
@@ -231,7 +231,7 @@ gui_fx.addButton(
     main_window_height_half - covert_to_height(170),
     covert_to_width(150), covert_to_height(60), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Load Values', 3,
-    functionCall="readValuesFromFile",
+    functionCall="read_values_from_file",
     functionArg=(['bci_config', 'advanced_config'], values_array),
     textSize=covert_to_width(16), scrollBar=100
 )
@@ -310,7 +310,7 @@ gui_fx.addButton(
     main_window_height_half - covert_to_height(150),
     covert_to_width(300), covert_to_height(70),
     (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), 'Calculate AUC',
-    0, functionCall="runPythonFile", functionArg=['testing/testfile.py'],
+    0, functionCall="run_python_file", functionArg=['testing/testfile.py'],
     textSize=covert_to_width(16)
 )
 

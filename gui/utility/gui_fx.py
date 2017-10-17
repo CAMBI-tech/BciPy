@@ -70,7 +70,7 @@ scrollBarHeight = 50
 #Moves a scroll bar back and forth by a given amount. Used by the show/hide options buttons in the parameters window.
 def moveMenu(barId, moveAmount):
     for eachBar in scrollBars:
-        if(eachBar[0].scrollId == barId):
+        if(eachBar[0].scroll_id == barId):
             if(eachBar[0].relativeYPos != moveAmount):
                 moveScrollBar(barId, moveAmount)
             else:
@@ -79,21 +79,21 @@ def moveMenu(barId, moveAmount):
 #Moves a scroll bar by a given amount, adjusting both the displayed bar and the bar's content's position accordingly.
 def moveScrollBar(barId, moveAmount):
     for eachBar in scrollBars:
-        if(eachBar[0].scrollId == barId):
+        if(eachBar[0].scroll_id == barId):
             eachBar[0].relativeYPos = moveAmount
             barAmount = int((moveAmount*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/(640.0 if eachBar[0].isHorizontal else 480.0))*(main_window_width if eachBar[0].isHorizontal else main_window_height)))
             eachBar[0].yPos = barAmount
 
 #searches human-readable parameter names for values that contain the text
 #of a given input field
-def searchParameters(readPath, scrollBar, inputName):
+def searchParameters(readpath, scrollBar, inputName):
     for counter in range(0, (len(inputFields))):
         if(inputFields[counter][0].name == inputName):
             searchText = inputFields[counter][0].text
             counter = len(inputFields)
     if(searchText != ''):
-        if(ospath.isfile(readPath)):
-            with codecsopen(str(readPath), 'r', encoding='utf-8') as f:
+        if(ospath.isfile(readpath)):
+            with codecsopen(str(readpath), 'r', encoding='utf-8') as f:
                 try:
                     file_data = jsonload(f)
                     searchItems = []
@@ -102,8 +102,8 @@ def searchParameters(readPath, scrollBar, inputName):
                         if str.lower(str(searchText)) in str.lower(str(readable_caption)):
                             searchItems.append(json_item)
                     for eachBar in scrollBars:
-                        if(eachBar[0].scrollId == scrollBar):
-                            finalTempHeight = False
+                        if(eachBar[0].scroll_id == scrollBar):
+                            finaltemp_height = False
                             valueFound2 = False
                             selectedButton = False
                             selectedInput = False
@@ -120,33 +120,33 @@ def searchParameters(readPath, scrollBar, inputName):
                                             for eachItem in searchItems:
                                                 if((eachInput[0].name if isInput else eachInput[0].attachedValueName) == eachItem):
                                                     #Position that the scrolling content should be at in order to display the given parameter at the top of the window
-                                                    tempHeight = abs((eachInput[2] if isInput else eachInput[0].centery) - int((385/480.0)*main_window_height))
+                                                    temp_height = abs((eachInput[2] if isInput else eachInput[0].centery) - int((385/480.0)*main_window_height))
                                                     #Amount the scroll bar should move from the top in order to match the content height
-                                                    barAmount = int((tempHeight*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/480.0)*main_window_height))
+                                                    barAmount = int((temp_height*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/480.0)*main_window_height))
                                                     if(repeatCounter == 0):
                                                         #tests if an input field has already been found (not looking for the lowest input field possible)
                                                         if(isInput and valueFound == False):
                                                             if(barAmount > prevYPos):
                                                                 valueFound = barAmount
                                                                 selectedInput = eachInput
-                                                                finalTempHeight = tempHeight
+                                                                finaltemp_height = temp_height
                                                         elif(valueFound2 == False):
                                                             #tests if a switch has already been found, and if the new switch found is lower than the scroll bar's current position but higher than the previously found input field
                                                             if(barAmount > prevYPos and barAmount < valueFound):
                                                                 valueFound2 = eachInput[2]
                                                                 selectedButton = eachInput
-                                                                finalTempHeight = tempHeight
+                                                                finaltemp_height = temp_height
                                                     else:
                                                         #looking for highest parameter in list
                                                         if(barAmount < valueFound):
                                                             valueFound = barAmount
-                                                            finalTempHeight = tempHeight
+                                                            finaltemp_height = temp_height
                                                             if(isInput):
                                                                 selectedInput = inputFields[counter]
                                                             else:
                                                                 selectedButton = switches[counter - len(inputFields)]
-                            if(finalTempHeight != False):
-                                moveScrollBar(eachBar[0].scrollId, finalTempHeight)
+                            if(finaltemp_height != False):
+                                moveScrollBar(eachBar[0].scroll_id, finaltemp_height)
                                 #create yellow highlight rectangle
                                 if(selectedButton != False):
                                     addButton(
@@ -167,10 +167,10 @@ def searchParameters(readPath, scrollBar, inputName):
                                         scrollBar, scrollBar=scrollBar, isTemp=True
                                     )
                 except ValueError:
-                    warn('File ' + str(readPath) + " is an invalid JSON file.")
+                    warn('File ' + str(readpath) + " is an invalid JSON file.")
             f.close()
         else:
-            warn("File " + str(readPath) + " could not be found.")
+            warn("File " + str(readpath) + " could not be found.")
 
 
 #for text boxes, inserts a given character (symbol) at the location indicated by
@@ -191,18 +191,18 @@ def changeInputText(inputName, changedText):
 
 #for drop-down menus. creates a drop-down of all items in a text file.
 #textBoxName is the name of the parent input field. windowId is the name of the
-#window that the buttons should be located in. fileName is the name of the file
+#window that the buttons should be located in. filename is the name of the file
 #the values are read from. readValues should be true if the file is a JSON file.
-def dropItems(textBoxName, windowId, fileName, readValues):
+def dropItems(textBoxName, windowId, filename, readValues):
     global scrollBars
     for counter in range(0, len(scrollBars)):
-        if(scrollBars[counter][0].scrollId == windowId):
+        if(scrollBars[counter][0].scroll_id == windowId):
             barIndex = counter
             counter = len(scrollBars)
     for counter in range(0, (len(inputFields))):
         if(inputFields[counter][0].name == textBoxName):
-            if(ospath.isfile(fileName)):
-                with codecsopen(fileName, 'r', encoding='utf-8') as f:
+            if(ospath.isfile(filename)):
+                with codecsopen(filename, 'r', encoding='utf-8') as f:
                     userArray = []
                     #determines whether content should be read as a json file
                     if(readValues == False):
@@ -212,7 +212,7 @@ def dropItems(textBoxName, windowId, fileName, readValues):
                             file_data = jsonload(f)
                             userArray = file_data[textBoxName][readValues]
                         except ValueError:
-                            warn('File ' + str(fileName) + ' is an invalid JSON file.')
+                            warn('File ' + str(filename) + ' is an invalid JSON file.')
                     for counter2 in range(0, (len(userArray))):
                         if(isinstance(userArray[counter2], basestring)):
                             addButton(
@@ -245,7 +245,7 @@ def dropItems(textBoxName, windowId, fileName, readValues):
                         scrollBars[barIndex][0].addToContentHeight((10/640.0)*main_window_width)
                     f.close()
             else:
-                warn("File " + str(fileName) + " could not be found.")
+                warn("File " + str(filename) + " could not be found.")
 
 #sets trial type global, writes user id to file if the user id is not already in the file, and opens new window
 def setTrialType(numId):
@@ -274,21 +274,21 @@ def setTrialType(numId):
                         f.write(str(userId) + "\n")
                     f.close()
             else:
-                createMessageBox("Info", "Please enter a user ID.", wx.OK)
+                create_message_box("Info", "Please enter a user ID.", wx.OK)
 
 #reads a given file and looks for a help tip attached to a given id
-def displayHelpPointers(fileName, helpId):
+def displayHelpPointers(filename, helpId):
     global mouseHelp
-    if(ospath.isfile(fileName)):
-        with codecsopen(fileName, 'r', encoding='utf-8') as f:
+    if(ospath.isfile(filename)):
+        with codecsopen(filename, 'r', encoding='utf-8') as f:
             try:
                 file_data = jsonload(f)
                 mouseHelp = file_data[helpId]["helpTip"]
                 f.close()
             except ValueError:
-                warn('File ' + str(fileName) + ' was an invalid JSON file.')
+                warn('File ' + str(filename) + ' was an invalid JSON file.')
     else:
-        warn('File ' + str(fileName) + ' could not be found.')
+        warn('File ' + str(filename) + ' could not be found.')
 
 #tests wheter a set of arguments passed to a function are of the correct types
 def testValues(inputVariables, valueArray, typeArray, functionCaller):
@@ -309,11 +309,11 @@ def testValues(inputVariables, valueArray, typeArray, functionCaller):
     return True
 
 #adds a button to the array of buttons
-def addButton(xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, openWindow=0, functionCall=0, functionArg=0, textSize=12, scrollBar=False, isTemp=False, prioritizeTask=False, fontName='Verdana'):
+def addButton(xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, open_window=0, functionCall=0, functionArg=0, textSize=12, scrollBar=False, isTemp=False, prioritizeTask=False, fontName='Verdana'):
     global buttons
     shouldAdd = testValues(locals(), getargspec(addButton)[0], [int, int, int, int, tuple, tuple, tuple, [str, unicode], int, int, [int, str], [int, list, tuple], int, [bool, int], bool, bool, str], 'addButton')
     if(shouldAdd):
-        return buttons.append((xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, openWindow, functionCall, functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
+        return buttons.append((xpos, ypos, width, height, tcolor, bcolor, lcolor, caption, display_window, open_window, functionCall, functionArg, textSize, scrollBar, isTemp, prioritizeTask, fontName))
 
 def addWindow(newWindow):
     global windows
@@ -340,27 +340,27 @@ def addScroll(newBar):
         newBar[0].baseContentHeight = newBar[0].contentHeight
         return scrollBars.append(newBar)
 
-def addImage(centerx, centery, fileName, windowId, sizex, sizey, scrollBar):
+def addImage(centerx, centery, filename, windowId, sizex, sizey, scrollBar):
     global images
     shouldAdd = testValues(locals(), getargspec(addImage)[0], [[int, float], [int, float], str, int, float, float, [int, bool]], 'addImage')
     if(shouldAdd):
         try:
-            theImage = pyglet.image.load(fileName)
+            theImage = pyglet.image.load(filename)
             sprite = pyglet.sprite.Sprite(theImage, x=centerx, y=centery)
             sprite.scale = sizex/theImage.width
             return images.append((sprite, windowId, scrollBar, centery, centerx))
         except IOError:
-            warn("File '" + fileName + "' not found!")
+            warn("File '" + filename + "' not found!")
 
-def addSwitch(newSwitch):
+def add_switch(newSwitch):
     global switches
-    shouldAdd = testValues(locals(), getargspec(addSwitch)[0], [tuple], 'addSwitch')
+    shouldAdd = testValues(locals(), getargspec(add_switch)[0], [tuple], 'add_switch')
     if(shouldAdd):
         return switches.append(newSwitch)
 
 #draws a button
-def drawButton(centerx, centery, width, height, textColor, buttonColor, outlineColor, text, textSize, scrollId, fontName='Verdana'):
-    if(testValues(locals(), getargspec(drawButton)[0], [[float, int], [float, int], [float, int], [float, int], tuple, tuple, tuple, [str, unicode], int, int, str], 'drawButton')):
+def draw_button(centerx, centery, width, height, textColor, buttonColor, outlineColor, text, textSize, scroll_id, fontName='Verdana'):
+    if(testValues(locals(), getargspec(draw_button)[0], [[float, int], [float, int], [float, int], [float, int], tuple, tuple, tuple, [str, unicode], int, int, str], 'draw_button')):
         if(buttonColor[3] == 255):
             bottomColor = (buttonColor[0] - 15, buttonColor[1] - 15, buttonColor[2] - 15, buttonColor[3]) if ((buttonColor[0] - 15)  >= 0 and (buttonColor[1] - 15)  >= 0 and (buttonColor[2] - 15) >= 0) else buttonColor
             vertex_list = pyglet.graphics.vertex_list(4, ('v2f', ((centerx - (width/2)), (centery - (height/2)),
@@ -380,15 +380,15 @@ def drawButton(centerx, centery, width, height, textColor, buttonColor, outlineC
             ('c4B', outlineColor + outlineColor + outlineColor + outlineColor)
             )
         vertex_list.draw(pyglet.gl.GL_LINE_LOOP)
-        drawText(centerx, centery, textColor, textSize, text, scrollId, width, fontName)
+        draw_text(centerx, centery, textColor, textSize, text, scroll_id, width, fontName)
         return True
     else:
         warn("Button with caption " + str(text) + " was not drawn.")
         return False
 
 #parameters: width of window, height of window, scrollBar class
-def drawBar(windowWidth, windowHeight, bar):
-    if(testValues(locals(), getargspec(drawBar)[0], [int, int, gui_fx.ScrollBar], 'drawBar')):
+def draw_bar(windowWidth, windowHeight, bar):
+    if(testValues(locals(), getargspec(draw_bar)[0], [int, int, gui_fx.ScrollBar], 'draw_bar')):
         vertex_list = pyglet.graphics.vertex_list(4, ('v2f', ((windowWidth), (windowHeight),
         (windowWidth - (windowWidth/30)), (windowHeight),
         (windowWidth - (windowWidth/30)), (0),
@@ -411,49 +411,50 @@ def drawBar(windowWidth, windowHeight, bar):
         return False
 
 #draws a switch, with the button color varying depending on how the switch is set
-def drawSwitch(windowWidth, windowHeight, switch, scrollId):
-    if(testValues(locals(), getargspec(drawSwitch)[0], [int, int, gui_fx.boolean_switch, int], 'drawSwitch')):
+def draw_switch(windowWidth, windowHeight, switch, scroll_id):
+    if(testValues(locals(), getargspec(draw_switch)[0], [int, int, gui_fx.BooleanSwitch, int], 'draw_switch')):
         #temp y position that is altered if the switch is attached to a scroll bar
         centery = switch.centery
         centerx = switch.centerx
-        if(scrollId != False):
+        if(scroll_id != False):
             for eachScrollBar in scrollBars:
-                if(eachScrollBar[0].scrollId == scrollId):
+                if(eachScrollBar[0].scroll_id == scroll_id):
                     if(eachScrollBar[0].isHorizontal):
                         centerx = centerx + eachScrollBar[0].relativeYPos
                     else:
                         centery = centery + eachScrollBar[0].relativeYPos
         if(centery <= main_window_height and centery >= 0):
-            drawButton(
+            draw_button(
                 switch.centerx, centery, switch.width, switch.height, \
                 (30, 28, 24, 255), (48, 51, 50, 255), (15, 15, 14, 255), '', 1, \
-                scrollId
+                scroll_id
             )
-            drawButton(
+            draw_button(
                 switch.centerx - int(switch.width/4), centery, \
                 int(switch.width*0.45), int(switch.height*0.85), (30, 28, 24, 255) \
                  if switch.booleanValue else (242, 237, 208, 255), (102, 186, 50, 255) \
                  if switch.booleanValue else (27, 40, 11, 255), (15, 15, 14, 255), \
-                 'True', switch.textSize, scrollId, 'Arial'
+                 'True', switch.textSize, scroll_id, 'Arial'
              )
-            drawButton(
+            draw_button(
                 switch.centerx + int(switch.width/4), centery, \
                 int(switch.width*0.45), int(switch.height*0.85), \
                 (242, 237, 208, 255)  if switch.booleanValue else (30, 28, 24, 255), \
                 (56, 13, 7, 255) if switch.booleanValue else (219, 30, 30, 255), \
-                (15, 15, 14, 255), 'False', switch.textSize, scrollId, 'Arial'
+                (15, 15, 14, 255), 'False', switch.textSize, scroll_id, 'Arial'
             )
             return True
     else:
         warn("Switch failed to draw")
         return False
-#draws text
-def drawText(centerx, centery, textColor, textSize, text, scrollId = False, buttonWidth = 0, fontName = 'Verdana'):
+
+# draws text
+def draw_text(centerx, centery, textColor, textSize, text, scroll_id = False, buttonWidth = 0, fontName = 'Verdana'):
     global labelCache
-    if(testValues(locals(), getargspec(drawText)[0], [[float, int], [float, int], tuple, int, [unicode, str], [int, bool], [int, float], str], 'drawText')):
+    if(testValues(locals(), getargspec(draw_text)[0], [[float, int], [float, int], tuple, int, [unicode, str], [int, bool], [int, float], str], 'draw_text')):
         labelName = text + str(textSize) + str(textColor)
         if (labelName) in labelCache:
-            if((isinstance(scrollId, bool))):
+            if((isinstance(scroll_id, bool))):
                 labelCache[labelName].draw()
             else:
                 labelCache[labelName].x=centerx
@@ -475,28 +476,29 @@ def drawText(centerx, centery, textColor, textSize, text, scrollId = False, butt
         warn("Text with caption " + text + " failed to draw")
         return False
 
-#writes the values of all current input boxes to a file. Parameters: name of config section, list of names of values to be written
-def writeValuesToFile(sectionNames, fieldNames, fileName=None):
+
+# writes the values of all current input boxes to a file. Parameters: name of config section, list of names of values to be written
+def writeValuesToFile(section_names, field_names, filename=None):
     try:
         dialog = wx.FileDialog(wxWindow, "Save Config As...", executable, ".json", "", wx.FD_SAVE)
-        if(fileName == None):
+        if(filename == None):
             result = dialog.ShowModal()
-            outputPath = dialog.GetDirectory() + "\\" + dialog.GetFilename()
+            outputPath = dialog.GetDirectory() + "\\" + dialog.Getfilename()
         else:
             result = None
-            outputPath = fileName
-        if (result == wx.ID_OK or fileName != None):
+            outputPath = filename
+        if (result == wx.ID_OK or filename != None):
             objects_list = OrderedDict()
-            for counter3 in range(0, len(sectionNames)):
-                sectionName = sectionNames[counter3]
-                for counter in range(0, (len(fieldNames))):
+            for counter3 in range(0, len(section_names)):
+                section_name = section_names[counter3]
+                for counter in range(0, (len(field_names))):
                     d = OrderedDict()
                     for eachInputField in inputFields:
-                        if(fieldNames[counter] == eachInputField[0].name and sectionName == eachInputField[0].sectionName):
+                        if(field_names[counter] == eachInputField[0].name and section_name == eachInputField[0].section_name):
                             d['value'] = eachInputField[0].text
                             objects_list[eachInputField[0].name] = d
                     for eachSwitch in switches:
-                        if(eachSwitch[0].attachedValueName == fieldNames[counter] and sectionName == eachSwitch[0].sectionName):
+                        if(eachSwitch[0].attachedValueName == field_names[counter] and section_name == eachSwitch[0].section_name):
                             d['value'] = 'true' if eachSwitch[0].booleanValue else 'false'
                             objects_list[eachSwitch[0].attachedValueName] = d
             if(ospath.isfile(outputPath)):
@@ -510,51 +512,52 @@ def writeValuesToFile(sectionNames, fieldNames, fileName=None):
     except TypeError:
         warn('Failed to create dialog')
 
-#reads the values of all current input boxes from a file, then changes the input box text accordingly. Parameters: name of config section, list of names of values to be written.
-def readValuesFromFile(sectionNames, fieldNames, fileName=None):
+
+# reads the values of all current input boxes from a file, then changes the input box text accordingly. Parameters: name of config section, list of names of values to be written.
+def read_values_from_file(section_names, field_names, filename=None):
     global inputFields
     global switches
     try:
         dialog = wx.FileDialog(wxWindow, "Select Config File", executable, ".json", "", wx.FD_OPEN)
-        if(fileName == None):
+        if(filename == None):
             result = dialog.ShowModal()
-            readPath = dialog.GetDirectory() + "\\" + dialog.GetFilename()
+            readpath = dialog.GetDirectory() + "\\" + dialog.Getfilename()
         else:
             result = None
-            readPath = fileName
-        if (result == wx.ID_OK or fileName != None):
-            if(ospath.isfile(readPath)):
-                with codecsopen(str(readPath), 'r', encoding='utf-8') as f:
+            readpath = filename
+        if (result == wx.ID_OK or filename != None):
+            if(ospath.isfile(readpath)):
+                with codecsopen(str(readpath), 'r', encoding='utf-8') as f:
                     try:
                         file_data = jsonload(f)
-                        for counter3 in range(0, len(sectionNames)):
-                            sectionName = sectionNames[counter3]
-                            for counter in range(0, (len(fieldNames))):
+                        for counter3 in range(0, len(section_names)):
+                            section_name = section_names[counter3]
+                            for counter in range(0, (len(field_names))):
                                 for counter2 in range(0, len(inputFields)):
-                                    if(counter != len(fieldNames)):
-                                        if(fieldNames[counter] == inputFields[counter2][0].name and sectionName == inputFields[counter2][0].sectionName):
+                                    if(counter != len(field_names)):
+                                        if(field_names[counter] == inputFields[counter2][0].name and section_name == inputFields[counter2][0].section_name):
                                             inputFields[counter2][0].text = file_data[inputFields[counter2][0].name]["value"]
-                                            counter = len(fieldNames)
+                                            counter = len(field_names)
                                 for counter2 in range(0, len(switches)):
-                                    if(counter != len(fieldNames)):
-                                        if(switches[counter2][0].attachedValueName == fieldNames[counter] and sectionName == switches[counter2][0].sectionName):
-                                            switches[counter2][0].booleanValue = (True if (file_data[(fieldNames[counter])]["value"]) == 'true' else False)
-                                            counter = len(fieldNames)
+                                    if(counter != len(field_names)):
+                                        if(switches[counter2][0].attachedValueName == field_names[counter] and section_name == switches[counter2][0].section_name):
+                                            switches[counter2][0].booleanValue = (True if (file_data[(field_names[counter])]["value"]) == 'true' else False)
+                                            counter = len(field_names)
                     except ValueError:
-                        warn('File ' + str(readPath) + " is an invalid JSON file.")
+                        warn('File ' + str(readpath) + " is an invalid JSON file.")
                     except KeyError:
-                        warn('File ' + str(readPath) + " does not contain all parameter values.")
+                        warn('File ' + str(readpath) + " does not contain all parameter values.")
                 f.close()
             else:
-                warn("File " + str(readPath) + " could not be found.")
+                warn("File " + str(readpath) + " could not be found.")
         dialog.Destroy()
     except TypeError:
         warn('Failed to create dialog')
 
 
-#Creates a wxpython message box with a given title, text, and type.
-#Currently does not do anything based on which button the user clicks.
-def createMessageBox(title, text, thetype):
+# Creates a wxpython message box with a given title, text, and type.
+# Currently does not do anything based on which button the user clicks.
+def create_message_box(title, text, thetype):
     try:
         dialog = wx.MessageDialog(wxWindow, text, title, thetype)
         result = dialog.ShowModal()
@@ -565,44 +568,46 @@ def createMessageBox(title, text, thetype):
     except TypeError:
         warn('Failed to create dialog with arguments: title: ' + title + " text: " + text + " type: " + str(thetype))
 
-#runs a given python file
-def runPythonFile(fileName):
-    if(ospath.isfile(fileName)):
+
+# runs a given python file
+def run_python_file(filename):
+    if(ospath.isfile(filename)):
         try:
-            execfile(fileName)
+            execfile(filename)
             return True
         except SyntaxError:
-            warn("File " + str(fileName) + " is not a valid Python file.")
+            warn("File " + str(filename) + " is not a valid Python file.")
     else:
-        warn("File " + str(fileName) + " not found.")
+        warn("File " + str(filename) + " not found.")
 
-#Runs a command (fileName) from the given location (execPath). Intended to
-#run exectuable files. If isParameter is true, fileName should be the name of the
-#parameter containing the name of the exe file.
-def runExecutable(execPath, fileName, isParameter):
+
+# Runs a command (filename) from the given location (execPath). Intended to
+# run exectuable files. If isParameter is true, filename should be the name of the
+# parameter containing the name of the exe file.
+def run_executable(execPath, filename, isParameter):
     if(isParameter):
         for eachInputField in inputFields:
-            if(fileName == eachInputField[0].name):
-                fileName = eachInputField[0].text
+            if(filename == eachInputField[0].name):
+                filename = eachInputField[0].text
     try:
         dir_path = ospath.dirname(ospath.realpath(__file__))
         chdir(execPath)
-        subprocess.call(fileName)
+        subprocess.call(filename)
         chdir(ospath.dirname(dir_path))
     except Exception:
-        warn("Could not find executable " + fileName + " in path " + execPath)
+        warn("Could not find executable " + filename + " in path " + execPath)
         chdir(ospath.dirname(dir_path))
 
 #removes drop-down items that are on the screen. Called when the user clicks
 #anywhere after opening a drop-down list.
-def removeDropDownList():
+def remove_dropdown_list():
     buttonTrueIndex = []
     for counter in range(0, (len(buttons))):
         if(buttons[counter][14] == True):
             buttonTrueIndex.append(buttons[counter])
     for counter2 in range(0, (len(scrollBars))):
         for counter in range(0, len(buttonTrueIndex)):
-            if(scrollBars[counter2][0].scrollId == buttonTrueIndex[counter][13]):
+            if(scrollBars[counter2][0].scroll_id == buttonTrueIndex[counter][13]):
                 if(scrollBars[counter2][0].baseContentHeight == 0):
                     scrollBars[counter2][0].yPos = 0
                 scrollBars[counter2][0].resetContentHeight()
@@ -610,8 +615,11 @@ def removeDropDownList():
                 buttons.remove(buttonTrueIndex[counter])
     buttonTrueIndex = []
 
-class boolean_switch():
-    def __init__(self, par2xpos, par3ypos, par4width, par5height, par6name, par7defaultvalue, par8textsize, par9sectionName):
+
+class BooleanSwitch():
+    def __init__(self, par2xpos, par3ypos,
+                 par4width, par5height, par6name,
+                 par7defaultvalue, par8textsize, par9section_name):
         self.centerx = par2xpos
         self.centery = par3ypos
         self.width = par4width
@@ -619,15 +627,17 @@ class boolean_switch():
         self.attachedValueName = par6name
         self.booleanValue = par7defaultvalue
         self.textSize = par8textsize
-        self.sectionName = par9sectionName
+        self.section_name = par9section_name
 
-#input box for the user to type in
+
+# input box for the user to type in
 class InputField():
-    def __init__(self, par2Name, par3SectionName, par4IsNumeric):
+    def __init__(self, par2Name, par3section_name, par4IsNumeric):
         self.text = ""
         self.name = par2Name
-        self.sectionName = par3SectionName
+        self.section_name = par3section_name
         self.isNumeric = par4IsNumeric
+
 
 class ScrollBar():
     def __init__(self, par2WindowHeight, theID, relativeYPos = 0, visible=True, horizontal=False):
@@ -646,7 +656,7 @@ class ScrollBar():
         #does the bar scroll horizontally?
         self.isHorizontal = horizontal
         #the id of this bar
-        self.scrollId = theID
+        self.scroll_id = theID
 
     def addToContentHeight(self, addedHeight):
         self.contentHeight = self.contentHeight + addedHeight
@@ -663,6 +673,7 @@ class ScrollBar():
 
 #window that opens when a button is pressed. window id is used to determine what should display in the window
 class MenuWindow(pyglet.window.Window):
+
     def __init__(self, par2WindowId, par3Title):
         global main_window_width
         global main_window_height
@@ -674,8 +685,8 @@ class MenuWindow(pyglet.window.Window):
         main_window_height = int((screen.height/4)*3)
         super(MenuWindow, self).__init__(caption=(par3Title if(par3Title != ' ') else ("Window " + str(par2WindowId))), width=int((screen.width/3)*2), height=int((screen.height/4)*3))
 
-    #draws all input fields
-    def drawInputFields(self):
+    # draws all input fields
+    def draw_input_fields(self):
         global currentActiveInputField
         returnTrue = True
         for counter in range(0, (len(inputFields))):
@@ -686,12 +697,12 @@ class MenuWindow(pyglet.window.Window):
                 mainButtonColor = (247, 247, 247, 255)
                 text = inputFields[counter][0].text
             if(inputFields[counter][5] == self.windowId):
-                scrollId = inputFields[counter][7]
+                scroll_id = inputFields[counter][7]
                 centery = inputFields[counter][2]
                 centerx = inputFields[counter][1]
-                if(scrollId != False):
+                if(scroll_id != False):
                     for eachScrollBar in scrollBars:
-                        if(eachScrollBar[0].scrollId == scrollId):
+                        if(eachScrollBar[0].scroll_id == scroll_id):
                             if(eachScrollBar[0].isHorizontal):
                                 centerx = centerx + eachScrollBar[0].relativeYPos
                             else:
@@ -700,32 +711,32 @@ class MenuWindow(pyglet.window.Window):
                 if(tempWidth < len(text) * inputFields[counter][6] * 0.7):
                     tempWidth = len(text) * inputFields[counter][6] * 0.7
                 if(centery < self.height and centery > 0 and centerx < self.width and centerx > 0):
-                    if(not drawButton(centerx, centery, tempWidth, inputFields[counter][4], (0, 0, 0, 255), mainButtonColor, (117, 117, 117, 255), text, inputFields[counter][6], scrollId, 'Arial')):
+                    if(not draw_button(centerx, centery, tempWidth, inputFields[counter][4], (0, 0, 0, 255), mainButtonColor, (117, 117, 117, 255), text, inputFields[counter][6], scroll_id, 'Arial')):
                         returnTrue = False
         return returnTrue
 
-    #draws all text
-    def drawTextBoxes(self):
+    # draws all text
+    def draw_text_boxes(self):
         returnTrue = True
         for counter in range(0, (len(textBoxes))):
             if(textBoxes[counter][5] == self.windowId):
-                scrollId = textBoxes[counter][6]
+                scroll_id = textBoxes[counter][6]
                 centery = textBoxes[counter][1]
                 centerx = textBoxes[counter][0]
-                if(scrollId != False):
+                if(scroll_id != False):
                     for eachScrollBar in scrollBars:
-                        if(eachScrollBar[0].scrollId == scrollId):
+                        if(eachScrollBar[0].scroll_id == scroll_id):
                             if(eachScrollBar[0].isHorizontal):
                                 centerx = centerx + eachScrollBar[0].relativeYPos
                             else:
                                 centery = centery + eachScrollBar[0].relativeYPos
                 if(centery < self.height and centery > 0 and centerx < self.width and centerx > 0):
-                    if(not drawText(centerx, centery, textBoxes[counter][2], textBoxes[counter][3], textBoxes[counter][4], textBoxes[counter][5])):
+                    if(not draw_text(centerx, centery, textBoxes[counter][2], textBoxes[counter][3], textBoxes[counter][4], textBoxes[counter][5])):
                         returnTrue = False
         return returnTrue
 
-    #draws all buttons
-    def drawButtons(self):
+    # draws all buttons
+    def draw_buttons(self):
         global buttonsOnScreen
         returnTrue = True
         buttonsOnScreen = []
@@ -735,40 +746,40 @@ class MenuWindow(pyglet.window.Window):
             else:
                 mainButtonColor = buttons[counter][5]
             if(buttons[counter][8] == self.windowId):
-                scrollId = buttons[counter][13]
+                scroll_id = buttons[counter][13]
                 centery = buttons[counter][1]
                 centerx = buttons[counter][0]
-                if(not(isinstance(scrollId, bool))):
+                if(not(isinstance(scroll_id, bool))):
                     for eachScrollBar in scrollBars:
-                        if(eachScrollBar[0].scrollId == scrollId):
+                        if(eachScrollBar[0].scroll_id == scroll_id):
                             if(eachScrollBar[0].isHorizontal):
                                 centerx = centerx + eachScrollBar[0].relativeYPos
                             else:
                                 centery = centery + eachScrollBar[0].relativeYPos
                 if(centery < self.height and centery > 0 and centerx < self.width and centerx > 0):
                     buttonsOnScreen.append(counter)
-                    if(not drawButton(centerx, centery, buttons[counter][2], buttons[counter][3], buttons[counter][4], mainButtonColor, buttons[counter][6], buttons[counter][7], buttons[counter][12], scrollId, buttons[counter][16])):
+                    if(not draw_button(centerx, centery, buttons[counter][2], buttons[counter][3], buttons[counter][4], mainButtonColor, buttons[counter][6], buttons[counter][7], buttons[counter][12], scroll_id, buttons[counter][16])):
                         returnTrue = False
         return returnTrue
 
-    #draws scroll bars
-    def drawScrollBars(self):
+    # draws scroll bars
+    def draw_scroll_bars(self):
         for counter in range(0, (len(scrollBars))):
-            if(scrollBars[counter][0].scrollId == self.windowId and scrollBars[counter][0].isVisible == True):
-                return drawBar(self.width, self.height, scrollBars[counter][0])
+            if(scrollBars[counter][0].scroll_id == self.windowId and scrollBars[counter][0].isVisible == True):
+                return draw_bar(self.width, self.height, scrollBars[counter][0])
 
-    #draws images
-    def drawImages(self):
+    # draws images
+    def draw_images(self):
         global images
         returnTrue = True
         for counter in range(0, (len(images))):
             if(images[counter][1] == self.windowId):
-                scrollId = images[counter][2]
+                scroll_id = images[counter][2]
                 centery = images[counter][3]
                 centerx = images[counter][4]
-                if(not(isinstance(scrollId, bool))):
+                if(not(isinstance(scroll_id, bool))):
                     for eachScrollBar in scrollBars:
-                        if(eachScrollBar[0].scrollId == scrollId):
+                        if(eachScrollBar[0].scroll_id == scroll_id):
                             if(eachScrollBar[0].isHorizontal):
                                 centerx = centerx + eachScrollBar[0].relativeYPos
                             else:
@@ -782,16 +793,16 @@ class MenuWindow(pyglet.window.Window):
                         returnTrue = False
         return returnTrue
 
-    #draws switches
-    def drawSwitches(self):
+    # draws switches
+    def draw_switches(self):
         returnTrue = True
         for counter in range(0, (len(switches))):
             if(switches[counter][1] == self.windowId):
-                if(not drawSwitch(main_window_width, main_window_height, switches[counter][0], switches[counter][2])):
+                if(not draw_switch(main_window_width, main_window_height, switches[counter][0], switches[counter][2])):
                     returnTrue = False
         return returnTrue
 
-    #draws buttons, inputs, etc.
+    # draws buttons, inputs, etc.
     def on_draw(self):
         global mouseX
         global mouseY
@@ -800,66 +811,67 @@ class MenuWindow(pyglet.window.Window):
         super(MenuWindow, self).clear()
 
         #background
-        drawButton(main_window_width/2, main_window_height/2, main_window_width, main_window_height, (16, 19, 22, 255), (16, 19, 22, 255), (16, 19, 22, 255), '', 0, False)
+        draw_button(main_window_width / 2, main_window_height / 2, main_window_width, main_window_height, (16, 19, 22, 255), (16, 19, 22, 255), (16, 19, 22, 255), '', 0, False)
 
-        if(not self.drawInputFields()):
+        if(not self.draw_input_fields()):
             returnTrue = False
-        if(not self.drawTextBoxes()):
+        if(not self.draw_text_boxes()):
             returnTrue = False
-        if(not self.drawSwitches()):
+        if(not self.draw_switches()):
             returnTrue = False
-        if(not self.drawButtons()):
+        if(not self.draw_buttons()):
             returnTrue = False
-        if(not self.drawScrollBars()):
+        if(not self.draw_scroll_bars()):
             returnTrue = False
-        if(not self.drawImages()):
+        if(not self.draw_images()):
             returnTrue = False
 
         #draws a help tip box at the location of the mouse pointer if mouseHelp is set
         if(mouseHelp != False):
-            if(not drawButton(int(mouseX - (50/640.0)*main_window_width), int(mouseY - ((10*(len(mouseHelp)/10.0 + 1) + 15)/960.0)*main_window_height), int((100/640.0)*main_window_width), int(((10*(len(mouseHelp)/10.0 + 1) + 15)/480.0)*main_window_height), (11, 4, 22, 255), (224, 217, 204, 255), (56, 55, 58, 255), mouseHelp, int((9/640.0)*main_window_width), 0, fontName='Arial')):
+            if(not draw_button(int(mouseX - (50/640.0)*main_window_width), int(mouseY - ((10*(len(mouseHelp)/10.0 + 1) + 15)/960.0)*main_window_height), int((100/640.0)*main_window_width), int(((10*(len(mouseHelp)/10.0 + 1) + 15)/480.0)*main_window_height), (11, 4, 22, 255), (224, 217, 204, 255), (56, 55, 58, 255), mouseHelp, int((9/640.0)*main_window_width), 0, fontName='Arial')):
                 returnTrue = False
         return returnTrue
 
 
-    #determines which, if any, button the mouse is over
+    # determines which, if any, button the mouse is over
     def on_mouse_motion(self, x, y, dx, dy):
         global mouseOnButton
         global mouseHelp
         global mouseX
         global mouseY
-        changedMouse = False
-        changedInput = False
+
+        changed_mouse = False
+        changed_input = False
         mouseX = x
         mouseY = y
 
-        #Checks whethter the mouse is over a button, and, if so, changes the relevant variable
+        # Checks whethter the mouse is over a button, and, if so, changes the relevant variable
         for counter in range(0, (len(buttonsOnScreen))):
-            buttonIndex = buttonsOnScreen[counter]
-            if(buttonIndex < len(buttons)):
-                if(self.windowId == buttons[buttonIndex][8]):
-                    tempHeight = buttons[buttonIndex][1]
-                    centerx = buttons[buttonIndex][0]
-                    if(not(isinstance(buttons[buttonIndex][13], bool))):
+            button_index = buttonsOnScreen[counter]
+            if(button_index < len(buttons)):
+                if(self.windowId == buttons[button_index][8]):
+                    temp_height = buttons[button_index][1]
+                    centerx = buttons[button_index][0]
+                    if(not(isinstance(buttons[button_index][13], bool))):
                         for eachScrollBar in scrollBars:
-                            if(eachScrollBar[0].scrollId == buttons[buttonIndex][13]):
+                            if(eachScrollBar[0].scroll_id == buttons[button_index][13]):
                                 if(eachScrollBar[0].isHorizontal):
                                     centerx = centerx + eachScrollBar[0].relativeYPos
                                 else:
-                                    tempHeight = tempHeight + eachScrollBar[0].relativeYPos
-                    if((x <= (centerx + buttons[buttonIndex][2]/2)) and (x >= (centerx - buttons[buttonIndex][2]/2))):
-                        if((y <= (tempHeight + buttons[buttonIndex][3]/2)) and (y >= (tempHeight - buttons[buttonIndex][3]/2))):
-                            mouseOnButton = buttonIndex
-                            changedMouse = True
+                                    temp_height = temp_height + eachScrollBar[0].relativeYPos
+                    if((x <= (centerx + buttons[button_index][2]/2)) and (x >= (centerx - buttons[button_index][2]/2))):
+                        if((y <= (temp_height + buttons[button_index][3]/2)) and (y >= (temp_height - buttons[button_index][3]/2))):
+                            mouseOnButton = button_index
+                            changed_mouse = True
                             counter = len(buttonsOnScreen)
-        if(changedMouse == False):
+        if(changed_mouse == False):
             mouseOnButton = 1000
             mouseHelp = False
 
-    #scroll bar handling
+    # scroll bar handling
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         for counter in range(0, (len(scrollBars))):
-            if(scrollBars[counter][0].scrollId == self.windowId):
+            if(scrollBars[counter][0].scroll_id == self.windowId):
                 if(y < self.height and y > 0):
                     if((x <= self.width) and (x >= (self.width - (self.width / 30)))):
                         if((y <= self.height - scrollBars[counter][0].yPos + scrollBarHeight) and (y >= self.height - scrollBars[counter][0].yPos - scrollBarHeight)):
@@ -871,10 +883,10 @@ class MenuWindow(pyglet.window.Window):
                             scrollBars[counter][0].translateBarToMovement(self.height - y)
                 return
 
-    #more scroll bar handling
+    # more scroll bar handling
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         for counter in range(0, (len(scrollBars))):
-            if(scrollBars[counter][0].scrollId == self.windowId):
+            if(scrollBars[counter][0].scroll_id == self.windowId):
                 scrollBars[counter][0].yPos = scrollBars[counter][0].yPos - (scroll_y * 3)
                 if(scrollBars[counter][0].yPos < 0):
                     scrollBars[counter][0].yPos = 0
@@ -883,7 +895,7 @@ class MenuWindow(pyglet.window.Window):
                 scrollBars[counter][0].translateBarToMovement(scrollBars[counter][0].yPos)
                 return
 
-    #opens the window attached to a button, or executes the function associated with the button
+    # opens the window attached to a button, or executes the function associated with the button
     def on_mouse_press(self, x, y, button, modifiers):
         global scrollBars
         global currentActiveInputField
@@ -892,90 +904,91 @@ class MenuWindow(pyglet.window.Window):
         global mouseOnInput
         global typingCursorPos
 
-        #make sure that drop-down items can run their task before they are deleted
+        # make sure that drop-down items can run their task before they are deleted
         if(mouseOnButton != 1000 and mouseOnButton < len(buttons)):
             if(buttons[mouseOnButton][15] == True):
                 if(buttons[mouseOnButton][10] != 0):
                     getattr(gui_fx, buttons[mouseOnButton][10])(*(buttons[mouseOnButton][11]))
 
-        removeDropDownList()
+        remove_dropdown_list()
 
         if(currentActiveInputField != 1000):
             if(inputFields[currentActiveInputField][0].isNumeric == True):
                 try:
                     float(inputFields[currentActiveInputField][0].text)
                 except ValueError:
-                    createMessageBox("Warning", "The parameter " + inputFields[currentActiveInputField][0].name + " takes a numeric value as input.", wx.ICON_EXCLAMATION)
+                    create_message_box("Warning", "The parameter " + inputFields[currentActiveInputField][0].name + " takes a numeric value as input.", wx.ICON_EXCLAMATION)
             currentActiveInputField = 1000
 
-        #run mouse tasks if necessary (window opening, function activation)
+        # run mouse tasks if necessary (window opening, function activation)
         if(mouseOnButton != 1000):
             if(mouseOnButton < len(buttons)):
-                openWindow = True
+                open_window = True
                 for counter in range(0, (len(windows))):
                     if(windows[counter].windowId == buttons[mouseOnButton][9]):
-                        openWindow = False
-                if(openWindow == True):
+                        open_window = False
+                if(open_window == True):
                     new_window = MenuWindow(buttons[mouseOnButton][9], ' ')
                     addWindow(new_window)
                 if(buttons[mouseOnButton][10] != 0):
                     getattr(gui_fx, buttons[mouseOnButton][10])(*(buttons[mouseOnButton][11]))
         else:
-            #detects whether a text box has been clicked
-            changedInput = False
+
+            # detects whether a text box has been clicked
+            changed_input = False
             for counter in range(0, (len(inputFields))):
                 if(self.windowId == inputFields[counter][5]):
-                    tempHeight = inputFields[counter][2]
+                    temp_height = inputFields[counter][2]
                     centerx = inputFields[counter][1]
                     if(not(isinstance(inputFields[counter][7], bool))):
                         for eachScrollBar in scrollBars:
-                            if(eachScrollBar[0].scrollId == inputFields[counter][7]):
+                            if(eachScrollBar[0].scroll_id == inputFields[counter][7]):
                                 if(eachScrollBar[0].isHorizontal):
                                     centerx = centerx + eachScrollBar[0].relativeYPos
                                 else:
-                                    tempHeight = tempHeight + eachScrollBar[0].relativeYPos
+                                    temp_height = temp_height + eachScrollBar[0].relativeYPos
                     if((x <= (centerx + inputFields[counter][3]/2)) and (x >= (centerx - inputFields[counter][3]/2))):
-                        if((y <= (tempHeight + inputFields[counter][4]/2)) and (y >= (tempHeight - inputFields[counter][4]/2))):
+                        if((y <= (temp_height + inputFields[counter][4]/2)) and (y >= (temp_height - inputFields[counter][4]/2))):
                             mouseOnInput = counter
-                            changedInput = True
+                            changed_input = True
                             typingCursorPos = len(inputFields[counter][0].text)
                             counter = len(inputFields)
-            if(changedInput == False):
+            if(changed_input == False):
                 mouseOnInput = 1000
             if(mouseOnInput != 1000):
                 currentActiveInputField = mouseOnInput
             else:
-                #detects whether a switch has been clicked
-                changedInput = False
+
+                # detects whether a switch has been clicked
+                changed_input = False
                 for counter in range(0, (len(switches))):
                     if(self.windowId == switches[counter][1]):
-                        tempHeight = switches[counter][0].centery
+                        temp_height = switches[counter][0].centery
                         centerx = switches[counter][0].centerx
                         if(not(isinstance(switches[counter][2], bool))):
                             for eachScrollBar in scrollBars:
-                                if(eachScrollBar[0].scrollId == switches[counter][2]):
+                                if(eachScrollBar[0].scroll_id == switches[counter][2]):
                                     if(eachScrollBar[0].isHorizontal):
                                         centerx = centerx + eachScrollBar[0].relativeYPos
                                     else:
-                                        tempHeight = tempHeight + eachScrollBar[0].relativeYPos
+                                        temp_height = temp_height + eachScrollBar[0].relativeYPos
                         if((x <= (centerx + switches[counter][0].width/2)) and (x >= (centerx - switches[counter][0].width/2))):
-                            if((y <= (tempHeight + switches[counter][0].height/2)) and (y >= (tempHeight - switches[counter][0].height/2))):
+                            if((y <= (temp_height + switches[counter][0].height/2)) and (y >= (temp_height - switches[counter][0].height/2))):
                                 mouseOnSwitch = counter
-                                changedInput = True
+                                changed_input = True
                                 counter = len(switches)
-                if(changedInput == False):
+                if(changed_input == False):
                     mouseOnSwitch = 1000
                 if(mouseOnSwitch != 1000):
                     switches[mouseOnSwitch][0].booleanValue = not(switches[mouseOnSwitch][0].booleanValue)
 
-
-    #typing in input boxes
+    # typing in input boxes
     def on_key_press(self, symbol, modifiers):
         global shiftPressed
         global currentActiveInputField
         global typingCursorPos
 
-        #input field typing handling
+        # input field typing handling
         if(currentActiveInputField != 1000):
             try:
                 if(symbol == pyglet.window.key.BACKSPACE):
@@ -1036,17 +1049,16 @@ class MenuWindow(pyglet.window.Window):
             except IndexError:
                 print "Invalid key press"
 
-
-    #for detecting shift key usage for input box text
+    # for detecting shift key usage for input box text
     def on_key_release(self, symbol, modifiers):
         global shiftPressed
         if(symbol == pyglet.window.key.LSHIFT or symbol == pyglet.window.key.RSHIFT):
             shiftPressed = False
 
-    #removes window from window array so that it can be opened again, or, if this is the main window, closes all windows
+    # removes window from window array so that it can be opened again, or, if this is the main window, closes all windows
     def on_close(self):
         for counter in range(0, (len(scrollBars))):
-            if(scrollBars[counter][0].scrollId == self.windowId):
+            if(scrollBars[counter][0].scroll_id == self.windowId):
                 scrollBars[counter][0].yPos = 0
                 scrollBars[counter][0].translateBarToMovement(0)
         if(self.windowId == 0):
@@ -1056,7 +1068,8 @@ class MenuWindow(pyglet.window.Window):
             wxWindow.Close()
             super(MenuWindow, self).close()
             return
-        #close advanced parameters window if main parameters window is closed
+
+        # close advanced parameters window if main parameters window is closed
         elif(self.windowId == 3):
             for counter in range(0, len(windows)):
                 if(windows[counter].windowId == 4):
