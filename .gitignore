@@ -2,3 +2,5 @@
 *~
 .DS_Store
 .cache/
+# .idea is created by PyCharm, needs to be ignored.
+.idea
