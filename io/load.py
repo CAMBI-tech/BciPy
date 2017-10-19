@@ -2,7 +2,6 @@ from Tkinter import Tk
 
 from codecs import open as codecsopen
 from json import load as jsonload
-from warnings import warn
 
 from tkFileDialog import askopenfilename
 
