@@ -3,8 +3,11 @@
 
 
 from __future__ import division
-from psychopy import visual, core, event
+
 path.append('display/')
+
+from psychopy import visual, core
+
 from rsvp_disp_modes import CopyPhraseTask
 from trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
@@ -118,7 +121,7 @@ rsvp = CopyPhraseTask(window=win, clock=clock, experiment_clock=experiment_clock
                       is_txt_sti=is_txt_sti)
 
 counter = 0
-file = open('copy_phrase_trigger_file.txt','w') 
+# file = open('copy_phrase_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     rsvp.bg.reset_weights()

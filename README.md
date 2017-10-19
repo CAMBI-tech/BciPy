@@ -34,7 +34,11 @@ This project requires Psychopy and Python v 2.7. See requirements.txt
 # RSVP Keyboard Setup
 
 In order to run **RSVP Keyboard** on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules for RSVP Keyboard. There are two methods for this, choose one of:
-1. Run(double click) moduleLoader.py file in this folder.
+
+
+1. Run moduleLoader.py.
+
+
 2. Use pip to iteratively install required modules.
     - pip install -r /path/to/requirements.txt
 
@@ -57,5 +61,6 @@ You are ready to run RSVP Keyboard.
 - static: images, misc manuals, and readable texts for gui
 
 - bci_main: executor of experiments. 
+
 
 
