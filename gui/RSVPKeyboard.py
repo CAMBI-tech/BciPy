@@ -6,9 +6,7 @@ from sys import path
 from warnings import warn
 
 import pyglet
-
-path.append('utils/')
-import gui_fx
+import utility.gui_fx as gui_fx
 
 path.append('io/')
 from load import load_json_parameters
