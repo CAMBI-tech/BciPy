@@ -52,8 +52,10 @@ class KernelDensityEstimate(object):
         for i in range(self.num_cls):
             # Reshape is required, otherwise there's ambiguity if it's one
             # sample with N dims or N samples with 1 dims
-            dat = cls_dep_x[i]
+
+            dat = np.squeeze(cls_dep_x[i])
             dat = np.expand_dims(dat, axis=1)
+            print(dat.shape)
             self.list_den_est[i].fit(dat)
 
     def transform(self, x):
@@ -68,7 +70,7 @@ class KernelDensityEstimate(object):
         # Calculate likelihoods for each density estimate
         val = []
         for i in range(self.num_cls):
-            dat = x
+            dat = np.squeeze(x)
             dat = np.expand_dims(dat, axis=1)
             val.append(self.list_den_est[i].score_samples(dat))
 

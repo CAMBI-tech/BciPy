@@ -17,15 +17,18 @@ def test_kde(x, x_lsp, kernel='gaussian'):
     # For demo purposes assume there's only 1 class
     y = np.zeros(x.shape)
 
-    kde = KernelDensityEstimate(bandwidth=bandwidth, kernel=kernel)
+    kde = KernelDensityEstimate(bandwidth=bandwidth, kernel=kernel, num_cls=1)
     kde.fit(x, y)
     log_density = kde.transform(x_lsp)
     return log_density
 
+# import matplotlib.pyplot as plt
 # N = 100
 # np.random.seed(1)
 # X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
 #                     np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
+#
+# Y = np.zeros(X.shape)
 #
 # X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 #
@@ -37,8 +40,9 @@ def test_kde(x, x_lsp, kernel='gaussian'):
 #         label='input distribution')
 #
 # for kernel in ['gaussian', 'tophat', 'epanechnikov']:
-#     kde = KernelDensityEstimate(kernel=kernel, bandwidth=0.5).fit(X)
-#     log_dens = kde.score_samples(X_plot)
+#     kde = KernelDensityEstimate(kernel=kernel, bandwidth=0.5, num_cls=1)
+#     kde.fit(X, Y)
+#     log_dens = kde.list_den_est[0].score_samples(X_plot)
 #     ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
 #             label="kernel = '{0}'".format(kernel))
 #
