@@ -19,12 +19,12 @@ mse = 0;
 % of each other. Right now it is just duplication of the same experiment
 for exper = 1:num_experiments
         
-    dim_x = 200;
-    num_x_p = 100;
-    num_x_n = 200;
+    dim_x = randi([150, 200]);
+    num_x_p = randi([75, 125]);
+    num_x_n = randi([750, 1250]);
     
-    xp = 10 * randn(num_x_p, dim_x);
-    xn = 15 + randn(num_x_n, dim_x);
+    xp = randi([1, 15]) + randi([1, 10]) * randn(num_x_p, dim_x);
+    xn = randi([1, 15]) + randi([1, 10]) * randn(num_x_n, dim_x);
     x = [xp; xn];
     
     y = [ones( num_x_p,1) ; zeros(num_x_n,1)];
