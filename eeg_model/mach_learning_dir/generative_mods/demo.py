@@ -13,8 +13,13 @@ def test_kde(x, x_lsp, kernel='gaussian'):
     analysis. Vol. 26. CRC press, 1986. """
     bandwidth = 1.06 * min(
         np.std(x), iqr(x) / 1.34) * np.power(x.shape[0], -0.2)
-    kde = KernelDensityEstimate(bandwidth=bandwidth, kernel=kernel).fit(x)
-    log_density = kde.score_samples(x_lsp)
+
+    # For demo purposes assume there's only 1 class
+    y = np.zeros(x.shape)
+
+    kde = KernelDensityEstimate(bandwidth=bandwidth, kernel=kernel)
+    kde.fit(x, y)
+    log_density = kde.transform(x_lsp)
     return log_density
 
 # N = 100
