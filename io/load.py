@@ -3,7 +3,7 @@ from Tkinter import Tk
 from codecs import open as codecsopen
 from json import load as jsonload
 
-from tkFileDialog import askopenfilename
+from tkFileDialog import askopenfilename, askdirectory
 
 
 def load_json_parameters(path):
@@ -30,11 +30,12 @@ def load_experimental_data():
     # use python's internal gui to call file explorers and get the filename
     try:
         Tk().withdraw()  # we don't want a full GUI
-        filename = askopenfilename()  # show dialog box and return the path
-        print("Loaded Experimental Data From: %s" % filename)
-    except:
-        pass
+        filename = askdirectory()  # show dialog box and return the path
 
+    except Exception as error:
+        raise error
+
+    print("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
@@ -43,6 +44,23 @@ def load_classifier():
     return
 
 
-def read_csv_data():
+def load_csv_data():
+    try:
+        Tk().withdraw()  # we don't want a full GUI
+        filename = askopenfilename()  # show dialog box and return the path
 
-    return
+    except Exception as error:
+        raise error
+
+    # get the last part of the path to determine file type
+    eeg_data_file_name = filename.split('/')[-1]
+
+    if 'csv' not in eeg_data_file_name:
+        raise Exception(
+            'File type unrecognized. Please use a supported eeg type')
+
+    # give the user some insight into what's happening
+    print("Loaded EEG Data From: %s" % filename)
+
+    return filename
+
