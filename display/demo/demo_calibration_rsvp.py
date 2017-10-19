@@ -8,10 +8,8 @@ from psychopy import visual, core, event
 from sys import path
 
 path.append('display/')
+# import bci.display
 from rsvp_disp_modes import CalibrationTask
-import numpy as np
-
-
 from trigger_helpers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
@@ -34,8 +32,6 @@ font_sti = 'Times'
 pos_sti = (0, 0)
 sti_height = 0.6
 
-# Bar Graph
-show_bg = 0
 tr_pos_bg = (0, .5)
 bl_pos_bg = (-1, -.5)
 size_domain_bg = 7
@@ -44,8 +40,7 @@ font_bg_txt = 'Arial'
 color_bar_bg = 'green'
 
 # Initialize Stimulus
-# TODO: Find a smart way to discriminate image input from text
-is_txt_sti = 1
+is_txt_sti = True
 
 if is_txt_sti:
     ele_sti = [
@@ -56,18 +51,18 @@ if is_txt_sti:
     color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white', 'white']] * 4
 else:
-    ele_sti = [['.\RSVP_presentation_by_images\A.jpg',
-                '.\RSVP_presentation_by_images\Red_Cross.png',
-                '.\RSVP_presentation_by_images\C.jpg',
-                '.\RSVP_presentation_by_images\D.jpg',
-                '.\RSVP_presentation_by_images\E.jpg',
-                '.\RSVP_presentation_by_images\P.jpg'],
-               ['.\RSVP_presentation_by_images\T.jpg',
-                '.\RSVP_presentation_by_images\Red_Cross.png',
-                '.\RSVP_presentation_by_images\B.jpg',
-                '.\RSVP_presentation_by_images\C.jpg',
-                '.\RSVP_presentation_by_images\D.jpg',
-                '.\RSVP_presentation_by_images\E.jpg']]
+    ele_sti = [['static/images/RSVP_images/A.jpg',
+                'static/images/RSVP_images/Red_Cross.png',
+                'static/images/RSVP_images/C.jpg',
+                'static/images/RSVP_images/D.jpg',
+                'static/images/RSVP_images/E.jpg',
+                'static/images/RSVP_images/P.jpg'],
+               ['static/images/RSVP_images/T.jpg',
+                'static/images/RSVP_images/Red_Cross.png',
+                'static/images/RSVP_images/B.jpg',
+                'static/images/RSVP_images/C.jpg',
+                'static/images/RSVP_images/D.jpg',
+                'static/images/RSVP_images/E.jpg']]
 
 time_flash = .25
 time_target = 2
@@ -75,14 +70,6 @@ time_cross = .6
 
 timing_sti = [[time_target] + [time_cross] + [time_flash] *
               (len(ele_sti[0]) - 1)] * 4
-
-# Dummy Bar Graph Params
-dummy_bar_schedule_t = [['A', 'B', 'C', 'D', '<', '-', 'G'],
-                        ['A', 'B', 'C', 'D', '<', 'H', 'G'],
-                        ['A', 'B', 'C', 'R', 'M', 'K', 'G'],
-                        ['A', 'B', 'C', 'R', '<', 'Z', 'G']]
-dummy_bar_schedule_p = [[1, 1, 1, 2, 3, 2, 3], [1, 1, 1, 2, 7, 2, 1],
-                        [1, 1, 1, 2, 3, 2, 3], [1, 1, 2, 12, 1, 2, 1]]
 
 task_text = ['1/100', '2/100', '3/100', '4/100']
 task_color = [['white'], ['white'], ['white'], ['white']]
@@ -126,7 +113,6 @@ rsvp = CalibrationTask(window=win, clock=clock,
 file = open('calibration_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
-    rsvp.bg.reset_weights()
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
     rsvp.draw_static()
     win.flip()
@@ -137,22 +123,15 @@ for idx_o in range(len(task_text)):
 
     if is_txt_sti:
         rsvp.color_list_sti = color_sti[idx_o]
-    rsvp.time_list_sti = timing_sti[idx_o]
 
+    rsvp.time_list_sti = timing_sti[idx_o]
 
     core.wait(.4)
     sequence_timing = rsvp.do_sequence()
 
     # _write_triggers_from_sequence_calibration(sequence_timing, file)
 
-    # Get parameters from Bar Graph and schedule
-    rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[idx_o],
-                        weight=dummy_bar_schedule_p[idx_o])
-
     core.wait(.5)
-
-    if show_bg:
-        rsvp.show_bar_graph()
 
 # close the window and file
 win.close()
