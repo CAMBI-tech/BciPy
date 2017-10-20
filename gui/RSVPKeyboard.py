@@ -1,15 +1,8 @@
-
-from codecs import open as codecsopen
-from json import load as jsonload
-
-from sys import path
-from warnings import warn
-
 import pyglet
-import utility.gui_fx as gui_fx
 
-path.append('io/')
-from load import load_json_parameters
+import utility.gui_fx as gui_fx
+from helpers.load import load_json_parameters
+
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
 gui_fx.add_window(main_window)

@@ -3,7 +3,7 @@
 
 
 from __future__ import division
-from psychopy import visual, core, event
+from psychopy import visual
 from rsvp_disp import DisplayRSVP
 
 """ RSVP Tasks are DisplayRSVP objects with different structure. They share
@@ -12,6 +12,7 @@ from rsvp_disp import DisplayRSVP
     mode should be separated from each other carefully.
     Functions:
         update_task_state: update task information of the module """
+
 
 class CopyPhraseTask(DisplayRSVP):
     """ Copy Phrase Task object of RSVP
