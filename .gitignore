@@ -2,5 +2,6 @@
 *~
 .DS_Store
 .cache/
-# .idea is created by PyCharm, needs to be ignored.
+calibration_trigger_file.txt
+
 .idea
