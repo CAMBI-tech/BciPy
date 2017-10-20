@@ -110,7 +110,7 @@ rsvp = CalibrationTask(window=win, clock=clock,
                        color_bar_bg=color_bar_bg,
                        is_txt_sti=is_txt_sti)
 
-file = open('calibration_trigger_file.txt','w') 
+# file = open('calibration_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])

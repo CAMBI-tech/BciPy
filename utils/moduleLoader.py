@@ -3,7 +3,9 @@ import pip, os, sys
 cDir = os.path.dirname(os.path.realpath(sys.argv[0]))
 print 'Current directory: ' + cDir
 
-f = open("\\..\\requirements.txt",'r')
+sys.path.append('.')
+
+f = open("requirements.txt",'r')
 answer = raw_input('Is your OS 64 Bit?(type y or n and press enter): ')
 
 if answer.lower()[0] == 'y':
