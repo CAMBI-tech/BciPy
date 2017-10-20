@@ -188,7 +188,7 @@ gui_fx.add_button(
     main_window_width_half, main_window_height_half + covert_to_height(50),
     covert_to_width(400), covert_to_height(75), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Presentation Mode', 2,
-    functionCall="run_python_file", functionArg=['testing/testfile.py'],
+    functionCall="run_python_file", functionArg=['tests/testfile.py'],
     textSize=covert_to_width(20)
 )
 # View signals button- path the executable for viewing quality of signals
@@ -306,7 +306,7 @@ gui_fx.add_button(
     main_window_height_half - covert_to_height(150),
     covert_to_width(300), covert_to_height(70),
     (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), 'Calculate AUC',
-    0, functionCall="run_python_file", functionArg=['testing/testfile.py'],
+    0, functionCall="run_python_file", functionArg=['tests/testfile.py'],
     textSize=covert_to_width(16)
 )
 
