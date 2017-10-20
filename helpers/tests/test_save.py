@@ -5,7 +5,7 @@ import sys
 import unittest
 
 # add previous dirs to python path for importing of modules
-sys.path.append('rw/')
+sys.path.append('helpers/')
 
 from save import init_save_data_structure
 

@@ -4,7 +4,7 @@ import sys
 import unittest
 
 # add previous dirs to python path for importing of modules
-sys.path.append('rw/')
+sys.path.append('helpers/')
 
 from load import load_json_parameters
 

@@ -3,8 +3,6 @@
 
 
 from __future__ import division
-
-
 from psychopy import visual, core
 
 from display.rsvp_disp_modes import CopyPhraseTask

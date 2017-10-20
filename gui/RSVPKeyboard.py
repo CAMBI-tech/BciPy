@@ -1,7 +1,7 @@
 import pyglet
 
 import utility.gui_fx as gui_fx
-from rw.load import load_json_parameters
+from helpers.load import load_json_parameters
 
 
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
