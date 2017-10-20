@@ -4,12 +4,11 @@
 
 from __future__ import division
 
-path.append('display/')
 
 from psychopy import visual, core
 
-from rsvp_disp_modes import CopyPhraseTask
-from trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from display.rsvp_disp_modes import CopyPhraseTask
+from utils.trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
 # Initialize Stimulus Parameters
 # Task Bar

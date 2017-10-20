@@ -46,6 +46,9 @@ In order to run **RSVP Keyboard** on your computer, first install **Python 2.7**
     - pip install /path/to/numpy‑1.13.1+mkl‑cp27‑cp27m‑win_amd64.whl
     - pip install /path/to/scipy‑0.19.1‑cp27‑cp27m‑win_amd64.whl
 
+3. Set a python path to this module
+	- cd into `bci` 
+	- run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 You are ready to run RSVP Keyboard.
 
 ## Modules and Vital Functions
