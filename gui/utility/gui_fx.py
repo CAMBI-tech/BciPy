@@ -97,6 +97,62 @@ def move_scroll_bar(barId, moveAmount):
             eachBar[0].yPos = bar_amount
 
 
+# sets exp type from main menu and opens the next desired gui
+def set_exp_type(expType, window):
+    # set textBoxes globally
+    global textBoxes
+    global buttons
+
+    # RSVP
+    if expType is 'RSVPKeyboard':
+        # Remove all previous text and buttons
+        textBoxes = []
+        buttons = []
+
+        # Run the RSVP python gui
+        run_python_file('gui/RSVPKeyboard.py')
+
+        # Close the BCI Main window
+        window.close()
+
+    # Shuffle
+    elif expType is 'Shuffle':
+        print("Shuffle is not implemeted yet!")
+
+    # Matrix
+    elif expType is 'Matrix':
+        print("Matrix is not implemeted yet!")
+
+    else:
+        raise Exception('Input not recognized')
+
+
+# Go back to the bci main window, from any other window
+def bci_main_exec(window):
+    # set textBoxes, buttons, inputs, and images globally
+    global textBoxes
+    global buttons
+    global inputFields
+    global images
+
+    # BCI Main
+    try:
+        # Remove all previous text, buttons, inputs and images
+        textBoxes = []
+        buttons = []
+        inputFields = []
+        images = []
+
+        # Run the BCI main python gui
+        run_python_file('gui/BCInterface.py')
+
+        # Close the other window
+        window.close()
+
+    except:
+        raise Exception('Input not recognized')
+
+
 # searches human-readable parameter names for values that contain the text
 # of a given input field
 def search_parameters(readpath, scrollBar, inputName):
