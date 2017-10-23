@@ -36,7 +36,7 @@ This project requires Psychopy and Python v 2.7. See requirements.txt
 In order to run **RSVP Keyboard** on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules for RSVP Keyboard. There are two methods for this, choose one of:
 
 
-1. Run moduleLoader.py.
+1. Run module_loader.py.
 
 
 2. Use pip to iteratively install required modules.
@@ -46,6 +46,9 @@ In order to run **RSVP Keyboard** on your computer, first install **Python 2.7**
     - pip install /path/to/numpy‑1.13.1+mkl‑cp27‑cp27m‑win_amd64.whl
     - pip install /path/to/scipy‑0.19.1‑cp27‑cp27m‑win_amd64.whl
 
+3. Set a python path to this module
+	- cd into `bci` 
+	- run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 You are ready to run RSVP Keyboard.
 
 ## Modules and Vital Functions
@@ -55,7 +58,7 @@ You are ready to run RSVP Keyboard.
 - display: handles display of stimuli on screen, passing back stimuli timing
 - eeg_model: trains and classifies eeg responses based on eeg and triggers
 - gui: end-user interface into system
-- io: input/output functions needed for system
+- helpers: input/output functions needed for system
 - language_model
 - parameters: json file for parameters
 - static: images, misc manuals, and readable texts for gui

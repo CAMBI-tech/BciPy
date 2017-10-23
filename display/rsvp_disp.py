@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
-from psychopy import visual, core, event
+from psychopy import visual
 import numpy as np
-import string
-import pdb
 
 
 class DisplayRSVP(object):

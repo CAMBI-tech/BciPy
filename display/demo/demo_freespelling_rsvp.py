@@ -3,11 +3,9 @@
 
 from __future__ import division
 from psychopy import visual, core
-from sys import path
-path.append('display/')
 
-from rsvp_disp_modes import FreeSpellingTask
-from trigger_helpers import _write_triggers_from_sequence_free_spell
+from display.rsvp_disp_modes import FreeSpellingTask
+from utils.trigger_helpers import _write_triggers_from_sequence_free_spell
 
 # Initialize Stimulus Parameters
 # Task Bar
