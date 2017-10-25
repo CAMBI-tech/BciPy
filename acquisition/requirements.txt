@@ -4,3 +4,4 @@ numpy
 construct==2.8.14
 mock
 pylsl
+pytest
