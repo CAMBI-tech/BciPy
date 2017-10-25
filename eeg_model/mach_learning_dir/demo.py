@@ -1,3 +1,4 @@
+""" Demo for the model proposed in the google drive. """
 import sys
 
 sys.path.append(
@@ -17,11 +18,11 @@ from sklearn import metrics
 import numpy as np
 from scipy.stats import iqr
 
-dim_x = 60
+dim_x = 16
 num_x_p = 2000
 num_x_n = 1000
 var_tol = 0.80
-num_ch = 4
+num_ch = 16
 
 x_p = np.random.randn(num_ch, num_x_p, dim_x)
 x_n = np.random.randn(num_ch, num_x_n, dim_x)
@@ -53,5 +54,8 @@ model.add(rda)
 sc1 = model.fit_transform(x, y)
 fpr, tpr, _ = metrics.roc_curve(y, sc1, pos_label=1)
 arg = metrics.auc(fpr, tpr)
-arg2 = cross_validation(x, y, model=model, K=10)[2]
+arg2 = cross_validation(x, y, model=model, K=10)
+auc2 = arg2[2]
+
+print('Pipeline Successfully Processed Data!')
 print('AUC-o: {}, AUC-cv: {}'.format(arg, np.max(arg2)))

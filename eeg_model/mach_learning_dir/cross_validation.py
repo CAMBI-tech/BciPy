@@ -76,7 +76,6 @@ def cross_validation(x, y, model, K=10, split='uniform'):
             K(int): number of folds
             split(string): split type,
                 'uniform': Takes the data as is
-                'random': Randomly shuffles data
             """
     num_samples = x.shape[1]
     fold_len = np.floor(float(num_samples) / K)
@@ -108,5 +107,9 @@ def cross_validation(x, y, model, K=10, split='uniform'):
         sc = model.transform(x)
         fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
         auc_h.append(metrics.auc(fpr, tpr))
+
+    lam = np.asarray(lam)
+    gam = np.asarray(gam)
+    auc_h = np.asarray(auc_h)
 
     return [lam, gam, auc_h]

@@ -81,6 +81,7 @@ class RegularizedDiscriminantAnalysis(object):
                 lam(float):
                 gam(float): """
 
+        # TODO: what if no param passed?
         self.gam = gam
         self.lam = lam
 

@@ -55,7 +55,7 @@ class KernelDensityEstimate(object):
 
             dat = np.squeeze(cls_dep_x[i])
             dat = np.expand_dims(dat, axis=1)
-            print(dat.shape)
+
             self.list_den_est[i].fit(dat)
 
     def transform(self, x):

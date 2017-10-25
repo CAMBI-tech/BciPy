@@ -161,3 +161,29 @@ class ChannelWisePrincipalComponentAnalysis(object):
             f_vector.append(self.list_pca[i].fit_transform(x[i, :, :], y))
 
         return np.concatenate(f_vector, axis=1)
+
+
+class DummyDimReduction(object):
+    """ Just concatenation without any PCA
+        Attr:
+        none(None): nothing
+         """
+
+    def __init__(self):
+        self.none = None
+
+    def fit(self, x, y=None, var_tol=None):
+        self.none = None
+
+    def transform(self, x, y=None):
+        self.none = None
+        num_ch = x.shape[0]
+        f_vector = []
+        for i in range(num_ch):
+            f_vector.append(x[i, :, :])
+
+        return np.concatenate(f_vector, axis=1)
+
+    def fit_transform(self, x, y=None, var_tol=None):
+        arg = self.transform(x, y)
+        return arg

@@ -12,6 +12,7 @@ def test_pca(x):
 
     return [y]
 
+
 # pca = PrincipalComponentAnalysis()
 #
 # dim_x = 16
@@ -39,20 +40,19 @@ def test_pca(x):
 
 ##
 
-num_ch = 16
-dim_x = 20
-num_x_p = 100
-num_x_n = 0
-var_tol = 0.2
-
-# We only require the data not labels
-x_p = 2 * np.random.randn(num_ch, num_x_p, dim_x)
-x_n = np.random.randn(num_ch, num_x_n, dim_x)
-x = np.concatenate((x_n, x_p), axis=1)
-len_x = x.shape[1]
-
-cw_pca = ChannelWisePrincipalComponentAnalysis(num_ch=num_ch)
-y = cw_pca.fit_transform(x, var_tol=var_tol)
-y_2 = cw_pca.transform(x)
-print('x: {}, y: {}'.format(x.shape, y.shape))
-
+# num_ch = 16
+# dim_x = 20
+# num_x_p = 100
+# num_x_n = 0
+# var_tol = 0.2
+#
+# # We only require the data not labels
+# x_p = 2 * np.random.randn(num_ch, num_x_p, dim_x)
+# x_n = np.random.randn(num_ch, num_x_n, dim_x)
+# x = np.concatenate((x_n, x_p), axis=1)
+# len_x = x.shape[1]
+#
+# cw_pca = ChannelWisePrincipalComponentAnalysis(num_ch=num_ch)
+# y = cw_pca.fit_transform(x, var_tol=var_tol)
+# y_2 = cw_pca.transform(x)
+# print('x: {}, y: {}'.format(x.shape, y.shape))
