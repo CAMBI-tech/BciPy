@@ -1,0 +1,77 @@
+"""Used to find a protocol or device by name."""
+
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import daq.protocols.util as util
+from daq.protocols.device import Device
+from daq.protocols.dsi_protocol import DsiProtocol
+
+# import all submodules so we can introspect on subclasses.
+util.import_submodules('daq.protocols')
+
+
+def _key(pyclass):
+    """
+    >>> from daq.protocols.dsi_device import DsiDevice
+    >>> _key(DsiDevice)
+    u'DSI'
+    """
+    return pyclass.__module__.split(".")[-1].split('_')[0].upper()
+
+
+supported_devices = dict((_key(device), device)
+                         for device in Device.__subclasses__())
+
+
+# TODO: Refactor protocols to use a base class so we can introspect on them.
+# Otherwise, consider using a naming convention.
+supported_protocols = {
+    'DSI': DsiProtocol
+}
+
+
+def find_device(name):
+    """Find device by name.
+
+    Parameters
+    ----------
+        name : str
+            name of the device
+    Returns
+    -------
+        Device constructor
+    """
+    return supported_devices[name]
+
+
+def protocol_with(name, hz, channels):
+    """Find protocol by name and initialize with the given parameters.
+
+    Parameters
+    ----------
+        name : str
+            name of the device
+        hz : int
+            used to override the default protocol hz value
+        channels : list
+            used to override the default protocol channels value
+    Returns
+    -------
+        Protocol
+    """
+    return supported_protocols[name](hz, channels)
+
+
+def default_protocol(name):
+    """Find protocol by name and initialize with default options.
+
+    Parameters
+    ----------
+        name : str
+            name of the device
+    Returns
+    -------
+        Protocol
+    """
+    return supported_protocols[name]()

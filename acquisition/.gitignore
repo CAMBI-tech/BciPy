@@ -1,0 +1,22 @@
+# Distribution/Packaging
+*.egg-info/
+.eggs/
+dist/
+build/
+
+*.pyc
+
+# Virtualenv
+venv/
+
+# Mac OS X custom attribute files
+.DS_Store
+
+__pycache__/
+.cache/
+
+calibration.csv
+rawdata.csv
+buffer.db
+
+*.sh

@@ -1,0 +1,102 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import pytest
+from daq.datastream import generator, server
+from daq.protocols.dsi_device import DsiDevice
+from daq.protocols.dsi_protocol import DsiProtocol
+
+HOST = '0.0.0.0'
+PORT = 9999
+connection_params = {'host': HOST, 'port': PORT}
+
+
+def make_server():
+    return server.DataServer(protocol=DsiProtocol(),
+                             generator=generator.random_data,
+                             host=HOST, port=PORT)
+
+
+def test_device():
+    s = make_server()
+    s.start()
+
+    _acquisition_init()
+    _connect()
+    _read_data()
+
+    s.stop()
+
+
+def test_channels():
+    """An exception should be thrown if parameters do not match data read
+    from the device."""
+
+    s = make_server()
+    s.start()
+
+    device = DsiDevice(connection_params=connection_params,
+                       channels=['ch1', 'ch2'])
+    assert len(device.channels) == 2
+    device.connect()
+
+    with pytest.raises(Exception):
+        device.acquisition_init()
+
+    s.stop()
+
+
+def test_frequency():
+    """An exception should be thrown if parameters do not match data read
+    from the device."""
+    s = make_server()
+    s.start()
+
+    device = DsiDevice(connection_params=connection_params, hz=100)
+    assert device.hz == 100
+    device.connect()
+
+    with pytest.raises(Exception):
+        device.acquisition_init()
+
+    s.stop()
+
+
+def _acquisition_init():
+    """Channel and sample rate properties should be updated by reading
+    initialization data from the server."""
+
+    device = DsiDevice(connection_params=connection_params, channels=[])
+    assert device.hz == 300
+    assert len(device.channels) == 0
+
+    device.connect()
+    device.acquisition_init()
+
+    assert device.hz == 300
+    assert len(device.channels) == 25
+
+
+def _connect():
+    """Should require a connect call before initialization."""
+
+    device = DsiDevice(connection_params=connection_params)
+
+    # Payload size that exceeds sensor_data points should throw an error
+    with pytest.raises(AssertionError):
+        device.acquisition_init()
+
+
+def _read_data():
+    """Should produce a valid sensor_data record."""
+
+    device = DsiDevice(connection_params=connection_params)
+
+    device.connect()
+    device.acquisition_init()
+    data = device.read_data()
+
+    assert len(data) > 0
+    assert len(data) == len(device.channels)
+    for f in data:
+        assert isinstance(f, float)
