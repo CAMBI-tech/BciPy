@@ -62,7 +62,7 @@ class Client(object):
         self._is_streaming = False
 
         self._initial_wait = 5  # for process loop
-        multiplier = self._device.hz if self._device.hz else 100
+        multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
         self._process_queue = Queue.Queue(maxsize=maxsize)
 
@@ -93,7 +93,7 @@ class Client(object):
             # been updated as needed.
             self._buf = self._make_buffer(channels=self._device.channels)
             self._processor = self._make_processor(self._device.name,
-                                                   self._device.hz,
+                                                   self._device.fs,
                                                    self._device.channels)
 
             self._acq_thread = _StoppableThread(target=self._acquisition_loop)

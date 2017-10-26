@@ -45,22 +45,22 @@ def find_device(name):
     return supported_devices[name]
 
 
-def protocol_with(name, hz, channels):
+def protocol_with(name, fs, channels):
     """Find protocol by name and initialize with the given parameters.
 
     Parameters
     ----------
         name : str
             name of the device
-        hz : int
-            used to override the default protocol hz value
+        fs : int
+            used to override the default protocol fs value
         channels : list
             used to override the default protocol channels value
     Returns
     -------
         Protocol
     """
-    return supported_protocols[name](hz, channels)
+    return supported_protocols[name](fs, channels)
 
 
 def default_protocol(name):

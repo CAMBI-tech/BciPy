@@ -22,7 +22,7 @@ class DataServer(threading.Thread):
     Parameters
     ----------
         protocol : Protocol
-            protocol-specific behavior including hz, init_messages, and encoder
+            protocol-specific behavior including fs, init_messages, and encoder
         generator : function
             generator function; used to generate the data to be served. A new
             generator will be created for every client connection.
@@ -101,7 +101,7 @@ class DataServer(threading.Thread):
 
         # Construct a new generator each time to get consistent results.
         generator = self.generator(**self.gen_params)
-        with Producer(q, generator=generator, freq=1 / self.protocol.hz):
+        with Producer(q, generator=generator, freq=1 / self.protocol.fs):
             while self.running:
                 try:
                     # block if necessary, for up to 5 seconds
@@ -123,9 +123,9 @@ def _settings(filename):
 
     with open(filename, 'r') as f:
         daq_type = f.readline().strip().split(',')[1]
-        hz = int(f.readline().strip().split(',')[1])
+        fs = int(f.readline().strip().split(',')[1])
         channels = f.readline().strip().split(',')
-        return (daq_type, hz, channels)
+        return (daq_type, fs, channels)
 
 
 if __name__ == '__main__':
@@ -146,12 +146,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.filename:
-        daq_type, hz, channels = _settings(args.filename)
-        protocol = protocol_with(daq_type, hz, channels)
+        daq_type, fs, channels = _settings(args.filename)
+        protocol = protocol_with(daq_type, fs, channels)
         generator, params = (file_data, {'filename': args.filename})
     else:
         protocol = default_protocol('DSI')
-        generator, params = (random_data, {})
+        channel_count = len(protocol.channels)
+        generator, params = (random_data, {'channel_count': channel_count})
 
     try:
         server = DataServer(protocol=protocol,

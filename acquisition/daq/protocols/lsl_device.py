@@ -18,12 +18,12 @@ class LslDevice(Device):
             parameters used to connect with the server.
         channels: list, optional
             list of channel names
-        hz: float, optional
+        fs: float, optional
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, hz=None, channels=None):
-        super(LslDevice, self).__init__(connection_params, hz, channels)
+    def __init__(self, connection_params, fs=None, channels=None):
+        super(LslDevice, self).__init__(connection_params, fs, channels)
 
     @property
     def name(self):
@@ -55,7 +55,7 @@ class LslDevice(Device):
         logging.debug(metadata.as_xml())
 
         info_channels = self._read_channels(metadata)
-        info_hz = metadata.nominal_srate()
+        info_fs = metadata.nominal_srate()
 
         # If channels are not initially provided, set them from the metadata.
         # Otherwise, confirm that provided channels match metadata, or meta is
@@ -69,9 +69,9 @@ class LslDevice(Device):
                                 "the provided parameters")
         assert len(self.channels) == metadata.channel_count(), "Channel count error"  # noqa
 
-        if not self.hz:
-            self.hz = info_hz
-        elif self.hz != info_hz:
+        if not self.fs:
+            self.fs = info_fs
+        elif self.fs != info_fs:
             raise Exception("Sample frequency read from device does not match "
                             "the provided parameter")
 

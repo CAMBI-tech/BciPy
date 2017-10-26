@@ -8,15 +8,15 @@ class Device(object):
     ----------
         connection_params : dict
             Parameters needed to connect with the given device
-        hz : int
+        fs : int
             Sample frequency in Hz.
         channels : list
             List of channel names.
     """
 
-    def __init__(self, connection_params, hz, channels):
+    def __init__(self, connection_params, fs, channels):
         self._connection_params = connection_params
-        self.hz = hz
+        self.fs = fs
         self.channels = channels
 
     @property

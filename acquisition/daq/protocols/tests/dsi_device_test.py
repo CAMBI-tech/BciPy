@@ -12,8 +12,11 @@ connection_params = {'host': HOST, 'port': PORT}
 
 
 def make_server():
-    return server.DataServer(protocol=DsiProtocol(),
+    protocol = DsiProtocol()
+    channel_count = len(protocol.channels)
+    return server.DataServer(protocol=protocol,
                              generator=generator.random_data,
+                             gen_params={'channel_count': channel_count},
                              host=HOST, port=PORT)
 
 
@@ -52,8 +55,8 @@ def test_frequency():
     s = make_server()
     s.start()
 
-    device = DsiDevice(connection_params=connection_params, hz=100)
-    assert device.hz == 100
+    device = DsiDevice(connection_params=connection_params, fs=100)
+    assert device.fs == 100
     device.connect()
 
     with pytest.raises(Exception):
@@ -67,14 +70,14 @@ def _acquisition_init():
     initialization data from the server."""
 
     device = DsiDevice(connection_params=connection_params, channels=[])
-    assert device.hz == 300
+    assert device.fs == 300
     assert len(device.channels) == 0
 
     device.connect()
     device.acquisition_init()
 
-    assert device.hz == 300
-    assert len(device.channels) == 25
+    assert device.fs == 300
+    assert len(device.channels) == 21
 
 
 def _connect():

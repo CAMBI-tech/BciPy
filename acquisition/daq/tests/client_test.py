@@ -16,8 +16,8 @@ from mock import mock_open, patch
 class _MockProcessor(Processor):
     """Processor that doesn't do anything."""
 
-    def __init__(self, device_name, hz, channels):
-        super(_MockProcessor, self).__init__(device_name, hz, channels)
+    def __init__(self, device_name, fs, channels):
+        super(_MockProcessor, self).__init__(device_name, fs, channels)
 
     def process(self, record, timestamp=None):
         pass
@@ -27,9 +27,9 @@ class _MockDevice(Device):
     """Device that mocks reading data every 1/500 seconds. Does not need a
     server. Accumulates read data in a list."""
 
-    def __init__(self, channels, hz=500):
+    def __init__(self, channels, fs=500):
         super(_MockDevice, self).__init__(
-            connection_params={}, channels=channels, hz=hz)
+            connection_params={}, channels=channels, fs=fs)
         self.data = []
         self._connected = True
 
@@ -37,7 +37,7 @@ class _MockDevice(Device):
         return 'MockDevice'
 
     def read_data(self):
-        time.sleep(1 / self.hz)
+        time.sleep(1 / self.fs)
         row = [np.random.uniform(-1000, 1000)
                for i in range(len(self.channels))]
         if self._connected:
@@ -72,7 +72,7 @@ def test_filewriter():
         assert device.name() in writeargs[0]
 
         # Second write was sample_rate
-        assert writeargs[1].startswith('sample_rate,' + str(device.hz))
+        assert writeargs[1].startswith('sample_rate,' + str(device.fs))
 
         # Third write was column header
         assert writeargs[2].startswith(
@@ -93,8 +93,8 @@ def test_processor():
     class _CountingProcessor(Processor):
         """Processor that records all data passed to the process method."""
 
-        def __init__(self, device_name, hz, channels):
-            super(_CountingProcessor, self).__init__(device_name, hz, channels)
+        def __init__(self, device_name, fs, channels):
+            super(_CountingProcessor, self).__init__(device_name, fs, channels)
             self.data = []
 
         def process(self, record, timestamp=None):

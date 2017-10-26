@@ -20,12 +20,12 @@ class DsiDevice(Device):
             parameters used to connect with the server. keys: [host, port]
         channels: list, optional
             list of channel names
-        hz: float, optional
+        fs: float, optional
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, hz=300, channels=[]):
-        super(DsiDevice, self).__init__(connection_params, hz, channels)
+    def __init__(self, connection_params, fs=300, channels=[]):
+        super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params
         assert 'port' in connection_params
 
@@ -78,10 +78,10 @@ class DsiDevice(Device):
         response = self._read_packet()
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
             raise Exception("Unexpected packet; expected DATA RATE Event")
-        hz = int(response.message.split(',')[1])
-        logging.debug("Sample frequency: " + str(hz))
+        fs = int(response.message.split(',')[1])
+        logging.debug("Sample frequency: " + str(fs))
 
-        if hz != self.hz:
+        if fs != self.fs:
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 

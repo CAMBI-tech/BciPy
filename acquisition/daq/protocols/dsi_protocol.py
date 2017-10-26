@@ -9,17 +9,18 @@ import daq.protocols.dsi as dsi
 import daq.protocols.protocol as protocol
 
 
-default_hz = 300
+default_fs = 300
 default_channels = ['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz', 'CM', 'A1',
-                    'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2', 'X3', 'X2', 'F7',
-                    'F8', 'X1', 'A2', 'T6', 'T4', 'TRG']
+                    'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2', 'F7', 'F8', 'A2',
+                    'T6', 'T4']
 
 
-def DsiProtocol(hz=default_hz, channels=default_channels):
+def DsiProtocol(fs=default_fs, channels=default_channels):
     """Protocol for mocking DSI data."""
     return protocol.Protocol(encoder=Encoder(),
-                             init_messages=_init_messages(hz, channels),
-                             hz=hz)
+                             init_messages=_init_messages(fs, channels),
+                             fs=fs,
+                             channels=channels)
 
 
 def _event_packet(code, msg):
@@ -39,13 +40,13 @@ def _event_packet(code, msg):
     return dsi.packet.build(params)
 
 
-def _init_messages(hz, channels):
+def _init_messages(fs, channels):
     """Messages sent at the start of the initialization protocol when
     connecting with a client. Sent before any data is sent.
 
     Parameters
     ----------
-        hz : int
+        fs : int
             sample frequency
         channels : list
             list of channel names
@@ -56,7 +57,7 @@ def _init_messages(hz, channels):
 
     # Comma-delimited list; the frequency is the second param, which is the
     # only one we use; not sure what else is in this list.
-    f_msg = (',' + str(hz)).encode('ascii', 'ignore')
+    f_msg = (',' + str(fs)).encode('ascii', 'ignore')
     freq_msg = _event_packet('DATA_RATE', f_msg)
 
     return [sensor_msg, freq_msg]

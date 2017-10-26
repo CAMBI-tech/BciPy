@@ -9,16 +9,16 @@ from daq.datastream.producer import Producer
 
 def test_frequency():
     """Data should be generated at the provided frequency"""
-    hz = 300
+    fs = 300
     runtime = 0.2
     q = Queue.Queue()
-    p = Producer(q, freq=1 / hz)
+    p = Producer(q, freq=1 / fs)
     p.start()
     time.sleep(runtime)
     p.stop()
 
     n = q.qsize()
-    expected_n = hz * runtime
+    expected_n = fs * runtime
     tolerance = 5
     assert n + tolerance >= expected_n
     assert n <= expected_n + tolerance
@@ -50,16 +50,16 @@ def test_max_iters():
     """Producer should stop producing data after maxiters if param is
     provided."""
 
-    hz = 300
+    fs = 300
     runtime = 0.2
     maxiters = 10
     q = Queue.Queue()
-    p = Producer(q, freq=1 / hz, maxiters=maxiters)
+    p = Producer(q, freq=1 / fs, maxiters=maxiters)
     p.start()
     time.sleep(runtime)
     p.stop()
 
-    expected_n = hz * runtime
+    expected_n = fs * runtime
     tolerance = 10
     assert expected_n - tolerance > maxiters
     n = q.qsize()

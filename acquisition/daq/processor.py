@@ -13,15 +13,15 @@ class Processor(object):
     ----------
         device_name : str
             Name of the device used to collect data.
-        hz : int
+        fs : int
             Sample frequency in Hz.
         channels : list
             List of channel names.
     """
 
-    def __init__(self, device_name, hz, channels):
+    def __init__(self, device_name, fs, channels):
         self._device_name = device_name
-        self._hz = hz
+        self._fs = fs
         self._channels = channels
 
     def __enter__(self):
@@ -47,8 +47,8 @@ class Processor(object):
 class FileWriter(Processor):
     """A DAQ item Processor that writes items to a file."""
 
-    def __init__(self, filename, device_name, hz, channels):
-        super(FileWriter, self).__init__(device_name, hz, channels)
+    def __init__(self, filename, device_name, fs, channels):
+        super(FileWriter, self).__init__(device_name, fs, channels)
         self._filename = filename
         self._writer = None
 
@@ -56,8 +56,8 @@ class FileWriter(Processor):
     def builder(cls, filename):
         """Returns a builder than constructs a new FileWriter with the given
         filename."""
-        def build(device_name, hz, channels):
-            return FileWriter(filename, device_name, hz, channels)
+        def build(device_name, fs, channels):
+            return FileWriter(filename, device_name, fs, channels)
         return build
 
     # @override ; context manager
@@ -65,7 +65,7 @@ class FileWriter(Processor):
         self._file = open(self._filename, 'w')
         self._writer = csv.writer(self._file, delimiter=',')
         self._writer.writerow(['daq_type', self._device_name])
-        self._writer.writerow(['sample_rate', self._hz])
+        self._writer.writerow(['sample_rate', self._fs])
         self._writer.writerow(['timestamp'] + self._channels)
         return self
 
@@ -81,12 +81,12 @@ class FileWriter(Processor):
 class LslProcessor(Processor):
     """A DAQ item processor that writes to an LSL data stream."""
 
-    def __init__(self, device_name, hz, channels):
+    def __init__(self, device_name, fs, channels):
         import pylsl
         import uuid
 
-        super(LslProcessor, self).__init__(device_name, hz, channels)
-        info = pylsl.StreamInfo(device_name, 'EEG', len(channels), hz,
+        super(LslProcessor, self).__init__(device_name, fs, channels)
+        info = pylsl.StreamInfo(device_name, 'EEG', len(channels), fs,
                                 'float32', str(uuid.uuid4()))
         meta_channels = info.desc().append_child('channels')
         for c in channels:

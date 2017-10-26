@@ -11,7 +11,7 @@ def test_filewriter():
     data = [[i + j for j in range(3)] for i in range(3)]
     expected_csv_rows = [b'0,1,2\r\n', b'1,2,3\r\n', b'2,3,4\r\n']
 
-    filewriter = FileWriter('foo.csv', device_name='foo-device', hz=100,
+    filewriter = FileWriter('foo.csv', device_name='foo-device', fs=100,
                             channels=['c1', 'c2', 'c3'])
 
     m = mock_open()
@@ -41,7 +41,7 @@ def test_filewriter_builder():
 
     m = mock_open()
     with patch('daq.processor.open', m):
-        with builder(device_name='foo-device', hz=100,
+        with builder(device_name='foo-device', fs=100,
                      channels=['c1', 'c2', 'c3']) as filewriter:
             m.assert_called_once_with('foo.csv', 'w')
 

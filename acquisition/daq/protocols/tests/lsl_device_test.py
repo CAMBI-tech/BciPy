@@ -74,7 +74,7 @@ def _test_incorrect_number_of_channels():
     raise an exception."""
 
     device = LslDevice(connection_params=connection_params,
-                       channels=['ch1', 'ch2'], hz=HZ)
+                       channels=['ch1', 'ch2'], fs=HZ)
     assert len(device.channels) == 2
     assert len(device.channels) != CHANNEL_COUNT
     device.connect()
@@ -84,10 +84,10 @@ def _test_incorrect_number_of_channels():
 
 
 def _test_incorrect_frequency():
-    """Provided hz should match sample rate read from device"""
+    """Provided fs should match sample rate read from device"""
     device = LslDevice(connection_params=connection_params,
-                       channels=CHANNELS, hz=300)
-    assert device.hz == 300
+                       channels=CHANNELS, fs=300)
+    assert device.fs == 300
     device.connect()
 
     with pytest.raises(Exception):
@@ -95,20 +95,20 @@ def _test_incorrect_frequency():
 
 
 def _test_frequency_init():
-    """Hz should be initialized from device metadata if not provided"""
+    """fs should be initialized from device metadata if not provided"""
 
     device = LslDevice(connection_params=connection_params,
-                       channels=CHANNELS, hz=None)
+                       channels=CHANNELS, fs=None)
     device.connect()
     device.acquisition_init()
 
-    assert device.hz == HZ
+    assert device.fs == HZ
 
 
 def _test_connect():
     """Should require a connect call before initialization."""
     device = LslDevice(connection_params=connection_params,
-                       channels=[], hz=None)
+                       channels=[], fs=None)
 
     with pytest.raises(Exception):
         device.acquisition_init()
@@ -118,7 +118,7 @@ def _test_read_data():
     """Should produce a valid data record."""
 
     device = LslDevice(connection_params=connection_params,
-                       channels=CHANNELS, hz=HZ)
+                       channels=CHANNELS, fs=HZ)
 
     device.connect()
     device.acquisition_init()
@@ -135,7 +135,7 @@ def _test_mismatched_channel_names():
 
     device = LslDevice(connection_params=connection_params,
                        channels=[str(i) for i in range(CHANNEL_COUNT)],
-                       hz=HZ)
+                       fs=HZ)
     assert len(device.channels) == CHANNEL_COUNT
     device.connect()
 
@@ -146,7 +146,7 @@ def _test_mismatched_channel_names():
 def _test_channel_init():
     """Channels should be initialized from device metadata if not provided."""
     device = LslDevice(connection_params=connection_params,
-                       channels=[], hz=HZ)
+                       channels=[], fs=HZ)
     assert len(device.channels) == 0
     device.connect()
     device.acquisition_init()
