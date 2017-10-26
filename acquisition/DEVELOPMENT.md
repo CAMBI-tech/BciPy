@@ -1,9 +1,6 @@
 # Data Acquisition Module (daq)
 
 
-* [Project Wiki](https://octri.ohsu.edu/wiki/display/BCIB/Product+Requirements)
-* [Issue Tracker](https://octri.ohsu.edu/issues/projects/BCI/issues)
-
 ## Prerequisites
 
 You will need the following things properly installed on your computer.
