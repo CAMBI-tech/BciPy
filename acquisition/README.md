@@ -78,11 +78,12 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
     import daq.protocols.registry as registry
 
     protocol = registry.default_protocol('DSI')
+    n = len(protocol.channels)
 
     try:
         server = DataServer(protocol=protocol,
                             generator=generator.random_data,
-                            gen_params={},
+                            gen_params={'channel_count': n},
                             host=, port=8844)
         server.start()
         while True:
