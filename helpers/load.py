@@ -13,7 +13,9 @@ def load_json_parameters(path):
             parameters = []
             try:
                 parameters = jsonload(f)
-            except ValueError:
+            except ValueError as e:
+                import pdb;
+                pdb.set_trace()
                 raise ValueError(
                     "Parameters file is formatted incorrectly!")
 
