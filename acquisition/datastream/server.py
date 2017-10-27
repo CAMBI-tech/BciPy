@@ -10,7 +10,8 @@ import select
 import socket
 import threading
 
-from datastream.producer import Producer
+
+from acquisition.datastream.producer import Producer
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -134,8 +135,8 @@ if __name__ == '__main__':
     import time
     import argparse
 
-    from datastream.generator import file_data, random_data
-    from protocols.registry import protocol_with, default_protocol
+    from acquisition.datastream.generator import file_data, random_data
+    from acquisition.protocols.registry import protocol_with, default_protocol
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='0.0.0.0')

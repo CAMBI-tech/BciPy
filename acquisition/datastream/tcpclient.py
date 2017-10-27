@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import socket
 
-from protocols import dsi
+from acquisition.protocols import dsi
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)

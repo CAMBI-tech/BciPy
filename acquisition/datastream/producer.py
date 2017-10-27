@@ -7,7 +7,7 @@ import random
 import threading
 import time
 
-from datastream.generator import random_data
+from acquisition.datastream.generator import random_data
 
 logging.basicConfig(
     level=logging.DEBUG,

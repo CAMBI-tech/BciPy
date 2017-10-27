@@ -3,9 +3,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import protocols.util as util
-from protocols.device import Device
-from protocols.dsi_protocol import DsiProtocol
+import acquisition.protocols.util as util
+from acquisition.protocols.device import Device
+from acquisition.protocols.dsi_protocol import DsiProtocol
 
 # import all submodules so we can introspect on subclasses.
 util.import_submodules('protocols')

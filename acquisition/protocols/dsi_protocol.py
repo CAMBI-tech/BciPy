@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import timeit
 
-import protocols.dsi as dsi
-import protocols.protocol as protocol
+import acquisition.protocols.dsi as dsi
+import acquisition.protocols.protocol as protocol
 
 
 default_fs = 300

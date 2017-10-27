@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 import pylsl
-from protocols.device import Device
+from acquisition.protocols.device import Device
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
