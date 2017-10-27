@@ -5,9 +5,9 @@ import time
 import timeit
 
 import numpy as np
-from daq.buffer import Buffer
-from daq.client import _StoppableThread
-from daq.record import Record
+from buffer import Buffer
+from client import _StoppableThread
+from record import Record
 
 
 def _mockdata(n, channel_count):

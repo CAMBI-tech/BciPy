@@ -7,9 +7,9 @@ import threading
 import time
 import timeit
 
-from daq.buffer import Buffer
-from daq.processor import FileWriter
-from daq.record import Record
+from buffer import Buffer
+from processor import FileWriter
+from record import Record
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     import argparse
     import json
-    import daq.protocols.registry as registry
+    import protocols.registry as registry
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',

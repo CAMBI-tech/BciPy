@@ -10,7 +10,7 @@ import select
 import socket
 import threading
 
-from daq.datastream.producer import Producer
+from datastream.producer import Producer
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -129,13 +129,13 @@ def _settings(filename):
 
 
 if __name__ == '__main__':
-    # Run this as: python -m daq.datastream.server
+    # Run this as: python -m acquisition.datastream.server
 
     import time
     import argparse
 
-    from daq.datastream.generator import file_data, random_data
-    from daq.protocols.registry import protocol_with, default_protocol
+    from datastream.generator import file_data, random_data
+    from protocols.registry import protocol_with, default_protocol
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='0.0.0.0')

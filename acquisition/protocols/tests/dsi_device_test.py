@@ -2,9 +2,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import pytest
-from daq.datastream import generator, server
-from daq.protocols.dsi_device import DsiDevice
-from daq.protocols.dsi_protocol import DsiProtocol
+from datastream import generator, server
+from protocols.dsi_device import DsiDevice
+from protocols.dsi_protocol import DsiProtocol
 
 HOST = '0.0.0.0'
 PORT = 9999

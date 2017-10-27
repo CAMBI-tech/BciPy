@@ -3,9 +3,9 @@ from __future__ import absolute_import, division, print_function
 import logging
 import socket
 
-import daq.protocols.dsi as dsi
-import daq.protocols.util as util
-from daq.protocols.device import Device
+import protocols.dsi as dsi
+import protocols.util as util
+from protocols.device import Device
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)

@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from daq.processor import FileWriter
+from acquisition.processor import FileWriter
 from mock import mock_open, patch
 
 
@@ -15,7 +15,7 @@ def test_filewriter():
                             channels=['c1', 'c2', 'c3'])
 
     m = mock_open()
-    with patch('daq.processor.open', m):
+    with patch('acquisition.processor.open', m):
         with filewriter:
             m.assert_called_once_with('foo.csv', 'w')
 
@@ -40,7 +40,7 @@ def test_filewriter_builder():
     builder = FileWriter.builder('foo.csv')
 
     m = mock_open()
-    with patch('daq.processor.open', m):
+    with patch('acquisition.processor.open', m):
         with builder(device_name='foo-device', fs=100,
                      channels=['c1', 'c2', 'c3']) as filewriter:
             m.assert_called_once_with('foo.csv', 'w')

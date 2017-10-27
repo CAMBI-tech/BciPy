@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import Queue
 import time
 
-from daq.datastream.producer import Producer
+from datastream.producer import Producer
 
 
 def test_frequency():

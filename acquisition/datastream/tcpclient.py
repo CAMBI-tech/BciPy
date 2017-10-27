@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import socket
 
-from daq.protocols import dsi
+from protocols import dsi
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)

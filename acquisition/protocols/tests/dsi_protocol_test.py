@@ -1,8 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import daq.protocols.dsi as dsi
-import daq.protocols.dsi_protocol as dsi_protocol
+import protocols.dsi as dsi
+import protocols.dsi_protocol as dsi_protocol
 
 
 def test_protocol_init_messages():

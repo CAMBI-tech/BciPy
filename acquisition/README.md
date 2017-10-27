@@ -9,8 +9,8 @@ The `client` is the primary module for receiving data from the EEG hardware, per
 ### Examples
 
     import time
-    import daq.client as client
-    import daq.protocols.registry as registry
+    from acquisition.client import Client
+    import acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': '0.0.0.0', 'port': 8844})
@@ -73,9 +73,9 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
 
     import time
 
-    import daq.datastream.generator as generator
-    import daq.datastream.server as server
-    import daq.protocols.registry as registry
+    import acquisition.datastream.generator as generator
+    import acquisition.protocols.registry as registry
+    from acquisition.datastream.server import DataServer
 
     protocol = registry.default_protocol('DSI')
     n = len(protocol.channels)
@@ -84,7 +84,7 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
         server = DataServer(protocol=protocol,
                             generator=generator.random_data,
                             gen_params={'channel_count': n},
-                            host=, port=8844)
+                            host='0.0.0.0', port=8844)
         server.start()
         while True:
             time.sleep(1)

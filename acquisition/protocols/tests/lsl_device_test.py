@@ -4,8 +4,8 @@ import time
 from random import random as rand
 
 import pytest
-from daq.client import _StoppableThread
-from daq.protocols.lsl_device import LslDevice
+from client import _StoppableThread
+from protocols.lsl_device import LslDevice
 from pylsl import StreamInfo, StreamOutlet
 
 CHANNEL_COUNT = 8

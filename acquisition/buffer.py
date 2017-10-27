@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import sqlite3
 from collections import deque
 
-from daq.record import Record
+from record import Record
 
 
 class Buffer(object):

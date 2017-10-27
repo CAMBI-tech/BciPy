@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import pytest
-from daq.datastream import generator
+from datastream import generator
 from mock import mock_open, patch
 
 
@@ -78,7 +78,7 @@ def test_file_generator():
     rows = map(lambda x: ','.join(map(str, x)), file_data)
     test_data = '\n'.join(header + rows)
 
-    with patch('daq.datastream.generator.open',
+    with patch('datastream.generator.open',
                mock_open(read_data=test_data), create=True):
 
         data = []
@@ -102,7 +102,7 @@ def test_file_generator_end():
     rows = map(lambda x: ','.join(map(str, x)), file_data)
     test_data = '\n'.join(header + rows)
 
-    with patch('daq.datastream.generator.open',
+    with patch('datastream.generator.open',
                mock_open(read_data=test_data), create=True):
 
         data = []
@@ -126,7 +126,7 @@ def test_file_with_custom_encoder():
     rows = map(lambda x: ','.join(map(str, x)), file_data)
     test_data = '\n'.join(header + rows)
 
-    with patch('daq.datastream.generator.open',
+    with patch('datastream.generator.open',
                mock_open(read_data=test_data), create=True):
 
         data = []

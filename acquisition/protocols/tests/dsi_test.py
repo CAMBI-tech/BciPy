@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import construct
-import daq.protocols.dsi as dsi
+import protocols.dsi as dsi
 import pytest
 
 # Expected values were generated from existing construct v.2.5.5 structs in the

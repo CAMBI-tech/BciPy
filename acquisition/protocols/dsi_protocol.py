@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import timeit
 
-import daq.protocols.dsi as dsi
-import daq.protocols.protocol as protocol
+import protocols.dsi as dsi
+import protocols.protocol as protocol
 
 
 default_fs = 300

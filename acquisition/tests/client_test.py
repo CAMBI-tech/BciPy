@@ -7,9 +7,9 @@ from __future__ import (absolute_import, division, print_function,
 import time
 
 import numpy as np
-from daq.client import Client
-from daq.processor import Processor
-from daq.protocols.device import Device
+from acquisition.client import Client
+from acquisition.processor import Processor
+from acquisition.protocols.device import Device
 from mock import mock_open, patch
 
 
@@ -52,7 +52,7 @@ def test_filewriter():
     """Test filewriter."""
 
     mwrite = mock_open()
-    with patch('daq.processor.open', mwrite):
+    with patch('processor.open', mwrite):
 
         # Instantiate and start collecting data
 

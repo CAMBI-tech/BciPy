@@ -3,17 +3,17 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import daq.protocols.util as util
-from daq.protocols.device import Device
-from daq.protocols.dsi_protocol import DsiProtocol
+import protocols.util as util
+from protocols.device import Device
+from protocols.dsi_protocol import DsiProtocol
 
 # import all submodules so we can introspect on subclasses.
-util.import_submodules('daq.protocols')
+util.import_submodules('protocols')
 
 
 def _key(pyclass):
     """
-    >>> from daq.protocols.dsi_device import DsiDevice
+    >>> from acquisition.protocols.dsi_device import DsiDevice
     >>> _key(DsiDevice)
     u'DSI'
     """
