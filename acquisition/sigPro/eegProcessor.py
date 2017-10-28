@@ -9,6 +9,19 @@ def sigPro(inputSeq, filt = None, fs = 256, k = 2, mode = '', channels = 16):
     :param mode: ??? I am going to work on mode later on.
     :param channels: Number of channels
     :return: output sequence that is filtered and downsampled input. Filter delay is compensated. Dimensions are 16xT/k
+
+    256Hz
+        - 1.75Hz to 45Hz
+        - 60Hz -64dB Gain
+
+    300Hz
+        - 1.84Hz to 45Hz
+        - 60Hz -84dB Gain
+
+    1024Hz
+        - 1.75Hz to 45Hz
+        - 60Hz -64dB Gain
+
     '''
 
     if fs == 256 and filt is None:
@@ -36,4 +49,4 @@ def sigPro(inputSeq, filt = None, fs = 256, k = 2, mode = '', channels = 16):
         # Downsampling
         outputSeq.append(temp[::k])
 
-    return outputSeq[1:]
+    return np.array(outputSeq[1:])
