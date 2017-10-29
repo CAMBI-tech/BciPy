@@ -25,7 +25,7 @@ if isnumeric(inArray)
         
     % Flip original shape because numpy's reshape reads inputs in opposite
     % order
-    outArray = outArray.reshape(fliplr(origSize));
+    outArray = outArray.reshape(fliplr(int16(origSize)));
     return
 end
 

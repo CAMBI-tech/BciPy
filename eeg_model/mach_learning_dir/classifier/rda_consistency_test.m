@@ -6,6 +6,7 @@ clear classes
 % discriminant analysis and currently RSVPKeyboard implementation.
 % mse is the mean squared error of all possible parameters to be checked.
 
+addpath('../../../utils');
 mod1 = py.importlib.import_module('function_classifier');
 py.reload(mod1);
 mod = py.importlib.import_module('demo');
@@ -78,4 +79,9 @@ end
 disp(strcat('Time py :',num2str(mean(time_py))))
 disp(strcat('Time rsvp :',num2str(mean(time_rsvp))))
 disp(strcat('MSE :',num2str(mse)))
+if mse<10^-10
+    disp('Test Passed!')
+else
+    disp('Test Failed!')
+end
 

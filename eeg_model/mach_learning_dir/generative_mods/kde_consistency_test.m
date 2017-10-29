@@ -2,6 +2,8 @@ clear all
 %close all
 clear classes
 
+addpath('../../../utils');
+
 mod1 = py.importlib.import_module('function_density_estimation');
 py.reload(mod1);
 mod = py.importlib.import_module('demo');

@@ -3,17 +3,6 @@ dimensionality reduction method. It should form a pipeline to apply
 different kinds of structures one after another.
 """
 
-import sys
-import numpy as np
-
-sys.path.append(
-    'C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir\classifier')
-sys.path.append(
-    'C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir\dimensionality_reduction')
-
-from function_classifier import RegularizedDiscriminantAnalysis
-from function_dim_reduction import PrincipalComponentAnalysis
-
 
 class PipeLine(object):
     """ Forms a pipeline using multiple dimensionality reductions and a

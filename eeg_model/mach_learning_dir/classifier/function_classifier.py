@@ -1,7 +1,6 @@
 import numpy as np
 
 
-
 class RegularizedDiscriminantAnalysis(object):
     """ Regularized Discriminant Analysis for quadratic boundary in high
     dimensional spaces. fits discriminant function,
@@ -42,7 +41,7 @@ class RegularizedDiscriminantAnalysis(object):
             and computes regularized covariances based on hyper parameters
             Args:
                 x(ndarray[float]): N x k data array
-                y(ndarray[int]): N x k observation (class) array
+                y(ndarray[int]): N x 1 observation (class) array
                     N is number of samples k is dimensionality of features
                 p(ndarray[float]): c x 1 array with prior probabilities
                     c is number of classes in data
@@ -154,4 +153,3 @@ class RegularizedDiscriminantAnalysis(object):
         self.fit(x, y, p)
         val = self.transform(x)
         return val
-

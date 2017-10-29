@@ -1,19 +1,12 @@
-""" Demo for the model proposed in the google drive. """
-import sys
-
-sys.path.append(
-    'C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir\dimensionality_reduction')
-sys.path.append(
-    'C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir\classifier')
-sys.path.append(
-    'C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir\generative_mods')
-sys.path.append('C:\Users\Aziz\Desktop\GIT\TMbci\eeg_model\mach_learning_dir')
-
-from function_density_estimation import KernelDensityEstimate
-from function_classifier import RegularizedDiscriminantAnalysis
-from function_dim_reduction import ChannelWisePrincipalComponentAnalysis
-from cross_validation import cross_validation
-from wrapper import PipeLine
+"""  """
+from eeg_model.mach_learning_dir.generative_mods.function_density_estimation \
+    import KernelDensityEstimate
+from eeg_model.mach_learning_dir.classifier.function_classifier import \
+    RegularizedDiscriminantAnalysis
+from eeg_model.mach_learning_dir.dimensionality_reduction.function_dim_reduction \
+    import ChannelWisePrincipalComponentAnalysis
+from eeg_model.mach_learning_dir.cross_validation import cross_validation
+from eeg_model.mach_learning_dir.wrapper import PipeLine
 from sklearn import metrics
 import numpy as np
 from scipy.stats import iqr

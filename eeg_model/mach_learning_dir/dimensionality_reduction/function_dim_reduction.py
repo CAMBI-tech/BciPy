@@ -128,7 +128,8 @@ class ChannelWisePrincipalComponentAnalysis(object):
     def transform(self, x, y=None):
         f_vector = []
         for i in range(self.num_ch):
-            f_vector.append(self.list_pca[i].transform(x[i, :, :], y))
+            # TODO: Observe that scikit learn PCA does not accept y
+            f_vector.append(self.list_pca[i].transform(x[i, :, :]))
 
         return np.concatenate(f_vector, axis=1)
 
