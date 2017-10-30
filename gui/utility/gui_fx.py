@@ -757,7 +757,9 @@ def exec_bci_main(parameters, window, mode):
     try:
 
         new_window.close()
-        bci_main.bci_main(parameters, userId, trialType, mode)
+        message = bci_main.bci_main(parameters, userId, trialType, mode)
+
+        print(message)
 
     except Exception:
         pass
