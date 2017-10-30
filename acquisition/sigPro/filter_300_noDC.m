@@ -14,7 +14,7 @@ fs = 300; % Sampling f
 % Magnitude of frequency response should be still around 1 between 30-35 Hz
 % range.
 
-L = floor(2*.3*fs) - 1; % Filter length. Choose as small as you can. 
+L = floor(2*.3*fs) - 2 % Filter length. Choose as small as you can. 
 %If filter is linear phase, L/2 is the group delay.
 % k = 2;  % Downsampling rate
 
@@ -37,9 +37,9 @@ z1hzNormF  = 2*1*1/fs
 d = designfilt('bandpassfir', ...       % Response type
        'FilterOrder',L, ...            % Filter order
        'StopbandFrequency1',1e-99, ...    % Frequency constraints
-       'PassbandFrequency1',2.6, ...
+       'PassbandFrequency1',2.55, ...
        'PassbandFrequency2',44.1, ...
-       'StopbandFrequency2',47.92, ...
+       'StopbandFrequency2',48.06, ...
        'DesignMethod','equiripple', ...         % Design method
        'StopbandWeight1',1, ...         % Design method options
        'PassbandWeight', 55, ...

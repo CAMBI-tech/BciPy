@@ -13,9 +13,9 @@ fcos2 = 20
 fcos3 = 30
 fcos4 = 40
 
-fs = 300
+# fs = 256
 # fs = 300
-# fs = 1024
+fs = 1024
 Duration = 5 # in seconds for test duration
 '''End of parameters'''
 
