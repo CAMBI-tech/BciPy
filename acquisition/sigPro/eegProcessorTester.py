@@ -44,8 +44,11 @@ x[1][:] = xpassband + xstopband
 
 y = sigPro(x, fs = fs, k = 1, channels = 2)
 
-MSE = np.sum((xpassband - y[0][:xpassband.size])**2.)/xpassband.size
-print 'MSE: {} -> {}%'.format(MSE, MSE/5.*100)
+MSE_perSample = np.sum((xpassband - y[0][:xpassband.size])**2.)/xpassband.size
+MSE_perSample_norm = MSE_perSample/np.sum(x[0][:]) # Decide on which mse to use. Talk with Bahar.
+
+print 'MSE per sample: {} -> {}%'.format(MSE_perSample, MSE_perSample/5.*100)
+print 'MSE normalized: {}'.format(MSE_perSample_norm*100)
 
 
 plt.figure(1)
