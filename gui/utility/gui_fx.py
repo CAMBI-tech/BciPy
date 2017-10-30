@@ -759,8 +759,8 @@ def exec_bci_main(parameters, window, mode):
         new_window.close()
         bci_main.bci_main(parameters, userId, trialType, mode)
 
-    except Exception as e:
-        raise e
+    except Exception:
+        pass
 
 
 # Runs a command (filename) from the given location (execPath). Intended to

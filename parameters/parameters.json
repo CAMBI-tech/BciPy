@@ -150,8 +150,18 @@
     ],
     "isNumeric": "false"
   },
-  "pos_text": {
-    "value": "(0, -.75)",
+  "pos_text_x": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Position Text",
+    "helpTip": "Position Text",
+    "recommended_values": [
+      "(0, -.75)"
+    ],
+    "isNumeric": "true"
+  },
+  "pos_text_y": {
+    "value": "-.75",
     "section": "bci_config",
     "readableName": "Position Text",
     "helpTip": "Position Text",
@@ -200,11 +210,19 @@
     ],
     "isNumeric": "false"
   },
-  "pos_sti": {
-    "value": "(0, 0)",
+  "pos_sti_x": {
+    "value": "0",
     "section": "bci_config",
-    "readableName": "Pos Stimuli",
-    "helpTip": "Pos Stimuli",
+    "readableName": "Pos Stimuli X",
+    "helpTip": "Pos Stimuli X",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "pos_sti_y": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Pos Stimuli Y",
+    "helpTip": "Pos Stimuli Y",
     "recommended_values": "",
     "isNumeric": "true"
   }, 
