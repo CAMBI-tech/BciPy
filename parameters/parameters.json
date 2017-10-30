@@ -240,6 +240,14 @@
     "recommended_values": "",
     "isNumeric": "true"
   }, 
+  "font_bg_txt": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "Font Bar Graph",
+    "helpTip": "Font Bar Graph",
+    "recommended_values": "",
+    "isNumeric": "false"
+  }, 
   "color_bg_txt": {
     "value": "red",
     "section": "bci_config",
@@ -288,11 +296,11 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
-  "font_bg_txt": {
-    "value": "Arial",
+  "window_size": {
+    "value": "[500, 500]",
     "section": "bci_config",
-    "readableName": "Font Bar Gragh",
-    "helpTip": "Font Bar Gragh",
+    "readableName": "Stimuli Presentation Window Size",
+    "helpTip": "Stimuli Presentation Window Size",
     "recommended_values": "",
-    "isNumeric": "false"
+    "isNumeric": "true"
   }}

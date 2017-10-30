@@ -741,7 +741,7 @@ def run_python_file(filename):
 
 
 # runs BCI main to start the experiment
-def exec_bci_main(parameters, window):
+def exec_bci_main(parameters, window, mode):
 
     # Get experiment information from globally set variables
     global trialType
@@ -755,15 +755,9 @@ def exec_bci_main(parameters, window):
     global images
 
     try:
-        textBoxes = []
-        buttons = []
-        inputFields = []
-        images = []
 
-        window.close()
         new_window.close()
-
-        bci_main.bci_main(parameters, userId, trialType)
+        bci_main.bci_main(parameters, userId, trialType, mode)
 
     except Exception as e:
         raise e

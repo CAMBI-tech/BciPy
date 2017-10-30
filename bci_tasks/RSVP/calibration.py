@@ -8,37 +8,40 @@ from utils.trigger_helpers import _write_triggers_from_sequence_calibration
 
 
 def RSVP_calibration_task(win, daq, parameters, file_save):
-    daq.start_acquistion(file_save)
+    # daq.start_acquistion(file_save)
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
     experiment_clock = core.MonotonicClock(start_time=None)
 
-    rsvp = CalibrationTask(
-        window=win, clock=clock,
-        experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
-        color_information=parameters['color_text']['value'],
-        pos_information=parameters['pos_text']['value'],
-        height_information=parameters['txt_height']['value'],
-        font_information=parameters['font_text']['value'],
-        color_task=['white'],
-        font_task=parameters['font_task']['value'],
-        text_task=task_text[0],
-        height_task=parameters['height_task']['value'],
-        font_sti=parameters['font_sti']['value'],
-        pos_sti=parameters['pos_sti']['value'],
-        sti_height=parameters['sti_height']['value'],
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        tr_pos_bg=parameters['tr_pos_bg']['value'],
-        bl_pos_bg=parameters['bl_pos_bg']['value'],
-        size_domain_bg=parameters['size_domain_bg']['value'],
-        color_bg_txt=parameters['color_bg_txt']['value'],
-        font_bg_txt=parameters['font_bg_txt']['value'],
-        color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=parameters['is_txt_sti']['value'])
-
+    task_text = ['1/100', '2/100', '3/100']
+    try:
+        rsvp = CalibrationTask(
+            window=win, clock=clock,
+            experiment_clock=experiment_clock,
+            text_information=parameters['text_text']['value'],
+            color_information=parameters['color_text']['value'],
+            pos_information=parameters['pos_text']['value'],
+            height_information=parameters['txt_height']['value'],
+            font_information=parameters['font_text']['value'],
+            color_task=['white'],
+            font_task=parameters['font_task']['value'],
+            text_task=task_text[0],
+            height_task=parameters['height_task']['value'],
+            font_sti=parameters['font_sti']['value'],
+            pos_sti=parameters['pos_sti']['value'],
+            sti_height=parameters['sti_height']['value'],
+            ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+            time_list_sti=[3] * 10,
+            tr_pos_bg=parameters['tr_pos_bg']['value'],
+            bl_pos_bg=parameters['bl_pos_bg']['value'],
+            size_domain_bg=parameters['size_domain_bg']['value'],
+            color_bg_txt=parameters['color_bg_txt']['value'],
+            font_bg_txt=parameters['font_bg_txt']['value'],
+            color_bar_bg=parameters['color_bar_bg']['value'],
+            is_txt_sti=parameters['is_txt_sti']['value'])
+    except Exception as e:
+        raise e
     # Init Task
     run = True
     while run is True:

@@ -163,7 +163,7 @@ gui_fx.add_button(
     main_window_width_half, main_window_height_half + convert_to_height(50, main_window_height),
     convert_to_width(400, main_window_width), convert_to_height(75, main_window_height), (40, 40, 40, 255),
     (219, 219, 219, 255), (89, 89, 89, 255), 'Presentation Mode', 2,
-    functionCall="exec_bci_main", functionArg=[file_data, main_window],
+    functionCall="exec_bci_main", functionArg=[file_data, main_window, "RSVP"],
     textSize=convert_to_width(20, main_window_width)
 )
 # View signals button- path the executable for viewing quality of signals
