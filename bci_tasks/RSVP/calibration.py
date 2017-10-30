@@ -9,8 +9,9 @@ from display.rsvp_disp_modes import CalibrationTask
 from utils.trigger_helpers import _write_triggers_from_sequence_calibration
 
 
-def RSVP_calibration_task(win, daq, parameters, file_save):
+def rsvp_calibration_task(win, daq, parameters, file_save):
     # daq.start_acquistion(file_save)
+
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -43,46 +44,49 @@ def RSVP_calibration_task(win, daq, parameters, file_save):
             color_bar_bg=parameters['color_bar_bg']['value'],
             is_txt_sti=parameters['is_txt_sti']['value'])
     except Exception as e:
-        pdb.set_trace()
+        print e
+
     # Init Task
-    # run = True
-    # while run is True:
-        # to-do allow pausing and exiting. See psychopy getKeys()
-    (task_text, task_color, ele_sti, timing_sti, color_sti) = get_task_info()
-    try:
-        for idx_o in range(len(task_text)):
+    trigger_save_location = file_save + '/triggers.txt'
+    trigger_file = open(trigger_save_location, 'w')
+    run = True
 
-            rsvp.update_task_state(
-                text=task_text[idx_o],
-                color_list=task_color[idx_o])
-            rsvp.draw_static()
-            win.flip()
-            rsvp.sti.height = float(parameters['sti_height']['value'])
+    while run is True:
+            # to-do allow pausing and exiting. See psychopy getKeys()
+        (task_text, task_color,
+            ele_sti, timing_sti, color_sti) = get_task_info()
+        try:
+            for idx_o in range(len(task_text)):
 
-            # Schedule a sequence
-            rsvp.ele_list_sti = ele_sti[idx_o]
+                rsvp.update_task_state(
+                    text=task_text[idx_o],
+                    color_list=task_color[idx_o])
+                rsvp.draw_static()
+                win.flip()
+                rsvp.sti.height = float(parameters['sti_height']['value'])
 
-            if parameters['is_txt_sti']['value']:
-                rsvp.color_list_sti = color_sti[idx_o]
+                # Schedule a sequence
+                rsvp.ele_list_sti = ele_sti[idx_o]
 
-            rsvp.time_list_sti = timing_sti[idx_o]
+                if parameters['is_txt_sti']['value']:
+                    rsvp.color_list_sti = color_sti[idx_o]
 
-            core.wait(.4)
-            sequence_timing = rsvp.do_sequence()
+                rsvp.time_list_sti = timing_sti[idx_o]
 
-            # _write_triggers_from_sequence_calibration(sequence_timing, file)
+                core.wait(.4)
+                last_sequence_timing = rsvp.do_sequence()
 
-            core.wait(.5)
+                _write_triggers_from_sequence_calibration(
+                    last_sequence_timing, trigger_file)
 
-            # run = False
-        # daq.stop_acquistion()
+                core.wait(.5)
 
-        # close the window and file
-        # win.close()
-        # file.close()
-    except Exception as e:
-        pdb.set_trace()
+            run = False
 
+        except Exception as e:
+            pdb.set_trace()
+
+    trigger_file.close()
     return (daq, file_save)
 
 

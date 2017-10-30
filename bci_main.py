@@ -57,6 +57,7 @@ def execute_task(task_type, parameters, save_folder):
         print e
 
     display.close()
+    # daq.stop_acquisition()
 
     # return trial_data
     return trial_data
