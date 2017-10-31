@@ -27,7 +27,7 @@ def cost_auc(model, opt_el, x, y, lam, gam):
     return -auc
 
 
-def opt_param(model, opt_el, x, y, init=None, op_type='cost_auc'):
+def param_nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc'):
     """ Optimizes lambda, gamma values for given  penalty function
         Args:
             model(pipeline): model to be iterated on
@@ -64,7 +64,7 @@ def opt_param(model, opt_el, x, y, init=None, op_type='cost_auc'):
     # TODO: Insert cost functions for parameter update below!
 
 
-def cross_validation(x, y, model, K=10, split='uniform'):
+def cross_validation(x, y, model, opt_el=1, K=10, split='uniform'):
     """ Cross validation object implementation which directly follows the
         MATLAB implementation
         Args:
@@ -73,6 +73,7 @@ def cross_validation(x, y, model, K=10, split='uniform'):
                 N is number of samples k is dimensionality of features
                 C is number of channels
             model(pipeline): model to be optimized
+            opt_el(int): element in the model to update hyper-params in [0,M]
             K(int): number of folds
             split(string): split type,
                 'uniform': Takes the data as is
@@ -100,7 +101,7 @@ def cross_validation(x, y, model, K=10, split='uniform'):
         y_valid = fold_y[list_valid]
 
         model.fit(x_train, y_train)
-        arg_opt = opt_param(model, 1, x_valid, y_valid)
+        arg_opt = param_nonlinear_opt(model, opt_el, x_valid, y_valid)
         lam.append(arg_opt[0])
         gam.append(arg_opt[1])
 

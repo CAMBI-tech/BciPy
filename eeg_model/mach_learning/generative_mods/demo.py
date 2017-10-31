@@ -3,15 +3,13 @@
 import numpy as np
 from scipy.stats import norm, iqr
 
-from eeg_model.mach_learning_dir.generative_mods.function_density_estimation \
-    import KernelDensityEstimate
-
 
 def test_kde(x, x_lsp, kernel='gaussian'):
     """ Select bandwidth of the gaussian kernel assuming data is also
     comming from a gaussian distribution.
     Ref: Silverman, Bernard W. Density estimation for statistics and data
     analysis. Vol. 26. CRC press, 1986. """
+    from function_density_estimation import KernelDensityEstimate
     bandwidth = 1.06 * min(
         np.std(x), iqr(x) / 1.34) * np.power(x.shape[0], -0.2)
 
@@ -25,7 +23,10 @@ def test_kde(x, x_lsp, kernel='gaussian'):
 
 
 def _test_kde():
+    from eeg_model.mach_learning.generative_mods.function_density_estimation \
+        import KernelDensityEstimate
     import matplotlib.pyplot as plt
+
     N = 100
     np.random.seed(1)
     X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),

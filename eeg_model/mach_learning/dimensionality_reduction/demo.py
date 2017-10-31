@@ -1,4 +1,4 @@
-from eeg_model.mach_learning_dir.dimensionality_reduction.function_dim_reduction \
+from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import PrincipalComponentAnalysis, ChannelWisePrincipalComponentAnalysis
 import numpy as np
 

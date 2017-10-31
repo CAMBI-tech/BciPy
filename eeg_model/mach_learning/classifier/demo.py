@@ -1,5 +1,3 @@
-from eeg_model.mach_learning_dir.classifier.function_classifier import \
-    RegularizedDiscriminantAnalysis
 import numpy as np
 
 
@@ -18,6 +16,7 @@ def test_rda(x, y, z):
             prb(ndarray[float]): priors
                 for each class
             """
+    from function_classifier import RegularizedDiscriminantAnalysis
     rda = RegularizedDiscriminantAnalysis()
     rda.fit(x, y)
 
@@ -28,6 +27,8 @@ def test_rda(x, y, z):
 
 
 def _test_rda():
+    from eeg_model.mach_learning.classifier.function_classifier import \
+        RegularizedDiscriminantAnalysis
     dim_x = 2
     num_x_p = 2000
     num_x_n = 500
