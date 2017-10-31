@@ -62,17 +62,17 @@ elif not is_presentation_by_images:
                 'static/images/RSVP_images/E.jpg']]
 else:
     ele_sti = [['./display/RSVP_presentation_by_images/blow_bubbles.png',
-                './display/RSVP_presentation_by_images/digest_swallow.png',
+                'static/images/RSVP_images/Red_Cross.png',
                 './display/RSVP_presentation_by_images/hike.png',
                 './display/RSVP_presentation_by_images/hunt.png',
                 './display/RSVP_presentation_by_images/hunt150.png',
                 './display/RSVP_presentation_by_images/hunt175.png',
                 ],
                ['./display/RSVP_presentation_by_images/kick.png',
-                './display/RSVP_presentation_by_images/kidnap.png',
+                'static/images/RSVP_images/Red_Cross.png',
                 './display/RSVP_presentation_by_images/pass_out.png',
                 './display/RSVP_presentation_by_images/Penguins.png',
-                './display/RSVP_presentation_by_images/pull_hair.png',
+                './display/RSVP_presentation_by_images/kick.png',
                 './display/RSVP_presentation_by_images/put_out_fire_3.png'
                 ]]
 
