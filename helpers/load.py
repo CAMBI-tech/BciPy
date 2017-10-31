@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from Tkinter import Tk
 
 from codecs import open as codecsopen
