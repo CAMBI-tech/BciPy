@@ -1,4 +1,4 @@
-from acquisition.sigPro.eegProcessor import sig_pro
+from acquisition.sig_pro import sig_pro
 import numpy as np
 import matplotlib.pyplot as plt
 
