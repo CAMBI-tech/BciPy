@@ -57,7 +57,7 @@ sm = sum(noDCFilt);
 for z = 1:1000
     delt = -sum(noDCFilt)/L;
     noDCFilt = noDCFilt + delt;
-    sm = sum(noDCFilt)
+    sm = sum(noDCFilt);
 end
 
 
