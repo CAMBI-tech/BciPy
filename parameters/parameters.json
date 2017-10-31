@@ -314,11 +314,19 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
-  "window_size": {
-    "value": "[500, 500]",
+  "window_width": {
+    "value": "500",
     "section": "bci_config",
-    "readableName": "Stimuli Presentation Window Size",
-    "helpTip": "Stimuli Presentation Window Size",
+    "readableName": "Stimuli Presentation Window Width",
+    "helpTip": "Stimuli Presentation Window Width",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "window_height": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Stimuli Presentation Window Width",
+    "helpTip": "Stimuli Presentation Window Width",
     "recommended_values": "",
     "isNumeric": "true"
   }}

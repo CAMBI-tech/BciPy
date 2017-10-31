@@ -69,6 +69,7 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 - `eeg_model`: trains and classifies eeg responses based on eeg and triggers
 - `gui`: end-user interface into system
 - `helpers`: input/output functions needed for system
+- `utils`: utility functions needed for operation and installation
 - `language_model`: gives prob of letters during typing
 - `parameters`: json file for parameters
 - `static`: images, misc manuals, and readable texts for gui
