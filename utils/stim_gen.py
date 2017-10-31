@@ -11,6 +11,7 @@ def random_clb_rsvp_seq_gen(alp, timing=[0.5, 1, 0.2],
             alp(list[str]): alphabet (can be arbitrary)
             timing(list[float]): Task specific timing for generator
             color(list[str]): Task specific color for generator
+                First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
             num_sti(int): number of random stimuli to be created
             len_sti(int): number of trials in a sequence
@@ -34,12 +35,12 @@ def random_clb_rsvp_seq_gen(alp, timing=[0.5, 1, 0.2],
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * len_sti)
 
-    schedule_seq = {'sequences': samples, 'timing': times, 'color': colors}
+    schedule_seq = (samples, times, colors)
 
     return schedule_seq
 
 
-def _test_random_seq_gen():
+def _demo_random_clb_rsvp_seq_gen():
     alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
            'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
@@ -52,9 +53,9 @@ def _test_random_seq_gen():
     print('Alphabet:{}'.format(alp))
     schedule = random_clb_rsvp_seq_gen(alp=alp, num_sti=num_samples,
                                        len_sti=len_samples)
-    sequences = schedule['sequences']
-    timing = schedule['timing']
-    color = schedule['color']
+    sequences = schedule[0]
+    timing = schedule[1]
+    color = schedule[2]
 
     for i in range(len(sequences)):
         print('seq{}:{}'.format(i, sequences[i]))
@@ -64,7 +65,7 @@ def _test_random_seq_gen():
 
 
 def main():
-    _test_random_seq_gen()
+    _demo_random_clb_rsvp_seq_gen()
 
     return 0
 
