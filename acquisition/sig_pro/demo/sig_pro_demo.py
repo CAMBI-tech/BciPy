@@ -1,4 +1,4 @@
-from acquisition.sig_pro import sig_pro
+from acquisition.sig_pro.sig_pro import sig_pro
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -42,7 +42,7 @@ x = np.zeros((2,xpassband.size))
 x[0][:] = xpassband + xstopband
 x[1][:] = xpassband + xstopband
 
-y = sig_pro(x, fs = fs, k = 1, channels = 2)
+y = sig_pro(x, fs = fs, k = 1)
 
 MSE_perSample = np.sum((xpassband - y[0][:xpassband.size])**2.)/xpassband.size
 MSE_perSample_norm = MSE_perSample/np.sum(x[0][:]**2) # Decide on which mse to use. Talk with Bahar.
@@ -68,4 +68,4 @@ plt.show()
 # plt.show()
 
 
-raw_input()
+raw_input('Press enter to exit: ')
