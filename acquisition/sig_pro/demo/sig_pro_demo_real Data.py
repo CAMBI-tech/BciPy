@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from eegProcessor import sigPro
+from acquisition.sig_pro import sig_pro
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat

@@ -1,13 +1,11 @@
 import numpy as np
 
-def sig_pro(input_seq, filt = None, fs = 256, k = 2, mode = '', channels = 16):
+def sig_pro(input_seq, filt = None, fs = 256, k = 2):
     '''
     :param input_seq: Input sequence to be filtered. Expected dimensions are 16xT
     :param filt: Input for using a specific filter. If left empty, according to fs a pre-designed filter is going to be used. Filters are pre-designed for fs = 256,300 or 1024 Hz.
     :param fs: Sampling frequency of the hardware.
     :param k: downsampling order
-    :param mode: ??? I am going to work on mode later on.
-    :param channels: Number of channels
     :return: output sequence that is filtered and downsampled input. Filter delay is compensated. Dimensions are 16xT/k
 
     256Hz
@@ -43,7 +41,7 @@ def sig_pro(input_seq, filt = None, fs = 256, k = 2, mode = '', channels = 16):
     output_seq = [[]]
 
     # Convolution per channel
-    for z in range(channels):
+    for z in range(len(input_seq)):
         temp = np.convolve(input_seq[z][:], filt)
         # Filter off-set compensation
         temp = temp[int(np.ceil(len(filt)/2.))-1:];
