@@ -74,6 +74,3 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 - `parameters`: json file for parameters.
 - `static`: images, misc manuals, and readable texts for gui.
 - `bci_main`: executor of experiments.
-
-
-
