@@ -3,3 +3,4 @@
 .DS_Store
 .cache/
 calibration_trigger_file.txt
+data/
