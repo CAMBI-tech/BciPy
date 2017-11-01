@@ -53,7 +53,7 @@ In order to run BCI suite on your computer, first install **Python 2.7** [from h
     - pip install /path/to/numpy‑1.13.1+mkl‑cp27‑cp27m‑win_amd64.whl
     - pip install /path/to/scipy‑0.19.1‑cp27‑cp27m‑win_amd64.whl
 
-You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows:
+* You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows: *
 
 1. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
@@ -64,16 +64,16 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 ## Modules and Vital Functions
 ------------------------------
 
-- `acquistion`: acquires data, gives back desired time series, saves at end of session
-- `display`: handles display of stimuli on screen, passing back stimuli timing
-- `eeg_model`: trains and classifies eeg responses based on eeg and triggers
-- `gui`: end-user interface into system
-- `helpers`: input/output functions needed for system
-- `utils`: utility functions needed for operation and installation
-- `language_model`: gives prob of letters during typing
-- `parameters`: json file for parameters
-- `static`: images, misc manuals, and readable texts for gui
-- `bci_main`: executor of experiments. 
+- `acquistion`: acquires data, gives back desired time series, saves at end of session.
+- `display`: handles display of stimuli on screen, passing back stimuli timing.
+- `eeg_model`: trains and classifies eeg responses based on eeg and triggers.
+- `gui`: end-user interface into system. See BCInterface.py and RSVPKeyboard.py.
+- `helpers`: input/output functions needed for system, as well as helpful intilization functions.
+- `utils`: utility functions needed for operation and installation.
+- `language_model`: gives prob of letters during typing.
+- `parameters`: json file for parameters.
+- `static`: images, misc manuals, and readable texts for gui.
+- `bci_main`: executor of experiments.
 
 
 
