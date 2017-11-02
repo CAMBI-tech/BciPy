@@ -4,7 +4,7 @@ import pyglet
 import utility.gui_fx as gui_fx
 from utils.convert import convert_to_height, convert_to_width
 
-', main_window_width',' Initialize main window and add via gui_fx. '''
+# Initialize main window and add via gui_fx.
 main_window = gui_fx.MenuWindow(0, 'Brain Computer Interface')
 gui_fx.add_window(main_window)
 

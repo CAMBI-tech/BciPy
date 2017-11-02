@@ -16,7 +16,7 @@
     "isNumeric": "false"
   },
   "languagemodel": {
-    "value": "'nyt.200.36char.m6.greg.fromfst.mod'",
+    "value": "nyt.200.36char.m6.greg.fromfst.mod",
     "section": "bci_config",
     "readableName": "Language Model",
     "helpTip": "Here are some sentences about this parameter. Here is another sentence.",
@@ -25,200 +25,39 @@
       "5",
       "17",
       "24",
-      "'test'",
-      "['array' 'fish']",
+      "test",
+      "['array', 'fish']",
       "false"
     ],
     "isNumeric": "false"
   },
-  "languagemodelwrapper.specialprobcalctype": {
-    "value": "'fixed'",
-    "section": "bci_config",
-    "readableName": "Language Model Wrapper",
-    "helpTip": "Language Model Wrapper",
-    "recommended_values": [
-      "'fixed'"
-    ],
-    "isNumeric": "false"
-  },
-  "calibration.numberoftrials": {
-    "value": "14",
-    "section": "bci_config",
-    "readableName": "Number of Calibration Trials",
-    "helpTip": "Number of Calibration Trials",
-    "recommended_values": [
-      "14"
-    ],
-    "isNumeric": "true"
-  },
-  "calibrationfrp.maxnumberofsequences": {
-    "value": "3",
-    "section": "bci_config",
-    "readableName": "Max Number of Calibration Sequences",
-    "helpTip": "Max Number of Calibration Sequences",
-    "recommended_values": [
-      "3"
-    ],
-    "isNumeric": "true"
-  },
-  "evidenceeval.priorities": {
-    "value": "[2 1]",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Priorities",
-    "helpTip": "Evidence Eval Priorities",
-    "recommended_values": [
-      "[2 1]"
-    ],
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.names": {
-    "value": "{'decideNextTrialsERP','decideNextTrialsFRP'}",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Names",
-    "helpTip": "Evidence Eval Names",
-    "recommended_values": [
-      "{'decideNextTrialsERP'",
-      "'decideNextTrialsFRP'}"
-    ],
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{1}.typing.maximumnumberofsequences": {
-    "value": "8",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Max Number of Sequences 1",
-    "helpTip": "Evidence Eval Max Number of Sequences 1",
-    "recommended_values": [
-      "8"
-    ],
-    "isNumeric": "true"
-  },
-  "evidenceeval.nexttrialfunctions.params{2}.typing.maximumnumberofsequences": {
-    "value": "inf",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Max Number of Sequences 2",
-    "helpTip": "Evidence Eval Max Number of Sequences 2",
-    "recommended_values": [
-      "inf"
-    ],
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{1}.typing.minimumnumberofsequences": {
-    "value": "true",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Min Number of Sequences 1",
-    "helpTip": "Evidence Eval Min Number of Sequences 1",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{2}.typing.minimumnumberofsequences": {
-    "value": "false",
-    "section": "bci_config",
-    "readableName": "Evidence Eval Min Number of Sequences 2",
-    "helpTip": "Evidence Eval Min Number of Sequences 2",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{2}.typing.allowasfirstsequence": {
-    "value": "false",
-    "section": "bci_config",
-    "readableName": "Allow As First Sequence",
-    "helpTip": "Allow As First Sequence",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{2}.typing.minmaxrequiredsequencecount{1}": {
-    "value": "[1 1]",
-    "section": "bci_config",
-    "readableName": "Min Max Required Sentence Count",
-    "helpTip": "Min Max Required Sentence Count",
-    "recommended_values": [
-      "[1 1]"
-    ],
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{2}.typing.enforcebeforedecision": {
-    "value": "true",
-    "section": "bci_config",
-    "readableName": "Enforce Before Decision",
-    "helpTip": "Enforce Before Decision",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{1}.typing.nextsequencedecisionrule": {
-    "value": "'Posterior'",
-    "section": "bci_config",
-    "readableName": "Next Sequence Decision Rule",
-    "helpTip": "Next Sequence Decision Rule",
-    "recommended_values": [
-      "'Posterior'"
-    ],
-    "isNumeric": "false"
-  },
-  "evidenceeval.nexttrialfunctions.params{1}.typing.enforcebackspaceateverysequence": {
-    "value": "true",
-    "section": "bci_config",
-    "readableName": "Enforce Backspace at Every Sequence",
-    "helpTip": "Enforce Backspace at Every Sequence",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "languagemodelwrapper.fixedprobability.deletecharacter": {
-    "value": "0.05",
-    "section": "bci_config",
-    "readableName": "Delete Character Fixed Probability",
-    "helpTip": "Delete Character Fixed Probability",
-    "recommended_values": [
-      "0.05"
-    ],
-    "isNumeric": "true"
-  },
-  "languagemodelwrapper.adaptiveprobability.deletecharacter.upperlimit": {
-    "value": "0.2",
-    "section": "bci_config",
-    "readableName": "Delete Character Upper Limit",
-    "helpTip": "Delete Character Upper Limit",
-    "recommended_values": [
-      "0.2"
-    ],
-    "isNumeric": "true"
-  },
-  "languagemodelwrapper.adaptiveprobability.deletecharacter.lowerlimit": {
-    "value": "0.03",
-    "section": "bci_config",
-    "readableName": "Delete Character Lower limit",
-    "helpTip": "Delete Character Lower limit",
-    "recommended_values": [
-      "0.03"
-    ],
-    "isNumeric": "true"
-  },
   "ip_main": {
-    "value": "'localhost'",
+    "value": "localhost",
     "section": "bci_config",
     "readableName": "Main IP",
     "helpTip": "Main IP",
     "recommended_values": [
-      "'localhost'"
+      "localhost"
     ],
     "isNumeric": "false"
   },
   "ip_presentation": {
-    "value": "'localhost'",
+    "value": "localhost",
     "section": "bci_config",
     "readableName": "IP presentation",
     "helpTip": "IP presentation",
     "recommended_values": [
-      "'localhost'"
+      "localhost"
     ],
     "isNumeric": "false"
   },
   "ip_gui": {
-    "value": "'localhost'",
+    "value": "localhost",
     "section": "bci_config",
     "readableName": "IP GUI",
     "helpTip": "IP GUI",
     "recommended_values": [
-      "'localhost'"
+      "localhost"
     ],
     "isNumeric": "false"
   },
@@ -242,238 +81,6 @@
     ],
     "isNumeric": "true"
   },
-  "gui.autolaunch": {
-    "value": "true",
-    "section": "advanced_config",
-    "readableName": "GUI Auto Launch",
-    "helpTip": "GUI Auto Launch",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "windowduration.erp": {
-    "value": "0.5",
-    "section": "advanced_config",
-    "readableName": "ERP Window Duration",
-    "helpTip": "ERP Window Duration",
-    "recommended_values": [
-      "0.5"
-    ],
-    "isNumeric": "true"
-  },
-  "windowduration.frp": {
-    "value": "0.5",
-    "section": "advanced_config",
-    "readableName": "FRP Window Duration",
-    "helpTip": "FRP Window Duration",
-    "recommended_values": [
-      "0.5"
-    ],
-    "isNumeric": "true"
-  },
-  "evidenceeval.nexttrialfunctions.params{1}.typing.numberoftrials": {
-    "value": "14",
-    "section": "advanced_config",
-    "readableName": "Evidence Eval Number of Trials",
-    "helpTip": "Evidence Eval Number of Trials",
-    "recommended_values": [
-      "14"
-    ],
-    "isNumeric": "true"
-  },
-  "artificialpriors.probadjuststep": {
-    "value": "0.05",
-    "section": "advanced_config",
-    "readableName": "Prob Adjust Step",
-    "helpTip": "Prob Adjust Step",
-    "recommended_values": [
-      "0.05"
-    ],
-    "isNumeric": "true"
-  },
-  "artificialpriors.nontargetinitialprob": {
-    "value": "0.4",
-    "section": "advanced_config",
-    "readableName": "Non-Target Initial Prob",
-    "helpTip": "Non-Target Initial Prob",
-    "recommended_values": [
-      "0.4"
-    ],
-    "isNumeric": "true"
-  },
-  "artificialpriors.targetinitialprob": {
-    "value": "0.4",
-    "section": "advanced_config",
-    "readableName": "Target Initial Prob",
-    "helpTip": "Target Initial Prob",
-    "recommended_values": [
-      "0.4"
-    ],
-    "isNumeric": "true"
-  },
-  "artificialpriors.numberoftargetsamples": {
-    "value": "120",
-    "section": "advanced_config",
-    "readableName": "Number of Target Samples",
-    "helpTip": "Number of Target Samples",
-    "recommended_values": [
-      "120"
-    ],
-    "isNumeric": "true"
-  },
-  "artificialpriors.numberofnontargetsamples": {
-    "value": "120",
-    "section": "advanced_config",
-    "readableName": "Number of Non-Target Samples",
-    "helpTip": "Number of Non-Target Samples",
-    "recommended_values": [
-      "120"
-    ],
-    "isNumeric": "true"
-  },
-  "supervisedproccesses.optimizationmode": {
-    "value": "1",
-    "section": "advanced_config",
-    "readableName": "Supervised Processes Optimization Mode",
-    "helpTip": "Supervised Processes Optimization Mode",
-    "recommended_values": [
-      "1"
-    ],
-    "isNumeric": "true"
-  },
-  "simulation.enabled": {
-    "value": "true",
-    "section": "advanced_config",
-    "readableName": "Simulation Enabled",
-    "helpTip": "Simulation Enabled",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "simulation.hyperparameternames": {
-    "value": "{'Typing.MaximumNumberofSequences'}",
-    "section": "advanced_config",
-    "readableName": "Hyperparameter Names",
-    "helpTip": "Hyperparameter Names",
-    "recommended_values": [
-      "{'Typing.MaximumNumberofSequences'}"
-    ],
-    "isNumeric": "false"
-  },
-  "simulation.hyperparametervalues": {
-    "value": "{[8]}",
-    "section": "advanced_config",
-    "readableName": "Hyperparameter Values",
-    "helpTip": "Hyperparameter Values",
-    "recommended_values": [
-      "{[8]}"
-    ],
-    "isNumeric": "false"
-  },
-  "simulation.exporttoexcel.enabled": {
-    "value": "true",
-    "section": "advanced_config",
-    "readableName": "Export to Excel Enabled",
-    "helpTip": "Export to Excel Enabled",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "simulation.exporttoexcel.filename": {
-    "value": "[]",
-    "section": "advanced_config",
-    "readableName": "Export to Excel filename",
-    "helpTip": "Export to Excel filename",
-    "recommended_values": [
-      "[]"
-    ],
-    "isNumeric": "false"
-  },
-  "simulation.exporttoexcel.folder": {
-    "value": "[]",
-    "section": "advanced_config",
-    "readableName": "Export to Excel Folder",
-    "helpTip": "Export to Excel Folder",
-    "recommended_values": [
-      "[]"
-    ],
-    "isNumeric": "false"
-  },
-  "simulation.montecarlorepetitioncount": {
-    "value": "5",
-    "section": "advanced_config",
-    "readableName": "Monte Carlo Repitition Count",
-    "helpTip": "Monte Carlo Repitition Count",
-    "recommended_values": [
-      "5"
-    ],
-    "isNumeric": "true"
-  },
-  "offlineanalysisscreen.enabled": {
-    "value": "true",
-    "section": "advanced_config",
-    "readableName": "Offline Analysis Screen Enabled",
-    "helpTip": "Offline Analysis Screen Enabled",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "offlineanalysisscreen.averageerpplotsenabled": {
-    "value": "true",
-    "section": "advanced_config",
-    "readableName": "Average ERP Plots Enabled",
-    "helpTip": "Average ERP Plots Enabled",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "artifactfiltering.enabled": {
-    "value": "false",
-    "section": "advanced_config",
-    "readableName": "Artifact Filtering Enabled",
-    "helpTip": "Artifact Filtering Enabled",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "artifactfiltering.channeldropwarning": {
-    "value": "false",
-    "section": "advanced_config",
-    "readableName": "Artifact Filtering Channel Drop Warning",
-    "helpTip": "Artifact Filtering Channel Drop Warning",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "artifactfiltering.rejectsequence": {
-    "value": "false",
-    "section": "advanced_config",
-    "readableName": "Artifact Filtering Reject Sequence",
-    "helpTip": "Artifact Filtering Reject Sequence",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "matrixspellermode": {
-    "value": "false",
-    "section": "advanced_config",
-    "readableName": "Matrix Speller Mode",
-    "helpTip": "Matrix Speller Mode",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "matrixpresentationparadigm": {
-    "value": "'RC'",
-    "section": "advanced_config",
-    "readableName": "Matrix Presentation Paradigm",
-    "helpTip": "Matrix Presentation Paradigm",
-    "recommended_values": [
-      "'RC'"
-    ],
-    "isNumeric": "false"
-  },
-  "matrixsize": {
-    "value": "[4 7]",
-    "section": "advanced_config",
-    "readableName": "Matrix Size",
-    "helpTip": "Matrix Size",
-    "recommended_values": [
-      "[4 7]"
-    ],
-    "isNumeric": "false"
-  },
   "typingtype": {
     "value": "2",
     "section": "advanced_config",
@@ -483,5 +90,243 @@
       "2"
     ],
     "isNumeric": "true"
-  }
-}
+  },
+  "color_task": {
+    "value": "White",
+    "section": "bci_config",
+    "readableName": "Color Task",
+    "helpTip": "Color Task",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "font_task": {
+    "value": "Times",
+    "section": "bci_config",
+    "readableName": "Font Task",
+    "helpTip": "Font Task",
+    "recommended_values": [
+      "Times"
+    ],
+    "isNumeric": "false"
+  },
+  "height_task": {
+    "value": "0.1",
+    "section": "bci_config",
+    "readableName": "Height Task",
+    "helpTip": "Height Task",
+    "recommended_values": [
+      "0.1"
+    ],
+    "isNumeric": "true"
+  },
+  "text_task": {
+    "value": "0/100",
+    "section": "advanced_config",
+    "readableName": "text task",
+    "helpTip": "text task",
+    "recommended_values": [
+      "0/100",
+      "1/100"
+    ],
+    "isNumeric": "false"
+  },
+  "color_text": {
+    "value": "White",
+    "section": "bci_config",
+    "readableName": "Color Text",
+    "helpTip": "Color Text",
+    "recommended_values": [
+      "White"
+    ],
+    "isNumeric": "false"
+  },
+  "font_text": {
+    "value": "Times",
+    "section": "bci_config",
+    "readableName": "Font Text",
+    "helpTip": "Font Text",
+    "recommended_values": [
+      "Times"
+    ],
+    "isNumeric": "false"
+  },
+  "pos_text_x": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Position Text",
+    "helpTip": "Position Text",
+    "recommended_values": [
+      "(0, -.75)"
+    ],
+    "isNumeric": "true"
+  },
+  "pos_text_y": {
+    "value": "-.75",
+    "section": "bci_config",
+    "readableName": "Position Text",
+    "helpTip": "Position Text",
+    "recommended_values": [
+      "(0, -.75)"
+    ],
+    "isNumeric": "true"
+  },
+  "text_text": {
+    "value": "Demo For Calibration Task",
+    "section": "bci_config",
+    "readableName": "Text Text",
+    "helpTip": "Text Text",
+    "recommended_values": [
+      "(0, -.75)"
+    ],
+    "isNumeric": "false"
+  },
+  "txt_height": {
+    "value": "0.1",
+    "section": "bci_config",
+    "readableName": "Text Height",
+    "helpTip": "Text Height",
+    "recommended_values": [
+      "0.1"
+    ],
+    "isNumeric": "true"
+  }, 
+  "txt_height": {
+    "value": "0.1",
+    "section": "bci_config",
+    "readableName": "Text Height",
+    "helpTip": "Text Height",
+    "recommended_values": [
+      "0.1"
+    ],
+    "isNumeric": "true"
+  }, 
+  "font_sti": {
+    "value": "Times",
+    "section": "bci_config",
+    "readableName": "Font Stimuli",
+    "helpTip": "Font Stimuli",
+    "recommended_values": [
+      "Times"
+    ],
+    "isNumeric": "false"
+  },
+  "pos_sti_x": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Pos Stimuli X",
+    "helpTip": "Pos Stimuli X",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "pos_sti_y": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Pos Stimuli Y",
+    "helpTip": "Pos Stimuli Y",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "sti_height": {
+    "value": "0.6",
+    "section": "bci_config",
+    "readableName": "Stimuli Height",
+    "helpTip": "Stimuli Height",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "tr_pos_bg": {
+    "value": "(0, .5)",
+    "section": "bci_config",
+    "readableName": "tr_pos_bg",
+    "helpTip": "tr_pos_bg",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "bl_pos_bg": {
+    "value": "(-1, -.5)",
+    "section": "bci_config",
+    "readableName": "bl_pos_bg",
+    "helpTip": "bl_pos_bg",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "size_domain_bg": {
+    "value": "7",
+    "section": "bci_config",
+    "readableName": "Size Bar Graph",
+    "helpTip": "Size Bar Graph",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }, 
+  "font_bg_txt": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "Font Bar Graph",
+    "helpTip": "Font Bar Graph",
+    "recommended_values": "",
+    "isNumeric": "false"
+  }, 
+  "color_bg_txt": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Bar Graph Text Color",
+    "helpTip": "Bar Graph Text Color",
+    "recommended_values": "",
+    "isNumeric": "fasle"
+  }, 
+  "is_txt_sti": {
+    "value": "True",
+    "section": "bci_config",
+    "readableName": "Is Text Stimuli",
+    "helpTip": "Is this Text -True- or Image -False-",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "time_flash": {
+    "value": "0.25",
+    "section": "bci_config",
+    "readableName": "Flash Length for Letters",
+    "helpTip": "Flash Length for Letters",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "time_target": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "Target Letter Presentation Length",
+    "helpTip": "Target Letter Presentation Length",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "time_cross": {
+    "value": "0.6",
+    "section": "bci_config",
+    "readableName": "Time Fixation Cross",
+    "helpTip": "Time Fixation Cross",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "color_bar_bg": {
+    "value": "green",
+    "section": "bci_config",
+    "readableName": "Color Bar Gragh Bars",
+    "helpTip": "Color Bar Gragh Bars",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "window_width": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Stimuli Presentation Window Width",
+    "helpTip": "Stimuli Presentation Window Width",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "window_height": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Stimuli Presentation Window Width",
+    "helpTip": "Stimuli Presentation Window Width",
+    "recommended_values": "",
+    "isNumeric": "true"
+  }}
