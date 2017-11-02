@@ -3,7 +3,7 @@ import utility.gui_fx as gui_fx
 from helpers.load import load_json_parameters
 from utils.convert import convert_to_height, convert_to_width
 
-', '' Initialize main window and add via gui_fx. '''
+# Initialize main window and add via gui_fx
 main_window = gui_fx.MenuWindow(0, 'RSVP Keyboard')
 gui_fx.add_window(main_window)
 

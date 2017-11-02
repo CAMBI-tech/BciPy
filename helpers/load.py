@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from Tkinter import Tk
 
 from codecs import open as codecsopen
@@ -14,8 +16,6 @@ def load_json_parameters(path):
             try:
                 parameters = jsonload(f)
             except ValueError as e:
-                import pdb;
-                pdb.set_trace()
                 raise ValueError(
                     "Parameters file is formatted incorrectly!")
 
@@ -65,4 +65,3 @@ def load_csv_data():
     print("Loaded EEG Data From: %s" % filename)
 
     return filename
-

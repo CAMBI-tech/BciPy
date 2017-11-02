@@ -18,18 +18,17 @@ def bci_main(parameters, user, exp_type, mode):
     # Initalize Save Folder
     save_folder = init_save_data_structure(
         'data/', user, 'parameters/parameters.json')
-    # Execute Task
 
+    # Register Task Type & Execute Task
     task_type = {
         'mode': mode,
         'exp_type': exp_type
     }
 
-    trial_data = execute_task(
+    execute_task(
         task_type, parameters, save_folder)
-    # Finalize Save
 
-    return "Successful Trial"
+    print "Successful Trial"
 
 
 def execute_task(task_type, parameters, save_folder):
@@ -43,10 +42,9 @@ def execute_task(task_type, parameters, save_folder):
 
     # Initialize DAQ [TO-DO: MAKE INIT_DAQ FUNCTION]
     # daq = init_daq()
-
     daq = "TEST DAQ"
 
-    # # Initialize Window
+    # Initialize Display Window
     display = init_display_window(parameters)
 
     # Start Task
@@ -56,8 +54,8 @@ def execute_task(task_type, parameters, save_folder):
     except Exception as e:
         print e
 
+    # Close Display Window and Stop Acquistion
     display.close()
     # daq.stop_acquisition()
 
-    # return trial_data
     return trial_data

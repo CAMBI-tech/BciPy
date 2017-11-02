@@ -52,7 +52,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     run = True
 
     while run is True:
-            # to-do allow pausing and exiting. See psychopy getKeys()
+        # to-do allow pausing and exiting. See psychopy getKeys()
         (task_text, task_color,
             ele_sti, timing_sti, color_sti) = get_task_info()
         try:
