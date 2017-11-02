@@ -3,10 +3,12 @@
 from __future__ import division
 from psychopy import core
 
-import pdb
-
 from display.rsvp_disp_modes import CalibrationTask
-from utils.trigger_helpers import _write_triggers_from_sequence_calibration
+from helpers.trigger_helpers import _write_triggers_from_sequence_calibration
+from helpers.stim_gen import random_rsvp_sequence_generator
+
+alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+       'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
@@ -44,7 +46,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
             color_bar_bg=parameters['color_bar_bg']['value'],
             is_txt_sti=parameters['is_txt_sti']['value'])
     except Exception as e:
-        print e
+        raise e
 
     # Init Task
     trigger_save_location = file_save + '/triggers.txt'
@@ -53,8 +55,11 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
     while run is True:
         # to-do allow pausing and exiting. See psychopy getKeys()
-        (task_text, task_color,
-            ele_sti, timing_sti, color_sti) = get_task_info()
+
+        task_text = ['1/100', '2/100', '3/100', '4/100']
+        task_color = [['white'], ['white'], ['white'], ['white']]
+        (ele_sti, timing_sti, color_sti) = random_rsvp_sequence_generator(
+            alp, 4, 10)
         try:
             for idx_o in range(len(task_text)):
 
@@ -84,7 +89,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
             run = False
 
         except Exception as e:
-            pdb.set_trace()
+            raise e
 
     trigger_file.close()
     return (daq, file_save)

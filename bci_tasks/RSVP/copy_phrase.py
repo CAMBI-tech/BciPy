@@ -6,7 +6,7 @@ from psychopy import core
 import pdb
 
 from display.rsvp_disp_modes import CopyPhraseTask
-from utils.trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
 
 def RSVP_copy_phrase_task(win, daq, parameters, file_save):
