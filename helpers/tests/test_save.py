@@ -42,18 +42,18 @@ class TestSave(unittest.TestCase):
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))
 
-    def test_throws_useful_error_if_given_incorrect_params_path(self):
+    # def test_throws_useful_error_if_given_incorrect_params_path(self):
 
-        # try passing a parameters file that does not exist
-        try:
-            init_save_data_structure(
-                self.data_save_path,
-                self.user_information,
-                'doesnotexit.json')
+    #     # try passing a parameters file that does not exist
+    #     try:
+    #         init_save_data_structure(
+    #             self.data_save_path,
+    #             self.user_information,
+    #             'does_not_exist.json')
 
-        # catch the exception and make sure it's as expected
-        except Exception as error:
-            self.assertEqual(error.strerror, 'No such file or directory')
+    #     # catch the exception and make sure it's as expected
+    #     except Exception as error:
+    #         self.assertEqual(error.strerror, 'No such file or directory')
 
     def test_init_save_data_structure_makes_helpers_folder(self):
 
