@@ -14,3 +14,5 @@ scipy==0.19.1
 construct==2.8.14
 mock==2.0.0
 pylsl==1.10.5
+psutil==5.4.0
+
