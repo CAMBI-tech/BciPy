@@ -16,10 +16,10 @@ def random_rsvp_sequence_generator(alp, timing=[0.5, 1, 0.2],
             num_sti(int): number of random stimuli to be created
             len_sti(int): number of trials in a sequence
         Return:
-            schedule_seq(dict{
+            schedule_seq(tuple(
                 samples[list[list[str]]]: list of sequences
                 timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors}): scheduled sequences
+                color(list(list[str])): list of colors)): scheduled sequences
             """
 
     len_alp = len(alp)
@@ -38,6 +38,25 @@ def random_rsvp_sequence_generator(alp, timing=[0.5, 1, 0.2],
     schedule_seq = (samples, times, colors)
 
     return schedule_seq
+
+
+def get_task_info(experiment_length, task_color):
+        """ Generates fixed RSVPKeyboard task text and color information for
+                display.
+        Args:
+            experiment_length(int): Number of sequences for the experiment
+            task_color(str): Task information display color
+
+        Return get_task_info((tuple): task_text: array of task text to display
+                       task_color: array of colors for the task text
+                       )
+            """
+
+    # Do list comprehensions to get the arrays for the task we need.
+    task_text = ['%s/100' % (stim) for stim in range(experiment_length)]
+    task_color = [[str(task_color)] for stim in range(experiment_length)]
+
+    return (task_text, task_color)
 
 
 def _demo_random_rsvp_sequence_generator():

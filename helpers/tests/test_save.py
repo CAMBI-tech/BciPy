@@ -27,7 +27,7 @@ class TestSave(unittest.TestCase):
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
-        shutil.rmtree(self.data_save_path)
+        shutil.rmtree(self.save_folder_name)
 
     def test_init_save_data_structure_creates_correct_save_folder(self):
 

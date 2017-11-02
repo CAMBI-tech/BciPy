@@ -5,7 +5,7 @@ from psychopy import core
 
 from display.rsvp_disp_modes import CalibrationTask
 from helpers.trigger_helpers import _write_triggers_from_sequence_calibration
-from helpers.stim_gen import random_rsvp_sequence_generator
+from helpers.stim_gen import random_rsvp_sequence_generator, get_task_info
 
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
@@ -54,60 +54,69 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     run = True
 
     while run is True:
-        # to-do allow pausing and exiting. See psychopy getKeys()
+        # [to-do] allow pausing and exiting. See psychopy getKeys()
 
-        task_text = ['1/100', '2/100', '3/100', '4/100']
-        task_color = [['white'], ['white'], ['white'], ['white']]
-        (ele_sti, timing_sti, color_sti) = random_rsvp_sequence_generator(
-            alp, 4, 10)
+        # Try getting random sequence information given stimuli parameters
+        try:
+            (ele_sti, timing_sti, color_sti) = random_rsvp_sequence_generator(
+                alp, num_sti=int(parameters['num_sti']['value']),
+                len_sti=int(parameters['len_sti']['value']), timing=[
+                    float(parameters['time_target']['value']),
+                    float(parameters['time_cross']['value']),
+                    float(parameters['time_flash']['value'])])
+
+            (task_text, task_color) = get_task_info(
+                int(parameters['num_sti']['value']),
+                parameters['task_color']['value'])
+
+        # Catch the exception here if needed.
+        except Exception as e:
+            raise e
+
+        # Try executing the sequences
         try:
             for idx_o in range(len(task_text)):
 
+                # update task state
                 rsvp.update_task_state(
                     text=task_text[idx_o],
                     color_list=task_color[idx_o])
+
+                # Draw and flip screen 
                 rsvp.draw_static()
                 win.flip()
+
+                # Get height
                 rsvp.sti.height = float(parameters['sti_height']['value'])
 
                 # Schedule a sequence
                 rsvp.ele_list_sti = ele_sti[idx_o]
 
+                # check if text stimuli or not for color information
                 if parameters['is_txt_sti']['value']:
                     rsvp.color_list_sti = color_sti[idx_o]
 
                 rsvp.time_list_sti = timing_sti[idx_o]
 
+                # Wait for a time
                 core.wait(.4)
+
+                # Do the sequence
                 last_sequence_timing = rsvp.do_sequence()
 
+                # Write triggers for the sequence
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, trigger_file)
 
+                # Wait for a time
                 core.wait(.5)
 
+            # Set run to False to stop looping
             run = False
 
         except Exception as e:
             raise e
 
+    # Close this sessions trigger file and return some data
     trigger_file.close()
     return (daq, file_save)
-
-
-def get_task_info():
-    ele_sti = [
-        ['B', '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
-        ['E', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['W', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
-    color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
-                  'white', 'white', 'white', 'white', 'white', 'white']] * 4
-    task_text = ['1/100', '2/100', '3/100', '4/100']
-    task_color = [['white'], ['white'], ['white'], ['white']]
-    time_flash = .25
-    time_target = 2
-    time_cross = .6
-    timing_sti = [[time_target] + [time_cross] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
-
-    return (task_text, task_color, ele_sti, timing_sti, color_sti)
