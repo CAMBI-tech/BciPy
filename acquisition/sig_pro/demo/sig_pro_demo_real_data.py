@@ -15,7 +15,7 @@ fs = 256  # downsampling factor
 k=1 # downsampling factor
 
 # New filter: testing filter on real data
-y = sigPro(EEG_Data, fs = fs, k = 1, channels = 20)
+y = sig_pro(EEG_Data, fs = fs, k = 1)
 
 # Old filter: testing filter on real data
 filt = loadmat('inputFilterCoef.mat')
@@ -24,7 +24,7 @@ filterNum = filt['frontendFilter']['Num'][0,0][0] # Den = 1
 # Convolution per channel
 temp = np.convolve(EEG_Data[0][:], filterNum)
 # Filter off-set compensation
-temp = temp[groupDelay-1:];
+temp = temp[groupDelay:];
 # Downsampling
 Y = temp[::k]
 
