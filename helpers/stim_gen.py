@@ -41,16 +41,16 @@ def random_rsvp_sequence_generator(alp, timing=[0.5, 1, 0.2],
 
 
 def get_task_info(experiment_length, task_color):
-        """ Generates fixed RSVPKeyboard task text and color information for
-                display.
-        Args:
-            experiment_length(int): Number of sequences for the experiment
-            task_color(str): Task information display color
+    """ Generates fixed RSVPKeyboard task text and color information for
+            display.
+    Args:
+        experiment_length(int): Number of sequences for the experiment
+        task_color(str): Task information display color
 
-        Return get_task_info((tuple): task_text: array of task text to display
-                       task_color: array of colors for the task text
-                       )
-            """
+    Return get_task_info((tuple): task_text: array of task text to display
+                   task_color: array of colors for the task text
+                   )
+    """
 
     # Do list comprehensions to get the arrays for the task we need.
     task_text = ['%s/100' % (stim) for stim in range(experiment_length)]
