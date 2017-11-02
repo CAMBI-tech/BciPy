@@ -3,3 +3,13 @@
 .DS_Store
 .cache/
 calibration_trigger_file.txt
+
+# Virtualenv
+venv/
+
+__pycache__/
+.cache/
+
+calibration.csv
+rawdata.csv
+buffer.db
