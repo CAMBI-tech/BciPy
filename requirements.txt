@@ -11,3 +11,4 @@ six==1.11.0
 numpy==1.13.1+mkl
 future==0.16.0
 scipy==0.19.1
+sklearn==0.0
