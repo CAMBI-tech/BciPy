@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import datetime
 import errno
 import os
@@ -7,12 +9,14 @@ from shutil import copy2
 def init_save_data_structure(data_save_path,
                              user_information,
                              parameters_used):
-    '''
-        data_save_path: string of path to save our data in
-        user_information: string of user name / realted information
-        parameters_used: a path to parameters file for the experiment
+    """
+    Initialize Save Data Strucutre.
 
-    '''
+        data_save_path[str]: string of path to save our data in
+        user_information[str]: string of user name / realted information
+        parameters_used[str]: a path to parameters file for the experiment
+
+    """
 
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information

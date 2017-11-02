@@ -1,0 +1,7 @@
+# Project dependencies
+future==0.16.0
+numpy==1.13.1
+construct==2.8.14
+mock==2.0.0
+pylsl==1.10.5
+pytest==3.2.2

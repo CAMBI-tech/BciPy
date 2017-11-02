@@ -2,3 +2,18 @@
 *~
 .DS_Store
 .cache/
+
+
+data/
+
+# Virtualenv
+venv/
+
+__pycache__/
+.cache/
+
+calibration.csv
+rawdata.csv
+buffer.db
+
+>>>>>>> master

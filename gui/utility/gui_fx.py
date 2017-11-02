@@ -8,6 +8,7 @@ from os import chdir
 from os import path as ospath
 from sys import executable
 from warnings import warn
+import bci_main
 
 import pyglet
 import wx
@@ -327,6 +328,7 @@ def drop_items(text_box_name, windowId, filename, readValues):
 def set_trial_type(numId):
     global trialType
     global userId
+    global new_window
     for counter in range(0, (len(inputFields))):
         if(inputFields[counter][0].name == 'user_id'):
             if(inputFields[counter][0].text != ''):
@@ -736,6 +738,31 @@ def run_python_file(filename):
             warn("File " + str(filename) + " is not a valid Python file.")
     else:
         warn("File " + str(filename) + " not found.")
+
+
+# runs BCI main to start the experiment
+def exec_bci_main(parameters, window, mode):
+
+    # Get experiment information from globally set variables
+    global trialType
+    global userId
+    global new_window
+
+    # set textBoxes, buttons, inputs, and images globally
+    global textBoxes
+    global buttons
+    global inputFields
+    global images
+
+    try:
+
+        new_window.close()
+        message = bci_main.bci_main(parameters, userId, trialType, mode)
+
+        print(message)
+
+    except Exception:
+        pass
 
 
 # Runs a command (filename) from the given location (execPath). Intended to
