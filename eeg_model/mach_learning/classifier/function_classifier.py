@@ -72,17 +72,19 @@ class RegularizedDiscriminantAnalysis(object):
         else:
             self.prior = p
 
-        self.regularize(gam=self.gam, lam=self.lam)
+        self.regularize(param=[self.gam, self.lam])
 
-    def regularize(self, gam, lam):
+    def regularize(self, param):
         """ Regularizes the covariance based on hyper parameters
             Args:
-                lam(float):
-                gam(float): """
+                param(list[gam(float),lam(float)]): List of regularization
+                    parameters. Parameters should be a list instead of
+                    individual elements for training purposes.
+                 """
 
         # TODO: what if no param passed?
-        self.gam = gam
-        self.lam = lam
+        self.gam = param[0]
+        self.lam = param[1]
 
         sum_cov = sum(self.cov)
         # Regularize covariances

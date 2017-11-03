@@ -3,7 +3,7 @@ import scipy.optimize
 from sklearn import metrics
 
 
-def cost_auc(model, opt_el, x, y, lam, gam):
+def cost_auc(model, opt_el, x, y, param):
     """ Minimize cost of the overall -AUC
         Args:
             model(pipeline): model to be iterated on
@@ -11,15 +11,15 @@ def cost_auc(model, opt_el, x, y, lam, gam):
             x(ndarray[float]): N x k data array
             y(ndarray[int]): N x k observation (class) array
                 N is number of samples k is dimensionality of features
-            lam(float): cost function lambda to iterate over
-            gam(float): cost function gamma to iterate over
+            param(list[float]): ordered hyper parameter list for the
+                regularization
         Return:
             -auc(float): negative AUC value for current setup
             """
 
     # x1, x2, y1, y2 = train_test_split(x, y, test_size=0.1)
     # self.fit_param(x1, y1, self.prior)
-    model.pipeline[opt_el].regularize(lam=lam, gam=gam)
+    model.pipeline[opt_el].regularize(param)
     sc = model.transform(x)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc = metrics.auc(fpr, tpr)
@@ -46,7 +46,7 @@ def param_nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc'):
         # TODO: maybe we should not have such an option and set it by ourselves
         if op_type == 'cost_auc':
             cost_fun_param = lambda b: cost_auc(
-                model, opt_el, x, y, b[0], b[1])
+                model, opt_el, x, y, [b[0], b[1]])
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
