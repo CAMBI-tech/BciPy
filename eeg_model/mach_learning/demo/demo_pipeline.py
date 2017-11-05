@@ -11,14 +11,14 @@ from sklearn import metrics
 import numpy as np
 from scipy.stats import iqr
 
-dim_x = 16
-num_x_p = 2000
-num_x_n = 1000
+dim_x = 2
+num_x_p = 300
+num_x_n = 300
 var_tol = 0.80
 num_ch = 16
 
-x_p = np.random.randn(num_ch, num_x_p, dim_x)
-x_n = np.random.randn(num_ch, num_x_n, dim_x)
+x_p = 4 * np.random.randn(num_ch, num_x_p, dim_x)
+x_n = 4 * np.random.randn(num_ch, num_x_n, dim_x)
 y_p = [1] * num_x_p
 y_n = [0] * num_x_n
 
@@ -47,7 +47,7 @@ model.add(rda)
 sc1 = model.fit_transform(x, y)
 fpr, tpr, _ = metrics.roc_curve(y, sc1, pos_label=1)
 arg = metrics.auc(fpr, tpr)
-arg2 = cross_validation(x, y, model=model, K=10)
+arg2 = cross_validation(x, y, model=model, k_folds=10)
 auc2 = arg2[2]
 
 print('Pipeline Successfully Processed Data!')

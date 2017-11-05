@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.optimize
 from sklearn import metrics
+import time
+from utils.progress_bar import progress_bar
 
 
 def cost_auc(model, opt_el, x, y, param):
@@ -64,9 +66,8 @@ def param_nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc'):
     # TODO: Insert cost functions for parameter update below!
 
 
-def cross_validation(x, y, model, opt_el=1, K=10, split='uniform'):
-    """ Cross validation object implementation which directly follows the
-        MATLAB implementation
+def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
+    """ Cross validation function for hyper parameter optimization
         Args:
             x(ndarray[float]): C x N x k data array
             y(ndarray[int]): N x 1 observation (class) array
@@ -74,16 +75,16 @@ def cross_validation(x, y, model, opt_el=1, K=10, split='uniform'):
                 C is number of channels
             model(pipeline): model to be optimized
             opt_el(int): element in the model to update hyper-params in [0,M]
-            K(int): number of folds
+            k_folds(int): number of folds
             split(string): split type,
                 'uniform': Takes the data as is
             """
     num_samples = x.shape[1]
-    fold_len = np.floor(float(num_samples) / K)
+    fold_len = np.floor(float(num_samples) / k_folds)
 
     fold_x, fold_y = [], []
     if split == 'uniform':
-        for idx_fold in range(K):
+        for idx_fold in range(k_folds):
             fold_x.append(x[:, int(idx_fold * fold_len):int(
                 (idx_fold + 1) * fold_len), :])
             fold_y.append(y[int(idx_fold * fold_len):int((idx_fold + 1) *
@@ -91,9 +92,14 @@ def cross_validation(x, y, model, opt_el=1, K=10, split='uniform'):
 
     # Split data
     lam, gam, auc_h = [], [], []
-    for idx_fold in range(K):
+    print('Starting Cross Validation !')
+    progress_bar(0, k_folds, prefix='Progress:', suffix='Complete', length=50)
+    t = time.time()
+    for idx_fold in range(k_folds):
+        progress_bar(idx_fold, k_folds, prefix='Progress:', suffix='Complete',
+                     length=50)
         list_valid = idx_fold
-        list_train = list(set(range(K)) - set([idx_fold]))
+        list_train = list(set(range(k_folds)) - set([idx_fold]))
 
         x_train = np.concatenate([fold_x[i] for i in list_train], axis=1)
         y_train = np.concatenate([fold_y[i] for i in list_train], axis=0)
@@ -108,6 +114,8 @@ def cross_validation(x, y, model, opt_el=1, K=10, split='uniform'):
         sc = model.transform(x)
         fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
         auc_h.append(metrics.auc(fpr, tpr))
+
+    print('Cross Validation Elapsed in {0:.2f}[s]!'.format((time.time() - t)))
 
     lam = np.asarray(lam)
     gam = np.asarray(gam)
