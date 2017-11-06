@@ -17,7 +17,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     try:
         daq.start_acquisition()
     except Exception as e:
-        print "data acquistion could not start!"
+        print "Data acquistion could not start!"
         raise e
 
     # Initialize Experiment clocks etc.

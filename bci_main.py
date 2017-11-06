@@ -26,8 +26,11 @@ def bci_main(parameters, user, exp_type, mode):
         'exp_type': exp_type
     }
 
-    execute_task(
-        task_type, parameters, save_folder)
+    try:
+        execute_task(
+            task_type, parameters, save_folder)
+    except:
+        print "Unsuccessful Trial"
 
     print "Successful Trial"
 
@@ -40,19 +43,14 @@ def execute_task(task_type, parameters, save_folder):
         data acquistion, then passing on to the start_task funtion
         which will initialize experiment.
     """
+
+    # Initialize the needed DAQ Parameters
     daq_parameters = {
         'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
-        # 'channels': ['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz', 'CM', 'A1',
-        #              'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2', 'F7', 'F8', 'A2',
-        #              'T6', 'T4'],
-        # 'connection_params': {
-        #     'host': parameters['connection_params_host']['value'],
-        #     'port': int(parameters['connection_params_port']['value'])},
-
         'device': parameters['acq_device']['value'],
         'filename': save_folder + '/' + parameters['raw_data_name']['value'],
-        # 'fs': 300
     }
+
     # Initialize EEG Acquisition
     daq, server = init_eeg_acquisition(daq_parameters, server=True)
 
@@ -64,10 +62,16 @@ def execute_task(task_type, parameters, save_folder):
         trial_data = start_task(
             daq, display, task_type, parameters, save_folder)
     except Exception as e:
-        print e
+        raise e
 
     # Close Display Window and Stop Acquistion
     daq.stop_acquisition()
+
+    # If a server was started for the data, stop it now
+    if server:
+        server.stop()
+
+    # Close the display window
     display.close()
 
     return trial_data

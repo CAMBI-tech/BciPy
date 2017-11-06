@@ -49,7 +49,7 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=True):
     filename = parameters.get('filename', 'rawdata.csv')
     fs = parameters.get('fs', 300)
 
-    dataserver = NullServer()
+    dataserver = False
     if server:
         device_name = 'DSI'
         host = connection_params.setdefault('host', default_host)
@@ -72,18 +72,4 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=True):
                     buffer=Buffer.builder(buffer_name),
                     clock=clock)
 
-    # client.start_acquisition()
     return (client, dataserver)
-
-
-class NullServer(object):
-    """Do-nothing object that implements the data server API."""
-
-    def __init__(self):
-        super(NullServer, self).__init__()
-
-    def start(self):
-        pass
-
-    def stop(self):
-        pass
