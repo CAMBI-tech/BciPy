@@ -13,7 +13,7 @@ The `client` is the primary module for receiving data from the EEG hardware, per
     import acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '0.0.0.0', 'port': 8844})
+    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 8844})
     # Use default processor (FileWriter), buffer, and clock.
     client = Client(device=dsi_device)
 
@@ -84,7 +84,7 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
         server = DataServer(protocol=protocol,
                             generator=generator.random_data,
                             gen_params={'channel_count': n},
-                            host='0.0.0.0', port=8844)
+                            host='127.0.0.1', port=8844)
         server.start()
         while True:
             time.sleep(1)

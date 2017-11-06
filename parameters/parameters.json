@@ -339,7 +339,7 @@
     "isNumeric": "false"
   },
   "connection_params_host": {
-    "value": "0.0.0.0",
+    "value": "127.0.0.1",
     "section": "bci_config",
     "readableName": "Connection host",
     "helpTip": "Connection host",

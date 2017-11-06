@@ -37,7 +37,7 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=True):
     -------
         (client, server) tuple
     """
-    default_host = '0.0.0.0'
+    default_host = '127.0.0.1'
     default_port = 8844
 
     # Set configuration parameters (with default values if not provided).
