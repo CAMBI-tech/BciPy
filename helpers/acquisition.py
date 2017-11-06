@@ -5,12 +5,12 @@ from __future__ import division
 import bci.acquisition.datastream.generator as generator
 import bci.acquisition.protocols.registry as registry
 from bci.acquisition.buffer import Buffer
-from bci.acquisition.client import Client
+from bci.acquisition.client import Client, _Clock
 from bci.acquisition.processor import FileWriter
 from bci.acquisition.datastream.server import DataServer
 
 
-def init_eeg_acquisition(parameters, server=True):
+def init_eeg_acquisition(parameters, clock=_Clock(), server=True):
     """
     Initializes a client that connects with the EEG data source and begins
     data collection.
@@ -28,12 +28,14 @@ def init_eeg_acquisition(parameters, server=True):
                     'filename': str,            # path/name of rawdata file
                     'fs': int                   # sample frequency
                 }
+        clock : Clock, optional
+            optional clock used in the client; see client for details.
         server : bool, optional
             optionally start a server that streams random DSI data; defaults
             to true; if this is True, the client will also be a DSI client.
     Returns
     -------
-        client : Client
+        (client, server) tuple
     """
     default_host = '0.0.0.0'
     default_port = 8844
@@ -47,6 +49,7 @@ def init_eeg_acquisition(parameters, server=True):
     filename = parameters.get('filename', 'rawdata.csv')
     fs = parameters.get('fs', 300)
 
+    dataserver = NullServer()
     if server:
         device_name = 'DSI'
         host = connection_params.setdefault('host', default_host)
@@ -54,18 +57,33 @@ def init_eeg_acquisition(parameters, server=True):
         protocol = registry.default_protocol(device_name)
         fs = protocol.fs
         channels = protocol.channels
-        server = DataServer(protocol=protocol,
-                            generator=generator.random_data,
-                            gen_params={'channel_count': len(channels)},
-                            host=host, port=port)
-        server.start()
+        dataserver = DataServer(protocol=protocol,
+                                generator=generator.random_data,
+                                gen_params={'channel_count': len(channels)},
+                                host=host, port=port)
+        dataserver.start()
 
     Device = registry.find_device(device_name)
+
     client = Client(device=Device(connection_params=connection_params,
                                   fs=fs,
                                   channels=channels),
                     processor=FileWriter.builder(filename),
-                    buffer=Buffer.builder(buffer_name))
+                    buffer=Buffer.builder(buffer_name),
+                    clock=clock)
 
     # client.start_acquisition()
-    return client
+    return (client, dataserver)
+
+
+class NullServer(object):
+    """Do-nothing object that implements the data server API."""
+
+    def __init__(self):
+        super(NullServer, self).__init__()
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass

@@ -54,7 +54,7 @@ def execute_task(task_type, parameters, save_folder):
         # 'fs': 300
     }
     # Initialize EEG Acquisition
-    daq = init_eeg_acquisition(daq_parameters, server=True)
+    daq, server = init_eeg_acquisition(daq_parameters, server=True)
 
     # Initialize Display Window
     display = init_display_window(parameters)
