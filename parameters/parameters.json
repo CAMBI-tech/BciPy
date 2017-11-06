@@ -329,4 +329,28 @@
     "helpTip": "Stimuli Presentation Window Width",
     "recommended_values": "",
     "isNumeric": "true"
+  },
+  "num_sti": {
+    "value": "4",
+    "section": "bci_config",
+    "readableName": "Number of stimuli to present over the experiment",
+    "helpTip": "Number of stimuli to present over the experiment",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "len_sti": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Number of stimuli to present in a sequence",
+    "helpTip": "Number of stimuli to present in a sequence",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "task_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Task Color",
+    "helpTip": "Task Color",
+    "recommended_values": "",
+    "isNumeric": "false"
   }}
