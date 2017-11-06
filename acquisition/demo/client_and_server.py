@@ -21,16 +21,18 @@ def main():
     from acquisition.client import Client
     from acquisition.datastream.server import DataServer
 
+    host = '127.0.0.1'
+    port = 8844
     # The Protocol is for mocking data.
     protocol = registry.default_protocol('DSI')
     server = DataServer(protocol=protocol,
                         generator=generator.random_data,
                         gen_params={'channel_count': len(protocol.channels)},
-                        host='0.0.0.0', port=8844)
+                        host=host, port=port)
 
     # Device is for reading data.
     Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '0.0.0.0', 'port': 8844})
+    dsi_device = Device(connection_params={'host': host, 'port': port})
     client = Client(device=dsi_device)
 
     try:
