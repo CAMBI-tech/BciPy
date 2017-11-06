@@ -10,7 +10,13 @@ from utils.trigger_helpers import _write_triggers_from_sequence_calibration
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
-    # daq.start_acquistion(file_save)
+
+    # start acquiring data
+    try:
+        daq.start_acquistion()
+    except Exception as e:
+        print "data acquistion could not start!"
+        raise e
 
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()

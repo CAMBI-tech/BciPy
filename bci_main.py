@@ -1,6 +1,7 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from helpers.display import init_display_window
+from helpers.acquistion import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 
 
@@ -39,10 +40,19 @@ def execute_task(task_type, parameters, save_folder):
         data acquistion, then passing on to the start_task funtion
         which will initialize experiment.
     """
+    daq_parameters = {
+        'buffer_name': save_folder + parameters['buffer_name']['value'],
+        'channels': [],
+        'connection_params': {
+            'host': parameters['connection_params_host']['value'],
+            'port': int(parameters['connection_params_port']['value'])},
 
-    # Initialize DAQ [TO-DO: MAKE INIT_DAQ FUNCTION]
-    # daq = init_daq()
-    daq = "TEST DAQ"
+        'device': parameters['acq_device']['value'],
+        'filename': save_folder + parameters['raw_data_name']['value'],
+        'fs': 300
+    }
+    # Initialize EEG Acquisition
+    daq = init_eeg_acquisition(daq_parameters, server=True)
 
     # Initialize Display Window
     display = init_display_window(parameters)
@@ -56,6 +66,6 @@ def execute_task(task_type, parameters, save_folder):
 
     # Close Display Window and Stop Acquistion
     display.close()
-    # daq.stop_acquisition()
+    daq.stop_acquisition()
 
     return trial_data

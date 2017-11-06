@@ -10,7 +10,7 @@ from bci.acquisition.processor import FileWriter
 from bci.acquisition.datastream.server import DataServer
 
 
-def init_acquisition(parameters, server=True):
+def init_eeg_acquisition(parameters, server=True):
     """
     Initializes a client that connects with the EEG data source and begins
     data collection.
@@ -67,5 +67,5 @@ def init_acquisition(parameters, server=True):
                     processor=FileWriter.builder(filename),
                     buffer=Buffer.builder(buffer_name))
 
-    client.start_acquisition()
+    # client.start_acquisition()
     return client
