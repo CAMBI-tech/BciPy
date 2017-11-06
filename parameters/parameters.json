@@ -359,10 +359,7 @@
     "section": "bci_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
-    "recommended_values": [
-      "DSI",
-      "LSL",
-       ],
+    "recommended_values": "",
     "isNumeric": "false"
   },
   "raw_data_name": {

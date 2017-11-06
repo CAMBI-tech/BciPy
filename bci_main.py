@@ -41,15 +41,17 @@ def execute_task(task_type, parameters, save_folder):
         which will initialize experiment.
     """
     daq_parameters = {
-        'buffer_name': save_folder + parameters['buffer_name']['value'],
-        'channels': [],
-        'connection_params': {
-            'host': parameters['connection_params_host']['value'],
-            'port': int(parameters['connection_params_port']['value'])},
+        'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
+        # 'channels': ['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz', 'CM', 'A1',
+        #              'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2', 'F7', 'F8', 'A2',
+        #              'T6', 'T4'],
+        # 'connection_params': {
+        #     'host': parameters['connection_params_host']['value'],
+        #     'port': int(parameters['connection_params_port']['value'])},
 
         'device': parameters['acq_device']['value'],
-        'filename': save_folder + parameters['raw_data_name']['value'],
-        'fs': 300
+        'filename': save_folder + '/' + parameters['raw_data_name']['value'],
+        # 'fs': 300
     }
     # Initialize EEG Acquisition
     daq = init_eeg_acquisition(daq_parameters, server=True)
@@ -65,7 +67,7 @@ def execute_task(task_type, parameters, save_folder):
         print e
 
     # Close Display Window and Stop Acquistion
-    display.close()
     daq.stop_acquisition()
+    display.close()
 
     return trial_data
