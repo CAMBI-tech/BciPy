@@ -29,10 +29,9 @@ def bci_main(parameters, user, exp_type, mode):
     try:
         execute_task(
             task_type, parameters, save_folder)
+        print "Successful Trial!"
     except:
         print "Unsuccessful Trial"
-
-    print "Successful Trial"
 
 
 def execute_task(task_type, parameters, save_folder):

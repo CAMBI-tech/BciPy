@@ -53,7 +53,9 @@ def get_task_info(experiment_length, task_color):
     """
 
     # Do list comprehensions to get the arrays for the task we need.
-    task_text = ['%s/100' % (stim) for stim in range(experiment_length)]
+
+    task_text = ['%s/%s' % (stim + 1, experiment_length)
+                 for stim in range(experiment_length)]
     task_color = [[str(task_color)] for stim in range(experiment_length)]
 
     return (task_text, task_color)
