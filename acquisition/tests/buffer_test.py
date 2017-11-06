@@ -6,7 +6,7 @@ import timeit
 
 import numpy as np
 from buffer import Buffer
-from client import _StoppableThread
+from acquisition.client import _StoppableThread
 from record import Record
 
 

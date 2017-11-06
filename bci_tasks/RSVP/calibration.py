@@ -12,13 +12,21 @@ alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
-    # daq.start_acquistion(file_save)
 
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
     experiment_clock = core.MonotonicClock(start_time=None)
 
+    # Start acquiring data
+    try:
+        daq.clock = experiment_clock
+        daq.start_acquisition()
+    except Exception as e:
+        print "Data acquistion could not start!"
+        raise e
+
+    # Try running the calibration task
     try:
         rsvp = CalibrationTask(
             window=win, clock=clock,
@@ -82,7 +90,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
                     text=task_text[idx_o],
                     color_list=task_color[idx_o])
 
-                # Draw and flip screen 
+                # Draw and flip screen
                 rsvp.draw_static()
                 win.flip()
 
@@ -119,4 +127,4 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
     # Close this sessions trigger file and return some data
     trigger_file.close()
-    return (daq, file_save)
+    return file_save
