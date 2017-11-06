@@ -1,7 +1,7 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from helpers.display import init_display_window
-from helpers.acquistion import init_eeg_acquisition
+from helpers.acquisition import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 
 
