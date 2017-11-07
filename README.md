@@ -46,7 +46,7 @@ In order to run BCI suite on your computer, first install **Python 2.7** [from h
 
 -or-
 
-2. Use pip to iteratively install required modules.
+  Use pip to iteratively install required modules.
     - `pip install -r requirements.txt`
 
     After pip is done, download two modules that are left according to your OS(64 or 32 bit), which are numpy+mkl 1.13.1 [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy) and scipy 0.19.1 [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy).
@@ -55,7 +55,7 @@ In order to run BCI suite on your computer, first install **Python 2.7** [from h
 
 * You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows: *
 
-1. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
+2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
 > You are ready to run BCI suite!
 
