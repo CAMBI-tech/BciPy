@@ -168,12 +168,13 @@
     "isNumeric": "true"
   },
   "text_text": {
-    "value": "Demo For Calibration Task",
+    "value": "",
     "section": "bci_config",
-    "readableName": "Text Text",
-    "helpTip": "Text Text",
+    "readableName": "Text below main presentation",
+    "helpTip": "Text below main presentation",
     "recommended_values": [
-      "(0, -.75)"
+      "",
+      "Demo Text"
     ],
     "isNumeric": "false"
   },
