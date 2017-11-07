@@ -85,6 +85,46 @@ def _demo_random_rsvp_sequence_generator():
     return 0
 
 
+def rsvp_copy_phrase_generator(alp, target_letter, timing=[0.5, 1, 0.2],
+                               color=['green', 'red', 'white'],
+                               num_sti=1,
+                               len_sti=10):
+    """Generate random RSVPKeyboard sequences.
+
+        Args:
+            alp(list[str]): alphabet (can be arbitrary)
+            target_letter([str]): letter to be copied
+            timing(list[float]): Task specific timing for generator
+            color(list[str]): Task specific color for generator
+                First element is the target, second element is the fixation
+                Observe that [-1] element represents the trial information
+            num_sti(int): number of random stimuli to be created
+            len_sti(int): number of trials in a sequence
+        Return:
+            schedule_seq(tuple(
+                samples[list[list[str]]]: list of sequences
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)): scheduled sequences
+    """
+
+    len_alp = len(alp)
+
+    samples, times, colors = [], [], []
+    for idx_num in range(num_sti):
+        rand_smp = np.random.randint(0, len_alp, len_sti)
+        sample = [alp[rand_smp[0]], '+']
+        sample += [alp[i] for i in rand_smp]
+        samples.append(sample)
+        times.append([timing[i] for i in range(len(timing) - 1)] +
+                     [timing[-1]] * len_sti)
+        colors.append([color[i] for i in range(len(color) - 1)] +
+                      [color[-1]] * len_sti)
+
+    schedule_seq = (samples, times, colors)
+
+    return schedule_seq
+
+
 def main():
     _demo_random_rsvp_sequence_generator()
 
