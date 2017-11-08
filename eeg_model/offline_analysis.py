@@ -34,12 +34,15 @@ import matplotlib.pylab as plt
 # x = x[:, permutation, :]
 # y = y[permutation]
 
+# Load data
 fol = loadmat('dummy_dat.mat')
 y = fol['trialTargetness']
 y = np.squeeze(y)
 x = fol['trialData']
 x = np.swapaxes(x, 0, 2)
 x = np.swapaxes(x, 0, 1)
+
+# Load triggers
 
 model = train_pca_rda_kde_model(x, y)
 
@@ -51,12 +54,12 @@ ax.plot(model.line_el[2][y == 0],
         'ro', label='class(-)')
 ax.plot(model.line_el[2][y == 1],
         -0.005 - 0.01 * np.random.random(model.line_el[2][y == 1].shape[0]),
-        'go', label='class(+)')
+        'bo', label='class(+)')
 
 for idx in range(len(model.pipeline[2].list_den_est)):
     log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
     ax.plot(x_plot[:, 0], np.exp(log_dens),
-            'r-' * (idx == 0) + 'g--' * (idx == 1),
+            'r-' * (idx == 0) + 'b--' * (idx == 1),
             linewidth=2.0)
 
 ax.legend(loc='upper right')

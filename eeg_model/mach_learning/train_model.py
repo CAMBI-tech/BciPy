@@ -1,5 +1,3 @@
-""" Trains the models shows some results
-    Will be turned into a function """
 
 import numpy as np
 from eeg_model.mach_learning.classifier.function_classifier \
@@ -14,8 +12,10 @@ from sklearn import metrics
 from scipy.stats import iqr
 
 
+# TODO: Horrible implementation make it modular!
 def train_pca_rda_kde_model(x, y):
-    """ Trains a pipeline
+    """ Trains the Cw-PCA RDA KDE model given the input data and labels with
+        cross validation and returns the model
         Args:
             x(ndarray[float]): C x N x k data array
             y(ndarray[int]): N x 1 observation (class) array
@@ -32,10 +32,12 @@ def train_pca_rda_kde_model(x, y):
     model.add(pca)
     model.add(rda)
 
+    # Get the AUC before the regularization
     sc = model.fit_transform(x, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc_init = metrics.auc(fpr, tpr)
 
+    # Cross validate
     arg_cv = cross_validation(x, y, model=model, k_folds=10)
     auc_cv = arg_cv[2]
 
@@ -47,11 +49,13 @@ def train_pca_rda_kde_model(x, y):
     model.pipeline[1].gam = gam
     sc = model.fit_transform(x, y)
 
+    # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
         np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
     model.add(KernelDensityEstimate(bandwidth=bandwidth))
     model.fit(x, y)
 
+    # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, np.max(np.mean(auc_cv))))
 
     return model
