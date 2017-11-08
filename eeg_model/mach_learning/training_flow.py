@@ -1,4 +1,5 @@
-""" Training flow for the model. """
+""" Trains the models shows some results
+    Will be turned into a function """
 
 import numpy as np
 from eeg_model.mach_learning.classifier.function_classifier \
@@ -17,12 +18,12 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pylab as plt
 
-dim_x = 40
+dim_x = 30
 num_ch = 20
 num_x_p = 100
 num_x_n = 1300
 
-x_p = 1 + 5 * np.random.randn(num_ch, num_x_p, dim_x)
+x_p = 3 + 5 * np.random.randn(num_ch, num_x_p, dim_x)
 x_n = 5 * np.random.randn(num_ch, num_x_n, dim_x)
 y_p = [1] * num_x_p
 y_n = [0] * num_x_n
@@ -51,7 +52,7 @@ gam = arg2[1][idx_max_auc]
 model.pipeline[1].regularize([lam, gam])
 
 print('Pipeline Successfully Processed Data!')
-print('AUC-o: {}, AUC-cv: {}'.format(auc1, np.max(auc2)))
+print('AUC-o: {}, AUC-cv: {}'.format(auc1, np.max(np.mean(auc2))))
 
 bandwidth = 1.06 * min(
     np.std(x), iqr(x) / 1.34) * np.power(x.shape[0], -0.2)

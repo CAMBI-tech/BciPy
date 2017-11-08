@@ -52,8 +52,8 @@ def param_nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc'):
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
-        cst_1 = lambda v: v[0]
-        cst_2 = lambda v: v[1]
+        cst_1 = lambda v: v[0] - np.power(0.1, 15)
+        cst_2 = lambda v: v[1] - np.power(0.1, 15)
         cst_3 = lambda v: 1 - v[0]
         cst_4 = lambda v: 1 - v[1]
 
@@ -96,8 +96,8 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
     progress_bar(0, k_folds, prefix='Progress:', suffix='Complete', length=50)
     t = time.time()
     for idx_fold in range(k_folds):
-        progress_bar(idx_fold, k_folds, prefix='Progress:', suffix='Complete',
-                     length=50)
+        progress_bar(idx_fold + 1, k_folds, prefix='Progress:',
+                     suffix='Complete', length=50)
         list_valid = idx_fold
         list_train = list(set(range(k_folds)) - set([idx_fold]))
 
@@ -110,6 +110,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
         arg_opt = param_nonlinear_opt(model, opt_el, x_valid, y_valid)
         lam.append(arg_opt[0])
         gam.append(arg_opt[1])
+        model.pipeline[opt_el].regularize(arg_opt)
 
         sc = model.transform(x)
         fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
