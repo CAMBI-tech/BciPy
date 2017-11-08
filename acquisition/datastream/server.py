@@ -33,7 +33,7 @@ class DataServer(threading.Thread):
         port : int, optional
     """
 
-    def __init__(self, protocol, generator, gen_params={}, host='0.0.0.0',
+    def __init__(self, protocol, generator, gen_params={}, host='127.0.0.1',
                  port=9999):
         super(DataServer, self).__init__()
         self.protocol = protocol
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     from acquisition.protocols.registry import protocol_with, default_protocol
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-H', '--host', default='0.0.0.0')
+    parser.add_argument('-H', '--host', default='127.0.0.1')
     parser.add_argument('-p', '--port', type=int, default=8844)
     parser.add_argument('-f', '--filename', default=None,
                         help="file containing data to be streamed; "

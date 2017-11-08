@@ -6,7 +6,7 @@ from psychopy import core
 import pdb
 
 from display.rsvp_disp_modes import CopyPhraseTask
-from utils.trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
 
 
 def RSVP_copy_phrase_task(win, daq, parameters, file_save):
@@ -101,20 +101,3 @@ def RSVP_copy_phrase_task(win, daq, parameters, file_save):
 
     return (daq, file_save)
 
-
-def get_task_info():
-    ele_sti = [
-        ['B', '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
-        ['E', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['W', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
-    color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
-                  'white', 'white', 'white', 'white', 'white', 'white']] * 4
-    task_text = ['1/100', '2/100', '3/100', '4/100']
-    task_color = [['white'], ['white'], ['white'], ['white']]
-    time_flash = .25
-    time_target = 2
-    time_cross = .6
-    timing_sti = [[time_target] + [time_cross] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
-
-    return (task_text, task_color, ele_sti, timing_sti, color_sti)

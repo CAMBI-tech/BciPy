@@ -21,7 +21,8 @@ def init_save_data_structure(data_save_path,
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information
     save_folder_run_name = save_folder_name + '/' + \
-        user_information + '_' + datetime.datetime.now().isoformat()
+        user_information + '_' + datetime.datetime.now().strftime(
+            '%Y_%m_%d_%H%M%S')
     helper_folder_name = save_folder_run_name + '/helpers/'
 
     # try making the given path
