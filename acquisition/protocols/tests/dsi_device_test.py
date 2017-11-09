@@ -6,7 +6,7 @@ from datastream import generator, server
 from protocols.dsi_device import DsiDevice
 from protocols.dsi_protocol import DsiProtocol
 
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 PORT = 9999
 connection_params = {'host': HOST, 'port': PORT}
 

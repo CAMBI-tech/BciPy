@@ -6,7 +6,7 @@ from __future__ import division
 from psychopy import visual, core
 
 from display.rsvp_disp_modes import CalibrationTask
-from utils.trigger_helpers import _write_triggers_from_sequence_calibration
+from helpers.trigger_helpers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -37,6 +37,7 @@ color_bar_bg = 'green'
 
 # Initialize Stimulus
 is_txt_sti = True
+is_presentation_by_images = False
 
 if is_txt_sti:
     ele_sti = [
@@ -46,7 +47,7 @@ if is_txt_sti:
         ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
     color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white', 'white']] * 4
-else:
+elif not is_presentation_by_images:
     ele_sti = [['static/images/RSVP_images/A.jpg',
                 'static/images/RSVP_images/Red_Cross.png',
                 'static/images/RSVP_images/C.jpg',
@@ -59,6 +60,27 @@ else:
                 'static/images/RSVP_images/C.jpg',
                 'static/images/RSVP_images/D.jpg',
                 'static/images/RSVP_images/E.jpg']]
+else:
+    ele_sti = [['./display/RSVP_presentation_by_images/blow_bubbles.png',
+                'static/images/RSVP_images/Red_Cross.png',
+                './display/RSVP_presentation_by_images/hike.png',
+                './display/RSVP_presentation_by_images/hunt.png',
+                './display/RSVP_presentation_by_images/hunt150.png',
+                './display/RSVP_presentation_by_images/hunt175.png',
+                ],
+               ['./display/RSVP_presentation_by_images/kick.png',
+                'static/images/RSVP_images/Red_Cross.png',
+                './display/RSVP_presentation_by_images/pass_out.png',
+                './display/RSVP_presentation_by_images/Penguins.png',
+                './display/RSVP_presentation_by_images/kick.png',
+                './display/RSVP_presentation_by_images/put_out_fire_3.png'
+                ]]
+
+    '''
+    Complete list of images:
+    ['./display/RSVP_presentation_by_images/blow_bubbles.png', './display/RSVP_presentation_by_images/bounce_on_ball.png', './display/RSVP_presentation_by_images/carve_pumpkin.png', './display/RSVP_presentation_by_images/destroy_smash.png', './display/RSVP_presentation_by_images/digest_swallow.png', './display/RSVP_presentation_by_images/escape.png', './display/RSVP_presentation_by_images/escapesmall.png', './display/RSVP_presentation_by_images/escapesmall2.png', './display/RSVP_presentation_by_images/fight.png', './display/RSVP_presentation_by_images/fightsmall.png', './display/RSVP_presentation_by_images/fishing.png', './display/RSVP_presentation_by_images/fishingsmall.png', './display/RSVP_presentation_by_images/food_fight.png', './display/RSVP_presentation_by_images/forvandle_poff.png', './display/RSVP_presentation_by_images/hike.png', './display/RSVP_presentation_by_images/hikesmall150.png', './display/RSVP_presentation_by_images/hot_air_balloon_launch.png', './display/RSVP_presentation_by_images/hunt.png', './display/RSVP_presentation_by_images/hunt150.png', './display/RSVP_presentation_by_images/hunt175.png', './display/RSVP_presentation_by_images/iditarod_race_verb.png', './display/RSVP_presentation_by_images/juggle.png', './display/RSVP_presentation_by_images/kayaking.png', './display/RSVP_presentation_by_images/kick.png', './display/RSVP_presentation_by_images/kidnap.png', './display/RSVP_presentation_by_images/pass_out.png', './display/RSVP_presentation_by_images/Penguins.png', './display/RSVP_presentation_by_images/pull_hair.png', './display/RSVP_presentation_by_images/put_out_fire_3.png', './display/RSVP_presentation_by_images/rescue_dolphin.png', './display/RSVP_presentation_by_images/row_gondola.png', './display/RSVP_presentation_by_images/spaceSymbol.png', './display/RSVP_presentation_by_images/steal_wallet.png', './display/RSVP_presentation_by_images/Thumbs-up-icon.png', './display/RSVP_presentation_by_images/toast_glasses.png', './display/RSVP_presentation_by_images/whine.png', './display/RSVP_presentation_by_images/wink.png']
+
+    '''
 
 time_flash = .25
 time_target = 2
@@ -106,7 +128,7 @@ rsvp = CalibrationTask(window=win, clock=clock,
                        color_bar_bg=color_bar_bg,
                        is_txt_sti=is_txt_sti)
 
-file = open('calibration_trigger_file.txt','w') 
+# file = open('calibration_trigger_file.txt','w') 
 for idx_o in range(len(task_text)):
 
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])

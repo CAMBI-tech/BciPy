@@ -216,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--channels', default='',
                         help='comma-delimited list')
     parser.add_argument('-p', '--params', type=json.loads,
-                        default={'host': '0.0.0.0', 'port': 8844},
+                        default={'host': '127.0.0.1', 'port': 8844},
                         help="device connection params; json")
     args = parser.parse_args()
 
