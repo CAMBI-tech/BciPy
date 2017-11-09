@@ -3,6 +3,7 @@
 
 This is the codebase for BCI suite. Designed and written by OHSU and NEU.
 
+
 ## Features
 -----------
 
@@ -46,7 +47,7 @@ In order to run BCI suite on your computer, first install **Python 2.7** [from h
 
 -or-
 
-2. Use pip to iteratively install required modules.
+  Use pip to iteratively install required modules.
     - `pip install -r requirements.txt`
 
     After pip is done, download two modules that are left according to your OS(64 or 32 bit), which are numpy+mkl 1.13.1 [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy) and scipy 0.19.1 [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy).
@@ -55,7 +56,7 @@ In order to run BCI suite on your computer, first install **Python 2.7** [from h
 
 * You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows: *
 
-1. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
+2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
 > You are ready to run BCI suite!
 
@@ -74,3 +75,29 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 - `parameters`: json file for parameters.
 - `static`: images, misc manuals, and readable texts for gui.
 - `bci_main`: executor of experiments.
+
+## Demo and Tests
+-----------------
+
+All major functions and modules have demo and test files associated with them. This should help orient you to the functionaly as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.* 
+
+For example, you may run the bci_main demo by:
+> run `python demo/bci_main_demo.py`
+
+This demo will load in parameters and exceute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
+
+This repository uses pytest for execution of tests. You may execute them by:
+
+> run `py.test` or `pytest` depending on your OS
+
+## Contribution Guidelines
+--------------------------
+
+1. All added code will need tests and a demo (if a large feature).
+2. All tests must pass to merge, even if they are seemingly unrelated to your task.
+3. Pull requests must be tested locally and by the requester on a different computer.
+4. Use Spaces, not Tabs.
+5. Use informative names for functions and classes.
+6. Document the input and output of your functions / classes in the code. eg in-line commenting
+7. Do not push IDE or other local configuration files.
+8. All new modules or major functionality should be documented outside of the code.

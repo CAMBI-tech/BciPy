@@ -68,7 +68,7 @@ def receive(socket, msglen, chunksize=2048):
 if __name__ == '__main__':
     """Run with: python -m daq.datastream.tcpclient"""
 
-    host = '0.0.0.0'
+    host = '127.0.0.1'
     port = 8844
 
     signal = Signal()
