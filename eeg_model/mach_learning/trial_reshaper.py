@@ -1,5 +1,5 @@
 import numpy as np
-from helpers.load import load_trigger_data
+from helpers.load import load_txt_data
 
 
 def trial_reshaper(trigger_location, filtered_eeg, fs, k):
@@ -17,7 +17,11 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
 
      """
     # Load triggers.txt
-    trigger_txt = load_trigger_data(trigger_location)
+    trigger_loc = load_txt_data(trigger_location)
+
+    with open(trigger_loc, 'r') as text_file:
+        trigger_txt = [line.replace('\n', '').split() for line in text_file
+                       if 'fixation' not in line and 'first_pres_target' not in line]
 
     # Every trial's trigger timing
     triggers = [eval(line[2]) for line in trigger_txt]

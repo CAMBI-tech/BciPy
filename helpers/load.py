@@ -67,7 +67,7 @@ def load_csv_data():
     return filename
 
 
-def load_trigger_data(filename = None):
+def load_txt_data(filename = None):
 
     if filename == None:
         try:
@@ -76,9 +76,13 @@ def load_trigger_data(filename = None):
         except Exception as error:
             raise error
 
+    trigger_file_name = filename.split('/')[-1]
 
-    with open(filename, 'r') as text_file:
-        trigger_txt = [line.replace('\n', '').split() for line in text_file
-                       if 'fixation' not in line and 'first_pres_target' not in line]
+    if 'txt' not in trigger_file_name:
+        raise Exception(
+            'File type unrecognized. Please use a supported trigger type')
 
-    return trigger_txt
+    # give the user some insight into what's happening
+    print("Loaded Trigger Data From: %s" % filename)
+
+    return filename
