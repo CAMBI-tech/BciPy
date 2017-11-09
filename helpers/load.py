@@ -65,3 +65,20 @@ def load_csv_data():
     print("Loaded EEG Data From: %s" % filename)
 
     return filename
+
+
+def load_trigger_data(filename = None):
+
+    if filename == None:
+        try:
+            Tk().withdraw()  # we don't want a full GUI
+            filename = askopenfilename()  # show dialog box and return the path
+        except Exception as error:
+            raise error
+
+
+    with open(filename, 'r') as text_file:
+        trigger_txt = [line.replace('\n', '').split() for line in text_file
+                       if 'fixation' not in line and 'first_pres_target' not in line]
+
+    return trigger_txt
