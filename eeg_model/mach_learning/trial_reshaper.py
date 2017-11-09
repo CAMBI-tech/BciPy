@@ -26,11 +26,11 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
     triggers = map(lambda x: int(x*fs/k) - 1, triggers)
 
     # Number of samples in half a second that we are interested in:
-    ns = int(1.*fs/2/k)
+    num_samples = int(1.*fs/2/k)
 
     # 3 dimensional np array first dimension is trials
     #  second dimension is channels and third dimension is time samples.
-    reshaped_trials = np.zeros((len(triggers), len(filtered_eeg), ns))
+    reshaped_trials = np.zeros((len(triggers), len(filtered_eeg), num_samples))
 
     # Label for every trial
     labels = np.zeros(len(triggers))
@@ -42,6 +42,6 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
 
         # For every channel
         for channel in range(len(filtered_eeg)):
-            reshaped_trials[trial][channel] = filtered_eeg[channel][triggers[trial]:triggers[trial]+ns]
+            reshaped_trials[trial][channel] = filtered_eeg[channel][triggers[trial]:triggers[trial]+num_samples]
 
     return [reshaped_trials, labels]
