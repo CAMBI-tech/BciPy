@@ -3,6 +3,8 @@ from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 
 #give location of trigger file
 loc = 'Path\\to\\triggers.txt'
+loc = 'C:\\Users\\Berkan\\Desktop\\triggers.txt'
+
 
 # A 3 channel dummy input
 inp = np.array([range(4000)]*3)

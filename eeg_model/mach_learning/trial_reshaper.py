@@ -9,32 +9,40 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
     :param fs: sampling frequency
     :param k: downsampling rate applied to the filtered eeg signal.
 
-    :return dict: {1: '<', 'first_pres_target', ndarray([Number of channels x .5 second samples for trial]), 2: ...}
-    Size of the returned dictionary is the size of the trials (fixations not included) marked in the triggers.txt
+    :return [reshaped_trials, labels]: Return type is a list.
+    reshaped_trials =   3 dimensional np array first dimension is trials
+                        second dimension is channels and third dimension is time samples.
+    labels = np array for every trial's class.
 
-    Important assumption: Samples should start aligned with trigger information. i.e. First sample corresponds to t = 0 w.r.t. triggers.
-
-    """
+     """
 
     with open(trigger_location, 'r') as text_file:
-        dict = [x.replace('\n','').split() for x in text_file if not 'fixation' in x]
+        trigger_txt = [line.replace('\n', '').split() for line in text_file
+                       if 'fixation' not in line and 'first_pres_target' not in line]
 
-    # Every trial's trigger in seconds
-    triggers = [eval(x[2]) for x in dict]
+    # Every trial's trigger timing
+    triggers = [eval(line[2]) for line in trigger_txt]
 
     # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-    triggered_samples = map(lambda x: int(x*fs/k) - 1, triggers)
+    triggers = map(lambda x: int(x*fs/k) - 1, triggers)
 
     # Number of samples in half a second that we are interested in:
-    Ns = int(1.*fs/2/k)
+    ns = int(1.*fs/2/k)
+
+    # 3 dimensional np array first dimension is trials
+    #  second dimension is channels and third dimension is time samples.
+    reshaped_trials = np.zeros((len(triggers), len(filtered_eeg), ns))
+
+    # Label for every trial
+    labels = np.zeros(len(triggers))
 
     # For every trial
-    for z in range(len(triggered_samples)):
+    for trial in range(len(triggers)):
+        if trigger_txt[trial][1] == 'target':
+            labels[trial] = 1
+
         # For every channel
-        dict[z][2] = []
-        for zz in range(len(filtered_eeg)):
-            dict[z][2].append(filtered_eeg[zz][triggered_samples[z]:triggered_samples[z]+Ns])
+        for channel in range(len(filtered_eeg)):
+            reshaped_trials[trial][channel] = filtered_eeg[channel][triggers[trial]:triggers[trial]+ns]
 
-        dict[z][2] = np.array(dict[z][2])
-
-    return dict
+    return [reshaped_trials, labels]
