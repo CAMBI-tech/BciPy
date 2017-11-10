@@ -85,10 +85,9 @@ def _demo_random_rsvp_sequence_generator():
     return 0
 
 
-def rsvp_copy_phrase_generator(alp, target_letter, timing=[0.5, 1, 0.2],
-                               color=['green', 'red', 'white'],
-                               num_sti=1,
-                               len_sti=10):
+def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
+                                   color=['green', 'white', 'white'],
+                                   len_sti=10):
     """Generate random RSVPKeyboard sequences.
 
         Args:
@@ -98,7 +97,6 @@ def rsvp_copy_phrase_generator(alp, target_letter, timing=[0.5, 1, 0.2],
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
-            num_sti(int): number of random stimuli to be created
             len_sti(int): number of trials in a sequence
         Return:
             schedule_seq(tuple(
@@ -109,16 +107,25 @@ def rsvp_copy_phrase_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     len_alp = len(alp)
 
+    # intialize our arrays
     samples, times, colors = [], [], []
-    for idx_num in range(num_sti):
-        rand_smp = np.random.randint(0, len_alp, len_sti)
-        sample = [alp[rand_smp[0]], '+']
-        sample += [alp[i] for i in rand_smp]
-        samples.append(sample)
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * len_sti)
-        colors.append([color[i] for i in range(len(color) - 1)] +
-                      [color[-1]] * len_sti)
+    rand_smp = np.random.randint(0, len_alp, len_sti)
+    sample = ['+']
+    sample += [alp[i] for i in rand_smp]
+
+    # if the target isn't in the array, replace it with some random index that
+    #  is not fixation
+    if target_letter not in sample:
+        random_index = np.random.randint(0, len_sti - 1)
+        sample[random_index + 1] = target_letter
+
+    # to-do shuffle the target letter
+
+    samples.append(sample)
+    times.append([timing[i] for i in range(len(timing) - 1)] +
+                 [timing[-1]] * len_sti)
+    colors.append([color[i] for i in range(len(color) - 1)] +
+                  [color[-1]] * len_sti)
 
     schedule_seq = (samples, times, colors)
 
