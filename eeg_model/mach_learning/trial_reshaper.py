@@ -16,6 +16,7 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
     labels = np array for every trial's class.
 
      """
+
     # Load triggers.txt
     trigger_loc = load_txt_data(trigger_location)
 

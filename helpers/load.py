@@ -67,14 +67,13 @@ def load_csv_data():
     return filename
 
 
-def load_txt_data(filename = None):
+def load_txt_data():
 
-    if filename == None:
-        try:
-            Tk().withdraw()  # we don't want a full GUI
-            filename = askopenfilename()  # show dialog box and return the path
-        except Exception as error:
-            raise error
+    try:
+        Tk().withdraw()  # we don't want a full GUI
+        filename = askopenfilename()  # show dialog box and return the path
+    except Exception as error:
+        raise error
 
     trigger_file_name = filename.split('/')[-1]
 
