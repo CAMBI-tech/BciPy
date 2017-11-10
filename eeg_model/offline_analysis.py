@@ -38,10 +38,33 @@ def offline_analysis(data_folder):
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
 
     # Get data and labels
-    x, y = trial_reshaper(data_folder + '/display/triggers.txt', dat, fs=fs,
+    x, y = trial_reshaper(data_folder + '/triggers.txt', dat, fs=fs,
                           k=ds_rate)
 
     model = train_pca_rda_kde_model(x, y)
+
+    fig, ax = plt.subplots()
+    x_plot = np.linspace(np.min(model.line_el[-1]), np.max(model.line_el[-1]),
+                          +                     1000)[:, np.newaxis]
+    ax.plot(model.line_el[2][y == 0],
+                     -0.005 - 0.01 * np.random.random(model.line_el[2][y == 0].shape[0]),
+                     'ro', label='class(-)')
+    ax.plot(model.line_el[2][y == 1],
+                     -0.005 - 0.01 * np.random.random(model.line_el[2][y == 1].shape[0]),
+                     'go', label='class(+)')
+
+
+    for idx in range(len(model.pipeline[2].list_den_est)):
+        log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
+        ax.plot(x_plot[:, 0], np.exp(log_dens),
+                             'r-' * (idx == 0) + 'g--' * (idx == 1),
+                             linewidth = 2.0)
+
+    ax.legend(loc='upper right')
+    plt.title('Likelihoods Given the Labels')
+    plt.ylabel('p(e|l)')
+    plt.xlabel('scores')
+    plt.show()
     print('Saving the model!')
     with open(data_folder + '/model.pkl', 'wb') as output:
         pickle.dump(model, output)
@@ -50,7 +73,7 @@ def offline_analysis(data_folder):
 
 
 def main():
-    data_folder = 'C:/Users/Aziz/Desktop/GIT/bci'
+    data_folder = 'C:\Users\Berkan\Desktop\GITProjects/bci\demo\data\demo_user\demo_user_2017_11_10_155056'
     offline_analysis(data_folder)
 
     return 0
