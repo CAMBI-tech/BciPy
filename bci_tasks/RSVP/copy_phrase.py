@@ -119,8 +119,11 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            (target_letter, text_task, run) = fake_copy_phrase_decision(
-                copy_phrase, target_letter, text_task)
+            if fake:
+                (target_letter, text_task, run) = fake_copy_phrase_decision(
+                    copy_phrase, target_letter, text_task)
+            else:
+                raise Exception('Real decision maker not implemented yet')
 
         except Exception as e:
             print e
