@@ -96,3 +96,21 @@ def read_data_csv(folder, dat_first_row=4, info_end_row=1):
 
     return raw_dat, stamp_time, channels, type_amp, fs
 
+def load_txt_data():
+
+    try:
+        Tk().withdraw()  # we don't want a full GUI
+        filename = askopenfilename()  # show dialog box and return the path
+    except Exception as error:
+        raise error
+
+    trigger_file_name = filename.split('/')[-1]
+
+    if 'txt' not in trigger_file_name:
+        raise Exception(
+            'File type unrecognized. Please use a supported trigger type')
+
+    # give the user some insight into what's happening
+    print("Loaded Trigger Data From: %s" % filename)
+
+    return filename
