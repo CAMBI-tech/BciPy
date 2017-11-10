@@ -96,18 +96,3 @@ def read_data_csv(folder, dat_first_row=4, info_end_row=1):
 
     return raw_dat, stamp_time, channels, type_amp, fs
 
-
-def _test_read_data_csv():
-    # Might cause path issues please be aware!
-    location = 'rawdata.csv'
-    raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(location)
-    print('Channels:{}, AMP:{}, fs:{}'.format(channels, type_amp, fs))
-
-    import matplotlib as mpl
-    mpl.use('TkAgg')
-    import matplotlib.pylab as plt
-
-    plt.plot(stamp_time, raw_dat.transpose(), '*')
-    plt.show()
-
-    return 0
