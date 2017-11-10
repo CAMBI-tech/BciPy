@@ -43,7 +43,7 @@ def sig_pro(input_seq, filt=None, fs=256, k=2):
     for z in range(len(input_seq)):
         temp = np.convolve(input_seq[z][:], filt)
         # Filter off-set compensation
-        temp = temp[int(np.ceil(len(filt) / 2.)) - 1:];
+        temp = temp[int(np.ceil(len(filt) / 2.)) - 1:]
         # Downsampling
         output_seq.append(temp[::k])
 

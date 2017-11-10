@@ -1,7 +1,7 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from helpers.display import init_display_window
-from helpers.acquisition import init_eeg_acquisition
+from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 
 
@@ -18,7 +18,7 @@ def bci_main(parameters, user, exp_type, mode):
 
     # Initalize Save Folder
     save_folder = init_save_data_structure(
-        'data/', user, 'parameters/parameters.json')
+        'data/', user, '../parameters/parameters.json')
 
     # Register Task Type & Execute Task
     task_type = {
