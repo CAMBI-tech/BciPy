@@ -18,7 +18,7 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
      """
 
     # Load triggers.txt
-    trigger_loc = load_txt_data(trigger_location)
+    trigger_loc = load_txt_data()
 
     with open(trigger_loc, 'r') as text_file:
         trigger_txt = [line.replace('\n', '').split() for line in text_file
