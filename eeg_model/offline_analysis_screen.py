@@ -26,7 +26,7 @@ ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
 
 count = 1
-while count < np.shape(means[1])[1]:
+while count < means[1].shape[1]:
     ax1.plot(means[0][:, count])
     ax1.plot(means[0][:, count])
     ax2.plot(means[1][:, count])

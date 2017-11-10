@@ -96,8 +96,8 @@ def read_data_csv(folder, dat_first_row=4, info_end_row=1):
 
     return raw_dat, stamp_time, channels, type_amp, fs
 
-def load_txt_data():
 
+def load_txt_data():
     try:
         Tk().withdraw()  # we don't want a full GUI
         filename = askopenfilename()  # show dialog box and return the path

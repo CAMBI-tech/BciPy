@@ -2,10 +2,10 @@ import numpy as np
 from helpers.load import load_txt_data
 
 
-def trial_reshaper(trigger_location, filtered_eeg, fs, k):
+def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
     """
 
-    :param trigger_location: location of the trigger.txt file to read triggers from
+    :param trigger_loc: location of the trigger.txt file to read triggers from
     :param filtered_eeg: channel wise band pass filtered and downsampled eeg data with format: [channel x signal_length]
     :param fs: sampling frequency
     :param k: downsampling rate applied to the filtered eeg signal.
@@ -18,20 +18,22 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
      """
 
     # Load triggers.txt
-    trigger_loc = load_txt_data()
+    if not trigger_loc:
+        trigger_loc = load_txt_data()
 
     with open(trigger_loc, 'r') as text_file:
         trigger_txt = [line.replace('\n', '').split() for line in text_file
-                       if 'fixation' not in line and 'first_pres_target' not in line]
+                       if
+                       'fixation' not in line and 'first_pres_target' not in line]
 
     # Every trial's trigger timing
     triggers = [eval(line[2]) for line in trigger_txt]
 
     # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-    triggers = map(lambda x: int(x*fs/k) - 1, triggers)
+    triggers = map(lambda x: int(x * fs / k) - 1, triggers)
 
     # Number of samples in half a second that we are interested in:
-    num_samples = int(1.*fs/2/k)
+    num_samples = int(1. * fs / 2 / k)
 
     # 3 dimensional np array first dimension is channels
     # second dimension is trials and third dimension is time samples.
@@ -47,6 +49,8 @@ def trial_reshaper(trigger_location, filtered_eeg, fs, k):
 
         # For every channel
         for channel in range(len(filtered_eeg)):
-            reshaped_trials[channel][trial] = filtered_eeg[channel][triggers[trial]:triggers[trial]+num_samples]
+            reshaped_trials[channel][trial] = filtered_eeg[channel][
+                                              triggers[trial]:triggers[
+                                                                  trial] + num_samples]
 
     return [reshaped_trials, labels]
