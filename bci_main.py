@@ -18,7 +18,7 @@ def bci_main(parameters, user, exp_type, mode):
 
     # Initalize Save Folder
     save_folder = init_save_data_structure(
-        'data/', user, '../parameters/parameters.json')
+        'data/', user, 'parameters/parameters.json')
 
     # Register Task Type & Execute Task
     task_type = {

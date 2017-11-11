@@ -1,11 +1,14 @@
 # This is a demo of the main bci system. It will run whatever task defined here
 #  with code downstream using the parameters file passed to it.
 
+import sys
+sys.path.append('C:\Users\Aziz\Desktop\GIT/bci_2')
+
 import bci_main
 from helpers.load import load_json_parameters
 
 # Load a parameters file
-parameters = load_json_parameters('../parameters/parameters.json')
+parameters = load_json_parameters('parameters/parameters.json')
 
 # RSVP mode
 test_mode = 'RSVP'
