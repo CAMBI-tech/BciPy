@@ -3,14 +3,7 @@ from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
 import numpy as np
 
 
-def test_pca(x):
-    pca = PrincipalComponentAnalysis()
-    y = pca.fit_transform(x)
-
-    return [y]
-
-
-def _test_pca():
+def _demo_pca():
     pca = PrincipalComponentAnalysis()
 
     dim_x = 16
@@ -23,25 +16,23 @@ def _test_pca():
     x_n = np.random.randn(num_x_n, dim_x)
 
     x = np.concatenate(np.asarray([x_p, x_n]), 0)
-    len_x = x.shape[0]
 
-    pca.fit(x[0:int(len_x * 9 / 10), :])
-    y = pca.transform(x[int(len_x * 9 / 10):-1, :])
+    y = pca.fit_transform(x)
     print('PCA Results')
     print('PCA flows!')
     print('X:{} |--[PCA(tol:0)]--> Y:{}'.format(x.shape, y.shape))
 
-    pca.fit(x[0:int(len_x * 9 / 10), :], var_tol=var_tol)
-    y = pca.transform(x[0:int(len_x * 9 / 10), :])
+    pca.fit(x, var_tol=var_tol)
+    y = pca.transform(x)
     print('X:{} |--[PCA(tol:10^-6)]--> Y:{}'.format(x.shape, y.shape))
 
-    y2 = pca.fit_transform(x[0:int(len_x * 9 / 10), :], var_tol=var_tol)
+    y2 = pca.fit_transform(x, var_tol=var_tol)
     print('MSE:{} fit_transform'.format(np.sum(np.abs(y2 - y))))
 
     return 0
 
 
-def _cw_test_pca():
+def _demo_cw_pca():
     num_ch = 16
     dim_x = 20
     num_x_p = 100
@@ -65,10 +56,8 @@ def _cw_test_pca():
 
 
 def main():
-
-    _test_pca()
-    _cw_test_pca()
-
+    _demo_pca()
+    _demo_cw_pca()
 
     return 0
 
