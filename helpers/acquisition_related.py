@@ -2,12 +2,12 @@
 
 from __future__ import division
 
-import bci.acquisition.datastream.generator as generator
-import bci.acquisition.protocols.registry as registry
-from bci.acquisition.buffer import Buffer
-from bci.acquisition.client import Client, _Clock
-from bci.acquisition.processor import FileWriter
-from bci.acquisition.datastream.server import DataServer
+import acquisition.datastream.generator as generator
+import acquisition.protocols.registry as registry
+from acquisition.buffer import Buffer
+from acquisition.client import Client, _Clock
+from acquisition.processor import FileWriter
+from acquisition.datastream.server import DataServer
 
 
 def init_eeg_acquisition(parameters, clock=_Clock(), server=True):

@@ -8,8 +8,6 @@ from eeg_model.mach_learning.wrapper import PipeLine
 
 
 def test_cv(x, y):
-    """ Called from MATLAB to check consistency
-        Args:"""
     rda = RegularizedDiscriminantAnalysis()
     pca = DummyDimReduction()
     pipeline = PipeLine()
@@ -20,7 +18,7 @@ def test_cv(x, y):
     return arg
 
 
-def _test_cv():
+def _demo_cv():
     dim_x = 2
     num_ch = 2
     num_x_p = 2000
@@ -51,7 +49,7 @@ def _test_cv():
 
 
 def main():
-    _test_cv()
+    _demo_cv()
 
     return 0
 
