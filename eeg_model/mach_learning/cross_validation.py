@@ -2,6 +2,7 @@ import numpy as np
 import scipy.optimize
 from sklearn import metrics
 import time
+import warnings
 from utils.progress_bar import progress_bar
 
 
@@ -110,8 +111,6 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc'):
                                                    cst_4])
     return arg_opt
 
-    # TODO: Insert cost functions for parameter update below!
-
 
 def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
     """ Cross validation function for hyper parameter optimization
@@ -139,6 +138,9 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
                 (idx_fold + 1) * fold_len), :])
             fold_y.append(y[int(idx_fold * fold_len):int((idx_fold + 1) *
                                                          fold_len)])
+            if len(np.unique(fold_y[idx_fold])) == 1:
+                raise Exception('Cannot use {}-folding in cross_validation '
+                                'or # of folds is inconsistent'.format(split))
 
     # Split data
     lam, gam, auc_h = [], [], []
@@ -157,7 +159,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
         y_valid = fold_y[list_valid]
 
         model.fit(x_train, y_train)
-        arg_opt = nonlinear_opt(model, opt_el, x_valid, y_valid)
+        arg_opt = grid_search(model, opt_el, x_valid, y_valid)
         lam.append(arg_opt[0])
         gam.append(arg_opt[1])
         model.pipeline[opt_el].regularize(arg_opt)
