@@ -52,7 +52,7 @@ def execute_task(task_type, parameters, save_folder):
     }
 
     # Initialize EEG Acquisition
-    daq, server = init_eeg_acquisition(daq_parameters, server=True)
+    daq, server = init_eeg_acquisition(daq_parameters, server=False)
 
     # Initialize Display Window
     display = init_display_window(parameters)

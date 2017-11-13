@@ -8,7 +8,7 @@ import acquisition.protocols.util as util
 from acquisition.protocols.device import Device
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s', )
 
 
 class DsiDevice(Device):
@@ -65,8 +65,16 @@ class DsiDevice(Device):
         """
 
         response = self._read_packet()
-        if response.type != 'EVENT' or response.event_code != 'SENSOR_MAP':
-            raise Exception("Unexpected packet; expected SENSOR MAP Event")
+        # Read packets until we encounter the headers we care about.
+        while response.type != 'EVENT' or response.event_code != 'SENSOR_MAP':
+            if response.type == 'EEG_DATA':
+                raise Exception('EEG Data was encountered; expected '
+                                'initialization headers.')
+            logging.debug(response.type)
+            if response.type == 'EVENT':
+                logging.debug(response.event_code + ': ' + response.message)
+            response = self.read_packet()
+
         channels = response.message.split(',')
         logging.debug("Channels: " + ','.join(channels))
         if self._channels_provided and channels != self.channels:
@@ -85,6 +93,8 @@ class DsiDevice(Device):
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 
+        reponse = self._read_packet()
+
     def read_data(self):
         """Reads the next packet and returns the sensor data.
 
@@ -93,4 +103,5 @@ class DsiDevice(Device):
             list with an item for each channel.
         """
         response = self._read_packet()
+
         return None if len(response) == 0 else list(response.sensor_data)
