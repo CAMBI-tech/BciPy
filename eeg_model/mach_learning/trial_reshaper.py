@@ -1,6 +1,5 @@
 import numpy as np
-from helpers.load import load_txt_data
-
+from helpers.trigger_helpers import trigger_decoder
 
 def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
     """
@@ -12,19 +11,13 @@ def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
 
     :return [reshaped_trials, labels]: Return type is a list.
     reshaped_trials =   3 dimensional np array first dimension is trials
-                        second dimension is channels and third dimension is time samples.
+                        second diDmension is channels and third dimension is time samples.
     labels = np array for every trial's class.
 
      """
 
-    # Load triggers.txt
-    if not trigger_loc:
-        trigger_loc = load_txt_data()
 
-    with open(trigger_loc, 'r') as text_file:
-        trigger_txt = [line.replace('\n', '').split() for line in text_file
-                       if
-                       'fixation' not in line and 'first_pres_target' not in line]
+    trigger_txt = trigger_decoder(trigger_loc=trigger_loc)
 
     # Every trial's trigger timing
     triggers = [eval(line[2]) for line in trigger_txt]
