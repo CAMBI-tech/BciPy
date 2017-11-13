@@ -1,7 +1,7 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from helpers.display import init_display_window
-from helpers.acquisition import init_eeg_acquisition
+from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 
 
@@ -30,8 +30,9 @@ def bci_main(parameters, user, exp_type, mode):
         execute_task(
             task_type, parameters, save_folder)
         print "Successful Trial!"
-    except:
+    except Exception as e:
         print "Unsuccessful Trial"
+        raise e
 
 
 def execute_task(task_type, parameters, save_folder):
@@ -51,7 +52,7 @@ def execute_task(task_type, parameters, save_folder):
     }
 
     # Initialize EEG Acquisition
-    daq, server = init_eeg_acquisition(daq_parameters, server=True)
+    daq, server = init_eeg_acquisition(daq_parameters, server=False)
 
     # Initialize Display Window
     display = init_display_window(parameters)

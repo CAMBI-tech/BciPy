@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from helpers.load import load_txt_data
 
 def _write_triggers_from_sequence_calibration(array, file):
 
@@ -82,3 +82,21 @@ def _write_triggers_from_sequence_free_spell(array, file):
         x += 1
 
     return file
+
+
+def trigger_decoder(trigger_loc):
+
+    # Load triggers.txt
+    if not trigger_loc:
+        trigger_loc = load_txt_data()
+
+    with open(trigger_loc, 'r') as text_file:
+        # Get every line of trigger.txt if that line does not contain 'fixation' and 'first_pres_target'
+        # [['words', 'in', 'line'], ['second', 'line']...]
+
+       # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
+
+        trigger_txt = [line.split() for line in text_file
+                       if 'fixation' not in line and 'first_pres_target' not in line]
+
+    return trigger_txt
