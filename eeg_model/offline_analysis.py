@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib as mpl
-from helpers.load import read_data_csv
+from helpers.load import read_data_csv, load_experimental_data
 from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
+from eeg_model.offline_analysis_screen import generate_offline_analysis_screen
 import pickle
-from helpers.load import load_experimental_data
 
 mpl.use('TkAgg')
 import matplotlib.pylab as plt
@@ -64,6 +64,9 @@ def offline_analysis(data_folder=None):
     plt.ylabel('p(e|l)')
     plt.xlabel('scores')
     plt.show()
+
+    print('Saving offline analysis plots!')
+    generate_offline_analysis_screen(x, y, data_folder)
     print('Saving the model!')
     with open(data_folder + '/model.pkl', 'wb') as output:
         pickle.dump(model, output)
