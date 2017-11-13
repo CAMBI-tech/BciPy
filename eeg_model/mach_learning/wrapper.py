@@ -12,11 +12,14 @@ class PipeLine(object):
         - update
         - fit_transform
     Attr:
-        pipeline(list[methods]): Wrapper for pipeline structure
+        pipeline(list[methods]): wrapper for pipeline structure
+        line_el(list[ndarray[float]]): values at each input.
+            [0] is the input and the rest follows
         """
 
     def __init__(self):
         self.pipeline = []
+        self.line_el = []
 
     def add(self, method):
         """ Adds an object to the pipeline.
@@ -31,11 +34,12 @@ class PipeLine(object):
         Args:
             x(ndarray[float]): of desired shape
             y(ndarray[int]): of desired shape """
-        line_el = [x]
+        self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            line_el.append(self.pipeline[i].fit_transform(line_el[i]))
+            self.line_el.append(
+                self.pipeline[i].fit_transform(self.line_el[i], y))
 
-        self.pipeline[-1].fit(line_el[-1], y)
+        self.pipeline[-1].fit(self.line_el[-1], y)
 
     def fit_transform(self, x, y):
         """ Applies fit transform on all functions
@@ -43,11 +47,12 @@ class PipeLine(object):
             x(ndarray[float]): of desired shape
             y(ndarray[int]): of desired shape """
 
-        line_el = [x]
+        self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            line_el.append(self.pipeline[i].fit_transform(line_el[i], y))
+            self.line_el.append(
+                self.pipeline[i].fit_transform(self.line_el[i], y))
 
-        arg = self.pipeline[-1].fit_transform(line_el[-1], y)
+        arg = self.pipeline[-1].fit_transform(self.line_el[-1], y)
         return arg
 
     def transform(self, x):

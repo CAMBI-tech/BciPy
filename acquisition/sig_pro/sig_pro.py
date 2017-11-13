@@ -1,8 +1,9 @@
 import numpy as np
 import os
 
-def sig_pro(input_seq, filt = None, fs = 256, k = 2):
-    '''
+
+def sig_pro(input_seq, filt=None, fs=256, k=2):
+    """
     :param input_seq: Input sequence to be filtered. Expected dimensions are 16xT
     :param filt: Input for using a specific filter. If left empty, according to fs a pre-designed filter is going to be used. Filters are pre-designed for fs = 256,300 or 1024 Hz.
     :param fs: Sampling frequency of the hardware.
@@ -21,9 +22,10 @@ def sig_pro(input_seq, filt = None, fs = 256, k = 2):
         - 1.75Hz to 45Hz
         - 60Hz -64dB Gain
 
-    '''
+    """
 
-    with open(os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt', 'r') as text_file:
+    with open(os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt',
+              'r') as text_file:
         dict_of_filters = eval(text_file.readline())
 
     try:
@@ -33,7 +35,7 @@ def sig_pro(input_seq, filt = None, fs = 256, k = 2):
         print 'Please provide a filter for your sampling frequency.'
 
     filt = np.array(filt)
-    filt = filt - np.sum(filt)/filt.size
+    filt = filt - np.sum(filt) / filt.size
 
     output_seq = [[]]
 
@@ -41,7 +43,7 @@ def sig_pro(input_seq, filt = None, fs = 256, k = 2):
     for z in range(len(input_seq)):
         temp = np.convolve(input_seq[z][:], filt)
         # Filter off-set compensation
-        temp = temp[int(np.ceil(len(filt)/2.))-1:];
+        temp = temp[int(np.ceil(len(filt) / 2.)) - 1:]
         # Downsampling
         output_seq.append(temp[::k])
 

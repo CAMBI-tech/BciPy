@@ -1,32 +1,7 @@
 import numpy as np
 
 
-def test_rda(x, y, z):
-    """ Test function called by MATLAB.
-        Please refer to rda_consistency_test
-        Args:
-            x(ndarray[float]): N x k data array
-            y(ndarray[int]): N x 1 observation (class) array
-            z(ndarray[float]): M x k validation array
-                N, M is number of samples k is dimensionality of features
-        Return:
-            rda.cov(ndarray[float]): covariances
-            rda.reg_inverse_cov(ndarray[float]): regularized Covariances
-            rda.means(ndarray[float]): means
-            prb(ndarray[float]): priors
-                for each class
-            """
-    from function_classifier import RegularizedDiscriminantAnalysis
-    rda = RegularizedDiscriminantAnalysis()
-    rda.fit(x, y)
-
-    prb = rda.get_proba(z)
-
-    return [np.array(rda.cov), np.array(rda.reg_inverse_cov), np.array(
-        rda.means), prb]
-
-
-def _test_rda():
+def _demo_rda():
     from eeg_model.mach_learning.classifier.function_classifier import \
         RegularizedDiscriminantAnalysis
     dim_x = 2
@@ -55,7 +30,7 @@ def _test_rda():
 
 
 def main():
-    _test_rda()
+    _demo_rda()
 
     return 0
 
