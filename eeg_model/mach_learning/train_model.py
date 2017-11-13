@@ -47,7 +47,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    sc = model.fit_transform(x, y)
+    sc = model.fit_transform(x, y)  # sc := scores
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(

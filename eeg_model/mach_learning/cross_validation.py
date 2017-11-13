@@ -2,7 +2,6 @@ import numpy as np
 import scipy.optimize
 from sklearn import metrics
 import time
-import warnings
 from utils.progress_bar import progress_bar
 
 
@@ -20,8 +19,6 @@ def cost_auc(model, opt_el, x, y, param):
             -auc(float): negative AUC value for current setup
             """
 
-    # x1, x2, y1, y2 = train_test_split(x, y, test_size=0.1)
-    # self.fit_param(x1, y1, self.prior)
     model.pipeline[opt_el].regularize(param)
     sc = model.transform(x)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
@@ -68,7 +65,7 @@ def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc'):
                     arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
                                                      param_cand['gam'][j]
     else:
-        # TO DO, Handle this case
+        # TODO: Handle this case
         print('Error: Operation type other than AUC cost.')
 
     # This returns the parameter estimates with the highest scores:

@@ -3,7 +3,7 @@ from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 
 
-def generate_offline_analysis_screen(x, y, folder):
+def generate_offline_analysis_screen(x, y, model, folder):
     """ Offline Analysis Screen.
     Generates the information figure following the offlineAnalysis.
     The figure has multiple tabs containing the average ERP plots
@@ -13,6 +13,7 @@ def generate_offline_analysis_screen(x, y, folder):
         y(ndarray[int]): N x k observation (class) array
             N is number of samples k is dimensionality of features
             C is number of channels
+        model(): trained model for data
         folder(str): Folder of the data
 
         """
@@ -47,26 +48,21 @@ def generate_offline_analysis_screen(x, y, folder):
 
     fig.savefig(folder + "\mean_erp.pdf", bbox_inches='tight', format='pdf')
 
+    fig, ax = plt.subplots()
+    x_plot = np.linspace(np.min(model.line_el[-1]), np.max(model.line_el[-1]),
+                         1000)[:, np.newaxis]
+    ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(
+        model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
+    ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(
+        model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
+    for idx in range(len(model.pipeline[2].list_den_est)):
+        log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
+        ax.plot(x_plot[:, 0], np.exp(log_dens),
+                'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
 
-def _demo_gen_offline_analysis_screen():
-    data_folder = load_experimental_data()
-    raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
-        data_folder + '/rawdata.csv')
-    ds_rate = 2  # Read from parameters file the down-sampling rate
-    dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
+    ax.legend(loc='upper right')
+    plt.title('Likelihoods Given the Labels')
+    plt.ylabel('p(e|l)')
+    plt.xlabel('scores')
+    fig.savefig(folder + "\lik_dens.pdf", bbox_inches='tight', format='pdf')
 
-    # Get data and labels
-    x, y = trial_reshaper(data_folder + '/triggers.txt', dat, fs=fs,
-                          k=ds_rate)
-
-    generate_offline_analysis_screen(x, y, data_folder)
-
-
-def main():
-    _demo_gen_offline_analysis_screen()
-
-    return 0
-
-
-if __name__ == "__main__":
-    main()

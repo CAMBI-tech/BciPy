@@ -30,7 +30,6 @@ def offline_analysis(data_folder=None):
         - generates and saves offline analysis screen
         """
 
-    # TODO: Ask for a file location if not exists
     if not data_folder:
         data_folder = load_experimental_data()
 
@@ -47,26 +46,8 @@ def offline_analysis(data_folder=None):
     k_folds = 4
     model = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
-    fig, ax = plt.subplots()
-    x_plot = np.linspace(np.min(model.line_el[-1]), np.max(model.line_el[-1]),
-                         1000)[:, np.newaxis]
-    ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(
-        model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
-    ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(
-        model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
-    for idx in range(len(model.pipeline[2].list_den_est)):
-        log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
-        ax.plot(x_plot[:, 0], np.exp(log_dens),
-                'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
-
-    ax.legend(loc='upper right')
-    plt.title('Likelihoods Given the Labels')
-    plt.ylabel('p(e|l)')
-    plt.xlabel('scores')
-    plt.show()
-
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, data_folder)
+    generate_offline_analysis_screen(x, y, model, data_folder)
     print('Saving the model!')
     with open(data_folder + '/model.pkl', 'wb') as output:
         pickle.dump(model, output)

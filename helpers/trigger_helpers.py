@@ -94,7 +94,7 @@ def trigger_decoder(trigger_loc):
         # Get every line of trigger.txt if that line does not contain 'fixation' and 'first_pres_target'
         # [['words', 'in', 'line'], ['second', 'line']...]
 
-        # trigger file has three columns: 'SYMBOL' TARGETNESS_INFO TIMING
+       # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
 
         trigger_txt = [line.split() for line in text_file
                        if 'fixation' not in line and 'first_pres_target' not in line]
