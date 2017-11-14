@@ -26,8 +26,9 @@ def random_rsvp_sequence_generator(alp, timing=[0.5, 1, 0.2],
 
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
-        rand_smp = np.random.randint(0, len_alp, len_sti)
+        rand_smp = np.random.choice(range(len_alp), len_sti)
         sample = [alp[rand_smp[0]], '+']
+        rand_smp = np.random.permutation(rand_smp)
         sample += [alp[i] for i in rand_smp]
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
