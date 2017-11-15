@@ -24,19 +24,30 @@ def sig_pro(input_seq, filt=None, fs=256, k=2):
 
     """
 
-    with open(os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt',
-              'r') as text_file:
-        dict_of_filters = eval(text_file.readline())
+    # Find the location of filters.txt
+    location_of_filters = os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt'
 
+    # Try to open the filters.txt file
+    try:
+        with open(location_of_filters, 'r') as text_file:
+            dict_of_filters = eval(text_file.readline())
+    except Exception as e:
+        print 'filters.txt cannot be found in', location_of_filters
+        raise e
+
+    # Try to get the required filter from the text file.
     try:
         filt = dict_of_filters[fs]
     except Exception as e:
-        print e
         print 'Please provide a filter for your sampling frequency.'
+        raise e
 
+
+    # Precision correction
     filt = np.array(filt)
     filt = filt - np.sum(filt) / filt.size
 
+    # Initialize output sequence
     output_seq = [[]]
 
     # Convolution per channel
