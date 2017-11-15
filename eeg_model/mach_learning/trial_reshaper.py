@@ -1,21 +1,21 @@
 import numpy as np
 from helpers.trigger_helpers import trigger_decoder
 
+
 def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
     """
 
     :param trigger_loc: location of the trigger.txt file to read triggers from
-    :param filtered_eeg: channel wise band pass filtered and downsampled eeg data with format: [channel x signal_length]
+    :param filtered_eeg: channel wise band pass filtered and down-sampled eeg data with format: [channel x signal_length]
     :param fs: sampling frequency
-    :param k: downsampling rate applied to the filtered eeg signal.
+    :param k: down-sampling rate applied to the filtered eeg signal.
 
     :return [reshaped_trials, labels]: Return type is a tuple.
     reshaped_trials =   3 dimensional np array first dimension is trials
-                        second diDmension is channels and third dimension is time samples.
+                        second dimension is channels and third dimension is time samples.
     labels = np array for every trial's class.
 
      """
-
 
     trigger_txt = trigger_decoder(trigger_loc=trigger_loc)
 
