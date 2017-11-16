@@ -4,7 +4,7 @@ import numpy as np
 
 
 def n_best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
-                             color=['red', 'white'], num_sti=10,
+                             color=['red', 'white'], num_sti=1,
                              len_sti=10):
     """ generates RSVPKeyboard sequence by picking n-most likeliy letters.
         Args:
@@ -34,9 +34,8 @@ def n_best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
         sample = ['+']
-        rand_smp = alp[idx]
-        rand_smp = np.random.permutation(rand_smp)
-        sample += [alp[i] for i in rand_smp]
+        idx = np.random.permutation(idx)
+        sample += [alp[i] for i in idx]
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * len_sti)
@@ -46,6 +45,32 @@ def n_best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
     schedule_seq = (samples, times, colors)
 
     return schedule_seq
+
+
+def _demo_best_case_sequence_generator():
+    alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+           'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+
+    num_samples = int(np.random.randint(1, 10, 1))
+    len_samples = int(np.random.randint(1, 20, 1))
+
+    print('Number of sequences:{}, Number of trials:{}'.format(num_samples,
+                                                               len_samples))
+    print('Alphabet:{}'.format(alp))
+    for i in range(num_samples):
+        p = np.random.randint(0, 10, len(alp))
+        print('Probabilities:{}'.format(p))
+        schedule = n_best_case_rsvp_seq_gen(alp=alp, p=p, num_sti=1,
+                                            len_sti=len_samples)
+        sequence = schedule[0]
+        timing = schedule[1]
+        color = schedule[2]
+
+        print('seq{}:{}'.format(i, sequence))
+        print('time{}:{}'.format(i, timing))
+        print('color{}:{}'.format(i, color))
+
+    return 0
 
 
 def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
@@ -181,7 +206,8 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
 
 def main():
-    _demo_random_rsvp_sequence_generator()
+    # _demo_random_rsvp_sequence_generator()
+    _demo_best_case_sequence_generator()
 
     return 0
 
