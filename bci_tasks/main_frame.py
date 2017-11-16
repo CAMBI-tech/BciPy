@@ -28,11 +28,44 @@ def fusion():
 
 
 class DecisionMaker(object):
-    """ Scheduler of the entire framework """
+    """ Scheduler of the entire framework
+        Attr:
+            state(str): state of the framework, which increases in size
+                by 1 after each sequence. Elements are alphabet, ".,_,<"
+                where ".": null_sequence(no decision made)
+                      "_": space bar
+                      "<": back space
+            displayed_state(str): visualization of the state to the user
+                only includes the alphabet and "_"
+            alphabet(list[str]): list of symbols used by the framework. Can
+                be switched with location of images or one hot encoded images.
+            posteriors(list[list[ndarray]]): list of epochs, where epochs
+                are list of sequences, informs the current probability
+                distribution of the sequence.
+            time(float): system time
+            evidence(list[str]): list of evidences used in the framework
+            list_priority_evidence(list[]): priority list for the vidences
+            sequence_counter(dict[str(val=float)]): number of sequences
+                passed for each particular evidence
+            epoch_counter(int): number of epochs through the session
+        Functions:
+            decide():
+                Checks the criteria for making and epoch, using all
+                evidences and decides to do an epoch or to collect more
+                evidence
+            do_epoch():
+                Once committed an epoch perform updates to condition the
+                distribution on the previous letter.
+            schedule_sequence():
+                schedule the next sequence using the current information
+            decide_state_update():
+                If committed to an epoch update the state using a decision
+                metric. (e.g. pick the letter with highest likelihood)
+        """
 
     def __init__(self, state=''):
         self.state = state
-        self.displayed_state = self.form_display_state(state)
+        self.displayed_state = form_display_state(state)
 
         self.alphabet = list(string.ascii_uppercase) + ['<'] + ['_']
 
@@ -40,8 +73,9 @@ class DecisionMaker(object):
         self.time = 0
 
         self.evidence = []
-        self.list_priority = []
+        self.list_priority_evidence = []
         self.sequence_counter = {'ERP': 0, 'FRP0': 0}
+        self.epoch_counter = 0
 
     def decide(self):
 
@@ -56,7 +90,7 @@ class DecisionMaker(object):
         if (sum(self.sequence_counter.values()) < min_num_seq) or \
                 (not (sum(self.sequence_counter.values()) > max_num_seq) and
                      not (self.time > time_threshold) and
-                     not (np.max(self.posteriors[-1]) >
+                     not (np.max(self.posteriors[-1][-1]) >
                               posterior_commit_threshold)):
             self.schedule_sequence()
         else:
@@ -66,6 +100,8 @@ class DecisionMaker(object):
         decision = self.decide_state_update()
         self.state = self.state + decision
         self.displayed_state = form_display_state(self.state)
+        # Append a new list for the next epoch
+        self.posteriors.append([])
 
     def schedule_sequence(self):
 
