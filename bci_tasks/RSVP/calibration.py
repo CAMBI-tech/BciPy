@@ -5,14 +5,14 @@ from psychopy import core
 
 from display.rsvp_disp_modes import CalibrationTask
 from helpers.trigger_helpers import _write_triggers_from_sequence_calibration
-from helpers.stim_gen import random_rsvp_sequence_generator, get_task_info
+from helpers.stim_gen import random_rsvp_calibration_seq_gen, \
+    get_task_info
 
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
-
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -66,7 +66,8 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
         # Try getting random sequence information given stimuli parameters
         try:
-            (ele_sti, timing_sti, color_sti) = random_rsvp_sequence_generator(
+            (ele_sti, timing_sti,
+             color_sti) = random_rsvp_calibration_seq_gen(
                 alp, num_sti=int(parameters['num_sti']['value']),
                 len_sti=int(parameters['len_sti']['value']), timing=[
                     float(parameters['time_target']['value']),
