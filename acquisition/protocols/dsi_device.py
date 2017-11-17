@@ -102,6 +102,15 @@ class DsiDevice(Device):
         -------
             list with an item for each channel.
         """
-        response = self._read_packet()
+        sensor_data = False
+        while sensor_data is False:
+            try:
+                response = self._read_packet()
+                if len(response) == 0:
+                    sensor_data = False
+                if response.sensor_data:
+                    sensor_data = True
+            except:
+                pass
 
-        return None if len(response) == 0 else list(response.sensor_data)
+        return list(response.sensor_data)

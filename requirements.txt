@@ -10,7 +10,6 @@ pytz==2017.2
 six==1.11.0
 numpy==1.13.1
 future==0.16.0
-scipy==0.19.1
 sklearn==0.0
 construct==2.8.14
 mock==2.0.0
