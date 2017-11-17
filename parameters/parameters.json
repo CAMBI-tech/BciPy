@@ -370,6 +370,26 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
+  "data_save_loc": {
+    "value": "data/",
+    "section": "bci_config",
+    "readableName": "Data Save Location",
+    "helpTip": "Data Save Location",
+    "recommended_values": [
+      "data/"
+    ],
+    "isNumeric": "false"    
+  },
+  "parameter_location": {
+    "value": "parameters/parameters.json",
+    "section": "bci_config",
+    "readableName": "Parameter Location",
+    "helpTip": "Parameter Location",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "isNumeric": "false"    
+  },
   "num_sti": {
     "value": "4",
     "section": "bci_config",

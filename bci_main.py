@@ -16,20 +16,28 @@ def bci_main(parameters, user, exp_type, mode):
         running the app.
     """
 
+    # Define the parameter and data save location
+    parameter_location = parameters['parameter_location']['value']
+    data_save_location = parameters['data_save_loc']['value']
+
     # Initalize Save Folder
     save_folder = init_save_data_structure(
-        'data/', user, 'parameters/parameters.json')
+        data_save_location, user, parameter_location)
 
-    # Register Task Type & Execute Task
+    # Register Task Type
     task_type = {
         'mode': mode,
         'exp_type': exp_type
     }
 
+    # Try executing the task
     try:
         execute_task(
             task_type, parameters, save_folder)
+
         print "Successful Trial!"
+
+    # Something went wrong, raise exception to caller
     except Exception as e:
         print "Unsuccessful Trial"
         raise e
@@ -64,10 +72,10 @@ def execute_task(task_type, parameters, save_folder):
     except Exception as e:
         raise e
 
-    # Close Display Window and Stop Acquistion
+    # Stop Acquistion
     daq.stop_acquisition()
 
-    # If a server was started for the data, stop it now
+    # If a server was started for the data, stop it now.
     if server:
         server.stop()
 
