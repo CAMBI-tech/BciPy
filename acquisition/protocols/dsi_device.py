@@ -106,8 +106,7 @@ class DsiDevice(Device):
         while sensor_data is False:
             try:
                 response = self._read_packet()
-                if len(response) == 0:
-                    sensor_data = False
+
                 if response.sensor_data:
                     sensor_data = True
             except:
