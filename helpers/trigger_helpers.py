@@ -4,7 +4,7 @@ from helpers.load import load_txt_data
 
 def _write_triggers_from_sequence_calibration(array, file):
     """
-    Write triggers from calibration
+    Write triggers from calibration.
 
     Helper Function to write trigger data to provided file. It assigns
         target letter based on the first presented letter in sequence, then
@@ -41,9 +41,8 @@ def _write_triggers_from_sequence_calibration(array, file):
 
 def _write_triggers_from_sequence_copy_phrase(array, file,
                                               copy_text, typed_text):
-
     """
-    Write triggers from copy phrase
+    Write triggers from copy phrase.
 
     Helper Function to write trigger data to provided file. It assigns
         target letter based on matching the next needed letter in typed text
@@ -91,7 +90,7 @@ def _write_triggers_from_sequence_copy_phrase(array, file,
 
 def _write_triggers_from_sequence_free_spell(array, file):
     """
-    Write triggers from free spell
+    Write triggers from free spell.
 
     Helper Function to write trigger data to provided file.
 
