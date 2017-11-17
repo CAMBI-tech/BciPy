@@ -62,6 +62,7 @@ class FileWriter(Processor):
 
     # @override ; context manager
     def __enter__(self):
+        # For python 2, writer needs the 'wb' option in order to work on Windows. If using #Python3 'w' is needed.
         self._file = open(self._filename, 'wb')
         self._writer = csv.writer(self._file, delimiter=',')
         self._writer.writerow(['daq_type', self._device_name])
@@ -75,8 +76,6 @@ class FileWriter(Processor):
 
     def process(self, record, timestamp=None):
         if self._writer:
-            import pdb
-            pdb.set_trace()
             self._writer.writerow([timestamp] + record)
 
 
