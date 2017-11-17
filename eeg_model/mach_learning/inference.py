@@ -19,6 +19,12 @@ def inference(x, y, model, alphabet):
     scores = np.exp(model.transform(dat))
     # This evaluates the log likelihood ratios:
     scores = -scores[:,1] / scores[:,0]
-    # TODO: This maps the log likelihood ratios:
-
-    return scores
+    # This maps the log likelihood ratios to alphabet:
+    # If the letter in alphabet does not exist in y, it takes 1
+    # the likelihood ratio.
+    lik_r = np.ones(len(alphabet))
+    for i in range(len(alphabet)):
+        for j in range(len(y)):
+            if alphabet(i) == y(j):
+                lik_r[i] = scores[j]
+    return lik_r
