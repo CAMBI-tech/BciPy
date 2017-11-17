@@ -156,7 +156,7 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "0"
     ],
     "isNumeric": "true"
   },
@@ -166,17 +166,17 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "-.75"
     ],
     "isNumeric": "true"
   },
   "text_text": {
-    "value": "Demo For Calibration Task",
+    "value": "",
     "section": "bci_config",
     "readableName": "Text Text",
     "helpTip": "Text Text",
     "recommended_values": [
-      "(0, -.75)"
+      "DEMO"
     ],
     "isNumeric": "false"
   },
