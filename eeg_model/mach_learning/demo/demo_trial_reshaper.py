@@ -17,8 +17,5 @@ trigger_loc = load_txt_data()
 arg = trial_reshaper(trigger_loc=trigger_loc, filtered_eeg=inp, fs=256, k=2)
 
 # Print results.
-print 'Reshaped trials:'
-print arg[0]
-print
-print 'Labels:'
-print arg[1]
+print 'Reshaped trials:\n', arg[0], '\nLabels:\n', arg[1], '\nTotal number of sequences:', \
+    arg[2], '\nTrial number in each sequence:', arg[3]

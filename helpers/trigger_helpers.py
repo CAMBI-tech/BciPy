@@ -97,7 +97,6 @@ def trigger_decoder(trigger_loc=None):
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
 
-        trigger_txt = [line.split() for line in text_file
-                       if 'fixation' not in line and 'first_pres_target' not in line]
+        trigger_txt = [line.split() for line in text_file if 'fixation' not in line]
 
     return trigger_txt
