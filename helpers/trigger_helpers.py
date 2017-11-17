@@ -92,7 +92,7 @@ def trigger_decoder(trigger_loc=None):
 
     with open(trigger_loc, 'r') as text_file:
         # Get every line of trigger.txt if that line does not contain
-        # 'fixation' and 'first_pres_target'
+        # 'fixation'
         # [['words', 'in', 'line'], ['second', 'line']...]
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
