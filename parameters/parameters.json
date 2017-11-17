@@ -388,6 +388,14 @@
     "recommended_values": "",
     "isNumeric": "false"    
   },
+  "full_screen": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Full Screen",
+    "helpTip": "Full Screen Mode",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
   "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
