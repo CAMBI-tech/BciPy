@@ -35,11 +35,8 @@ def bci_main(parameters, user, exp_type, mode):
         execute_task(
             task_type, parameters, save_folder)
 
-        print "Successful Trial!"
-
     # Something went wrong, raise exception to caller
     except Exception as e:
-        print "Unsuccessful Trial"
         raise e
 
 
@@ -59,8 +56,15 @@ def execute_task(task_type, parameters, save_folder):
         'filename': save_folder + '/' + parameters['raw_data_name']['value'],
     }
 
+    fake_data = parameters['fake_data']['value']
+
+    if fake_data == 'true':
+        server = True
+    else:
+        server = False
+
     # Initialize EEG Acquisition
-    daq, server = init_eeg_acquisition(daq_parameters, server=False)
+    daq, server = init_eeg_acquisition(daq_parameters, server=server)
 
     # Initialize Display Window
     display = init_display_window(parameters)

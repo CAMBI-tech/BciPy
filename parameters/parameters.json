@@ -380,6 +380,14 @@
     ],
     "isNumeric": "false"    
   },
+  "fake_data": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake Data Sessions",
+    "helpTip": "If true, fake data server used",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
   "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
