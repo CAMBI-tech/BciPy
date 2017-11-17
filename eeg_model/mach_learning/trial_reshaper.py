@@ -10,7 +10,7 @@ def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
     :param fs: sampling frequency
     :param k: down-sampling rate applied to the filtered eeg signal.
 
-    :return [reshaped_trials, labels]: Return type is a tuple.
+    :return (reshaped_trials, labels, num_of_sequences): Return type is a tuple.
     reshaped_trials =   3 dimensional np array first dimension is trials
                         second dimension is channels and third dimension is time samples.
     labels = np array for every trial's class.
@@ -42,8 +42,9 @@ def trial_reshaper(trigger_loc, filtered_eeg, fs, k):
 
         # For every channel
         for channel in range(len(filtered_eeg)):
-            reshaped_trials[channel][trial] = filtered_eeg[channel][
-                                              triggers[trial]:triggers[
-                                                                  trial] + num_samples]
+            reshaped_trials[channel][trial] = filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
 
-    return reshaped_trials, labels
+
+    num_of_sequences = np.sum(labels)
+
+    return reshaped_trials, labels, num_of_sequences
