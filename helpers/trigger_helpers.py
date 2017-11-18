@@ -84,7 +84,7 @@ def _write_triggers_from_sequence_free_spell(array, file):
     return file
 
 
-def trigger_decoder(trigger_loc=None):
+def trigger_decoder(trigger_loc=None, mode='calibration'):
 
     # Load triggers.txt
     if not trigger_loc:
@@ -99,4 +99,13 @@ def trigger_decoder(trigger_loc=None):
 
         trigger_txt = [line.split() for line in text_file if 'fixation' not in line]
 
-    return trigger_txt
+    # If operating mode is calibration, trigger.txt has three columns.
+    if mode == 'calibration':
+        symbol_info = map(lambda x: x[0],trigger_txt)
+        trial_target_info = map(lambda x: x[1],trigger_txt)
+        timing_info = map(lambda x: x[2],trigger_txt)
+    else:
+        pass # for tasks besides calibration, trigger.txt file will change in format.
+            #  Once the format is clear, this part can be handled.
+
+    return symbol_info, trial_target_info, timing_info

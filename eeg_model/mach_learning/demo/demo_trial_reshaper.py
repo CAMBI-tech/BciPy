@@ -1,6 +1,7 @@
 import numpy as np
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.load import load_txt_data
+from helpers.trigger_helpers import trigger_decoder
 
 
 # A 3 channel dummy input
@@ -11,10 +12,10 @@ fs = 256
 k = 2
 
 # Load trigger file
-trigger_loc = load_txt_data()
+trigger_data = trigger_decoder(trigger_loc=None, mode='calibration')
 
 # reshape function is applied to dummy data with given trigger file
-arg = trial_reshaper(trigger_loc=trigger_loc, filtered_eeg=inp, fs=256, k=2)
+arg = trial_reshaper(trigger_data=trigger_data, filtered_eeg=inp, fs=256, k=2, mode='calibration')
 
 # Print results.
 print 'Reshaped trials:\n', arg[0], '\nLabels:\n', arg[1], '\nTotal number of sequences:', \
