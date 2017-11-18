@@ -60,8 +60,8 @@ class PipeLine(object):
         pipeline, it should be trained.
         Args:
              x(ndarray[float]): of desired shape """
-        line_el = [x]
+        self.line_el = [x]
         for i in range(len(self.pipeline)):
-            line_el.append(self.pipeline[i].transform(line_el[i]))
+            self.line_el.append(self.pipeline[i].transform(self.line_el[i]))
 
-        return line_el[-1]
+        return self.line_el[-1]

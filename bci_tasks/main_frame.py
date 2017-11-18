@@ -1,4 +1,5 @@
-from helpers.stim_gen import random_rsvp_sequence_generator
+from helpers.stim_gen import random_rsvp_calibration_seq_gen, \
+    n_best_case_rsvp_seq_gen
 import numpy as np
 import string
 
@@ -47,7 +48,15 @@ class DecisionMaker(object):
             list_priority_evidence(list[]): priority list for the vidences
             sequence_counter(dict[str(val=float)]): number of sequences
                 passed for each particular evidence
-            epoch_counter(int): number of epochs through the session
+            list_epoch(list[epoch]): List of stimuli in each sequence
+                epoch(dict{items}):
+                    - target(str): target of the epoch
+                    - time_spent(ndarray[float]): |num_trials|x1
+                      time spent on the sequence
+                    - list_sti(list[list[str]]): presented symbols in each
+                      sequence
+                    - list_distribution(list[ndarray[float]]): list of |alp|x1
+                        arrays with prob. dist. over alp
         Functions:
             decide():
                 Checks the criteria for making and epoch, using all
@@ -60,24 +69,37 @@ class DecisionMaker(object):
                 schedule the next sequence using the current information
             decide_state_update():
                 If committed to an epoch update the state using a decision
-                metric. (e.g. pick the letter with highest likelihood)
+                metric.
+                (e.g. pick the letter with highest likelihood)
+            prepare_stimuli():
+                prepares the query set for the next sequence
+                (e.g pick n-highest likely letters and randomly shuffle)
         """
 
     def __init__(self, state=''):
         self.state = state
         self.displayed_state = form_display_state(state)
 
+        # TODO: read from parameters file
         self.alphabet = list(string.ascii_uppercase) + ['<'] + ['_']
 
-        self.posteriors = []
+        self.list_epoch = [{'target': None, 'time_spent': 0, 'list_sti':
+            [], 'list_distribution': []}]
         self.time = 0
 
-        self.evidence = []
-        self.list_priority_evidence = []
-        self.sequence_counter = {'ERP': 0, 'FRP0': 0}
-        self.epoch_counter = 0
+    def decide(self, p):
+        """ Once evidence is collected, decision_maker makes a decision to
+            stop or not by leveraging the information of the stopping
+            criteria. Can decide to do an epoch or schedule another sequence.
+            Args:
+                p(ndarray[float]): |A| x 1 distribution array
+            Return:
+                commitment(bin): True if a letter is a commitment is made
+                                 False if requires more evidence
+                args(dict[]): Extra arguments depending on the decision
+                """
 
-    def decide(self):
+        self.list_epoch[-1]['list_distribution'].append(p)
 
         # Stopping Criteria
         # TODO: Read from parameters
@@ -90,26 +112,34 @@ class DecisionMaker(object):
         if (sum(self.sequence_counter.values()) < min_num_seq) or \
                 (not (sum(self.sequence_counter.values()) > max_num_seq) and
                      not (self.time > time_threshold) and
-                     not (np.max(self.posteriors[-1][-1]) >
-                              posterior_commit_threshold)):
-            self.schedule_sequence()
+                     not (np.max(p) > posterior_commit_threshold)):
+            stimuli = self.schedule_sequence()
+            commitment = False
+            return commitment, {'stimuli': stimuli}
         else:
             self.do_epoch()
+            commitment = True
+            return commitment
 
     def do_epoch(self):
         decision = self.decide_state_update()
         self.state = self.state + decision
         self.displayed_state = form_display_state(self.state)
-        # Append a new list for the next epoch
-        self.posteriors.append([])
+
+        # Initialize next epoch
+        self.list_epoch.append({'target': None, 'time_spent': 0, 'list_sti':
+            [], 'list_distribution': []})
 
     def schedule_sequence(self):
+        """ Schedules next sequence """
+        stimuli = self.prepare_stimuli()
+        self.list_epoch[-1]['list_sti'].append(stimuli)
 
-        return 0
+        return stimuli
 
     def decide_state_update(self):
         """ Checks stopping criteria to commit to an epoch """
-        idx = np.where(self.posteriors[-1] ==
+        idx = np.where(self.list_epoch[-1]['[op'] ==
                        np.max(self.posteriors[-1]))[0][0]
         decision = self.alphabet[idx]
         return decision
@@ -121,7 +151,9 @@ class DecisionMaker(object):
                 stimuli(tuple[list[char],list[float],list[str]]): tuple of
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
-        stimuli = random_rsvp_sequence_generator(self.alphabet, num_sti=1)[0]
+        stimuli = \
+            n_best_case_rsvp_seq_gen(self.alphabet, self.posteriors[-1][-1],
+                                     num_sti=1)
         return stimuli
 
     def save_sequence_info(self):
