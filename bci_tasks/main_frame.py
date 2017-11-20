@@ -23,9 +23,43 @@ def form_display_state(state):
     return tmp
 
 
-def fusion():
-    """ Fuses likelihood evidences provided by the """
-    return 0
+class EvidenceFusion(object):
+    """ Fuses likelihood evidences provided by the inference
+        Attr:
+            evidence_history(dict{list[ndarray]}): Dictionary of difference
+                evidence types in list. Lists are ordered using the arrival
+                time.
+            likelihood(ndarray[]): current probability distribution over the
+                set. Gets updated once new evindence arrives. """
+
+    def __init__(self, list_name_evidence, len_dist):
+        self.evidence_history = {name: [] for name in list_name_evidence}
+        self.likelihood = np.ones(len_dist) / len_dist
+
+    def update_and_fuse(self, dict_evidence):
+        """ Updates the probability distribution
+            Args:
+                dict_evidence(dict[name: ndarray[float]]): dictionary of
+                    evidences (EEG and other likelihoods)
+                """
+        names = dict_evidence.keys()
+        values = dict_evidence.values()
+
+        for name, value in zip(names, values):
+            (self.evidence_history[name]).append(value)
+
+        # TODO: Current rule is to multiply
+        for value in values:
+            self.likelihood *= value
+
+        self.likelihood = self.likelihood / np.sum(self.likelihood)
+        return self.likelihood
+
+    def reset_history(self):
+        # Makes all the values
+        for value in self.evidence_history.values():
+            del value[:]
+        self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)
 
 
 class DecisionMaker(object):
@@ -122,6 +156,9 @@ class DecisionMaker(object):
             return commitment
 
     def do_epoch(self):
+        """ Epoch refers to a commitment to a decision.
+            If made, state is updated, displayed state is updated
+            a new epoch is appended. """
         decision = self.decide_state_update()
         self.state = self.state + decision
         self.displayed_state = form_display_state(self.state)
@@ -158,3 +195,42 @@ class DecisionMaker(object):
 
     def save_sequence_info(self):
         return 0
+
+
+def _demo_fusion():
+    len_alp = 4
+    evidence_names = ['LM', 'ERP', 'FRP']
+    num_epochs = 4
+    num_sequences = 10
+
+    conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
+
+    print('Random Epochs!')
+    for idx_ep in range(num_epochs):
+        prior = np.abs(np.random.randn(len_alp))
+        prior = prior / np.sum(prior)
+        conjugator.update_and_fuse({'LM': prior})
+        for idx in range(num_sequences):
+            # Generate random sequences
+            evidence_erp = 10 * np.abs(np.random.randn(len_alp))
+            evidence_frp = 10 * np.abs(np.random.randn(len_alp))
+            conjugator.update_and_fuse(
+                {'ERP': evidence_erp, 'FRP': evidence_frp})
+        print('Epoch: {}'.format(idx_ep))
+        print(conjugator.evidence_history['ERP'])
+        print(conjugator.evidence_history['FRP'])
+        print(conjugator.evidence_history['LM'])
+        print('Posterior:{}'.format(conjugator.likelihood))
+
+        # Reset the conjugator before starting a new epoch for clear history
+        conjugator.reset_history()
+
+
+def main():
+    _demo_fusion()
+
+    return 0
+
+
+if __name__ == "__main__":
+    main()
