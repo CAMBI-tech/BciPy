@@ -15,7 +15,8 @@ k = 2
 trigger_data = trigger_decoder(trigger_loc=None, mode='calibration')
 
 # reshape function is applied to dummy data with given trigger file
-arg = trial_reshaper(trigger_data=trigger_data, filtered_eeg=inp, fs=256, k=2, mode='calibration')
+arg = trial_reshaper(trial_target_info=trigger_data[1],
+                     timing_info=trigger_data[2], filtered_eeg=inp, fs=256, k=2, mode='calibration')
 
 # Print results.
 print 'Reshaped trials:\n', arg[0], '\nLabels:\n', arg[1], '\nTotal number of sequences:', \

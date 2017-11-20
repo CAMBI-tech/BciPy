@@ -103,8 +103,8 @@ def trigger_decoder(trigger_loc=None, mode='calibration'):
     if mode == 'calibration':
         symbol_info = map(lambda x: x[0],trigger_txt)
         trial_target_info = map(lambda x: x[1],trigger_txt)
-        timing_info = map(lambda x: x[2],trigger_txt)
-    else:
+        timing_info = map(lambda x: eval(x[2]),trigger_txt)
+    else: # TODO: fix this! Add other operating modes besides calibration!
         pass # for tasks besides calibration, trigger.txt file will change in format.
             #  Once the format is clear, this part can be handled.
 
