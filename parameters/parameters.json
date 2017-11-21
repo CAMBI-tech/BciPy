@@ -362,6 +362,14 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
+  "eeg_buffer_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "End of file eeg buffer length",
+    "helpTip": "End of file eeg buffer length",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
   "raw_data_name": {
     "value": "rawdata.csv",
     "section": "bci_config",
