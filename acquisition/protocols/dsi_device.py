@@ -73,7 +73,7 @@ class DsiDevice(Device):
             logging.debug(response.type)
             if response.type == 'EVENT':
                 logging.debug(response.event_code + ': ' + response.message)
-            response = self.read_packet()
+            response = self._read_packet()
 
         channels = response.message.split(',')
         logging.debug("Channels: " + ','.join(channels))
