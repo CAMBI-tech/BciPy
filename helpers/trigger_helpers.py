@@ -69,8 +69,6 @@ def _write_triggers_from_sequence_copy_phrase(array, file,
 
 def _write_triggers_from_sequence_free_spell(array, file):
 
-    x = 0
-
     for i in array:
 
         # extract the letter and timing from the array
@@ -79,12 +77,10 @@ def _write_triggers_from_sequence_free_spell(array, file):
         # write to file
         file.write('%s %s' % (letter, time) + "\n")
 
-        x += 1
-
     return file
 
 
-def trigger_decoder(trigger_loc=None, mode='calibration'):
+def trigger_decoder(mode, trigger_loc=None):
 
     # Load triggers.txt
     if not trigger_loc:
@@ -97,15 +93,21 @@ def trigger_decoder(trigger_loc=None, mode='calibration'):
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
 
-        trigger_txt = [line.split() for line in text_file if 'fixation' not in line]
+        trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line]
 
     # If operating mode is calibration, trigger.txt has three columns.
-    if mode == 'calibration':
+    if mode == 'calibration' or mode == 'copy_phrase':
         symbol_info = map(lambda x: x[0],trigger_txt)
         trial_target_info = map(lambda x: x[1],trigger_txt)
         timing_info = map(lambda x: eval(x[2]),trigger_txt)
-    else: # TODO: fix this! Add other operating modes besides calibration!
-        pass # for tasks besides calibration, trigger.txt file will change in format.
-            #  Once the format is clear, this part can be handled.
+    elif mode == 'free_spell':
+        symbol_info = map(lambda x: x[0],trigger_txt)
+        trial_target_info = None
+        timing_info = map(lambda x: eval(x[1]),trigger_txt)
+    else:
+        raise Exception("You have not provided a valid operating mode for trigger_decoder. "
+                        "Valid modes are: 'calibration','copy_phrase','free_spell'")
+
+
 
     return symbol_info, trial_target_info, timing_info
