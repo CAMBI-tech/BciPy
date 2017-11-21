@@ -61,6 +61,10 @@ class EvidenceFusion(object):
             del value[:]
         self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)
 
+    def save_history(self):
+        """ Saves the current likelihood history """
+        return 0
+
 
 class DecisionMaker(object):
     """ Scheduler of the entire framework
@@ -110,16 +114,18 @@ class DecisionMaker(object):
                 (e.g pick n-highest likely letters and randomly shuffle)
         """
 
-    def __init__(self, state=''):
+    def __init__(self, state='',
+                 alphabet=list(string.ascii_uppercase) + ['<'] + ['_']):
         self.state = state
         self.displayed_state = form_display_state(state)
 
         # TODO: read from parameters file
-        self.alphabet = list(string.ascii_uppercase) + ['<'] + ['_']
+        self.alphabet = alphabet
 
         self.list_epoch = [{'target': None, 'time_spent': 0, 'list_sti':
             [], 'list_distribution': []}]
         self.time = 0
+        self.sequence_counter = 0
 
     def decide(self, p):
         """ Once evidence is collected, decision_maker makes a decision to
@@ -143,8 +149,8 @@ class DecisionMaker(object):
         posterior_commit_threshold = .8
 
         # Check stopping criteria
-        if (sum(self.sequence_counter.values()) < min_num_seq) or \
-                (not (sum(self.sequence_counter.values()) > max_num_seq) and
+        if (self.sequence_counter < min_num_seq) or \
+                (not (self.sequence_counter > max_num_seq) and
                      not (self.time > time_threshold) and
                      not (np.max(p) > posterior_commit_threshold)):
             stimuli = self.schedule_sequence()
@@ -153,12 +159,13 @@ class DecisionMaker(object):
         else:
             self.do_epoch()
             commitment = True
-            return commitment
+            return commitment, []
 
     def do_epoch(self):
         """ Epoch refers to a commitment to a decision.
             If made, state is updated, displayed state is updated
             a new epoch is appended. """
+        self.sequence_counter = 0
         decision = self.decide_state_update()
         self.state = self.state + decision
         self.displayed_state = form_display_state(self.state)
@@ -169,15 +176,18 @@ class DecisionMaker(object):
 
     def schedule_sequence(self):
         """ Schedules next sequence """
+        self.state += '.'
         stimuli = self.prepare_stimuli()
-        self.list_epoch[-1]['list_sti'].append(stimuli)
+        self.list_epoch[-1]['list_sti'].append(stimuli[0])
+        self.sequence_counter += 1
 
         return stimuli
 
     def decide_state_update(self):
         """ Checks stopping criteria to commit to an epoch """
-        idx = np.where(self.list_epoch[-1]['[op'] ==
-                       np.max(self.posteriors[-1]))[0][0]
+        idx = np.where(self.list_epoch[-1]['list_distribution'][-1] ==
+                       np.max(self.list_epoch[-1]['list_distribution'][
+                                  -1]))[0][0]
         decision = self.alphabet[idx]
         return decision
 
@@ -189,8 +199,8 @@ class DecisionMaker(object):
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
         stimuli = \
-            n_best_case_rsvp_seq_gen(self.alphabet, self.posteriors[-1][-1],
-                                     num_sti=1)
+            n_best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
+                'list_distribution'][-1], num_sti=1)
         return stimuli
 
     def save_sequence_info(self):
@@ -226,8 +236,49 @@ def _demo_fusion():
         conjugator.reset_history()
 
 
+def _demo_decision_maker():
+    alp = ['L', 'A', 'M', 'E']
+    len_alp = len(alp)
+    evidence_names = ['LM', 'ERP', 'FRP']
+    num_epochs = 4
+    num_sequences = 10
+
+    conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
+    decision_maker = DecisionMaker(state='', alphabet=alp)
+
+    prior = np.abs(np.random.randn(len_alp))
+    prior = prior / np.sum(prior)
+    conjugator.update_and_fuse({'LM': prior})
+
+    for idx_epoch in range(num_epochs):
+
+        prior = np.abs(np.random.randn(len_alp))
+        prior = prior / np.sum(prior)
+        p = conjugator.update_and_fuse({'LM': prior})
+        decision_maker.decide(p)
+
+        while True:
+            # Generate random sequences
+            evidence_erp = np.abs(np.random.randn(len_alp))
+            evidence_erp[idx_epoch] += 1
+            evidence_frp = np.abs(np.random.randn(len_alp))
+            evidence_frp[idx_epoch] += 3
+
+            p = conjugator.update_and_fuse(
+                {'ERP': evidence_erp, 'FRP': evidence_frp})
+
+            d, query = decision_maker.decide(p)
+            if d:
+                break
+        # Reset the conjugator before starting a new epoch for clear history
+        conjugator.reset_history()
+
+    print('State:{}'.format(decision_maker.state))
+    print('Displayed State: {}'.format(decision_maker.displayed_state))
+
+
 def main():
-    _demo_fusion()
+    _demo_decision_maker()
 
     return 0
 
