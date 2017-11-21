@@ -73,7 +73,7 @@ class DsiDevice(Device):
             logging.debug(response.type)
             if response.type == 'EVENT':
                 logging.debug(response.event_code + ': ' + response.message)
-            response = self.read_packet()
+            response = self._read_packet()
 
         channels = response.message.split(',')
         logging.debug("Channels: " + ','.join(channels))
@@ -102,6 +102,14 @@ class DsiDevice(Device):
         -------
             list with an item for each channel.
         """
-        response = self._read_packet()
+        sensor_data = False
+        while sensor_data is False:
+            try:
+                response = self._read_packet()
 
-        return None if len(response) == 0 else list(response.sensor_data)
+                if response.sensor_data:
+                    sensor_data = True
+            except:
+                pass
+
+        return list(response.sensor_data)
