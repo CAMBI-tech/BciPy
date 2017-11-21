@@ -132,6 +132,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
     # Close this sessions trigger file and return some data
     trigger_file.close()
 
+    # Wait some time before exiting so there is trailing eeg data saved
+    core.wait(int(parameters['eeg_buffer_len']['value']))
+
     return file_save
 
 
