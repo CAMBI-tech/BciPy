@@ -120,14 +120,11 @@
     "isNumeric": "true"
   },
   "text_task": {
-    "value": "0/100",
+    "value": "COPY_PHRASE",
     "section": "advanced_config",
     "readableName": "text task",
     "helpTip": "text task",
-    "recommended_values": [
-      "0/100",
-      "1/100"
-    ],
+    "recommended_values": "",
     "isNumeric": "false"
   },
   "color_text": {
@@ -173,9 +170,11 @@
   "text_text": {
     "value": "",
     "section": "bci_config",
-    "readableName": "Text Text",
-    "helpTip": "Text Text",
+    "readableName": "Text below main presentation",
+    "helpTip": "Text below main presentation",
     "recommended_values": [
+      "",
+      "Demo Text",
       "DEMO"
     ],
     "isNumeric": "false"
@@ -234,22 +233,38 @@
     "recommended_values": "",
     "isNumeric": "true"
   }, 
-  "tr_pos_bg": {
-    "value": "(0, .5)",
+  "tr_pos_bg_x": {
+    "value": "0",
     "section": "bci_config",
-    "readableName": "tr_pos_bg",
-    "helpTip": "tr_pos_bg",
+    "readableName": "tr_pos_bg_x",
+    "helpTip": "tr_pos_bg_x",
     "recommended_values": "",
     "isNumeric": "true"
   }, 
-  "bl_pos_bg": {
-    "value": "(-1, -.5)",
+  "tr_pos_bg_y": {
+    "value": ".5",
     "section": "bci_config",
-    "readableName": "bl_pos_bg",
-    "helpTip": "bl_pos_bg",
+    "readableName": "tr_pos_bg_y",
+    "helpTip": "tr_pos_bg_y",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
+  "bl_pos_bg_x": {
+    "value": "-1",
+    "section": "bci_config",
+    "readableName": "bl_pos_bg_x",
+    "helpTip": "bl_pos_bg_x",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "bl_pos_bg_y": {
+    "value": "-.5",
+    "section": "bci_config",
+    "readableName": "bl_pos_bg_y",
+    "helpTip": "bl_pos_bg_y",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
   "size_domain_bg": {
     "value": "7",
     "section": "bci_config",

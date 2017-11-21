@@ -1,4 +1,4 @@
-from RSVP import calibration
+from RSVP import calibration, copy_phrase
 
 
 def start_task(daq, display_window, task_type, parameters, file_save):
@@ -22,7 +22,7 @@ def start_task(daq, display_window, task_type, parameters, file_save):
         if task_type['exp_type'] is 2:
             # try running the experiment
             try:
-                trial_data = calibration.rsvp_copy_phrase_task(
+                trial_data = copy_phrase.rsvp_copy_phrase_task(
                     display_window, daq, parameters, file_save)
 
             # Raise exceptions if any encountered and clean up!!
