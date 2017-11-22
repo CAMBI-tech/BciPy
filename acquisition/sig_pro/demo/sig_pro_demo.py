@@ -66,6 +66,3 @@ plt.show()
 # plt.plot(t,x[0][:xpassband.size])
 # plt.title('Received Signal')
 # plt.show()
-
-
-raw_input('Press enter to exit: ')

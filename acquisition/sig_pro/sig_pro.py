@@ -2,12 +2,14 @@ import numpy as np
 import os
 
 
-def sig_pro(input_seq, filt=None, fs=256, k=2):
+def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
     """
     :param input_seq: Input sequence to be filtered. Expected dimensions are 16xT
     :param filt: Input for using a specific filter. If left empty, according to fs a pre-designed filter is going to be used. Filters are pre-designed for fs = 256,300 or 1024 Hz.
     :param fs: Sampling frequency of the hardware.
     :param k: downsampling order
+    :param filter_location: Path to filters.txt, If left empty, filters.txt is assumed to be next to this sig_pro.py
+
     :return: output sequence that is filtered and downsampled input. Filter delay is compensated. Dimensions are 16xT/k
 
     256Hz
@@ -24,24 +26,24 @@ def sig_pro(input_seq, filt=None, fs=256, k=2):
 
     """
 
-    # Find the location of filters.txt
-    location_of_filters = os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt'
+    # If filter location is not provided, assume it is next to sig_pro.py file.
+    if not filter_location:
+        filter_location = os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt'
 
     # Try to open the filters.txt file
     try:
-        with open(location_of_filters, 'r') as text_file:
+        with open(filter_location, 'r') as text_file:
             dict_of_filters = eval(text_file.readline())
     except Exception as e:
-        print 'filters.txt cannot be found in', location_of_filters
+        print 'filters.txt cannot be found in path that is passed:', filter_location
         raise e
 
     # Try to get the required filter from the text file.
     try:
         filt = dict_of_filters[fs]
     except Exception as e:
-        print 'Please provide a filter for your sampling frequency.'
+        print 'filters.txt does not have a filter with sampling frequency provided.'
         raise e
-
 
     # Precision correction
     filt = np.array(filt)
