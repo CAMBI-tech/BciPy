@@ -100,7 +100,7 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
         # Do time windowing (get the related time samples) for every trial in every channel
         # For every trial
         for trial in range(len(triggers)):
-            if trial_target_info[trial] == 'correct':
+            if trial_target_info[trial] == 'target':
                 labels[trial] = 1
 
             # For every channel

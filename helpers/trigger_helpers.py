@@ -55,9 +55,9 @@ def _write_triggers_from_sequence_copy_phrase(array, file,
         if x == 0:
             targetness = 'fixation'
         elif x > 1 and correct_letter == letter:
-            targetness = 'correct'
+            targetness = 'target'
         else:
-            targetness = 'incorrect'
+            targetness = 'nontarget'
 
         # write to the file
         file.write('%s %s %s' % (letter, targetness, time) + "\n")
