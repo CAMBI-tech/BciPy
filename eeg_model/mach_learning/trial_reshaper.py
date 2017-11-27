@@ -19,8 +19,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
     :param mode: Operating mode, can be 'calibration', 'copy_phrase', 'free_spell'.
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return type is a tuple.
-    reshaped_trials =   3 dimensional np array first dimension is trials
-                        second dimension is channels and third dimension is time samples.
+    reshaped_trials =   3 dimensional np array first dimension is channels
+                        second dimension is trials and third dimension is time samples.
     labels = np array for every trial's class.
     num_of_sequences = Integer for total sequence number, as written in trigger.txt
     trials_per_seq = number of trials in each sequence
