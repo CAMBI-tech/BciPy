@@ -70,13 +70,13 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
         # Label for every trial
         labels = np.zeros(len(triggers))
 
-        # Do time windowing (get the related time samples) for every trial in every channel
-        # For every trial
+
         for trial in range(len(triggers)):
+            # Assign targetness to labels for each trial
             if trial_target_info[trial] == 'target':
                 labels[trial] = 1
 
-            # For every channel
+            # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
                     filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
@@ -97,13 +97,12 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
         # Label for every trial
         labels = np.zeros(len(triggers))
 
-        # Do time windowing (get the related time samples) for every trial in every channel
-        # For every trial
         for trial in range(len(triggers)):
+            # Assign targetness to labels for each trial
             if trial_target_info[trial] == 'target':
                 labels[trial] = 1
 
-            # For every channel
+            # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
                     filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
@@ -126,11 +125,10 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
         labels = None
 
-        # Do time windowing (get the related time samples) for every trial in every channel
-        # For every trial
+
         for trial in range(len(triggers)):
 
-            # For every channel
+            # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
                     filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
