@@ -1,9 +1,8 @@
-from helpers.stim_gen import random_rsvp_calibration_seq_gen, \
-    n_best_case_rsvp_seq_gen
+from helpers.stim_gen import n_best_case_rsvp_seq_gen
 import numpy as np
 import string
 
-
+# TODO: Decide if this method should be inside decision maker class!
 def form_display_state(state):
     """ Forms the state information or the user that fits to the
         display. Basically takes '.' and '<' into consideration and rewrites
@@ -22,15 +21,14 @@ def form_display_state(state):
 
     return tmp
 
-
-class EvidenceFusion(object):
+class EvidenceFusion:
     """ Fuses likelihood evidences provided by the inference
         Attr:
             evidence_history(dict{list[ndarray]}): Dictionary of difference
                 evidence types in list. Lists are ordered using the arrival
                 time.
             likelihood(ndarray[]): current probability distribution over the
-                set. Gets updated once new evindence arrives. """
+                set. Gets updated once new evidence arrives. """
 
     def __init__(self, list_name_evidence, len_dist):
         self.evidence_history = {name: [] for name in list_name_evidence}
@@ -42,17 +40,15 @@ class EvidenceFusion(object):
                 dict_evidence(dict[name: ndarray[float]]): dictionary of
                     evidences (EEG and other likelihoods)
                 """
-        names = dict_evidence.keys()
-        values = dict_evidence.values()
 
-        for name, value in zip(names, values):
-            (self.evidence_history[name]).append(value)
+        for key in dict_evidence.keys():
+            self.evidence_history[key].append(dict_evidence[key])
 
         # TODO: Current rule is to multiply
-        for value in values:
+        for value in dict_evidence.values():
             self.likelihood *= value
-
         self.likelihood = self.likelihood / np.sum(self.likelihood)
+
         return self.likelihood
 
     def reset_history(self):
@@ -65,8 +61,7 @@ class EvidenceFusion(object):
         """ Saves the current likelihood history """
         return 0
 
-
-class DecisionMaker(object):
+class DecisionMaker:
     """ Scheduler of the entire framework
         Attr:
             state(str): state of the framework, which increases in size
@@ -83,7 +78,7 @@ class DecisionMaker(object):
                 distribution of the sequence.
             time(float): system time
             evidence(list[str]): list of evidences used in the framework
-            list_priority_evidence(list[]): priority list for the vidences
+            list_priority_evidence(list[]): priority list for the evidences
             sequence_counter(dict[str(val=float)]): number of sequences
                 passed for each particular evidence
             list_epoch(list[epoch]): List of stimuli in each sequence
@@ -127,6 +122,12 @@ class DecisionMaker(object):
         self.time = 0
         self.sequence_counter = 0
 
+        # Stopping Criteria
+        # TODO: Read from parameters
+        self.min_num_seq = 1
+        self.max_num_seq = 2
+        self.posterior_commit_threshold = .8
+
     def decide(self, p):
         """ Once evidence is collected, decision_maker makes a decision to
             stop or not by leveraging the information of the stopping
@@ -141,22 +142,16 @@ class DecisionMaker(object):
 
         self.list_epoch[-1]['list_distribution'].append(p)
 
-        # Stopping Criteria
-        # TODO: Read from parameters
-        min_num_seq = 1
-        max_num_seq = 2
-        time_threshold = 1  # in seconds
-        posterior_commit_threshold = .8
-
         # Check stopping criteria
-        if (self.sequence_counter < min_num_seq) or \
-                (not (self.sequence_counter > max_num_seq) and
-                     not (self.time > time_threshold) and
-                     not (np.max(p) > posterior_commit_threshold)):
+        if self.sequence_counter < self.min_num_seq or\
+                not (self.sequence_counter > self.max_num_seq
+                     or np.max(p) > self.posterior_commit_threshold):
+
             stimuli = self.schedule_sequence()
             commitment = False
             return commitment, {'stimuli': stimuli}
         else:
+
             self.do_epoch()
             commitment = True
             return commitment, []
@@ -186,8 +181,7 @@ class DecisionMaker(object):
     def decide_state_update(self):
         """ Checks stopping criteria to commit to an epoch """
         idx = np.where(self.list_epoch[-1]['list_distribution'][-1] ==
-                       np.max(self.list_epoch[-1]['list_distribution'][
-                                  -1]))[0][0]
+                       np.max(self.list_epoch[-1]['list_distribution'][-1]))[0][0]
         decision = self.alphabet[idx]
         return decision
 
@@ -205,7 +199,6 @@ class DecisionMaker(object):
 
     def save_sequence_info(self):
         return 0
-
 
 def _demo_fusion():
     len_alp = 4
@@ -235,7 +228,6 @@ def _demo_fusion():
         # Reset the conjugator before starting a new epoch for clear history
         conjugator.reset_history()
 
-
 def _demo_decision_maker():
     alp = ['L', 'A', 'M', 'E']
     len_alp = len(alp)
@@ -252,11 +244,6 @@ def _demo_decision_maker():
 
     for idx_epoch in range(num_epochs):
 
-        prior = np.abs(np.random.randn(len_alp))
-        prior = prior / np.sum(prior)
-        p = conjugator.update_and_fuse({'LM': prior})
-        decision_maker.decide(p)
-
         while True:
             # Generate random sequences
             evidence_erp = np.abs(np.random.randn(len_alp))
@@ -264,8 +251,7 @@ def _demo_decision_maker():
             evidence_frp = np.abs(np.random.randn(len_alp))
             evidence_frp[idx_epoch] += 3
 
-            p = conjugator.update_and_fuse(
-                {'ERP': evidence_erp, 'FRP': evidence_frp})
+            p = conjugator.update_and_fuse({'ERP': evidence_erp, 'FRP': evidence_frp})
 
             d, query = decision_maker.decide(p)
             if d:
@@ -276,12 +262,5 @@ def _demo_decision_maker():
     print('State:{}'.format(decision_maker.state))
     print('Displayed State: {}'.format(decision_maker.displayed_state))
 
-
-def main():
-    _demo_decision_maker()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    _demo_decision_maker()
