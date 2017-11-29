@@ -16,7 +16,6 @@ def start_task(daq, display_window, task_type, parameters, file_save):
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
-                print "Error in start_task for calibration"
                 raise e
 
         # COPY PHRASE
@@ -28,7 +27,6 @@ def start_task(daq, display_window, task_type, parameters, file_save):
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
-                print "Error in start_task for copy phrase"
                 raise e
 
     # The parameters given for task type were incongruent with
