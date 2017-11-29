@@ -28,7 +28,7 @@ def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
 
     # If filter location is not provided, assume it is next to sig_pro.py file.
     if not filter_location:
-        filter_location = os.path.dirname(os.path.abspath(__file__)) + '\\filters.txt'
+        filter_location = os.path.dirname(os.path.abspath(__file__)) + '/filters.txt'
 
     # Try to open the filters.txt file
     try:
