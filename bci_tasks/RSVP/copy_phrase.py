@@ -4,7 +4,7 @@ from __future__ import division
 from psychopy import core
 
 from display.rsvp_disp_modes import CopyPhraseTask
-from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
 
 

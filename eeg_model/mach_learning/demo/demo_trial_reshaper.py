@@ -1,6 +1,6 @@
 import numpy as np
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
-from helpers.trigger_helpers import trigger_decoder
+from helpers.triggers import trigger_decoder
 from os import remove
 
 # A 3 channel dummy input
