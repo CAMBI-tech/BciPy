@@ -4,7 +4,7 @@ import shutil
 import sys
 import unittest
 
-from helpers.triggers import *
+# from helpers.triggers import *
 
 
 class TestTriggers(unittest.TestCase):

@@ -6,12 +6,11 @@ import unittest
 class SigProTest(unittest.TestCase):
     """Test for 'sig_pro.py"""
 
-
     def test_cosines(self):
         """Test if cosines with defined frequencies are passed or attenuated"""
 
         """Parameters entered for test here: """
-        dcLevel = .1
+        dc_level = .1
 
         # passband freq should be chosen w.r.t. filter specification, changes for filter to filter, defined in eegProcessor.py
         fcos0 = 2
@@ -23,10 +22,10 @@ class SigProTest(unittest.TestCase):
         fs = 256
         # fs = 300
         # fs = 1024
-        Duration = 5  # in seconds for test duration
+        duration = 5  # in seconds for test duration
         '''End of parameters'''
 
-        t = np.arange(0, Duration - 1. / fs, 1. / fs)  # time vector
+        t = np.arange(0, duration - 1. / fs, 1. / fs)  # time vector
 
         # Cosines with different frequencies
         x0 = np.cos(2 * np.pi * fcos0 * t)
@@ -35,7 +34,7 @@ class SigProTest(unittest.TestCase):
         x3 = np.cos(2 * np.pi * fcos3 * t)
         x4 = np.cos(2 * np.pi * fcos4 * t)
 
-        x6 = dcLevel
+        x6 = dc_level
         x7 = np.cos(2 * np.pi * 1 * t)
         x8 = np.cos(2 * np.pi * 48 * t)
         x9 = np.cos(2 * np.pi * 70 * t)
@@ -54,8 +53,4 @@ class SigProTest(unittest.TestCase):
         MSE_perSample = np.sum((xpassband - y[0][:xpassband.size]) ** 2.) / xpassband.size
         MSE_perSample_norm = MSE_perSample / np.sum(x[0][:] ** 2)
 
-        self.assertTrue(MSE_perSample_norm*100 < 10)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        self.assertTrue(MSE_perSample_norm * 100 < 10)

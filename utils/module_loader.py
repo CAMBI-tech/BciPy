@@ -5,7 +5,7 @@ print 'Current directory: ' + cDir
 
 sys.path.append('.')
 
-f = open("..\\requirements.txt",'r')
+f = open("../requirements.txt", 'r')
 answer = raw_input('Is your OS 64 Bit?(type y or n and press enter): ')
 
 if answer.lower()[0] == 'y':
