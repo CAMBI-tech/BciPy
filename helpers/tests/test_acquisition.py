@@ -2,7 +2,7 @@ import pytest
 import time
 import unittest
 
-from bci.helpers.acquisition import init_eeg_acquisition
+from bci.helpers.acquisition_related import init_eeg_acquisition
 from mock import mock_open, patch
 
 

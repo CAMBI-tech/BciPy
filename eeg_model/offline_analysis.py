@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib as mpl
 from helpers.load import read_data_csv, load_experimental_data
 from acquisition.sig_pro.sig_pro import sig_pro
@@ -43,7 +42,7 @@ def offline_analysis(data_folder=None):
                           k=ds_rate)
 
     # Determine on number of folds based on the data!
-    k_folds = 4
+    k_folds = 11
     model = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     print('Saving offline analysis plots!')

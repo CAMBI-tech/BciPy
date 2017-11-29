@@ -23,13 +23,15 @@ Downsampling order. Default value = 2
 Pass an input eeg np.array that is a matrix where every row is a channels data. For example a two channel EEG sequence could be:
 
 ```python
-input_seq = array([[1, 4, ...],
-       	           [2, 2, ...]])
+input_seq = np.array([[1, 4, ...],
+       	               [2, 2, ...]])
 ```
 
 Specify parameters. If your sampling frequency is different than predefined values, specify the filter. Returned value is another numpy array in the form:
 
 ```python
-output_seq = array([[.3, .4, ...],
-       	           [.2, .1, ...]])
+output_seq = np.array([[.3, .4, ...],
+       	                [.2, .1, ...]])
 ```
+
+For other details, refer to demo file or function definition.

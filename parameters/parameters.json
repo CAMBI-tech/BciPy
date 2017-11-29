@@ -153,7 +153,7 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "0"
     ],
     "isNumeric": "true"
   },
@@ -163,7 +163,7 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "-.75"
     ],
     "isNumeric": "true"
   },
@@ -174,7 +174,8 @@
     "helpTip": "Text below main presentation",
     "recommended_values": [
       "",
-      "Demo Text"
+      "Demo Text",
+      "DEMO"
     ],
     "isNumeric": "false"
   },
@@ -376,6 +377,14 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
+  "eeg_buffer_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "End of file eeg buffer length",
+    "helpTip": "End of file eeg buffer length",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
   "raw_data_name": {
     "value": "rawdata.csv",
     "section": "bci_config",
@@ -383,6 +392,42 @@
     "helpTip": "Raw Data Filename",
     "recommended_values": "",
     "isNumeric": "false"
+  },
+  "data_save_loc": {
+    "value": "data/",
+    "section": "bci_config",
+    "readableName": "Data Save Location",
+    "helpTip": "Data Save Location",
+    "recommended_values": [
+      "data/"
+    ],
+    "isNumeric": "false"    
+  },
+  "fake_data": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake Data Sessions",
+    "helpTip": "If true, fake data server used",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
+  "full_screen": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Full Screen",
+    "helpTip": "Full Screen Mode",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
+  "parameter_location": {
+    "value": "parameters/parameters.json",
+    "section": "bci_config",
+    "readableName": "Parameter Location",
+    "helpTip": "Parameter Location",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "isNumeric": "false"    
   },
   "num_sti": {
     "value": "4",
