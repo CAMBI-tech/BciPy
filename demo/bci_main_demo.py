@@ -10,7 +10,7 @@ parameters = load_json_parameters('parameters/parameters.json')
 # RSVP mode
 test_mode = 'RSVP'
 # ERP Calibration
-test_type = 2
+test_type = 3
 
 # define a user
 user = 'demo_user'
