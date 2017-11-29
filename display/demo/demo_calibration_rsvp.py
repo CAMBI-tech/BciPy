@@ -128,7 +128,8 @@ rsvp = CalibrationTask(window=win, clock=clock,
                        color_bar_bg=color_bar_bg,
                        is_txt_sti=is_txt_sti)
 
-# file = open('calibration_trigger_file.txt','w') 
+# uncomment trigger_file lines for demo with triggers!
+# trigger_file = open('calibration_triggers.txt','w')
 for idx_o in range(len(task_text)):
 
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
@@ -147,13 +148,13 @@ for idx_o in range(len(task_text)):
     core.wait(.4)
     sequence_timing = rsvp.do_sequence()
 
-    # _write_triggers_from_sequence_calibration(sequence_timing, file)
+    # _write_triggers_from_sequence_calibration(sequence_timing, trigger_file)
 
     core.wait(.5)
 
-# close the window and file
+# close the window and trigger_file
 win.close()
-file.close()
+# trigger_file.close()
 
 # Print intervals
 # intervalsMS = np.array(win.frameIntervals) * 1000
