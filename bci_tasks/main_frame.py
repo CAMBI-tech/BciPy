@@ -39,7 +39,7 @@ class EvidenceFusion(object):
     def update_and_fuse(self, dict_evidence):
         """ Updates the probability distribution
             Args:
-                dict_evidence(dict[name: ndarray[float]]): dictionary of
+                dict_evidence(dict{name: ndarray[float]}): dictionary of
                     evidences (EEG and other likelihoods)
                 """
         names = dict_evidence.keys()
@@ -78,11 +78,7 @@ class DecisionMaker(object):
                 only includes the alphabet and "_"
             alphabet(list[str]): list of symbols used by the framework. Can
                 be switched with location of images or one hot encoded images.
-            posteriors(list[list[ndarray]]): list of epochs, where epochs
-                are list of sequences, informs the current probability
-                distribution of the sequence.
             time(float): system time
-            evidence(list[str]): list of evidences used in the framework
             list_priority_evidence(list[]): priority list for the vidences
             sequence_counter(dict[str(val=float)]): number of sequences
                 passed for each particular evidence
@@ -133,6 +129,7 @@ class DecisionMaker(object):
             criteria. Can decide to do an epoch or schedule another sequence.
             Args:
                 p(ndarray[float]): |A| x 1 distribution array
+                    |A|: cardinality of the alphabet
             Return:
                 commitment(bin): True if a letter is a commitment is made
                                  False if requires more evidence
@@ -167,7 +164,7 @@ class DecisionMaker(object):
             a new epoch is appended. """
         self.sequence_counter = 0
         decision = self.decide_state_update()
-        self.state = self.state + decision
+        self.state += decision
         self.displayed_state = form_display_state(self.state)
 
         # Initialize next epoch
@@ -237,18 +234,13 @@ def _demo_fusion():
 
 
 def _demo_decision_maker():
-    alp = ['L', 'A', 'M', 'E']
+    alp = ['T', 'H', 'I', 'S', 'I', 'S', 'L', 'A', 'M', 'E']
     len_alp = len(alp)
     evidence_names = ['LM', 'ERP', 'FRP']
-    num_epochs = 4
-    num_sequences = 10
+    num_epochs = 10
 
     conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
     decision_maker = DecisionMaker(state='', alphabet=alp)
-
-    prior = np.abs(np.random.randn(len_alp))
-    prior = prior / np.sum(prior)
-    conjugator.update_and_fuse({'LM': prior})
 
     for idx_epoch in range(num_epochs):
 
@@ -267,7 +259,7 @@ def _demo_decision_maker():
             p = conjugator.update_and_fuse(
                 {'ERP': evidence_erp, 'FRP': evidence_frp})
 
-            d, query = decision_maker.decide(p)
+            d, arg = decision_maker.decide(p)
             if d:
                 break
         # Reset the conjugator before starting a new epoch for clear history
