@@ -2,7 +2,7 @@ import pytest
 import time
 import unittest
 
-from bci.helpers.acquisition import init_eeg_acquisition
+from bci.helpers.acquisition_related import init_eeg_acquisition
 from mock import mock_open, patch
 
 
@@ -64,13 +64,3 @@ class TestAcquisition(unittest.TestCase):
             data = client.get_data()
             assert clock.count > 0
             assert len(data) == clock.count
-
-    def test_null_server(self):
-        params = {}
-        client, server = init_eeg_acquisition(params, server=False)
-
-        with pytest.raises(Exception):
-            with client:
-                time.sleep(0.1)
-
-        server.stop()

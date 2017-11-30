@@ -120,14 +120,11 @@
     "isNumeric": "true"
   },
   "text_task": {
-    "value": "0/100",
+    "value": "COPY_PHRASE",
     "section": "advanced_config",
     "readableName": "text task",
     "helpTip": "text task",
-    "recommended_values": [
-      "0/100",
-      "1/100"
-    ],
+    "recommended_values": "",
     "isNumeric": "false"
   },
   "color_text": {
@@ -156,7 +153,7 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "0"
     ],
     "isNumeric": "true"
   },
@@ -166,17 +163,19 @@
     "readableName": "Position Text",
     "helpTip": "Position Text",
     "recommended_values": [
-      "(0, -.75)"
+      "-.75"
     ],
     "isNumeric": "true"
   },
   "text_text": {
-    "value": "Demo For Calibration Task",
+    "value": "",
     "section": "bci_config",
-    "readableName": "Text Text",
-    "helpTip": "Text Text",
+    "readableName": "Text below main presentation",
+    "helpTip": "Text below main presentation",
     "recommended_values": [
-      "(0, -.75)"
+      "",
+      "Demo Text",
+      "DEMO"
     ],
     "isNumeric": "false"
   },
@@ -234,22 +233,38 @@
     "recommended_values": "",
     "isNumeric": "true"
   }, 
-  "tr_pos_bg": {
-    "value": "(0, .5)",
+  "tr_pos_bg_x": {
+    "value": "0",
     "section": "bci_config",
-    "readableName": "tr_pos_bg",
-    "helpTip": "tr_pos_bg",
+    "readableName": "tr_pos_bg_x",
+    "helpTip": "tr_pos_bg_x",
     "recommended_values": "",
     "isNumeric": "true"
   }, 
-  "bl_pos_bg": {
-    "value": "(-1, -.5)",
+  "tr_pos_bg_y": {
+    "value": ".5",
     "section": "bci_config",
-    "readableName": "bl_pos_bg",
-    "helpTip": "bl_pos_bg",
+    "readableName": "tr_pos_bg_y",
+    "helpTip": "tr_pos_bg_y",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
+  "bl_pos_bg_x": {
+    "value": "-1",
+    "section": "bci_config",
+    "readableName": "bl_pos_bg_x",
+    "helpTip": "bl_pos_bg_x",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
+  "bl_pos_bg_y": {
+    "value": "-.5",
+    "section": "bci_config",
+    "readableName": "bl_pos_bg_y",
+    "helpTip": "bl_pos_bg_y",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
   "size_domain_bg": {
     "value": "7",
     "section": "bci_config",
@@ -362,6 +377,14 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
+  "eeg_buffer_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "End of file eeg buffer length",
+    "helpTip": "End of file eeg buffer length",
+    "recommended_values": "",
+    "isNumeric": "true"
+  },
   "raw_data_name": {
     "value": "rawdata.csv",
     "section": "bci_config",
@@ -369,6 +392,42 @@
     "helpTip": "Raw Data Filename",
     "recommended_values": "",
     "isNumeric": "false"
+  },
+  "data_save_loc": {
+    "value": "data/",
+    "section": "bci_config",
+    "readableName": "Data Save Location",
+    "helpTip": "Data Save Location",
+    "recommended_values": [
+      "data/"
+    ],
+    "isNumeric": "false"    
+  },
+  "fake_data": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake Data Sessions",
+    "helpTip": "If true, fake data server used",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
+  "full_screen": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Full Screen",
+    "helpTip": "Full Screen Mode",
+    "recommended_values": "",
+    "isNumeric": "false"    
+  },
+  "parameter_location": {
+    "value": "parameters/parameters.json",
+    "section": "bci_config",
+    "readableName": "Parameter Location",
+    "helpTip": "Parameter Location",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "isNumeric": "false"    
   },
   "num_sti": {
     "value": "4",
