@@ -2,6 +2,7 @@ from helpers.stim_gen import n_best_case_rsvp_seq_gen
 import numpy as np
 import string
 
+
 # TODO: Decide if this method should be inside decision maker class!
 def form_display_state(state):
     """ Forms the state information or the user that fits to the
@@ -21,7 +22,8 @@ def form_display_state(state):
 
     return tmp
 
-class EvidenceFusion:
+
+class EvidenceFusion(object):
     """ Fuses likelihood evidences provided by the inference
         Attr:
             evidence_history(dict{list[ndarray]}): Dictionary of difference
@@ -52,7 +54,7 @@ class EvidenceFusion:
         return self.likelihood
 
     def reset_history(self):
-        # Makes all the values
+        """ Clears evidence history """
         for value in self.evidence_history.values():
             del value[:]
         self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)
@@ -61,7 +63,8 @@ class EvidenceFusion:
         """ Saves the current likelihood history """
         return 0
 
-class DecisionMaker:
+
+class DecisionMaker(object):
     """ Scheduler of the entire framework
         Attr:
             state(str): state of the framework, which increases in size
@@ -141,7 +144,7 @@ class DecisionMaker:
         self.list_epoch[-1]['list_distribution'].append(p)
 
         # Check stopping criteria
-        if self.sequence_counter < self.min_num_seq or\
+        if self.sequence_counter < self.min_num_seq or \
                 not (self.sequence_counter > self.max_num_seq
                      or np.max(p) > self.posterior_commit_threshold):
 
@@ -179,7 +182,8 @@ class DecisionMaker:
     def decide_state_update(self):
         """ Checks stopping criteria to commit to an epoch """
         idx = np.where(self.list_epoch[-1]['list_distribution'][-1] ==
-                       np.max(self.list_epoch[-1]['list_distribution'][-1]))[0][0]
+                       np.max(self.list_epoch[-1]['list_distribution'][-1]))[
+            0][0]
         decision = self.alphabet[idx]
         return decision
 
@@ -197,6 +201,7 @@ class DecisionMaker:
 
     def save_sequence_info(self):
         return 0
+
 
 def _demo_fusion():
     len_alp = 4
@@ -226,6 +231,7 @@ def _demo_fusion():
         # Reset the conjugator before starting a new epoch for clear history
         conjugator.reset_history()
 
+
 def _demo_decision_maker():
     alp = ['T', 'H', 'I', 'S', 'I', 'S', 'L', 'A', 'M', 'E']
     len_alp = len(alp)
@@ -244,7 +250,8 @@ def _demo_decision_maker():
             evidence_frp = np.abs(np.random.randn(len_alp))
             evidence_frp[idx_epoch] += 3
 
-            p = conjugator.update_and_fuse({'ERP': evidence_erp, 'FRP': evidence_frp})
+            p = conjugator.update_and_fuse(
+                {'ERP': evidence_erp, 'FRP': evidence_frp})
 
             d, arg = decision_maker.decide(p)
             if d:
@@ -254,6 +261,7 @@ def _demo_decision_maker():
 
     print('State:{}'.format(decision_maker.state))
     print('Displayed State: {}'.format(decision_maker.displayed_state))
+
 
 if __name__ == "__main__":
     _demo_decision_maker()
