@@ -17,18 +17,17 @@ def generate_offline_analysis_screen(x, y, model, folder):
     import matplotlib.pyplot as plt
 
     classes = np.unique(y)
-    means = [np.mean(x[:, :, np.where(y == i)], 3) for i in classes]
+    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2))
+             for i in classes]
 
     fig = plt.figure(figsize=(20, 10))
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
 
     count = 1
-    while count < np.shape(means[1])[1]:
-        ax1.plot(means[0][:, count])
-        ax1.plot(means[0][:, count])
-        ax2.plot(means[1][:, count])
-        ax2.plot(means[1][:, count])
+    while count < means[0].shape[0]:
+        ax1.plot(means[0][count, :])
+        ax2.plot(means[1][count, :])
         count += 1
 
     # Set common labels
@@ -60,4 +59,3 @@ def generate_offline_analysis_screen(x, y, model, folder):
     plt.ylabel('p(e|l)')
     plt.xlabel('scores')
     fig.savefig(folder + "\lik_dens.pdf", bbox_inches='tight', format='pdf')
-
