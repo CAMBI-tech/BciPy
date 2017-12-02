@@ -125,8 +125,12 @@ class DecisionMaker(object):
         # Stopping Criteria
         # TODO: Read from parameters
         self.min_num_seq = 1
-        self.max_num_seq = 2
+        self.max_num_seq = 10
         self.posterior_commit_threshold = .8
+
+    def update(self, state=''):
+        self.state = state
+        self.displayed_state = form_display_state(state)
 
     def decide(self, p):
         """ Once evidence is collected, decision_maker makes a decision to
