@@ -8,11 +8,11 @@ from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
 
 # TODO: These are shared parameters for multiple functions
 # and I have no idea how to put them into correct place
-dim_x = 10
-num_ch = 1
+dim_x = 50
+num_ch = 16
 
 # Make up some distributions that data come from
-mean_pos = .5
+mean_pos = .2
 var_pos = .5
 mean_neg = 0
 var_neg = .5
@@ -48,9 +48,9 @@ def dummy_trig_dat_generator(truth, state, stimuli):
     if any(tar in i for i in stimuli):
         target_info = ['Non_Target'] * len(stimuli)
         idx = stimuli.index(tar)
+
         tmp = mean_neg + var_neg * np.random.randn(num_ch, len(stimuli), dim_x)
-        tmp[:, idx, :] = mean_pos + var_pos * np.random.randn(num_ch, 1,
-                                                              dim_x)
+        tmp[:, idx, :] = mean_pos + var_pos * np.random.randn(num_ch, dim_x)
         target_info[idx] = 'Target'
     else:
         target_info = ['Non_Target'] * len(stimuli)
@@ -171,7 +171,7 @@ class CopyPhraseWrapper(object):
                     self.evaluate_sequence(raw_dat, triggers, target_info)
 
                 # TODO: sleep for demo purposes. Remove it afterwards
-                time.sleep(1)
+                time.sleep(.3)
                 print('\rstate:{}'.format(self.decision_maker.state)),
             print('')
 
