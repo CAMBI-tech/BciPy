@@ -11,17 +11,17 @@
     * specializer (all)
     * ebitweight (all)
     * lm
-      - requirements.txt
-      - lm_server.py
-      - util.py
-      - server.py
-      - bitweight.py
+      * requirements.txt
+      * lm_server.py
+      * util.py
+      * server.py
+      * bitweight.py
 
     * specialfiles
-      - basictypes.pdx
-      - fst.pxd
-      - ios.pxd
-      - memory.pxd
+      * basictypes.pdx
+      * fst.pxd
+      * ios.pxd
+      * memory.pxd
 
     
 5. Read dockerRun.txt file and start a machine as described in 1.
