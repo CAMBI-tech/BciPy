@@ -6,20 +6,20 @@
 3. Pull the latest version of langModelPy from bitbucket.
 
 4. Make sure you have the following file hirarchy and you are here:
-&nbsp;&nbsp;Dokerfile
-&nbsp;&nbsp;specializer (all)
-&nbsp;&nbsp;ebitweight (all)
-&nbsp;&nbsp;lm
-&nbsp;&nbsp;&nbsp;&nbsp;requirements.txt
-&nbsp;&nbsp;&nbsp;&nbsp;lm_server.py
-&nbsp;&nbsp;&nbsp;&nbsp;util.py
-&nbsp;&nbsp;&nbsp;&nbsp;server.py
-&nbsp;&nbsp;&nbsp;&nbsp;bitweight.py
-&nbsp;&nbsp; specialfiles
-&nbsp;&nbsp;&nbsp;&nbsp;basictypes.pdx
-&nbsp;&nbsp;&nbsp;&nbsp;fst.pxd
-&nbsp;&nbsp;&nbsp;&nbsp;ios.pxd
-&nbsp;&nbsp;&nbsp;&nbsp;memory.pxd
+ + Dokerfile
+ + specializer (all)
+ + ebitweight (all)
+ + lm
+     - requirements.txt
+     - lm_server.py
+     - util.py
+     - server.py
+     - bitweight.py
+ +  specialfiles
+     - basictypes.pdx
+     - fst.pxd
+     - ios.pxd
+     - memory.pxd
 
     
 5. Read dockerRun.txt file and start a machine as described in 1.
