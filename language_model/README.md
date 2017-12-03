@@ -6,16 +6,23 @@
 3. Pull the latest version of langModelPy from bitbucket.
 
 4. Make sure you have the following file hirarchy and you are here:
+
  + Dokerfile
+
  + specializer (all)
+
  + ebitweight (all)
+
  + lm
+
      - requirements.txt
      - lm_server.py
      - util.py
      - server.py
      - bitweight.py
+
  +  specialfiles
+
      - basictypes.pdx
      - fst.pxd
      - ios.pxd
