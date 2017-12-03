@@ -7,20 +7,22 @@
 
 4. Make sure you have the following file hirarchy and you are here:
 
-    + Dokerfile
-    + lm
+    * Dokerfile
+    * specializer (all)
+    * ebitweight (all)
+    * lm
       - requirements.txt
       - lm_server.py
       - util.py
       - server.py
       - bitweight.py
-    + ebitweight (all)
-    + specialfiles
+
+    * specialfiles
       - basictypes.pdx
       - fst.pxd
       - ios.pxd
       - memory.pxd
-    specializer (all)
+
     
 5. Read dockerRun.txt file and start a machine as described in 1.
 
@@ -28,8 +30,7 @@
 
 Congrats! You built the lmImage :-)
 
-7. Open use_LMWRAPPER.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst.
-[The current language model](https://bitbucket.org/cogsyslab/langmodelpy/src/34e35c06d0f4/lm/?at=master).
+7. Open use_LMWRAPPER.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst. [The current language model](https://bitbucket.org/cogsyslab/langmodelpy/src/34e35c06d0f4/lm/?at=master).
 
 8. Run use_LMWrapper.py from its current directory (to be able to import the LM_Wrapper module)
 
