@@ -4,3 +4,6 @@
 [submodule "language_model/src"]
 	path = language_model/src
 	url = https://bitbucket.org/shiran_dudy/ebitweight/src
+[submodule "language_model/ebitweight"]
+	path = language_model/ebitweight
+	url = https://bitbucket.org/shiran_dudy/ebitweight
