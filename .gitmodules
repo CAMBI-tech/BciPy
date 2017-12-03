@@ -1,3 +1,6 @@
 [submodule "language_model/specializer"]
 	path = language_model/specializer
 	url = https://github.com/shiranD/specializer/
+[submodule "language_model/src"]
+	path = language_model/src
+	url = https://bitbucket.org/shiran_dudy/ebitweight/src
