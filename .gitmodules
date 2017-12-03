@@ -1,0 +1,3 @@
+[submodule "language_model/specializer"]
+	path = language_model/specializer
+	url = https://github.com/shiranD/specializer/
