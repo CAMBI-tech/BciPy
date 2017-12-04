@@ -5,6 +5,7 @@ from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
+from helpers.triggers import trigger_decoder
 import pickle
 
 mpl.use('TkAgg')
@@ -33,18 +34,21 @@ def offline_analysis(data_folder=None):
     if not data_folder:
         data_folder = load_experimental_data()
 
+    mode = 'calibration'
+
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
         data_folder + '/rawdata.csv')
     ds_rate = 2  # Read from parameters file the down-sampling rate
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
 
     # Get data and labels
-    x, y = trial_reshaper(data_folder + '/triggers.txt', dat, fs=fs,
-                          k=ds_rate)
+    s_i, t_t_i, t_i = trigger_decoder(mode=mode,
+                                      trigger_loc=data_folder + '/triggers.txt')
+    x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode, fs=fs,
+                                      k=ds_rate)
 
     # Determine on number of folds based on the data!
-    k_folds = 4
-    model = train_pca_rda_kde_model(x, y, k_folds=k_folds)
+    model = train_pca_rda_kde_model(x, y, k_folds=num_seq/10)
 
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder)

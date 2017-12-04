@@ -404,7 +404,7 @@
     "isNumeric": "false"    
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -430,7 +430,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "4",
+    "value": "100",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",
