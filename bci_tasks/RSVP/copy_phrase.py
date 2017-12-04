@@ -111,6 +111,25 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
                 copy_phrase,
                 text_task)
 
+            # Get timing of the first and last stimuli
+            _, first_stim_time = sequence_timing[0]
+            _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
+
+            # define my first and last time points
+            time1 = first_stim_time - .5
+            time2 = last_stim_time + .5
+
+            # Construct triggers
+            triggers = [(text, timing - time1)
+                        for text, timing in sequence_timing]
+
+            # Query for raw data
+            try:
+                raw_data = daq.get_data(time1, time2)
+            except Exception as e:
+                print "error in get_data()"
+                raise e
+
             # # Get parameters from Bar Graph and schedule
             # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
             #                     weight=dummy_bar_schedule_p[counter])
