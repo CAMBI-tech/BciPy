@@ -125,7 +125,7 @@ class ChannelWisePrincipalComponentAnalysis(object):
 
             self.list_pca[i].fit(x[i, :, :], y)
 
-    def transform(self, x):
+    def transform(self, x, y=None):
         f_vector = []
         for i in range(self.num_ch):
             # TODO: Observe that scikit learn PCA does not accept y
