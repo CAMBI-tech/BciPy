@@ -11,8 +11,8 @@ def force_pypath():
     BCI_PATH2 = BCI_PATH.replace('\\','/') # Notation used on unix and mac
 
     # Add to path if not already included.
-    if not BCI_PATH in sys.path:
+    if BCI_PATH not in sys.path:
         sys.path.append(BCI_PATH)
 
-    if not BCI_PATH2 in sys.path:
+    if BCI_PATH2 not in sys.path:
         sys.path.append(BCI_PATH2)

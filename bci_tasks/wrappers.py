@@ -1,7 +1,6 @@
 import numpy as np
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 import time
-from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.inference import inference
 from bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
@@ -187,7 +186,7 @@ def demo_copy_phrase_wrapper():
     y_n = [0] * num_x_n
 
     train_x = np.concatenate((x_p, x_n), 1)
-    train_y = np.concatenate(np.asarray([y_p, y_n]), 0)
+    train_y = np.concatenate((y_p, y_n), 0)
     permutation = np.random.permutation(train_x.shape[1])
     train_x = train_x[:, permutation, :]
     train_y = train_y[permutation]
