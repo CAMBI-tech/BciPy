@@ -20,7 +20,6 @@ var_neg = .5
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
        'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
-
 # TODO: Distributions are hardcoded!!
 def dummy_trig_dat_generator(truth, state, stimuli):
     """ Dummy trigger and data generation, will be replaced with daq and
@@ -62,7 +61,6 @@ def dummy_trig_dat_generator(truth, state, stimuli):
     trigger = [(stimuli[i], time[i]) for i in range(len(stimuli))]
 
     return eeg, trigger, target_info
-
 
 class CopyPhraseWrapper(object):
     """ Basic copy phrase task duty cycle wrapper. Given the phrases once
@@ -174,7 +172,6 @@ class CopyPhraseWrapper(object):
                 print('\rstate:{}'.format(self.decision_maker.state)),
             print('')
 
-
 def demo_copy_phrase_wrapper():
     # We need to train a dummy model
     num_x_p = 100
@@ -201,7 +198,6 @@ def demo_copy_phrase_wrapper():
     task = CopyPhraseWrapper(model, fs=dim_x * 2, k=1, alp=alp,
                              task_list=task_list)
     task.operate()
-
 
 if __name__ == "__main__":
     demo_copy_phrase_wrapper()
