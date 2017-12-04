@@ -49,7 +49,8 @@ def load_classifier():
         filename = askopenfilename()  # show dialog box and return the path
 
         if 'p' or 'pkl' not in filename:
-            raise "incorrect file type"
+            raise Exception(
+                'File type unrecognized. Please use a supported classifier type')
 
         # load the classifier with pickle
         classifier = pickle.load(filename, 'rb')
