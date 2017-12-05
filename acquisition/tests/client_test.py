@@ -86,6 +86,7 @@ def test_filewriter():
         # Length of data writes should match the buffer size.
         assert daq.get_data_len() == len(writeargs[3:])
 
+        daq.cleanup()
 
 def test_processor():
     """Test processor calls."""
@@ -113,6 +114,7 @@ def test_processor():
     for i, record in enumerate(daq._processor.data):
         assert record == device.data[i]
 
+    daq.cleanup()
 
 def test_buffer():
     """Buffer should capture values read from the device."""
@@ -129,6 +131,8 @@ def test_buffer():
     assert len(data) == len(device.data)
     for i, record in enumerate(data):
         assert record.data == device.data[i]
+
+    daq.cleanup()
 
 
 def test_clock():
@@ -161,3 +165,5 @@ def test_clock():
     assert len(data) == clock.counter
     for i in range(clock.counter):
         assert data[i].timestamp == float(i + 1)
+
+    daq.cleanup()
