@@ -12,8 +12,8 @@ alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
-def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
-                          model=None):
+def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
+                          fake=True):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -74,23 +74,30 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
 
     task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
                                                           2)]))]
-    copy_phrase_task = CopyPhraseWrapper(model, 300, 2, alp,
-                                         task_list=task_list)
+    try:
+        copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
+                                             task_list=task_list)
+    except Exception as e:
+        print "Error initializing Copy Phrase Task"
 
-    epoch_flag = True
-    loop_counter = 0
+    # Set new epoch to true and sequence counter to zero
+    new_epoch = True
+    seq_counter = 0
+
+    # Start the experiment!
     while run is True:
         # [to-do] allow pausing and exiting. See psychopy getKeys()
+
+        # Why bs for else?
         if copy_phrase[0:len(text_task)] == text_task:
             target_letter = copy_phrase[len(text_task)]
         else:
             target_letter = '<'
 
-        print(target_letter)
-        # Try getting random sequence information given stimuli parameters
+        # Try getting sequence information
         try:
-            if epoch_flag:
-                epoch_flag, sti = copy_phrase_task.initialize_epoch()
+            if new_epoch:
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
                 ele_sti = sti[0]
                 timing_sti = sti[1]
                 color_sti = sti[2]
@@ -100,24 +107,27 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
             print e
             raise e
 
-        # Try executing the sequences
-        print(ele_sti)
+        # Try executing the given sequences. This is where display is used!
         try:
+
+            # Update task state and reset the static
             rsvp.update_task_state(text=text_task, color_list=['white'])
             rsvp.draw_static()
             win.flip()
 
-            # update task state
+            # Setup the new Stimuli
             rsvp.ele_list_sti = ele_sti[0]
-            # rsvp.text_task = text_task
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
-
             rsvp.time_list_sti = timing_sti[0]
 
+            # Pause for a time
             core.wait(.4)
+
+            # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
 
+            # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
                 trigger_file,
@@ -132,17 +142,20 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
             time1 = first_stim_time - .5
             time2 = last_stim_time + .5
 
-            # Construct triggers
+            # Construct triggers to send off for processing
             triggers = [(text, timing - time1)
                         for text, timing in sequence_timing]
 
             # Query for raw data
             try:
-                raw_dat = daq.get_data(time1, time2)
-                import pdb
-                pdb.set_trace()
+                raw_data = daq.get_data(start=time1, end=time2)
+
+                # If the query didn't work, try just giving a start time
+                if len(raw_data) == 0:
+                    raw_data = daq.get_data(start=time1)
+
             except Exception as e:
-                print "error in get_data()"
+                print "error in daq get_data()"
                 raise e
 
             # # Get parameters from Bar Graph and schedule
@@ -158,8 +171,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
                     copy_phrase, target_letter, text_task)
             else:
                 target_info = ['Non_Target'] * len(triggers)
-                epoch_flag, sti = \
-                    copy_phrase_task.evaluate_sequence(raw_dat, triggers,
+                new_epoch, sti = \
+                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                        target_info)
                 ele_sti = sti[0]
                 timing_sti = sti[1]
@@ -171,9 +184,10 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
             raise e  # Close this sessions trigger file and return some data
 
         run = (copy_phrase_task.decision_maker.displayed_state !=
-               copy_phrase and loop_counter < 50)
-        loop_counter += 1
+               copy_phrase and seq_counter < 50)
+        seq_counter += 1
 
+    # Close the trigger file for this session
     trigger_file.close()
 
     # Wait some time before exiting so there is trailing eeg data saved
