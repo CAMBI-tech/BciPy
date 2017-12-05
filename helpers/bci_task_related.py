@@ -1,5 +1,3 @@
-
-
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     if text_task is '*':
         length_of_spelled_letters = 0
@@ -32,6 +30,5 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
 
 def alphabet():
-
-    return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
-            'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+    return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']

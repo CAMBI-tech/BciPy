@@ -1,4 +1,5 @@
 import numpy as np
+from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 import time
 from eeg_model.inference import inference
@@ -117,23 +118,29 @@ class CopyPhraseWrapper(object):
                     as letter and flash time for the letter
                 target_info(list[str]): target information about the stimuli
                 """
-        # dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
-        dat = raw_dat
-        letters = [triggers[i][0] for i in range(len(triggers))]
-        time = [triggers[i][1] for i in range(len(triggers))]
+
+        # TODO: Don't forget to activate
+        dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
+        # TODO: if it is a fixation remove it don't hardcode it as if you did
+        letters = [triggers[i][0] for i in range(1, len(triggers))]
+        time = [triggers[i][1] for i in range(1, len(triggers))]
 
         x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode)
+        # TODO: Hacked to get rid of cross sign for now
+        x = x[:, 1:x.shape[1], :]
+        y = y[1: y.shape[0]]
+
         lik_r = inference(x, letters, self.model, self.alp)
-        p = self.conjugator.update_and_fuse({'ERP': lik_r})
-        d, arg = self.decision_maker.decide(p)
+        prob = self.conjugator.update_and_fuse({'ERP': lik_r})
+        decision, arg = self.decision_maker.decide(prob)
 
         if 'stimuli' in arg:
             sti = arg['stimuli']
         else:
             sti = None
 
-        return d, sti
+        return decision, sti
 
     def initialize_epoch(self):
         """ If a decision is made initializes the next epoch """
@@ -142,7 +149,7 @@ class CopyPhraseWrapper(object):
         # TODO: update language model with
         self.decision_maker.displayed_state
         # get probabilites from language model
-        prior = np.ones(len(alp))
+        prior = np.ones(len(self.alp))
         prior /= np.sum(prior)
 
         p = self.conjugator.update_and_fuse({'LM': prior})

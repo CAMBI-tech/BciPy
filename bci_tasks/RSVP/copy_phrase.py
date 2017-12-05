@@ -2,6 +2,7 @@
 
 from __future__ import division
 from psychopy import core
+import numpy as np
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
@@ -12,7 +13,7 @@ from helpers.bci_task_related import fake_copy_phrase_decision, alphabet
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
-                          fake=True):
+                          fake=False):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -99,6 +100,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         # Try getting sequence information
         try:
             if new_epoch:
+
                 new_epoch, sti = copy_phrase_task.initialize_epoch()
                 ele_sti = sti[0]
                 timing_sti = sti[1]
@@ -152,9 +154,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             try:
                 raw_data = daq.get_data(start=time1, end=time2)
 
-                # If the query didn't work, try just giving a start time
-                if len(raw_data) == 0:
-                    raw_data = daq.get_data(start=time1)
+                # TODO: We hardcoded 0 as it is the data location
+                raw_data = np.array([np.array(raw_data[i][0]) for i in
+                                     range(len(raw_data))]).transpose()
 
             except Exception as e:
                 print "Error in daq get_data()"
@@ -168,18 +170,25 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            if fake:
-                (target_letter, text_task, run) = fake_copy_phrase_decision(
-                    copy_phrase, target_letter, text_task)
-            else:
-                target_info = ['Non_Target'] * len(triggers)
-                new_epoch, sti = \
-                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info)
-                ele_sti = sti[0]
-                timing_sti = sti[1]
-                color_sti = sti[2]
-                text_task = copy_phrase_task.decision_maker.displayed_state
+            # TODO: Don't forget you sinned
+            fake = False
+            try:
+                if fake:
+                    (target_letter, text_task, run) = fake_copy_phrase_decision(
+                        copy_phrase, target_letter, text_task)
+                else:
+                    print(raw_data.shape)
+                    target_info = ['nontarget'] * len(triggers)
+                    new_epoch, sti = \
+                        copy_phrase_task.evaluate_sequence(raw_data, triggers,
+                                                           target_info)
+                    ele_sti = sti[0]
+                    timing_sti = sti[1]
+                    color_sti = sti[2]
+                    text_task = copy_phrase_task.decision_maker.displayed_state
+            except Exception as e:
+                raise e
+
 
         except Exception as e:
             raise e
