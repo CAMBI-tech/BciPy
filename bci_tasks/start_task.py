@@ -24,11 +24,6 @@ def start_task(daq, display_window, task_type, parameters, file_save,
         if task_type['exp_type'] is 2:
             # try running the experiment
             try:
-                filename = '/Users/sci_tab/Desktop/bci/model.pkl'
-                try:
-                    classifier = pickle.load(open(filename))
-                except:
-                    print "classifier couldn't load"
                 trial_data = copy_phrase.rsvp_copy_phrase_task(
                     display_window, daq, parameters, file_save, classifier,
                     fake=fake)

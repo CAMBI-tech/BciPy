@@ -70,13 +70,13 @@ def execute_task(task_type, parameters, save_folder):
     daq, server = init_eeg_acquisition(daq_parameters, server=server)
 
     # Init EEG Model
-    # if task_type['exp_type'] > 1:
-    #     try:
-    #         classifier = load_classifier()
-    #     except:
-    #         print "cannot load classifier"
-    # else:
-    #     classifier = None
+    if task_type['exp_type'] > 1:
+        try:
+            classifier = load_classifier()
+        except:
+            print "cannot load classifier"
+    else:
+        classifier = None
 
     # Initialize Display Window
     display = init_display_window(parameters)
@@ -85,7 +85,7 @@ def execute_task(task_type, parameters, save_folder):
     try:
         trial_data = start_task(
             daq, display, task_type, parameters, save_folder,
-            classifier=None, fake=fake)
+            classifier=classifier, fake=fake)
     except Exception as e:
         raise e
 

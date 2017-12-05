@@ -6,7 +6,7 @@ from psychopy import core
 from display.rsvp_disp_modes import CalibrationTask
 
 from helpers.triggers import _write_triggers_from_sequence_calibration
-from helpers.stim_gen import random_rsvp_sequence_generator, get_task_info
+from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
 from helpers.bci_task_related import alphabet
 
 

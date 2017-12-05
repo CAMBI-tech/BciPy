@@ -106,7 +106,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
         # Catch the exception here if needed.
         except Exception as e:
-            print e
+            print "Error Initializing Epoch!"
             raise e
 
         # Try executing the given sequences. This is where display is used!
@@ -157,7 +157,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     raw_data = daq.get_data(start=time1)
 
             except Exception as e:
-                print "error in daq get_data()"
+                print "Error in daq get_data()"
                 raise e
 
             # # Get parameters from Bar Graph and schedule
@@ -182,8 +182,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                 text_task = copy_phrase_task.decision_maker.displayed_state
 
         except Exception as e:
-            print e
-            raise e  # Close this sessions trigger file and return some data
+            raise e
 
         run = (copy_phrase_task.decision_maker.displayed_state !=
                copy_phrase and seq_counter < 50)
