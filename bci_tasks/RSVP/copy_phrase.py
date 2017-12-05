@@ -126,7 +126,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.time_list_sti = timing_sti[0]
 
             # Pause for a time
-            core.wait(.4)
+            core.wait(.5)
 
             # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
@@ -143,8 +143,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
 
             # define my first and last time points
-            time1 = first_stim_time - .5
-            time2 = last_stim_time + .5
+            time1 = first_stim_time
+            time2 = first_stim_time + last_stim_time + 2
 
             # Construct triggers to send off for processing
             triggers = [(text, timing - time1)
@@ -188,7 +188,6 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     text_task = copy_phrase_task.decision_maker.displayed_state
             except Exception as e:
                 raise e
-
 
         except Exception as e:
             raise e
