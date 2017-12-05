@@ -35,7 +35,7 @@
 
 Congrats! You built the lmImage :-)
 
-7. Open use_LMWRAPPER.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst. [The current language model](https://bitbucket.org/cogsyslab/langmodelpy/src/34e35c06d0f4/lm/?at=master).
+7. Open use_LMWRAPPER.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst. [The current language model](.).
 
 8. Run use_LMWrapper.py from its current directory (to be able to import the LM_Wrapper module)
 
