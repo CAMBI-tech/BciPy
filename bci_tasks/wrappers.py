@@ -7,11 +7,11 @@ from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
 
 # TODO: These are shared parameters for multiple functions
 # and I have no idea how to put them into correct place
-dim_x = 50
-num_ch = 16
+dim_x = 5
+num_ch = 2
 
 # Make up some distributions that data come from
-mean_pos = .2
+mean_pos = 2
 var_pos = .5
 mean_neg = 0
 var_neg = .5
@@ -63,7 +63,7 @@ def dummy_trig_dat_generator(truth, state, stimuli):
     return eeg, trigger, target_info
 
 class CopyPhraseWrapper(object):
-    """ Basic copy phrase task duty cycle wrapper. Given the phrases once
+    """ Basic copy p    hrase task duty cycle wrapper. Given the phrases once
     operate() is called performs the task.
     Attr:
         conjugator(EvidenceFusion): fuses evidences in the task
@@ -82,6 +82,7 @@ class CopyPhraseWrapper(object):
 
     def __init__(self, model, fs, k, alp, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')]):
+
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(state=task_list[0][1],
                                             alphabet=alp)
@@ -92,9 +93,6 @@ class CopyPhraseWrapper(object):
         self.k = k
 
         self.mode = 'copy_phrase'
-        self.d = 1
-        self.sti = None
-
         self.task_list = task_list
 
     def do_sequence(self):
@@ -126,10 +124,14 @@ class CopyPhraseWrapper(object):
                                     k=self.k, mode=self.mode)
         lik_r = inference(x, letters, self.model, self.alp)
         p = self.conjugator.update_and_fuse({'ERP': lik_r})
-        self.d, arg = self.decision_maker.decide(p)
+        d, arg = self.decision_maker.decide(p)
 
         if 'stimuli' in arg:
-            self.sti = arg['stimuli'][0][0]
+            sti = arg['stimuli']
+        else:
+            sti = None
+
+        return d, sti
 
     def initialize_epoch(self):
         """ If a decision is made initializes the next epoch """
@@ -142,8 +144,10 @@ class CopyPhraseWrapper(object):
         prior /= np.sum(prior)
 
         p = self.conjugator.update_and_fuse({'LM': prior})
-        self.d, arg = self.decision_maker.decide(p)
-        self.sti = arg['stimuli'][0][0]
+        d, arg = self.decision_maker.decide(p)
+        sti = arg['stimuli']
+
+        return d, sti
 
     def operate(self):
         """ Main function of the task. Once called, performs the task """
@@ -154,18 +158,24 @@ class CopyPhraseWrapper(object):
             self.decision_maker.update(task_state)
             loop_counter = 0
             print('task:{}'.format(task_final))
+            d = 1
 
             # TODO: Get stopping condition as parameter
             while (self.decision_maker.displayed_state != task_final and
                            loop_counter < 50):
-                if self.d:
-                    self.initialize_epoch()
+                if d:
+                    d, sti = self.initialize_epoch()
+                    if sti:
+                        sti = sti[0][0]
                 else:
                     # raw_dat, triggers, target_info = self.do_sequence()
                     raw_dat, triggers, target_info = dummy_trig_dat_generator(
                         task_final, self.decision_maker.displayed_state,
-                        self.sti)
-                    self.evaluate_sequence(raw_dat, triggers, target_info)
+                        sti)
+                    d, sti = self.evaluate_sequence(raw_dat, triggers,
+                                                    target_info)
+                    if sti:
+                        sti = sti[0][0]
 
                 # TODO: sleep for demo purposes. Remove it afterwards
                 time.sleep(.3)

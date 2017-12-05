@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from codecs import open as codecsopen
 from json import load as jsonload
+import pickle
 
 from tkFileDialog import askopenfilename, askdirectory
 
@@ -42,7 +43,23 @@ def load_experimental_data():
 
 
 def load_classifier():
-    return
+    # use python's internal gui to call file explorers and get the filename
+    try:
+        Tk().withdraw()  # we don't want a full GUI
+        filename = askopenfilename()  # show dialog box and return the path
+
+        if 'p' or 'pkl' not in filename:
+            raise Exception(
+                'File type unrecognized. Please use a supported classifier type')
+
+        # load the classifier with pickle
+        classifier = pickle.load(filename, 'rb')
+
+    # except, raise error
+    except Exception as error:
+        raise error
+
+    return classifier
 
 
 def load_csv_data():

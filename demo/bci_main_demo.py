@@ -10,7 +10,7 @@ parameters = load_json_parameters('parameters/parameters.json')
 # RSVP mode
 test_mode = 'RSVP'
 # ERP Calibration
-test_type = 2
+test_type = 1
 
 # define a user
 user = 'demo_user'
@@ -19,5 +19,5 @@ user = 'demo_user'
 try:
     bci_main.bci_main(parameters, user, test_type, test_mode)
 except Exception as e:
-    print "something went wrong"
     print e
+    print "BCI MAIN Fail. Exiting."

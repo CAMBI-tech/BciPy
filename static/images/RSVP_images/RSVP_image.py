@@ -4,7 +4,7 @@ from os.path import isfile
 from psychopy import visual, core, event
 
 # Path to pictures
-#   ex: /Users/tabatha/Desktop/rsvp/
+#   ex: /Users/sci_tab/Desktop/bci/static/images/RSVP_images
 path = ""
 
 # Get Image List

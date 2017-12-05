@@ -2,11 +2,11 @@
 from helpers.load import load_txt_data
 
 
-def _write_triggers_from_sequence_calibration(array, file):
+def _write_triggers_from_sequence_calibration(array, trigger_file):
     """
     Write triggers from calibration.
 
-    Helper Function to write trigger data to provided file. It assigns
+    Helper Function to write trigger data to provided trigger_file. It assigns
         target letter based on the first presented letter in sequence, then
         assigns target/nontarget label to following letters.
 
@@ -31,20 +31,20 @@ def _write_triggers_from_sequence_calibration(array, file):
         else:
             targetness = 'nontarget'
 
-        # write to the file
-        file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        # write to the trigger_file
+        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
 
         x += 1
 
-    return file
+    return trigger_file
 
 
-def _write_triggers_from_sequence_copy_phrase(array, file,
+def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
                                               copy_text, typed_text):
     """
     Write triggers from copy phrase.
 
-    Helper Function to write trigger data to provided file. It assigns
+    Helper Function to write trigger data to provided trigger_file. It assigns
         target letter based on matching the next needed letter in typed text
         then assigns target/nontarget label to following letters.
 
@@ -80,19 +80,19 @@ def _write_triggers_from_sequence_copy_phrase(array, file,
         else:
             targetness = 'nontarget'
 
-        # write to the file
-        file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        # write to the trigger_file
+        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
 
         x += 1
 
-    return file
+    return trigger_file
 
 
-def _write_triggers_from_sequence_free_spell(array, file):
+def _write_triggers_from_sequence_free_spell(array, trigger_file):
     """
     Write triggers from free spell.
 
-    Helper Function to write trigger data to provided file.
+    Helper Function to write trigger data to provided trigger_file.
 
     It writes in the following order:
         (I) presented letter, (II) timestamp
@@ -103,10 +103,10 @@ def _write_triggers_from_sequence_free_spell(array, file):
         # extract the letter and timing from the array
         (letter, time) = i
 
-        # write to file
-        file.write('%s %s' % (letter, time) + "\n")
+        # write to trigger_file
+        trigger_file.write('%s %s' % (letter, time) + "\n")
 
-    return file
+    return trigger_file
 
 
 def trigger_decoder(mode, trigger_loc=None):
