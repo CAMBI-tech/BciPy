@@ -145,8 +145,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
     progress_bar(0, k_folds, prefix='Progress:', suffix='Complete', length=50)
     t = time.time()
     for idx_fold in range(k_folds):
-        progress_bar(idx_fold + 1, k_folds, prefix='Progress:',
-                     suffix='Complete', length=50)
+
         list_valid = idx_fold
         list_train = list(set(range(k_folds)) - set([idx_fold]))
 
@@ -164,6 +163,9 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
         sc = model.transform(x)
         fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
         auc_h.append(metrics.auc(fpr, tpr))
+
+        progress_bar(idx_fold + 1, k_folds, prefix='Progress:',
+                     suffix='Complete', length=50)
 
     print('Cross Validation Elapsed in {0:.2f}[s]!'.format((time.time() - t)))
 

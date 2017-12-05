@@ -6,14 +6,14 @@ from psychopy import core
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
+from bci_tasks.wrappers import CopyPhraseWrapper
 
-
-alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
-def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
-
+def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True,
+                          model=None):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -67,21 +67,33 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
 
     # get the initial target letter
     copy_phrase = parameters['text_task']['value']
-    target_letter = copy_phrase[0]
-    text_task = '*'
+    text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
 
+    # Init Copy Phrase
+    # TODO: get model, fs and k from .pkl besides model
+
+    task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
+                                                          2)]))]
+    copy_phrase_task = CopyPhraseWrapper(model, 300, 2, alp,
+                                         task_list=task_list)
+
+    epoch_flag = True
+    loop_counter = 0
     while run is True:
         # [to-do] allow pausing and exiting. See psychopy getKeys()
+        if copy_phrase[0:len(text_task)] == text_task:
+            target_letter = copy_phrase[len(text_task)]
+        else:
+            target_letter = '<'
 
+        print(target_letter)
         # Try getting random sequence information given stimuli parameters
         try:
-            # to-do implement color from params
-            (ele_sti, timing_sti, color_sti) = rsvp_copy_phrase_seq_generator(
-                alp, target_letter,
-                len_sti=int(parameters['len_sti']['value']), timing=[
-                    float(parameters['time_target']['value']),
-                    float(parameters['time_cross']['value']),
-                    float(parameters['time_flash']['value'])])
+            if epoch_flag:
+                epoch_flag, sti = copy_phrase_task.initialize_epoch()
+                ele_sti = sti[0]
+                timing_sti = sti[1]
+                color_sti = sti[2]
 
         # Catch the exception here if needed.
         except Exception as e:
@@ -89,6 +101,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
             raise e
 
         # Try executing the sequences
+        print(ele_sti)
         try:
             rsvp.update_task_state(text=text_task, color_list=['white'])
             rsvp.draw_static()
@@ -125,7 +138,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
 
             # Query for raw data
             try:
-                raw_data = daq.get_data(time1, time2)
+                raw_dat = daq.get_data(time1, time2)
+                import pdb
+                pdb.set_trace()
             except Exception as e:
                 print "error in get_data()"
                 raise e
@@ -142,13 +157,23 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
                 (target_letter, text_task, run) = fake_copy_phrase_decision(
                     copy_phrase, target_letter, text_task)
             else:
-                raise Exception('Real decision maker not implemented yet')
+                target_info = ['Non_Target'] * len(triggers)
+                epoch_flag, sti = \
+                    copy_phrase_task.evaluate_sequence(raw_dat, triggers,
+                                                       target_info)
+                ele_sti = sti[0]
+                timing_sti = sti[1]
+                color_sti = sti[2]
+                text_task = copy_phrase_task.decision_maker.displayed_state
 
         except Exception as e:
             print e
-            raise e
+            raise e  # Close this sessions trigger file and return some data
 
-    # Close this sessions trigger file and return some data
+        run = (copy_phrase_task.decision_maker.displayed_state !=
+               copy_phrase and loop_counter < 50)
+        loop_counter += 1
+
     trigger_file.close()
 
     # Wait some time before exiting so there is trailing eeg data saved

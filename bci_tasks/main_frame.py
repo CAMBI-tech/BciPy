@@ -156,7 +156,6 @@ class DecisionMaker(object):
             commitment = False
             return commitment, {'stimuli': stimuli}
         else:
-
             self.do_epoch()
             commitment = True
             return commitment, []
