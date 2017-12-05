@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import sqlite3
 from collections import deque
 
@@ -35,6 +36,7 @@ class Buffer(object):
         self._archive_name = archive_name
         self._buf = deque()
         self.start_time = None
+        self._archive_deleted = False
 
         # There is some discussion and disagreement on re-using sqlite
         # connections between threads. If any issues are encountered, consider
@@ -76,8 +78,26 @@ class Buffer(object):
             return Buffer(channels, archive_name=archive_name)
         return build
 
+    def _new_connection(self):
+        """Returns a new database connection."""
+        if self._archive_deleted:
+            raise Exception("Queries are not allowed after buffer cleanup. "
+                            "Database file has been deleted.")
+        return sqlite3.connect(self._archive_name)
+
     def close(self):
         self._flush()
+
+    def cleanup(self):
+        """Deletes the archive database. Data cannot be queried after this
+        method is called."""
+
+        self._conn.close()
+        try:
+            os.remove(self._archive_name)
+            self._archive_deleted = True
+        except OSError:
+            pass
 
     def append(self, record):
         """Append the list of readings for the given timestamp.
@@ -109,7 +129,7 @@ class Buffer(object):
     def __len__(self):
         self._flush()
 
-        cur = sqlite3.connect(self._archive_name).cursor()
+        cur = self._new_connection().cursor()
         cur.execute("select count(*) from data", ())
         return cur.fetchone()[0]
 
@@ -130,7 +150,7 @@ class Buffer(object):
             timestamp.
         """
         self._flush()
-        conn = sqlite3.connect(self._archive_name)
+        conn = self._new_connection()
         result = conn.execute("select * from data "
                               "order by timestamp desc limit ?",
                               (limit,))
@@ -151,7 +171,7 @@ class Buffer(object):
             list of tuple(timestamp, data)
         """
         self._flush()
-        conn = sqlite3.connect(self._archive_name)
+        conn = self._new_connection()
         result = []
         if end:
             result = conn.execute("select * from data where "
@@ -228,6 +248,7 @@ def _main():
     print("Total time: " + str(totaltime))
     print("Records per second: " + str(n / totaltime))
 
+    b.cleanup()
 
 if __name__ == '__main__':
     _main()
