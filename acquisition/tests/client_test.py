@@ -62,7 +62,7 @@ def test_filewriter():
         with daq:
             time.sleep(0.5)
 
-        mwrite.assert_called_once_with('rawdata.csv', 'w')
+        mwrite.assert_called_once_with('rawdata.csv', 'wb')
 
         writeargs = [args[0]
                      for name, args, kwargs in mwrite().write.mock_calls]
