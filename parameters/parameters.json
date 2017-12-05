@@ -404,7 +404,7 @@
     "isNumeric": "false"    
   },
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
