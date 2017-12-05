@@ -88,10 +88,13 @@ trigger_data = trigger_decoder(trigger_loc='triggers.txt', mode=demo_mode)
 # Remove the trigger.txt file that has been used.
 remove('triggers.txt')
 
+# Which channels to keep
+channel_info = [1, 0, 1]
+
 # reshape function is applied to dummy data with given trigger file
 arg = trial_reshaper(trial_target_info=trigger_data[1],
                      timing_info=trigger_data[2], filtered_eeg=inp,
-                     fs=256, k=2, mode=demo_mode)
+                     fs=256, k=2, mode=demo_mode, channel_info=channel_info)
 
 # Print results.
 print 'Reshaped trials:\n', arg[0], '\nLabels:', arg[1], '\nTotal number of sequences:', \
