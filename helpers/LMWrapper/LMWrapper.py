@@ -7,52 +7,30 @@ import time
 import re
 import logging
 from errors import ConnectionErr, StatusCodeError, DockerDownError
-
+from helpers.bci_task_related import alphabet
 
 class LangModel:
 
-    ALPHABET = [
-        'a',
-        'b',
-        'c',
-        'd',
-        'e',
-        'f',
-        'g',
-        'h',
-        'i',
-        'j',
-        'k',
-        'l',
-        'm',
-        'n',
-        'o',
-        'p',
-        'q',
-        'r',
-        's',
-        't',
-        'u',
-        'v',
-        'w',
-        'x',
-        'y',
-        'z',
-        '<',
-        '#']
-
     def __init__(self, localpath2fst, host, port, logfile):
         """
-        Initiiate the langModel class. Primarly initializing
+        Initiate the langModel class. Primarly initializing
         is aimed at establishing the tcp/ip connection
         between the host (local machine) and its server
         (the docker machine)
         Establishing the connection and running the server
         are done in a single operartion
+        Input:
+          localpath2fst (str) - the local path to the fst file
+          host (str) - host machine ip address
+          port (str) - the port used in docker
+          logfile (str) - a valid filename to function as a logger 
         """
         # assert input path validity
         assert os.path.exists(os.path.dirname(
             localpath2fst)), "%r is not a valid path" % localpath2fst
+        # assert strings
+        assert type(host)==str, "%r is not a string type" % host
+        assert type(port)==str, "%r is not a string type" % port
         # assert docker is on
         try:
             docker.from_env()
@@ -151,7 +129,7 @@ class LangModel:
         # assert the input contains a valid symbol
         assert isinstance(decision, list), "%r is not list" % decision
         for symbol in decision:
-            assert symbol in LangModel.ALPHABET, \
+            assert symbol in alphabet, \
                 "%r contains invalid symbol" % decision
 
         err_msg = "Connection was not extablished\nstate update failed"
@@ -197,21 +175,3 @@ class LangModel:
         # print a json dict of the priors
         return self.priors
 
-if __name__ == '__main__':
-
-    localfst = "/Users/dudy/CSLU/bci/5th_year/letters/pywrapper/lm/brown_closure.n5.kn.fst"
-    lmodel = LangModel(
-        localfst,
-        host='127.0.0.1',
-        port='5000',
-        logfile="lmwrap.log")
-    lmodel.init()
-    priors = lmodel.state_update('t')
-    lmodel.recent_priors()
-    priors = lmodel.state_update('h')
-    lmodel.recent_priors()
-    priors = lmodel.state_update('e')
-    lmodel.reset()
-    lmodel.recent_priors()
-    priors = lmodel.state_update('t')
-    lmodel.recent_priors()
