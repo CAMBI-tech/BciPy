@@ -179,6 +179,12 @@ class Client(object):
         else:
             return len(self._buf)
 
+    def cleanup(self):
+        """Performs cleanup tasks, such as deleting the buffer archive. Note
+        that data may be unavailable after calling this method."""
+        if self._buf:
+            self._buf.cleanup()
+
 
 class _StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
