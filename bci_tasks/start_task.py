@@ -1,8 +1,9 @@
 from RSVP import calibration, copy_phrase
-from helpers.load import load_classifier
+import pickle
 
 
-def start_task(daq, display_window, task_type, parameters, file_save):
+def start_task(daq, display_window, task_type, parameters, file_save,
+               classifier=None, fake=True):
     # Determine the mode and exp type: send to the correct task.
 
     # RSVP
@@ -22,10 +23,15 @@ def start_task(daq, display_window, task_type, parameters, file_save):
         # COPY PHRASE
         if task_type['exp_type'] is 2:
             # try running the experiment
-            model = load_classifier()
             try:
+                filename = '/Users/sci_tab/Desktop/bci/model.pkl'
+                try:
+                    classifier = pickle.load(open(filename))
+                except:
+                    print "classifier couldn't load"
                 trial_data = copy_phrase.rsvp_copy_phrase_task(
-                    display_window, daq, parameters, file_save, model=model)
+                    display_window, daq, parameters, file_save, classifier,
+                    fake=fake)
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
