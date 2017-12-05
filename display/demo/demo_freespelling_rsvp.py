@@ -5,7 +5,7 @@ from __future__ import division
 from psychopy import visual, core
 
 from display.rsvp_disp_modes import FreeSpellingTask
-from helpers.trigger_helpers import _write_triggers_from_sequence_free_spell
+from helpers.triggers import _write_triggers_from_sequence_free_spell
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -119,7 +119,8 @@ rsvp = FreeSpellingTask(window=win, clock=clock,
 counter = 0
 decision_made = 0
 
-file = open('free_spell_trigger_file.txt', 'w')
+# uncomment trigger_file lines for demo with triggers!
+# trigger_file = open('free_spell_trigger_trigger_file.txt', 'w')
 for idx_o in range(len(task_text)):
 
     if decision_made == 1:
@@ -142,7 +143,7 @@ for idx_o in range(len(task_text)):
     sequence_timing = rsvp.do_sequence()
 
 #     # if wanting to test triggers from display
-    # _write_triggers_from_sequence_free_spell(sequence_timing, file)
+    # _write_triggers_from_sequence_free_spell(sequence_timing, trigger_file)
 
     # Get parameters from Bar Graph and schedule
     rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
@@ -168,6 +169,7 @@ for idx_o in range(len(task_text)):
     core.wait(.5)
 
 win.close()
+# trigger_file.close()
 
 # Print intervals
 # intervalsMS = np.array(win.frameIntervals) * 1000

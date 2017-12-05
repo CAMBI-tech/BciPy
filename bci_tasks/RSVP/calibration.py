@@ -4,11 +4,10 @@ from __future__ import division
 from psychopy import core
 
 from display.rsvp_disp_modes import CalibrationTask
-from helpers.trigger_helpers import _write_triggers_from_sequence_calibration
+from helpers.triggers import _write_triggers_from_sequence_calibration
 from helpers.stim_gen import random_rsvp_sequence_generator, get_task_info
 
-alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
-       'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+from helpers.bci_task_related import alphabet
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
@@ -17,6 +16,9 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
     experiment_clock = core.MonotonicClock(start_time=None)
+
+    # Get alphabet for experiment
+    alp = alphabet()
 
     # Start acquiring data
     try:

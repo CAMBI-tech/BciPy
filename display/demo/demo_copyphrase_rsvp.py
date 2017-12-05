@@ -6,7 +6,7 @@ from __future__ import division
 from psychopy import visual, core
 
 from display.rsvp_disp_modes import CopyPhraseTask
-from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -118,7 +118,9 @@ rsvp = CopyPhraseTask(window=win, clock=clock, experiment_clock=experiment_clock
                       is_txt_sti=is_txt_sti)
 
 counter = 0
-# file = open('copy_phrase_trigger_file.txt','w') 
+
+# uncomment trigger_file lines for demo with triggers!
+# trigger_file = open('copy_phrase_triggers.txt','w')
 for idx_o in range(len(task_text)):
 
     rsvp.bg.reset_weights()
@@ -139,7 +141,9 @@ for idx_o in range(len(task_text)):
         core.wait(.4)
         sequence_timing = rsvp.do_sequence()
 
-        # _write_triggers_from_sequence_copy_phrase(sequence_timing, file, text_task, task_text[idx_o])
+        # _write_triggers_from_sequence_copy_phrase(sequence_timing,
+        #                                           trigger_file, text_task,
+        #                                           task_text[idx_o])
 
         # Get parameters from Bar Graph and schedule
         rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
@@ -158,6 +162,7 @@ for idx_o in range(len(task_text)):
     rsvp.do_sequence()
 
 win.close()
+# trigger_file.close()
 
 # Print intervals
 # intervalsMS = np.array(win.frameIntervals) * 1000
