@@ -4,12 +4,11 @@ import shutil
 import sys
 import unittest
 
-# add previous dirs to python path for importing of modules
 from helpers.save import init_save_data_structure
 
 
 class TestSave(unittest.TestCase):
-    ''' This is Test Case for Saving BCI data'''
+    """This is Test Case for Saving BCI data."""
 
     def setUp(self):
         # set up the needed paths and initial data save structure

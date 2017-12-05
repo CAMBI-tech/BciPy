@@ -4,12 +4,11 @@ from __future__ import division
 from psychopy import core
 
 from display.rsvp_disp_modes import CopyPhraseTask
-from helpers.trigger_helpers import _write_triggers_from_sequence_copy_phrase
+from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
 from bci_tasks.wrappers import CopyPhraseWrapper
 
-alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-       'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+from helpers.bci_task_related import fake_copy_phrase_decision, alphabet
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
@@ -18,6 +17,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
     experiment_clock = core.MonotonicClock(start_time=None)
+
+    # Get alphabet for experiment
+    alp = alphabet()
 
     # Start acquiring data
     try:
@@ -194,34 +196,3 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     core.wait(int(parameters['eeg_buffer_len']['value']))
 
     return file_save
-
-
-def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
-    if text_task is '*':
-        length_of_spelled_letters = 0
-    else:
-        length_of_spelled_letters = len(text_task)
-
-    length_of_phrase = len(copy_phrase)
-
-    if length_of_spelled_letters is 0:
-        text_task = copy_phrase[length_of_spelled_letters]
-    else:
-        text_task += copy_phrase[length_of_spelled_letters]
-
-    length_of_spelled_letters += 1
-
-    # If there is still text to be spelled, update the text_task
-    # and target letter
-    if length_of_spelled_letters < length_of_phrase:
-        next_target_letter = copy_phrase[length_of_spelled_letters]
-
-        run = True
-
-    # else, end the run
-    else:
-        run = False
-        next_target_letter = None
-        text_task = None
-
-    return next_target_letter, text_task, run
