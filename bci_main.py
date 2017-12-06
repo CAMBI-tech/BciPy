@@ -72,9 +72,11 @@ def execute_task(task_type, parameters, save_folder):
     # Init EEG Model
     if task_type['exp_type'] > 1:
         try:
+
             classifier = load_classifier()
         except:
             print "cannot load classifier"
+            classifier = None
     else:
         classifier = None
 
