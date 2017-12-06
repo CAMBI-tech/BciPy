@@ -152,12 +152,23 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
             # Query for raw data
             try:
+                # Call get_data method on daq with start/end
                 raw_data = daq.get_data(start=time1, end=time2)
 
+                # If no raw_data returned in the first query, let's try again
+                #  using only the start param. This is known issue on Windows.
+                #  #windowsbug
                 if len(raw_data) is 0:
-                    raise Exception("No data recieved in get data!")
+
+                    # Call get_data method on daq with just start
+                    raw_data = daq.get_data(start=time1)
+
+                    # If there is insufficient data returned, throw an error
+                    if len(raw_data) < (time2 - time2 + .5):
+                        raise Exception("Not enough data recieved")
 
                 # TODO: We hardcoded 0 as it is the data location
+                # Take only the sensor data from raw data and transpose it
                 raw_data = np.array([np.array(raw_data[i][0]) for i in
                                      range(len(raw_data))]).transpose()
 
@@ -184,6 +195,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
+                    # If new_epoch is False, get the stimuli info returned
                     if not new_epoch:
                         ele_sti = sti[0]
                         timing_sti = sti[1]
@@ -199,6 +211,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         run = (text_task == copy_phrase or seq_counter < 10)
         seq_counter += 1
 
+    print "Stopping criteria met!"
     # Close the trigger file for this session
     trigger_file.close()
 
