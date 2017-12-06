@@ -2,14 +2,14 @@
 
 from __future__ import division
 from psychopy import core
-import numpy as np
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
 from bci_tasks.wrappers import CopyPhraseWrapper
 
-from helpers.bci_task_related import fake_copy_phrase_decision, alphabet
+from helpers.bci_task_related import (
+    fake_copy_phrase_decision, alphabet, _process_data_for_decision)
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
@@ -73,8 +73,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
 
     # Init Copy Phrase
-    # TODO: get model, fs and k from .pkl besides model
-
+    # TODO: get model, fs and k from .pkl besides model. #changeforrelease
     task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
                                                           2)]))]
     try:
@@ -91,7 +90,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     while run is True:
         # [to-do] allow pausing and exiting. See psychopy getKeys()
 
-        # Why bs for else?
+        # Why bs for else? #changeforrelease
         if copy_phrase[0:len(text_task)] == text_task:
             target_letter = copy_phrase[len(text_task)]
         else:
@@ -101,6 +100,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         try:
             if new_epoch:
 
+                # Init an epoch, getting initial stimuli
                 new_epoch, sti = copy_phrase_task.initialize_epoch()
                 ele_sti = sti[0]
                 timing_sti = sti[1]
@@ -138,44 +138,6 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                 copy_phrase,
                 text_task)
 
-            # Get timing of the first and last stimuli
-            _, first_stim_time = sequence_timing[0]
-            _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
-
-            # define my first and last time points
-            time1 = first_stim_time
-            time2 = last_stim_time + 2
-
-            # Construct triggers to send off for processing
-            triggers = [(text, timing - time1)
-                        for text, timing in sequence_timing]
-
-            # Query for raw data
-            try:
-                # Call get_data method on daq with start/end
-                raw_data = daq.get_data(start=time1, end=time2)
-
-                # If no raw_data returned in the first query, let's try again
-                #  using only the start param. This is known issue on Windows.
-                #  #windowsbug
-                if len(raw_data) is 0:
-
-                    # Call get_data method on daq with just start
-                    raw_data = daq.get_data(start=time1)
-
-                    # If there is insufficient data returned, throw an error
-                    if len(raw_data) < (time2 - time2 + .5):
-                        raise Exception("Not enough data recieved")
-
-                # TODO: We hardcoded 0 as it is the data location
-                # Take only the sensor data from raw data and transpose it
-                raw_data = np.array([np.array(raw_data[i][0]) for i in
-                                     range(len(raw_data))]).transpose()
-
-            except Exception as e:
-                print "Error in daq: get_data()"
-                raise e
-
             # # Get parameters from Bar Graph and schedule
             # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
             #                     weight=dummy_bar_schedule_p[counter])
@@ -184,22 +146,32 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            # TODO: Don't forget you sinned
+            # TODO: Don't forget you sinned #changeforrelease
             fake = False
             try:
                 if fake:
-                    (target_letter, text_task, run) = fake_copy_phrase_decision(
-                        copy_phrase, target_letter, text_task)
+                    (target_letter, text_task, run) = \
+                        fake_copy_phrase_decision(copy_phrase, target_letter,
+                                                  text_task)
                 else:
-                    target_info = ['nontarget'] * len(triggers)
+
+                    # reshape the data and triggers as needed for later modules
+                    raw_data, triggers, target_info = \
+                        _process_data_for_decision(sequence_timing, daq)
+
+                    # evaulate this sequence, returning wheter to gen a new
+                    #  epoch (seq) or stimuli to present
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
+
                     # If new_epoch is False, get the stimuli info returned
                     if not new_epoch:
                         ele_sti = sti[0]
                         timing_sti = sti[1]
                         color_sti = sti[2]
+
+                    # Get the current task text from the decision maker
                     text_task = copy_phrase_task.decision_maker.displayed_state
 
             except Exception as e:
@@ -208,10 +180,13 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         except Exception as e:
             raise e
 
+        # decide whether to keep task going #changeforrelease
         run = (text_task == copy_phrase or seq_counter < 10)
         seq_counter += 1
 
+    # Let the user know stopping criteria was met and stop
     print "Stopping criteria met!"
+
     # Close the trigger file for this session
     trigger_file.close()
 
