@@ -144,7 +144,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
             # define my first and last time points
             time1 = first_stim_time
-            time2 = first_stim_time + last_stim_time + 2
+            time2 = last_stim_time + 2
 
             # Construct triggers to send off for processing
             triggers = [(text, timing - time1)
@@ -154,12 +154,15 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             try:
                 raw_data = daq.get_data(start=time1, end=time2)
 
+                if len(raw_data) is 0:
+                    raise Exception("No data recieved in get data!")
+
                 # TODO: We hardcoded 0 as it is the data location
                 raw_data = np.array([np.array(raw_data[i][0]) for i in
                                      range(len(raw_data))]).transpose()
 
             except Exception as e:
-                print "Error in daq get_data()"
+                print "Error in daq: get_data()"
                 raise e
 
             # # Get parameters from Bar Graph and schedule
@@ -177,23 +180,23 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     (target_letter, text_task, run) = fake_copy_phrase_decision(
                         copy_phrase, target_letter, text_task)
                 else:
-                    print(raw_data.shape)
                     target_info = ['nontarget'] * len(triggers)
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
-                    ele_sti = sti[0]
-                    timing_sti = sti[1]
-                    color_sti = sti[2]
+                    if not new_epoch:
+                        ele_sti = sti[0]
+                        timing_sti = sti[1]
+                        color_sti = sti[2]
                     text_task = copy_phrase_task.decision_maker.displayed_state
+
             except Exception as e:
                 raise e
 
         except Exception as e:
             raise e
 
-        run = (copy_phrase_task.decision_maker.displayed_state !=
-               copy_phrase and seq_counter < 50)
+        run = (text_task == copy_phrase or seq_counter < 10)
         seq_counter += 1
 
     # Close the trigger file for this session
