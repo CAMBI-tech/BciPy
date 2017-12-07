@@ -1,7 +1,7 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core
+from psychopy import core, event
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
@@ -97,6 +97,18 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
     # Start the Session!
     while run is True:
+
+        # check user input to make sure we should be going
+        keys = event.getKeys(keyList=['space', 'escape'])
+
+        if keys:
+            # pause?
+            if keys[0] == 'space':
+                event.waitKeys(keyList=["space"])
+
+            # escape?
+            if keys[0] == 'escape':
+                break
         # [to-do] allow pausing and exiting. See psychopy getKeys()
 
         # Why bs for else? #changeforrelease
@@ -177,6 +189,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                 epochs.append(save_dict)
                 _save_session_related_data(session_file, epochs)
 
+                # fake = False
                 if fake:
                     (target_letter, text_task, run) = \
                         fake_copy_phrase_decision(copy_phrase, target_letter,
