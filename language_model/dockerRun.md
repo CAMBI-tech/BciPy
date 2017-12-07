@@ -1,5 +1,4 @@
 The following commands are to be executed in windows terminal
------------------------
 
 1.
 Start a machine to turn on Docker
@@ -37,10 +36,11 @@ A ONE TIME BUILD of the IMAGE
 docker build -t lmimage
 ```
 
-Now the image is build
+Now the image is built
+
 -----------------------
 3.
-WHEN FINISHING WORKING WITH DOCKER
+When finishing working with docker
 Stop the VM
 
 
