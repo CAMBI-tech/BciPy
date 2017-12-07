@@ -146,7 +146,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.time_list_sti = timing_sti[0]
 
             # Pause for a time
-            core.wait(.5)
+            core.wait(float(parameters['task_buffer_len']['value']))
 
             # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
@@ -162,7 +162,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
             #                     weight=dummy_bar_schedule_p[counter])
 
-            core.wait(.5)
+            core.wait(float(parameters['task_buffer_len']['value']))
             # if show_bg:
             #     rsvp.show_bar_graph()
 
@@ -216,7 +216,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             raise e
 
         # decide whether to keep task going #changeforrelease
-        run = (text_task == copy_phrase or seq_counter < 20)
+        run = (text_task == copy_phrase or
+               seq_counter < int(parameters['max_seq_len']['value']))
         seq_counter += 1
 
     # Let the user know stopping criteria was met and stop
