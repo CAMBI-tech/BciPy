@@ -2,6 +2,18 @@ import numpy as np
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
+    """Fake Copy Phrase Decision.
+
+    Parameters
+    ----------
+        copy_phrase(str): phrase to be copied
+        target_letter(str): the letter supposed to be typed
+        text_task(str): phrase spelled at this time
+
+    Returns
+    -------
+        (next_target_letter, text_task, run) tuple
+    """
     if text_task is '*':
         length_of_spelled_letters = 0
     else:
@@ -33,11 +45,34 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
 
 def alphabet():
+    """Alphabet.
+
+    Function used to standardize the symbols we use as alphabet.
+
+    Returns
+    -------
+        array of letters.
+    """
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
 def _process_data_for_decision(sequence_timing, daq):
+    """Process Data for Decision.
+
+    Processes the raw data (triggers and eeg) into a form that can be passed to
+        signal processing and classifiers.
+
+    Parameters
+    ----------
+        sequence_timing(array): array of tuples containing stimulus timing and
+            text
+        daq (object): data acquistion object
+
+    Returns
+    -------
+        (raw_data, triggers, target_info) tuple
+    """
 
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
@@ -54,25 +89,26 @@ def _process_data_for_decision(sequence_timing, daq):
     # assign labels for triggers
     target_info = ['nontarget'] * len(triggers)
 
+    # Define the amount of data required for any processing to occur.
+    data_limit = (time2 - time2 + .5) * daq._device.fs
+
     # Query for raw data
     try:
         # Call get_data method on daq with start/end
         raw_data = daq.get_data(start=time1, end=time2)
-        raw_data = []
 
-        # If no raw_data returned in the first query, let's try again
+        # If not enough raw_data returned in the first query, let's try again
         #  using only the start param. This is known issue on Windows.
         #  #windowsbug
-        if len(raw_data) is 0:
+        if len(raw_data) < data_limit:
 
             # Call get_data method on daq with just start
             raw_data = daq.get_data(start=time1)
 
-            # If there is insufficient data returned, throw an error
-            if len(raw_data) < (time2 - time2 + .5):
+            # If there is still insufficient data returned, throw an error
+            if len(raw_data) < data_limit:
                 raise Exception("Not enough data recieved")
 
-        # TODO: We hardcoded 0 as it is the data location
         # Take only the sensor data from raw data and transpose it
         raw_data = np.array([np.array(raw_data[i][0]) for i in
                              range(len(raw_data))]).transpose()

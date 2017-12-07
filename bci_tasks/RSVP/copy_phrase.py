@@ -146,8 +146,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            # TODO: Don't forget you sinned #changeforrelease
-            fake = False
+            # TODO: Don't forget you sinned #changeforrelease. uncomment this
+            #   to use fake data but real decisions
+            # fake = False
             try:
                 if fake:
                     (target_letter, text_task, run) = \
@@ -181,7 +182,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             raise e
 
         # decide whether to keep task going #changeforrelease
-        run = (text_task == copy_phrase or seq_counter < 10)
+        run = (text_task == copy_phrase or seq_counter < 20)
         seq_counter += 1
 
     # Let the user know stopping criteria was met and stop
