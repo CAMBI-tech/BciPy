@@ -14,6 +14,32 @@ from helpers.bci_task_related import (
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                           fake=False):
+
+    """RSVP Copy Phrase Task.
+
+    Initializes and runs all needed code for executing a copy phrase task. A
+        phrase is set in parameters and necessary objects (eeg, display) passed
+        to this function. Certain Wrappers and Task Specific objects are 
+        executed here
+
+    Parameters
+    ----------
+        parameters : dict,
+            configuration details regarding the experiment. See parameters.json
+        daq : object,
+            data acquisition object initialized for the desired protocol
+        file_save : str,
+            path location of where to save data from the session
+        classifier : loaded pickle file,
+            trained eeg_model, loaded before session started
+        fake : boolean, optional
+            boolean to indicate whether this is a fake session or not.
+    Returns
+    -------
+        file_save : str,
+            path location of where to save data from the session
+    """
+
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -22,7 +48,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     # Get alphabet for experiment
     alp = alphabet()
 
-    # Start acquiring data
+    # Start acquiring data and set the experiment clock
     try:
         daq.clock = experiment_clock
         daq.start_acquisition()
@@ -30,63 +56,40 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         print "Data acquistion could not start!"
         raise e
 
+    # Try Initializing the Copy Phrase Display Object
     try:
-        rsvp = CopyPhraseTask(
-            window=win, clock=clock,
-            experiment_clock=experiment_clock,
-            text_information=parameters['text_text']['value'],
-            static_text_task=parameters['text_task']['value'],
-            text_task='****',
-            color_information=parameters['color_text']['value'],
-            pos_information=(float(parameters['pos_text_x']['value']),
-                             float(parameters['pos_text_y']['value'])),
-            height_information=float(parameters['txt_height']['value']),
-            font_information=parameters['font_text']['value'],
-            color_task=['white'],
-            font_task=parameters['font_task']['value'],
-            height_task=float(parameters['height_task']['value']),
-            font_sti=parameters['font_sti']['value'],
-            pos_sti=(float(parameters['pos_sti_x']['value']),
-                     float(parameters['pos_sti_y']['value'])),
-            sti_height=float(parameters['sti_height']['value']),
-            ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
-            time_list_sti=[3] * 10,
-            tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
-                       float(parameters['tr_pos_bg_y']['value'])),
-            bl_pos_bg=(float(parameters['bl_pos_bg_x']['value']),
-                       float(parameters['bl_pos_bg_y']['value'])),
-            size_domain_bg=int(parameters['size_domain_bg']['value']),
-            color_bg_txt=parameters['color_bg_txt']['value'],
-            font_bg_txt=parameters['font_bg_txt']['value'],
-            color_bar_bg=parameters['color_bar_bg']['value'],
-            is_txt_sti=parameters['is_txt_sti']['value'])
+        rsvp = _init_copy_phrase_display_task(
+            parameters, win, clock, experiment_clock)
     except Exception as e:
         raise e
 
     # Init Triggers
     trigger_save_location = file_save + '/triggers.txt'
     trigger_file = open(trigger_save_location, 'w')
-    run = True
 
-    # get the initial target letter
+    # Get the copy_phrase, initial targets and task list
     copy_phrase = parameters['text_task']['value']
     text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
-
-    # Init Copy Phrase
     # TODO: get model, fs and k from .pkl besides model. #changeforrelease
     task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
                                                           2)]))]
-    try:
-        copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
-                                             task_list=task_list)
-    except Exception as e:
-        print "Error initializing Copy Phrase Task"
+    if not fake:
+        # Try Initializing Copy Phrase Wrapper:
+        #       (sig_pro, decision maker, eeg_model)
+        try:
+            copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
+                                                 task_list=task_list)
+        except Exception as e:
+            print "Error initializing Copy Phrase Task"
 
-    # Set new epoch to true and sequence counter to zero
+    # Set new epoch (wheter to present a new epoch),
+    #   run (whether to cont. session) and,
+    #   sequence counter (how many seq have occured).
     new_epoch = True
+    run = True
     seq_counter = 0
 
-    # Start the experiment!
+    # Start the Session!
     while run is True:
         # [to-do] allow pausing and exiting. See psychopy getKeys()
 
@@ -195,3 +198,37 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     core.wait(int(parameters['eeg_buffer_len']['value']))
 
     return file_save
+
+
+def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
+    rsvp = CopyPhraseTask(
+        window=win, clock=clock,
+        experiment_clock=experiment_clock,
+        text_information=parameters['text_text']['value'],
+        static_text_task=parameters['text_task']['value'],
+        text_task='****',
+        color_information=parameters['color_text']['value'],
+        pos_information=(float(parameters['pos_text_x']['value']),
+                         float(parameters['pos_text_y']['value'])),
+        height_information=float(parameters['txt_height']['value']),
+        font_information=parameters['font_text']['value'],
+        color_task=['white'],
+        font_task=parameters['font_task']['value'],
+        height_task=float(parameters['height_task']['value']),
+        font_sti=parameters['font_sti']['value'],
+        pos_sti=(float(parameters['pos_sti_x']['value']),
+                 float(parameters['pos_sti_y']['value'])),
+        sti_height=float(parameters['sti_height']['value']),
+        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        time_list_sti=[3] * 10,
+        tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
+                   float(parameters['tr_pos_bg_y']['value'])),
+        bl_pos_bg=(float(parameters['bl_pos_bg_x']['value']),
+                   float(parameters['bl_pos_bg_y']['value'])),
+        size_domain_bg=int(parameters['size_domain_bg']['value']),
+        color_bg_txt=parameters['color_bg_txt']['value'],
+        font_bg_txt=parameters['font_bg_txt']['value'],
+        color_bar_bg=parameters['color_bar_bg']['value'],
+        is_txt_sti=parameters['is_txt_sti']['value'])
+
+    return rsvp
