@@ -1,8 +1,3 @@
-from helpers.load import read_data_csv, load_experimental_data
-from acquisition.sig_pro.sig_pro import sig_pro
-from eeg_model.mach_learning.trial_reshaper import trial_reshaper
-
-
 def generate_offline_analysis_screen(x, y, model, folder):
     """ Offline Analysis Screen.
     Generates the information figure following the offlineAnalysis.

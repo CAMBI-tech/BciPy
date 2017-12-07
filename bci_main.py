@@ -3,6 +3,7 @@ from helpers.save import init_save_data_structure
 from helpers.display import init_display_window
 from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
+from helpers.load import load_classifier
 
 
 def bci_main(parameters, user, exp_type, mode):
@@ -60,11 +61,24 @@ def execute_task(task_type, parameters, save_folder):
 
     if fake_data == 'true':
         server = True
+        fake = True
     else:
         server = False
+        fake = False
 
     # Initialize EEG Acquisition
     daq, server = init_eeg_acquisition(daq_parameters, server=server)
+
+    # Init EEG Model
+    if task_type['exp_type'] > 1:
+        try:
+
+            classifier = load_classifier()
+        except:
+            print "cannot load classifier"
+            classifier = None
+    else:
+        classifier = None
 
     # Initialize Display Window
     display = init_display_window(parameters)
@@ -72,7 +86,8 @@ def execute_task(task_type, parameters, save_folder):
     # Start Task
     try:
         trial_data = start_task(
-            daq, display, task_type, parameters, save_folder)
+            daq, display, task_type, parameters, save_folder,
+            classifier=classifier, fake=fake)
     except Exception as e:
         raise e
 

@@ -10,5 +10,3 @@ __pycache__/
 calibration.csv
 rawdata.csv
 buffer.db
-+calibration_trigger_file.txt
-data

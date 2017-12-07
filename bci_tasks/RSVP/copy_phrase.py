@@ -6,12 +6,14 @@ from psychopy import core
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
+from bci_tasks.wrappers import CopyPhraseWrapper
 
-from helpers.bci_task_related import fake_copy_phrase_decision, alphabet
+from helpers.bci_task_related import (
+    fake_copy_phrase_decision, alphabet, _process_data_for_decision)
 
 
-def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
-
+def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
+                          fake=False):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -68,44 +70,68 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
 
     # get the initial target letter
     copy_phrase = parameters['text_task']['value']
-    target_letter = copy_phrase[0]
-    text_task = '*'
+    text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
 
+    # Init Copy Phrase
+    # TODO: get model, fs and k from .pkl besides model. #changeforrelease
+    task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
+                                                          2)]))]
+    try:
+        copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
+                                             task_list=task_list)
+    except Exception as e:
+        print "Error initializing Copy Phrase Task"
+
+    # Set new epoch to true and sequence counter to zero
+    new_epoch = True
+    seq_counter = 0
+
+    # Start the experiment!
     while run is True:
         # [to-do] allow pausing and exiting. See psychopy getKeys()
 
-        # Try getting random sequence information given stimuli parameters
+        # Why bs for else? #changeforrelease
+        if copy_phrase[0:len(text_task)] == text_task:
+            target_letter = copy_phrase[len(text_task)]
+        else:
+            target_letter = '<'
+
+        # Try getting sequence information
         try:
-            # to-do implement color from params
-            (ele_sti, timing_sti, color_sti) = rsvp_copy_phrase_seq_generator(
-                alp, target_letter,
-                len_sti=int(parameters['len_sti']['value']), timing=[
-                    float(parameters['time_target']['value']),
-                    float(parameters['time_cross']['value']),
-                    float(parameters['time_flash']['value'])])
+            if new_epoch:
+
+                # Init an epoch, getting initial stimuli
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
+                ele_sti = sti[0]
+                timing_sti = sti[1]
+                color_sti = sti[2]
 
         # Catch the exception here if needed.
         except Exception as e:
-            print e
+            print "Error Initializing Epoch!"
             raise e
 
-        # Try executing the sequences
+        # Try executing the given sequences. This is where display is used!
         try:
+
+            # Update task state and reset the static
             rsvp.update_task_state(text=text_task, color_list=['white'])
             rsvp.draw_static()
             win.flip()
 
-            # update task state
+            # Setup the new Stimuli
             rsvp.ele_list_sti = ele_sti[0]
-            # rsvp.text_task = text_task
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
-
             rsvp.time_list_sti = timing_sti[0]
 
-            core.wait(.4)
+            # Pause for a time
+            core.wait(.5)
+
+            # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
 
+            # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
                 trigger_file,
@@ -120,17 +146,49 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, fake=True):
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            if fake:
-                (target_letter, text_task, run) = fake_copy_phrase_decision(
-                    copy_phrase, target_letter, text_task)
-            else:
-                raise Exception('Real decision maker not implemented yet')
+            # TODO: Don't forget you sinned #changeforrelease. uncomment this
+            #   to use fake data but real decisions
+            # fake = False
+            try:
+                if fake:
+                    (target_letter, text_task, run) = \
+                        fake_copy_phrase_decision(copy_phrase, target_letter,
+                                                  text_task)
+                else:
+
+                    # reshape the data and triggers as needed for later modules
+                    raw_data, triggers, target_info = \
+                        _process_data_for_decision(sequence_timing, daq)
+
+                    # evaulate this sequence, returning wheter to gen a new
+                    #  epoch (seq) or stimuli to present
+                    new_epoch, sti = \
+                        copy_phrase_task.evaluate_sequence(raw_data, triggers,
+                                                           target_info)
+
+                    # If new_epoch is False, get the stimuli info returned
+                    if not new_epoch:
+                        ele_sti = sti[0]
+                        timing_sti = sti[1]
+                        color_sti = sti[2]
+
+                    # Get the current task text from the decision maker
+                    text_task = copy_phrase_task.decision_maker.displayed_state
+
+            except Exception as e:
+                raise e
 
         except Exception as e:
-            print e
             raise e
 
-    # Close this sessions trigger file and return some data
+        # decide whether to keep task going #changeforrelease
+        run = (text_task == copy_phrase or seq_counter < 20)
+        seq_counter += 1
+
+    # Let the user know stopping criteria was met and stop
+    print "Stopping criteria met!"
+
+    # Close the trigger file for this session
     trigger_file.close()
 
     # Wait some time before exiting so there is trailing eeg data saved

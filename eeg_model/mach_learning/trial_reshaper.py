@@ -88,7 +88,7 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int(x * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -117,7 +117,7 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int(x * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
