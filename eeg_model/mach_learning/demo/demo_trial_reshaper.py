@@ -3,8 +3,10 @@ from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.triggers import trigger_decoder
 from os import remove
 
-# A 3 channel dummy input
-inp = np.array([range(4000)] * 3)
+# A 21 channel dummy input
+inp = np.array([range(4000)] * 21)
+# Make the first sample indicate the channel index, ease of checking channel removal
+inp[:,0] = np.transpose(np.arange(1,22,1))
 # Sampling frequency
 fs = 256
 # Downsampling ratio
@@ -88,10 +90,17 @@ trigger_data = trigger_decoder(trigger_loc='triggers.txt', mode=demo_mode)
 # Remove the trigger.txt file that has been used.
 remove('triggers.txt')
 
+# Which channels to keep//
+channel_map = [1]*21
+channel_map[0] = 0 # Remove first channel
+channel_map[20] = 0 # Remove 21st channel
+channel_map[3:15] = [0]*12 #remove 4th to 15th channels
+# In the end there are only 7 channels left
+
 # reshape function is applied to dummy data with given trigger file
 arg = trial_reshaper(trial_target_info=trigger_data[1],
                      timing_info=trigger_data[2], filtered_eeg=inp,
-                     fs=256, k=2, mode=demo_mode)
+                     fs=256, k=2, mode=demo_mode, channel_map=channel_map)
 
 # Print results.
 print 'Reshaped trials:\n', arg[0], '\nLabels:', arg[1], '\nTotal number of sequences:', \

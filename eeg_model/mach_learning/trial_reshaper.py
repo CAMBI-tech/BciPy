@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
+def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, channel_map):
     """
 
-    :param trial_target_info: A list of strings which can take values like
-        'target', 'nontarget', 'first_press_target', or other values for free spelling/copy phrase.
+    :param trial_target_info: A list of strings which can take values:
+        'target', 'nontarget', 'first_press_target'
 
     :param timing_info: Trigger timings for each trial, a list of floats
 
@@ -18,6 +18,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
     :param mode: Operating mode, can be 'calibration', 'copy_phrase', 'free_spell'.
 
+    :param channel_map: A binary list, if i'th element is 0, i'th channel in filtered_eeg is removed.
+
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return type is a tuple.
     reshaped_trials =   3 dimensional np array first dimension is channels
                         second dimension is trials and third dimension is time samples.
@@ -27,7 +29,16 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
     """
 
-    # Number of samples in half a second that we are interested in:
+    # Remove the channels that we are not interested in
+    channel_indexes_to_remove = []
+    for channel_index in range(len(filtered_eeg)):
+        if channel_map[channel_index] == 0:
+            channel_indexes_to_remove.append(channel_index)
+
+    filtered_eeg = np.delete(filtered_eeg,
+                             channel_indexes_to_remove, axis=0)
+
+    # Number of samples in half a second that we are interested in
     num_samples = int(1. * fs / 2 / k)
 
     if mode == 'calibration':
