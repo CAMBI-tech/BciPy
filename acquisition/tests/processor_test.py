@@ -17,7 +17,7 @@ def test_filewriter():
     m = mock_open()
     with patch('acquisition.processor.open', m):
         with filewriter:
-            m.assert_called_once_with('foo.csv', 'w')
+            m.assert_called_once_with('foo.csv', 'wb')
 
             handle = m()
             handle.write.assert_called_with(b'timestamp,c1,c2,c3\r\n')
@@ -43,7 +43,7 @@ def test_filewriter_builder():
     with patch('acquisition.processor.open', m):
         with builder(device_name='foo-device', fs=100,
                      channels=['c1', 'c2', 'c3']) as filewriter:
-            m.assert_called_once_with('foo.csv', 'w')
+            m.assert_called_once_with('foo.csv', 'wb')
 
             handle = m()
             handle.write.assert_called_with(b'timestamp,c1,c2,c3\r\n')

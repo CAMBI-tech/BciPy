@@ -79,10 +79,10 @@ class ChannelWisePrincipalComponentAnalysis(object):
         Attr:
             n_components(int): Number of components in PCA
             copy(bool): Saves the matrix if  True and updates on each fit()
-            whiten(bool): Whitens the PCA matrix to form a tigth frame
-            svd_solver(string): SV Decomposition solver metgod
+            whiten(bool): Whitens the PCA matrix to form a tight frame
+            svd_solver(string): SV Decomposition solver method
             tol=var_tol(float): Unfortunately I re-implemented it
-                Tolarance to the singular values of the matrix
+                Tolerance to the singular values of the matrix
             random_state(seed): Random state seed
             num_ch(int): number of channels in expected data
             var_tol(float): Tolerance to the variance
@@ -156,8 +156,7 @@ class ChannelWisePrincipalComponentAnalysis(object):
             if var_tol:
                 max_var = self.list_pca[i].explained_variance_ratio_[0]
                 self.list_pca[i].n_components = np.sum(np.array(
-                    self.list_pca[
-                        i].explained_variance_ratio_ >= max_var * self.var_tol))
+                    self.list_pca[i].explained_variance_ratio_ >= max_var * self.var_tol))
 
             f_vector.append(self.list_pca[i].fit_transform(x[i, :, :], y))
 

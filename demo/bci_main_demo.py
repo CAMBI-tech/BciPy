@@ -19,5 +19,5 @@ user = 'demo_user'
 try:
     bci_main.bci_main(parameters, user, test_type, test_mode)
 except Exception as e:
-    print "something went wrong"
     print e
+    print "BCI MAIN Fail. Exiting."
