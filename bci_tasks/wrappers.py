@@ -5,6 +5,7 @@ import time
 from eeg_model.inference import inference
 from bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
+from helpers.bci_task_related import alphabet
 
 # TODO: These are shared parameters for multiple functions
 # and I have no idea how to put them into correct place
@@ -18,8 +19,10 @@ mean_neg = 0
 var_neg = .5
 
 # Symbol set
-alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-       'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+alp = alphabet()
+
+channel_map = [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0]
+
 
 # TODO: Distributions are hardcoded!!
 def dummy_trig_dat_generator(truth, state, stimuli):
@@ -62,6 +65,7 @@ def dummy_trig_dat_generator(truth, state, stimuli):
     trigger = [(stimuli[i], time[i]) for i in range(len(stimuli))]
 
     return eeg, trigger, target_info
+
 
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
@@ -128,7 +132,8 @@ class CopyPhraseWrapper(object):
 
             # reshape the data
             x, y, _, _ = trial_reshaper(
-                target_info, time, dat, fs=self.fs, k=self.k, mode=self.mode)
+                target_info, time, dat, fs=self.fs, k=self.k, mode=self.mode,
+                channel_map=channel_map)
 
             # TODO: Hacked to get rid of cross sign for now
             x = x[:, 1:x.shape[1], :]

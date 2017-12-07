@@ -15,12 +15,11 @@ from helpers.bci_task_related import (
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                           fake=False):
-
     """RSVP Copy Phrase Task.
 
     Initializes and runs all needed code for executing a copy phrase task. A
         phrase is set in parameters and necessary objects (eeg, display) passed
-        to this function. Certain Wrappers and Task Specific objects are 
+        to this function. Certain Wrappers and Task Specific objects are
         executed here
 
     Parameters
