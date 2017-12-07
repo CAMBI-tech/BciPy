@@ -1,7 +1,7 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core
+from psychopy import core, event
 
 from display.rsvp_disp_modes import CalibrationTask
 
@@ -63,7 +63,17 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     run = True
 
     while run is True:
-        # [to-do] allow pausing and exiting. See psychopy getKeys()
+        # check user input to make sure we should be going
+        keys = event.getKeys(keyList=['space', 'escape'])
+
+        if keys:
+            # pause?
+            if keys[0] == 'space':
+                event.waitKeys(keyList=["space"])
+
+            # escape?
+            if keys[0] == 'escape':
+                break
 
         # Try getting random sequence information given stimuli parameters
         try:
@@ -109,7 +119,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
                 rsvp.time_list_sti = timing_sti[idx_o]
 
                 # Wait for a time
-                core.wait(.4)
+                core.wait(float(parameters['task_buffer_len']['value']))
 
                 # Do the sequence
                 last_sequence_timing = rsvp.do_sequence()
@@ -119,7 +129,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
                     last_sequence_timing, trigger_file)
 
                 # Wait for a time
-                core.wait(.5)
+                core.wait(float(parameters['task_buffer_len']['value']))
 
             # Set run to False to stop looping
             run = False
