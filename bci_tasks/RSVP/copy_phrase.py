@@ -6,7 +6,7 @@ from psychopy import core, event
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
-from bci_tasks.wrappers import CopyPhraseWrapper
+from helpers.eeg_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, _process_data_for_decision)
