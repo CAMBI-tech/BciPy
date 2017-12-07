@@ -5,7 +5,6 @@ from psychopy import core, event
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
-from helpers.stim_gen import rsvp_copy_phrase_seq_generator
 from helpers.save import _save_session_related_data
 from bci_tasks.wrappers import CopyPhraseWrapper
 
