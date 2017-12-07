@@ -1,4 +1,4 @@
-from LMWrapper import LangModel
+from lm_wrapper import LangModel
 
 """
 This script shows how to use the language model wrapper
