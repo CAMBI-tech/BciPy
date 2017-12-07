@@ -4,6 +4,7 @@ import datetime
 import errno
 import os
 from shutil import copy2
+import json
 
 
 def init_save_data_structure(data_save_path,
@@ -54,6 +55,10 @@ def init_save_data_structure(data_save_path,
     return save_folder_run_name
 
 
-def complete_save_data_structure(path):
+def _save_session_related_data(file, array):
+    try:
+        json.dump(array, file)
+    except Exception as e:
+        raise e
 
-    return path
+    return file

@@ -6,6 +6,7 @@ from psychopy import core
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import rsvp_copy_phrase_seq_generator
+from helpers.save import _save_session_related_data
 from bci_tasks.wrappers import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
@@ -67,20 +68,24 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     trigger_save_location = file_save + '/triggers.txt'
     trigger_file = open(trigger_save_location, 'w')
 
+    # Init Session File
+    session_save_location = file_save + '/session.json'
+    session_file = open(session_save_location, 'w')
+
     # Get the copy_phrase, initial targets and task list
     copy_phrase = parameters['text_task']['value']
     text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
     # TODO: get model, fs and k from .pkl besides model. #changeforrelease
     task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
                                                           2)]))]
-    if not fake:
-        # Try Initializing Copy Phrase Wrapper:
-        #       (sig_pro, decision maker, eeg_model)
-        try:
-            copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
-                                                 task_list=task_list)
-        except Exception as e:
-            print "Error initializing Copy Phrase Task"
+
+    # Try Initializing Copy Phrase Wrapper:
+    #       (sig_pro, decision maker, eeg_model)
+    try:
+        copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
+                                             task_list=task_list)
+    except Exception as e:
+        print "Error initializing Copy Phrase Task"
 
     # Set new epoch (wheter to present a new epoch),
     #   run (whether to cont. session) and,
@@ -88,6 +93,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     new_epoch = True
     run = True
     seq_counter = 0
+    epochs = []
 
     # Start the Session!
     while run is True:
@@ -152,17 +158,30 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # TODO: Don't forget you sinned #changeforrelease. uncomment this
             #   to use fake data but real decisions
             # fake = False
+
             try:
+
+                # reshape the data and triggers as needed for later modules
+                raw_data, triggers, target_info = \
+                    _process_data_for_decision(sequence_timing, daq)
+
+                # Save Data Before getting next stimuli or decisions
+                save_dict = {
+                    'triggers': sequence_timing,
+                    'data': len(raw_data),
+                    'target_info': target_info,
+                    'trial_number': seq_counter,
+                    'new_epoch': new_epoch,
+                    'sti': sti,
+                }
+                epochs.append(save_dict)
+                _save_session_related_data(session_file, epochs)
+
                 if fake:
                     (target_letter, text_task, run) = \
                         fake_copy_phrase_decision(copy_phrase, target_letter,
                                                   text_task)
                 else:
-
-                    # reshape the data and triggers as needed for later modules
-                    raw_data, triggers, target_info = \
-                        _process_data_for_decision(sequence_timing, daq)
-
                     # evaulate this sequence, returning wheter to gen a new
                     #  epoch (seq) or stimuli to present
                     new_epoch, sti = \
