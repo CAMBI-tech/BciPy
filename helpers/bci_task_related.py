@@ -90,7 +90,7 @@ def _process_data_for_decision(sequence_timing, daq):
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (time2 - time2 + .5) * daq._device.fs
+    data_limit = (time2 - time1 + .5) * daq._device.fs
 
     # Query for raw data
     try:
