@@ -26,7 +26,8 @@ FOR /f "tokens=*" %%i IN (env.txt) DO %%i
 DEL env.txt
 ```
 
-NOW DOCKER CAN RUN
+Now docker is up and running
+
 -----------------------
 2.
 A ONE TIME BUILD of the IMAGE
@@ -36,6 +37,7 @@ A ONE TIME BUILD of the IMAGE
 docker build -t lmimage
 ```
 
+Now the image is build
 -----------------------
 3.
 WHEN FINISHING WORKING WITH DOCKER
@@ -45,3 +47,5 @@ Stop the VM
 ```
 docker-machine stop mymachine
 ```
+
+Now docker is shut down
