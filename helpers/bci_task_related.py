@@ -1,4 +1,5 @@
 import numpy as np
+from psychopy import visual
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -118,3 +119,32 @@ def _process_data_for_decision(sequence_timing, daq):
         raise e
 
     return raw_data, triggers, target_info
+
+
+def trial_complete_message(win, parameters):
+    """Trial Complete Message.
+
+    Function return a TextStim Object (see Psycopy) to complete the trial.
+
+    Parameters
+    ----------
+
+        win (object): Psychopy Window Object, should be the same as the one
+            used in the experiment
+        parameters (dict): Dictionary of session parameters 
+
+    Returns
+    -------
+        array of message_stim (trial complete message to be displayed).
+    """
+
+    message_stim = visual.TextStim(
+        win=win,
+        height=float(parameters['txt_height']['value']),
+        text=parameters['trial_complete_message']['value'],
+        font=parameters['font_text']['value'],
+        pos=(float(parameters['pos_text_x']['value']),
+             float(parameters['pos_text_y']['value'])),
+        wrapWidth=None, colorSpace='rgb',
+        opacity=1, depth=-6.0)
+    return [message_stim]

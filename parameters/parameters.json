@@ -449,7 +449,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",

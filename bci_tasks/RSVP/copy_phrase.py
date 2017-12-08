@@ -9,7 +9,8 @@ from helpers.save import _save_session_related_data
 from helpers.eeg_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
-    fake_copy_phrase_decision, alphabet, _process_data_for_decision)
+    fake_copy_phrase_decision, alphabet, _process_data_for_decision,
+    trial_complete_message)
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
@@ -255,7 +256,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         if (text_task == copy_phrase or
                 seq_counter > int(parameters['max_seq_len']['value'])):
 
-            # Update the final task state and say goodbye.
+            # Update the final task state and say goodbye!
             rsvp.update_task_state(text=text_task, color_list=['white'])
             rsvp.text = trial_complete_message(win, parameters)
             rsvp.draw_static()
@@ -310,16 +311,3 @@ def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
         is_txt_sti=parameters['is_txt_sti']['value'])
 
     return rsvp
-
-
-def trial_complete_message(win, parameters):
-    message_stim = visual.TextStim(
-        win=win,
-        height=float(parameters['txt_height']['value']),
-        text=parameters['trial_complete_message']['value'],
-        font=parameters['font_text']['value'],
-        pos=(float(parameters['pos_text_x']['value']),
-             float(parameters['pos_text_y']['value'])),
-        wrapWidth=None, colorSpace='rgb',
-        opacity=1, depth=-6.0)
-    return [message_stim]

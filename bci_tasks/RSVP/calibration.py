@@ -7,7 +7,7 @@ from display.rsvp_disp_modes import CalibrationTask
 
 from helpers.triggers import _write_triggers_from_sequence_calibration
 from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
-from helpers.bci_task_related import alphabet
+from helpers.bci_task_related import alphabet, trial_complete_message
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
@@ -15,6 +15,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
     experiment_clock = core.MonotonicClock(start_time=None)
+    buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
     alp = alphabet()
@@ -119,7 +120,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
                 rsvp.time_list_sti = timing_sti[idx_o]
 
                 # Wait for a time
-                core.wait(float(parameters['task_buffer_len']['value']))
+                core.wait(buffer_val)
 
                 # Do the sequence
                 last_sequence_timing = rsvp.do_sequence()
@@ -129,13 +130,19 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
                     last_sequence_timing, trigger_file)
 
                 # Wait for a time
-                core.wait(float(parameters['task_buffer_len']['value']))
+                core.wait(buffer_val)
 
             # Set run to False to stop looping
             run = False
 
         except Exception as e:
             raise e
+
+    rsvp.text = trial_complete_message(win, parameters)
+    rsvp.draw_static()
+    win.flip()
+
+    core.wait(buffer_val)
 
     # Close this sessions trigger file and return some data
     trigger_file.close()
