@@ -86,8 +86,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         print "Error initializing Copy Phrase Task"
 
     # Set new epoch (wheter to present a new epoch),
-    #   run (whether to cont. session) and,
+    #   run (whether to cont. session),
     #   sequence counter (how many seq have occured).
+    #   epoch counter and index (what epoch, and how many sequences within it)
     new_epoch = True
     run = True
     seq_counter = 0
@@ -103,6 +104,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         'total_time_spent': experiment_clock.getTime()
     }
 
+    # Save session data
     _save_session_related_data(session_save_location, data)
 
     # Start the Session!
