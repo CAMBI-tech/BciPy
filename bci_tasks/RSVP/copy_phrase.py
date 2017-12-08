@@ -1,7 +1,7 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core, event
+from psychopy import core, event, visual
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
@@ -17,9 +17,9 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     """RSVP Copy Phrase Task.
 
     Initializes and runs all needed code for executing a copy phrase task. A
-        phrase is set in parameters and necessary objects (eeg, display) passed
-        to this function. Certain Wrappers and Task Specific objects are
-        executed here
+        phrase is set in parameters and necessary objects (eeg, display) are
+        passed to this function. Certain Wrappers and Task Specific objects are
+        executed here.
 
     Parameters
     ----------
@@ -68,7 +68,6 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
     # Init Session File
     session_save_location = file_save + '/session.json'
-    session_file = open(session_save_location, 'w')
 
     # Get the copy_phrase, initial targets and task list
     copy_phrase = parameters['text_task']['value']
@@ -80,8 +79,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     # Try Initializing Copy Phrase Wrapper:
     #       (sig_pro, decision maker, eeg_model)
     try:
-        copy_phrase_task = CopyPhraseWrapper(classifier, 300, 2, alp,
-                                             task_list=task_list)
+        copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
+                                             2, alp, task_list=task_list)
     except Exception as e:
         print "Error initializing Copy Phrase Task"
 
@@ -91,7 +90,19 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     new_epoch = True
     run = True
     seq_counter = 0
-    epochs = []
+    epoch_counter = 0
+    epoch_index = 0
+
+    # Init session data and save before beginning
+    data = {
+        'session': file_save,
+        'session_type': 'Copy Phrase',
+        'paradigm': 'RSVP',
+        'epochs': {},
+        'total_time_spent': experiment_clock.getTime()
+    }
+
+    _save_session_related_data(session_save_location, data)
 
     # Start the Session!
     while run is True:
@@ -107,7 +118,6 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # escape?
             if keys[0] == 'escape':
                 break
-        # [to-do] allow pausing and exiting. See psychopy getKeys()
 
         # Why bs for else? #changeforrelease
         if copy_phrase[0:len(text_task)] == text_task:
@@ -124,6 +134,13 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                 ele_sti = sti[0]
                 timing_sti = sti[1]
                 color_sti = sti[2]
+
+                # Increase epoch number and reset epoch index
+                epoch_counter += 1
+                data['epochs'][epoch_counter] = {}
+                epoch_index = 0
+            else:
+                epoch_index += 1
 
         # Catch the exception here if needed.
         except Exception as e:
@@ -165,39 +182,55 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # if show_bg:
             #     rsvp.show_bar_graph()
 
-            # TODO: Don't forget you sinned #changeforrelease. uncomment this
-            #   to use fake data but real decisions
-            # fake = False
-
             try:
 
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
                     _process_data_for_decision(sequence_timing, daq)
 
-                # Save Data Before getting next stimuli or decisions
-                save_dict = {
-                    'triggers': sequence_timing,
-                    'data': len(raw_data),
-                    'target_info': target_info,
-                    'trial_number': seq_counter,
-                    'new_epoch': new_epoch,
-                    'sti': sti,
-                }
-                epochs.append(save_dict)
-                _save_session_related_data(session_file, epochs)
-
+                # Uncomment this to turn off fake decisions, but use fake data.
                 # fake = False
                 if fake:
+                    # Construct Data Record
+                    data['epochs'][epoch_counter][epoch_index] = {
+                        'stimuli': ele_sti,
+                        'eeg_len': len(raw_data),
+                        'timing_sti': timing_sti,
+                        'triggers': triggers,
+                        'target_info': target_info,
+                        'target_letter': target_letter,
+                        'current_text': text_task,
+                        'copy_phrase': copy_phrase}
+
+                    # Evaulate this sequence
                     (target_letter, text_task, run) = \
                         fake_copy_phrase_decision(copy_phrase, target_letter,
                                                   text_task)
+
+                    # Update next state for this record
+                    data['epochs'][
+                        epoch_counter][
+                        epoch_index][
+                        'next_display_state'] = \
+                        text_task
                 else:
-                    # evaulate this sequence, returning wheter to gen a new
+                    # Evaulate this sequence, returning wheter to gen a new
                     #  epoch (seq) or stimuli to present
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
+                    # Construct Data Record
+                    data['epochs'][epoch_counter][epoch_index] = {
+                        'stimuli': ele_sti,
+                        'eeg_len': len(raw_data),
+                        'timing_sti': timing_sti,
+                        'triggers': triggers,
+                        'target_info': target_info,
+                        'current_text': text_task,
+                        'copy_phrase': copy_phrase,
+                        'next_display_state':
+                            copy_phrase_task.decision_maker.displayed_state
+                    }
 
                     # If new_epoch is False, get the stimuli info returned
                     if not new_epoch:
@@ -214,9 +247,23 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         except Exception as e:
             raise e
 
-        # decide whether to keep task going #changeforrelease
-        run = (text_task == copy_phrase or
-               seq_counter < int(parameters['max_seq_len']['value']))
+        # Update time spent and save data
+        data['total_time_spent'] = experiment_clock.getTime()
+        _save_session_related_data(session_save_location, data)
+
+        # Decide whether to keep the task going
+        if (text_task == copy_phrase or
+                seq_counter > int(parameters['max_seq_len']['value'])):
+
+            # Update the final task state and say goodbye.
+            rsvp.update_task_state(text=text_task, color_list=['white'])
+            rsvp.text = trial_complete_message(win, parameters)
+            rsvp.draw_static()
+            win.flip()
+
+            core.wait(float(parameters['task_buffer_len']['value']))
+
+            break
         seq_counter += 1
 
     # Let the user know stopping criteria was met and stop
@@ -263,3 +310,16 @@ def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
         is_txt_sti=parameters['is_txt_sti']['value'])
 
     return rsvp
+
+
+def trial_complete_message(win, parameters):
+    message_stim = visual.TextStim(
+        win=win,
+        height=float(parameters['txt_height']['value']),
+        text=parameters['trial_complete_message']['value'],
+        font=parameters['font_text']['value'],
+        pos=(float(parameters['pos_text_x']['value']),
+             float(parameters['pos_text_y']['value'])),
+        wrapWidth=None, colorSpace='rgb',
+        opacity=1, depth=-6.0)
+    return [message_stim]

@@ -464,6 +464,15 @@
     "recommended_values": "",
     "isNumeric": "true"
   },
+  "trial_complete_message": {
+    "value": "Nice! Trial Complete!",
+    "section": "bci_config",
+    "readableName": "Trial Complete Message",
+    "helpTip": "Message that displays at the end of trial",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
   "max_seq_len": {
     "value": "20",
     "section": "bci_config",

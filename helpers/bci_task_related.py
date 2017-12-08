@@ -39,7 +39,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     else:
         run = False
         next_target_letter = None
-        text_task = None
+        text_task = copy_phrase
 
     return next_target_letter, text_task, run
 
@@ -86,7 +86,7 @@ def _process_data_for_decision(sequence_timing, daq):
     triggers = [(text, timing - time1)
                 for text, timing in sequence_timing]
 
-    # assign labels for triggers
+    # Assign labels for triggers
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.

@@ -55,9 +55,52 @@ def init_save_data_structure(data_save_path,
     return save_folder_run_name
 
 
-def _save_session_related_data(file, array):
+def _save_session_related_data(file, session_dictionary):
+    """
+    Save Session Related Data.
+
+    Parameters
+    ----------
+        file[str]: string of path to save our data in
+        session_dictionary[dict]: dictionary of session data. It will appear
+            as follows:
+                {{ "epochs": {
+                        "1": {
+                          "0": {
+                            "copy_phrase": "COPY_PHRASE",
+                            "current_text": "COPY_",
+                            "eeg_len": 22,
+                            "next_display_state": "COPY_",
+                            "stimuli": [["+", "_", "G", "L", "B"]],
+                            "target_info": [
+                              "nontarget", ... ,
+                            ],
+                            "timing_sti": [[1, 0.2, 0.2, 0.2, 0.2]],
+                            "triggers": [[ "+", 0.0], ["_", 0.9922] ..],
+                            },
+                        ... ,
+                        "7": {
+                            ... ,
+                  },
+                  "paradigm": "RSVP",
+                  "session": "data/demo_user/demo_user",
+                  "session_type": "Copy Phrase",
+                  "total_time_spent": 83.24798703193665
+                }}
+    Returns
+    -------
+        file, session data file (json file)
+
+    """
+    # Try opening as json, if not able to use open() to create first
     try:
-        json.dump(array, file)
+        file = json.load(file, 'wt')
+    except:
+        file = open(file, 'wt')
+
+    # Use the file to dump data to
+    try:
+        json.dump(session_dictionary, file)
     except Exception as e:
         raise e
 
