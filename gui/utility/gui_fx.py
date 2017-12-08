@@ -100,8 +100,14 @@ def move_scroll_bar(barId, moveAmount):
 
 
 def run_offline_analysis(window, data_folder=None):
-    offline_analysis(data_folder=data_folder)
-    pass
+    try:
+        data_folder = '/Users/scit_tab/Desktop/bci/data/test_user'
+        offline_analysis(data_folder=data_folder)
+    except Exception as e:
+        create_message_box(
+            "BCI Error",
+            "Error in Offline Analysis: %s" % (e),
+            wx.OK)
 
 
 # sets exp type from main menu and opens the next desired gui
@@ -131,7 +137,7 @@ def set_exp_type(expType, window):
         print("Matrix is not implemeted yet!")
 
     else:
-        raise Exception('Input not recognized')
+        create_message_box("BCI Error", "Input Not Recognized", wx.OK)
 
 
 # Go back to the bci main window, from any other window
@@ -358,7 +364,9 @@ def set_trial_type(numId):
                         f.write(str(userId) + "\n")
                     f.close()
             else:
-                create_message_box("Info", "Please enter a user ID.", wx.OK)
+                create_message_box(
+                    "Whoops!",
+                    "Please enter a User ID to start a trial!", wx.OK)
 
 
 # reads a given file and looks for a help tip attached to a given id
@@ -763,12 +771,22 @@ def exec_bci_main(parameters, window, mode):
     try:
 
         new_window.close()
-        message = bci_main.bci_main(parameters, userId, trialType, mode)
+        bci_main.bci_main(parameters, userId, trialType, mode)
 
-        print(message)
+    except Exception as e:
+        if e.message == 'Not implemented yet!':
+            message = "BCI mode not Implemented yet!"
 
-    except Exception:
-        pass
+        elif e.strerror == 'Address already in use':
+            message = "Please close all BCI Windows and restart!"
+
+        else:
+            message = "Error in BCI Main Execution: %s" % (e)
+
+        create_message_box(
+            "BCI Error",
+            message,
+            wx.OK)
 
 
 # Runs a command (filename) from the given location (execPath). Intended to

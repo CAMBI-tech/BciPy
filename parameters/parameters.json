@@ -105,7 +105,10 @@
     "readableName": "Font Task",
     "helpTip": "Font Task",
     "recommended_values": [
+      "Verdana",
       "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"
@@ -144,7 +147,10 @@
     "readableName": "Font Text",
     "helpTip": "Font Text",
     "recommended_values": [
+      "Verdana",
       "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"
@@ -207,7 +213,10 @@
     "readableName": "Font Stimuli",
     "helpTip": "Font Stimuli",
     "recommended_values": [
+      "Verdana",
       "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"

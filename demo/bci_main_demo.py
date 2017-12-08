@@ -11,7 +11,7 @@ parameters = load_json_parameters('parameters/parameters.json')
 test_mode = 'RSVP'
 
 # Test Type: ERP Calibration = 1, Copy Phrase = 2
-test_type = 1
+test_type = 2
 
 # Define a user
 user = 'demo_user'
