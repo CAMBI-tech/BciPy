@@ -405,7 +405,7 @@
     "isNumeric": "true"
   },
   "raw_data_name": {
-    "value": "rawdata.csv",
+    "value": "raw_data.csv",
     "section": "bci_config",
     "readableName": "Raw Data Filename",
     "helpTip": "Raw Data Filename",
