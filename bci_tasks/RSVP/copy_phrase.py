@@ -101,7 +101,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         'session_type': 'Copy Phrase',
         'paradigm': 'RSVP',
         'epochs': {},
-        'total_time_spent': experiment_clock.getTime()
+        'total_time_spent': experiment_clock.getTime(),
+        'total_number_epochs': 0,
     }
 
     # Save session data
@@ -209,7 +210,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     (target_letter, text_task, run) = \
                         fake_copy_phrase_decision(copy_phrase, target_letter,
                                                   text_task)
-
+                    new_epoch = True
                     # Update next state for this record
                     data['epochs'][
                         epoch_counter][
@@ -252,6 +253,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
         # Update time spent and save data
         data['total_time_spent'] = experiment_clock.getTime()
+        data['total_number_epochs'] = epoch_counter
         _save_session_related_data(session_save_location, data)
 
         # Decide whether to keep the task going
