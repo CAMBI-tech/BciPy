@@ -265,6 +265,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             core.wait(float(parameters['task_buffer_len']['value']))
 
             break
+
+        # Increment sequence counter
         seq_counter += 1
 
     # Let the user know stopping criteria was met and stop

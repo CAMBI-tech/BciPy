@@ -138,6 +138,9 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
         except Exception as e:
             raise e
 
+    print "Stopping criteria met!"
+
+    # Say Goodbye!
     rsvp.text = trial_complete_message(win, parameters)
     rsvp.draw_static()
     win.flip()
