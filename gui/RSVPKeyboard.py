@@ -281,7 +281,7 @@ gui_fx.add_button(
     main_window_height_half - convert_to_height(150, main_window_height),
     convert_to_width(300, main_window_width), convert_to_height(70, main_window_height),
     (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), 'Calculate AUC',
-    0, functionCall="run_python_file", functionArg=['gui/tests/testfile.py'],
+    0, functionCall="run_offline_analysis", functionArg=[main_window],
     textSize=convert_to_width(16, main_window_width)
 )
 

@@ -9,6 +9,7 @@ from os import path as ospath
 from sys import executable
 from warnings import warn
 import bci_main
+from eeg_model.offline_analysis import offline_analysis
 
 import pyglet
 import wx
@@ -96,6 +97,11 @@ def move_scroll_bar(barId, moveAmount):
                  (main_window_width if eachBar[0].isHorizontal
                   else main_window_height)))
             eachBar[0].yPos = bar_amount
+
+
+def run_offline_analysis(window, data_folder=None):
+    offline_analysis(data_folder=data_folder)
+    pass
 
 
 # sets exp type from main menu and opens the next desired gui
