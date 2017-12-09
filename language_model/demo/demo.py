@@ -1,4 +1,4 @@
-from LMWrapper import LangModel
+from bci.language_model import LangModel
 
 # local fst
 localfst = "/Users/dudy/CSLU/bci/5th_year/letters/pywrapper/lm/brown_closure.n5.kn.fst"
