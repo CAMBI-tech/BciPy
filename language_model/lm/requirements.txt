@@ -1,7 +1,0 @@
-Flask==0.12.2
-Jinja2==2.9.6
-Werkzeug==0.12.2
-distribute==0.7.3
-wsgiref
-pyyaml==3.12
-cython==0.25.2
