@@ -9,13 +9,14 @@ parameters = load_json_parameters('parameters/parameters.json')
 
 # RSVP mode
 test_mode = 'RSVP'
-# ERP Calibration
+
+# Test Type: ERP Calibration = 1, Copy Phrase = 2
 test_type = 2
 
-# define a user
+# Define a user
 user = 'demo_user'
 
-# try and intialize bci main
+# Try and intialize bci main
 try:
     bci_main.bci_main(parameters, user, test_type, test_mode)
 except Exception as e:

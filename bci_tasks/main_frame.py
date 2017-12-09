@@ -202,9 +202,6 @@ class DecisionMaker(object):
                 'list_distribution'][-1], num_sti=1)
         return stimuli
 
-    def save_sequence_info(self):
-        return 0
-
 
 def _demo_fusion():
     len_alp = 4

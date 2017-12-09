@@ -85,10 +85,26 @@ def execute_task(task_type, parameters, save_folder):
 
     # Start Task
     try:
-        trial_data = start_task(
+        start_task(
             daq, display, task_type, parameters, save_folder,
             classifier=classifier, fake=fake)
+    # If exception, close all display and acquistion objects
     except Exception as e:
+        # close display
+        display.close()
+
+        # try stoping acquistion
+        try:
+            daq.stop_acquisition()
+        except:
+            # if not started, we can pass!
+            pass
+
+        # if there is a server, stop it
+        if server:
+            server.stop()
+
+        # raise error
         raise e
 
     # Stop Acquistion
@@ -101,4 +117,4 @@ def execute_task(task_type, parameters, save_folder):
     # Close the display window
     display.close()
 
-    return trial_data
+    return

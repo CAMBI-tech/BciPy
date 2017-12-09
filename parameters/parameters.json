@@ -53,11 +53,15 @@
     "isNumeric": "false"
   },
   "font_task": {
-    "value": "Times",
+    "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Task",
     "helpTip": "Font Task",
     "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"
@@ -91,11 +95,15 @@
     "isNumeric": "false"
   },
   "font_text": {
-    "value": "Times",
+    "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Text",
     "helpTip": "Font Text",
     "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"
@@ -153,11 +161,15 @@
     "isNumeric": "true"
   }, 
   "font_sti": {
-    "value": "Times",
+    "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Stimuli",
     "helpTip": "Font Stimuli",
     "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
       "Times"
     ],
     "isNumeric": "false"
@@ -181,7 +193,7 @@
   "sti_height": {
     "value": "0.6",
     "section": "bci_config",
-    "readableName": "Stimuli Height",
+    "readableName": "Stimuli Height (px)",
     "helpTip": "Stimuli Height",
     "recommended_values": "",
     "isNumeric": "true"
@@ -253,15 +265,23 @@
   "time_flash": {
     "value": "0.25",
     "section": "bci_config",
-    "readableName": "Flash Length for Letters",
+    "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
     "recommended_values": "",
     "isNumeric": "true"
   },
+  "task_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Task Color",
+    "helpTip": "Task Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
   "time_target": {
     "value": "2",
     "section": "bci_config",
-    "readableName": "Target Letter Presentation Length",
+    "readableName": "Target Letter Presentation Length (sec)",
     "helpTip": "Target Letter Presentation Length",
     "recommended_values": "",
     "isNumeric": "true"
@@ -269,7 +289,7 @@
   "time_cross": {
     "value": "0.6",
     "section": "bci_config",
-    "readableName": "Time Fixation Cross",
+    "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",
     "recommended_values": "",
     "isNumeric": "true"
@@ -285,7 +305,7 @@
   "window_width": {
     "value": "500",
     "section": "bci_config",
-    "readableName": "Stimuli Presentation Window Width",
+    "readableName": "Stimuli Presentation Window Width (px)",
     "helpTip": "Stimuli Presentation Window Width",
     "recommended_values": "",
     "isNumeric": "true"
@@ -293,7 +313,7 @@
   "window_height": {
     "value": "500",
     "section": "bci_config",
-    "readableName": "Stimuli Presentation Window Width",
+    "readableName": "Stimuli Presentation Window Width (px)",
     "helpTip": "Stimuli Presentation Window Width",
     "recommended_values": "",
     "isNumeric": "true"
@@ -333,13 +353,24 @@
   "eeg_buffer_len": {
     "value": "1",
     "section": "bci_config",
-    "readableName": "End of file eeg buffer length",
+    "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
     "recommended_values": "",
     "isNumeric": "true"
   },
+  "task_buffer_len": {
+    "value": ".5",
+    "section": "bci_config",
+    "readableName": "Task Buffer Length (sec)",
+    "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
+    "recommended_values": [
+      ".5",
+      ".75"
+    ],
+    "isNumeric": "true"
+  },
   "raw_data_name": {
-    "value": "rawdata.csv",
+    "value": "raw_data.csv",
     "section": "bci_config",
     "readableName": "Raw Data Filename",
     "helpTip": "Raw Data Filename",
@@ -383,7 +414,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",
@@ -398,11 +429,24 @@
     "recommended_values": "",
     "isNumeric": "true"
   },
-  "task_color": {
-    "value": "white",
+  "trial_complete_message": {
+    "value": "Nice! Trial Complete!",
     "section": "bci_config",
-    "readableName": "Task Color",
-    "helpTip": "Task Color",
+    "readableName": "Trial Complete Message",
+    "helpTip": "Message that displays at the end of trial",
     "recommended_values": "",
     "isNumeric": "false"
-  }}
+
+  },
+  "max_seq_len": {
+    "value": "20",
+    "section": "bci_config",
+    "readableName": "Maximum Sequence Length",
+    "helpTip": "Maximum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "20",
+      "25"
+    ],
+    "isNumeric": "true"
+  }
+}
