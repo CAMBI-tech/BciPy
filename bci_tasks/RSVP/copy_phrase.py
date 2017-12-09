@@ -2,6 +2,7 @@
 
 from __future__ import division
 from psychopy import core, event
+import numpy as np
 
 from display.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
@@ -193,7 +194,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     _process_data_for_decision(sequence_timing, daq)
 
                 # Uncomment this to turn off fake decisions, but use fake data.
-                # fake = False
+                fake = False
                 if fake:
                     # Construct Data Record
                     data['epochs'][epoch_counter][epoch_index] = {
@@ -217,12 +218,14 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                         epoch_index][
                         'next_display_state'] = \
                         text_task
+
                 else:
                     # Evaulate this sequence, returning wheter to gen a new
                     #  epoch (seq) or stimuli to present
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
+
                     # Construct Data Record
                     data['epochs'][epoch_counter][epoch_index] = {
                         'stimuli': ele_sti,
@@ -233,7 +236,17 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                         'current_text': text_task,
                         'copy_phrase': copy_phrase,
                         'next_display_state':
-                            copy_phrase_task.decision_maker.displayed_state
+                            copy_phrase_task.decision_maker.displayed_state,
+                        'lm_evidence': copy_phrase_task
+                            .conjugator
+                            .evidence_history['LM'][0]
+                            .tolist(),
+                        'eeg_evidence': copy_phrase_task
+                            .conjugator
+                            .evidence_history['ERP'][0]
+                            .tolist(),
+                        'likelihood': copy_phrase_task
+                            .conjugator.likelihood.tolist()
                     }
 
                     # If new_epoch is False, get the stimuli info returned
