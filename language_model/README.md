@@ -38,18 +38,18 @@
 ###Congrats! You Built lmimage :-)
 ###Step 2: Try the demo
 
-7. Open use_LMWRAPPER.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst. [The current language model](.).
+7. Open demo/demo.py and find the path on your machine to the fst file (e.g. c:\Users\shaobinx\langModelPy\brown\_closure.n5.kn.fst. [The current language model](.).
 
-8. Run use_LMWrapper.py from its current directory (to be able to import the LM_Wrapper module)
+8. Run demo.py from its current directory (to be able to import the language_model module)
 
 9. After finishing running the RSVP code you can execute 3 in dockerRun.md.
 
-###Running successfully use\_LMWrapper.py means you were able to run lmimage, establish a tcp/ip connection and query the lm server :-)
+###Running successfully demo.py means you were able to run lmimage, establish a tcp/ip connection and query the lm server :-)
 
 
 ###LMWrapper Module
 
-LMWrapper module provides the LangModel class from which requests are sent to the language model server. 
+language_model module provides the LangModel class from which requests are sent to the language model server and itself serve as the client. 
 The current implementation uses logging, custom error handling and requires having docker environment to be up and running. 
 Each method in LangModel class contains explanations corresponding to the purpose they were made for. 
 
@@ -61,5 +61,5 @@ The current Wrapper has 3 different methods:
 
 3.state update that gets a symbol decision and sends in return the appropriate prior distribution
 
-In addition, use_LMWrapper.pt provides a show case for how to call langModel class methods from the LMWrapper module.
+In addition, demo.py provides a show case for how to call langModel class methods from the language_model module.
 If there are problems in the process there are different error messages that can be raised: connection error, status code of response, correctness of input. 
