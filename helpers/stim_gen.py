@@ -97,7 +97,8 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
 
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
-        rand_smp = np.random.choice(range(len_alp), len_sti)
+        idx = np.random.permutation(np.array(list(range(len_alp))))
+        rand_smp = (idx[0:len_sti])
         sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
         sample += [alp[i] for i in rand_smp]
@@ -137,7 +138,7 @@ def _demo_random_rsvp_sequence_generator():
     alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
            'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
-    num_samples = int(np.random.randint(1, 10, 1))
+    num_samples = int(np.random.randint(10, 30, 1))
     len_samples = int(np.random.randint(1, 20, 1))
 
     print('Number of sequences:{}, Number of trials:{}'.format(num_samples,
@@ -153,6 +154,8 @@ def _demo_random_rsvp_sequence_generator():
 
     for i in range(len(sequences)):
         print('seq{}:{}'.format(i, sequences[i]))
+        if len(set(sequences[i][2::])) != len(sequences[i][2::]):
+            raise Exception('Letter repetition!')
         print('time{}:{}'.format(i, timing[i]))
         print('color{}:{}'.format(i, color[i]))
     return 0
@@ -206,8 +209,8 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
 
 def main():
-    # _demo_random_rsvp_sequence_generator()
-    _demo_best_case_sequence_generator()
+    _demo_random_rsvp_sequence_generator()
+    # _demo_best_case_sequence_generator()
 
     return 0
 
