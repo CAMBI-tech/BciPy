@@ -1,7 +1,11 @@
-from bci.language_model import LangModel
+import os
+from language_model.language_model import LangModel
+
+# path to fst in bci repo on local machiene
+abs_path_fst = os.path.abspath("./language_model/fst/brown_closure.n5.kn.fst")
 
 # local fst
-localfst = "/Users/dudy/CSLU/bci/5th_year/letters/pywrapper/lm/brown_closure.n5.kn.fst"
+localfst = abs_path_fst
 # init LMWrapper
 lmodel = LangModel(
     localfst,
