@@ -196,7 +196,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                     _process_data_for_decision(sequence_timing, daq)
 
                 # Uncomment this to turn off fake decisions, but use fake data.
-                fake = False
+                # fake = False
                 if fake:
                     # Construct Data Record
                     data['epochs'][epoch_counter][epoch_index] = {

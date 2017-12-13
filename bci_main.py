@@ -64,6 +64,8 @@ def execute_task(task_type, parameters, save_folder):
 
     if fake_data == 'true':
         server = True
+
+        # Set this to False to have fake data but real decisions
         fake = True
     else:
         server = False
@@ -72,22 +74,37 @@ def execute_task(task_type, parameters, save_folder):
     # Initialize EEG Acquisition
     daq, server = init_eeg_acquisition(daq_parameters, server=server)
 
-    # Init EEG Model
+    # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
+    #   modules to be loaded.
     if task_type['exp_type'] > 1:
+
+        # Try loading in our classifier and starting a langmodel(if enabled)
         try:
 
-            classifier = load_classifier()
-        except:
-            print "cannot load classifier"
-            classifier = None
+            # EEG MODEL
+            if fake:
+                classifier = None
+            else:
+                # classifier = pickle.load(open('#LOCATION OF CLASSIFIER'))
+                classifier = load_classifier()
 
-        try:
-            lmodel = init_language_model(parameters)
-        except:
-            print "cannot load language model"
-            lmodel = None
+            # Language Model
+            if parameters['languagemodelenabled']['value'] == 'true':
+                try:
+                    lmodel = init_language_model(parameters)
+                except:
+                    print "Cannot load language model. Setting to None."
+                    lmodel = None
+            else:
+                lmodel = None
+
+        except Exception as e:
+            print "Cannot load classifier. Exiting"
+            raise e
+
     else:
         classifier = None
+        lmodel = None
 
     # Initialize Display Window
     display = init_display_window(parameters)
@@ -98,6 +115,7 @@ def execute_task(task_type, parameters, save_folder):
             daq, display, task_type, parameters, save_folder,
             lmodel=lmodel,
             classifier=classifier, fake=fake)
+
     # If exception, close all display and acquistion objects
     except Exception as e:
         # close display
