@@ -11,12 +11,12 @@ lmodel = LangModel(
 # init LM
 lmodel.init()
 # get priors
-priors = lmodel.state_update('T')
+priors = lmodel.state_update(['T'])
 # display priors
 lmodel.recent_priors()
-priors = lmodel.state_update('H')
+priors = lmodel.state_update(['H'])
 lmodel.recent_priors()
-priors = lmodel.state_update('E')
+priors = lmodel.state_update(['E'])
 # reset history al together
 lmodel.reset()
 lmodel.recent_priors()
