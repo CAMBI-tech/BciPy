@@ -118,11 +118,11 @@ def set_exp_type(expType, window):
 
     # Shuffle
     elif expType is 'Shuffle':
-        print("Shuffle is not implemeted yet!")
+        create_message_box("BCI Main", "Shuffle is not implemeted yet!", wx.OK)
 
     # Matrix
     elif expType is 'Matrix':
-        print("Matrix is not implemeted yet!")
+        create_message_box("BCI Main", "Matrix is not implemeted yet!", wx.OK)
 
     else:
         raise Exception('Input not recognized')
@@ -788,7 +788,7 @@ def run_executable(execPath, filename, isParameter):
 def remove_dropdown_list():
     buttonTrueIndex = []
     for counter in range(0, (len(buttons))):
-        if(buttons[counter][14] == True):
+        if buttons[counter][14] is True:
             buttonTrueIndex.append(buttons[counter])
     for counter2 in range(0, (len(scroll_bars))):
         for counter in range(0, len(buttonTrueIndex)):
@@ -797,7 +797,10 @@ def remove_dropdown_list():
                     scroll_bars[counter2][0].yPos = 0
                 scroll_bars[counter2][0].resetContentHeight()
                 scroll_bars[counter2][0].translateBarToMovement(scroll_bars[counter2][0].yPos)
-                buttons.remove(buttonTrueIndex[counter])
+                try:
+                    buttons.remove(buttonTrueIndex[counter])
+                except:
+                    pass
     buttonTrueIndex = []
 
 
