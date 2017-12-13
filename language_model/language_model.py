@@ -185,7 +185,7 @@ class LangModel:
             self.decision = symbol.upper()
             self._logger()
         
-        self.priors = [[letter.upper(), prob] for (letter, prob) in self.priors]
+        self.priors['prior'] = [[letter.upper(), prob] for (letter, prob) in self.priors['prior']]
         return self.priors
 
     def _logger(self):
