@@ -15,81 +15,34 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
-  "languagemodel": {
-    "value": "nyt.200.36char.m6.greg.fromfst.mod",
-    "section": "bci_config",
-    "readableName": "Language Model",
-    "helpTip": "Here are some sentences about this parameter. Here is another sentence.",
-    "recommended_values": [
-      "1",
-      "5",
-      "17",
-      "24",
-      "test",
-      "['array', 'fish']",
-      "false"
-    ],
-    "isNumeric": "false"
-  },
-  "ip_main": {
-    "value": "localhost",
-    "section": "bci_config",
-    "readableName": "Main IP",
-    "helpTip": "Main IP",
-    "recommended_values": [
-      "localhost"
-    ],
-    "isNumeric": "false"
-  },
-  "ip_presentation": {
-    "value": "localhost",
-    "section": "bci_config",
-    "readableName": "IP presentation",
-    "helpTip": "IP presentation",
-    "recommended_values": [
-      "localhost"
-    ],
-    "isNumeric": "false"
-  },
-  "ip_gui": {
-    "value": "localhost",
-    "section": "bci_config",
-    "readableName": "IP GUI",
-    "helpTip": "IP GUI",
-    "recommended_values": [
-      "localhost"
-    ],
-    "isNumeric": "false"
-  },
-  "port_mainandpresentation": {
-    "value": "52957",
-    "section": "bci_config",
-    "readableName": "Main Port?",
-    "helpTip": "Main Port?",
-    "recommended_values": [
-      "52957"
-    ],
-    "isNumeric": "true"
-  },
-  "port_mainandgui": {
-    "value": "52958",
-    "section": "bci_config",
-    "readableName": "Another Main Port",
-    "helpTip": "Another Main Port",
-    "recommended_values": [
-      "52958"
-    ],
-    "isNumeric": "true"
-  },
-  "typingtype": {
-    "value": "2",
+  "path_to_fst": {
+    "value": "language_model/fst/brown_closure.n5.kn.fst",
     "section": "advanced_config",
-    "readableName": "Typing Type",
-    "helpTip": "Typing Type",
+    "readableName": "Language Model",
+    "helpTip": "FST file for language model",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "lang_model_server_host": {
+    "value": "127.0.0.1",
+    "section": "advanced_config",
+    "readableName": "Language Model Host",
+    "helpTip": "Language Model Host",
     "recommended_values": [
-      "2"
-    ],
-    "isNumeric": "true"
+      "127.0.0.1",
+      "0.0.0.0"
+      ],
+    "isNumeric": "false"
+  },
+  "lang_model_server_port": {
+    "value": "5000",
+    "section": "advanced_config",
+    "readableName": "Language Model Port",
+    "helpTip": "Language Model Port",
+    "recommended_values": [
+      "5000"
+      ],
+    "isNumeric": "false"
   },
   "color_task": {
     "value": "White",
@@ -121,7 +74,7 @@
   },
   "text_task": {
     "value": "COPY_PHRASE",
-    "section": "advanced_config",
+    "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
     "recommended_values": "",
