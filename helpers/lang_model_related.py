@@ -12,8 +12,8 @@ def init_language_model(parameters):
             logfile="lmwrap.log")
         # init LM
         lmodel.init()
+
     except Exception as e:
-        print e
         raise e
 
     return lmodel

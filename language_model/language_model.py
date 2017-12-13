@@ -135,7 +135,7 @@ class LangModel:
         # assert the input contains a valid symbol
         assert isinstance(decision, list), "%r is not list" % decision
         for symbol in decision:
-            assert symbol in ALPHABET, \
+            assert symbol in ALPHABET or ' ', \
                 "%r contains invalid symbol" % decision
 
         for symbol in decision:
@@ -156,8 +156,12 @@ class LangModel:
             self.decision = symbol.upper()
             # self._logger()
 
-        self.priors['prior'] = [[letter.upper(), prob]
-                                for (letter, prob) in self.priors['prior']]
+        self.priors['prior'] = [
+            [letter.upper(), prob]
+            if letter != '#'
+            else ["_", prob]
+            for (letter, prob) in self.priors['prior']]
+
         return self.priors
 
     def _logger(self):

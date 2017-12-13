@@ -168,21 +168,26 @@ class CopyPhraseWrapper(object):
                 prior /= np.sum(prior)
             else:
                 update = [letter
-                          for letter in self.decision_maker.displayed_state
-                          if not letter == '_']
+                          if not letter == '_'
+                          else ' '
+                          for letter in self.decision_maker.displayed_state]
 
                 prior = self.lmodel.state_update(update)
+
+                prior['prior'].append(['<', 0])
 
                 priors = [float(pr_letter[1])
                           for alp_letter in alphabet()
                           for pr_letter in prior['prior']
-                          if alp_letter == pr_letter[0]]
+                          if alp_letter == pr_letter[0]
+                          ]
 
             try:
                 p = self.conjugator.update_and_fuse({'LM': np.array(priors)})
             except Exception as e:
-                import pdb
-                pdb.set_trace()
+                print "Error updating language model!"
+                raise e
+
             d, arg = self.decision_maker.decide(p)
             sti = arg['stimuli']
 
