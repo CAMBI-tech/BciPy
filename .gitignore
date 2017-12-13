@@ -1,14 +1,14 @@
- *.pyc
- *~
- .DS_Store
- .cache/
- data/
- # Virtualenv
- venv/
- __pycache__/
- .cache/
- calibration.csv
- rawdata.csv
- buffer.db
-+calibration_trigger_file.txt
-data
+*.pyc
+*~
+.DS_Store
+.cache/
+data/
+# Virtualenv
+venv/
+__pycache__/
+.cache/
+calibration.csv
+rawdata.csv
+buffer.db
+lmwrap.log
+env.txt

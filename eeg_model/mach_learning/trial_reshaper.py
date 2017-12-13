@@ -1,11 +1,12 @@
 import numpy as np
 
 
-def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
+def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k,
+                   mode, channel_map=[1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]):
     """
 
-    :param trial_target_info: A list of strings which can take values like
-        'target', 'nontarget', 'first_press_target', or other values for free spelling/copy phrase.
+    :param trial_target_info: A list of strings which can take values:
+        'target', 'nontarget', 'first_press_target'
 
     :param timing_info: Trigger timings for each trial, a list of floats
 
@@ -18,6 +19,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
     :param mode: Operating mode, can be 'calibration', 'copy_phrase', 'free_spell'.
 
+    :param channel_map: A binary list, if i'th element is 0, i'th channel in filtered_eeg is removed.
+
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return type is a tuple.
     reshaped_trials =   3 dimensional np array first dimension is channels
                         second dimension is trials and third dimension is time samples.
@@ -27,7 +30,16 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
     """
 
-    # Number of samples in half a second that we are interested in:
+    # Remove the channels that we are not interested in
+    channel_indexes_to_remove = []
+    for channel_index in range(len(filtered_eeg)):
+        if channel_map[channel_index] == 0:
+            channel_indexes_to_remove.append(channel_index)
+
+    filtered_eeg = np.delete(filtered_eeg,
+                             channel_indexes_to_remove, axis=0)
+
+    # Number of samples in half a second that we are interested in
     num_samples = int(1. * fs / 2 / k)
 
     if mode == 'calibration':
@@ -57,7 +69,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
                 timing_info[symbol_info_index] = -1
 
         # Get rid of 'first_pres_target' trials information in both in trial_target_info and timing_info
-        trial_target_info = filter(lambda x: x != 'first_pres_target', trial_target_info)
+        trial_target_info = filter(lambda x: x != 'first_pres_target',
+                                   trial_target_info)
         timing_info = filter(lambda x: x != -1, timing_info)
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
@@ -65,11 +78,11 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         # Label for every trial
         labels = np.zeros(len(triggers))
-
 
         for trial in range(len(triggers)):
             # Assign targetness to labels for each trial
@@ -79,7 +92,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         num_of_sequences = int(sum(labels))
 
@@ -88,11 +102,12 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int(x * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         # Label for every trial
         labels = np.zeros(len(triggers))
@@ -105,7 +120,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         # In copy phrase, num of sequence is assumed to be 1.
         num_of_sequences = 1
@@ -117,21 +133,22 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode):
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int(x * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         labels = None
-
 
         for trial in range(len(triggers)):
 
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         # In copy phrase, num of sequence is assumed to be 1.
         num_of_sequences = 1
