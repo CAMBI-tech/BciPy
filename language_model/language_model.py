@@ -176,14 +176,16 @@ class LangModel:
                     self.port +
                     '/state_update',
                     json={
-                        'decision': symbol})
+                        'decision': symbol.lower()})
             except requests.ConnectionError:
                 raise ConnectionErr(self.host, self.port)
             if not r.status_code == requests.codes.ok:
                 raise StatusCodeError(r.status_code)
             self.priors = r.json()
-            self.decision = symbol
+            self.decision = symbol.upper()
             self._logger()
+        
+        self.priors = [[letter.upper(), prob] for (letter, prob) in self.priors]
         return self.priors
 
     def _logger(self):
