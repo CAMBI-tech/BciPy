@@ -9,6 +9,37 @@ import logging
 from errors import ConnectionErr, StatusCodeError, DockerDownError
 from helpers.bci_task_related import alphabet
 
+ALPHABET = [
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+    'j',
+    'k',
+    'l',
+    'm',
+    'n',
+    'o',
+    'p',
+    'q',
+    'r',
+    's',
+    't',
+    'u',
+    'v',
+    'w',
+    'x',
+    'y',
+    'z',
+    '<',
+    '#']
+
+
 class LangModel:
 
     def __init__(self, localpath2fst, host, port, logfile):
@@ -33,7 +64,7 @@ class LangModel:
         assert type(port)==str, "%r is not a string type" % port
         # assert docker is on
         try:
-            docker.from_env()
+            client = docker.from_env()
         except BaseException:
             raise DockerDownError  # docker ps for instance
 
@@ -42,10 +73,13 @@ class LangModel:
         logging.basicConfig(filename=logfile, level=logging.INFO)
         dockerpath2fst = "/opt/lm/brown_closure.n5.kn.fst"
         volume = {localpath2fst: {'bind': dockerpath2fst, 'mode': 'ro'}}
-        # get docker client
-        client = docker.from_env()
-        # remove existing containers
-        self.__rm_cons__(client)
+
+        try:
+            # remove existing containers
+            self.__rm_cons__(client)
+        except:
+            pass
+
         # create a new contaienr from image
         self.container = client.containers.run(
             image='lmimage',
@@ -129,7 +163,7 @@ class LangModel:
         # assert the input contains a valid symbol
         assert isinstance(decision, list), "%r is not list" % decision
         for symbol in decision:
-            assert symbol in alphabet, \
+            assert symbol in ALPHABET, \
                 "%r contains invalid symbol" % decision
 
         err_msg = "Connection was not extablished\nstate update failed"
@@ -174,4 +208,3 @@ class LangModel:
             print "There are no priors in the history"
         # print a json dict of the priors
         return self.priors
-
