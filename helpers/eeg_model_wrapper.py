@@ -5,6 +5,7 @@ import time
 from eeg_model.inference import inference
 from bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
+from language_model.language_model import LangModel
 from helpers.bci_task_related import alphabet
 
 # TODO: These are shared parameters for multiple functions
@@ -86,20 +87,21 @@ class CopyPhraseWrapper(object):
             the copy phrase task
     """
 
-    def __init__(self, model, fs, k, alp, evidence_names=['LM', 'ERP'],
-                 task_list=[('I_LOVE_COOKIES', 'I_LOVE_')]):
+    def __init__(self, eeg_model, fs, k, alp, evidence_names=['LM', 'ERP'],
+                 task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(state=task_list[0][1],
                                             alphabet=alp)
         self.alp = alp
 
-        self.model = model
+        self.eeg_model = eeg_model
         self.fs = fs
         self.k = k
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
+        self.lmodel = lmodel
 
     def do_sequence(self):
         """Display symbols and collect evidence."""
@@ -139,7 +141,7 @@ class CopyPhraseWrapper(object):
             x = x[:, 1:x.shape[1], :]
             y = y[1: y.shape[0]]
 
-            lik_r = inference(x, letters, self.model, self.alp)
+            lik_r = inference(x, letters, self.eeg_model, self.alp)
             prob = self.conjugator.update_and_fuse({'ERP': lik_r})
             decision, arg = self.decision_maker.decide(prob)
 
@@ -160,13 +162,27 @@ class CopyPhraseWrapper(object):
         try:
             self.conjugator.reset_history()
 
-            # TODO: update language model with
-            self.decision_maker.displayed_state
-            # get probabilites from language model
-            prior = np.ones(len(self.alp))
-            prior /= np.sum(prior)
+            if not self.lmodel:
+                # get probabilites from language model
+                prior = np.ones(len(self.alp))
+                prior /= np.sum(prior)
+            else:
+                update = [letter
+                          for letter in self.decision_maker.displayed_state
+                          if not letter == '_']
 
-            p = self.conjugator.update_and_fuse({'LM': prior})
+                prior = self.lmodel.state_update(update)
+
+                priors = [float(pr_letter[1])
+                          for alp_letter in alphabet()
+                          for pr_letter in prior['prior']
+                          if alp_letter == pr_letter[0]]
+
+            try:
+                p = self.conjugator.update_and_fuse({'LM': np.array(priors)})
+            except Exception as e:
+                import pdb
+                pdb.set_trace()
             d, arg = self.decision_maker.decide(p)
             sti = arg['stimuli']
 
@@ -209,6 +225,7 @@ class CopyPhraseWrapper(object):
                 time.sleep(.3)
                 print('\rstate:{}'.format(self.decision_maker.state)),
             print('')
+
 
 def demo_copy_phrase_wrapper():
     # We need to train a dummy model

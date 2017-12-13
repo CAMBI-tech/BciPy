@@ -15,6 +15,7 @@ from helpers.bci_task_related import (
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
+                          lmodel=None,
                           fake=False):
     """RSVP Copy Phrase Task.
 
@@ -82,7 +83,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     #       (sig_pro, decision maker, eeg_model)
     try:
         copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
-                                             2, alp, task_list=task_list)
+                                             2, alp, task_list=task_list,
+                                             lmodel=lmodel)
     except Exception as e:
         print "Error initializing Copy Phrase Task"
 

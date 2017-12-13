@@ -26,14 +26,14 @@ class LangModel:
           localpath2fst (str) - the local path to the fst file
           host (str) - host machine ip address
           port (str) - the port used in docker
-          logfile (str) - a valid filename to function as a logger 
+          logfile (str) - a valid filename to function as a logger
         """
         # assert input path validity
         assert os.path.exists(os.path.dirname(
             localpath2fst)), "%r is not a valid path" % localpath2fst
         # assert strings
-        assert type(host)==str, "%r is not a string type" % host
-        assert type(port)==str, "%r is not a string type" % port
+        assert type(host) == str, "%r is not a string type" % host
+        assert type(port) == str, "%r is not a string type" % port
         # assert docker is on
         try:
             client = docker.from_env()
@@ -138,7 +138,6 @@ class LangModel:
             assert symbol in ALPHABET, \
                 "%r contains invalid symbol" % decision
 
-        err_msg = "Connection was not extablished\nstate update failed"
         for symbol in decision:
             try:
                 r = requests.post(
@@ -155,9 +154,10 @@ class LangModel:
                 raise StatusCodeError(r.status_code)
             self.priors = r.json()
             self.decision = symbol.upper()
-            self._logger()
-        
-        self.priors['prior'] = [[letter.upper(), prob] for (letter, prob) in self.priors['prior']]
+            # self._logger()
+
+        self.priors['prior'] = [[letter.upper(), prob]
+                                for (letter, prob) in self.priors['prior']]
         return self.priors
 
     def _logger(self):

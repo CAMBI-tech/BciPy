@@ -4,6 +4,9 @@ from helpers.display import init_display_window
 from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 from helpers.load import load_classifier
+from helpers.lang_model_related import init_language_model
+
+import pickle
 
 
 def bci_main(parameters, user, exp_type, mode):
@@ -77,6 +80,12 @@ def execute_task(task_type, parameters, save_folder):
         except:
             print "cannot load classifier"
             classifier = None
+
+        try:
+            lmodel = init_language_model(parameters)
+        except:
+            print "cannot load language model"
+            lmodel = None
     else:
         classifier = None
 
@@ -87,6 +96,7 @@ def execute_task(task_type, parameters, save_folder):
     try:
         start_task(
             daq, display, task_type, parameters, save_folder,
+            lmodel=lmodel,
             classifier=classifier, fake=fake)
     # If exception, close all display and acquistion objects
     except Exception as e:
