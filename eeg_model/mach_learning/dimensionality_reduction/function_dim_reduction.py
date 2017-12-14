@@ -88,9 +88,10 @@ class ChannelWisePrincipalComponentAnalysis(object):
             var_tol(float): Tolerance to the variance
          """
 
-    def __init__(self, n_components=None, copy=True, whiten=False,
+    def __init__(self, n_components=None, var_tol=0, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='arpack',
                  random_state=None, num_ch=1):
+
         self.list_pca = []
         for idx in range(num_ch):
             self.list_pca.append(PCA(n_components=n_components, copy=copy,
@@ -98,7 +99,7 @@ class ChannelWisePrincipalComponentAnalysis(object):
                                      svd_solver=svd_solver, tol=tol,
                                      iterated_power=iterated_power,
                                      random_state=random_state))
-        self.var_tol = None
+        self.var_tol = var_tol
         self.num_ch = num_ch
 
     def fit(self, x, y=None, var_tol=None):
@@ -116,13 +117,10 @@ class ChannelWisePrincipalComponentAnalysis(object):
             self.var_tol = var_tol
 
         for i in range(self.num_ch):
-            self.list_pca[i].fit(x[i], y)
-            if var_tol:
-                max_var = self.list_pca[i].explained_variance_ratio_[0]
-                self.list_pca[i].n_components = np.sum(np.array(
-                    self.list_pca[
-                        i].explained_variance_ratio_ >= max_var * self.var_tol))
-
+            self.list_pca[i].fit(x[i, :, :], y)
+            max_var = self.list_pca[i].explained_variance_ratio_[0]
+            self.list_pca[i].n_components = np.sum(self.list_pca[
+                                                       i].explained_variance_ratio_ >= max_var * self.var_tol)
             self.list_pca[i].fit(x[i, :, :], y)
 
     def transform(self, x, y=None):
@@ -146,21 +144,10 @@ class ChannelWisePrincipalComponentAnalysis(object):
                 y(ndarray(float)): N x ( sum_i (C x k')) data array
                     where k' is the new dimension for each PCA
                 """
+        self.fit(x, var_tol=var_tol)
+        arg = self.transform(x)
 
-        if var_tol:
-            self.var_tol = var_tol
-
-        f_vector = []
-        for i in range(self.num_ch):
-            self.list_pca[i].fit(x[i, :, :], y)
-            if var_tol:
-                max_var = self.list_pca[i].explained_variance_ratio_[0]
-                self.list_pca[i].n_components = np.sum(np.array(
-                    self.list_pca[i].explained_variance_ratio_ >= max_var * self.var_tol))
-
-            f_vector.append(self.list_pca[i].fit_transform(x[i, :, :], y))
-
-        return np.concatenate(f_vector, axis=1)
+        return arg
 
 
 class DummyDimReduction(object):
