@@ -85,11 +85,10 @@ def execute_task(task_type, parameters, save_folder):
             if fake:
                 classifier = None
             else:
-                # classifier = pickle.load(open('#LOCATION OF CLASSIFIER'))
                 classifier = load_classifier()
 
             # Language Model
-            if parameters['languagemodelenabled']['value'] == 'true':
+            if parameters['languagemodelenabled']['value'] == 'true' or fake:
                 try:
                     lmodel = init_language_model(parameters)
                 except:
