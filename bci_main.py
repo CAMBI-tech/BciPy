@@ -81,24 +81,24 @@ def execute_task(task_type, parameters, save_folder):
         # Try loading in our classifier and starting a langmodel(if enabled)
         try:
 
-            # EEG MODEL
+            # EEG Model, Load in pre-trained classifier
             if fake:
                 classifier = None
             else:
                 classifier = load_classifier()
 
-            # Language Model
+            # if Language Model enabled and data not fake, init lm
             if parameters['languagemodelenabled']['value'] == 'true' or fake:
                 try:
                     lmodel = init_language_model(parameters)
                 except:
-                    print "Cannot load language model. Setting to None."
+                    print "Cannot init language model. Setting to None."
                     lmodel = None
             else:
                 lmodel = None
 
         except Exception as e:
-            print "Cannot load classifier. Exiting"
+            print "Cannot load EEG classifier. Exiting"
             raise e
 
     else:

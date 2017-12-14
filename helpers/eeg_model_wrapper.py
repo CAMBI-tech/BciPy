@@ -5,7 +5,6 @@ import time
 from eeg_model.inference import inference
 from bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
-from language_model.language_model import LangModel
 from helpers.bci_task_related import alphabet
 
 # TODO: These are shared parameters for multiple functions
@@ -160,34 +159,45 @@ class CopyPhraseWrapper(object):
         """If a decision is made initializes the next epoch."""
 
         try:
+            # First, reset the history for this new epoch
             self.conjugator.reset_history()
 
+            # If there is no language model specified, mock the LM prior
             if not self.lmodel:
                 # get probabilites from language model
                 prior = np.ones(len(self.alp))
                 prior /= np.sum(prior)
+
+            # Else, let's query the lmodel for priors
             else:
+                # Get the displayed state, and do a list comprehension to place
+                    # in a form the LM recognizes
                 update = [letter
                           if not letter == '_'
                           else ' '
                           for letter in self.decision_maker.displayed_state]
 
-                prior = self.lmodel.state_update(update)
+                # update the lmodel and get back the priors
+                lm_prior = self.lmodel.state_update(update)
 
-                prior['prior'].append(['<', 0])
+                # hack: Append it with a backspace
+                lm_prior['prior'].append(['<', 0])
 
-                priors = [float(pr_letter[1])
-                          for alp_letter in alphabet()
-                          for pr_letter in prior['prior']
-                          if alp_letter == pr_letter[0]
-                          ]
+                # construct the priors as needed for evidence fusion
+                prior = [float(pr_letter[1])
+                         for alp_letter in alphabet()
+                         for pr_letter in lm_prior['prior']
+                         if alp_letter == pr_letter[0]
+                         ]
 
+            # Try fusing the lmodel evidence
             try:
-                p = self.conjugator.update_and_fuse({'LM': np.array(priors)})
+                p = self.conjugator.update_and_fuse({'LM': np.array(prior)})
             except Exception as e:
                 print "Error updating language model!"
                 raise e
 
+            # Get decision maker to give us back some decisions and stimuli
             d, arg = self.decision_maker.decide(p)
             sti = arg['stimuli']
 
