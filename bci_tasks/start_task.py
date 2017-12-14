@@ -2,7 +2,7 @@ from RSVP import calibration, copy_phrase
 
 
 def start_task(daq, display_window, task_type, parameters, file_save,
-               classifier=None, fake=True):
+               classifier=None, lmodel=None, fake=True):
     # Determine the mode and exp type: send to the correct task.
 
     # RSVP
@@ -25,6 +25,7 @@ def start_task(daq, display_window, task_type, parameters, file_save,
             try:
                 copy_phrase.rsvp_copy_phrase_task(
                     display_window, daq, parameters, file_save, classifier,
+                    lmodel=lmodel,
                     fake=fake)
 
             # Raise exceptions if any encountered and clean up!!

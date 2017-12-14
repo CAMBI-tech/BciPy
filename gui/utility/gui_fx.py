@@ -92,8 +92,8 @@ def move_scroll_bar(barId, moveAmount):
             eachBar[0].relativeYPos = moveAmount
             bar_amount = int(
                 (moveAmount * (eachBar[0].height - scrollBarHeight)) /
-                ((eachBar[0].contentHeight / (640.0 if eachBar[0].isHorizontal 
-                                              else 480.0)) * 
+                ((eachBar[0].contentHeight / (640.0 if eachBar[0].isHorizontal
+                                              else 480.0)) *
                  (main_window_width if eachBar[0].isHorizontal
                   else main_window_height)))
             eachBar[0].yPos = bar_amount
@@ -130,11 +130,11 @@ def set_exp_type(expType, window):
 
     # Shuffle
     elif expType is 'Shuffle':
-        print("Shuffle is not implemeted yet!")
+        create_message_box("BCI Main", "Shuffle is not implemeted yet!", wx.OK)
 
     # Matrix
     elif expType is 'Matrix':
-        print("Matrix is not implemeted yet!")
+        create_message_box("BCI Main", "Matrix is not implemeted yet!", wx.OK)
 
     else:
         create_message_box("BCI Error", "Input Not Recognized", wx.OK)
@@ -165,8 +165,9 @@ def bci_main_exec(window):
     except:
         raise Exception('Input not recognized')
 
+
 # for text boxes, inserts a given character (symbol) at the location indicated
-# by typingcursorpos in the text of an input field located at inputFieldIndex 
+# by typingcursorpos in the text of an input field located at inputFieldIndex
 # in the global array
 def insert_symbol_at_index(symbol, inputFieldIndex):
     global typingCursorPos
@@ -202,7 +203,7 @@ def drop_items(text_box_name, windowId, filename, readValues):
                 with codecsopen(filename, 'r', encoding='utf-8') as f:
                     user_array = []
                     # determines whether content should be read as a json file
-                    if(readValues == False):
+                    if readValues is False:
                         user_array = f.readlines()
                     else:
                         try:
@@ -686,8 +687,9 @@ def exec_bci_main(parameters, window, mode):
         if e.message == 'Not implemented yet!':
             message = "BCI mode not Implemented yet!"
 
-        elif e.strerror == 'Address already in use':
-            message = "Please close all BCI Windows and restart!"
+        elif hasattr(e, 'strerror'):
+            if e.strerrer == 'Address already in use':
+                message = "Please close all BCI Windows and restart!"
 
         else:
             message = "Error in BCI Main Execution: %s" % (e)
@@ -721,7 +723,7 @@ def run_executable(execPath, filename, isParameter):
 def remove_dropdown_list():
     buttonTrueIndex = []
     for counter in range(0, (len(buttons))):
-        if(buttons[counter][14] == True):
+        if buttons[counter][14] is True:
             buttonTrueIndex.append(buttons[counter])
     for counter2 in range(0, (len(scroll_bars))):
         for counter in range(0, len(buttonTrueIndex)):
@@ -730,7 +732,10 @@ def remove_dropdown_list():
                     scroll_bars[counter2][0].yPos = 0
                 scroll_bars[counter2][0].resetContentHeight()
                 scroll_bars[counter2][0].translateBarToMovement(scroll_bars[counter2][0].yPos)
-                buttons.remove(buttonTrueIndex[counter])
+                try:
+                    buttons.remove(buttonTrueIndex[counter])
+                except:
+                    pass
     buttonTrueIndex = []
 
 

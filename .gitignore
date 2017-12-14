@@ -10,3 +10,5 @@ __pycache__/
 calibration.csv
 rawdata.csv
 buffer.db
+lmwrap.log
+env.txt

@@ -243,8 +243,8 @@ gui_fx.add_button(
 gui_fx.add_button(
     main_window_width_half, main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
-    (25, 20, 1, 255), (239, 212, 105, 255), (255, 236, 160, 255), 'Free Spell',
-    0, functionCall="set_trial_type", functionArg=[3],
+    (25, 20, 1, 255), (239, 212, 105, 255), (255, 236, 160, 255), 'Copy Phrase',
+    0, functionCall="set_trial_type", functionArg=[2],
     textSize=convert_to_width(12, main_window_width)
 )
 
@@ -254,7 +254,7 @@ gui_fx.add_button(
     main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
     (25, 20, 1, 255), (239, 146, 40, 255), (255, 190, 117, 255),
-    'FRP Calibration', 0, functionCall="set_trial_type", functionArg=[3],
+    'Copy Phrase Calibration', 0, functionCall="set_trial_type", functionArg=[3],
     textSize=convert_to_width(12, main_window_width)
 )
 
@@ -263,8 +263,8 @@ gui_fx.add_button(
     main_window_width_half + convert_to_width(110, main_window_width),
     main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
-    (25, 20, 1, 255), (117, 173, 48, 255), (186, 232, 129, 255), 'Copy Phrase',
-    0, functionCall="set_trial_type", functionArg=[2],
+    (25, 20, 1, 255), (117, 173, 48, 255), (186, 232, 129, 255), 'Free Spell',
+    0, functionCall="set_trial_type", functionArg=[3],
     textSize=convert_to_width(12, main_window_width)
 )
 
