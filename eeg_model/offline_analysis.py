@@ -37,7 +37,7 @@ def offline_analysis(data_folder=None):
     mode = 'calibration'
 
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
-        data_folder + '/rawdata.csv')
+        data_folder + '/raw_data.csv')
 
     # TODO: Read from parameters
     ds_rate = 2

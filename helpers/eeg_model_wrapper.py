@@ -9,19 +9,18 @@ from helpers.bci_task_related import alphabet
 
 # TODO: These are shared parameters for multiple functions
 # and I have no idea how to put them into correct place
+channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]
 dim_x = 5
-num_ch = 2
+num_ch = len(channel_map)
 
 # Make up some distributions that data come from
-mean_pos = 2
+mean_pos = .5
 var_pos = .5
 mean_neg = 0
 var_neg = .5
 
 # Symbol set
 alp = alphabet()
-
-channel_map = [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0]
 
 
 # TODO: Distributions are hardcoded!!
@@ -65,7 +64,6 @@ def dummy_trig_dat_generator(truth, state, stimuli):
     trigger = [(stimuli[i], time[i]) for i in range(len(stimuli))]
 
     return eeg, trigger, target_info
-
 
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
@@ -123,21 +121,18 @@ class CopyPhraseWrapper(object):
         """
 
         try:
-
             # Send the raw data to signal processing
             dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
             # TODO: if it is a fixation remove it don't hardcode it as if you did
+
             letters = [triggers[i][0] for i in range(1, len(triggers))]
             time = [triggers[i][1] for i in range(1, len(triggers))]
 
-            # reshape the data
-            x, y, _, _ = trial_reshaper(
-                target_info, time, dat, fs=self.fs, k=self.k, mode=self.mode,
-                channel_map=channel_map)
+            x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
+                                        k=self.k, mode=self.mode,
+                                        channel_map=channel_map)
 
             # TODO: Hacked to get rid of cross sign for now
-            x = x[:, 1:x.shape[1], :]
-            y = y[1: y.shape[0]]
 
             lik_r = inference(x, letters, self.model, self.alp)
             prob = self.conjugator.update_and_fuse({'ERP': lik_r})
@@ -149,6 +144,7 @@ class CopyPhraseWrapper(object):
                 sti = None
 
         except Exception as e:
+
             print "Error in evaluate_sequence: %s" % (e)
             raise e
 
@@ -190,7 +186,7 @@ class CopyPhraseWrapper(object):
 
             # TODO: Get stopping condition as parameter
             while (self.decision_maker.displayed_state != task_final and
-                   loop_counter < 50):
+                           loop_counter < 50):
                 if d:
                     d, sti = self.initialize_epoch()
                     if sti:
@@ -200,6 +196,7 @@ class CopyPhraseWrapper(object):
                     raw_dat, triggers, target_info = dummy_trig_dat_generator(
                         task_final, self.decision_maker.displayed_state,
                         sti)
+
                     d, sti = self.evaluate_sequence(raw_dat, triggers,
                                                     target_info)
                     if sti:
@@ -209,6 +206,7 @@ class CopyPhraseWrapper(object):
                 time.sleep(.3)
                 print('\rstate:{}'.format(self.decision_maker.state)),
             print('')
+
 
 def demo_copy_phrase_wrapper():
     # We need to train a dummy model
@@ -226,6 +224,8 @@ def demo_copy_phrase_wrapper():
     train_x = train_x[:, permutation, :]
     train_y = train_y[permutation]
 
+    train_x = train_x[list(np.where(np.asarray(channel_map) == 1)[0]), :, :]
+
     k_folds = 10
     model = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
 
@@ -236,6 +236,7 @@ def demo_copy_phrase_wrapper():
     task = CopyPhraseWrapper(model, fs=dim_x * 2, k=1, alp=alp,
                              task_list=task_list)
     task.operate()
+
 
 if __name__ == "__main__":
     demo_copy_phrase_wrapper()
