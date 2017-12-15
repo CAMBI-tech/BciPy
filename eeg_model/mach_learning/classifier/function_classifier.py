@@ -155,3 +155,9 @@ class RegularizedDiscriminantAnalysis(object):
         self.fit(x, y, p)
         val = self.transform(x)
         return val
+
+    def predict(self, x):
+        tmp = self.transform(x)
+        arg = (np.exp(tmp) >= .5) + 0
+
+        return arg
