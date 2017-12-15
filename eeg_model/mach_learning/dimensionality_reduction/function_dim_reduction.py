@@ -118,9 +118,11 @@ class ChannelWisePrincipalComponentAnalysis(object):
 
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
-            max_var = self.list_pca[i].explained_variance_ratio_[0]
+            max_sv = self.list_pca[i].singular_values_[0]
+            import pdb
+            pdb.set_trace()
             self.list_pca[i].n_components = np.sum(self.list_pca[
-                                                       i].explained_variance_ratio_ >= max_var * self.var_tol)
+                                                       i].singular_values_ >= max_sv * self.var_tol)
             self.list_pca[i].fit(x[i, :, :], y)
 
     def transform(self, x, y=None):
