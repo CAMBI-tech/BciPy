@@ -27,7 +27,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Pipeline is the model. It can be populated manually
     rda = RegularizedDiscriminantAnalysis()
-    pca = ChannelWisePrincipalComponentAnalysis(tol=np.power(.1, 3),
+    pca = ChannelWisePrincipalComponentAnalysis(var_tol=np.power(.1, 1),
                                                 num_ch=x.shape[0])
     model = PipeLine()
     model.add(pca)
@@ -40,15 +40,15 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Cross validate
     arg_cv = cross_validation(x, y, model=model, k_folds=k_folds)
-    auc_cv = arg_cv[2]
 
-    idx_max_auc = np.where(auc_cv == np.max(auc_cv))[0][0]
-    lam = arg_cv[0][idx_max_auc]
-    gam = arg_cv[1][idx_max_auc]
+    lam = arg_cv[0]
+    gam = arg_cv[1]
     print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     sc = model.fit_transform(x, y)  # sc := scores
+    fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
+    auc_cv = metrics.auc(fpr, tpr)
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -57,6 +57,6 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.fit(x, y)
 
     # Report AUC
-    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, np.max(np.mean(auc_cv))))
+    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
     return model
