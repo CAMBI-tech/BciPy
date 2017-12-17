@@ -89,7 +89,7 @@ class ChannelWisePrincipalComponentAnalysis(object):
          """
 
     def __init__(self, n_components=None, var_tol=0, copy=True, whiten=False,
-                 svd_solver='auto', tol=0.0, iterated_power='arpack',
+                 svd_solver='auto', tol=0.0, iterated_power='auto',
                  random_state=None, num_ch=1):
 
         self.list_pca = []
@@ -119,11 +119,12 @@ class ChannelWisePrincipalComponentAnalysis(object):
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
             max_sv = self.list_pca[i].singular_values_[0]
-            import pdb
-            pdb.set_trace()
-            self.list_pca[i].n_components = np.sum(self.list_pca[
-                                                       i].singular_values_ >= max_sv * self.var_tol)
-            self.list_pca[i].fit(x[i, :, :], y)
+            self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
+            try:
+                self.list_pca[i].fit(x[i, :, :], y)
+            except Exception as e:
+                import pdb
+                pdb.set_trace()
 
     def transform(self, x, y=None):
         f_vector = []

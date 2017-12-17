@@ -64,7 +64,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     return -auc
 
 
-def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc',
+def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
                 arg_op_type=[10, 'uniform']):
     """ Description: This function performs an exhaustive grid search
                      to estimate the hyper parameters lambda and gamma
@@ -87,10 +87,10 @@ def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc',
         # and select the set of parameters that provides the most accurate
         # model.
         param_cand = {  # dictionary of parameter candidates
-            'lam': np.linspace(0, 1, grid[0], endpoint=False),
-            'gam': np.linspace(0, 1, grid[1], endpoint=False),
+            'lam': np.linspace(.01, .99, grid[0], endpoint=False),
+            'gam': np.linspace(.01, .99, grid[1], endpoint=False),
         }
-        best_auc = 1  # auc can't be bigger than 1
+        best_auc = 0  # auc can't be smaller than 0
         arg_opt = {'lam': 0, 'gam': 0}
 
         # For every coordinate on the grid, try every combination of
@@ -100,11 +100,11 @@ def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc',
         tmp_counter = 0
         for i in range(len(param_cand['lam'])):
             for j in range(len(param_cand['gam'])):
-                auc = cost_cross_validation_auc(model, opt_el, x, y,
-                                                [param_cand['lam'][i],
-                                                 param_cand['gam'][j]],
-                                                k_folds=k_folds, split=split)
-                if auc < best_auc:
+                auc = -cost_cross_validation_auc(model, opt_el, x, y,
+                                                 [param_cand['lam'][i],
+                                                  param_cand['gam'][j]],
+                                                 k_folds=k_folds, split=split)
+                if auc > best_auc:
                     best_auc = auc
                     arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
                                                      param_cand['gam'][j]
@@ -154,6 +154,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         cst_4 = lambda v: 1 - v[1]
 
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
+                                             disp=False,
                                              cons=[cst_1, cst_2, cst_3,
                                                    cst_4])
     return arg_opt
