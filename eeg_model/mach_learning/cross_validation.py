@@ -1,11 +1,16 @@
 import numpy as np
 import scipy.optimize
 from sklearn import metrics
+from utils.progress_bar import progress_bar
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
                               split='uniform'):
-    """ Minimize cost of the overall -AUC
+    """ Minimize cost of the overall -AUC.
+        Cost function: given a particular architecture (model). Fits the
+        parameters to the folds with leave one fold out procedure. Calculates
+        scores for the validation fold. Concatenates all calculated scores
+        together and returns a -AUC vale.
         Args:
             model(pipeline): model to be iterated on
             opt_el(int): number of the element in pipeline to be optimized
@@ -90,6 +95,9 @@ def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc',
 
         # For every coordinate on the grid, try every combination of
         # hyper parameters:
+        progress_bar(0, grid[0] * grid[1], prefix='Progress:',
+                     suffix='Complete', length=50)
+        tmp_counter = 0
         for i in range(len(param_cand['lam'])):
             for j in range(len(param_cand['gam'])):
                 auc = cost_cross_validation_auc(model, opt_el, x, y,
@@ -100,6 +108,10 @@ def grid_search(model, opt_el, x, y, grid=[10, 10], op_type='cost_auc',
                     best_auc = auc
                     arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
                                                      param_cand['gam'][j]
+
+                tmp_counter += 1
+                progress_bar(tmp_counter, grid[0] * grid[1],
+                             prefix='Progress:', suffix='Complete', length=50)
     else:
         # TODO: Handle this case
         print('Error: Operation type other than AUC cost.')
@@ -142,7 +154,6 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         cst_4 = lambda v: 1 - v[1]
 
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
-                                             disp=False,
                                              cons=[cst_1, cst_2, cst_3,
                                                    cst_4])
     return arg_opt
@@ -166,6 +177,6 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
             """
 
     print('Starting Cross Validation !')
-    arg_opt = grid_search(model, opt_el, x, y, op_type='cost_auc',
-                          arg_op_type=[k_folds, split])
+    arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
+                            arg_op_type=[k_folds, split])
     return arg_opt
