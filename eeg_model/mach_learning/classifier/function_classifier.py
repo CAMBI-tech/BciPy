@@ -32,7 +32,7 @@ class RegularizedDiscriminantAnalysisX(object):
     """
 
     def __init__(self):  # TODO: Make it more modular
-        self.lam = .1
+        self.lam = .9
         self.gam = .1
 
         self.class_i = None
@@ -195,7 +195,6 @@ class RegularizedDiscriminantAnalysisX(object):
 
         return self.transform(x)
 
-
 class RegularizedDiscriminantAnalysis(object):
     """ Regularized Discriminant Analysis for quadratic boundary in high
     dimensional spaces. fits discriminant function,
@@ -217,7 +216,7 @@ class RegularizedDiscriminantAnalysis(object):
 
     def __init__(self):
         self.lam = .9
-        self.gam = .1
+        self.gam = .9
 
         self.classes = None
         self.means = []
@@ -306,7 +305,7 @@ class RegularizedDiscriminantAnalysis(object):
         asd = 1
 
     def transform(self, x):
-        val = self.get_proba(x)
+        val = self.get_prob(x)
         # as the val includes negative log likelihoods it outputs the
         # likelihood ratio for log(p(x|l=1)/p(x|l=0))
         if val.shape[1] == 2:
