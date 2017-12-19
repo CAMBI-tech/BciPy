@@ -12,7 +12,7 @@ def test_protocol_init_messages():
     c = dsi.packet.parse(channel_msg)
     assert c.type == 'EVENT'
     assert c.event_code == 'SENSOR_MAP'
-    assert c.message == u'P3,C3,F3,Fz,F4,C4,P4,Cz,CM,A1,Fp1,Fp2,T3,T5,O1,O2,F7,F8,A2,T6,T4'  # noqa: E501
+    assert c.message == u'P3,C3,F3,Fz,F4,C4,P4,Cz,CM,A1,Fp1,Fp2,T3,T5,O1,O2,F7,F8,A2,T6,T4,TRG'  # noqa: E501
 
     c2 = dsi.packet.parse(p.init_messages[1])
     assert c2.type == 'EVENT'

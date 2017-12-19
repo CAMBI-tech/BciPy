@@ -9,6 +9,7 @@ from os import path as ospath
 from sys import executable
 from warnings import warn
 import bci_main
+from eeg_model.offline_analysis import offline_analysis
 
 import pyglet
 import wx
@@ -91,11 +92,22 @@ def move_scroll_bar(barId, moveAmount):
             eachBar[0].relativeYPos = moveAmount
             bar_amount = int(
                 (moveAmount * (eachBar[0].height - scrollBarHeight)) /
-                ((eachBar[0].contentHeight / (640.0 if eachBar[0].isHorizontal 
-                                              else 480.0)) * 
+                ((eachBar[0].contentHeight / (640.0 if eachBar[0].isHorizontal
+                                              else 480.0)) *
                  (main_window_width if eachBar[0].isHorizontal
                   else main_window_height)))
             eachBar[0].yPos = bar_amount
+
+
+def run_offline_analysis(window, data_folder=None):
+    try:
+        data_folder = '/Users/scit_tab/Desktop/bci/data/test_user'
+        offline_analysis(data_folder=data_folder)
+    except Exception as e:
+        create_message_box(
+            "BCI Error",
+            "Error in Offline Analysis: %s" % (e),
+            wx.OK)
 
 
 # sets exp type from main menu and opens the next desired gui
@@ -118,14 +130,14 @@ def set_exp_type(expType, window):
 
     # Shuffle
     elif expType is 'Shuffle':
-        print("Shuffle is not implemeted yet!")
+        create_message_box("BCI Main", "Shuffle is not implemeted yet!", wx.OK)
 
     # Matrix
     elif expType is 'Matrix':
-        print("Matrix is not implemeted yet!")
+        create_message_box("BCI Main", "Matrix is not implemeted yet!", wx.OK)
 
     else:
-        raise Exception('Input not recognized')
+        create_message_box("BCI Error", "Input Not Recognized", wx.OK)
 
 
 # Go back to the bci main window, from any other window
@@ -154,98 +166,8 @@ def bci_main_exec(window):
         raise Exception('Input not recognized')
 
 
-# searches human-readable parameter names for values that contain the text
-# of a given input field
-def search_parameters(readpath, scrollBar, inputName):
-    for counter in range(0, (len(inputFields))):
-        if(inputFields[counter][0].name == inputName):
-            search_text = inputFields[counter][0].text
-            counter = len(inputFields)
-    if(search_text != ''):
-        if(ospath.isfile(readpath)):
-            with codecsopen(str(readpath), 'r', encoding='utf-8') as f:
-                try:
-                    file_data = jsonload(f)
-                    search_items = []
-                    for json_item in file_data:
-                        readable_caption = file_data[json_item]["readableName"]
-                        if str.lower(str(search_text)) in str.lower(
-                                str(readable_caption)):
-                            search_items.append(json_item)
-                    for eachBar in scroll_bars:
-                        if(eachBar[0].scroll_id == scrollBar):
-                            finaltemp_height = False
-                            valueFound2 = False
-                            selectedButton = False
-                            selectedInput = False
-                            prevYPos = eachBar[0].yPos
-                            isButton = False
-                            # repeats to find highest parameter if no lower parameter is found
-                            for repeatCounter in range(0, 2):
-                                valueFound = prevYPos if repeatCounter == 1 else False
-                                if(repeatCounter == 0 or (selectedButton == False and selectedInput == False)):
-                                    for counter in range(0, len(inputFields) + len(switches) - (1 if len(inputFields) != 0 else 0) - (1 if len(switches) != 0 else 0)):
-                                        isInput = counter < len(inputFields)
-                                        eachInput = inputFields[counter] if isInput else switches[counter - len(inputFields)]
-                                        if((eachInput[7] if isInput else eachInput[2]) == scrollBar):
-                                            for eachItem in search_items:
-                                                if((eachInput[0].name if isInput else eachInput[0].attachedValueName) == eachItem):
-                                                    # Position that the scrolling content should be at in order to display the given parameter at the top of the window
-                                                    temp_height = abs((eachInput[2] if isInput else eachInput[0].centery) - int((385/480.0)*main_window_height))
-                                                    # Amount the scroll bar should move from the top in order to match the content height
-                                                    bar_amount = int((temp_height*(eachBar[0].height - scrollBarHeight))/((eachBar[0].contentHeight/480.0)*main_window_height))
-                                                    if(repeatCounter == 0):
-                                                        # tests if an input field has already been found (not looking for the lowest input field possible)
-                                                        if(isInput and valueFound == False):
-                                                            if(bar_amount > prevYPos):
-                                                                valueFound = bar_amount
-                                                                selectedInput = eachInput
-                                                                finaltemp_height = temp_height
-                                                        elif(valueFound2 == False):
-                                                            # tests if a switch has already been found, and if the new switch found is lower than the scroll bar's current position but higher than the previously found input field
-                                                            if(bar_amount > prevYPos and bar_amount < valueFound):
-                                                                valueFound2 = eachInput[2]
-                                                                selectedButton = eachInput
-                                                                finaltemp_height = temp_height
-                                                    else:
-                                                        # looking for highest parameter in list
-                                                        if(bar_amount < valueFound):
-                                                            valueFound = bar_amount
-                                                            finaltemp_height = temp_height
-                                                            if(isInput):
-                                                                selectedInput = inputFields[counter]
-                                                            else:
-                                                                selectedButton = switches[counter - len(inputFields)]
-                            if(finaltemp_height != False):
-                                move_scroll_bar(eachBar[0].scroll_id, finaltemp_height)
-                                # create yellow highlight rectangle
-                                if(selectedButton != False):
-                                    add_button(
-                                        selectedButton[0].centerx, selectedButton[0].centery,
-                                        selectedButton[0].width + int((10/640.0)*main_window_width),
-                                        int((50/480.0)*main_window_height), (40, 40, 40, 255),
-                                        (255, 215, 38, 5), (255, 204, 0, 255),
-                                        '',
-                                        scrollBar, scrollBar=scrollBar, isTemp=True
-                                    )
-                                elif(selectedInput != False):
-                                    add_button(
-                                        selectedInput[1], selectedInput[2],
-                                        selectedInput[3] + int((10/640.0)*main_window_width),
-                                        int((50/480.0)*main_window_height), (40, 40, 40, 255),
-                                        (255, 215, 38, 5), (255, 204, 0, 255),
-                                        '',
-                                        scrollBar, scrollBar=scrollBar, isTemp=True
-                                    )
-                except ValueError:
-                    warn('File ' + str(readpath) + " is an invalid JSON file.")
-            f.close()
-        else:
-            warn("File " + str(readpath) + " could not be found.")
-
-
 # for text boxes, inserts a given character (symbol) at the location indicated
-# by typingcursorpos in the text of an input field located at inputFieldIndex 
+# by typingcursorpos in the text of an input field located at inputFieldIndex
 # in the global array
 def insert_symbol_at_index(symbol, inputFieldIndex):
     global typingCursorPos
@@ -281,7 +203,7 @@ def drop_items(text_box_name, windowId, filename, readValues):
                 with codecsopen(filename, 'r', encoding='utf-8') as f:
                     user_array = []
                     # determines whether content should be read as a json file
-                    if(readValues == False):
+                    if readValues is False:
                         user_array = f.readlines()
                     else:
                         try:
@@ -352,7 +274,9 @@ def set_trial_type(numId):
                         f.write(str(userId) + "\n")
                     f.close()
             else:
-                create_message_box("Info", "Please enter a user ID.", wx.OK)
+                create_message_box(
+                    "Whoops!",
+                    "Please enter a User ID to start a trial!", wx.OK)
 
 
 # reads a given file and looks for a help tip attached to a given id
@@ -757,12 +681,23 @@ def exec_bci_main(parameters, window, mode):
     try:
 
         new_window.close()
-        message = bci_main.bci_main(parameters, userId, trialType, mode)
+        bci_main.bci_main(parameters, userId, trialType, mode)
 
-        print(message)
+    except Exception as e:
+        if e.message == 'Not implemented yet!':
+            message = "BCI mode not Implemented yet!"
 
-    except Exception:
-        pass
+        elif hasattr(e, 'strerror'):
+            if e.strerrer == 'Address already in use':
+                message = "Please close all BCI Windows and restart!"
+
+        else:
+            message = "Error in BCI Main Execution: %s" % (e)
+
+        create_message_box(
+            "BCI Error",
+            message,
+            wx.OK)
 
 
 # Runs a command (filename) from the given location (execPath). Intended to
@@ -788,7 +723,7 @@ def run_executable(execPath, filename, isParameter):
 def remove_dropdown_list():
     buttonTrueIndex = []
     for counter in range(0, (len(buttons))):
-        if(buttons[counter][14] == True):
+        if buttons[counter][14] is True:
             buttonTrueIndex.append(buttons[counter])
     for counter2 in range(0, (len(scroll_bars))):
         for counter in range(0, len(buttonTrueIndex)):
@@ -797,7 +732,10 @@ def remove_dropdown_list():
                     scroll_bars[counter2][0].yPos = 0
                 scroll_bars[counter2][0].resetContentHeight()
                 scroll_bars[counter2][0].translateBarToMovement(scroll_bars[counter2][0].yPos)
-                buttons.remove(buttonTrueIndex[counter])
+                try:
+                    buttons.remove(buttonTrueIndex[counter])
+                except:
+                    pass
     buttonTrueIndex = []
 
 

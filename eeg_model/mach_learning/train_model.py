@@ -27,7 +27,8 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Pipeline is the model. It can be populated manually
     rda = RegularizedDiscriminantAnalysis()
-    pca = ChannelWisePrincipalComponentAnalysis(tol=0)
+    pca = ChannelWisePrincipalComponentAnalysis(tol=np.power(.1, 3),
+                                                num_ch=x.shape[0])
     model = PipeLine()
     model.add(pca)
     model.add(rda)

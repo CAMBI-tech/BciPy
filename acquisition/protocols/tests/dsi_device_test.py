@@ -77,7 +77,7 @@ def _acquisition_init():
     device.acquisition_init()
 
     assert device.fs == 300
-    assert len(device.channels) == 21
+    assert len(device.channels) == 22
 
 
 def _connect():
