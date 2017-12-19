@@ -4,7 +4,7 @@ from eeg_model.mach_learning.classifier.function_classifier \
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
 from eeg_model.mach_learning.wrapper import PipeLine
-from eeg_model.mach_learning.cross_validation import cross_validation
+from eeg_model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
 from eeg_model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
 from sklearn import metrics
@@ -46,9 +46,8 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    sc = model.fit_transform(x, y)  # sc := scores
-    fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
-    auc_cv = metrics.auc(fpr, tpr)
+    auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
+                                        k_folds=10, split='uniform')
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
