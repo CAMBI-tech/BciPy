@@ -1,7 +1,11 @@
 # Language Model server recipe
 
-###Step 1: Build the LM docker image
+###Step 1: Build or Retrieve the LM docker image
 See https://bitbucket.org/cogsyslab/langmodelpy to see instructions on building a docker container!
+
+ -or-
+
+Contact LM Team (Shiran Dudy, Steven Bedrick) or BCI Codebase maintainers for a pre-built docker image.
 
 
 ###LMWrapper Module
