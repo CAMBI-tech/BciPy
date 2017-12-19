@@ -92,8 +92,11 @@ class RegularizedDiscriminantAnalysisX(object):
                       for i in range(len(self.class_i))]
 
         # Sample covariance of total data
-        self.cov = np.cov(x, rowvar=False)
-        self.S = self.cov * self.N
+        self.S = np.zeros((self.k, self.k))
+        for i in range(len(self.class_i)):
+            self.S += self.S_i[i]
+
+        self.cov = self.S / self.N
 
         # Set prior information on observed data if not given
         if len(p) == 0:
@@ -311,7 +314,7 @@ class RegularizedDiscriminantAnalysis(object):
 
         return val
 
-    def get_proba(self, x):
+    def get_prob(self, x):
         """ Gets -log likelihoods for each class
             Args:
                 x(ndarray): N x k data array where
