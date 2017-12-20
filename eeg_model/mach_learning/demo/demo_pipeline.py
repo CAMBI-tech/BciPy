@@ -5,7 +5,7 @@ from eeg_model.mach_learning.classifier.function_classifier import \
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
 from eeg_model.mach_learning.cross_validation import cross_validation
-from eeg_model.mach_learning.wrapper import PipeLine
+from eeg_model.mach_learning.pipeline import Pipeline
 from sklearn import metrics
 import numpy as np
 from scipy.stats import iqr
@@ -53,7 +53,7 @@ def _demo_pipeline():
     rda = RegularizedDiscriminantAnalysis()
     kde = KernelDensityEstimate(bandwidth=bandwidth)
 
-    model = PipeLine()
+    model = Pipeline()
     model.add(pca)
     model.add(rda)
     model.add(kde)
@@ -138,14 +138,7 @@ def _demo_pipeline():
     plt.xlabel('scores')
     fig_2.show()
     time.sleep(10)
-    print('Hhah')
-
-
-def main():
-    _demo_pipeline()
-
-    return 0
 
 
 if __name__ == "__main__":
-    main()
+    _demo_pipeline()

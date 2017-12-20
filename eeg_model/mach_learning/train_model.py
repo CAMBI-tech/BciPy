@@ -1,9 +1,9 @@
 import numpy as np
 from eeg_model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysisX
+    import RegularizedDiscriminantAnalysis
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
-from eeg_model.mach_learning.wrapper import PipeLine
+from eeg_model.mach_learning.pipeline import Pipeline
 from eeg_model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
 from eeg_model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
@@ -26,10 +26,10 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
             """
 
     # Pipeline is the model. It can be populated manually
-    rda = RegularizedDiscriminantAnalysisX()
+    rda = RegularizedDiscriminantAnalysis()
     pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1**5,
                                                 num_ch=x.shape[0])
-    model = PipeLine()
+    model = Pipeline()
     model.add(pca)
     model.add(rda)
 
