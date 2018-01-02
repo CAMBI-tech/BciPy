@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib as mpl
 from helpers.load import read_data_csv, load_experimental_data
 from acquisition.sig_pro.sig_pro import sig_pro
 from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
@@ -7,9 +5,6 @@ from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import pickle
-
-mpl.use('TkAgg')
-import matplotlib.pylab as plt
 
 
 def offline_analysis(data_folder=None):
@@ -41,32 +36,29 @@ def offline_analysis(data_folder=None):
 
     # TODO: Read from parameters
     ds_rate = 2
-    channel_map = [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
 
-    # Get data and labels
+    # Process triggers.txt
     s_i, t_t_i, t_i = trigger_decoder(mode=mode,
                                       trigger_loc=data_folder + '/triggers.txt')
+
+    # Channel map can be checked from raw_data.csv file.
+    # read_data_csv already removes the timespamp column.
+    #                     CM            X3 X2           X1            TRG
+    channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode, fs=fs,
                                       k=ds_rate, channel_map=channel_map)
 
-    # Determine on number of folds based on the data!
-    model = train_pca_rda_kde_model(x, y, k_folds=num_seq / 10)
+    model = train_pca_rda_kde_model(x, y, k_folds=10)
 
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder)
+
     print('Saving the model!')
     with open(data_folder + '/model.pkl', 'wb') as output:
         pickle.dump(model, output)
-
     return model
 
 
-def main():
-    offline_analysis()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    offline_analysis()

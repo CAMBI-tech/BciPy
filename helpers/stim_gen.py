@@ -183,7 +183,7 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     len_alp = len(alp)
 
-    # intialize our arrays
+    # initialize our arrays
     samples, times, colors = [], [], []
     rand_smp = np.random.randint(0, len_alp, len_sti)
     sample = ['+']
@@ -208,12 +208,5 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     return schedule_seq
 
 
-def main():
-    _demo_random_rsvp_sequence_generator()
-    # _demo_best_case_sequence_generator()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    _demo_random_rsvp_sequence_generator()

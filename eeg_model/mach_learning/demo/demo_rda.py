@@ -29,11 +29,5 @@ def _demo_rda():
     return 0
 
 
-def main():
-    _demo_rda()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    _demo_rda()

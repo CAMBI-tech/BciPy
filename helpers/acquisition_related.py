@@ -10,7 +10,7 @@ from acquisition.processor import FileWriter
 from acquisition.datastream.server import DataServer
 
 
-def init_eeg_acquisition(parameters, clock=_Clock(), server=True):
+def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
     """
     Initializes a client that connects with the EEG data source and begins
     data collection.
