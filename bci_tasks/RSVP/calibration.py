@@ -14,7 +14,6 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
-    experiment_clock = core.MonotonicClock(start_time=None)
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
@@ -22,6 +21,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
     # Start acquiring data
     try:
+        experiment_clock = core.MonotonicClock(start_time=None)
         daq._clock = experiment_clock
         daq.start_acquisition()
     except Exception as e:
