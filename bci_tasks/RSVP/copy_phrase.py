@@ -52,7 +52,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
     # Start acquiring data and set the experiment clock
     try:
-        daq.clock = experiment_clock
+        daq._clock = experiment_clock
         daq.start_acquisition()
     except Exception as e:
         print "Data acquistion could not start!"

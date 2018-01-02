@@ -22,7 +22,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
     # Start acquiring data
     try:
-        daq.clock = experiment_clock
+        daq._clock = experiment_clock
         daq.start_acquisition()
     except Exception as e:
         print "Data acquistion could not start!"
