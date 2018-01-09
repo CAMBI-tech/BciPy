@@ -4,7 +4,7 @@ different kinds of structures one after another.
 """
 
 
-class PipeLine(object):
+class Pipeline(object):
     """ Forms a pipeline using multiple dimensionality reductions and a
     final classifier. Observe that each function should include;
         - fit

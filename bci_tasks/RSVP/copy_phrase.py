@@ -45,14 +45,15 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
-    experiment_clock = core.MonotonicClock(start_time=None)
+    buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
     alp = alphabet()
 
     # Start acquiring data and set the experiment clock
     try:
-        daq.clock = experiment_clock
+        experiment_clock = core.MonotonicClock(start_time=None)
+        daq._clock = experiment_clock
         daq.start_acquisition()
     except Exception as e:
         print "Data acquistion could not start!"
@@ -169,7 +170,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.time_list_sti = timing_sti[0]
 
             # Pause for a time
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
 
             # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
@@ -185,7 +186,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
             #                     weight=dummy_bar_schedule_p[counter])
 
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
             # if show_bg:
             #     rsvp.show_bar_graph()
 
@@ -281,7 +282,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.draw_static()
             win.flip()
 
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
 
             break
 

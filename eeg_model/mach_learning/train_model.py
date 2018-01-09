@@ -3,8 +3,8 @@ from eeg_model.mach_learning.classifier.function_classifier \
     import RegularizedDiscriminantAnalysis
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
-from eeg_model.mach_learning.wrapper import PipeLine
-from eeg_model.mach_learning.cross_validation import cross_validation
+from eeg_model.mach_learning.pipeline import Pipeline
+from eeg_model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
 from eeg_model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
 from sklearn import metrics
@@ -27,9 +27,9 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Pipeline is the model. It can be populated manually
     rda = RegularizedDiscriminantAnalysis()
-    pca = ChannelWisePrincipalComponentAnalysis(tol=np.power(.1, 3),
+    pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1**5,
                                                 num_ch=x.shape[0])
-    model = PipeLine()
+    model = Pipeline()
     model.add(pca)
     model.add(rda)
 
@@ -40,15 +40,14 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Cross validate
     arg_cv = cross_validation(x, y, model=model, k_folds=k_folds)
-    auc_cv = arg_cv[2]
 
-    idx_max_auc = np.where(auc_cv == np.max(auc_cv))[0][0]
-    lam = arg_cv[0][idx_max_auc]
-    gam = arg_cv[1][idx_max_auc]
+    lam = arg_cv[0]
+    gam = arg_cv[1]
     print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    sc = model.fit_transform(x, y)  # sc := scores
+    auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
+                                        k_folds=10, split='uniform')
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -57,6 +56,6 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.fit(x, y)
 
     # Report AUC
-    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, np.max(np.mean(auc_cv))))
+    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
     return model

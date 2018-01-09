@@ -101,7 +101,6 @@ def move_scroll_bar(barId, moveAmount):
 
 def run_offline_analysis(window, data_folder=None):
     try:
-        data_folder = '/Users/scit_tab/Desktop/bci/data/test_user'
         offline_analysis(data_folder=data_folder)
     except Exception as e:
         create_message_box(
