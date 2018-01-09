@@ -1,5 +1,5 @@
 import numpy as np
-from psychopy import visual
+from psychopy import visual, event
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -148,3 +148,26 @@ def trial_complete_message(win, parameters):
         wrapWidth=None, colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]
+
+
+def get_user_input():
+                            # check user input to make sure we should be going
+    keys = event.getKeys(keyList=['space', 'escape'])
+
+    if keys:
+        # pause?
+        if keys[0] == 'space':
+            pause = True
+            print "Pause"
+
+            while pause:
+                keys = event.getKeys(keyList=["space"])
+
+                if keys:
+                    pause = False
+
+        # escape?
+        if keys[0] == 'escape':
+            return False
+
+    return True

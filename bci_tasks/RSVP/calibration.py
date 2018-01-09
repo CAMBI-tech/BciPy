@@ -1,13 +1,14 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core, event
+from psychopy import core
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
 
 from helpers.triggers import _write_triggers_from_sequence_calibration
 from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
-from helpers.bci_task_related import alphabet, trial_complete_message
+from helpers.bci_task_related import (
+    alphabet, trial_complete_message, get_user_input)
 
 
 def rsvp_calibration_task(win, daq, parameters, file_save):
@@ -29,32 +30,10 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
         raise e
 
     # Try running the calibration task
+
     try:
-        rsvp = CalibrationTask(
-            window=win, clock=clock,
-            experiment_clock=experiment_clock,
-            text_information=parameters['text_text']['value'],
-            color_information=parameters['color_text']['value'],
-            pos_information=(float(parameters['pos_text_x']['value']),
-                             float(parameters['pos_text_y']['value'])),
-            height_information=float(parameters['txt_height']['value']),
-            font_information=parameters['font_text']['value'],
-            color_task=['white'],
-            font_task=parameters['font_task']['value'],
-            height_task=float(parameters['height_task']['value']),
-            font_sti=parameters['font_sti']['value'],
-            pos_sti=(float(parameters['pos_sti_x']['value']),
-                     float(parameters['pos_sti_y']['value'])),
-            sti_height=float(parameters['sti_height']['value']),
-            ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
-            time_list_sti=[3] * 10,
-            # tr_pos_bg=parameters['tr_pos_bg']['value'],
-            # bl_pos_bg=parameters['bl_pos_bg']['value'],
-            size_domain_bg=int(parameters['size_domain_bg']['value']),
-            color_bg_txt=parameters['color_bg_txt']['value'],
-            font_bg_txt=parameters['font_bg_txt']['value'],
-            color_bar_bg=parameters['color_bar_bg']['value'],
-            is_txt_sti=parameters['is_txt_sti']['value'])
+        rsvp = init_calibration_display_task(
+            parameters, win, clock, experiment_clock)
     except Exception as e:
         raise e
 
@@ -63,18 +42,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     trigger_file = open(trigger_save_location, 'w')
     run = True
 
-    while run is True:
-        # check user input to make sure we should be going
-        keys = event.getKeys(keyList=['space', 'escape'])
-
-        if keys:
-            # pause?
-            if keys[0] == 'space':
-                event.waitKeys(keyList=["space"])
-
-            # escape?
-            if keys[0] == 'escape':
-                break
+    while run:
 
         # Try getting random sequence information given stimuli parameters
         try:
@@ -97,6 +65,10 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
         # Try executing the sequences
         try:
             for idx_o in range(len(task_text)):
+
+                # check user input to make sure we should be going
+                if not get_user_input():
+                    break
 
                 # update task state
                 rsvp.update_task_state(
@@ -154,3 +126,32 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     core.wait(int(parameters['eeg_buffer_len']['value']))
 
     return file_save
+
+
+def init_calibration_display_task(parameters, win, clock, experiment_clock):
+    rsvp = CalibrationTask(
+        window=win, clock=clock,
+        experiment_clock=experiment_clock,
+        text_information=parameters['text_text']['value'],
+        color_information=parameters['color_text']['value'],
+        pos_information=(float(parameters['pos_text_x']['value']),
+                         float(parameters['pos_text_y']['value'])),
+        height_information=float(parameters['txt_height']['value']),
+        font_information=parameters['font_text']['value'],
+        color_task=['white'],
+        font_task=parameters['font_task']['value'],
+        height_task=float(parameters['height_task']['value']),
+        font_sti=parameters['font_sti']['value'],
+        pos_sti=(float(parameters['pos_sti_x']['value']),
+                 float(parameters['pos_sti_y']['value'])),
+        sti_height=float(parameters['sti_height']['value']),
+        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        time_list_sti=[3] * 10,
+        # tr_pos_bg=parameters['tr_pos_bg']['value'],
+        # bl_pos_bg=parameters['bl_pos_bg']['value'],
+        size_domain_bg=int(parameters['size_domain_bg']['value']),
+        color_bg_txt=parameters['color_bg_txt']['value'],
+        font_bg_txt=parameters['font_bg_txt']['value'],
+        color_bar_bg=parameters['color_bar_bg']['value'],
+        is_txt_sti=parameters['is_txt_sti']['value'])
+    return rsvp
