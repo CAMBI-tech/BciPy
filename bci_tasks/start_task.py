@@ -1,4 +1,4 @@
-from RSVP import calibration, copy_phrase
+from rsvp import calibration, copy_phrase
 
 
 def start_task(daq, display_window, task_type, parameters, file_save,

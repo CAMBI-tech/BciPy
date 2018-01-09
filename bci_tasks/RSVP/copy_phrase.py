@@ -4,7 +4,7 @@ from __future__ import division
 from psychopy import core, event
 import numpy as np
 
-from display.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
 from helpers.eeg_model_wrapper import CopyPhraseWrapper
