@@ -42,12 +42,10 @@ This project requires Psychopy, Python v 2.7, and other packages. See requiremen
 
 In order to run BCI suite on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must install Docker and Docker-Machience to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using, set fake_lm to true. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python espeically for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). 
 
-There are two methods in this BCI repo to load all packages in:
 
-1. Run `pip install -r requirements.txt`. -or- `python utils/module_loader.py`
+1. Run `pip install -r requirements.txt`
 
-
-* You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows: *
+You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows:
 
 2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
