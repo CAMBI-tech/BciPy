@@ -19,7 +19,7 @@ class TestStartTask(unittest.TestCase):
 
         self.parameters = load_json_parameters(parameters_used)
 
-        from helpers.display import init_display_window
+        from display.display_main import init_display_window
         self.display_window = init_display_window(self.parameters)
 
         self.data_save_path = 'data/'

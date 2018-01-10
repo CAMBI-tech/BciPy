@@ -15,7 +15,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters_used = '../parameters/parameters.json'
+        self.parameters_used = './parameters/parameters.json'
 
     def test_load_json_parameters_returns_dict(self):
         """Test load parameters returns a Python dict."""

@@ -1,36 +1,6 @@
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
-    import PrincipalComponentAnalysis, ChannelWisePrincipalComponentAnalysis
+    import ChannelWisePrincipalComponentAnalysis
 import numpy as np
-
-
-def _demo_pca():
-    pca = PrincipalComponentAnalysis()
-
-    dim_x = 16
-    num_x_p = 2000
-    num_x_n = 1000
-    var_tol = 0.80
-
-    # We only require the data not labels
-    x_p = 2 * np.random.randn(num_x_p, dim_x)
-    x_n = np.random.randn(num_x_n, dim_x)
-
-    x = np.concatenate(np.asarray([x_p, x_n]), 0)
-
-    y = pca.fit_transform(x)
-    print('PCA Results')
-    print('PCA flows!')
-    print('X:{} |--[PCA(tol:0)]--> Y:{}'.format(x.shape, y.shape))
-
-    pca.fit(x, var_tol=var_tol)
-    y = pca.transform(x)
-    print('X:{} |--[PCA(tol:10^-6)]--> Y:{}'.format(x.shape, y.shape))
-
-    y2 = pca.fit_transform(x, var_tol=var_tol)
-    print('MSE:{} fit_transform'.format(np.sum(np.abs(y2 - y))))
-
-    return 0
-
 
 def _demo_cw_pca():
     num_ch = 16
@@ -55,12 +25,5 @@ def _demo_cw_pca():
     return 0
 
 
-def main():
-    _demo_pca()
-    _demo_cw_pca()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    _demo_cw_pca()

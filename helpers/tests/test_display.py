@@ -2,7 +2,7 @@ import unittest
 
 from psychopy import visual
 from helpers.load import load_json_parameters
-from helpers.display import init_display_window
+from display.display_main import init_display_window
 
 
 class TestInitializeDisplayWindow(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestInitializeDisplayWindow(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
 
-        parameters_used = '../parameters/parameters.json'
+        parameters_used = './parameters/parameters.json'
 
         self.parameters = load_json_parameters(parameters_used)
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import errno
 import os
+from time import localtime, strftime
 from shutil import copy2
 import json
 
@@ -22,8 +22,8 @@ def init_save_data_structure(data_save_path,
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information
     save_folder_run_name = save_folder_name + '/' + \
-        user_information + '_' + datetime.datetime.now().strftime(
-            '%Y_%m_%d_%H%M%S')
+        user_information + '_' + strftime(
+            '%a_%d_%b_%X%Z', localtime())
     helper_folder_name = save_folder_run_name + '/helpers/'
 
     # try making the given path
@@ -61,11 +61,15 @@ def init_save_data_structure(data_save_path,
         if (os.path.isfile(parameters_used)):
             # Copy over parameters file
             copy2(parameters_used, save_folder_run_name)
+        else:
+            raise Exception('Parameter File Not Found!')
 
     # catch IO exceptions
     except IOError as error:
-        if error.errno == 2:
-            raise error
+        raise error
+
+    except Exception as error:
+        raise error
 
     return save_folder_run_name
 

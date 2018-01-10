@@ -1,6 +1,6 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
-from helpers.display import init_display_window
+from display.display import init_display_window
 from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 from helpers.load import load_classifier
@@ -88,7 +88,7 @@ def execute_task(task_type, parameters, save_folder):
                 classifier = load_classifier()
 
             # if Language Model enabled and data not fake, init lm
-            if parameters['languagemodelenabled']['value'] == 'true' or fake:
+            if parameters['languagemodelenabled']['value'] == 'true' and not fake:
                 try:
                     lmodel = init_language_model(parameters)
                 except:

@@ -3,15 +3,17 @@
 from __future__ import division
 from psychopy import core
 
-from display.rsvp.rsvp_disp_modes import CalibrationTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from helpers.triggers import _write_triggers_from_sequence_copy_phrase
+from helpers.stim_gen import target_rsvp_sequence_generator, get_task_info
 
-from helpers.triggers import _write_triggers_from_sequence_calibration
-from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
 from helpers.bci_task_related import (
-    alphabet, trial_complete_message, get_user_input)
+    fake_copy_phrase_decision, alphabet, get_user_input)
 
 
-def rsvp_calibration_task(win, daq, parameters, file_save):
+def rsvp_copy_phrase_calibration_task(win, daq, parameters,
+                                      file_save, fake=True):
+
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -29,26 +31,34 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
         print "Data acquistion could not start!"
         raise e
 
-    # Try running the calibration task
-
+    # Try Initializing the Copy Phrase Display Object
     try:
-        rsvp = init_calibration_display_task(
+        rsvp = _init_copy_phrase_display_task(
             parameters, win, clock, experiment_clock)
     except Exception as e:
         raise e
 
-    # Init Task
+    # Init Triggers
     trigger_save_location = file_save + '/triggers.txt'
     trigger_file = open(trigger_save_location, 'w')
     run = True
 
+    # get the initial target letter
+    copy_phrase = parameters['text_task']['value']
+    target_letter = copy_phrase[0]
+    text_task = '*'
+
     while run:
+
+        # check user input to make sure we should be going
+        if not get_user_input():
+            break
 
         # Try getting random sequence information given stimuli parameters
         try:
-            (ele_sti, timing_sti,
-             color_sti) = random_rsvp_calibration_seq_gen(
-                alp, num_sti=int(parameters['num_sti']['value']),
+            # to-do implement color from params
+            (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
+                alp, target_letter=target_letter,
                 len_sti=int(parameters['len_sti']['value']), timing=[
                     float(parameters['time_target']['value']),
                     float(parameters['time_cross']['value']),
@@ -60,64 +70,39 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
         # Catch the exception here if needed.
         except Exception as e:
+            print e
             raise e
 
         # Try executing the sequences
         try:
-            for idx_o in range(len(task_text)):
+            rsvp.update_task_state(text=text_task, color_list=['white'])
+            rsvp.draw_static()
+            win.flip()
 
-                # check user input to make sure we should be going
-                if not get_user_input():
-                    break
+            # update task state
+            rsvp.ele_list_sti = ele_sti[0]
+            # rsvp.text_task = text_task
+            if parameters['is_txt_sti']['value']:
+                rsvp.color_list_sti = color_sti[0]
 
-                # update task state
-                rsvp.update_task_state(
-                    text=task_text[idx_o],
-                    color_list=task_color[idx_o])
+            rsvp.time_list_sti = timing_sti[0]
 
-                # Draw and flip screen
-                rsvp.draw_static()
-                win.flip()
+            core.wait(buffer_val)
+            sequence_timing = rsvp.do_sequence()
 
-                # Get height
-                rsvp.sti.height = float(parameters['sti_height']['value'])
+            _write_triggers_from_sequence_copy_phrase(
+                sequence_timing,
+                trigger_file,
+                copy_phrase,
+                text_task)
 
-                # Schedule a sequence
-                rsvp.ele_list_sti = ele_sti[idx_o]
+            core.wait(buffer_val)
 
-                # check if text stimuli or not for color information
-                if parameters['is_txt_sti']['value']:
-                    rsvp.color_list_sti = color_sti[idx_o]
-
-                rsvp.time_list_sti = timing_sti[idx_o]
-
-                # Wait for a time
-                core.wait(buffer_val)
-
-                # Do the sequence
-                last_sequence_timing = rsvp.do_sequence()
-
-                # Write triggers for the sequence
-                _write_triggers_from_sequence_calibration(
-                    last_sequence_timing, trigger_file)
-
-                # Wait for a time
-                core.wait(buffer_val)
-
-            # Set run to False to stop looping
-            run = False
+            (target_letter, text_task, run) = fake_copy_phrase_decision(
+                copy_phrase, target_letter, text_task)
 
         except Exception as e:
             raise e
-
-    print "Stopping criteria met!"
-
-    # Say Goodbye!
-    rsvp.text = trial_complete_message(win, parameters)
-    rsvp.draw_static()
-    win.flip()
-
-    core.wait(buffer_val)
 
     # Close this sessions trigger file and return some data
     trigger_file.close()
@@ -128,11 +113,13 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     return file_save
 
 
-def init_calibration_display_task(parameters, win, clock, experiment_clock):
-    rsvp = CalibrationTask(
+def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
+    rsvp = CopyPhraseTask(
         window=win, clock=clock,
         experiment_clock=experiment_clock,
         text_information=parameters['text_text']['value'],
+        static_text_task=parameters['text_task']['value'],
+        text_task='****',
         color_information=parameters['color_text']['value'],
         pos_information=(float(parameters['pos_text_x']['value']),
                          float(parameters['pos_text_y']['value'])),
@@ -147,9 +134,14 @@ def init_calibration_display_task(parameters, win, clock, experiment_clock):
         sti_height=float(parameters['sti_height']['value']),
         ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
+        tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
+                   float(parameters['tr_pos_bg_y']['value'])),
+        bl_pos_bg=(float(parameters['bl_pos_bg_x']['value']),
+                   float(parameters['bl_pos_bg_y']['value'])),
         size_domain_bg=int(parameters['size_domain_bg']['value']),
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
         is_txt_sti=parameters['is_txt_sti']['value'])
+
     return rsvp

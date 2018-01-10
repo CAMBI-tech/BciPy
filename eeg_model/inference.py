@@ -16,22 +16,16 @@ def inference(x, targets, model, alphabet):
         lik_r(ndarray[float]): likelihood array.
     """
 
-    try:
+    # Evaluates the likelihood probabilities for p(e|l=1) and p(e|l=0)
+    scores = np.exp(model.transform(x))
+    # Evaluates the log likelihood ratios
+    scores = scores[:, 1] / (scores[:, 0] + np.power(.1, 10))
 
-        # Evaluates the likelihood probabilities for p(e|l=1) and p(e|l=0)
-        scores = np.exp(model.transform(x))
-        # Evaluates the log likelihood ratios
-        scores = scores[:, 1] / (scores[:, 0] + np.power(.1, 10))
-
-        # This maps the likelihood distribution over the alphabet
-        #   If the letter in the alphabet does not exist in the target string,
-        #       it takes 1
-        lik_r = np.ones(len(alphabet))
-        for idx in range(len(scores)):
-            lik_r[alphabet.index(targets[idx])] *= scores[idx]
-
-    except Exception as e:
-        print "Error in inference: %s" % (e)
-        raise e
+    # This maps the likelihood distribution over the alphabet
+    #   If the letter in the alphabet does not exist in the target string,
+    #       it takes 1
+    lik_r = np.ones(len(alphabet))
+    for idx in range(len(scores)):
+        lik_r[alphabet.index(targets[idx])] *= scores[idx]
 
     return lik_r

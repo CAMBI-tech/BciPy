@@ -1,17 +1,16 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core, event
-import numpy as np
+from psychopy import core
 
-from display.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseTask
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
 from helpers.eeg_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, _process_data_for_decision,
-    trial_complete_message)
+    trial_complete_message, get_user_input)
 
 
 def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
@@ -45,14 +44,15 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
-    experiment_clock = core.MonotonicClock(start_time=None)
+    buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
     alp = alphabet()
 
     # Start acquiring data and set the experiment clock
     try:
-        daq.clock = experiment_clock
+        experiment_clock = core.MonotonicClock(start_time=None)
+        daq._clock = experiment_clock
         daq.start_acquisition()
     except Exception as e:
         print "Data acquistion could not start!"
@@ -115,16 +115,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     while run is True:
 
         # check user input to make sure we should be going
-        keys = event.getKeys(keyList=['space', 'escape'])
-
-        if keys:
-            # pause?
-            if keys[0] == 'space':
-                event.waitKeys(keyList=["space"])
-
-            # escape?
-            if keys[0] == 'escape':
-                break
+        if not get_user_input():
+            break
 
         # Why bs for else? #changeforrelease
         if copy_phrase[0:len(text_task)] == text_task:
@@ -169,7 +161,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.time_list_sti = timing_sti[0]
 
             # Pause for a time
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
 
             # Do the RSVP sequence!
             sequence_timing = rsvp.do_sequence()
@@ -185,7 +177,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
             #                     weight=dummy_bar_schedule_p[counter])
 
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
             # if show_bg:
             #     rsvp.show_bar_graph()
 
@@ -281,7 +273,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             rsvp.draw_static()
             win.flip()
 
-            core.wait(float(parameters['task_buffer_len']['value']))
+            core.wait(buffer_val)
 
             break
 

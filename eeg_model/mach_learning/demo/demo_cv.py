@@ -4,13 +4,13 @@ from eeg_model.mach_learning.classifier.function_classifier \
     import RegularizedDiscriminantAnalysis
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import DummyDimReduction, ChannelWisePrincipalComponentAnalysis
-from eeg_model.mach_learning.wrapper import PipeLine
+from eeg_model.mach_learning.pipeline import Pipeline
 
 
 def test_cv(x, y):
     rda = RegularizedDiscriminantAnalysis()
     pca = DummyDimReduction()
-    pipeline = PipeLine()
+    pipeline = Pipeline()
     pipeline.add(pca)
     pipeline.add(rda)
     arg = cross_validation(x, y, pipeline)
@@ -39,7 +39,7 @@ def _demo_cv():
 
     rda = RegularizedDiscriminantAnalysis()
     pca = DummyDimReduction()
-    pipeline = PipeLine()
+    pipeline = Pipeline()
     pipeline.add(pca)
     pipeline.add(rda)
     arg_1 = cross_validation(x, y, pipeline)
@@ -47,12 +47,5 @@ def _demo_cv():
 
     return 0
 
-
-def main():
-    _demo_cv()
-
-    return 0
-
-
 if __name__ == "__main__":
-    main()
+    _demo_cv()
