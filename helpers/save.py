@@ -61,11 +61,15 @@ def init_save_data_structure(data_save_path,
         if (os.path.isfile(parameters_used)):
             # Copy over parameters file
             copy2(parameters_used, save_folder_run_name)
+        else:
+            raise Exception('Parameter File Not Found!')
 
     # catch IO exceptions
     except IOError as error:
-        if error.errno == 2:
-            raise error
+        raise error
+
+    except Exception as error:
+        raise error
 
     return save_folder_run_name
 

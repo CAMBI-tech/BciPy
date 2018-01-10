@@ -1,7 +1,7 @@
 import errno
 import os
 import shutil
-import sys
+import time
 import unittest
 
 from helpers.save import init_save_data_structure
@@ -15,7 +15,7 @@ class TestSave(unittest.TestCase):
 
         self.data_save_path = 'data/'
         self.user_information = 'test_user_001'
-        self.parameters_used = '../parameters/parameters.json'
+        self.parameters_used = './parameters/parameters.json'
 
         self.save_folder_name = init_save_data_structure(
             self.data_save_path,
@@ -39,18 +39,19 @@ class TestSave(unittest.TestCase):
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))
 
-    # def test_throws_useful_error_if_given_incorrect_params_path(self):
+    def test_throws_useful_error_if_given_incorrect_params_path(self):
 
-    #     # try passing a parameters file that does not exist
-    #     try:
-    #         init_save_data_structure(
-    #             self.data_save_path,
-    #             self.user_information,
-    #             'does_not_exist.json')
+        # try passing a parameters file that does not exist
+        try:
+            time.sleep(.5)
+            init_save_data_structure(
+                self.data_save_path,
+                'new_user',
+                'does_not_exist.json')
 
-    #     # catch the exception and make sure it's as expected
-    #     except Exception as error:
-    #         self.assertEqual(error.strerror, 'No such file or directory')
+        # catch the exception and make sure it's as expected
+        except Exception as error:
+            self.assertEqual(error[0], 'Parameter File Not Found!')
 
     def test_init_save_data_structure_makes_helpers_folder(self):
 

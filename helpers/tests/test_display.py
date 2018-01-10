@@ -11,7 +11,7 @@ class TestInitializeDisplayWindow(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
 
-        parameters_used = '../parameters/parameters.json'
+        parameters_used = './parameters/parameters.json'
 
         self.parameters = load_json_parameters(parameters_used)
 

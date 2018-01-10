@@ -13,7 +13,7 @@ class TestAcquisition(unittest.TestCase):
 
         m = mock_open()
         with patch('acquisition.processor.open', m):
-            client, server = init_eeg_acquisition(params)
+            client, server = init_eeg_acquisition(params, server=True)
             client.start_acquisition()
             time.sleep(0.1)
             client.stop_acquisition()
@@ -29,7 +29,7 @@ class TestAcquisition(unittest.TestCase):
 
         m = mock_open()
         with patch('acquisition.processor.open', m):
-            client, server = init_eeg_acquisition(params)
+            client, server = init_eeg_acquisition(params, server=True)
             with client:
                 time.sleep(0.1)
             server.stop()
@@ -54,7 +54,8 @@ class TestAcquisition(unittest.TestCase):
         clock = _MockClock()
         m = mock_open()
         with patch('acquisition.processor.open', m):
-            client, server = init_eeg_acquisition(params, clock=clock)
+            client, server = init_eeg_acquisition(params,
+                                                  clock=clock, server=True)
 
             with client:
                 time.sleep(0.1)
