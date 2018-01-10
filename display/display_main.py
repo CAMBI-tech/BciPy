@@ -12,7 +12,7 @@ def init_display_window(parameters):
     Function to Initialize main display window
         needed for all later stimuli presentation.
 
-    See Psychopy official documentation for more information:
+    See Psychopy official documentation for more information and working demos:
         http://www.psychopy.org/api/visual/window.html
     """
 
