@@ -147,8 +147,6 @@ def init_calibration_display_task(parameters, win, clock, experiment_clock):
         sti_height=float(parameters['sti_height']['value']),
         ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        # tr_pos_bg=parameters['tr_pos_bg']['value'],
-        # bl_pos_bg=parameters['bl_pos_bg']['value'],
         size_domain_bg=int(parameters['size_domain_bg']['value']),
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
