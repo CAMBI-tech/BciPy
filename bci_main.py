@@ -1,9 +1,12 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
-from helpers.display import init_display_window
+from display.display import init_display_window
 from helpers.acquisition_related import init_eeg_acquisition
 from bci_tasks.start_task import start_task
 from helpers.load import load_classifier
+from helpers.lang_model_related import init_language_model
+
+import pickle
 
 
 def bci_main(parameters, user, exp_type, mode):
@@ -61,6 +64,8 @@ def execute_task(task_type, parameters, save_folder):
 
     if fake_data == 'true':
         server = True
+
+        # Set this to False to have fake data but real decisions
         fake = True
     else:
         server = False
@@ -69,26 +74,64 @@ def execute_task(task_type, parameters, save_folder):
     # Initialize EEG Acquisition
     daq, server = init_eeg_acquisition(daq_parameters, server=server)
 
-    # Init EEG Model
+    # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
+    #   modules to be loaded.
     if task_type['exp_type'] > 1:
+
+        # Try loading in our classifier and starting a langmodel(if enabled)
         try:
 
-            classifier = load_classifier()
-        except:
-            print "cannot load classifier"
-            classifier = None
+            # EEG Model, Load in pre-trained classifier
+            if fake:
+                classifier = None
+            else:
+                classifier = load_classifier()
+
+            # if Language Model enabled and data not fake, init lm
+            if parameters['languagemodelenabled']['value'] == 'true' and not fake:
+                try:
+                    lmodel = init_language_model(parameters)
+                except:
+                    print "Cannot init language model. Setting to None."
+                    lmodel = None
+            else:
+                lmodel = None
+
+        except Exception as e:
+            print "Cannot load EEG classifier. Exiting"
+            raise e
+
     else:
         classifier = None
+        lmodel = None
 
     # Initialize Display Window
     display = init_display_window(parameters)
 
     # Start Task
     try:
-        trial_data = start_task(
+        start_task(
             daq, display, task_type, parameters, save_folder,
+            lmodel=lmodel,
             classifier=classifier, fake=fake)
+
+    # If exception, close all display and acquistion objects
     except Exception as e:
+        # close display
+        display.close()
+
+        # try stoping acquistion
+        try:
+            daq.stop_acquisition()
+        except:
+            # if not started, we can pass!
+            pass
+
+        # if there is a server, stop it
+        if server:
+            server.stop()
+
+        # raise error
         raise e
 
     # Stop Acquistion
@@ -101,4 +144,4 @@ def execute_task(task_type, parameters, save_folder):
     # Close the display window
     display.close()
 
-    return trial_data
+    return

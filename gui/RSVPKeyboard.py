@@ -190,18 +190,41 @@ gui_fx.add_button(
     0,
     main_window_height_half - convert_to_height(100, main_window_height),
     convert_to_width(150, main_window_width), convert_to_height(60, main_window_height), (40, 40, 40, 255),
-    (219, 219, 219, 255), (89, 89, 89, 255), 'Save Values', 3,
+    (219, 219, 219, 255), (89, 89, 89, 255), 'Save JSON Values', 3,
     functionCall="writeValuesToFile",
     functionArg=(['bci_config', 'advanced_config'], values_array),
     textSize=convert_to_width(16, main_window_width), scrollBar=100
 )
+
+# Info Text for Saving Values
+gui_fx.add_text(
+    0, main_window_height_half + convert_to_height(170, main_window_height),
+    (247, 247, 247, 255), convert_to_width(11, main_window_width),
+    "Please Note:", 3, scrollBar=100,
+)
+gui_fx.add_text(
+    0, main_window_height_half + convert_to_height(155, main_window_height),
+    (247, 247, 247, 255), convert_to_width(5, main_window_width),
+    "Overwrite the correct parameters file on save!", 3, scrollBar=100,
+)
+gui_fx.add_text(
+    0, main_window_height_half + convert_to_height(140, main_window_height),
+    (247, 247, 247, 255), convert_to_width(7, main_window_width),
+    "- or -", 3, scrollBar=100,
+)
+gui_fx.add_text(
+    0, main_window_height_half + convert_to_height(125, main_window_height),
+    (247, 247, 247, 255), convert_to_width(5, main_window_width),
+    "Update the parameter filename/location variable!", 3, scrollBar=100,
+)
+
 
 # Load values button
 gui_fx.add_button(
     0,
     main_window_height_half - convert_to_height(170, main_window_height),
     convert_to_width(150, main_window_width), convert_to_height(60, main_window_height), (40, 40, 40, 255),
-    (219, 219, 219, 255), (89, 89, 89, 255), 'Load Values', 3,
+    (219, 219, 219, 255), (89, 89, 89, 255), 'Load JSON Values', 3,
     functionCall="read_values_from_file",
     functionArg=(['bci_config', 'advanced_config'], values_array),
     textSize=convert_to_width(16, main_window_width), scrollBar=100
@@ -220,8 +243,8 @@ gui_fx.add_button(
 gui_fx.add_button(
     main_window_width_half, main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
-    (25, 20, 1, 255), (239, 212, 105, 255), (255, 236, 160, 255), 'Free Spell',
-    0, functionCall="set_trial_type", functionArg=[3],
+    (25, 20, 1, 255), (239, 212, 105, 255), (255, 236, 160, 255), 'Copy Phrase',
+    0, functionCall="set_trial_type", functionArg=[2],
     textSize=convert_to_width(12, main_window_width)
 )
 
@@ -231,7 +254,7 @@ gui_fx.add_button(
     main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
     (25, 20, 1, 255), (239, 146, 40, 255), (255, 190, 117, 255),
-    'FRP Calibration', 0, functionCall="set_trial_type", functionArg=[3],
+    'Copy Phrase Calibration', 0, functionCall="set_trial_type", functionArg=[3],
     textSize=convert_to_width(12, main_window_width)
 )
 
@@ -240,8 +263,8 @@ gui_fx.add_button(
     main_window_width_half + convert_to_width(110, main_window_width),
     main_window_height_half - convert_to_height(40, main_window_height),
     convert_to_width(100, main_window_width), convert_to_height(90, main_window_height),
-    (25, 20, 1, 255), (117, 173, 48, 255), (186, 232, 129, 255), 'Copy Phrase',
-    0, functionCall="set_trial_type", functionArg=[2],
+    (25, 20, 1, 255), (117, 173, 48, 255), (186, 232, 129, 255), 'Free Spell',
+    0, functionCall="set_trial_type", functionArg=[3],
     textSize=convert_to_width(12, main_window_width)
 )
 
@@ -281,7 +304,7 @@ gui_fx.add_button(
     main_window_height_half - convert_to_height(150, main_window_height),
     convert_to_width(300, main_window_width), convert_to_height(70, main_window_height),
     (40, 40, 40, 255), (219, 219, 219, 255), (89, 89, 89, 255), 'Calculate AUC',
-    0, functionCall="run_python_file", functionArg=['gui/tests/testfile.py'],
+    0, functionCall="run_offline_analysis", functionArg=[main_window],
     textSize=convert_to_width(16, main_window_width)
 )
 
@@ -296,25 +319,6 @@ gui_fx.add_button(
     textSize=convert_to_width(7, main_window_width),
 )
 
-# Search parameters button
-gui_fx.add_button(
-    0,
-    main_window_height_half + convert_to_height(90, main_window_height),
-    convert_to_width(60, main_window_width), convert_to_height(30, main_window_height), (40, 40, 40, 255),
-    (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 3,
-    functionCall="search_parameters", functionArg=[path, 3, 'search'],
-    textSize=convert_to_width(8, main_window_width), scrollBar=100
-)
-
-# Search advanced parameters button
-gui_fx.add_button(
-    main_window_width_half - convert_to_width(230, main_window_width),
-    main_window_height_half + convert_to_height(90, main_window_height),
-    convert_to_width(60, main_window_width), convert_to_height(30, main_window_height), (40, 40, 40, 255),
-    (219, 219, 219, 255), (89, 89, 89, 255), 'Search', 4,
-    functionCall="search_parameters", functionArg=[path, 4, 'advancedsearch'],
-    textSize=convert_to_width(8, main_window_width)
-)
 
 # Retract options menu
 gui_fx.add_button(
@@ -335,22 +339,7 @@ gui_fx.add_input(
     convert_to_width(300, main_window_width), convert_to_height(50, main_window_height), 0,
     convert_to_width(14, main_window_width)
 )
-# Main parameters search menu
-gui_fx.add_input(
-    gui_fx.InputField('search', False, False), 0,
-    main_window_height_half + convert_to_height(130, main_window_height),
-    convert_to_width(150, main_window_width), convert_to_height(40, main_window_height), 3,
-    convert_to_width(10, main_window_width), scrollBar=100
-)
 
-# Advanced parameters search menu
-gui_fx.add_input(
-    gui_fx.InputField('advancedsearch', False, False),
-    main_window_width_half - convert_to_width(230, main_window_width),
-    main_window_height_half + convert_to_height(130, main_window_height),
-    convert_to_width(150, main_window_width), convert_to_height(40, main_window_height), 4,
-    convert_to_width(10,main_window_width)
-)
 
 ''' Register text. '''
 
@@ -380,18 +369,7 @@ gui_fx.add_text(
     (247, 247, 247, 255), convert_to_width(21, main_window_width), "Select Mode:", 2
 )
 
-# Search Parameters help text
-gui_fx.add_text(
-    0, main_window_height_half + convert_to_height(170, main_window_height),
-    (247, 247, 247, 255), convert_to_width(11,main_window_width), "Search Parameters", 3, scrollBar=100
-)
 
-# Search Advanced Parameters help text
-gui_fx.add_text(
-    main_window_width_half - convert_to_width(230, main_window_width),
-    main_window_height_half + convert_to_height(160, main_window_height),
-    (247, 247, 247, 255), convert_to_width(8, main_window_width), "Search Advanced Parameters", 4
-)
 
 ''' Register images. '''
 

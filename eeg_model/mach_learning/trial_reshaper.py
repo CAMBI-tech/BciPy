@@ -1,7 +1,8 @@
 import numpy as np
 
 
-def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, channel_map):
+def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k,
+                   mode, channel_map=(1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
     """
 
     :param trial_target_info: A list of strings which can take values:
@@ -68,7 +69,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
                 timing_info[symbol_info_index] = -1
 
         # Get rid of 'first_pres_target' trials information in both in trial_target_info and timing_info
-        trial_target_info = filter(lambda x: x != 'first_pres_target', trial_target_info)
+        trial_target_info = filter(lambda x: x != 'first_pres_target',
+                                   trial_target_info)
         timing_info = filter(lambda x: x != -1, timing_info)
 
         # triggers in seconds are mapped to triggers in number of samples. -1 is for indexing
@@ -76,11 +78,11 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         # Label for every trial
         labels = np.zeros(len(triggers))
-
 
         for trial in range(len(triggers)):
             # Assign targetness to labels for each trial
@@ -90,7 +92,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         num_of_sequences = int(sum(labels))
 
@@ -103,7 +106,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         # Label for every trial
         labels = np.zeros(len(triggers))
@@ -116,7 +120,8 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         # In copy phrase, num of sequence is assumed to be 1.
         num_of_sequences = 1
@@ -132,17 +137,18 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, ch
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros((len(filtered_eeg), len(triggers), num_samples))
+        reshaped_trials = np.zeros(
+            (len(filtered_eeg), len(triggers), num_samples))
 
         labels = None
-
 
         for trial in range(len(triggers)):
 
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                    filtered_eeg[channel][
+                    triggers[trial]:triggers[trial] + num_samples]
 
         # In copy phrase, num of sequence is assumed to be 1.
         num_of_sequences = 1

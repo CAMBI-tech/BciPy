@@ -117,8 +117,8 @@ class DecisionMaker(object):
         # TODO: read from parameters file
         self.alphabet = alphabet
 
-        self.list_epoch = [{'target': None, 'time_spent': 0, 'list_sti':
-            [], 'list_distribution': []}]
+        self.list_epoch = [{'target': None, 'time_spent': 0,
+                            'list_sti': [], 'list_distribution': []}]
         self.time = 0
         self.sequence_counter = 0
 
@@ -149,8 +149,8 @@ class DecisionMaker(object):
 
         # Check stopping criteria
         if self.sequence_counter < self.min_num_seq or \
-                not (self.sequence_counter > self.max_num_seq
-                     or np.max(p) > self.posterior_commit_threshold):
+                not (self.sequence_counter > self.max_num_seq or
+                     np.max(p) > self.posterior_commit_threshold):
 
             stimuli = self.schedule_sequence()
             commitment = False
@@ -170,8 +170,8 @@ class DecisionMaker(object):
         self.displayed_state = form_display_state(self.state)
 
         # Initialize next epoch
-        self.list_epoch.append({'target': None, 'time_spent': 0, 'list_sti':
-            [], 'list_distribution': []})
+        self.list_epoch.append({'target': None, 'time_spent': 0,
+                                'list_sti': [], 'list_distribution': []})
 
     def schedule_sequence(self):
         """ Schedules next sequence """
@@ -184,9 +184,9 @@ class DecisionMaker(object):
 
     def decide_state_update(self):
         """ Checks stopping criteria to commit to an epoch """
-        idx = np.where(self.list_epoch[-1]['list_distribution'][-1] ==
-                       np.max(self.list_epoch[-1]['list_distribution'][-1]))[
-            0][0]
+        idx = np.where(
+            self.list_epoch[-1]['list_distribution'][-1] ==
+            np.max(self.list_epoch[-1]['list_distribution'][-1]))[0][0]
         decision = self.alphabet[idx]
         return decision
 
@@ -201,9 +201,6 @@ class DecisionMaker(object):
             n_best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
                 'list_distribution'][-1], num_sti=1)
         return stimuli
-
-    def save_sequence_info(self):
-        return 0
 
 
 def _demo_fusion():

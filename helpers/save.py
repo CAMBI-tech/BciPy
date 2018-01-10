@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import errno
 import os
+from time import localtime, strftime
 from shutil import copy2
 import json
 
@@ -22,8 +22,8 @@ def init_save_data_structure(data_save_path,
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information
     save_folder_run_name = save_folder_name + '/' + \
-        user_information + '_' + datetime.datetime.now().strftime(
-            '%Y_%m_%d_%H%M%S')
+        user_information + '_' + strftime(
+            '%a_%d_%b_%X%Z', localtime())
     helper_folder_name = save_folder_run_name + '/helpers/'
 
     # try making the given path
@@ -43,21 +43,79 @@ def init_save_data_structure(data_save_path,
         os.makedirs(helper_folder_name)
 
     try:
-        # put in static things
-        copy2(parameters_used, save_folder_run_name)
+        # Go to folder helpers and list files within it
+        src_files = os.listdir('helpers/')
+
+        # Loop through files in helpers and copy important ones over
+        for file_name in src_files:
+
+            # get the full name
+            full_file_name = os.path.join('helpers/', file_name)
+
+            # Check that constructed file is a real file and ends in .py
+            if (os.path.isfile(full_file_name)) and '.py' in file_name:
+                # Copy over!
+                copy2(full_file_name, helper_folder_name)
+
+        # Check that parameters file given is a real file
+        if (os.path.isfile(parameters_used)):
+            # Copy over parameters file
+            copy2(parameters_used, save_folder_run_name)
 
     # catch IO exceptions
     except IOError as error:
         if error.errno == 2:
             raise error
 
-    # return path for completion or other data type saving needs
     return save_folder_run_name
 
 
-def _save_session_related_data(file, array):
+def _save_session_related_data(file, session_dictionary):
+    """
+    Save Session Related Data.
+
+    Parameters
+    ----------
+        file[str]: string of path to save our data in
+        session_dictionary[dict]: dictionary of session data. It will appear
+            as follows:
+                {{ "epochs": {
+                        "1": {
+                          "0": {
+                            "copy_phrase": "COPY_PHRASE",
+                            "current_text": "COPY_",
+                            "eeg_len": 22,
+                            "next_display_state": "COPY_",
+                            "stimuli": [["+", "_", "G", "L", "B"]],
+                            "target_info": [
+                              "nontarget", ... ,
+                            ],
+                            "timing_sti": [[1, 0.2, 0.2, 0.2, 0.2]],
+                            "triggers": [[ "+", 0.0], ["_", 0.9922] ..],
+                            },
+                        ... ,
+                        "7": {
+                            ... ,
+                  },
+                  "paradigm": "RSVP",
+                  "session": "data/demo_user/demo_user",
+                  "session_type": "Copy Phrase",
+                  "total_time_spent": 83.24798703193665
+                }}
+    Returns
+    -------
+        file, session data file (json file)
+
+    """
+    # Try opening as json, if not able to use open() to create first
     try:
-        json.dump(array, file)
+        file = json.load(file, 'wt')
+    except:
+        file = open(file, 'wt')
+
+    # Use the file to dump data to
+    try:
+        json.dump(session_dictionary, file, indent=2)
     except Exception as e:
         raise e
 

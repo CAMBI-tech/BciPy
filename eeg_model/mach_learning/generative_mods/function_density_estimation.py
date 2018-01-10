@@ -2,13 +2,13 @@ from sklearn.neighbors.kde import KernelDensity
 import numpy as np
 
 
-class KernelDensityEstimate(object):
+class KernelDensityEstimate:
     """ Kernel density estimate implementation using scikit learn
     library. For further reference, please check scikit learn website.
     Attr:
         bandwidth(float): bandwidth of the kernel
         algorithm(string): algorithm type
-        kernel(string): element toform the actual fitted pdf.
+        kernel(string): element to form the actual fitted pdf.
         metric(string): distance metric used by algorithm to insert kernels
             onto samples in the given domain.
         atol(float): absolute tolerance to fit a probability distribution
@@ -59,7 +59,7 @@ class KernelDensityEstimate(object):
             self.list_den_est[i].fit(dat)
 
     def transform(self, x):
-        """ Calculates likelihop ods of given data.
+        """ Calculates likelihood ods of given data.
             Attr:
                 x(ndarray[float]): N x 1 data array
                 Where N and c denotes number of samples and classes
@@ -74,10 +74,9 @@ class KernelDensityEstimate(object):
             dat = np.expand_dims(dat, axis=1)
             val.append(self.list_den_est[i].score_samples(dat))
 
-        val = np.transpose(np.array(val))
-        return val
+        return np.transpose(np.array(val))
 
     def fit_transform(self, x, y):
+
         self.fit(x, y)
-        val = self.transform(x)
-        return val
+        return self.transform(x)
