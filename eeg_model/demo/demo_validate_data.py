@@ -177,9 +177,6 @@ def _demo_validate_real_data():
     plt.ylabel('p(e|l)')
     plt.xlabel('scores')
 
-    import pdb
-    pdb.set_trace()
-
     plt.show()
 
 

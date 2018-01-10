@@ -52,8 +52,7 @@ class ChannelWisePrincipalComponentAnalysis:
             try:
                 self.list_pca[i].fit(x[i, :, :], y)
             except Exception as e:
-                import pdb
-                pdb.set_trace()
+                raise e
 
     def transform(self, x, y=None):
         f_vector = []
