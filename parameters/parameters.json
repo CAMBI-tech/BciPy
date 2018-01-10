@@ -255,7 +255,15 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "True",
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Is Text Stimuli",
+    "helpTip": "Is this Text -True- or Image -False-",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "path_to_presentation_images": {
+    "value": "/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -388,7 +396,7 @@
     "isNumeric": "false"    
   },
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -396,7 +404,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -414,7 +422,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",

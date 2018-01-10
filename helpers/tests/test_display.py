@@ -2,7 +2,7 @@ import unittest
 
 from psychopy import visual
 from helpers.load import load_json_parameters
-from helpers.display import init_display_window
+from display.display_main import init_display_window
 
 
 class TestInitializeDisplayWindow(unittest.TestCase):
