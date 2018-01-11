@@ -1,11 +1,9 @@
-""" timing and color information either hard coded or read from a parameters
-file """
 import numpy as np
 
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
-                             color=['red', 'white'], num_sti=1,
-                             len_sti=10):
+                           color=['red', 'white'], num_sti=1,
+                           len_sti=10):
     """ generates RSVPKeyboard sequence by picking n-most likeliy letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
@@ -61,7 +59,7 @@ def _demo_best_case_sequence_generator():
         p = np.random.randint(0, 10, len(alp))
         print('Probabilities:{}'.format(p))
         schedule = best_case_rsvp_seq_gen(alp=alp, p=p, num_sti=1,
-                                            len_sti=len_samples)
+                                          len_sti=len_samples)
         sequence = schedule[0]
         timing = schedule[1]
         color = schedule[2]
