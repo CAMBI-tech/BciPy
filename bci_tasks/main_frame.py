@@ -1,4 +1,4 @@
-from helpers.stim_gen import n_best_case_rsvp_seq_gen
+from helpers.stim_gen import best_case_rsvp_seq_gen
 import numpy as np
 import string
 
@@ -198,7 +198,7 @@ class DecisionMaker(object):
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
         stimuli = \
-            n_best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
+            best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
                 'list_distribution'][-1], num_sti=1)
         return stimuli
 
