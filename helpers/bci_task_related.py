@@ -58,7 +58,7 @@ def alphabet():
             'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
 
-def _process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(sequence_timing, daq):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -131,7 +131,7 @@ def trial_complete_message(win, parameters):
 
         win (object): Psychopy Window Object, should be the same as the one
             used in the experiment
-        parameters (dict): Dictionary of session parameters 
+        parameters (dict): Dictionary of session parameters
 
     Returns
     -------
@@ -151,7 +151,23 @@ def trial_complete_message(win, parameters):
 
 
 def get_user_input():
-                            # check user input to make sure we should be going
+    """Get User Input.
+
+    Function returns whether or not to stop a trial. If a key of interest is
+        passed (e.g. space), it will act on it.
+
+    Parameters
+    ----------
+
+        No Input Required. Psychopy getKeys method used to detect any key
+            presses.
+
+    Returns
+    -------
+        True/False: whether or not to stop a trial (based on escape key).
+    """
+
+    # check user input to make sure we should be going
     keys = event.getKeys(keyList=['space', 'escape'])
 
     if keys:

@@ -9,7 +9,7 @@ from helpers.save import _save_session_related_data
 from helpers.eeg_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
-    fake_copy_phrase_decision, alphabet, _process_data_for_decision,
+    fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
 
 
@@ -185,7 +185,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
 
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
-                    _process_data_for_decision(sequence_timing, daq)
+                    process_data_for_decision(sequence_timing, daq)
 
                 # Uncomment this to turn off fake decisions, but use fake data.
                 # fake = False
