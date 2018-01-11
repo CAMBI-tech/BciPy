@@ -92,3 +92,13 @@ This repository uses pytest for execution of tests. You may execute them by:
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
 8. All new modules or major functionality should be documented outside of the code.
+
+## Authorship
+--------------
+
+Tab Memmott (OHSU)
+Aziz Kocanaogullari (NEU)
+Matthew Lawhead (OSHU- OCTRI)
+Berkan Kadioglu (NEU)
+Dani Smektala (N.A.)
+Andac Demir (NEU)
