@@ -1,7 +1,7 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core
+from psychopy import core, clock
 
 from display.rsvp.rsvp_disp_modes import CopyPhraseTask
 from helpers.acquisition_related import init_eeg_acquisition
@@ -19,7 +19,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
 
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
-    clock = core.StaticPeriod(screenHz=frame_rate)
+    static_clock = core.StaticPeriod(screenHz=frame_rate)
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
@@ -27,7 +27,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
 
     # Start acquiring data
     try:
-        experiment_clock = core.MonotonicClock(start_time=None)
+        experiment_clock = clock.Clock()
         # Initialize EEG Acquisition
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
@@ -38,7 +38,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     # Try Initializing the Copy Phrase Display Object
     try:
         rsvp = _init_copy_phrase_display_task(
-            parameters, win, clock, experiment_clock)
+            parameters, win, static_clock, experiment_clock)
     except Exception as e:
         raise e
 
@@ -135,9 +135,10 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     return file_save
 
 
-def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
+def _init_copy_phrase_display_task(
+        parameters, win, static_clock, experiment_clock):
     rsvp = CopyPhraseTask(
-        window=win, clock=clock,
+        window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_information=parameters['text_text']['value'],
         static_text_task=parameters['text_task']['value'],

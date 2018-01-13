@@ -1,7 +1,7 @@
 # Calibration Task for RSVP
 
 from __future__ import division
-from psychopy import core
+from psychopy import clock, core
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
 from helpers.acquisition_related import init_eeg_acquisition
@@ -15,7 +15,7 @@ from helpers.bci_task_related import (
 def rsvp_calibration_task(win, parameters, file_save, fake):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
-    clock = core.StaticPeriod(screenHz=frame_rate)
+    static_clock = core.StaticPeriod(screenHz=frame_rate)
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
@@ -23,20 +23,21 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     # Start acquiring data
     try:
-        experiment_clock = core.MonotonicClock(start_time=None)
+        experiment_clock = clock.Clock()
 
         # Initialize EEG Acquisition
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
     except Exception as e:
         print "Data acquistion could not start!"
+        print e
         raise e
 
     # Try running the calibration task
 
     try:
         rsvp = init_calibration_display_task(
-            parameters, win, clock, experiment_clock)
+            parameters, win, static_clock, experiment_clock)
     except Exception as e:
         raise e
 
@@ -139,9 +140,10 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     return file_save
 
 
-def init_calibration_display_task(parameters, win, clock, experiment_clock):
+def init_calibration_display_task(
+        parameters, win, static_clock, experiment_clock):
     rsvp = CalibrationTask(
-        window=win, clock=clock,
+        window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_information=parameters['text_text']['value'],
         color_information=parameters['color_text']['value'],

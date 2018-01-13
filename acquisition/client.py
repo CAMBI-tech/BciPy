@@ -60,6 +60,7 @@ class Client(object):
         self._clock = clock
 
         self._is_streaming = False
+        self.first_record = True
 
         self._initial_wait = 5  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
@@ -128,6 +129,14 @@ class Client(object):
         if self._is_streaming:
             data = self._device.read_data()
             while self._acq_thread.running() and data:
+                # Is this the first record?
+                if self.first_record:
+                    # Start it at zero and reset the clock that was passed
+                    self._process_queue.put(Record(data, 0))
+                    self._clock.reset()
+                    self.first_record = False
+
+                # Use get time to timestamp and continue saving records.
                 self._process_queue.put(Record(data, self._clock.getTime()))
                 data = self._device.read_data()
 
