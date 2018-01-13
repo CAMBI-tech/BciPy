@@ -24,7 +24,8 @@ class TestBciTask(unittest.TestCase):
         self.assertEqual(
             alp,
             ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-             'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<',
+             'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+             'Y', 'Z', '<',
              '_'])
 
     def test_alphabet_images(self):

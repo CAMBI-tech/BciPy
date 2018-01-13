@@ -132,12 +132,12 @@ class Client(object):
                 # Is this the first record?
                 if self.first_record:
                     # Start it at zero and reset the clock that was passed
-                    self._process_queue.put(Record(data, 0))
                     self._clock.reset()
                     self.first_record = False
 
                 # Use get time to timestamp and continue saving records.
-                self._process_queue.put(Record(data, self._clock.getTime()))
+                self._process_queue.put(
+                    Record(data, self._clock.getTime()))
                 data = self._device.read_data()
 
     def stop_acquisition(self):

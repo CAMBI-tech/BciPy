@@ -38,7 +38,6 @@ class TestStartTask(unittest.TestCase):
         from bci_tasks.start_task import start_task
         try:
             start_task(
-                self.daq,
                 self.display_window,
                 self.task_type,
                 self.parameters,

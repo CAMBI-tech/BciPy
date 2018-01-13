@@ -146,6 +146,9 @@ def test_clock():
             super(_MockClock, self).__init__()
             self.counter = 0
 
+        def reset(self):
+            self.counter = 0
+
         def getTime(self):
             self.counter += 1
             return float(self.counter)
