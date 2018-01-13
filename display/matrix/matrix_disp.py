@@ -7,7 +7,7 @@ import time
 from helpers.bci_task_related import alphabet
 
 
-class DisplayMatirx(object):
+class DisplayMatrix(object):
     """ Matrix Display Object for Sequence Presentation. Animates a sequence
         in Matrix. Mode should be determined outside.
         Attr:
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         color='black')
 
     # Create a Display Matrix Object
-    matrix = DisplayMatirx(
+    matrix = DisplayMatrix(
         display_window,
         clock.MonotonicClock(),
         clock.MonotonicClock(),
