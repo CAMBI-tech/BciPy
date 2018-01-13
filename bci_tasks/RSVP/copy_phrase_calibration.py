@@ -8,7 +8,8 @@ from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import target_rsvp_sequence_generator, get_task_info
 
 from helpers.bci_task_related import (
-    fake_copy_phrase_decision, alphabet, get_user_input)
+    fake_copy_phrase_decision, alphabet, get_user_input,
+    trial_complete_message)
 
 
 def rsvp_copy_phrase_calibration_task(win, daq, parameters,
@@ -58,7 +59,7 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
         try:
             # to-do implement color from params
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
-                alp, target_letter=target_letter,
+                alp, target_letter, parameters,
                 len_sti=int(parameters['len_sti']['value']), timing=[
                     float(parameters['time_target']['value']),
                     float(parameters['time_cross']['value']),
@@ -104,6 +105,18 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
 
         except Exception as e:
             raise e
+
+    # update the final task state
+    rsvp.update_task_state(text=text_task, color_list=['white'])
+    rsvp.draw_static()
+    win.flip()
+
+    # Say Goodbye!
+    rsvp.text = trial_complete_message(win, parameters)
+    rsvp.draw_static()
+    win.flip()
+
+    core.wait(buffer_val)
 
     # Close this sessions trigger file and return some data
     trigger_file.close()
