@@ -106,12 +106,8 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
         except Exception as e:
             raise e
 
-    # update the final task state
+    # update the final task state and say goodbye
     rsvp.update_task_state(text=text_task, color_list=['white'])
-    rsvp.draw_static()
-    win.flip()
-
-    # Say Goodbye!
     rsvp.text = trial_complete_message(win, parameters)
     rsvp.draw_static()
     win.flip()

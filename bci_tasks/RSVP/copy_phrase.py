@@ -281,9 +281,6 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         # Increment sequence counter
         seq_counter += 1
 
-    # Let the user know stopping criteria was met and stop
-    print "Stopping criteria met!"
-
     # Close the trigger file for this session
     trigger_file.close()
 
