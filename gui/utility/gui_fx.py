@@ -114,12 +114,14 @@ def set_exp_type(expType, window):
     # set textBoxes globally
     global textBoxes
     global buttons
+    global images
 
     # RSVP
     if expType is 'RSVPKeyboard':
         # Remove all previous text and buttons
         textBoxes = []
         buttons = []
+        images = []
 
         # Run the RSVP python gui
         run_python_file('gui/RSVPKeyboard.py')

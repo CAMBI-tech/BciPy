@@ -73,7 +73,7 @@ gui_fx.add_text(
 gui_fx.add_image(
     main_window_width_half + convert_to_width(260, main_window_width),
     main_window_height_half + convert_to_height(140, main_window_height),
-    "static/images/OHSU-RGB-4C-REV.png", 0,
+    "static/images/gui_images/OHSU-RGB-4C-REV.png", 0,
     float(convert_to_width(39, main_window_width),), float(convert_to_height(67, main_window_height)), False
 )
 
@@ -81,7 +81,15 @@ gui_fx.add_image(
 gui_fx.add_image(
     main_window_width_half - convert_to_width(305, main_window_width),
     main_window_height_half + convert_to_height(115, main_window_height),
-    "static/images/northeasternuniversity_logoseal.png", 0,
+    "static/images/gui_images/northeasternuniversity_logoseal.png", 0,
+    float(convert_to_width(87, main_window_width),), float(convert_to_height(88, main_window_height)), False
+)
+
+# BCI LOGO
+gui_fx.add_image(
+    main_window_width_half - convert_to_width(50, main_window_width),
+    main_window_height_half + convert_to_height(60, main_window_height),
+    "static/images/gui_images/bci_cas_logo.png", 0,
     float(convert_to_width(87, main_window_width),), float(convert_to_height(88, main_window_height)), False
 )
 
