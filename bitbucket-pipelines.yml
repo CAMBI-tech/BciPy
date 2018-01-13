@@ -13,4 +13,4 @@ pipelines:
         script:
           - pip install --upgrade pip
           - pip install pytest==3.1.3 configobj==5.0.6 json-tricks==3.8.0 olefile==0.44 Pillow==4.2.1 PsychoPy==1.85.3 pyglet==1.2.4 pytz==2017.2 six==1.11.0 numpy==1.13.1 future==0.16.0 scipy==0.19.1 sklearn==0.0 construct==2.8.14 mock==2.0.0 pylsl==1.10.5 psutil==5.4.0 pandas==0.21.0
-          - pytest --ignore=helpers/tests/test_display.py --ignore=helpers/tests/test_load.py --ignore=helpers/tests/test_save.py --ignore=helpers/tests/test_bci_task.py --ignore=bci_tasks/tests/test_start_task.py --ignore=bci_tasks/tests/test_acquisition.py
+          - pytest --ignore=helpers/tests/test_display.py --ignore=helpers/tests/test_load.py --ignore=helpers/tests/test_save.py --ignore=helpers/tests/test_bci_task.py --ignore=bci_tasks/tests/test_start_task.py --ignore=helpers/tests/test_acquisition.py
