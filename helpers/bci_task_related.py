@@ -157,7 +157,8 @@ def trial_complete_message(win, parameters):
         font=parameters['font_text']['value'],
         pos=(float(parameters['pos_text_x']['value']),
              float(parameters['pos_text_y']['value'])),
-        wrapWidth=None, colorSpace='rgb',
+        wrapWidth=None,
+        color=parameters['trial_complete_message_color']['value'],
         opacity=1, depth=-6.0)
     return [message_stim]
 

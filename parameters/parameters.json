@@ -53,10 +53,18 @@
     "isNumeric": "false"
   },
   "color_task": {
-    "value": "White",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Color Task",
     "helpTip": "Color Task",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "trial_complete_message_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Trail Complete Message Color",
+    "helpTip": "Trail Complete Message Color",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -93,7 +101,7 @@
     "isNumeric": "false"
   },
   "color_text": {
-    "value": "White",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Color Text",
     "helpTip": "Color Text",
@@ -287,7 +295,7 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "white",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Task Color",
     "helpTip": "Task Color",
