@@ -2,7 +2,7 @@
 from rsvp import calibration, copy_phrase, copy_phrase_calibration
 
 
-def start_task(daq, display_window, task_type, parameters, file_save,
+def start_task(display_window, task_type, parameters, file_save,
                classifier=None, lmodel=None, fake=True):
     # Determine the mode and exp type: send to the correct task.
 
@@ -14,7 +14,7 @@ def start_task(daq, display_window, task_type, parameters, file_save,
             # try running the experiment
             try:
                 calibration.rsvp_calibration_task(
-                    display_window, daq, parameters, file_save)
+                    display_window, parameters, file_save, fake)
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
@@ -25,7 +25,7 @@ def start_task(daq, display_window, task_type, parameters, file_save,
             # try running the experiment
             try:
                 copy_phrase.rsvp_copy_phrase_task(
-                    display_window, daq, parameters, file_save, classifier,
+                    display_window, parameters, file_save, classifier,
                     lmodel=lmodel,
                     fake=fake)
 
@@ -39,7 +39,7 @@ def start_task(daq, display_window, task_type, parameters, file_save,
             try:
                 copy_phrase_calibration \
                     .rsvp_copy_phrase_calibration_task(
-                        display_window, daq, parameters, file_save)
+                        display_window, parameters, file_save, fake)
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:

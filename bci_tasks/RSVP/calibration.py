@@ -4,6 +4,7 @@ from __future__ import division
 from psychopy import core
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
+from helpers.acquisition_related import init_eeg_acquisition
 
 from helpers.triggers import _write_triggers_from_sequence_calibration
 from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
@@ -11,7 +12,7 @@ from helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input)
 
 
-def rsvp_calibration_task(win, daq, parameters, file_save):
+def rsvp_calibration_task(win, parameters, file_save, fake):
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
     clock = core.StaticPeriod(screenHz=frame_rate)
@@ -23,8 +24,10 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     # Start acquiring data
     try:
         experiment_clock = core.MonotonicClock(start_time=None)
-        daq._clock = experiment_clock
-        daq.start_acquisition()
+
+        # Initialize EEG Acquisition
+        daq, server = init_eeg_acquisition(
+            parameters, file_save, clock=experiment_clock, server=fake)
     except Exception as e:
         print "Data acquistion could not start!"
         raise e
@@ -123,6 +126,15 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
 
     # Wait some time before exiting so there is trailing eeg data saved
     core.wait(int(parameters['eeg_buffer_len']['value']))
+
+    try:
+        daq.stop_acquisition()
+    except:
+        # if not started, we can pass!
+        pass
+
+    if server:
+        server.stop()
 
     return file_save
 

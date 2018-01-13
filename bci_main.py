@@ -1,7 +1,7 @@
 import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from display.display_main import init_display_window
-from helpers.acquisition_related import init_eeg_acquisition
+
 from bci_tasks.start_task import start_task
 from helpers.load import load_classifier
 from helpers.lang_model_related import init_language_model
@@ -51,26 +51,13 @@ def execute_task(task_type, parameters, save_folder):
         which will initialize experiment.
     """
 
-    # Initialize the needed DAQ Parameters
-    daq_parameters = {
-        'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
-        'device': parameters['acq_device']['value'],
-        'filename': save_folder + '/' + parameters['raw_data_name']['value'],
-    }
-
     fake_data = parameters['fake_data']['value']
 
     if fake_data == 'true':
-        server = True
-
         # Set this to False to have fake data but real decisions
         fake = True
     else:
-        server = False
         fake = False
-
-    # Initialize EEG Acquisition
-    daq, server = init_eeg_acquisition(daq_parameters, server=server)
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
     #   modules to be loaded.
@@ -109,7 +96,7 @@ def execute_task(task_type, parameters, save_folder):
     # Start Task
     try:
         start_task(
-            daq, display, task_type, parameters, save_folder,
+            display, task_type, parameters, save_folder,
             lmodel=lmodel,
             classifier=classifier, fake=fake)
 
@@ -117,27 +104,6 @@ def execute_task(task_type, parameters, save_folder):
     except Exception as e:
         # close display
         display.close()
-
-        # try stoping acquistion
-        try:
-            daq.stop_acquisition()
-        except:
-            # if not started, we can pass!
-            pass
-
-        # if there is a server, stop it
-        if server:
-            server.stop()
-
-        # raise error
-        raise e
-
-    # Stop Acquistion
-    daq.stop_acquisition()
-
-    # If a server was started for the data, stop it now.
-    if server:
-        server.stop()
 
     # Close the display window
     display.close()

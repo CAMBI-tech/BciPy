@@ -10,7 +10,8 @@ from acquisition.processor import FileWriter
 from acquisition.datastream.server import DataServer
 
 
-def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
+def init_eeg_acquisition(parameters, save_folder,
+                         clock=_Clock(), server=False):
     """
     Initializes a client that connects with the EEG data source and begins
     data collection.
@@ -37,6 +38,14 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
     -------
         (client, server) tuple
     """
+
+    # Initialize the needed DAQ Parameters
+    parameters = {
+        'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
+        'device': parameters['acq_device']['value'],
+        'filename': save_folder + '/' + parameters['raw_data_name']['value'],
+    }
+
     default_host = '127.0.0.1'
     default_port = 8844
 
@@ -71,5 +80,7 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
                     processor=FileWriter.builder(filename),
                     buffer=Buffer.builder(buffer_name),
                     clock=clock)
+
+    client.start_acquisition()
 
     return (client, dataserver)
