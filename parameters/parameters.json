@@ -271,7 +271,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.3",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",

@@ -47,7 +47,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
-    alp = alphabet(parameters)
+    alp = alphabet(parameters=parameters)
 
     # Start acquiring data and set the experiment clock
     try:
@@ -84,7 +84,8 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     try:
         copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
                                              2, alp, task_list=task_list,
-                                             lmodel=lmodel)
+                                             lmodel=lmodel,
+                                             is_txt_sti=rsvp.is_txt_sti)
     except Exception as e:
         print "Error initializing Copy Phrase Task"
 
@@ -321,6 +322,6 @@ def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=parameters['is_txt_sti']['value'])
+        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
 
     return rsvp

@@ -3,7 +3,7 @@ import numpy as np
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                            color=['red', 'white'], num_sti=1,
-                           len_sti=10):
+                           len_sti=10, is_txt=True):
     """ generates RSVPKeyboard sequence by picking n-most likeliy letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
@@ -31,7 +31,10 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
 
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
-        sample = ['+']
+        if is_txt:
+            sample = ['+']
+        else:
+            sample = ['../bci/static/images/bci_main_images/PLUS.png']
         idx = np.random.permutation(idx)
         sample += [alp[i] for i in idx]
         samples.append(sample)
@@ -118,7 +121,7 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
 
 def target_rsvp_sequence_generator(alp, target_letter, timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
-                                   len_sti=10):
+                                   len_sti=10, is_txt=True):
 
     """Generate target RSVPKeyboard sequences.
 
@@ -142,7 +145,10 @@ def target_rsvp_sequence_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     # intialize our arrays
     samples, times, colors = [], [], []
     rand_smp = np.random.randint(0, len_alp, len_sti)
-    sample = ['+']
+    if is_txt:
+        sample = ['+']
+    else:
+        sample = ['../bci/static/images/bci_main_images/PLUS.png']
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that

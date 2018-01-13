@@ -62,7 +62,8 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
                 len_sti=int(parameters['len_sti']['value']), timing=[
                     float(parameters['time_target']['value']),
                     float(parameters['time_cross']['value']),
-                    float(parameters['time_flash']['value'])])
+                    float(parameters['time_flash']['value'])],
+                is_txt=rsvp.is_txt_sti)
 
             (task_text, task_color) = get_task_info(
                 int(parameters['num_sti']['value']),
@@ -142,6 +143,6 @@ def _init_copy_phrase_display_task(parameters, win, clock, experiment_clock):
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=parameters['is_txt_sti']['value'])
+        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
 
     return rsvp

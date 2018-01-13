@@ -110,12 +110,14 @@ class DecisionMaker(object):
         """
 
     def __init__(self, state='',
-                 alphabet=list(string.ascii_uppercase) + ['<'] + ['_']):
+                 alphabet=list(string.ascii_uppercase) + ['<'] + ['_'],
+                 is_txt_sti=True):
         self.state = state
         self.displayed_state = form_display_state(state)
 
         # TODO: read from parameters file
         self.alphabet = alphabet
+        self.is_txt_sti = is_txt_sti
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
                             'list_sti': [], 'list_distribution': []}]
@@ -199,7 +201,7 @@ class DecisionMaker(object):
                 """
         stimuli = \
             best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
-                'list_distribution'][-1], num_sti=1)
+                'list_distribution'][-1], num_sti=1, is_txt=self.is_txt_sti)
         return stimuli
 
 
