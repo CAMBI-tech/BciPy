@@ -8,6 +8,8 @@ import re
 import logging
 from errors import ConnectionErr, StatusCodeError, DockerDownError
 from helpers.bci_task_related import alphabet
+from subprocess import Popen, PIPE
+import platform
 
 ALPHABET = alphabet()
 
@@ -28,6 +30,18 @@ class LangModel:
           port (str) - the port used in docker
           logfile (str) - a valid filename to function as a logger
         """
+
+        # Windows 7 requires a special handling on environment variables. 
+        os_version = platform.platform() 
+        if os_version.startswith('Windows-7-'):
+            docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
+            docker_instructions = docker_env_cmd.stdout.read().split('\n')
+            for instruction in docker_instructions:
+                if instruction.startswith('SET'):
+                    environ_pair_str = instruction[instruction.find(' ')+1:]
+                    var_name, var_value = environ_pair_str.split('=')
+                    os.environ[var_name] = var_value
+
         # assert input path validity
         assert os.path.exists(os.path.dirname(
             localpath2fst)), "%r is not a valid path" % localpath2fst
