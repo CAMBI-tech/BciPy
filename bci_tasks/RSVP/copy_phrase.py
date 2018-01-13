@@ -47,7 +47,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
-    alp = alphabet()
+    alp = alphabet(parameters)
 
     # Start acquiring data and set the experiment clock
     try:

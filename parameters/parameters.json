@@ -255,7 +255,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -263,7 +263,7 @@
     "isNumeric": "false"
   },
   "path_to_presentation_images": {
-    "value": "/static/images/rsvp_images/",
+    "value": "../bci/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",

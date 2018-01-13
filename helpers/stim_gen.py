@@ -74,7 +74,7 @@ def _demo_best_case_sequence_generator():
 def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
                                     color=['green', 'red', 'white'],
                                     num_sti=10,
-                                    len_sti=10):
+                                    len_sti=10, is_txt=True):
     """ Generates random RSVPKeyboard sequences.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
@@ -97,7 +97,12 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
     for idx_num in range(num_sti):
         idx = np.random.permutation(np.array(list(range(len_alp))))
         rand_smp = (idx[0:len_sti])
-        sample = [alp[rand_smp[0]], '+']
+        if not is_txt:
+            sample = [
+                alp[rand_smp[0]],
+                '../bci/static/images/bci_main_images/PLUS.png']
+        else:
+            sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
         sample += [alp[i] for i in rand_smp]
         samples.append(sample)

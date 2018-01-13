@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from psychopy import visual, event
 
@@ -45,7 +46,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     return next_target_letter, text_task, run
 
 
-def alphabet():
+def alphabet(parameters=None):
     """Alphabet.
 
     Function used to standardize the symbols we use as alphabet.
@@ -54,6 +55,17 @@ def alphabet():
     -------
         array of letters.
     """
+    if parameters:
+        if parameters['is_txt_sti']['value'] == 'false':
+            # construct an array of paths to images
+            path = parameters['path_to_presentation_images']['value']
+            image_array = []
+            for image_filename in os.listdir(path):
+                if image_filename.endswith(".png"):
+                    image_array.append(os.path.join(path, image_filename))
+
+            return image_array
+
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 

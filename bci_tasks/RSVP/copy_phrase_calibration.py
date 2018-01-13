@@ -20,7 +20,7 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
     buffer_val = float(parameters['task_buffer_len']['value'])
 
     # Get alphabet for experiment
-    alp = alphabet()
+    alp = alphabet(parameters)
 
     # Start acquiring data
     try:
