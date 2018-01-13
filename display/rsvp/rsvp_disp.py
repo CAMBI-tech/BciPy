@@ -155,6 +155,8 @@ class DisplayRSVP(object):
 
         # Do the sequence
         for idx in range(len(self.ele_list_sti)):
+
+            # Start the trial clock and set stimuli
             self.trialClock.start(self.time_list_sti[idx])
             if self.is_txt_sti:
                 self.sti.text = self.ele_list_sti[idx]
@@ -162,19 +164,24 @@ class DisplayRSVP(object):
             else:
                 self.sti.image = self.ele_list_sti[idx]
 
+            # draw static and stimuli
             self.draw_static()
             self.sti.draw()
 
+            # append timing information
             if self.is_txt_sti:
                 timing.append((self.sti.text, self.expClock.getTime()))
             else:
-                end = self.sti.image.rfind('.')
-                start= self.sti.image.rfind('\\') + 1
-                timing.append((self.sti.image[start:end], self.expClock.getTime()))
+                # We expect a path for images, so split on forward slash and
+                    # extension to get the name of the file
+                image_name = self.sti.image.split('/')[-1].split('.')[0]
+                timing.append((image_name, self.expClock.getTime()))
 
+            # flip the monitor and stop the clock
             self.win.flip()
             self.trialClock.complete()
 
+        # draw in other static and flip once more
         self.draw_static()
         self.win.flip()
 
