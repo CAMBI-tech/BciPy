@@ -45,11 +45,12 @@ def init_display_window(parameters):
               window_height],
         screen=0,
         allowGUI=False,
+        useFBO=False,
         fullscr=full_screen,
         allowStencil=False,
         monitor='mainMonitor',
-        color='black', colorSpace='rgb', blendMode='avg',
-        waitBlanking=True)
+        winType='pyglet', units='norm', waitBlanking=True,
+        color=parameters['background_color']['value'])
 
     # Return display window to caller
     return display_window
