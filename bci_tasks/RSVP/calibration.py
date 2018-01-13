@@ -20,8 +20,6 @@ def rsvp_calibration_task(win, daq, parameters, file_save):
     # Get alphabet for experiment
     alp = alphabet(parameters)
 
-    print alp
-
     # Start acquiring data
     try:
         experiment_clock = core.MonotonicClock(start_time=None)

@@ -43,5 +43,3 @@ class TestBciTask(unittest.TestCase):
             ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
              'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<',
              '_'])
-        import pdb
-        pdb.set_trace()
