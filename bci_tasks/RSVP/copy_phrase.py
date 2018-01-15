@@ -161,7 +161,7 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
             win.flip()
 
             # Setup the new Stimuli
-            rsvp.ele_list_sti = ele_sti[0]
+            rsvp.stim_sequence = ele_sti[0]
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
             rsvp.time_list_sti = timing_sti[0]
@@ -325,10 +325,10 @@ def _init_copy_phrase_display_task(
     rsvp = CopyPhraseTask(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
+        text_info=parameters['text_text']['value'],
         static_text_task=parameters['text_task']['value'],
         text_task='****',
-        color_information=parameters['color_text']['value'],
+        color_info=parameters['color_text']['value'],
         pos_information=(float(parameters['pos_text_x']['value']),
                          float(parameters['pos_text_y']['value'])),
         height_information=float(parameters['txt_height']['value']),
@@ -340,7 +340,7 @@ def _init_copy_phrase_display_task(
         pos_sti=(float(parameters['pos_sti_x']['value']),
                  float(parameters['pos_sti_y']['value'])),
         sti_height=float(parameters['sti_height']['value']),
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
                    float(parameters['tr_pos_bg_y']['value'])),

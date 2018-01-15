@@ -56,10 +56,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
                     float(parameters['time_cross']['value']),
                     float(parameters['time_flash']['value'])],
                 is_txt=rsvp.is_txt_sti,
-                color=[
-                    parameters['target_letter_color']['value'],
-                    parameters['fixation_color']['value'],
-                    parameters['stimuli_color']['value']])
+ )
 
             (task_text, task_color) = get_task_info(
                 int(parameters['num_sti']['value']),
@@ -90,7 +87,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
                 rsvp.sti.height = float(parameters['sti_height']['value'])
 
                 # Schedule a sequence
-                rsvp.ele_list_sti = ele_sti[idx_o]
+                rsvp.stim_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
                 if parameters['is_txt_sti']['value']:
@@ -147,8 +144,8 @@ def init_calibration_display_task(
     rsvp = CalibrationTask(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
-        color_information=parameters['color_text']['value'],
+        text_info=parameters['text_text']['value'],
+        color_info=parameters['color_text']['value'],
         pos_information=(float(parameters['pos_text_x']['value']),
                          float(parameters['pos_text_y']['value'])),
         height_information=float(parameters['txt_height']['value']),
@@ -160,7 +157,7 @@ def init_calibration_display_task(
         pos_sti=(float(parameters['pos_sti_x']['value']),
                  float(parameters['pos_sti_y']['value'])),
         sti_height=float(parameters['sti_height']['value']),
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         size_domain_bg=int(parameters['size_domain_bg']['value']),
         color_bg_txt=parameters['color_bg_txt']['value'],
