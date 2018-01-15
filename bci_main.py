@@ -104,6 +104,7 @@ def execute_task(task_type, parameters, save_folder):
     except Exception as e:
         # close display
         display.close()
+        raise e
 
     # Close the display window
     display.close()

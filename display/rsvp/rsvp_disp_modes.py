@@ -27,28 +27,28 @@ class CopyPhraseTask(DisplayRSVP):
 
     def __init__(self, window, clock, experiment_clock, static_text_task='COPY_PHRASE',
                  static_color_task='White',
-                 text_information='Press Space Bar to Pause',
-                 color_information='White', pos_information=(0, -.9),
-                 height_information=0.2, font_information='Times',
+                 text_info='Press Space Bar to Pause',
+                 color_info='White', pos_info=(0, -.9),
+                 height_info=0.2, font_info='Times',
                  color_task=['white'] * 4 + ['green'] * 2 + ['red'],
                  font_task='Times', text_task='COPY_PH', height_task=0.1,
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
-                 ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+                 stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=1):
+                 is_txt_sti=True):
         """ Initializes Copy Phrase Task Objects """
 
         tmp = visual.TextStim(window, font=font_task, text=static_text_task)
         static_pos_task = (
             tmp.boundingBox[0] / window.size[0] - 1, 1 - height_task)
 
-        color_text = [static_color_task, color_information]
-        font_text = [font_task, font_information]
-        text_text = [static_text_task, text_information]
-        pos_text = [static_pos_task, pos_information]
-        height_text = [height_task, height_information]
+        color_text = [static_color_task, color_info]
+        font_text = [font_task, font_info]
+        text_text = [static_text_task, text_info]
+        pos_text = [static_pos_task, pos_info]
+        height_text = [height_task, height_info]
 
         # Adjust task position wrt. static task position. Definition of
         # dummy texts are required. Place the task on bottom
@@ -71,7 +71,7 @@ class CopyPhraseTask(DisplayRSVP):
                                              font_sti=font_sti,
                                              pos_sti=pos_sti,
                                              sti_height=sti_height,
-                                             ele_list_sti=ele_list_sti,
+                                             stim_sequence=stim_sequence,
                                              color_list_sti=color_list_sti,
                                              time_list_sti=time_list_sti,
                                              tr_pos_bg=tr_pos_bg,
@@ -104,24 +104,24 @@ class FreeSpellingTask(DisplayRSVP):
             bg(BarGraph): bar graph display unit in display """
 
     def __init__(self, window, clock, experiment_clock,
-                 text_information='Press Space Bar to Pause',
-                 color_information='White', pos_information=(0, -.9),
-                 height_information=0.2, font_information='Times',
+                 text_info='Press Space Bar to Pause',
+                 color_info='White', pos_info=(0, -.9),
+                 height_info=0.2, font_info='Times',
                  color_task=['white'],
                  font_task='Times', text_task='1/100', height_task=0.1,
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
-                 ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+                 stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=1):
+                 is_txt_sti=True):
         """ Initializes Free Spelling Task Objects """
 
-        color_text = [color_information]
-        font_text = [font_information]
-        text_text = [text_information]
-        pos_text = [pos_information]
-        height_text = [height_information]
+        color_text = [color_info]
+        font_text = [font_info]
+        text_text = [text_info]
+        pos_text = [pos_info]
+        height_text = [height_info]
 
         tmp = visual.TextStim(window, font=font_task, text=text_task)
         x_pos_task = tmp.boundingBox[0] / window.size[0] - 1
@@ -142,7 +142,7 @@ class FreeSpellingTask(DisplayRSVP):
                                                font_sti=font_sti,
                                                pos_sti=pos_sti,
                                                sti_height=sti_height,
-                                               ele_list_sti=ele_list_sti,
+                                               stim_sequence=stim_sequence,
                                                color_list_sti=color_list_sti,
                                                time_list_sti=time_list_sti,
                                                tr_pos_bg=tr_pos_bg,
@@ -152,7 +152,6 @@ class FreeSpellingTask(DisplayRSVP):
                                                font_bg_txt=font_bg_txt,
                                                color_bar_bg=color_bar_bg,
                                                is_txt_sti=is_txt_sti)
-
 
 
 class CalibrationTask(DisplayRSVP):
@@ -165,24 +164,24 @@ class CalibrationTask(DisplayRSVP):
 
     def __init__(self, window, clock,
                  experiment_clock,
-                 text_information='Press Space Bar to Pause',
-                 color_information='White', pos_information=(0, -.9),
-                 height_information=0.2, font_information='Times',
+                 text_info='Press Space Bar to Pause',
+                 color_info='White', pos_info=(0, -.9),
+                 height_info=0.2, font_info='Times',
                  color_task=['white'],
                  font_task='Times', text_task='1/100', height_task=0.1,
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
-                 ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+                 stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=1):
+                 is_txt_sti=True):
         """ Initializes Calibration Task Objects """
 
-        color_text = [color_information]
-        font_text = [font_information]
-        text_text = [text_information]
-        pos_text = [pos_information]
-        height_text = [height_information]
+        color_text = [color_info]
+        font_text = [font_info]
+        text_text = [text_info]
+        pos_text = [pos_info]
+        height_text = [height_info]
 
         tmp = visual.TextStim(window, font=font_task, text=text_task)
         x_pos_task = tmp.boundingBox[0] / window.size[0] - 1
@@ -203,7 +202,7 @@ class CalibrationTask(DisplayRSVP):
                                               font_sti=font_sti,
                                               pos_sti=pos_sti,
                                               sti_height=sti_height,
-                                              ele_list_sti=ele_list_sti,
+                                              stim_sequence=stim_sequence,
                                               color_list_sti=color_list_sti,
                                               time_list_sti=time_list_sti,
                                               tr_pos_bg=tr_pos_bg,

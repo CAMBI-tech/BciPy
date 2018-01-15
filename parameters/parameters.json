@@ -16,7 +16,7 @@
     "isNumeric": "false"
   },
   "background_color": {
-    "value": "white",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Main Window Background Color",
     "helpTip": "Main Window Background Color.",
@@ -61,7 +61,7 @@
     "isNumeric": "false"
   },
   "trial_complete_message_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Trail Complete Message Color",
     "helpTip": "Trail Complete Message Color",
@@ -93,7 +93,7 @@
     "isNumeric": "true"
   },
   "text_task": {
-    "value": "COPY_PHRASE",
+    "value": "SPELL_THIS_WORD",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
@@ -101,7 +101,7 @@
     "isNumeric": "false"
   },
   "color_text": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Color Text",
     "helpTip": "Color Text",
@@ -271,7 +271,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -279,7 +279,7 @@
     "isNumeric": "false"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/toy_control_images/",
+    "value": "../bci/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -287,7 +287,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": "0.3",
+    "value": ".25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -295,10 +295,34 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Task Color",
     "helpTip": "Task Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "target_letter_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Target Letter Color",
+    "helpTip": "Target Letter Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "fixation_color": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Fixation Color",
+    "helpTip": "Fixation Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "stimuli_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Stimuli Color",
+    "helpTip": "Stimuli Color",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -311,7 +335,7 @@
     "isNumeric": "true"
   },
   "time_cross": {
-    "value": "0.6",
+    "value": "0.4",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",
@@ -460,6 +484,42 @@
     "helpTip": "Message that displays at the end of trial",
     "recommended_values": "",
     "isNumeric": "false"
+
+  },
+  "wait_screen_message": {
+    "value": "Press Space to Continue or Esc to Exit",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message",
+    "helpTip": "Message that displays at the beginning of trial and when user pauses",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "prospect_flash_time": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "prospect_flash_time",
+    "helpTip": "prospect_flash_time",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "show_prospects": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "show_prospects",
+    "helpTip": "show_prospects",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "prospect_message": {
+    "value": "SELECTED:",
+    "section": "bci_config",
+    "readableName": "prospect_message",
+    "helpTip": "prospect_message",
+    "recommended_values": "",
+    "isNumeric": "true"
 
   },
   "max_seq_len": {

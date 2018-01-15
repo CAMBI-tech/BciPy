@@ -111,16 +111,16 @@ experiment_clock = core.MonotonicClock(start_time=None)
 
 rsvp = CalibrationTask(window=win, clock=clock,
                        experiment_clock=experiment_clock,
-                       text_information=text_text,
-                       color_information=color_text, pos_information=pos_text,
-                       height_information=txt_height,
-                       font_information=font_text,
+                       text_info=text_text,
+                       color_info=color_text, pos_info=pos_text,
+                       height_info=txt_height,
+                       font_info=font_text,
                        color_task=['white'],
                        font_task=font_task, text_task=task_text[0],
                        height_task=height_task,
                        font_sti=font_sti, pos_sti=pos_sti,
                        sti_height=sti_height,
-                       ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+                       stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                        time_list_sti=[3] * 10,
                        tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
                        size_domain_bg=size_domain_bg,
@@ -138,7 +138,7 @@ for idx_o in range(len(task_text)):
     rsvp.sti.height = sti_height
 
     # Schedule a sequence
-    rsvp.ele_list_sti = ele_sti[idx_o]
+    rsvp.stim_sequence = ele_sti[idx_o]
 
     if is_txt_sti:
         rsvp.color_list_sti = color_sti[idx_o]
@@ -149,6 +149,9 @@ for idx_o in range(len(task_text)):
     sequence_timing = rsvp.do_sequence()
 
     # _write_triggers_from_sequence_calibration(sequence_timing, trigger_file)
+
+    # Show the selected letter
+    rsvp.show_prospect_letter(ele_sti[idx_o][0], 2, 'selected:')
 
     core.wait(.5)
 

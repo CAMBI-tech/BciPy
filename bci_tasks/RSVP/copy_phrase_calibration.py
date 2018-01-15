@@ -52,10 +52,17 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     target_letter = copy_phrase[0]
     text_task = '*'
 
+    # check user input to make sure we should be going
+    if not get_user_input(
+            rsvp, parameters['wait_screen_message']['value'],
+            first_run=True):
+        return
+
     while run:
 
         # check user input to make sure we should be going
-        if not get_user_input():
+        if not get_user_input(
+                rsvp, parameters['wait_screen_message']['value']):
             break
 
         # Try getting random sequence information given stimuli parameters
@@ -67,7 +74,11 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
                     float(parameters['time_target']['value']),
                     float(parameters['time_cross']['value']),
                     float(parameters['time_flash']['value'])],
-                is_txt=rsvp.is_txt_sti)
+                is_txt=rsvp.is_txt_sti,
+                color=[
+                    parameters['target_letter_color']['value'],
+                    parameters['fixation_color']['value'],
+                    parameters['stimuli_color']['value']])
 
             (task_text, task_color) = get_task_info(
                 int(parameters['num_sti']['value']),
@@ -85,7 +96,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
             win.flip()
 
             # update task state
-            rsvp.ele_list_sti = ele_sti[0]
+            rsvp.stim_sequence = ele_sti[0]
             # rsvp.text_task = text_task
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
@@ -140,14 +151,14 @@ def _init_copy_phrase_display_task(
     rsvp = CopyPhraseTask(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
+        text_info=parameters['text_text']['value'],
         static_text_task=parameters['text_task']['value'],
         text_task='****',
-        color_information=parameters['color_text']['value'],
-        pos_information=(float(parameters['pos_text_x']['value']),
+        color_info=parameters['color_text']['value'],
+        pos_info=(float(parameters['pos_text_x']['value']),
                          float(parameters['pos_text_y']['value'])),
-        height_information=float(parameters['txt_height']['value']),
-        font_information=parameters['font_text']['value'],
+        height_info=float(parameters['txt_height']['value']),
+        font_info=parameters['font_text']['value'],
         color_task=['white'],
         font_task=parameters['font_task']['value'],
         height_task=float(parameters['height_task']['value']),
@@ -155,7 +166,7 @@ def _init_copy_phrase_display_task(
         pos_sti=(float(parameters['pos_sti_x']['value']),
                  float(parameters['pos_sti_y']['value'])),
         sti_height=float(parameters['sti_height']['value']),
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
                    float(parameters['tr_pos_bg_y']['value'])),

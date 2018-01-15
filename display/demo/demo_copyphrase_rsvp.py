@@ -100,16 +100,16 @@ experiment_clock = core.MonotonicClock(start_time=None)
 
 rsvp = CopyPhraseTask(window=win, clock=clock, experiment_clock=experiment_clock, static_text_task=text_task,
                       static_color_task=color_task,
-                      text_information=text_text,
-                      color_information=color_text, pos_information=pos_text,
-                      height_information=txt_height,
-                      font_information=font_text,
+                      text_info=text_text,
+                      color_info=color_text, pos_info=pos_text,
+                      height_info=txt_height,
+                      font_info=font_text,
                       color_task=['white'] * 4 + ['green'] * 2 + ['red'],
                       font_task=font_task, text_task='COPY_PH',
                       height_task=height_task,
                       font_sti=font_sti, pos_sti=pos_sti,
                       sti_height=sti_height,
-                      ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+                      stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                       time_list_sti=[3] * 10,
                       tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
                       size_domain_bg=size_domain_bg,
@@ -131,7 +131,7 @@ for idx_o in range(len(task_text)):
 
     for idx in range(int(len(ele_sti) / 2)):
         # Schedule a sequence
-        rsvp.ele_list_sti = ele_sti[counter]
+        rsvp.stim_sequence = ele_sti[counter]
         if is_txt_sti:
             rsvp.color_list_sti = color_sti[counter]
 
@@ -156,7 +156,7 @@ for idx_o in range(len(task_text)):
         counter += 1
 
     # Get stimuli parameters
-    rsvp.ele_list_sti = ele_list_dec[idx_o]
+    rsvp.stim_sequence = ele_list_dec[idx_o]
     rsvp.color_list_sti = ['green']
     rsvp.time_list_sti = [2]
     rsvp.do_sequence()

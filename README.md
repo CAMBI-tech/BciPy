@@ -91,7 +91,35 @@ This repository uses pytest for execution of tests. You may execute them by:
 5. Use informative names for functions and classes.
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
-8. All new modules or major functionality should be documented outside of the code.
+8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one. 
+
+For further instruction:
+
+```
+The Zen of Python, by Tim Peters
+
+Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+Complex is better than complicated.
+Flat is better than nested.
+Sparse is better than dense.
+Readability counts.
+Special cases aren't special enough to break the rules.
+Although practicality beats purity.
+Errors should never pass silently.
+Unless explicitly silenced.
+In the face of ambiguity, refuse the temptation to guess.
+There should be one-- and preferably only one --obvious way to do it.
+Although that way may not be obvious at first unless you're Dutch.
+Now is better than never.
+Although never is often better than *right* now.
+If the implementation is hard to explain, it's a bad idea.
+If the implementation is easy to explain, it may be a good idea.
+Namespaces are one honking great idea -- let's do more of those!
+```
+
+Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
 ## Authorship
 --------------

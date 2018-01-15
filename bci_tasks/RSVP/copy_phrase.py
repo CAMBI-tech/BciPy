@@ -99,6 +99,8 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
     #   epoch counter and index (what epoch, and how many sequences within it)
     new_epoch = True
     run = True
+    show_prospects = True if \
+        parameters['show_prospects']['value'] == 'true' else False
     seq_counter = 0
     epoch_counter = 0
     epoch_index = 0
@@ -116,11 +118,17 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
     # Save session data
     _save_session_related_data(session_save_location, data)
 
+    # check user input to make sure we should be going
+    if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          first_run=True):
+        return
+
     # Start the Session!
     while run is True:
 
         # check user input to make sure we should be going
-        if not get_user_input():
+        if not get_user_input(
+                rsvp, parameters['wait_screen_message']['value']):
             break
 
         # Why bs for else? #changeforrelease
@@ -148,7 +156,6 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
 
         # Catch the exception here if needed.
         except Exception as e:
-            print "Error Initializing Epoch!"
             raise e
 
         # Try executing the given sequences. This is where display is used!
@@ -160,7 +167,7 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
             win.flip()
 
             # Setup the new Stimuli
-            rsvp.ele_list_sti = ele_sti[0]
+            rsvp.stim_sequence = ele_sti[0]
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
             rsvp.time_list_sti = timing_sti[0]
@@ -205,6 +212,12 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
                         'target_letter': target_letter,
                         'current_text': text_task,
                         'copy_phrase': copy_phrase}
+
+                    if show_prospects:
+                        rsvp.show_prospect_letter(
+                            target_letter,
+                            float(parameters['prospect_flash_time']['value']),
+                            parameters['prospect_message']['value'])
 
                     # Evaulate this sequence
                     (target_letter, text_task, run) = \
@@ -253,6 +266,16 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
                         ele_sti = sti[0]
                         timing_sti = sti[1]
                         color_sti = sti[2]
+                    else:
+                        if show_prospects:
+                            selected_letter = copy_phrase_task \
+                                .decision_maker.displayed_state[-1]
+                            rsvp.show_prospect_letter(
+                                selected_letter,
+                                float(
+                                    parameters[
+                                        'prospect_flash_time']['value']),
+                                parameters['prospect_message']['value'])
 
                     # Get the current task text from the decision maker
                     text_task = copy_phrase_task.decision_maker.displayed_state
@@ -308,14 +331,14 @@ def _init_copy_phrase_display_task(
     rsvp = CopyPhraseTask(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
+        text_info=parameters['text_text']['value'],
         static_text_task=parameters['text_task']['value'],
         text_task='****',
-        color_information=parameters['color_text']['value'],
-        pos_information=(float(parameters['pos_text_x']['value']),
+        color_info=parameters['color_text']['value'],
+        pos_info=(float(parameters['pos_text_x']['value']),
                          float(parameters['pos_text_y']['value'])),
-        height_information=float(parameters['txt_height']['value']),
-        font_information=parameters['font_text']['value'],
+        height_info=float(parameters['txt_height']['value']),
+        font_info=parameters['font_text']['value'],
         color_task=['white'],
         font_task=parameters['font_task']['value'],
         height_task=float(parameters['height_task']['value']),
@@ -323,7 +346,7 @@ def _init_copy_phrase_display_task(
         pos_sti=(float(parameters['pos_sti_x']['value']),
                  float(parameters['pos_sti_y']['value'])),
         sti_height=float(parameters['sti_height']['value']),
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
                    float(parameters['tr_pos_bg_y']['value'])),
