@@ -150,6 +150,9 @@ for idx_o in range(len(task_text)):
 
     # _write_triggers_from_sequence_calibration(sequence_timing, trigger_file)
 
+    # Show the selected letter
+    rsvp.show_prospect_letter(ele_sti[idx_o][0], 2, 'selected:')
+
     core.wait(.5)
 
 # close the window and trigger_file

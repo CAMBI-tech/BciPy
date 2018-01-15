@@ -93,7 +93,7 @@
     "isNumeric": "true"
   },
   "text_task": {
-    "value": "COPY_PHRASE",
+    "value": "SPELL_THIS_WORD",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
@@ -271,7 +271,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -279,7 +279,7 @@
     "isNumeric": "false"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/toy_control_images/",
+    "value": "../bci/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -460,6 +460,33 @@
     "helpTip": "Message that displays at the end of trial",
     "recommended_values": "",
     "isNumeric": "false"
+
+  },
+  "prospect_flash_time": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "prospect_flash_time",
+    "helpTip": "prospect_flash_time",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "show_prospects": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "show_prospects",
+    "helpTip": "show_prospects",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "prospect_message": {
+    "value": "SELECTED:",
+    "section": "bci_config",
+    "readableName": "prospect_message",
+    "helpTip": "prospect_message",
+    "recommended_values": "",
+    "isNumeric": "true"
 
   },
   "max_seq_len": {

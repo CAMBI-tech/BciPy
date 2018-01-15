@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
-from psychopy import visual
+from psychopy import visual, core
 import numpy as np
 
 
@@ -71,6 +71,10 @@ class DisplayRSVP(object):
 
         # Length of the stimuli (number of flashes)
         self.len_sti = len(ele_list_sti)
+
+        self.font_stim = font_sti
+        self.height_stim = sti_height
+        self.pos_sti = pos_sti
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -207,6 +211,38 @@ class DisplayRSVP(object):
 
         self.update_task(text=text, color_list=color_list, pos=pos_task)
 
+    def show_prospect_letter(self, text, prospect_flash_time, message):
+        """ Flashes a prospect letter to user.
+                text(string): prospect letter to show,
+                prospect_flash_time(float): time to present prospect
+                message(string): message to display with prospect
+        """
+        # Make a prospect Stimuli and add it as the text to be displayed
+        if self.is_txt_sti:
+            prospect = visual.TextStim(self.win, font=self.font_stim,
+                                       text=text,
+                                       height=self.height_stim,
+                                       pos=self.pos_sti)
+        else:
+            prospect = visual.ImageStim(
+                self.win,
+                image=text,
+                size=(self.height_stim, self.height_stim),
+                mask=None,
+                pos=self.pos_sti,
+                ori=0.0)
+
+        message = visual.TextStim(
+            self.win,
+            font=self.font_stim, text=message, height=.1,
+            pos=(-.5, .5), color='green')
+
+        message.draw()
+        prospect.draw()
+        self.draw_static()
+        self.win.flip()
+
+        core.wait(prospect_flash_time)
 
 
 class MultiColorText(object):

@@ -99,6 +99,8 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
     #   epoch counter and index (what epoch, and how many sequences within it)
     new_epoch = True
     run = True
+    show_prospects = True if \
+        parameters['show_prospects']['value'] == 'true' else False
     seq_counter = 0
     epoch_counter = 0
     epoch_index = 0
@@ -148,7 +150,6 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
 
         # Catch the exception here if needed.
         except Exception as e:
-            print "Error Initializing Epoch!"
             raise e
 
         # Try executing the given sequences. This is where display is used!
@@ -206,6 +207,12 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
                         'current_text': text_task,
                         'copy_phrase': copy_phrase}
 
+                    if show_prospects:
+                        rsvp.show_prospect_letter(
+                            target_letter,
+                            float(parameters['prospect_flash_time']['value']),
+                            parameters['prospect_message']['value'])
+
                     # Evaulate this sequence
                     (target_letter, text_task, run) = \
                         fake_copy_phrase_decision(copy_phrase, target_letter,
@@ -253,6 +260,16 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
                         ele_sti = sti[0]
                         timing_sti = sti[1]
                         color_sti = sti[2]
+                    else:
+                        if show_prospects:
+                            selected_letter = copy_phrase_task \
+                                .decision_maker.displayed_state[-1]
+                            rsvp.show_prospect_letter(
+                                selected_letter,
+                                float(
+                                    parameters[
+                                        'prospect_flash_time']['value']),
+                                parameters['prospect_message']['value'])
 
                     # Get the current task text from the decision maker
                     text_task = copy_phrase_task.decision_maker.displayed_state
