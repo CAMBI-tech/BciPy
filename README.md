@@ -91,7 +91,7 @@ This repository uses pytest for execution of tests. You may execute them by:
 5. Use informative names for functions and classes.
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
-8. All new modules or major functionality should be documented outside of the code.
+8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one. 
 
 For further instruction:
 
