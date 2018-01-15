@@ -156,7 +156,7 @@ def _init_copy_phrase_display_task(
         text_task='****',
         color_info=parameters['color_text']['value'],
         pos_info=(float(parameters['pos_text_x']['value']),
-                         float(parameters['pos_text_y']['value'])),
+                  float(parameters['pos_text_y']['value'])),
         height_info=float(parameters['txt_height']['value']),
         font_info=parameters['font_text']['value'],
         color_task=['white'],
@@ -176,6 +176,7 @@ def _init_copy_phrase_display_task(
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
+        is_txt_sti=True if parameters[
+            'is_txt_sti']['value'] == 'true' else False)
 
     return rsvp

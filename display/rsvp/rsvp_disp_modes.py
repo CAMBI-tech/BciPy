@@ -4,9 +4,9 @@
 
 from __future__ import division
 from psychopy import visual
-from rsvp_disp import DisplayRSVP
+from rsvp_disp import RSVPDisplay
 
-""" RSVP Tasks are DisplayRSVP objects with different structure. They share
+""" RSVP Tasks are RSVPDisplay objects with different structure. They share
     the tasks and the essential elements and stimuli. However layout, length of
     stimuli list, update procedures and colors are different. Therefore each
     mode should be separated from each other carefully.
@@ -14,7 +14,7 @@ from rsvp_disp import DisplayRSVP
         update_task_state: update task information of the module """
 
 
-class CopyPhraseTask(DisplayRSVP):
+class CopyPhraseTask(RSVPDisplay):
     """ Copy Phrase Task object of RSVP
         Attr:
             static_task(visual_Text_Stimuli): aim string of the copy phrase.
@@ -95,7 +95,7 @@ class CopyPhraseTask(DisplayRSVP):
         self.update_task(text=text, color_list=color_list, pos=pos_task)
 
 
-class FreeSpellingTask(DisplayRSVP):
+class FreeSpellingTask(RSVPDisplay):
     """ Free Spelling Task object of RSVP
         Attr:
             information(visual_Text_Stimuli): information text.
@@ -154,7 +154,7 @@ class FreeSpellingTask(DisplayRSVP):
                                                is_txt_sti=is_txt_sti)
 
 
-class CalibrationTask(DisplayRSVP):
+class CalibrationTask(RSVPDisplay):
     """ Calibration object of RSVP
         Attr:
             information(visual_Text_Stimuli): information text.

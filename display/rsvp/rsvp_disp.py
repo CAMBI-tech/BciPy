@@ -5,7 +5,7 @@ from psychopy import visual, core
 import numpy as np
 
 
-class DisplayRSVP(object):
+class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
 
     Animates a sequence in RSVP. Mode should be determined outside.
