@@ -257,6 +257,14 @@ class DisplayRSVP(object):
 
         core.wait(prospect_flash_time)
 
+    def wait_screen(self, message):
+        wait_message = visual.TextStim(self.win, font=self.font_stim,
+                                       text=message,
+                                       height=self.height_stim,
+                                       pos=self.pos_sti)
+        wait_message.draw()
+        self.win.flip()
+
 
 class MultiColorText(object):
     """Multi Color Text.

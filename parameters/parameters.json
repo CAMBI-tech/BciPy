@@ -486,6 +486,15 @@
     "isNumeric": "false"
 
   },
+  "wait_screen_message": {
+    "value": "Please Press Space to Begin or Esc to Exit!",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message",
+    "helpTip": "Message that displays at the beginning of trial and when user pauses",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
   "prospect_flash_time": {
     "value": "2",
     "section": "bci_config",
