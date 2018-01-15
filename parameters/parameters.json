@@ -16,7 +16,7 @@
     "isNumeric": "false"
   },
   "background_color": {
-    "value": "white",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Main Window Background Color",
     "helpTip": "Main Window Background Color.",
@@ -61,7 +61,7 @@
     "isNumeric": "false"
   },
   "trial_complete_message_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Trail Complete Message Color",
     "helpTip": "Trail Complete Message Color",
@@ -101,7 +101,7 @@
     "isNumeric": "false"
   },
   "color_text": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Color Text",
     "helpTip": "Color Text",
@@ -287,7 +287,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": "0.3",
+    "value": ".25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -295,10 +295,34 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Task Color",
     "helpTip": "Task Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "target_letter_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Target Letter Color",
+    "helpTip": "Target Letter Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "fixation_color": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Fixation Color",
+    "helpTip": "Fixation Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "stimuli_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Stimuli Color",
+    "helpTip": "Stimuli Color",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -311,7 +335,7 @@
     "isNumeric": "true"
   },
   "time_cross": {
-    "value": "0.6",
+    "value": "0.4",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",

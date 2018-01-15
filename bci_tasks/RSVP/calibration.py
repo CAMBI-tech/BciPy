@@ -29,8 +29,6 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
     except Exception as e:
-        print "Data acquistion could not start!"
-        print e
         raise e
 
     # Try running the calibration task
@@ -57,7 +55,11 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
                     float(parameters['time_target']['value']),
                     float(parameters['time_cross']['value']),
                     float(parameters['time_flash']['value'])],
-                is_txt=rsvp.is_txt_sti)
+                is_txt=rsvp.is_txt_sti,
+                color=[
+                    parameters['target_letter_color']['value'],
+                    parameters['fixation_color']['value'],
+                    parameters['stimuli_color']['value']])
 
             (task_text, task_color) = get_task_info(
                 int(parameters['num_sti']['value']),
