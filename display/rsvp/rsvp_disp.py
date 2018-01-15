@@ -224,14 +224,14 @@ class DisplayRSVP(object):
         self.update_task(text=text, color_list=color_list, pos=pos_task)
 
     def show_prospect_letter(self, text, prospect_flash_time, message):
-        """Flashe a prospect letter to user.
+        """Flash a prospect letter to user.
 
         Args:
                 text(string): prospect letter to show,
                 prospect_flash_time(float): time to present prospect
                 message(string): message to display with prospect
         """
-        # Make a prospect Stimuli and add it as the text to be displayed
+        # Make a prospect Stimuli. Make it a text or image.
         if self.is_txt_sti:
             prospect = visual.TextStim(self.win, font=self.font_stim,
                                        text=text,
@@ -246,34 +246,51 @@ class DisplayRSVP(object):
                 pos=self.pos_sti,
                 ori=0.0)
 
+        # Construct the message to present with prospect
         message = visual.TextStim(
             self.win,
             font=self.font_stim, text=message, height=.1,
             pos=(-.5, .5), color='green')
 
+        # Draw Stimuli and flip screen
         message.draw()
         prospect.draw()
         self.draw_static()
         self.win.flip()
 
+        # Wait for a user defined amount of time with prospect on screen
         core.wait(prospect_flash_time)
 
     def wait_screen(self, message):
+        """Wait Screen.
+
+        Args:
+            message(string): message to be displayed while waiting
+        """
+
+        # Construct the wait message
         wait_message = visual.TextStim(self.win, font=self.font_stim,
                                        text=message,
                                        height=.1,
                                        color='white',
                                        pos=self.pos_sti,
                                        wrapWidth=2)
-        wait_logo = visual.ImageStim(
-            self.win,
-            image='./static/images/gui_images/bci_cas_logo.png',
-            size=(self.height_stim, self.height_stim),
-            pos=(0, .5),
-            mask=None,
-            ori=0.0)
-        wait_logo.draw()
 
+        # Try adding our BCI logo. Pass if not found.
+        try:
+            wait_logo = visual.ImageStim(
+                self.win,
+                image='./static/images/gui_images/bci_cas_logo.png',
+                size=(self.height_stim, self.height_stim),
+                pos=(0, .5),
+                mask=None,
+                ori=0.0)
+            wait_logo.draw()
+        except Exception:
+            print "Cannot load logo image"
+            pass
+
+        # Draw and flip the screen.
         wait_message.draw()
         self.win.flip()
 
