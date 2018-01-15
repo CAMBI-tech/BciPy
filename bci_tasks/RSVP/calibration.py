@@ -44,6 +44,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     trigger_file = open(trigger_save_location, 'w')
     run = True
 
+    rsvp.wait_screen(parameters['wait_screen_message']['value'])
     while run:
 
         # Try getting random sequence information given stimuli parameters
@@ -90,7 +91,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
                 rsvp.sti.height = float(parameters['sti_height']['value'])
 
                 # Schedule a sequence
-                rsvp.ele_list_sti = ele_sti[idx_o]
+                rsvp.stim_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
                 if parameters['is_txt_sti']['value']:
@@ -147,12 +148,12 @@ def init_calibration_display_task(
     rsvp = CalibrationTask(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_information=parameters['text_text']['value'],
-        color_information=parameters['color_text']['value'],
-        pos_information=(float(parameters['pos_text_x']['value']),
-                         float(parameters['pos_text_y']['value'])),
-        height_information=float(parameters['txt_height']['value']),
-        font_information=parameters['font_text']['value'],
+        text_info=parameters['text_text']['value'],
+        color_info=parameters['color_text']['value'],
+        pos_info=(float(parameters['pos_text_x']['value']),
+                  float(parameters['pos_text_y']['value'])),
+        height_info=float(parameters['txt_height']['value']),
+        font_info=parameters['font_text']['value'],
         color_task=['white'],
         font_task=parameters['font_task']['value'],
         height_task=float(parameters['height_task']['value']),
@@ -160,7 +161,7 @@ def init_calibration_display_task(
         pos_sti=(float(parameters['pos_sti_x']['value']),
                  float(parameters['pos_sti_y']['value'])),
         sti_height=float(parameters['sti_height']['value']),
-        ele_list_sti=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         size_domain_bg=int(parameters['size_domain_bg']['value']),
         color_bg_txt=parameters['color_bg_txt']['value'],
