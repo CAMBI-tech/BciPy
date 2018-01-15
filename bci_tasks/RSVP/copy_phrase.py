@@ -118,11 +118,17 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
     # Save session data
     _save_session_related_data(session_save_location, data)
 
+    # check user input to make sure we should be going
+    if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          first_run=True):
+        return
+
     # Start the Session!
     while run is True:
 
         # check user input to make sure we should be going
-        if not get_user_input():
+        if not get_user_input(
+                rsvp, parameters['wait_screen_message']['value']):
             break
 
         # Why bs for else? #changeforrelease

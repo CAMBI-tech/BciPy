@@ -52,10 +52,17 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     target_letter = copy_phrase[0]
     text_task = '*'
 
+    # check user input to make sure we should be going
+    if not get_user_input(
+            rsvp, parameters['wait_screen_message']['value'],
+            first_run=True):
+        return
+
     while run:
 
         # check user input to make sure we should be going
-        if not get_user_input():
+        if not get_user_input(
+                rsvp, parameters['wait_screen_message']['value']):
             break
 
         # Try getting random sequence information given stimuli parameters

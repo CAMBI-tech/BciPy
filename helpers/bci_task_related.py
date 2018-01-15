@@ -164,7 +164,7 @@ def trial_complete_message(win, parameters):
     return [message_stim]
 
 
-def get_user_input():
+def get_user_input(window, message, first_run=False):
     """Get User Input.
 
     Function returns whether or not to stop a trial. If a key of interest is
@@ -173,31 +173,37 @@ def get_user_input():
     Parameters
     ----------
 
-        No Input Required. Psychopy getKeys method used to detect any key
-            presses.
+        window[psychopy task window]: task window.  *assumes wait_screen method
 
     Returns
     -------
         True/False: whether or not to stop a trial (based on escape key).
     """
 
-    # check user input to make sure we should be going
-    keys = event.getKeys(keyList=['space', 'escape'])
+    if not first_run:
+        pause = False
+        # check user input to make sure we should be going
+        keys = event.getKeys(keyList=['space', 'escape'])
 
-    if keys:
-        # pause?
-        if keys[0] == 'space':
-            pause = True
-            print "Pause"
+        if keys:
+            # pause?
+            if keys[0] == 'space':
+                pause = True
 
-            while pause:
-                keys = event.getKeys(keyList=["space"])
+            # escape?
+            if keys[0] == 'escape':
+                return False
 
-                if keys:
-                    pause = False
+    else:
+        pause = True
 
-        # escape?
-        if keys[0] == 'escape':
-            return False
+    while pause:
+        window.wait_screen(message)
+        keys = event.getKeys(keyList=['space', 'escape'])
+
+        if keys:
+            if keys[0] == 'escape':
+                return False
+            pause = False
 
     return True

@@ -77,6 +77,7 @@ class DisplayRSVP(object):
         # Length of the stimuli (number of flashes)
         self.len_sti = len(stim_sequence)
 
+        # Stim parameters
         self.font_stim = font_sti
         self.height_stim = sti_height
         self.pos_sti = pos_sti
@@ -260,8 +261,19 @@ class DisplayRSVP(object):
     def wait_screen(self, message):
         wait_message = visual.TextStim(self.win, font=self.font_stim,
                                        text=message,
-                                       height=self.height_stim,
-                                       pos=self.pos_sti)
+                                       height=.1,
+                                       color='white',
+                                       pos=self.pos_sti,
+                                       wrapWidth=2)
+        wait_logo = visual.ImageStim(
+            self.win,
+            image='./static/images/gui_images/bci_cas_logo.png',
+            size=(self.height_stim, self.height_stim),
+            pos=(0, .5),
+            mask=None,
+            ori=0.0)
+        wait_logo.draw()
+
         wait_message.draw()
         self.win.flip()
 
@@ -278,7 +290,7 @@ class MultiColorText(object):
     """
 
     def __init__(self, win, list_color=['red'] * 5, height=0.2,
-                 text='dummy_text', font='Times', pos=(0, 0), wrap_width=False,
+                 text='dummy_text', font='Times', pos=(0, 0), wrap_width=None,
                  color_space='rgb', opacity=1, depth=-6.0):
         """Initialize Multi Color Text.
 

@@ -44,7 +44,11 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     trigger_file = open(trigger_save_location, 'w')
     run = True
 
-    rsvp.wait_screen(parameters['wait_screen_message']['value'])
+    # check user input to make sure we should be going
+    if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          first_run=True):
+        return
+
     while run:
 
         # Try getting random sequence information given stimuli parameters
@@ -75,7 +79,8 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
             for idx_o in range(len(task_text)):
 
                 # check user input to make sure we should be going
-                if not get_user_input():
+                if not get_user_input(
+                        rsvp, parameters['wait_screen_message']['value']):
                     break
 
                 # update task state
