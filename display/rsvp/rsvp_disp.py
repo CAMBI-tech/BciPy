@@ -166,6 +166,10 @@ class RSVPDisplay(object):
     def do_sequence(self):
         """Animate a sequence."""
 
+        # Tell us if any frames are dropped. There are many causes to this:
+        #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
+        self.win.recordFrameIntervals = True
+
         # init an array for timing information
         timing = []
 
@@ -208,6 +212,9 @@ class RSVPDisplay(object):
 
             self.staticPeriod.complete()
 
+        # Now that timing critical parts are done, stop recording frames
+        self.win.recordFrameIntervals = False
+
         # draw in other static and flip once more
         self.draw_static()
         self.win.flip()
@@ -247,6 +254,9 @@ class RSVPDisplay(object):
         Returns:
                 trigger_time(float): time prospect was flashed
         """
+        # Tell us if any frames are dropped. There are many causes to this:
+        #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
+        self.win.recordFrameIntervals = True
 
         # reset the timing clock on flip to correct stim drawing
         self.win.callOnFlip(self.timing_clock.reset)
@@ -281,7 +291,11 @@ class RSVPDisplay(object):
         trigger_time = self.expClock.getTime() - self.timing_clock.getTime()
 
         # Wait for a user defined amount of time with prospect on screen
+        #  #changeforrelease. We should use clocks or frames to hold stim.
         core.wait(prospect_flash_time)
+
+        # stop recording frame intervals
+        self.win.recordFrameIntervals = False
 
         return trigger_time
 

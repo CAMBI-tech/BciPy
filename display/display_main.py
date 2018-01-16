@@ -52,9 +52,5 @@ def init_display_window(parameters):
         winType='pyglet', units='norm', waitBlanking=True,
         color=parameters['background_color']['value'])
 
-    # Tell us if any frames are dropped. There are many causes to this:
-    #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
-    display_window.recordFrameIntervals = True
-
     # Return display window to caller
     return display_window
