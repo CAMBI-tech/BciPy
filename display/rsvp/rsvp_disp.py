@@ -16,10 +16,11 @@ class RSVPDisplay(object):
                 different number of information texts in different paradigms
             sti(visual_Text_Stimuli): stimuli text
             bg(BarGraph): bar graph display unit in display
-            trialClock(core_clock): timer for presentation
+            staticPeriod(core_clock): timer for presentation
     """
 
-    def __init__(self, window, clock, experiment_clock, color_task=['white'],
+    def __init__(self, window, static_period, experiment_clock,
+                 color_task=['white'],
                  font_task='Times',
                  pos_task=(-.8, .9), task_height=0.2, text_task='1/100',
                  color_text=['white'], text_text=['Information Text'],
@@ -71,8 +72,9 @@ class RSVPDisplay(object):
 
         self.is_txt_sti = is_txt_sti
 
-        self.trialClock = clock
+        self.staticPeriod = static_period
         self.expClock = experiment_clock
+        self.timing_clock = core.Clock()
 
         # Length of the stimuli (number of flashes)
         self.len_sti = len(stim_sequence)
@@ -170,8 +172,11 @@ class RSVPDisplay(object):
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
+            # reset the timing clock on flip to correct stim drawing
+            self.win.callOnFlip(self.timing_clock.reset)
+
             # Start the trial clock and set stimuli
-            self.trialClock.start(self.time_list_sti[idx])
+            self.staticPeriod.start(self.time_list_sti[idx])
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
@@ -182,18 +187,26 @@ class RSVPDisplay(object):
             self.draw_static()
             self.sti.draw()
 
+            # flip the monitor and stop the clock
+            self.win.flip()
+
+            # Get the actual trigger time, by subtracting the time to load from
+            #   experiment clock. W/o offset corrections it's ~ 6ms.
+            #   W/ correction should give less < .01 ms offset.
+            trigger_time = self.expClock.getTime() - \
+                self.timing_clock.getTime()
+
             # append timing information
             if self.is_txt_sti:
-                timing.append((self.sti.text, self.expClock.getTime()))
+                timing.append((self.sti.text, (trigger_time)))
+
             else:
                 # We expect a path for images, so split on forward slash and
                     # extension to get the name of the file
                 image_name = self.sti.image.split('/')[-1].split('.')[0]
-                timing.append((image_name, self.expClock.getTime()))
+                timing.append((image_name, trigger_time))
 
-            # flip the monitor and stop the clock
-            self.win.flip()
-            self.trialClock.complete()
+            self.staticPeriod.complete()
 
         # draw in other static and flip once more
         self.draw_static()
@@ -230,7 +243,14 @@ class RSVPDisplay(object):
                 text(string): prospect letter to show,
                 prospect_flash_time(float): time to present prospect
                 message(string): message to display with prospect
+
+        Returns:
+                trigger_time(float): time prospect was flashed
         """
+
+        # reset the timing clock on flip to correct stim drawing
+        self.win.callOnFlip(self.timing_clock.reset)
+
         # Make a prospect Stimuli. Make it a text or image.
         if self.is_txt_sti:
             prospect = visual.TextStim(self.win, font=self.font_stim,
@@ -258,8 +278,12 @@ class RSVPDisplay(object):
         self.draw_static()
         self.win.flip()
 
+        trigger_time = self.expClock.getTime() - self.timing_clock.getTime()
+
         # Wait for a user defined amount of time with prospect on screen
         core.wait(prospect_flash_time)
+
+        return trigger_time
 
     def wait_screen(self, message):
         """Wait Screen.
@@ -286,6 +310,7 @@ class RSVPDisplay(object):
                 mask=None,
                 ori=0.0)
             wait_logo.draw()
+
         except Exception:
             print "Cannot load logo image"
             pass
