@@ -17,12 +17,12 @@ lmodel.init()
 # get priors
 priors = lmodel.state_update(['T'])
 # display priors
-lmodel.recent_priors()
+print lmodel.recent_priors()
 priors = lmodel.state_update(['H'])
-lmodel.recent_priors()
+print lmodel.recent_priors()
 priors = lmodel.state_update(['E'])
 # reset history al together
 lmodel.reset()
-lmodel.recent_priors()
+print lmodel.recent_priors()
 priors = lmodel.state_update(list('THE'))
-lmodel.recent_priors()
+print lmodel.recent_priors()
