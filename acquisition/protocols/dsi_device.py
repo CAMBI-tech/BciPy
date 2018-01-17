@@ -86,6 +86,7 @@ class DsiDevice(Device):
         response = self._read_packet()
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
             raise Exception("Unexpected packet; expected DATA RATE Event")
+
         fs = int(response.message.split(',')[1])
         logging.debug("Sample frequency: " + str(fs))
 
@@ -103,13 +104,9 @@ class DsiDevice(Device):
             list with an item for each channel.
         """
         sensor_data = False
-        while sensor_data is False:
-            try:
-                response = self._read_packet()
+        while not sensor_data:
 
-                if response.sensor_data:
-                    sensor_data = True
-            except:
-                pass
+            response = self._read_packet()
 
-        return list(response.sensor_data)
+            if hasattr(response, 'sensor_data'):
+                return list(response.sensor_data)
