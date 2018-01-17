@@ -3,7 +3,8 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import Queue
-import threading
+# import threading
+import multiprocessing as mp
 import time
 import timeit
 
@@ -65,7 +66,7 @@ class Client(object):
         self._initial_wait = 5  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
-        self._process_queue = Queue.Queue(maxsize=maxsize)
+        self._process_queue = mp.Queue(maxsize=maxsize)
 
     # @override ; context manager
     def __enter__(self):
@@ -99,7 +100,6 @@ class Client(object):
 
             self._acq_thread = _StoppableThread(target=self._acquisition_loop)
             self._process_thread = _StoppableThread(target=self._process_loop)
-            self._process_thread.daemon = True
             self._process_thread.start()
             self._acq_thread.start()
 
@@ -195,7 +195,7 @@ class Client(object):
             self._buf.cleanup()
 
 
-class _StoppableThread(threading.Thread):
+class _StoppableThread(mp.Process):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
 
@@ -204,16 +204,16 @@ class _StoppableThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
         super(_StoppableThread, self).__init__(*args, **kwargs)
-        self._stopper = threading.Event()
+        self._stopper = mp.Event()
 
     def stop(self):
         self._stopper.set()
 
     def running(self):
-        return not self._stopper.isSet()
+        return not self._stopper.is_set()
 
     def stopped(self):
-        return self._stopper.isSet()
+        return self._stopper.is_set()
 
 
 if __name__ == "__main__":

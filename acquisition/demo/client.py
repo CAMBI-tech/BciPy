@@ -20,7 +20,7 @@ def main():
     import acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 8844})
+    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
 
     # Use default processor (FileWriter), buffer, and clock.
     client = Client(device=dsi_device)

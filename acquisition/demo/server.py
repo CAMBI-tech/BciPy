@@ -23,7 +23,7 @@ def main():
                             generator=generator.random_data,
                             gen_params={'channel_count': len(
                                 protocol.channels)},
-                            host='127.0.0.1', port=8844)
+                            host='127.0.0.1', port=9000)
         server.start()
         while True:
             time.sleep(1)
