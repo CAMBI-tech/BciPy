@@ -444,7 +444,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -462,7 +462,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "5",
+    "value": "100",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",

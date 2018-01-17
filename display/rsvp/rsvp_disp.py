@@ -166,10 +166,6 @@ class RSVPDisplay(object):
     def do_sequence(self):
         """Animate a sequence."""
 
-        # Tell us if any frames are dropped. There are many causes to this:
-        #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
-        self.win.recordFrameIntervals = True
-
         # init an array for timing information
         timing = []
 
@@ -211,9 +207,6 @@ class RSVPDisplay(object):
                 timing.append((image_name, trigger_time))
 
             self.staticPeriod.complete()
-
-        # Now that timing critical parts are done, stop recording frames
-        self.win.recordFrameIntervals = False
 
         # draw in other static and flip once more
         self.draw_static()

@@ -138,6 +138,8 @@ class Client(object):
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
                     Record(data, self._clock.getTime()))
+
+                # Read data again
                 data = self._device.read_data()
 
     def stop_acquisition(self):
