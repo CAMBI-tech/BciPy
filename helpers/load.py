@@ -80,7 +80,7 @@ def load_csv_data():
     return filename
 
 
-def read_data_csv(folder, dat_first_row=4, info_end_row=1):
+def read_data_csv(folder, dat_first_row=2, info_end_row=1):
     """ Reads the data (.csv) provided by the data acquisition
         Arg:
             folder(str): file location for the data
@@ -97,10 +97,13 @@ def read_data_csv(folder, dat_first_row=4, info_end_row=1):
     """
     dat_file = pd.read_csv(folder, skiprows=dat_first_row)
 
+    import pdb
+    pdb.set_trace()
+
     cols = list(dat_file.axes[1])
     channels = cols[2:len(cols)]
 
-    temp = np.array(dat_file)
+    temp = pd.DataFrame.as_matrix(dat_file)
     stamp_time = temp[:, 0]
     raw_dat = temp[:, 1:temp.shape[1]].transpose()
 
