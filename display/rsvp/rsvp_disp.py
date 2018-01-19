@@ -173,30 +173,38 @@ class RSVPDisplay(object):
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
+
+            # Set a static period to do all our stim setting. Will warn if ISI value is violated.
             self.staticPeriod.start(.05)
-            # turn ms timing into frames
+
+            # Turn ms timing into frames! Much more accurate!
             time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
+            # Set the Stimuli attrs
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
             else:
                 self.sti.image = self.stim_sequence[idx]
-
+            # End static period
             self.staticPeriod.complete()
 
+            # Reset the timing clock to start presenting
             self.timing_clock.reset()
-            #let's draw a stimulus for 200 frames, drifting for frames 50:100
-            for frameN in xrange(time_to_present):#for exactly 200 frames
+
+            # Draw stimulus for n frames
+            for n_frames in xrange(time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
 
-            trigger_time = self.expClock.getTime()
+            # Get trigger time (takes < .01ms)
+            trigger_time = self.expClock.getTime() - self.timing_clock.getTime()
 
+            # Start another ISI for trigger saving
             self.staticPeriod.start(.02)
 
-             # append timing information
+            # append timing information
             if self.is_txt_sti:
                 timing.append((self.sti.text, (trigger_time)))
 
@@ -206,9 +214,10 @@ class RSVPDisplay(object):
                 image_name = self.sti.image.split('/')[-1].split('.')[0]
                 timing.append((image_name, trigger_time))
 
+            # End the static period
             self.staticPeriod.complete()
 
-        # draw in other static and flip once more
+        # draw in static and flip once more
         self.draw_static()
         self.win.flip()
 
