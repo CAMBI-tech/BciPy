@@ -173,7 +173,7 @@ class RSVPDisplay(object):
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
-            self.staticPeriod.start(.001)
+            self.staticPeriod.start(.05)
             # turn ms timing into frames
             time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
@@ -194,7 +194,7 @@ class RSVPDisplay(object):
 
             trigger_time = self.expClock.getTime()
 
-            self.staticPeriod.start(.001)
+            self.staticPeriod.start(.02)
 
              # append timing information
             if self.is_txt_sti:

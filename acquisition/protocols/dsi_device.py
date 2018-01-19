@@ -94,8 +94,6 @@ class DsiDevice(Device):
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 
-        reponse = self._read_packet()
-
     def read_data(self):
         """Reads the next packet and returns the sensor data.
 
