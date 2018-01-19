@@ -94,7 +94,6 @@ def trial_reshaper(
         labels = np.zeros(len(triggers))
 
         for trial in range(len(triggers)):
-            print trial
             # Assign targetness to labels for each trial
             if trial_target_info[trial] == 'target':
                 labels[trial] = 1
