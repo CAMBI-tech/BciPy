@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+
 from __future__ import division
 from psychopy import visual, core
-
-
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
 from helpers.triggers import _write_triggers_from_sequence_calibration
