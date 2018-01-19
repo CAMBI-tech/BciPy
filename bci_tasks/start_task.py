@@ -1,5 +1,5 @@
 
-from RSVP import calibration, copy_phrase, copy_phrase_calibration
+from rsvp import calibration, copy_phrase, copy_phrase_calibration
 
 
 def start_task(display_window, task_type, parameters, file_save,
