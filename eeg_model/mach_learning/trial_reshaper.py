@@ -83,7 +83,7 @@ def trial_reshaper(
         timing_info = filter(lambda x: x != -1, timing_info)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int((x - timing_info[0])*fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
