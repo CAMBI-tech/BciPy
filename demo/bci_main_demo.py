@@ -16,7 +16,7 @@ test_type = 1
 # Define a user
 user = 'UndefinedDemoUser'
 
-# Try and intialize with bci main
+# Try and initialize with bci main
 try:
     bci_main.bci_main(parameters, user, test_type, test_mode)
 except Exception as e:

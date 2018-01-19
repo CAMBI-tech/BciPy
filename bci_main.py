@@ -1,4 +1,3 @@
-import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from display.display_main import init_display_window
 
@@ -22,7 +21,7 @@ def bci_main(parameters, user, exp_type, mode):
     parameter_location = parameters['parameter_location']['value']
     data_save_location = parameters['data_save_loc']['value']
 
-    # Initalize Save Folder
+    # Initialize Save Folder
     save_folder = init_save_data_structure(
         data_save_location, user, parameter_location)
 
@@ -100,7 +99,7 @@ def execute_task(task_type, parameters, save_folder):
             lmodel=lmodel,
             classifier=classifier, fake=fake)
 
-    # If exception, close all display and acquistion objects
+    # If exception, close all display and acquisition objects
     except Exception as e:
         # close display
         display.close()
