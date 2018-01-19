@@ -145,7 +145,7 @@ def demo2():
     trial_target_info = ['target']*len(triggers)
 
     reshaped, _, _, _ = trial_reshaper(trial_target_info=trial_target_info,
-                         timing_info=triggers, filtered_eeg=inp,
+                         timing_info=triggers, filtered_eeg=inp, first_sample_time=time[0],
                          fs=300, k=1, mode='calibration', channel_map=[1,1])
 
     print reshaped.shape
