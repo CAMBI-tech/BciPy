@@ -179,8 +179,7 @@ class RSVPDisplay(object):
             # reset the timing clock on flip to correct stim drawing
             self.win.callOnFlip(self.timing_clock.reset)
 
-            # Start the trial clock and set stimuli
-            self.staticPeriod.start(self.time_list_sti[idx])
+
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
@@ -191,6 +190,9 @@ class RSVPDisplay(object):
             self.draw_static()
             self.sti.draw()
 
+            # Start the trial clock and set stimuli
+            self.staticPeriod.start(self.time_list_sti[idx])
+            
             # flip the monitor and stop the clock
             self.win.flip()
 

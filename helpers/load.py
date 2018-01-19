@@ -97,9 +97,6 @@ def read_data_csv(folder, dat_first_row=2, info_end_row=1):
     """
     dat_file = pd.read_csv(folder, skiprows=dat_first_row)
 
-    import pdb
-    pdb.set_trace()
-
     cols = list(dat_file.axes[1])
     channels = cols[2:len(cols)]
 
