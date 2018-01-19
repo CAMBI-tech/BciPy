@@ -65,6 +65,7 @@ class RSVPDisplay(object):
                 bg_step_num(int): number of animation iterations for bars
         """
         self.win = window
+        self.refresh_rate = window.getActualFrameRate()
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti
@@ -166,19 +167,15 @@ class RSVPDisplay(object):
     def do_sequence(self):
         """Animate a sequence."""
 
-        # Tell us if any frames are dropped. There are many causes to this:
-        #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
-        self.win.recordFrameIntervals = True
-
         # init an array for timing information
         timing = []
 
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
-            # reset the timing clock on flip to correct stim drawing
-            self.win.callOnFlip(self.timing_clock.reset)
-
+            self.staticPeriod.start(.001)
+            # turn ms timing into frames
+            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
@@ -186,23 +183,20 @@ class RSVPDisplay(object):
             else:
                 self.sti.image = self.stim_sequence[idx]
 
-            # draw static and stimuli
-            self.draw_static()
-            self.sti.draw()
+            self.staticPeriod.complete()
 
-            # Start the trial clock and set stimuli
-            self.staticPeriod.start(self.time_list_sti[idx])
-            
-            # flip the monitor and stop the clock
-            self.win.flip()
+            self.timing_clock.reset()
+            #let's draw a stimulus for 200 frames, drifting for frames 50:100
+            for frameN in xrange(time_to_present):#for exactly 200 frames
+                self.sti.draw()
+                self.draw_static()
+                self.win.flip()
 
-            # Get the actual trigger time, by subtracting the time to load from
-            #   experiment clock. W/o offset corrections it's ~ 6ms.
-            #   W/ correction should give less < .01 ms offset.
-            trigger_time = self.expClock.getTime() - \
-                self.timing_clock.getTime()
+            trigger_time = self.expClock.getTime()
 
-            # append timing information
+            self.staticPeriod.start(.001)
+
+             # append timing information
             if self.is_txt_sti:
                 timing.append((self.sti.text, (trigger_time)))
 
@@ -213,9 +207,6 @@ class RSVPDisplay(object):
                 timing.append((image_name, trigger_time))
 
             self.staticPeriod.complete()
-
-        # Now that timing critical parts are done, stop recording frames
-        self.win.recordFrameIntervals = False
 
         # draw in other static and flip once more
         self.draw_static()
