@@ -1,7 +1,7 @@
 import os
-import numpy as np
 from psychopy import visual, event
 
+import numpy as np
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.

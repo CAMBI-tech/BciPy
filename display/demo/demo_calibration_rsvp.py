@@ -5,7 +5,7 @@
 from __future__ import division
 from psychopy import visual, core
 
-from display.rsvp_disp_modes import CalibrationTask
+from display.rsvp.rsvp_disp_modes import CalibrationTask
 from helpers.triggers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
