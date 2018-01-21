@@ -22,6 +22,8 @@ class Buffer(object):
              performant with small chunksize).
         archive_name: str; optional
             Name of the data store.
+
+    http://sebastianraschka.com/Articles/2014_sqlite_in_python_tutorial.html
     """
 
     def __init__(self, channels, chunksize=10000, archive_name='buffer.db'):
