@@ -126,6 +126,7 @@ class Client(object):
         self._device.connect()
         # Read headers/params
         self._device.acquisition_init()
+        sample = 1
 
         if self._is_streaming:
             data = self._device.read_data()
@@ -138,7 +139,8 @@ class Client(object):
 
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
-                    Record(data, self._clock.getTime()))
+                    Record(data, sample))
+                sample += 1
                 data = self._device.read_data()
 
     def stop_acquisition(self):
