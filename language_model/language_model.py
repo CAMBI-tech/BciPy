@@ -8,13 +8,15 @@ import re
 import logging
 from errors import ConnectionErr, StatusCodeError, DockerDownError
 from helpers.bci_task_related import alphabet
+from subprocess import Popen, PIPE
+import platform
 
 ALPHABET = alphabet()
 
 
 class LangModel:
 
-    def __init__(self, localpath2fst, host, port, logfile):
+    def __init__(self, localpath2fst, host="127.0.0.1", port="5000", logfile="log"):
         """
         Initiate the langModel class. Primarly initializing
         is aimed at establishing the tcp/ip connection
@@ -28,9 +30,37 @@ class LangModel:
           port (str) - the port used in docker
           logfile (str) - a valid filename to function as a logger
         """
+
+        # Windows requires a special handling on to setup the access to Docker.
+        os_version = platform.platform()
+        if os_version.startswith('Windows-7-'):
+            # Setup the environment variables.
+            docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
+            docker_instructions = docker_env_cmd.stdout.read().split('\n')
+            for instruction in docker_instructions:
+                if instruction.startswith('SET'):
+                    environ_pair_str = instruction[instruction.find(' ')+1:]
+                    var_name, var_value = environ_pair_str.split('=')
+                    os.environ[var_name] = var_value
+            # Overides the local ip as Windows 7 uses docker machine hence would
+            # fail to bind.
+            docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
+            host = docker_machine_ip_cmd.stdout.read().strip()
+
+
         # assert input path validity
         assert os.path.exists(os.path.dirname(
             localpath2fst)), "%r is not a valid path" % localpath2fst
+
+        # Correct the format of path in Windows
+        if os_version.startswith('Windows'):
+            path = re.compile(r'([a-zA-Z]):\\(.*)')
+            match = path.search(localpath2fst)
+            if match:
+                drive = match.group(1).lower()
+                remaining_path = match.group(2).replace("\\", "/")
+                localpath2fst = "/{0}/{1}".format(drive, remaining_path)
+
         # assert strings
         assert type(host) == str, "%r is not a string type" % host
         assert type(port) == str, "%r is not a string type" % port
@@ -62,7 +92,7 @@ class LangModel:
                     self.host,
                     self.port)},
             volumes=volume,
-            auto_remove=True)
+            remove=True)
         # wait for initialization
         print "INITIALIZING SERVER.."
         time.sleep(1)
