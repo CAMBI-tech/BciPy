@@ -82,7 +82,27 @@ class Client(object):
 
     def start_acquisition(self):
         """Run the initialization code and start the loop to acquire data from
-        the server."""
+        the server.
+
+        We use threading and multiprocessing to achieve best performance during our
+        sessions.
+
+            **** 
+            Eventually, we'd like to parallelize both acquistion and processing loops
+                but there are some issues with how our process loop is desinged
+                and cannot work on Windows. This is due to os forking vs. duplication.
+                    There are fixes in #Python3, but we are currently tied to v2.7
+                - unix systems can directly replace _StoppableThread with
+                    _StoppableProcess!
+            ****
+
+        Some references:
+            Stoping processes and other great multiprocessing examples:
+                https://pymotw.com/2/multiprocessing/communication.html
+            Windows vs. Unix Process Differences:
+                https://docs.python.org/2.7/library/multiprocessing.html#windows
+
+        """
 
         if not self._is_streaming:
             logging.debug("Starting acquisition")

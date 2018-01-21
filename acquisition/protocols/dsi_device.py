@@ -77,8 +77,11 @@ class DsiDevice(Device):
                 raise Exception('EEG Data was encountered; expected '
                                 'initialization headers.')
             logging.debug(response.type)
+
+            # Here we get information from the device about version etc. 
+            #  If interested, print the response type and message!
             if response.type == 'EVENT':
-                logging.debug(response.event_code)
+                pass
             response = self._read_packet()
 
         channels = response.message.split(',')
