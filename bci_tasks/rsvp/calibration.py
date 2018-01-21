@@ -138,9 +138,9 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     try:
         daq.stop_acquisition()
-    except Exception as e:
+    except:
         # if not started, we can pass!
-        raise e
+        pass
 
     if server:
         server.stop()
