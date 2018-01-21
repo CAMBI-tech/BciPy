@@ -11,6 +11,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s', )
 
 
+
+
 class DsiDevice(Device):
     """Driver for the DSI device.
 
@@ -26,13 +28,15 @@ class DsiDevice(Device):
 
     def __init__(self, connection_params, fs=300, channels=['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
                     'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-                    'F7', 'F8', 'A2', 'T6', 'T4', 'TRG']):
+                    'X3', 'X2', 'F7', 'F8', 'X1',
+                    'A2', 'T6', 'T4', 'TRG']):
         super(DsiDevice, self).__init__(connection_params, fs, channels)
-        assert 'host' in connection_params
-        assert 'port' in connection_params
+        assert 'host' in connection_params, "Please specify host to Device!"
+        assert 'port' in connection_params, "Please specify port to Device!"
 
         self._channels_provided = len(channels) > 0
         self._socket = None
+        self.channels = channels
 
     @property
     def name(self):
@@ -53,7 +57,7 @@ class DsiDevice(Device):
             dict-like object
         """
 
-        assert self._socket is not None
+        assert self._socket is not None, "Socket isn't started, cannot DSI read packet!"
 
         # Reads the header to get the payload length, then reads the payload.
         header_buf = util.receive(self._socket, dsi.header_len)
@@ -74,16 +78,17 @@ class DsiDevice(Device):
                                 'initialization headers.')
             logging.debug(response.type)
             if response.type == 'EVENT':
-                logging.debug(response.event_code + ': ' + response.message)
+                logging.debug(response.event_code)
             response = self._read_packet()
 
         channels = response.message.split(',')
         logging.debug("Channels: " + ','.join(channels))
-        if self._channels_provided and channels != self.channels:
+        if self._channels_provided and len(channels) != len(self.channels):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
         else:
             self.channels = channels
+            print (self.channels)
 
         response = self._read_packet()
 

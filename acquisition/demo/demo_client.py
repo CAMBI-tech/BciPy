@@ -21,7 +21,7 @@ def main():
     import acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
+    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 8844})
 
     # Use default processor (FileWriter), buffer, and clock.
     client = Client(device=dsi_device, clock=clock.Clock())
@@ -30,7 +30,11 @@ def main():
         client.start_acquisition()
         print("\nCollecting data... (Interrupt [Ctl-C] to stop)\n")
         while True:
-            time.sleep(1)
+            time.sleep(10)
+            print("Ten Second Passed")
+            print("Number of samples: {0}".format(client.get_data_len()))
+            client.stop_acquisition()
+            break
     except IOError as e:
         print "{0}; make sure you started the server.".format(e.strerror)
     except KeyboardInterrupt:

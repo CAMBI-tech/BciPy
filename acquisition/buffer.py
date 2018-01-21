@@ -28,8 +28,8 @@ class Buffer(object):
 
     def __init__(self, channels, chunksize=10000, archive_name='buffer.db'):
 
-        assert len(channels) > 0
-        assert chunksize > 0
+        assert len(channels) > 0, "Buffer wasn't given any channels!"
+        assert chunksize > 0, "Chunksize for Buffer must be greater than 0!"
         assert len(archive_name) > 0, "An empty archive name will result in " \
             "an in-memory database that cannot be shared across processes."
 

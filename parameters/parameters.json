@@ -399,7 +399,7 @@
     "isNumeric": "false"
   },
   "eeg_buffer_len": {
-    "value": "1",
+    "value": "3",
     "section": "bci_config",
     "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
@@ -444,7 +444,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -478,7 +478,7 @@
     "isNumeric": "true"
   },
   "trial_complete_message": {
-    "value": "Nice! Trial Complete!",
+    "value": "Nice! Trial Complete! Please wait while we save your data!",
     "section": "bci_config",
     "readableName": "Trial Complete Message",
     "helpTip": "Message that displays at the end of trial",
