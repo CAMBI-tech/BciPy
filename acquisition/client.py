@@ -95,15 +95,9 @@ class Client(object):
             self._processor = self._make_processor(self._device.name,
                                                    self._device.fs,
                                                    self._device.channels)
-
-<<<<<<< HEAD
             
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
-=======
-            self._acq_thread = _StoppableProcess(target=self._acquisition_loop)
-            self._process_thread = _StoppableProcess(target=self._process_loop)
->>>>>>> origin/clean_up_cleanup
             self._process_thread.start()
 
     def _process_loop(self):
@@ -145,14 +139,10 @@ class Client(object):
 
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
-<<<<<<< HEAD
                     Record(data, sample))
                 sample += 1
-=======
-                    Record(data, self._clock.getTime()))
 
                 # Read data again
->>>>>>> origin/clean_up_cleanup
                 data = self._device.read_data()
 
     def stop_acquisition(self):
@@ -211,7 +201,6 @@ class Client(object):
 
 
 class _StoppableProcess(multiprocessing.Process):
-<<<<<<< HEAD
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
 
@@ -235,13 +224,6 @@ class _StoppableProcess(multiprocessing.Process):
 class _StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
-=======
-    """Stoppable Process.
-
-    Process class with a stop() method. The checks itself regularly
-        for the running() condition.
->>>>>>> origin/clean_up_cleanup
-
     """
 
     def __init__(self, *args, **kwargs):
