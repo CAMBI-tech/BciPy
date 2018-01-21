@@ -86,6 +86,7 @@ class DsiDevice(Device):
             self.channels = channels
 
         response = self._read_packet()
+
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
             raise Exception("Unexpected packet; expected DATA RATE Event")
 
@@ -97,7 +98,9 @@ class DsiDevice(Device):
                             "match the provided parameter")
 
     def read_data(self):
-        """Reads the next packet and returns the sensor data.
+        """Read Data.
+
+        Reads he next packet from DSI device and returns the sensor data.
 
         Returns
         -------

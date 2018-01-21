@@ -2,8 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-import Queue
-import threading
+import multiprocessing
 import time
 import timeit
 import multiprocessing
@@ -66,7 +65,9 @@ class Client(object):
         self._initial_wait = 5  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
+
         self._process_queue = multiprocessing.Manager().Queue(maxsize=maxsize)
+
 
     # @override ; context manager
     def __enter__(self):
@@ -95,9 +96,14 @@ class Client(object):
                                                    self._device.fs,
                                                    self._device.channels)
 
+<<<<<<< HEAD
             
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
+=======
+            self._acq_thread = _StoppableProcess(target=self._acquisition_loop)
+            self._process_thread = _StoppableProcess(target=self._process_loop)
+>>>>>>> origin/clean_up_cleanup
             self._process_thread.start()
 
     def _process_loop(self):
@@ -113,8 +119,8 @@ class Client(object):
                     # block if necessary
                     record = self._process_queue.get(True, wait)
                     # decrease the wait after data has been initially received
-                    wait = 1
-                except Queue.Empty:
+                    wait = 2
+                except multiprocessing.Queue.Empty:
                     break
                 self._buf.append(record)
                 p.process(record.data, record.timestamp)
@@ -139,8 +145,14 @@ class Client(object):
 
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
+<<<<<<< HEAD
                     Record(data, sample))
                 sample += 1
+=======
+                    Record(data, self._clock.getTime()))
+
+                # Read data again
+>>>>>>> origin/clean_up_cleanup
                 data = self._device.read_data()
 
     def stop_acquisition(self):
@@ -199,6 +211,7 @@ class Client(object):
 
 
 class _StoppableProcess(multiprocessing.Process):
+<<<<<<< HEAD
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
 
@@ -222,13 +235,18 @@ class _StoppableProcess(multiprocessing.Process):
 class _StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
+=======
+    """Stoppable Process.
 
-      https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+    Process class with a stop() method. The checks itself regularly
+        for the running() condition.
+>>>>>>> origin/clean_up_cleanup
+
     """
 
     def __init__(self, *args, **kwargs):
-        super(_StoppableThread, self).__init__(*args, **kwargs)
-        self._stopper = threading.Event()
+        super(_StoppableProcess, self).__init__(*args, **kwargs)
+        self._stopper = multiprocessing.Event()
 
     def stop(self):
         self._stopper.set()

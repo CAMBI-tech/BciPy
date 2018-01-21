@@ -6,7 +6,7 @@ import timeit
 
 import numpy as np
 from buffer import Buffer
-from acquisition.client import _StoppableThread
+from acquisition.client import _StoppableProcess
 from record import Record
 
 
@@ -143,7 +143,7 @@ def test_concurrent_access():
     channel_count = 25
     channels = ["ch" + str(c) for c in range(channel_count)]
 
-    class Writer(_StoppableThread):
+    class Writer(_StoppableProcess):
         def __init__(self, buf):
             super(Writer, self).__init__()
             self.buffer = buf
@@ -158,7 +158,7 @@ def test_concurrent_access():
                 time.sleep(0.002)
                 i += 1
 
-    class Reader(_StoppableThread):
+    class Reader(_StoppableProcess):
         def __init__(self, buf):
             super(Reader, self).__init__()
             self.buffer = buf

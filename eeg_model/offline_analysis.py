@@ -46,7 +46,7 @@ def offline_analysis(data_folder=None):
     # read_data_csv already removes the timespamp column.
     #                     CM            X3 X2           X1            TRG
     channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
-    x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode, fs=fs,
+    x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode, fs=fs, first_sample_time=stamp_time[0],
                                       k=ds_rate, channel_map=channel_map)
 
     model = train_pca_rda_kde_model(x, y, k_folds=10)

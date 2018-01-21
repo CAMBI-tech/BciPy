@@ -22,7 +22,7 @@ def main():
     from acquisition.datastream.server import DataServer
 
     host = '127.0.0.1'
-    port = 8844
+    port = 9000
     # The Protocol is for mocking data.
     protocol = registry.default_protocol('DSI')
     server = DataServer(protocol=protocol,
