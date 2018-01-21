@@ -24,7 +24,9 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=300, channels=[]):
+    def __init__(self, connection_params, fs=300, channels=['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
+                    'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
+                    'F7', 'F8', 'A2', 'T6', 'T4', 'TRG']):
         super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params
         assert 'port' in connection_params
@@ -108,3 +110,5 @@ class DsiDevice(Device):
 
             if hasattr(response, 'sensor_data'):
                 return list(response.sensor_data)
+
+                

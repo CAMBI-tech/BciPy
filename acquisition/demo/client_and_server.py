@@ -42,7 +42,13 @@ def main():
         print("\nCollecting data... (Interrupt [Ctl-C] to stop)\n")
 
         while True:
-            time.sleep(1)
+            time.sleep(10)
+            client.stop_acquisition()
+            print("Number of samples: {0}".format(client.get_data_len()))
+            server.stop()
+            print("The collected data has been written to rawdata.csv")
+            break
+
     except KeyboardInterrupt:
         print("Keyboard Interrupt; stopping.")
         client.stop_acquisition()

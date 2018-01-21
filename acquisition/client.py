@@ -6,6 +6,7 @@ import Queue
 import threading
 import time
 import timeit
+import multiprocessing
 
 from buffer import Buffer
 from processor import FileWriter
@@ -65,7 +66,7 @@ class Client(object):
         self._initial_wait = 5  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
-        self._process_queue = Queue.Queue(maxsize=maxsize)
+        self._process_queue = multiprocessing.Manager().Queue(maxsize=maxsize)
 
     # @override ; context manager
     def __enter__(self):
@@ -80,14 +81,11 @@ class Client(object):
         """Run the initialization code and start the loop to acquire data from
         the server."""
 
-        self._device.connect()
-
         if not self._is_streaming:
             logging.debug("Starting acquisition")
             self._is_streaming = True
-
-            # Read headers/params
-            self._device.acquisition_init()
+            self._acq_thread = _StoppableThread(target=self._acquisition_loop)
+            self._acq_thread.start()
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
@@ -97,11 +95,10 @@ class Client(object):
                                                    self._device.fs,
                                                    self._device.channels)
 
-            self._acq_thread = _StoppableThread(target=self._acquisition_loop)
+            
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
             self._process_thread.start()
-            self._acq_thread.start()
 
     def _process_loop(self):
         """Reads from the queue of data and performs processing an item at a
@@ -125,6 +122,10 @@ class Client(object):
     def _acquisition_loop(self):
         """Continuously reads data from the source and sends it to the buffer
         for processing."""
+
+        self._device.connect()
+        # Read headers/params
+        self._device.acquisition_init()
 
         if self._is_streaming:
             data = self._device.read_data()
@@ -195,6 +196,27 @@ class Client(object):
             self._buf.cleanup()
 
 
+class _StoppableProcess(multiprocessing.Process):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the running() condition.
+
+      https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(_StoppableThread, self).__init__(*args, **kwargs)
+        self._stopper = multiprocessing.Event()
+
+    def stop(self):
+        self._stopper.set()
+
+    def running(self):
+        return not self._stopper.is_set()
+
+    def stopped(self):
+        return self._stopper.is_set()
+
+
 class _StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
@@ -210,10 +232,10 @@ class _StoppableThread(threading.Thread):
         self._stopper.set()
 
     def running(self):
-        return not self._stopper.isSet()
+        return not self._stopper.is_set()
 
     def stopped(self):
-        return self._stopper.isSet()
+        return self._stopper.is_set()
 
 
 if __name__ == "__main__":
