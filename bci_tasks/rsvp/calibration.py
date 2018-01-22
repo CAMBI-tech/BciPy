@@ -46,6 +46,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     # check user input to make sure we should be going
     if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          parameters['wait_screen_message_color']['value'],
                           first_run=True):
         return
 
@@ -80,7 +81,8 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
                 # check user input to make sure we should be going
                 if not get_user_input(
-                        rsvp, parameters['wait_screen_message']['value']):
+                        rsvp, parameters['wait_screen_message']['value'],
+                        parameters['wait_screen_message_color']['value']):
                     break
 
                 # update task state
