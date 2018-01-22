@@ -111,7 +111,7 @@ def trial_reshaper(
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k), timing_info)
+        triggers = map(lambda x: int((x - first_sample_time) * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -142,7 +142,7 @@ def trial_reshaper(
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k), timing_info)
+        triggers = map(lambda x: int((x - first_sample_time) * fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
