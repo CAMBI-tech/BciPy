@@ -150,17 +150,11 @@ class Client(object):
 
         device.connect()
         # Read headers/params
-        device.acquisition_init()
-        first_record = True
+        device.acquisition_init(clock)
 
         if self._is_streaming:
             data = device.read_data()
             while self._acq_process.running() and data:
-                # Is this the first record?
-                if first_record:
-                    # Start it at zero and reset the clock that was passed
-                    clock.reset()
-                    first_record = False
 
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
@@ -176,8 +170,8 @@ class Client(object):
         """Stop acquiring data; perform cleanup."""
 
         self._is_streaming = False
-        self._acq_process.stop()
         self._device.disconnect()
+        self._acq_process.stop()
         self._acq_process.join()
 
         # allow initial_wait seconds to wrap up any queued work

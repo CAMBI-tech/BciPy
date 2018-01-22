@@ -57,7 +57,7 @@ class DsiDevice(Device):
             dict-like object
         """
 
-        assert self._socket is not None, "Socket isn't started, cannot DSI read packet!"
+        assert self._socket is not None, "Socket isn't started, cannot read DSI packet!"
 
         # Reads the header to get the payload length, then reads the payload.
         header_buf = util.receive(self._socket, dsi.header_len)
@@ -65,11 +65,12 @@ class DsiDevice(Device):
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)
 
-    def acquisition_init(self):
+    def acquisition_init(self, clock):
         """Initialization step. Reads the channel and data rate information
         sent by the server and sets the appropriate instance variables.
         """
 
+        clock.reset()
         response = self._read_packet()
         # Read packets until we encounter the headers we care about.
         while response.type != 'EVENT' or response.event_code != 'SENSOR_MAP':
@@ -91,7 +92,6 @@ class DsiDevice(Device):
                             "the provided parameters")
         else:
             self.channels = channels
-            print (self.channels)
 
         response = self._read_packet()
 
@@ -105,6 +105,12 @@ class DsiDevice(Device):
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 
+        response = self._read_packet()
+
+        if response.event_code != 'DATA_START':
+            raise Exception("Expected DATA START")
+
+
     def read_data(self):
         """Read Data.
 
@@ -115,11 +121,14 @@ class DsiDevice(Device):
             list with an item for each channel.
         """
         sensor_data = False
+
         while not sensor_data:
 
             response = self._read_packet()
 
+
             if hasattr(response, 'sensor_data'):
                 return list(response.sensor_data)
+
 
                 
