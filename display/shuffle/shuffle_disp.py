@@ -13,7 +13,7 @@ def flick(flicking_freqs, boxes, screen_refresh_rate, frameN):
 
 
 '''Params:'''
-flicking_freqs = [6, 16, 26, 36, 46, 56]
+flicking_freqs = [6, 10, 20, 30, 1, 1]
 screen_refresh_rate = 60.
 ''''''
 
@@ -74,6 +74,7 @@ while True:
 
 print('Overall, %i frames were dropped.' % win.nDroppedFrames)
 print win.frameIntervals
+print len(win.frameIntervals)
 
 core.wait(.5)
 
