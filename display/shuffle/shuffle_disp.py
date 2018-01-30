@@ -1,6 +1,7 @@
 from psychopy import visual, core, event
 from utils.get_system_info import get_system_info
 from psychopy.visual import TextStim
+from operator import itemgetter
 
 import numpy as np
 
@@ -13,7 +14,7 @@ class MyTextBox():
 
     def __init__(self, contained_letters, position, pos_shift, color):
         self.contained_letters = contained_letters
-        self.position = position
+        self.position = position + (-3, 2)
         self.pos_shift = pos_shift
         self.color = color
 
@@ -58,10 +59,10 @@ def distribute_letters(letters, myTextBoxes, posteriors = None):
     else:
         # Posteriors are not provided, demo mode, randomly shuffle
 
-        split_indexes = np.split(len(letters), len(myTextBoxes))
+        split_indexes = np.split(np.array(np.random.permutation(range(len(letters)))), len(myTextBoxes))
 
         for index in range(len(myTextBoxes)):
-            myTextBoxes[index].set_letters(letters[split_indexes[index]])
+            myTextBoxes[index].set_letters(itemgetter(*split_indexes[index])(letters))
 
 
 
@@ -69,7 +70,7 @@ def distribute_letters(letters, myTextBoxes, posteriors = None):
 '''Params:#######################################################################'''
 # A second thought reveals that these are actually double the freq of flickering.
 flicking_freqs = [6., 10., 20., 30., 1., 120]
-flick_duration = 1
+flick_duration = .5
 screen_refresh_rate = 60.
 
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
@@ -103,17 +104,17 @@ box6 = visual.Rect(win = win, width=12, height=8, pos = (-21, 10.8),
                    fillColor='black')
 
 text_box_1 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(255, 255, 0))
-text_box_2 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(255, 80, 80))
-text_box_3 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(255, 0, 255))
-text_box_4 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(51, 102, 255))
-text_box_5 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(51, 204, 204))
-text_box_6 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=5, color=(51, 204, 51))
+                       pos_shift=3, color=(255, 255, 0))
+text_box_2 = MyTextBox(contained_letters=None, position=(0, -10.8),
+                       pos_shift=3, color=(255, 80, 80))
+text_box_3 = MyTextBox(contained_letters=None, position=(21, -10.8),
+                       pos_shift=3, color=(255, 0, 255))
+text_box_4 = MyTextBox(contained_letters=None, position=(21, 10.8),
+                       pos_shift=3, color=(51, 102, 255))
+text_box_5 = MyTextBox(contained_letters=None, position=(0, 10.8),
+                       pos_shift=3, color=(51, 204, 204))
+text_box_6 = MyTextBox(contained_letters=None, position=(-21, 10.8),
+                       pos_shift=3, color=(51, 204, 51))
 
 my_text_boxes = [text_box_1, text_box_2, text_box_3, text_box_4, text_box_5, text_box_6]
 
@@ -124,7 +125,7 @@ for box in boxes:
 
 all_letters = []
 for index in range(len(alp)):
-    all_letters.append(TextStim(win=win, text=alp[index], pos=(-15 + 5*(index % 7), 5 - 3*(index / 7)), height=3))
+    all_letters.append(TextStim(win=win, text=alp[index], pos=(-15 + 5*(index % 7), 5 - 3*(index / 7)), height=3, colorSpace='rgb255'))
     all_letters[index].setAutoDraw(True)
 
 while True:
@@ -133,6 +134,9 @@ while True:
           screen_refresh_rate=screen_refresh_rate, flick_duration=flick_duration)
 
     distribute_letters(all_letters,my_text_boxes)
+
+    for t_b in my_text_boxes:
+        t_b.set_pos()
 
     num_keys = len(event.getKeys())
     if num_keys > 0:
