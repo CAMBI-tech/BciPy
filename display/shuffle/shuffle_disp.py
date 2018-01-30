@@ -27,8 +27,8 @@ class MyTextBox():
     def set_pos(self):
         for index in range(len(self.contained_letters)):
 
-            self.contained_letters[index].pos = (self.position[0] + self.pos_shift*(index % 3),
-                                                 self.position[1] - self.pos_shift*(index / 3))
+            self.contained_letters[index].pos = (self.position[0] + self.pos_shift*(index % 3) - 5,
+                                                 self.position[1] - self.pos_shift*(index / 3) + 3)
 
 
 def flick_draw(win, flicking_freqs, boxes, screen_refresh_rate, flick_duration):
@@ -43,7 +43,6 @@ def flick_draw(win, flicking_freqs, boxes, screen_refresh_rate, flick_duration):
                     boxes[index].fillColor = 'white'
                 else:
                     boxes[index].fillColor = 'black'
-
             boxes[index].draw()
 
         win.update()
@@ -65,78 +64,55 @@ def distribute_letters(letters, myTextBoxes, posteriors = None):
             myTextBoxes[index].set_letters(itemgetter(*split_indexes[index])(letters))
 
 
-
-
 '''Params:#######################################################################'''
 # A second thought reveals that these are actually double the freq of flickering.
-flicking_freqs = [6., 10., 20., 30., 1., 120]
-flick_duration = .5
+flicking_freqs = [6., 10., 20., 30., 1., 60]
+flick_duration = 2
 screen_refresh_rate = 60.
-
+colors = [(255, 255, 0), (255, 80, 80), (255, 0, 255), (51, 102, 255), (51, 204, 204), (51, 204, 51)]
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
-
 '''##############################################################################'''
 
 system_info = get_system_info()
-
 win = visual.Window(system_info['RESOLUTION'],
                                monitor='testMonitor', units='deg')
 win.recordFrameIntervals = True
 
-box1 = visual.Rect(win = win, width=12, height=8, pos = (-21, -10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(255, 255, 0),
-                   fillColor='black')
-box2 = visual.Rect(win = win, width=12, height=8, pos = (0, -10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(255, 80, 80),
-                   fillColor='black')
-box3 = visual.Rect(win = win, width=12, height=8, pos = (21, -10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(255, 0, 255),
-                   fillColor='black')
-box4 = visual.Rect(win = win, width=12, height=8, pos = (21, 10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(51, 102, 255),
-                   fillColor='black')
-box5 = visual.Rect(win = win, width=12, height=8, pos = (0, 10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(51, 204, 204),
-                   fillColor='black')
-box6 = visual.Rect(win = win, width=12, height=8, pos = (-21, 10.8),
-                   lineWidth=4, lineColorSpace='rgb255', lineColor=(51, 204, 51),
-                   fillColor='black')
+# Create text boxes and rectangular boxes that cover the text boxes.
+boxes = []
+my_text_boxes = []
+for index in range(6):
+    boxes.append(visual.Rect(win = win, width=14, height=10, pos = (-21 + 21*(index%3), -10.8 + 21.6*(index/3)),
+                   lineWidth=7, lineColorSpace='rgb255', lineColor=colors[index],
+                   fillColor='black'))
+    boxes[index].setAutoDraw(True)
 
-text_box_1 = MyTextBox(contained_letters=None, position=(-21, -10.8),
-                       pos_shift=3, color=(255, 255, 0))
-text_box_2 = MyTextBox(contained_letters=None, position=(0, -10.8),
-                       pos_shift=3, color=(255, 80, 80))
-text_box_3 = MyTextBox(contained_letters=None, position=(21, -10.8),
-                       pos_shift=3, color=(255, 0, 255))
-text_box_4 = MyTextBox(contained_letters=None, position=(21, 10.8),
-                       pos_shift=3, color=(51, 102, 255))
-text_box_5 = MyTextBox(contained_letters=None, position=(0, 10.8),
-                       pos_shift=3, color=(51, 204, 204))
-text_box_6 = MyTextBox(contained_letters=None, position=(-21, 10.8),
-                       pos_shift=3, color=(51, 204, 51))
-
-my_text_boxes = [text_box_1, text_box_2, text_box_3, text_box_4, text_box_5, text_box_6]
-
-
-boxes = [box1, box2, box3, box4, box5, box6]
-for box in boxes:
-    box.draw()
+    my_text_boxes.append(MyTextBox(contained_letters=None, position=(-21 + 21*(index%3), -10.8 + 21.6*(index/3)),
+                                   pos_shift=5, color=colors[index]))
 
 all_letters = []
 for index in range(len(alp)):
-    all_letters.append(TextStim(win=win, text=alp[index], pos=(-15 + 5*(index % 7), 5 - 3*(index / 7)), height=3, colorSpace='rgb255'))
+    all_letters.append(TextStim(win=win, text=alp[index], pos=(-24.5 + 8*(index % 9), 4 - 3.8*(index / 9)), height=4, colorSpace='rgb255'))
     all_letters[index].setAutoDraw(True)
+
+
+
+win.update()
+core.wait(3)
 
 while True:
 
-    flick_draw(win =win, flicking_freqs=flicking_freqs, boxes=boxes,
-          screen_refresh_rate=screen_refresh_rate, flick_duration=flick_duration)
+    distribute_letters(all_letters, my_text_boxes)
+    core.wait(3)
 
-    distribute_letters(all_letters,my_text_boxes)
+    win.update()
 
-    for t_b in my_text_boxes:
-        t_b.set_pos()
+    [tb.set_pos() for tb in my_text_boxes]
+    core.wait(2)
+
+    flick_draw(win=win, flicking_freqs=flicking_freqs, boxes=boxes,
+               screen_refresh_rate=screen_refresh_rate, flick_duration=flick_duration)
 
     num_keys = len(event.getKeys())
     if num_keys > 0:
@@ -147,8 +123,12 @@ while True:
 print('Overall, %i frames were dropped.' % win.nDroppedFrames)
 print '# of frames: ', len(win.frameIntervals)
 print 'Frame intervals: ', win.frameIntervals
-print 'Frame clock: ', win.frameClock.getTime()
 core.wait(.5)
 
 win.close()
 core.quit()
+
+
+
+
+
