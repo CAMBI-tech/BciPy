@@ -106,21 +106,25 @@ class Client(object):
 
         if not self._is_streaming:
             logging.debug("Starting acquisition")
+
             self._is_streaming = True
-            self._acq_process = _StoppableProcess(target=self._acquisition_loop, args=(self._device,
-                self._clock))
+            self._clock.reset()
+
+            self._acq_process = _StoppableProcess(
+                target=self._acquisition_loop,
+                args=(self._device))
             self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
             # been updated as needed.
-            print(self._device.channels)
-            self._buf = Buffer(channels=self._device.channels, archive_name=self._buffer_name)
+            self._buf = Buffer(channels=self._device.channels,
+                               archive_name=self._buffer_name)
             self._processor = FileWriter(self._processor_name,
                                          self._device.name,
                                          self._device.fs,
                                          self._device.channels)
-            
+
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
             self._process_thread.start()
@@ -149,28 +153,36 @@ class Client(object):
         for processing."""
 
         device.connect()
-        # Read headers/params
-        device.acquisition_init(clock)
+        device.acquisition_init()
+        sample = 0
 
+        # If streaming set, start reading data
         if self._is_streaming:
             data = device.read_data()
+
+            # begin continuous acquistion process as long as data recieved
             while self._acq_process.running() and data:
 
                 # Use get time to timestamp and continue saving records.
                 self._process_queue.put(
-                    Record(data, clock.getTime()))
+                    Record(data, sample))
 
                 try:
                     # Read data again
                     data = device.read_data()
+                    sample += 1
                 except:
-                    raise Exception('Data not received')
+                    data = None
+                    break
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
 
         self._is_streaming = False
         self._device.disconnect()
+
+        while self._acq_process.running():
+            time.sleep(.1)
         self._acq_process.stop()
         self._acq_process.join()
 

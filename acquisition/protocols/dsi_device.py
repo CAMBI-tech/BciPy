@@ -11,8 +11,6 @@ logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s', )
 
 
-
-
 class DsiDevice(Device):
     """Driver for the DSI device.
 
@@ -26,10 +24,13 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=300, channels=['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-                    'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-                    'X3', 'X2', 'F7', 'F8', 'X1',
-                    'A2', 'T6', 'T4', 'TRG']):
+    def __init__(self, connection_params, fs=300, channels=[
+            'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
+            'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
+            'X3', 'X2', 'F7', 'F8', 'X1',
+            'A2', 'T6', 'T4', 'TRG']):
+        """Init DsiDevice."""
+
         super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
@@ -40,6 +41,7 @@ class DsiDevice(Device):
 
     @property
     def name(self):
+        """DSI Name."""
         return 'DSI'
 
     def connect(self):
@@ -57,7 +59,8 @@ class DsiDevice(Device):
             dict-like object
         """
 
-        assert self._socket is not None, "Socket isn't started, cannot read DSI packet!"
+        assert self._socket is not None, \
+            "Socket isn't started, cannot read DSI packet!"
 
         # Reads the header to get the payload length, then reads the payload.
         header_buf = util.receive(self._socket, dsi.header_len)
@@ -65,12 +68,13 @@ class DsiDevice(Device):
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)
 
-    def acquisition_init(self, clock):
-        """Initialization step. Reads the channel and data rate information
+    def acquisition_init(self):
+        """Initialization step.
+
+        Reads the channel and data rate information
         sent by the server and sets the appropriate instance variables.
         """
 
-        clock.reset()
         response = self._read_packet()
         # Read packets until we encounter the headers we care about.
         while response.type != 'EVENT' or response.event_code != 'SENSOR_MAP':
@@ -79,7 +83,7 @@ class DsiDevice(Device):
                                 'initialization headers.')
             logging.debug(response.type)
 
-            # Here we get information from the device about version etc. 
+            # Here we get information from the device about version etc.
             #  If interested, print the response type and message!
             if response.type == 'EVENT':
                 pass
@@ -110,7 +114,6 @@ class DsiDevice(Device):
         if response.event_code != 'DATA_START':
             raise Exception("Expected DATA START")
 
-
     def read_data(self):
         """Read Data.
 
@@ -126,9 +129,5 @@ class DsiDevice(Device):
 
             response = self._read_packet()
 
-
             if hasattr(response, 'sensor_data'):
                 return list(response.sensor_data)
-
-
-                
