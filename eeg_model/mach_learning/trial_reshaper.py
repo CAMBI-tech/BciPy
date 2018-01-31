@@ -2,12 +2,9 @@ import numpy as np
 
 
 def trial_reshaper(
-    trial_target_info, timing_info, filtered_eeg, fs, k,
-    mode,
-    channel_map=(
-        1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-        1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1,
-        1, 1, 0)):
+    trial_target_info, timing_info, filtered_eeg, fs, k, mode,
+        channel_map=
+        (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1,1, 1, 0)):
     """
 
     :param trial_target_info: A list of strings which can take values:
@@ -24,7 +21,7 @@ def trial_reshaper(
 
     :param mode: Operating mode, can be 'calibration', 'copy_phrase', etc.
 
-    :param channel_map: A binary list, if i'th element is 0, i'th channel
+      :param channel_map: A binary list, if i'th element is 0, i'th channel
         in filtered_eeg is removed.
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return
@@ -83,7 +80,7 @@ def trial_reshaper(
         timing_info = filter(lambda x: x != -1, timing_info)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k) - 1, timing_info)
+        triggers = map(lambda x: int(x *fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.

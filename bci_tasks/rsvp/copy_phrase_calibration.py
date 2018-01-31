@@ -55,6 +55,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     # check user input to make sure we should be going
     if not get_user_input(
             rsvp, parameters['wait_screen_message']['value'],
+            parameters['wait_screen_message_color']['value'],
             first_run=True):
         return
 
@@ -62,7 +63,8 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
 
         # check user input to make sure we should be going
         if not get_user_input(
-                rsvp, parameters['wait_screen_message']['value']):
+                rsvp, parameters['wait_screen_message']['value'],
+                parameters['wait_screen_message_color']['value']):
             break
 
         # Try getting random sequence information given stimuli parameters

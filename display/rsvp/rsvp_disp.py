@@ -301,7 +301,7 @@ class RSVPDisplay(object):
 
         return trigger_time
 
-    def wait_screen(self, message):
+    def wait_screen(self, message, color):
         """Wait Screen.
 
         Args:
@@ -312,7 +312,7 @@ class RSVPDisplay(object):
         wait_message = visual.TextStim(self.win, font=self.font_stim,
                                        text=message,
                                        height=.1,
-                                       color='white',
+                                       color=color,
                                        pos=self.pos_sti,
                                        wrapWidth=2)
 
@@ -321,7 +321,7 @@ class RSVPDisplay(object):
             wait_logo = visual.ImageStim(
                 self.win,
                 image='./static/images/gui_images/bci_cas_logo.png',
-                size=(self.height_stim, self.height_stim),
+                size=(1, 1),
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)

@@ -106,7 +106,9 @@
     "readableName": "Color Text",
     "helpTip": "Color Text",
     "recommended_values": [
-      "White"
+      "white",
+      "black",
+      "blue"
     ],
     "isNumeric": "false"
   },
@@ -295,10 +297,10 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "white",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Task Color",
-    "helpTip": "Task Color",
+    "helpTip": "Color of Task Text: Ex. 1/100",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -399,7 +401,7 @@
     "isNumeric": "false"
   },
   "eeg_buffer_len": {
-    "value": "1",
+    "value": "3",
     "section": "bci_config",
     "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
@@ -462,7 +464,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "50",
+    "value": "120",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",
@@ -470,7 +472,7 @@
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "10",
+    "value": "8",
     "section": "bci_config",
     "readableName": "Number of stimuli to present in a sequence",
     "helpTip": "Number of stimuli to present in a sequence",
@@ -478,7 +480,7 @@
     "isNumeric": "true"
   },
   "trial_complete_message": {
-    "value": "Nice! Trial Complete!",
+    "value": "Complete! Saving data...",
     "section": "bci_config",
     "readableName": "Trial Complete Message",
     "helpTip": "Message that displays at the end of trial",
@@ -487,10 +489,19 @@
 
   },
   "wait_screen_message": {
-    "value": "Press Space to Continue or Esc to Exit",
+    "value": "Press Space or Esc to Exit",
     "section": "bci_config",
     "readableName": "Wait Screen Message",
     "helpTip": "Message that displays at the beginning of trial and when user pauses",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "wait_screen_message_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message Color",
+    "helpTip": "Wait Screen Message Color, when background_color is white this should be black",
     "recommended_values": "",
     "isNumeric": "false"
 

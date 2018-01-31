@@ -22,7 +22,7 @@ def main():
     from acquisition.datastream.server import DataServer
 
     host = '127.0.0.1'
-    port = 8844
+    port = 9000
     # The Protocol is for mocking data.
     protocol = registry.default_protocol('DSI')
     server = DataServer(protocol=protocol,
@@ -39,7 +39,7 @@ def main():
         server.start()
         client.start_acquisition()
 
-        print("\nCollecting data... (Interrupt [Ctl-C] to stop)\n")
+        print("\nCollecting data for 10s... (Interrupt [Ctl-C] to stop)\n")
 
         while True:
             time.sleep(10)
