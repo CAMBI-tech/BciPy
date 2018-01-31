@@ -66,7 +66,7 @@ def distribute_letters(letters, myTextBoxes, posteriors = None):
 
 '''Params:#######################################################################'''
 # A second thought reveals that these are actually double the freq of flickering.
-flicking_freqs = [6., 10., 20., 30., 1., 60]
+flicking_freqs = [1, 2., 10., 20., 40, 60]
 flick_duration = 2
 screen_refresh_rate = 60.
 colors = [(255, 255, 0), (255, 80, 80), (255, 0, 255), (51, 102, 255), (51, 204, 204), (51, 204, 51)]
@@ -96,19 +96,17 @@ for index in range(len(alp)):
     all_letters.append(TextStim(win=win, text=alp[index], pos=(-24.5 + 8*(index % 9), 4 - 3.8*(index / 9)), height=4, colorSpace='rgb255'))
     all_letters[index].setAutoDraw(True)
 
-
-
 win.update()
-core.wait(3)
+core.wait(2)
 
 while True:
 
     distribute_letters(all_letters, my_text_boxes)
-    core.wait(3)
-
     win.update()
+    core.wait(2)
 
     [tb.set_pos() for tb in my_text_boxes]
+    win.update()
     core.wait(2)
 
     flick_draw(win=win, flicking_freqs=flicking_freqs, boxes=boxes,
