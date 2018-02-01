@@ -33,7 +33,7 @@ class LangModel:
 
         # Windows requires a special handling on to setup the access to Docker.
         os_version = platform.platform()
-        if os_version.startswith('Windows-7-'):
+        if os_version.startswith('Windows'):
             # Setup the environment variables.
             docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
             docker_instructions = docker_env_cmd.stdout.read().split('\n')

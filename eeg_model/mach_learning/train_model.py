@@ -11,7 +11,6 @@ from sklearn import metrics
 from scipy.stats import iqr
 
 
-# TODO: Horrible implementation make it modular!
 def train_pca_rda_kde_model(x, y, k_folds=10):
     """ Trains the Cw-PCA RDA KDE model given the input data and labels with
         cross validation and returns the model

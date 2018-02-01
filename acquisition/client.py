@@ -2,10 +2,13 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-import Queue
+import multiprocessing
 import threading
 import time
 import timeit
+
+from Queue import Empty
+
 
 from buffer import Buffer
 from processor import FileWriter
@@ -50,13 +53,13 @@ class Client(object):
 
     def __init__(self,
                  device,
-                 processor=FileWriter.builder('rawdata.csv'),
-                 buffer=Buffer.builder('buffer.db'),
+                 processor_name='rawdata.csv',
+                 buffer_name='buffer.db',
                  clock=_Clock()):
 
         self._device = device
-        self._make_processor = processor
-        self._make_buffer = buffer
+        self._processor_name = processor_name
+        self._buffer_name = buffer_name
         self._clock = clock
 
         self._is_streaming = False
@@ -64,7 +67,9 @@ class Client(object):
         self._initial_wait = 5  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
-        self._process_queue = Queue.Queue(maxsize=maxsize)
+
+        self._process_queue = multiprocessing.Queue(maxsize=maxsize)
+
 
     # @override ; context manager
     def __enter__(self):
@@ -77,30 +82,52 @@ class Client(object):
 
     def start_acquisition(self):
         """Run the initialization code and start the loop to acquire data from
-        the server."""
+        the server.
 
-        self._device.connect()
+        We use threading and multiprocessing to achieve best performance during our
+        sessions.
+
+            **** 
+            Eventually, we'd like to parallelize both acquistion and processing loops
+                but there are some issues with how our process loop is desinged
+                and cannot work on Windows. This is due to os forking vs. duplication.
+                    There are fixes in #Python3, but we are currently tied to v2.7
+                - unix systems can directly replace _StoppableThread with
+                    _StoppableProcess!
+            ****
+
+        Some references:
+            Stoping processes and other great multiprocessing examples:
+                https://pymotw.com/2/multiprocessing/communication.html
+            Windows vs. Unix Process Differences:
+                https://docs.python.org/2.7/library/multiprocessing.html#windows
+
+        """
 
         if not self._is_streaming:
             logging.debug("Starting acquisition")
-            self._is_streaming = True
 
-            # Read headers/params
-            self._device.acquisition_init()
+            self._is_streaming = True
+            self._clock.reset()
+
+            self._acq_process = _StoppableProcess(
+                target=self._acquisition_loop,
+                args=(self._device))
+            self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
             # been updated as needed.
-            self._buf = self._make_buffer(channels=self._device.channels)
-            self._processor = self._make_processor(self._device.name,
-                                                   self._device.fs,
-                                                   self._device.channels)
+            self._buf = Buffer(channels=self._device.channels,
+                               archive_name=self._buffer_name)
+            self._processor = FileWriter(self._processor_name,
+                                         self._device.name,
+                                         self._device.fs,
+                                         self._device.channels)
 
-            self._acq_thread = _StoppableThread(target=self._acquisition_loop)
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
             self._process_thread.start()
-            self._acq_thread.start()
 
     def _process_loop(self):
         """Reads from the queue of data and performs processing an item at a
@@ -115,30 +142,49 @@ class Client(object):
                     # block if necessary
                     record = self._process_queue.get(True, wait)
                     # decrease the wait after data has been initially received
-                    wait = 1
-                except Queue.Empty:
+                    wait = 2
+                except Empty:
                     break
                 self._buf.append(record)
                 p.process(record.data, record.timestamp)
 
-    def _acquisition_loop(self):
+    def _acquisition_loop(self, device, clock):
         """Continuously reads data from the source and sends it to the buffer
         for processing."""
 
+        device.connect()
+        device.acquisition_init()
+        sample = 0
+
+        # If streaming set, start reading data
         if self._is_streaming:
-            data = self._device.read_data()
-            while self._acq_thread.running() and data:
-                self._process_queue.put(Record(data, self._clock.getTime()))
-                data = self._device.read_data()
+            data = device.read_data()
+
+            # begin continuous acquistion process as long as data recieved
+            while self._acq_process.running() and data:
+
+                # Use get time to timestamp and continue saving records.
+                self._process_queue.put(
+                    Record(data, sample))
+
+                try:
+                    # Read data again
+                    data = device.read_data()
+                    sample += 1
+                except:
+                    data = None
+                    break
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
 
         self._is_streaming = False
-
         self._device.disconnect()
-        self._acq_thread.stop()
-        self._acq_thread.join()
+
+        while self._acq_process.running():
+            time.sleep(.1)
+        self._acq_process.stop()
+        self._acq_process.join()
 
         # allow initial_wait seconds to wrap up any queued work
         counter = 0
@@ -186,11 +232,30 @@ class Client(object):
             self._buf.cleanup()
 
 
-class _StoppableThread(threading.Thread):
+class _StoppableProcess(multiprocessing.Process):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
 
       https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(_StoppableProcess, self).__init__(*args, **kwargs)
+        self._stopper = multiprocessing.Event()
+
+    def stop(self):
+        self._stopper.set()
+
+    def running(self):
+        return not self._stopper.is_set()
+
+    def stopped(self):
+        return self._stopper.is_set()
+
+
+class _StoppableThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the running() condition.
     """
 
     def __init__(self, *args, **kwargs):

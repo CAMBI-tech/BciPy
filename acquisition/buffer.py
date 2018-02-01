@@ -22,12 +22,14 @@ class Buffer(object):
              performant with small chunksize).
         archive_name: str; optional
             Name of the data store.
+
+    http://sebastianraschka.com/Articles/2014_sqlite_in_python_tutorial.html
     """
 
     def __init__(self, channels, chunksize=10000, archive_name='buffer.db'):
 
-        assert len(channels) > 0
-        assert chunksize > 0
+        assert len(channels) > 0, "Buffer wasn't given any channels!"
+        assert chunksize > 0, "Chunksize for Buffer must be greater than 0!"
         assert len(archive_name) > 0, "An empty archive name will result in " \
             "an in-memory database that cannot be shared across processes."
 
@@ -58,7 +60,7 @@ class Buffer(object):
 
         # Create SQL INSERT statement
         field_names = ','.join(fields)
-        placeholders = ','.join('?' for i in range(len(fields)))
+        placeholders = ','.join('?' for i in xrange(len(fields)))
         self._insert_stmt = 'INSERT INTO data (%s) VALUES (%s)' % \
             (field_names, placeholders)
 
@@ -119,7 +121,7 @@ class Buffer(object):
         """Writes data to the datastore and empties the buffer."""
 
         data = [_adapt_record(self._buf.popleft())
-                for i in range(len(self._buf))]
+                for i in xrange(len(self._buf))]
 
         if data:
             # Performs writes in a single transaction;
@@ -223,7 +225,7 @@ def _main():
     chunksize = args.chunk_size
     channel_count = args.channel_count
 
-    channels = ["ch" + str(c) for c in range(channel_count)]
+    channels = ["ch" + str(c) for c in xrange(channel_count)]
 
     print("Running with %d samples of %d channels each and chunksize %d" %
           (n, channel_count, chunksize))
@@ -233,7 +235,7 @@ def _main():
         """Generater for mock data"""
         i = 0
         while i < n:
-            yield [np.random.uniform(-1000, 1000) for cc in range(c)]
+            yield [np.random.uniform(-1000, 1000) for cc in xrange(c)]
             i += 1
 
     starttime = timeit.default_timer()

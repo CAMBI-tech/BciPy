@@ -4,13 +4,12 @@ from __future__ import division
 
 import acquisition.datastream.generator as generator
 import acquisition.protocols.registry as registry
-from acquisition.buffer import Buffer
 from acquisition.client import Client, _Clock
-from acquisition.processor import FileWriter
 from acquisition.datastream.server import DataServer
 
 
-def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
+def init_eeg_acquisition(parameters, save_folder,
+                         clock=_Clock(), server=False):
     """
     Initializes a client that connects with the EEG data source and begins
     data collection.
@@ -37,6 +36,14 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
     -------
         (client, server) tuple
     """
+
+    # Initialize the needed DAQ Parameters
+    parameters = {
+        'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
+        'device': parameters['acq_device']['value'],
+        'filename': save_folder + '/' + parameters['raw_data_name']['value'],
+    }
+
     default_host = '127.0.0.1'
     default_port = 8844
 
@@ -65,11 +72,14 @@ def init_eeg_acquisition(parameters, clock=_Clock(), server=False):
 
     Device = registry.find_device(device_name)
 
+    # Start a client. We assume that the channels will be set on the device,
+    #  add a channel parameter to Device to override!
     client = Client(device=Device(connection_params=connection_params,
-                                  fs=fs,
-                                  channels=channels),
-                    processor=FileWriter.builder(filename),
-                    buffer=Buffer.builder(buffer_name),
+                                  fs=fs),
+                    processor_name=filename,
+                    buffer_name=buffer_name,
                     clock=clock)
+
+    client.start_acquisition()
 
     return (client, dataserver)

@@ -42,12 +42,10 @@ This project requires Psychopy, Python v 2.7, and other packages. See requiremen
 
 In order to run BCI suite on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must install Docker and Docker-Machience to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using, set fake_lm to true. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python espeically for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). 
 
-There are two methods in this BCI repo to load all packages in:
 
-1. Run `pip install -r requirements.txt`. -or- `python utils/module_loader.py`
+1. Run `pip install -r requirements.txt`
 
-
-* You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows: *
+You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows:
 
 2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
@@ -93,4 +91,44 @@ This repository uses pytest for execution of tests. You may execute them by:
 5. Use informative names for functions and classes.
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
-8. All new modules or major functionality should be documented outside of the code.
+8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one. 
+
+For further instruction:
+
+```
+The Zen of Python, by Tim Peters
+
+Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+Complex is better than complicated.
+Flat is better than nested.
+Sparse is better than dense.
+Readability counts.
+Special cases aren't special enough to break the rules.
+Although practicality beats purity.
+Errors should never pass silently.
+Unless explicitly silenced.
+In the face of ambiguity, refuse the temptation to guess.
+There should be one-- and preferably only one --obvious way to do it.
+Although that way may not be obvious at first unless you're Dutch.
+Now is better than never.
+Although never is often better than *right* now.
+If the implementation is hard to explain, it's a bad idea.
+If the implementation is easy to explain, it may be a good idea.
+Namespaces are one honking great idea -- let's do more of those!
+```
+
+Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
+
+## Authorship
+--------------
+
+Tab Memmott (OHSU)
+Aziz Kocanaogullari (NEU)
+Matthew Lawhead (OSHU- OCTRI)
+Berkan Kadioglu (NEU)
+Dani Smektala (N.A.)
+Andac Demir (NEU)
+Shaobin Xu (OHSU)
+Shiran Dudy (OHSU)

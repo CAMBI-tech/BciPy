@@ -12,7 +12,7 @@ This is the GUI for RSVP Keyboard. All GUI elements (buttons, input boxes, etc.)
 
 ## Dependencies
 -------------
-This project requires wxPython version 4.0.0a3, and pyglet version 1.3.0b1.  
+This project was written in wxPython version 4.0.0a3, and pyglet version 1.3.0b1.  
 Both wxPython and pyglet are dependencies of Psychopy.
 
 ## Project structure
@@ -26,14 +26,6 @@ testing/pytestfile.py | Pytest test file
 testing/testfile.py | Temporary placeholder Python script to use where other scripts will eventually be added
 
 The 'static' folder contains images.
-
-## Installation
-------------
-
-After downloading and unzipping the source, cd into the ohsu-rsvp-gui repo, then run:  
-
-`pip install -r requirements.txt`  
-
 
 To run the GUI:  
 

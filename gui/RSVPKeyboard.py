@@ -135,7 +135,7 @@ for json_item in file_data:
                 convert_to_height((section_counter) - (window_three_bar.contentHeight
                                  if (section_boolean)
                                  else window_four_bar.contentHeight) - 15, main_window_height) + main_window_height,
-                "static/images/triangle.png", display_window,
+                "static/images/gui_images/triangle.png", display_window,
                 float(convert_to_width(25, main_window_width)), float(convert_to_height(25, main_window_height)),
                 display_window
             )
@@ -370,14 +370,13 @@ gui_fx.add_text(
 )
 
 
-
 ''' Register images. '''
 
 # OHSU
 gui_fx.add_image(
     main_window_width_half + convert_to_width(260, main_window_width),
     main_window_height_half + convert_to_height(140, main_window_height),
-    "static/images/OHSU-RGB-4C-REV.png", 0,
+    "static/images/gui_images/OHSU-RGB-4C-REV.png", 0,
     float(convert_to_width(39, main_window_width)), float(convert_to_height(67, main_window_height)), False
 )
 
@@ -385,7 +384,7 @@ gui_fx.add_image(
 gui_fx.add_image(
     main_window_width_half - convert_to_width(305, main_window_width),
     main_window_height_half + convert_to_height(115, main_window_height),
-    "static/images/northeasternuniversity_logoseal.png", 0,
+    "static/images/gui_images/northeasternuniversity_logoseal.png", 0,
     float(convert_to_width(87, main_window_width)), float(convert_to_height(88, main_window_height)), False
 )
 
@@ -393,7 +392,7 @@ gui_fx.add_image(
 gui_fx.add_image(
     main_window_width_half + convert_to_width(105, main_window_width),
     main_window_height_half + (80/480.0)*main_window_height,
-    "static/images/triangle.png", 0,
+    "static/images/gui_images/triangle.png", 0,
     float(convert_to_width(33, main_window_width)), float(convert_to_height(33, main_window_height)), False
 )
 

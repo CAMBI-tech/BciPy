@@ -19,9 +19,6 @@ var_pos = .5
 mean_neg = 0
 var_neg = .5
 
-# Symbol set
-alp = alphabet()
-
 
 # TODO: Distributions are hardcoded!!
 def dummy_trig_dat_generator(truth, state, stimuli):
@@ -65,6 +62,7 @@ def dummy_trig_dat_generator(truth, state, stimuli):
 
     return eeg, trigger, target_info
 
+
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
 
@@ -85,11 +83,13 @@ class CopyPhraseWrapper(object):
     """
 
     def __init__(self, eeg_model, fs, k, alp, evidence_names=['LM', 'ERP'],
-                 task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None):
+                 task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
+                 is_txt_sti=True):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(state=task_list[0][1],
-                                            alphabet=alp)
+                                            alphabet=alp,
+                                            is_txt_sti=is_txt_sti)
         self.alp = alp
 
         self.eeg_model = eeg_model
@@ -181,7 +181,7 @@ class CopyPhraseWrapper(object):
 
                 # construct the priors as needed for evidence fusion
                 prior = [float(pr_letter[1])
-                         for alp_letter in alphabet()
+                         for alp_letter in self.alp
                          for pr_letter in lm_prior['prior']
                          if alp_letter == pr_letter[0]
                          ]
@@ -264,7 +264,7 @@ def demo_copy_phrase_wrapper():
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),
                  ('THIS_IS_A_DEMO', 'THIS_IS_A_')]
 
-    task = CopyPhraseWrapper(model, fs=dim_x * 2, k=1, alp=alp,
+    task = CopyPhraseWrapper(model, fs=dim_x * 2, k=1, alp=alphabet(),
                              task_list=task_list)
     task.operate()
 

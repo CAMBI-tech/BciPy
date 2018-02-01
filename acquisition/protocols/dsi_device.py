@@ -24,16 +24,24 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=300, channels=[]):
+    def __init__(self, connection_params, fs=300, channels=[
+            'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
+            'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
+            'X3', 'X2', 'F7', 'F8', 'X1',
+            'A2', 'T6', 'T4', 'TRG']):
+        """Init DsiDevice."""
+
         super(DsiDevice, self).__init__(connection_params, fs, channels)
-        assert 'host' in connection_params
-        assert 'port' in connection_params
+        assert 'host' in connection_params, "Please specify host to Device!"
+        assert 'port' in connection_params, "Please specify port to Device!"
 
         self._channels_provided = len(channels) > 0
         self._socket = None
+        self.channels = channels
 
     @property
     def name(self):
+        """DSI Name."""
         return 'DSI'
 
     def connect(self):
@@ -51,7 +59,8 @@ class DsiDevice(Device):
             dict-like object
         """
 
-        assert self._socket is not None
+        assert self._socket is not None, \
+            "Socket isn't started, cannot read DSI packet!"
 
         # Reads the header to get the payload length, then reads the payload.
         header_buf = util.receive(self._socket, dsi.header_len)
@@ -60,7 +69,9 @@ class DsiDevice(Device):
         return dsi.packet.parse(header_buf + payload_buf)
 
     def acquisition_init(self):
-        """Initialization step. Reads the channel and data rate information
+        """Initialization step.
+
+        Reads the channel and data rate information
         sent by the server and sets the appropriate instance variables.
         """
 
@@ -71,21 +82,26 @@ class DsiDevice(Device):
                 raise Exception('EEG Data was encountered; expected '
                                 'initialization headers.')
             logging.debug(response.type)
+
+            # Here we get information from the device about version etc.
+            #  If interested, print the response type and message!
             if response.type == 'EVENT':
-                logging.debug(response.event_code + ': ' + response.message)
+                pass
             response = self._read_packet()
 
         channels = response.message.split(',')
         logging.debug("Channels: " + ','.join(channels))
-        if self._channels_provided and channels != self.channels:
+        if self._channels_provided and len(channels) != len(self.channels):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
         else:
             self.channels = channels
 
         response = self._read_packet()
+
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
             raise Exception("Unexpected packet; expected DATA RATE Event")
+
         fs = int(response.message.split(',')[1])
         logging.debug("Sample frequency: " + str(fs))
 
@@ -93,23 +109,25 @@ class DsiDevice(Device):
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 
-        reponse = self._read_packet()
+        response = self._read_packet()
+
+        if response.event_code != 'DATA_START':
+            raise Exception("Expected DATA START")
 
     def read_data(self):
-        """Reads the next packet and returns the sensor data.
+        """Read Data.
+
+        Reads he next packet from DSI device and returns the sensor data.
 
         Returns
         -------
             list with an item for each channel.
         """
         sensor_data = False
-        while sensor_data is False:
-            try:
-                response = self._read_packet()
 
-                if response.sensor_data:
-                    sensor_data = True
-            except:
-                pass
+        while not sensor_data:
 
-        return list(response.sensor_data)
+            response = self._read_packet()
+
+            if hasattr(response, 'sensor_data'):
+                return list(response.sensor_data)

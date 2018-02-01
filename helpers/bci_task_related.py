@@ -1,6 +1,7 @@
-import numpy as np
+import os
 from psychopy import visual, event
 
+import numpy as np
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
@@ -45,7 +46,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     return next_target_letter, text_task, run
 
 
-def alphabet():
+def alphabet(parameters=None):
     """Alphabet.
 
     Function used to standardize the symbols we use as alphabet.
@@ -54,11 +55,23 @@ def alphabet():
     -------
         array of letters.
     """
+    if parameters:
+        if parameters['is_txt_sti']['value'] == 'false':
+            # construct an array of paths to images
+            path = parameters['path_to_presentation_images']['value']
+            image_array = []
+            for image_filename in os.listdir(path):
+                if image_filename.endswith(".png"):
+                    image_array.append(os.path.join(path, image_filename))
+
+            return image_array
+
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '<', '_']
 
 
-def _process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(sequence_timing, daq):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -131,7 +144,7 @@ def trial_complete_message(win, parameters):
 
         win (object): Psychopy Window Object, should be the same as the one
             used in the experiment
-        parameters (dict): Dictionary of session parameters 
+        parameters (dict): Dictionary of session parameters
 
     Returns
     -------
@@ -145,29 +158,52 @@ def trial_complete_message(win, parameters):
         font=parameters['font_text']['value'],
         pos=(float(parameters['pos_text_x']['value']),
              float(parameters['pos_text_y']['value'])),
-        wrapWidth=None, colorSpace='rgb',
+        wrapWidth=None,
+        color=parameters['trial_complete_message_color']['value'],
         opacity=1, depth=-6.0)
     return [message_stim]
 
 
-def get_user_input():
-                            # check user input to make sure we should be going
-    keys = event.getKeys(keyList=['space', 'escape'])
+def get_user_input(window, message, color, first_run=False):
+    """Get User Input.
 
-    if keys:
-        # pause?
-        if keys[0] == 'space':
-            pause = True
-            print "Pause"
+    Function returns whether or not to stop a trial. If a key of interest is
+        passed (e.g. space), it will act on it.
 
-            while pause:
-                keys = event.getKeys(keyList=["space"])
+    Parameters
+    ----------
 
-                if keys:
-                    pause = False
+        window[psychopy task window]: task window.  *assumes wait_screen method
 
-        # escape?
-        if keys[0] == 'escape':
-            return False
+    Returns
+    -------
+        True/False: whether or not to stop a trial (based on escape key).
+    """
+
+    if not first_run:
+        pause = False
+        # check user input to make sure we should be going
+        keys = event.getKeys(keyList=['space', 'escape'])
+
+        if keys:
+            # pause?
+            if keys[0] == 'space':
+                pause = True
+
+            # escape?
+            if keys[0] == 'escape':
+                return False
+
+    else:
+        pause = True
+
+    while pause:
+        window.wait_screen(message, color)
+        keys = event.getKeys(keyList=['space', 'escape'])
+
+        if keys:
+            if keys[0] == 'escape':
+                return False
+            pause = False
 
     return True

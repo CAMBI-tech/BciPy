@@ -15,6 +15,14 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
+  "background_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Main Window Background Color",
+    "helpTip": "Main Window Background Color.",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
   "path_to_fst": {
     "value": "language_model/fst/brown_closure.n5.kn.fst",
     "section": "advanced_config",
@@ -45,10 +53,18 @@
     "isNumeric": "false"
   },
   "color_task": {
-    "value": "White",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Color Task",
     "helpTip": "Color Task",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "trial_complete_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Trail Complete Message Color",
+    "helpTip": "Trail Complete Message Color",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -77,7 +93,7 @@
     "isNumeric": "true"
   },
   "text_task": {
-    "value": "COPY_PHRASE",
+    "value": "SPELL_THIS_WORD",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
@@ -85,12 +101,14 @@
     "isNumeric": "false"
   },
   "color_text": {
-    "value": "White",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Color Text",
     "helpTip": "Color Text",
     "recommended_values": [
-      "White"
+      "white",
+      "black",
+      "blue"
     ],
     "isNumeric": "false"
   },
@@ -263,7 +281,7 @@
     "isNumeric": "false"
   },
   "path_to_presentation_images": {
-    "value": "/static/images/rsvp_images/",
+    "value": "../bci/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -271,7 +289,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": ".25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -279,10 +297,34 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "white",
+    "value": "black",
     "section": "bci_config",
     "readableName": "Task Color",
-    "helpTip": "Task Color",
+    "helpTip": "Color of Task Text: Ex. 1/100",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "target_letter_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Target Letter Color",
+    "helpTip": "Target Letter Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "fixation_color": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Fixation Color",
+    "helpTip": "Fixation Color",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "stimuli_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Stimuli Color",
+    "helpTip": "Stimuli Color",
     "recommended_values": "",
     "isNumeric": "false"
   },
@@ -295,7 +337,7 @@
     "isNumeric": "true"
   },
   "time_cross": {
-    "value": "0.6",
+    "value": "0.4",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",
@@ -359,7 +401,7 @@
     "isNumeric": "false"
   },
   "eeg_buffer_len": {
-    "value": "1",
+    "value": "3",
     "section": "bci_config",
     "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
@@ -396,7 +438,7 @@
     "isNumeric": "false"    
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -404,7 +446,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -422,7 +464,7 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "5",
+    "value": "120",
     "section": "bci_config",
     "readableName": "Number of stimuli to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",
@@ -430,7 +472,7 @@
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "10",
+    "value": "8",
     "section": "bci_config",
     "readableName": "Number of stimuli to present in a sequence",
     "helpTip": "Number of stimuli to present in a sequence",
@@ -438,12 +480,57 @@
     "isNumeric": "true"
   },
   "trial_complete_message": {
-    "value": "Nice! Trial Complete!",
+    "value": "Complete! Saving data...",
     "section": "bci_config",
     "readableName": "Trial Complete Message",
     "helpTip": "Message that displays at the end of trial",
     "recommended_values": "",
     "isNumeric": "false"
+
+  },
+  "wait_screen_message": {
+    "value": "Press Space or Esc to Exit",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message",
+    "helpTip": "Message that displays at the beginning of trial and when user pauses",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "wait_screen_message_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message Color",
+    "helpTip": "Wait Screen Message Color, when background_color is white this should be black",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "prospect_flash_time": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "prospect_flash_time",
+    "helpTip": "prospect_flash_time",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "show_prospects": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "show_prospects",
+    "helpTip": "show_prospects",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
+  "prospect_message": {
+    "value": "SELECTED:",
+    "section": "bci_config",
+    "readableName": "prospect_message",
+    "helpTip": "prospect_message",
+    "recommended_values": "",
+    "isNumeric": "true"
 
   },
   "max_seq_len": {
