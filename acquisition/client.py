@@ -104,7 +104,7 @@ class Client(object):
         """
 
         if not self._is_streaming:
-            logging.debug("Starting acquisition")
+            logging.debug("Starting Acquisition")
 
             self._is_streaming = True
             self._clock.reset()
@@ -176,6 +176,7 @@ class Client(object):
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
+        logging.debug("Stopping Acquisition")
 
         self._is_streaming = False
         self._device.disconnect()

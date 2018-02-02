@@ -122,10 +122,10 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
     if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
                           parameters['wait_screen_message_color']['value'],
                           first_run=True):
-        return
+        run = False
 
     # Start the Session!
-    while run is True:
+    while run:
 
         # check user input to make sure we should be going
         if not get_user_input(
