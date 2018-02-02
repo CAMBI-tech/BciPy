@@ -109,10 +109,8 @@ class DsiDevice(Device):
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 
+        # Read once more for data start
         response = self._read_packet()
-
-        if response.event_code != 'DATA_START':
-            raise Exception("Expected DATA START")
 
     def read_data(self):
         """Read Data.

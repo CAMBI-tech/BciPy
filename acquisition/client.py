@@ -70,7 +70,6 @@ class Client(object):
 
         self._process_queue = multiprocessing.Queue(maxsize=maxsize)
 
-
     # @override ; context manager
     def __enter__(self):
         self.start_acquisition()
@@ -84,17 +83,17 @@ class Client(object):
         """Run the initialization code and start the loop to acquire data from
         the server.
 
-        We use threading and multiprocessing to achieve best performance during our
-        sessions.
+        We use threading and multiprocessing to achieve best performance during
+        our sessions.
 
-            **** 
-            Eventually, we'd like to parallelize both acquistion and processing loops
-                but there are some issues with how our process loop is desinged
-                and cannot work on Windows. This is due to os forking vs. duplication.
-                    There are fixes in #Python3, but we are currently tied to v2.7
-                - unix systems can directly replace _StoppableThread with
+        ****
+        Eventually, we'd like to parallelize both acquistion and processing
+        loop but there are some issues with how our process loop is desinged
+        and cannot work on Windows. This is due to os forking vs. duplication.
+            There are fixes in #Python3, but we are currently tied to v2.7
+                -- unix systems can directly replace _StoppableThread with
                     _StoppableProcess!
-            ****
+        ****
 
         Some references:
             Stoping processes and other great multiprocessing examples:
@@ -112,7 +111,7 @@ class Client(object):
 
             self._acq_process = _StoppableProcess(
                 target=self._acquisition_loop,
-                args=(self._device))
+                args=(self._device, self._process_queue))
             self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
@@ -148,7 +147,7 @@ class Client(object):
                 self._buf.append(record)
                 p.process(record.data, record.timestamp)
 
-    def _acquisition_loop(self, device, clock):
+    def _acquisition_loop(self, device, process_queue):
         """Continuously reads data from the source and sends it to the buffer
         for processing."""
 
@@ -164,7 +163,7 @@ class Client(object):
             while self._acq_process.running() and data:
 
                 # Use get time to timestamp and continue saving records.
-                self._process_queue.put(
+                process_queue.put(
                     Record(data, sample))
 
                 try:
@@ -181,8 +180,6 @@ class Client(object):
         self._is_streaming = False
         self._device.disconnect()
 
-        while self._acq_process.running():
-            time.sleep(.1)
         self._acq_process.stop()
         self._acq_process.join()
 

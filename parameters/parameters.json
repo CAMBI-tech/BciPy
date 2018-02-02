@@ -297,7 +297,7 @@
     "isNumeric": "true"
   },
   "task_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Task Color",
     "helpTip": "Color of Task Text: Ex. 1/100",
