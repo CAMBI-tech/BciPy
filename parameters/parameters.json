@@ -438,7 +438,7 @@
     "isNumeric": "false"    
   },
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -446,7 +446,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -498,7 +498,7 @@
 
   },
   "wait_screen_message_color": {
-    "value": "black",
+    "value": "white",
     "section": "bci_config",
     "readableName": "Wait Screen Message Color",
     "helpTip": "Wait Screen Message Color, when background_color is white this should be black",
