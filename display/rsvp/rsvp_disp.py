@@ -173,8 +173,8 @@ class RSVPDisplay(object):
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
-
-            # Set a static period to do all our stim setting. Will warn if ISI value is violated.
+            # Set a static period to do all our stim setting.
+            #   Will warn if ISI value is violated.
             self.staticPeriod.start(.05)
 
             # Turn ms timing into frames! Much more accurate!
@@ -313,7 +313,7 @@ class RSVPDisplay(object):
                                        text=message,
                                        height=.1,
                                        color=color,
-                                       pos=self.pos_sti,
+                                       pos=(0, -.5),
                                        wrapWidth=2)
 
         # Try adding our BCI logo. Pass if not found.
