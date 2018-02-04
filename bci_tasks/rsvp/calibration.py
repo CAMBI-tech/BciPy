@@ -1,6 +1,6 @@
 # Calibration Task for RSVP
 
-from __future__ import division
+from __future__ import division, print_function
 from psychopy import clock, core
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask

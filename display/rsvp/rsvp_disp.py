@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division, print_function
 from psychopy import visual, core
 import numpy as np
 
@@ -328,7 +328,7 @@ class RSVPDisplay(object):
             wait_logo.draw()
 
         except Exception:
-            print "Cannot load logo image"
+            print("Cannot load logo image")
             pass
 
         # Draw and flip the screen.
