@@ -57,7 +57,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
             rsvp, parameters['wait_screen_message']['value'],
             parameters['wait_screen_message_color']['value'],
             first_run=True):
-        return
+        run = False
 
     while run:
 

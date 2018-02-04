@@ -49,7 +49,7 @@ def offline_analysis(data_folder=None):
 
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat,
                                       mode=mode, fs=fs,k=ds_rate,
-                                      cannel_map=channel_map)
+                                      channel_map=channel_map)
 
     model = train_pca_rda_kde_model(x, y, k_folds=10)
 
