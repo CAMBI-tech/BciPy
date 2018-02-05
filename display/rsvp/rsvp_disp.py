@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
-from psychopy import visual, core
+from psychopy import prefs
+prefs.general['audioLib'] = ['pygame']
+from psychopy import visual, core, sound
 import numpy as np
 
 
@@ -179,6 +181,7 @@ class RSVPDisplay(object):
 
             # Turn ms timing into frames! Much more accurate!
             time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            # play_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
 
             # Set the Stimuli attrs
             if self.is_txt_sti:
@@ -193,6 +196,7 @@ class RSVPDisplay(object):
             self.timing_clock.reset()
 
             # Draw stimulus for n frames
+            # play_sound.play()
             for n_frames in xrange(time_to_present):
                 self.sti.draw()
                 self.draw_static()
@@ -203,6 +207,10 @@ class RSVPDisplay(object):
 
             # Start another ISI for trigger saving
             self.staticPeriod.start(.02)
+
+            # Draw in blank screen
+            self.draw_static()
+            self.win.flip()
 
             # append timing information
             if self.is_txt_sti:
