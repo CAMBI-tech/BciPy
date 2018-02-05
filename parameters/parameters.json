@@ -273,7 +273,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -289,7 +289,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": ".25",
+    "value": ".3",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -337,7 +337,7 @@
     "isNumeric": "true"
   },
   "time_cross": {
-    "value": "0.4",
+    "value": ".5",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",
@@ -401,7 +401,7 @@
     "isNumeric": "false"
   },
   "eeg_buffer_len": {
-    "value": "3",
+    "value": "2",
     "section": "bci_config",
     "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
@@ -409,7 +409,7 @@
     "isNumeric": "true"
   },
   "task_buffer_len": {
-    "value": ".5",
+    "value": ".75",
     "section": "bci_config",
     "readableName": "Task Buffer Length (sec)",
     "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",

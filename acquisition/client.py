@@ -63,8 +63,11 @@ class Client(object):
         self._clock = clock
 
         self._is_streaming = False
+        self._is_calibrated = False
+        # offset in seconds from the start of acquistion to calibration trigger
+        self.offset = 0
 
-        self._initial_wait = 5  # for process loop
+        self._initial_wait = 2  # for process loop
         multiplier = self._device.fs if self._device.fs else 100
         maxsize = (self._initial_wait + 1) * multiplier
 
@@ -88,7 +91,7 @@ class Client(object):
 
         ****
         Eventually, we'd like to parallelize both acquistion and processing
-        loop but there are some issues with how our process loop is desinged
+        loop but there are some issues with how our process loop is designed
         and cannot work on Windows. This is due to os forking vs. duplication.
             There are fixes in #Python3, but we are currently tied to v2.7
                 -- unix systems can directly replace _StoppableThread with
@@ -140,6 +143,14 @@ class Client(object):
                 try:
                     # block if necessary
                     record = self._process_queue.get(True, wait)
+
+                    # if device not calibrated, look for the first trigger signal
+                    #   as a marker of starting location. #refactorlater
+                    if not self._is_calibrated:
+                        if record.data[-1] > 0:
+                            self._is_calibrated = True
+                            self.offset = record.timestamp / self._device.fs
+
                     # decrease the wait after data has been initially received
                     wait = 2
                 except Empty:
