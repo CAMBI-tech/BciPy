@@ -111,7 +111,7 @@ class Client(object):
 
             self._acq_process = _StoppableProcess(
                 target=self._acquisition_loop,
-                args=(self._device, self._process_queue))
+                args=(self._device, ))
             self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
@@ -147,7 +147,7 @@ class Client(object):
                 self._buf.append(record)
                 p.process(record.data, record.timestamp)
 
-    def _acquisition_loop(self, device, process_queue):
+    def _acquisition_loop(self, device):
         """Continuously reads data from the source and sends it to the buffer
         for processing."""
 
@@ -163,7 +163,7 @@ class Client(object):
             while self._acq_process.running() and data:
 
                 # Use get time to timestamp and continue saving records.
-                process_queue.put(
+                self._process_queue.put(
                     Record(data, sample))
 
                 try:
