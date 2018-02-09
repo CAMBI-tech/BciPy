@@ -1,11 +1,8 @@
 # Calibration Task for RSVP
 
 from __future__ import division, print_function
-from psychopy import prefs
-prefs.general['audioLib'] = ['pygame']
 
-
-from psychopy import core, sound
+from psychopy import core
 import time
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
@@ -41,8 +38,6 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     '''
 
-
-
     # Initialize needed experiment information 
     frame_rate = win.getActualFrameRate()
     static_clock = core.StaticPeriod(screenHz=frame_rate)
@@ -61,7 +56,7 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
         print("EEG initializing failed")
         raise e
 
-    # Try initializing the calibration task
+    # Try initializing the calibration display
     try:
         rsvp = init_calibration_display_task(
             parameters, win, static_clock, experiment_clock)
@@ -163,11 +158,10 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     # Give the system time to process
     core.wait(buffer_val)
 
+    _write_triggers_from_sequence_calibration(
+        ['offset', daq.offset], trigger_file, offset=True)
     # Close this sessions trigger file and return some data
     trigger_file.close()
-
-    # print offset.. maybe add to text file with ISI added via params?
-    print(daq.offset)
 
     # Wait some time before exiting so there is trailing eeg data saved
     core.wait(int(parameters['eeg_buffer_len']['value']))

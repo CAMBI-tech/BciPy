@@ -40,8 +40,6 @@ class DsiDevice(Device):
         self._channels_provided = len(channels) > 0
         self._socket = None
         self.channels = channels
-        self._is_calibrated = False
-        self.offset = 0
 
     @property
     def name(self):
@@ -115,7 +113,6 @@ class DsiDevice(Device):
 
         # Read once more for data start
         response = self._read_packet()
-
         clock.reset()
 
     def read_data(self):
