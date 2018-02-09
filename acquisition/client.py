@@ -110,7 +110,6 @@ class Client(object):
             logging.debug("Starting Acquisition")
 
             self._is_streaming = True
-            self._clock.reset()
 
             self._acq_process = _StoppableProcess(
                 target=self._acquisition_loop,
@@ -163,7 +162,7 @@ class Client(object):
         for processing."""
 
         device.connect()
-        device.acquisition_init()
+        device.acquisition_init(self._clock)
         sample = 0
 
         # If streaming set, start reading data

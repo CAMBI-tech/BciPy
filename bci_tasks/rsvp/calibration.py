@@ -57,20 +57,14 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
 
-        experiment_clock.reset()
-
-        # Send a calibration signal
-        cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
-        cal_sound.play()
-
         # wait for calibration to take place
         while not daq._is_calibrated:
             core.wait(.5)
             print('calibrating data to stimuli....')
 
-        # Add offset to the experiment clock for precise stimuli timing
+        # # Add offset to the experiment clock for precise stimuli timing
         print(daq.offset)
-        experiment_clock.add(daq.offset)
+        # experiment_clock.add(daq.offset)
 
     except Exception as e:
         print("EEG initializing failed")

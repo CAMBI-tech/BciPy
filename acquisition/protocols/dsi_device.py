@@ -7,6 +7,8 @@ import acquisition.protocols.dsi as dsi
 import acquisition.protocols.util as util
 from acquisition.protocols.device import Device
 
+from psychopy import sound
+
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s', )
 
@@ -38,6 +40,8 @@ class DsiDevice(Device):
         self._channels_provided = len(channels) > 0
         self._socket = None
         self.channels = channels
+        self._is_calibrated = False
+        self.offset = 0
 
     @property
     def name(self):
@@ -68,7 +72,7 @@ class DsiDevice(Device):
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)
 
-    def acquisition_init(self):
+    def acquisition_init(self, clock):
         """Initialization step.
 
         Reads the channel and data rate information
@@ -111,6 +115,15 @@ class DsiDevice(Device):
 
         # Read once more for data start
         response = self._read_packet()
+
+        # Get the first data packet
+        response = self._read_packet()
+        if not self._is_calibrated:
+            # Send a calibration signal
+            cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
+            cal_sound.play()
+            self._is_calibrated = True
+        clock.reset()
 
     def read_data(self):
         """Read Data.

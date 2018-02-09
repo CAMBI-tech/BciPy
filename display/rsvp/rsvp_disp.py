@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
-from psychopy import visual, core
+from psychopy import visual, core, sound
 import numpy as np
 
 
@@ -169,6 +169,10 @@ class RSVPDisplay(object):
 
         # init an array for timing information
         timing = []
+
+        # Play a sequence start sound to help orient triggers
+        cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
+        cal_sound.play()
 
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
