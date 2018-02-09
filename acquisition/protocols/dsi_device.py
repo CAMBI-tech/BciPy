@@ -116,13 +116,6 @@ class DsiDevice(Device):
         # Read once more for data start
         response = self._read_packet()
 
-        # Get the first data packet
-        response = self._read_packet()
-        if not self._is_calibrated:
-            # Send a calibration signal
-            cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
-            cal_sound.play()
-            self._is_calibrated = True
         clock.reset()
 
     def read_data(self):

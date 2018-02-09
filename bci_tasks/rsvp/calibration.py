@@ -57,15 +57,6 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
 
-        # wait for calibration to take place
-        while not daq._is_calibrated:
-            core.wait(.5)
-            print('calibrating data to stimuli....')
-
-        # # Add offset to the experiment clock for precise stimuli timing
-        print(daq.offset)
-        # experiment_clock.add(daq.offset)
-
     except Exception as e:
         print("EEG initializing failed")
         raise e
@@ -174,6 +165,9 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     # Close this sessions trigger file and return some data
     trigger_file.close()
+
+    # print offset.. maybe add to text file with ISI added via params?
+    print(daq.offset)
 
     # Wait some time before exiting so there is trailing eeg data saved
     core.wait(int(parameters['eeg_buffer_len']['value']))

@@ -24,3 +24,4 @@ matplotlib==2.1.1
 pylsl==1.10.5
 psutil==5.4.0
 pandas==0.21.0
+pygame==1.9.3
