@@ -472,7 +472,7 @@
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "8",
+    "value": "10",
     "section": "bci_config",
     "readableName": "Number of stimuli to present in a sequence",
     "helpTip": "Number of stimuli to present in a sequence",
