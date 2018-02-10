@@ -4,7 +4,7 @@
 from __future__ import division
 from psychopy import visual, core
 
-from display.rsvp_disp_modes import FreeSpellingTask
+from display.rsvp.rsvp_disp_modes import FreeSpellingTask
 from helpers.triggers import _write_triggers_from_sequence_free_spell
 
 # Initialize Stimulus Parameters

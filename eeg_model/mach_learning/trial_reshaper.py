@@ -2,7 +2,7 @@ import numpy as np
 
 
 def trial_reshaper(
-    trial_target_info, timing_info, filtered_eeg, fs, k, mode, first_sample_time,
+    trial_target_info, timing_info, filtered_eeg, fs, k, mode, offset=0,
         channel_map=
         (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
     """
@@ -21,10 +21,7 @@ def trial_reshaper(
 
     :param mode: Operating mode, can be 'calibration', 'copy_phrase', etc.
 
-    :param first_sample_time: The first time stamp of DAQ. Used for finding
-        number of samples that passed between the first sample and a trigger
-
-    :param channel_map: A binary list, if i'th element is 0, i'th channel
+      :param channel_map: A binary list, if i'th element is 0, i'th channel
         in filtered_eeg is removed.
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return
@@ -38,7 +35,7 @@ def trial_reshaper(
     trials_per_seq = number of trials in each sequence
 
     """
-
+    print(offset)
     # Remove the channels that we are not interested in
     channel_indexes_to_remove = []
     for channel_index in range(len(filtered_eeg)):
@@ -83,7 +80,7 @@ def trial_reshaper(
         timing_info = filter(lambda x: x != -1, timing_info)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int((x - first_sample_time)*fs / k), timing_info)
+        triggers = map(lambda x: int((x - offset) *fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -111,7 +108,7 @@ def trial_reshaper(
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k), timing_info)
+        triggers = map(lambda x: int((x - offset) *fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -142,7 +139,7 @@ def trial_reshaper(
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = map(lambda x: int(x * fs / k), timing_info)
+        triggers = map(lambda x: int((x - offset) *fs / k), timing_info)
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.

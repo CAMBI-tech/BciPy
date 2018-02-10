@@ -1,6 +1,6 @@
 # Calibration Task for RSVP
 
-from __future__ import division
+from __future__ import division, print_function
 from psychopy import core, clock
 
 from display.rsvp.rsvp_disp_modes import CopyPhraseTask
@@ -32,7 +32,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
     except Exception as e:
-        print "Data acquistion could not start!"
+        print("Data acquistion could not start!")
         raise e
 
     # Try Initializing the Copy Phrase Display Object
@@ -55,14 +55,16 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     # check user input to make sure we should be going
     if not get_user_input(
             rsvp, parameters['wait_screen_message']['value'],
+            parameters['wait_screen_message_color']['value'],
             first_run=True):
-        return
+        run = False
 
     while run:
 
         # check user input to make sure we should be going
         if not get_user_input(
-                rsvp, parameters['wait_screen_message']['value']):
+                rsvp, parameters['wait_screen_message']['value'],
+                parameters['wait_screen_message_color']['value']):
             break
 
         # Try getting random sequence information given stimuli parameters
@@ -86,7 +88,7 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
 
         # Catch the exception here if needed.
         except Exception as e:
-            print e
+            print(e)
             raise e
 
         # Try executing the sequences

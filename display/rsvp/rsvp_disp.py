@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
-from psychopy import visual, core
+from __future__ import division, print_function
+from psychopy import visual, core, sound
 import numpy as np
 
 
@@ -65,6 +65,7 @@ class RSVPDisplay(object):
                 bg_step_num(int): number of animation iterations for bars
         """
         self.win = window
+        self.refresh_rate = window.getActualFrameRate()
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti
@@ -169,32 +170,47 @@ class RSVPDisplay(object):
         # init an array for timing information
         timing = []
 
+        # Play a sequence start sound to help orient triggers
+        cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
+        cal_sound.play()
+
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
-            # reset the timing clock on flip to correct stim drawing
-            self.win.callOnFlip(self.timing_clock.reset)
+            # Set a static period to do all our stim setting.
+            #   Will warn if ISI value is violated.
+            self.staticPeriod.start(.05)
 
-            # Start the trial clock and set stimuli
-            self.staticPeriod.start(self.time_list_sti[idx])
+            # Turn ms timing into frames! Much more accurate!
+            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+
+            # Set the Stimuli attrs
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
             else:
                 self.sti.image = self.stim_sequence[idx]
+            # End static period
+            self.staticPeriod.complete()
 
-            # draw static and stimuli
+            # Reset the timing clock to start presenting
+            self.timing_clock.reset()
+
+            # Draw stimulus for n frames
+            for n_frames in xrange(time_to_present):
+                self.sti.draw()
+                self.draw_static()
+                self.win.flip()
+
+            # Get trigger time (takes < .01ms)
+            trigger_time = self.expClock.getTime() - self.timing_clock.getTime()
+
+            # Start another ISI for trigger saving
+            self.staticPeriod.start(.05)
+
+            # Draw in blank screen
             self.draw_static()
-            self.sti.draw()
-
-            # flip the monitor and stop the clock
             self.win.flip()
-
-            # Get the actual trigger time, by subtracting the time to load from
-            #   experiment clock. W/o offset corrections it's ~ 6ms.
-            #   W/ correction should give less < .01 ms offset.
-            trigger_time = self.expClock.getTime() - \
-                self.timing_clock.getTime()
 
             # append timing information
             if self.is_txt_sti:
@@ -206,9 +222,10 @@ class RSVPDisplay(object):
                 image_name = self.sti.image.split('/')[-1].split('.')[0]
                 timing.append((image_name, trigger_time))
 
+            # End the static period
             self.staticPeriod.complete()
 
-        # draw in other static and flip once more
+        # draw in static and flip once more
         self.draw_static()
         self.win.flip()
 
@@ -292,7 +309,7 @@ class RSVPDisplay(object):
 
         return trigger_time
 
-    def wait_screen(self, message):
+    def wait_screen(self, message, color):
         """Wait Screen.
 
         Args:
@@ -303,8 +320,8 @@ class RSVPDisplay(object):
         wait_message = visual.TextStim(self.win, font=self.font_stim,
                                        text=message,
                                        height=.1,
-                                       color='white',
-                                       pos=self.pos_sti,
+                                       color=color,
+                                       pos=(0, -.5),
                                        wrapWidth=2)
 
         # Try adding our BCI logo. Pass if not found.
@@ -312,14 +329,14 @@ class RSVPDisplay(object):
             wait_logo = visual.ImageStim(
                 self.win,
                 image='./static/images/gui_images/bci_cas_logo.png',
-                size=(self.height_stim, self.height_stim),
+                size=(1, 1),
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
             wait_logo.draw()
 
         except Exception:
-            print "Cannot load logo image"
+            print("Cannot load logo image")
             pass
 
         # Draw and flip the screen.

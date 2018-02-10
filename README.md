@@ -49,6 +49,8 @@ You will also need to set a python path for your session. If running demo or oth
 
 2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
 
+3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
+
 > You are ready to run BCI suite!
 
 Start by running `python gui/BCInterface.py` in your command prompt or terminal

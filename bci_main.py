@@ -1,3 +1,4 @@
+import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from display.display_main import init_display_window
 
@@ -72,7 +73,8 @@ def execute_task(task_type, parameters, save_folder):
                 classifier = load_classifier()
 
             # if Language Model enabled and data not fake, init lm
-            if parameters['languagemodelenabled']['value'] == 'true' and not fake:
+            if parameters['languagemodelenabled']['value'] == 'true' \
+                    and not fake:
                 try:
                     lmodel = init_language_model(parameters)
                 except:

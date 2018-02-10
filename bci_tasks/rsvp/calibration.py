@@ -1,7 +1,9 @@
 # Calibration Task for RSVP
 
-from __future__ import division
-from psychopy import clock, core
+from __future__ import division, print_function
+
+from psychopy import core
+import time
 
 from display.rsvp.rsvp_disp_modes import CalibrationTask
 from helpers.acquisition_related import init_eeg_acquisition
@@ -13,45 +15,69 @@ from helpers.bci_task_related import (
 
 
 def rsvp_calibration_task(win, parameters, file_save, fake):
-    # Initialize Experiment clocks etc.
+    '''RSVP Calibration Task
+
+        Calibration task performs an RSVP stimulus sequence
+            to elicit an ERP. Parameters will change how many stim
+            and for how long they present. Parameters also change
+            color and text / image inputs. 
+
+        A task begins setting up variables --> initializing eeg -->
+            awaiting user input to start -->
+            setting up stimuli --> presenting sequences -->
+            saving data
+
+        Input: 
+            win (PsychoPy Display Object)
+            parameters (Dictionary)
+            file_save (String)
+            fake (Boolean)
+
+        Output:
+            file_save (String)
+
+    '''
+
+    # Initialize needed experiment information 
     frame_rate = win.getActualFrameRate()
     static_clock = core.StaticPeriod(screenHz=frame_rate)
     buffer_val = float(parameters['task_buffer_len']['value'])
-
-    # Get alphabet for experiment
     alp = alphabet(parameters)
 
     # Start acquiring data
     try:
-        experiment_clock = clock.Clock()
+        experiment_clock = core.Clock()
 
         # Initialize EEG Acquisition
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
+
     except Exception as e:
+        print("EEG initializing failed")
         raise e
 
-    # Try running the calibration task
-
+    # Try initializing the calibration display
     try:
         rsvp = init_calibration_display_task(
             parameters, win, static_clock, experiment_clock)
     except Exception as e:
         raise e
 
-    # Init Task
+    # Init Task Triggers and Run
     trigger_save_location = file_save + '/triggers.txt'
     trigger_file = open(trigger_save_location, 'w')
     run = True
 
-    # check user input to make sure we should be going
+    # Check user input to make sure we should be going
     if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          parameters['wait_screen_message_color']['value'],
                           first_run=True):
-        return
+        run = False
 
+    # Begin the Experiment
     while run:
 
-        # Try getting random sequence information given stimuli parameters
+        # Get random sequence information given stimuli parameters
         try:
             (ele_sti, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
@@ -74,13 +100,14 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
         except Exception as e:
             raise e
 
-        # Try executing the sequences
+        # Execute the RSVP sequences
         try:
             for idx_o in range(len(task_text)):
 
                 # check user input to make sure we should be going
                 if not get_user_input(
-                        rsvp, parameters['wait_screen_message']['value']):
+                        rsvp, parameters['wait_screen_message']['value'],
+                        parameters['wait_screen_message_color']['value']):
                     break
 
                 # update task state
@@ -128,8 +155,11 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     rsvp.draw_static()
     win.flip()
 
+    # Give the system time to process
     core.wait(buffer_val)
 
+    _write_triggers_from_sequence_calibration(
+        ['offset', daq.offset], trigger_file, offset=True)
     # Close this sessions trigger file and return some data
     trigger_file.close()
 
@@ -138,9 +168,8 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
 
     try:
         daq.stop_acquisition()
-    except:
-        # if not started, we can pass!
-        pass
+    except Exception as e:
+        raise e
 
     if server:
         server.stop()

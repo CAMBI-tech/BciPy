@@ -22,17 +22,13 @@ Name | Description
 utility/gui_fx.py  | All GUI execution code
 utility/parameters.json  | Parameters file containing all parameter names, default values, suggested values, etc.
 RSVPKeyboard.py | Registration of all GUI elements
-testing/pytestfile.py | Pytest test file
-testing/testfile.py | Temporary placeholder Python script to use where other scripts will eventually be added
+
 
 The 'static' folder contains images.
 
 To run the GUI:  
 
 `python RSVPKeyboard.py`  
-
-To run the included test file, cd into the 'testing' directory, then run:  
-`py.test pytestfile.py`
 
 
 Initially written by. Dani Smektala under the supervision of Tab Memmott @ OHSU

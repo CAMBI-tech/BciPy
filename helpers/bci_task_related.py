@@ -1,7 +1,7 @@
 import os
-import numpy as np
 from psychopy import visual, event
 
+import numpy as np
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
@@ -164,7 +164,7 @@ def trial_complete_message(win, parameters):
     return [message_stim]
 
 
-def get_user_input(window, message, first_run=False):
+def get_user_input(window, message, color, first_run=False):
     """Get User Input.
 
     Function returns whether or not to stop a trial. If a key of interest is
@@ -198,7 +198,7 @@ def get_user_input(window, message, first_run=False):
         pause = True
 
     while pause:
-        window.wait_screen(message)
+        window.wait_screen(message, color)
         keys = event.getKeys(keyList=['space', 'escape'])
 
         if keys:

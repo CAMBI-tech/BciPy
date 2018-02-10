@@ -1,6 +1,6 @@
 # Calibration Task for RSVP
 
-from __future__ import division
+from __future__ import division, print_function
 from psychopy import core, clock
 
 from display.rsvp.rsvp_disp_modes import CopyPhraseTask
@@ -59,7 +59,7 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
         daq, server = init_eeg_acquisition(
             parameters, file_save, clock=experiment_clock, server=fake)
     except Exception as e:
-        print "Data acquistion could not start!"
+        print("Data acquistion could not start!")
         raise e
 
     # Try Initializing the Copy Phrase Display Object
@@ -91,7 +91,8 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
                                              lmodel=lmodel,
                                              is_txt_sti=rsvp.is_txt_sti)
     except Exception as e:
-        print "Error initializing Copy Phrase Task"
+        print("Error initializing Copy Phrase Task")
+        raise e
 
     # Set new epoch (wheter to present a new epoch),
     #   run (whether to cont. session),
@@ -120,15 +121,17 @@ def rsvp_copy_phrase_task(win, parameters, file_save, classifier,
 
     # check user input to make sure we should be going
     if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
+                          parameters['wait_screen_message_color']['value'],
                           first_run=True):
-        return
+        run = False
 
     # Start the Session!
-    while run is True:
+    while run:
 
         # check user input to make sure we should be going
         if not get_user_input(
-                rsvp, parameters['wait_screen_message']['value']):
+                rsvp, parameters['wait_screen_message']['value'],
+                parameters['wait_screen_message_color']['value']):
             break
 
         # Why bs for else? #changeforrelease
@@ -336,7 +339,7 @@ def _init_copy_phrase_display_task(
         text_task='****',
         color_info=parameters['color_text']['value'],
         pos_info=(float(parameters['pos_text_x']['value']),
-                         float(parameters['pos_text_y']['value'])),
+                  float(parameters['pos_text_y']['value'])),
         height_info=float(parameters['txt_height']['value']),
         font_info=parameters['font_text']['value'],
         color_task=['white'],
