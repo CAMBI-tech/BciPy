@@ -137,6 +137,4 @@ def trigger_decoder(mode, trigger_loc=None):
         raise Exception("You have not provided a valid operating mode for trigger_decoder. "
                         "Valid modes are: 'calibration','copy_phrase','free_spell'")
 
-
-
     return symbol_info, trial_target_info, timing_info

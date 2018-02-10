@@ -4,7 +4,7 @@ import numpy as np
 def trial_reshaper(
     trial_target_info, timing_info, filtered_eeg, fs, k, mode, first_sample_time,
         channel_map=
-        (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1,1, 1, 0)):
+        (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
     """
 
     :param trial_target_info: A list of strings which can take values:
