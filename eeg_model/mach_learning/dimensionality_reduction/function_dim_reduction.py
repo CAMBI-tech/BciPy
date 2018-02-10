@@ -1,5 +1,5 @@
-import numpy as np
 from sklearn.decomposition import PCA
+from eeg_model.mach_learning.m_estimator.m_estimator import *
 
 
 class ChannelWisePrincipalComponentAnalysis:
@@ -80,27 +80,93 @@ class ChannelWisePrincipalComponentAnalysis:
         return self.transform(x)
 
 
-class DummyDimReduction:
-    """ Just concatenation without any PCA
-        Attr:
-        none(None): nothing
-         """
+class MPCA:
+    # Channel wise MPCA
 
-    def __init__(self):
-        self.none = None
+    def __init__(self, var_tol=1):
+        self.var_tol = var_tol
 
     def fit(self, x, y=None, var_tol=None):
-        self.none = None
+        """ Find channels wise robust covariances and apply pca.
+            Args:
+                x(ndarray[float]): C x N x k data array
+                y(ndarray[int]): N x 1 observation (class) array
+                    N is number of samples k is dimensionality of features
+                    C is number of channels
+                var_tol(float): Threshold to remove lower variance dims.
+                """
+        self.transform_matrix_list=[]
+        q = .5
+        p = x.shape[2]
+        N = x.shape[1]
+
+        c_square = sc.stats.chi2.ppf(q, p)
+        b = sc.stats.chi2.cdf(c_square, p + 2) + c_square / p * (1 - sc.stats.chi2.cdf(c_square, p))
+
+        for ch_index in range(x.shape[0]):
+            X = x[ch_index]
+            sample_mean = np.mean(X, axis=0)
+            sample_sigma = 1. / N * np.dot(np.transpose(X - sample_mean), X - sample_mean)
+
+            iteration = 0
+            M_est_mean_new = sample_mean
+            M_est_sigma_new = sample_sigma
+            s_a_c = 1 # summed absolute change, initially large value
+            while iteration < 1000 and s_a_c > .1**3:
+                # print '{}/{}'.format(iteration, 1000)
+                M_est_mean_old = M_est_mean_new
+                M_est_sigma_old = M_est_sigma_new
+                # update mean
+                M_est_mean_new = mean_update(X=X, mean=M_est_mean_old, sigma_inv=np.linalg.inv(M_est_sigma_old), b=b, c_square=c_square)
+
+                # update sigma
+                M_est_sigma_new = sigma_update(X=X, mean=M_est_mean_new, sigma_inv=np.linalg.inv(M_est_sigma_old), b=b, c_square=c_square)
+
+                s_a_c = np.sum(np.abs(M_est_mean_new-M_est_mean_old)) +\
+                          np.sum(np.sum(np.abs(M_est_sigma_new-M_est_sigma_old)))
+                # print s_a_c
+                iteration += 1
+                if iteration == 999:
+                    print 'Max number of iterations reached for m estimation for pca. Last s_a_c: {}. If last s_a_c is large (>.1) use regular calibration.'.format(s_a_c)
+
+
+            vals, vecs = eigsorted(M_est_sigma_new)
+
+            lim = vals[0]*self.var_tol
+
+            transform_matrix = []
+            for index in range(len(vals)):
+                if vals[index]>lim:
+                    transform_matrix.append(vecs[:, index])
+
+            self.transform_matrix_list.append(np.transpose(np.array(transform_matrix)))
 
     def transform(self, x, y=None):
-        self.none = None
-        num_ch = x.shape[0]
-        f_vector = []
-        for i in range(num_ch):
-            f_vector.append(x[i, :, :])
 
-        return np.concatenate(f_vector, axis=1)
+        C, N, p = x.shape
+
+        new_p = len(self.transform_matrix_list[0][0])
+        new_x = np.zeros((C, N, new_p))
+        for channel in range(len(x.shape[0])):
+            new_x[channel, :, :] = np.dot(x[channel, :, :], self.transform_matrix_list[channel])
+
+
+
+        return new_x
 
     def fit_transform(self, x, y=None, var_tol=None):
-        arg = self.transform(x, y)
-        return arg
+        """ Fits parameters wrt. the input matrix and outputs corresponding
+            reduced form feature vector.
+            Args:
+                x(ndarray[float]): C x N x k data array
+                y(ndarray[int]): N x k observation (class) array
+                    N is number of samples k is dimensionality of features
+                    C is number of channels
+                var_tol(float): Threshold to remove lower variance dims.
+            Return:
+                y(ndarray(float)): N x ( sum_i (C x k')) data array
+                    where k' is the new dimension for each PCA
+                """
+
+        self.fit(x, var_tol=var_tol)
+        return self.transform(x)
