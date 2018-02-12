@@ -185,3 +185,22 @@ class RegularizedDiscriminantAnalysis:
 
         return self.transform(x)
 
+class MDiscriminantAnalysis:
+    """
+    Attr:
+    """
+
+    def __init__(self):
+        self.means = []
+        self.covariances =  []
+
+    def fit(self, x, y, p=[]):
+        pass
+
+    def transform(self, x):
+        pass
+
+    def fit_transform(self, x, y, p=[]):
+
+        self.fit(x, y, p)
+        return self.transform(x)

@@ -85,6 +85,7 @@ class MPCA:
 
     def __init__(self, var_tol=1):
         self.var_tol = var_tol
+        self.transform_matrix_list=[]
 
     def fit(self, x, y=None, var_tol=None):
         """ Find channels wise robust covariances and apply pca.
@@ -95,42 +96,15 @@ class MPCA:
                     C is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
                 """
-        self.transform_matrix_list=[]
-        q = .5
-        p = x.shape[2]
-        N = x.shape[1]
 
-        c_square = sc.stats.chi2.ppf(q, p)
-        b = sc.stats.chi2.cdf(c_square, p + 2) + c_square / p * (1 - sc.stats.chi2.cdf(c_square, p))
+        C, N, p = x.shape
 
-        for ch_index in range(x.shape[0]):
-            X = x[ch_index]
-            sample_mean = np.mean(X, axis=0)
-            sample_sigma = 1. / N * np.dot(np.transpose(X - sample_mean), X - sample_mean)
-
-            iteration = 0
-            M_est_mean_new = sample_mean
-            M_est_sigma_new = sample_sigma
-            s_a_c = 1 # summed absolute change, initially large value
-            while iteration < 1000 and s_a_c > .1**3:
-                # print '{}/{}'.format(iteration, 1000)
-                M_est_mean_old = M_est_mean_new
-                M_est_sigma_old = M_est_sigma_new
-                # update mean
-                M_est_mean_new = mean_update(X=X, mean=M_est_mean_old, sigma_inv=np.linalg.inv(M_est_sigma_old), b=b, c_square=c_square)
-
-                # update sigma
-                M_est_sigma_new = sigma_update(X=X, mean=M_est_mean_new, sigma_inv=np.linalg.inv(M_est_sigma_old), b=b, c_square=c_square)
-
-                s_a_c = np.sum(np.abs(M_est_mean_new-M_est_mean_old)) +\
-                          np.sum(np.sum(np.abs(M_est_sigma_new-M_est_sigma_old)))
-                # print s_a_c
-                iteration += 1
-                if iteration == 999:
-                    print 'Max number of iterations reached for m estimation for pca. Last s_a_c: {}. If last s_a_c is large (>.1) use regular calibration.'.format(s_a_c)
+        for channel in range(C):
+            X = x[channel]
 
 
-            vals, vecs = eigsorted(M_est_sigma_new)
+            M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
+            vals, vecs = eigsorted(M_est_sigma)
 
             lim = vals[0]*self.var_tol
 
@@ -145,14 +119,11 @@ class MPCA:
 
         C, N, p = x.shape
 
-        new_p = len(self.transform_matrix_list[0][0])
-        new_x = np.zeros((C, N, new_p))
-        for channel in range(len(x.shape[0])):
-            new_x[channel, :, :] = np.dot(x[channel, :, :], self.transform_matrix_list[channel])
+        new_x = []
+        for channel in range(C):
+            new_x.append(np.dot(x[channel], self.transform_matrix_list[channel]))
 
-
-
-        return new_x
+        return tuple(new_x)
 
     def fit_transform(self, x, y=None, var_tol=None):
         """ Fits parameters wrt. the input matrix and outputs corresponding

@@ -1,6 +1,6 @@
 import numpy as np
 from eeg_model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysis
+    import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis, MPCA
 from eeg_model.mach_learning.pipeline import Pipeline
@@ -75,7 +75,7 @@ def train_m_estimator_pipeline(x, y, k_folds=10):
 
     pca = MPCA(var_tol=.1**5)
 
-    rda = RegularizedDiscriminantAnalysis()
+    rda = MDiscriminantAnalysis()
 
     model = Pipeline()
     model.add(pca)
