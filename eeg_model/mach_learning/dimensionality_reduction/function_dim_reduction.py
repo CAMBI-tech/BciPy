@@ -123,7 +123,7 @@ class MPCA:
         for channel in range(C):
             new_x.append(np.dot(x[channel], self.transform_matrix_list[channel]))
 
-        return tuple(new_x)
+        return new_x
 
     def fit_transform(self, x, y=None, var_tol=None):
         """ Fits parameters wrt. the input matrix and outputs corresponding

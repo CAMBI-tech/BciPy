@@ -1,4 +1,5 @@
 import numpy as np
+from eeg_model.mach_learning.m_estimator.m_estimator import *
 
 
 class RegularizedDiscriminantAnalysis:
@@ -191,16 +192,52 @@ class MDiscriminantAnalysis:
     """
 
     def __init__(self):
-        self.means = []
-        self.covariances =  []
+        # means and covariances of each channel with the order inherent in data.
+        self.means = None
+        self.covariances =  None
+        self.labels = None
+        self.priors = None
+        self.toeplitz_inverse_cov = None
 
     def fit(self, x, y, p=[]):
-        pass
+        """
+        :list x: data, each element is every channel's trials.
+        """
+        # number of channels
+        C = len(x)
+
+        # first index is channel second index is label
+        self.means = [[] for i in range(C)]
+        self.covariances = [[] for i in range(C)]
+
+        self.labels = np.unique(y)
+
+        for channel in range(C):
+            X = x[channel]
+            for label in self.labels:
+                X_label = X[np.where(y == label)[0], :]
+                mean, sigma = robust_mean_covariance(X_label)
+                self.means[channel].append(mean)
+                self.covariances[channel].append(sigma)
+
+        # new_dimension = np.size(self.means[:][])
+
+
+        # Set priors
+        if len(p) == 0:
+            prior = np.asarray([np.sum(y == self.labels[i]) for i in
+                                range(len(self.labels))], dtype=float)
+            self.priors = np.divide(prior, np.sum(prior))
+        else:
+            self.priors = p
 
     def transform(self, x):
         pass
 
-    def fit_transform(self, x, y, p=[]):
 
-        self.fit(x, y, p)
+
+
+    def fit_transform(self, x, y):
+
+        self.fit(x, y)
         return self.transform(x)

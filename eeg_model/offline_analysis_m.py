@@ -42,8 +42,6 @@ def offline_analysis_m(data_folder=None, from_matlab=False, method='regular'):
         raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
             data_folder + '/raw_data.csv')
 
-        # TODO: Read from parameters
-
         dat = sig_pro(raw_dat, fs=fs, k=k)
 
         # Process triggers.txt
