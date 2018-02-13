@@ -12,7 +12,7 @@ def generate_offline_analysis_screen(x, y, model, folder):
         folder(str): Folder of the data
 
         """
-    # import
+
     import numpy as np
     import matplotlib.pyplot as plt
 

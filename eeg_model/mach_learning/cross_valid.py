@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.optimize
 from sklearn import metrics
+
+from sklearn.model_selection import StratifiedKFold
 from utils.progress_bar import progress_bar
 
 
@@ -158,7 +160,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
     return arg_opt
 
 
-def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
+def cross_validate_parameters(x, y, model, opt_el=1, k_folds=10, split='uniform'):
     """ Cross validation function for hyper parameter optimization
         Args:
             x(ndarray[float]): C x N x k data array
@@ -179,3 +181,22 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
     return arg_opt
+
+
+def cross_validate_model(x, y, model, k_folds=10):
+    # Given a model and data, create folds and apply k fold cross validation.
+    # The aim here is to evaluate our model and estimate its performance as good as we can.
+
+    skf = StratifiedKFold(n_splits=k_folds, random_state=0)
+
+    auc_list = []
+    for train_index, test_index in skf.split(X=x[0],y=y):
+        x_train, y_train = x[:, train_index, :], y[train_index]
+        x_test, y_test = x[:, test_index, :], y[test_index]
+
+        model.fit(x_train, y_train)
+        sc = model.transform(x_test)
+        fpr, tpr, _ = metrics.roc_curve(y_test, sc, pos_label=1)
+        auc_list.append(metrics.auc(fpr, tpr))
+
+    return np.mean(auc_list)

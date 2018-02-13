@@ -9,6 +9,7 @@ from helpers.triggers import trigger_decoder
 import pickle
 import matlab.engine
 
+
 def load_data_matlab_csv(k=1):
     # This function is for loading data collected with matlab.
     eng = matlab.engine.start_matlab()
@@ -32,9 +33,6 @@ def offline_analysis_m(data_folder=None, from_matlab=False, method='regular'):
     if from_matlab:
         x, y = load_data_matlab_csv(k=k)
         y = np.squeeze(y)
-        # indices = np.random.permutation(len(y))
-        # x = x[:,indices,:]
-        # y = y[indices]
     else:
         if not data_folder:
             data_folder = load_experimental_data()
@@ -50,7 +48,7 @@ def offline_analysis_m(data_folder=None, from_matlab=False, method='regular'):
 
         # Channel map can be checked from raw_data.csv file.
         # read_data_csv already removes the timespamp column.
-        #                     CM            X3 X2           X1            TRG
+        #                       CM            X3 X2           X1            TRG
         channel_map = [1] * 8 + [0] + [1] * 7 + [0] * 2 + [1] * 2 + [0] + [1] * 3 + [0]
         x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode='calibration',
                                           fs=fs, k=k,
@@ -71,6 +69,6 @@ def offline_analysis_m(data_folder=None, from_matlab=False, method='regular'):
 
 
 if __name__ == '__main__':
-    offline_analysis_m(from_matlab=False, data_folder='C:/Users/Berkan/Desktop/GITProjects/bci/data/andac/andac_Mon_22_Jan_2018_1236_Eastern Standard Time', method='m-estimator')
+    offline_analysis_m(from_matlab=False, method='m-estimator')
 
 

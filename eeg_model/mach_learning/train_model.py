@@ -1,12 +1,11 @@
-import numpy as np
-from eeg_model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
+from eeg_model.mach_learning.pipeline import Pipeline
 from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis, MPCA
-from eeg_model.mach_learning.pipeline import Pipeline
-from eeg_model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
+from eeg_model.mach_learning.classifier.function_classifier \
+    import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
 from eeg_model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
+from eeg_model.mach_learning.cross_valid import *
 from sklearn import metrics
 from scipy.stats import iqr
 
@@ -38,7 +37,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     auc_init = metrics.auc(fpr, tpr)
 
     # Cross validate
-    arg_cv = cross_validation(x, y, model=model, k_folds=k_folds)
+    arg_cv = cross_validate_parameters(x, y, model=model, k_folds=k_folds)
 
     lam = arg_cv[0]
     gam = arg_cv[1]
@@ -60,48 +59,41 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     return model
 
 
-def train_m_estimator_pipeline(x, y, k_folds=10):
-    """ Trains the Cw-m-PCA m-RDA KDE model given the input data and labels with
-        cross validation and returns the model
+def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
+    """ Trains Cw-m-PCA m-RDA KDE model given the input data and labels, returns the model
         Args:
-            x(ndarray[float]): C x N x k data array
+            x(ndarray[float]): C x N x p data array
             y(ndarray[int]): N x 1 observation (class) array
-                N is number of samples k is dimensionality of features
+                N is number of samples p is dimensionality of features
                 C is number of channels
             k_folds(int): Number of cross validation folds
         Return:
-            model(pipeline): trained likelihood model
+            model(pipeline): trained model
             """
 
     pca = MPCA(var_tol=.1**5)
-
     rda = MDiscriminantAnalysis()
 
     model = Pipeline()
     model.add(pca)
     model.add(rda)
 
-    # Get the AUC before the regularization
+    # Find the cross validation AUC for the model.
+    if cross_validate:
+        auc_cv = cross_validate_model(x=x, y=y, model=model, k_folds=k_folds)
+    else:
+        auc_cv = 'Skipped for speed.'
+
+    # Now train on complete data for the final model
     sc = model.fit_transform(x, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc_init = metrics.auc(fpr, tpr)
-
-    # Cross validate
-    arg_cv = cross_validation(x, y, model=model, k_folds=k_folds)
-
-    lam = arg_cv[0]
-    gam = arg_cv[1]
-    print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
-    model.pipeline[1].lam = lam
-    model.pipeline[1].gam = gam
-    auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
-                                        k_folds=10, split='uniform')
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
         np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
     model.add(KernelDensityEstimate(bandwidth=bandwidth))
-    model.fit(x, y)
+    model.fit(x,y)
 
     # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))

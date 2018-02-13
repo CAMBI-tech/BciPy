@@ -13,6 +13,7 @@ def eigsorted(cov):
 
 
 def u_func(t, b, c_square):
+    # Huber's loss function
 
     if t <= c_square:
         return 1./b

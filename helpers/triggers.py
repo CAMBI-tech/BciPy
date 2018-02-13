@@ -65,7 +65,7 @@ def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
     last_typed = typed_text[-1]
     correct_letter = copy_text[spelling_length - 1]
 
-    # because there is the possiblility of incorrect letter and correction,
+    # because there is the possibility of incorrect letter and correction,
     # we check here what is appropriate as a correct response
     if last_typed == correct_letter:
         correct_letter = copy_text[spelling_length]

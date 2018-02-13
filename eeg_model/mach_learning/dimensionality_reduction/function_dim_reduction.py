@@ -102,7 +102,6 @@ class MPCA:
         for channel in range(C):
             X = x[channel]
 
-
             M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
             vals, vecs = eigsorted(M_est_sigma)
 

@@ -189,13 +189,21 @@ class RegularizedDiscriminantAnalysis:
 
 class MDiscriminantAnalysis:
     """
+        M discriminant analysis
     Attr:
+        means(list): Every element is a channel's robust means for both channels
+        inv_covariances(list) = Every element is a channel's
+            inverse robust covariances for both channels
+        labels(ndarray): Unique labels in y
+        priors(list): Prior for every label
+        toeplitz_inverse_cov(list): This attribute is left empty.
+
     """
 
     def __init__(self):
         # means and covariances of each channel with the order inherent in data.
         self.means = None
-        self.inv_covariances =  None
+        self.inv_covariances = None
         self.labels = None
         self.priors = None
         self.toeplitz_inverse_cov = None
@@ -207,7 +215,7 @@ class MDiscriminantAnalysis:
 
         # number of channels
         C = len(x)
-        p_new = 0
+        p_new = 0 #Every feature from every channel
         for index in range(C):
             p_new += len(x[index][0])
 
@@ -215,20 +223,20 @@ class MDiscriminantAnalysis:
         self.means = [[] for i in range(C)]
         self.inv_covariances = [[] for i in range(C)]
         self.labels = np.unique(y)
-        self.toeplitz_inverse_cov = [np.zeros((p_new, p_new)) for i in range(len(self.labels))]
+        # self.toeplitz_inverse_cov = [np.zeros((p_new, p_new)) for i in range(len(self.labels))]
 
         for label_index in range(len(self.labels)):
-            count = 0
+            # count = 0
             for channel in range(C):
                 X = x[channel]
                 X_label = X[np.where(y == self.labels[label_index])[0], :]
                 mean, sigma = robust_mean_covariance(X_label)
                 self.means[channel].append(mean)
                 self.inv_covariances[channel].append(np.linalg.inv(sigma))
-                p_channel = len(self.inv_covariances[channel][0][0])
-                self.toeplitz_inverse_cov[label_index][count:count + p_channel, count:count + p_channel] \
-                    = self.inv_covariances[channel][label_index]
-                count += p_channel
+                # p_channel = len(self.inv_covariances[channel][0][0])
+                # self.toeplitz_inverse_cov[label_index][count:count + p_channel, count:count + p_channel] \
+                #     = self.inv_covariances[channel][label_index]
+                # count += p_channel
 
         # Set priors
         if len(p) == 0:
