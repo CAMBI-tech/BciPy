@@ -7,7 +7,7 @@ from eeg_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import pickle
-
+import matlab.engine
 
 def load_data_matlab_csv(k=1):
     # This function is for loading data collected with matlab.
@@ -71,6 +71,6 @@ def offline_analysis_m(data_folder=None, from_matlab=False, method='regular'):
 
 
 if __name__ == '__main__':
-    offline_analysis_m(from_matlab=False, method='m-estimator')
+    offline_analysis_m(from_matlab=False, data_folder='C:/Users/Berkan/Desktop/GITProjects/bci/data/andac/andac_Mon_22_Jan_2018_1236_Eastern Standard Time', method='m-estimator')
 
 

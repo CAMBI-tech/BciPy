@@ -19,10 +19,10 @@ def main():
 
 	# Try and intialize with bci main
 	try:
-	    bci_main.bci_main(parameters, user, test_type, test_mode)
+		bci_main.bci_main(parameters, user, test_type, test_mode)
 	except Exception as e:
-	    print("BCI MAIN Fail. Exiting. Error: \n")
-	    print(e)
+		print("BCI MAIN Fail. Exiting. Error: \n")
+		print(e)
 
 if __name__ == "__main__":
-    main()
+	main()

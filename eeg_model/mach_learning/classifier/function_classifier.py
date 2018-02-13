@@ -186,6 +186,7 @@ class RegularizedDiscriminantAnalysis:
 
         return self.transform(x)
 
+
 class MDiscriminantAnalysis:
     """
     Attr:
@@ -194,7 +195,7 @@ class MDiscriminantAnalysis:
     def __init__(self):
         # means and covariances of each channel with the order inherent in data.
         self.means = None
-        self.covariances =  None
+        self.inv_covariances =  None
         self.labels = None
         self.priors = None
         self.toeplitz_inverse_cov = None
@@ -203,25 +204,31 @@ class MDiscriminantAnalysis:
         """
         :list x: data, each element is every channel's trials.
         """
+
         # number of channels
         C = len(x)
+        p_new = 0
+        for index in range(C):
+            p_new += len(x[index][0])
 
         # first index is channel second index is label
         self.means = [[] for i in range(C)]
-        self.covariances = [[] for i in range(C)]
-
+        self.inv_covariances = [[] for i in range(C)]
         self.labels = np.unique(y)
+        self.toeplitz_inverse_cov = [np.zeros((p_new, p_new)) for i in range(len(self.labels))]
 
-        for channel in range(C):
-            X = x[channel]
-            for label in self.labels:
-                X_label = X[np.where(y == label)[0], :]
+        for label_index in range(len(self.labels)):
+            count = 0
+            for channel in range(C):
+                X = x[channel]
+                X_label = X[np.where(y == self.labels[label_index])[0], :]
                 mean, sigma = robust_mean_covariance(X_label)
                 self.means[channel].append(mean)
-                self.covariances[channel].append(sigma)
-
-        # new_dimension = np.size(self.means[:][])
-
+                self.inv_covariances[channel].append(np.linalg.inv(sigma))
+                p_channel = len(self.inv_covariances[channel][0][0])
+                self.toeplitz_inverse_cov[label_index][count:count + p_channel, count:count + p_channel] \
+                    = self.inv_covariances[channel][label_index]
+                count += p_channel
 
         # Set priors
         if len(p) == 0:
@@ -232,10 +239,19 @@ class MDiscriminantAnalysis:
             self.priors = p
 
     def transform(self, x):
-        pass
+        N = x[0].shape[0]
 
+        scores =[np.zeros(N) for i in range(len(self.labels))]
 
+        for i in range(len(self.labels)):
+            for n in range(N):
+                current_score = 0
+                for c in range(len(x)):
+                    temp = x[c][n] - self.means[c][i]
+                    current_score += -.5*np.dot(np.dot(temp, self.inv_covariances[c][i]), temp)
+                scores[i][n] = current_score + np.log(self.priors[i])
 
+        return scores[1] - scores[0]
 
     def fit_transform(self, x, y):
 
