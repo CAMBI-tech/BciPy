@@ -15,30 +15,30 @@ from helpers.bci_task_related import (
 
 
 def rsvp_calibration_task(win, parameters, file_save, fake):
-    '''RSVP Calibration Task
+    """RSVP Calibration Task.
 
-        Calibration task performs an RSVP stimulus sequence
-            to elicit an ERP. Parameters will change how many stim
-            and for how long they present. Parameters also change
-            color and text / image inputs. 
+    Calibration task performs an RSVP stimulus sequence
+        to elicit an ERP. Parameters will change how many stim
+        and for how long they present. Parameters also change
+        color and text / image inputs.
 
-        A task begins setting up variables --> initializing eeg -->
-            awaiting user input to start -->
-            setting up stimuli --> presenting sequences -->
-            saving data
+    A task begins setting up variables --> initializing eeg -->
+        awaiting user input to start -->
+        setting up stimuli --> presenting sequences -->
+        saving data
 
-        Input: 
-            win (PsychoPy Display Object)
-            parameters (Dictionary)
-            file_save (String)
-            fake (Boolean)
+    Input:
+        win (PsychoPy Display Object)
+        parameters (Dictionary)
+        file_save (String)
+        fake (Boolean)
 
-        Output:
-            file_save (String)
+    Output:
+        file_save (String)
 
-    '''
+    """
 
-    # Initialize needed experiment information 
+    # Initialize needed experiment information
     frame_rate = win.getActualFrameRate()
     static_clock = core.StaticPeriod(screenHz=frame_rate)
     buffer_val = float(parameters['task_buffer_len']['value'])
@@ -158,8 +158,10 @@ def rsvp_calibration_task(win, parameters, file_save, fake):
     # Give the system time to process
     core.wait(buffer_val)
 
-    _write_triggers_from_sequence_calibration(
-        ['offset', daq.offset], trigger_file, offset=True)
+    if daq._is_calibrated:
+        _write_triggers_from_sequence_calibration(
+            ['offset', daq.offset], trigger_file, offset=True)
+
     # Close this sessions trigger file and return some data
     trigger_file.close()
 
