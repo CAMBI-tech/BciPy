@@ -1,6 +1,6 @@
-import gui.utility.gui_fx
 from helpers.save import init_save_data_structure
 from display.display_main import init_display_window
+from helpers.acquisition_related import init_eeg_acquisition
 
 from bci_tasks.start_task import start_task
 from helpers.load import load_classifier
@@ -91,13 +91,17 @@ def execute_task(task_type, parameters, save_folder):
         classifier = None
         lmodel = None
 
+    # Initialize DAQ
+    daq, server = init_eeg_acquisition(
+        parameters, save_folder, server=fake)
+
     # Initialize Display Window
     display = init_display_window(parameters)
 
     # Start Task
     try:
         start_task(
-            display, task_type, parameters, save_folder,
+            display, daq, task_type, parameters, save_folder,
             lmodel=lmodel,
             classifier=classifier, fake=fake)
 
@@ -109,5 +113,14 @@ def execute_task(task_type, parameters, save_folder):
 
     # Close the display window
     display.close()
+
+    # Stop Acquistion
+    try:
+        daq.stop_acquisition()
+    except Exception as e:
+        raise e
+
+    if server:
+        server.stop()
 
     return

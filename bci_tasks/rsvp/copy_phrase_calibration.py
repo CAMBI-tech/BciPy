@@ -4,7 +4,6 @@ from __future__ import division, print_function
 from psychopy import core, clock
 
 from display.rsvp.rsvp_disp_modes import CopyPhraseTask
-from helpers.acquisition_related import init_eeg_acquisition
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import target_rsvp_sequence_generator, get_task_info
@@ -14,7 +13,7 @@ from helpers.bci_task_related import (
     trial_complete_message)
 
 
-def rsvp_copy_phrase_calibration_task(win, parameters,
+def rsvp_copy_phrase_calibration_task(win, daq, parameters,
                                       file_save, fake):
 
     # Initialize Experiment clocks etc.
@@ -25,15 +24,8 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
     # Get alphabet for experiment
     alp = alphabet(parameters)
 
-    # Start acquiring data
-    try:
-        experiment_clock = clock.Clock()
-        # Initialize EEG Acquisition
-        daq, server = init_eeg_acquisition(
-            parameters, file_save, clock=experiment_clock, server=fake)
-    except Exception as e:
-        print("Data acquistion could not start!")
-        raise e
+    experiment_clock = clock.Clock()
+    daq._clock = experiment_clock
 
     # Try Initializing the Copy Phrase Display Object
     try:
@@ -135,15 +127,6 @@ def rsvp_copy_phrase_calibration_task(win, parameters,
 
     # Wait some time before exiting so there is trailing eeg data saved
     core.wait(int(parameters['eeg_buffer_len']['value']))
-
-    try:
-        daq.stop_acquisition()
-    except:
-        # if not started, we can pass!
-        pass
-
-    if server:
-        server.stop()
 
     return file_save
 
