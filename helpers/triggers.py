@@ -157,12 +157,16 @@ def trigger_decoder(mode, trigger_loc=None):
     with open(trigger_loc, 'r') as text_file:   
         offset_array = [line.split() for line in text_file if 'offset_correction' in line]
 
-    with open(trigger_loc, 'r') as text_file:   
-        calib_trigger_time = [line.split() for line in text_file if 'calibration_trigger' in line]
+    if offset_array:
+        with open(trigger_loc, 'r') as text_file:   
+            calib_trigger_time = [line.split() for line in text_file if 'calibration_trigger' in line]
 
-        if offset_array:
-            offset = float(calib_trigger_time[0][2]) - float(offset_array[0][2])
-        else:
-            offset = 0
+        if calib_trigger_time:
+            if offset_array:
+                offset = float(calib_trigger_time[0][2]) - float(offset_array[0][2])
+            else:
+                offset = timing_info[0] - float(offset_array[0][2])
+    else:
+        offset = 0
 
     return symbol_info, trial_target_info, timing_info, offset
