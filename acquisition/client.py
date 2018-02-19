@@ -163,7 +163,7 @@ class Client(object):
 
         device.connect()
         device.acquisition_init(self._clock)
-        sample = 0
+        sample = 1
 
         # If streaming set, start reading data
         if self._is_streaming:
