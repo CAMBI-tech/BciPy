@@ -60,7 +60,7 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 
 - `acquistion`: acquires data, gives back desired time series, saves at end of session.
 - `display`: handles display of stimuli on screen, passing back stimuli timing.
-- `eeg_model`: trains and classifies eeg responses based on eeg and triggers.
+- `signal_model`: trains and classifies eeg responses based on eeg and triggers.
 - `gui`: end-user interface into system. See BCInterface.py and RSVPKeyboard.py.
 - `helpers`: input/output functions needed for system, as well as helpful intilization functions.
 - `utils`: utility functions needed for operation and installation.

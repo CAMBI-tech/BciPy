@@ -7,7 +7,7 @@ from display.rsvp.rsvp_disp_modes import CopyPhraseTask
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
-from helpers.eeg_model_wrapper import CopyPhraseWrapper
+from helpers.signal_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
@@ -33,7 +33,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         file_save : str,
             path location of where to save data from the session
         classifier : loaded pickle file,
-            trained eeg_model, loaded before session started
+            trained signal_model, loaded before session started
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns
@@ -76,7 +76,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                                                           2)]))]
 
     # Try Initializing Copy Phrase Wrapper:
-    #       (sig_pro, decision maker, eeg_model)
+    #       (sig_pro, decision maker, signal_model)
     try:
         copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
                                              2, alp, task_list=task_list,

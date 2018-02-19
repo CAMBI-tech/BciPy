@@ -1,10 +1,10 @@
 import numpy as np
 from acquisition.sig_pro.sig_pro import sig_pro
-from eeg_model.mach_learning.trial_reshaper import trial_reshaper
+from signal_model.mach_learning.trial_reshaper import trial_reshaper
 import time
-from eeg_model.inference import inference
+from signal_model.inference import inference
 from bci_tasks.main_frame import EvidenceFusion, DecisionMaker
-from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
+from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from helpers.bci_task_related import alphabet
 
 # TODO: These are shared parameters for multiple functions
@@ -82,7 +82,7 @@ class CopyPhraseWrapper(object):
             the copy phrase task
     """
 
-    def __init__(self, eeg_model, fs, k, alp, evidence_names=['LM', 'ERP'],
+    def __init__(self, signal_model, fs, k, alp, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True):
 
@@ -92,7 +92,7 @@ class CopyPhraseWrapper(object):
                                             is_txt_sti=is_txt_sti)
         self.alp = alp
 
-        self.eeg_model = eeg_model
+        self.signal_model = signal_model
         self.fs = fs
         self.k = k
 
@@ -135,7 +135,7 @@ class CopyPhraseWrapper(object):
 
             # TODO: Hacked to get rid of cross sign for now
 
-            lik_r = inference(x, letters, self.eeg_model, self.alp)
+            lik_r = inference(x, letters, self.signal_model, self.alp)
             prob = self.conjugator.update_and_fuse({'ERP': lik_r})
             decision, arg = self.decision_maker.decide(prob)
 

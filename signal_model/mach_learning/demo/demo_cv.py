@@ -1,10 +1,10 @@
 import numpy as np
-from eeg_model.mach_learning.cross_validation import cross_validation
-from eeg_model.mach_learning.classifier.function_classifier \
+from signal_model.mach_learning.cross_validation import cross_validation
+from signal_model.mach_learning.classifier.function_classifier \
     import RegularizedDiscriminantAnalysis
-from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
+from signal_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import DummyDimReduction, ChannelWisePrincipalComponentAnalysis
-from eeg_model.mach_learning.pipeline import Pipeline
+from signal_model.mach_learning.pipeline import Pipeline
 
 
 def test_cv(x, y):
