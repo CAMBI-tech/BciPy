@@ -273,7 +273,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
