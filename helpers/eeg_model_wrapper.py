@@ -1,5 +1,5 @@
 import numpy as np
-from acquisition.sig_pro.sig_pro import sig_pro
+from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 import time
 from signal_model.inference import inference

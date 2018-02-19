@@ -7,7 +7,7 @@ from display.rsvp.rsvp_disp_modes import CopyPhraseTask
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
-from helpers.signal_model_wrapper import CopyPhraseWrapper
+from helpers.eeg_model_wrapper import CopyPhraseWrapper
 
 from helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
