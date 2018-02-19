@@ -29,20 +29,26 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
             (letter, time) = i
 
             # determine what the trigger are
-            if x == 0:
-                targetness = 'first_pres_target'
+            if letter == 'calibration_trigger':
+                targetness = 'calib'
                 target_letter = letter
-            elif x == 1:
-                targetness = 'fixation'
-            elif x > 1 and target_letter == letter:
-                targetness = 'target'
             else:
-                targetness = 'nontarget'
+                if x == 0:
+                    targetness = 'first_pres_target'
+                    target_letter = letter
+                elif x == 1:
+                    targetness = 'fixation'
+                elif x > 1 and target_letter == letter:
+                    targetness = 'target'
+                else:
+                    targetness = 'nontarget'
+
+                x += 1
 
             # write to the trigger_file
             trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
 
-            x += 1
+
 
     return trigger_file
 
@@ -131,7 +137,7 @@ def trigger_decoder(mode, trigger_loc=None):
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
 
         trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line \
-            and 'offset_correction' not in line]
+            and 'offset_correction' not in line and 'calibration_trigger' not in line]
  
 
     # If operating mode is calibration, trigger.txt has three columns.
@@ -151,8 +157,11 @@ def trigger_decoder(mode, trigger_loc=None):
     with open(trigger_loc, 'r') as text_file:   
         offset_array = [line.split() for line in text_file if 'offset_correction' in line]
 
+    with open(trigger_loc, 'r') as text_file:   
+        calib_trigger_time = [line.split() for line in text_file if 'calibration_trigger' in line]
+
         if offset_array:
-            offset = timing_info[0] - float(offset_array[0][2])
+            offset = float(calib_trigger_time[0][2]) - float(offset_array[0][2])
         else:
             offset = 0
 

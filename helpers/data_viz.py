@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from helpers.load import load_csv_data, read_data_csv
 
@@ -93,5 +94,7 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    # Show us the figure!
+    print('Press Ctrl + C to exit!')
+    # Show us the figure! Depending on your OS / IDE this may not close when
+    #  The window is closed, see the message above
     plt.show()

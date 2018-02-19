@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
+from psychopy import prefs
+prefs.general['audioLib'] = ['pygame']
+
 from psychopy import visual, core, sound
 import numpy as np
 
@@ -30,7 +33,8 @@ class RSVPDisplay(object):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 bg_step_num=20, is_txt_sti=1):
+                 bg_step_num=20, is_txt_sti=1,
+                 static_period_time=.05):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -74,6 +78,7 @@ class RSVPDisplay(object):
         self.is_txt_sti = is_txt_sti
 
         self.staticPeriod = static_period
+        self.static_period_time = static_period_time
         self.expClock = experiment_clock
         self.timing_clock = core.Clock()
 
@@ -84,6 +89,8 @@ class RSVPDisplay(object):
         self.font_stim = font_sti
         self.height_stim = sti_height
         self.pos_sti = pos_sti
+
+        self.first_run = True
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -170,16 +177,19 @@ class RSVPDisplay(object):
         # init an array for timing information
         timing = []
 
-        # Play a sequence start sound to help orient triggers
-        cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
-        cal_sound.play()
+        if self.first_run:
+            # Play a sequence start sound to help orient triggers
+            stim_timing = _calibration_trigger(self.expClock)
+            timing.append(stim_timing)
+            self.first_run = False
+
 
         # Do the sequence
         for idx in range(len(self.stim_sequence)):
 
             # Set a static period to do all our stim setting.
             #   Will warn if ISI value is violated.
-            self.staticPeriod.start(.05)
+            self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
             time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
@@ -206,7 +216,7 @@ class RSVPDisplay(object):
             trigger_time = self.expClock.getTime() - self.timing_clock.getTime()
 
             # Start another ISI for trigger saving
-            self.staticPeriod.start(.05)
+            self.staticPeriod.start(self.static_period_time)
 
             # Draw in blank screen
             self.draw_static()
@@ -559,3 +569,30 @@ class BarGraph(object):
     def reset_weights(self):
         """Reset Bar Graph Weights."""
         self.weight_bars = list(np.ones(self.size_domain) / self.size_domain)
+
+
+def _calibration_trigger(expClock, sound_trigger=True):
+
+    # If sound trigger is selected, output calibration tones
+    if sound_trigger:
+
+        # Init the sound object and give it some time
+        try:
+            cal_sound = sound.Sound('./static/sounds/1k_800mV_20ms_stereo.wav')
+        except:
+            raise Exception('Sound object could not be found or Initialized')
+
+        core.wait(.2)
+
+        # Play the fist sound (used to calibrate) and wait.
+        cal_sound.play()
+        timing = ['calibration_trigger', expClock.getTime()]
+        core.wait(.3)
+
+        # Play another to have active control over sound latency
+        cal_sound.play()
+        core.wait(.3)
+
+        return timing
+    else:
+        raise Exception('Non-Sound Triggers for Calibration not implemented yet!')
