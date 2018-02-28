@@ -163,7 +163,7 @@ class Client(object):
 
         device.connect()
         device.acquisition_init(self._clock)
-        sample = 0
+        sample = 1
 
         # If streaming set, start reading data
         if self._is_streaming:
@@ -186,7 +186,7 @@ class Client(object):
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
-        logging.debug("Stopping Acquisition")
+        logging.debug("Stopping Acquisition Process")
 
         self._is_streaming = False
         self._device.disconnect()
@@ -196,6 +196,7 @@ class Client(object):
 
         # allow initial_wait seconds to wrap up any queued work
         counter = 0
+        logging.debug("Stopping Processing Queue")
         while not self._process_queue.empty() and \
                 counter < (self._initial_wait * 100):
             counter += 1

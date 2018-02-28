@@ -68,14 +68,11 @@ def load_csv_data():
         raise error
 
     # get the last part of the path to determine file type
-    eeg_data_file_name = filename.split('/')[-1]
+    file_name = filename.split('/')[-1]
 
-    if 'csv' not in eeg_data_file_name:
+    if 'csv' not in file_name:
         raise Exception(
-            'File type unrecognized. Please use a supported eeg type')
-
-    # give the user some insight into what's happening
-    print("Loaded EEG Data From: %s" % filename)
+            'File type unrecognized. Please use a supported csv type')
 
     return filename
 
@@ -118,13 +115,10 @@ def load_txt_data():
     except Exception as error:
         raise error
 
-    trigger_file_name = filename.split('/')[-1]
+    file_name = filename.split('/')[-1]
 
-    if 'txt' not in trigger_file_name:
+    if 'txt' not in file_name:
         raise Exception(
-            'File type unrecognized. Please use a supported trigger type')
-
-    # give the user some insight into what's happening
-    print("Loaded Trigger Data From: %s" % filename)
+            'File type unrecognized. Please use a supported text type')
 
     return filename

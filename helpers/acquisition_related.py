@@ -82,4 +82,9 @@ def init_eeg_acquisition(parameters, save_folder,
 
     client.start_acquisition()
 
+    # If we're using a server or data generator, there is no reason to
+    #   calibrate data
+    if server:
+        client._is_calibrated = True
+
     return (client, dataserver)

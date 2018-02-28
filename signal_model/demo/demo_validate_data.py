@@ -1,12 +1,12 @@
 import numpy as np
-from eeg_model.mach_learning.generative_mods.function_density_estimation \
+from signal_model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
 import matplotlib as mpl
 from scipy.stats import iqr
 from helpers.load import read_data_csv, load_experimental_data
-from acquisition.sig_pro.sig_pro import sig_pro
-from eeg_model.mach_learning.train_model import train_pca_rda_kde_model
-from eeg_model.mach_learning.trial_reshaper import trial_reshaper
+from signal_processing.sig_pro import sig_pro
+from signal_model.mach_learning.train_model import train_pca_rda_kde_model
+from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.triggers import trigger_decoder
 
 mpl.use('TkAgg')

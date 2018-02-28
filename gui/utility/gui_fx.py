@@ -9,7 +9,7 @@ from os import path as ospath
 from sys import executable
 from warnings import warn
 import bci_main
-from eeg_model.offline_analysis import offline_analysis
+from signal_model.offline_analysis import offline_analysis
 
 import pyglet
 import wx

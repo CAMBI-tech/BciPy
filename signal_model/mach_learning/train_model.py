@@ -1,11 +1,10 @@
-from eeg_model.mach_learning.pipeline import Pipeline
-from eeg_model.mach_learning.dimensionality_reduction.function_dim_reduction \
+from signal_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis, MPCA
-from eeg_model.mach_learning.classifier.function_classifier \
+from signal_model.mach_learning.classifier.function_classifier \
     import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
-from eeg_model.mach_learning.generative_mods.function_density_estimation \
-    import KernelDensityEstimate
-from eeg_model.mach_learning.cross_valid import *
+from signal_model.mach_learning.generative_mods.function_density_estimation import KernelDensityEstimate
+from signal_model.mach_learning.pipeline import Pipeline
+from signal_model.mach_learning.cross_valid import *
 from sklearn import metrics
 from scipy.stats import iqr
 

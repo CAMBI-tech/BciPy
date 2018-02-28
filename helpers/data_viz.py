@@ -1,3 +1,9 @@
+import numpy as np
+import matplotlib as plt
+import matplotlib.pyplot as plt
+from helpers.load import load_csv_data, read_data_csv
+
+
 def generate_offline_analysis_screen(x, y, model, folder):
     """ Offline Analysis Screen.
     Generates the information figure following the offlineAnalysis.
@@ -12,9 +18,6 @@ def generate_offline_analysis_screen(x, y, model, folder):
         folder(str): Folder of the data
 
         """
-
-    import numpy as np
-    import matplotlib.pyplot as plt
 
     classes = np.unique(y)
     means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2))
@@ -59,3 +62,40 @@ def generate_offline_analysis_screen(x, y, model, folder):
     plt.ylabel('p(e|l)')
     plt.xlabel('scores')
     fig.savefig(folder + "\lik_dens.pdf", bbox_inches='tight', format='pdf')
+    return
+
+
+def visualize_csv_eeg_triggers(trigger_col=None):
+    """Visualize CSV EEG Triggers.
+
+    This function is used to load in CSV data and visualize device generated triggers.
+
+    Input:
+        trigger_col(int)(optional): Column location of triggers in csv file.
+            It defaults to the last column.
+        
+    Output:
+        Figure of Triggers
+    """
+    # Load in CSV
+    file_name = load_csv_data()
+    raw_data, stamp_time, channels, type_amp, fs = read_data_csv(file_name)
+
+    # Pull out the triggers
+    if not trigger_col:
+        triggers = raw_data[-1]
+    else:
+        triggers = raw_data[trigger_col]
+
+    # Plot the triggers
+    plt.plot(triggers)
+
+    # Add some titles and labels to the figure
+    plt.title('Trigger Signal')
+    plt.ylabel('Trigger Value')
+    plt.xlabel('Samples')
+
+    print('Press Ctrl + C to exit!')
+    # Show us the figure! Depending on your OS / IDE this may not close when
+    #  The window is closed, see the message above
+    plt.show()
