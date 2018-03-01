@@ -1,5 +1,5 @@
 import numpy as np
-from eeg_model.mach_learning.m_estimator.m_estimator import *
+from signal_model.mach_learning.m_estimator.m_estimator import *
 
 
 class RegularizedDiscriminantAnalysis:

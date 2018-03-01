@@ -273,7 +273,7 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -446,7 +446,7 @@
     "isNumeric": "false"    
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -464,15 +464,15 @@
     "isNumeric": "false"    
   },
   "num_sti": {
-    "value": "50",
+    "value": "150",
     "section": "bci_config",
-    "readableName": "Number of stimuli to present over the experiment",
+    "readableName": "Number of sequence to present over the experiment",
     "helpTip": "Number of stimuli to present over the experiment",
     "recommended_values": "",
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "10",
+    "value": "7",
     "section": "bci_config",
     "readableName": "Number of stimuli to present in a sequence",
     "helpTip": "Number of stimuli to present in a sequence",

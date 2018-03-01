@@ -40,10 +40,10 @@ def offline_analysis(data_folder=None):
 
     # Process triggers.txt
     s_i, t_t_i, t_i, offset = trigger_decoder(mode=mode,
-                                      trigger_loc=data_folder + '/triggers.txt')
+                                              trigger_loc=data_folder + '/triggers.txt')
 
     # Channel map can be checked from raw_data.csv file.
-    # read_data_csv already removes the timespamp column.
+    # read_data_csv already removes the timestamp column.
     #                     CM            X3 X2           X1            TRG
     channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
 

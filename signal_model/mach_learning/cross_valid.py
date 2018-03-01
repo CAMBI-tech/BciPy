@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize
 from sklearn import metrics
-
 from sklearn.model_selection import StratifiedKFold
 from utils.progress_bar import progress_bar
 
@@ -187,6 +186,7 @@ def cross_validate_model(x, y, model, k_folds=10):
     # Given a model and data, create folds and apply k fold cross validation.
     # The aim here is to evaluate our model and estimate its performance as good as we can.
 
+    print 'Starting cross validation...'
     skf = StratifiedKFold(n_splits=k_folds, random_state=0)
 
     auc_list = []
@@ -198,5 +198,8 @@ def cross_validate_model(x, y, model, k_folds=10):
         sc = model.transform(x_test)
         fpr, tpr, _ = metrics.roc_curve(y_test, sc, pos_label=1)
         auc_list.append(metrics.auc(fpr, tpr))
+
+        print 'Current AUC\'s are:'
+        print auc_list
 
     return np.mean(auc_list)

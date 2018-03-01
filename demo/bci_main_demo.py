@@ -1,6 +1,7 @@
 # This is a demo of the main bci system. It will run the task defined here
 #  using the parameters file passed to it.
 
+
 def main():
 	import bci_main
 	from helpers.load import load_json_parameters
@@ -17,12 +18,13 @@ def main():
 	# Define a user
 	user = 'bci_main_demo_user'
 
-	# Try and intialize with bci main
+	# Try and initialize with bci main
 	try:
 		bci_main.bci_main(parameters, user, test_type, test_mode)
 	except Exception as e:
 		print("BCI MAIN Fail. Exiting. Error: \n")
 		print(e)
+
 
 if __name__ == "__main__":
 	main()

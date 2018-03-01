@@ -1,5 +1,5 @@
 from sklearn.decomposition import PCA
-from eeg_model.mach_learning.m_estimator.m_estimator import *
+from signal_model.mach_learning.m_estimator.m_estimator import *
 
 
 class ChannelWisePrincipalComponentAnalysis:
@@ -81,11 +81,16 @@ class ChannelWisePrincipalComponentAnalysis:
 
 
 class MPCA:
-    # Channel wise MPCA
+    """ Channel wise MPCA
+        attributes:
+            var_tol(float): Variance tolerance with respect to principal component
+            output_type(string): 'MDA' if next element in pipeline is MDA, 'RDA' else
+    """
 
-    def __init__(self, var_tol=1):
+    def __init__(self, var_tol=1, output_type='MDA'):
         self.var_tol = var_tol
-        self.transform_matrix_list=[]
+        self.transform_matrix_list = []
+        self.output_type = output_type
 
     def fit(self, x, y=None, var_tol=None):
         """ Find channels wise robust covariances and apply pca.
@@ -122,7 +127,18 @@ class MPCA:
         for channel in range(C):
             new_x.append(np.dot(x[channel], self.transform_matrix_list[channel]))
 
-        return new_x
+        if self.output_type == 'MDA':
+            return new_x
+        elif self.output_type == 'RDA':
+            concatenated_new_x = []
+
+            for sample_index in range(N):
+                new_sample = []
+                for channel in range(C):
+                    new_sample = np.append(new_sample, new_x[channel][sample_index])
+                concatenated_new_x.append(new_sample)
+
+            return np.array(concatenated_new_x)
 
     def fit_transform(self, x, y=None, var_tol=None):
         """ Fits parameters wrt. the input matrix and outputs corresponding

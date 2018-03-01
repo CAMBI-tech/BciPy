@@ -66,12 +66,13 @@ def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
                 N is number of samples p is dimensionality of features
                 C is number of channels
             k_folds(int): Number of cross validation folds
+            cross_validate(Boolean): True if cross validation AUC is to be calculated. Increases required time.
         Return:
             model(pipeline): trained model
             """
 
-    pca = MPCA(var_tol=.1**5)
-    rda = MDiscriminantAnalysis()
+    pca = MPCA(var_tol=.1**5, output_type='RDA')
+    rda = RegularizedDiscriminantAnalysis()
 
     model = Pipeline()
     model.add(pca)
@@ -92,7 +93,7 @@ def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
     bandwidth = 1.06 * min(
         np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
     model.add(KernelDensityEstimate(bandwidth=bandwidth))
-    model.fit(x,y)
+    model.fit(x, y)
 
     # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
