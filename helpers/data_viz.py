@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from helpers.load import load_csv_data, read_data_csv
 
 
-def generate_offline_analysis_screen(x, y, model, folder):
+def generate_offline_analysis_screen(x, y, model, folder, auc_cv):
     """ Offline Analysis Screen.
     Generates the information figure following the offlineAnalysis.
     The figure has multiple tabs containing the average ERP plots
@@ -43,7 +43,7 @@ def generate_offline_analysis_screen(x, y, model, folder):
     ax2.set_title(
         'Mean target ERP (averaged over trials in the calibration data)')
 
-    fig.savefig(folder + "\mean_erp.pdf", bbox_inches='tight', format='pdf')
+    fig.savefig(folder + "/mean_erp.pdf", bbox_inches='tight', format='pdf')
 
     fig, ax = plt.subplots()
     x_plot = np.linspace(np.min(model.line_el[-1]), np.max(model.line_el[-1]),
@@ -61,7 +61,7 @@ def generate_offline_analysis_screen(x, y, model, folder):
     plt.title('Likelihoods Given the Labels')
     plt.ylabel('p(e|l)')
     plt.xlabel('scores')
-    fig.savefig(folder + "\lik_dens.pdf", bbox_inches='tight', format='pdf')
+    fig.savefig(folder + "/lik_dens_{}.pdf".format(auc_cv), bbox_inches='tight', format='pdf')
     return
 
 

@@ -83,7 +83,7 @@ class ChannelWisePrincipalComponentAnalysis:
 class MPCA:
     """ Channel wise MPCA
         attributes:
-            var_tol(float): Variance tolerance with respect to principal component
+            var_tol(float): Variance tolerance with respect to principal component(eigen value)
             output_type(string): 'MDA' if next element in pipeline is MDA, 'RDA' else
     """
 
@@ -91,6 +91,8 @@ class MPCA:
         self.var_tol = var_tol
         self.transform_matrix_list = []
         self.output_type = output_type
+        self.init_mean = None
+        self.init_sigma = None
 
     def fit(self, x, y=None, var_tol=None):
         """ Find channels wise robust covariances and apply pca.
@@ -107,7 +109,9 @@ class MPCA:
         for channel in range(C):
             X = x[channel]
 
-            M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
+            M_est_mean, M_est_sigma = robust_mean_covariance(X=X, init_mean=self.init_mean, init_sigma=self.init_sigma)
+            self.init_mean = M_est_mean
+            self.init_sigma = M_est_sigma
             vals, vecs = eigsorted(M_est_sigma)
 
             lim = vals[0]*self.var_tol

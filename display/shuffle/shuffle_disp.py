@@ -125,8 +125,3 @@ core.wait(.5)
 
 win.close()
 core.quit()
-
-
-
-
-

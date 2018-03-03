@@ -1,7 +1,7 @@
 from signal_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis, MPCA
 from signal_model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
+    import RegularizedDiscriminantAnalysis
 from signal_model.mach_learning.generative_mods.function_density_estimation import KernelDensityEstimate
 from signal_model.mach_learning.pipeline import Pipeline
 from signal_model.mach_learning.cross_valid import *
@@ -23,9 +23,10 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
             """
 
     # Pipeline is the model. It can be populated manually
-    rda = RegularizedDiscriminantAnalysis()
     pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1**5,
                                                 num_ch=x.shape[0])
+    rda = RegularizedDiscriminantAnalysis()
+
     model = Pipeline()
     model.add(pca)
     model.add(rda)
@@ -36,15 +37,12 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     auc_init = metrics.auc(fpr, tpr)
 
     # Cross validate
-    arg_cv = cross_validate_parameters(x, y, model=model, k_folds=k_folds)
+    lam, gam = cross_validate_parameters(x, y, model=model, k_folds=k_folds)
 
-    lam = arg_cv[0]
-    gam = arg_cv[1]
     print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
-                                        k_folds=10, split='uniform')
+    auc_cv = cross_validate_model(x=x, y=y, model=model)
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -55,10 +53,10 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
-    return model
+    return model, auc_cv
 
 
-def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
+def train_m_estimator_pipeline(x, y, k_folds=10):
     """ Trains Cw-m-PCA m-RDA KDE model given the input data and labels, returns the model
         Args:
             x(ndarray[float]): C x N x p data array
@@ -79,15 +77,16 @@ def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
     model.add(rda)
 
     # Find the cross validation AUC for the model.
-    if cross_validate:
-        auc_cv = cross_validate_model(x=x, y=y, model=model, k_folds=k_folds)
-    else:
-        auc_cv = 'Skipped for speed.'
+    lam, gam = cross_validate_parameters(x=x, y=y, model=model, k_folds=k_folds)
+    print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
+    model.pipeline[1].lam = lam
+    model.pipeline[1].gam = gam
+    auc_cv = cross_validate_model(x=x, y=y, model=model)
 
     # Now train on complete data for the final model
     sc = model.fit_transform(x, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
-    auc_init = metrics.auc(fpr, tpr)
+    auc_all = metrics.auc(fpr, tpr)
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -96,6 +95,6 @@ def train_m_estimator_pipeline(x, y, k_folds=10, cross_validate=True):
     model.fit(x, y)
 
     # Report AUC
-    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
+    print('AUC-complete_data: {}, AUC-cv: {}'.format(auc_all, auc_cv))
 
-    return model
+    return model, auc_cv

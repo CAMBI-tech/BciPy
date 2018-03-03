@@ -24,7 +24,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             split(string): split type,
                 'uniform': Takes the data as is
         Return:
-            -auc(float): negative AUC value for current setup """
+            -auc(float): Negative cross validation AUC, to be minimized."""
 
     num_samples = x.shape[1]
     fold_len = np.floor(float(num_samples) / k_folds)

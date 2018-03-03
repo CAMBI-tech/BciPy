@@ -5,6 +5,7 @@ from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import pickle
+from time import time
 
 
 def offline_analysis(data_folder=None):
@@ -48,13 +49,13 @@ def offline_analysis(data_folder=None):
     channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
 
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat,
-                                      mode=mode, fs=fs,k=ds_rate, offset=offset,
+                                      mode=mode, fs=fs, k=ds_rate, offset=offset,
                                       channel_map=channel_map)
 
-    model = train_pca_rda_kde_model(x, y, k_folds=10)
+    model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder)
+    generate_offline_analysis_screen(x, y, model, data_folder, auc_cv)
 
     print('Saving the model!')
     with open(data_folder + '/model.pkl', 'wb') as output:
@@ -63,4 +64,6 @@ def offline_analysis(data_folder=None):
 
 
 if __name__ == "__main__":
+    t1 = time()
     offline_analysis()
+    print 'Elapsed time: {} mins'.format((time() - t1) / 60.)

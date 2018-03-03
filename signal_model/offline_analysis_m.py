@@ -9,7 +9,7 @@ import pickle
 from time import time
 
 
-def offline_analysis_m(data_folder=None, method='regular'):
+def offline_analysis_m(data_folder=None):
     """ Train the model by first loading the data and save the trained model.
         Args:
             data_folder(str): Path to data folder
@@ -20,8 +20,7 @@ def offline_analysis_m(data_folder=None, method='regular'):
     if not data_folder:
         data_folder = load_experimental_data()
 
-    raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
-        data_folder + '/raw_data.csv')
+    raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(data_folder + '/raw_data.csv')
 
     dat = sig_pro(raw_dat, fs=fs, k=k)
 
@@ -37,21 +36,18 @@ def offline_analysis_m(data_folder=None, method='regular'):
                                       fs=fs, k=k,
                                       channel_map=channel_map, offset=offset)
 
-    if method == 'regular':
-        model = train_pca_rda_kde_model(x, y, k_folds=10)
-    elif method == 'm-estimator':
-        model = train_m_estimator_pipeline(x, y, k_folds=10)
+    model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder)
+    generate_offline_analysis_screen(x, y, model, data_folder+'/mpca', auc_cv)
 
     print('Saving the model!')
-    with open(data_folder + '/model.pkl', 'wb') as output:
+    with open(data_folder + 'mpca/model.pkl', 'wb') as output:
         pickle.dump(model, output)
     return model
 
 
 if __name__ == '__main__':
     t1 = time()
-    offline_analysis_m(data_folder='C:/Users/Berkan/Desktop/GitProjects/bci/data/bci_main_demo_user/bci_main_demo_user_Wed_28_Feb_2018_0209_Eastern Standard Time', method='regular')
+    offline_analysis_m(data_folder=None)
     print 'Elapsed time: {} mins'.format((time() - t1)/60.)
