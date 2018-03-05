@@ -39,7 +39,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     # Cross validate
     lam, gam = cross_validate_parameters(x, y, model=model, k_folds=k_folds)
 
-    print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
+    print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     auc_cv = cross_validate_model(x=x, y=y, model=model)
@@ -78,7 +78,7 @@ def train_m_estimator_pipeline(x, y, k_folds=10):
 
     # Find the cross validation AUC for the model.
     lam, gam = cross_validate_parameters(x=x, y=y, model=model, k_folds=k_folds)
-    print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
+    print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     auc_cv = cross_validate_model(x=x, y=y, model=model)

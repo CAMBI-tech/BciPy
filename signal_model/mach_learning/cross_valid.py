@@ -59,7 +59,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             auc_h.append(metrics.auc(fpr, tpr))
 
     auc = np.mean(np.array(auc_h))
-
+    print 'Current optimisation step\'s AUC-cv: {}'.format(auc)
     return -auc
 
 

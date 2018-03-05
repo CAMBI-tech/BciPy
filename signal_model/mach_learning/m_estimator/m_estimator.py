@@ -53,27 +53,23 @@ def sigma_update(X, mean, sigma_inv, b, c_square):
     return sigma_hat
 
 
-def robust_mean_covariance(X, init_mean, init_sigma, q=.5):
+def robust_mean_covariance(X, q=.9):
     # Calculates robust mean and covariance for Nxp ndarray x. N is number of samples and p is number of features.
 
     N, p = X.shape
     c_square = sc.stats.chi2.ppf(q, p)
     b = sc.stats.chi2.cdf(c_square, p + 2) + c_square / p * (1 - sc.stats.chi2.cdf(c_square, p))
 
-    if init_mean is None:
-        sample_mean = np.mean(X, axis=0)
-        sample_sigma = 1. / N * np.dot(np.transpose(X - sample_mean), X - sample_mean)
+    sample_mean = np.mean(X, axis=0)
+    sample_sigma = 1. / N * np.dot(np.transpose(X - sample_mean), X - sample_mean)
 
+    M_est_mean_new = sample_mean
+    M_est_sigma_new = sample_sigma
 
-        M_est_mean_new = sample_mean
-        M_est_sigma_new = sample_sigma
-    else:
-        M_est_mean_new = init_mean
-        M_est_sigma_new = init_sigma
 
     iteration = 0
     s_a_c = 1  # summed absolute change, initially large value
-    while iteration < 1000 and s_a_c > .1 ** 3:
+    while iteration < 1000 and s_a_c > .1 ** 2:
         # print '{}/{}'.format(iteration, 1000)
         M_est_mean_old = M_est_mean_new
         M_est_sigma_old = M_est_sigma_new
@@ -89,9 +85,9 @@ def robust_mean_covariance(X, init_mean, init_sigma, q=.5):
                 np.sum(np.sum(np.abs(M_est_sigma_new - M_est_sigma_old)))
         # print s_a_c
         iteration += 1
-        if iteration == 999:
-            print 'Max number of iterations reached for m estimation for pca. Last s_a_c: {}.'
-            print 'If last s_a_c is large (>.1) use regular calibration.'.format(s_a_c)
+        if iteration == 999 and s_a_c > 1:
+            print 'Max number of iterations reached for m estimation for pca. Last s_a_c: {}.'.format(s_a_c)
+            print 'Use regular calibration, m estimation does not converge for this case.'
 
     return M_est_mean_new, M_est_sigma_new
 

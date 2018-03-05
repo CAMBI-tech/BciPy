@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
-from signal_model.mach_learning.train_model import train_pca_rda_kde_model, train_m_estimator_pipeline
+from signal_model.mach_learning.train_model import train_m_estimator_pipeline
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import pickle
 from time import time
+import os
 
 
 def offline_analysis_m(data_folder=None):
@@ -38,11 +39,14 @@ def offline_analysis_m(data_folder=None):
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
+    if not os.path.exists(data_folder+'/mpca'):
+        os.makedirs(data_folder+'/mpca')
+
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder+'/mpca', auc_cv)
 
     print('Saving the model!')
-    with open(data_folder + 'mpca/model.pkl', 'wb') as output:
+    with open(data_folder + 'mpca_model.pkl', 'wb') as output:
         pickle.dump(model, output)
     return model
 

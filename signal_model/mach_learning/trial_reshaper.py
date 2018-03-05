@@ -1,10 +1,8 @@
 import numpy as np
 
 
-def trial_reshaper(
-    trial_target_info, timing_info, filtered_eeg, fs, k, mode, offset=0,
-        channel_map=
-        (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
+def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, offset=0,
+        channel_map=(1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
     """
 
     :param trial_target_info: A list of strings which can take values:
@@ -35,7 +33,7 @@ def trial_reshaper(
     trials_per_seq = number of trials in each sequence
 
     """
-    print(offset)
+    print 'The offset from acquisition is {}'.format(offset)
     # Remove the channels that we are not interested in
     channel_indexes_to_remove = []
     for channel_index in range(len(filtered_eeg)):
