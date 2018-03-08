@@ -5,7 +5,7 @@ from random import random as rand
 
 import pytest
 from acquisition.client import _StoppableProcess
-from protocols.lsl_device import LslDevice
+from protocols.lsl.lsl_device import LslDevice
 from pylsl import StreamInfo, StreamOutlet
 
 CHANNEL_COUNT = 8

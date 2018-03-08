@@ -28,6 +28,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save, fake):
 
     Input:
         win (PsychoPy Display Object)
+        daq (Data Acquistion Object)
         parameters (Dictionary)
         file_save (String)
         fake (Boolean)

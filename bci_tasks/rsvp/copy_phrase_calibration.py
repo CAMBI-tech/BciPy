@@ -14,7 +14,32 @@ from helpers.bci_task_related import (
 
 
 def rsvp_copy_phrase_calibration_task(win, daq, parameters,
-                                      file_save, fake):
+                                      file_save, fake=False):
+
+    """RSVP Copy Phrase Calibration.
+
+    Initializes and runs all needed code for executing a copy phrase calibration task. A
+        phrase is set in parameters and necessary objects (eeg, display) are
+        passed to this function. Fake decisions are made, but the implementation should mimic
+        as copy phrase session. 
+
+    Parameters
+    ----------
+        parameters : dict,
+            configuration details regarding the experiment. See parameters.json
+        daq : object,
+            data acquisition object initialized for the desired protocol
+        file_save : str,
+            path location of where to save data from the session
+        classifier : loaded pickle file,
+            trained signal_model, loaded before session started
+        fake : boolean, optional
+            boolean to indicate whether this is a fake session or not.
+    Returns
+    -------
+        file_save : str,
+            path location of where to save data from the session
+    """
 
     # Initialize Experiment clocks etc.
     frame_rate = win.getActualFrameRate()
@@ -61,7 +86,7 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
 
         # Try getting random sequence information given stimuli parameters
         try:
-            # to-do implement color from params
+            # Generate some sequences to present based on parameters
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
                 alp, target_letter, parameters,
                 len_sti=int(parameters['len_sti']['value']), timing=[
@@ -74,6 +99,7 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
                     parameters['fixation_color']['value'],
                     parameters['stimuli_color']['value']])
 
+            # Get task information, seperate from stimuli to be presented
             (task_text, task_color) = get_task_info(
                 int(parameters['num_sti']['value']),
                 parameters['task_color']['value'])
@@ -91,23 +117,27 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
 
             # update task state
             rsvp.stim_sequence = ele_sti[0]
+
             # rsvp.text_task = text_task
             if parameters['is_txt_sti']['value']:
                 rsvp.color_list_sti = color_sti[0]
-
             rsvp.time_list_sti = timing_sti[0]
 
+            # buffer and execute the sequence
             core.wait(buffer_val)
             sequence_timing = rsvp.do_sequence()
 
+            # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
                 trigger_file,
                 copy_phrase,
                 text_task)
 
+            # buffer
             core.wait(buffer_val)
 
+            # Fake a decision!
             (target_letter, text_task, run) = fake_copy_phrase_decision(
                 copy_phrase, target_letter, text_task)
 
