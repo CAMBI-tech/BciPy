@@ -1,6 +1,64 @@
 # -*- coding: utf-8 -*-
 from helpers.load import load_txt_data
 
+def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
+
+    # If sound trigger is selected, output calibration tones
+    if trigger_type == 'sound':
+        import sounddevice as sd
+        import soundfile as sf
+
+        # Init the sound object and give it some time to buffer
+        try:
+            data, fs = sf.read('./static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
+        except:
+            raise Exception('Sound object could not be found or Initialized')
+
+        core.wait(.2)
+
+        # Play the fist sound (used to calibrate) and wait.
+        sd.play(data, fs)
+        timing = ['calibration_trigger', experiment_clock.getTime()]
+        core.wait(.3)
+
+        # Play another to have active control over sound latency
+        sd.play(data, fs)
+        core.wait(.3)
+
+
+    if trigger_type == 'image':
+        if display:
+            calibration_box = visual.ImageStim(
+                display,
+                image='./static/images/testing_images/white.png',
+                size=(.75, .75),
+                pos=(-.5, -.5),
+                mask=None,
+                ori=0.0)
+            timing = ['calibration_trigger', experiment_clock.getTime()]
+            calibration_box.draw()
+            display.flip()
+
+            core.wait(1)
+
+            # delete the stimuli off screen
+            display.flip()
+
+            # Draw it again and flip
+            calibration_box.draw()
+            display.flip()
+
+            core.wait(1)
+
+        else:
+          raise Exception('No Display Object passed for calibration with images!')  
+
+    else:
+        raise Exception('Trigger type not implemented for Calibration yet!')
+
+    return timing
+
+
 
 def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
     """
