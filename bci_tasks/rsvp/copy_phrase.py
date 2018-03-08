@@ -342,6 +342,7 @@ def _init_copy_phrase_display_task(
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
+        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False,
+        trigger_type=parameters['trigger_type']['value'])
 
     return rsvp

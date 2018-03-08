@@ -273,11 +273,22 @@
     "isNumeric": "fasle"
   }, 
   "is_txt_sti": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "trigger_type": {
+    "value": "image",
+    "section": "bci_config",
+    "readableName": "What type of Calibration Trigger should be used",
+    "helpTip": "Select a calibration trigger type to be used",
+    "recommended_values": [
+      "image",
+      "sound"
+    ],
     "isNumeric": "false"
   },
   "path_to_presentation_images": {

@@ -35,8 +35,9 @@ class RSVPDisplay(object):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 bg_step_num=20, is_txt_sti=1,
-                 static_period_time=.05):
+                 bg_step_num=20, is_txt_sti=True,
+                 static_period_time=.05,
+                 trigger_type='image'):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -93,6 +94,7 @@ class RSVPDisplay(object):
         self.pos_sti = pos_sti
 
         self.first_run = True
+        self.trigger_type = trigger_type
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -181,7 +183,7 @@ class RSVPDisplay(object):
 
         if self.first_run:
             # Play a sequence start sound to help orient triggers
-            stim_timing = _calibration_trigger(self.experiment_clock, trigger_type='image', display=self.win)
+            stim_timing = _calibration_trigger(self.experiment_clock, trigger_type=self.trigger_type, display=self.win)
             timing.append(stim_timing)
             self.first_run = False
 

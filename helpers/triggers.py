@@ -2,11 +2,28 @@
 from helpers.load import load_txt_data
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
+    """Calibration Trigger.
+
+        Outputs triggers for the purpose of calibrating data and stimuli.
+        This is an ongoing difficulty between OS, DAQ devices and stimuli type. This
+        code aims to operationalize the approach to finding the correct DAQ samples in
+        relation to our trigger code.
+
+        Args:
+                experiment_clock(clock): clock with getTime() method, which is used in the code
+                    to report timing of stimuli
+                trigger_type(string): type of trigger that is desired (sound, image, etc)
+                display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
+        Return:
+                timing(array): timing values for the calibration triggers to be written to trigger file or
+                    used to calculate offsets.
+    """
 
     # If sound trigger is selected, output calibration tones
     if trigger_type == 'sound':
         import sounddevice as sd
         import soundfile as sf
+        from psychopy import core
 
         # Init the sound object and give it some time to buffer
         try:
@@ -26,8 +43,10 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
         core.wait(.3)
 
 
-    if trigger_type == 'image':
+    elif trigger_type == 'image':
         if display:
+            from psychopy import visual, core
+
             calibration_box = visual.ImageStim(
                 display,
                 image='./static/images/testing_images/white.png',
@@ -43,6 +62,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
 
             # delete the stimuli off screen
             display.flip()
+            core.wait(.1)
 
             # Draw it again and flip
             calibration_box.draw()
