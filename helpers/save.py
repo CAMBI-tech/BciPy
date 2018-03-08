@@ -23,7 +23,7 @@ def init_save_data_structure(data_save_path,
     save_folder_name = data_save_path + user_information
     save_folder_run_name = save_folder_name + '/' + \
         user_information + '_' + strftime(
-            '%a_%d_%b_%Y_%H%M_%z', localtime())
+            '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
     helper_folder_name = save_folder_run_name + '/helpers/'
 
     # try making the given path
