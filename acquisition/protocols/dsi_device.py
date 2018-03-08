@@ -7,8 +7,6 @@ import acquisition.protocols.dsi as dsi
 import acquisition.protocols.util as util
 from acquisition.protocols.device import Device
 
-from psychopy import sound
-
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s', )
 

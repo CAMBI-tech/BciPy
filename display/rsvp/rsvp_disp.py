@@ -2,7 +2,7 @@
 
 from __future__ import division, print_function
 from psychopy import prefs
-prefs.general['audioLib'] = ['pygame']
+prefs.general['audioLib'] = ['sounddevice']
 
 from psychopy import visual, core, sound
 import numpy as np
