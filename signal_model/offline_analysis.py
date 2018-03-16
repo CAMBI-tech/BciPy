@@ -6,9 +6,11 @@ from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import pickle
 from time import time
+from signal_model.offline_analysis_m import noise_data
+import sys
 
 
-def offline_analysis(data_folder=None):
+def offline_analysis(data_folder=None, add_artifacts=0):
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -52,6 +54,9 @@ def offline_analysis(data_folder=None):
                                       mode=mode, fs=fs, k=ds_rate, offset=offset,
                                       channel_map=channel_map)
 
+    if add_artifacts:
+        x = noise_data(x, y, 300, add_artifacts)
+
     model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
 
     print('Saving offline analysis plots!')
@@ -64,6 +69,13 @@ def offline_analysis(data_folder=None):
 
 
 if __name__ == "__main__":
+    try:
+        ratio = sys.argv[1]
+    except Exception as e:
+        ratio = 10
+
+    sample_calib_path = 'C:/Users/Berkan/Desktop/data/bci_main_demo_user/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+
     t1 = time()
-    offline_analysis()
+    offline_analysis(data_folder=sample_calib_path, add_artifacts=ratio)
     print 'Elapsed time: {} mins'.format((time() - t1) / 60.)
