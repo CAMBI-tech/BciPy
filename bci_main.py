@@ -124,3 +124,26 @@ def execute_task(task_type, parameters, save_folder):
         server.stop()
 
     return
+
+if __name__ == "__main__":
+    import argparse
+    from helpers.load import load_json_parameters
+    import multiprocessing
+
+    multiprocessing.freeze_support()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--parameters', default='parameters/parameters.json',
+                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    parser.add_argument('-u', '--user', default='test_user')
+    parser.add_argument('-t', '--type', default=1,
+                        help='Task Type for a given mode. Ex. RSVP Keyboard, 1 is calibration')
+    parser.add_argument('-m', '--mode', default='RSVP',
+                        help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
+
+    args = parser.parse_args()
+
+    # Load a parameters file
+    parameters = load_json_parameters(args.parameters)
+
+    bci_main(parameters, args.user, args.type, args.mode)
