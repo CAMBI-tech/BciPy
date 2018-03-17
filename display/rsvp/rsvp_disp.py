@@ -14,14 +14,6 @@ class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
 
     Animates a sequence in RSVP. Mode should be determined outside.
-
-    Attr:
-            task(visual_Text_Stimuli): task bar
-            text(list[visual_Text_Stimuli]): text bar, there can be
-                different number of information texts in different paradigms
-            sti(visual_Text_Stimuli): stimuli text
-            bg(BarGraph): bar graph display unit in display
-            staticPeriod(core_clock): timer for presentation
     """
 
     def __init__(self, window, static_period, experiment_clock,

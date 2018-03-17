@@ -8,14 +8,24 @@ from helpers.lang_model_related import init_language_model
 
 
 def bci_main(parameters, user, exp_type, mode):
-    """
-    BCI Main.
+    """BCI Main.
 
-    Using parameters (dict), user information, exp_type
-        ( ex. calibration v. free spell), and mode ( ex .RSVP v. SSVEP)
-        the BCI app will initialize a save folder, construct needed information
-        and execute the task. This is the main connection between any UI and
-        running the app.
+    The BCI main function will initialize a save folder, construct needed information
+    and execute the task. This is the main connection between any UI and
+    running the app.
+
+    It may also be invoked via tha command line.
+        Ex. `python bci_main.py` this will default parameters, mode, user, and type.
+
+        You can pass it those attributes with flags, if desired.
+            Ex. `python bci_main.py --user "bci_user" --mode "SHUFFLE"`
+
+    Input:
+        parameters (dict): parameter dictionary
+        user (str): name of the user
+        exp_type (int): type of experiment. Ex. 1 = calibration
+        mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
+    
     """
 
     # Define the parameter and data save location
@@ -49,6 +59,11 @@ def execute_task(task_type, parameters, save_folder):
     Executes the desired task by setting up the display window and
         data acquistion, then passing on to the start_task funtion
         which will initialize experiment.
+
+    Input:
+        parameters (dict): parameter dictionary
+        task_type (dict): type and mode of experiment
+        save_folder (str): path to save folder
     """
 
     fake_data = parameters['fake_data']['value']
@@ -146,4 +161,5 @@ if __name__ == "__main__":
     # Load a parameters file
     parameters = load_json_parameters(args.parameters)
 
+    # Start BCI Main
     bci_main(parameters, str(args.user), int(args.type), str(args.mode))
