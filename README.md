@@ -1,7 +1,7 @@
 # Brain- Computer Interface Codebase
 ------------------------------------
 
-This is the codebase for BCI suite. Designed and written by OHSU and NEU.
+This is the codebase for BCI suite. Designed and written by OHSU and NEU. Contributions Welcome!
 
 
 ## Features
@@ -32,7 +32,8 @@ This is the codebase for BCI suite. Designed and written by OHSU and NEU.
 
 ## Dependencies
 ---------------
-This project requires Psychopy, Python v 2.7, and other packages. See requirements.txt
+This project requires Psychopy, Python v 2.7, and other packages. See requirements.txt. When possible integration with other open source
+libraries will be done.
 
 
 ## Installation
@@ -40,7 +41,7 @@ This project requires Psychopy, Python v 2.7, and other packages. See requiremen
 
 # BCI Setup
 
-In order to run BCI suite on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must install Docker and Docker-Machience to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using, set fake_lm to true. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python espeically for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). 
+In order to run BCI suite on your computer, first install **Python 2.7** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using, set fake_lm to true. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python especially for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). 
 
 
 1. Run `pip install -r requirements.txt`
@@ -51,12 +52,23 @@ You will also need to set a python path for your session. If running demo or oth
 
 3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 
-> You are ready to run BCI suite!
+## Usage
 
-Start by running `python gui/BCInterface.py` in your command prompt or terminal
+Start by running `python gui/BCInterface.py` in your command prompt or terminal.
+
+You may also invoke the experiment directly using command line tools for bci_main.py
+
+Ex.
+	 `python bci_main.py` *this will default parameters, mode, user, and type.*
+
+You can pass it attributes with flags, if desired.
+    	Ex. 
+    		`python bci_main.py --user "bci_user" --mode "RSVP"`
 
 ## Modules and Vital Functions
 ------------------------------
+
+This a list of the major modules and their functionality. Each module will contain its own README, demo and test scripts. Please check them out for more information!
 
 - `acquistion`: acquires data, gives back desired time series, saves at end of session.
 - `display`: handles display of stimuli on screen, passing back stimuli timing.
@@ -72,12 +84,12 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal
 ## Demo and Tests
 -----------------
 
-All major functions and modules have demo and test files associated with them. This should help orient you to the functionaly as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.* 
+All major functions and modules have demo and test files associated with them. This should help orient you to the functionality as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.* 
 
 For example, you may run the bci_main demo by:
 > run `python demo/bci_main_demo.py`
 
-This demo will load in parameters and exceute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
 
 This repository uses pytest for execution of tests. You may execute them by:
 
