@@ -8,14 +8,24 @@ from helpers.lang_model_related import init_language_model
 
 
 def bci_main(parameters, user, exp_type, mode):
-    """
-    BCI Main.
+    """BCI Main.
 
-    Using parameters (dict), user information, exp_type
-        ( ex. calibration v. free spell), and mode ( ex .RSVP v. SSVEP)
-        the BCI app will initialize a save folder, construct needed information
-        and execute the task. This is the main connection between any UI and
-        running the app.
+    The BCI main function will initialize a save folder, construct needed information
+    and execute the task. This is the main connection between any UI and
+    running the app.
+
+    It may also be invoked via tha command line.
+        Ex. `python bci_main.py` this will default parameters, mode, user, and type.
+
+        You can pass it those attributes with flags, if desired.
+            Ex. `python bci_main.py --user "bci_user" --mode "SHUFFLE"`
+
+    Input:
+        parameters (dict): parameter dictionary
+        user (str): name of the user
+        exp_type (int): type of experiment. Ex. 1 = calibration
+        mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
+    
     """
 
     # Define the parameter and data save location
@@ -49,6 +59,11 @@ def execute_task(task_type, parameters, save_folder):
     Executes the desired task by setting up the display window and
         data acquistion, then passing on to the start_task funtion
         which will initialize experiment.
+
+    Input:
+        parameters (dict): parameter dictionary
+        task_type (dict): type and mode of experiment
+        save_folder (str): path to save folder
     """
 
     fake_data = parameters['fake_data']['value']
@@ -124,3 +139,27 @@ def execute_task(task_type, parameters, save_folder):
         server.stop()
 
     return
+
+if __name__ == "__main__":
+    import argparse
+    from helpers.load import load_json_parameters
+    import multiprocessing
+
+    multiprocessing.freeze_support()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--parameters', default='parameters/parameters.json',
+                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    parser.add_argument('-u', '--user', default='test_user')
+    parser.add_argument('-t', '--type', default=1,
+                        help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
+    parser.add_argument('-m', '--mode', default='RSVP',
+                        help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
+
+    args = parser.parse_args()
+
+    # Load a parameters file
+    parameters = load_json_parameters(args.parameters)
+
+    # Start BCI Main
+    bci_main(parameters, str(args.user), int(args.type), str(args.mode))

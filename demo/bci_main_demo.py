@@ -12,7 +12,7 @@ def main():
 	test_mode = 'RSVP'
 
 	# Test Type: ex. RSVP Calibration = 1, Copy Phrase = 2
-	test_type = 3
+	test_type = 1
 
 	# Define a user
 	user = 'bci_main_demo_user'

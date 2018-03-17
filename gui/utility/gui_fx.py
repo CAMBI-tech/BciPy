@@ -8,7 +8,7 @@ from os import chdir
 from os import path as ospath
 from sys import executable
 from warnings import warn
-import bci_main
+# import bci_main
 from signal_model.offline_analysis import offline_analysis
 
 import pyglet
@@ -672,6 +672,7 @@ def exec_bci_main(parameters, window, mode):
     global trialType
     global userId
     global new_window
+    global windows
 
     # set textBoxes, buttons, inputs, and images globally
     global textBoxes
@@ -680,9 +681,14 @@ def exec_bci_main(parameters, window, mode):
     global images
 
     try:
-
         new_window.close()
-        bci_main.bci_main(parameters, userId, trialType, mode)
+
+        cmd = 'python bci_main.py -m {} -t {} -u {}'.format(mode, trialType, userId)
+        # cmd = 'python bci_main.py'
+
+        p = subprocess.call(cmd, shell=False)
+        # bci_main.bci_main(parameters, userId, trialType, mode)
+        
 
     except Exception as e:
         if e.message == 'Not implemented yet!':
