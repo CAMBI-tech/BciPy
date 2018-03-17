@@ -137,7 +137,7 @@ if __name__ == "__main__":
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--type', default=1,
-                        help='Task Type for a given mode. Ex. RSVP Keyboard, 1 is calibration')
+                        help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
 
@@ -146,4 +146,4 @@ if __name__ == "__main__":
     # Load a parameters file
     parameters = load_json_parameters(args.parameters)
 
-    bci_main(parameters, args.user, args.type, args.mode)
+    bci_main(parameters, str(args.user), int(args.type), str(args.mode))
