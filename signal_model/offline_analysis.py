@@ -8,6 +8,7 @@ import pickle
 from time import time
 from signal_model.offline_analysis_m import noise_data
 import sys
+import os
 
 
 def offline_analysis(data_folder=None, add_artifacts=0):
@@ -37,6 +38,7 @@ def offline_analysis(data_folder=None, add_artifacts=0):
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
         data_folder + '/raw_data.csv')
 
+    t1 = time()
     # TODO: Read from parameters
     ds_rate = 2
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
@@ -58,12 +60,16 @@ def offline_analysis(data_folder=None, add_artifacts=0):
         x = noise_data(x, y, 300, add_artifacts)
 
     model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
+    t1 = time() - t1
+
+    if not os.path.exists(data_folder+'/{}'.format(add_artifacts)):
+        os.makedirs(data_folder+'/{}'.format(add_artifacts))
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder, auc_cv)
+    generate_offline_analysis_screen(x, y, model, data_folder+'/{}'.format(add_artifacts))
 
     print('Saving the model!')
-    with open(data_folder + '/model.pkl', 'wb') as output:
+    with open(data_folder + '{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
         pickle.dump(model, output)
     return model
 
@@ -74,8 +80,9 @@ if __name__ == "__main__":
     except Exception as e:
         ratio = 10
 
-    sample_calib_path = 'C:/Users/Berkan/Desktop/data/bci_main_demo_user/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    print 'Noisy sample rate: %{}'.format(ratio)
 
-    t1 = time()
+    #sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = None
+
     offline_analysis(data_folder=sample_calib_path, add_artifacts=ratio)
-    print 'Elapsed time: {} mins'.format((time() - t1) / 60.)

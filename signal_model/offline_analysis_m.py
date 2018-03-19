@@ -25,7 +25,10 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     C, N, d = x.shape
     length = int(d/2)
 
-    num_p = np.sum(y)*ratio/100
+    print 'shape of y:', y.shape
+    print ratio
+    print np.sum(y)
+    num_p = np.sum(y)*ratio/100.
     num_n = (y.size - np.sum(y))*ratio/100
 
     index_p = np.where(y)[0]
@@ -61,6 +64,8 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
 
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(data_folder + '/raw_data.csv')
 
+    t1 = time()
+
     dat = sig_pro(raw_dat, fs=fs, k=k)
 
     # Process triggers.txt
@@ -80,14 +85,16 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
-    if not os.path.exists(data_folder+'/mpca'):
-        os.makedirs(data_folder+'/mpca')
+    t1 = time() - t1
+
+    if not os.path.exists(data_folder+'{}/mpca'.format(add_artifacts)):
+        os.makedirs(data_folder+'{}/mpca'.format(add_artifacts))
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder+'/mpca', auc_cv)
+    generate_offline_analysis_screen(x, y, model, data_folder+'{}/mpca'.format(add_artifacts))
 
     print('Saving the model!')
-    with open(data_folder + 'mpca_model.pkl', 'wb') as output:
+    with open(data_folder + '{}/mpca/mpca_model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
         pickle.dump(model, output)
     return model
 
@@ -98,8 +105,9 @@ if __name__ == '__main__':
     except Exception as e:
         ratio = 10
 
-    t1 = time()
-    sample_calib_path = 'C:/Users/Berkan/Desktop/data/bci_main_demo_user/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    print 'Noisy sample rate: %{}'.format(ratio)
+
+    sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
 
     offline_analysis_m(data_folder=sample_calib_path, add_artifacts=ratio)
-    print 'Elapsed time: {} mins'.format((time() - t1)/60.)
+
