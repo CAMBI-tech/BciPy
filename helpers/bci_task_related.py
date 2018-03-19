@@ -81,7 +81,7 @@ def process_data_for_decision(sequence_timing, daq):
     ----------
         sequence_timing(array): array of tuples containing stimulus timing and
             text
-        daq (object): data acquistion object
+        daq (object): data acquisition object
 
     Returns
     -------
@@ -93,8 +93,8 @@ def process_data_for_decision(sequence_timing, daq):
     _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
 
     # define my first and last time points #changeforrelease
-    time1 = first_stim_time
-    time2 = last_stim_time + 2
+    time1 = first_stim_time * daq._device.fs
+    time2 = (last_stim_time + 2) * daq._device.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, timing - time1)

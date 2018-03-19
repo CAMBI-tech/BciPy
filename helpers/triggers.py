@@ -132,7 +132,7 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
 
 
 def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
-                                              copy_text, typed_text):
+                                              copy_text, typed_text, offset=None):
     """
     Write triggers from copy phrase.
 
@@ -144,38 +144,44 @@ def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
         (I) presented letter, (II) targetness, (III) timestamp
     """
 
-    # get relevant spelling info to determine what was and should be typed
-    spelling_length = len(typed_text)
-    last_typed = typed_text[-1]
-    correct_letter = copy_text[spelling_length - 1]
-
-    # because there is the possiblility of incorrect letter and correction,
-    # we check here what is appropriate as a correct response
-    if last_typed == correct_letter:
-        correct_letter = copy_text[spelling_length]
-    else:
-        correct_letter = '<'
-
-    x = 0
-
-    for i in array:
-
+    if offset:
         # extract the letter and timing from the array
-        (letter, time) = i
-
-        # determine what the triggers are:
-        #       assumes there is no target letter presentation.
-        if x == 0:
-            targetness = 'fixation'
-        elif x > 1 and correct_letter == letter:
-            targetness = 'target'
-        else:
-            targetness = 'nontarget'
-
-        # write to the trigger_file
+        (letter, time) = array
+        targetness = 'offset_correction'
         trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+    else:
+        # get relevant spelling info to determine what was and should be typed
+        spelling_length = len(typed_text)
+        last_typed = typed_text[-1]
+        correct_letter = copy_text[spelling_length - 1]
 
-        x += 1
+        # because there is the impassibility of incorrect letter and correction,
+        # we check here what is appropriate as a correct response
+        if last_typed == correct_letter:
+            correct_letter = copy_text[spelling_length]
+        else:
+            correct_letter = '<'
+
+        x = 0
+
+        for i in array:
+
+            # extract the letter and timing from the array
+            (letter, time) = i
+
+            # determine what the triggers are:
+            #       assumes there is no target letter presentation.
+            if x == 0:
+                targetness = 'fixation'
+            elif x > 1 and correct_letter == letter:
+                targetness = 'target'
+            else:
+                targetness = 'nontarget'
+
+            # write to the trigger_file
+            trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+
+            x += 1
 
     return trigger_file
 
