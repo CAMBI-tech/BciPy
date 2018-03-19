@@ -10,7 +10,6 @@ def start_task(display_window, daq, task_type, parameters, file_save,
 
     # RSVP
     if task_type['mode'] == 'RSVP':
-        print("here!!")
 
         # CALIBRATION
         if task_type['exp_type'] == 1:
