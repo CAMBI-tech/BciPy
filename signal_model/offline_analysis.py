@@ -76,13 +76,12 @@ def offline_analysis(data_folder=None, add_artifacts=0):
 
 if __name__ == "__main__":
     try:
-        ratio = sys.argv[1]
+        percent_rate = sys.argv[1]
     except Exception as e:
-        ratio = 10
+        percent_rate = 10
 
-    print 'Noisy sample rate: %{}'.format(ratio)
+    print 'Noisy sample rate: %{}'.format(percent_rate)
 
-    #sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    sample_calib_path = None
+    sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
 
-    offline_analysis(data_folder=sample_calib_path, add_artifacts=ratio)
+    offline_analysis(data_folder=sample_calib_path, add_artifacts=percent_rate)

@@ -25,11 +25,8 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     C, N, d = x.shape
     length = int(d/2)
 
-    print 'shape of y:', y.shape
-    print ratio
-    print np.sum(y)
-    num_p = np.sum(y)*ratio/100.
-    num_n = (y.size - np.sum(y))*ratio/100
+    num_p = np.float(np.sum(y))*np.float(ratio)/100.
+    num_n = (y.size - np.float(np.sum(y)))*np.float(ratio)/100.
 
     index_p = np.where(y)[0]
     index_n = np.where(np.abs(y-1))[0]
@@ -82,6 +79,7 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
 
     if add_artifacts:
         x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
+        print 'data noise completed'
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
@@ -101,13 +99,13 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
 
 if __name__ == '__main__':
     try:
-        ratio = sys.argv[1]
+        percent_rate = sys.argv[1]
     except Exception as e:
-        ratio = 10
+        percent_rate = 10
 
-    print 'Noisy sample rate: %{}'.format(ratio)
+    print 'Noisy sample rate: %{}'.format(percent_rate)
 
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
 
-    offline_analysis_m(data_folder=sample_calib_path, add_artifacts=ratio)
+    offline_analysis_m(data_folder=sample_calib_path, add_artifacts=percent_rate)
 
