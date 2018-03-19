@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from helpers.load import load_txt_data
 
+
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
     """Calibration Trigger.
 
@@ -42,7 +43,6 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
         sd.play(data, fs)
         core.wait(.3)
 
-
     elif trigger_type == 'image':
         if display:
             from psychopy import visual, core
@@ -71,7 +71,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
             core.wait(1)
 
         else:
-          raise Exception('No Display Object passed for calibration with images!')  
+            raise Exception('No Display Object passed for calibration with images!')  
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
