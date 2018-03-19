@@ -152,6 +152,11 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
 
     core.wait(buffer_val)
 
+    if daq._is_calibrated:
+        _write_triggers_from_sequence_copy_phrase(
+            ['offset', daq.offset], trigger_file,
+            copy_phrase, text_task, offset=True)
+
     # Close this sessions trigger file and return some data
     trigger_file.close()
 
