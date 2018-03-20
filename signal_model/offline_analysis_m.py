@@ -38,13 +38,13 @@ def noise_data(x, y, amplitude=1, ratio=5.):
         start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
         for c in range(C):
             x[c, p_i, start_of_artifact:start_of_artifact+length] += np.transpose(np.random.multivariate_normal(amplitude*np.ones(length),
-                                                                                                   3000*np.eye(length, length)))
+                                                                                                   30000*np.eye(length, length)))
 
     for n_i in selected_n:
         start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
         for c in range(C):
             x[c, n_i, start_of_artifact:start_of_artifact+length] += np.transpose(np.random.multivariate_normal(amplitude*np.ones(length),
-                                                                                                   3000*np.eye(length, length)))
+                                                                                                   30000*np.eye(length, length)))
     return x
 
 
@@ -78,21 +78,20 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
                                       channel_map=channel_map, offset=offset)
 
     if add_artifacts:
-        x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
-        print 'data noise completed'
+        x = noise_data(x, y, amplitude=3000, ratio=add_artifacts)
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
     t1 = time() - t1
 
-    if not os.path.exists(data_folder+'{}/mpca'.format(add_artifacts)):
-        os.makedirs(data_folder+'{}/mpca'.format(add_artifacts))
+    if not os.path.exists(data_folder+'/mpca_{}'.format(add_artifacts)):
+        os.makedirs(data_folder+'/mpca_{}'.format(add_artifacts))
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder+'{}/mpca'.format(add_artifacts))
+    generate_offline_analysis_screen(x, y, model, data_folder+'/mpca_{}'.format(add_artifacts))
 
     print('Saving the model!')
-    with open(data_folder + '{}/mpca/mpca_model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
+    with open(data_folder + '/mpca_{}/mpca_model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
         pickle.dump(model, output)
     return model
 

@@ -69,7 +69,7 @@ def offline_analysis(data_folder=None, add_artifacts=0):
     generate_offline_analysis_screen(x, y, model, data_folder+'/{}'.format(add_artifacts))
 
     print('Saving the model!')
-    with open(data_folder + '{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
+    with open(data_folder + '/{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
         pickle.dump(model, output)
     return model
 
