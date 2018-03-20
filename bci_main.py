@@ -140,6 +140,7 @@ def execute_task(task_type, parameters, save_folder):
 
     return
 
+
 if __name__ == "__main__":
     import argparse
     from helpers.load import load_json_parameters
