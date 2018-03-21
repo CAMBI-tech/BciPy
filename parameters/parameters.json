@@ -272,14 +272,6 @@
     "recommended_values": "",
     "isNumeric": "fasle"
   }, 
-  "is_txt_sti": {
-    "value": "true",
-    "section": "bci_config",
-    "readableName": "Is Text Stimuli",
-    "helpTip": "Is this Text -True- or Image -False-",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
   "trigger_type": {
     "value": "sound",
     "section": "bci_config",
@@ -448,6 +440,24 @@
     ],
     "isNumeric": "false"    
   },
+    "parameter_location": {
+    "value": "parameters/parameters.json",
+    "section": "bci_config",
+    "readableName": "Parameter Location",
+    "helpTip": "Parameter Location",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "isNumeric": "false"
+  },
+    "is_txt_sti": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Is Text Stimuli",
+    "helpTip": "Is this Text -true- or Image -false-",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
   "fake_data": {
     "value": "true",
     "section": "bci_config",
@@ -464,21 +474,11 @@
     "recommended_values": "",
     "isNumeric": "false"    
   },
-  "parameter_location": {
-    "value": "parameters/parameters.json",
-    "section": "bci_config",
-    "readableName": "Parameter Location",
-    "helpTip": "Parameter Location",
-    "recommended_values": [
-      "parameters/parameters.json"
-    ],
-    "isNumeric": "false"    
-  },
   "num_sti": {
     "value": "2",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
-    "helpTip": "Number of stimuli to present over the experiment",
+    "helpTip": "Number of sequences to present over the experiment",
     "recommended_values": "",
     "isNumeric": "true"
   },
@@ -486,7 +486,7 @@
     "value": "7",
     "section": "bci_config",
     "readableName": "Number of trials to present in a sequence",
-    "helpTip": "Number of stimuli to present in a sequence",
+    "helpTip": "Number of trials to present in a sequence",
     "recommended_values": "",
     "isNumeric": "true"
   },
