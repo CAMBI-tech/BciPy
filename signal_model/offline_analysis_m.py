@@ -24,13 +24,13 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     length = d
     noise_type = 'gaussian'
 
-    num_p = np.float(np.sum(y)) * np.float(ratio) / 100.
+    num_p = np.float(np.sum(y)) * np.float(ratio) / 100.  # num of positive samples to corrupt
     num_n = (y.size - np.float(np.sum(y))) * np.float(ratio) / 100.
 
-    index_p = np.where(y)[0]
+    index_p = np.where(y)[0]  # indexes of positive samples
     index_n = np.where(np.abs(y - 1))[0]
 
-    selected_p = random.sample(index_p, int(num_p))
+    selected_p = random.sample(index_p, int(num_p))  # indexes of positive samples to be corrupted
     selected_n = random.sample(index_n, int(num_n))
 
     if noise_type == 'gaussian':
@@ -42,14 +42,14 @@ def noise_data(x, y, amplitude=1, ratio=5.):
             start_of_artifact = 0
             for c in range(C):
                 x[c, p_i, start_of_artifact:start_of_artifact+length] += \
-                    np.random.multivariate_normal(mean=mean, cov=cov)
+                    np.random.multivariate_normal(mean=mean, cov=cov)*np.hamming(length)
 
         for n_i in selected_n:
             # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
             start_of_artifact = 0
             for c in range(C):
                 x[c, n_i, start_of_artifact:start_of_artifact+length] += \
-                    np.random.multivariate_normal(mean=mean, cov=cov)
+                    np.random.multivariate_normal(mean=mean, cov=cov)*np.hamming(length)
 
     elif noise_type == 'artifact':
 
@@ -62,13 +62,13 @@ def noise_data(x, y, amplitude=1, ratio=5.):
             # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
             start_of_artifact = 0
             x[:, p_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), :]
+                artifacts[:, random.sample(list_indexes, 1), :]*np.hamming(length)
 
         for n_i in selected_n:
             # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
             start_of_artifact = 0
             x[:, n_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), :]
+                artifacts[:, random.sample(list_indexes, 1), :]*np.hamming(length)
 
     return x
 
