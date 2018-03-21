@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
+sys.path.append('.')
 sys.path.append('..')
+sys.path.append('../..')
 
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
