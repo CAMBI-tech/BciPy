@@ -53,7 +53,7 @@ def sigma_update(X, mean, sigma_inv, b, c_square):
     return sigma_hat
 
 
-def robust_mean_covariance(X, q=.6):
+def robust_mean_covariance(X, q=.5):
     # Calculates robust mean and covariance for Nxp ndarray x. N is number of samples and p is number of features.
 
     N, p = X.shape

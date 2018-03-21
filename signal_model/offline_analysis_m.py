@@ -6,6 +6,7 @@ from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import numpy as np
+import sklearn as sk
 import random
 import pickle
 from time import time
@@ -23,7 +24,7 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     '''
 
     C, N, d = x.shape
-    length = int(d/2)
+    length = d
 
     num_p = np.float(np.sum(y))*np.float(ratio)/100.
     num_n = (y.size - np.float(np.sum(y)))*np.float(ratio)/100.
@@ -34,17 +35,22 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     selected_p = random.sample(index_p, int(num_p))
     selected_n = random.sample(index_n, int(num_n))
 
+    mean = amplitude*np.ones(length)
+    cov = sk.datasets.make_spd_matrix(length, random_state=15)
+
     for p_i in selected_p:
-        start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+        # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+        start_of_artifact = 0
         for c in range(C):
-            x[c, p_i, start_of_artifact:start_of_artifact+length] += np.transpose(np.random.multivariate_normal(amplitude*np.ones(length),
-                                                                                                   30000*np.eye(length, length)))
+            x[c, p_i, start_of_artifact:start_of_artifact+length] += \
+                np.random.multivariate_normal(mean=mean, cov=cov)
 
     for n_i in selected_n:
-        start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+        # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+        start_of_artifact = 0
         for c in range(C):
-            x[c, n_i, start_of_artifact:start_of_artifact+length] += np.transpose(np.random.multivariate_normal(amplitude*np.ones(length),
-                                                                                                   30000*np.eye(length, length)))
+            x[c, n_i, start_of_artifact:start_of_artifact+length] += \
+                np.random.multivariate_normal(mean=mean, cov=cov)
     return x
 
 
@@ -78,7 +84,7 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
                                       channel_map=channel_map, offset=offset)
 
     if add_artifacts:
-        x = noise_data(x, y, amplitude=3000, ratio=add_artifacts)
+        x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
@@ -103,8 +109,9 @@ if __name__ == '__main__':
         percent_rate = 10
 
     print 'Noisy sample rate: %{}'.format(percent_rate)
-
+    np.random.seed(15)
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    # sample_calib_path = None
 
     offline_analysis_m(data_folder=sample_calib_path, add_artifacts=percent_rate)
 

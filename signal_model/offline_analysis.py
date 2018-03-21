@@ -4,6 +4,7 @@ from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
+import numpy as np
 import pickle
 from time import time
 from signal_model.offline_analysis_m import noise_data
@@ -57,7 +58,7 @@ def offline_analysis(data_folder=None, add_artifacts=0):
                                       channel_map=channel_map)
 
     if add_artifacts:
-        x = noise_data(x, y, 300, add_artifacts)
+        x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
 
     model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
     t1 = time() - t1
@@ -81,7 +82,8 @@ if __name__ == "__main__":
         percent_rate = 10
 
     print 'Noisy sample rate: %{}'.format(percent_rate)
-
+    np.random.seed(15)
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    # sample_calib_path = None
 
     offline_analysis(data_folder=sample_calib_path, add_artifacts=percent_rate)
