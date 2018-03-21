@@ -40,7 +40,7 @@ def noise_data(x, y, amplitude=1, ratio=5.):
     selected_n = random.sample(index_n, int(num_n))
 
     mean = amplitude*np.ones(length)
-    cov = sk.datasets.make_spd_matrix(length, random_state=15)
+    cov = 100*sk.datasets.make_spd_matrix(length, random_state=15)
 
     for p_i in selected_p:
         # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
@@ -88,11 +88,12 @@ def offline_analysis_m(data_folder=None, add_artifacts = 0):
                                       channel_map=channel_map, offset=offset)
 
     if add_artifacts:
-        x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
+        x = noise_data(x, y, amplitude=600, ratio=add_artifacts)
 
     model, auc_cv = train_m_estimator_pipeline(x, y, k_folds=10)
 
     t1 = time() - t1
+    print 'Completed in {} mins'.format(t1/60.)
 
     if not os.path.exists(data_folder+'/mpca_{}'.format(add_artifacts)):
         os.makedirs(data_folder+'/mpca_{}'.format(add_artifacts))

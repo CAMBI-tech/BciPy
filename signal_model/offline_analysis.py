@@ -65,7 +65,9 @@ def offline_analysis(data_folder=None, add_artifacts=0):
         x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
 
     model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
+
     t1 = time() - t1
+    print 'Completed in {} mins'.format(t1/60.)
 
     if not os.path.exists(data_folder+'/{}'.format(add_artifacts)):
         os.makedirs(data_folder+'/{}'.format(add_artifacts))
