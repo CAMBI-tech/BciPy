@@ -21,7 +21,7 @@ import os
 def noise_data(x, y, amplitude=1, ratio=5.):
 
     C, N, d = x.shape
-    length = d
+    length = int(d/2)
     noise_type = 'gaussian'
 
     num_p = np.float(np.sum(y)) * np.float(ratio) / 100.  # num of positive samples to corrupt
@@ -35,18 +35,19 @@ def noise_data(x, y, amplitude=1, ratio=5.):
 
     if noise_type == 'gaussian':
         mean = amplitude*np.ones(length)
-        cov = 100*sk.datasets.make_spd_matrix(length, random_state=15)
 
         for p_i in selected_p:
-            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-            start_of_artifact = 0
+            cov = 100 * sk.datasets.make_spd_matrix(length, random_state=15)
+            start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            # start_of_artifact = 0
             for c in range(C):
                 x[c, p_i, start_of_artifact:start_of_artifact+length] += \
                     np.random.multivariate_normal(mean=mean, cov=cov)*np.hamming(length)
 
         for n_i in selected_n:
-            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-            start_of_artifact = 0
+            cov = 100 * sk.datasets.make_spd_matrix(length, random_state=15)
+            start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            # start_of_artifact = 0
             for c in range(C):
                 x[c, n_i, start_of_artifact:start_of_artifact+length] += \
                     np.random.multivariate_normal(mean=mean, cov=cov)*np.hamming(length)
@@ -129,7 +130,7 @@ if __name__ == '__main__':
         percent_rate = 10
 
     print 'Noisy sample rate: %{}'.format(percent_rate)
-    np.random.seed(15)
+    np.random.seed(150)
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 

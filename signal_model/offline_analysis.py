@@ -88,7 +88,7 @@ if __name__ == "__main__":
         percent_rate = 10
 
     print 'Noisy sample rate: %{}'.format(percent_rate)
-    np.random.seed(15)
+    np.random.seed(150)
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 
