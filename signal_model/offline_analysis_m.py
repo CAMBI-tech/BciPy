@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.append('..')
+
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_m_estimator_pipeline
@@ -11,7 +14,6 @@ import random
 import pickle
 from time import time
 import os
-import sys
 
 
 def noise_data(x, y, amplitude=1, ratio=5.):

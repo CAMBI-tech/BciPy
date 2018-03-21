@@ -1,14 +1,16 @@
+import sys
+sys.path.append('..')
+
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
+from signal_model.offline_analysis_m import noise_data
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import numpy as np
 import pickle
 from time import time
-from signal_model.offline_analysis_m import noise_data
-import sys
 import os
 
 
