@@ -19,42 +19,57 @@ import os
 
 
 def noise_data(x, y, amplitude=1, ratio=5.):
-    '''
-    with open('objs.pkl', 'w') as f:  # Python 3: open(..., 'wb')
-    pickle.dump([obj0, obj1, obj2], f)
-
-    with open('objs.pkl') as f:  # Python 3: open(..., 'rb')
-        obj0, obj1, obj2 = pickle.load(f)
-    '''
 
     C, N, d = x.shape
     length = d
+    noise_type = 'gaussian'
 
-    num_p = np.float(np.sum(y))*np.float(ratio)/100.
-    num_n = (y.size - np.float(np.sum(y)))*np.float(ratio)/100.
+    num_p = np.float(np.sum(y)) * np.float(ratio) / 100.
+    num_n = (y.size - np.float(np.sum(y))) * np.float(ratio) / 100.
 
     index_p = np.where(y)[0]
-    index_n = np.where(np.abs(y-1))[0]
+    index_n = np.where(np.abs(y - 1))[0]
 
     selected_p = random.sample(index_p, int(num_p))
     selected_n = random.sample(index_n, int(num_n))
 
-    mean = amplitude*np.ones(length)
-    cov = 100*sk.datasets.make_spd_matrix(length, random_state=15)
+    if noise_type == 'gaussian':
+        mean = amplitude*np.ones(length)
+        cov = 100*sk.datasets.make_spd_matrix(length, random_state=15)
 
-    for p_i in selected_p:
-        # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-        start_of_artifact = 0
-        for c in range(C):
-            x[c, p_i, start_of_artifact:start_of_artifact+length] += \
-                np.random.multivariate_normal(mean=mean, cov=cov)
+        for p_i in selected_p:
+            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            start_of_artifact = 0
+            for c in range(C):
+                x[c, p_i, start_of_artifact:start_of_artifact+length] += \
+                    np.random.multivariate_normal(mean=mean, cov=cov)
 
-    for n_i in selected_n:
-        # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-        start_of_artifact = 0
-        for c in range(C):
-            x[c, n_i, start_of_artifact:start_of_artifact+length] += \
-                np.random.multivariate_normal(mean=mean, cov=cov)
+        for n_i in selected_n:
+            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            start_of_artifact = 0
+            for c in range(C):
+                x[c, n_i, start_of_artifact:start_of_artifact+length] += \
+                    np.random.multivariate_normal(mean=mean, cov=cov)
+
+    elif noise_type == 'artifact':
+
+        with open('../../data/artifacts.pkl') as f:
+            artifacts = pickle.load(f) # CxN'xd
+        N_prime = artifacts.shape[1]
+        list_indexes = range(N_prime)
+
+        for p_i in selected_p:
+            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            start_of_artifact = 0
+            x[:, p_i, start_of_artifact:start_of_artifact+length] += \
+                artifacts[:, random.sample(list_indexes, 1), :]
+
+        for n_i in selected_n:
+            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            start_of_artifact = 0
+            x[:, n_i, start_of_artifact:start_of_artifact+length] += \
+                artifacts[:, random.sample(list_indexes, 1), :]
+
     return x
 
 

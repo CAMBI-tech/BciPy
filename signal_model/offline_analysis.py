@@ -62,7 +62,7 @@ def offline_analysis(data_folder=None, add_artifacts=0):
                                       channel_map=channel_map)
 
     if add_artifacts:
-        x = noise_data(x, y, amplitude=300, ratio=add_artifacts)
+        x = noise_data(x, y, amplitude=600, ratio=add_artifacts)
 
     model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
 
