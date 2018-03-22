@@ -54,7 +54,7 @@ def noise_data(x, y, amplitude=1, ratio=5.):
 
     elif noise_type == 'artifact':
 
-        with open('../../data/jaw_muscle.pkl') as f:
+        with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
             artifacts = pickle.load(f) # CxN'xd
         N_prime = artifacts.shape[1]
         list_indexes = range(N_prime)
@@ -63,13 +63,13 @@ def noise_data(x, y, amplitude=1, ratio=5.):
             start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
             # start_of_artifact = 0
             x[:, p_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), 0:length]*np.hamming(length)
+                np.squeeze(artifacts[:, random.sample(list_indexes, 1), 0:length]*np.hamming(length))
 
         for n_i in selected_n:
             start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
             # start_of_artifact = 0
             x[:, n_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), 0:length]*np.hamming(length)
+                np.squeeze(artifacts[:, random.sample(list_indexes, 1), 0:length] * np.hamming(length))
 
     return x
 
