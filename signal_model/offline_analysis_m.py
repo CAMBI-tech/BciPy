@@ -22,7 +22,7 @@ def noise_data(x, y, amplitude=1, ratio=5.):
 
     C, N, d = x.shape
     length = int(d/2)
-    noise_type = 'gaussian'
+    noise_type = 'artifact'
 
     num_p = np.float(np.sum(y)) * np.float(ratio) / 100.  # num of positive samples to corrupt
     num_n = (y.size - np.float(np.sum(y))) * np.float(ratio) / 100.
@@ -54,22 +54,22 @@ def noise_data(x, y, amplitude=1, ratio=5.):
 
     elif noise_type == 'artifact':
 
-        with open('../../data/artifacts.pkl') as f:
+        with open('../../data/jaw_muscle.pkl') as f:
             artifacts = pickle.load(f) # CxN'xd
         N_prime = artifacts.shape[1]
         list_indexes = range(N_prime)
 
         for p_i in selected_p:
-            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-            start_of_artifact = 0
+            start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            # start_of_artifact = 0
             x[:, p_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), :]*np.hamming(length)
+                artifacts[:, random.sample(list_indexes, 1), 0:length]*np.hamming(length)
 
         for n_i in selected_n:
-            # start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
-            start_of_artifact = 0
+            start_of_artifact = np.random.randint(low=0, high=d-length, size=1)[0]
+            # start_of_artifact = 0
             x[:, n_i, start_of_artifact:start_of_artifact+length] += \
-                artifacts[:, random.sample(list_indexes, 1), :]*np.hamming(length)
+                artifacts[:, random.sample(list_indexes, 1), 0:length]*np.hamming(length)
 
     return x
 
@@ -131,8 +131,8 @@ if __name__ == '__main__':
 
     print 'Noisy sample rate: %{}'.format(percent_rate)
     np.random.seed(150)
-    sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    # sample_calib_path = None
+    # sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = None
 
     offline_analysis_m(data_folder=sample_calib_path, add_artifacts=percent_rate)
 
