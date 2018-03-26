@@ -182,7 +182,7 @@ def cross_validate_parameters(x, y, model, opt_el=1, k_folds=10, split='uniform'
     return arg_opt
 
 
-def cross_validate_model(x, y, model, k_folds=10):
+def cross_validate_model(x, x_artifact, y, model, k_folds=10):
     # Given a model and data, create folds and apply k fold cross validation.
     # The aim here is to evaluate our model and estimate its performance as good as we can.
 
@@ -191,7 +191,7 @@ def cross_validate_model(x, y, model, k_folds=10):
 
     auc_list = []
     for train_index, test_index in skf.split(X=x[0],y=y):
-        x_train, y_train = x[:, train_index, :], y[train_index]
+        x_train, y_train = x_artifact[:, train_index, :], y[train_index]
         x_test, y_test = x[:, test_index, :], y[test_index]
 
         model.fit(x_train, y_train)

@@ -9,7 +9,7 @@ from sklearn import metrics
 from scipy.stats import iqr
 
 
-def train_pca_rda_kde_model(x, y, k_folds=10):
+def train_pca_rda_kde_model(x, x_artifact, y, k_folds=10):
     """ Trains the Cw-PCA RDA KDE model given the input data and labels with
         cross validation and returns the model
         Args:
@@ -32,17 +32,17 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.add(rda)
 
     # Get the AUC before the regularization
-    sc = model.fit_transform(x, y)
+    sc = model.fit_transform(x_artifact, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc_init = metrics.auc(fpr, tpr)
 
     # Cross validate
-    lam, gam = cross_validate_parameters(x, y, model=model, k_folds=k_folds)
+    lam, gam = cross_validate_parameters(x_artifact, y, model=model, k_folds=k_folds)
 
     print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = cross_validate_model(x=x, y=y, model=model)
+    auc_cv = cross_validate_model(x=x, x_artifact=x_artifact, y=y, model=model)
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -56,7 +56,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     return model, auc_cv
 
 
-def train_m_estimator_pipeline(x, y, k_folds=10):
+def train_m_estimator_pipeline(x, x_artifact, y, k_folds=10):
     """ Trains Cw-m-PCA m-RDA KDE model given the input data and labels, returns the model
         Args:
             x(ndarray[float]): C x N x p data array
@@ -77,14 +77,14 @@ def train_m_estimator_pipeline(x, y, k_folds=10):
     model.add(rda)
 
     # Find the cross validation AUC for the model.
-    lam, gam = cross_validate_parameters(x=x, y=y, model=model, k_folds=k_folds)
+    lam, gam = cross_validate_parameters(x=x_artifact, y=y, model=model, k_folds=k_folds)
     print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = cross_validate_model(x=x, y=y, model=model)
+    auc_cv = cross_validate_model(x=x, x_artifact=x_artifact, y=y, model=model)
 
     # Now train on complete data for the final model
-    sc = model.fit_transform(x, y)
+    sc = model.fit_transform(x_artifact, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc_all = metrics.auc(fpr, tpr)
 

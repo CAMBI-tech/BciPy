@@ -1,6 +1,6 @@
 #!/bin/bash
 #set a job name  
-#SBATCH --job-name=rsvp_reg
+#SBATCH --job-name=jawreg50
 #################  
 #a file for job output, you can check job progress
 #SBATCH --output=output.out

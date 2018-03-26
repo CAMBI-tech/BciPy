@@ -1,12 +1,12 @@
 #!/bin/bash
-work=/gss_gpfs_scratch/kadioglu.b/gaussian90
+work=/gss_gpfs_scratch/kadioglu.b/jaw_muscle50
 cd ${work}
 mkdir reg
 mkdir rob
 
 
 # There are 9 different rate values
-for rate in "1" "3" "5" "10" "15" "20" "25" "30" "40"
+for rate in ".0001" ".001" ".002" ".0035" ".005" ".0065" ".008" ".01" ".02" ".05"
 do
     cd ${work}
     cd reg
@@ -16,11 +16,11 @@ do
 done
 
 
-for rate in "1" "3" "5" "10" "15" "20" "25" "30" "40"
-do
-    cd ${work}
-    cd rob
-    mkdir $rate
-    cd $rate
-    sbatch ../../rob.bash $rate
-done
+#for rate in ".01" ".03" ".05" ".1"
+#do
+#    cd ${work}
+#    cd rob
+#    mkdir $rate
+#    cd $rate
+#    sbatch ../../rob.bash $rate
+#done

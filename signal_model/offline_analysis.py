@@ -8,12 +8,12 @@ from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from signal_model.offline_analysis_m import noise_data
-from helpers.data_viz import generate_offline_analysis_screen
+# from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import numpy as np
-import pickle
+# import pickle
 from time import time
-import os
+# import os
 
 
 def offline_analysis(data_folder=None, add_artifacts=0):
@@ -44,7 +44,6 @@ def offline_analysis(data_folder=None, add_artifacts=0):
         data_folder + '/raw_data.csv')
 
     t1 = time()
-    # TODO: Read from parameters
     ds_rate = 2
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
 
@@ -56,38 +55,41 @@ def offline_analysis(data_folder=None, add_artifacts=0):
     # read_data_csv already removes the timestamp column.
     #                     CM            X3 X2           X1            TRG
     channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
-
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat,
                                       mode=mode, fs=fs, k=ds_rate, offset=offset,
                                       channel_map=channel_map)
 
     if add_artifacts:
-        x = noise_data(x, y, amplitude=600, ratio=add_artifacts)
+        dat_artifact = noise_data(dat=dat, amplitude=20, length=30, p=add_artifacts, channel_map=channel_map)
+        x_artifact, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat_artifact,
+                                          mode=mode, fs=fs, k=ds_rate, offset=offset,
+                                          channel_map=channel_map)
 
-    model, auc_cv = train_pca_rda_kde_model(x, y, k_folds=10)
+    model, auc_cv = train_pca_rda_kde_model(x, x_artifact, y, k_folds=10)
 
     t1 = time() - t1
     print 'Completed in {} mins'.format(t1/60.)
 
-    if not os.path.exists(data_folder+'/{}'.format(add_artifacts)):
-        os.makedirs(data_folder+'/{}'.format(add_artifacts))
+    # if not os.path.exists(data_folder+'/{}'.format(add_artifacts)):
+    #     os.makedirs(data_folder+'/{}'.format(add_artifacts))
 
-    print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder+'/{}'.format(add_artifacts))
+    # print('Saving offline analysis plots!')
+    # generate_offline_analysis_screen(x, y, model, data_folder+'/{}'.format(add_artifacts))
 
-    print('Saving the model!')
-    with open(data_folder + '/{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
-        pickle.dump(model, output)
-    return model
+    # print('Saving the model!')
+    # with open(data_folder + '/{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
+    #     pickle.dump(model, output)
+    # return model
 
 
 if __name__ == "__main__":
     try:
-        percent_rate = sys.argv[1]
+        percent_rate = np.float(sys.argv[1])
     except Exception as e:
-        percent_rate = 10
+        percent_rate = .01
+        print 'sys.argv failed'
 
-    print 'Noisy sample rate: %{}'.format(percent_rate)
+    print 'Noise activation rate: {}'.format(percent_rate)
     np.random.seed(150)
     sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None

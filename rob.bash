@@ -1,6 +1,6 @@
 #!/bin/bash
 #set a job name  
-#SBATCH --job-name=rsvp_rob
+#SBATCH --job-name=jawrob50
 #################
 #a file for job output, you can check job progress
 #SBATCH --output=output.out
