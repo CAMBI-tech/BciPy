@@ -87,10 +87,12 @@ class MPCA:
             output_type(string): 'MDA' if next element in pipeline is MDA, 'RDA' else
     """
 
-    def __init__(self, var_tol=1, output_type='MDA'):
+    def __init__(self, var_tol=1, output_type='MDA', n_folds=10):
         self.var_tol = var_tol
-        self.transform_matrix_list = []
+        self.transform_matrix_list = [[]]*n_folds
         self.output_type = output_type
+        self.n_folds = n_folds
+        self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
 
 
     def fit(self, x, y=None, var_tol=None):

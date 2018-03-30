@@ -8,32 +8,19 @@ from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from signal_model.offline_analysis_m import noise_data
-# from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
 import numpy as np
-# import pickle
 from time import time
-# import os
 
 
-def offline_analysis(data_folder=None, add_artifacts=0):
-    """ Gets calibration data and trains the model in an offline fashion.
-        pickle dumps the model into a .pkl folder
-        Args:
-            data_folder(str): folder of the data
-                save all information and load all from this folder
+def offline_analysis(data_folder=None, add_artifacts=0., leng=1, amp=1):
+    """
 
-        Duty cycle
-        - reads data and information from a .csv calibration file
-        - reads trigger information from a .txt trigger file
-        - filters data
-        - reshapes and labels the data for the training procedure
-        - fits the model to the data
-            - uses cross validation to select parameters
-            - based on the parameters, trains system using all the data
-        - pickle dumps model into .pkl file
-        - generates and saves offline analysis screen
-        """
+    :param data_folder:
+    :param add_artifacts:
+    :param leng:
+    :return:
+    """
 
     if not data_folder:
         data_folder = load_experimental_data()
@@ -60,7 +47,7 @@ def offline_analysis(data_folder=None, add_artifacts=0):
                                       channel_map=channel_map)
 
     if add_artifacts:
-        dat_artifact = noise_data(dat=dat, amplitude=20, length=30, p=add_artifacts, channel_map=channel_map)
+        dat_artifact = noise_data(dat=dat, amplitude=amp, length=leng, p=add_artifacts, channel_map=channel_map)
         x_artifact, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat_artifact,
                                           mode=mode, fs=fs, k=ds_rate, offset=offset,
                                           channel_map=channel_map)
@@ -70,28 +57,26 @@ def offline_analysis(data_folder=None, add_artifacts=0):
     t1 = time() - t1
     print 'Completed in {} mins'.format(t1/60.)
 
-    # if not os.path.exists(data_folder+'/{}'.format(add_artifacts)):
-    #     os.makedirs(data_folder+'/{}'.format(add_artifacts))
-
-    # print('Saving offline analysis plots!')
-    # generate_offline_analysis_screen(x, y, model, data_folder+'/{}'.format(add_artifacts))
-
-    # print('Saving the model!')
-    # with open(data_folder + '/{}/model_duration_{}_auccv_{}.pkl'.format(add_artifacts, t1, auc_cv), 'wb') as output:
-    #     pickle.dump(model, output)
-    # return model
-
 
 if __name__ == "__main__":
     try:
-        percent_rate = np.float(sys.argv[1])
+        rate = np.float(sys.argv[1])
+        leng = np.float(sys.argv[2])
+        amp = np.float(sys.argv[3])
+        seed = np.float(sys.argv[4])
     except Exception as e:
-        percent_rate = .01
-        print 'sys.argv failed'
+        rate = .01
+        leng = 30
+        amp = 1
+        seed = 7
 
-    print 'Noise activation rate: {}'.format(percent_rate)
-    np.random.seed(150)
-    sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    print 'Noise activation rate: {}'.format(rate)
+    print 'Length: {}'.format(leng)
+    print 'Amplitude: {}'.format(amp)
+    print 'Random seed: {}\n'.format(seed)
+    np.random.seed(seed)
+    # sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 
-    offline_analysis(data_folder=sample_calib_path, add_artifacts=percent_rate)
+    offline_analysis(data_folder=sample_calib_path, add_artifacts=rate, leng=leng, amp=amp)
