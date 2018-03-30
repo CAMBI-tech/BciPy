@@ -63,8 +63,8 @@ def noise_data(dat, amplitude, length, p, channel_map):
 
     elif noise_type == 'artifact':
 
-        # with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
-        with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
+        with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
+        # with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
             artifacts = pickle.load(f)  # CxN'xd
         N_prime = artifacts.shape[1]
         list_indexes = range(N_prime)
@@ -187,13 +187,13 @@ if __name__ == '__main__':
     try:
         percent_rate = np.float(sys.argv[1])
     except Exception as e:
-        percent_rate = np.float('.001')
+        percent_rate = np.float('.000000001')
         print 'sys.argv failed'
 
     print 'Noise activation rate: {}'.format(percent_rate)
     np.random.seed(150)
-    sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    # sample_calib_path = None
+    # sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = None
 
     offline_analysis_m(data_folder=sample_calib_path, add_artifacts=percent_rate)
 
