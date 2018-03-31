@@ -69,7 +69,7 @@ def train_m_estimator_pipeline(x, x_artifact, y, k_folds=10):
             model(pipeline): trained model
             """
 
-    pca = MPCA(var_tol=.1**5, output_type='RDA')
+    pca = MPCA(var_tol=.1**5, output_type='RDA', n_folds=k_folds)
     rda = RegularizedDiscriminantAnalysis()
 
     model = Pipeline()

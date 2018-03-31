@@ -89,7 +89,9 @@ class MPCA:
 
     def __init__(self, var_tol=1, output_type='MDA', n_folds=10):
         self.var_tol = var_tol
-        self.transform_matrix_list = [[]]*n_folds
+        self.transform_matrix_list = []
+        for z in range(n_folds):
+            self.transform_matrix_list.append([])
         self.output_type = output_type
         self.n_folds = n_folds
         self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
@@ -107,20 +109,23 @@ class MPCA:
 
         C, N, p = x.shape
 
-        for channel in range(C):
-            X = x[channel]
+        if not self.transform_matrix_list[self.current_fold]:  # if does not exist
 
-            M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
-            vals, vecs = eigsorted(M_est_sigma)
+            for channel in range(C):
+                X = x[channel]
 
-            lim = vals[0]*self.var_tol
+                M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
+                vals, vecs = eigsorted(M_est_sigma)
 
-            transform_matrix = []
-            for index in range(len(vals)):
-                if vals[index]>lim:
-                    transform_matrix.append(vecs[:, index])
+                lim = vals[0]*self.var_tol
 
-            self.transform_matrix_list.append(np.transpose(np.array(transform_matrix)))
+                transform_matrix = []
+                for index in range(len(vals)):
+                    if vals[index]>lim:
+                        transform_matrix.append(vecs[:, index])
+
+                self.transform_matrix_list[self.current_fold].append(np.transpose(np.array(transform_matrix)))
+
 
     def transform(self, x, y=None):
 
@@ -128,7 +133,7 @@ class MPCA:
 
         new_x = []
         for channel in range(C):
-            new_x.append(np.dot(x[channel], self.transform_matrix_list[channel]))
+            new_x.append(np.dot(x[channel], self.transform_matrix_list[self.current_fold][channel]))
 
         if self.output_type == 'MDA':
             return new_x

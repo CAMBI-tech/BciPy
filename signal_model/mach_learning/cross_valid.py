@@ -54,9 +54,10 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             y_valid = fold_y[list_valid]
 
             try:
-                model[0].current_fold = idx_fold
+                model.pipeline[0].current_fold = idx_fold
             except Exception as e:
-                raise('There was an error when setting fold incex for MPCA in file cross_valid.py for fold {}').format(idx_fold)
+                pass
+
             model.fit(x_train, y_train)
             sc = model.transform(x_valid)
             fpr, tpr, _ = metrics.roc_curve(y_valid, sc, pos_label=1)
