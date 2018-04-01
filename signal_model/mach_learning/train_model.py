@@ -91,17 +91,16 @@ def train_m_estimator_pipeline(x, x_artifact, y, k_folds=10):
     model.pipeline[1].gam = gam
     auc_cv = cross_validate_model(x=x, x_artifact=x_artifact, y=y, model=model)
 
-    if 0:
-        # Now train on complete data for the final model
-        sc = model.fit_transform(x_artifact, y)
-        fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
-        auc_all = metrics.auc(fpr, tpr)
-
-        # Insert the density estimates to the model and train
-        bandwidth = 1.06 * min(
-            np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
-        model.add(KernelDensityEstimate(bandwidth=bandwidth))
-        model.fit(x, y)
+    # # Now train on complete data for the final model
+    # sc = model.fit_transform(x_artifact, y)
+    # fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
+    # auc_all = metrics.auc(fpr, tpr)
+    #
+    # # Insert the density estimates to the model and train
+    # bandwidth = 1.06 * min(
+    #     np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
+    # model.add(KernelDensityEstimate(bandwidth=bandwidth))
+    # model.fit(x, y)
 
     # Report AUC
     print('AUC-complete_data: {}, AUC-cv: {}'.format(1, auc_cv))
