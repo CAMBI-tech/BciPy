@@ -195,10 +195,12 @@ def cross_validate_model(x, x_artifact, y, model, k_folds=10):
     skf = StratifiedKFold(n_splits=k_folds, random_state=0)
 
     auc_list = []
-    for train_index, test_index in skf.split(X=x[0],y=y):
+    fold = 0
+    for train_index, test_index in skf.split(X=x[0], y=y):
         x_train, y_train = x_artifact[:, train_index, :], y[train_index]
         x_test, y_test = x[:, test_index, :], y[test_index]
 
+        model.pipeline[0].current_fold = fold
         model.fit(x_train, y_train)
         sc = model.transform(x_test)
         fpr, tpr, _ = metrics.roc_curve(y_test, sc, pos_label=1)
@@ -206,5 +208,6 @@ def cross_validate_model(x, x_artifact, y, model, k_folds=10):
 
         print 'Current AUC\'s are:'
         print auc_list
+        fold += 1
 
     return np.mean(auc_list)
