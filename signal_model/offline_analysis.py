@@ -74,9 +74,11 @@ if __name__ == "__main__":
     print 'Length: {}'.format(leng)
     print 'Amplitude: {}'.format(amp)
     print 'Random seed: {}\n'.format(seed)
+
     np.random.seed(seed)
-    # sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = \
+        '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    # sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 
     offline_analysis(data_folder=sample_calib_path, add_artifacts=rate, leng=leng, amp=amp)

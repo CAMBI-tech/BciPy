@@ -121,25 +121,26 @@ def offline_analysis_m(data_folder=None, add_artifacts=0., leng=1, amp=1):
 
 if __name__ == '__main__':
     try:
-        percent_rate = np.float(sys.argv[1])
+        act_rate = np.float(sys.argv[1])
         leng = np.float(sys.argv[2])
         amp = np.float(sys.argv[3])
         seed = np.float(sys.argv[4])
     except Exception as e:
-        percent_rate = .01
+        act_rate = .01
         leng = 30
         amp = 1
         seed = 7
 
-    print 'Noise activation rate: {}'.format(percent_rate)
+    print 'Noise activation rate: {}'.format(act_rate)
     print 'Length: {}'.format(leng)
     print 'Amplitude: {}'.format(amp)
     print 'Random seed: {}\n'.format(seed)
 
     np.random.seed(seed)
-    # sample_calib_path = '/gss_gpfs_scratch/kadioglu.b/data/b/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    # sample_calib_path = \
+    #     '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 
-    offline_analysis_m(data_folder=sample_calib_path, add_artifacts=percent_rate, leng=leng, amp=amp)
+    offline_analysis_m(data_folder=sample_calib_path, add_artifacts=act_rate, leng=leng, amp=amp)
 

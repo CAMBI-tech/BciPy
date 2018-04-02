@@ -1,6 +1,6 @@
 #!/bin/bash
 #set a job name  
-#SBATCH --job-name=jawreg50
+#SBATCH --job-name=jgl5a1
 #################  
 #a file for job output, you can check job progress
 #SBATCH --output=output.out
@@ -21,4 +21,4 @@
 #################
 
 source activate bci_env
-python ../../signal_model/offline_analysis.py $1
+python ../../signal_model/offline_analysis.py $1 $2 $3 $4
