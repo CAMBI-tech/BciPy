@@ -3,6 +3,7 @@ import sys
 sys.path.append('.')
 sys.path.append('..')
 sys.path.append('../..')
+sys.path.append('../../..')
 
 from helpers.load import load_experimental_data, read_data_csv
 from signal_processing.sig_pro import sig_pro
@@ -57,8 +58,8 @@ def noise_data(dat, amplitude, length, p, channel_map):
 
     elif noise_type == 'artifact':
 
-        with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
-        # with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
+        # with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
+        with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
             artifacts = pickle.load(f)  # CxN'xd
         N_prime = artifacts.shape[1]
         list_indexes = range(N_prime)
@@ -122,9 +123,9 @@ def offline_analysis_m(data_folder=None, add_artifacts=0., leng=1, amp=1):
 if __name__ == '__main__':
     try:
         act_rate = np.float(sys.argv[1])
-        leng = np.float(sys.argv[2])
+        leng = int(np.float(sys.argv[2]))
         amp = np.float(sys.argv[3])
-        seed = np.float(sys.argv[4])
+        seed = int(np.float(sys.argv[4]))
     except Exception as e:
         act_rate = .01
         leng = 30
@@ -137,9 +138,9 @@ if __name__ == '__main__':
     print 'Random seed: {}\n'.format(seed)
 
     np.random.seed(seed)
-    # sample_calib_path = \
-    #     '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    sample_calib_path = \
+        '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
+    # sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = None
 
     offline_analysis_m(data_folder=sample_calib_path, add_artifacts=act_rate, leng=leng, amp=amp)

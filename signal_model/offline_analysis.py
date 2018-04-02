@@ -2,6 +2,7 @@ import sys
 sys.path.append('.')
 sys.path.append('..')
 sys.path.append('../..')
+sys.path.append('../../..')
 
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
@@ -61,9 +62,9 @@ def offline_analysis(data_folder=None, add_artifacts=0., leng=1, amp=1):
 if __name__ == "__main__":
     try:
         rate = np.float(sys.argv[1])
-        leng = np.float(sys.argv[2])
+        leng = int(np.float(sys.argv[2]))
         amp = np.float(sys.argv[3])
-        seed = np.float(sys.argv[4])
+        seed = int(np.float(sys.argv[4]))
     except Exception as e:
         rate = .01
         leng = 30

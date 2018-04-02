@@ -44,11 +44,11 @@ def train_pca_rda_kde_model(x, x_artifact, y, k_folds=10):
     model.pipeline[1].gam = gam
     auc_cv = cross_validate_model(x=x, x_artifact=x_artifact, y=y, model=model)
 
-    # Insert the density estimates to the model and train
-    bandwidth = 1.06 * min(
-        np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
-    model.add(KernelDensityEstimate(bandwidth=bandwidth))
-    model.fit(x, y)
+    # # Insert the density estimates to the model and train
+    # bandwidth = 1.06 * min(
+    #     np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
+    # model.add(KernelDensityEstimate(bandwidth=bandwidth))
+    # model.fit(x, y)
 
     # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))

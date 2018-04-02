@@ -21,4 +21,4 @@
 #################
 
 source activate bci_env
-python ../../signal_model/offline_analysis.py $1 $2 $3 $4
+python ../../../signal_model/offline_analysis.py $1 $2 $3 $4
