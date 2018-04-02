@@ -164,7 +164,8 @@ class Client(object):
         for processing."""
 
         device.connect()
-        device.acquisition_init(self._clock)
+        device.acquisition_init()
+        self._clock.reset()
         sample = 1
 
         # If streaming set, start reading data

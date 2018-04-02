@@ -24,11 +24,14 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=300, channels=[
-            'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-            'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-            'X3', 'X2', 'F7', 'F8', 'X1',
-            'A2', 'T6', 'T4', 'TRG']):
+    default_fs = 300
+    default_channels = [
+        'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
+        'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
+        'X3', 'X2', 'F7', 'F8', 'X1',
+        'A2', 'T6', 'T4', 'TRG']
+
+    def __init__(self, connection_params, fs=default_fs, channels=default_channels):
         """Init DsiDevice."""
 
         super(DsiDevice, self).__init__(connection_params, fs, channels)
@@ -68,7 +71,7 @@ class DsiDevice(Device):
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)
 
-    def acquisition_init(self, clock):
+    def acquisition_init(self):
         """Initialization step.
 
         Reads the channel and data rate information
@@ -111,7 +114,6 @@ class DsiDevice(Device):
 
         # Read once more for data start
         response = self._read_packet()
-        clock.reset()
 
     def read_data(self):
         """Read Data.

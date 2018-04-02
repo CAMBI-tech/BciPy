@@ -70,14 +70,14 @@ def _acquisition_init():
     initialization data from the server."""
 
     device = DsiDevice(connection_params=connection_params, channels=[])
-    assert device.fs == 300
+    assert device.fs == DsiDevice.default_fs
     assert len(device.channels) == 0
 
     device.connect()
     device.acquisition_init()
 
-    assert device.fs == 300
-    assert len(device.channels) == 22
+    assert device.fs == DsiDevice.default_fs
+    assert len(device.channels) == len(DsiDevice.default_channels)
 
 
 def _connect():
