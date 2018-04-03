@@ -24,14 +24,7 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    default_fs = 300
-    default_channels = [
-        'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-        'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-        'X3', 'X2', 'F7', 'F8', 'X1',
-        'A2', 'T6', 'T4', 'TRG']
-
-    def __init__(self, connection_params, fs=default_fs, channels=default_channels):
+    def __init__(self, connection_params, fs=dsi.default_fs, channels=dsi.default_channels):
         """Init DsiDevice."""
 
         super(DsiDevice, self).__init__(connection_params, fs, channels)

@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import pytest
 from datastream import generator, server
+from protocols.dsi.dsi_device import dsi
 from protocols.dsi.dsi_device import DsiDevice
 from protocols.dsi.dsi_protocol import DsiProtocol
 
@@ -70,14 +71,14 @@ def _acquisition_init():
     initialization data from the server."""
 
     device = DsiDevice(connection_params=connection_params, channels=[])
-    assert device.fs == DsiDevice.default_fs
+    assert device.fs == dsi.default_fs
     assert len(device.channels) == 0
 
     device.connect()
     device.acquisition_init()
 
-    assert device.fs == DsiDevice.default_fs
-    assert len(device.channels) == len(DsiDevice.default_channels)
+    assert device.fs == dsi.default_fs
+    assert len(device.channels) == len(dsi.default_channels)
 
 
 def _connect():
