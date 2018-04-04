@@ -4,7 +4,7 @@ import time
 from random import random as rand
 
 import pytest
-from acquisition.client import _StoppableProcess
+from acquisition.client import _StoppableThread
 from protocols.lsl.lsl_device import LslDevice
 from pylsl import StreamInfo, StreamOutlet
 
@@ -15,7 +15,7 @@ HZ = 100
 connection_params = {}
 
 
-class Server(_StoppableProcess):
+class Server(_StoppableThread):
     '''docstring for Server'''
 
     def __init__(self, include_meta=False):
