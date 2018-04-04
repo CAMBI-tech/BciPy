@@ -8,6 +8,7 @@ import numpy as np
 from buffer import Buffer
 from acquisition.client import _StoppableProcess
 from record import Record
+from multiprocessing import Queue
 
 
 def _mockdata(n, channel_count):
@@ -23,7 +24,7 @@ class _Timer(object):
 
     def __init__(self):
         super(_Timer, self).__init__()
-        self.times = []
+        self.timings = []
         self._start = None
 
     def __enter__(self):
@@ -32,7 +33,7 @@ class _Timer(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         stop = timeit.default_timer()
-        self.times.append(stop - self._start)
+        self.timings.append(stop - self._start)
         self._start = None
 
 
@@ -56,7 +57,7 @@ def test_buffer():
 
     # Performance assertion; TODO: is this a reasonable requirement? Does it
     # make sense to test max insert time?
-    assert sum(append_timer.times) / len(append_timer.times) < 1 / 600
+    assert sum(append_timer.timings) / len(append_timer.timings) < 1 / 600
 
     assert b.start_time == 0.0
     starttime = 0.0
@@ -129,57 +130,3 @@ def test_query_before_flush():
     rows = b.query(start=b.start_time)
     assert len(rows) == n
     assert len(b.all()) == n
-
-
-def test_concurrent_access():
-    """Test that queries to buffer still allow efficient writes."""
-
-    channel_count = 25
-    channels = ["ch" + str(c) for c in range(channel_count)]
-
-    insert_timer = _Timer()
-
-    buf = Buffer(channels=channels, chunksize=1000)
-    channel_count = 25
-    channels = ["ch" + str(c) for c in range(channel_count)]
-
-    class Writer(_StoppableProcess):
-        def __init__(self, buf):
-            super(Writer, self).__init__()
-            self.buffer = buf
-
-        def run(self):
-            i = 0
-            while self.running():
-                data = [np.random.uniform(-1000, 1000)
-                        for cc in range(channel_count)]
-                with insert_timer:
-                    self.buffer.append(Record(data, i))
-                time.sleep(0.002)
-                i += 1
-
-    class Reader(_StoppableProcess):
-        def __init__(self, buf):
-            super(Reader, self).__init__()
-            self.buffer = buf
-            self.records = []
-
-        def run(self):
-            while self.running():
-                self.records = self.buffer.latest()
-                time.sleep(0.1)
-
-    write_thread = Writer(buf)
-    read_thread = Reader(buf)
-
-    write_thread.start()
-    read_thread.start()
-
-    time.sleep(1)
-
-    write_thread.stop()
-    read_thread.stop()
-
-    assert len(insert_timer.times) > 100
-    assert len(read_thread.records) > 0 and len(read_thread.records) <= 1000
-    assert sum(insert_timer.times) / len(insert_timer.times) < 1 / 600
