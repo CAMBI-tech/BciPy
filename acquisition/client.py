@@ -17,7 +17,6 @@ from record import Record
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 
-
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
 
@@ -112,9 +111,8 @@ class Client(object):
 
             self._is_streaming = True
 
-            self._acq_process = _StoppableProcess(
-                target=self._acquisition_loop,
-                args=(self._device, ))
+            self._acq_process = AcquisitionProcess(self._device, self._clock,
+                                                   self._process_queue)
             self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
@@ -168,48 +166,11 @@ class Client(object):
                 self._buf.append(record)
                 p.process(record.data, record.timestamp)
 
-    def _acquisition_loop(self, device):
-        """Continuously reads data from the source and sends it to the buffer
-        for processing.
-
-        TODO: Check references to self._ ; these are probably suspect now that
-        this is in a Process, rather than a Thread. Refactor to take these
-        items as parameters, and use another Queue for commands.
-        """
-        # TODO: Update device information (fs, channels) in process thread.
-        device.connect()
-        device.acquisition_init()
-
-        # TODO: This is a copy of the clock; do we need to coordinate changes?
-        self._clock.reset()
-        sample = 1
-
-        # If streaming set, start reading data
-        if self._is_streaming:
-            data = device.read_data()
-
-            # begin continuous acquisition process as long as data received
-            while self._acq_process.running() and data:
-
-                # Use get time to timestamp and continue saving records.
-                self._process_queue.put(
-                    Record(data, sample))
-
-                try:
-                    # Read data again
-                    data = device.read_data()
-                    sample += 1
-                except:
-                    data = None
-                    break
-
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
         logging.debug("Stopping Acquisition Process")
 
         self._is_streaming = False
-        # TODO: Refactor to acquisition_loop; this is not the correct object.
-        self._device.disconnect()
 
         self._acq_process.stop()
         self._acq_process.join()
@@ -260,7 +221,7 @@ class Client(object):
         if self._buf:
             self._buf.cleanup()
 
-
+# TODO: move into another module
 class _StoppableProcess(multiprocessing.Process):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
@@ -281,7 +242,7 @@ class _StoppableProcess(multiprocessing.Process):
     def stopped(self):
         return self._stopper.is_set()
 
-
+# TODO: move into another module
 class _StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the running() condition.
@@ -300,6 +261,40 @@ class _StoppableThread(threading.Thread):
     def stopped(self):
         return self._stopper.isSet()
 
+class AcquisitionProcess(_StoppableProcess):
+    def __init__(self, device, clock, data_queue):
+        super(AcquisitionProcess, self).__init__()
+        self._device = device
+        self._clock = clock # TODO: clock manager?
+        self._data_queue = data_queue
+
+    def run(self):
+        """Continuously reads data from the source and sends it to the buffer
+        for processing.
+        """
+        # TODO: Send updated device information (fs, channels).
+        self._device.connect()
+        self._device.acquisition_init()
+        self._clock.reset()
+
+        sample = 1
+        data = self._device.read_data()
+
+        # begin continuous acquisition process as long as data received
+        while self.running() and data:
+            # Use get time to timestamp and continue saving records.
+            self._data_queue.put(
+                Record(data, sample))
+            try:
+                # Read data again
+                data = device.read_data()
+                sample += 1
+            except:
+                data = None
+                break
+        self._device.disconnect()
+
+
 
 if __name__ == "__main__":
 
@@ -316,7 +311,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--channels', default='',
                         help='comma-delimited list')
     parser.add_argument('-p', '--params', type=json.loads,
-                        default={'host': '127.0.0.1', 'port': 8844},
+                        default={'host': '127.0.0.1', 'port': 9000},
                         help="device connection params; json")
     args = parser.parse_args()
 
