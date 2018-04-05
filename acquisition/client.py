@@ -13,9 +13,11 @@ from Queue import Empty
 from buffer import Buffer
 from processor import FileWriter
 from record import Record
+from util import StoppableThread, StoppableProcess
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
+
 
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
@@ -94,8 +96,8 @@ class Client(object):
         loop but there are some issues with how our process loop is designed
         and cannot work on Windows. This is due to os forking vs. duplication.
             There are fixes in #Python3, but we are currently tied to v2.7
-                -- unix systems can directly replace _StoppableThread with
-                    _StoppableProcess!
+                -- unix systems can directly replace StoppableThread with
+                    StoppableProcess!
         ****
 
         Some references:
@@ -132,7 +134,7 @@ class Client(object):
             self._processor.set_device_info(self._device.name, self._device.fs,
                                             self._device.channels)
 
-            self._process_thread = _StoppableThread(target=self._process_loop)
+            self._process_thread = StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
             self._process_thread.start()
 
@@ -221,51 +223,12 @@ class Client(object):
         if self._buf:
             self._buf.cleanup()
 
-# TODO: move into another module
-class _StoppableProcess(multiprocessing.Process):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the running() condition.
 
-      https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(_StoppableProcess, self).__init__(*args, **kwargs)
-        self._stopper = multiprocessing.Event()
-
-    def stop(self):
-        self._stopper.set()
-
-    def running(self):
-        return not self._stopper.is_set()
-
-    def stopped(self):
-        return self._stopper.is_set()
-
-# TODO: move into another module
-class _StoppableThread(threading.Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the running() condition.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(_StoppableThread, self).__init__(*args, **kwargs)
-        self._stopper = threading.Event()
-
-    def stop(self):
-        self._stopper.set()
-
-    def running(self):
-        return not self._stopper.isSet()
-
-    def stopped(self):
-        return self._stopper.isSet()
-
-class AcquisitionProcess(_StoppableProcess):
+class AcquisitionProcess(StoppableProcess):
     def __init__(self, device, clock, data_queue):
         super(AcquisitionProcess, self).__init__()
         self._device = device
-        self._clock = clock # TODO: clock manager?
+        self._clock = clock  # TODO: clock manager?
         self._data_queue = data_queue
 
     def run(self):
@@ -295,7 +258,6 @@ class AcquisitionProcess(_StoppableProcess):
         self._device.disconnect()
 
 
-
 if __name__ == "__main__":
 
     import argparse
@@ -317,9 +279,8 @@ if __name__ == "__main__":
 
     Device = registry.find_device(args.device)
 
-
     # Instantiate and start collecting data
-    device=Device(connection_params=args.params)
+    device = Device(connection_params=args.params)
     if args.channels:
         device.channels = args.channels.split(',')
     daq = Client(device=device,

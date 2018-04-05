@@ -6,7 +6,6 @@ import timeit
 
 import numpy as np
 from buffer import Buffer
-from acquisition.client import _StoppableProcess
 from record import Record
 from multiprocessing import Queue
 
