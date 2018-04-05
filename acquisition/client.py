@@ -322,10 +322,12 @@ if __name__ == "__main__":
 
     Device = registry.find_device(args.device)
 
+
     # Instantiate and start collecting data
-    channels = args.channels.split(',') if args.channels else []
-    daq = Client(device=Device(connection_params=args.params,
-                               channels=channels),
+    device=Device(connection_params=args.params)
+    if args.channels:
+        device.channels = args.channels.split(',')
+    daq = Client(device=device,
                  processor=FileWriter(filename=args.filename),
                  buffer_name=args.buffer)
 
