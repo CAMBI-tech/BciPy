@@ -13,39 +13,38 @@ from acquisition.protocols.device import Device
 from mock import mock_open, patch
 
 
-class _MockProcessor(Processor):
-    """Processor that doesn't do anything."""
-
-    def __init__(self, device_name, fs, channels):
-        super(_MockProcessor, self).__init__(device_name, fs, channels)
-
-    def process(self, record, timestamp=None):
-        pass
+NUM_CHANNELS = 25
+NUM_RECORDS = 500
+MOCK_CHANNELS = ['ch' + str(i) for i in range(NUM_CHANNELS)]
+MOCK_DATA = [[np.random.uniform(-1000, 1000) for i in range(NUM_CHANNELS)]
+             for j in range(NUM_RECORDS)]
 
 
 class _MockDevice(Device):
-    """Device that mocks reading data every 1/500 seconds. Does not need a
-    server. Accumulates read data in a list."""
+    """Device that mocks reading data. Does not need a server. Continues as
+    long as there is mock data."""
 
-    def __init__(self, channels, fs=500):
+    def __init__(self, fs=500):
         super(_MockDevice, self).__init__(
-            connection_params={}, channels=channels, fs=fs)
-        self.data = []
-        self._connected = True
+            connection_params={}, channels=MOCK_CHANNELS, fs=fs)
+        self.i = 0
 
     def name(self):
         return 'MockDevice'
 
     def read_data(self):
-        time.sleep(1 / self.fs)
-        row = [np.random.uniform(-1000, 1000)
-               for i in range(len(self.channels))]
-        if self._connected:
-            self.data.append(row)
-        return row
+        if (self.i < len(MOCK_DATA)):
+            row = MOCK_DATA[self.i]
+            self.i += 1
+            return row
+        return None
 
-    def disconnect(self):
-        self._connected = False
+
+class _MockProcessor(Processor):
+    """Processor that doesn't do anything."""
+
+    def process(self, record, timestamp=None):
+        pass
 
 
 def test_filewriter():
@@ -56,11 +55,10 @@ def test_filewriter():
 
         # Instantiate and start collecting data
 
-        channels = ['ch' + str(i) for i in range(25)]
-        device = _MockDevice(channels)
+        device = _MockDevice()
         daq = Client(device=device)
         with daq:
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         mwrite.assert_called_once_with('rawdata.csv', 'wb')
 
@@ -76,17 +74,19 @@ def test_filewriter():
 
         # Third write was column header
         assert writeargs[2].startswith(
-            ','.join(['timestamp'] + device.channels))
+            ','.join(['timestamp'] + MOCK_CHANNELS))
 
-        # All subsequent data writes should match the values in the data
-        # rows.
+        assert daq.get_data_len() > 0, "daq should have acquired data"
+
+        # All subsequent data writes should look like data.
         for i, r in enumerate(writeargs[3:]):
-            assert repr(device.data[i][0]) in r
+            assert MOCK_DATA[i] == [float(n) for n in r.split(",")[1:]]
 
         # Length of data writes should match the buffer size.
         assert daq.get_data_len() == len(writeargs[3:])
 
         daq.cleanup()
+
 
 def test_processor():
     """Test processor calls."""
@@ -94,43 +94,45 @@ def test_processor():
     class _CountingProcessor(Processor):
         """Processor that records all data passed to the process method."""
 
-        def __init__(self, device_name, fs, channels):
-            super(_CountingProcessor, self).__init__(device_name, fs, channels)
+        def __init__(self):
+            super(_CountingProcessor, self).__init__()
             self.data = []
 
         def process(self, record, timestamp=None):
             self.data.append(record)
 
-    device = _MockDevice(channels=['ch' + str(i) for i in range(10)])
-    daq = Client(device=device, processor=_CountingProcessor)
+    device = _MockDevice()
+    processor = _CountingProcessor()
+    processor.set_device_info("MockDevice", 500, MOCK_CHANNELS)
+
+    daq = Client(device=device, processor=processor)
     daq.start_acquisition()
     time.sleep(0.1)
     daq.stop_acquisition()
 
     assert len(daq._processor.data) > 0
-    assert daq.get_data_len() == len(daq._processor.data), \
-        'Processor should be called for every data read'
 
     for i, record in enumerate(daq._processor.data):
-        assert record == device.data[i]
+        assert record == MOCK_DATA[i]
 
     daq.cleanup()
+
 
 def test_buffer():
     """Buffer should capture values read from the device."""
 
-    device = _MockDevice(channels=['ch' + str(i) for i in range(10)])
+    device = _MockDevice()
     daq = Client(device=device,
-                 processor=_MockProcessor)
+                 processor=_MockProcessor())
     daq.start_acquisition()
     time.sleep(0.1)
     daq.stop_acquisition()
 
     # Get all records from buffer
     data = daq.get_data()
-    assert len(data) == len(device.data)
+    assert len(data) > 0, "Data should have been put in the buffer."
     for i, record in enumerate(data):
-        assert record.data == device.data[i]
+        assert record.data == MOCK_DATA[i]
 
     daq.cleanup()
 
@@ -154,9 +156,8 @@ def test_clock():
             return float(self.counter)
 
     clock = _MockClock()
-    channels = ['ch' + str(i) for i in range(5)]
-    daq = Client(device=_MockDevice(channels),
-                 processor=_MockProcessor,
+    daq = Client(device=_MockDevice(),
+                 processor=_MockProcessor(),
                  clock=clock)
     with daq:
         time.sleep(0.1)
@@ -164,9 +165,10 @@ def test_clock():
     # Get all records from buffer
     data = daq.get_data()
 
-    assert clock.counter > 0
-    assert len(data) == clock.counter
-    for i in range(clock.counter):
-        assert data[i].timestamp == float(i + 1)
+    # NOTE: we can't make any assertions about the Clock, since it is copied
+    # when it's passed to the acquisition thread.
+    assert len(data) > 0
+    for i, record in enumerate(data):
+        assert record.timestamp == float(i + 1)
 
     daq.cleanup()

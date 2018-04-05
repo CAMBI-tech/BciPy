@@ -8,23 +8,41 @@ import csv
 class Processor(object):
     """Abstract base class for an object that can be used to process data
     acquisition data.
-
-    Parameters
-    ----------
-        device_name : str
-            Name of the device used to collect data.
-        fs : int
-            Sample frequency in Hz.
-        channels : list
-            List of channel names.
     """
 
-    def __init__(self, device_name, fs, channels):
+    def set_device_info(self, device_name, fs, channels):
+        """
+        Sets the device info, which may be used by the process method.
+
+        Parameters
+        ----------
+            device_name : str
+                Name of the device used to collect data.
+            fs : int
+                Sample frequency in Hz.
+            channels : list
+                List of channel names.
+        """
         self._device_name = device_name
         self._fs = fs
         self._channels = channels
 
+    def _check_device_info(self):
+        """
+        Checks that the device_info has been set.
+
+        Exceptions
+        ----------
+            throws AssertionError unless all device_info properties are set.
+        """
+        assert self._device_name is not None and \
+            self._fs is not None and \
+            self._channels is not None, \
+            "device_info is not set; Initialize with set_device_info."
+
     def __enter__(self):
+        # Device info should be set before using as a context.
+        self._check_device_info()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -45,24 +63,25 @@ class Processor(object):
 
 
 class FileWriter(Processor):
-    """A DAQ item Processor that writes items to a file."""
+    """A DAQ item Processor that writes items to a file.
 
-    def __init__(self, filename, device_name, fs, channels):
-        super(FileWriter, self).__init__(device_name, fs, channels)
+    Parameters
+    ----------
+        filename : str
+            Filename to write to.
+    """
+
+    def __init__(self, filename):
+        super(FileWriter, self).__init__()
         self._filename = filename
         self._writer = None
 
-    @classmethod
-    def builder(cls, filename):
-        """Returns a builder than constructs a new FileWriter with the given
-        filename."""
-        def build(device_name, fs, channels):
-            return FileWriter(filename, device_name, fs, channels)
-        return build
-
     # @override ; context manager
     def __enter__(self):
-        # For python 2, writer needs the 'wb' option in order to work on Windows. If using #Python3 'w' is needed.
+        self._check_device_info()
+
+        # For python 2, writer needs the 'wb' option in order to work on
+        # Windows. If using #Python3 'w' is needed.
         self._file = open(self._filename, 'wb')
         self._writer = csv.writer(self._file, delimiter=',')
         self._writer.writerow(['daq_type', self._device_name])
@@ -82,11 +101,16 @@ class FileWriter(Processor):
 class LslProcessor(Processor):
     """A DAQ item processor that writes to an LSL data stream."""
 
-    def __init__(self, device_name, fs, channels):
+    def __init__(self, filename):
+        super(LslProcessor, self).__init__()
+        self._outlet = None
+
+    # @override
+    def set_device_info(self, device_name, fs, channels):
         import pylsl
         import uuid
 
-        super(LslProcessor, self).__init__(device_name, fs, channels)
+        super(LslProcessor, self).set_device_info(device_name, fs, channels)
         info = pylsl.StreamInfo(device_name, 'EEG', len(channels), fs,
                                 'float32', str(uuid.uuid4()))
         meta_channels = info.desc().append_child('channels')
@@ -99,4 +123,5 @@ class LslProcessor(Processor):
         self._outlet = pylsl.StreamOutlet(info)
 
     def process(self, record, timestamp=None):
-        self._outlet.push_sample(record, timestamp)
+        if self._outlet:
+            self._outlet.push_sample(record, timestamp)

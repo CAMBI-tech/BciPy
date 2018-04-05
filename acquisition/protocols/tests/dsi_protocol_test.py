@@ -12,7 +12,7 @@ def test_protocol_init_messages():
     c = dsi.packet.parse(channel_msg)
     assert c.type == 'EVENT'
     assert c.event_code == 'SENSOR_MAP'
-    assert c.message == ','.join(dsi.default_channels)
+    assert c.message == ','.join(dsi.DEFAULT_CHANNELS)
 
     c2 = dsi.packet.parse(p.init_messages[1])
     assert c2.type == 'EVENT'

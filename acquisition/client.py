@@ -54,12 +54,12 @@ class Client(object):
 
     def __init__(self,
                  device,
-                 processor_name='rawdata.csv',
+                 processor=FileWriter(filename='rawdata.csv'),
                  buffer_name='buffer.db',
                  clock=_Clock()):
 
         self._device = device
-        self._processor_name = processor_name
+        self._processor = processor
         self._buffer_name = buffer_name
         self._clock = clock
 
@@ -120,12 +120,19 @@ class Client(object):
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
             # been updated as needed.
+
+            # TODO: Now that device initialization has been moved to the
+            # acquisition loop, and that loop is in its own process,
+            # self._device is copied and never updated. So the device_info set
+            # in the processor and buffer only reflects what was initially
+            # configured. Initialization should either be moved back into this
+            # method or we need to use inter-process communication to update
+            # these values.
+
             self._buf = Buffer(channels=self._device.channels,
                                archive_name=self._buffer_name)
-            self._processor = FileWriter(self._processor_name,
-                                         self._device.name,
-                                         self._device.fs,
-                                         self._device.channels)
+            self._processor.set_device_info(self._device.name, self._device.fs,
+                                            self._device.channels)
 
             self._process_thread = _StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
@@ -144,12 +151,14 @@ class Client(object):
                     # block if necessary
                     record = self._process_queue.get(True, wait)
 
-                    # if device not calibrated, look for the first trigger signal
-                    #   as a marker of starting location.
+                    # if device not calibrated, look for the first trigger
+                    # signal as a marker of starting location.
                     if not self._is_calibrated:
                         # This assumes the last record is the trigger channel!
                         if record.data[-1] > 0:
                             self._is_calibrated = True
+
+                            # TODO: device.fs may not be correct. See above.
                             self.offset = record.timestamp / self._device.fs
 
                     # decrease the wait after data has been initially received
@@ -161,10 +170,17 @@ class Client(object):
 
     def _acquisition_loop(self, device):
         """Continuously reads data from the source and sends it to the buffer
-        for processing."""
+        for processing.
 
+        TODO: Check references to self._ ; these are probably suspect now that
+        this is in a Process, rather than a Thread. Refactor to take these
+        items as parameters, and use another Queue for commands.
+        """
+        # TODO: Update device information (fs, channels) in process thread.
         device.connect()
         device.acquisition_init()
+
+        # TODO: This is a copy of the clock; do we need to coordinate changes?
         self._clock.reset()
         sample = 1
 
@@ -192,6 +208,7 @@ class Client(object):
         logging.debug("Stopping Acquisition Process")
 
         self._is_streaming = False
+        # TODO: Refactor to acquisition_loop; this is not the correct object.
         self._device.disconnect()
 
         self._acq_process.stop()
@@ -309,8 +326,8 @@ if __name__ == "__main__":
     channels = args.channels.split(',') if args.channels else []
     daq = Client(device=Device(connection_params=args.params,
                                channels=channels),
-                 processor=FileWriter.builder(args.filename),
-                 buffer=Buffer.builder(args.buffer))
+                 processor=FileWriter(filename=args.filename),
+                 buffer_name=args.buffer)
 
     daq.start_acquisition()
 

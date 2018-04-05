@@ -24,13 +24,11 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=dsi.default_fs, channels=dsi.default_channels):
+    def __init__(self, connection_params, fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
         """Init DsiDevice."""
-
         super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
-
         self._channels_provided = len(channels) > 0
         self._socket = None
         self.channels = channels
@@ -59,7 +57,7 @@ class DsiDevice(Device):
             "Socket isn't started, cannot read DSI packet!"
 
         # Reads the header to get the payload length, then reads the payload.
-        header_buf = util.receive(self._socket, dsi.header_len)
+        header_buf = util.receive(self._socket, dsi.HEADER_LEN)
         header = dsi.header.parse(header_buf)
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)

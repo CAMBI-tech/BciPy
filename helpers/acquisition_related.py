@@ -6,6 +6,7 @@ import acquisition.datastream.generator as generator
 import acquisition.protocols.registry as registry
 from acquisition.client import Client, _Clock
 from acquisition.datastream.server import DataServer
+from acquisition.processor import FileWriter
 
 
 def init_eeg_acquisition(parameters, save_folder,
@@ -76,7 +77,7 @@ def init_eeg_acquisition(parameters, save_folder,
     #  add a channel parameter to Device to override!
     client = Client(device=Device(connection_params=connection_params,
                                   fs=fs),
-                    processor_name=filename,
+                    processor=FileWriter(filename=filename),
                     buffer_name=buffer_name,
                     clock=clock)
 

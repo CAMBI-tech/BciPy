@@ -9,7 +9,7 @@ import acquisition.protocols.dsi.dsi as dsi
 import acquisition.protocols.protocol as protocol
 
 
-def DsiProtocol(fs=dsi.default_fs, channels=dsi.default_channels):
+def DsiProtocol(fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
     """Protocol for mocking DSI data."""
     return protocol.Protocol(encoder=Encoder(),
                              init_messages=_init_messages(fs, channels),
