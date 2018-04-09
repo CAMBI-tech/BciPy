@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import csv
+import sys
 
 
 class Processor(object):
@@ -82,7 +83,11 @@ class FileWriter(Processor):
 
         # For python 2, writer needs the 'wb' option in order to work on
         # Windows. If using #Python3 'w' is needed.
-        self._file = open(self._filename, 'wb')
+        if sys.version_info >= (3,0,0):
+            self._file = open(self._filename, 'w', newline='')
+        else:
+            self._file = open(self._filename, 'wb')
+
         self._writer = csv.writer(self._file, delimiter=',')
         self._writer.writerow(['daq_type', self._device_name])
         self._writer.writerow(['sample_rate', self._fs])
