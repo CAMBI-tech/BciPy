@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 import logging
 
 import numpy as np
+from past.builtins import map, range
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)

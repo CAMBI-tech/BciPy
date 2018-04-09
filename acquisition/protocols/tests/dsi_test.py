@@ -37,7 +37,7 @@ def test_event_packet():
     expected = b'@ABCD\x05\x00\x08\x00\x00\x00\r\x00\x00\x00\x02\x00\x00\x00!\x00\x00\x00\x0bhello world'  # noqa
     params = dict(type='EVENT', payload_length=8, number=13,
                   event_code='DATA_START', sending_node=33, message_length=11,
-                  message=u'hello world'.encode('ascii', 'ignore'))
+                  message='hello world')
 
     result = dsi.packet.build(params)
     assert result == expected

@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import Queue
+import queue
 import time
 
 from datastream.producer import Producer
@@ -11,7 +11,7 @@ def test_frequency():
     """Data should be generated at the provided frequency"""
     fs = 300
     runtime = 0.2
-    q = Queue.Queue()
+    q = queue.Queue()
     p = Producer(q, freq=1 / fs)
     p.start()
     time.sleep(runtime)
@@ -33,7 +33,7 @@ def test_custom_generator():
             counter += 1
             yield counter
 
-    q = Queue.Queue()
+    q = queue.Queue()
     p = Producer(q, freq=1 / 300, generator=gen())
     p.start()
     time.sleep(0.1)
@@ -53,7 +53,7 @@ def test_max_iters():
     fs = 300
     runtime = 0.2
     maxiters = 10
-    q = Queue.Queue()
+    q = queue.Queue()
     p = Producer(q, freq=1 / fs, maxiters=maxiters)
     p.start()
     time.sleep(runtime)

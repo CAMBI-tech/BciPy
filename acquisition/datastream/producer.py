@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
+from builtins import next
 from queue import Queue
 import random
 import threading
@@ -57,7 +58,7 @@ class Producer(threading.Thread):
         """Generates the data item to be added to the queue."""
 
         try:
-            data = self.generator.next()
+            data = next(self.generator)
         except StopIteration:
             logging.debug("End of input reached")
             raise Exception("End of input reached")

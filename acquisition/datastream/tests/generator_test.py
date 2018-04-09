@@ -2,8 +2,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import pytest
+from builtins import next
 from datastream import generator
 from mock import mock_open, patch
+from past.builtins import map, range
 
 
 class CustomEncoder(object):
@@ -24,7 +26,7 @@ def test_random_generator():
     gen = generator.random_data()
 
     for i in range(100):
-        data.append(gen.next())
+        data.append(next(gen))
 
     assert len(data) == 100
 
@@ -38,7 +40,7 @@ def test_random_high_low_values():
                                 channel_count=channel_count)
     data = []
     for i in range(100):
-        data.append(gen.next())
+        data.append(next(gen))
 
     assert len(data) == 100
 
@@ -57,7 +59,7 @@ def test_random_with_custom_encoder():
                                 channel_count=channel_count)
 
     for i in range(100):
-        data.append(gen.next())
+        data.append(next(gen))
 
     assert len(data) == 100
     for count, record in data:
@@ -84,7 +86,7 @@ def test_file_generator():
         data = []
         gen = generator.file_data(filename='foo', header_row=1)
         for i in range(row_count):
-            data.append(gen.next())
+            data.append(next(gen))
 
         assert len(data) == row_count
         for i, row in enumerate(data):
@@ -108,10 +110,10 @@ def test_file_generator_end():
         data = []
         gen = generator.file_data(filename='foo', header_row=1)
         for i in range(row_count):
-            data.append(gen.next())
+            data.append(next(gen))
 
         with pytest.raises(StopIteration):
-            data.append(gen.next())
+            data.append(next(gen))
 
 
 def test_file_with_custom_encoder():
@@ -133,7 +135,7 @@ def test_file_with_custom_encoder():
         gen = generator.file_data(
             filename='foo', header_row=1, encoder=CustomEncoder())
         for i in range(row_count):
-            data.append(gen.next())
+            data.append(next(gen))
 
         for count, record in data:
             assert len(record) == col_count
