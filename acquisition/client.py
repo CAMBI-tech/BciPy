@@ -250,15 +250,23 @@ class AcquisitionProcess(StoppableProcess):
                 Record(data, sample))
             try:
                 # Read data again
-                data = device.read_data()
+                data = self._device.read_data()
                 sample += 1
-            except:
+            except Exception as e:
+                logging.debug("Error reading data from device: " + str(e))
                 data = None
                 break
+        logging.debug("Total samples read: " + str(sample))
         self._device.disconnect()
 
 
 if __name__ == "__main__":
+
+    import sys
+    if sys.version_info >= (3, 0, 0):
+        # Only available in Python 3; allows us to test process code as it
+        # behaves in Windows environments.
+        multiprocessing.set_start_method('spawn')
 
     import argparse
     import json
