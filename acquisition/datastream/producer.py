@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
-import Queue
+from queue import Queue
 import random
 import threading
 import time
@@ -119,7 +119,7 @@ class _ConsumerThread(threading.Thread):
 
 
 if __name__ == '__main__':
-    q = Queue.Queue()
+    q = Queue()
     p = Producer(q)
     c = _ConsumerThread(q)
 

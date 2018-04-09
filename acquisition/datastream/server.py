@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import errno
 import logging
-import Queue
+from queue import Queue, Empty
 import select
 import socket
 import threading
@@ -98,7 +98,7 @@ class DataServer(threading.Thread):
         # This needs to be handled differently if we decide to allow
         # multiple clients. Producer needs to be managed by the class,
         # and the same message should be sent to each client.
-        q = Queue.Queue()
+        q = Queue()
 
         # Construct a new generator each time to get consistent results.
         generator = self.generator(**self.gen_params)
@@ -107,7 +107,7 @@ class DataServer(threading.Thread):
                 try:
                     # block if necessary, for up to 5 seconds
                     item = q.get(True, 5)
-                except Queue.Empty:
+                except Empty:
                     client_socket.close()
                     break
                 try:

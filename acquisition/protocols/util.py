@@ -27,4 +27,4 @@ def receive(socket, msglen, chunksize=2048):
             raise RuntimeError("socket connection broken")
         chunks.append(chunk)
         bytes_received = bytes_received + len(chunk)
-    return ''.join(chunks)
+    return b''.join(chunks)

@@ -7,7 +7,7 @@ import threading
 import time
 import timeit
 
-from Queue import Empty
+from queue import Empty
 
 
 from buffer import Buffer

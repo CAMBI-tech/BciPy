@@ -5,6 +5,7 @@ import os
 import sqlite3
 from collections import deque
 
+from builtins import range
 from record import Record
 
 
@@ -60,7 +61,7 @@ class Buffer(object):
 
         # Create SQL INSERT statement
         field_names = ','.join(fields)
-        placeholders = ','.join('?' for i in xrange(len(fields)))
+        placeholders = ','.join('?' for i in range(len(fields)))
         self._insert_stmt = 'INSERT INTO data (%s) VALUES (%s)' % \
             (field_names, placeholders)
 
@@ -121,7 +122,7 @@ class Buffer(object):
         """Writes data to the datastore and empties the buffer."""
 
         data = [_adapt_record(self._buf.popleft())
-                for i in xrange(len(self._buf))]
+                for i in range(len(self._buf))]
 
         if data:
             # Performs writes in a single transaction;
@@ -225,7 +226,7 @@ def _main():
     chunksize = args.chunk_size
     channel_count = args.channel_count
 
-    channels = ["ch" + str(c) for c in xrange(channel_count)]
+    channels = ["ch" + str(c) for c in range(channel_count)]
 
     print("Running with %d samples of %d channels each and chunksize %d" %
           (n, channel_count, chunksize))
@@ -235,7 +236,7 @@ def _main():
         """Generater for mock data"""
         i = 0
         while i < n:
-            yield [np.random.uniform(-1000, 1000) for cc in xrange(c)]
+            yield [np.random.uniform(-1000, 1000) for cc in range(c)]
             i += 1
 
     starttime = timeit.default_timer()
