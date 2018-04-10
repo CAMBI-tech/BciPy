@@ -136,6 +136,9 @@ class Buffer(object):
         cur.execute("select count(*) from data", ())
         return cur.fetchone()[0]
 
+    def __str__(self):
+        return "Buffer<archive_name={}>".format(self._archive_name)
+
     def all(self):
         """Returns all data in the buffer."""
         return self.query(start=self.start_time)
