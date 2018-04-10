@@ -1,4 +1,3 @@
-
 from signal_model.mach_learning.m_estimator.m_estimator import *
 
 
@@ -32,7 +31,7 @@ class RegularizedDiscriminantAnalysis:
 
     def __init__(self): # TODO: Make it more modular
         self.lam = .9
-        self.gam = .1
+        self.gam = .3
 
         self.class_i = None
         self.mean_i = None
@@ -188,78 +187,89 @@ class RegularizedDiscriminantAnalysis:
 
 
 class MDiscriminantAnalysis:
-    """
-        M discriminant analysis
-    Attr:
-        means(list): Every element is a channel's robust means for both channels
-        inv_covariances(list) = Every element is a channel's
-            inverse robust covariances for both channels
-        labels(ndarray): Unique labels in y
-        priors(list): Prior for every label
-        toeplitz_inverse_cov(list): This attribute is left empty.
-
-    """
 
     def __init__(self):
         # means and covariances of each channel with the order inherent in data.
-        self.means = None
-        self.inv_covariances = None
-        self.labels = None
-        self.priors = None
-        self.toeplitz_inverse_cov = None
+        self.means = []
+        self.covariances = []
+        self.S_matrices = []  # Covariance times N for each class
+        self.S = []
+        self.N_list = []  # List of number of samples of each class
+        self.class_list = []
+        self.priors = []
 
-    def fit(self, x, y, p=[]):
+        self.inv_reg_covariances = []  # Inverse regularized covariances
+
+        for z in range(10):  # add an empty list to the list will store every folds stats.
+            self.means.append([])
+            self.covariances.append([])
+            self.S_matrices.append([])
+            self.S.append([])
+            self.N_list.append([])
+            self.priors.append([])
+
+            self.inv_reg_covariances.append([])
+
+        self.lam = .9
+        self.gam = .3
+
+        self.current_fold = -1
+
+    def fit(self, x, y):
         """
         :list x: data, each element is every channel's trials.
         """
+        N, p = x.shape
 
-        # number of channels
-        C = len(x)
-        p_new = 0 #Every feature from every channel
-        for index in range(C):
-            p_new += len(x[index][0])
+        if not self.means[self.current_fold]:  # current fold had not been processed yet
 
-        # first index is channel second index is label
-        self.means = [[] for i in range(C)]
-        self.inv_covariances = [[] for i in range(C)]
-        self.labels = np.unique(y)
-        # self.toeplitz_inverse_cov = [np.zeros((p_new, p_new)) for i in range(len(self.labels))]
+            # Unique labels/classes
+            if self.class_list == []:
+                self.class_list = np.unique(y)
 
-        for label_index in range(len(self.labels)):
-            # count = 0
-            for channel in range(C):
-                X = x[channel]
-                X_label = X[np.where(y == self.labels[label_index])[0], :]
-                mean, sigma = robust_mean_covariance(X_label)
-                self.means[channel].append(mean)
-                self.inv_covariances[channel].append(np.linalg.inv(sigma))
-                # p_channel = len(self.inv_covariances[channel][0][0])
-                # self.toeplitz_inverse_cov[label_index][count:count + p_channel, count:count + p_channel] \
-                #     = self.inv_covariances[channel][label_index]
-                # count += p_channel
+            for i in range(len(self.class_list)):
+                self.N_list[self.current_fold].append(np.sum(y == self.class_list[i]))  # Number of samples of current class
+                x_i = x[np.where(y == self.class_list[i])[0], :]
 
-        # Set priors
-        if len(p) == 0:
-            prior = np.asarray([np.sum(y == self.labels[i]) for i in
-                                range(len(self.labels))], dtype=float)
-            self.priors = np.divide(prior, np.sum(prior))
-        else:
-            self.priors = p
+                mean, cov = robust_mean_covariance(X=x_i)
 
-    def transform(self, x):
-        N = x[0].shape[0]
+                self.means[self.current_fold].append(mean)
+                self.covariances[self.current_fold].append(cov)
+                self.S_matrices[self.current_fold].append(cov*(self.N_list[self.current_fold][-1]))
 
-        scores =[np.zeros(N) for i in range(len(self.labels))]
+            self.priors[self.current_fold] = [self.N_list[self.current_fold][0]*1./N, self.N_list[self.current_fold][1]*1./N]
 
-        for i in range(len(self.labels)):
+            self.S[self.current_fold] = np.zeros((p, p))
+            for i in range(len(self.class_list)):
+                self.S[self.current_fold] += self.S_matrices[self.current_fold][i]
+
+        # Shrinked class covariances
+        shr_cov_i = [((1 - self.lam) * self.S_matrices[self.current_fold][i] + self.lam * self.S[self.current_fold]) /
+                     ((1 - self.lam) * self.N_list[self.current_fold][i] + self.lam * N)
+                     for i in range(len(self.class_list))]
+
+        # Regularized class covariances
+        reg_cov_i = [((1 - self.gam) * shr_cov_i[i] +
+                      self.gam / p * np.trace(shr_cov_i[i]) *
+                      np.eye(p)) for i in range(len(self.class_list))]
+
+        # Make sure part below works fine #TODO: Here might be problems
+        self.inv_reg_covariances[self.current_fold] = []
+        self.inv_reg_covariances[self.current_fold].append(np.linalg.inv(np.array(reg_cov_i)))
+
+    def transform(self, x, y=None):
+        N, _ = x.shape
+
+        scores = np.zeros((N, self.class_list.size))
+
+        for i in range(len(self.class_list)):
             for n in range(N):
-                current_score = 0
-                for c in range(len(x)):
-                    temp = x[c][n] - self.means[c][i]
-                    current_score += -.5*np.dot(np.dot(temp, self.inv_covariances[c][i]), temp)
-                scores[i][n] = current_score + np.log(self.priors[i])
+                temp = x[n, :] - self.means[self.current_fold][i]
 
-        return scores[1] - scores[0]
+                scores[n][i] = -.5*np.dot(np.dot(temp, self.inv_reg_covariances[self.current_fold][0][i]), temp) \
+                               + np.log(self.priors[self.current_fold][i])
+
+        return scores[:, 1] - scores[:, 0]
 
     def fit_transform(self, x, y):
 

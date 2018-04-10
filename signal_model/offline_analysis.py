@@ -1,8 +1,8 @@
 import sys
 sys.path.append('.')
 sys.path.append('..')
-sys.path.append('../..')
-sys.path.append('../../..')
+# sys.path.append('../..')
+# sys.path.append('../../..')
 
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
@@ -66,10 +66,10 @@ if __name__ == "__main__":
         amp = np.float(sys.argv[3])
         seed = int(np.float(sys.argv[4]))
     except Exception as e:
-        rate = .01
-        leng = 30
-        amp = 1
-        seed = 7
+        rate = .0001
+        leng = 3
+        amp = 10000
+        seed = 3
 
     print 'Noise activation rate: {}'.format(rate)
     print 'Length: {}'.format(leng)
@@ -77,6 +77,7 @@ if __name__ == "__main__":
     print 'Random seed: {}\n'.format(seed)
 
     np.random.seed(seed)
+    # sample_calib_path = '/home/berkan/Desktop/GitProjects/bci/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     sample_calib_path = \
         '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
     # sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'

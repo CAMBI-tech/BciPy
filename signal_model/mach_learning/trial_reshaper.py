@@ -93,6 +93,9 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, of
             if trial_target_info[trial] == 'target':
                 labels[trial] = 1
 
+            # if (np.abs(filtered_eeg[13][triggers[trial]:triggers[trial] + num_samples]) > 500).any():
+            #     print 'artifact at: {}'.format(trial)
+
             # For every channel append filtered channel data to trials
             for channel in range(len(filtered_eeg)):
                 reshaped_trials[channel][trial] = \

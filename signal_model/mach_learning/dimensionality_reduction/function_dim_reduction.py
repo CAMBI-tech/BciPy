@@ -46,9 +46,10 @@ class ChannelWisePrincipalComponentAnalysis:
             self.var_tol = var_tol
 
         for i in range(self.num_ch):
-            self.list_pca[i].fit(x[i, :, :], y)
+            # self.list_pca[i].fit(x[i, :, :], y)
             max_sv = self.list_pca[i].singular_values_[0]
-            self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
+            # self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
+            self.list_pca[i].n_components = 5
             try:
                 self.list_pca[i].fit(x[i, :, :], y)
             except Exception as e:
@@ -84,21 +85,18 @@ class MPCA:
     """ Channel wise MPCA
         attributes:
             var_tol(float): Variance tolerance with respect to principal component(eigen value)
-            output_type(string): 'MDA' if next element in pipeline is MDA, 'RDA' else
     """
 
-    def __init__(self, var_tol=1, output_type='MDA', n_folds=10):
+    def __init__(self, var_tol=1):
         self.var_tol = var_tol
         self.transform_matrix_list = []
-        for z in range(n_folds):
+        for z in range(10):  # 10 for 10 fold cross validation
             self.transform_matrix_list.append([])
-        self.output_type = output_type
-        self.n_folds = n_folds
         self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
 
 
     def fit(self, x, y=None, var_tol=None):
-        """ Find channels wise robust covariances and apply pca.
+        """ Find channel wise robust covariances and apply pca.
             Args:
                 x(ndarray[float]): C x N x k data array
                 y(ndarray[int]): N x 1 observation (class) array
@@ -120,8 +118,9 @@ class MPCA:
                 lim = vals[0]*self.var_tol
 
                 transform_matrix = []
-                for index in range(len(vals)):
-                    if vals[index]>lim:
+                # for index in range(len(vals)):
+                for index in range(5):
+                    if vals[index] > lim:
                         transform_matrix.append(vecs[:, index])
 
                 self.transform_matrix_list[self.current_fold].append(np.transpose(np.array(transform_matrix)))
@@ -135,18 +134,15 @@ class MPCA:
         for channel in range(C):
             new_x.append(np.dot(x[channel], self.transform_matrix_list[self.current_fold][channel]))
 
-        if self.output_type == 'MDA':
-            return new_x
-        elif self.output_type == 'RDA':
-            concatenated_new_x = []
+        concatenated_new_x = []
 
-            for sample_index in range(N):
-                new_sample = []
-                for channel in range(C):
-                    new_sample = np.append(new_sample, new_x[channel][sample_index])
-                concatenated_new_x.append(new_sample)
+        for sample_index in range(N):
+            new_sample = []
+            for channel in range(C):
+                new_sample = np.append(new_sample, new_x[channel][sample_index])
+            concatenated_new_x.append(new_sample)
 
-            return np.array(concatenated_new_x)
+        return np.array(concatenated_new_x)
 
     def fit_transform(self, x, y=None, var_tol=None):
         """ Fits parameters wrt. the input matrix and outputs corresponding

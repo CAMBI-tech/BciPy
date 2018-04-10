@@ -55,6 +55,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
 
             try:
                 model.pipeline[0].current_fold = idx_fold
+                model.pipeline[1].current_fold = idx_fold
             except Exception as e:
                 pass
 
@@ -64,7 +65,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             auc_h.append(metrics.auc(fpr, tpr))
 
     auc = np.mean(np.array(auc_h))
-    print 'Current optimisation step\'s AUC-cv: {}'.format(auc)
+    print 'Current optimisation step\'s AUC-cv: {}, lam: {}, gam: {}'.format(auc, param[0], param[1])
     return -auc
 
 

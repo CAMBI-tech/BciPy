@@ -2,14 +2,14 @@
 import numpy as np
 import scipy as sc
 from sklearn.datasets import make_spd_matrix
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+# import matplotlib.pyplot as plt
+# from matplotlib.patches import Ellipse
 
 
 def eigsorted(cov):
     vals, vecs = np.linalg.eigh(cov)
     order = vals.argsort()[::-1]
-    return vals[order], vecs[:,order]
+    return vals[order], vecs[:, order]
 
 
 def u_func(t, b, c_square):
@@ -24,15 +24,23 @@ def u_func(t, b, c_square):
 def mean_update(X, mean, sigma_inv, b, c_square):
     # Returns updated mean
 
+    # count_outlier = 0
     N, p = X.shape
     mean_hat = np.zeros(p)
     sum_u = 0
     for z in range(N):
-        u = u_func(t = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean), b=b, c_square=c_square)
-        sum_u += u
-        mean_hat += 1./N*u*X[z]
+        # if (np.abs(X[z, :]) > 1000).any():
+        #     print z
+        t = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean)
+        # if t > c_square:
+        #     count_outlier += 1
+        u = u_func(t=t, b=b, c_square=c_square)
 
-    mean_hat = mean_hat/(1./N*sum_u)
+        sum_u += u
+        mean_hat += u*X[z]
+
+    mean_hat = mean_hat/sum_u
+    # print 'Outlier count at mean update: {}'.format(count_outlier)
 
     return mean_hat
 
@@ -44,16 +52,12 @@ def sigma_update(X, mean, sigma_inv, b, c_square):
     sigma_hat = np.zeros((p,p))
 
     for z in range(N):
-        sigma_hat += 1./N*u_func(t = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean), b=b, c_square=c_square)*np.outer(X[z]- mean, X[z]- mean)
-
-    Maronnas_Equation = False
-    if Maronnas_Equation:
-        sigma_hat=np.dot(np.dot(sigma_hat, sigma_inv), sigma_hat)
+        sigma_hat += 1./N*u_func(t=np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean), b=b, c_square=c_square)*np.outer(X[z]- mean, X[z]- mean)
 
     return sigma_hat
 
 
-def robust_mean_covariance(X, q=.5):
+def robust_mean_covariance(X, q=.95):
     # Calculates robust mean and covariance for Nxp ndarray x. N is number of samples and p is number of features.
 
     N, p = X.shape
@@ -68,8 +72,8 @@ def robust_mean_covariance(X, q=.5):
 
 
     iteration = 0
-    s_a_c = 1  # summed absolute change, initially large value
-    while iteration < 1000 and s_a_c > .1 ** 2:
+    s_a_c = 2  # summed absolute change, initially large value
+    while iteration < 1000 and s_a_c > 1:
         # print '{}/{}'.format(iteration, 1000)
         M_est_mean_old = M_est_mean_new
         M_est_sigma_old = M_est_sigma_new

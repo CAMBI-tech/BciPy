@@ -1,12 +1,10 @@
 from signal_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis, MPCA
 from signal_model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysis
-from signal_model.mach_learning.generative_mods.function_density_estimation import KernelDensityEstimate
+    import RegularizedDiscriminantAnalysis, MDiscriminantAnalysis
 from signal_model.mach_learning.pipeline import Pipeline
 from signal_model.mach_learning.cross_valid import *
 from sklearn import metrics
-from scipy.stats import iqr
 
 
 def train_pca_rda_kde_model(x, x_artifact, y, k_folds=10):
@@ -69,23 +67,23 @@ def train_m_estimator_pipeline(x, x_artifact, y, k_folds=10):
             model(pipeline): trained model
             """
 
-    pca = MPCA(var_tol=.1**5, output_type='RDA', n_folds=k_folds)
-    rda = RegularizedDiscriminantAnalysis()
+    pca = MPCA(var_tol=.1**5)
+    mda = MDiscriminantAnalysis()
 
     model = Pipeline()
     model.add(pca)
-    model.add(rda)
+    model.add(mda)
 
     # Find the cross validation AUC for the model.
     lam, gam = cross_validate_parameters(x=x_artifact, y=y, model=model, k_folds=k_folds)
     print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
 
-    pca = MPCA(var_tol=.1**5, output_type='RDA', n_folds=k_folds)
-    rda = RegularizedDiscriminantAnalysis()
+    pca = MPCA(var_tol=.1**5)
+    mda = MDiscriminantAnalysis()
 
     model = Pipeline()
     model.add(pca)
-    model.add(rda)
+    model.add(mda)
 
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
