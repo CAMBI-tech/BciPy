@@ -13,28 +13,23 @@ from acquisition.protocols.device import Device
 from mock import mock_open, patch
 import unittest
 
-NUM_CHANNELS = 25
-NUM_RECORDS = 500
-MOCK_CHANNELS = ['ch' + str(i) for i in range(NUM_CHANNELS)]
-MOCK_DATA = [[np.random.uniform(-1000, 1000) for i in range(NUM_CHANNELS)]
-             for j in range(NUM_RECORDS)]
-
 
 class _MockDevice(Device):
     """Device that mocks reading data. Does not need a server. Continues as
     long as there is mock data."""
 
-    def __init__(self, fs=500):
+    def __init__(self, data=[], channels=[], fs=500):
         super(_MockDevice, self).__init__(
-            connection_params={}, channels=MOCK_CHANNELS, fs=fs)
+            connection_params={}, channels=channels, fs=fs)
+        self.data = data
         self.i = 0
 
     def name(self):
         return 'MockDevice'
 
     def read_data(self):
-        if (self.i < len(MOCK_DATA)):
-            row = MOCK_DATA[self.i]
+        if (self.i < len(self.data)):
+            row = self.data[self.i]
             self.i += 1
             return row
         return None
@@ -63,7 +58,28 @@ class _MockClock(object):
         return float(self.counter)
 
 
+class _CountingProcessor(Processor):
+    """Processor that records all data passed to the process method."""
+
+    def __init__(self):
+        super(_CountingProcessor, self).__init__()
+        self.data = []
+
+    def process(self, record, timestamp=None):
+        self.data.append(record)
+
+
 class TestClient(unittest.TestCase):
+    """Main Test class for client code."""
+
+    def __init__(self, *args, **kwargs):
+        super(TestClient, self).__init__(*args, **kwargs)
+        num_channels = 25
+        num_records = 500
+        self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
+        self.mock_data = [[np.random.uniform(-1000, 1000)
+                           for i in range(num_channels)]
+                          for j in range(num_records)]
 
     def test_filewriter(self):
         """Test filewriter."""
@@ -73,7 +89,8 @@ class TestClient(unittest.TestCase):
 
             # Instantiate and start collecting data
 
-            device = _MockDevice()
+            device = _MockDevice(data=self.mock_data,
+                                 channels=self.mock_channels)
             daq = Client(device=device)
             with daq:
                 time.sleep(0.1)
@@ -93,14 +110,14 @@ class TestClient(unittest.TestCase):
 
             # Third write was column header
             self.assertTrue(writeargs[2].startswith(
-                ','.join(['timestamp'] + MOCK_CHANNELS)))
+                ','.join(['timestamp'] + self.mock_channels)))
 
             self.assertTrue(daq.get_data_len() > 0,
                             "daq should have acquired data")
 
             # All subsequent data writes should look like data.
             for i, r in enumerate(writeargs[3:]):
-                self.assertEqual(MOCK_DATA[i],
+                self.assertEqual(self.mock_data[i],
                                  [float(n) for n in r.split(",")[1:]])
 
             # Length of data writes should match the buffer size.
@@ -111,36 +128,26 @@ class TestClient(unittest.TestCase):
     def test_processor(self):
         """Test processor calls."""
 
-        class _CountingProcessor(Processor):
-            """Processor that records all data passed to the process method."""
-
-            def __init__(self):
-                super(_CountingProcessor, self).__init__()
-                self.data = []
-
-            def process(self, record, timestamp=None):
-                self.data.append(record)
-
-        device = _MockDevice()
+        device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         processor = _CountingProcessor()
-        processor.set_device_info("MockDevice", 500, MOCK_CHANNELS)
+        processor.set_device_info("MockDevice", 500, self.mock_channels)
 
         daq = Client(device=device, processor=processor)
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
 
-        self.assertTrue(len(daq._processor.data) > 0)
+        self.assertTrue(len(processor.data) > 0)
 
-        for i, record in enumerate(daq._processor.data):
-            self.assertEqual(record, MOCK_DATA[i])
+        for i, record in enumerate(processor.data):
+            self.assertEqual(record, self.mock_data[i])
 
         daq.cleanup()
 
     def test_buffer(self):
         """Buffer should capture values read from the device."""
 
-        device = _MockDevice()
+        device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = Client(device=device,
                      processor=_MockProcessor())
         daq.start_acquisition()
@@ -151,7 +158,7 @@ class TestClient(unittest.TestCase):
         data = daq.get_data()
         self.assertTrue(len(data) > 0, "Buffer should have data.")
         for i, record in enumerate(data):
-            self.assertEqual(record.data, MOCK_DATA[i])
+            self.assertEqual(record.data, self.mock_data[i])
 
         daq.cleanup()
 
@@ -159,7 +166,8 @@ class TestClient(unittest.TestCase):
         """Test clock integration."""
 
         clock = _MockClock()
-        daq = Client(device=_MockDevice(),
+        daq = Client(device=_MockDevice(data=self.mock_data,
+                                        channels=self.mock_channels),
                      processor=_MockProcessor(),
                      clock=clock)
         with daq:
@@ -175,3 +183,7 @@ class TestClient(unittest.TestCase):
             self.assertEqual(record.timestamp, float(i + 1))
 
         daq.cleanup()
+
+
+if __name__ == '__main__':
+    unittest.main()

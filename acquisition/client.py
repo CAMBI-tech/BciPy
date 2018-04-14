@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import multiprocessing
-import threading
 import time
 import timeit
 
@@ -17,7 +16,8 @@ from util import StoppableThread, StoppableProcess
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
-
+DEBUG = False
+DEBUG_FREQ = 500
 
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
@@ -50,7 +50,8 @@ class Client(object):
             Constructor for a Buffer
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
-        offset: integer, used to help calibrate timing between device and the apps that use it.
+        offset: integer, used to help calibrate timing between device and the
+        apps that use it.
     """
 
     def __init__(self,
@@ -66,14 +67,16 @@ class Client(object):
 
         self._is_streaming = False
         self._is_calibrated = False
-        # offset in seconds from the start of acquisition to calibration trigger
+        # offset in seconds from the start of acquisition to calibration
+        # trigger
         self.offset = 0
 
-        self._initial_wait = 2  # for process loop
-        multiplier = self._device.fs if self._device.fs else 100
-        maxsize = (self._initial_wait + 1) * multiplier
+        self._initial_wait = 0.1  # for process loop
 
-        self._process_queue = multiprocessing.Queue(maxsize=maxsize)
+        # Max number of records in queue before it blocks for processing.
+        maxsize = 100
+
+        self._process_queue = multiprocessing.JoinableQueue(maxsize=maxsize)
 
     # @override ; context manager
     def __enter__(self):
@@ -112,9 +115,10 @@ class Client(object):
             logging.debug("Starting Acquisition")
 
             self._is_streaming = True
-
+            acq_started = multiprocessing.Event()
             self._acq_process = AcquisitionProcess(self._device, self._clock,
-                                                   self._process_queue)
+                                                   self._process_queue,
+                                                   acq_started)
             self._acq_process.start()
 
             # Initialize the buffer and processor; this occurs after the
@@ -136,6 +140,10 @@ class Client(object):
 
             self._process_thread = StoppableThread(target=self._process_loop)
             self._process_thread.daemon = True
+
+            while not acq_started.is_set():
+                time.sleep(self._initial_wait)
+
             self._process_thread.start()
 
     def _process_loop(self):
@@ -144,6 +152,7 @@ class Client(object):
 
         assert self._process_thread.running()
 
+        count = 0
         with self._processor as p:
             wait = self._initial_wait
             while self._process_thread.running():
@@ -151,6 +160,9 @@ class Client(object):
                     # block if necessary
                     record = self._process_queue.get(True, wait)
 
+                    count += 1
+                    if DEBUG and count % DEBUG_FREQ == 0:
+                        logging.debug("Processed sample: " + str(count))
                     # if device not calibrated, look for the first trigger
                     # signal as a marker of starting location.
                     if not self._is_calibrated:
@@ -160,13 +172,11 @@ class Client(object):
 
                             # TODO: device.fs may not be correct. See above.
                             self.offset = record.timestamp / self._device.fs
-
-                    # decrease the wait after data has been initially received
-                    wait = 2
+                    self._buf.append(record)
+                    p.process(record.data, record.timestamp)
+                    self._process_queue.task_done()
                 except Empty:
-                    break
-                self._buf.append(record)
-                p.process(record.data, record.timestamp)
+                    pass
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
@@ -177,13 +187,18 @@ class Client(object):
         self._acq_process.stop()
         self._acq_process.join()
 
-        # allow initial_wait seconds to wrap up any queued work
-        counter = 0
+
         logging.debug("Stopping Processing Queue")
-        while not self._process_queue.empty() and \
-                counter < (self._initial_wait * 100):
-            counter += 1
-            time.sleep(0.1)
+        # This blocks the current thread; wait until everything is in its
+        # own process before using this approach.
+        # self._process_queue.join()
+        counter = 0
+        while not self._process_queue.empty():
+            if counter % 100 == 0:
+                logging.debug("Waiting for processing to complete")
+            if counter % 300 == 0:
+                break
+            time.sleep(0.01)
 
         self._process_thread.stop()
         self._process_thread.join()
@@ -225,11 +240,12 @@ class Client(object):
 
 
 class AcquisitionProcess(StoppableProcess):
-    def __init__(self, device, clock, data_queue):
+    def __init__(self, device, clock, data_queue, start_event):
         super(AcquisitionProcess, self).__init__()
         self._device = device
         self._clock = clock  # TODO: clock manager?
         self._data_queue = data_queue
+        self._start_event = start_event
 
     def run(self):
         """Continuously reads data from the source and sends it to the buffer
@@ -240,18 +256,22 @@ class AcquisitionProcess(StoppableProcess):
         self._device.acquisition_init()
         self._clock.reset()
 
-        sample = 1
+        logging.debug("Starting Acquisition read data loop")
+        self._start_event.set()
+        sample = 0
         data = self._device.read_data()
 
         # begin continuous acquisition process as long as data received
         while self.running() and data:
+            sample += 1
+            if DEBUG and sample % DEBUG_FREQ == 0:
+                logging.debug("Read sample: " + str(sample))
+
             # Use get time to timestamp and continue saving records.
-            self._data_queue.put(
-                Record(data, sample))
+            self._data_queue.put(Record(data, sample))
             try:
                 # Read data again
                 data = self._device.read_data()
-                sample += 1
             except Exception as e:
                 logging.debug("Error reading data from device: " + str(e))
                 data = None

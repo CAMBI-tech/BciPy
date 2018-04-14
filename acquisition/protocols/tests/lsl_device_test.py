@@ -45,7 +45,7 @@ class Server(StoppableThread):
         while self.running():
             sample = [rand() for k in range(CHANNEL_COUNT)]
             self.outlet.push_sample(sample)
-            time.sleep(0.1)
+            time.sleep(0.01)
 
 
 class TestLslDevice(unittest.TestCase):
