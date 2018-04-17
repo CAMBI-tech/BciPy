@@ -55,6 +55,23 @@ class TestBufferServer(unittest.TestCase):
         self.assertEqual([r.data for r in result], data[start:end], "Should \
             return the slice of data requested.")
 
+    def test_query_data(self):
+        n = 150
+        data = [self._new_data() for x in range(n)]
+        last_channel = self.channels[-1]
+
+        for i, d in enumerate(data):
+            d[-1] = 1.0 if i >= 100 else 0.0
+            buffer_server.append(self.pid, Record(data=d, timestamp=i))
+
+        result = buffer_server.query(self.pid,
+                                     filters=[(last_channel, ">", 0)],
+                                     ordering=("timestamp", "asc"),
+                                     max_results=1)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].data[-1], 1.0)
+        self.assertEqual(result[0].timestamp, 100.0)
+
     def test_get_all_data(self):
         n = 150
         data = [self._new_data() for x in range(n)]

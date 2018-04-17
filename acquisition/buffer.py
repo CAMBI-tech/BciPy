@@ -54,6 +54,7 @@ class Buffer(object):
 
         # Create a data table with the correct number of channels (+ timestamp)
         fields = ['timestamp'] + channels
+        self.fields = fields
         defs = ','.join([field + ' real' for field in fields])
         cursor.execute('DROP TABLE IF EXISTS data')
         cursor.execute('CREATE TABLE data (%s)' % defs)
@@ -141,7 +142,8 @@ class Buffer(object):
 
     def all(self):
         """Returns all data in the buffer."""
-        return self.query(start=self.start_time)
+
+        return self.query_data(filters=[("timestamp", ">=", self.start_time)])
 
     def latest(self, limit=1000):
         """Get the n most recent number of items.
@@ -155,14 +157,9 @@ class Buffer(object):
             list of tuple(timestamp, data); will be in descending order by
             timestamp.
         """
-        self._flush()
-        conn = self._new_connection()
-        result = conn.execute("select * from data "
-                              "order by timestamp desc limit ?",
-                              (limit,))
 
-        # Return the data in the format it was provided
-        return [_convert_row(r) for r in result]
+        return self.query_data(ordering=("timestamp", "desc"),
+                               max_results=limit)
 
     def query(self, start, end=None):
         """Query the buffer for a time slice.
@@ -176,17 +173,69 @@ class Buffer(object):
         -------
             list of tuple(timestamp, data)
         """
+        if end:
+            return self.query_data(filters=[("timestamp", ">=", start),
+                                            ("timestamp", "<", end)])
+        else:
+            return self.query_data(filters=[("timestamp", ">=", start)])
+
+    def query_data(self, filters=[], ordering=None, max_results=None):
+        """Query the data with the provided filters.
+
+        Parameters:
+        -----------
+            filters: list(tuple(field, operator, value)), optional
+                list of tuples of the field_name, sql operator, and value.
+            ordering: tuple(fieldname, direction), optional
+                optional tuple indicating sort order
+            max_results: int, optional
+
+        Returns
+        -------
+            list of Records matching the query.
+        """
+
+        # Guard against sql injection by limiting query inputs.
+        valid_ops = ["<", "<=", ">", ">=", "=", "==", "!=", "<>", "IS",
+                     "IS NOT", "IN"]
+        for field, op, value in filters:
+            if not field in self.fields:
+                raise Exception("Invalid SQL data filter field. Must be one "\
+                 "of: " + str(self.fields))
+            elif not op in valid_ops:
+                raise Exception("Invalid SQL operator")
+
+        select = "select * from data"
+
+        where = ''
+        params = ()
+        if filters:
+            where = "where " + " AND ".join([" ".join([field, op, "?"])
+                                             for field, op, value in filters])
+            params = tuple(value for field, op, value in filters)
+
+        order = ''
+        if ordering is not None:
+            f, direction = ordering
+            if not f in self.fields:
+                raise Exception("Invalid field for SQL order by.")
+            elif not direction in ["asc", "desc"]:
+                raise Exception("Invalid order by direction.")
+
+            order = ' '.join(["order by", f, direction])
+
+        limit = "limit " + \
+            str(max_results) if isinstance(max_results, int) else ''
+
+        q = ' '.join(filter(None, [select, where, order, limit]))
+
         self._flush()
         conn = self._new_connection()
         result = []
-        if end:
-            result = conn.execute("select * from data where "
-                                  "timestamp >= ? and "
-                                  "timestamp < ?",
-                                  (start, end))
-        else:
-            result = conn.execute("select * from data where "
-                                  "timestamp >= ?", (start,))
+
+        print(q)
+        result = conn.execute(q, params) if params else conn.execute(q)
+
         # Return the data in the format it was provided
         return [_convert_row(r) for r in result]
 
@@ -255,6 +304,7 @@ def _main():
     print("Records per second: " + str(n / totaltime))
 
     b.cleanup()
+
 
 if __name__ == '__main__':
     _main()

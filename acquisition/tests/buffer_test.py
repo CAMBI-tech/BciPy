@@ -6,6 +6,7 @@ import timeit
 import numpy as np
 from buffer import Buffer
 from record import Record
+import pytest
 import unittest
 
 
@@ -72,6 +73,7 @@ class TestBuffer(unittest.TestCase):
         rows = b.query(start=b.start_time)
         self.assertEqual(
             len(rows), n, "Providing only the start should return the rest.")
+        b.cleanup()
 
     def test_latest(self):
         """Test query for most recent items."""
@@ -92,6 +94,7 @@ class TestBuffer(unittest.TestCase):
         rows = b.latest(latest_n)
         for j, item in enumerate(reversed(latest)):
             self.assertEqual(item, rows[j])
+        b.cleanup()
 
     def test_len(self):
         """Test buffer len."""
@@ -105,10 +108,11 @@ class TestBuffer(unittest.TestCase):
             b.append(Record(d, float(i)))
 
         self.assertEqual(len(b), n)
+        b.cleanup()
 
     def test_query_before_flush(self):
-        """If a query is made before chunksize records have been written, the data
-        should still be available."""
+        """If a query is made before chunksize records have been written,
+        the data should still be available."""
 
         n = 1000
         channel_count = 25
@@ -123,3 +127,99 @@ class TestBuffer(unittest.TestCase):
         rows = b.query(start=b.start_time)
         self.assertEqual(len(rows), n)
         self.assertEqual(len(b.all()), n)
+
+        b.cleanup()
+
+    def test_query_data(self):
+        n = 20
+
+        channels = ["ch1", "ch2", "TRG"]
+        trg_index = -1
+        channel_count = len(channels)
+
+        b = Buffer(channels=channels)
+
+        for i, d in enumerate(_mockdata(n, channel_count)):
+            d[trg_index] = 1.0 if i >= 10 else 0.0
+            timestamp = float(i)
+            b.append(Record(d, timestamp))
+
+        rows = b.query_data(filters=[("TRG", ">", 0)],
+                            ordering=("timestamp", "asc"),
+                            max_results=1)
+
+        self.assertEqual(len(rows), 1, "Should have limited to max_results.")
+        self.assertEqual(rows[0].data[trg_index], 1.0,
+                         "Should get filtered data.")
+        self.assertEqual(rows[0].timestamp, 10.0,
+                         "Should get first instance")
+        b.cleanup()
+
+    def test_query_with_invalid_filter_field(self):
+        n = 20
+
+        channels = ["ch1", "ch2", "TRG"]
+        channel_count = len(channels)
+
+        b = Buffer(channels=channels)
+
+        for i, d in enumerate(_mockdata(n, channel_count)):
+            timestamp = float(i)
+            b.append(Record(d, timestamp))
+
+        with pytest.raises(Exception):
+            b.query_data(filters=[("ch3", ">", 0)])
+        b.cleanup()
+
+    def test_query_with_invalid_filter_op(self):
+        n = 20
+
+        channels = ["ch1", "ch2", "TRG"]
+        channel_count = len(channels)
+
+        b = Buffer(channels=channels)
+
+        for i, d in enumerate(_mockdata(n, channel_count)):
+            timestamp = float(i)
+            b.append(Record(d, timestamp))
+
+        with pytest.raises(Exception):
+            b.query_data(filters=[("TRG", "> 0; DROP TABLE data; --", 0)])
+
+        b.cleanup()
+
+    def test_query_with_invalid_order_field(self):
+        n = 20
+
+        channels = ["ch1", "ch2", "TRG"]
+        trg_index = -1
+        channel_count = len(channels)
+
+        b = Buffer(channels=channels)
+
+        for i, d in enumerate(_mockdata(n, channel_count)):
+            d[trg_index] = 1.0 if i >= 10 else 0.0
+            timestamp = float(i)
+            b.append(Record(d, timestamp))
+
+        with pytest.raises(Exception):
+            b.query_data(ordering=("ch3", "asc"))
+        b.cleanup()
+
+    def test_query_with_invalid_order_direction(self):
+        n = 20
+
+        channels = ["ch1", "ch2", "TRG"]
+        trg_index = -1
+        channel_count = len(channels)
+
+        b = Buffer(channels=channels)
+
+        for i, d in enumerate(_mockdata(n, channel_count)):
+            d[trg_index] = 1.0 if i >= 10 else 0.0
+            timestamp = float(i)
+            b.append(Record(d, timestamp))
+
+        with pytest.raises(Exception):
+            b.query_data(ordering=("ch1", "ascending"))
+        b.cleanup()

@@ -8,6 +8,7 @@ from buffer import Buffer
 # Commands to which the server can respond.
 MSG_PUT = 'put_data'
 MSG_GET_ALL = 'get_all_data'
+MSG_QUERY_SLICE = 'query_slice'
 MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
@@ -56,10 +57,14 @@ def _loop(mailbox, channels, archive_name, cleanup):
             sender.put(buf.all())
         elif command == MSG_COUNT:
             sender.put(len(buf))
-        elif command == MSG_QUERY:
+        elif command == MSG_QUERY_SLICE:
             start, end = params
             logging.debug("Sending query: {}".format((start, end)))
             sender.put(buf.query(start, end))
+        elif command == MSG_QUERY:
+            # Generic query
+            filters, ordering, max_results = params
+            sender.put(buf.query_data(filters, ordering, max_results))
         else:
             logging.debug("Error; message not understood: {}".format(msg))
 
@@ -160,7 +165,7 @@ def count(mailbox):
 
 
 def get_data(mailbox, start=None, end=None):
-    """Query the buffer for a list of data records.
+    """Query the buffer for a time slice of data records.
 
     Parameters
     ----------
@@ -177,8 +182,28 @@ def get_data(mailbox, start=None, end=None):
     if start is None:
         request = (MSG_GET_ALL, None)
     else:
-        request = (MSG_QUERY, (start, end))
+        request = (MSG_QUERY_SLICE, (start, end))
 
+    return _rpc(mailbox, request)
+
+
+def query(mailbox, filters=[], ordering=None, max_results=None):
+    """Query the buffer for data.
+
+    Parameters:
+    -----------
+        filters: list(tuple(field, operator, value)), optional
+            list of tuples of the field_name, sql operator, and value.
+        ordering: tuple(fieldname, direction), optional
+            optional tuple indicating sort order
+        max_results: int, optional
+
+    Returns
+    -------
+        list of data rows meeting the query criteria.
+    """
+
+    request = (MSG_QUERY, (filters, ordering, max_results))
     return _rpc(mailbox, request)
 
 
