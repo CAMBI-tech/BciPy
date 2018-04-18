@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 
 
-def _loop(mailbox, channels, archive_name, cleanup):
+def _loop(mailbox, channels, archive_name):
     """Main server loop. Intended to be a Process target (and private to this
     module). Accepts messages through its mailbox queue, and takes the
     appropriate action based on the command and parameters contained within the
@@ -33,8 +33,6 @@ def _loop(mailbox, channels, archive_name, cleanup):
             channel.
         archive_name : str
             sqlite database name
-        cleanup : boolean
-            if true, deletes the archive on exit
     """
     buf = Buffer(channels=channels, archive_name=archive_name)
 
@@ -46,8 +44,8 @@ def _loop(mailbox, channels, archive_name, cleanup):
         sender, body = msg
         command, params = body
         if command == MSG_EXIT:
-            if cleanup:
-                buf.cleanup()
+            delete_archive = params
+            buf.cleanup(delete_archive=delete_archive)
             sender.put(('exit', 'ok'))
             break
         elif command == MSG_PUT:
@@ -69,7 +67,7 @@ def _loop(mailbox, channels, archive_name, cleanup):
             logging.debug("Error; message not understood: {}".format(msg))
 
 
-def start(channels, archive_name, cleanup=True):
+def start(channels, archive_name):
     """Starts a server Process.
 
     Parameters
@@ -79,8 +77,6 @@ def start(channels, archive_name, cleanup=True):
             for each channel.
         archive_name : str
             underlying database name
-        cleanup : boolean, optional
-            if true, deletes the archive on exit
     Returns
     -------
         Queue used to communicate with this server instance.
@@ -88,20 +84,22 @@ def start(channels, archive_name, cleanup=True):
 
     msg_queue = mp.Queue()
     p = mp.Process(target=_loop,
-                   args=(msg_queue, channels, archive_name, cleanup))
+                   args=(msg_queue, channels, archive_name))
     p.start()
     return msg_queue
 
 
-def stop(mailbox):
+def stop(mailbox, delete_archive=True):
     """Stops the process associated with the provided mailbox.
 
     Parameters
     ----------
         mailbox : Queue
             queue used to communicate with the process.
+        delete_archive : boolean, optional
+            if true, deletes the archive on exit
     """
-    request = (MSG_EXIT, None)
+    request = (MSG_EXIT, delete_archive)
     return _rpc(mailbox, request)
 
 

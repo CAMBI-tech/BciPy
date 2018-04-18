@@ -8,8 +8,8 @@ import timeit
 
 from queue import Empty
 
-
-from buffer import Buffer
+import buffer_server
+# from buffer import Buffer
 from processor import FileWriter
 from record import Record
 from util import StoppableThread, StoppableProcess
@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 DEBUG = False
 DEBUG_FREQ = 500
+
 
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
@@ -43,34 +44,36 @@ class Client(object):
         device: Device instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
-        processor : function -> Processor; optional
-            Constructor for a Processor (contextmanager with a `process`
-            method)
-        buffer : function -> Buffer, optional
-            Constructor for a Buffer
+        processor : Processor; optional
+            A data Processor that does something with the streaming data (ex.
+            writes to a file.)
+        buffer_name : str, optional
+            Name of the sql database archive; default is buffer.db.
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
-        offset: integer, used to help calibrate timing between device and the
-        apps that use it.
+        delete_archive: boolean, optional
+            Flag indicating whether to delete the database archive on exit.
+            Default is True.
     """
 
     def __init__(self,
                  device,
                  processor=FileWriter(filename='rawdata.csv'),
                  buffer_name='buffer.db',
-                 clock=_Clock()):
+                 clock=_Clock(),
+                 delete_archive=True):
 
         self._device = device
         self._processor = processor
         self._buffer_name = buffer_name
         self._clock = clock
+        self.delete_archive = delete_archive
 
         self._is_streaming = False
-        self._is_calibrated = False
+
         # offset in seconds from the start of acquisition to calibration
         # trigger
-        self.offset = 0
-
+        self._cached_offset = None
         self._initial_wait = 0.1  # for process loop
 
         # Max number of records in queue before it blocks for processing.
@@ -91,17 +94,7 @@ class Client(object):
         """Run the initialization code and start the loop to acquire data from
         the server.
 
-        We use threading and multiprocessing to achieve best performance during
-        our sessions.
-
-        ****
-        Eventually, we'd like to parallelize both acquisition and processing
-        loop but there are some issues with how our process loop is designed
-        and cannot work on Windows. This is due to os forking vs. duplication.
-            There are fixes in #Python3, but we are currently tied to v2.7
-                -- unix systems can directly replace StoppableThread with
-                    StoppableProcess!
-        ****
+        We use multiprocessing to achieve best performance during our sessions.
 
         Some references:
             Stopping processes and other great multiprocessing examples:
@@ -116,6 +109,13 @@ class Client(object):
 
             self._is_streaming = True
             acq_started = multiprocessing.Event()
+
+            # Device connection must happen in the Main thread if using
+            # the lsl_device due to limitations in the underlying lib.
+            self._device.connect()
+            self._device.acquisition_init()
+            self._clock.reset()
+
             self._acq_process = AcquisitionProcess(self._device, self._clock,
                                                    self._process_queue,
                                                    acq_started)
@@ -125,58 +125,22 @@ class Client(object):
             # device initialization to ensure that any device parameters have
             # been updated as needed.
 
-            # TODO: Now that device initialization has been moved to the
-            # acquisition loop, and that loop is in its own process,
-            # self._device is copied and never updated. So the device_info set
-            # in the processor and buffer only reflects what was initially
-            # configured. Initialization should either be moved back into this
-            # method or we need to use inter-process communication to update
-            # these values.
-
-            self._buf = Buffer(channels=self._device.channels,
-                               archive_name=self._buffer_name)
+            # Set/update device info. This may have been set in the device
+            # during the acquisition_init.
             self._processor.set_device_info(self._device.name, self._device.fs,
                                             self._device.channels)
+            self._buf = buffer_server.start(channels=self._device.channels,
+                                            archive_name=self._buffer_name)
 
-            self._process_thread = StoppableThread(target=self._process_loop)
-            self._process_thread.daemon = True
+            self._data_processor = DataProcessor(data_queue=self._process_queue,
+                                                 processor=self._processor,
+                                                 buf=self._buf,
+                                                 wait=self._initial_wait)
 
             while not acq_started.is_set():
                 time.sleep(self._initial_wait)
 
-            self._process_thread.start()
-
-    def _process_loop(self):
-        """Reads from the queue of data and performs processing an item at a
-        time. Also writes data to buffer. Intended to be in its own thread."""
-
-        assert self._process_thread.running()
-
-        count = 0
-        with self._processor as p:
-            wait = self._initial_wait
-            while self._process_thread.running():
-                try:
-                    # block if necessary
-                    record = self._process_queue.get(True, wait)
-
-                    count += 1
-                    if DEBUG and count % DEBUG_FREQ == 0:
-                        logging.debug("Processed sample: " + str(count))
-                    # if device not calibrated, look for the first trigger
-                    # signal as a marker of starting location.
-                    if not self._is_calibrated:
-                        # This assumes the last record is the trigger channel!
-                        if record.data[-1] > 0:
-                            self._is_calibrated = True
-
-                            # TODO: device.fs may not be correct. See above.
-                            self.offset = record.timestamp / self._device.fs
-                    self._buf.append(record)
-                    p.process(record.data, record.timestamp)
-                    self._process_queue.task_done()
-                except Empty:
-                    pass
+            self._data_processor.start()
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
@@ -186,23 +150,13 @@ class Client(object):
 
         self._acq_process.stop()
         self._acq_process.join()
-
+        self._device.disconnect()
 
         logging.debug("Stopping Processing Queue")
-        # This blocks the current thread; wait until everything is in its
-        # own process before using this approach.
-        # self._process_queue.join()
-        counter = 0
-        while not self._process_queue.empty():
-            if counter % 100 == 0:
-                logging.debug("Waiting for processing to complete")
-            if counter % 300 == 0:
-                break
-            time.sleep(0.01)
 
-        self._process_thread.stop()
-        self._process_thread.join()
-        self._buf.close()
+        # Blocks until all data in the queue is consumed.
+        self._process_queue.join()
+        self._data_processor.stop()
 
     def get_data(self, start=None, end=None):
         """ Gets data from the buffer.
@@ -218,32 +172,64 @@ class Client(object):
         -------
             list of Records
         """
+
         if self._buf is None:
             return []
-        elif start is None:
-            return self._buf.all()
         else:
-            return self._buf.query(start, end)
+            return buffer_server.get_data(self._buf, start, end)
 
     def get_data_len(self):
         """Efficient way to calculate the amount of data cached."""
         if self._buf is None:
             return 0
         else:
-            return len(self._buf)
+            return buffer_server.count(self._buf)
+
+    @property
+    def is_calibrated(self):
+        return self.offset != None
+
+    @property
+    def offset(self):
+        """Offset in seconds from the start of acquisition to calibration
+        trigger.
+
+        Returns
+        -------
+            float or None if TRG channel is all 0.
+        """
+
+        # cached value if previously queried; only needs to be computed once.
+        if self._cached_offset:
+            return self._cached_offset
+
+        if self._buf is None or self._device is None:
+            logging.debug("Buffer or device has not been initialized")
+            return None
+
+        rows = buffer_server.query(self._buf,
+                                   filters=[("TRG", ">", 0)],
+                                   ordering=("timestamp", "asc"),
+                                   max_results=1)
+        if len(rows) == 0:
+            return None
+        else:
+            self._cached_offset = rows[0].timestamp / self._device.fs
+            return self._cached_offset
 
     def cleanup(self):
         """Performs cleanup tasks, such as deleting the buffer archive. Note
-        that data may be unavailable after calling this method."""
+        that data will be unavailable after calling this method."""
         if self._buf:
-            self._buf.cleanup()
+            buffer_server.stop(self._buf, delete_archive=self.delete_archive)
+            self._buf = None
 
 
 class AcquisitionProcess(StoppableProcess):
     def __init__(self, device, clock, data_queue, start_event):
         super(AcquisitionProcess, self).__init__()
         self._device = device
-        self._clock = clock  # TODO: clock manager?
+        self._clock = clock
         self._data_queue = data_queue
         self._start_event = start_event
 
@@ -251,10 +237,6 @@ class AcquisitionProcess(StoppableProcess):
         """Continuously reads data from the source and sends it to the buffer
         for processing.
         """
-        # TODO: Send updated device information (fs, channels).
-        self._device.connect()
-        self._device.acquisition_init()
-        self._clock.reset()
 
         logging.debug("Starting Acquisition read data loop")
         self._start_event.set()
@@ -267,8 +249,7 @@ class AcquisitionProcess(StoppableProcess):
             if DEBUG and sample % DEBUG_FREQ == 0:
                 logging.debug("Read sample: " + str(sample))
 
-            # Use get time to timestamp and continue saving records.
-            self._data_queue.put(Record(data, sample))
+            self._data_queue.put(Record(data, self._clock.getTime()))
             try:
                 # Read data again
                 data = self._device.read_data()
@@ -277,7 +258,36 @@ class AcquisitionProcess(StoppableProcess):
                 data = None
                 break
         logging.debug("Total samples read: " + str(sample))
-        self._device.disconnect()
+
+
+class DataProcessor(StoppableProcess):
+    """Process that gets data from a queue and persists it to the buffer."""
+
+    def __init__(self, data_queue, processor, buf, wait=0.1):
+        super(DataProcessor, self).__init__()
+        self._data_queue = data_queue
+        self._processor = processor
+        self._buf = buf
+        self._wait = wait
+
+    def run(self):
+        """Reads from the queue of data and performs processing an item at a
+        time. Also writes data to buffer."""
+
+        count = 0
+        with self._processor as p:
+            while self.running():
+                try:
+                    record = self._data_queue.get(True, self._wait)
+                    count += 1
+                    if DEBUG and count % DEBUG_FREQ == 0:
+                        logging.debug("Processed sample: " + str(count))
+                    buffer_server.append(self._buf, record)
+                    p.process(record.data, record.timestamp)
+                    self._data_queue.task_done()
+                except Empty:
+                    pass
+            logging.debug("Total samples processed: " + str(count))
 
 
 if __name__ == "__main__":
@@ -313,7 +323,8 @@ if __name__ == "__main__":
         device.channels = args.channels.split(',')
     daq = Client(device=device,
                  processor=FileWriter(filename=args.filename),
-                 buffer_name=args.buffer)
+                 buffer_name=args.buffer,
+                 delete_archive=True)
 
     daq.start_acquisition()
 
@@ -327,3 +338,4 @@ if __name__ == "__main__":
     print("Number of samples in 2 seconds: {0}".format(daq.get_data_len()))
 
     daq.stop_acquisition()
+    daq.cleanup()

@@ -4,11 +4,13 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sqlite3
 from collections import deque
+import logging
 
 from builtins import range
 from record import Record
 
-
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 class Buffer(object):
     """Queryable Data Structure for caching data acquisition data.
 
@@ -66,22 +68,6 @@ class Buffer(object):
         self._insert_stmt = 'INSERT INTO data (%s) VALUES (%s)' % \
             (field_names, placeholders)
 
-    @classmethod
-    def with_opts(cls, options):
-        """Returns a builder than constructs a new Buffer with the given
-        options."""
-        def build(channels):
-            return Buffer(channels, **options)
-        return build
-
-    @classmethod
-    def builder(cls, archive_name):
-        """Returns a builder than constructs a new Buffer with the given
-        options."""
-        def build(channels):
-            return Buffer(channels, archive_name=archive_name)
-        return build
-
     def _new_connection(self):
         """Returns a new database connection."""
         if self._archive_deleted:
@@ -92,14 +78,15 @@ class Buffer(object):
     def close(self):
         self._flush()
 
-    def cleanup(self):
-        """Deletes the archive database. Data cannot be queried after this
-        method is called."""
+    def cleanup(self, delete_archive=True):
+        """Close connection and optionally deletes the archive database.
+        Data may not be queryable after this method is called."""
 
         self._conn.close()
         try:
-            os.remove(self._archive_name)
-            self._archive_deleted = True
+            if delete_archive:
+                os.remove(self._archive_name)
+                self._archive_deleted = True
         except OSError:
             pass
 
@@ -232,8 +219,7 @@ class Buffer(object):
         self._flush()
         conn = self._new_connection()
         result = []
-
-        print(q)
+        logging.debug(q)
         result = conn.execute(q, params) if params else conn.execute(q)
 
         # Return the data in the format it was provided

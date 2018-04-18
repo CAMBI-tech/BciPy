@@ -11,6 +11,7 @@ from acquisition.client import Client
 from acquisition.processor import Processor
 from acquisition.protocols.device import Device
 from mock import mock_open, patch
+import multiprocessing
 import unittest
 
 
@@ -58,15 +59,15 @@ class _MockClock(object):
         return float(self.counter)
 
 
-class _CountingProcessor(Processor):
+class _AccumulatingProcessor(Processor):
     """Processor that records all data passed to the process method."""
 
-    def __init__(self):
-        super(_CountingProcessor, self).__init__()
-        self.data = []
+    def __init__(self, q):
+        super(_AccumulatingProcessor, self).__init__()
+        self.data = q
 
     def process(self, record, timestamp=None):
-        self.data.append(record)
+        self.data.put(record)
 
 
 class TestClient(unittest.TestCase):
@@ -81,55 +82,13 @@ class TestClient(unittest.TestCase):
                            for i in range(num_channels)]
                           for j in range(num_records)]
 
-    def test_filewriter(self):
-        """Test filewriter."""
-
-        mwrite = mock_open()
-        with patch('processor.open', mwrite):
-
-            # Instantiate and start collecting data
-
-            device = _MockDevice(data=self.mock_data,
-                                 channels=self.mock_channels)
-            daq = Client(device=device)
-            with daq:
-                time.sleep(0.1)
-
-            mwrite.assert_called_once_with('rawdata.csv', 'wb')
-
-            writeargs = [args[0]
-                         for name, args, kwargs in mwrite().write.mock_calls]
-
-            # First write was daq_type
-            self.assertTrue('daq_type' in writeargs[0])
-            self.assertTrue(device.name() in writeargs[0])
-
-            # Second write was sample_rate
-            self.assertTrue(writeargs[1].startswith('sample_rate,' +
-                                                    str(device.fs)))
-
-            # Third write was column header
-            self.assertTrue(writeargs[2].startswith(
-                ','.join(['timestamp'] + self.mock_channels)))
-
-            self.assertTrue(daq.get_data_len() > 0,
-                            "daq should have acquired data")
-
-            # All subsequent data writes should look like data.
-            for i, r in enumerate(writeargs[3:]):
-                self.assertEqual(self.mock_data[i],
-                                 [float(n) for n in r.split(",")[1:]])
-
-            # Length of data writes should match the buffer size.
-            self.assertEqual(daq.get_data_len(), len(writeargs[3:]))
-
-            daq.cleanup()
-
     def test_processor(self):
         """Test processor calls."""
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        processor = _CountingProcessor()
+        q = multiprocessing.Queue()
+        processor = _AccumulatingProcessor(q)
+
         processor.set_device_info("MockDevice", 500, self.mock_channels)
 
         daq = Client(device=device, processor=processor)
@@ -137,15 +96,20 @@ class TestClient(unittest.TestCase):
         time.sleep(0.1)
         daq.stop_acquisition()
 
-        self.assertTrue(len(processor.data) > 0)
+        q.put('END')
+        data = []
+        for d in iter(q.get, 'END'):
+            data.append(d)
 
-        for i, record in enumerate(processor.data):
+        self.assertTrue(len(data) > 0)
+
+        for i, record in enumerate(data):
             self.assertEqual(record, self.mock_data[i])
 
         daq.cleanup()
 
-    def test_buffer(self):
-        """Buffer should capture values read from the device."""
+    def test_get_data(self):
+        """Data should be queryable."""
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = Client(device=device,
@@ -154,9 +118,9 @@ class TestClient(unittest.TestCase):
         time.sleep(0.1)
         daq.stop_acquisition()
 
-        # Get all records from buffer
+        # Get all records
         data = daq.get_data()
-        self.assertTrue(len(data) > 0, "Buffer should have data.")
+        self.assertTrue(len(data) > 0, "Client should have data.")
         for i, record in enumerate(data):
             self.assertEqual(record.data, self.mock_data[i])
 
@@ -166,6 +130,7 @@ class TestClient(unittest.TestCase):
         """Test clock integration."""
 
         clock = _MockClock()
+        clock.counter = 10  # ensures that clock gets reset.
         daq = Client(device=_MockDevice(data=self.mock_data,
                                         channels=self.mock_channels),
                      processor=_MockProcessor(),
@@ -181,6 +146,65 @@ class TestClient(unittest.TestCase):
         self.assertTrue(len(data) > 0)
         for i, record in enumerate(data):
             self.assertEqual(record.timestamp, float(i + 1))
+
+        daq.cleanup()
+
+    def test_offset(self):
+        """Test offset calculation"""
+
+        channels = ['ch1', 'ch2', 'TRG']
+        fs = 100
+        trigger_at = 10
+        num_records = 500
+        num_channels = len(channels)
+
+        mock_data = []
+        for i in range(num_records):
+            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
+            trigger_channel = 0 if (i + 1) < trigger_at else 1
+            d.append(trigger_channel)
+            mock_data.append(d)
+
+        clock = _MockClock()
+        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        daq = Client(device=device,
+                     processor=_MockProcessor(),
+                     clock=_MockClock())
+
+        daq.start_acquisition()
+        time.sleep(0.1)
+
+        self.assertTrue(daq.is_calibrated)
+        self.assertEqual(daq.offset, float(trigger_at) / fs)
+
+        daq.stop_acquisition()
+        daq.cleanup()
+
+    def test_missing_offset(self):
+
+        channels = ['ch1', 'ch2', 'TRG']
+        fs = 100
+        trigger_at = 10
+        num_records = 500
+        num_channels = len(channels)
+
+        mock_data = []
+        for i in range(num_records):
+            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
+            d.append(0)
+            mock_data.append(d)
+
+        clock = _MockClock()
+        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        daq = Client(device=device,
+                     processor=_MockProcessor(),
+                     clock=_MockClock())
+
+        with daq:
+            time.sleep(0.1)
+
+        self.assertFalse(daq.is_calibrated)
+        self.assertEqual(daq.offset, None)
 
         daq.cleanup()
 
