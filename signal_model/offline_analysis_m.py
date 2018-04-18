@@ -12,9 +12,9 @@ from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from signal_model.mach_learning.train_model import train_m_estimator_pipeline
 
 import numpy as np
-import sklearn as sk
 import pickle
 from time import time
+
 
 def noise_data(dat, amplitude, length, p, channel_map):
     """
@@ -29,6 +29,7 @@ def noise_data(dat, amplitude, length, p, channel_map):
     C, d = dat.shape
 
     activations = np.random.binomial(1, p, d)
+    noise_power = 0
 
     # Below is for having one activation per length samples
     end = -99999
@@ -42,38 +43,31 @@ def noise_data(dat, amplitude, length, p, channel_map):
     activations[d-length:] = 0
 
     artifact_start_indices = np.where(activations)[0]
-    print('Artifact start indices (#Artf. = {}):').format(len(artifact_start_indices))
-    print(artifact_start_indices[0:16])
+    print('#Artf. = {}').format(len(artifact_start_indices))
 
-    noise_type = 'artifact'
+    # with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
+    # with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
+    with open('/home/berkan/Desktop/GitProjects/bci/data/jaw_muscle.pkl') as f:
+        artifacts = pickle.load(f)  # CxN'xd
+    N_prime = artifacts.shape[1]
+    list_indexes = range(N_prime)
+    list_artifact_indices = np.random.choice(list_indexes, len(artifact_start_indices))
 
-    if noise_type == 'gaussian':
-        mean = amplitude*np.ones(length)
+    sig_power = np.linalg.norm(dat[np.where(channel_map)[0]])**2
 
-        for indice in artifact_start_indices:
-            cov = 100 * sk.datasets.make_spd_matrix(length, random_state=15)
-            for c in range(C):
-                dat[c, indice:indice+length] += \
-                    np.random.multivariate_normal(mean=mean, cov=cov)*np.hamming(length)
-
-    elif noise_type == 'artifact':
-
-        # with open('C:/Users/Berkan/Desktop/data/jaw_muscle.pkl') as f:
-        # with open('/gss_gpfs_scratch/kadioglu.b/data/jaw_muscle.pkl') as f:
-        with open('/home/berkan/Desktop/GitProjects/bci/data/jaw_muscle.pkl') as f:
-            artifacts = pickle.load(f)  # CxN'xd
-        N_prime = artifacts.shape[1]
-        list_indexes = range(N_prime)
-        list_artifact_indices = np.random.choice(list_indexes, len(artifact_start_indices))
-        print 'Chosen artifacts for chosen start indices:'
-        print list_artifact_indices[0:14]
-
+    if length == 1:
         for z in range(len(artifact_start_indices)):
-            dat[np.where(channel_map)[0], artifact_start_indices[z]:artifact_start_indices[z]+length] += \
-                amplitude*artifacts[:, list_artifact_indices[z], 0:length]*np.hamming(length)
-                # amplitude * np.squeeze(artifacts[:, list_artifact_indices[z], 0:length] * np.hamming(length))
+            temp = amplitude*artifacts[:, list_artifact_indices[z], 0:length]*np.hamming(length)
+            noise_power += (np.dot(np.transpose(temp), temp)[0])
+            dat[np.where(channel_map)[0], artifact_start_indices[z]:artifact_start_indices[z]+length] += temp
+    else:
+        for z in range(len(artifact_start_indices)):
+            temp = amplitude * np.squeeze(artifacts[:, list_artifact_indices[z], 0:length] * np.hamming(length))
+            noise_power += np.linalg.norm(temp)**2
+            dat[np.where(channel_map)[0], artifact_start_indices[z]:artifact_start_indices[z] + length] += temp
 
-    return dat
+    print 'SIR: {}'.format(10*np.log10(sig_power/noise_power))
+    return dat, artifact_start_indices
 
 
 def offline_analysis_m(data_folder=None, add_artifacts=0., leng=1, amp=1):
@@ -104,17 +98,24 @@ def offline_analysis_m(data_folder=None, add_artifacts=0., leng=1, amp=1):
     # read_data_csv already removes the timestamp column.
     #                       CM            X3 X2           X1            TRG
     channel_map = [1] * 8 + [0] + [1] * 7 + [0] * 2 + [1] * 2 + [0] + [1] * 3 + [0]
-    x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode='calibration',
+    x, y, num_seq, _, triggers = trial_reshaper(t_t_i, t_i, dat, mode='calibration',
                                       fs=fs, k=k,
                                       channel_map=channel_map, offset=offset)
 
     # Adding pre-recorded artifacts below:
     if add_artifacts:
-        dat_artifact = noise_data(dat=dat, amplitude=amp, length=leng, p=add_artifacts, channel_map=channel_map)
+        dat_artifact, artifact_start_indices = noise_data(dat=dat, amplitude=amp, length=leng, p=add_artifacts, channel_map=channel_map)
 
-        x_artifact, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat_artifact, mode='calibration',
+        x_artifact, y, num_seq, _, triggers = trial_reshaper(t_t_i, t_i, dat_artifact, mode='calibration',
                                           fs=fs, k=k,
                                           channel_map=channel_map, offset=offset)
+        num_noisy_samples = 0
+        for art_indice in artifact_start_indices:
+            for trig_indice in triggers:
+                if art_indice >= trig_indice - leng and art_indice < trig_indice + x.shape[2]:
+                    num_noisy_samples += 1
+        print 'Noisy sample rate: {}'.format(num_noisy_samples*1./x.shape[1])
+
 
     model, auc_cv = train_m_estimator_pipeline(x, x_artifact, y, k_folds=10)
 
@@ -129,10 +130,10 @@ if __name__ == '__main__':
         amp = np.float(sys.argv[3])
         seed = int(np.float(sys.argv[4]))
     except Exception as e:
-        act_rate = .0001
-        leng = 1
-        amp = 10000
-        seed = 3
+        act_rate = .00300
+        leng = 15
+        amp = 100
+        seed = 30
 
     print 'Noise activation rate: {}'.format(act_rate)
     print 'Length: {}'.format(leng)
