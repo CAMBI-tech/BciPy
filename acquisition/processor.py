@@ -83,7 +83,7 @@ class FileWriter(Processor):
 
         # For python 2, writer needs the 'wb' option in order to work on
         # Windows. If using #Python3 'w' is needed.
-        if sys.version_info >= (3,0,0):
+        if sys.version_info >= (3, 0, 0):
             self._file = open(self._filename, 'w', newline='')
         else:
             self._file = open(self._filename, 'wb')

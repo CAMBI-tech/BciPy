@@ -41,6 +41,8 @@ class LslDevice(Device):
 
         # NOTE: this is a blocking call that can only be performed on the
         # main thread in Linux systems.
+        # TODO: confirm that the StreamInlet is Pickleable and can be copied
+        # to another process using spawn.
         streams = pylsl.resolve_stream('type', 'EEG')
 
         assert len(streams) > 0
