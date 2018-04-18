@@ -104,7 +104,7 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, of
 
         num_of_sequences = int(sum(labels))
 
-        return reshaped_trials, labels, num_of_sequences, trials_per_seq, triggers
+        return reshaped_trials, labels, num_of_sequences, trials_per_seq
 
     elif mode == 'copy_phrase':
 

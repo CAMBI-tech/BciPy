@@ -44,7 +44,6 @@ class KernelDensityEstimate:
                 respectively. """
 
         classes = np.unique(y)
-        # TODO: if train set lacks one of the classes ignore it
 
         cls_dep_x = [x[np.where(y == classes[i])[0]] for i in
                      range(self.num_cls)]

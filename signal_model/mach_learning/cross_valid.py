@@ -69,62 +69,6 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     return -auc
 
 
-def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
-                arg_op_type=[10, 'uniform']):
-    """ Description: This function performs an exhaustive grid search
-                     to estimate the hyper parameters lambda and gamma
-                     that minimize the cost of AUC.
-        Args:
-            model(pipeline): model to be iterated on
-            opt_el(int): number of the element in pipeline to be optimized
-            x(ndarray[float]): N x k data array
-            y(ndarray[int]): N x k observation (class) array
-                 N is number of samples k is dimensionality of features
-            grid(list(int)): a list of 2 numbers for grid
-            op_type(string): type of the optimization
-        Returns:
-            arg_opt(list[float]): optimized hyper parameters
-            """
-    if op_type == 'cost_auc':
-        k_folds, split = arg_op_type
-        # This specifies the different candidate values we want to try.
-        # The grid search will try all combination of these parameter values
-        # and select the set of parameters that provides the most accurate
-        # model.
-        param_cand = {  # dictionary of parameter candidates
-            'lam': np.linspace(.01, .99, grid[0], endpoint=False),
-            'gam': np.linspace(.01, .99, grid[1], endpoint=False),
-        }
-        best_auc = 0  # auc can't be smaller than 0
-        arg_opt = {'lam': 0, 'gam': 0}
-
-        # For every coordinate on the grid, try every combination of
-        # hyper parameters:
-        progress_bar(0, grid[0] * grid[1], prefix='Progress:',
-                     suffix='Complete', length=50)
-        tmp_counter = 0
-        for i in range(len(param_cand['lam'])):
-            for j in range(len(param_cand['gam'])):
-                auc = -cost_cross_validation_auc(model, opt_el, x, y,
-                                                 [param_cand['lam'][i],
-                                                  param_cand['gam'][j]],
-                                                 k_folds=k_folds, split=split)
-                if auc > best_auc:
-                    best_auc = auc
-                    arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
-                                                     param_cand['gam'][j]
-
-                tmp_counter += 1
-                progress_bar(tmp_counter, grid[0] * grid[1],
-                             prefix='Progress:', suffix='Complete', length=50)
-    else:
-        # TODO: Handle this case
-        print('Error: Operation type other than AUC cost.')
-
-    # This returns the parameter estimates with the highest scores:
-    return [arg_opt['lam'], arg_opt['gam']]
-
-
 def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
                   arg_op_type=[10, 'uniform']):
     """ Optimizes lambda, gamma values for given  penalty function
@@ -183,32 +127,93 @@ def cross_validate_parameters(x, y, model, opt_el=1, k_folds=10, split='uniform'
             """
 
     print('Starting Cross Validation !')
+
+
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
+
+
     return arg_opt
 
 
-def cross_validate_model(x, x_artifact, y, model, k_folds=10):
+def cross_validate_model(x, y, model, k_folds=10):
     # Given a model and data, create folds and apply k fold cross validation.
     # The aim here is to evaluate our model and estimate its performance as good as we can.
 
-    print 'Starting cross validation...'
-    skf = StratifiedKFold(n_splits=k_folds, random_state=0)
+    skf = StratifiedKFold(n_splits=k_folds)
 
     auc_list = []
     fold = 0
     for train_index, test_index in skf.split(X=x[0], y=y):
-        x_train, y_train = x_artifact[:, train_index, :], y[train_index]
+        x_train, y_train = x[:, train_index, :], y[train_index]
         x_test, y_test = x[:, test_index, :], y[test_index]
 
-        model.pipeline[0].current_fold = fold
+        try:
+            model.pipeline[0].current_fold = fold
+        except:
+            pass
+
         model.fit(x_train, y_train)
         sc = model.transform(x_test)
         fpr, tpr, _ = metrics.roc_curve(y_test, sc, pos_label=1)
         auc_list.append(metrics.auc(fpr, tpr))
 
-        print 'Current AUC\'s are:'
-        print auc_list
         fold += 1
 
     return np.mean(auc_list)
+
+
+def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
+                arg_op_type=[10, 'uniform']):
+    """ Description: This function performs an exhaustive grid search
+                     to estimate the hyper parameters lambda and gamma
+                     that minimize the cost of AUC.
+        Args:
+            model(pipeline): model to be iterated on
+            opt_el(int): number of the element in pipeline to be optimized
+            x(ndarray[float]): N x k data array
+            y(ndarray[int]): N x k observation (class) array
+                 N is number of samples k is dimensionality of features
+            grid(list(int)): a list of 2 numbers for grid
+            op_type(string): type of the optimization
+        Returns:
+            arg_opt(list[float]): optimized hyper parameters
+            """
+    if op_type == 'cost_auc':
+        k_folds, split = arg_op_type
+        # This specifies the different candidate values we want to try.
+        # The grid search will try all combination of these parameter values
+        # and select the set of parameters that provides the most accurate
+        # model.
+        param_cand = {  # dictionary of parameter candidates
+            'lam': np.linspace(.01, .99, grid[0], endpoint=False),
+            'gam': np.linspace(.01, .99, grid[1], endpoint=False),
+        }
+        best_auc = 0  # auc can't be smaller than 0
+        arg_opt = {'lam': 0, 'gam': 0}
+
+        # For every coordinate on the grid, try every combination of
+        # hyper parameters:
+        progress_bar(0, grid[0] * grid[1], prefix='Progress:',
+                     suffix='Complete', length=50)
+        tmp_counter = 0
+        for i in range(len(param_cand['lam'])):
+            for j in range(len(param_cand['gam'])):
+                auc = -cost_cross_validation_auc(model, opt_el, x, y,
+                                                 [param_cand['lam'][i],
+                                                  param_cand['gam'][j]],
+                                                 k_folds=k_folds, split=split)
+                if auc > best_auc:
+                    best_auc = auc
+                    arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
+                                                     param_cand['gam'][j]
+
+                tmp_counter += 1
+                progress_bar(tmp_counter, grid[0] * grid[1],
+                             prefix='Progress:', suffix='Complete', length=50)
+    else:
+        # TODO: Handle this case
+        print('Error: Operation type other than AUC cost.')
+
+    # This returns the parameter estimates with the highest scores:
+    return [arg_opt['lam'], arg_opt['gam']]
