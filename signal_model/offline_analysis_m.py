@@ -58,4 +58,3 @@ if __name__ == '__main__':
 
     calib_path = None
     offline_analysis_m(data_folder=calib_path)
-1
