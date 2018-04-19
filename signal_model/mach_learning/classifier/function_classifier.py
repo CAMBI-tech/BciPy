@@ -31,7 +31,7 @@ class RegularizedDiscriminantAnalysis:
 
     def __init__(self): # TODO: Make it more modular
         self.lam = .9
-        self.gam = .3
+        self.gam = .1
 
         self.class_i = None
         self.mean_i = None
@@ -211,7 +211,7 @@ class MDiscriminantAnalysis:
             self.inv_reg_covariances.append([])
 
         self.lam = .9
-        self.gam = .3
+        self.gam = .1
 
         self.current_fold = -1
 
@@ -253,7 +253,7 @@ class MDiscriminantAnalysis:
                       self.gam / p * np.trace(shr_cov_i[i]) *
                       np.eye(p)) for i in range(len(self.class_list))]
 
-        # Make sure part below works fine #TODO: Here might be problems
+        # Make sure part below works fine
         self.inv_reg_covariances[self.current_fold] = []
         self.inv_reg_covariances[self.current_fold].append(np.linalg.inv(np.array(reg_cov_i)))
 

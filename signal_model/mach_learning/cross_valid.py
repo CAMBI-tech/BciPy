@@ -56,7 +56,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             try:
                 model.pipeline[0].current_fold = idx_fold
                 model.pipeline[1].current_fold = idx_fold
-            except Exception as e:
+            except:
                 pass
 
             model.fit(x_train, y_train)
@@ -128,10 +128,8 @@ def cross_validate_parameters(x, y, model, opt_el=1, k_folds=10, split='uniform'
 
     print('Starting Cross Validation !')
 
-
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
-
 
     return arg_opt
 
@@ -150,6 +148,7 @@ def cross_validate_model(x, y, model, k_folds=10):
 
         try:
             model.pipeline[0].current_fold = fold
+            model.pipeline[1].current_fold = fold
         except:
             pass
 

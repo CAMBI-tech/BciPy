@@ -57,7 +57,7 @@ def sigma_update(X, mean, sigma_inv, b, c_square):
     return sigma_hat
 
 
-def robust_mean_covariance(X, q=.95):
+def robust_mean_covariance(X, q=.85):
     # Calculates robust mean and covariance for Nxp ndarray x. N is number of samples and p is number of features.
 
     N, p = X.shape
@@ -90,8 +90,8 @@ def robust_mean_covariance(X, q=.95):
         # print s_a_c
         iteration += 1
         if iteration == 999 and s_a_c > 1:
-            print 'Max number of iterations reached for m estimation for pca. Last s_a_c: {}.'.format(s_a_c)
-            print 'Use regular calibration, m estimation does not converge for this case.'
+            print 'Max number of iterations reached for m estimation. Last s_a_c: {}.'.format(s_a_c)
+            print 'It is advised to have at least 120 positive trials in robust calibration.'
 
     return M_est_mean_new, M_est_sigma_new
 

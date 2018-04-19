@@ -46,10 +46,10 @@ class ChannelWisePrincipalComponentAnalysis:
             self.var_tol = var_tol
 
         for i in range(self.num_ch):
-            # self.list_pca[i].fit(x[i, :, :], y)
+            self.list_pca[i].fit(x[i, :, :], y)
             max_sv = self.list_pca[i].singular_values_[0]
-            # self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
-            self.list_pca[i].n_components = 5
+            self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
+            # self.list_pca[i].n_components = 5
             try:
                 self.list_pca[i].fit(x[i, :, :], y)
             except Exception as e:

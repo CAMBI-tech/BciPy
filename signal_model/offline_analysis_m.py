@@ -4,7 +4,9 @@ from signal_processing.sig_pro import sig_pro
 from helpers.triggers import trigger_decoder
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from signal_model.mach_learning.train_model import train_m_estimator_pipeline
+from helpers.data_viz import generate_offline_analysis_screen
 from time import time
+import pickle
 
 
 def offline_analysis_m(data_folder=None):
@@ -36,14 +38,24 @@ def offline_analysis_m(data_folder=None):
                                       fs=fs, k=k,
                                       channel_map=channel_map, offset=offset)
 
-    model, auc_cv = train_m_estimator_pipeline(x, y)
+    model, auc = train_m_estimator_pipeline(x, y)
 
     t1 = time() - t1
     print 'Completed in {} mins'.format(t1/60.)
 
+    print('Saving offline analysis plots!')
+    generate_offline_analysis_screen(x, y, model, data_folder)
+
+    print('Saving the model!')
+    with open(data_folder + '/m_model_auc_%2.0f.pkl' % (auc*100), 'wb') as output:
+        pickle.dump(model, output)
+    return model
+
 
 if __name__ == '__main__':
+    # IMPORTANT: In calibration number of sequences should be higher than 120
+    # SUGGESTED: (6 negative 1 positive) 150 sequences.
 
-    sample_calib_path = '/home/berkan/Desktop/b/Results/backup/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    # sample_calib_path = None
-    offline_analysis_m(data_folder=sample_calib_path)
+    calib_path = None
+    offline_analysis_m(data_folder=calib_path)
+1

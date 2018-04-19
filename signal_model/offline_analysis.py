@@ -1,25 +1,17 @@
-import sys
-sys.path.append('.')
-sys.path.append('..')
-# sys.path.append('../..')
-# sys.path.append('../../..')
-
 from helpers.load import read_data_csv, load_experimental_data
 from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
-from signal_model.offline_analysis_m import noise_data
 from helpers.triggers import trigger_decoder
-import numpy as np
+from helpers.data_viz import generate_offline_analysis_screen
 from time import time
+import pickle
 
 
-def offline_analysis(data_folder=None, add_artifacts=0., leng=1, amp=1):
+def offline_analysis(data_folder=None):
     """
 
     :param data_folder:
-    :param add_artifacts:
-    :param leng:
     :return:
     """
 
@@ -47,40 +39,21 @@ def offline_analysis(data_folder=None, add_artifacts=0., leng=1, amp=1):
                                       mode=mode, fs=fs, k=ds_rate, offset=offset,
                                       channel_map=channel_map)
 
-    if add_artifacts:
-        dat_artifact = noise_data(dat=dat, amplitude=amp, length=leng, p=add_artifacts, channel_map=channel_map)
-        x_artifact, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat_artifact,
-                                          mode=mode, fs=fs, k=ds_rate, offset=offset,
-                                          channel_map=channel_map)
-
-    model, auc_cv = train_pca_rda_kde_model(x, x_artifact, y, k_folds=10)
+    model, auc = train_pca_rda_kde_model(x, y)
 
     t1 = time() - t1
     print 'Completed in {} mins'.format(t1/60.)
 
+    print('Saving offline analysis plots!')
+    generate_offline_analysis_screen(x, y, model, data_folder)
+
+    print('Saving the model!')
+    with open(data_folder + '/model_%2.0f.pkl' % (auc*100), 'wb') as output:
+        pickle.dump(model, output)
+    return model
+
 
 if __name__ == "__main__":
-    try:
-        rate = np.float(sys.argv[1])
-        leng = int(np.float(sys.argv[2]))
-        amp = np.float(sys.argv[3])
-        seed = int(np.float(sys.argv[4]))
-    except Exception as e:
-        rate = .0001
-        leng = 3
-        amp = 10000
-        seed = 3
 
-    print 'Noise activation rate: {}'.format(rate)
-    print 'Length: {}'.format(leng)
-    print 'Amplitude: {}'.format(amp)
-    print 'Random seed: {}\n'.format(seed)
-
-    np.random.seed(seed)
-    # sample_calib_path = '/home/berkan/Desktop/GitProjects/bci/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    sample_calib_path = \
-        '/gss_gpfs_scratch/kadioglu.b/data/Berkan_calib/Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    # sample_calib_path = 'C:\Users\Berkan\Desktop\data\Berkan_calib\Berkan_Wed_28_Feb_2018_0209_Eastern Standard Time'
-    # sample_calib_path = None
-
-    offline_analysis(data_folder=sample_calib_path, add_artifacts=rate, leng=leng, amp=amp)
+    calib_path = None
+    offline_analysis(data_folder=calib_path)

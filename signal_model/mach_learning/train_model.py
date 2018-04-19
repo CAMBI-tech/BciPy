@@ -71,6 +71,8 @@ def train_m_estimator_pipeline(x, y):
         Return:
             model(pipeline): trained model
             """
+
+    # Train PCA and MDA to cross validate hyper parameters
     model = Pipeline()
 
     pca = MPCA(var_tol=.1**5)
@@ -79,14 +81,15 @@ def train_m_estimator_pipeline(x, y):
     model.add(pca)
     model.add(mda)
 
-    # Find the cross validation AUC for the model.
     lam, gam = cross_validate_parameters(x=x, y=y, model=model)
-    print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
+    print('Optimized val [lam:{} \ gam:{}]'.format(lam, gam))
+
+    # Train the model with optimized hyper parameters to find once again the CV AUC
+    model = Pipeline()
 
     pca = MPCA(var_tol=.1**5)
     mda = MDiscriminantAnalysis()
 
-    model = Pipeline()
     model.add(pca)
     model.add(mda)
 
@@ -94,15 +97,17 @@ def train_m_estimator_pipeline(x, y):
     model.pipeline[1].gam = gam
     auc_cv = cross_validate_model(x=x, y=y, model=model)
 
-    # Now train on complete data for the final model
     sc = model.fit_transform(x, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
     auc_all = metrics.auc(fpr, tpr)
 
-    # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
 
     model = Pipeline()
+
+    pca = MPCA(var_tol=.1**5)
+    mda = MDiscriminantAnalysis()
+
     model.add(pca)
     model.add(mda)
     model.add(KernelDensityEstimate(bandwidth=bandwidth))
