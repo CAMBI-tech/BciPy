@@ -107,7 +107,6 @@ class Client(object):
         if not self._is_streaming:
             logging.debug("Starting Acquisition")
 
-            self._is_streaming = True
             acq_started = multiprocessing.Event()
 
             # Device connection must happen in the Main thread if using
@@ -137,10 +136,9 @@ class Client(object):
                                                  buf=self._buf,
                                                  wait=self._initial_wait)
 
-            while not acq_started.is_set():
-                time.sleep(self._initial_wait)
-
+            acq_started.wait()
             self._data_processor.start()
+            self._is_streaming = True
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
