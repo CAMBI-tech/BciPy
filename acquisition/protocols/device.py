@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from acquisition.device_info import DeviceInfo
 
+
 class Device(object):
     """Base class for device-specific behavior.
 
@@ -26,7 +27,10 @@ class Device(object):
 
     @property
     def device_info(self):
-        return DeviceInfo(fs=self.fs, channels=self.channels)
+        """Information about the acquisition parameters. Should be called after
+        acquisition_init for those devices which set this information."""
+
+        return DeviceInfo(fs=self.fs, channels=self.channels, name=self.name())
 
     def connect(self):
         """Connect to the data source."""

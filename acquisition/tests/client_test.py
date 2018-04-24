@@ -89,8 +89,6 @@ class TestClient(unittest.TestCase):
         q = multiprocessing.Queue()
         processor = _AccumulatingProcessor(q)
 
-        processor.set_device_info("MockDevice", 500, self.mock_channels)
-
         daq = Client(device=device, processor=processor)
         daq.start_acquisition()
         time.sleep(0.1)
@@ -134,6 +132,7 @@ class TestClient(unittest.TestCase):
         daq = Client(device=_MockDevice(data=self.mock_data,
                                         channels=self.mock_channels),
                      processor=_MockProcessor(),
+                     buffer_name='buffer_client_test_clock.db',
                      clock=clock)
         with daq:
             time.sleep(0.1)
@@ -165,19 +164,22 @@ class TestClient(unittest.TestCase):
             d.append(trigger_channel)
             mock_data.append(d)
 
-        clock = _MockClock()
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
         daq = Client(device=device,
                      processor=_MockProcessor(),
+                     buffer_name='buffer_client_test_offset.db',
                      clock=_MockClock())
 
         daq.start_acquisition()
         time.sleep(0.1)
+        daq.stop_acquisition()
 
+        # The assertions should work before the stop_acquisition, but on some
+        # Windows environments the tests were taking too long to setup and the
+        # time would complete before any data had been processed.
         self.assertTrue(daq.is_calibrated)
         self.assertEqual(daq.offset, float(trigger_at) / fs)
 
-        daq.stop_acquisition()
         daq.cleanup()
 
     def test_missing_offset(self):
@@ -194,11 +196,11 @@ class TestClient(unittest.TestCase):
             d.append(0)
             mock_data.append(d)
 
-        clock = _MockClock()
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
         daq = Client(device=device,
                      processor=_MockProcessor(),
-                     clock=_MockClock())
+                     clock=_MockClock(),
+                     buffer_name='buffer_client_test_missing_offset.db')
 
         with daq:
             time.sleep(0.1)

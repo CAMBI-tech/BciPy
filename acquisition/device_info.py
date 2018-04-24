@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
 
 from collections import namedtuple
 
-"""Domain object used for storing data and timestamp information, where data
-is a single reading from a device and is a list of channel information
-(float)."""
-DeviceInfo = namedtuple('DeviceInfo', ['fs', 'channels'])
+"""Domain object used for storing metadata about the collection parameters,
+including device name, sample rate and the list of channels."""
+DeviceInfo = namedtuple('DeviceInfo', ['fs', 'channels', 'name'])

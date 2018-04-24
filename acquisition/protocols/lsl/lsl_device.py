@@ -39,10 +39,9 @@ class LslDevice(Device):
         # other metadata.
         # TODO: consider using other connection_params here.
 
-        # NOTE: this is a blocking call that can only be performed on the
-        # main thread in Linux systems.
-        # TODO: confirm that the StreamInlet is Pickleable and can be copied
-        # to another process using spawn.
+        # NOTE: According to the documentation this is a blocking call that can
+        # only be performed on the main thread in Linux systems. So far testing
+        # seems fine when done in a separate multiprocessing.Process.
         streams = pylsl.resolve_stream('type', 'EEG')
 
         assert len(streams) > 0

@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from device_info import DeviceInfo
 import csv
 import sys
 
@@ -11,34 +12,26 @@ class Processor(object):
     acquisition data.
     """
 
-    def set_device_info(self, device_name, fs, channels):
+    def set_device_info(self, device_info):
         """
         Sets the device info, which may be used by the process method.
 
         Parameters
         ----------
-            device_name : str
-                Name of the device used to collect data.
-            fs : int
-                Sample frequency in Hz.
-            channels : list
-                List of channel names.
+            device_info : DeviceInfo
+                Metadata with the parameters used to collect data.
         """
-        self._device_name = device_name
-        self._fs = fs
-        self._channels = channels
+        self._device_info = device_info
 
     def _check_device_info(self):
         """
-        Checks that the device_info has been set.
+        Checks that the sample_metadata has been set.
 
         Exceptions
         ----------
-            throws AssertionError unless all device_info properties are set.
+            throws AssertionError unless set.
         """
-        assert self._device_name is not None and \
-            self._fs is not None and \
-            self._channels is not None, \
+        assert self._device_info is not None, \
             "device_info is not set; Initialize with set_device_info."
 
     def __enter__(self):
@@ -61,6 +54,13 @@ class Processor(object):
                 time at which the record was obtained
         """
         raise NotImplementedError('Subclass must define the process method')
+
+
+class NullProcessor(Processor):
+    """A DAQ item Processor that doesn't do anything."""
+
+    def process(self, record, timestamp=None):
+        pass
 
 
 class FileWriter(Processor):
@@ -89,9 +89,9 @@ class FileWriter(Processor):
             self._file = open(self._filename, 'wb')
 
         self._writer = csv.writer(self._file, delimiter=',')
-        self._writer.writerow(['daq_type', self._device_name])
-        self._writer.writerow(['sample_rate', self._fs])
-        self._writer.writerow(['timestamp'] + self._channels)
+        self._writer.writerow(['daq_type', self._device_info.name])
+        self._writer.writerow(['sample_rate', self._device_info.fs])
+        self._writer.writerow(['timestamp'] + self._device_info.channels)
         return self
 
     # @override ; context manager
@@ -111,12 +111,15 @@ class LslProcessor(Processor):
         self._outlet = None
 
     # @override
-    def set_device_info(self, device_name, fs, channels):
+    def set_device_info(self, device_info):
         import pylsl
         import uuid
 
-        super(LslProcessor, self).set_device_info(device_name, fs, channels)
-        info = pylsl.StreamInfo(device_name, 'EEG', len(channels), fs,
+        super(LslProcessor, self).set_device_info(device_info)
+        channels = self._device_info.channels
+        info = pylsl.StreamInfo(self._device_info.name, 'EEG',
+                                len(channels),
+                                self._device_info.fs,
                                 'float32', str(uuid.uuid4()))
         meta_channels = info.desc().append_child('channels')
         for c in channels:

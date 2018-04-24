@@ -9,7 +9,6 @@ import timeit
 from queue import Empty
 
 import buffer_server
-# from buffer import Buffer
 from device_info import DeviceInfo
 from processor import FileWriter
 from record import Record
@@ -68,17 +67,20 @@ class Client(object):
         self._processor = processor
         self._buffer_name = buffer_name
         self._clock = clock
+
+        # boolean; set to false to retain the sqlite db.
         self.delete_archive = delete_archive
 
+        self._device_info = None  # set on start.
         self._is_streaming = False
 
-        # offset in seconds from the start of acquisition to calibration
-        # trigger
+        # Offset in seconds from the start of acquisition to calibration
+        # trigger. Calculated once, then cached.
         self._cached_offset = None
-        self._initial_wait = 0.1  # for process loop
+        self._max_wait = 0.1  # for process loop
 
         # Max number of records in queue before it blocks for processing.
-        maxsize = 100
+        maxsize = 500
 
         self._process_queue = multiprocessing.JoinableQueue(maxsize=maxsize)
 
@@ -110,14 +112,7 @@ class Client(object):
 
             msg_queue = multiprocessing.Queue()
 
-            # Device connection must happen in the Main thread if using
-            # the lsl_device due to limitations in the underlying lib.
-
-            # TODO: create new device instance or refactor devices to only
-            # include pickleable items in connect method.
-
-            # self._device.connect()
-            # self._device.acquisition_init()
+            # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
 
             self._acq_process = AcquisitionProcess(self._device, self._clock,
@@ -125,25 +120,20 @@ class Client(object):
                                                    msg_queue)
             self._acq_process.start()
 
-            # Block thread until device connects and possibly updates
-            # device_info.
-            device_info = msg_queue.get()
+            # Block thread until device connects and returns device_info.
+            self._device_info = msg_queue.get()
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
             # been updated as needed.
-
-            # Set/update device info. This may have been set in the device
-            # during the acquisition_init.
-            self._processor.set_device_info(self._device.name, device_info.fs,
-                                            device_info.channels)
-            self._buf = buffer_server.start(channels=device_info.channels,
-                                            archive_name=self._buffer_name)
+            self._processor.set_device_info(self._device_info)
+            self._buf = buffer_server.start(self._device_info.channels,
+                                            self._buffer_name)
 
             self._data_processor = DataProcessor(data_queue=self._process_queue,
                                                  processor=self._processor,
                                                  buf=self._buf,
-                                                 wait=self._initial_wait)
+                                                 wait=self._max_wait)
             self._data_processor.start()
             self._is_streaming = True
 
@@ -201,13 +191,14 @@ class Client(object):
         Returns
         -------
             float or None if TRG channel is all 0.
+        TODO: Consider setting the trigger channel name in the device_info.
         """
 
         # cached value if previously queried; only needs to be computed once.
         if self._cached_offset:
             return self._cached_offset
 
-        if self._buf is None or self._device is None:
+        if self._buf is None or self._device_info is None:
             logging.debug("Buffer or device has not been initialized")
             return None
 
@@ -216,9 +207,10 @@ class Client(object):
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
         if len(rows) == 0:
+            logging.debug("No rows have a TRG value.")
             return None
         else:
-            self._cached_offset = rows[0].timestamp / self._device.fs
+            self._cached_offset = rows[0].timestamp / self._device_info.fs
             return self._cached_offset
 
     def cleanup(self):
@@ -245,7 +237,8 @@ class AcquisitionProcess(StoppableProcess):
         self._device.connect()
         self._device.acquisition_init()
 
-        # Send updated device info to the main thread
+        # Send updated device info to the main thread; this also signals that
+        # initialization is complete.
         self._msg_queue.put(self._device.device_info)
 
         logging.debug("Starting Acquisition read data loop")
@@ -268,6 +261,7 @@ class AcquisitionProcess(StoppableProcess):
                 break
         logging.debug("Total samples read: " + str(sample))
         self._device.disconnect()
+
 
 class DataProcessor(StoppableProcess):
     """Process that gets data from a queue and persists it to the buffer."""

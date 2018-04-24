@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from acquisition.processor import FileWriter
+from acquisition.device_info import DeviceInfo
 from mock import mock_open, patch
 import pytest
 import unittest
@@ -16,8 +17,8 @@ class TestFilewriter(unittest.TestCase):
         expected_csv_rows = ['0,1,2\r\n', '1,2,3\r\n', '2,3,4\r\n']
 
         filewriter = FileWriter('foo.csv')
-        filewriter.set_device_info(device_name='foo-device', fs=100,
-                                   channels=['c1', 'c2', 'c3'])
+        filewriter.set_device_info(DeviceInfo(name='foo-device', fs=100,
+                                              channels=['c1', 'c2', 'c3']))
 
         m = mock_open()
         with patch('acquisition.processor.open', m):
