@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+from acquisition.device_info import DeviceInfo
 
 class Device(object):
     """Base class for device-specific behavior.
@@ -22,6 +23,10 @@ class Device(object):
     @property
     def name(self):
         raise NotImplementedError('Subclass must define a name property')
+
+    @property
+    def device_info(self):
+        return DeviceInfo(fs=self.fs, channels=self.channels)
 
     def connect(self):
         """Connect to the data source."""

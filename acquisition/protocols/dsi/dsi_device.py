@@ -45,6 +45,9 @@ class DsiDevice(Device):
         self._socket = socket.create_connection(address)
         self._socket.settimeout(None)
 
+    def disconnect(self):
+        self._socket.close()
+
     def _read_packet(self):
         """Read a single packet from the data source.
 

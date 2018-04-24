@@ -10,6 +10,7 @@ from queue import Empty
 
 import buffer_server
 # from buffer import Buffer
+from device_info import DeviceInfo
 from processor import FileWriter
 from record import Record
 from util import StoppableThread, StoppableProcess
@@ -107,18 +108,26 @@ class Client(object):
         if not self._is_streaming:
             logging.debug("Starting Acquisition")
 
-            acq_started = multiprocessing.Event()
+            msg_queue = multiprocessing.Queue()
 
             # Device connection must happen in the Main thread if using
             # the lsl_device due to limitations in the underlying lib.
-            self._device.connect()
-            self._device.acquisition_init()
+
+            # TODO: create new device instance or refactor devices to only
+            # include pickleable items in connect method.
+
+            # self._device.connect()
+            # self._device.acquisition_init()
             self._clock.reset()
 
             self._acq_process = AcquisitionProcess(self._device, self._clock,
                                                    self._process_queue,
-                                                   acq_started)
+                                                   msg_queue)
             self._acq_process.start()
+
+            # Block thread until device connects and possibly updates
+            # device_info.
+            device_info = msg_queue.get()
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
@@ -126,17 +135,15 @@ class Client(object):
 
             # Set/update device info. This may have been set in the device
             # during the acquisition_init.
-            self._processor.set_device_info(self._device.name, self._device.fs,
-                                            self._device.channels)
-            self._buf = buffer_server.start(channels=self._device.channels,
+            self._processor.set_device_info(self._device.name, device_info.fs,
+                                            device_info.channels)
+            self._buf = buffer_server.start(channels=device_info.channels,
                                             archive_name=self._buffer_name)
 
             self._data_processor = DataProcessor(data_queue=self._process_queue,
                                                  processor=self._processor,
                                                  buf=self._buf,
                                                  wait=self._initial_wait)
-
-            acq_started.wait()
             self._data_processor.start()
             self._is_streaming = True
 
@@ -148,7 +155,6 @@ class Client(object):
 
         self._acq_process.stop()
         self._acq_process.join()
-        self._device.disconnect()
 
         logging.debug("Stopping Processing Queue")
 
@@ -224,20 +230,25 @@ class Client(object):
 
 
 class AcquisitionProcess(StoppableProcess):
-    def __init__(self, device, clock, data_queue, start_event):
+    def __init__(self, device, clock, data_queue, msg_queue):
         super(AcquisitionProcess, self).__init__()
         self._device = device
         self._clock = clock
         self._data_queue = data_queue
-        self._start_event = start_event
+        self._msg_queue = msg_queue
 
     def run(self):
         """Continuously reads data from the source and sends it to the buffer
         for processing.
         """
 
+        self._device.connect()
+        self._device.acquisition_init()
+
+        # Send updated device info to the main thread
+        self._msg_queue.put(self._device.device_info)
+
         logging.debug("Starting Acquisition read data loop")
-        self._start_event.set()
         sample = 0
         data = self._device.read_data()
 
@@ -256,7 +267,7 @@ class AcquisitionProcess(StoppableProcess):
                 data = None
                 break
         logging.debug("Total samples read: " + str(sample))
-
+        self._device.disconnect()
 
 class DataProcessor(StoppableProcess):
     """Process that gets data from a queue and persists it to the buffer."""
@@ -272,6 +283,7 @@ class DataProcessor(StoppableProcess):
         """Reads from the queue of data and performs processing an item at a
         time. Also writes data to buffer."""
 
+        logging.debug("Starting Data Processing loop.")
         count = 0
         with self._processor as p:
             while self.running():
