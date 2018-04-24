@@ -21,7 +21,6 @@ class Device(object):
         self.fs = fs
         self.channels = channels
 
-    @property
     def name(self):
         raise NotImplementedError('Subclass must define a name property')
 
@@ -29,8 +28,8 @@ class Device(object):
     def device_info(self):
         """Information about the acquisition parameters. Should be called after
         acquisition_init for those devices which set this information."""
-
-        return DeviceInfo(fs=self.fs, channels=self.channels, name=self.name())
+        device_name = self.name if isinstance(self.name, str) else self.name()
+        return DeviceInfo(fs=self.fs, channels=self.channels, name=device_name)
 
     def connect(self):
         """Connect to the data source."""
