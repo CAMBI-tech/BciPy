@@ -28,7 +28,8 @@ class Device(object):
     def device_info(self):
         """Information about the acquisition parameters. Should be called after
         acquisition_init for those devices which set this information."""
-        device_name = self.name if isinstance(self.name, str) else self.name()
+        device_name = self.name if isinstance(self.name, str) or\
+            isinstance(self.name, unicode) else self.name()
         return DeviceInfo(fs=self.fs, channels=self.channels, name=device_name)
 
     def connect(self):
