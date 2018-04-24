@@ -114,8 +114,7 @@ class DataServer(threading.Thread):
                     wfile.write(item)
 
                 except IOError as e:
-                    if e.errno == errno.EPIPE:
-                        break
+                    break
         logging.debug("Client disconnected")
 
 
