@@ -18,7 +18,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 DEBUG = False
 DEBUG_FREQ = 500
-
+MSG_DEVICE_INFO = "device_info"
+MSG_ERROR = "error"
 
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
@@ -121,7 +122,13 @@ class Client(object):
             self._acq_process.start()
 
             # Block thread until device connects and returns device_info.
-            self._device_info = msg_queue.get()
+            msg_type, msg = msg_queue.get()
+            if msg_type == MSG_DEVICE_INFO:
+                self._device_info = msg
+            elif msg_type == MSG_ERROR:
+                raise Exception("Error connecting to device")
+            else:
+                raise Exception("Message not understood: " + str(msg))
 
             # Initialize the buffer and processor; this occurs after the
             # device initialization to ensure that any device parameters have
@@ -234,12 +241,17 @@ class AcquisitionProcess(StoppableProcess):
         for processing.
         """
 
-        self._device.connect()
-        self._device.acquisition_init()
+        try:
+            logging.debug("Connecting to device")
+            self._device.connect()
+            self._device.acquisition_init()
+        except Exception as e:
+            self._msg_queue.put((MSG_ERROR, str(e)))
+            raise e
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self._msg_queue.put(self._device.device_info)
+        self._msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
 
         logging.debug("Starting Acquisition read data loop")
         sample = 0

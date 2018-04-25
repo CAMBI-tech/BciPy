@@ -21,6 +21,7 @@ class Device(object):
         self.fs = fs
         self.channels = channels
 
+    @property
     def name(self):
         raise NotImplementedError('Subclass must define a name property')
 
