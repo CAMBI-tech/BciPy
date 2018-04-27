@@ -210,6 +210,39 @@ class TestClient(unittest.TestCase):
 
         daq.cleanup()
 
+    def test_zero_offset(self):
+        """Test offset value override"""
+
+        channels = ['ch1', 'ch2', 'TRG']
+        fs = 100
+        trigger_at = 10
+        num_records = 500
+        num_channels = len(channels)
+
+        mock_data = []
+        for i in range(num_records):
+            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
+            trigger_channel = 0 if (i + 1) < trigger_at else 1
+            d.append(trigger_channel)
+            mock_data.append(d)
+
+        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        daq = Client(device=device,
+                     processor=_MockProcessor(),
+                     buffer_name='buffer_client_test_offset.db',
+                     clock=_MockClock())
+
+        daq.is_calibrated = True  # force the override.
+        daq.start_acquisition()
+        time.sleep(0.1)
+        daq.stop_acquisition()
+
+        self.assertTrue(daq.is_calibrated)
+        self.assertEqual(daq.offset, 0.0, "Setting the is_calibrated to True\
+            should override the offset calcution.")
+
+        daq.cleanup()
+
 
 if __name__ == '__main__':
     unittest.main()

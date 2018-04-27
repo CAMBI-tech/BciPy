@@ -193,7 +193,21 @@ class Client(object):
 
     @property
     def is_calibrated(self):
+        """Returns boolean indicating whether or not acquisition has been
+        calibrated (an offset calculated based on a trigger)."""
         return self.offset != None
+
+    @is_calibrated.setter
+    def is_calibrated(self, bool_val):
+        """Setter for the is_calibrated property that allows the user to
+        override the calculated value and use a 0 offset.
+
+        Parameters
+        ----------
+            bool_val: boolean
+                if True, uses a 0 offset; if False forces the calculation.
+        """
+        self._cached_offset = 0.0 if bool_val else None
 
     @property
     def offset(self):
@@ -207,7 +221,7 @@ class Client(object):
         """
 
         # cached value if previously queried; only needs to be computed once.
-        if self._cached_offset:
+        if self._cached_offset != None:
             return self._cached_offset
 
         if self._buf is None or self._device_info is None:
