@@ -25,7 +25,7 @@ def bci_main(parameters, user, exp_type, mode):
         user (str): name of the user
         exp_type (int): type of experiment. Ex. 1 = calibration
         mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
-    
+
     """
 
     # Define the parameter and data save location
@@ -132,6 +132,7 @@ def execute_task(task_type, parameters, save_folder):
     # Stop Acquistion
     try:
         daq.stop_acquisition()
+        daq.cleanup()
     except Exception as e:
         raise e
 

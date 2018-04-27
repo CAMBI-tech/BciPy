@@ -21,6 +21,7 @@ DEBUG_FREQ = 500
 MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
 
+
 class _Clock(object):
     """Default clock that uses the timeit module to generate timestamps"""
 
@@ -185,6 +186,10 @@ class Client(object):
             return 0
         else:
             return buffer_server.count(self._buf)
+
+    @property
+    def device_info(self):
+        return self._device_info
 
     @property
     def is_calibrated(self):
