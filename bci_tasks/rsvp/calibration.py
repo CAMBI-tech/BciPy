@@ -149,7 +149,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save, fake):
     # Give the system time to process
     core.wait(buffer_val)
 
-    if daq._is_calibrated:
+    if daq.is_calibrated:
         _write_triggers_from_sequence_calibration(
             ['offset', daq.offset], trigger_file, offset=True)
 
