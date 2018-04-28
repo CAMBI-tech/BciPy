@@ -567,7 +567,7 @@ def writeValuesToFile(section_names, field_names, filename=None):
                                executable, ".json", "", wx.FD_SAVE)
         if(filename is None):
             result = dialog.ShowModal()
-            output_path = dialog.GetDirectory() + "\\" + dialog.Getfilename()
+            output_path = dialog.GetDirectory() + "\\" + dialog.GetFilename()
         else:
             result = None
             output_path = filename
@@ -605,7 +605,7 @@ def read_values_from_file(section_names, field_names, filename=None):
         dialog = wx.FileDialog(wxWindow, "Select Config File", executable, ".json", "", wx.FD_OPEN)
         if(filename == None):
             result = dialog.ShowModal()
-            readpath = dialog.GetDirectory() + "\\" + dialog.Getfilename()
+            readpath = dialog.GetDirectory() + "\\" + dialog.GetFilename()
         else:
             result = None
             readpath = filename
