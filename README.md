@@ -52,6 +52,14 @@ You will also need to set a python path for your session. If running demo or oth
 
 3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 
+## Bash Script
+
+To use, create a virtual env named `bci-env` in your Documents folder. 
+Clone the repo to that folder as well.
+`pip install -r requirements.txt` while that environment is activated. 
+If those assumptions are met, simply click on the run_bci.sh and the gui will pop-up allowing you to execute the experiments.
+Change the paths or script names here is needed.
+
 ## Usage
 
 Start by running `python gui/BCInterface.py` in your command prompt or terminal.
