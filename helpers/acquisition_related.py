@@ -39,20 +39,21 @@ def init_eeg_acquisition(parameters, save_folder,
     """
 
     # Initialize the needed DAQ Parameters
+    host = parameters['acq_host']['value']
+    port = int(parameters['acq_port']['value'])
+
     parameters = {
         'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
         'device': parameters['acq_device']['value'],
         'filename': save_folder + '/' + parameters['raw_data_name']['value'],
-    }
-
-    default_host = '127.0.0.1'
-    default_port = 8844
+        'connection_params': {'host': host,
+                              'port': port}}
 
     # Set configuration parameters (with default values if not provided).
     buffer_name = parameters.get('buffer_name', 'buffer.db')
     channels = parameters.get('channels', [])
     connection_params = parameters.get(
-        'connection_params', {'host': default_host, 'port': default_port})
+        'connection_params', {})
     device_name = parameters.get('device', 'DSI')
     filename = parameters.get('filename', 'rawdata.csv')
     fs = parameters.get('fs', 300)
@@ -60,15 +61,14 @@ def init_eeg_acquisition(parameters, save_folder,
     dataserver = False
     if server:
         device_name = 'DSI'
-        host = connection_params.setdefault('host', default_host)
-        port = connection_params.setdefault('port', default_port)
         protocol = registry.default_protocol(device_name)
         fs = protocol.fs
         channels = protocol.channels
         dataserver = DataServer(protocol=protocol,
                                 generator=generator.random_data,
                                 gen_params={'channel_count': len(channels)},
-                                host=host, port=port)
+                                host=host,
+                                port=port)
         dataserver.start()
 
     Device = registry.find_device(device_name)

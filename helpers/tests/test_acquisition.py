@@ -1,4 +1,4 @@
-import pytest
+import shutil
 import time
 import unittest
 
@@ -22,6 +22,10 @@ class TestAcquisition(unittest.TestCase):
             self.data_save_path,
             self.user_information,
             self.parameters_used)
+
+    def tearDown(self):
+        # clean up by removing the data folder we used for testing
+        shutil.rmtree(self.save)
 
     def test_default_values(self):
         m = mock_open()
