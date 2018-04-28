@@ -440,7 +440,7 @@
     ],
     "isNumeric": "false"    
   },
-    "parameter_location": {
+  "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter Location",
@@ -450,7 +450,7 @@
     ],
     "isNumeric": "false"
   },
-    "is_txt_sti": {
+  "is_txt_sti": {
     "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",

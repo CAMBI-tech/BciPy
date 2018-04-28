@@ -42,30 +42,32 @@ def load_experimental_data():
     return filename
 
 
-def load_classifier():
+def load_classifier(filename=None):
     # use python's internal gui to call file explorers and get the filename
 
-    try:
-        Tk().withdraw()  # we don't want a full GUI
-        filename = askopenfilename()  # show dialog box and return the path
+    if not filename:
+        try:
+            Tk().withdraw()  # we don't want a full GUI
+            filename = askopenfilename()  # show dialog box and return the path
 
-        # load the classifier with pickle
-        classifier = pickle.load(open(filename, 'rb'))
+        # except, raise error
+        except Exception as error:
+            raise error
 
-    # except, raise error
-    except Exception as error:
-        raise error
+    # load the classifier with pickle
+    classifier = pickle.load(open(filename, 'rb'))
 
     return classifier
 
 
-def load_csv_data():
-    try:
-        Tk().withdraw()  # we don't want a full GUI
-        filename = askopenfilename()  # show dialog box and return the path
+def load_csv_data(filename=None):
+    if not filename:
+        try:
+            Tk().withdraw()  # we don't want a full GUI
+            filename = askopenfilename()  # show dialog box and return the path
 
-    except Exception as error:
-        raise error
+        except Exception as error:
+            raise error
 
     # get the last part of the path to determine file type
     file_name = filename.split('/')[-1]
