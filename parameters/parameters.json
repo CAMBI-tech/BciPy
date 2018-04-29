@@ -397,11 +397,27 @@
   },
   "acq_device": {
     "value": "DSI",
-    "section": "bci_config",
+    "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
     "recommended_values": "",
     "isNumeric": "false"
+  },
+  "acq_host": {
+    "value": "127.0.0.1",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Host",
+    "helpTip": "Acquisition Device Host",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "acq_port": {
+    "value": "9000",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Port",
+    "helpTip": "Acquisition Device Port",
+    "recommended_values": "",
+    "isNumeric": "true"
   },
   "eeg_buffer_len": {
     "value": "2",
@@ -440,7 +456,7 @@
     ],
     "isNumeric": "false"    
   },
-    "parameter_location": {
+  "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter Location",
@@ -450,7 +466,7 @@
     ],
     "isNumeric": "false"
   },
-    "is_txt_sti": {
+  "is_txt_sti": {
     "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",

@@ -37,7 +37,6 @@ def dummy_trig_dat_generator(truth, state, stimuli):
             target_info(list[str]): target information about the stimuli
             """
     # Remove fixation
-    stimuli.pop(0)
     if truth[0:len(state)] == state:
         tar = truth[len(state)]
     else:
@@ -122,18 +121,26 @@ class CopyPhraseWrapper(object):
         """
 
         try:
-            # Send the raw data to signal processing
-            dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
-            # TODO: if it is a fixation remove it don't hardcode it as if you did
+            # Send the raw data to signal processing / in demo mode do not use sig_pro
+            # dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
+            dat = raw_dat
 
-            letters = [triggers[i][0] for i in range(1, len(triggers))]
-            time = [triggers[i][1] for i in range(1, len(triggers))]
+            # TODO: if it is a fixation remove it don't hardcode it as if you did
+            letters = [triggers[i][0] for i in range(0, len(triggers))]
+            time = [triggers[i][1] for i in range(0, len(triggers))]
+
+            # Raise an error if the stimuli includes unexpected terms
+            if not set(letters).issubset(set(self.alp+['+'])):
+                raise 'stimuli include letters not in {alphabet, {'+'}}'
+
+            # Remove information in any trigger related with the fixation
+            del target_info[letters.index('+')]
+            del time[letters.index('+')]
+            del letters[letters.index('+')]
 
             x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                         k=self.k, mode=self.mode,
                                         channel_map=channel_map)
-
-            # TODO: Hacked to get rid of cross sign for now
 
             lik_r = inference(x, letters, self.signal_model, self.alp)
             prob = self.conjugator.update_and_fuse({'ERP': lik_r})
@@ -167,7 +174,7 @@ class CopyPhraseWrapper(object):
             # Else, let's query the lmodel for priors
             else:
                 # Get the displayed state, and do a list comprehension to place
-                    # in a form the LM recognizes
+                # in a form the LM recognizes
                 update = [letter
                           if not letter == '_'
                           else ' '
@@ -217,7 +224,7 @@ class CopyPhraseWrapper(object):
 
             # TODO: Get stopping condition as parameter
             while (self.decision_maker.displayed_state != task_final and
-                           loop_counter < 50):
+                   loop_counter < 50):
                 if d:
                     d, sti = self.initialize_epoch()
                     if sti:

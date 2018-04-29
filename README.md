@@ -52,6 +52,14 @@ You will also need to set a python path for your session. If running demo or oth
 
 3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 
+## Bash Script
+
+To use, create a virtual env named `bci-env` in your Documents folder. 
+Clone the repo to that folder as well.
+`pip install -r requirements.txt` while that environment is activated. 
+If those assumptions are met, simply click on the run_bci.sh and the gui will pop-up allowing you to execute the experiments.
+Change the paths or script names here is needed.
+
 ## Usage
 
 Start by running `python gui/BCInterface.py` in your command prompt or terminal.
@@ -135,14 +143,52 @@ Namespaces are one honking great idea -- let's do more of those!
 
 Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
+## Testing
+----------
+
+Please have all requirements installed. When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module's tests for examples!
+
+To run all tests, in the command line:
+
+```python
+py.test
+```
+
+
+To run a single modules tests (ex. acquisition), in the command line:
+
+```python
+py.test acquisition
+```
+
+To generate test coverage metrics, in the command line:
+
+```python
+coverage run -m py.test
+
+#Generate a command line report
+coverage report
+
+# Generate html doc in the bci folder. Navigate to index.html and click.
+coverage html
+
+```
+
 ## Authorship
 --------------
 
 Tab Memmott (OHSU)
+
 Aziz Kocanaogullari (NEU)
+
 Matthew Lawhead (OSHU- OCTRI)
+
 Berkan Kadioglu (NEU)
-Dani Smektala (N.A.)
+
+Dani Smektala (OHSU_
+
 Andac Demir (NEU)
+
 Shaobin Xu (OHSU)
+
 Shiran Dudy (OHSU)
