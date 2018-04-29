@@ -30,7 +30,9 @@ class VisualFeedback(Feedback):
         # Clock
         self.clock = clock
 
-    def administer(self, stimulus, assertion=None):
+        self.message_color = self.parameters['feedback_message_color']['value']
+
+    def administer(self, stimulus, message=None, compare_assertion=None):
         """Administer.
 
         Adminster visual feedback. Timing information from parameters,
@@ -39,17 +41,23 @@ class VisualFeedback(Feedback):
         """
         timing = []
 
-        if assertion:
-            stim, assert_stim, assert_message = self._construct_assertion_stimuli(
-                stimulus, assertion)
+        if message:
+            message = self._construct_message(message)
+            message.draw()
 
-            assert_message.draw()
+        if compare_assertion:
+            (stim,
+             assert_stim) = self._construct_assertion_stimuli(
+                stimulus, compare_assertion)
+
             assert_stim.draw()
             stim.draw()
+
             self.display.flip()
             time = ['assertion_visual_feedback', self.clock.getTime()]
         else:
-            stim = self._construct_stimulus(stimulus)
+            stim = self._construct_stimulus(stimulus, self.pos_stim)
+
             stim.draw()
             self.display.flip()
 
@@ -60,43 +68,36 @@ class VisualFeedback(Feedback):
 
         return timing
 
-    def _construct_stimulus(self, stimulus):
+    def _construct_stimulus(self, stimulus, pos):
         if '.png' in stimulus:
-            return visual.TextStim(self.display, font=self.font_stim,
-                                   text=stimulus,
-                                   height=self.height_stim,
-                                   mask=None,
-                                   pos=self.pos_sti,
-                                   ori=0.0)
+            return visual.ImageStim(self.display,
+                                    image=stimulus,
+                                    size=(self.height_stim, self.height_stim),
+                                    mask=None,
+                                    pos=pos,
+                                    ori=0.0)
         else:
             return visual.TextStim(self.display, font=self.font_stim,
                                    text=stimulus,
                                    height=self.height_stim,
-                                   pos=self.pos_stim)
+                                   pos=pos)
 
     def _construct_assertion_stimuli(self, stimulus, assertion):
-        assertion, assert_message = assertion
-        stimulus = visual.TextStim(self.display, font=self.font_stim,
-                                   text=stimulus,
-                                   height=0.3,
-                                   pos=(-.3, 0))
-        assertion = visual.TextStim(self.display, font=self.font_stim,
-                                    text=assertion,
-                                    height=0.3,
-                                    pos=(.3, 0))
+        stimulus = self._construct_stimulus(stimulus, (-.3, 0))
+        assertion = self._construct_stimulus(assertion, (.3, 0))
 
-        assert_message = visual.TextStim(self.display, font=self.font_stim,
-                                         text=assert_message,
-                                         height=0.3,
-                                         pos=(-.5, .5), color='green')
-        return stimulus, assertion, assert_message
+        return stimulus, assertion
 
+    def _construct_message(self, message):
+        return visual.TextStim(self.display, font=self.font_stim,
+                               text=message,
+                               height=0.3,
+                               pos=(-.3, .5), color=self.message_color)
 
 if __name__ == "__main__":
     import argparse
     from helpers.load import load_json_parameters
     from display.display_main import init_display_window
-    from psychopy import core
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',

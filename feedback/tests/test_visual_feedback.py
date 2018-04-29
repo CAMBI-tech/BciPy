@@ -43,11 +43,31 @@ class TestVisualFeedback(unittest.TestCase):
 
     def test_feedback_administer_text(self):
         test_stimulus = 'A'
-        resp = self.visual_feedback.administer(test_stimulus)
+        resp = self.visual_feedback.administer(
+            test_stimulus, message='Correct:')
 
         self.assertTrue(isinstance(resp, list))
 
     def test_feedback_assertion_text(self):
         stimulus = 'B'
-        assertion = ('A', 'Incorret')
-        self.visual_feedback.administer(stimulus, assertion=assertion)
+        assertion = 'A'
+        self.visual_feedback.message_color = 'red'
+        resp = self.visual_feedback.administer(
+            stimulus,
+            message='Incorrect:', compare_assertion=assertion)
+        self.assertTrue(isinstance(resp, list))
+
+    def test_feedback_administer_image(self):
+        test_stimulus = './static/images/testing_images/white.png'
+        resp = self.visual_feedback.administer(
+            test_stimulus, message='Correct:')
+
+        self.assertTrue(isinstance(resp, list))
+
+    def test_feedback_assertion_images(self):
+        test_stimulus = './static/images/testing_images/white.png'
+        assertion = './static/images/testing_images/white.png'
+        resp = self.visual_feedback.administer(
+            test_stimulus, message='Correct:', compare_assertion=assertion)
+
+        self.assertTrue(isinstance(resp, list))

@@ -587,6 +587,15 @@
     "isNumeric": "false"
 
   },
+  "feedback_message_color": {
+    "value": "green",
+    "section": "bci_config",
+    "readableName": "feedback_message_color",
+    "helpTip": "feedback_message_color",
+    "recommended_values": "",
+    "isNumeric": "false"
+
+  },
   "max_seq_len": {
     "value": "20",
     "section": "bci_config",
