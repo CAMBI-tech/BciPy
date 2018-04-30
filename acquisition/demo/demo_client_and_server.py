@@ -44,6 +44,7 @@ def main():
         while True:
             time.sleep(10)
             client.stop_acquisition()
+            client.cleanup()
             print("Number of samples: {0}".format(client.get_data_len()))
             server.stop()
             print("The collected data has been written to rawdata.csv")
@@ -52,6 +53,7 @@ def main():
     except KeyboardInterrupt:
         print("Keyboard Interrupt; stopping.")
         client.stop_acquisition()
+        client.cleanup()
         print("Number of samples: {0}".format(client.get_data_len()))
         server.stop()
         print("The collected data has been written to rawdata.csv")

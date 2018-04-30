@@ -25,7 +25,7 @@ class TestSoundFeedback(unittest.TestCase):
             self.parameters_used)
 
         self.clock = core.Clock()
-        self.data, self.fs = sf.read(
+        self.sound, self.fs = sf.read(
             './static/sounds/1k_800mV_20ms_stereo.wav',
             dtype='float32')
 
