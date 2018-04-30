@@ -4,7 +4,7 @@ from __future__ import division, print_function
 
 from psychopy import core
 
-from display.rsvp.rsvp_disp_modes import CalibrationTask
+from display.rsvp.rsvp_disp_modes import CalibrationDisplay
 
 from bci_tasks.task import Task
 
@@ -179,7 +179,7 @@ class RSVPCalibrationTask(Task):
 
 def init_calibration_display_task(
         parameters, window, static_clock, experiment_clock):
-    rsvp = CalibrationTask(
+    rsvp = CalibrationDisplay(
         window=window, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],

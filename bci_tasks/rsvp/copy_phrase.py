@@ -1,10 +1,10 @@
 # Calibration Task for RSVP
 
 from __future__ import division, print_function
-from psychopy import core, clock
+from psychopy import core
 from bci_tasks.task import Task
 
-from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
@@ -312,7 +312,7 @@ class RSVPCopyPhraseTask(Task):
 
 def _init_copy_phrase_display_task(
         parameters, win, static_clock, experiment_clock):
-    rsvp = CopyPhraseTask(
+    rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],

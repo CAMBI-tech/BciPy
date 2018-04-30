@@ -4,6 +4,8 @@ from __future__ import division
 from psychopy import visual
 from utils.get_system_info import get_system_info
 
+import numpy as np
+
 
 def init_display_window(parameters):
     """

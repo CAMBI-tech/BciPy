@@ -101,7 +101,6 @@ class RSVPDisplay(object):
                                        height=task_height,
                                        text=text_task,
                                        font=font_task, pos=pos_task,
-                                       wrapWidth=None, colorSpace='rgb',
                                        opacity=1, depth=-6.0)
 
         # Create multiple text objects based on input
@@ -175,10 +174,11 @@ class RSVPDisplay(object):
 
         if self.first_run:
             # Play a sequence start sound to help orient triggers
-            stim_timing = _calibration_trigger(self.experiment_clock, trigger_type=self.trigger_type, display=self.win)
+            stim_timing = _calibration_trigger(
+                self.experiment_clock,
+                trigger_type=self.trigger_type, display=self.win)
             timing.append(stim_timing)
             self.first_run = False
-
 
         # Do the sequence
         for idx in range(len(self.stim_sequence)):

@@ -5,7 +5,7 @@ from psychopy import core
 
 from bci_tasks.task import Task
 
-from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import target_rsvp_sequence_generator, get_task_info
@@ -186,7 +186,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
 
 def _init_copy_phrase_display_task(
         parameters, win, static_clock, experiment_clock):
-    rsvp = CopyPhraseTask(
+    rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],
