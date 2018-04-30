@@ -379,22 +379,6 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
-  "connection_params_host": {
-    "value": "127.0.0.1",
-    "section": "bci_config",
-    "readableName": "Connection host",
-    "helpTip": "Connection host",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "connection_params_port": {
-    "value": "8844",
-    "section": "bci_config",
-    "readableName": "Connection port",
-    "helpTip": "Connection port",
-    "recommended_values": "",
-    "isNumeric": "true"
-  },
   "acq_device": {
     "value": "DSI",
     "section": "acq_config",
