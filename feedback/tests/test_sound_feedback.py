@@ -17,7 +17,7 @@ class TestSoundFeedback(unittest.TestCase):
         self.parameters_used = './parameters/parameters.json'
         self.parameters = load_json_parameters(self.parameters_used)
         self.data_save_path = 'data/'
-        self.user_information = 'test_user_001'
+        self.user_information = 'test_user_0010'
 
         self.save = init_save_data_structure(
             self.data_save_path,
@@ -35,7 +35,7 @@ class TestSoundFeedback(unittest.TestCase):
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
-        shutil.rmtree(self.save)
+        shutil.rmtree(self.data_save_path)
 
     def test_feedback_type(self):
 

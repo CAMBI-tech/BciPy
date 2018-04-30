@@ -14,7 +14,7 @@ class TestSave(unittest.TestCase):
         # set up the needed paths and initial data save structure
 
         self.data_save_path = 'data/'
-        self.user_information = 'test_user_001'
+        self.user_information = 'test_user_002'
         self.parameters_used = './parameters/parameters.json'
 
         self.save_folder_name = init_save_data_structure(
@@ -24,7 +24,7 @@ class TestSave(unittest.TestCase):
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
-        shutil.rmtree(self.save_folder_name)
+        shutil.rmtree(self.data_save_path)
 
     def test_init_save_data_structure_creates_correct_save_folder(self):
 
@@ -42,16 +42,11 @@ class TestSave(unittest.TestCase):
     def test_throws_useful_error_if_given_incorrect_params_path(self):
 
         # try passing a parameters file that does not exist
-        try:
-            time.sleep(.5)
+        with self.assertRaises(Exception):
             init_save_data_structure(
                 self.data_save_path,
                 'new_user',
                 'does_not_exist.json')
-
-        # catch the exception and make sure it's as expected
-        except Exception as error:
-            self.assertEqual(error[0], 'Parameter File Not Found!')
 
     def test_init_save_data_structure_makes_helpers_folder(self):
 
