@@ -94,7 +94,7 @@ class LangModel:
             volumes=volume,
             remove=True)
         # wait for initialization
-        print "INITIALIZING SERVER.."
+        print("INITIALIZING SERVER..")
         time.sleep(1)
         # assert a new container was generated
         con_id = str(self.container.short_id)
@@ -213,6 +213,6 @@ class LangModel:
             self.priors
             self.decision
         except BaseException:
-            print "There are no priors in the history"
+            print("There are no priors in the history")
         # print a json dict of the priors
         return self.priors

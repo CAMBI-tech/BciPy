@@ -1,7 +1,4 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
-from __future__ import division
 from psychopy import visual, core
 
 import numpy as np

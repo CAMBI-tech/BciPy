@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
 from psychopy import visual, clock
 import numpy as np
 import time

@@ -688,7 +688,7 @@ def exec_bci_main(parameters, window, mode):
 
         p = subprocess.call(cmd, shell=False)
         # bci_main.bci_main(parameters, userId, trialType, mode)
-        
+
 
     except Exception as e:
         if e.message == 'Not implemented yet!':
@@ -1176,7 +1176,7 @@ class MenuWindow(pyglet.window.Window):
                     else:
                         insert_symbol_at_index("]", currentActiveInputField)
             except IndexError:
-                print "Invalid key press"
+                print("Invalid key press")
 
     # for detecting shift key usage for input box text
     def on_key_release(self, symbol, modifiers):

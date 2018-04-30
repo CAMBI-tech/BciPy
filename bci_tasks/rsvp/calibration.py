@@ -1,7 +1,4 @@
 # Calibration Task for RSVP
-
-from __future__ import division, print_function
-
 from psychopy import core
 
 from display.rsvp.rsvp_disp_modes import CalibrationDisplay

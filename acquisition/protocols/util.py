@@ -1,5 +1,5 @@
 """Utility functions for protocols."""
-from __future__ import absolute_import, division, print_function
+
 
 def receive(socket, msglen, chunksize=2048):
     """Receive an entire message from a socket, which may be chunked.

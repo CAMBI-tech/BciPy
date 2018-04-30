@@ -1,5 +1,4 @@
 
-
 class Task(object):
     """Task."""
     def __init__(self):

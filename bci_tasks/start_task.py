@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
-from rsvp.calibration import RSVPCalibrationTask
-from rsvp.copy_phrase import RSVPCopyPhraseTask
-from rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
+from bci_tasks.rsvp.calibration import RSVPCalibrationTask
+from bci_tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bci_tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,

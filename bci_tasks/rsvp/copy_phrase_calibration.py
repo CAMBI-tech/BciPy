@@ -1,6 +1,5 @@
 # Calibration Task for RSVP
 
-from __future__ import division, print_function
 from psychopy import core
 
 from bci_tasks.task import Task
@@ -182,6 +181,9 @@ class RSVPCopyPhraseCalibrationTask(Task):
         core.wait(self.eeg_buffer)
 
         return self.file_save
+
+    def name(self):
+        return 'RSVP Copy Phrase Calibration Task'
 
 
 def _init_copy_phrase_display_task(

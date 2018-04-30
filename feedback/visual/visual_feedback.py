@@ -116,5 +116,5 @@ if __name__ == "__main__":
         display=display, parameters=parameters, clock=clock)
     stimulus = 'Visual'
     timing = visual_feedback.administer(stimulus)
-    print timing
-    print visual_feedback._type()
+    print(timing)
+    print(visual_feedback._type())

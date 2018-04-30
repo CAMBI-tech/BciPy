@@ -1,8 +1,6 @@
 """Functions to generate EEG(-like) data for testing and development.
 Generators are used by a Producer to stream the data at a given frequency.
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import time
 

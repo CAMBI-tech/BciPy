@@ -93,13 +93,13 @@ def execute_task(task_type, parameters, save_folder):
                 try:
                     lmodel = init_language_model(parameters)
                 except:
-                    print "Cannot init language model. Setting to None."
+                    print("Cannot init language model. Setting to None.")
                     lmodel = None
             else:
                 lmodel = None
 
         except Exception as e:
-            print "Cannot load EEG classifier. Exiting"
+            print("Cannot load EEG classifier. Exiting")
             raise e
 
     else:

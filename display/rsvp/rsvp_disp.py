@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
 from psychopy import prefs
 
 from psychopy import visual, core
@@ -203,7 +202,7 @@ class RSVPDisplay(object):
             self.timing_clock.reset()
 
             # Draw stimulus for n frames
-            for n_frames in xrange(time_to_present):
+            for n_frames in range(time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
