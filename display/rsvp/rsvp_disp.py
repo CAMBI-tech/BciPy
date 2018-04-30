@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-
-from psychopy import prefs
-
 from psychopy import visual, core
-import numpy as np
 
 from helpers.triggers import _calibration_trigger
 from display.display_main import BarGraph, MultiColorText
@@ -257,62 +253,6 @@ class RSVPDisplay(object):
         pos_task = (x_pos_task, 1 - self.task.height)
 
         self.update_task(text=text, color_list=color_list, pos=pos_task)
-
-    def show_prospect_letter(self, text, prospect_flash_time, message):
-        """Flash a prospect letter to user.
-
-        Args:
-                text(string): prospect letter to show,
-                prospect_flash_time(float): time to present prospect
-                message(string): message to display with prospect
-
-        Returns:
-                trigger_time(float): time prospect was flashed
-        """
-        # Tell us if any frames are dropped. There are many causes to this:
-        #  http://www.psychopy.org/general/timing/detectingFrameDrops.html
-        self.win.recordFrameIntervals = True
-
-        # reset the timing clock on flip to correct stim drawing
-        self.win.callOnFlip(self.timing_clock.reset)
-
-        # Make a prospect Stimuli. Make it a text or image.
-        if self.is_txt_sti:
-            prospect = visual.TextStim(self.win, font=self.font_stim,
-                                       text=text,
-                                       height=self.height_stim,
-                                       pos=self.pos_sti)
-        else:
-            prospect = visual.ImageStim(
-                self.win,
-                image=text,
-                size=(self.height_stim, self.height_stim),
-                mask=None,
-                pos=self.pos_sti,
-                ori=0.0)
-
-        # Construct the message to present with prospect
-        message = visual.TextStim(
-            self.win,
-            font=self.font_stim, text=message, height=.1,
-            pos=(-.5, .5), color='green')
-
-        # Draw Stimuli and flip screen
-        message.draw()
-        prospect.draw()
-        self.draw_static()
-        self.win.flip()
-
-        trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
-
-        # Wait for a user defined amount of time with prospect on screen
-        #  #changeforrelease. We should use clocks or frames to hold stim.
-        core.wait(prospect_flash_time)
-
-        # stop recording frame intervals
-        self.win.recordFrameIntervals = False
-
-        return trigger_time
 
     def wait_screen(self, message, color):
         """Wait Screen.
