@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
-from rsvp import copy_phrase_calibration
 from rsvp.calibration import RSVPCalibrationTask
 from rsvp.copy_phrase import RSVPCopyPhraseTask
+from rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,
@@ -44,9 +44,10 @@ def start_task(display_window, daq, task_type, parameters, file_save,
         if task_type['exp_type'] == 3:
             # try running the experiment
             try:
-                copy_phrase_calibration \
-                    .rsvp_copy_phrase_calibration_task(
-                        display_window, daq, parameters, file_save, fake)
+                copy_phrase_calibration = RSVPCopyPhraseCalibrationTask(
+                    display_window, daq, parameters, file_save, fake)
+
+                copy_phrase_calibration.execute()
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:

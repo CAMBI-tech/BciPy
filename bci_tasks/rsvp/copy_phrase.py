@@ -16,6 +16,31 @@ from helpers.bci_task_related import (
 
 
 class RSVPCopyPhraseTask(Task):
+    """RSVP Copy Phrase Task.
+
+    Initializes and runs all needed code for executing a copy phrase task. A
+        phrase is set in parameters and necessary objects (eeg, display) are
+        passed to this function. Certain Wrappers and Task Specific objects are
+        executed here.
+
+    Parameters
+    ----------
+        parameters : dict,
+            configuration details regarding the experiment. See parameters.json
+        daq : object,
+            data acquisition object initialized for the desired protocol
+        file_save : str,
+            path location of where to save data from the session
+        classifier : loaded pickle file,
+            trained signal_model, loaded before session started
+        fake : boolean, optional
+            boolean to indicate whether this is a fake session or not.
+    Returns
+    -------
+        file_save : str,
+            path location of where to save data from the session
+    """
+
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake):
 
