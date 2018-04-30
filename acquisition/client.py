@@ -4,15 +4,13 @@ from __future__ import absolute_import, division, print_function
 import logging
 import multiprocessing
 import time
-import timeit
 
 from queue import Empty
 
 import buffer_server
-from device_info import DeviceInfo
 from processor import FileWriter
 from record import Record
-from util import StoppableThread, StoppableProcess
+from util import StoppableProcess
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -23,17 +21,19 @@ MSG_ERROR = "error"
 
 
 class _Clock(object):
-    """Default clock that uses the timeit module to generate timestamps"""
+    """Clock that provides timestamp values starting at 1.0; the next value
+    is the increment of the previous."""
 
     def __init__(self):
         super(_Clock, self).__init__()
-        self.reset()
+        self.counter = 0
 
     def reset(self):
-        self._reset_at = timeit.default_timer()
+        self.counter = 0
 
     def getTime(self):
-        return timeit.default_timer() - self._reset_at
+        self.counter += 1
+        return float(self.counter)
 
 
 class Client(object):
@@ -195,7 +195,7 @@ class Client(object):
     def is_calibrated(self):
         """Returns boolean indicating whether or not acquisition has been
         calibrated (an offset calculated based on a trigger)."""
-        return self.offset != None
+        return self.offset is not None
 
     @is_calibrated.setter
     def is_calibrated(self, bool_val):
@@ -221,7 +221,7 @@ class Client(object):
         """
 
         # cached value if previously queried; only needs to be computed once.
-        if self._cached_offset != None:
+        if self._cached_offset is not None:
             return self._cached_offset
 
         if self._buf is None or self._device_info is None:

@@ -78,7 +78,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
     # Try Initializing Copy Phrase Wrapper:
     #       (sig_pro, decision maker, signal_model)
     try:
-        copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
+        copy_phrase_task = CopyPhraseWrapper(classifier, daq.device_info.fs,
                                              2, alp, task_list=task_list,
                                              lmodel=lmodel,
                                              is_txt_sti=rsvp.is_txt_sti)

@@ -21,7 +21,7 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
     Initializes and runs all needed code for executing a copy phrase calibration task. A
         phrase is set in parameters and necessary objects (eeg, display) are
         passed to this function. Fake decisions are made, but the implementation should mimic
-        as copy phrase session. 
+        as copy phrase session.
 
     Parameters
     ----------
@@ -50,7 +50,6 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
     alp = alphabet(parameters)
 
     experiment_clock = clock.Clock()
-    daq._clock = experiment_clock
 
     # Try Initializing the Copy Phrase Display Object
     try:

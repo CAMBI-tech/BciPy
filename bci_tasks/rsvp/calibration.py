@@ -45,7 +45,6 @@ def rsvp_calibration_task(win, daq, parameters, file_save, fake):
     alp = alphabet(parameters)
 
     experiment_clock = core.Clock()
-    daq._clock = experiment_clock
 
     # Try initializing the calibration display
     try:
