@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 import logging
+import random
 import time
 from acquisition.util import StoppableThread
 from pylsl import StreamInfo, StreamOutlet
@@ -10,7 +11,10 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 class LslDataServer(StoppableThread):
-    """Data server that streams EEG data using pylsl."""
+    """Data server that streams EEG data using pylsl.
+
+    TODO: Accept parameters controlling how markers are added to the stream.
+    """
 
     def __init__(self, params, generator, include_meta=True):
         super(LslDataServer, self).__init__()
@@ -38,6 +42,13 @@ class LslDataServer(StoppableThread):
 
         self.outlet = StreamOutlet(info)
 
+        # Marker stream
+        # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
+
+        markers_info = StreamInfo("TestStream Markers",
+                                  "Markers", 1, 0, 'string', "uid12345_markers")
+        self.markers_outlet = StreamOutlet(markers_info)
+
     def stop(self):
         super(LslDataServer, self).stop()
 
@@ -45,13 +56,19 @@ class LslDataServer(StoppableThread):
         # after destruction and all connected inlets will stop delivering data.
         del self.outlet
         self.outlet = None
+        del self.markers_outlet
+        self.markers_outlet = None
 
     def next_sample(self):
         return next(self.generator)
 
     def run(self):
+        sample_counter = 0
         while self.running():
+            sample_counter += 1
             self.outlet.push_sample(self.next_sample())
+            if sample_counter % 100 == 0:
+                self.markers_outlet.push_sample([str(random.randint(1, 100))])
             time.sleep(1 / self.hz)
 
 
@@ -71,8 +88,7 @@ def main():
 
     from acquisition.datastream.generator import file_data, random_data
 
-    default_channels = ['ch' + str(i + 1) for i in range(24)]
-    default_channels.append("TRG")
+    default_channels = ['ch' + str(i + 1) for i in range(16)]
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--filename', default=None,
