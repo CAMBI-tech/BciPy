@@ -39,7 +39,6 @@ class RSVPCopyPhraseTask(Task):
         file_save : str,
             path location of where to save data from the session
     """
-
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake):
 

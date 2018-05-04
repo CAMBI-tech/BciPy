@@ -21,7 +21,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
         calibration task. A phrase is set in parameters and necessary objects
         (eeg, display) are passed to this function.
         Fake decisions are made, but the implementation should mimic
-        as copy phrase session.
+        a copy phrase session.
 
     Parameters
     ----------

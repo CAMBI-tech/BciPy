@@ -96,7 +96,6 @@ class RSVPCalibrationTask(Task):
             (task_text, task_color) = get_task_info(self.num_sti,
                                                     self.task_info_color)
 
-
             # Execute the RSVP sequences
             for idx_o in range(len(task_text)):
 
