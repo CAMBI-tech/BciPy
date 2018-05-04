@@ -295,7 +295,7 @@ def display_help_pointers(filename, helpId):
         warn('File ' + str(filename) + ' could not be found.')
 
 
-# tests wheter a set of arguments passed to a function are of the correct types
+# tests whether a set of arguments passed to a function are of the correct types
 def test_values(inputVariables, valueArray, typeArray, functionCaller):
     for counter in range(0, len(valueArray)):
         if(isinstance(typeArray[counter], list)):

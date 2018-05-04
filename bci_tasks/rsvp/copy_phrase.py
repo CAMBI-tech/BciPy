@@ -103,7 +103,7 @@ class RSVPCopyPhraseTask(Task):
             print("Error initializing Copy Phrase Task")
             raise e
 
-        # Set new epoch (wheter to present a new epoch),
+        # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
         #   sequence counter (how many seq have occured).
         #   epoch counter and index (what epoch, and how many sequences within it)
