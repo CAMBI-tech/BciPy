@@ -86,69 +86,61 @@ class RSVPCalibrationTask(Task):
         while run:
 
             # Get random sequence information given stimuli parameters
-            try:
-                (ele_sti, timing_sti,
-                 color_sti) = random_rsvp_calibration_seq_gen(
-                    self.alp, num_sti=self.num_sti,
-                    len_sti=self.len_sti, timing=self.timing,
-                    is_txt=self.rsvp.is_txt_sti,
-                    color=self.color)
+            (ele_sti, timing_sti,
+             color_sti) = random_rsvp_calibration_seq_gen(
+                self.alp, num_sti=self.num_sti,
+                len_sti=self.len_sti, timing=self.timing,
+                is_txt=self.rsvp.is_txt_sti,
+                color=self.color)
 
-                (task_text, task_color) = get_task_info(self.num_sti,
-                                                        self.task_info_color)
+            (task_text, task_color) = get_task_info(self.num_sti,
+                                                    self.task_info_color)
 
-            # Catch the exception here if needed.
-            except Exception as e:
-                raise e
 
             # Execute the RSVP sequences
-            try:
-                for idx_o in range(len(task_text)):
+            for idx_o in range(len(task_text)):
 
-                    # check user input to make sure we should be going
-                    if not get_user_input(self.rsvp, self.wait_screen_message,
-                                          self.wait_screen_message_color):
-                        break
+                # check user input to make sure we should be going
+                if not get_user_input(self.rsvp, self.wait_screen_message,
+                                      self.wait_screen_message_color):
+                    break
 
-                    # update task state
-                    self.rsvp.update_task_state(
-                        text=task_text[idx_o],
-                        color_list=task_color[idx_o])
+                # update task state
+                self.rsvp.update_task_state(
+                    text=task_text[idx_o],
+                    color_list=task_color[idx_o])
 
-                    # Draw and flip screen
-                    self.rsvp.draw_static()
-                    self.window.flip()
+                # Draw and flip screen
+                self.rsvp.draw_static()
+                self.window.flip()
 
-                    # Get height
-                    self.rsvp.sti.height = self.stimuli_height
+                # Get height
+                self.rsvp.sti.height = self.stimuli_height
 
-                    # Schedule a sequence
-                    self.rsvp.stim_sequence = ele_sti[idx_o]
+                # Schedule a sequence
+                self.rsvp.stim_sequence = ele_sti[idx_o]
 
-                    # check if text stimuli or not for color information
-                    if self.is_txt_sti:
-                        self.rsvp.color_list_sti = color_sti[idx_o]
+                # check if text stimuli or not for color information
+                if self.is_txt_sti:
+                    self.rsvp.color_list_sti = color_sti[idx_o]
 
-                    self.rsvp.time_list_sti = timing_sti[idx_o]
+                self.rsvp.time_list_sti = timing_sti[idx_o]
 
-                    # Wait for a time
-                    core.wait(self.buffer_val)
+                # Wait for a time
+                core.wait(self.buffer_val)
 
-                    # Do the sequence
-                    last_sequence_timing = self.rsvp.do_sequence()
+                # Do the sequence
+                last_sequence_timing = self.rsvp.do_sequence()
 
-                    # Write triggers for the sequence
-                    _write_triggers_from_sequence_calibration(
-                        last_sequence_timing, self.trigger_file)
+                # Write triggers for the sequence
+                _write_triggers_from_sequence_calibration(
+                    last_sequence_timing, self.trigger_file)
 
-                    # Wait for a time
-                    core.wait(self.buffer_val)
+                # Wait for a time
+                core.wait(self.buffer_val)
 
-                # Set run to False to stop looping
-                run = False
-
-            except Exception as e:
-                raise e
+            # Set run to False to stop looping
+            run = False
 
         # Say Goodbye!
         self.rsvp.text = trial_complete_message(self.window, self.parameters)

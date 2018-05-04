@@ -146,132 +146,117 @@ class RSVPCopyPhraseTask(Task):
             else:
                 target_letter = '<'
 
-            # Try getting sequence information
-            try:
-                if new_epoch:
+            # Get sequence information
+            if new_epoch:
 
-                    # Init an epoch, getting initial stimuli
-                    new_epoch, sti = copy_phrase_task.initialize_epoch()
+                # Init an epoch, getting initial stimuli
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
+                ele_sti = sti[0]
+                timing_sti = sti[1]
+                color_sti = sti[2]
+
+                # Increase epoch number and reset epoch index
+                epoch_counter += 1
+                data['epochs'][epoch_counter] = {}
+                epoch_index = 0
+            else:
+                epoch_index += 1
+
+            # Update task state and reset the static
+            self.rsvp.update_task_state(text=text_task, color_list=['white'])
+            self.rsvp.draw_static()
+            self.window.flip()
+
+            # Setup the new Stimuli
+            self.rsvp.stim_sequence = ele_sti[0]
+            if self.is_txt_sti:
+                self.rsvp.color_list_sti = color_sti[0]
+            self.rsvp.time_list_sti = timing_sti[0]
+
+            # Pause for a time
+            core.wait(self.buffer_val)
+
+            # Do the self.RSVP sequence!
+            sequence_timing = self.rsvp.do_sequence()
+
+            # Write triggers to file
+            _write_triggers_from_sequence_copy_phrase(
+                sequence_timing,
+                self.trigger_file,
+                self.copy_phrase,
+                text_task)
+
+            core.wait(self.buffer_val)
+
+            # reshape the data and triggers as needed for later modules
+            raw_data, triggers, target_info = \
+                process_data_for_decision(sequence_timing, self.daq)
+
+            # Uncomment this to turn off fake decisions, but use fake data.
+            # fake = False
+            if self.fake:
+                # Construct Data Record
+                data['epochs'][epoch_counter][epoch_index] = {
+                    'stimuli': ele_sti,
+                    'eeg_len': len(raw_data),
+                    'timing_sti': timing_sti,
+                    'triggers': triggers,
+                    'target_info': target_info,
+                    'target_letter': target_letter,
+                    'current_text': text_task,
+                    'copy_phrase': self.copy_phrase}
+
+                # Evaulate this sequence
+                (target_letter, text_task, run) = \
+                    fake_copy_phrase_decision(self.copy_phrase,
+                                              target_letter,
+                                              text_task)
+                new_epoch = True
+                # Update next state for this record
+                data['epochs'][
+                    epoch_counter][
+                    epoch_index][
+                    'next_display_state'] = \
+                    text_task
+
+            else:
+                # Evaluate this sequence, returning whether to gen a new
+                #  epoch (seq) or stimuli to present
+                new_epoch, sti = \
+                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
+                                                       target_info)
+
+                # Construct Data Record
+                data['epochs'][epoch_counter][epoch_index] = {
+                    'stimuli': ele_sti,
+                    'eeg_len': len(raw_data),
+                    'timing_sti': timing_sti,
+                    'triggers': triggers,
+                    'target_info': target_info,
+                    'current_text': text_task,
+                    'copy_phrase': self.copy_phrase,
+                    'next_display_state':
+                        copy_phrase_task.decision_maker.displayed_state,
+                    'lm_evidence': copy_phrase_task
+                        .conjugator
+                        .evidence_history['LM'][0]
+                        .tolist(),
+                    'eeg_evidence': copy_phrase_task
+                        .conjugator
+                        .evidence_history['ERP'][0]
+                        .tolist(),
+                    'likelihood': copy_phrase_task
+                        .conjugator.likelihood.tolist()
+                }
+
+                # If new_epoch is False, get the stimuli info returned
+                if not new_epoch:
                     ele_sti = sti[0]
                     timing_sti = sti[1]
                     color_sti = sti[2]
 
-                    # Increase epoch number and reset epoch index
-                    epoch_counter += 1
-                    data['epochs'][epoch_counter] = {}
-                    epoch_index = 0
-                else:
-                    epoch_index += 1
-
-            # Catch the exception here if needed.
-            except Exception as e:
-                raise e
-
-            # Try executing the given sequences. This is where display is used!
-            try:
-
-                # Update task state and reset the static
-                self.rsvp.update_task_state(text=text_task, color_list=['white'])
-                self.rsvp.draw_static()
-                self.window.flip()
-
-                # Setup the new Stimuli
-                self.rsvp.stim_sequence = ele_sti[0]
-                if self.is_txt_sti:
-                    self.rsvp.color_list_sti = color_sti[0]
-                self.rsvp.time_list_sti = timing_sti[0]
-
-                # Pause for a time
-                core.wait(self.buffer_val)
-
-                # Do the self.RSVP sequence!
-                sequence_timing = self.rsvp.do_sequence()
-
-                # Write triggers to file
-                _write_triggers_from_sequence_copy_phrase(
-                    sequence_timing,
-                    self.trigger_file,
-                    self.copy_phrase,
-                    text_task)
-
-                core.wait(self.buffer_val)
-
-                try:
-                    # reshape the data and triggers as needed for later modules
-                    raw_data, triggers, target_info = \
-                        process_data_for_decision(sequence_timing, self.daq)
-
-                    # Uncomment this to turn off fake decisions, but use fake data.
-                    # fake = False
-                    if self.fake:
-                        # Construct Data Record
-                        data['epochs'][epoch_counter][epoch_index] = {
-                            'stimuli': ele_sti,
-                            'eeg_len': len(raw_data),
-                            'timing_sti': timing_sti,
-                            'triggers': triggers,
-                            'target_info': target_info,
-                            'target_letter': target_letter,
-                            'current_text': text_task,
-                            'copy_phrase': self.copy_phrase}
-
-                        # Evaulate this sequence
-                        (target_letter, text_task, run) = \
-                            fake_copy_phrase_decision(self.copy_phrase,
-                                                      target_letter,
-                                                      text_task)
-                        new_epoch = True
-                        # Update next state for this record
-                        data['epochs'][
-                            epoch_counter][
-                            epoch_index][
-                            'next_display_state'] = \
-                            text_task
-
-                    else:
-                        # Evaluate this sequence, returning whether to gen a new
-                        #  epoch (seq) or stimuli to present
-                        new_epoch, sti = \
-                            copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                               target_info)
-
-                        # Construct Data Record
-                        data['epochs'][epoch_counter][epoch_index] = {
-                            'stimuli': ele_sti,
-                            'eeg_len': len(raw_data),
-                            'timing_sti': timing_sti,
-                            'triggers': triggers,
-                            'target_info': target_info,
-                            'current_text': text_task,
-                            'copy_phrase': self.copy_phrase,
-                            'next_display_state':
-                                copy_phrase_task.decision_maker.displayed_state,
-                            'lm_evidence': copy_phrase_task
-                                .conjugator
-                                .evidence_history['LM'][0]
-                                .tolist(),
-                            'eeg_evidence': copy_phrase_task
-                                .conjugator
-                                .evidence_history['ERP'][0]
-                                .tolist(),
-                            'likelihood': copy_phrase_task
-                                .conjugator.likelihood.tolist()
-                        }
-
-                        # If new_epoch is False, get the stimuli info returned
-                        if not new_epoch:
-                            ele_sti = sti[0]
-                            timing_sti = sti[1]
-                            color_sti = sti[2]
-
-                        # Get the current task text from the decision maker
-                        text_task = copy_phrase_task.decision_maker.displayed_state
-
-                except Exception as e:
-                    raise e
-
-            except Exception as e:
-                raise e
+                # Get the current task text from the decision maker
+                text_task = copy_phrase_task.decision_maker.displayed_state
 
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()

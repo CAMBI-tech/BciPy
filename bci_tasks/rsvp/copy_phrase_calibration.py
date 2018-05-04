@@ -107,59 +107,47 @@ class RSVPCopyPhraseCalibrationTask(Task):
                                   self.wait_screen_message_color):
                 break
 
-            # Try getting random sequence information given stimuli parameters
-            try:
-                # Generate some sequences to present based on parameters
-                (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
-                    self.alp, target_letter, self.parameters,
-                    len_sti=self.len_sti, timing=self.timing,
-                    is_txt=self.is_txt_sti,
-                    color=self.color)
+            # Generate some sequences to present based on parameters
+            (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
+                self.alp, target_letter, self.parameters,
+                len_sti=self.len_sti, timing=self.timing,
+                is_txt=self.is_txt_sti,
+                color=self.color)
 
-                # Get task information, seperate from stimuli to be presented
-                (task_text, task_color) = get_task_info(
-                    self.num_sti,
-                    self.task_info_color)
+            # Get task information, seperate from stimuli to be presented
+            (task_text, task_color) = get_task_info(
+                self.num_sti,
+                self.task_info_color)
 
-            # Catch the exception here if needed.
-            except Exception as e:
-                print(e)
-                raise e
+            self.rsvp.update_task_state(text=text_task, color_list=['white'])
+            self.rsvp.draw_static()
+            self.window.flip()
 
-            # Try executing the sequences
-            try:
-                self.rsvp.update_task_state(text=text_task, color_list=['white'])
-                self.rsvp.draw_static()
-                self.window.flip()
+            # update task state
+            self.rsvp.stim_sequence = ele_sti[0]
 
-                # update task state
-                self.rsvp.stim_sequence = ele_sti[0]
+            # self.rsvp.text_task = text_task
+            if self.is_txt_sti:
+                self.rsvp.color_list_sti = color_sti[0]
+            self.rsvp.time_list_sti = timing_sti[0]
 
-                # self.rsvp.text_task = text_task
-                if self.is_txt_sti:
-                    self.rsvp.color_list_sti = color_sti[0]
-                self.rsvp.time_list_sti = timing_sti[0]
+            # buffer and execute the sequence
+            core.wait(self.buffer_val)
+            sequence_timing = self.rsvp.do_sequence()
 
-                # buffer and execute the sequence
-                core.wait(self.buffer_val)
-                sequence_timing = self.rsvp.do_sequence()
+            # Write triggers to file
+            _write_triggers_from_sequence_copy_phrase(
+                sequence_timing,
+                self.trigger_file,
+                self.copy_phrase,
+                text_task)
 
-                # Write triggers to file
-                _write_triggers_from_sequence_copy_phrase(
-                    sequence_timing,
-                    self.trigger_file,
-                    self.copy_phrase,
-                    text_task)
+            # buffer
+            core.wait(self.buffer_val)
 
-                # buffer
-                core.wait(self.buffer_val)
-
-                # Fake a decision!
-                (target_letter, text_task, run) = fake_copy_phrase_decision(
-                    self.copy_phrase, target_letter, text_task)
-
-            except Exception as e:
-                raise e
+            # Fake a decision!
+            (target_letter, text_task, run) = fake_copy_phrase_decision(
+                self.copy_phrase, target_letter, text_task)
 
         # update the final task state and say goodbye
         self.rsvp.update_task_state(text=text_task, color_list=['white'])
