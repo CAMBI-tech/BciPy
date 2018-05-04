@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-
-from __future__ import division
-
 import acquisition.datastream.generator as generator
 import acquisition.protocols.registry as registry
 from acquisition.client import Client, _Clock

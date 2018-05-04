@@ -3,9 +3,6 @@ Binary protocol for DSI; ported to construct 2.8 from the original
 rsvpkeyboard app.
 """
 
-from __future__ import absolute_import, division, print_function
-
-# from __future__ import (unicode_literals)
 from construct import (Array, Bytes, Const, Embedded, Enum, Float32b, Int8ub,
                        Int16ub, Int32ub, Optional, PascalString, Struct,
                        Switch, this)

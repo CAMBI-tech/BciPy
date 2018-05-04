@@ -1,11 +1,8 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-
-from __future__ import division
 from psychopy import visual, core
 
-from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 
 # Initialize Stimulus Parameters
@@ -98,24 +95,26 @@ print frameRate
 clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 
-rsvp = CopyPhraseTask(window=win, clock=clock, experiment_clock=experiment_clock, static_text_task=text_task,
-                      static_color_task=color_task,
-                      text_info=text_text,
-                      color_info=color_text, pos_info=pos_text,
-                      height_info=txt_height,
-                      font_info=font_text,
-                      color_task=['white'] * 4 + ['green'] * 2 + ['red'],
-                      font_task=font_task, text_task='COPY_PH',
-                      height_task=height_task,
-                      font_sti=font_sti, pos_sti=pos_sti,
-                      sti_height=sti_height,
-                      stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-                      time_list_sti=[3] * 10,
-                      tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
-                      size_domain_bg=size_domain_bg,
-                      color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
-                      color_bar_bg=color_bar_bg,
-                      is_txt_sti=is_txt_sti)
+rsvp = CopyPhraseDisplay(
+    window=win, clock=clock,
+    experiment_clock=experiment_clock, static_text_task=text_task,
+    static_color_task=color_task,
+    text_info=text_text,
+    color_info=color_text, pos_info=pos_text,
+    height_info=txt_height,
+    font_info=font_text,
+    color_task=['white'] * 4 + ['green'] * 2 + ['red'],
+    font_task=font_task, text_task='COPY_PH',
+    height_task=height_task,
+    font_sti=font_sti, pos_sti=pos_sti,
+    sti_height=sti_height,
+    stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
+    time_list_sti=[3] * 10,
+    tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
+    size_domain_bg=size_domain_bg,
+    color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
+    color_bar_bg=color_bar_bg,
+    is_txt_sti=is_txt_sti)
 
 counter = 0
 

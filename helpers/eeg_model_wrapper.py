@@ -153,7 +153,7 @@ class CopyPhraseWrapper(object):
 
         except Exception as e:
 
-            print "Error in evaluate_sequence: %s" % (e)
+            print("Error in evaluate_sequence: %s" % (e))
             raise e
 
         return decision, sti
@@ -197,7 +197,7 @@ class CopyPhraseWrapper(object):
             try:
                 p = self.conjugator.update_and_fuse({'LM': np.array(prior)})
             except Exception as e:
-                print "Error updating language model!"
+                print("Error updating language model!")
                 raise e
 
             # Get decision maker to give us back some decisions and stimuli
@@ -205,7 +205,7 @@ class CopyPhraseWrapper(object):
             sti = arg['stimuli']
 
         except Exception as e:
-            print "Error in initialize_epoch: %s" % (e)
+            print("Error in initialize_epoch: %s" % (e))
             raise e
 
         return d, sti

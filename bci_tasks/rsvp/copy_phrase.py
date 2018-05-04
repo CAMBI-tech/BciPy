@@ -1,9 +1,9 @@
 # Calibration Task for RSVP
 
-from __future__ import division, print_function
-from psychopy import core, clock
+from psychopy import core
+from bci_tasks.task import Task
 
-from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.save import _save_session_related_data
@@ -14,9 +14,7 @@ from helpers.bci_task_related import (
     trial_complete_message, get_user_input)
 
 
-def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
-                          lmodel=None,
-                          fake=False):
+class RSVPCopyPhraseTask(Task):
     """RSVP Copy Phrase Task.
 
     Initializes and runs all needed code for executing a copy phrase task. A
@@ -41,99 +39,113 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         file_save : str,
             path location of where to save data from the session
     """
+    def __init__(
+            self, win, daq, parameters, file_save, classifier, lmodel, fake):
 
-    # Initialize Experiment clocks etc.
-    frame_rate = win.getActualFrameRate()
-    static_clock = core.StaticPeriod(screenHz=frame_rate)
-    buffer_val = float(parameters['task_buffer_len']['value'])
+        self.window = win
+        self.frame_rate = self.window.getActualFrameRate()
+        self.parameters = parameters
+        self.daq = daq
+        self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
+        self.experiment_clock = core.Clock()
+        self.buffer_val = float(parameters['task_buffer_len']['value'])
+        self.alp = alphabet(parameters)
+        self.rsvp = _init_copy_phrase_display_task(
+            self.parameters, self.window,
+            self.static_clock, self.experiment_clock)
+        self.file_save = file_save
+        trigger_save_location = self.file_save + '/triggers.txt'
+        self.session_save_location = self.file_save + '/session.json'
+        self.trigger_file = open(trigger_save_location, 'w')
 
-    # Get alphabet for experiment
-    alp = alphabet(parameters=parameters)
+        self.wait_screen_message = parameters['wait_screen_message']['value']
+        self.wait_screen_message_color = parameters[
+            'wait_screen_message_color']['value']
 
-    experiment_clock = clock.Clock()
-    daq._clock = experiment_clock
+        self.num_sti = int(parameters['num_sti']['value'])
+        self.len_sti = int(parameters['len_sti']['value'])
+        self.timing = [float(parameters['time_target']['value']),
+                       float(parameters['time_cross']['value']),
+                       float(parameters['time_flash']['value'])]
 
+        self.color = [parameters['target_letter_color']['value'],
+                      parameters['fixation_color']['value'],
+                      parameters['stimuli_color']['value']]
 
-    # Try Initializing the Copy Phrase Display Object
-    try:
-        rsvp = _init_copy_phrase_display_task(
-            parameters, win, static_clock, experiment_clock)
-    except Exception as e:
-        raise e
+        self.task_info_color = parameters['task_color']['value']
 
-    # Init Triggers
-    trigger_save_location = file_save + '/triggers.txt'
-    trigger_file = open(trigger_save_location, 'w')
+        self.stimuli_height = float(parameters['sti_height']['value'])
 
-    # Init Session File
-    session_save_location = file_save + '/session.json'
+        self.is_txt_sti = True if parameters['is_txt_sti']['value'] == 'true' \
+            else False,
+        self.eeg_buffer = int(parameters['eeg_buffer_len']['value'])
+        self.copy_phrase = parameters['text_task']['value']
 
-    # Get the copy_phrase, initial targets and task list
-    copy_phrase = parameters['text_task']['value']
-    text_task = str(copy_phrase[0:int(len(copy_phrase) / 2)])
-    # TODO: get model, fs and k from .pkl besides model. #changeforrelease
-    task_list = [(str(copy_phrase), str(copy_phrase[0:int(len(copy_phrase) /
-                                                          2)]))]
+        self.max_seq_length = int(parameters['max_seq_len']['value'])
+        self.fake = fake
+        self.lmodel = lmodel
+        self.classifier = classifier
 
-    # Try Initializing Copy Phrase Wrapper:
-    #       (sig_pro, decision maker, signal_model)
-    try:
-        copy_phrase_task = CopyPhraseWrapper(classifier, daq._device.fs,
-                                             2, alp, task_list=task_list,
-                                             lmodel=lmodel,
-                                             is_txt_sti=rsvp.is_txt_sti)
-    except Exception as e:
-        print("Error initializing Copy Phrase Task")
-        raise e
+    def execute(self):
+        text_task = str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)])
+        task_list = [(str(self.copy_phrase),
+                      str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)]))]
 
-    # Set new epoch (wheter to present a new epoch),
-    #   run (whether to cont. session),
-    #   sequence counter (how many seq have occured).
-    #   epoch counter and index (what epoch, and how many sequences within it)
-    new_epoch = True
-    run = True
-    show_prospects = True if \
-        parameters['show_prospects']['value'] == 'true' else False
-    seq_counter = 0
-    epoch_counter = 0
-    epoch_index = 0
+        # Try Initializing Copy Phrase Wrapper:
+        #       (sig_pro, decision maker, signal_model)
+        try:
+            copy_phrase_task = CopyPhraseWrapper(self.classifier, self.daq._device.fs,
+                                                 2, self.alp, task_list=task_list,
+                                                 lmodel=self.lmodel,
+                                                 is_txt_sti=self.is_txt_sti)
+        except Exception as e:
+            print("Error initializing Copy Phrase Task")
+            raise e
 
-    # Init session data and save before beginning
-    data = {
-        'session': file_save,
-        'session_type': 'Copy Phrase',
-        'paradigm': 'RSVP',
-        'epochs': {},
-        'total_time_spent': experiment_clock.getTime(),
-        'total_number_epochs': 0,
-    }
+        # Set new epoch (whether to present a new epoch),
+        #   run (whether to cont. session),
+        #   sequence counter (how many seq have occured).
+        #   epoch counter and index (what epoch, and how many sequences within it)
+        new_epoch = True
+        run = True
+        seq_counter = 0
+        epoch_counter = 0
+        epoch_index = 0
 
-    # Save session data
-    _save_session_related_data(session_save_location, data)
+        # Init session data and save before beginning
+        data = {
+            'session': self.file_save,
+            'session_type': 'Copy Phrase',
+            'paradigm': 'RSVP',
+            'epochs': {},
+            'total_time_spent': self.experiment_clock.getTime(),
+            'total_number_epochs': 0,
+        }
 
-    # check user input to make sure we should be going
-    if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
-                          parameters['wait_screen_message_color']['value'],
-                          first_run=True):
-        run = False
-
-    # Start the Session!
-    while run:
+        # Save session data
+        _save_session_related_data(self.session_save_location, data)
 
         # check user input to make sure we should be going
-        if not get_user_input(
-                rsvp, parameters['wait_screen_message']['value'],
-                parameters['wait_screen_message_color']['value']):
-            break
+        if not get_user_input(self.rsvp, self.wait_screen_message,
+                              self.wait_screen_message_color,
+                              first_run=True):
+            run = False
 
-        # Why bs for else? #changeforrelease
-        if copy_phrase[0:len(text_task)] == text_task:
-            target_letter = copy_phrase[len(text_task)]
-        else:
-            target_letter = '<'
+        # Start the Session!
+        while run:
 
-        # Try getting sequence information
-        try:
+            # check user input to make sure we should be going
+            if not get_user_input(self.rsvp, self.wait_screen_message,
+                                  self.wait_screen_message_color):
+                break
+
+            # Why bs for else? #changeforrelease
+            if self.copy_phrase[0:len(text_task)] == text_task:
+                target_letter = self.copy_phrase[len(text_task)]
+            else:
+                target_letter = '<'
+
+            # Get sequence information
             if new_epoch:
 
                 # Init an epoch, getting initial stimuli
@@ -149,185 +161,144 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
             else:
                 epoch_index += 1
 
-        # Catch the exception here if needed.
-        except Exception as e:
-            raise e
-
-        # Try executing the given sequences. This is where display is used!
-        try:
-
             # Update task state and reset the static
-            rsvp.update_task_state(text=text_task, color_list=['white'])
-            rsvp.draw_static()
-            win.flip()
+            self.rsvp.update_task_state(text=text_task, color_list=['white'])
+            self.rsvp.draw_static()
+            self.window.flip()
 
             # Setup the new Stimuli
-            rsvp.stim_sequence = ele_sti[0]
-            if parameters['is_txt_sti']['value']:
-                rsvp.color_list_sti = color_sti[0]
-            rsvp.time_list_sti = timing_sti[0]
+            self.rsvp.stim_sequence = ele_sti[0]
+            if self.is_txt_sti:
+                self.rsvp.color_list_sti = color_sti[0]
+            self.rsvp.time_list_sti = timing_sti[0]
 
             # Pause for a time
-            core.wait(buffer_val)
+            core.wait(self.buffer_val)
 
-            # Do the RSVP sequence!
-            sequence_timing = rsvp.do_sequence()
+            # Do the self.RSVP sequence!
+            sequence_timing = self.rsvp.do_sequence()
 
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
-                trigger_file,
-                copy_phrase,
+                self.trigger_file,
+                self.copy_phrase,
                 text_task)
 
-            # # Get parameters from Bar Graph and schedule
-            # rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
-            #                     weight=dummy_bar_schedule_p[counter])
+            core.wait(self.buffer_val)
 
-            core.wait(buffer_val)
-            # if show_bg:
-            #     rsvp.show_bar_graph()
+            # reshape the data and triggers as needed for later modules
+            raw_data, triggers, target_info = \
+                process_data_for_decision(sequence_timing, self.daq)
 
-            try:
+            # Uncomment this to turn off fake decisions, but use fake data.
+            # fake = False
+            if self.fake:
+                # Construct Data Record
+                data['epochs'][epoch_counter][epoch_index] = {
+                    'stimuli': ele_sti,
+                    'eeg_len': len(raw_data),
+                    'timing_sti': timing_sti,
+                    'triggers': triggers,
+                    'target_info': target_info,
+                    'target_letter': target_letter,
+                    'current_text': text_task,
+                    'copy_phrase': self.copy_phrase}
 
-                # reshape the data and triggers as needed for later modules
-                raw_data, triggers, target_info = \
-                    process_data_for_decision(sequence_timing, daq)
+                # Evaulate this sequence
+                (target_letter, text_task, run) = \
+                    fake_copy_phrase_decision(self.copy_phrase,
+                                              target_letter,
+                                              text_task)
+                new_epoch = True
+                # Update next state for this record
+                data['epochs'][
+                    epoch_counter][
+                    epoch_index][
+                    'next_display_state'] = \
+                    text_task
 
-                # Uncomment this to turn off fake decisions, but use fake data.
-                # fake = False
-                if fake:
-                    # Construct Data Record
-                    data['epochs'][epoch_counter][epoch_index] = {
-                        'stimuli': ele_sti,
-                        'eeg_len': len(raw_data),
-                        'timing_sti': timing_sti,
-                        'triggers': triggers,
-                        'target_info': target_info,
-                        'target_letter': target_letter,
-                        'current_text': text_task,
-                        'copy_phrase': copy_phrase}
+            else:
+                # Evaluate this sequence, returning whether to gen a new
+                #  epoch (seq) or stimuli to present
+                new_epoch, sti = \
+                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
+                                                       target_info)
 
-                    if show_prospects:
-                        rsvp.show_prospect_letter(
-                            target_letter,
-                            float(parameters['prospect_flash_time']['value']),
-                            parameters['prospect_message']['value'])
+                # Construct Data Record
+                data['epochs'][epoch_counter][epoch_index] = {
+                    'stimuli': ele_sti,
+                    'eeg_len': len(raw_data),
+                    'timing_sti': timing_sti,
+                    'triggers': triggers,
+                    'target_info': target_info,
+                    'current_text': text_task,
+                    'copy_phrase': self.copy_phrase,
+                    'next_display_state':
+                        copy_phrase_task.decision_maker.displayed_state,
+                    'lm_evidence': copy_phrase_task
+                        .conjugator
+                        .evidence_history['LM'][0]
+                        .tolist(),
+                    'eeg_evidence': copy_phrase_task
+                        .conjugator
+                        .evidence_history['ERP'][0]
+                        .tolist(),
+                    'likelihood': copy_phrase_task
+                        .conjugator.likelihood.tolist()
+                }
 
-                    # Evaulate this sequence
-                    (target_letter, text_task, run) = \
-                        fake_copy_phrase_decision(copy_phrase, target_letter,
-                                                  text_task)
-                    new_epoch = True
-                    # Update next state for this record
-                    data['epochs'][
-                        epoch_counter][
-                        epoch_index][
-                        'next_display_state'] = \
-                        text_task
+                # If new_epoch is False, get the stimuli info returned
+                if not new_epoch:
+                    ele_sti = sti[0]
+                    timing_sti = sti[1]
+                    color_sti = sti[2]
 
-                else:
-                    # Evaluate this sequence, returning whether to gen a new
-                    #  epoch (seq) or stimuli to present
-                    new_epoch, sti = \
-                        copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                           target_info)
+                # Get the current task text from the decision maker
+                text_task = copy_phrase_task.decision_maker.displayed_state
 
-                    # Construct Data Record
-                    data['epochs'][epoch_counter][epoch_index] = {
-                        'stimuli': ele_sti,
-                        'eeg_len': len(raw_data),
-                        'timing_sti': timing_sti,
-                        'triggers': triggers,
-                        'target_info': target_info,
-                        'current_text': text_task,
-                        'copy_phrase': copy_phrase,
-                        'next_display_state':
-                            copy_phrase_task.decision_maker.displayed_state,
-                        'lm_evidence': copy_phrase_task
-                            .conjugator
-                            .evidence_history['LM'][0]
-                            .tolist(),
-                        'eeg_evidence': copy_phrase_task
-                            .conjugator
-                            .evidence_history['ERP'][0]
-                            .tolist(),
-                        'likelihood': copy_phrase_task
-                            .conjugator.likelihood.tolist()
-                    }
+            # Update time spent and save data
+            data['total_time_spent'] = self.experiment_clock.getTime()
+            data['total_number_epochs'] = epoch_counter
+            _save_session_related_data(self.session_save_location, data)
 
-                    # If new_epoch is False, get the stimuli info returned
-                    if not new_epoch:
-                        ele_sti = sti[0]
-                        timing_sti = sti[1]
-                        color_sti = sti[2]
-                    else:
-                        if show_prospects:
-                            selected_letter = copy_phrase_task \
-                                .decision_maker.displayed_state[-1]
-                            rsvp.show_prospect_letter(
-                                selected_letter,
-                                float(
-                                    parameters[
-                                        'prospect_flash_time']['value']),
-                                parameters['prospect_message']['value'])
+            # Decide whether to keep the task going
+            if (text_task == self.copy_phrase or
+                    seq_counter > self.max_seq_length):
 
-                    # Get the current task text from the decision maker
-                    text_task = copy_phrase_task.decision_maker.displayed_state
+                run = False
 
-            except Exception as e:
-                raise e
+            # Increment sequence counter
+            seq_counter += 1
 
-        except Exception as e:
-            raise e
+        # Say Goodbye!
+        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.draw_static()
+        self.window.flip()
 
-        # Update time spent and save data
-        data['total_time_spent'] = experiment_clock.getTime()
-        data['total_number_epochs'] = epoch_counter
-        _save_session_related_data(session_save_location, data)
+        # Give the system time to process
+        core.wait(self.buffer_val)
 
-        # Decide whether to keep the task going
-        if (text_task == copy_phrase or
-                seq_counter > int(parameters['max_seq_len']['value'])):
+        if self.daq.is_calibrated:
+            _write_triggers_from_sequence_copy_phrase(
+                ['offset', self.daq.offset], self.trigger_file,
+                self.copy_phrase, text_task, offset=True)
 
-            # Update the final task state and say goodbye!
-            rsvp.update_task_state(text=text_task, color_list=['white'])
-            rsvp.text = trial_complete_message(win, parameters)
-            rsvp.draw_static()
-            win.flip()
+        # Close the trigger file for this session
+        self.trigger_file.close()
 
-            core.wait(buffer_val)
+        # Wait some time before exiting so there is trailing eeg data saved
+        core.wait(self.eeg_buffer)
 
-            break
+        return self.file_save
 
-        # Increment sequence counter
-        seq_counter += 1
-
-    # Say Goodbye!
-    rsvp.text = trial_complete_message(win, parameters)
-    rsvp.draw_static()
-    win.flip()
-
-    # Give the system time to process
-    core.wait(buffer_val)
-
-    if daq.is_calibrated:
-        _write_triggers_from_sequence_copy_phrase(
-            ['offset', daq.offset], trigger_file,
-            copy_phrase, text_task, offset=True)
-
-    # Close the trigger file for this session
-    trigger_file.close()
-
-    # Wait some time before exiting so there is trailing eeg data saved
-    core.wait(int(parameters['eeg_buffer_len']['value']))
-
-    return file_save
+    def name(self):
+        return 'RSVP Copy Phrase Task'
 
 
 def _init_copy_phrase_display_task(
         parameters, win, static_clock, experiment_clock):
-    rsvp = CopyPhraseTask(
+    rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],

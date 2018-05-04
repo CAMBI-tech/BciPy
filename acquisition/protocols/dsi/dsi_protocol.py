@@ -1,8 +1,4 @@
 """Protocol with information for generating and serving mock DSI data."""
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import timeit
 
 import acquisition.protocols.dsi.dsi as dsi

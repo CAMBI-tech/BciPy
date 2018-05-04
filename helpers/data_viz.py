@@ -3,6 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from helpers.load import load_csv_data, read_data_csv
 
+
 def generate_offline_analysis_screen(x, y, model, folder):
     """ Offline Analysis Screen.
     Generates the information figure following the offlineAnalysis.
@@ -72,7 +73,7 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     Input:
         trigger_col(int)(optional): Column location of triggers in csv file.
             It defaults to the last column.
-        
+
     Output:
         Figure of Triggers
     """
