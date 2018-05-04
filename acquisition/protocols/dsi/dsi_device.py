@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import logging
 import socket
 
@@ -24,17 +22,11 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=300, channels=[
-            'P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-            'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-            'X3', 'X2', 'F7', 'F8', 'X1',
-            'A2', 'T6', 'T4', 'TRG']):
+    def __init__(self, connection_params, fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
         """Init DsiDevice."""
-
         super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
-
         self._channels_provided = len(channels) > 0
         self._socket = None
         self.channels = channels
@@ -51,6 +43,9 @@ class DsiDevice(Device):
         self._socket = socket.create_connection(address)
         self._socket.settimeout(None)
 
+    def disconnect(self):
+        self._socket.close()
+
     def _read_packet(self):
         """Read a single packet from the data source.
 
@@ -63,12 +58,12 @@ class DsiDevice(Device):
             "Socket isn't started, cannot read DSI packet!"
 
         # Reads the header to get the payload length, then reads the payload.
-        header_buf = util.receive(self._socket, dsi.header_len)
+        header_buf = util.receive(self._socket, dsi.HEADER_LEN)
         header = dsi.header.parse(header_buf)
         payload_buf = util.receive(self._socket, header.payload_length)
         return dsi.packet.parse(header_buf + payload_buf)
 
-    def acquisition_init(self, clock):
+    def acquisition_init(self):
         """Initialization step.
 
         Reads the channel and data rate information
@@ -111,7 +106,6 @@ class DsiDevice(Device):
 
         # Read once more for data start
         response = self._read_packet()
-        clock.reset()
 
     def read_data(self):
         """Read Data.

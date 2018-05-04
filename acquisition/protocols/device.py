@@ -1,4 +1,4 @@
-from __future__ import absolute_import, division, print_function
+from acquisition.device_info import DeviceInfo
 
 
 class Device(object):
@@ -22,6 +22,13 @@ class Device(object):
     @property
     def name(self):
         raise NotImplementedError('Subclass must define a name property')
+
+    @property
+    def device_info(self):
+        """Information about the acquisition parameters. Should be called after
+        acquisition_init for those devices which set this information."""
+        device_name = self.name if not callable(self.name) else self.name()
+        return DeviceInfo(fs=self.fs, channels=self.channels, name=device_name)
 
     def connect(self):
         """Connect to the data source."""

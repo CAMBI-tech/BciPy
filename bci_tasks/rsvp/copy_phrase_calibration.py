@@ -1,9 +1,10 @@
 # Calibration Task for RSVP
 
-from __future__ import division, print_function
-from psychopy import core, clock
+from psychopy import core
 
-from display.rsvp.rsvp_disp_modes import CopyPhraseTask
+from bci_tasks.task import Task
+
+from display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from helpers.stim_gen import target_rsvp_sequence_generator, get_task_info
@@ -13,15 +14,14 @@ from helpers.bci_task_related import (
     trial_complete_message)
 
 
-def rsvp_copy_phrase_calibration_task(win, daq, parameters,
-                                      file_save, fake=False):
-
+class RSVPCopyPhraseCalibrationTask(Task):
     """RSVP Copy Phrase Calibration.
 
-    Initializes and runs all needed code for executing a copy phrase calibration task. A
-        phrase is set in parameters and necessary objects (eeg, display) are
-        passed to this function. Fake decisions are made, but the implementation should mimic
-        as copy phrase session. 
+    Initializes and runs all needed code for executing a copy phrase
+        calibration task. A phrase is set in parameters and necessary objects
+        (eeg, display) are passed to this function.
+        Fake decisions are made, but the implementation should mimic
+        a copy phrase session.
 
     Parameters
     ----------
@@ -41,134 +41,142 @@ def rsvp_copy_phrase_calibration_task(win, daq, parameters,
             path location of where to save data from the session
     """
 
-    # Initialize Experiment clocks etc.
-    frame_rate = win.getActualFrameRate()
-    static_clock = core.StaticPeriod(screenHz=frame_rate)
-    buffer_val = float(parameters['task_buffer_len']['value'])
+    def __init__(
+            self, win, daq, parameters, file_save, fake):
 
-    # Get alphabet for experiment
-    alp = alphabet(parameters)
+        self.window = win
+        self.frame_rate = self.window.getActualFrameRate()
+        self.parameters = parameters
+        self.daq = daq
+        self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
+        self.experiment_clock = core.Clock()
+        self.buffer_val = float(parameters['task_buffer_len']['value'])
+        self.alp = alphabet(parameters)
+        self.rsvp = _init_copy_phrase_display_task(
+            self.parameters, self.window,
+            self.static_clock, self.experiment_clock)
+        self.file_save = file_save
+        trigger_save_location = self.file_save + '/triggers.txt'
+        self.session_save_location = self.file_save + '/session.json'
+        self.trigger_file = open(trigger_save_location, 'w')
 
-    experiment_clock = clock.Clock()
-    daq._clock = experiment_clock
+        self.wait_screen_message = parameters['wait_screen_message']['value']
+        self.wait_screen_message_color = parameters[
+            'wait_screen_message_color']['value']
 
-    # Try Initializing the Copy Phrase Display Object
-    try:
-        rsvp = _init_copy_phrase_display_task(
-            parameters, win, static_clock, experiment_clock)
-    except Exception as e:
-        raise e
+        self.num_sti = int(parameters['num_sti']['value'])
+        self.len_sti = int(parameters['len_sti']['value'])
+        self.timing = [float(parameters['time_target']['value']),
+                       float(parameters['time_cross']['value']),
+                       float(parameters['time_flash']['value'])]
 
-    # Init Triggers
-    trigger_save_location = file_save + '/triggers.txt'
-    trigger_file = open(trigger_save_location, 'w')
-    run = True
+        self.color = [parameters['target_letter_color']['value'],
+                      parameters['fixation_color']['value'],
+                      parameters['stimuli_color']['value']]
 
-    # get the initial target letter
-    copy_phrase = parameters['text_task']['value']
-    target_letter = copy_phrase[0]
-    text_task = '*'
+        self.task_info_color = parameters['task_color']['value']
 
-    # check user input to make sure we should be going
-    if not get_user_input(
-            rsvp, parameters['wait_screen_message']['value'],
-            parameters['wait_screen_message_color']['value'],
-            first_run=True):
-        run = False
+        self.stimuli_height = float(parameters['sti_height']['value'])
 
-    while run:
+        self.is_txt_sti = True if parameters['is_txt_sti']['value'] == 'true' \
+            else False,
+        self.eeg_buffer = int(parameters['eeg_buffer_len']['value'])
+        self.copy_phrase = parameters['text_task']['value']
+
+        self.max_seq_length = int(parameters['max_seq_len']['value'])
+        self.fake = fake
+
+    def execute(self):
+
+        run = True
+
+        # get the initial target letter
+        target_letter = self.copy_phrase[0]
+        text_task = '*'
 
         # check user input to make sure we should be going
-        if not get_user_input(
-                rsvp, parameters['wait_screen_message']['value'],
-                parameters['wait_screen_message_color']['value']):
-            break
+        if not get_user_input(self.rsvp, self.wait_screen_message,
+                              self.wait_screen_message_color,
+                              first_run=True):
+            run = False
 
-        # Try getting random sequence information given stimuli parameters
-        try:
+        while run:
+
+            # check user input to make sure we should be going
+            if not get_user_input(self.rsvp, self.wait_screen_message,
+                                  self.wait_screen_message_color):
+                break
+
             # Generate some sequences to present based on parameters
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(
-                alp, target_letter, parameters,
-                len_sti=int(parameters['len_sti']['value']), timing=[
-                    float(parameters['time_target']['value']),
-                    float(parameters['time_cross']['value']),
-                    float(parameters['time_flash']['value'])],
-                is_txt=rsvp.is_txt_sti,
-                color=[
-                    parameters['target_letter_color']['value'],
-                    parameters['fixation_color']['value'],
-                    parameters['stimuli_color']['value']])
+                self.alp, target_letter, self.parameters,
+                len_sti=self.len_sti, timing=self.timing,
+                is_txt=self.is_txt_sti,
+                color=self.color)
 
             # Get task information, seperate from stimuli to be presented
             (task_text, task_color) = get_task_info(
-                int(parameters['num_sti']['value']),
-                parameters['task_color']['value'])
+                self.num_sti,
+                self.task_info_color)
 
-        # Catch the exception here if needed.
-        except Exception as e:
-            print(e)
-            raise e
-
-        # Try executing the sequences
-        try:
-            rsvp.update_task_state(text=text_task, color_list=['white'])
-            rsvp.draw_static()
-            win.flip()
+            self.rsvp.update_task_state(text=text_task, color_list=['white'])
+            self.rsvp.draw_static()
+            self.window.flip()
 
             # update task state
-            rsvp.stim_sequence = ele_sti[0]
+            self.rsvp.stim_sequence = ele_sti[0]
 
-            # rsvp.text_task = text_task
-            if parameters['is_txt_sti']['value']:
-                rsvp.color_list_sti = color_sti[0]
-            rsvp.time_list_sti = timing_sti[0]
+            # self.rsvp.text_task = text_task
+            if self.is_txt_sti:
+                self.rsvp.color_list_sti = color_sti[0]
+            self.rsvp.time_list_sti = timing_sti[0]
 
             # buffer and execute the sequence
-            core.wait(buffer_val)
-            sequence_timing = rsvp.do_sequence()
+            core.wait(self.buffer_val)
+            sequence_timing = self.rsvp.do_sequence()
 
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
-                trigger_file,
-                copy_phrase,
+                self.trigger_file,
+                self.copy_phrase,
                 text_task)
 
             # buffer
-            core.wait(buffer_val)
+            core.wait(self.buffer_val)
 
             # Fake a decision!
             (target_letter, text_task, run) = fake_copy_phrase_decision(
-                copy_phrase, target_letter, text_task)
+                self.copy_phrase, target_letter, text_task)
 
-        except Exception as e:
-            raise e
+        # update the final task state and say goodbye
+        self.rsvp.update_task_state(text=text_task, color_list=['white'])
+        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.draw_static()
+        self.window.flip()
 
-    # update the final task state and say goodbye
-    rsvp.update_task_state(text=text_task, color_list=['white'])
-    rsvp.text = trial_complete_message(win, parameters)
-    rsvp.draw_static()
-    win.flip()
+        core.wait(self.buffer_val)
 
-    core.wait(buffer_val)
+        if self.daq.is_calibrated:
+            _write_triggers_from_sequence_copy_phrase(
+                ['offset', self.daq.offset], self.trigger_file,
+                self.copy_phrase, text_task, offset=True)
 
-    if daq._is_calibrated:
-        _write_triggers_from_sequence_copy_phrase(
-            ['offset', daq.offset], trigger_file,
-            copy_phrase, text_task, offset=True)
+        # Close this sessions trigger file and return some data
+        self.trigger_file.close()
 
-    # Close this sessions trigger file and return some data
-    trigger_file.close()
+        # Wait some time before exiting so there is trailing eeg data saved
+        core.wait(self.eeg_buffer)
 
-    # Wait some time before exiting so there is trailing eeg data saved
-    core.wait(int(parameters['eeg_buffer_len']['value']))
+        return self.file_save
 
-    return file_save
+    def name(self):
+        return 'RSVP Copy Phrase Calibration Task'
 
 
 def _init_copy_phrase_display_task(
         parameters, win, static_clock, experiment_clock):
-    rsvp = CopyPhraseTask(
+    rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],

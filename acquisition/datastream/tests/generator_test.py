@@ -1,9 +1,10 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import pytest
+from builtins import next
 from datastream import generator
 from mock import mock_open, patch
+from past.builtins import map, range
+import unittest
 
 
 class CustomEncoder(object):
@@ -18,125 +19,123 @@ class CustomEncoder(object):
         return (self.counter, data)
 
 
-def test_random_generator():
-    """Test default parameters for random generator"""
-    data = []
-    gen = generator.random_data()
+class TestGenerator(unittest.TestCase):
+    """Tests for Generator"""
 
-    for i in range(100):
-        data.append(gen.next())
+    def test_random_generator(self):
+        """Test default parameters for random generator"""
+        data = []
+        gen = generator.random_data()
 
-    assert len(data) == 100
+        for i in range(100):
+            data.append(next(gen))
 
+        self.assertEqual(len(data), 100)
 
-def test_random_high_low_values():
-    """Random generator should allow user to set value ranges."""
-    channel_count = 10
-    low = -100
-    high = 100
-    gen = generator.random_data(low=-100, high=100,
-                                channel_count=channel_count)
-    data = []
-    for i in range(100):
-        data.append(gen.next())
+    def test_random_high_low_values(self):
+        """Random generator should allow user to set value ranges."""
+        channel_count = 10
+        low = -100
+        high = 100
+        gen = generator.random_data(low=-100, high=100,
+                                    channel_count=channel_count)
+        data = []
+        for i in range(100):
+            data.append(next(gen))
 
-    assert len(data) == 100
+        self.assertEqual(len(data), 100)
 
-    for record in data:
-        assert len(record) == channel_count
-        for value in record:
-            assert value >= low and value <= high
+        for record in data:
+            self.assertEqual(len(record), channel_count)
+            for value in record:
+                self.assertTrue(value >= low and value <= high)
 
-
-def test_random_with_custom_encoder():
-    """Random generator should allow a custom encoder."""
-
-    data = []
-    channel_count = 10
-    gen = generator.random_data(encoder=CustomEncoder(),
-                                channel_count=channel_count)
-
-    for i in range(100):
-        data.append(gen.next())
-
-    assert len(data) == 100
-    for count, record in data:
-        assert len(record) == channel_count
-
-    assert data[0][0] == 1
-    assert data[99][0] == 100
-
-
-def test_file_generator():
-    """Should stream data from a file."""
-    col_count = 3
-    row_count = 100
-
-    header = ['col1,col2,col3']
-    file_data = [[float(cnum + rnum) for cnum in range(col_count)]
-                 for rnum in range(row_count)]
-    rows = map(lambda x: ','.join(map(str, x)), file_data)
-    test_data = '\n'.join(header + rows)
-
-    with patch('datastream.generator.open',
-               mock_open(read_data=test_data), create=True):
+    def test_random_with_custom_encoder(self):
+        """Random generator should allow a custom encoder."""
 
         data = []
-        gen = generator.file_data(filename='foo', header_row=1)
-        for i in range(row_count):
-            data.append(gen.next())
+        channel_count = 10
+        gen = generator.random_data(encoder=CustomEncoder(),
+                                    channel_count=channel_count)
 
-        assert len(data) == row_count
-        for i, row in enumerate(data):
-            assert row == file_data[i]
+        for i in range(100):
+            data.append(next(gen))
 
-
-def test_file_generator_end():
-    """Should throw an exception when all data has been consumed"""
-    col_count = 3
-    row_count = 10
-
-    header = ['col1,col2,col3']
-    file_data = [[float(cnum + rnum) for cnum in range(col_count)]
-                 for rnum in range(row_count)]
-    rows = map(lambda x: ','.join(map(str, x)), file_data)
-    test_data = '\n'.join(header + rows)
-
-    with patch('datastream.generator.open',
-               mock_open(read_data=test_data), create=True):
-
-        data = []
-        gen = generator.file_data(filename='foo', header_row=1)
-        for i in range(row_count):
-            data.append(gen.next())
-
-        with pytest.raises(StopIteration):
-            data.append(gen.next())
-
-
-def test_file_with_custom_encoder():
-    """Should allow a custom encoder"""
-
-    col_count = 3
-    row_count = 100
-
-    header = ['col1,col2,col3']
-    file_data = [[float(cnum + rnum) for cnum in range(col_count)]
-                 for rnum in range(row_count)]
-    rows = map(lambda x: ','.join(map(str, x)), file_data)
-    test_data = '\n'.join(header + rows)
-
-    with patch('datastream.generator.open',
-               mock_open(read_data=test_data), create=True):
-
-        data = []
-        gen = generator.file_data(
-            filename='foo', header_row=1, encoder=CustomEncoder())
-        for i in range(row_count):
-            data.append(gen.next())
-
+        self.assertEqual(len(data), 100)
         for count, record in data:
-            assert len(record) == col_count
+            self.assertEqual(len(record), channel_count)
 
-        assert data[0][0] == 1
-        assert data[99][0] == 100
+        self.assertEqual(data[0][0], 1)
+        self.assertEqual(data[99][0], 100)
+
+    def test_file_generator(self):
+        """Should stream data from a file."""
+        col_count = 3
+        row_count = 100
+
+        header = ['col1,col2,col3']
+        file_data = [[float(cnum + rnum) for cnum in range(col_count)]
+                     for rnum in range(row_count)]
+        rows = map(lambda x: ','.join(map(str, x)), file_data)
+        test_data = '\n'.join(header + rows)
+
+        with patch('datastream.generator.open',
+                   mock_open(read_data=test_data), create=True):
+
+            data = []
+            gen = generator.file_data(filename='foo', header_row=1)
+            for i in range(row_count):
+                data.append(next(gen))
+
+            self.assertEqual(len(data), row_count)
+            for i, row in enumerate(data):
+                self.assertEqual(row, file_data[i])
+
+    def test_file_generator_end(self):
+        """Should throw an exception when all data has been consumed"""
+        col_count = 3
+        row_count = 10
+
+        header = ['col1,col2,col3']
+        file_data = [[float(cnum + rnum) for cnum in range(col_count)]
+                     for rnum in range(row_count)]
+        rows = map(lambda x: ','.join(map(str, x)), file_data)
+        test_data = '\n'.join(header + rows)
+
+        with patch('datastream.generator.open',
+                   mock_open(read_data=test_data), create=True):
+
+            data = []
+            gen = generator.file_data(filename='foo', header_row=1)
+            for i in range(row_count):
+                data.append(next(gen))
+
+            with pytest.raises(StopIteration):
+                data.append(next(gen))
+
+    def test_file_with_custom_encoder(self):
+        """Should allow a custom encoder"""
+
+        col_count = 3
+        row_count = 100
+
+        header = ['col1,col2,col3']
+        file_data = [[float(cnum + rnum) for cnum in range(col_count)]
+                     for rnum in range(row_count)]
+        rows = map(lambda x: ','.join(map(str, x)), file_data)
+        test_data = '\n'.join(header + rows)
+
+        with patch('datastream.generator.open',
+                   mock_open(read_data=test_data), create=True):
+
+            data = []
+            gen = generator.file_data(
+                filename='foo', header_row=1, encoder=CustomEncoder())
+            for i in range(row_count):
+                data.append(next(gen))
+
+            for count, record in data:
+                self.assertEqual(len(record), col_count)
+
+            self.assertEqual(data[0][0], 1)
+            self.assertEqual(data[99][0], 100)

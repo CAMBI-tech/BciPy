@@ -1,22 +1,11 @@
 """Protocol with information for generating and serving mock DSI data."""
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import timeit
 
 import acquisition.protocols.dsi.dsi as dsi
 import acquisition.protocols.protocol as protocol
 
 
-default_fs = 300
-default_channels = ['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-                    'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-                    'X3', 'X2', 'F7', 'F8', 'X1',
-                    'A2', 'T6', 'T4', 'TRG']
-
-
-def DsiProtocol(fs=default_fs, channels=default_channels):
+def DsiProtocol(fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
     """Protocol for mocking DSI data."""
     return protocol.Protocol(encoder=Encoder(),
                              init_messages=_init_messages(fs, channels),
