@@ -1,8 +1,6 @@
-#!/usr/bin/env python2
+
 # -*- coding: utf-8 -*-
 
-
-from __future__ import division
 from psychopy import visual
 from rsvp_disp import RSVPDisplay
 
@@ -14,8 +12,8 @@ from rsvp_disp import RSVPDisplay
         update_task_state: update task information of the module """
 
 
-class CopyPhraseTask(RSVPDisplay):
-    """ Copy Phrase Task object of RSVP
+class CopyPhraseDisplay(RSVPDisplay):
+    """ Copy Phrase display object of RSVP
         Attr:
             static_task(visual_Text_Stimuli): aim string of the copy phrase.
                 (Stored in self.text[0])
@@ -57,32 +55,33 @@ class CopyPhraseTask(RSVPDisplay):
         x_pos_task = tmp2.boundingBox[0] / window.size[0] - 1
         pos_task = (x_pos_task, static_pos_task[1] - height_task)
 
-        super(CopyPhraseTask, self).__init__(window, clock,
-                                             experiment_clock,
-                                             color_task=color_task,
-                                             font_task=font_task,
-                                             pos_task=pos_task,
-                                             task_height=height_task,
-                                             text_task=text_task,
-                                             color_text=color_text,
-                                             text_text=text_text,
-                                             font_text=font_text,
-                                             pos_text=pos_text,
-                                             height_text=height_text,
-                                             font_sti=font_sti,
-                                             pos_sti=pos_sti,
-                                             sti_height=sti_height,
-                                             stim_sequence=stim_sequence,
-                                             color_list_sti=color_list_sti,
-                                             time_list_sti=time_list_sti,
-                                             tr_pos_bg=tr_pos_bg,
-                                             bl_pos_bg=bl_pos_bg,
-                                             size_domain_bg=size_domain_bg,
-                                             color_bg_txt=color_bg_txt,
-                                             font_bg_txt=font_bg_txt,
-                                             color_bar_bg=color_bar_bg,
-                                             is_txt_sti=is_txt_sti,
-                                             trigger_type=trigger_type)
+        super(CopyPhraseDisplay, self).__init__(
+            window, clock,
+            experiment_clock,
+            color_task=color_task,
+            font_task=font_task,
+            pos_task=pos_task,
+            task_height=height_task,
+            text_task=text_task,
+            color_text=color_text,
+            text_text=text_text,
+            font_text=font_text,
+            pos_text=pos_text,
+            height_text=height_text,
+            font_sti=font_sti,
+            pos_sti=pos_sti,
+            sti_height=sti_height,
+            stim_sequence=stim_sequence,
+            color_list_sti=color_list_sti,
+            time_list_sti=time_list_sti,
+            tr_pos_bg=tr_pos_bg,
+            bl_pos_bg=bl_pos_bg,
+            size_domain_bg=size_domain_bg,
+            color_bg_txt=color_bg_txt,
+            font_bg_txt=font_bg_txt,
+            color_bar_bg=color_bar_bg,
+            is_txt_sti=is_txt_sti,
+            trigger_type=trigger_type)
 
     def update_task_state(self, text, color_list):
         """ Updates task state of Copy Phrase Task by removing letters or
@@ -97,7 +96,7 @@ class CopyPhraseTask(RSVPDisplay):
         self.update_task(text=text, color_list=color_list, pos=pos_task)
 
 
-class FreeSpellingTask(RSVPDisplay):
+class FreeSpellingDisplay(RSVPDisplay):
     """ Free Spelling Task object of RSVP
         Attr:
             information(visual_Text_Stimuli): information text.
@@ -130,35 +129,36 @@ class FreeSpellingTask(RSVPDisplay):
         x_pos_task = tmp.boundingBox[0] / window.size[0] - 1
         pos_task = (x_pos_task, 1 - height_task)
 
-        super(FreeSpellingTask, self).__init__(window, clock,
-                                               experiment_clock,
-                                               color_task=color_task,
-                                               font_task=font_task,
-                                               pos_task=pos_task,
-                                               task_height=height_task,
-                                               text_task=text_task,
-                                               color_text=color_text,
-                                               text_text=text_text,
-                                               font_text=font_text,
-                                               pos_text=pos_text,
-                                               height_text=height_text,
-                                               font_sti=font_sti,
-                                               pos_sti=pos_sti,
-                                               sti_height=sti_height,
-                                               stim_sequence=stim_sequence,
-                                               color_list_sti=color_list_sti,
-                                               time_list_sti=time_list_sti,
-                                               tr_pos_bg=tr_pos_bg,
-                                               bl_pos_bg=bl_pos_bg,
-                                               size_domain_bg=size_domain_bg,
-                                               color_bg_txt=color_bg_txt,
-                                               font_bg_txt=font_bg_txt,
-                                               color_bar_bg=color_bar_bg,
-                                               is_txt_sti=is_txt_sti,
-                                               trigger_type=trigger_type)
+        super(FreeSpellingDisplay, self).__init__(
+            window, clock,
+            experiment_clock,
+            color_task=color_task,
+            font_task=font_task,
+            pos_task=pos_task,
+            task_height=height_task,
+            text_task=text_task,
+            color_text=color_text,
+            text_text=text_text,
+            font_text=font_text,
+            pos_text=pos_text,
+            height_text=height_text,
+            font_sti=font_sti,
+            pos_sti=pos_sti,
+            sti_height=sti_height,
+            stim_sequence=stim_sequence,
+            color_list_sti=color_list_sti,
+            time_list_sti=time_list_sti,
+            tr_pos_bg=tr_pos_bg,
+            bl_pos_bg=bl_pos_bg,
+            size_domain_bg=size_domain_bg,
+            color_bg_txt=color_bg_txt,
+            font_bg_txt=font_bg_txt,
+            color_bar_bg=color_bar_bg,
+            is_txt_sti=is_txt_sti,
+            trigger_type=trigger_type)
 
 
-class CalibrationTask(RSVPDisplay):
+class CalibrationDisplay(RSVPDisplay):
     """ Calibration object of RSVP
         Attr:
             information(visual_Text_Stimuli): information text.
@@ -192,29 +192,30 @@ class CalibrationTask(RSVPDisplay):
         x_pos_task = tmp.boundingBox[0] / window.size[0] - 1
         pos_task = (x_pos_task, 1 - height_task)
 
-        super(CalibrationTask, self).__init__(window, clock,
-                                              experiment_clock,
-                                              color_task=color_task,
-                                              font_task=font_task,
-                                              pos_task=pos_task,
-                                              task_height=height_task,
-                                              text_task=text_task,
-                                              color_text=color_text,
-                                              text_text=text_text,
-                                              font_text=font_text,
-                                              pos_text=pos_text,
-                                              height_text=height_text,
-                                              font_sti=font_sti,
-                                              pos_sti=pos_sti,
-                                              sti_height=sti_height,
-                                              stim_sequence=stim_sequence,
-                                              color_list_sti=color_list_sti,
-                                              time_list_sti=time_list_sti,
-                                              tr_pos_bg=tr_pos_bg,
-                                              bl_pos_bg=bl_pos_bg,
-                                              size_domain_bg=size_domain_bg,
-                                              color_bg_txt=color_bg_txt,
-                                              font_bg_txt=font_bg_txt,
-                                              color_bar_bg=color_bar_bg,
-                                              is_txt_sti=is_txt_sti,
-                                              trigger_type=trigger_type)
+        super(CalibrationDisplay, self).__init__(
+            window, clock,
+            experiment_clock,
+            color_task=color_task,
+            font_task=font_task,
+            pos_task=pos_task,
+            task_height=height_task,
+            text_task=text_task,
+            color_text=color_text,
+            text_text=text_text,
+            font_text=font_text,
+            pos_text=pos_text,
+            height_text=height_text,
+            font_sti=font_sti,
+            pos_sti=pos_sti,
+            sti_height=sti_height,
+            stim_sequence=stim_sequence,
+            color_list_sti=color_list_sti,
+            time_list_sti=time_list_sti,
+            tr_pos_bg=tr_pos_bg,
+            bl_pos_bg=bl_pos_bg,
+            size_domain_bg=size_domain_bg,
+            color_bg_txt=color_bg_txt,
+            font_bg_txt=font_bg_txt,
+            color_bar_bg=color_bar_bg,
+            is_txt_sti=is_txt_sti,
+            trigger_type=trigger_type)

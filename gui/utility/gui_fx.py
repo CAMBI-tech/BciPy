@@ -295,7 +295,7 @@ def display_help_pointers(filename, helpId):
         warn('File ' + str(filename) + ' could not be found.')
 
 
-# tests wheter a set of arguments passed to a function are of the correct types
+# tests whether a set of arguments passed to a function are of the correct types
 def test_values(inputVariables, valueArray, typeArray, functionCaller):
     for counter in range(0, len(valueArray)):
         if(isinstance(typeArray[counter], list)):
@@ -688,7 +688,7 @@ def exec_bci_main(parameters, window, mode):
 
         p = subprocess.call(cmd, shell=False)
         # bci_main.bci_main(parameters, userId, trialType, mode)
-        
+
 
     except Exception as e:
         if e.message == 'Not implemented yet!':
@@ -1176,7 +1176,7 @@ class MenuWindow(pyglet.window.Window):
                     else:
                         insert_symbol_at_index("]", currentActiveInputField)
             except IndexError:
-                print "Invalid key press"
+                print("Invalid key press")
 
     # for detecting shift key usage for input box text
     def on_key_release(self, symbol, modifiers):

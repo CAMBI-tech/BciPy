@@ -1,7 +1,7 @@
-from __future__ import absolute_import, division, print_function
 
 import multiprocessing
 import threading
+
 
 class StoppableProcess(multiprocessing.Process):
     """Thread class with a stop() method. The thread itself has to check

@@ -3,6 +3,8 @@
 omit =
         *__init__*
         */usr/local/lib*
+        *tests*
+        *test*
 
 [report]
 exclude_lines =

@@ -3,6 +3,7 @@ from psychopy import visual, event
 
 import numpy as np
 
+
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
 
@@ -128,7 +129,7 @@ def process_data_for_decision(sequence_timing, daq):
                              range(len(raw_data))]).transpose()
 
     except Exception as e:
-        print "Error in daq: get_data()"
+        print("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info

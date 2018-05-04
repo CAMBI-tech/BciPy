@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 from acquisition.processor import FileWriter
 from acquisition.device_info import DeviceInfo
@@ -23,7 +21,7 @@ class TestFilewriter(unittest.TestCase):
         m = mock_open()
         with patch('acquisition.processor.open', m):
             with filewriter:
-                m.assert_called_once_with('foo.csv', 'wb')
+                m.assert_called_once_with('foo.csv', 'w', newline='')
 
                 handle = m()
                 handle.write.assert_called_with('timestamp,c1,c2,c3\r\n')

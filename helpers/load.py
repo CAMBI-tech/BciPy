@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-
-from Tkinter import Tk
+from tkinter import Tk
 import numpy as np
 import pandas as pd
 from codecs import open as codecsopen
 from json import load as jsonload
 import pickle
 
-from tkFileDialog import askopenfilename, askdirectory
+from tkinter.filedialog import askopenfilename, askdirectory
 
 
 def load_json_parameters(path):
