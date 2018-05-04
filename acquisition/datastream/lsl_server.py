@@ -21,12 +21,14 @@ class LslDataServer(StoppableThread):
 
         self.channels = params['channels']
         self.hz = int(params['hz'])
+        stream_name = params.get('name', 'TestStream')
+
         params['channel_count'] = len(self.channels)
         self.channel_count = len(self.channels)
         self.generator = generator
 
         logging.debug("Starting server with params: " + str(params))
-        info = StreamInfo("TestStream",
+        info = StreamInfo(stream_name,
                           "EEG", self.channel_count,
                           self.hz,
                           'float32',
@@ -48,8 +50,10 @@ class LslDataServer(StoppableThread):
         markers_info = StreamInfo("TestStream Markers",
                                   "Markers", 1, 0, 'string', "uid12345_markers")
         self.markers_outlet = StreamOutlet(markers_info)
+        self.started = False
 
     def stop(self):
+        logging.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
         # Allows pylsl to cleanup; The outlet will no longer be discoverable
@@ -64,12 +68,14 @@ class LslDataServer(StoppableThread):
 
     def run(self):
         sample_counter = 0
+        self.started = True
         while self.running():
             sample_counter += 1
             self.outlet.push_sample(self.next_sample())
             if sample_counter % 100 == 0:
                 self.markers_outlet.push_sample([str(random.randint(1, 100))])
             time.sleep(1 / self.hz)
+        logging.debug("[*] No longer pushing data")
 
 
 def _settings(filename):

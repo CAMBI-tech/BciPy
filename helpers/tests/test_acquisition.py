@@ -61,6 +61,23 @@ class TestAcquisition(unittest.TestCase):
         self.assertEqual(client.device_info.name, 'DSI')
         self.assertEqual(client.device_info.fs, 300)
 
+    def test_can_use_lsl(self):
+        print("Testing init_eeg_acquisition with LSL device")
+
+        params = self.parameters
+        params['acq_device'] = {"value": 'LSL'}
+
+        client, server = init_eeg_acquisition(params, self.save, server=True)
+
+        with client:
+            time.sleep(0.1)
+        client.cleanup()
+        server.stop()
+        server.join()
+
+        self.assertEqual(client.device_info.name, 'LSL')
+        self.assertEqual(client.device_info.fs, 512)
+
 
 if __name__ == '__main__':
     unittest.main()

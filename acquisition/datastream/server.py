@@ -127,6 +127,60 @@ class DataServer(StoppableThread):
         logging.debug("[*] Client disconnected")
 
 
+def start_socket_server(protocol, host, port, retries=2):
+    """Starts a DataServer given the provided port and host information. If
+    the port is not available, will automatically try a different port up to
+    the given number of times. Returns the server along with the port.
+
+    Parameters
+    ----------
+        protocol : Protocol for how to generate data.
+        host : str ; socket host (ex. '127.0.0.1').
+        port : int.
+        retries : int; number of times to attempt another port if provided
+            port is busy.
+    Returns
+    -------
+        (server, port)
+    """
+    from acquisition.datastream.generator import random_data
+    try:
+        dataserver = DataServer(protocol=protocol,
+                                generator=random_data,
+                                gen_params={'channel_count': len(
+                                    protocol.channels)},
+                                host=host,
+                                port=port)
+
+    except IOError as e:
+        if retries > 0:
+            # try a different port when 'Address already in use'.
+            port = port + 1
+            logging.debug("Address in use: trying port {}".format(port))
+            return start_socket_server(protocol, host, port, retries - 1)
+        else:
+            raise e
+
+    await_start(dataserver)
+    return dataserver, port
+
+
+def await_start(dataserver, max_wait=2):
+    """Blocks until server is started. Raises if max_wait is exceeded before
+    server is started."""
+    import time
+
+    dataserver.start()
+    wait = 0
+    wait_interval = 0.01
+    while not dataserver.started:
+        time.sleep(wait_interval)
+        wait += wait_interval
+        if wait >= max_wait:
+            dataserver.stop()
+            raise Exception("Server couldn't start up in time.")
+
+
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
