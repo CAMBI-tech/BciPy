@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
 from helpers.stim_gen import best_case_rsvp_seq_gen
 import numpy as np
 import string

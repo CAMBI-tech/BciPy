@@ -1,5 +1,6 @@
 import unittest
 import shutil
+from unittest.mock import MagicMock
 from helpers.load import load_json_parameters
 from helpers.save import init_save_data_structure
 from display.display_main import init_display_window
@@ -29,14 +30,15 @@ class TestStartTask(unittest.TestCase):
             self.user_information,
             parameters_used)
 
-        self.daq = 'DAQ'
+        self.daq = MagicMock()
+        self.daq.is_calibrated = True
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
-        shutil.rmtree(self.file_save)
+        shutil.rmtree(self.data_save_path)
 
     def test_start_task_returns_helpful_message_on_undefiend_task(self):
-        try:
+        with self.assertRaises(Exception):
             start_task(
                 self.display_window,
                 self.daq,
@@ -44,22 +46,14 @@ class TestStartTask(unittest.TestCase):
                 self.parameters,
                 self.file_save)
 
-        except Exception as e:
-            self.assertEqual(e.message, 'New Mode 1 Not implemented yet!')
-
-
     def test_start_task_runs_rsvp_calibration(self):
         task_type = {
             'mode': 'RSVP',
             'exp_type': 1
         }
-        try:
-            task = start_task(
-                    self.display_window,
-                    self.daq,
-                    task_type,
-                    self.parameters,
-                    self.file_save)
-
-        except Exception as e:
-            pass
+        start_task(
+            self.display_window,
+            self.daq,
+            task_type,
+            self.parameters,
+            self.file_save)

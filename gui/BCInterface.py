@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import pyglet
 import utility.gui_fx as gui_fx
 from utils.convert import convert_to_height, convert_to_width

@@ -47,8 +47,8 @@ y = sig_pro(x, fs = fs, k = 1)
 MSE_perSample = np.sum((xpassband - y[0][:xpassband.size])**2.)/xpassband.size
 MSE_perSample_norm = MSE_perSample/np.sum(x[0][:]**2)
 
-print 'MSE per sample: {} -> {}%'.format(MSE_perSample, MSE_perSample/5.*100)
-print 'MSE normalized: {}'.format(MSE_perSample_norm*100)
+print('MSE per sample: {} -> {}%'.format(MSE_perSample, MSE_perSample/5.*100))
+print('MSE normalized: {}'.format(MSE_perSample_norm*100))
 
 
 plt.figure(1)

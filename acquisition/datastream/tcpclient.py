@@ -1,6 +1,4 @@
-"""Test client for the TCP server"""
-
-from __future__ import absolute_import, division, print_function
+"""Test client for the TCP server."""
 
 import logging
 import socket

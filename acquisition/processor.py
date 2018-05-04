@@ -1,7 +1,5 @@
 """DAQ Item Processors"""
 
-from __future__ import absolute_import, division, print_function
-
 from device_info import DeviceInfo
 import csv
 import sys

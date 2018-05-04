@@ -1,11 +1,9 @@
 # Calibration Task for RSVP
-
-from __future__ import division, print_function
-
 from psychopy import core
-import time
 
-from display.rsvp.rsvp_disp_modes import CalibrationTask
+from display.rsvp.rsvp_disp_modes import CalibrationDisplay
+
+from bci_tasks.task import Task
 
 from helpers.triggers import _write_triggers_from_sequence_calibration
 from helpers.stim_gen import random_rsvp_calibration_seq_gen, get_task_info
@@ -13,7 +11,7 @@ from helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input)
 
 
-def rsvp_calibration_task(win, daq, parameters, file_save, fake):
+class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
     Calibration task performs an RSVP stimulus sequence
@@ -37,135 +35,141 @@ def rsvp_calibration_task(win, daq, parameters, file_save, fake):
         file_save (String)
 
     """
+    def __init__(self, win, daq, parameters, file_save, fake):
+        self.window = win
+        self.frame_rate = self.window.getActualFrameRate()
+        self.parameters = parameters
+        self.daq = daq
+        self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
+        self.experiment_clock = core.Clock()
+        self.buffer_val = float(parameters['task_buffer_len']['value'])
+        self.alp = alphabet(parameters)
+        self.rsvp = init_calibration_display_task(
+            self.parameters, self.window,
+            self.static_clock, self.experiment_clock)
+        self.file_save = file_save
+        trigger_save_location = self.file_save + '/triggers.txt'
+        self.trigger_file = open(trigger_save_location, 'w')
 
-    # Initialize needed experiment information
-    frame_rate = win.getActualFrameRate()
-    static_clock = core.StaticPeriod(screenHz=frame_rate)
-    buffer_val = float(parameters['task_buffer_len']['value'])
-    alp = alphabet(parameters)
+        self.wait_screen_message = parameters['wait_screen_message']['value']
+        self.wait_screen_message_color = parameters[
+            'wait_screen_message_color']['value']
 
-    experiment_clock = core.Clock()
-    daq._clock = experiment_clock
+        self.num_sti = int(parameters['num_sti']['value'])
+        self.len_sti = int(parameters['len_sti']['value'])
+        self.timing = [float(parameters['time_target']['value']),
+                       float(parameters['time_cross']['value']),
+                       float(parameters['time_flash']['value'])]
 
-    # Try initializing the calibration display
-    try:
-        rsvp = init_calibration_display_task(
-            parameters, win, static_clock, experiment_clock)
-    except Exception as e:
-        raise e
+        self.color = [parameters['target_letter_color']['value'],
+                      parameters['fixation_color']['value'],
+                      parameters['stimuli_color']['value']]
 
-    # Init Task Triggers and Run
-    trigger_save_location = file_save + '/triggers.txt'
-    trigger_file = open(trigger_save_location, 'w')
-    run = True
+        self.task_info_color = parameters['task_color']['value']
 
-    # Check user input to make sure we should be going
-    if not get_user_input(rsvp, parameters['wait_screen_message']['value'],
-                          parameters['wait_screen_message_color']['value'],
-                          first_run=True):
-        run = False
+        self.stimuli_height = float(parameters['sti_height']['value'])
 
-    # Begin the Experiment
-    while run:
+        self.is_txt_sti = True if parameters['is_txt_sti']['value'] == 'true' \
+            else False,
+        self.eeg_buffer = int(parameters['eeg_buffer_len']['value'])
 
-        # Get random sequence information given stimuli parameters
-        try:
+    def execute(self):
+        run = True
+
+        # Check user input to make sure we should be going
+        if not get_user_input(self.rsvp, self.wait_screen_message,
+                              self.wait_screen_message_color,
+                              first_run=True):
+            run = False
+
+        # Begin the Experiment
+        while run:
+
+            # Get random sequence information given stimuli parameters
             (ele_sti, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
-                alp, num_sti=int(parameters['num_sti']['value']),
-                len_sti=int(parameters['len_sti']['value']), timing=[
-                    float(parameters['time_target']['value']),
-                    float(parameters['time_cross']['value']),
-                    float(parameters['time_flash']['value'])],
-                is_txt=rsvp.is_txt_sti,
-                color=[
-                    parameters['target_letter_color']['value'],
-                    parameters['fixation_color']['value'],
-                    parameters['stimuli_color']['value']])
+                self.alp, num_sti=self.num_sti,
+                len_sti=self.len_sti, timing=self.timing,
+                is_txt=self.rsvp.is_txt_sti,
+                color=self.color)
 
-            (task_text, task_color) = get_task_info(
-                int(parameters['num_sti']['value']),
-                parameters['task_color']['value'])
+            (task_text, task_color) = get_task_info(self.num_sti,
+                                                    self.task_info_color)
 
-        # Catch the exception here if needed.
-        except Exception as e:
-            raise e
 
-        # Execute the RSVP sequences
-        try:
+            # Execute the RSVP sequences
             for idx_o in range(len(task_text)):
 
                 # check user input to make sure we should be going
-                if not get_user_input(
-                        rsvp, parameters['wait_screen_message']['value'],
-                        parameters['wait_screen_message_color']['value']):
+                if not get_user_input(self.rsvp, self.wait_screen_message,
+                                      self.wait_screen_message_color):
                     break
 
                 # update task state
-                rsvp.update_task_state(
+                self.rsvp.update_task_state(
                     text=task_text[idx_o],
                     color_list=task_color[idx_o])
 
                 # Draw and flip screen
-                rsvp.draw_static()
-                win.flip()
+                self.rsvp.draw_static()
+                self.window.flip()
 
                 # Get height
-                rsvp.sti.height = float(parameters['sti_height']['value'])
+                self.rsvp.sti.height = self.stimuli_height
 
                 # Schedule a sequence
-                rsvp.stim_sequence = ele_sti[idx_o]
+                self.rsvp.stim_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
-                if parameters['is_txt_sti']['value']:
-                    rsvp.color_list_sti = color_sti[idx_o]
+                if self.is_txt_sti:
+                    self.rsvp.color_list_sti = color_sti[idx_o]
 
-                rsvp.time_list_sti = timing_sti[idx_o]
+                self.rsvp.time_list_sti = timing_sti[idx_o]
 
                 # Wait for a time
-                core.wait(buffer_val)
+                core.wait(self.buffer_val)
 
                 # Do the sequence
-                last_sequence_timing = rsvp.do_sequence()
+                last_sequence_timing = self.rsvp.do_sequence()
 
                 # Write triggers for the sequence
                 _write_triggers_from_sequence_calibration(
-                    last_sequence_timing, trigger_file)
+                    last_sequence_timing, self.trigger_file)
 
                 # Wait for a time
-                core.wait(buffer_val)
+                core.wait(self.buffer_val)
 
             # Set run to False to stop looping
             run = False
 
-        except Exception as e:
-            raise e
+        # Say Goodbye!
+        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.draw_static()
+        self.window.flip()
 
-    # Say Goodbye!
-    rsvp.text = trial_complete_message(win, parameters)
-    rsvp.draw_static()
-    win.flip()
+        # Give the system time to process
+        core.wait(self.buffer_val)
 
-    # Give the system time to process
-    core.wait(buffer_val)
+        if self.daq.is_calibrated:
+            _write_triggers_from_sequence_calibration(
+                ['offset', self.daq.offset], self.trigger_file, offset=True)
 
-    if daq.is_calibrated:
-        _write_triggers_from_sequence_calibration(
-            ['offset', daq.offset], trigger_file, offset=True)
+        # Close this sessions trigger file and return some data
+        self.trigger_file.close()
 
-    # Close this sessions trigger file and return some data
-    trigger_file.close()
+        # Wait some time before exiting so there is trailing eeg data saved
+        core.wait(self.eeg_buffer)
 
-    # Wait some time before exiting so there is trailing eeg data saved
-    core.wait(int(parameters['eeg_buffer_len']['value']))
+        return self.file_save
 
-    return file_save
+    def name(self):
+        return 'RSVP Calibration Task'
 
 
 def init_calibration_display_task(
-        parameters, win, static_clock, experiment_clock):
-    rsvp = CalibrationTask(
-        window=win, clock=static_clock,
+        parameters, window, static_clock, experiment_clock):
+    rsvp = CalibrationDisplay(
+        window=window, clock=static_clock,
         experiment_clock=experiment_clock,
         text_info=parameters['text_text']['value'],
         color_info=parameters['color_text']['value'],

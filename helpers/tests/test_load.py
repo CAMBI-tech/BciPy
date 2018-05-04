@@ -16,6 +16,7 @@ from load import (load_json_parameters,
                   load_classifier,
                   load_txt_data)
 
+
 class TestLoad(unittest.TestCase):
     """This is Test Case for Loading BCI data."""
 
@@ -37,19 +38,12 @@ class TestLoad(unittest.TestCase):
         # assert that load function turned json parameters into a dict
         self.assertTrue(type(parameters), 'dict')
 
-    def test_load_json_parameters_throws_useful_error_on_wrong_path(self):
+    def test_load_json_parameters_throws_error_on_wrong_path(self):
         """Test load parameters returns error on entering wrong path."""
 
         # call the load parameters function with incorrect path
-        try:
+        with self.assertRaises(Exception):
             load_json_parameters('/garbage/dir/wont/work')
-
-        # catch the exception and make sure it's as expected
-        except Exception as error:
-            self.assertEqual(
-                error.message,
-                "Incorrect path to parameters given! Please try again.")
-
 
     def test_load_classifier(self):
         """Test load classifier can load pickled file when given path."""
