@@ -6,6 +6,9 @@ from acquisition.protocols.device import Device
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 
+TRG = "TRG"
+LSL_TIMESTAMP = 'LSL_timestamp'
+
 
 class LslDevice(Device):
     """Driver for any device streaming data through the LabStreamingLayer lib.
@@ -20,12 +23,13 @@ class LslDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=None, channels=None):
+    def __init__(self, connection_params, fs=None, channels=None,
+                 include_lsl_timestamp=False):
         super(LslDevice, self).__init__(connection_params, fs, channels)
-        self._appended_channels = ['TRG']
-        if channels is not None:
-            for channel in channels:
-                assert channel not in self._appended_channels
+        self._appended_channels = []
+        if include_lsl_timestamp:
+            self._appended_channels.append(LSL_TIMESTAMP)
+        self._appended_channels.append(TRG)
         self._current_marker = (None, None)
 
     @property
@@ -152,8 +156,7 @@ class LslDevice(Device):
                 assign_current_marker = True
 
         # Useful for debugging.
-        # TODO: use name or index
-        if 'LSL_timestamp' in self._appended_channels:
+        if LSL_TIMESTAMP in self._appended_channels:
             sample.append(timestamp)
 
         # Add marker field to sample
