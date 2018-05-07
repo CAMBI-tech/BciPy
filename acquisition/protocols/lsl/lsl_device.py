@@ -22,6 +22,10 @@ class LslDevice(Device):
 
     def __init__(self, connection_params, fs=None, channels=None):
         super(LslDevice, self).__init__(connection_params, fs, channels)
+        self._appended_channels = ['TRG']
+        if channels is not None:
+            for channel in channels:
+                assert channel not in self._appended_channels
         self._current_marker = (None, None)
 
     @property
@@ -71,7 +75,8 @@ class LslDevice(Device):
             if len(info_channels) > 0 and self.channels != info_channels:
                 raise Exception("Channels read from the device do not match "
                                 "the provided parameters")
-        assert len(self.channels) == (metadata.channel_count() + 1),\
+        assert len(self.channels) == (metadata.channel_count() +
+                                      len(self._appended_channels)),\
             "Channel count error"
 
         if not self.fs:
@@ -100,13 +105,13 @@ class LslDevice(Device):
             channels.append(ch.child_value("label"))
             ch = ch.next_sibling()
 
-        if 'TRG' not in channels:
-            channels.append('TRG')
+        for ac in self._appended_channels:
+            channels.append(ac)
 
         return channels
 
     def _current_marker_set(self):
-        return self._current_marker[0] is not None
+        return self._current_marker and self._current_marker[0] is not None
 
     def _clear_current_marker(self):
         self._current_marker = (None, None)
@@ -130,7 +135,7 @@ class LslDevice(Device):
         else:
             marker_just_read = False
 
-        trg = "0"
+        assign_current_marker = False
         if self._current_marker_set():
             marker_channels, marker_timestamp = self._current_marker
             trg = marker_channels[0]
@@ -144,9 +149,18 @@ class LslDevice(Device):
                                   trg, marker_timestamp, timestamp))
                 logging.debug("Time diff: {}".format(
                     timestamp - marker_timestamp))
-                self._clear_current_marker()
+                assign_current_marker = True
 
-        # Add marker field to sample.
-        sample.append(trg)
+        # Useful for debugging.
+        # TODO: use name or index
+        if 'LSL_timestamp' in self._appended_channels:
+            sample.append(timestamp)
+
+        # Add marker field to sample
+        if assign_current_marker and trg:
+            sample.append(trg)
+            self._clear_current_marker()
+        else:
+            sample.append("0")
 
         return sample
