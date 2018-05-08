@@ -14,7 +14,7 @@ from signal_model.offline_analysis import offline_analysis
 import pyglet
 import wx
 
-import gui_fx
+from . import gui_fx
 
 
 # arrays of buttons, windows, text, input fields, scroll bars, on the screen
@@ -213,7 +213,7 @@ def drop_items(text_box_name, windowId, filename, readValues):
                         except ValueError:
                             warn('File ' + str(filename) + ' is an invalid JSON file.')
                     for counter2 in range(0, (len(user_array))):
-                        if(isinstance(user_array[counter2], basestring)):
+                        if(isinstance(user_array[counter2], str)):
                             add_button(
                                 inputFields[counter][1],
                                 (inputFields[counter][2] - (inputFields[counter][4]) - ((counter2 - 1) * 10)) - counter2*20,
@@ -336,7 +336,7 @@ def add_button(xpos, ypos, width, height,
                isTemp=False, prioritizeTask=False, fontName='Verdana'):
     global buttons
     should_add = test_values(locals(), getargspec(add_button)[0], [
-        int, int, int, int, tuple, tuple, tuple, [str, unicode],
+        int, int, int, int, tuple, tuple, tuple, [str, str],
         int, int, [int, str], [int, list, tuple],
         int, [bool, int], bool, bool, str], 'add_button')
     if(should_add):
@@ -369,7 +369,7 @@ def add_input(inputObject, xpos, ypos, width,
 def add_text(xpos, ypos, color, size, text, window, scrollBar=False):
     global textBoxes
     should_add = test_values(locals(), getargspec(add_text)[0], [
-        int, int, tuple, int, [str, unicode], int, [bool, int]], 'add_text')
+        int, int, tuple, int, [str, str], int, [bool, int]], 'add_text')
     if(should_add):
         return textBoxes.append((xpos, ypos, color,
                                  size, text, window, scrollBar))
@@ -415,7 +415,7 @@ def draw_button(centerx, centery, width, height,
     if(test_values(locals(), getargspec(draw_button)[0], [[float, int],
                    [float, int], [float, int], [float, int],
                    tuple, tuple, tuple,
-                   [str, unicode], int, int, str], 'draw_button')):
+                   [str, str], int, int, str], 'draw_button')):
         if(button_color[3] == 255):
             bottom_color = (button_color[0] - 15, button_color[1] - 15,
                             button_color[2] - 15, button_color[3]) \
@@ -532,7 +532,7 @@ def draw_text(centerx, centery, textColor, textSize, text,
     global labelCache
     if(test_values(locals(), getargspec(draw_text)[0],
                    [[float, int], [float, int],
-                   tuple, int, [unicode, str],
+                   tuple, int, [str, str],
                    [int, bool], [int, float], str], 'draw_text')):
         label_name = text + str(textSize) + str(textColor)
         if (label_name) in labelCache:
@@ -657,7 +657,7 @@ def create_message_box(title, text, thetype):
 def run_python_file(filename):
     if(ospath.isfile(filename)):
         try:
-            execfile(filename)
+            exec(compile(open(filename).read(), filename, 'exec'))
             return True
         except SyntaxError:
             warn("File " + str(filename) + " is not a valid Python file.")
