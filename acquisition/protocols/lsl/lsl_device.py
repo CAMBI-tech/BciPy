@@ -114,11 +114,19 @@ class LslDevice(Device):
 
         return channels
 
-    def _current_marker_set(self):
+    def has_current_marker(self):
         return self._current_marker and self._current_marker[0] is not None
 
-    def _clear_current_marker(self):
+    def clear_current_marker(self):
         self._current_marker = (None, None)
+
+    def current_marker_trg(self):
+        # Current marker is a tuple where first item is a list of channels
+        # and second item is the timestamp.
+        return self._current_marker[0][0]
+
+    def current_marker_ts(self):
+        return self._current_marker[1]
 
     def read_data(self):
         """Reads the next packet and returns the sensor data.
@@ -129,41 +137,32 @@ class LslDevice(Device):
         """
         sample, timestamp = self._inlet.pull_sample()
 
-        # Only retrieve a marker from the inlet if we have merged the last one
-        # with a sample.
-        if not self._current_marker_set():
+        # Only attempt to retrieve a marker from the inlet if we have merged the
+        # last one with a sample.
+        if not self.has_current_marker():
             # A timeout of 0.0 only returns a sample if one is buffered for
             # immediate pickup. Without a timeout, this is a blocking call.
             self._current_marker = self._marker_inlet.pull_sample(timeout=0.0)
-            marker_just_read = True
-        else:
-            marker_just_read = False
 
-        assign_current_marker = False
-        if self._current_marker_set():
-            marker_channels, marker_timestamp = self._current_marker
-            trg = marker_channels[0]
-            if marker_just_read:
-                logging.debug("Read marker: {} with timestamp: {};"
+            if self.has_current_marker():
+                logging.debug("Read marker with timestamp: {};"
                               " current sample time: {}".format(
-                                  trg, marker_timestamp, timestamp))
-            if timestamp >= marker_timestamp:
-                logging.debug("Appending Marker: {} at timestamp: {}"
-                              " to sample at time: {}".format(
-                                  trg, marker_timestamp, timestamp))
-                logging.debug("Time diff: {}".format(
-                    timestamp - marker_timestamp))
-                assign_current_marker = True
+                                  self.current_marker_ts, timestamp))
+
+        trg = "0"
+        if self.has_current_marker() and timestamp >= self.current_marker_ts():
+            marker_ts = self.current_marker_ts()
+            trg = self.current_marker_trg()
+            logging.debug("Appending marker at timestamp: {}"
+                          " to sample at time: {}; time diff: {}".format(
+                              marker_ts, timestamp, timestamp - marker_ts))
+            self.clear_current_marker()
 
         # Useful for debugging.
         if LSL_TIMESTAMP in self._appended_channels:
             sample.append(timestamp)
 
-        # Add marker field to sample
-        if assign_current_marker and trg:
-            sample.append(trg)
-            self._clear_current_marker()
-        else:
-            sample.append("0")
+        # Add TRG field to sample
+        sample.append(trg)
 
         return sample
