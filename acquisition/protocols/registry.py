@@ -1,8 +1,5 @@
 """Used to find a protocol or device by name."""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from utils.pypaths import import_submodules
 from acquisition.protocols.device import Device
 from acquisition.protocols.dsi.dsi_protocol import DsiProtocol

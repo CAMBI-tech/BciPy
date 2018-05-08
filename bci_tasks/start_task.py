@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
-from rsvp import calibration, copy_phrase, copy_phrase_calibration
+from bci_tasks.rsvp.calibration import RSVPCalibrationTask
+from bci_tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bci_tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,
@@ -16,9 +17,10 @@ def start_task(display_window, daq, task_type, parameters, file_save,
 
             # try running the experiment
             try:
-                calibration.rsvp_calibration_task(
+                calibration_task = RSVPCalibrationTask(
                     display_window, daq, parameters, file_save, fake)
 
+                calibration_task.execute()
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
                 raise e
@@ -27,10 +29,11 @@ def start_task(display_window, daq, task_type, parameters, file_save,
         elif task_type['exp_type'] == 2:
             # try running the experiment
             try:
-                copy_phrase.rsvp_copy_phrase_task(
+                copy_phrase_task = RSVPCopyPhraseTask(
                     display_window, daq, parameters, file_save, classifier,
                     lmodel=lmodel,
                     fake=fake)
+                copy_phrase_task.execute()
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:
@@ -40,9 +43,10 @@ def start_task(display_window, daq, task_type, parameters, file_save,
         if task_type['exp_type'] == 3:
             # try running the experiment
             try:
-                copy_phrase_calibration \
-                    .rsvp_copy_phrase_calibration_task(
-                        display_window, daq, parameters, file_save, fake)
+                copy_phrase_calibration = RSVPCopyPhraseCalibrationTask(
+                    display_window, daq, parameters, file_save, fake)
+
+                copy_phrase_calibration.execute()
 
             # Raise exceptions if any encountered and clean up!!
             except Exception as e:

@@ -3,10 +3,18 @@ import os
 import sys
 import unittest
 
+import tempfile
+import shutil
+import pickle
 # add previous dirs to python path for importing of modules
 sys.path.append('helpers/')
 
-from load import load_json_parameters
+from load import (load_json_parameters,
+                  load_experimental_data,
+                  load_classifier,
+                  load_classifier,
+                  load_classifier,
+                  load_txt_data)
 
 
 class TestLoad(unittest.TestCase):
@@ -15,26 +23,37 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters_used = './parameters/parameters.json'
+        self.parameters = './parameters/parameters.json'
+        self.temp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
 
     def test_load_json_parameters_returns_dict(self):
         """Test load parameters returns a Python dict."""
 
         # call the load parameters function
-        parameters = load_json_parameters(self.parameters_used)
+        parameters = load_json_parameters(self.parameters)
 
         # assert that load function turned json parameters into a dict
         self.assertTrue(type(parameters), 'dict')
 
-    def test_load_json_parameters_throws_useful_error_on_wrong_path(self):
+    def test_load_json_parameters_throws_error_on_wrong_path(self):
         """Test load parameters returns error on entering wrong path."""
 
         # call the load parameters function with incorrect path
-        try:
+        with self.assertRaises(Exception):
             load_json_parameters('/garbage/dir/wont/work')
 
-        # catch the exception and make sure it's as expected
-        except Exception as error:
-            self.assertEqual(
-                error.message,
-                "Incorrect path to parameters given! Please try again.")
+    def test_load_classifier(self):
+        """Test load classifier can load pickled file when given path."""
+
+        # create a pickle file to save a pickled json
+        pickle_file = self.temp_dir + "save.p"
+        pickle.dump(self.parameters, open(pickle_file, "wb"))
+
+        # Load classifier
+        unpickled_parameters = load_classifier(pickle_file)
+
+        # assert the same data was returned
+        self.assertEqual(unpickled_parameters, self.parameters)

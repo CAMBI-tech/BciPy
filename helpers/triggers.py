@@ -71,13 +71,12 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
             core.wait(1)
 
         else:
-            raise Exception('No Display Object passed for calibration with images!')  
+            raise Exception('No Display Object passed for calibration with images!')
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
     return timing
-
 
 
 def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
@@ -125,8 +124,6 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
 
             # write to the trigger_file
             trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
-
-
 
     return trigger_file
 
@@ -222,7 +219,7 @@ def trigger_decoder(mode, trigger_loc=None):
 
         trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line \
             and 'offset_correction' not in line and 'calibration_trigger' not in line]
- 
+
 
     # If operating mode is calibration, trigger.txt has three columns.
     if mode == 'calibration' or mode == 'copy_phrase':
@@ -238,11 +235,11 @@ def trigger_decoder(mode, trigger_loc=None):
                         "Valid modes are: 'calibration','copy_phrase','free_spell'")
 
 
-    with open(trigger_loc, 'r') as text_file:   
+    with open(trigger_loc, 'r') as text_file:
         offset_array = [line.split() for line in text_file if 'offset_correction' in line]
 
     if offset_array:
-        with open(trigger_loc, 'r') as text_file:   
+        with open(trigger_loc, 'r') as text_file:
             calib_trigger_time = [line.split() for line in text_file if 'calibration_trigger' in line]
 
         if calib_trigger_time:
