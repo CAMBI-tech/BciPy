@@ -31,9 +31,11 @@ def trial_reshaper(trial_target_info, timing_info, filtered_eeg, fs, k, mode, of
     num_of_sequences = Integer for total sequence number, as written in
         trigger.txt
     trials_per_seq = number of trials in each sequence
+    offset: the calculated offset of triggers. To be subtracted from data.
+        It will return a negative value if it needs to be added.
 
     """
-    print 'The offset from acquisition is {}'.format(offset)
+
     # Remove the channels that we are not interested in
     channel_indexes_to_remove = []
     for channel_index in range(len(filtered_eeg)):

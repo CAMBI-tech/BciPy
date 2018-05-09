@@ -9,10 +9,11 @@ def start_task(display_window, daq, task_type, parameters, file_save,
     # Determine the mode and exp type: send to the correct task.
 
     # RSVP
-    if task_type['mode'] is 'RSVP':
+    if task_type['mode'] == 'RSVP':
 
         # CALIBRATION
-        if task_type['exp_type'] is 1:
+        if task_type['exp_type'] == 1:
+
             # try running the experiment
             try:
                 calibration.rsvp_calibration_task(
@@ -23,7 +24,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
                 raise e
 
         # COPY PHRASE
-        elif task_type['exp_type'] is 2:
+        elif task_type['exp_type'] == 2:
             # try running the experiment
             try:
                 copy_phrase.rsvp_copy_phrase_task(
@@ -36,7 +37,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
                 raise e
 
         # COPY PHRASE CALIBRATION
-        if task_type['exp_type'] is 3:
+        if task_type['exp_type'] == 3:
             # try running the experiment
             try:
                 copy_phrase_calibration \

@@ -10,7 +10,7 @@ PyOpenGL==3.1.0
 pyOpenSSL==17.5.0
 moviepy==0.2.3.2
 lxml==4.1.1
-PsychoPy==1.85.3
+PsychoPy==1.90.0
 pyglet==1.2.4
 pytz==2017.2
 six==1.11.0
@@ -24,4 +24,7 @@ matplotlib==2.1.1
 pylsl==1.10.5
 psutil==5.4.0
 pandas==0.21.0
-pygame==1.9.3
+sounddevice==0.3.10
+SoundFile==0.10.1
+PySoundCard==0.5.2
+PySoundFile==0.9.0

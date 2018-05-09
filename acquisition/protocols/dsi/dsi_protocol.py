@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import timeit
 
-import acquisition.protocols.dsi as dsi
+import acquisition.protocols.dsi.dsi as dsi
 import acquisition.protocols.protocol as protocol
 
 

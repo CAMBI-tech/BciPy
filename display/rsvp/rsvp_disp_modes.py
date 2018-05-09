@@ -37,7 +37,8 @@ class CopyPhraseTask(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=True):
+                 is_txt_sti=True,
+                 trigger_type='image'):
         """ Initializes Copy Phrase Task Objects """
 
         tmp = visual.TextStim(window, font=font_task, text=static_text_task)
@@ -80,7 +81,8 @@ class CopyPhraseTask(RSVPDisplay):
                                              color_bg_txt=color_bg_txt,
                                              font_bg_txt=font_bg_txt,
                                              color_bar_bg=color_bar_bg,
-                                             is_txt_sti=is_txt_sti)
+                                             is_txt_sti=is_txt_sti,
+                                             trigger_type=trigger_type)
 
     def update_task_state(self, text, color_list):
         """ Updates task state of Copy Phrase Task by removing letters or
@@ -114,7 +116,8 @@ class FreeSpellingTask(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=True):
+                 is_txt_sti=True,
+                 trigger_type='image'):
         """ Initializes Free Spelling Task Objects """
 
         color_text = [color_info]
@@ -151,7 +154,8 @@ class FreeSpellingTask(RSVPDisplay):
                                                color_bg_txt=color_bg_txt,
                                                font_bg_txt=font_bg_txt,
                                                color_bar_bg=color_bar_bg,
-                                               is_txt_sti=is_txt_sti)
+                                               is_txt_sti=is_txt_sti,
+                                               trigger_type=trigger_type)
 
 
 class CalibrationTask(RSVPDisplay):
@@ -174,7 +178,8 @@ class CalibrationTask(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=True):
+                 is_txt_sti=True,
+                 trigger_type='image'):
         """ Initializes Calibration Task Objects """
 
         color_text = [color_info]
@@ -211,4 +216,5 @@ class CalibrationTask(RSVPDisplay):
                                               color_bg_txt=color_bg_txt,
                                               font_bg_txt=font_bg_txt,
                                               color_bar_bg=color_bar_bg,
-                                              is_txt_sti=is_txt_sti)
+                                              is_txt_sti=is_txt_sti,
+                                              trigger_type=trigger_type)

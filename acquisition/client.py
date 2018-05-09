@@ -49,6 +49,7 @@ class Client(object):
             Constructor for a Buffer
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
+        offset: integer, used to help calibrate timing between device and the apps that use it.
     """
 
     def __init__(self,
@@ -64,7 +65,7 @@ class Client(object):
 
         self._is_streaming = False
         self._is_calibrated = False
-        # offset in seconds from the start of acquistion to calibration trigger
+        # offset in seconds from the start of acquisition to calibration trigger
         self.offset = 0
 
         self._initial_wait = 2  # for process loop
@@ -90,7 +91,7 @@ class Client(object):
         our sessions.
 
         ****
-        Eventually, we'd like to parallelize both acquistion and processing
+        Eventually, we'd like to parallelize both acquisition and processing
         loop but there are some issues with how our process loop is designed
         and cannot work on Windows. This is due to os forking vs. duplication.
             There are fixes in #Python3, but we are currently tied to v2.7
@@ -99,7 +100,7 @@ class Client(object):
         ****
 
         Some references:
-            Stoping processes and other great multiprocessing examples:
+            Stopping processes and other great multiprocessing examples:
                 https://pymotw.com/2/multiprocessing/communication.html
             Windows vs. Unix Process Differences:
                 https://docs.python.org/2.7/library/multiprocessing.html#windows
@@ -144,8 +145,9 @@ class Client(object):
                     record = self._process_queue.get(True, wait)
 
                     # if device not calibrated, look for the first trigger signal
-                    #   as a marker of starting location. #refactorlater
+                    #   as a marker of starting location.
                     if not self._is_calibrated:
+                        # This assumes the last record is the trigger channel!
                         if record.data[-1] > 0:
                             self._is_calibrated = True
                             self.offset = record.timestamp / self._device.fs
@@ -169,7 +171,7 @@ class Client(object):
         if self._is_streaming:
             data = device.read_data()
 
-            # begin continuous acquistion process as long as data recieved
+            # begin continuous acquisition process as long as data received
             while self._acq_process.running() and data:
 
                 # Use get time to timestamp and continue saving records.

@@ -28,6 +28,7 @@ def rsvp_calibration_task(win, daq, parameters, file_save, fake):
 
     Input:
         win (PsychoPy Display Object)
+        daq (Data Acquistion Object)
         parameters (Dictionary)
         file_save (String)
         fake (Boolean)
@@ -185,5 +186,6 @@ def init_calibration_display_task(
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
+        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False,
+        trigger_type=parameters['trigger_type']['value'])
     return rsvp

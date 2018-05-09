@@ -227,7 +227,7 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
                         text_task
 
                 else:
-                    # Evaulate this sequence, returning wheter to gen a new
+                    # Evaluate this sequence, returning whether to gen a new
                     #  epoch (seq) or stimuli to present
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
@@ -303,6 +303,19 @@ def rsvp_copy_phrase_task(win, daq, parameters, file_save, classifier,
         # Increment sequence counter
         seq_counter += 1
 
+    # Say Goodbye!
+    rsvp.text = trial_complete_message(win, parameters)
+    rsvp.draw_static()
+    win.flip()
+
+    # Give the system time to process
+    core.wait(buffer_val)
+
+    if daq._is_calibrated:
+        _write_triggers_from_sequence_copy_phrase(
+            ['offset', daq.offset], trigger_file,
+            copy_phrase, text_task, offset=True)
+
     # Close the trigger file for this session
     trigger_file.close()
 
@@ -342,6 +355,7 @@ def _init_copy_phrase_display_task(
         color_bg_txt=parameters['color_bg_txt']['value'],
         font_bg_txt=parameters['font_bg_txt']['value'],
         color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False)
+        is_txt_sti=True if parameters['is_txt_sti']['value'] == 'true' else False,
+        trigger_type=parameters['trigger_type']['value'])
 
     return rsvp

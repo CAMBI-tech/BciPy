@@ -272,12 +272,15 @@
     "recommended_values": "",
     "isNumeric": "fasle"
   }, 
-  "is_txt_sti": {
-    "value": "true",
+  "trigger_type": {
+    "value": "sound",
     "section": "bci_config",
-    "readableName": "Is Text Stimuli",
-    "helpTip": "Is this Text -True- or Image -False-",
-    "recommended_values": "",
+    "readableName": "What type of Calibration Trigger should be used",
+    "helpTip": "Select a calibration trigger type to be used",
+    "recommended_values": [
+      "image",
+      "sound"
+    ],
     "isNumeric": "false"
   },
   "path_to_presentation_images": {
@@ -435,25 +438,9 @@
     "recommended_values": [
       "data/"
     ],
-    "isNumeric": "false"    
+    "isNumeric": "false"
   },
-  "fake_data": {
-    "value": "false",
-    "section": "bci_config",
-    "readableName": "Fake Data Sessions",
-    "helpTip": "If true, fake data server used",
-    "recommended_values": "",
-    "isNumeric": "false"    
-  },
-  "full_screen": {
-    "value": "true",
-    "section": "bci_config",
-    "readableName": "Full Screen",
-    "helpTip": "Full Screen Mode",
-    "recommended_values": "",
-    "isNumeric": "false"    
-  },
-  "parameter_location": {
+    "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter Location",
@@ -461,21 +448,45 @@
     "recommended_values": [
       "parameters/parameters.json"
     ],
-    "isNumeric": "false"    
+    "isNumeric": "false"
+  },
+    "is_txt_sti": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Is Text Stimuli",
+    "helpTip": "Is this Text -true- or Image -false-",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "fake_data": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake Data Sessions",
+    "helpTip": "If true, fake data server used",
+    "recommended_values": "",
+    "isNumeric": "false"
+  },
+  "full_screen": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Full Screen",
+    "helpTip": "Full Screen Mode",
+    "recommended_values": "",
+    "isNumeric": "false"
   },
   "num_sti": {
     "value": "2",
     "section": "bci_config",
-    "readableName": "Number of sequence to present over the experiment",
-    "helpTip": "Number of stimuli to present over the experiment",
+    "readableName": "Number of sequences to present over the experiment",
+    "helpTip": "Number of sequences to present over the experiment",
     "recommended_values": "",
     "isNumeric": "true"
   },
   "len_sti": {
     "value": "7",
     "section": "bci_config",
-    "readableName": "Number of stimuli to present in a sequence",
-    "helpTip": "Number of stimuli to present in a sequence",
+    "readableName": "Number of trials to present in a sequence",
+    "helpTip": "Number of trials to present in a sequence",
     "recommended_values": "",
     "isNumeric": "true"
   },

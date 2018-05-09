@@ -3,12 +3,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import acquisition.protocols.util as util
+from utils.pypaths import import_submodules
 from acquisition.protocols.device import Device
-from acquisition.protocols.dsi_protocol import DsiProtocol
+from acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 
 # import all submodules so we can introspect on subclasses.
-util.import_submodules('protocols')
+import_submodules('protocols')
 
 
 def _key(pyclass):

@@ -3,8 +3,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import pytest
 from datastream import generator, server
-from protocols.dsi_device import DsiDevice
-from protocols.dsi_protocol import DsiProtocol
+from protocols.dsi.dsi_device import DsiDevice
+from protocols.dsi.dsi_protocol import DsiProtocol
 
 HOST = '127.0.0.1'
 PORT = 9999
