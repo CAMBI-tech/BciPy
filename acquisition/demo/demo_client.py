@@ -37,7 +37,7 @@ def main():
             client.cleanup()
             break
     except IOError as e:
-        print "{0}; make sure you started the server.".format(e.strerror)
+        print(f'{e.strerror}; make sure you started the server.')
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
         print("Number of samples: {0}".format(client.get_data_len()))

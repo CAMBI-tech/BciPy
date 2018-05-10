@@ -90,8 +90,7 @@ class DsiDevice(Device):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
         else:
-            self.channels = channels
-
+            self.channels = dsi.DEFAULT_CHANNELS
         response = self._read_packet()
 
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':

@@ -129,12 +129,9 @@ def execute_task(task_type, parameters, save_folder):
     # Close the display window
     display.close()
 
-    # Stop Acquistion
-    try:
-        daq.stop_acquisition()
-        daq.cleanup()
-    except Exception as e:
-        raise e
+    # Stop Acquisition
+    daq.stop_acquisition()
+    daq.cleanup()
 
     if server:
         server.stop()
