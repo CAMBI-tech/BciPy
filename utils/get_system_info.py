@@ -14,6 +14,5 @@ def get_system_info():
         'OS': sys.platform,
         'PYTHON': sys.version,
         'RESOLUTION': [screen.width, screen.height],
-        'PYTHONPATH': os.environ['PYTHONPATH'].split(os.pathsep),
         'AVAILMEMORYMB': mem.available/1024./1024
     }

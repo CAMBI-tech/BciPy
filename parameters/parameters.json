@@ -478,7 +478,7 @@
     "isNumeric": "false"
   },
   "num_sti": {
-    "value": "2",
+    "value": "25",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",

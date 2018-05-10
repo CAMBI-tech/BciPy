@@ -223,13 +223,13 @@ def trigger_decoder(mode, trigger_loc=None):
 
     # If operating mode is calibration, trigger.txt has three columns.
     if mode == 'calibration' or mode == 'copy_phrase':
-        symbol_info = map(lambda x: x[0],trigger_txt)
-        trial_target_info = map(lambda x: x[1],trigger_txt)
-        timing_info = map(lambda x: eval(x[2]),trigger_txt)
+        symbol_info = list(map(lambda x: x[0],trigger_txt))
+        trial_target_info = list(map(lambda x: x[1],trigger_txt))
+        timing_info = list(map(lambda x: eval(x[2]),trigger_txt))
     elif mode == 'free_spell':
-        symbol_info = map(lambda x: x[0],trigger_txt)
+        symbol_info = list(map(lambda x: x[0],trigger_txt))
         trial_target_info = None
-        timing_info = map(lambda x: eval(x[1]),trigger_txt)
+        timing_info = list(map(lambda x: eval(x[1]),trigger_txt))
     else:
         raise Exception("You have not provided a valid operating mode for trigger_decoder. "
                         "Valid modes are: 'calibration','copy_phrase','free_spell'")
