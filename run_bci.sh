@@ -11,7 +11,7 @@
 # Change directory to the path of virtual env and activate it
 cd
 cd Documents
-source bci-env/Scripts/Activate
+bci-env\Scripts\Activate
 
 # Change directory to path of bci code
 cd bci

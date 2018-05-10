@@ -292,7 +292,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": ".3",
+    "value": ".25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -384,7 +384,10 @@
     "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
-    "recommended_values": "",
+    "recommended_values": [
+      "DSI",
+      "LSL"
+    ],
     "isNumeric": "false"
   },
   "acq_host": {
@@ -396,7 +399,7 @@
     "isNumeric": "false"
   },
   "acq_port": {
-    "value": "7878",
+    "value": "8944",
     "section": "acq_config",
     "readableName": "Acquisition Device Port",
     "helpTip": "Acquisition Device Port",
@@ -459,7 +462,7 @@
     "isNumeric": "false"
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -483,7 +486,7 @@
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "7",
+    "value": "10",
     "section": "bci_config",
     "readableName": "Number of trials to present in a sequence",
     "helpTip": "Number of trials to present in a sequence",

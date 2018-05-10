@@ -5,16 +5,18 @@ import logging
 from queue import Queue, Empty
 import select
 import socket
+import time
 import threading
 
 
 from acquisition.datastream.producer import Producer
+from acquisition.util import StoppableThread
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 
 
-class DataServer(threading.Thread):
+class DataServer(StoppableThread):
     """Streams sample EEG-like data via TCP.
 
     Parameters
@@ -32,7 +34,7 @@ class DataServer(threading.Thread):
 
     def __init__(self, protocol, generator, gen_params={}, host='127.0.0.1',
                  port=9999):
-        super(DataServer, self).__init__()
+        super(DataServer, self).__init__(name="DataServer")
         self.protocol = protocol
         self.generator = generator
         self.gen_params = gen_params
@@ -40,28 +42,29 @@ class DataServer(threading.Thread):
 
         self.host = host
         self.port = port
-        self.running = True
 
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((self.host, self.port))
+        self.started = False
 
-        self.server.listen(2)
-        logging.debug("[*] Listening on %s:%d" % (self.host, self.port))
+        # Putting socket.bind in constructor allows us to handle any errors
+        # (such as Address already in use) in the calling context.
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((self.host, self.port))
 
     def run(self):
-        self.serverthread = threading.Thread(target=self._accept_clients,
-                                             name="TCP Server")
-        self.serverthread.daemon = True
-        self.serverthread.start()
-
-    def _accept_clients(self):
         """Listen for client connection and initiate handler."""
 
-        logging.debug("Accepting connections")
-        while self.running:
+        self.server_socket.listen(1)
 
-            inputs = [self.server]  # Sockets from which we expect to read
+        self.started = True
+        logging.debug("[*] Accepting connections on %s:%d" %
+                      (self.host, self.port))
+
+        while self.running():
+
+            # Sockets from which we expect to read
+            inputs = [self.server_socket]
             outputs = []
             errors = []
 
@@ -69,15 +72,21 @@ class DataServer(threading.Thread):
             readable, w, e = select.select(inputs, outputs, errors, 0.05)
 
             if readable:
-                client, addr = self.server.accept()
+                client, addr = self.server_socket.accept()
                 logging.debug("[*] Accepted connection from: %s:%d" %
                               (addr[0], addr[1]))
                 self._handle_client(client)
+        try:
+            self.server_socket.shutdown(2)
+            self.server_socket.close()
+        except Exception as e:
+            pass
+        self.server_socket = None
+        logging.debug("[*] No longer accepting connections")
 
     def stop(self):
-        logging.debug("Stopping server")
-        self.running = False
-        self.serverthread.join()
+        logging.debug("[*] Stopping data server")
+        super(DataServer, self).stop()
 
     def _handle_client(self, client_socket):
         """This currently only handles a single client and blocks on that call.
@@ -100,7 +109,7 @@ class DataServer(threading.Thread):
         # Construct a new generator each time to get consistent results.
         generator = self.generator(**self.gen_params)
         with Producer(q, generator=generator, freq=1 / self.protocol.fs):
-            while self.running:
+            while self.running():
                 try:
                     # block if necessary, for up to 5 seconds
                     item = q.get(True, 5)
@@ -109,10 +118,64 @@ class DataServer(threading.Thread):
                     break
                 try:
                     wfile.write(item)
-
                 except IOError as e:
                     break
-        logging.debug("Client disconnected")
+        client_socket.close()
+        logging.debug("[*] Client disconnected")
+
+
+def start_socket_server(protocol, host, port, retries=2):
+    """Starts a DataServer given the provided port and host information. If
+    the port is not available, will automatically try a different port up to
+    the given number of times. Returns the server along with the port.
+
+    Parameters
+    ----------
+        protocol : Protocol for how to generate data.
+        host : str ; socket host (ex. '127.0.0.1').
+        port : int.
+        retries : int; number of times to attempt another port if provided
+            port is busy.
+    Returns
+    -------
+        (server, port)
+    """
+    from acquisition.datastream.generator import random_data
+    try:
+        dataserver = DataServer(protocol=protocol,
+                                generator=random_data,
+                                gen_params={'channel_count': len(
+                                    protocol.channels)},
+                                host=host,
+                                port=port)
+
+    except IOError as e:
+        if retries > 0:
+            # try a different port when 'Address already in use'.
+            port = port + 1
+            logging.debug("Address in use: trying port {}".format(port))
+            return start_socket_server(protocol, host, port, retries - 1)
+        else:
+            raise e
+
+    await_start(dataserver)
+    return dataserver, port
+
+
+def await_start(dataserver, max_wait=2):
+    """Blocks until server is started. Raises if max_wait is exceeded before
+    server is started."""
+    import time
+
+    dataserver.start()
+    wait = 0
+    wait_interval = 0.01
+    while not dataserver.started:
+        time.sleep(wait_interval)
+        wait += wait_interval
+        if wait >= max_wait:
+            dataserver.stop()
+            raise Exception("Server couldn't start up in time.")
 
 
 def _settings(filename):

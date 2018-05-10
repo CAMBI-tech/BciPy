@@ -1,48 +1,11 @@
 
-import time
-from random import random as rand
 
 import pytest
-from acquisition.util import StoppableThread
+from acquisition.datastream.lsl_server import LslDataServer
+from acquisition.datastream.server import await_start
+from acquisition.datastream import generator
 from protocols.lsl.lsl_device import LslDevice
-from pylsl import StreamInfo, StreamOutlet
 import unittest
-
-class Server(StoppableThread):
-    """LSL Server"""
-
-    def __init__(self, params={}, include_meta=False):
-        super(Server, self).__init__()
-
-        self.channel_count = params['channel_count']
-        info = StreamInfo('TestStream', 'EEG', params['channel_count'],
-                          params['hz'], 'float32', 'uid12345')
-
-        if include_meta:
-            meta_channels = info.desc().append_child('channels')
-            for c in params['channels']:
-                meta_channels.append_child('channel') \
-                    .append_child_value('label', c) \
-                    .append_child_value('unit', 'microvolts') \
-                    .append_child_value('type', 'EEG')
-
-        self.outlet = StreamOutlet(info)
-
-    def stop(self):
-        super(Server, self).stop()
-        # del self.outlet
-        # Allows pylsl to cleanup; The outlet will no longer be discoverable
-        # after destruction and all connected inlets will stop delivering data.
-        self.outlet = None
-
-    def random_sample(self):
-        return [rand() for k in range(self.channel_count)]
-
-    def run(self):
-
-        while self.running():
-            self.outlet.push_sample(self.random_sample())
-            time.sleep(0.01)
 
 
 class TestLslDevice(unittest.TestCase):
@@ -53,23 +16,20 @@ class TestLslDevice(unittest.TestCase):
         self.channels = ['C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2']
         self.channel_count = len(self.channels)
         self.hz = 100
-        self.server_params = {'channel_count': self.channel_count,
-                              'channels': self.channels,
-                              'hz': self.hz}
 
     @property
     def include_meta(self):
         raise Exception("Must be implemented in subclass")
 
-    def make_server(self):
-        # TODO: subclass for different server params
-        return Server(include_meta=self.include_meta,
-                      params=self.server_params)
-
     def setUp(self):
         """Run before each test."""
-        self.server = self.make_server()
-        self.server.start()
+        self.server = LslDataServer(params={'name': 'LSL',
+                                            'channels': self.channels,
+                                            'hz': self.hz},
+                                    generator=generator.random_data(
+                                        channel_count=self.channel_count),
+                                    include_meta=self.include_meta)
+        await_start(self.server)
 
     def tearDown(self):
         """Run after each test."""
@@ -111,7 +71,7 @@ class TestLslWithoutMetadata(TestLslDevice):
         """fs should be initialized from device metadata if not provided"""
 
         device = LslDevice(connection_params={},
-                           channels=self.channels, fs=None)
+                           channels=self.channels + ["TRG"], fs=None)
         device.connect()
         device.acquisition_init()
 
@@ -129,7 +89,7 @@ class TestLslWithoutMetadata(TestLslDevice):
         """Should produce a valid data record."""
 
         device = LslDevice(connection_params={},
-                           channels=self.channels, fs=self.hz)
+                           channels=self.channels + ["TRG"], fs=self.hz)
 
         device.connect()
         device.acquisition_init()
@@ -137,7 +97,8 @@ class TestLslWithoutMetadata(TestLslDevice):
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(len(data), len(device.channels))
-        for f in data:
+
+        for f in data[0:-1]:
             self.assertTrue(isinstance(f, float))
 
 
@@ -167,14 +128,14 @@ class TestLslWithMetadata(TestLslDevice):
         self.assertEqual(len(device.channels), 0)
         device.connect()
         device.acquisition_init()
-        self.assertEqual(len(device.channels), self.channel_count)
-        self.assertEqual(device.channels, self.channels)
+        self.assertEqual(len(device.channels), self.channel_count + 1,
+                         "Should have added a TRG channel")
+        self.assertEqual(device.channels[0:-1], self.channels)
 
     def test_frequency_init(self):
         """fs should be initialized from device metadata if not provided"""
 
-        device = LslDevice(connection_params={},
-                           channels=self.channels, fs=None)
+        device = LslDevice(connection_params={}, fs=None)
         device.connect()
         device.acquisition_init()
 
@@ -191,8 +152,7 @@ class TestLslWithMetadata(TestLslDevice):
     def test_read_data(self):
         """Should produce a valid data record."""
 
-        device = LslDevice(connection_params={},
-                           channels=self.channels, fs=self.hz)
+        device = LslDevice(connection_params={}, fs=self.hz)
 
         device.connect()
         device.acquisition_init()
@@ -200,7 +160,7 @@ class TestLslWithMetadata(TestLslDevice):
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(len(data), len(device.channels))
-        for f in data:
+        for f in data[0:-1]:
             self.assertTrue(isinstance(f, float))
 
 
