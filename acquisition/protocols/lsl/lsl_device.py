@@ -10,6 +10,14 @@ TRG = "TRG"
 LSL_TIMESTAMP = 'LSL_timestamp'
 
 
+def empty_marker():
+    return (None, None)
+
+
+def inlet_name(inlet):
+    return inlet.info().name()
+
+
 class LslDevice(Device):
     """Driver for any device streaming data through the LabStreamingLayer lib.
 
@@ -26,10 +34,15 @@ class LslDevice(Device):
     def __init__(self, connection_params, fs=None, channels=None,
                  include_lsl_timestamp=False):
         super(LslDevice, self).__init__(connection_params, fs, channels)
+
         self._appended_channels = []
         if include_lsl_timestamp:
             self._appended_channels.append(LSL_TIMESTAMP)
-        self._appended_channels.append(TRG)
+
+        self._marker_channels = []
+        self._inlet = None
+        # There can be 1 current marker for each marker channel.
+        self._current_markers = {}
         self._current_marker = (None, None)
 
     @property
@@ -55,7 +68,15 @@ class LslDevice(Device):
         assert len(streams) > 0
         assert len(marker_streams) > 0
         self._inlet = pylsl.StreamInlet(streams[0])
-        self._marker_inlet = pylsl.StreamInlet(marker_streams[0])
+
+        self._marker_inlets = [pylsl.StreamInlet(inlet)
+                               for inlet in marker_streams]
+
+        # initialize the current_markers for each marker stream.
+        for inlet in self._marker_inlets:
+            self._current_markers[inlet_name(inlet)] = empty_marker()
+
+        # self._marker_inlet = pylsl.StreamInlet(marker_streams[0])
 
     def acquisition_init(self):
         """Initialization step. Reads the channel and data rate information
@@ -64,7 +85,8 @@ class LslDevice(Device):
         assert self._inlet is not None, "Connect call is required."
         metadata = self._inlet.info()
         logging.debug(metadata.as_xml())
-        logging.debug(self._marker_inlet.info().as_xml())
+        for mi in self._marker_inlets:
+            logging.debug(f"Streaming from marker inlet: {inlet_name(mi)}")
 
         info_channels = self._read_channels(metadata)
         info_fs = metadata.nominal_srate()
@@ -80,7 +102,8 @@ class LslDevice(Device):
                 raise Exception("Channels read from the device do not match "
                                 "the provided parameters")
         assert len(self.channels) == (metadata.channel_count() +
-                                      len(self._appended_channels)),\
+                                      len(self._appended_channels) +
+                                      len(self._marker_inlets)),\
             "Channel count error"
 
         if not self.fs:
@@ -112,21 +135,35 @@ class LslDevice(Device):
         for ac in self._appended_channels:
             channels.append(ac)
 
+        for i, inlet in enumerate(self._marker_inlets):
+            col = inlet_name(inlet)
+            if i == len(self._marker_inlets) - 1:
+                col = 'TRG'
+            channels.append(col)
+
         return channels
 
-    def has_current_marker(self):
-        return self._current_marker and self._current_marker[0] is not None
+    def has_current_marker(self, inlet_name):
+        # return self._current_marker and self._current_marker[0] is not None
+        return self._current_markers[inlet_name] and \
+            self._current_markers[inlet_name][0] is not None
 
-    def clear_current_marker(self):
-        self._current_marker = (None, None)
+    def set_current_marker(self, inlet_name, value):
+        self._current_markers[inlet_name] = value
 
-    def current_marker_trg(self):
+    def clear_current_marker(self, inlet_name):
+        # self._current_marker = (None, None)
+        self.set_current_marker(inlet_name, empty_marker())
+
+    def current_marker_trg(self, inlet_name):
         # Current marker is a tuple where first item is a list of channels
         # and second item is the timestamp.
-        return self._current_marker[0][0]
+        return self._current_markers[inlet_name][0][0]
+        # return self._current_marker[0][0]
 
-    def current_marker_ts(self):
-        return self._current_marker[1]
+    def current_marker_ts(self, inlet_name):
+        # return self._current_marker[1]
+        return self._current_markers[inlet_name][1]
 
     def read_data(self):
         """Reads the next packet and returns the sensor data.
@@ -137,32 +174,36 @@ class LslDevice(Device):
         """
         sample, timestamp = self._inlet.pull_sample()
 
-        # Only attempt to retrieve a marker from the inlet if we have merged the
-        # last one with a sample.
-        if not self.has_current_marker():
-            # A timeout of 0.0 only returns a sample if one is buffered for
-            # immediate pickup. Without a timeout, this is a blocking call.
-            self._current_marker = self._marker_inlet.pull_sample(timeout=0.0)
-
-            if self.has_current_marker():
-                logging.debug("Read marker with timestamp: {};"
-                              " current sample time: {}".format(
-                                  self.current_marker_ts, timestamp))
-
-        trg = "0"
-        if self.has_current_marker() and timestamp >= self.current_marker_ts():
-            marker_ts = self.current_marker_ts()
-            trg = self.current_marker_trg()
-            logging.debug("Appending marker at timestamp: {}"
-                          " to sample at time: {}; time diff: {}".format(
-                              marker_ts, timestamp, timestamp - marker_ts))
-            self.clear_current_marker()
-
         # Useful for debugging.
         if LSL_TIMESTAMP in self._appended_channels:
             sample.append(timestamp)
 
-        # Add TRG field to sample
-        sample.append(trg)
+        for marker_inlet in self._marker_inlets:
+            name = inlet_name(marker_inlet)
+
+            # Only attempt to retrieve a marker from the inlet if we have
+            # merged the last one with a sample.
+            if not self.has_current_marker(name):
+                # A timeout of 0.0 only returns a sample if one is buffered for
+                # immediate pickup. Without a timeout, this is a blocking call.
+                self.set_current_marker(name,
+                                        marker_inlet.pull_sample(timeout=0.0))
+
+                if self.has_current_marker(name):
+                    logging.debug((f"Read marker from {name} with timestamp: "
+                                   f"{self.current_marker_ts(name)}; "
+                                   f"current sample time: {timestamp}"))
+
+            trg = "0"
+            if self.has_current_marker(name) and timestamp >= self.current_marker_ts(name):
+                marker_ts = self.current_marker_ts(name)
+                trg = self.current_marker_trg(name)
+                logging.debug((f"Appending {name} marker at timestamp: "
+                               f"{marker_ts} to sample at time {timestamp}; "
+                               f"time diff: {timestamp - marker_ts}"))
+                self.clear_current_marker(name)
+
+            # Add marker field to sample
+            sample.append(trg)
 
         return sample

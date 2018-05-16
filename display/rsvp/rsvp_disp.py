@@ -4,14 +4,13 @@ from psychopy import visual, core
 from helpers.triggers import _calibration_trigger
 from display.display_main import BarGraph, MultiColorText
 
-
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
 
     Animates a sequence in RSVP. Mode should be determined outside.
     """
 
-    def __init__(self, window, static_period, experiment_clock,
+    def __init__(self, window, static_period, experiment_clock, marker_writer,
                  color_task=['white'],
                  font_task='Times',
                  pos_task=(-.8, .9), task_height=0.2, text_task='1/100',
@@ -29,6 +28,8 @@ class RSVPDisplay(object):
 
         Args:
                 window(visual_window): Window in computer
+                marker_writer(MarkerWriter): object used to write triggers to
+                    the daq stream.
                 color_task(list[string]): Color of the task string. Shares the
                     length of the text_task. If of length 1 the entire task
                     bar shares the same color.
@@ -71,6 +72,9 @@ class RSVPDisplay(object):
         self.static_period_time = static_period_time
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
+
+        # Used to write triggers directly to the daq stream.
+        self.marker_writer = marker_writer
 
         # Length of the stimuli (number of flashes)
         self.len_sti = len(stim_sequence)
@@ -128,6 +132,7 @@ class RSVPDisplay(object):
                            color_txt=color_bg_txt, font_bg=font_bg_txt,
                            color_bar_bg=color_bar_bg, max_num_step=bg_step_num)
 
+
     def draw_static(self):
         """Draw static elements in a stimulus."""
         self.task.draw()
@@ -161,6 +166,7 @@ class RSVPDisplay(object):
         else:
             self.task.update(text=text, color_list=color_list, pos=pos)
 
+
     def do_sequence(self):
         """Animate a sequence."""
 
@@ -171,8 +177,11 @@ class RSVPDisplay(object):
             # Play a sequence start sound to help orient triggers
             stim_timing = _calibration_trigger(
                 self.experiment_clock,
-                trigger_type=self.trigger_type, display=self.win)
+                trigger_type=self.trigger_type, display=self.win,
+                on_trigger=self.marker_writer.push_marker)
+
             timing.append(stim_timing)
+
             self.first_run = False
 
         # Do the sequence
@@ -205,6 +214,11 @@ class RSVPDisplay(object):
 
             # Get trigger time (takes < .01ms)
             trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
+            # TODO: doesn't account for trigger_time calculation; is this worth
+            # measuring and accounting for? Do we need to write to the marker
+            # before showing stim to assure that the marker is in the stream
+            # in time for the response?
+            stamp = self.marker_writer.now() - self.timing_clock.getTime()
 
             # Start another ISI for trigger saving
             self.staticPeriod.start(self.static_period_time)
@@ -216,12 +230,13 @@ class RSVPDisplay(object):
             # append timing information
             if self.is_txt_sti:
                 timing.append((self.sti.text, (trigger_time)))
-
             else:
                 # We expect a path for images, so split on forward slash and
                     # extension to get the name of the file
                 image_name = self.sti.image.split('/')[-1].split('.')[0]
                 timing.append((image_name, trigger_time))
+
+            self.marker_writer.push_marker(timing[-1], stamp)
 
             # End the static period
             self.staticPeriod.complete()

@@ -9,6 +9,7 @@ import buffer_server
 from processor import FileWriter
 from record import Record
 from util import StoppableProcess
+from marker_writer import NullMarkerWriter, LslMarkerWriter
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -83,6 +84,7 @@ class Client(object):
         maxsize = 500
 
         self._process_queue = multiprocessing.JoinableQueue(maxsize=maxsize)
+        self.marker_writer = NullMarkerWriter()
 
     # @override ; context manager
     def __enter__(self):
@@ -111,6 +113,12 @@ class Client(object):
             logging.debug("Starting Acquisition")
 
             msg_queue = multiprocessing.Queue()
+
+            # Initialize the marker streams before the device connection so the
+            # device can start listening.
+            # TODO: Should this be a property of the device?
+            if self._device.name == 'LSL':
+                self.marker_writer = LslMarkerWriter()
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
@@ -157,6 +165,8 @@ class Client(object):
         # Blocks until all data in the queue is consumed.
         self._process_queue.join()
         self._data_processor.stop()
+        self.marker_writer.cleanup()
+        self.marker_writer = NullMarkerWriter()
 
     def get_data(self, start=None, end=None):
         """ Gets data from the buffer.

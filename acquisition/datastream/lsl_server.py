@@ -15,7 +15,8 @@ class LslDataServer(StoppableThread):
     TODO: Accept parameters controlling how markers are added to the stream.
     """
 
-    def __init__(self, params, generator, include_meta=True):
+    def __init__(self, params, generator, include_meta=True,
+                 add_markers=False):
         super(LslDataServer, self).__init__()
 
         self.channels = params['channels']
@@ -43,12 +44,14 @@ class LslDataServer(StoppableThread):
 
         self.outlet = StreamOutlet(info)
 
-        # Marker stream
-        # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
+        self.add_markers = add_markers
+        if add_markers:
+            # Marker stream
+            # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
 
-        markers_info = StreamInfo("TestStream Markers",
-                                  "Markers", 1, 0, 'string', "uid12345_markers")
-        self.markers_outlet = StreamOutlet(markers_info)
+            markers_info = StreamInfo("TestStream Markers",
+                                      "Markers", 1, 0, 'string', "uid12345_markers")
+            self.markers_outlet = StreamOutlet(markers_info)
         self.started = False
 
     def stop(self):
@@ -59,8 +62,10 @@ class LslDataServer(StoppableThread):
         # after destruction and all connected inlets will stop delivering data.
         del self.outlet
         self.outlet = None
-        del self.markers_outlet
-        self.markers_outlet = None
+
+        if self.add_markers:
+            del self.markers_outlet
+            self.markers_outlet = None
 
     def next_sample(self):
         return next(self.generator)
@@ -71,7 +76,7 @@ class LslDataServer(StoppableThread):
         while self.running():
             sample_counter += 1
             self.outlet.push_sample(self.next_sample())
-            if sample_counter % 100 == 0:
+            if self.add_markers and sample_counter % 1000 == 0:
                 self.markers_outlet.push_sample([str(random.randint(1, 100))])
             time.sleep(1 / self.hz)
         logging.debug("[*] No longer pushing data")
