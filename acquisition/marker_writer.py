@@ -1,5 +1,5 @@
 import pylsl
-
+import logging
 
 class MarkerWriter(object):
     """Abstract base class for an object that can be used to handle stimulus
