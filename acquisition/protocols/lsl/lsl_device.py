@@ -15,8 +15,8 @@ def empty_marker():
 
 
 def inlet_name(inlet):
-    return inlet.info().name()
-
+    name = '_'.join(inlet.info().name().split())
+    return name.replace('-', '_')
 
 class LslDevice(Device):
     """Driver for any device streaming data through the LabStreamingLayer lib.
