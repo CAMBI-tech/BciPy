@@ -236,6 +236,7 @@ class Client(object):
             logging.debug("Buffer or device has not been initialized")
             return None
 
+        logging.debug("Querying database for offset")
         rows = buffer_server.query(self._buf,
                                    filters=[("TRG", ">", 0)],
                                    ordering=("timestamp", "asc"),
@@ -245,6 +246,7 @@ class Client(object):
             return None
         else:
             self._cached_offset = rows[0].timestamp / self._device_info.fs
+            logging.debug("Cached offset: " + str(self._cached_offset))
             return self._cached_offset
 
     def cleanup(self):
