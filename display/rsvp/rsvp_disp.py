@@ -198,13 +198,21 @@ class RSVPDisplay(object):
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
+                sti_label = self.sti.text
             else:
                 self.sti.image = self.stim_sequence[idx]
+                # We expect a path for images, so split on forward slash and
+                # extension to get the name of the file.
+                sti_label = self.sti.image.split('/')[-1].split('.')[0]
+
             # End static period
             self.staticPeriod.complete()
 
             # Reset the timing clock to start presenting
             self.timing_clock.reset()
+
+            # Push to configured marker stream (ex. LslMarkerWriter)
+            self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
             for n_frames in range(time_to_present):
@@ -214,11 +222,6 @@ class RSVPDisplay(object):
 
             # Get trigger time (takes < .01ms)
             trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
-            # TODO: doesn't account for trigger_time calculation; is this worth
-            # measuring and accounting for? Do we need to write to the marker
-            # before showing stim to assure that the marker is in the stream
-            # in time for the response?
-            stamp = self.marker_writer.now() - self.timing_clock.getTime()
 
             # Start another ISI for trigger saving
             self.staticPeriod.start(self.static_period_time)
@@ -229,14 +232,9 @@ class RSVPDisplay(object):
 
             # append timing information
             if self.is_txt_sti:
-                timing.append((self.sti.text, (trigger_time)))
+                timing.append((sti_label, (trigger_time)))
             else:
-                # We expect a path for images, so split on forward slash and
-                    # extension to get the name of the file
-                image_name = self.sti.image.split('/')[-1].split('.')[0]
-                timing.append((image_name, trigger_time))
-
-            self.marker_writer.push_marker(timing[-1], stamp)
+                timing.append((sti_label, trigger_time))
 
             # End the static period
             self.staticPeriod.complete()
