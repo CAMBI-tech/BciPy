@@ -9,14 +9,52 @@ import pickle
 from tkinter.filedialog import askopenfilename, askdirectory
 
 
-def load_json_parameters(path):
+def _cast_parameters(parameters):
+    """Cast to Value.
+
+    Take in a parameters json and coverts to a dictionary with type converted
+        and extranous information removed
+    """
+    new_parameters = {}
+    for key, value in parameters.items():
+        new_parameters[key] = cast_value(value)
+
+    return new_parameters
+
+
+def cast_value(value):
+    actual_value = str(value['value'])
+    actual_type = value['type']
+
+    try:
+        if actual_type == 'int':
+            new_value = int(actual_value)
+        elif actual_type == 'float':
+            new_value = float(actual_value)
+        elif actual_type == 'bool':
+            new_value = True if actual_type == 'true' else False
+        elif actual_type == 'str':
+            new_value = str(actual_value)
+        else:
+            raise ValueError('Unrecognized value type')
+
+    except Exception:
+        raise ValueError(f'Could not cast {actual_value} to {actual_type}')
+
+    return new_value
+
+
+def load_json_parameters(path, value_cast=False):
     # loads in json parameters and turns it into a dictionary
     try:
         with codecsopen(path, 'r', encoding='utf-8') as f:
             parameters = []
             try:
                 parameters = jsonload(f)
-            except ValueError as e:
+
+                if value_cast:
+                    parameters = _cast_parameters(parameters)
+            except ValueError:
                 raise ValueError(
                     "Parameters file is formatted incorrectly!")
 

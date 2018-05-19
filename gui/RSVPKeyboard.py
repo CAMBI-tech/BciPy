@@ -58,7 +58,10 @@ for json_item in file_data:
     else:
         counteradv = counteradv + 1
     readable_caption = file_data[json_item]["readableName"]
-    isNumeric = file_data[json_item]["isNumeric"]
+    if file_data[json_item]["type"] == 'str':
+        isNumeric = False
+    else:
+        isNumeric = True
     # adds name of each parameter above its input box
     gui_fx.add_text(
         main_window_width_half + convert_to_width(10, main_window_width),
@@ -105,9 +108,7 @@ for json_item in file_data:
     else:
         # Adds an input field if an input field is needed
         gui_fx.add_input(
-            gui_fx.InputField(json_item, section_string, True
-                              if isNumeric == "true"
-                              else False),
+            gui_fx.InputField(json_item, section_string, isNumeric),
             main_window_width_half + convert_to_width(10, main_window_width),
             convert_to_height((section_counter) - (window_three_bar.contentHeight
                              if (section_boolean)

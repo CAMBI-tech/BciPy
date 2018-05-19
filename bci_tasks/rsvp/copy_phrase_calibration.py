@@ -50,7 +50,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = core.Clock()
-        self.buffer_val = float(parameters['task_buffer_len']['value'])
+        self.buffer_val = parameters['task_buffer_len']
         self.alp = alphabet(parameters)
         self.rsvp = _init_copy_phrase_display_task(
             self.parameters, self.window,
@@ -60,30 +60,29 @@ class RSVPCopyPhraseCalibrationTask(Task):
         self.session_save_location = self.file_save + '/session.json'
         self.trigger_file = open(trigger_save_location, 'w')
 
-        self.wait_screen_message = parameters['wait_screen_message']['value']
+        self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
-            'wait_screen_message_color']['value']
+            'wait_screen_message_color']
 
-        self.num_sti = int(parameters['num_sti']['value'])
-        self.len_sti = int(parameters['len_sti']['value'])
-        self.timing = [float(parameters['time_target']['value']),
-                       float(parameters['time_cross']['value']),
-                       float(parameters['time_flash']['value'])]
+        self.num_sti = parameters['num_sti']
+        self.len_sti = parameters['len_sti']
+        self.timing = [parameters['time_target'],
+                       parameters['time_cross'],
+                       parameters['time_flash']]
 
-        self.color = [parameters['target_letter_color']['value'],
-                      parameters['fixation_color']['value'],
-                      parameters['stimuli_color']['value']]
+        self.color = [parameters['target_letter_color'],
+                      parameters['fixation_color'],
+                      parameters['stimuli_color']]
 
-        self.task_info_color = parameters['task_color']['value']
+        self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = float(parameters['sti_height']['value'])
+        self.stimuli_height = parameters['sti_height']
 
-        self.is_txt_sti = True if parameters['is_txt_sti']['value'] == 'true' \
-            else False,
-        self.eeg_buffer = int(parameters['eeg_buffer_len']['value'])
-        self.copy_phrase = parameters['text_task']['value']
+        self.is_txt_sti = parameters['is_txt_sti']
+        self.eeg_buffer = parameters['eeg_buffer_len']
+        self.copy_phrase = parameters['text_task']
 
-        self.max_seq_length = int(parameters['max_seq_len']['value'])
+        self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
 
     def execute(self):
@@ -179,33 +178,32 @@ def _init_copy_phrase_display_task(
     rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
-        text_info=parameters['text_text']['value'],
-        static_text_task=parameters['text_task']['value'],
+        text_info=parameters['text_text'],
+        static_text_task=parameters['text_task'],
         text_task='****',
-        color_info=parameters['color_text']['value'],
-        pos_info=(float(parameters['pos_text_x']['value']),
-                  float(parameters['pos_text_y']['value'])),
-        height_info=float(parameters['txt_height']['value']),
-        font_info=parameters['font_text']['value'],
+        color_info=parameters['color_text'],
+        pos_info=(parameters['pos_text_x'],
+                  parameters['pos_text_y']),
+        height_info=parameters['txt_height'],
+        font_info=parameters['font_text'],
         color_task=['white'],
-        font_task=parameters['font_task']['value'],
-        height_task=float(parameters['height_task']['value']),
-        font_sti=parameters['font_sti']['value'],
-        pos_sti=(float(parameters['pos_sti_x']['value']),
-                 float(parameters['pos_sti_y']['value'])),
-        sti_height=float(parameters['sti_height']['value']),
+        font_task=parameters['font_task'],
+        height_task=parameters['height_task'],
+        font_sti=parameters['font_sti'],
+        pos_sti=(parameters['pos_sti_x'],
+                 parameters['pos_sti_y']),
+        sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(float(parameters['tr_pos_bg_x']['value']),
-                   float(parameters['tr_pos_bg_y']['value'])),
-        bl_pos_bg=(float(parameters['bl_pos_bg_x']['value']),
-                   float(parameters['bl_pos_bg_y']['value'])),
-        size_domain_bg=int(parameters['size_domain_bg']['value']),
-        color_bg_txt=parameters['color_bg_txt']['value'],
-        font_bg_txt=parameters['font_bg_txt']['value'],
-        color_bar_bg=parameters['color_bar_bg']['value'],
-        is_txt_sti=True if parameters[
-            'is_txt_sti']['value'] == 'true' else False,
-        trigger_type=parameters['trigger_type']['value'])
+        tr_pos_bg=(parameters['tr_pos_bg_x'],
+                   parameters['tr_pos_bg_y']),
+        bl_pos_bg=(parameters['bl_pos_bg_x'],
+                   parameters['bl_pos_bg_y']),
+        size_domain_bg=parameters['size_domain_bg'],
+        color_bg_txt=parameters['color_bg_txt'],
+        font_bg_txt=parameters['font_bg_txt'],
+        color_bar_bg=parameters['color_bar_bg'],
+        is_txt_sti=parameters['is_txt_sti'],
+        trigger_type=parameters['trigger_type'])
 
     return rsvp

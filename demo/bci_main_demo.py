@@ -7,7 +7,8 @@ def main():
     from helpers.load import load_json_parameters
 
     # Load a parameters file
-    parameters = load_json_parameters('parameters/parameters.json')
+    parameters = load_json_parameters(
+        'parameters/parameters.json', value_cast=True)
 
     # Mode: ex. RSVP, Shuffle, Matrix
     test_mode = 'RSVP'

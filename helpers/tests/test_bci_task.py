@@ -12,9 +12,9 @@ class TestBciTask(unittest.TestCase):
 
     def test_alphabet_text(self):
         parameters_used = './parameters/parameters.json'
-        parameters = load_json_parameters(parameters_used)
+        parameters = load_json_parameters(parameters_used, value_cast=True)
 
-        parameters['is_txt_sti']['value'] = 'true'
+        parameters['is_txt_sti'] = True
         parameters[
             'path_to_presentation_images'][
             'value'] = './bci/static/images/rsvp_images/'
@@ -30,9 +30,9 @@ class TestBciTask(unittest.TestCase):
 
     def test_alphabet_images(self):
         parameters_used = './parameters/parameters.json'
-        parameters = load_json_parameters(parameters_used)
+        parameters = load_json_parameters(parameters_used, value_cast=True)
 
-        parameters['is_txt_sti']['value'] = 'false'
+        parameters['is_txt_sti'] = False
         parameters[
             'path_to_presentation_images'][
             'value'] = '../bci/static/images/rsvp_images/'

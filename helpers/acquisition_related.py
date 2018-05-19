@@ -47,13 +47,13 @@ def init_eeg_acquisition(parameters, save_folder,
     """
 
     # Initialize the needed DAQ Parameters
-    host = parameters['acq_host']['value']
-    port = int(parameters['acq_port']['value'])
+    host = parameters['acq_host']
+    port = parameters['acq_port']
 
     parameters = {
-        'buffer_name': save_folder + '/' + parameters['buffer_name']['value'],
-        'device': parameters['acq_device']['value'],
-        'filename': save_folder + '/' + parameters['raw_data_name']['value'],
+        'buffer_name': save_folder + '/' + parameters['buffer_name'],
+        'device': parameters['acq_device'],
+        'filename': save_folder + '/' + parameters['raw_data_name'],
         'connection_params': {'host': host,
                               'port': port}}
 

@@ -15,22 +15,22 @@ class VisualFeedback(Feedback):
 
         # Parameters Dictionary
         self.parameters = parameters
-        self.font_stim = self.parameters['feedback_font']['value']
+        self.font_stim = self.parameters['feedback_font']
         self.height_stim = float(
-            self.parameters['feedback_stim_height']['value'])
+            self.parameters['feedback_stim_height'])
 
-        pos_x = float(self.parameters['feedback_pos_x']['value'])
-        pos_y = float(self.parameters['feedback_pos_y']['value'])
+        pos_x = float(self.parameters['feedback_pos_x'])
+        pos_y = float(self.parameters['feedback_pos_y'])
 
         self.pos_stim = (pos_x, pos_y)
 
         self.feedback_length = float(self.parameters[
-            'feedback_flash_time']['value'])
+            'feedback_flash_time'])
 
         # Clock
         self.clock = clock
 
-        self.message_color = self.parameters['feedback_message_color']['value']
+        self.message_color = self.parameters['feedback_message_color']
 
     def administer(self, stimulus, message=None, compare_assertion=None):
         """Administer.
