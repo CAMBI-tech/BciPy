@@ -129,8 +129,8 @@
   "pos_text_x": {
     "value": "0",
     "section": "bci_config",
-    "readableName": "Position Text",
-    "helpTip": "Position Text",
+    "readableName": "Position Text (X)",
+    "helpTip": "Position Text (X)",
     "recommended_values": [
       "0"
     ],
@@ -139,8 +139,8 @@
   "pos_text_y": {
     "value": "-.75",
     "section": "bci_config",
-    "readableName": "Position Text",
-    "helpTip": "Position Text",
+    "readableName": "Position Text (Y)",
+    "helpTip": "Position Text (Y)",
     "recommended_values": [
       "-.75"
     ],
@@ -286,7 +286,7 @@
   "path_to_presentation_images": {
     "value": "../bci/static/images/testing_images/",
     "section": "bci_config",
-    "readableName": "Is Text Stimuli",
+    "readableName": "Path to Images",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
     "isNumeric": "false"
@@ -366,8 +366,8 @@
   "window_height": {
     "value": "500",
     "section": "bci_config",
-    "readableName": "Stimuli Presentation Window Width (px)",
-    "helpTip": "Stimuli Presentation Window Width",
+    "readableName": "Stimuli Presentation Window Height (px)",
+    "helpTip": "Stimuli Presentation Window Height",
     "recommended_values": "",
     "isNumeric": "true"
   },
