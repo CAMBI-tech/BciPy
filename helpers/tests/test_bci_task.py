@@ -16,8 +16,7 @@ class TestBciTask(unittest.TestCase):
 
         parameters['is_txt_sti'] = True
         parameters[
-            'path_to_presentation_images'][
-            'value'] = './bci/static/images/rsvp_images/'
+            'path_to_presentation_images'] = './bci/static/images/rsvp_images/'
 
         alp = alphabet(parameters)
 

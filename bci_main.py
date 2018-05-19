@@ -66,13 +66,7 @@ def execute_task(task_type, parameters, save_folder):
         save_folder (str): path to save folder
     """
 
-    fake_data = parameters['fake_data']
-
-    if fake_data == 'true':
-        # Set this to False to have fake data but real decisions
-        fake = True
-    else:
-        fake = False
+    fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
     #   modules to be loaded.

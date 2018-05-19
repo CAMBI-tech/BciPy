@@ -32,7 +32,7 @@ def cast_value(value):
         elif actual_type == 'float':
             new_value = float(actual_value)
         elif actual_type == 'bool':
-            new_value = True if actual_type == 'true' else False
+            new_value = True if actual_value == 'true' else False
         elif actual_type == 'str':
             new_value = str(actual_value)
         else:

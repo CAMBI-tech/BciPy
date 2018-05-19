@@ -244,7 +244,7 @@
     "readableName": "Size Bar Graph",
     "helpTip": "Size Bar Graph",
     "recommended_values": "",
-    "type": "float"
+    "type": "int"
   },
   "font_bg_txt": {
     "value": "Arial",

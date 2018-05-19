@@ -57,7 +57,7 @@ def alphabet(parameters=None):
         array of letters.
     """
     if parameters:
-        if parameters['is_txt_sti']:
+        if not parameters['is_txt_sti']:
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             image_array = []
