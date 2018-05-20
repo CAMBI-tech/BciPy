@@ -19,6 +19,7 @@ class BCIGui(wx.Frame):
 
         self.buttons = []
         self.input_text = []
+        self.static_text = []
 
     def show_gui(self):
         """Show GUI."""
@@ -30,13 +31,13 @@ class BCIGui(wx.Frame):
         # Button Type
         if button_type == 'gradient_button':
             btn = GB.GradientButton(
-                self.panel, label=message.center(5), pos=position, size=size)
+                self.panel, label=message, pos=position, size=size)
         elif button_type == 'aqua_button':
             btn = AB.AquaButton(
-                self.panel, label=message.center(5), pos=position, size=size)
+                self.panel, label=message, pos=position, size=size)
         else:
             btn = buttons.GenButton(
-                self.panel, label=message.center(5), pos=position, size=size)
+                self.panel, label=message, pos=position, size=size)
 
             # You can really only set colors with GenButtons as the others
             #  use native widgets!
@@ -56,13 +57,17 @@ class BCIGui(wx.Frame):
         input_text = wx.TextCtrl(self.panel, pos=position, size=size)
         self.input_text.append(input_text)
 
-    def add_window(self):
-        """Add Window."""
-        pass
-
-    def add_text(self, xpos, ypos, color, size, text):
+    def add_static_text(self, text, position, color, size):
         """Add Text."""
-        pass
+
+        static_text = wx.StaticText(
+            self.panel, pos=position,
+            label=text)
+        static_text.SetForegroundColour(color)
+        font = wx.Font(size, wx.NORMAL, wx.NORMAL, wx.NORMAL)
+        static_text.SetFont(font)
+
+        self.static_text.append(static_text)
 
     def add_image(self):
         """Add Image."""
@@ -74,19 +79,29 @@ class BCIGui(wx.Frame):
 
     def OnClicked(self, event):
         """OnClicked."""
-        btn = event.GetEventObject().GetLabel()
-        print(f'pressed {btn}')
+        event.GetEventObject().GetLabel()
+
+        # print(f'pressed {btn}')
 
     def launch_bci_main(self, event):
+        """Laucnh BCI MAIN"""
         if self.check_input():
-            username = self.input_text[0].GetValue()
+            username = self.input_text[0].GetValue().replace(" ", "_")
             experiment_type = _cast_experiment_type(
                 event.GetEventObject().GetLabel())
-            print(username, experiment_type)
+            mode = 1
+            cmd = 'python3 bci_main.py -m {} -t {} -u {}'.format(
+                mode, experiment_type, username)
+
+            subprocess.call(cmd, shell=True)
 
     def check_input(self):
+        """Check Input."""
         if self.input_text[0].GetValue() == '':
-            print('error!')
+            dialog = wx.MessageDialog(
+                self, "Please Input User ID", 'Info', wx.OK | wx.ICON_WARNING)
+            dialog.ShowModal()
+            dialog.Destroy()
             return False
         return True
 
@@ -107,18 +122,5 @@ def _cast_experiment_type(experiment_type_string):
 if __name__ == '__main__':
     app = wx.App(False)
     gui = BCIGui(title="BCIGui", size=(650, 650), background_color='black')
-    gui.add_button(
-        message="Calibration",
-        position=(50, 400), size=(100, 100),
-        color='red')
-    gui.add_button(
-        message="Copy Phrase", position=(200, 400),
-        size=(100, 100),
-        color='blue')
-    gui.add_button(
-        message="Copy Phrase Calibratui", position=(400, 400),
-        size=(100, 100),
-        color='blue')
-    gui.add_text_input(position=(175, 100), size=(300, 50))
     gui.show_gui()
     app.MainLoop()
