@@ -1,4 +1,5 @@
 import subprocess
+import os
 import wx
 import wx.lib.agw.gradientbutton as GB
 import wx.lib.agw.aquabutton as AB
@@ -12,6 +13,7 @@ class BCIGui(wx.Frame):
                  background_color='blue', parameters=None, parent=None):
         """Init."""
         super(BCIGui, self).__init__(parent, title=title, size=size)
+        self.size = size
         self.panel = wx.Panel(self)
         self.SetBackgroundColour(background_color)
 
@@ -64,14 +66,31 @@ class BCIGui(wx.Frame):
             self.panel, pos=position,
             label=text)
         static_text.SetForegroundColour(color)
-        font = wx.Font(size, wx.NORMAL, wx.NORMAL, wx.NORMAL)
+        font = wx.Font(size, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
         static_text.SetFont(font)
 
         self.static_text.append(static_text)
 
-    def add_image(self):
+    def add_image(self, path, position, size):
         """Add Image."""
-        pass
+        if os.path.isfile(path):
+            img = wx.Image(path, wx.BITMAP_TYPE_ANY)
+            # scale the image, preserving the aspect ratio
+            W = img.GetWidth()
+            H = img.GetHeight()
+            if W > H:
+                NewW = size
+                NewH = size * H / W
+            else:
+                NewH = size
+                NewW = size * W / H
+
+            img = img.Scale(NewW, NewH)
+            img = img.ConvertToBitmap()
+            bmp = wx.StaticBitmap(self.panel, pos=position, bitmap=img)
+
+        else:
+            print('INVALID PATH')
 
     def add_scroll(self):
         """Add Scroll."""
@@ -89,8 +108,8 @@ class BCIGui(wx.Frame):
             username = self.input_text[0].GetValue().replace(" ", "_")
             experiment_type = _cast_experiment_type(
                 event.GetEventObject().GetLabel())
-            mode = 1
-            cmd = 'python3 bci_main.py -m {} -t {} -u {}'.format(
+            mode = 'RSVP'
+            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
                 mode, experiment_type, username)
 
             subprocess.call(cmd, shell=True)
@@ -109,9 +128,9 @@ class BCIGui(wx.Frame):
 def _cast_experiment_type(experiment_type_string):
     if experiment_type_string == 'Calibration':
         experiment_type = 1
-    elif experiment_type == 'Copy Phrase':
+    elif experiment_type_string == 'Copy Phrase':
         experiment_type = 2
-    elif experiment_type == 'Copy Phrase Calibration':
+    elif experiment_type_string == 'Copy Phrase Calibration':
         experiment_type = 3
     else:
         raise ValueError('Not a known experiment_type')

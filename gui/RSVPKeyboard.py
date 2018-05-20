@@ -7,11 +7,11 @@ gui = BCIGui(title="RSVPKeyboard", size=(650, 650), background_color='black')
 
 # STATIC TEXT!
 gui.add_static_text(
-    text='RSVPKeyboard', position=(175, 0), size=50, color='white')
+    text='RSVPKeyboard', position=(175, 0), size=30, color='white')
 gui.add_static_text(
-    text='Please enter user ID:', position=(220, 70), size=25, color='white')
+    text='Please enter user ID:', position=(170, 70), size=15, color='white')
 gui.add_static_text(
-    text='Chose your experiment type:', position=(75, 350), size=25, color='white')
+    text='Chose your experiment type:', position=(75, 350), size=15, color='white')
 
 # BUTTONS!
 gui.add_button(
@@ -30,7 +30,15 @@ gui.add_button(
     message="Free Spell", position=(450, 400),
     size=(100, 100),
     color='orange')
-gui.add_text_input(position=(175, 100), size=(300, 25))
+
+# TEXT INPUT
+gui.add_text_input(position=(175, 100), size=(250, 25))
+
+gui.add_image(
+    path='./static/images/gui_images/ohsu.png', position=(5, 0), size=125)
+
+gui.add_image(
+    path='./static/images/gui_images/neu.png', position=(510, 0), size=125)
 
 
 # Make the GUI Show now
