@@ -1,4 +1,4 @@
-from utility.bci_gui import BCIGui
+from gui.gui_main import BCIGui
 import wx
 
 # Start the app and init the main GUI

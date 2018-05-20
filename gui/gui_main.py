@@ -12,7 +12,7 @@ class BCIGui(wx.Frame):
     def __init__(self, title, size,
                  background_color='blue', parameters=None, parent=None):
         """Init."""
-        super(BCIGui, self).__init__(parent, title=title, size=size)
+        super(BCIGui, self).__init__(parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.size = size
         self.panel = wx.Panel(self)
         self.SetBackgroundColour(background_color)
