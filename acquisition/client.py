@@ -245,6 +245,7 @@ class Client(object):
             logging.debug("No rows have a TRG value.")
             return None
         else:
+            logging.debug(rows[0])
             self._cached_offset = rows[0].timestamp / self._device_info.fs
             logging.debug("Cached offset: " + str(self._cached_offset))
             return self._cached_offset

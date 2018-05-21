@@ -48,7 +48,7 @@ class LslDataServer(StoppableThread):
         if add_markers:
             # Marker stream
             # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
-
+            logging.debug("Creating marker stream")
             markers_info = StreamInfo("TestStream Markers",
                                       "Markers", 1, 0, 'string', "uid12345_markers")
             self.markers_outlet = StreamOutlet(markers_info)
@@ -109,6 +109,8 @@ def main():
                         help='comma-delimited list')
     parser.add_argument('-s', '--sample_rate', default='300',
                         help='sample rate in hz')
+
+    parser.add_argument('-m', '--markers', action="store_true", default=False)
     args = parser.parse_args()
 
     params = {'channels': args.channels.split(','),
@@ -118,8 +120,10 @@ def main():
     generator = file_data(filename=args.filename) if args.filename \
         else random_data(channel_count=len(params['channels']))
 
+    markers = True if args.markers else False
     try:
-        server = LslDataServer(params=params, generator=generator)
+        server = LslDataServer(params=params, generator=generator,
+                               add_markers=markers)
 
         logging.debug("New server created")
         server.start()

@@ -10,13 +10,35 @@ TRG = "TRG"
 LSL_TIMESTAMP = 'LSL_timestamp'
 
 
-def empty_marker():
-    return (None, None)
+class Marker(object):
+    """Data class which wraps a LSL marker; data pulled from a marker stream is
+    a tuple where the first item is a list of channels and second item is the
+    timestamp. Assumes that marker inlet only has a single channel."""
+
+    def __init__(self, data=(None, None)):
+        super(Marker, self).__init__()
+        self.channels, self.timestamp = data
+
+    @classmethod
+    def empty(cls):
+        return Marker()
+
+    def __repr__(self):
+        return f"<value: {self.trg}, timestamp: {self.timestamp}>"
+
+    @property
+    def is_empty(self):
+        return self.channels is None or self.timestamp is None
+
+    @property
+    def trg(self):
+        return self.channels[0] if self.channels else None
 
 
 def inlet_name(inlet):
     name = '_'.join(inlet.info().name().split())
     return name.replace('-', '_')
+
 
 class LslDevice(Device):
     """Driver for any device streaming data through the LabStreamingLayer lib.
@@ -29,21 +51,29 @@ class LslDevice(Device):
             list of channel names
         fs: float, optional
             sample frequency in (Hz)
+        include_lsl_timestamp: bool, optional
+            if True, appends the LSL_timestamp to each sample.
+        trg_channel_name: str, optional
+            if present, the marker channel with this name is used as the TRG
+            channel in the output and queried for offset; otherwise the last
+            marker_channel added is used.
     """
 
     def __init__(self, connection_params, fs=None, channels=None,
-                 include_lsl_timestamp=False):
+                 include_lsl_timestamp=False,
+                 trg_channel_name='BCI_Stimulus_Markers'):
         super(LslDevice, self).__init__(connection_params, fs, channels)
 
         self._appended_channels = []
+        self.trg_channel_name = trg_channel_name
+
         if include_lsl_timestamp:
             self._appended_channels.append(LSL_TIMESTAMP)
 
         self._marker_channels = []
         self._inlet = None
         # There can be 1 current marker for each marker channel.
-        self._current_markers = {}
-        self._current_marker = (None, None)
+        self.current_markers = {}
 
     @property
     def name(self):
@@ -74,9 +104,7 @@ class LslDevice(Device):
 
         # initialize the current_markers for each marker stream.
         for inlet in self._marker_inlets:
-            self._current_markers[inlet_name(inlet)] = empty_marker()
-
-        # self._marker_inlet = pylsl.StreamInlet(marker_streams[0])
+            self.current_markers[inlet_name(inlet)] = Marker.empty()
 
     def acquisition_init(self):
         """Initialization step. Reads the channel and data rate information
@@ -112,6 +140,19 @@ class LslDevice(Device):
             raise Exception("Sample frequency read from device does not match "
                             "the provided parameter")
 
+    def _trigger_inlet_index(self):
+        """Index of the marker inlet that should be used for the TRG column.
+        If the trg_channel_name parameter is provided, and there is a marker
+        inlet with this name, that is used, otherwise the last marker inlet
+        is used. Returns -1 if there are no marker inlets."""
+
+        inlet_names = [inlet_name(inlet) for inlet in self._marker_inlets]
+
+        if self.trg_channel_name in inlet_names:
+            return inlet_names.index(self.trg_channel_name)
+        else:
+            return len(inlet_names) - 1
+
     def _read_channels(self, info):
         """Read channels from the stream metadata if provided and return them
         as a list. If channels were not specified, returns an empty list.
@@ -135,35 +176,14 @@ class LslDevice(Device):
         for ac in self._appended_channels:
             channels.append(ac)
 
+        trg_marker_index = self._trigger_inlet_index()
         for i, inlet in enumerate(self._marker_inlets):
             col = inlet_name(inlet)
-            if i == len(self._marker_inlets) - 1:
+            if i == trg_marker_index:
                 col = 'TRG'
             channels.append(col)
 
         return channels
-
-    def has_current_marker(self, inlet_name):
-        # return self._current_marker and self._current_marker[0] is not None
-        return self._current_markers[inlet_name] and \
-            self._current_markers[inlet_name][0] is not None
-
-    def set_current_marker(self, inlet_name, value):
-        self._current_markers[inlet_name] = value
-
-    def clear_current_marker(self, inlet_name):
-        # self._current_marker = (None, None)
-        self.set_current_marker(inlet_name, empty_marker())
-
-    def current_marker_trg(self, inlet_name):
-        # Current marker is a tuple where first item is a list of channels
-        # and second item is the timestamp.
-        return self._current_markers[inlet_name][0][0]
-        # return self._current_marker[0][0]
-
-    def current_marker_ts(self, inlet_name):
-        # return self._current_marker[1]
-        return self._current_markers[inlet_name][1]
 
     def read_data(self):
         """Reads the next packet and returns the sensor data.
@@ -180,28 +200,28 @@ class LslDevice(Device):
 
         for marker_inlet in self._marker_inlets:
             name = inlet_name(marker_inlet)
+            marker = self.current_markers.get(name, Marker().empty())
 
             # Only attempt to retrieve a marker from the inlet if we have
             # merged the last one with a sample.
-            if not self.has_current_marker(name):
+            if marker.is_empty:
                 # A timeout of 0.0 only returns a sample if one is buffered for
                 # immediate pickup. Without a timeout, this is a blocking call.
-                self.set_current_marker(name,
-                                        marker_inlet.pull_sample(timeout=0.0))
+                marker_data = marker_inlet.pull_sample(timeout=0.0)
+                marker = Marker(marker_data)
+                self.current_markers[name] = marker
 
-                if self.has_current_marker(name):
-                    logging.debug((f"Read marker from {name} with timestamp: "
-                                   f"{self.current_marker_ts(name)}; "
+                if not marker.is_empty:
+                    logging.debug((f"Read marker {marker} from {name}; "
                                    f"current sample time: {timestamp}"))
 
             trg = "0"
-            if self.has_current_marker(name) and timestamp >= self.current_marker_ts(name):
-                marker_ts = self.current_marker_ts(name)
-                trg = self.current_marker_trg(name)
-                logging.debug((f"Appending {name} marker at timestamp: "
-                               f"{marker_ts} to sample at time {timestamp}; "
-                               f"time diff: {timestamp - marker_ts}"))
-                self.clear_current_marker(name)
+            if not marker.is_empty and timestamp >= marker.timestamp:
+                trg = marker.trg
+                logging.debug((f"Appending {name} marker {marker} "
+                               f"to sample at time {timestamp}; "
+                               f"time diff: {timestamp - marker.timestamp}"))
+                self.current_markers[name] = Marker.empty()  # clear current
 
             # Add marker field to sample
             sample.append(trg)
