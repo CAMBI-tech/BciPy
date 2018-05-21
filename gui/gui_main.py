@@ -12,7 +12,8 @@ class BCIGui(wx.Frame):
     def __init__(self, title, size,
                  background_color='blue', parameters=None, parent=None):
         """Init."""
-        super(BCIGui, self).__init__(parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        super(BCIGui, self).__init__(
+            parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.size = size
         self.panel = wx.Panel(self)
         self.SetBackgroundColour(background_color)
@@ -22,10 +23,14 @@ class BCIGui(wx.Frame):
         self.buttons = []
         self.input_text = []
         self.static_text = []
+        self.images = []
 
     def show_gui(self):
         """Show GUI."""
         self.Show(True)
+
+    def close_gui(self):
+        pass
 
     def add_button(self, message, position, size,
                    button_type=None, color=None, action='default'):
@@ -47,26 +52,27 @@ class BCIGui(wx.Frame):
                 btn.SetBackgroundColour(color)
 
         # Attach Custom Actions
-        if action == 'default':
-            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
-        elif action == 'launch_bci':
-            self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
+        self.bind_action(action, btn)
 
         self.buttons.append(btn)
+
+    def bind_action(self, action, btn):
+        if action == 'default':
+            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
     def add_text_input(self, position, size):
         """Add Text Input."""
         input_text = wx.TextCtrl(self.panel, pos=position, size=size)
         self.input_text.append(input_text)
 
-    def add_static_text(self, text, position, color, size):
+    def add_static_text(self, text, position, color, size, font_family=wx.FONTFAMILY_SWISS):
         """Add Text."""
 
         static_text = wx.StaticText(
             self.panel, pos=position,
             label=text)
         static_text.SetForegroundColour(color)
-        font = wx.Font(size, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
+        font = wx.Font(size, font_family, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
         static_text.SetFont(font)
 
         self.static_text.append(static_text)
@@ -76,18 +82,21 @@ class BCIGui(wx.Frame):
         if os.path.isfile(path):
             img = wx.Image(path, wx.BITMAP_TYPE_ANY)
             # scale the image, preserving the aspect ratio
-            W = img.GetWidth()
-            H = img.GetHeight()
-            if W > H:
-                NewW = size
-                NewH = size * H / W
-            else:
-                NewH = size
-                NewW = size * W / H
+            width = img.GetWidth()
+            height = img.GetHeight()
 
-            img = img.Scale(NewW, NewH)
+            if width > height:
+                new_width = size
+                new_height = size * height / width
+            else:
+                new_height = size
+                new_width = size * width / height
+
+            img = img.Scale(new_width, new_height)
             img = img.ConvertToBitmap()
             bmp = wx.StaticBitmap(self.panel, pos=position, bitmap=img)
+
+            self.images.append(bmp)
 
         else:
             print('INVALID PATH')
@@ -98,9 +107,15 @@ class BCIGui(wx.Frame):
 
     def on_clicked(self, event):
         """on_clicked."""
-        event.GetEventObject().GetLabel()
+        btn = event.GetEventObject().GetLabel()
+        print(f'pressed {btn}')
 
-        # print(f'pressed {btn}')
+    def edit_parameters(self, event):
+        """Edit Parameters.
+
+        Function for executing the edit parameter window
+        """
+        print(f'edit parameters window launched')
 
     def launch_bci_main(self, event):
         """Laucnh BCI MAIN"""
@@ -114,11 +129,27 @@ class BCIGui(wx.Frame):
 
             subprocess.call(cmd, shell=True)
 
+    def launch_mode(self, event):
+        if self.check_input():
+            mode = _cast_mode(
+                event.GetEventObject().GetLabel())
+            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
+                mode, experiment_type, username)
+
+            subprocess.call(cmd, shell=True)
+
     def check_input(self):
         """Check Input."""
-        if self.input_text[0].GetValue() == '':
+        try:
+            if self.input_text[0].GetValue() == '':
+                dialog = wx.MessageDialog(
+                    self, "Please Input User ID", 'Info', wx.OK | wx.ICON_WARNING)
+                dialog.ShowModal()
+                dialog.Destroy()
+                return False
+        except:
             dialog = wx.MessageDialog(
-                self, "Please Input User ID", 'Info', wx.OK | wx.ICON_WARNING)
+                self, "Error, expected input field for this function", 'Info', wx.OK | wx.ICON_WARNING)
             dialog.ShowModal()
             dialog.Destroy()
             return False
@@ -130,7 +161,7 @@ def _cast_experiment_type(experiment_type_string):
         experiment_type = 1
     elif experiment_type_string == 'Copy Phrase':
         experiment_type = 2
-    elif experiment_type_string == 'Copy Phrase Calibration':
+    elif experiment_type_string == 'Copy Phrase C.':
         experiment_type = 3
     else:
         raise ValueError('Not a known experiment_type')
