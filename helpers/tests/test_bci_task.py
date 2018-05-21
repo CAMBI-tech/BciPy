@@ -1,11 +1,9 @@
-import pytest
 import unittest
 import sys
 
 from helpers.bci_task_related import alphabet
-sys.path.append('helpers/')
-
 from load import load_json_parameters
+sys.path.append('helpers/')
 
 
 class TestBciTask(unittest.TestCase):
@@ -32,9 +30,8 @@ class TestBciTask(unittest.TestCase):
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_sti'] = False
-        parameters[
-            'path_to_presentation_images'][
-            'value'] = '../bci/static/images/rsvp_images/'
+        parameters['path_to_presentation_images'] = ('../bci/static/images/'
+                                                     'rsvp_images/')
 
         alp = alphabet(parameters)
 
