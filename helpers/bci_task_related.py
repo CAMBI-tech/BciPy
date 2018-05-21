@@ -57,9 +57,9 @@ def alphabet(parameters=None):
         array of letters.
     """
     if parameters:
-        if parameters['is_txt_sti']['value'] == 'false':
+        if not parameters['is_txt_sti']:
             # construct an array of paths to images
-            path = parameters['path_to_presentation_images']['value']
+            path = parameters['path_to_presentation_images']
             image_array = []
             for image_filename in os.listdir(path):
                 if image_filename.endswith(".png"):
@@ -154,13 +154,13 @@ def trial_complete_message(win, parameters):
 
     message_stim = visual.TextStim(
         win=win,
-        height=float(parameters['txt_height']['value']),
-        text=parameters['trial_complete_message']['value'],
-        font=parameters['font_text']['value'],
-        pos=(float(parameters['pos_text_x']['value']),
-             float(parameters['pos_text_y']['value'])),
+        height=float(parameters['txt_height']),
+        text=parameters['trial_complete_message'],
+        font=parameters['font_text'],
+        pos=(float(parameters['pos_text_x']),
+             float(parameters['pos_text_y'])),
         wrapWidth=None,
-        color=parameters['trial_complete_message_color']['value'],
+        color=parameters['trial_complete_message_color'],
         opacity=1, depth=-6.0)
     return [message_stim]
 

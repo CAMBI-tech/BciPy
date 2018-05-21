@@ -24,13 +24,13 @@ def init_language_model(parameters):
 
     try:
         # get the absolute path for fst from parameters
-        abs_path_fst = os.path.abspath(parameters['path_to_fst']['value'])
+        abs_path_fst = os.path.abspath(parameters['path_to_fst'])
 
         # Try getting an instance of LM
         lmodel = LangModel(
             abs_path_fst,
-            host=str(parameters['lang_model_server_host']['value']),
-            port=str(parameters['lang_model_server_port']['value']),
+            host=str(parameters['lang_model_server_host']),
+            port=str(parameters['lang_model_server_port']),
             logfile="lmwrap.log")
         # init LM
         lmodel.init()

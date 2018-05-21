@@ -18,7 +18,7 @@ def init_display_window(parameters):
     """
 
     # Check is full_screen mode is set and get necessary values
-    if parameters['full_screen']['value'] == 'true':
+    if parameters['full_screen']:
 
         # get relevant info about the system
         info = get_system_info()
@@ -34,8 +34,8 @@ def init_display_window(parameters):
     else:
 
         # set window attributes directly from parameters file
-        window_height = parameters['window_height']['value']
-        window_width = parameters['window_width']['value']
+        window_height = parameters['window_height']
+        window_width = parameters['window_width']
 
         # make sure full screen is set to false
         full_screen = False
@@ -51,7 +51,7 @@ def init_display_window(parameters):
         allowStencil=False,
         monitor='mainMonitor',
         winType='pyglet', units='norm', waitBlanking=True,
-        color=parameters['background_color']['value'])
+        color=parameters['background_color'])
 
     # Return display window to caller
     return display_window
