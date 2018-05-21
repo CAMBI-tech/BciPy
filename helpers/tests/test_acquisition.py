@@ -12,7 +12,8 @@ class TestAcquisition(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
         self.parameters_used = './parameters/parameters.json'
-        self.parameters = load_json_parameters(self.parameters_used)
+        self.parameters = load_json_parameters(self.parameters_used,
+                                               value_cast=True)
         self.data_save_path = 'data/'
         self.user_information = 'test_user_001'
 
@@ -46,8 +47,8 @@ class TestAcquisition(unittest.TestCase):
 
         f = 'foo.csv'
         params = self.parameters
-        params['raw_data_name'] = {"value": f}
-        params['acq_port'] = {"value": 9000}
+        params['raw_data_name'] = f
+        params['acq_port'] = 9000
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 
@@ -65,7 +66,7 @@ class TestAcquisition(unittest.TestCase):
         print("Testing init_eeg_acquisition with LSL device")
 
         params = self.parameters
-        params['acq_device'] = {"value": 'LSL'}
+        params['acq_device'] = 'LSL'
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 

@@ -1,13 +1,33 @@
-from helpers.load import read_data_csv, load_experimental_data
+from helpers.load import read_data_csv, load_experimental_data, \
+    load_json_parameters
 from signal_processing.sig_pro import sig_pro
 from signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from signal_model.mach_learning.trial_reshaper import trial_reshaper
 from helpers.data_viz import generate_offline_analysis_screen
 from helpers.triggers import trigger_decoder
+from helpers.acquisition_related import analysis_channels_by_device
 import pickle
 
 
-def offline_analysis(data_folder=None):
+def analysis_channels(channels, device_name):
+    """
+    Parameters:
+    ----------
+        channels(list(str)): list of channel names from the raw_data
+            (excluding the timestamp)
+        device_name(str): daq_type from the raw_data file.
+    Returns:
+    --------
+        A binary list indicating which channels should be used for analysis.
+        If i'th element is 0, i'th channel in filtered_eeg is removed.
+    """
+    relevant_channels = analysis_channels_by_device.get(device_name)
+    if not relevant_channels:
+        raise Exception("Analysis channels for the given device not found.")
+    return [int(ch in relevant_channels) for ch in channels]
+
+
+def offline_analysis(data_folder=None, parameters={}):
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -32,23 +52,28 @@ def offline_analysis(data_folder=None):
     mode = 'calibration'
 
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
-        data_folder + '/raw_data.csv')
+        data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
+
+    print(f"Channels read from csv: {channels}")
+    print(f"Device type: {type_amp}")
 
     # TODO: Read from parameters
     ds_rate = 2
     dat = sig_pro(raw_dat, fs=fs, k=ds_rate)
 
     # Process triggers.txt
-    s_i, t_t_i, t_i, offset = trigger_decoder(mode=mode,
-                                      trigger_loc=data_folder + '/triggers.txt')
+    triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
+    s_i, t_t_i, t_i, offset = trigger_decoder(
+        mode=mode,
+        trigger_loc=f"{data_folder}/{triggers_file}")
 
     # Channel map can be checked from raw_data.csv file.
     # read_data_csv already removes the timespamp column.
-    #                     CM            X3 X2           X1            TRG
-    channel_map = [1]*8 + [0] + [1]*7 + [0]*2 + [1]*2 + [0] + [1]*3 + [0]
+    channel_map = analysis_channels(channels, type_amp)
 
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, dat,
-                                      mode=mode, fs=fs,k=ds_rate, offset=offset,
+                                      mode=mode, fs=fs, k=ds_rate,
+                                      offset=offset,
                                       channel_map=channel_map)
 
     model = train_pca_rda_kde_model(x, y, k_folds=10)
@@ -63,4 +88,15 @@ def offline_analysis(data_folder=None):
 
 
 if __name__ == "__main__":
-    offline_analysis()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--data_folder', default=None)
+    parser.add_argument('-p', '--parameters_file',
+                        default='parameters/parameters.json')
+    args = parser.parse_args()
+
+    print(f"Loading params from {args.parameters_file}")
+    parameters = load_json_parameters(args.parameters_file,
+                                      value_cast=True)
+    offline_analysis(args.data_folder, parameters)

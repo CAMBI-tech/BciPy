@@ -6,6 +6,14 @@ from acquisition.datastream.server import start_socket_server, await_start
 from acquisition.processor import FileWriter
 from acquisition.datastream.lsl_server import LslDataServer
 
+# Channels relevant for analysis, for each supported device.
+analysis_channels_by_device = {
+    'DSI': ["P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "A1", "Fp1", "Fp2",
+            "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"],
+    'g.USBamp-2': ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8",
+                   "Ch9", "Ch10", "Ch11", "Ch12", "Ch13", "Ch14", "Ch15",
+                   "Ch16"]
+}
 
 def init_eeg_acquisition(parameters, save_folder,
                          clock=_Clock(), server=False):
@@ -19,22 +27,11 @@ def init_eeg_acquisition(parameters, save_folder,
             configuration details regarding the device type and other relevant
             connection information.
              {
-               "acq_device": {
-                 "value": str
-               },
-               "acq_host": {
-                 "value": str
-               },
-               "acq_port": {
-                 "value": int
-               },
-               "buffer_name": {
-                 "value": str
-               },
-
-               "raw_data_name": {
-                 "value": str
-               }
+               "acq_device": str,
+               "acq_host": str,
+               "acq_port": int,
+               "buffer_name": str,
+               "raw_data_name": str
              }
         clock : Clock, optional
             optional clock used in the client; see client for details.
