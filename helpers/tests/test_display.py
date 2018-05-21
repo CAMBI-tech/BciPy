@@ -13,14 +13,15 @@ class TestInitializeDisplayWindow(unittest.TestCase):
 
         parameters_used = './parameters/parameters.json'
 
-        self.parameters = load_json_parameters(parameters_used)
+        self.parameters = load_json_parameters(parameters_used,
+                                               value_cast=True)
 
     def test_init_display_window_returns_psychopy_window(self):
         """Test display window is created."""
 
         test_display_window = visual.Window(
-            size=[self.parameters['window_width']['value'],
-                  self.parameters['window_height']['value']],
+            size=[self.parameters['window_width'],
+                  self.parameters['window_height']],
             fullscr=False, screen=0,
             allowGUI=False, allowStencil=False, monitor='mainMonitor',
             color='black', colorSpace='rgb', blendMode='avg',
