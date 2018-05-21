@@ -19,22 +19,11 @@ def init_eeg_acquisition(parameters, save_folder,
             configuration details regarding the device type and other relevant
             connection information.
              {
-               "acq_device": {
-                 "value": str
-               },
-               "acq_host": {
-                 "value": str
-               },
-               "acq_port": {
-                 "value": int
-               },
-               "buffer_name": {
-                 "value": str
-               },
-
-               "raw_data_name": {
-                 "value": str
-               }
+               "acq_device": str,
+               "acq_host": str,
+               "acq_port": int,
+               "buffer_name": str,
+               "raw_data_name": str
              }
         clock : Clock, optional
             optional clock used in the client; see client for details.
