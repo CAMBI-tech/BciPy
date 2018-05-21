@@ -1,16 +1,17 @@
 import os
 import sys
+sys.path.insert(0, ".")
 import docker
 import requests
 import json
 import time
 import re
 import logging
+import unittest
 from errors import ConnectionErr, StatusCodeError, DockerDownError
 from helpers.bci_task_related import alphabet
 from subprocess import Popen, PIPE
 import platform
-
 ALPHABET = alphabet()
 
 
@@ -216,3 +217,6 @@ class LangModel:
             print("There are no priors in the history")
         # print a json dict of the priors
         return self.priors
+
+if __name__ == '__main__':
+    unittest.main()

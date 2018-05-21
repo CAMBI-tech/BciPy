@@ -5,7 +5,7 @@
     "readableName": "Executable to run from desktop",
     "helpTip": "Name of the executable file to run from the Desktop",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "languagemodelenabled": {
     "value": "true",
@@ -13,7 +13,7 @@
     "readableName": "Language Model Enabled",
     "helpTip": "This is the language model.",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "bool"
   },
   "background_color": {
     "value": "black",
@@ -21,7 +21,7 @@
     "readableName": "Main Window Background Color",
     "helpTip": "Main Window Background Color.",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "path_to_fst": {
     "value": "language_model/fst/brown_closure.n5.kn.fst",
@@ -29,7 +29,7 @@
     "readableName": "Language Model",
     "helpTip": "FST file for language model",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "lang_model_server_host": {
     "value": "127.0.0.1",
@@ -40,7 +40,7 @@
       "127.0.0.1",
       "0.0.0.0"
       ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "lang_model_server_port": {
     "value": "5000",
@@ -50,7 +50,7 @@
     "recommended_values": [
       "5000"
       ],
-    "isNumeric": "false"
+    "type": "int"
   },
   "color_task": {
     "value": "white",
@@ -58,7 +58,7 @@
     "readableName": "Color Task",
     "helpTip": "Color Task",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "trial_complete_message_color": {
     "value": "white",
@@ -66,7 +66,7 @@
     "readableName": "Trail Complete Message Color",
     "helpTip": "Trail Complete Message Color",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "font_task": {
     "value": "Arial",
@@ -80,7 +80,7 @@
       "Georgia",
       "Times"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "height_task": {
     "value": "0.1",
@@ -90,7 +90,7 @@
     "recommended_values": [
       "0.1"
     ],
-    "isNumeric": "true"
+    "type": "float"
   },
   "text_task": {
     "value": "SPELL_THIS_WORD",
@@ -98,7 +98,7 @@
     "readableName": "text task",
     "helpTip": "text task",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "color_text": {
     "value": "white",
@@ -110,7 +110,7 @@
       "black",
       "blue"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "font_text": {
     "value": "Arial",
@@ -124,27 +124,27 @@
       "Georgia",
       "Times"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "pos_text_x": {
     "value": "0",
     "section": "bci_config",
-    "readableName": "Position Text",
-    "helpTip": "Position Text",
+    "readableName": "Position Text (X)",
+    "helpTip": "Position Text (X)",
     "recommended_values": [
       "0"
     ],
-    "isNumeric": "true"
+    "type": "float"
   },
   "pos_text_y": {
-    "value": "-.75",
+    "value": "-0.75",
     "section": "bci_config",
-    "readableName": "Position Text",
-    "helpTip": "Position Text",
+    "readableName": "Position Text (Y)",
+    "helpTip": "Position Text (Y)",
     "recommended_values": [
-      "-.75"
+      "-0.75"
     ],
-    "isNumeric": "true"
+    "type": "float"
   },
   "text_text": {
     "value": "",
@@ -156,7 +156,7 @@
       "Demo Text",
       "DEMO"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "txt_height": {
     "value": "0.1",
@@ -166,17 +166,7 @@
     "recommended_values": [
       "0.1"
     ],
-    "isNumeric": "true"
-  },
-  "txt_height": {
-    "value": "0.1",
-    "section": "bci_config",
-    "readableName": "Text Height",
-    "helpTip": "Text Height",
-    "recommended_values": [
-      "0.1"
-    ],
-    "isNumeric": "true"
+    "type": "float"
   },
   "font_sti": {
     "value": "Arial",
@@ -190,7 +180,7 @@
       "Georgia",
       "Times"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "pos_sti_x": {
     "value": "0",
@@ -198,7 +188,7 @@
     "readableName": "Pos Stimuli X",
     "helpTip": "Pos Stimuli X",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "pos_sti_y": {
     "value": "0",
@@ -206,7 +196,7 @@
     "readableName": "Pos Stimuli Y",
     "helpTip": "Pos Stimuli Y",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "sti_height": {
     "value": "0.6",
@@ -214,7 +204,7 @@
     "readableName": "Stimuli Height (px)",
     "helpTip": "Stimuli Height",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "tr_pos_bg_x": {
     "value": "0",
@@ -222,15 +212,15 @@
     "readableName": "tr_pos_bg_x",
     "helpTip": "tr_pos_bg_x",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "tr_pos_bg_y": {
-    "value": ".5",
+    "value": "0.5",
     "section": "bci_config",
     "readableName": "tr_pos_bg_y",
     "helpTip": "tr_pos_bg_y",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "bl_pos_bg_x": {
     "value": "-1",
@@ -238,15 +228,15 @@
     "readableName": "bl_pos_bg_x",
     "helpTip": "bl_pos_bg_x",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "bl_pos_bg_y": {
-    "value": "-.5",
+    "value": "-0.5",
     "section": "bci_config",
     "readableName": "bl_pos_bg_y",
     "helpTip": "bl_pos_bg_y",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "size_domain_bg": {
     "value": "7",
@@ -254,7 +244,7 @@
     "readableName": "Size Bar Graph",
     "helpTip": "Size Bar Graph",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "font_bg_txt": {
     "value": "Arial",
@@ -262,7 +252,7 @@
     "readableName": "Font Bar Graph",
     "helpTip": "Font Bar Graph",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "color_bg_txt": {
     "value": "red",
@@ -270,7 +260,7 @@
     "readableName": "Bar Graph Text Color",
     "helpTip": "Bar Graph Text Color",
     "recommended_values": "",
-    "isNumeric": "fasle"
+    "type": "str"
   },
   "trigger_type": {
     "value": "sound",
@@ -281,23 +271,23 @@
       "image",
       "sound"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "path_to_presentation_images": {
     "value": "../bci/static/images/testing_images/",
     "section": "bci_config",
-    "readableName": "Is Text Stimuli",
+    "readableName": "Path to Images",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "time_flash": {
-    "value": ".25",
+    "value": "0.25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "task_color": {
     "value": "white",
@@ -305,7 +295,7 @@
     "readableName": "Task Color",
     "helpTip": "Color of Task Text: Ex. 1/100",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "target_letter_color": {
     "value": "white",
@@ -313,7 +303,7 @@
     "readableName": "Target Letter Color",
     "helpTip": "Target Letter Color",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "fixation_color": {
     "value": "red",
@@ -321,7 +311,7 @@
     "readableName": "Fixation Color",
     "helpTip": "Fixation Color",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "stimuli_color": {
     "value": "white",
@@ -329,7 +319,7 @@
     "readableName": "Stimuli Color",
     "helpTip": "Stimuli Color",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "time_target": {
     "value": "2",
@@ -337,15 +327,15 @@
     "readableName": "Target Letter Presentation Length (sec)",
     "helpTip": "Target Letter Presentation Length",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "time_cross": {
-    "value": ".5",
+    "value": "0.5",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
     "helpTip": "Time Fixation Cross",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "color_bar_bg": {
     "value": "green",
@@ -353,7 +343,7 @@
     "readableName": "Color Bar Gragh Bars",
     "helpTip": "Color Bar Gragh Bars",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "window_width": {
     "value": "500",
@@ -361,15 +351,15 @@
     "readableName": "Stimuli Presentation Window Width (px)",
     "helpTip": "Stimuli Presentation Window Width",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "window_height": {
     "value": "500",
     "section": "bci_config",
-    "readableName": "Stimuli Presentation Window Width (px)",
-    "helpTip": "Stimuli Presentation Window Width",
+    "readableName": "Stimuli Presentation Window Height (px)",
+    "helpTip": "Stimuli Presentation Window Height",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "buffer_name": {
     "value": "buffer.db",
@@ -377,7 +367,7 @@
     "readableName": "Path to the buffer database for data acquistion",
     "helpTip": "Path to the buffer database for data acquistion",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "acq_device": {
     "value": "DSI",
@@ -388,7 +378,7 @@
       "DSI",
       "LSL"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "acq_host": {
     "value": "127.0.0.1",
@@ -396,15 +386,15 @@
     "readableName": "Acquisition Device Host",
     "helpTip": "Acquisition Device Host",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "acq_port": {
-    "value": "9000",
+    "value": "9999",
     "section": "acq_config",
     "readableName": "Acquisition Device Port",
     "helpTip": "Acquisition Device Port",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "eeg_buffer_len": {
     "value": "2",
@@ -412,18 +402,18 @@
     "readableName": "End of file eeg buffer length (sec)",
     "helpTip": "End of file eeg buffer length",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
   },
   "task_buffer_len": {
-    "value": ".75",
+    "value": "0.75",
     "section": "bci_config",
     "readableName": "Task Buffer Length (sec)",
     "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
     "recommended_values": [
-      ".5",
-      ".75"
+      "0.5",
+      "0.75"
     ],
-    "isNumeric": "true"
+    "type": "float"
   },
   "raw_data_name": {
     "value": "raw_data.csv",
@@ -431,7 +421,7 @@
     "readableName": "Raw Data Filename",
     "helpTip": "Raw Data Filename",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
   },
   "data_save_loc": {
     "value": "data/",
@@ -441,7 +431,7 @@
     "recommended_values": [
       "data/"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "parameter_location": {
     "value": "parameters/parameters.json",
@@ -451,7 +441,7 @@
     "recommended_values": [
       "parameters/parameters.json"
     ],
-    "isNumeric": "false"
+    "type": "str"
   },
   "is_txt_sti": {
     "value": "true",
@@ -459,15 +449,15 @@
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -true- or Image -false-",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "bool"
   },
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "bool"
   },
   "full_screen": {
     "value": "false",
@@ -475,7 +465,7 @@
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "bool"
   },
   "num_sti": {
     "value": "25",
@@ -483,7 +473,7 @@
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "len_sti": {
     "value": "10",
@@ -491,7 +481,7 @@
     "readableName": "Number of trials to present in a sequence",
     "helpTip": "Number of trials to present in a sequence",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "int"
   },
   "trial_complete_message": {
     "value": "Complete! Saving data...",
@@ -499,7 +489,7 @@
     "readableName": "Trial Complete Message",
     "helpTip": "Message that displays at the end of trial",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
 
   },
   "wait_screen_message": {
@@ -508,7 +498,7 @@
     "readableName": "Wait Screen Message",
     "helpTip": "Message that displays at the beginning of trial and when user pauses",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
 
   },
   "wait_screen_message_color": {
@@ -517,7 +507,7 @@
     "readableName": "Wait Screen Message Color",
     "helpTip": "Wait Screen Message Color, when background_color is white this should be black",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
 
   },
   "feedback_flash_time": {
@@ -526,7 +516,7 @@
     "readableName": "feedback_flash_time",
     "helpTip": "feedback_flash_time",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
 
   },
   "feedback_pos_x": {
@@ -535,7 +525,7 @@
     "readableName": "feedback_pos_x",
     "helpTip": "feedback_pos_x",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
 
   },
   "feedback_pos_y": {
@@ -544,7 +534,7 @@
     "readableName": "feedback_pos_y",
     "helpTip": "feedback_pos_y",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
 
   },
   "feedback_stim_height": {
@@ -553,7 +543,7 @@
     "readableName": "feedback_stim_height",
     "helpTip": "feedback_stim_height",
     "recommended_values": "",
-    "isNumeric": "true"
+    "type": "float"
 
   },
   "feedback_font": {
@@ -562,7 +552,7 @@
     "readableName": "feedback_font",
     "helpTip": "feedback_font",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
 
   },
   "show_feedback": {
@@ -571,7 +561,7 @@
     "readableName": "show_feedback",
     "helpTip": "show_feedback",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "bool"
 
   },
   "feedback_message_color": {
@@ -580,7 +570,7 @@
     "readableName": "feedback_message_color",
     "helpTip": "feedback_message_color",
     "recommended_values": "",
-    "isNumeric": "false"
+    "type": "str"
 
   },
   "max_seq_len": {
@@ -592,6 +582,6 @@
       "20",
       "25"
     ],
-    "isNumeric": "true"
+    "type": "int"
   }
 }

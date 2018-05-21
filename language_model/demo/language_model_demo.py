@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, ".")
 import os
 from language_model.language_model import LangModel
 
