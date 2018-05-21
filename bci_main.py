@@ -29,8 +29,8 @@ def bci_main(parameters, user, exp_type, mode):
     """
 
     # Define the parameter and data save location
-    parameter_location = parameters['parameter_location']['value']
-    data_save_location = parameters['data_save_loc']['value']
+    parameter_location = parameters['parameter_location']
+    data_save_location = parameters['data_save_loc']
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
@@ -66,13 +66,7 @@ def execute_task(task_type, parameters, save_folder):
         save_folder (str): path to save folder
     """
 
-    fake_data = parameters['fake_data']['value']
-
-    if fake_data == 'true':
-        # Set this to False to have fake data but real decisions
-        fake = True
-    else:
-        fake = False
+    fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
     #   modules to be loaded.
@@ -88,7 +82,7 @@ def execute_task(task_type, parameters, save_folder):
                 classifier = load_classifier()
 
             # if Language Model enabled and data not fake, init lm
-            if parameters['languagemodelenabled']['value'] == 'true' \
+            if parameters['languagemodelenabled'] == 'true' \
                     and not fake:
                 try:
                     lmodel = init_language_model(parameters)
@@ -158,7 +152,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load a parameters file
-    parameters = load_json_parameters(args.parameters)
+    parameters = load_json_parameters(args.parameters, value_cast=True)
 
     # Start BCI Main
     bci_main(parameters, str(args.user), int(args.type), str(args.mode))

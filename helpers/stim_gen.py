@@ -150,7 +150,7 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
     else:
         sample = ['../bci/static/images/bci_main_images/PLUS.png']
         target_letter = parameters[
-            'path_to_presentation_images']['value'] + target_letter + '.png'
+            'path_to_presentation_images'] + target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that

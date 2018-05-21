@@ -683,7 +683,7 @@ def exec_bci_main(parameters, window, mode):
     try:
         new_window.close()
 
-        cmd = 'python bci_main.py -m {} -t {} -u {}'.format(mode, trialType, userId)
+        cmd = 'python bci_main.py -m {} -t {} -u {}'.format(mode, trialType, userId.replace(' ', '_'))
         # cmd = 'python bci_main.py'
 
         p = subprocess.call(cmd, shell=False)
