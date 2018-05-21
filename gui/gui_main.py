@@ -47,9 +47,9 @@ class BCIGui(wx.Frame):
                 btn.SetBackgroundColour(color)
 
         # Attach Custom Actions
-        if action == 'launch_bci':
-            self.Bind(wx.EVT_BUTTON, self.OnClicked, btn)
-        elif action == 'default':
+        if action == 'default':
+            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
+        elif action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
 
         self.buttons.append(btn)
@@ -96,8 +96,8 @@ class BCIGui(wx.Frame):
         """Add Scroll."""
         pass
 
-    def OnClicked(self, event):
-        """OnClicked."""
+    def on_clicked(self, event):
+        """on_clicked."""
         event.GetEventObject().GetLabel()
 
         # print(f'pressed {btn}')
