@@ -1,4 +1,3 @@
-import subprocess
 import os
 import wx
 import wx.lib.agw.gradientbutton as GB
@@ -110,63 +109,6 @@ class BCIGui(wx.Frame):
         btn = event.GetEventObject().GetLabel()
         print(f'pressed {btn}')
 
-    def edit_parameters(self, event):
-        """Edit Parameters.
-
-        Function for executing the edit parameter window
-        """
-        print(f'edit parameters window launched')
-
-    def launch_bci_main(self, event):
-        """Laucnh BCI MAIN"""
-        if self.check_input():
-            username = self.input_text[0].GetValue().replace(" ", "_")
-            experiment_type = _cast_experiment_type(
-                event.GetEventObject().GetLabel())
-            mode = 'RSVP'
-            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
-                mode, experiment_type, username)
-
-            subprocess.call(cmd, shell=True)
-
-    def launch_mode(self, event):
-        if self.check_input():
-            mode = _cast_mode(
-                event.GetEventObject().GetLabel())
-            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
-                mode, experiment_type, username)
-
-            subprocess.call(cmd, shell=True)
-
-    def check_input(self):
-        """Check Input."""
-        try:
-            if self.input_text[0].GetValue() == '':
-                dialog = wx.MessageDialog(
-                    self, "Please Input User ID", 'Info', wx.OK | wx.ICON_WARNING)
-                dialog.ShowModal()
-                dialog.Destroy()
-                return False
-        except:
-            dialog = wx.MessageDialog(
-                self, "Error, expected input field for this function", 'Info', wx.OK | wx.ICON_WARNING)
-            dialog.ShowModal()
-            dialog.Destroy()
-            return False
-        return True
-
-
-def _cast_experiment_type(experiment_type_string):
-    if experiment_type_string == 'Calibration':
-        experiment_type = 1
-    elif experiment_type_string == 'Copy Phrase':
-        experiment_type = 2
-    elif experiment_type_string == 'Copy Phrase C.':
-        experiment_type = 3
-    else:
-        raise ValueError('Not a known experiment_type')
-
-    return experiment_type
 
 
 if __name__ == '__main__':
