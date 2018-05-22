@@ -55,8 +55,11 @@ class Buffer(object):
         # Create a data table with the correct number of channels (+ timestamp)
         fields = ['timestamp'] + channels
         self.fields = fields
+        # TODO: str type for marker field.
         defs = ','.join([field + ' real' for field in fields])
         cursor.execute('DROP TABLE IF EXISTS data')
+
+        logging.debug(defs)
         cursor.execute('CREATE TABLE data (%s)' % defs)
         self._conn.commit()
 

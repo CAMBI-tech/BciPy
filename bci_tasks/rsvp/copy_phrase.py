@@ -51,7 +51,7 @@ class RSVPCopyPhraseTask(Task):
         self.buffer_val = parameters['task_buffer_len']
         self.alp = alphabet(parameters)
         self.rsvp = _init_copy_phrase_display_task(
-            self.parameters, self.window,
+            self.parameters, self.window, self.daq,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
         trigger_save_location = self.file_save + '/triggers.txt'
@@ -296,10 +296,11 @@ class RSVPCopyPhraseTask(Task):
 
 
 def _init_copy_phrase_display_task(
-        parameters, win, static_clock, experiment_clock):
+        parameters, win, daq, static_clock, experiment_clock):
     rsvp = CopyPhraseDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
+        marker_writer=daq.marker_writer,
         text_info=parameters['text_text'],
         static_text_task=parameters['text_task'],
         text_task='****',

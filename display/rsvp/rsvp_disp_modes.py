@@ -23,7 +23,8 @@ class CopyPhraseDisplay(RSVPDisplay):
             sti(visual_Text_Stimuli): stimuli text
             bg(BarGraph): bar graph display unit in display """
 
-    def __init__(self, window, clock, experiment_clock, static_text_task='COPY_PHRASE',
+    def __init__(self, window, clock, experiment_clock, marker_writer,
+                 static_text_task='COPY_PHRASE',
                  static_color_task='White',
                  text_info='Press Space Bar to Pause',
                  color_info='White', pos_info=(0, -.9),
@@ -58,6 +59,7 @@ class CopyPhraseDisplay(RSVPDisplay):
         super(CopyPhraseDisplay, self).__init__(
             window, clock,
             experiment_clock,
+            marker_writer,
             color_task=color_task,
             font_task=font_task,
             pos_task=pos_task,
@@ -104,7 +106,7 @@ class FreeSpellingDisplay(RSVPDisplay):
             sti(visual_Text_Stimuli): stimuli text
             bg(BarGraph): bar graph display unit in display """
 
-    def __init__(self, window, clock, experiment_clock,
+    def __init__(self, window, clock, experiment_clock, marker_writer,
                  text_info='Press Space Bar to Pause',
                  color_info='White', pos_info=(0, -.9),
                  height_info=0.2, font_info='Times',
@@ -132,6 +134,7 @@ class FreeSpellingDisplay(RSVPDisplay):
         super(FreeSpellingDisplay, self).__init__(
             window, clock,
             experiment_clock,
+            marker_writer,
             color_task=color_task,
             font_task=font_task,
             pos_task=pos_task,
@@ -168,6 +171,7 @@ class CalibrationDisplay(RSVPDisplay):
 
     def __init__(self, window, clock,
                  experiment_clock,
+                 marker_writer,
                  text_info='Press Space Bar to Pause',
                  color_info='White', pos_info=(0, -.9),
                  height_info=0.2, font_info='Times',
@@ -195,6 +199,7 @@ class CalibrationDisplay(RSVPDisplay):
         super(CalibrationDisplay, self).__init__(
             window, clock,
             experiment_clock,
+            marker_writer,
             color_task=color_task,
             font_task=font_task,
             pos_task=pos_task,

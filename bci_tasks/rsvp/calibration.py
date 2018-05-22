@@ -45,7 +45,7 @@ class RSVPCalibrationTask(Task):
         self.buffer_val = parameters['task_buffer_len']
         self.alp = alphabet(parameters)
         self.rsvp = init_calibration_display_task(
-            self.parameters, self.window,
+            self.parameters, self.window, self.daq,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
         trigger_save_location = self.file_save + '/triggers.txt'
@@ -165,10 +165,11 @@ class RSVPCalibrationTask(Task):
 
 
 def init_calibration_display_task(
-        parameters, window, static_clock, experiment_clock):
+        parameters, window, daq, static_clock, experiment_clock):
     rsvp = CalibrationDisplay(
         window=window, clock=static_clock,
         experiment_clock=experiment_clock,
+        marker_writer=daq.marker_writer,
         text_info=parameters['text_text'],
         color_info=parameters['color_text'],
         pos_info=(parameters['pos_text_x'],

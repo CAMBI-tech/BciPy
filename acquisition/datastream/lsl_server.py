@@ -10,12 +10,30 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 class LslDataServer(StoppableThread):
-    """Data server that streams EEG data using pylsl.
+    """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
+    using pylsl. See https://github.com/sccn/labstreaminglayer/wiki.
 
-    TODO: Accept parameters controlling how markers are added to the stream.
+    In parameters.json, if the fake_data parameter is set to true and the
+    device is set to LSL, this server will be used to mock data. Alternatively,
+    fake_data can be set to false and this module can be run standalone in its
+    own python instance.
+
+    Parameters
+    ----------
+        params : dict(channels: list(str), hz(int))
+            parameters used to configure the server. Should have at least
+            a list of channels and the sample frequency.
+        generator : Object (see generator.py for options)
+            used to generate the data to be served. Ex. random_data.
+        include_meta: bool, optional
+            if True, writes metadata to the outlet stream.
+        add_markers: bool, optional
+            if True, creates a the marker channel and streams data to this
+            channel at a fixed frequency.
     """
 
-    def __init__(self, params, generator, include_meta=True):
+    def __init__(self, params, generator, include_meta=True,
+                 add_markers=False):
         super(LslDataServer, self).__init__()
 
         self.channels = params['channels']
@@ -43,15 +61,19 @@ class LslDataServer(StoppableThread):
 
         self.outlet = StreamOutlet(info)
 
-        # Marker stream
-        # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
-
-        markers_info = StreamInfo("TestStream Markers",
-                                  "Markers", 1, 0, 'string', "uid12345_markers")
-        self.markers_outlet = StreamOutlet(markers_info)
+        self.add_markers = add_markers
+        if add_markers:
+            # Marker stream
+            # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
+            logging.debug("Creating marker stream")
+            markers_info = StreamInfo("TestStream Markers",
+                                      "Markers", 1, 0, 'string', "uid12345_markers")
+            self.markers_outlet = StreamOutlet(markers_info)
         self.started = False
 
     def stop(self):
+        """Stop the thread and cleanup resources."""
+
         logging.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
@@ -59,19 +81,27 @@ class LslDataServer(StoppableThread):
         # after destruction and all connected inlets will stop delivering data.
         del self.outlet
         self.outlet = None
-        del self.markers_outlet
-        self.markers_outlet = None
+
+        if self.add_markers:
+            del self.markers_outlet
+            self.markers_outlet = None
 
     def next_sample(self):
+        """Retrieves the next sample from the data generator."""
+
         return next(self.generator)
 
     def run(self):
+        """Main loop of the thread. Continuously streams data to the stream
+        outlet at a rate consistent with the sample frequency. May also
+        output markers at a different interval."""
+
         sample_counter = 0
         self.started = True
         while self.running():
             sample_counter += 1
             self.outlet.push_sample(self.next_sample())
-            if sample_counter % 100 == 0:
+            if self.add_markers and sample_counter % 1000 == 0:
                 self.markers_outlet.push_sample([str(random.randint(1, 100))])
             time.sleep(1 / self.hz)
         logging.debug("[*] No longer pushing data")
@@ -104,6 +134,8 @@ def main():
                         help='comma-delimited list')
     parser.add_argument('-s', '--sample_rate', default='300',
                         help='sample rate in hz')
+
+    parser.add_argument('-m', '--markers', action="store_true", default=False)
     args = parser.parse_args()
 
     params = {'channels': args.channels.split(','),
@@ -113,8 +145,10 @@ def main():
     generator = file_data(filename=args.filename) if args.filename \
         else random_data(channel_count=len(params['channels']))
 
+    markers = True if args.markers else False
     try:
-        server = LslDataServer(params=params, generator=generator)
+        server = LslDataServer(params=params, generator=generator,
+                               add_markers=markers)
 
         logging.debug("New server created")
         server.start()

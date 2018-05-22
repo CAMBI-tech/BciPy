@@ -28,7 +28,8 @@ class TestLslDevice(unittest.TestCase):
                                             'hz': self.hz},
                                     generator=generator.random_data(
                                         channel_count=self.channel_count),
-                                    include_meta=self.include_meta)
+                                    include_meta=self.include_meta,
+                                    add_markers=True)
         await_start(self.server)
 
     def tearDown(self):

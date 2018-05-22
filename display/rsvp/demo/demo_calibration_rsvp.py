@@ -4,6 +4,7 @@ from psychopy import visual, core
 
 from display.rsvp.rsvp_disp_modes import CalibrationDisplay
 from helpers.triggers import _write_triggers_from_sequence_calibration
+from acquisition.marker_writer import NullMarkerWriter
 
 # Initialize Stimulus Parameters
 # Task Bar
@@ -100,7 +101,7 @@ win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
-print frameRate
+print(frameRate)
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
@@ -109,6 +110,7 @@ experiment_clock = core.MonotonicClock(start_time=None)
 rsvp = CalibrationDisplay(
     window=win, clock=clock,
     experiment_clock=experiment_clock,
+    marker_writer=NullMarkerWriter(),
     text_info=text_text,
     color_info=color_text, pos_info=pos_text,
     height_info=txt_height,
