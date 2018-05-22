@@ -1,5 +1,6 @@
 import pylsl
 import logging
+from typing import Any
 
 
 class MarkerWriter(object):
@@ -7,7 +8,7 @@ class MarkerWriter(object):
     markers.
     """
 
-    def push_marker(self, marker: any, lsl_time: float=None):
+    def push_marker(self, marker: Any, lsl_time: float=None):
         """Push the given stimulus marker for processing.
 
         Parameters:
@@ -46,7 +47,7 @@ class LslMarkerWriter(object):
         local_clock."""
         return pylsl.local_clock()
 
-    def push_marker(self, marker: any, lsl_time: float=None):
+    def push_marker(self, marker: Any, lsl_time: float=None):
         """Push the given stimulus marker for processing.
         Parameters:
             marker : any object that can be converted to a str
@@ -76,7 +77,7 @@ class NullMarkerWriter(MarkerWriter):
     https://en.wikipedia.org/wiki/Null_object_pattern
     """
 
-    def push_marker(self, marker: any, lsl_time: float=None):
+    def push_marker(self, marker: Any, lsl_time: float=None):
         pass
 
     def now(self) -> float:
