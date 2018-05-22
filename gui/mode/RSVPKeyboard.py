@@ -4,7 +4,7 @@ import wx
 
 
 class RSVPKeyboard(BCIGui):
-    def bind_action(self, action, btn):
+    def bind_action(self, action: str, btn: wx.Button) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
         elif action == 'edit_parameters':
@@ -12,14 +12,14 @@ class RSVPKeyboard(BCIGui):
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
-    def edit_parameters(self, event):
+    def edit_parameters(self, event) -> None:
         """Edit Parameters.
 
         Function for executing the edit parameter window
         """
         print(f'edit parameters window launched')
 
-    def launch_bci_main(self, event):
+    def launch_bci_main(self, event: wx.Event) -> None:
         """Laucnh BCI MAIN"""
         if self.check_input():
             username = self.input_text[0].GetValue().replace(" ", "_")
@@ -31,7 +31,7 @@ class RSVPKeyboard(BCIGui):
 
             subprocess.call(cmd, shell=True)
 
-    def check_input(self):
+    def check_input(self) -> bool:
         """Check Input."""
         try:
             if self.input_text[0].GetValue() == '':
@@ -50,7 +50,7 @@ class RSVPKeyboard(BCIGui):
             return False
         return True
 
-    def _cast_experiment_type(self, experiment_type_string):
+    def _cast_experiment_type(self, experiment_type_string: str) -> None:
         if experiment_type_string == 'Calibration':
             experiment_type = 1
         elif experiment_type_string == 'Copy Phrase':

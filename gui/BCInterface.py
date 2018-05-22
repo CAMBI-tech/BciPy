@@ -5,13 +5,13 @@ from gui.gui_main import BCIGui
 
 # Make a custom GUI class with the events we want
 class BCInterface(BCIGui):
-    def bind_action(self, action, btn):
+    def bind_action(self, action: str, btn: wx.Button) -> None:
         if action == 'launch_mode':
             self.Bind(wx.EVT_BUTTON, self.launch_mode, btn)
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
-    def launch_mode(self, event):
+    def launch_mode(self, event) -> None:
         mode_label = event.GetEventObject().GetLabel()
         if mode_label == 'RSVP':
             subprocess.Popen('python gui/mode/RSVPKeyboard.py')

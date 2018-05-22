@@ -8,16 +8,14 @@ import wx.lib.buttons as buttons
 class BCIGui(wx.Frame):
     """BCIGui."""
 
-    def __init__(self, title, size,
-                 background_color='blue', parameters=None, parent=None):
+    def __init__(self, title: str, size: tuple,
+                 background_color: str='blue', parent: wx.Frame=None):
         """Init."""
         super(BCIGui, self).__init__(
             parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
-        self.size = size
+
         self.panel = wx.Panel(self)
         self.SetBackgroundColour(background_color)
-
-        self.parameters = parameters
 
         self.buttons = []
         self.input_text = []
@@ -31,8 +29,9 @@ class BCIGui(wx.Frame):
     def close_gui(self):
         pass
 
-    def add_button(self, message, position, size,
-                   button_type=None, color=None, action='default'):
+    def add_button(self, message: str, position: tuple, size: tuple,
+                   button_type: str=None, color: str=None,
+                   action: str='default') -> None:
         """Add Button."""
         # Button Type
         if button_type == 'gradient_button':
@@ -55,16 +54,18 @@ class BCIGui(wx.Frame):
 
         self.buttons.append(btn)
 
-    def bind_action(self, action, btn):
+    def bind_action(self, action: str, btn: wx.Button) -> None:
         if action == 'default':
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
-    def add_text_input(self, position, size):
+    def add_text_input(self, position: tuple, size: tuple) -> None:
         """Add Text Input."""
         input_text = wx.TextCtrl(self.panel, pos=position, size=size)
         self.input_text.append(input_text)
 
-    def add_static_text(self, text, position, color, size, font_family=wx.FONTFAMILY_SWISS):
+    def add_static_text(self, text: str, position: str,
+                        color: str, size: int,
+                        font_family: wx.Font=wx.FONTFAMILY_SWISS) -> None:
         """Add Text."""
 
         static_text = wx.StaticText(
@@ -76,7 +77,7 @@ class BCIGui(wx.Frame):
 
         self.static_text.append(static_text)
 
-    def add_image(self, path, position, size):
+    def add_image(self, path: str, position: tuple, size: int) -> None:
         """Add Image."""
         if os.path.isfile(path):
             img = wx.Image(path, wx.BITMAP_TYPE_ANY)
@@ -100,12 +101,11 @@ class BCIGui(wx.Frame):
         else:
             print('INVALID PATH')
 
-    def add_scroll(self):
-        """Add Scroll."""
-        pass
-
     def on_clicked(self, event):
-        """on_clicked."""
+        """on_clicked.
+
+        Default event to bind to buttons
+        """
         btn = event.GetEventObject().GetLabel()
         print(f'pressed {btn}')
 
