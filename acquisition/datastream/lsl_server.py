@@ -10,9 +10,26 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 class LslDataServer(StoppableThread):
-    """Data server that streams EEG data using pylsl.
+    """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
+    using pylsl. See https://github.com/sccn/labstreaminglayer/wiki.
 
-    TODO: Accept parameters controlling how markers are added to the stream.
+    In parameters.json, if the fake_data parameter is set to true and the
+    device is set to LSL, this server will be used to mock data. Alternatively,
+    fake_data can be set to false and this module can be run standalone in its
+    own python instance.
+
+    Parameters
+    ----------
+        params : dict(channels: list(str), hz(int))
+            parameters used to configure the server. Should have at least
+            a list of channels and the sample frequency.
+        generator : Object (see generator.py for options)
+            used to generate the data to be served. Ex. random_data.
+        include_meta: bool, optional
+            if True, writes metadata to the outlet stream.
+        add_markers: bool, optional
+            if True, creates a the marker channel and streams data to this
+            channel at a fixed frequency.
     """
 
     def __init__(self, params, generator, include_meta=True,
@@ -55,6 +72,8 @@ class LslDataServer(StoppableThread):
         self.started = False
 
     def stop(self):
+        """Stop the thread and cleanup resources."""
+
         logging.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
@@ -68,9 +87,15 @@ class LslDataServer(StoppableThread):
             self.markers_outlet = None
 
     def next_sample(self):
+        """Retrieves the next sample from the data generator."""
+
         return next(self.generator)
 
     def run(self):
+        """Main loop of the thread. Continuously streams data to the stream
+        outlet at a rate consistent with the sample frequency. May also
+        output markers at a different interval."""
+
         sample_counter = 0
         self.started = True
         while self.running():

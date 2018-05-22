@@ -3,6 +3,7 @@ from psychopy import visual, core
 
 from helpers.triggers import _calibration_trigger
 from display.display_main import BarGraph, MultiColorText
+from acquisition.marker_writer import NullMarkerWriter
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -73,8 +74,8 @@ class RSVPDisplay(object):
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
 
-        # Used to write triggers directly to the daq stream.
-        self.marker_writer = marker_writer
+        # Used to handle writing the marker stimulus
+        self.marker_writer = marker_writer or NullMarkerWriter()
 
         # Length of the stimuli (number of flashes)
         self.len_sti = len(stim_sequence)
