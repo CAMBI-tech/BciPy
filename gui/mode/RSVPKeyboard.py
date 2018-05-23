@@ -1,6 +1,7 @@
 import subprocess
 from gui.gui_main import BCIGui
 import wx
+from gui.params_server import start_params_server
 
 
 class RSVPKeyboard(BCIGui):
@@ -17,10 +18,12 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        print(f'edit parameters window launched')
+        # cmd = 'python gui/params_server.py'
+        # subprocess.call(cmd, shell=True)
+        start_params_server()
 
     def launch_bci_main(self, event: wx.Event) -> None:
-        """Laucnh BCI MAIN"""
+        """Launch BCI MAIN"""
         if self.check_input():
             username = self.input_text[0].GetValue().replace(" ", "_")
             experiment_type = self._cast_experiment_type(

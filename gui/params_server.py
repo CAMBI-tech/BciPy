@@ -7,7 +7,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import webbrowser
 from collections import defaultdict
 import urllib
-from typing import Dict, Any
+from typing import Dict, Any, Callable
+import threading
+import time
 
 
 def page(load_from, save_to, msg=None, err=None):
@@ -37,17 +39,69 @@ def page(load_from, save_to, msg=None, err=None):
     }}
     body, .form-control {{ font-size: 16px; }}
     </style>
+    <script type='text/javascript'>
+      function stop() {{
+         console.log('calling stop function');
+         var xmlhttp = new XMLHttpRequest();
+         xmlhttp.onreadystatechange = function() {{
+             if (this.readyState == 4 && this.status == 200) {{
+                 window.close();
+             }}
+         }};
+         xmlhttp.open('GET', '/stop', true);
+         xmlhttp.send();
+         return true;
+      }}
+    </script>
 </head>
 <body>
     <div class='container-fluid'>
         <h1>BCI Configuration</h1>
         {err_element}
         {msg_element}
+        {close_link()}
         {params_form(load_from, save_to)}
         {form(load_from, save_to)}
     </div>
 </body>
 </html>"""
+
+
+def bootstrap():
+    p = sep.join(['.', 'gui', 'assets', 'css', 'bootstrap.min.css'])
+
+    with open(p, 'r') as f:
+        return str(f.read())
+
+
+def close_page():
+    return f"""<!DOCTYPE html>
+    <html lang='en'>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device_width, initial-scale=1">
+    <meta name="Description" content="Form to edit BCI configuration parameters">
+    <title>BCI Parameters</title>
+        <style>
+        {bootstrap()}
+        .container-fluid {{ max-width: 798px; }}
+        .help-block {{ color:#555; }}
+        .info {{
+            padding: 10px;
+            border: 0.5px solid lightgray;
+            margin-bottom: 12px;
+        }}
+        body, .form-control {{ font-size: 16px; }}
+        </style>
+
+    </head>
+    <body>
+        <div class='container-fluid'>
+            <h1>BCI Configuration</h1>
+            <div class='info bg-success'>Please close this browser window.</div>
+        </div>
+    </body>
+    </html>"""
 
 
 def label(key, param):
@@ -144,6 +198,10 @@ def params_form(json_file: str, save_to: str) -> str:
     return content
 
 
+def close_link():
+    return "<a class='btn btn-link' href='/stop'>Close</a>"
+
+
 def form(json_file: str, save_to: str) -> str:
     """Creates a web form from a json file"""
 
@@ -164,23 +222,26 @@ def form(json_file: str, save_to: str) -> str:
                f"{hidden_input('filename', save_to)}"
                f"{inputs}"
                "<button type='submit' class='btn btn-default'>Save</button>"
+               f"{close_link()}"
                "</form>")
 
     return content
 
 
-def server_factory(load_file: str, save_to: str=None):
+def request_handler_builder(load_file: str, save_to: str=None,
+                            stop_server: Callable[[], None]=None):
     """Constructs a WebServer with the provided parameters. This factory design
-    pattern is needed since HTTPServer takes a functional argument."""
+    pattern is needed since HTTPServer creates a new Handler for every
+    request."""
 
-    class WebServer(BaseHTTPRequestHandler, object):
+    class RequestHandler(BaseHTTPRequestHandler, object):
         def __init__(self, *args, **kwargs):
-            print("Initializing with load file: " + load_file)
             self.load_file = load_file
             self.save_to = save_to
+            self.stop_server = stop_server
             if self.save_to is None:
                 self.save_to = load_file
-            super(WebServer, self).__init__(*args, **kwargs)
+            super(RequestHandler, self).__init__(*args, **kwargs)
 
         def send_headers(self, mime_type="text/html", encoding=False):
             self.send_response(200)
@@ -205,8 +266,22 @@ def server_factory(load_file: str, save_to: str=None):
         # @override
         def do_GET(self):
             """Handles GET requests"""
-
-            if "bootstrap.min.css" in self.path:
+            print(f"Path: {self.path}")
+            if self.path == "/":
+                content = page(self.load_file, self.save_to)
+                self.send_content(content)
+            elif self.path == '/assets/css/bootstrap.min.css.map':
+                p = sep.join(['.', 'gui', 'assets', 'css',
+                              'bootstrap.min.css.map'])
+                try:
+                    with open(p, 'rb') as f:
+                        self.send_headers("application/json")
+                        self.wfile.write(f.read())
+                    return
+                except IOError:
+                    self.send_error(
+                        404, "File Not Found: {}".format(p))
+            elif self.path == '/assets/css/bootstrap.min.css.gz':
                 p = sep.join(['.', 'gui', 'assets', 'css',
                               'bootstrap.min.css.gz'])
                 try:
@@ -216,9 +291,10 @@ def server_factory(load_file: str, save_to: str=None):
                 except IOError:
                     self.send_error(
                         404, "File Not Found: {}".format(p))
+            elif self.path == '/stop':
+                self.stop()
             else:
-                content = page(self.load_file, self.save_to)
-                self.send_content(content)
+                self.send_error(404, "Not Found")
 
         # @override
         def do_POST(self):
@@ -231,14 +307,12 @@ def server_factory(load_file: str, save_to: str=None):
         def load(self):
             """Loads a new parameters file from the POSTed path."""
             post_data = self.get_post_data()
-            previous_load_file = self.load_file
             new_file = post_data['params_load_file'][0]
-            self.load_file = new_file
+
             try:
-                self.send_content(page(self.load_file, self.save_to))
+                self.send_content(page(new_file, self.save_to))
             except Exception as e:
                 err = f"Error loading from file: {new_file}; {str(e)}"
-                self.load_file = previous_load_file
                 self.send_content(page(self.load_file, self.save_to, err=err))
 
         def save(self):
@@ -265,27 +339,50 @@ def server_factory(load_file: str, save_to: str=None):
             filename = post_data['filename'][0]
             with open(filename, 'w') as outfile:
                 json.dump(params, outfile, indent=4)
-
             self.send_content(page(filename, self.save_to,
                                    msg="Successfully saved!"))
 
-    return WebServer
+        def stop(self):
+            self.send_content(close_page())
+
+            if self.stop_server:
+                self.stop_server()
+
+    return RequestHandler
 
 
-def main(load_file="parameters/parameters.json", save_to=None,
-         host="127.0.0.1", port=8080):
+class Signal(object):
+    running = True
 
-    myServer = HTTPServer((host, port), server_factory(load_file, save_to))
-    print(time.asctime(), "Server Starts - %s:%s" % (host, port))
+
+def start_params_server(load_file="parameters/parameters.json", save_to=None,
+                        host='', port=8080):
+
+    signal = Signal()
+
+    def stop_server():
+        signal.running = False
+
+    httpd = HTTPServer((host, port), request_handler_builder(
+        load_file, save_to, stop_server=stop_server))
+    print(time.asctime(), "Server Started - %s:%s" % (host, port))
 
     try:
+        server_thread = threading.Thread(target=httpd.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
         webbrowser.open("http://{}:{}".format(host, port))
-        myServer.serve_forever()
-    except KeyboardInterrupt:
-        myServer.server_close()
 
-    myServer.server_close()
-    print(time.asctime(), "Server Stops - %s:%s" % (host, port))
+        while signal.running:
+            time.sleep(0.5)
+
+        httpd.shutdown()
+
+    except KeyboardInterrupt:
+        httpd.server_close()
+
+    httpd.server_close()
+    print(time.asctime(), "Server Stopped - %s:%s" % (host, port))
 
 
 if __name__ == '__main__':
@@ -300,5 +397,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args)
-    main(save_to=args.save_to, load_file=args.load_file,
-         host=args.host, port=args.port)
+    start_params_server(save_to=args.save_to, load_file=args.load_file,
+                        host=args.host, port=args.port)
