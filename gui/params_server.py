@@ -10,6 +10,7 @@ import urllib
 from typing import Dict, Any, Callable
 import threading
 import time
+import logging
 
 
 def page(load_from, save_to, msg=None, err=None):
@@ -266,7 +267,7 @@ def request_handler_builder(load_file: str, save_to: str=None,
         # @override
         def do_GET(self):
             """Handles GET requests"""
-            print(f"Path: {self.path}")
+            logging.debug(f"Path: {self.path}")
             if self.path == "/":
                 content = page(self.load_file, self.save_to)
                 self.send_content(content)
@@ -365,7 +366,7 @@ def start_params_server(load_file="parameters/parameters.json", save_to=None,
 
     httpd = HTTPServer((host, port), request_handler_builder(
         load_file, save_to, stop_server=stop_server))
-    print(time.asctime(), "Server Started - %s:%s" % (host, port))
+    logging.debug(time.asctime(), "Server Started - %s:%s" % (host, port))
 
     try:
         server_thread = threading.Thread(target=httpd.serve_forever)
@@ -382,7 +383,7 @@ def start_params_server(load_file="parameters/parameters.json", save_to=None,
         httpd.server_close()
 
     httpd.server_close()
-    print(time.asctime(), "Server Stopped - %s:%s" % (host, port))
+    logging.debug(time.asctime(), "Server Stopped - %s:%s" % (host, port))
 
 
 if __name__ == '__main__':
@@ -396,6 +397,6 @@ if __name__ == '__main__':
     parser.add_argument('--port', default=8080)
 
     args = parser.parse_args()
-    print(args)
+    logging.debug(args)
     start_params_server(save_to=args.save_to, load_file=args.load_file,
                         host=args.host, port=args.port)
