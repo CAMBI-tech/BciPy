@@ -3,6 +3,8 @@
 
 This is the codebase for BCI suite. Designed and written by OHSU and NEU. Contributions Welcome!
 
+WARNING THIS IS DEV RELEASE! PLEASE USE WITH CAUTION; OFFICAL RELEASE WILL BE OUT END OF JUNE. Thanks for waiting!
+
 
 ## Features
 -----------
@@ -41,26 +43,17 @@ libraries will be done.
 
 # BCI Setup
 
-In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using, set fake_lm to true. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python especially for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
+In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must also use git if you would like to see the demos or contribute to the project [found here.](https://git-scm.com/). You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python especially for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). When trying to install it will let you know, so give it a try first :)
 
-
-1. Run `pip install -r requirements.txt`
-
-You will also need to set a python path for your session. If running demo or other files and you get an error that a module doesn't exist, try setting your path again. You can set your path as follows:
-
-2. run `export PYTHONPATH=.` for Mac or `set PYTHONPATH=.` for Windows
-
+To use all the goodies locally (including the GUI and demo scripts)
+1. git clone https://github.com/BciPy/BciPy.git
+1. Run `pip install -e .`
 3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 
-## Bash Script
+To just use the built-in functions:
+1. `pip install bcipy`
 
-To use, create a virtual env named `bci-env` in your Documents folder.
-Clone the repo to that folder as well.
-`pip install -r requirements.txt` while that environment is activated.
-If those assumptions are met, simply click on the run_bci.sh and the gui will pop-up allowing you to execute the experiments.
-Change the paths or script names here is needed.
-
-## Usage
+## Usage Locally
 
 Start by running `python gui/BCInterface.py` in your command prompt or terminal.
 
@@ -72,6 +65,12 @@ Ex.
 You can pass it attributes with flags, if desired.
     	Ex.
     		`python bci_main.py --user "bci_user" --mode "RSVP"`
+
+## Example usage as a package
+
+`python`
+`from bcipy.helpers import system_utils`
+`system_utils.get_system_info()`
 
 ## Modules and Vital Functions
 ------------------------------
@@ -92,7 +91,7 @@ This a list of the major modules and their functionality. Each module will conta
 ## Demo and Tests
 -----------------
 
-All major functions and modules have demo and test files associated with them. This should help orient you to the functionality as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.*
+All major functions and modules have demo and test files associated with them which may be run locally. This should help orient you to the functionality as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.*
 
 For example, you may run the bci_main demo by:
 > run `python demo/bci_main_demo.py`
@@ -114,32 +113,6 @@ This repository uses pytest for execution of tests. You may execute them by:
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
 8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
-
-For further instruction:
-
-```
-The Zen of Python, by Tim Peters
-
-Beautiful is better than ugly.
-Explicit is better than implicit.
-Simple is better than complex.
-Complex is better than complicated.
-Flat is better than nested.
-Sparse is better than dense.
-Readability counts.
-Special cases aren't special enough to break the rules.
-Although practicality beats purity.
-Errors should never pass silently.
-Unless explicitly silenced.
-In the face of ambiguity, refuse the temptation to guess.
-There should be one-- and preferably only one --obvious way to do it.
-Although that way may not be obvious at first unless you're Dutch.
-Now is better than never.
-Although never is often better than *right* now.
-If the implementation is hard to explain, it's a bad idea.
-If the implementation is easy to explain, it may be a good idea.
-Namespaces are one honking great idea -- let's do more of those!
-```
 
 Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
@@ -179,16 +152,23 @@ coverage html
 
 Tab Memmott (OHSU)
 
+
 Aziz Kocanaogullari (NEU)
+
 
 Matthew Lawhead (OSHU- OCTRI)
 
+
 Berkan Kadioglu (NEU)
 
-Dani Smektala (OHSU_
+
+Dani Smektala (OHSU)
+
 
 Andac Demir (NEU)
 
-Shaobin Xu (OHSU)
+
+Shaobin Xu (NEU)
+
 
 Shiran Dudy (OHSU)

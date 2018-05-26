@@ -16,3 +16,6 @@ env.txt
 users.txt
 .coverage
 htmlcov/
+bcipy.egg-info/
+build/
+dist/
