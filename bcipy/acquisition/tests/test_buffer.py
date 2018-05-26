@@ -2,8 +2,8 @@
 import timeit
 
 import numpy as np
-from buffer import Buffer
-from bcipy.acquistion.record import Record
+from bcipy.acquisition.buffer import Buffer
+from bcipy.acquisition.record import Record
 import pytest
 import unittest
 

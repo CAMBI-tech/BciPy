@@ -4,9 +4,9 @@ import psychopy
 
 from mockito import any, mock, unstub, when
 
-from helpers.load import load_json_parameters
-from helpers.save import init_save_data_structure
-from bci_tasks.start_task import start_task
+from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.save import init_save_data_structure
+from bcipy.bci_tasks.start_task import start_task
 
 
 class TestStartTask(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestStartTask(unittest.TestCase):
 
     def setUp(self):
         # set up the needed data to start a task
-        parameters_used = '../bci/parameters/parameters.json'
+        parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(
             parameters_used, value_cast=True)
         self.parameters['num_sti'] = 1

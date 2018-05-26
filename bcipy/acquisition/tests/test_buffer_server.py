@@ -1,6 +1,6 @@
 import unittest
 
-import buffer_server
+import bcipy.acquisition.buffer_server as buffer_server
 from bcipy.acquisition.record import Record
 import numpy as np
 

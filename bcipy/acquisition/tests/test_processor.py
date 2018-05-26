@@ -19,7 +19,7 @@ class TestFilewriter(unittest.TestCase):
                                               channels=['c1', 'c2', 'c3']))
 
         m = mock_open()
-        with patch('acquisition.processor.open', m):
+        with patch('bcipy.acquisition.processor.open', m):
             with filewriter:
                 m.assert_called_once_with('foo.csv', 'w', newline='')
 

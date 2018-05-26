@@ -1,6 +1,6 @@
 
-import bcipy.protocols.dsi.dsi as dsi
-import bcipy.protocols.dsi.dsi_protocol as dsi_protocol
+import bcipy.acquisition.protocols.dsi.dsi as dsi
+import bcipy.acquisition.protocols.dsi.dsi_protocol as dsi_protocol
 import unittest
 
 

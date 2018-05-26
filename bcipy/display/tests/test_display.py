@@ -12,7 +12,7 @@ class TestInitializeDisplayWindow(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
 
-        parameters_used = './parameters/parameters.json'
+        parameters_used = 'bcipy/parameters/parameters.json'
         self.window = mock()
         when(psychopy.visual).Window(
             size=any(), screen=any(),

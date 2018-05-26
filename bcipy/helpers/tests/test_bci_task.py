@@ -8,12 +8,12 @@ from bcipy.helpers.load import load_json_parameters
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):
-        parameters_used = './parameters/parameters.json'
+        parameters_used = 'bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_sti'] = True
         parameters[
-            'path_to_presentation_images'] = './bci/static/images/rsvp_images/'
+            'path_to_presentation_images'] = 'bcipy/static/images/rsvp_images/'
 
         alp = alphabet(parameters)
 
@@ -25,11 +25,11 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
     def test_alphabet_images(self):
-        parameters_used = './parameters/parameters.json'
+        parameters_used = 'bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_sti'] = False
-        parameters['path_to_presentation_images'] = ('../bci/static/images/'
+        parameters['path_to_presentation_images'] = ('bcipy/static/images/'
                                                      'rsvp_images/')
 
         alp = alphabet(parameters)

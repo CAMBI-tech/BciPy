@@ -11,7 +11,7 @@ class TestAcquisition(unittest.TestCase):
 
     def setUp(self):
         """set up the needed path for load functions."""
-        self.parameters_used = './parameters/parameters.json'
+        self.parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(self.parameters_used,
                                                value_cast=True)
         self.data_save_path = 'data/'

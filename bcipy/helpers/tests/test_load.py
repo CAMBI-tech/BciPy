@@ -22,7 +22,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters = './parameters/parameters.json'
+        self.parameters = 'bcipy/parameters/parameters.json'
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
