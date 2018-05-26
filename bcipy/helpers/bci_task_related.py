@@ -87,7 +87,6 @@ def process_data_for_decision(sequence_timing, daq):
     -------
         (raw_data, triggers, target_info) tuple
     """
-
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
@@ -150,7 +149,6 @@ def trial_complete_message(win, parameters):
     -------
         array of message_stim (trial complete message to be displayed).
     """
-
     message_stim = visual.TextStim(
         win=win,
         height=float(parameters['txt_height']),
@@ -209,12 +207,12 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
-def trial_reshaper(
-    trial_target_info, timing_info, filtered_eeg, fs, k, mode, offset=0,
-        channel_map=
-        (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
-         1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)):
-    """
+def trial_reshaper(trial_target_info,
+                   timing_info, filtered_eeg, fs, k, mode, offset=0,
+                   channel_map=(
+        1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
+        1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)) -> tuple:
+    """Trial Reshaper.
 
     :param trial_target_info: A list of strings which can take values:
         'target', 'nontarget', 'first_press_target'
@@ -246,7 +244,6 @@ def trial_reshaper(
         It will return a negative value if it needs to be added.
 
     """
-
     # Remove the channels that we are not interested in
     channel_indexes_to_remove = []
     for channel_index in range(len(filtered_eeg)):
@@ -287,11 +284,11 @@ def trial_reshaper(
 
         # Get rid of 'first_pres_target' trials information
         trial_target_info = list(filter(lambda x: x != 'first_pres_target',
-                                   trial_target_info))
+                                        trial_target_info))
         timing_info = list(filter(lambda x: x != -1, timing_info))
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) *fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -319,7 +316,7 @@ def trial_reshaper(
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) *fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -350,7 +347,7 @@ def trial_reshaper(
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) *fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.

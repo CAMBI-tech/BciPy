@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 def demo1():
     # A 21 channel dummy input
     inp = np.array([range(4000)] * 21)
-    # Make the first sample indicate the channel index, ease of checking channel removal
-    inp[:,0] = np.transpose(np.arange(1,22,1))
+    # Make the first sample indicate the channel index
+    # ease of checking channel removal
+    inp[:, 0] = np.transpose(np.arange(1, 22, 1))
 
     # Uncomment the calibration mode you want to test trial reshaper for below:
     # demo_mode = 'calibration'
@@ -90,10 +91,10 @@ def demo1():
     remove('triggers.txt')
 
     # Which channels to keep//
-    channel_map = [1]*21
-    channel_map[0] = 0 # Remove first channel
-    channel_map[20] = 0 # Remove 21st channel
-    channel_map[3:15] = [0]*12 #remove 4th to 15th channels
+    channel_map = [1] * 21
+    channel_map[0] = 0  # Remove first channel
+    channel_map[20] = 0  # Remove 21st channel
+    channel_map[3:15] = [0] * 12  # remove 4th to 15th channels
     # In the end there are only 7 channels left
 
     # reshape function is applied to dummy data with given trigger file
@@ -102,24 +103,29 @@ def demo1():
                          fs=256, k=2, mode=demo_mode, channel_map=channel_map)
 
     # Print results.
-    print('Reshaped trials:\n', arg[0], '\nLabels:', arg[1], '\nTotal number of sequences:', \
-        arg[2], '\nTrial number in each sequence:', arg[3])
+    print('Reshaped trials:\n', arg[0], '\nLabels:', arg[1],
+          '\nTotal number of sequences:',
+          arg[2], '\nTrial number in each sequence:', arg[3])
 
 
 def demo2():
 
-    # Time interval between each trial is .4 seconds. At t = 10 first trial arrives.
-    # At t = 12.4 last trial arrives. After the arrival of last trial we need at least .5 seconds. I gave .6 seconds.
+    # Time interval between each trial is .4 seconds.
+    # At t = 10 first trial arrives.
+    # At t = 12.4 last trial arrives.
+    # After the arrival of last trial we need at least .5 seconds.
+    # I gave .6 seconds.
     triggers = np.arange(10, 12.4, .4)
 
-    # Create a dummy excel file with time stamps, a linear function and a cosine. There won't be any signal processing.
+    # Create a dummy excel file with time stamps,
+    # a linear function and a cosine. There won't be any signal processing.
 
     fs = 300
-    time = np.arange(10,13,1./fs)
-    lin_fun = time*2 +3
-    cos = np.cos(2*np.pi*7*time)
+    time = np.arange(10, 13, 1. / fs)
+    lin_fun = time * 2 + 3
+    cos = np.cos(2 * np.pi * 7 * time)
 
-    inp = np.array([lin_fun,cos])
+    inp = np.array([lin_fun, cos])
 
     plt.figure(0)
     plt.plot(time)
@@ -139,9 +145,10 @@ def demo2():
     # Assume all trials are target.
     trial_target_info = ['target']*len(triggers)
 
-    reshaped, _, _, _ = trial_reshaper(trial_target_info=trial_target_info,
-                         timing_info=triggers, filtered_eeg=inp, offset=time[0],
-                         fs=300, k=2, mode='calibration', channel_map=[1,1])
+    reshaped, _, _, _ = trial_reshaper(
+        trial_target_info=trial_target_info,
+        timing_info=triggers, filtered_eeg=inp, offset=time[0],
+        fs=300, k=2, mode='calibration', channel_map=[1, 1])
 
     print(reshaped.shape)
 
@@ -171,7 +178,8 @@ def demo2():
     plt.figure(2)
     plt.plot(ch2_tr7)
     plt.ylabel('cos = cos(2*pi*7*t) where')
-    plt.title('Last trial of second channel.\nFirst index of t is (10 + 6*0.4)')
+    plt.title(
+        'Last trial of second channel.\nFirst index of t is (10 + 6*0.4)')
     plt.show()
 
     print(ch2_tr7[0])
@@ -180,4 +188,3 @@ def demo2():
 if __name__ == '__main__':
     demo1()
     demo2()
-
