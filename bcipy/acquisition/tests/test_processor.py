@@ -1,6 +1,6 @@
 
-from acquisition.processor import FileWriter
-from acquisition.device_info import DeviceInfo
+from bcipy.acquisition.processor import FileWriter
+from bcipy.acquisition.device_info import DeviceInfo
 from mock import mock_open, patch
 import pytest
 import unittest

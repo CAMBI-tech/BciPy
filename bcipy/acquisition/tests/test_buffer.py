@@ -3,7 +3,7 @@ import timeit
 
 import numpy as np
 from buffer import Buffer
-from record import Record
+from bcipy.acquistion.record import Record
 import pytest
 import unittest
 

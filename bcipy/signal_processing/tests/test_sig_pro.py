@@ -1,5 +1,5 @@
 
-from signal_processing.sig_pro import sig_pro
+from bcipy.signal_processing.sig_pro import sig_pro
 import numpy as np
 import unittest
 
