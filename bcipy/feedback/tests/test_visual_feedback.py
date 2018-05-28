@@ -14,7 +14,7 @@ class TestVisualFeedback(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters_used = './parameters/parameters.json'
+        self.parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(
             self.parameters_used,
             value_cast=True)
@@ -79,15 +79,15 @@ class TestVisualFeedback(unittest.TestCase):
         self.assertTrue(isinstance(resp, list))
 
     def test_feedback_administer_image(self):
-        test_stimulus = './static/images/testing_images/white.png'
+        test_stimulus = 'bcipy/static/images/testing_images/white.png'
         resp = self.visual_feedback.administer(
             test_stimulus, message='Correct:')
 
         self.assertTrue(isinstance(resp, list))
 
     def test_feedback_assertion_images(self):
-        test_stimulus = './static/images/testing_images/white.png'
-        assertion = './static/images/testing_images/white.png'
+        test_stimulus = 'bcipy/static/images/testing_images/white.png'
+        assertion = 'bcipy/static/images/testing_images/white.png'
         resp = self.visual_feedback.administer(
             test_stimulus, message='Correct:', compare_assertion=assertion)
 

@@ -1,7 +1,7 @@
 import unittest
 
-import buffer_server
-from record import Record
+import bcipy.acquisition.buffer_server as buffer_server
+from bcipy.acquisition.record import Record
 import numpy as np
 
 

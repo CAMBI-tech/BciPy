@@ -4,17 +4,18 @@ import psychopy
 
 from mockito import any, mock, unstub, when
 
-from helpers.load import load_json_parameters
-from helpers.save import init_save_data_structure
-from bci_tasks.start_task import start_task
+from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.save import init_save_data_structure
+from bcipy.bci_tasks.start_task import start_task
 
 
 class TestStartTask(unittest.TestCase):
-    ''' This is a Test Case for Starting a BCI Task'''
+    """This is a Test Case for Starting a BCI Task."""
 
     def setUp(self):
+        """Set Up."""
         # set up the needed data to start a task
-        parameters_used = '../bci/parameters/parameters.json'
+        parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(
             parameters_used, value_cast=True)
         self.parameters['num_sti'] = 1
@@ -54,11 +55,13 @@ class TestStartTask(unittest.TestCase):
         self.daq.marker_writer = None
 
     def tearDown(self):
+        """Tear Down."""
         # clean up by removing the data folder we used for testing
         shutil.rmtree(self.data_save_path)
         unstub()
 
-    def test_start_task_returns_helpful_message_on_undefiend_task(self):
+    def test_start_task_raises_exception_on_undefiend_task(self):
+        """Exception on undefined mode."""
         task_type = {
             'mode': 'New Mode',
             'exp_type': 1}
@@ -71,6 +74,7 @@ class TestStartTask(unittest.TestCase):
                 self.file_save)
 
     def test_start_task_runs_rsvp_calibration(self):
+        """Start Task RSVP Calibration."""
         when(psychopy.event).getKeys(keyList=any(list)).thenReturn(['space'])
         task_type = {
             'mode': 'RSVP',

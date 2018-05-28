@@ -1,6 +1,6 @@
 
 import construct
-import bcipy.protocols.dsi.dsi as dsi
+import bcipy.acquisition.protocols.dsi.dsi as dsi
 import pytest
 import unittest
 

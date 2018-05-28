@@ -4,7 +4,7 @@ import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.server import await_start
 from bcipy.acquisition.datastream import generator
-from bcipy.protocols.lsl.lsl_device import LslDevice
+from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
 import unittest
 
 

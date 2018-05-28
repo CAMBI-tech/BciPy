@@ -33,7 +33,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         # Init the sound object and give it some time to buffer
         try:
             data, fs = sf.read(
-                './static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
+                'bcipy/static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
         except:
             raise Exception('Sound object could not be found or Initialized')
 
@@ -56,7 +56,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
 
             calibration_box = visual.ImageStim(
                 display,
-                image='./static/images/testing_images/white.png',
+                image='bcipy/static/images/testing_images/white.png',
                 size=(.75, .75),
                 pos=(-.5, -.5),
                 mask=None,

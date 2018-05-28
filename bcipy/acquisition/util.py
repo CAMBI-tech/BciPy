@@ -4,10 +4,8 @@ import threading
 
 
 class StoppableProcess(multiprocessing.Process):
-    """Thread class with a stop() method. The thread itself has to check
+    """Process class with a stop() method. The process itself has to check
     regularly for the running() condition.
-
-      https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
     """
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +35,7 @@ class StoppableThread(threading.Thread):
         self._stopper.set()
 
     def running(self):
-        return not self._stopper.isSet()
+        return not self._stopper.is_set()
 
     def stopped(self):
-        return self._stopper.isSet()
+        return self._stopper.is_set()

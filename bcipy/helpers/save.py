@@ -57,8 +57,6 @@ def init_save_data_structure(data_save_path,
                 copy2(full_file_name, helper_folder_name)
 
         # Check that parameters file given is a real file
-        import pdb;
-        pdb.set_trace()
         if (os.path.isfile(parameters_used)):
             # Copy over parameters file
             copy2(parameters_used, save_folder_run_name)

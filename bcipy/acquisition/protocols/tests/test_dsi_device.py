@@ -1,9 +1,9 @@
 
 import pytest
 from datastream import server
-from bcipy.protocols.dsi.dsi_device import dsi
-from bcipy.protocols.dsi.dsi_device import DsiDevice
-from bcipy.protocols.dsi.dsi_protocol import DsiProtocol
+from bcipy.acquisition.protocols.dsi.dsi_device import dsi
+from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
+from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 
 import unittest
 
