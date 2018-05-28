@@ -56,7 +56,7 @@ class TestTrialReshaper(unittest.TestCase):
         self.channel_map = [1] * self.channel_number
 
     def tearDown(self):
-        pass
+        unstub()
 
     def test_trial_reshaper_calibration(self):
         (reshaped_trials, labels,
@@ -68,10 +68,9 @@ class TestTrialReshaper(unittest.TestCase):
         self.assertTrue(
             len(reshaped_trials) == self.channel_number,
             f'len is {len(reshaped_trials)} not {self.channel_number}')
-
-        # Since there are three trials of interest,
-        # assert each channel has that information
-        self.assertTrue(len(reshaped_trials[0]) == 3)
+        self.assertEqual(len(reshaped_trials[0]), 3)
+        self.assertEqual(num_of_seq, 1)
+        self.assertEqual(trials_per_sequence, 3)
 
     def test_trial_reshaper_copy_phrase(self):
         pass

@@ -207,41 +207,22 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
-def trial_reshaper(trial_target_info,
-                   timing_info, filtered_eeg, fs, k, mode, offset=0,
-                   channel_map=(
+def trial_reshaper(trial_target_info: list,
+                   timing_info: list, filtered_eeg: np.array, fs: int, k: int, mode: str,
+                   offset: float=0,
+                   channel_map: tuple=(
         1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
-        1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)) -> tuple:
+        1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0), trial_length: float=0.5) -> tuple:
     """Trial Reshaper.
 
-    :param trial_target_info: A list of strings which can take values:
-        'target', 'nontarget', 'first_press_target'
+    Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
+        timing information (sec), filtered_eeg, sampling rate (fs), down-sampling rate (k),
+        mode of oberation (ex. 'calibration'),
+        offset (any calculated or hypothesized offsets in timings),
+        channel map (which channels to include in reshaping) and
+        trial lenght (length of reshaped trials in secs)
 
-    :param timing_info: Trigger timings for each trial, a list of floats
-
-    :param filtered_eeg: channel wise band pass filtered and down-sampled data
-        with format: [channel x signal_length]
-
-    :param fs: sampling frequency
-
-    :param k: down-sampling rate applied to the filtered eeg signal.
-
-    :param mode: Operating mode, can be 'calibration', 'copy_phrase', etc.
-
-      :param channel_map: A binary list, if i'th element is 0, i'th channel
-        in filtered_eeg is removed.
-
-    :return (reshaped_trials, labels, num_of_sequences, trials_per_seq): Return
-         type is a tuple.
-    reshaped_trials =   3 dimensional np array first dimension is channels
-                        second dimension is trials and third dimension is time
-                        samples.
-    labels = np array for every trial's class.
-    num_of_sequences = Integer for total sequence number, as written in
-        trigger.txt
-    trials_per_seq = number of trials in each sequence
-    offset: the calculated offset of triggers. To be subtracted from data.
-        It will return a negative value if it needs to be added.
+    :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
 
     """
     # Remove the channels that we are not interested in
@@ -250,12 +231,14 @@ def trial_reshaper(trial_target_info,
         if channel_map[channel_index] == 0:
             channel_indexes_to_remove.append(channel_index)
 
+    # define our filtered eeg and frequency
     filtered_eeg = np.delete(filtered_eeg,
                              channel_indexes_to_remove, axis=0)
+    after_filter_frequency = fs / k
+    # Number of samples we are interested per trial
+    num_samples = int(trial_length * after_filter_frequency)
 
-    # Number of samples in half a second that we are interested in
-    num_samples = int(1. * fs / 2 / k)
-
+    # MODE CALIBRATION
     if mode == 'calibration':
         trials_per_seq = []
         count = 0
@@ -288,7 +271,7 @@ def trial_reshaper(trial_target_info,
         timing_info = list(filter(lambda x: x != -1, timing_info))
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -311,12 +294,11 @@ def trial_reshaper(trial_target_info,
 
         num_of_sequences = int(sum(labels))
 
-        return reshaped_trials, labels, num_of_sequences, trials_per_seq
-
+    # MODE COPY PHRASE
     elif mode == 'copy_phrase':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -342,12 +324,11 @@ def trial_reshaper(trial_target_info,
         # Since there is only one sequence, all trials are in the sequence
         trials_per_seq = len(triggers)
 
-        return reshaped_trials, labels, num_of_sequences, trials_per_seq
-
+    # MODE FREE SPELL
     elif mode == 'free_spell':
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * fs / k), timing_info))
+        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
         # 3 dimensional np array first dimension is channels
         # second dimension is trials and third dimension is time samples.
@@ -368,7 +349,8 @@ def trial_reshaper(trial_target_info,
         num_of_sequences = 1
         # Since there is only one sequence, all trials are in the sequence
         trials_per_seq = len(triggers)
-
-        return reshaped_trials, labels, num_of_sequences, trials_per_seq
     else:
         raise Exception('Trial_reshaper does not work in this operating mode.')
+
+    # Return our trials, labels and some useful information about the arrays
+    return reshaped_trials, labels, num_of_sequences, trials_per_seq
