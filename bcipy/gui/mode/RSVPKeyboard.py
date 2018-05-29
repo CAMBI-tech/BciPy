@@ -17,7 +17,7 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        subprocess.call('python gui/params_form.py', shell=True)
+        subprocess.call('python bcipy/gui/params_form.py', shell=True)
 
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""

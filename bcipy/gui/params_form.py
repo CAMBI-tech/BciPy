@@ -1,7 +1,6 @@
 import wx
 import wx.lib.scrolledpanel as scrolled
 import json
-from gui.gui_main import BCIGui
 import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple
@@ -267,7 +266,7 @@ class MainPanel(scrolled.ScrolledPanel):
 
 
 def main(title='BCI Parameters', size=(650, 550),
-         json_file="parameters/parameters.json"):
+         json_file="bcipy/parameters/parameters.json"):
     """Set up the GUI components and start the main loop."""
 
     app = wx.App(0)
