@@ -1,11 +1,8 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-
-from __future__ import division
 from psychopy import visual, core
 
-from display.rsvp.rsvp_disp_modes import CalibrationTask
+from display.rsvp.rsvp_disp_modes import CalibrationDisplay
 from helpers.triggers import _write_triggers_from_sequence_calibration
 
 # Initialize Stimulus Parameters
@@ -109,24 +106,25 @@ print frameRate
 clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 
-rsvp = CalibrationTask(window=win, clock=clock,
-                       experiment_clock=experiment_clock,
-                       text_info=text_text,
-                       color_info=color_text, pos_info=pos_text,
-                       height_info=txt_height,
-                       font_info=font_text,
-                       color_task=['white'],
-                       font_task=font_task, text_task=task_text[0],
-                       height_task=height_task,
-                       font_sti=font_sti, pos_sti=pos_sti,
-                       sti_height=sti_height,
-                       stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-                       time_list_sti=[3] * 10,
-                       tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
-                       size_domain_bg=size_domain_bg,
-                       color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
-                       color_bar_bg=color_bar_bg,
-                       is_txt_sti=is_txt_sti)
+rsvp = CalibrationDisplay(
+    window=win, clock=clock,
+    experiment_clock=experiment_clock,
+    text_info=text_text,
+    color_info=color_text, pos_info=pos_text,
+    height_info=txt_height,
+    font_info=font_text,
+    color_task=['white'],
+    font_task=font_task, text_task=task_text[0],
+    height_task=height_task,
+    font_sti=font_sti, pos_sti=pos_sti,
+    sti_height=sti_height,
+    stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
+    time_list_sti=[3] * 10,
+    tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
+    size_domain_bg=size_domain_bg,
+    color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
+    color_bar_bg=color_bar_bg,
+    is_txt_sti=is_txt_sti)
 
 # uncomment trigger_file lines for demo with triggers!
 # trigger_file = open('calibration_triggers.txt','w')
@@ -149,9 +147,6 @@ for idx_o in range(len(task_text)):
     sequence_timing = rsvp.do_sequence()
 
     # _write_triggers_from_sequence_calibration(sequence_timing, trigger_file)
-
-    # Show the selected letter
-    rsvp.show_prospect_letter(ele_sti[idx_o][0], 2, 'selected:')
 
     core.wait(.5)
 

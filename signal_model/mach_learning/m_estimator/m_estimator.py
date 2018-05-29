@@ -7,6 +7,11 @@ from matplotlib.patches import Ellipse
 
 
 def eigsorted(cov):
+    """
+    Find and sort eigen values and vectors
+    :param cov: covariance matrix
+    :return: sorted eigen values and vectors
+    """
 
     vals, vecs = np.linalg.eigh(cov)
     order = vals.argsort()[::-1]
@@ -96,7 +101,7 @@ def demo_m_estimator():
     # Simple demo for m estimators.
 
     N = 150
-    p = 75
+    p = 2
     q = .5
     true_mean = 0 + 0*np.random.standard_normal(p)
     true_sigma = make_spd_matrix(n_dim=p)
@@ -191,3 +196,7 @@ def demo_m_estimator():
 
         plt.grid()
         plt.show()
+
+
+if __name__ == '__main__':
+    demo_m_estimator()

@@ -71,13 +71,12 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None):
             core.wait(1)
 
         else:
-            raise Exception('No Display Object passed for calibration with images!')  
+            raise Exception('No Display Object passed for calibration with images!')
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
     return timing
-
 
 
 def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
@@ -125,8 +124,6 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
 
             # write to the trigger_file
             trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
-
-
 
     return trigger_file
 
@@ -221,27 +218,27 @@ def trigger_decoder(mode, trigger_loc=None):
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
 
-        trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line and 'calibration_trigger' not in line]
+        trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line \
+            and 'offset_correction' not in line and 'calibration_trigger' not in line]
 
     # If operating mode is calibration, trigger.txt has three columns.
     if mode == 'calibration' or mode == 'copy_phrase':
-        symbol_info = map(lambda x: x[0],trigger_txt)
-        trial_target_info = map(lambda x: x[1],trigger_txt)
-        timing_info = map(lambda x: eval(x[2]),trigger_txt)
+        symbol_info = list(map(lambda x: x[0],trigger_txt))
+        trial_target_info = list(map(lambda x: x[1],trigger_txt))
+        timing_info = list(map(lambda x: eval(x[2]),trigger_txt))
     elif mode == 'free_spell':
-        symbol_info = map(lambda x: x[0],trigger_txt)
+        symbol_info = list(map(lambda x: x[0],trigger_txt))
         trial_target_info = None
-        timing_info = map(lambda x: eval(x[1]),trigger_txt)
+        timing_info = list(map(lambda x: eval(x[1]),trigger_txt))
     else:
         raise Exception("You have not provided a valid operating mode for trigger_decoder. "
                         "Valid modes are: 'calibration','copy_phrase','free_spell'")
 
-    with open(trigger_loc, 'r') as text_file:   
+    with open(trigger_loc, 'r') as text_file:
         offset_array = [line.split() for line in text_file if 'offset_correction' in line]
 
     if offset_array:
-        with open(trigger_loc, 'r') as text_file:   
+        with open(trigger_loc, 'r') as text_file:
             calib_trigger_time = [line.split() for line in text_file if 'calibration_trigger' in line]
 
         if calib_trigger_time:

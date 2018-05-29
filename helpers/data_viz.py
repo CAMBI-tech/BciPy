@@ -73,7 +73,7 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     Input:
         trigger_col(int)(optional): Column location of triggers in csv file.
             It defaults to the last column.
-        
+
     Output:
         Figure of Triggers
     """

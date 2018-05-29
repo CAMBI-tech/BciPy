@@ -167,7 +167,7 @@
       "0.1"
     ],
     "isNumeric": "true"
-  }, 
+  },
   "txt_height": {
     "value": "0.1",
     "section": "bci_config",
@@ -177,7 +177,7 @@
       "0.1"
     ],
     "isNumeric": "true"
-  }, 
+  },
   "font_sti": {
     "value": "Arial",
     "section": "bci_config",
@@ -199,7 +199,7 @@
     "helpTip": "Pos Stimuli X",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
   "pos_sti_y": {
     "value": "0",
     "section": "bci_config",
@@ -207,7 +207,7 @@
     "helpTip": "Pos Stimuli Y",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
   "sti_height": {
     "value": "0.6",
     "section": "bci_config",
@@ -215,7 +215,7 @@
     "helpTip": "Stimuli Height",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
   "tr_pos_bg_x": {
     "value": "0",
     "section": "bci_config",
@@ -223,7 +223,7 @@
     "helpTip": "tr_pos_bg_x",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
   "tr_pos_bg_y": {
     "value": ".5",
     "section": "bci_config",
@@ -255,7 +255,7 @@
     "helpTip": "Size Bar Graph",
     "recommended_values": "",
     "isNumeric": "true"
-  }, 
+  },
   "font_bg_txt": {
     "value": "Arial",
     "section": "bci_config",
@@ -263,7 +263,7 @@
     "helpTip": "Font Bar Graph",
     "recommended_values": "",
     "isNumeric": "false"
-  }, 
+  },
   "color_bg_txt": {
     "value": "red",
     "section": "bci_config",
@@ -271,7 +271,7 @@
     "helpTip": "Bar Graph Text Color",
     "recommended_values": "",
     "isNumeric": "fasle"
-  }, 
+  },
   "trigger_type": {
     "value": "sound",
     "section": "bci_config",
@@ -292,7 +292,7 @@
     "isNumeric": "false"
   },
   "time_flash": {
-    "value": ".3",
+    "value": ".25",
     "section": "bci_config",
     "readableName": "Flash Length for Letters (sec)",
     "helpTip": "Flash Length for Letters",
@@ -379,29 +379,32 @@
     "recommended_values": "",
     "isNumeric": "false"
   },
-  "connection_params_host": {
-    "value": "127.0.0.1",
-    "section": "bci_config",
-    "readableName": "Connection host",
-    "helpTip": "Connection host",
-    "recommended_values": "",
-    "isNumeric": "false"
-  },
-  "connection_params_port": {
-    "value": "8844",
-    "section": "bci_config",
-    "readableName": "Connection port",
-    "helpTip": "Connection port",
-    "recommended_values": "",
-    "isNumeric": "true"
-  },
   "acq_device": {
     "value": "DSI",
-    "section": "bci_config",
+    "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
+    "recommended_values": [
+      "DSI",
+      "LSL"
+    ],
+    "isNumeric": "false"
+  },
+  "acq_host": {
+    "value": "127.0.0.1",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Host",
+    "helpTip": "Acquisition Device Host",
     "recommended_values": "",
     "isNumeric": "false"
+  },
+  "acq_port": {
+    "value": "9000",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Port",
+    "helpTip": "Acquisition Device Port",
+    "recommended_values": "",
+    "isNumeric": "true"
   },
   "eeg_buffer_len": {
     "value": "2",
@@ -440,7 +443,7 @@
     ],
     "isNumeric": "false"
   },
-    "parameter_location": {
+  "parameter_location": {
     "value": "parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter Location",
@@ -450,7 +453,7 @@
     ],
     "isNumeric": "false"
   },
-    "is_txt_sti": {
+  "is_txt_sti": {
     "value": "true",
     "section": "bci_config",
     "readableName": "Is Text Stimuli",
@@ -459,7 +462,7 @@
     "isNumeric": "false"
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -475,7 +478,7 @@
     "isNumeric": "false"
   },
   "num_sti": {
-    "value": "2",
+    "value": "25",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",
@@ -483,7 +486,7 @@
     "isNumeric": "true"
   },
   "len_sti": {
-    "value": "7",
+    "value": "10",
     "section": "bci_config",
     "readableName": "Number of trials to present in a sequence",
     "helpTip": "Number of trials to present in a sequence",
@@ -517,31 +520,67 @@
     "isNumeric": "false"
 
   },
-  "prospect_flash_time": {
+  "feedback_flash_time": {
     "value": "2",
     "section": "bci_config",
-    "readableName": "prospect_flash_time",
-    "helpTip": "prospect_flash_time",
+    "readableName": "feedback_flash_time",
+    "helpTip": "feedback_flash_time",
     "recommended_values": "",
     "isNumeric": "true"
 
   },
-  "show_prospects": {
-    "value": "true",
+  "feedback_pos_x": {
+    "value": "0",
     "section": "bci_config",
-    "readableName": "show_prospects",
-    "helpTip": "show_prospects",
+    "readableName": "feedback_pos_x",
+    "helpTip": "feedback_pos_x",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "feedback_pos_y": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "feedback_pos_y",
+    "helpTip": "feedback_pos_y",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "feedback_stim_height": {
+    "value": "0.6",
+    "section": "bci_config",
+    "readableName": "feedback_stim_height",
+    "helpTip": "feedback_stim_height",
+    "recommended_values": "",
+    "isNumeric": "true"
+
+  },
+  "feedback_font": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "feedback_font",
+    "helpTip": "feedback_font",
     "recommended_values": "",
     "isNumeric": "false"
 
   },
-  "prospect_message": {
-    "value": "SELECTED:",
+  "show_feedback": {
+    "value": "true",
     "section": "bci_config",
-    "readableName": "prospect_message",
-    "helpTip": "prospect_message",
+    "readableName": "show_feedback",
+    "helpTip": "show_feedback",
     "recommended_values": "",
-    "isNumeric": "true"
+    "isNumeric": "false"
+
+  },
+  "feedback_message_color": {
+    "value": "green",
+    "section": "bci_config",
+    "readableName": "feedback_message_color",
+    "helpTip": "feedback_message_color",
+    "recommended_values": "",
+    "isNumeric": "false"
 
   },
   "max_seq_len": {

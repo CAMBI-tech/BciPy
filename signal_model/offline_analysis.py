@@ -9,10 +9,10 @@ import pickle
 
 
 def offline_analysis(data_folder=None):
-    """
-
-    :param data_folder:
-    :return:
+    """ offline_analysis
+    Starts offline analysis on calibration data using regular pca rda methods.
+    :param data_folder: Directory of calibration file
+    :return: model
     """
 
     if not data_folder:

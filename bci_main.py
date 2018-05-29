@@ -25,7 +25,7 @@ def bci_main(parameters, user, exp_type, mode):
         user (str): name of the user
         exp_type (int): type of experiment. Ex. 1 = calibration
         mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
-    
+
     """
 
     # Define the parameter and data save location
@@ -93,13 +93,13 @@ def execute_task(task_type, parameters, save_folder):
                 try:
                     lmodel = init_language_model(parameters)
                 except:
-                    print "Cannot init language model. Setting to None."
+                    print("Cannot init language model. Setting to None.")
                     lmodel = None
             else:
                 lmodel = None
 
         except Exception as e:
-            print "Cannot load EEG classifier. Exiting"
+            print("Cannot load EEG classifier. Exiting")
             raise e
 
     else:
@@ -129,11 +129,9 @@ def execute_task(task_type, parameters, save_folder):
     # Close the display window
     display.close()
 
-    # Stop Acquistion
-    try:
-        daq.stop_acquisition()
-    except Exception as e:
-        raise e
+    # Stop Acquisition
+    daq.stop_acquisition()
+    daq.cleanup()
 
     if server:
         server.stop()

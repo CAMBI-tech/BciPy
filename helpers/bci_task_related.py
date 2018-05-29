@@ -3,6 +3,7 @@ from psychopy import visual, event
 
 import numpy as np
 
+
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
 
@@ -93,8 +94,8 @@ def process_data_for_decision(sequence_timing, daq):
     _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
 
     # define my first and last time points #changeforrelease
-    time1 = first_stim_time * daq._device.fs
-    time2 = (last_stim_time + 2) * daq._device.fs
+    time1 = first_stim_time * daq.device_info.fs
+    time2 = (last_stim_time + 2) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, timing - time1)
@@ -104,7 +105,7 @@ def process_data_for_decision(sequence_timing, daq):
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + .5) * daq._device.fs
+    data_limit = (last_stim_time - first_stim_time + .5) * daq.device_info.fs
 
     # Query for raw data
     try:
@@ -128,7 +129,7 @@ def process_data_for_decision(sequence_timing, daq):
                              range(len(raw_data))]).transpose()
 
     except Exception as e:
-        print "Error in daq: get_data()"
+        print("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info

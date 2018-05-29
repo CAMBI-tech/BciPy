@@ -1,13 +1,14 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import os
 import sqlite3
 from collections import deque
+import logging
 
+from builtins import range
 from record import Record
 
-
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 class Buffer(object):
     """Queryable Data Structure for caching data acquisition data.
 
@@ -53,6 +54,7 @@ class Buffer(object):
 
         # Create a data table with the correct number of channels (+ timestamp)
         fields = ['timestamp'] + channels
+        self.fields = fields
         defs = ','.join([field + ' real' for field in fields])
         cursor.execute('DROP TABLE IF EXISTS data')
         cursor.execute('CREATE TABLE data (%s)' % defs)
@@ -60,25 +62,9 @@ class Buffer(object):
 
         # Create SQL INSERT statement
         field_names = ','.join(fields)
-        placeholders = ','.join('?' for i in xrange(len(fields)))
+        placeholders = ','.join('?' for i in range(len(fields)))
         self._insert_stmt = 'INSERT INTO data (%s) VALUES (%s)' % \
             (field_names, placeholders)
-
-    @classmethod
-    def with_opts(cls, options):
-        """Returns a builder than constructs a new Buffer with the given
-        options."""
-        def build(channels):
-            return Buffer(channels, **options)
-        return build
-
-    @classmethod
-    def builder(cls, archive_name):
-        """Returns a builder than constructs a new Buffer with the given
-        options."""
-        def build(channels):
-            return Buffer(channels, archive_name=archive_name)
-        return build
 
     def _new_connection(self):
         """Returns a new database connection."""
@@ -90,14 +76,15 @@ class Buffer(object):
     def close(self):
         self._flush()
 
-    def cleanup(self):
-        """Deletes the archive database. Data cannot be queried after this
-        method is called."""
+    def cleanup(self, delete_archive=True):
+        """Close connection and optionally deletes the archive database.
+        Data may not be queryable after this method is called."""
 
         self._conn.close()
         try:
-            os.remove(self._archive_name)
-            self._archive_deleted = True
+            if delete_archive:
+                os.remove(self._archive_name)
+                self._archive_deleted = True
         except OSError:
             pass
 
@@ -121,7 +108,7 @@ class Buffer(object):
         """Writes data to the datastore and empties the buffer."""
 
         data = [_adapt_record(self._buf.popleft())
-                for i in xrange(len(self._buf))]
+                for i in range(len(self._buf))]
 
         if data:
             # Performs writes in a single transaction;
@@ -135,9 +122,13 @@ class Buffer(object):
         cur.execute("select count(*) from data", ())
         return cur.fetchone()[0]
 
+    def __str__(self):
+        return "Buffer<archive_name={}>".format(self._archive_name)
+
     def all(self):
         """Returns all data in the buffer."""
-        return self.query(start=self.start_time)
+
+        return self.query_data(filters=[("timestamp", ">=", self.start_time)])
 
     def latest(self, limit=1000):
         """Get the n most recent number of items.
@@ -151,14 +142,9 @@ class Buffer(object):
             list of tuple(timestamp, data); will be in descending order by
             timestamp.
         """
-        self._flush()
-        conn = self._new_connection()
-        result = conn.execute("select * from data "
-                              "order by timestamp desc limit ?",
-                              (limit,))
 
-        # Return the data in the format it was provided
-        return [_convert_row(r) for r in result]
+        return self.query_data(ordering=("timestamp", "desc"),
+                               max_results=limit)
 
     def query(self, start, end=None):
         """Query the buffer for a time slice.
@@ -172,17 +158,68 @@ class Buffer(object):
         -------
             list of tuple(timestamp, data)
         """
+        if end:
+            return self.query_data(filters=[("timestamp", ">=", start),
+                                            ("timestamp", "<", end)])
+        else:
+            return self.query_data(filters=[("timestamp", ">=", start)])
+
+    def query_data(self, filters=[], ordering=None, max_results=None):
+        """Query the data with the provided filters.
+
+        Parameters:
+        -----------
+            filters: list(tuple(field, operator, value)), optional
+                list of tuples of the field_name, sql operator, and value.
+            ordering: tuple(fieldname, direction), optional
+                optional tuple indicating sort order
+            max_results: int, optional
+
+        Returns
+        -------
+            list of Records matching the query.
+        """
+
+        # Guard against sql injection by limiting query inputs.
+        valid_ops = ["<", "<=", ">", ">=", "=", "==", "!=", "<>", "IS",
+                     "IS NOT", "IN"]
+        for field, op, value in filters:
+            if not field in self.fields:
+                raise Exception("Invalid SQL data filter field. Must be one "\
+                 "of: " + str(self.fields))
+            elif not op in valid_ops:
+                raise Exception("Invalid SQL operator")
+
+        select = "select * from data"
+
+        where = ''
+        params = ()
+        if filters:
+            where = "where " + " AND ".join([" ".join([field, op, "?"])
+                                             for field, op, value in filters])
+            params = tuple(value for field, op, value in filters)
+
+        order = ''
+        if ordering is not None:
+            f, direction = ordering
+            if not f in self.fields:
+                raise Exception("Invalid field for SQL order by.")
+            elif not direction in ["asc", "desc"]:
+                raise Exception("Invalid order by direction.")
+
+            order = ' '.join(["order by", f, direction])
+
+        limit = "limit " + \
+            str(max_results) if isinstance(max_results, int) else ''
+
+        q = ' '.join(filter(None, [select, where, order, limit]))
+
         self._flush()
         conn = self._new_connection()
         result = []
-        if end:
-            result = conn.execute("select * from data where "
-                                  "timestamp >= ? and "
-                                  "timestamp < ?",
-                                  (start, end))
-        else:
-            result = conn.execute("select * from data where "
-                                  "timestamp >= ?", (start,))
+        logging.debug(q)
+        result = conn.execute(q, params) if params else conn.execute(q)
+
         # Return the data in the format it was provided
         return [_convert_row(r) for r in result]
 
@@ -225,7 +262,7 @@ def _main():
     chunksize = args.chunk_size
     channel_count = args.channel_count
 
-    channels = ["ch" + str(c) for c in xrange(channel_count)]
+    channels = ["ch" + str(c) for c in range(channel_count)]
 
     print("Running with %d samples of %d channels each and chunksize %d" %
           (n, channel_count, chunksize))
@@ -235,7 +272,7 @@ def _main():
         """Generater for mock data"""
         i = 0
         while i < n:
-            yield [np.random.uniform(-1000, 1000) for cc in xrange(c)]
+            yield [np.random.uniform(-1000, 1000) for cc in range(c)]
             i += 1
 
     starttime = timeit.default_timer()
@@ -251,6 +288,7 @@ def _main():
     print("Records per second: " + str(n / totaltime))
 
     b.cleanup()
+
 
 if __name__ == '__main__':
     _main()

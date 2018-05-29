@@ -1,8 +1,7 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import logging
-import Queue
+from builtins import next
+from queue import Queue
 import random
 import threading
 import time
@@ -57,7 +56,7 @@ class Producer(threading.Thread):
         """Generates the data item to be added to the queue."""
 
         try:
-            data = self.generator.next()
+            data = next(self.generator)
         except StopIteration:
             logging.debug("End of input reached")
             raise Exception("End of input reached")
@@ -119,7 +118,7 @@ class _ConsumerThread(threading.Thread):
 
 
 if __name__ == '__main__':
-    q = Queue.Queue()
+    q = Queue()
     p = Producer(q)
     c = _ConsumerThread(q)
 
