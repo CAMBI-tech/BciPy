@@ -3,16 +3,23 @@ import wx.lib.scrolledpanel as scrolled
 import json
 from gui.gui_main import BCIGui
 import logging
+from typing import Callable, Dict, Tuple
+from collections import namedtuple
+
+JSON_INDENT = 2
 
 
-def font(size: int = 14, font_family: wx.Font=wx.FONTFAMILY_SWISS):
+# Utility functions
+def font(size: int = 14, font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.Font:
+    """Create a Font object with the given parameters."""
     return wx.Font(size, font_family, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
 
 
 def static_text_control(parent, label: str,
                         color: str = 'black', size: int = 14,
-                        font_family: wx.Font=wx.FONTFAMILY_SWISS) -> None:
-    """Add Text."""
+                        font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.StaticText:
+    """Creates a static text control with the given font parameters. Useful for
+    creating labels and help components."""
 
     static_text = wx.StaticText(parent, label=label)
     static_text.SetForegroundColour(color)
@@ -20,21 +27,29 @@ def static_text_control(parent, label: str,
     return static_text
 
 
+# Holds the label, help, and input controls for a given parameter.
+FormInput = namedtuple('FormInput', ['control', 'label', 'help'])
+Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
+                                     'helpTip', 'recommended_values', 'type'])
+
+
 class Form(wx.Panel):
     """The Form class is a wx.Panel that creates controls/inputs for each
     parameter in the provided json file."""
 
-    def __init__(self, parent, json_file='parameters/parameters.json',
-                 control_width=300, control_height=25, **kwargs):
+    def __init__(self, parent, json_file: str='parameters/parameters.json',
+                 control_width: int=300, control_height: int=25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
 
         self.json_file = json_file
         self.control_size = (control_width, control_height)
-
+        self.help_font_size = 12
+        self.help_color = 'DARK SLATE GREY'
         with open(json_file) as f:
             data = f.read()
 
-        self.params = json.loads(data)
+        config = json.loads(data)
+        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
 
         # TODO: group inputs by section
 
@@ -48,36 +63,79 @@ class Form(wx.Panel):
 
         self.controls = {}
         for key, param in self.params.items():
-            if param['type'] == "bool":
-                ctl = wx.CheckBox(self, label=param['readableName'])
-                ctl.SetValue(param['value'] == 'true')
-                self.controls[key] = ctl
-            elif type(param['recommended_values']) == list:
-                self.controls[f"{key}_label"] = static_text_control(
-                    self,
-                    label=param['readableName'])
-                self.controls[key] = wx.ComboBox(self, size=self.control_size,
-                                                 choices=param['recommended_values'],
-                                                 style=wx.CB_DROPDOWN)
-            # TODO: from wx.lib.masked import NumCtrl
+            if param.type == "bool":
+                form_input = self.bool_input(param)
+            elif type(param.recommended_values) == list:
+                form_input = self.selection_input(param)
+            # TODO: NumCtrl for numeric input types.
+            # from wx.lib.masked import NumCtrl
             # elif param['type'] in ['float', 'int']:
-            # return numeric_input(key, param)
             else:
-                self.controls[f"{key}_label"] = static_text_control(self, label=param['readableName'])
-                self.controls[key] = wx.TextCtrl(
-                    self, size=self.control_size, value=param['value'])
+                form_input = self.text_input(param)
 
-            self.controls[key].SetFont(font())
+            self.add_input(self.controls, key, form_input)
+
         self.saveButton = wx.Button(self, label="Save")
 
+    def add_input(self, controls: Dict[str, wx.Control], key: str,
+                  form_input: FormInput) -> None:
+        """Adds the controls for the given input to the controls structure."""
+        if form_input.label:
+            controls[f"{key}_label"] = form_input.label
+        if form_input.help:
+            controls[f"{key}_help"] = form_input.help
+        controls[key] = form_input.control
+
+        # TODO: consider adding an empty space after each input:
+        # controls[f"{key}_empty"] = (0,0)
+
+    def bool_input(self, param: Parameter) -> FormInput:
+        """Creates a checkbox FormInput"""
+        ctl = wx.CheckBox(self, label=param.readableName)
+        ctl.SetValue(param.value == 'true')
+        ctl.SetFont(font())
+        return FormInput(ctl, label=None, help=None)
+
+    def selection_input(self, param: Parameter) -> FormInput:
+        """Creates a selection pulldown FormInput."""
+        ctl = wx.ComboBox(self, -1, param.value,
+                          size=self.control_size,
+                          choices=param.recommended_values,
+                          style=wx.CB_DROPDOWN)
+        ctl.SetFont(font())
+        label, help_tip = self.input_label(param)
+        return FormInput(ctl, label, help_tip)
+
+    def text_input(self, param: Parameter) -> FormInput:
+        """Creates a text field FormInput."""
+        ctl = wx.TextCtrl(self, size=self.control_size, value=param.value)
+        ctl.SetFont(font())
+        label, help_tip = self.input_label(param)
+        return FormInput(ctl, label, help_tip)
+
+    def input_label(self, param: Parameter) -> Tuple[wx.Control, wx.Control]:
+        """Returns a label control and maybe a help Control if the help
+        text is different than the label text."""
+        label = static_text_control(self, label=param.readableName)
+        help_tip = None
+        if param.readableName != param.helpTip:
+            help_tip = static_text_control(self, label=param.helpTip,
+                                           size=self.help_font_size,
+                                           color=self.help_color)
+        return (label, help_tip)
+
     def bindEvents(self):
+        """Bind event handlers to the controls to update the parameter values
+        when the inputs change."""
+
         control_events = []
         for k, control in self.controls.items():
+            # Only bind events for control inputs, not for label and help items
             if k in self.params:
                 param = self.params[k]
-                if param['type'] == "bool":
+                if param.type == "bool":
                     control.Bind(wx.EVT_CHECKBOX, self.checkboxEventHandler(k))
-                elif type(param['recommended_values']) == list:
+                elif type(param.recommended_values) == list:
                     control.Bind(wx.EVT_COMBOBOX, self.selectEventHandler(k))
                 else:
                     control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
@@ -85,26 +143,19 @@ class Form(wx.Panel):
         self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
 
     def doLayout(self):
-        ''' Layout the controls by means of sizers. '''
+        """Layout the controls using Sizers."""
 
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # A GridSizer will contain the other controls:
-        gridSizer = wx.FlexGridSizer(rows=len(self.controls.keys()) + 1, cols=1,
-                                     vgap=10, hgap=10)
+        button_control_len = 1  # save button
+        rowlen = len(self.controls.keys()) + button_control_len
+        gridSizer = wx.FlexGridSizer(rows=rowlen, cols=1, vgap=10, hgap=10)
 
-        # Prepare some reusable arguments for calling sizer.Add():
-        expandOption = dict(flag=wx.EXPAND)
         noOptions = dict()
-        emptySpace = ((0, 0), noOptions)
-
-        controls = [(v, noOptions)
-                    for k, v in self.controls.items()]
 
         # Add the controls to the grid:
-        for control, options in controls:
-            # TODO: add emptySpace after label, control pairs
-            gridSizer.Add(control, **options)
+        for control in self.controls.values():
+            gridSizer.Add(control, **noOptions)
 
         # Add the save button
         gridSizer.Add(self.saveButton, flag=wx.ALIGN_CENTER)
@@ -113,10 +164,12 @@ class Form(wx.Panel):
         self.SetSizerAndFit(sizer)
 
     # Callback methods:
-    def onSave(self, event):
+    def onSave(self, event: wx.EVT_BUTTON) -> None:
         logging.debug("Saving data")
+
         with open(self.json_file, 'w') as outfile:
-            json.dump(self.params, outfile, indent=4)
+            json.dump({k: v._asdict() for k, v in self.params.items()},
+                      outfile, indent=JSON_INDENT)
 
         dialog = wx.MessageDialog(
             self, "Parameters Successfully Updated!", 'Info',
@@ -124,50 +177,107 @@ class Form(wx.Panel):
         dialog.ShowModal()
         dialog.Destroy()
 
-    def textEventHandler(self, key):
-        def handler(event):
-            self.params[key]["value"] = event.GetString()
+    def textEventHandler(self, key: str) -> Callable[[wx.EVT_TEXT], None]:
+        """Returns a handler function that updates the parameter for the
+        provided key.
+        """
+        def handler(event: wx.EVT_TEXT):
+            p = self.params[key]
+            self.params[key] = p._replace(value=event.GetString())
             logging.debug(f"{key}: {event.GetString()}")
         return handler
 
-    def selectEventHandler(self, key):
-        def handler(event):
-            self.params[key]["value"] = event.GetString()
+    def selectEventHandler(self, key: str) -> Callable[[wx.EVT_COMBOBOX], None]:
+        """Returns a handler function that updates the parameter for the
+        provided key.
+        """
+        def handler(event: wx.EVT_COMBOBOX):
+            p = self.params[key]
+            self.params[key] = p._replace(value=event.GetString())
             logging.debug(f"{key}: {event.GetString()}")
         return handler
 
-    def checkboxEventHandler(self, key):
-        def handler(event):
-            self.params[key]["value"] = "true" if event.IsChecked() else "false"
+    def checkboxEventHandler(self, key: str) -> Callable[[wx.EVT_CHECKBOX], None]:
+        """Returns a handler function that updates the parameter for the
+        provided key.
+        """
+        def handler(event: wx.EVT_CHECKBOX):
+            p = self.params[key]
+            value = "true" if event.IsChecked() else "false"
+            self.params[key] = p._replace(value=value)
             logging.debug(f"{key}: {bool(event.IsChecked())}")
         return handler
 
 
-class ScrollPanel(scrolled.ScrolledPanel):
-    """Panel which contains the Form. Responsible for handling scrolling."""
+class MainPanel(scrolled.ScrolledPanel):
+    """Panel which contains the Form. Responsible for selecting the json data
+     to load and handling scrolling."""
 
     def __init__(self, parent, title="BCI Parameters",
                  json_file="parameters/parameters.json"):
-        super(ScrollPanel, self).__init__(parent, -1)
+        super(MainPanel, self).__init__(parent, -1)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
+        self.vbox = vbox
 
-        form = Form(self, json_file)
-        vbox.Add(static_text_control(self, label=title, size=20))
-        vbox.Add(form)
+        self.form = Form(self, json_file)
+        vbox.Add(static_text_control(self, label=title, size=20),
+                 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
+        vbox.AddSpacer(10)
+
+        loading_box = wx.BoxSizer(wx.VERTICAL)
+        loading_box.Add(static_text_control(self, label=f"Editing: {json_file}",
+                                            size=14))
+        self.loaded_from = static_text_control(
+            self,
+            label=f"Loaded from: {json_file}",
+            size=14)
+        loading_box.Add(self.loaded_from)
+        loading_box.AddSpacer(10)
+
+        self.loadButton = wx.Button(self, label="Load")
+        self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
+        loading_box.Add(self.loadButton)
+
+        vbox.Add(loading_box, 0, wx.ALL, border=10)
+        vbox.AddSpacer(10)
+        vbox.Add(self.form)
         self.SetSizer(vbox)
+        self.SetupScrolling()
+
+    def onLoad(self, event: wx.EVT_BUTTON) -> None:
+        """Event handler to load the form data from a different json file."""
+        logging.debug("Loading parameters file")
+
+        with wx.FileDialog(self, "Open parameters file",
+                           wildcard="JSON files (*.json)|*.json",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
+            if fd.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+            json_file = fd.GetPath()
+            self.loaded_from.SetLabel(f"Loaded from: {json_file}")
+            logging.debug(f"New file: {json_file}")
+            self.vbox.Hide(self.form)
+        self.form = Form(self, json_file)
+        self.vbox.Add(self.form)
         self.SetupScrolling()
 
     def OnChildFocus(self, event):
         event.Skip()
 
-def main():
+
+def main(title='BCI Parameters', size=(650, 550),
+         json_file="parameters/parameters.json"):
+    """Set up the GUI components and start the main loop."""
+
     app = wx.App(0)
-    frame = wx.Frame(None, wx.ID_ANY,  size=(650, 550), title='BCI Parameters')
-    fa = ScrollPanel(frame, title='BCI Parameters',
-                     json_file="parameters/parameters.json")
+    frame = wx.Frame(None, wx.ID_ANY,  size=size, title=title)
+    fa = MainPanel(frame, title=title, json_file=json_file)
     frame.Show()
     app.MainLoop()
 
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,
+                        format='(%(threadName)-9s) %(message)s',)
     main()
