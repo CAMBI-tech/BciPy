@@ -4,7 +4,7 @@
 
 def main():
     import bci_main
-    from helpers.load import load_json_parameters
+    from bcipy.helpers.load import load_json_parameters
 
     # Load a parameters file
     parameters = load_json_parameters(

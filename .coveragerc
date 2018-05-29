@@ -5,6 +5,8 @@ omit =
         */usr/local/lib*
         *tests*
         *test*
+        *demo*
+        *gui/*
 
 [report]
 exclude_lines =
