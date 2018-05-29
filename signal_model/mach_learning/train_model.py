@@ -23,7 +23,7 @@ def train_pca_rda_kde_model(x, y):
             k_folds(int): Number of cross validation folds
         Return:
             model(pipeline): trained likelihood model
-            """
+    """
 
     # Pipeline is the model. It can be populated manually
     pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1**5,
@@ -70,7 +70,7 @@ def train_m_estimator_pipeline(x, y):
             cross_validate(Boolean): True if cross validation AUC is to be calculated. Increases required time.
         Return:
             model(pipeline): trained model
-            """
+    """
 
     # Train PCA and MDA to cross validate hyper parameters
     model = Pipeline()

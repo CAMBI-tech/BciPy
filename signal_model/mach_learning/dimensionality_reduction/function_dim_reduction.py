@@ -94,7 +94,6 @@ class MPCA:
             self.transform_matrix_list.append([])
         self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
 
-
     def fit(self, x, y=None, var_tol=None):
         """ Find channel wise robust covariances and apply pca.
             Args:
@@ -124,7 +123,6 @@ class MPCA:
                         transform_matrix.append(vecs[:, index])
 
                 self.transform_matrix_list[self.current_fold].append(np.transpose(np.array(transform_matrix)))
-
 
     def transform(self, x, y=None):
 

@@ -48,7 +48,7 @@ def offline_analysis(data_folder=None):
     generate_offline_analysis_screen(x, y, model, data_folder)
 
     print('Saving the model!')
-    with open(data_folder + '/model_%2.0f.pkl' % (auc*100), 'wb') as output:
+    with open(data_folder + '/model_auc_%2.0f.pkl' % (auc*100), 'wb') as output:
         pickle.dump(model, output)
     return model
 

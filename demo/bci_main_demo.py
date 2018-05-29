@@ -1,6 +1,5 @@
 # This is a demo of the main bci system. It will run the task defined here
 #  using the parameters file passed to it.
-from time import time
 
 
 def main():
@@ -28,6 +27,4 @@ def main():
 
 
 if __name__ == "__main__":
-    t1 = time()
     main()
-    print 'finished in {} minutes'.format((time()-t1)/60.)

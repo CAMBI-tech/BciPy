@@ -11,9 +11,9 @@ import pickle
 
 def offline_analysis_m(data_folder=None):
     """
-
+    Starts offline analysis on calibration data using robust method.
     :param data_folder: Directory of calibration file
-    :return:
+    :return: model
     """
 
     k = 2

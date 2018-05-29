@@ -2,11 +2,12 @@
 import numpy as np
 import scipy as sc
 from sklearn.datasets import make_spd_matrix
-# import matplotlib.pyplot as plt
-# from matplotlib.patches import Ellipse
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 
 
 def eigsorted(cov):
+
     vals, vecs = np.linalg.eigh(cov)
     order = vals.argsort()[::-1]
     return vals[order], vecs[:, order]
@@ -24,23 +25,18 @@ def u_func(t, b, c_square):
 def mean_update(X, mean, sigma_inv, b, c_square):
     # Returns updated mean
 
-    # count_outlier = 0
     N, p = X.shape
     mean_hat = np.zeros(p)
     sum_u = 0
     for z in range(N):
-        # if (np.abs(X[z, :]) > 1000).any():
-        #     print z
+
         t = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean)
-        # if t > c_square:
-        #     count_outlier += 1
         u = u_func(t=t, b=b, c_square=c_square)
 
         sum_u += u
         mean_hat += u*X[z]
 
     mean_hat = mean_hat/sum_u
-    # print 'Outlier count at mean update: {}'.format(count_outlier)
 
     return mean_hat
 
@@ -99,35 +95,6 @@ def robust_mean_covariance(X, q=.85):
 def demo_m_estimator():
     # Simple demo for m estimators.
 
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('N', help='# of samples', type=int)
-    # parser.add_argument('p', help='# of features', type=int)
-
-    # parser.add_argument('mean_mean', help='mean of xi is going to be normal distributed around this value with std: mean_std')
-    # parser.add_argument('mean_std', help='How much true mean varies from mean_mean parameter')
-
-    # parser.add_argument('outlier_percentage', help='# = n_outlier/N*100')
-    # parser.add_argument('mean_mean_outlier', help='mean of outliers is going to be normal distributed around this value with std: mean_std_outlier')
-    # parser.add_argument('mean_std_outlier', help='How much true mean_outlier varies from mean_mean_outlier parameter')
-    # parser.add_argument('-i', help='# of iterations', type=int, default = 1000)
-    # parser.add_argument('-e', help='epsilon', type=float, default = .1**4)
-    # parser.add_argument(-p, help='Plotting std ellipses for 2d case', default = True)
-
-    # args = parser.parse_args()
-    #
-    # N = args.N
-    # p = args.p
-    # q = .5
-    # true_mean = args.mean_mean + args.mean_std*np.random.standard_normal(p)
-    # true_sigma = make_spd_matrix(n_dim=p)
-    # N_outlier = int(N*args.outlier_percentage/100)
-    # true_mean_outlier = args.mean_mean_outlier + mean_std_outlier*np.random.standard_normal(p)
-    # true_sigma_outlier = make_spd_matrix(n_dim=p)
-    # iter_num = args.i
-    # epsilon = args.e
-    # plot_choice = args.p
-
-    # np.random.seed(seed=12)
     N = 150
     p = 75
     q = .5
@@ -157,6 +124,7 @@ def demo_m_estimator():
     M_est_mean_new = sample_mean
     M_est_sigma_new = sample_sigma
     s_a_c = 4 # summed absolute change, initially large value
+
     while iteration < 1000 and s_a_c > .1**6:
         # print '{}/{}'.format(iteration, 1000)
         M_est_mean_old = M_est_mean_new

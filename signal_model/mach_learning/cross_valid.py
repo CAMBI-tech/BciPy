@@ -105,7 +105,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
                                              disp=False,
                                              cons=[cst_1, cst_2, cst_3,
-                                                   cst_4])
+                                                   cst_4], rhobeg=.8, rhoend=.05)
     return arg_opt
 
 
