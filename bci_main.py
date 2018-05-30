@@ -1,13 +1,13 @@
-from helpers.save import init_save_data_structure
-from display.display_main import init_display_window
-from helpers.acquisition_related import init_eeg_acquisition
+from bcipy.helpers.save import init_save_data_structure
+from bcipy.display.display_main import init_display_window
+from bcipy.helpers.acquisition_related import init_eeg_acquisition
 
-from bci_tasks.start_task import start_task
-from helpers.load import load_classifier
-from helpers.lang_model_related import init_language_model
+from bcipy.bci_tasks.start_task import start_task
+from bcipy.helpers.load import load_classifier
+from bcipy.helpers.lang_model_related import init_language_model
 
 
-def bci_main(parameters, user, exp_type, mode):
+def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -29,8 +29,8 @@ def bci_main(parameters, user, exp_type, mode):
     """
 
     # Define the parameter and data save location
-    parameter_location = parameters['parameter_location']['value']
-    data_save_location = parameters['data_save_loc']['value']
+    parameter_location = parameters['parameter_location']
+    data_save_location = parameters['data_save_loc']
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
@@ -42,19 +42,11 @@ def bci_main(parameters, user, exp_type, mode):
         'exp_type': exp_type
     }
 
-    # Try executing the task
-    try:
-        execute_task(
-            task_type, parameters, save_folder)
-
-    # Something went wrong, raise exception to caller
-    except Exception as e:
-        raise e
+    return execute_task(task_type, parameters, save_folder)
 
 
-def execute_task(task_type, parameters, save_folder):
-    """
-    Excecute Task.
+def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
+    """Excecute Task.
 
     Executes the desired task by setting up the display window and
         data acquistion, then passing on to the start_task funtion
@@ -66,13 +58,7 @@ def execute_task(task_type, parameters, save_folder):
         save_folder (str): path to save folder
     """
 
-    fake_data = parameters['fake_data']['value']
-
-    if fake_data == 'true':
-        # Set this to False to have fake data but real decisions
-        fake = True
-    else:
-        fake = False
+    fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
     #   modules to be loaded.
@@ -87,20 +73,20 @@ def execute_task(task_type, parameters, save_folder):
             else:
                 classifier = load_classifier()
 
-            # if Language Model enabled and data not fake, init lm
-            if parameters['languagemodelenabled']['value'] == 'true' \
-                    and not fake:
-                try:
-                    lmodel = init_language_model(parameters)
-                except:
-                    print("Cannot init language model. Setting to None.")
-                    lmodel = None
-            else:
-                lmodel = None
-
         except Exception as e:
             print("Cannot load EEG classifier. Exiting")
             raise e
+
+        # if Language Model enabled and data not fake, init lm
+        if parameters['languagemodelenabled'] == 'true' \
+                and not fake:
+            try:
+                lmodel = init_language_model(parameters)
+            except:
+                print("Cannot init language model. Setting to None.")
+                lmodel = None
+        else:
+            lmodel = None
 
     else:
         classifier = None
@@ -122,10 +108,14 @@ def execute_task(task_type, parameters, save_folder):
 
     # If exception, close all display and acquisition objects
     except Exception as e:
-        # close display
-        display.close()
+        _clean_up_session(display, daq, server)
         raise e
 
+    return _clean_up_session(display, daq, server)
+
+
+def _clean_up_session(display, daq, server):
+    """Clean up session."""
     # Close the display window
     display.close()
 
@@ -136,29 +126,29 @@ def execute_task(task_type, parameters, save_folder):
     if server:
         server.stop()
 
-    return
-
+    return True
 
 if __name__ == "__main__":
     import argparse
-    from helpers.load import load_json_parameters
+    from bcipy.helpers.load import load_json_parameters
     import multiprocessing
 
+    # Needed for windows machines
     multiprocessing.freeze_support()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--parameters', default='parameters/parameters.json',
+    # Command line utility for adding arguments/ paths via command line
+    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--type', default=1,
                         help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
-
     args = parser.parse_args()
 
     # Load a parameters file
-    parameters = load_json_parameters(args.parameters)
+    parameters = load_json_parameters(args.parameters, value_cast=True)
 
     # Start BCI Main
     bci_main(parameters, str(args.user), int(args.type), str(args.mode))

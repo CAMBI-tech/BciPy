@@ -4,16 +4,17 @@
 
 def main():
     import bci_main
-    from helpers.load import load_json_parameters
+    from bcipy.helpers.load import load_json_parameters
 
     # Load a parameters file
-    parameters = load_json_parameters('parameters/parameters.json')
+    parameters = load_json_parameters(
+        'parameters/parameters.json', value_cast=True)
 
     # Mode: ex. RSVP, Shuffle, Matrix
     test_mode = 'RSVP'
 
     # Test Type: ex. RSVP Calibration = 1, Copy Phrase = 2
-    test_type = 2
+    test_type = 3
 
     # Define a user
     user = 'bci_main_demo_user'
