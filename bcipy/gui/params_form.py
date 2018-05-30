@@ -36,15 +36,18 @@ class Form(wx.Panel):
     """The Form class is a wx.Panel that creates controls/inputs for each
     parameter in the provided json file."""
 
-    def __init__(self, parent, json_file: str='parameters/parameters.json',
+    def __init__(self, parent,
+                 json_file: str='bcipy/parameters/parameters.json',
+                 load_file: str=None,
                  control_width: int=300, control_height: int=25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
 
         self.json_file = json_file
+        self.load_file = json_file if not load_file else load_file
         self.control_size = (control_width, control_height)
         self.help_font_size = 12
         self.help_color = 'DARK SLATE GREY'
-        with open(json_file) as f:
+        with open(self.load_file) as f:
             data = f.read()
 
         config = json.loads(data)
@@ -213,9 +216,9 @@ class MainPanel(scrolled.ScrolledPanel):
      to load and handling scrolling."""
 
     def __init__(self, parent, title="BCI Parameters",
-                 json_file="parameters/parameters.json"):
+                 json_file="bcipy/parameters/parameters.json"):
         super(MainPanel, self).__init__(parent, -1)
-
+        self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
 
@@ -238,6 +241,11 @@ class MainPanel(scrolled.ScrolledPanel):
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
         loading_box.Add(self.loadButton)
 
+        # Used for displaying help messages to the user.
+        self.flash_msg = static_text_control(self, label='', size=14,
+                                             color='FOREST GREEN')
+        loading_box.Add(self.flash_msg)
+
         vbox.Add(loading_box, 0, wx.ALL, border=10)
         vbox.AddSpacer(10)
         vbox.Add(self.form)
@@ -253,11 +261,12 @@ class MainPanel(scrolled.ScrolledPanel):
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
-            json_file = fd.GetPath()
-            self.loaded_from.SetLabel(f"Loaded from: {json_file}")
-            logging.debug(f"New file: {json_file}")
+            load_file = fd.GetPath()
+            self.loaded_from.SetLabel(f"Loaded from: {load_file}")
+            self.flash_msg.SetLabel("Click the Save button to persist these "
+                                    "changes.")
             self.vbox.Hide(self.form)
-        self.form = Form(self, json_file)
+        self.form = Form(self, json_file=self.json_file, load_file=load_file)
         self.vbox.Add(self.form)
         self.SetupScrolling()
 
