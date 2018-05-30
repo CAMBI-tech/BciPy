@@ -1,5 +1,6 @@
 from sklearn.decomposition import PCA
-from signal_model.mach_learning.m_estimator.m_estimator import *
+from bcipy.signal_model.mach_learning.m_estimator.m_estimator import eigsorted, robust_mean_covariance
+import numpy as np
 
 
 class ChannelWisePrincipalComponentAnalysis:
@@ -104,7 +105,7 @@ class MPCA:
                 var_tol(float): Threshold to remove lower variance dims.
                 """
 
-        C, N, p = x.shape
+        C, N, p = x.shape  # C: number of channels, N:Number of samples, p: number of parameters
 
         if not self.transform_matrix_list[self.current_fold]:  # if does not exist
 

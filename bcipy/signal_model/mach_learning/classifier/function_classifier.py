@@ -1,4 +1,4 @@
-from signal_model.mach_learning.m_estimator.m_estimator import *
+from bcipy.signal_model.mach_learning.m_estimator.m_estimator import robust_mean_covariance
 
 
 class RegularizedDiscriminantAnalysis:
@@ -219,7 +219,7 @@ class MDiscriminantAnalysis:
         """
         :list x: data, each element is every channel's trials.
         """
-        N, p = x.shape
+        N, p = x.shape  # N is number of samples, p is number of features
 
         if not self.means[self.current_fold]:  # current fold had not been processed yet
 
