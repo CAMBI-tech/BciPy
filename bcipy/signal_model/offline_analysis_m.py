@@ -44,16 +44,16 @@ def offline_analysis_m(data_folder=None, parameters={}):
                                       fs=fs, k=k,
                                       channel_map=channel_map, offset=offset)
 
-    model, auc = train_m_estimator_pipeline(x, y)
+    model = train_m_estimator_pipeline(x, y)
 
     t1 = time() - t1
-    print 'Completed in {} mins'.format(t1/60.)
+    print('Completed in {} mins'.format(t1/60.))
 
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder)
 
     print('Saving the model!')
-    with open(data_folder + '/m_model_auc_%2.0f.pkl' % (auc*100), 'wb') as output:
+    with open(data_folder + '/m_model_auc_%2.0f.pkl' % (model.last_cv_auc*100), 'wb') as output:
         pickle.dump(model, output)
     return model
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', default=None)
     parser.add_argument('-p', '--parameters_file',
-                        default='parameters/parameters.json')
+                        default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
     print(f'Loading params from {args.parameters_file}')

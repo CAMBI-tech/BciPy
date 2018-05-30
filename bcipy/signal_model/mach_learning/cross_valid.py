@@ -2,7 +2,6 @@ import numpy as np
 import scipy.optimize
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold
-from utils.progress_bar import progress_bar
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
@@ -65,7 +64,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             auc_h.append(metrics.auc(fpr, tpr))
 
     auc = np.mean(np.array(auc_h))
-    print 'Current optimisation step\'s AUC-cv: {}, lam: {}, gam: {}'.format(auc, param[0], param[1])
+    print('Current optimisation step\'s AUC-cv: {}, lam: {}, gam: {}'.format(auc, param[0], param[1]))
+    model.last_cv_auc = auc
     return -auc
 
 
@@ -193,8 +193,6 @@ def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
 
         # For every coordinate on the grid, try every combination of
         # hyper parameters:
-        progress_bar(0, grid[0] * grid[1], prefix='Progress:',
-                     suffix='Complete', length=50)
         tmp_counter = 0
         for i in range(len(param_cand['lam'])):
             for j in range(len(param_cand['gam'])):
@@ -208,11 +206,8 @@ def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
                                                      param_cand['gam'][j]
 
                 tmp_counter += 1
-                progress_bar(tmp_counter, grid[0] * grid[1],
-                             prefix='Progress:', suffix='Complete', length=50)
     else:
-        # TODO: Handle this case
-        print('Error: Operation type other than AUC cost.')
+        raise Exception('Error: Operation type other than AUC cost.')
 
     # This returns the parameter estimates with the highest scores:
     return [arg_opt['lam'], arg_opt['gam']]

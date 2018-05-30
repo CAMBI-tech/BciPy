@@ -98,11 +98,11 @@ def robust_mean_covariance(X, q=.85):
     M_est_mean_new = sample_mean
     M_est_sigma_new = sample_sigma
 
-
     iteration = 0
+
     s_a_c = 2  # summed absolute change, initially large value
     while iteration < 1000 and s_a_c > 1:
-        # print '{}/{}'.format(iteration, 1000)
+
         M_est_mean_old = M_est_mean_new
         M_est_sigma_old = M_est_sigma_new
         # update mean
@@ -118,7 +118,7 @@ def robust_mean_covariance(X, q=.85):
         # print s_a_c
         iteration += 1
         if iteration == 999 and s_a_c > 1:
-            print 'Max number of iterations reached for m estimation. Last s_a_c: {}.'.format(s_a_c)
-            print 'It is advised to have at least 120 positive trials in robust calibration.'
+            print('Max number of iterations reached for m estimation. Last s_a_c: {}.'.format(s_a_c))
+            print('It is advised to have at least 120 positive trials in robust calibration.')
 
     return M_est_mean_new, M_est_sigma_new

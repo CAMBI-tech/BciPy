@@ -1,4 +1,5 @@
 from bcipy.signal_model.mach_learning.m_estimator.m_estimator import robust_mean_covariance
+import numpy as np
 
 
 class RegularizedDiscriminantAnalysis:

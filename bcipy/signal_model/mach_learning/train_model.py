@@ -13,7 +13,7 @@ from sklearn import metrics
 from scipy.stats import iqr
 
 
-def train_pca_rda_kde_model(x, y):
+def train_pca_rda_kde_model(x, y, k_folds=10):
     """ Trains the Cw-PCA RDA KDE model given the input data and labels with
         cross validation and returns the model
         Args:
@@ -46,7 +46,6 @@ def train_pca_rda_kde_model(x, y):
     print('Optimized val [gam:{} \ lam:{}]'.format(gam, lam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = cross_validate_model(x=x, y=y, model=model)
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
@@ -55,9 +54,9 @@ def train_pca_rda_kde_model(x, y):
     model.fit(x, y)
 
     # Report AUC
-    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
+    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, model.last_cv_auc))
 
-    return model, auc_cv
+    return model
 
 
 def train_m_estimator_pipeline(x, y):
@@ -83,6 +82,7 @@ def train_m_estimator_pipeline(x, y):
     model.add(mda)
 
     lam, gam = cross_validate_parameters(x=x, y=y, model=model)
+    cv_auc = model.last_cv_auc
     print('Optimized val [lam:{} \ gam:{}]'.format(lam, gam))
 
     # Train the model with optimized hyper parameters to find once again the CV AUC
@@ -96,7 +96,6 @@ def train_m_estimator_pipeline(x, y):
 
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = cross_validate_model(x=x, y=y, model=model)
 
     sc = model.fit_transform(x, y)
     fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
@@ -116,8 +115,9 @@ def train_m_estimator_pipeline(x, y):
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     model.fit(x, y)
+    model.last_cv_auc = cv_auc
 
     # Report AUC
-    print('AUC-complete_data: {}, AUC-cv: {}'.format(auc_all, auc_cv))
+    print('AUC-complete_data: {}, AUC-cv: {}'.format(auc_all, model.last_cv_auc))
 
-    return model, auc_cv
+    return model
