@@ -121,7 +121,7 @@ def main():
     import time
     import argparse
 
-    from acquisition.datastream.generator import file_data, random_data
+    from bcipy.acquisition.datastream.generator import file_data, random_data
 
     default_channels = ['ch' + str(i + 1) for i in range(16)]
 
