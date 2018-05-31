@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
+import csv
+from typing import TextIO, List, Tuple
+
+NONE_VALUE = '0'
 
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
@@ -263,3 +267,110 @@ def trigger_decoder(mode, trigger_loc=None):
         offset = 0
 
     return symbol_info, trial_target_info, timing_info, offset
+
+
+class Classifier(object):
+    """docstring for Classifier"""
+
+    def __init__(self):
+        super(Classifier, self).__init__()
+
+    def classify(self, trigger):
+        raise NotImplementedError('Subclass must define the classify method')
+
+
+class CalibrationClassifier(Classifier):
+    """Calculates targetness for calibration data. Uses a state machine to
+    determine how to classify triggers.
+
+    Parameters:
+    -----------
+        seq_len: len_sti parameter value for the experiment; used to calculate
+            targetness for first_pres_target.
+    """
+
+    def __init__(self, seq_len: int):
+        super(CalibrationClassifier, self).__init__()
+        self.seq_len = seq_len
+        self.prev = None
+        self.current_target = None
+        self.seq_position = 0
+
+    def classify(self, trigger):
+        """Calculates the targetness for the given trigger, accounting for the
+        previous triggers/states encountered."""
+        state = ''
+        if self.prev is None:
+            # First trigger is always calibration.
+            state = 'calib'
+        elif self.prev == 'calib':
+            self.current_target = trigger
+            state = 'first_pres_target'
+        elif self.prev == 'first_pres_target':
+            # reset the sequence when fixation '+' is encountered.
+            self.seq_pos = 0
+            state = 'fixation'
+        else:
+            self.seq_pos += 1
+            if self.seq_pos > self.seq_len:
+                self.current_target = trigger
+                state = 'first_pres_target'
+            elif trigger == self.current_target:
+                state = 'target'
+            else:
+                state = 'nontarget'
+        self.prev = state
+        return state
+
+
+def extract_triggers(csvfile: TextIO,
+                     trg_field,
+                     classifier: Classifier) -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from an experiment output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+        classifier: Classifier used to calculate the targetness value for a
+            given trigger.
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp)
+    """
+    data = []
+
+    # Skip metadata rows
+    _daq_type = next(csvfile)
+    _sample_rate = next(csvfile)
+
+    reader = csv.DictReader(csvfile)
+
+    for row in reader:
+        trg = row[trg_field]
+        if trg != NONE_VALUE:
+            targetness = classifier.classify(trg)
+            data.append((trg, targetness, row['timestamp']))
+
+    return data
+
+
+def extract_from_calibration(csvfile: TextIO,
+                             seq_len: int,
+                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from a calibration output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        seq_len: len_sti parameter value for the experiment; used to calculate
+                 targetness for first_pres_target.
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp), where timestamp is
+        the timestamp recorded in the file.
+    """
+
+    return extract_triggers(csvfile, trg_field,
+                            classifier=CalibrationClassifier(seq_len))
