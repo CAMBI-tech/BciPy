@@ -14,7 +14,9 @@ analysis_channels_by_device = {
             "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"],
     'g.USBamp-2': ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8",
                    "Ch9", "Ch10", "Ch11", "Ch12", "Ch13", "Ch14", "Ch15",
-                   "Ch16"]
+                   "Ch16"],
+    'LSL': ["ch1", "ch2", "ch3", "ch4", "ch5", "ch6", "ch7", "ch8",
+            "ch9", "ch10", "ch11", "ch12", "ch13", "ch14", "ch15", "ch16"]
 }
 
 
@@ -111,5 +113,8 @@ def analysis_channels(channels, device_name):
     """
     relevant_channels = analysis_channels_by_device.get(device_name)
     if not relevant_channels:
-        raise Exception("Analysis channels for the given device not found.")
+        raise Exception("Analysis channels for the given device not found: "
+                        f"{device_name}.")
+    if channels is None:
+        return relevant_channels
     return [int(ch in relevant_channels) for ch in channels]

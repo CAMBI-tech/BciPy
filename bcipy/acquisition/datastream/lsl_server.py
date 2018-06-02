@@ -4,6 +4,8 @@ import random
 import time
 from bcipy.acquisition.util import StoppableThread
 from pylsl import StreamInfo, StreamOutlet
+from queue import Queue, Empty
+from bcipy.acquisition.datastream.producer import Producer
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -86,11 +88,6 @@ class LslDataServer(StoppableThread):
             del self.markers_outlet
             self.markers_outlet = None
 
-    def next_sample(self):
-        """Retrieves the next sample from the data generator."""
-
-        return next(self.generator)
-
     def run(self):
         """Main loop of the thread. Continuously streams data to the stream
         outlet at a rate consistent with the sample frequency. May also
@@ -98,12 +95,20 @@ class LslDataServer(StoppableThread):
 
         sample_counter = 0
         self.started = True
-        while self.running():
-            sample_counter += 1
-            self.outlet.push_sample(self.next_sample())
-            if self.add_markers and sample_counter % 1000 == 0:
-                self.markers_outlet.push_sample([str(random.randint(1, 100))])
-            time.sleep(1 / self.hz)
+
+        q = Queue()
+        with Producer(q, generator=self.generator, freq=1 / self.hz):
+            while self.running():
+                sample_counter += 1
+                try:
+                    sample = q.get(True, 2)
+                    self.outlet.push_sample(sample)
+                    if self.add_markers and sample_counter % 1000 == 0:
+                        self.markers_outlet.push_sample(
+                            [str(random.randint(1, 100))])
+                except Exception:
+                    break
+
         logging.debug("[*] No longer pushing data")
 
 
@@ -132,7 +137,7 @@ def main():
     parser.add_argument('-c', '--channels',
                         default=','.join(default_channels),
                         help='comma-delimited list')
-    parser.add_argument('-s', '--sample_rate', default='300',
+    parser.add_argument('-s', '--sample_rate', default='256',
                         help='sample rate in hz')
 
     parser.add_argument('-m', '--markers', action="store_true", default=False)
