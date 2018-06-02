@@ -323,6 +323,54 @@ class CalibrationClassifier(Classifier):
         return state
 
 
+class CopyPhraseClassifier(Classifier):
+    """Sequentially calculates targetness for copy phrase triggers."""
+
+    def __init__(self, copy_text: str, typed_text: str):
+        super(CopyPhraseClassifier, self).__init__()
+        self.copy_text = copy_text
+        self.typed_text = typed_text
+        self.prev = None
+
+        self.pos = 0
+        self.typing_pos = -1  # sequence length should be >= typed text.
+
+        self.mistakes = 0
+        self.current_index = -1
+        self.current_target = None
+
+    def classify(self, trigger):
+        """Calculates the targetness for the given trigger, accounting for the
+        previous triggers/states encountered."""
+        state = ''
+        if self.prev is None:
+            state = 'calib'
+        elif trigger == '+':
+            self.typing_pos += 1
+            if not self.current_target:
+                # set target to first letter in the copy phrase.
+                self.current_target = self.copy_text[self.pos]
+            else:
+                last_typed = self.typed_text[self.typing_pos - 1]
+                if last_typed == self.current_target:
+                    # increment if the user typed the target correctly
+                    if last_typed != '<':
+                        self.pos += 1
+                    self.current_target = self.copy_text[self.pos]
+                else:
+                    # Error correction.
+                    self.current_target = '<'
+
+            state = 'fixation'
+        else:
+            if trigger == self.current_target:
+                state = 'target'
+            else:
+                state = 'nontarget'
+        self.prev = state
+        return state
+
+
 def extract_triggers(csvfile: TextIO,
                      trg_field,
                      classifier: Classifier) -> List[Tuple[str, str, str]]:
@@ -374,3 +422,24 @@ def extract_from_calibration(csvfile: TextIO,
 
     return extract_triggers(csvfile, trg_field,
                             classifier=CalibrationClassifier(seq_len))
+
+
+def extract_from_copy_phrase(csvfile: TextIO,
+                             copy_text: str,
+                             typed_text: str,
+                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from a copy phrase output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        copy_text: phrase to copy
+        typed_text: participant typed response
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp), where timestamp is
+        the timestamp recorded in the file.
+    """
+    c = triggers.CopyPhraseClassifier(copy_text, typed_text)
+    return extract_triggers(csvfile, trg_field, classifier=c)
