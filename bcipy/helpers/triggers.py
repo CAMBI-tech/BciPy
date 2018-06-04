@@ -270,7 +270,7 @@ def trigger_decoder(mode, trigger_loc=None):
 
 
 class Classifier(object):
-    """docstring for Classifier"""
+    """Calculates targetness for a trigger value in a raw_data file."""
 
     def __init__(self):
         super(Classifier, self).__init__()
@@ -371,7 +371,7 @@ class CopyPhraseClassifier(Classifier):
         return state
 
 
-def extract_triggers(csvfile: TextIO,
+def _extract_triggers(csvfile: TextIO,
                      trg_field,
                      classifier: Classifier) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from an experiment output csv file.
@@ -397,10 +397,43 @@ def extract_triggers(csvfile: TextIO,
     for row in reader:
         trg = row[trg_field]
         if trg != NONE_VALUE:
+            if 'calibration' in trg:
+                trg = 'calibration_trigger'
             targetness = classifier.classify(trg)
             data.append((trg, targetness, row['timestamp']))
 
     return data
+
+
+def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
+                                            trigger_file: TextIO,
+                                            seq_len: int, trg_field: str='TRG'):
+    """Creates a triggers.txt file from TRG data recorded in the raw_data
+    output from a calibration."""
+    extracted = extract_from_calibration(csvfile, seq_len, trg_field)
+    _write_trigger_file_from_extraction(trigger_file, extracted)
+
+
+def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
+                                            trigger_file: TextIO,
+                                            copy_text: str, typed_text: str,
+                                            trg_field: str='TRG'):
+    """Creates a triggers.txt file from TRG data recorded in the raw_data
+    output from a copy phrase."""
+    extracted = extract_from_copy_phrase(csvfile, copy_text, typed_text,
+                                         trg_field)
+    _write_trigger_file_from_extraction(trigger_file, extracted)
+
+
+def _write_trigger_file_from_extraction(trigger_file: TextIO,
+                                       extraction: List[Tuple[str, str, str]]):
+    """Writes triggers that have been extracted from a raw_data file to a
+    file."""
+    for trigger, targetness, timestamp in extraction:
+        trigger_file.write(f"{trigger} {targetness} {timestamp}\n")
+
+    # TODO: is this assumption correct?
+    trigger_file.write("offset offset_correction 0.0")
 
 
 def extract_from_calibration(csvfile: TextIO,
@@ -420,7 +453,7 @@ def extract_from_calibration(csvfile: TextIO,
         the timestamp recorded in the file.
     """
 
-    return extract_triggers(csvfile, trg_field,
+    return _extract_triggers(csvfile, trg_field,
                             classifier=CalibrationClassifier(seq_len))
 
 
@@ -441,5 +474,5 @@ def extract_from_copy_phrase(csvfile: TextIO,
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
-    c = triggers.CopyPhraseClassifier(copy_text, typed_text)
-    return extract_triggers(csvfile, trg_field, classifier=c)
+    c = CopyPhraseClassifier(copy_text, typed_text)
+    return _extract_triggers(csvfile, trg_field, classifier=c)

@@ -1,9 +1,11 @@
-import ast
 import unittest
 from io import StringIO
 from typing import List, Tuple, Dict
 import random
-import bcipy.helpers.triggers as triggers
+from bcipy.helpers.triggers import NONE_VALUE, CopyPhraseClassifier, \
+    extract_from_copy_phrase, extract_from_calibration, \
+    write_trigger_file_from_lsl_calibration, \
+    write_trigger_file_from_lsl_copy_phrase
 
 
 def sample_raw_data(trigger_seq: List[Tuple[str, str]] =[],
@@ -40,7 +42,7 @@ def sample_raw_data(trigger_seq: List[Tuple[str, str]] =[],
     for i in range(1000):
         timestamp = i + 10.0
         channel_data = [str(random.uniform(-1000, 1000)) for _ in range(3)]
-        trg = triggers_by_time.get(timestamp, triggers.NONE_VALUE)
+        trg = triggers_by_time.get(timestamp, NONE_VALUE)
         data.append(','.join([str(timestamp), *channel_data, trg]))
 
     content = sep.join([meta, header, *data])
@@ -57,7 +59,7 @@ class TestTriggers(unittest.TestCase):
         copy_phrase = 'HI'
         typed = 'HI'
 
-        c = triggers.CopyPhraseClassifier(copy_phrase, typed)
+        c = CopyPhraseClassifier(copy_phrase, typed)
         self.assertEqual('calib',
                          c.classify("['calibration_trigger', 2.30196808103]"))
         self.assertEqual('fixation', c.classify('+'))
@@ -76,7 +78,7 @@ class TestTriggers(unittest.TestCase):
         copy_phrase = 'HI'
         typed = 'HA<I'
 
-        c = triggers.CopyPhraseClassifier(copy_phrase, typed)
+        c = CopyPhraseClassifier(copy_phrase, typed)
         self.assertEqual('calib',
                          c.classify("['calibration_trigger', 2.30196808103]"))
         self.assertEqual('fixation', c.classify('+'))
@@ -103,7 +105,7 @@ class TestTriggers(unittest.TestCase):
         copy_phrase = 'HELLO'
         typed = 'HELP<LO'
 
-        c = triggers.CopyPhraseClassifier(copy_phrase, typed)
+        c = CopyPhraseClassifier(copy_phrase, typed)
         self.assertEqual('calib',
                          c.classify("['calibration_trigger', 2.30196808103]"))
         # H
@@ -162,18 +164,17 @@ class TestTriggers(unittest.TestCase):
         start_index = int(len(phrase) / 2)
         copy_text = phrase[start_index:]  # 'LLO'
         content, trigger_times = sample_raw_data(trigger_seq)
-        extracted = triggers.extract_from_copy_phrase(StringIO(content),
-                                                      copy_text=copy_text,
-                                                      seq_len=10)
+        extracted = extract_from_copy_phrase(StringIO(content),
+                                             copy_text=copy_text,
+                                             typed_text='')
 
         # Assertions
         self.assertEqual(len(trigger_seq), len(extracted))
         for seq_i in range(len(trigger_seq)):
             extracted_val, extracted_targetness, stamp = extracted[seq_i]
-            trg, targetness = trigger_seq[seq_i]
-            # The calibration has escaped chars, so it needs to be escaped
-            # to test.
-            expected_trg = ast.literal_eval(trg) if seq_i == 0 else trg
+            expected_trg, targetness = trigger_seq[seq_i]
+            if 'calibration' in expected_trg:
+                expected_trg = 'calibration_trigger'
             self.assertEqual(expected_trg, extracted_val)
             self.assertEqual(targetness, extracted_targetness)
             self.assertEqual(trigger_times[seq_i], float(stamp))
@@ -192,20 +193,50 @@ class TestTriggers(unittest.TestCase):
 
         # Mock the raw_data file
         content, trigger_times = sample_raw_data(trigger_seq)
-        extracted = triggers.extract_from_calibration(StringIO(content),
-                                                      seq_len=10)
+        extracted = extract_from_calibration(StringIO(content),
+                                             seq_len=10)
 
         # Assertions
         self.assertEqual(len(trigger_seq), len(extracted))
         for seq_i in range(len(trigger_seq)):
             extracted_val, extracted_targetness, stamp = extracted[seq_i]
-            trg, targetness = trigger_seq[seq_i]
-            # The calibration has escaped chars, so it needs to be escaped
-            # to test.
-            expected_trg = ast.literal_eval(trg) if seq_i == 0 else trg
+            expected_trg, targetness = trigger_seq[seq_i]
+            if 'calibration' in expected_trg:
+                expected_trg = 'calibration_trigger'
             self.assertEqual(expected_trg, extracted_val)
             self.assertEqual(targetness, extracted_targetness)
             self.assertEqual(trigger_times[seq_i], float(stamp))
+
+    def test_writing_trigger_file(self):
+        trigger_seq = [
+            ('"[\'calibration_trigger\', 2.039073024992831]"', 'calib'),
+            ('J', 'first_pres_target'), ('+', 'fixation'), ('P', 'nontarget'),
+            ('R', 'nontarget'), ('E', 'nontarget'), ('K', 'nontarget'),
+            ('A', 'nontarget'), ('J', 'target'), ('X', 'nontarget'),
+            ('F', 'nontarget'), ('<', 'nontarget'), ('S', 'nontarget'),
+            ('E', 'first_pres_target'), ('+', 'fixation'), ('M', 'nontarget'),
+            ('T', 'nontarget'), ('H', 'nontarget'), ('W', 'nontarget'),
+            ('Y', 'nontarget'), ('V', 'nontarget'), ('E', 'target'),
+            ('L', 'nontarget'), ('_', 'nontarget'), ('J', 'nontarget')]
+
+        # Mock the raw_data file
+        raw_data, trigger_times = sample_raw_data(trigger_seq)
+        output = StringIO()
+        write_trigger_file_from_lsl_calibration(StringIO(raw_data), output,
+                                                seq_len=10)
+
+        written_contents = output.getvalue()
+        lines = written_contents.split("\n")
+
+        for i in range(len(lines) - 1):
+            written_val, written_targetness, written_stamp = lines[i].split()
+            expected_trg, targetness = trigger_seq[i]
+            if 'calibration' in expected_trg:
+                expected_trg = 'calibration_trigger'
+            self.assertEqual(expected_trg, written_val)
+            self.assertEqual(targetness, written_targetness)
+            self.assertEqual(trigger_times[i], float(written_stamp))
+
 
     def test_extract_from_copy_phrase(self):
         # TODO:
