@@ -106,7 +106,10 @@ class LslDataServer(StoppableThread):
                     if self.add_markers and sample_counter % 1000 == 0:
                         self.markers_outlet.push_sample(
                             [str(random.randint(1, 100))])
-                except Exception:
+                except (Empty, AttributeError) as err:
+                    # outlet.push_sample(sample) may cause an error after
+                    # the server has been stopped since the attribute is
+                    # deleted in another thread.
                     break
 
         logging.debug("[*] No longer pushing data")
