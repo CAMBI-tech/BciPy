@@ -173,7 +173,7 @@ class LslDevice(Device):
             channel_name = ch.child_value("label")
             # If the data stream has a TRG channel, rename it so it doesn't
             # conflict with the marker channel.
-            if channel_name == 'TRG':
+            if channel_name == 'TRG' and len(self._marker_inlets) > 0:
                 channel_name = "TRG_device_stream"
             channels.append(channel_name)
             ch = ch.next_sibling()
