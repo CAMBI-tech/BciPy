@@ -269,19 +269,19 @@ def trigger_decoder(mode, trigger_loc=None):
     return symbol_info, trial_target_info, timing_info, offset
 
 
-class Classifier(object):
-    """Calculates targetness for a trigger value in a raw_data file."""
+class Labeller(object):
+    """Labels the targetness for a trigger value in a raw_data file."""
 
     def __init__(self):
-        super(Classifier, self).__init__()
+        super(Labeller, self).__init__()
 
-    def classify(self, trigger):
-        raise NotImplementedError('Subclass must define the classify method')
+    def label(self, trigger):
+        raise NotImplementedError('Subclass must define the label method')
 
 
-class CalibrationClassifier(Classifier):
+class LslCalibrationLabeller(Labeller):
     """Calculates targetness for calibration data. Uses a state machine to
-    determine how to classify triggers.
+    determine how to label triggers.
 
     Parameters:
     -----------
@@ -290,13 +290,13 @@ class CalibrationClassifier(Classifier):
     """
 
     def __init__(self, seq_len: int):
-        super(CalibrationClassifier, self).__init__()
+        super(LslCalibrationLabeller, self).__init__()
         self.seq_len = seq_len
         self.prev = None
         self.current_target = None
         self.seq_position = 0
 
-    def classify(self, trigger):
+    def label(self, trigger):
         """Calculates the targetness for the given trigger, accounting for the
         previous triggers/states encountered."""
         state = ''
@@ -323,11 +323,11 @@ class CalibrationClassifier(Classifier):
         return state
 
 
-class CopyPhraseClassifier(Classifier):
+class LslCopyPhraseLabeller(Labeller):
     """Sequentially calculates targetness for copy phrase triggers."""
 
     def __init__(self, copy_text: str, typed_text: str):
-        super(CopyPhraseClassifier, self).__init__()
+        super(LslCopyPhraseLabeller, self).__init__()
         self.copy_text = copy_text
         self.typed_text = typed_text
         self.prev = None
@@ -335,11 +335,9 @@ class CopyPhraseClassifier(Classifier):
         self.pos = 0
         self.typing_pos = -1  # sequence length should be >= typed text.
 
-        self.mistakes = 0
-        self.current_index = -1
         self.current_target = None
 
-    def classify(self, trigger):
+    def label(self, trigger):
         """Calculates the targetness for the given trigger, accounting for the
         previous triggers/states encountered."""
         state = ''
@@ -372,15 +370,15 @@ class CopyPhraseClassifier(Classifier):
 
 
 def _extract_triggers(csvfile: TextIO,
-                     trg_field,
-                     classifier: Classifier) -> List[Tuple[str, str, str]]:
+                      trg_field,
+                      labeller: Labeller) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from an experiment output csv file.
     Parameters:
     -----------
         csvfile: open csv file containing data.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
-        classifier: Classifier used to calculate the targetness value for a
+        labeller: Labeller used to calculate the targetness value for a
             given trigger.
     Returns:
     --------
@@ -399,7 +397,7 @@ def _extract_triggers(csvfile: TextIO,
         if trg != NONE_VALUE:
             if 'calibration' in trg:
                 trg = 'calibration_trigger'
-            targetness = classifier.classify(trg)
+            targetness = labeller.label(trg)
             data.append((trg, targetness, row['timestamp']))
 
     return data
@@ -426,7 +424,7 @@ def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
 
 
 def _write_trigger_file_from_extraction(trigger_file: TextIO,
-                                       extraction: List[Tuple[str, str, str]]):
+                                        extraction: List[Tuple[str, str, str]]):
     """Writes triggers that have been extracted from a raw_data file to a
     file."""
     for trigger, targetness, timestamp in extraction:
@@ -454,7 +452,7 @@ def extract_from_calibration(csvfile: TextIO,
     """
 
     return _extract_triggers(csvfile, trg_field,
-                            classifier=CalibrationClassifier(seq_len))
+                             labeller=LslCalibrationLabeller(seq_len))
 
 
 def extract_from_copy_phrase(csvfile: TextIO,
@@ -474,5 +472,5 @@ def extract_from_copy_phrase(csvfile: TextIO,
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
-    c = CopyPhraseClassifier(copy_text, typed_text)
-    return _extract_triggers(csvfile, trg_field, classifier=c)
+    labeller = LslCopyPhraseLabeller(copy_text, typed_text)
+    return _extract_triggers(csvfile, trg_field, labeller=labeller)

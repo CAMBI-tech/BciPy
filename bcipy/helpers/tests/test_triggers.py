@@ -1,11 +1,10 @@
 import unittest
 from io import StringIO
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 import random
-from bcipy.helpers.triggers import NONE_VALUE, CopyPhraseClassifier, \
+from bcipy.helpers.triggers import NONE_VALUE, LslCopyPhraseLabeller, \
     extract_from_copy_phrase, extract_from_calibration, \
-    write_trigger_file_from_lsl_calibration, \
-    write_trigger_file_from_lsl_copy_phrase
+    write_trigger_file_from_lsl_calibration
 
 
 def sample_raw_data(trigger_seq: List[Tuple[str, str]] =[],
@@ -55,93 +54,96 @@ class TestTriggers(unittest.TestCase):
     def test_triggers_for_calibration(self):
         return
 
-    def test_copy_phrase_classifier(self):
+    def test_copy_phrase_labeller(self):
         copy_phrase = 'HI'
         typed = 'HI'
 
-        c = CopyPhraseClassifier(copy_phrase, typed)
+        labeller = LslCopyPhraseLabeller(copy_phrase, typed)
         self.assertEqual('calib',
-                         c.classify("['calibration_trigger', 2.30196808103]"))
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('nontarget', c.classify('B'))
-        self.assertEqual('target', c.classify('H'))
-        self.assertEqual('nontarget', c.classify('I'))
+                         labeller.label("['calibration_trigger', "
+                                        "2.30196808103]"))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('nontarget', labeller.label('B'))
+        self.assertEqual('target', labeller.label('H'))
+        self.assertEqual('nontarget', labeller.label('I'))
 
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('I'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('nontarget', c.classify('H'))
-        self.assertEqual('nontarget', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('I'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('nontarget', labeller.label('H'))
+        self.assertEqual('nontarget', labeller.label('O'))
 
-    def test_copy_phrase_classifier_correction(self):
+    def test_copy_phrase_labeller_correction(self):
         copy_phrase = 'HI'
         typed = 'HA<I'
 
-        c = CopyPhraseClassifier(copy_phrase, typed)
+        labeller = LslCopyPhraseLabeller(copy_phrase, typed)
         self.assertEqual('calib',
-                         c.classify("['calibration_trigger', 2.30196808103]"))
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('B'))
-        self.assertEqual('target', c.classify('H'))
-        self.assertEqual('nontarget', c.classify('I'))
+                         labeller.label("['calibration_trigger', "
+                                        "2.30196808103]"))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('B'))
+        self.assertEqual('target', labeller.label('H'))
+        self.assertEqual('nontarget', labeller.label('I'))
 
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('I'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('nontarget', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('I'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('nontarget', labeller.label('O'))
 
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('I'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('target', c.classify('<'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('I'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('target', labeller.label('<'))
 
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('I'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('nontarget', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('I'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('nontarget', labeller.label('O'))
 
-    def test_copy_phrase_classifier_correction_double_letters(self):
+    def test_copy_phrase_labeller_correction_double_letters(self):
         copy_phrase = 'HELLO'
         typed = 'HELP<LO'
 
-        c = CopyPhraseClassifier(copy_phrase, typed)
+        labeller = LslCopyPhraseLabeller(copy_phrase, typed)
         self.assertEqual('calib',
-                         c.classify("['calibration_trigger', 2.30196808103]"))
+                         labeller.label("['calibration_trigger', "
+                                        "2.30196808103]"))
         # H
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('H'))
-        self.assertEqual('nontarget', c.classify('I'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('H'))
+        self.assertEqual('nontarget', labeller.label('I'))
 
         # E
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('E'))
-        self.assertEqual('nontarget', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('E'))
+        self.assertEqual('nontarget', labeller.label('O'))
 
         # L
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('O'))
-        self.assertEqual('target', c.classify('L'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('O'))
+        self.assertEqual('target', labeller.label('L'))
 
         # L
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('L'))
-        self.assertEqual('nontarget', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('L'))
+        self.assertEqual('nontarget', labeller.label('O'))
 
         # <
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('O'))
-        self.assertEqual('target', c.classify('<'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('O'))
+        self.assertEqual('target', labeller.label('<'))
 
         # L
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('target', c.classify('L'))
-        self.assertEqual('nontarget', c.classify('A'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('target', labeller.label('L'))
+        self.assertEqual('nontarget', labeller.label('A'))
 
         # O
-        self.assertEqual('fixation', c.classify('+'))
-        self.assertEqual('nontarget', c.classify('A'))
-        self.assertEqual('target', c.classify('O'))
+        self.assertEqual('fixation', labeller.label('+'))
+        self.assertEqual('nontarget', labeller.label('A'))
+        self.assertEqual('target', labeller.label('O'))
 
     def test_extract_from_copy_phrase(self):
         trigger_seq = [
@@ -166,7 +168,7 @@ class TestTriggers(unittest.TestCase):
         content, trigger_times = sample_raw_data(trigger_seq)
         extracted = extract_from_copy_phrase(StringIO(content),
                                              copy_text=copy_text,
-                                             typed_text='')
+                                             typed_text=copy_text)
 
         # Assertions
         self.assertEqual(len(trigger_seq), len(extracted))
@@ -236,11 +238,6 @@ class TestTriggers(unittest.TestCase):
             self.assertEqual(expected_trg, written_val)
             self.assertEqual(targetness, written_targetness)
             self.assertEqual(trigger_times[i], float(written_stamp))
-
-
-    def test_extract_from_copy_phrase(self):
-        # TODO:
-        return
 
 
 if __name__ == '__main__':
