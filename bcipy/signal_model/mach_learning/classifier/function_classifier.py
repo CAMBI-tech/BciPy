@@ -188,7 +188,28 @@ class RegularizedDiscriminantAnalysis:
 
 
 class MDiscriminantAnalysis:
+    """ Robust version of RDA where every estimated statistic is estimated
+    Ref:
+        Friedman, Jerome H. "Regularized discriminant analysis."
+        Journal of the American statistical association 84.405 (1989): 165-175
 
+        and
+
+        Kadioglu, Berkan "M Estimation Based Robust Subspace learning for Brain Computer Interfaces"
+
+    Attr:
+        lam(float): shrinkage param
+        gam(float): threshold param (a.k.a. regularization param)
+        means(list): Means' of each channel
+        covariances(list): Covariances' of each channel
+        S_matrices(list): Covariance times N for each class
+        S(list): Covariance times N for all data
+        N_list(list): List of number of samples of each class
+        class_list(list): List of classes
+        priors(list): List of priors for each class
+        inv_reg_covariances(list): List of inverse regularized covariances for each class
+
+    """
     def __init__(self):
         # means and covariances of each channel with the order inherent in data.
         self.means = []

@@ -54,14 +54,13 @@ def demo_m_estimator():
         print s_a_c
         iteration += 1
 
-
-    print '\n\nFinished in {} iterations.\n\n'.format(iteration)
-    print 'M estimate mean - true mean:\n', M_est_mean_new - true_mean
-    print 'M estimate sigma - true sigma:\n', M_est_sigma_new - true_sigma
-    print '\nΣ|Sample mean - true mean|:', np.sum(np.abs(sample_mean - true_mean))
-    print 'Σ|M estimate mean - true mean|:', np.sum(np.abs(M_est_mean_new - true_mean))
-    print 'Σ|Sample cov - true cov|:', np.sum(np.sum(np.abs(sample_sigma - true_sigma)))
-    print 'Σ|M estimate sigma - true sigma|:', np.sum(np.sum(np.abs(M_est_sigma_new - true_sigma)))
+    print('\n\nFinished in {} iterations.\n\n'.format(iteration))
+    print('M estimate mean - true mean:\n', M_est_mean_new - true_mean)
+    print('M estimate sigma - true sigma:\n', M_est_sigma_new - true_sigma)
+    print('\nΣ|Sample mean - true mean|:', np.sum(np.abs(sample_mean - true_mean)))
+    print('Σ|M estimate mean - true mean|:', np.sum(np.abs(M_est_mean_new - true_mean)))
+    print('Σ|Sample cov - true cov|:', np.sum(np.sum(np.abs(sample_sigma - true_sigma))))
+    print('Σ|M estimate sigma - true sigma|:', np.sum(np.sum(np.abs(M_est_sigma_new - true_sigma))))
 
     # If data is two dimensional plot the results.
     if p == 2:
