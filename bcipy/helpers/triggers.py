@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
+import csv
+from typing import TextIO, List, Tuple
+
+NONE_VALUE = '0'
 
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
@@ -263,3 +267,210 @@ def trigger_decoder(mode, trigger_loc=None):
         offset = 0
 
     return symbol_info, trial_target_info, timing_info, offset
+
+
+class Labeller(object):
+    """Labels the targetness for a trigger value in a raw_data file."""
+
+    def __init__(self):
+        super(Labeller, self).__init__()
+
+    def label(self, trigger):
+        raise NotImplementedError('Subclass must define the label method')
+
+
+class LslCalibrationLabeller(Labeller):
+    """Calculates targetness for calibration data. Uses a state machine to
+    determine how to label triggers.
+
+    Parameters:
+    -----------
+        seq_len: len_sti parameter value for the experiment; used to calculate
+            targetness for first_pres_target.
+    """
+
+    def __init__(self, seq_len: int):
+        super(LslCalibrationLabeller, self).__init__()
+        self.seq_len = seq_len
+        self.prev = None
+        self.current_target = None
+        self.seq_position = 0
+
+    def label(self, trigger):
+        """Calculates the targetness for the given trigger, accounting for the
+        previous triggers/states encountered."""
+        state = ''
+        if self.prev is None:
+            # First trigger is always calibration.
+            state = 'calib'
+        elif self.prev == 'calib':
+            self.current_target = trigger
+            state = 'first_pres_target'
+        elif self.prev == 'first_pres_target':
+            # reset the sequence when fixation '+' is encountered.
+            self.seq_pos = 0
+            state = 'fixation'
+        else:
+            self.seq_pos += 1
+            if self.seq_pos > self.seq_len:
+                self.current_target = trigger
+                state = 'first_pres_target'
+            elif trigger == self.current_target:
+                state = 'target'
+            else:
+                state = 'nontarget'
+        self.prev = state
+        return state
+
+
+class LslCopyPhraseLabeller(Labeller):
+    """Sequentially calculates targetness for copy phrase triggers."""
+
+    def __init__(self, copy_text: str, typed_text: str):
+        super(LslCopyPhraseLabeller, self).__init__()
+        self.copy_text = copy_text
+        self.typed_text = typed_text
+        self.prev = None
+
+        self.pos = 0
+        self.typing_pos = -1  # sequence length should be >= typed text.
+
+        self.current_target = None
+
+    def label(self, trigger):
+        """Calculates the targetness for the given trigger, accounting for the
+        previous triggers/states encountered."""
+        state = ''
+        if self.prev is None:
+            state = 'calib'
+        elif trigger == '+':
+            self.typing_pos += 1
+            if not self.current_target:
+                # set target to first letter in the copy phrase.
+                self.current_target = self.copy_text[self.pos]
+            else:
+                last_typed = self.typed_text[self.typing_pos - 1]
+                if last_typed == self.current_target:
+                    # increment if the user typed the target correctly
+                    if last_typed != '<':
+                        self.pos += 1
+                    self.current_target = self.copy_text[self.pos]
+                else:
+                    # Error correction.
+                    self.current_target = '<'
+
+            state = 'fixation'
+        else:
+            if trigger == self.current_target:
+                state = 'target'
+            else:
+                state = 'nontarget'
+        self.prev = state
+        return state
+
+
+def _extract_triggers(csvfile: TextIO,
+                      trg_field,
+                      labeller: Labeller) -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from an experiment output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+        labeller: Labeller used to calculate the targetness value for a
+            given trigger.
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp)
+    """
+    data = []
+
+    # Skip metadata rows
+    _daq_type = next(csvfile)
+    _sample_rate = next(csvfile)
+
+    reader = csv.DictReader(csvfile)
+
+    for row in reader:
+        trg = row[trg_field]
+        if trg != NONE_VALUE:
+            if 'calibration' in trg:
+                trg = 'calibration_trigger'
+            targetness = labeller.label(trg)
+            data.append((trg, targetness, row['timestamp']))
+
+    return data
+
+
+def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
+                                            trigger_file: TextIO,
+                                            seq_len: int, trg_field: str='TRG'):
+    """Creates a triggers.txt file from TRG data recorded in the raw_data
+    output from a calibration."""
+    extracted = extract_from_calibration(csvfile, seq_len, trg_field)
+    _write_trigger_file_from_extraction(trigger_file, extracted)
+
+
+def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
+                                            trigger_file: TextIO,
+                                            copy_text: str, typed_text: str,
+                                            trg_field: str='TRG'):
+    """Creates a triggers.txt file from TRG data recorded in the raw_data
+    output from a copy phrase."""
+    extracted = extract_from_copy_phrase(csvfile, copy_text, typed_text,
+                                         trg_field)
+    _write_trigger_file_from_extraction(trigger_file, extracted)
+
+
+def _write_trigger_file_from_extraction(trigger_file: TextIO,
+                                        extraction: List[Tuple[str, str, str]]):
+    """Writes triggers that have been extracted from a raw_data file to a
+    file."""
+    for trigger, targetness, timestamp in extraction:
+        trigger_file.write(f"{trigger} {targetness} {timestamp}\n")
+
+    # TODO: is this assumption correct?
+    trigger_file.write("offset offset_correction 0.0")
+
+
+def extract_from_calibration(csvfile: TextIO,
+                             seq_len: int,
+                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from a calibration output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        seq_len: len_sti parameter value for the experiment; used to calculate
+                 targetness for first_pres_target.
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp), where timestamp is
+        the timestamp recorded in the file.
+    """
+
+    return _extract_triggers(csvfile, trg_field,
+                             labeller=LslCalibrationLabeller(seq_len))
+
+
+def extract_from_copy_phrase(csvfile: TextIO,
+                             copy_text: str,
+                             typed_text: str,
+                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+    """Extracts trigger data from a copy phrase output csv file.
+    Parameters:
+    -----------
+        csvfile: open csv file containing data.
+        copy_text: phrase to copy
+        typed_text: participant typed response
+        trg_field: optional; name of the data column with the trigger data;
+                   defaults to 'TRG'
+    Returns:
+    --------
+        list of tuples of (trigger, targetness, timestamp), where timestamp is
+        the timestamp recorded in the file.
+    """
+    labeller = LslCopyPhraseLabeller(copy_text, typed_text)
+    return _extract_triggers(csvfile, trg_field, labeller=labeller)
