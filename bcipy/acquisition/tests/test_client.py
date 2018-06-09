@@ -240,6 +240,64 @@ class TestClient(unittest.TestCase):
 
         daq.cleanup()
 
+    def test_get_data_for_clock(self):
+        """Test get_data_for_clock."""
+
+        channels = ['ch1', 'ch2', 'TRG']
+        fs = 100
+        trigger_at = 10
+        num_records = 1000
+        num_channels = len(channels)
+
+        mock_data = []
+        for i in range(num_records):
+            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
+            trigger_channel = 0 if (i + 1) < trigger_at else 1
+            d.append(trigger_channel)
+            mock_data.append(d)
+
+        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        daq = Client(device=device,
+                     processor=_MockProcessor(),
+                     buffer_name='buffer_client_test_get_data_for_clock.db',
+                     clock=_MockClock())
+
+        daq.start_acquisition()
+        time.sleep(0.2)
+        daq.stop_acquisition()
+
+        self.assertTrue(daq.is_calibrated)
+
+        # rownum at calibration should be trigger_at
+        self.assertEqual(trigger_at, daq._record_at_calib.rownum)
+        self.assertEqual(trigger_at, daq._record_at_calib.timestamp)
+        self.assertEqual(mock_data[trigger_at - 1], daq._record_at_calib.data)
+
+        # Test with clocks exactly synchronized.
+        self.assertEqual(0.1, daq.offset)
+        data = daq.get_data_for_clock(calib_time=0.1, start_time=0.2,
+                                      end_time=0.3)
+        self.assertEqual(10, len(data))
+
+        start_offset = 20
+        for i, record in enumerate(data):
+            # mock-data is 0-based, so we have to subtract 1 from the start.
+            mock_data_index = i + start_offset - 1
+            self.assertEqual(record.data, mock_data[mock_data_index])
+
+
+        # Test with clocks offset
+        data = daq.get_data_for_clock(calib_time=0.2, start_time=0.4,
+                                      end_time=0.6)
+        self.assertEqual(20, len(data))
+        start_offset = 30
+        for i, record in enumerate(data):
+            # mock-data is 0-based, so we have to subtract 1 from the start.
+            mock_data_index = i + start_offset - 1
+            self.assertEqual(record.data, mock_data[mock_data_index])
+
+        daq.cleanup()
+
 
 if __name__ == '__main__':
     unittest.main()
