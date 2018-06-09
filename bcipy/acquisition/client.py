@@ -218,11 +218,8 @@ class Client(object):
 
         # Calculate number of samples since experiment_clock calibration;
         # multiplying by the fs converts from seconds to samples.
-        print(f"fs: {fs}")
         start_offset = (start_time - calib_time) * fs
-        print(f"Start offset: {start_offset}")
         start = rownum_at_calib + start_offset
-        print(f"Start: {start}")
 
         end = None
         if end_time:
