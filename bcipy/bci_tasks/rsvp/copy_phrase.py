@@ -209,7 +209,7 @@ class RSVPCopyPhraseTask(Task):
                     'current_text': text_task,
                     'copy_phrase': self.copy_phrase}
 
-                # Evaulate this sequence
+                # Evaluate this sequence
                 (target_letter, text_task, run) = \
                     fake_copy_phrase_decision(self.copy_phrase,
                                               target_letter,
@@ -239,7 +239,7 @@ class RSVPCopyPhraseTask(Task):
                     'current_text': text_task,
                     'copy_phrase': self.copy_phrase,
                     'next_display_state':
-                    copy_phrase_task.decision_maker.displayed_state,
+                        copy_phrase_task.decision_maker.displayed_state,
                     'lm_evidence': copy_phrase_task
                         .conjugator
                         .evidence_history['LM'][0]

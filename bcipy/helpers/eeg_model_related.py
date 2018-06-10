@@ -1,6 +1,7 @@
 import numpy as np
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.signal_model.inference import inference
+from bcipy.signal_processing.sig_pro import sig_pro
 from bcipy.bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
 
@@ -54,8 +55,7 @@ class CopyPhraseWrapper(object):
             target_info(list[str]): target information about the stimuli
         """
         # Send the raw data to signal processing / in demo mode do not use sig_pro
-        # dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
-        dat = raw_dat
+        dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
 
         # TODO: if it is a fixation remove it don't hardcode it as if you did
         letters = [triggers[i][0] for i in range(0, len(triggers))]
@@ -70,12 +70,9 @@ class CopyPhraseWrapper(object):
         del time[letters.index('+')]
         del letters[letters.index('+')]
 
-        try:
-            x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
+        x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map)
-        except:
-            raise Exception('error in reshaping')
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
