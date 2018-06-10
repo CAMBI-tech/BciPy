@@ -18,7 +18,7 @@ URL = 'https://github.com/BciPy/BciPy'
 EMAIL = 'tab.memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
-VERSION = '0.1dev'
+VERSION = '0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
