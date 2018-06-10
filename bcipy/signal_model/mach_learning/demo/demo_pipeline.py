@@ -4,7 +4,6 @@ from bcipy.signal_model.mach_learning.classifier.function_classifier import \
     RegularizedDiscriminantAnalysis
 from bcipy.signal_model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal_model.mach_learning.cross_validation import cross_validation
 from bcipy.signal_model.mach_learning.pipeline import Pipeline
 from sklearn import metrics
 import numpy as np
