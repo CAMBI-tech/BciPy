@@ -54,9 +54,9 @@ def _loop(mailbox, channels, archive_name):
         elif command == MSG_COUNT:
             sender.put(len(buf))
         elif command == MSG_QUERY_SLICE:
-            start, end = params
-            logging.debug("Sending query: {}".format((start, end)))
-            sender.put(buf.query(start, end))
+            start, end, field = params
+            logging.debug("Sending query: {}".format((start, end, field)))
+            sender.put(buf.query(start, end, field))
         elif command == MSG_QUERY:
             # Generic query
             filters, ordering, max_results = params
@@ -160,8 +160,8 @@ def count(mailbox):
     return _rpc(mailbox, request)
 
 
-def get_data(mailbox, start=None, end=None):
-    """Query the buffer for a time slice of data records.
+def get_data(mailbox, start=None, end=None, field='_rowid_'):
+    """Query the buffer for a slice of data records.
 
     Parameters
     ----------
@@ -178,7 +178,7 @@ def get_data(mailbox, start=None, end=None):
     if start is None:
         request = (MSG_GET_ALL, None)
     else:
-        request = (MSG_QUERY_SLICE, (start, end))
+        request = (MSG_QUERY_SLICE, (start, end, field))
 
     return _rpc(mailbox, request)
 
@@ -220,9 +220,9 @@ def main():
     for i in range(n):
         d = [np.random.uniform(-1000, 1000) for cc in range(channel_count)]
         if i % 2 == 0:
-            append(pid1, Record(d, i))
+            append(pid1, Record(d, i, None))
         else:
-            append(pid2, Record(d, i))
+            append(pid2, Record(d, i, None))
 
     endtime = timeit.default_timer()
     totaltime = endtime - starttime

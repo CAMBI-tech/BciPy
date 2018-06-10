@@ -78,6 +78,7 @@ class Client(object):
         # Offset in seconds from the start of acquisition to calibration
         # trigger. Calculated once, then cached.
         self._cached_offset = None
+        self._record_at_calib = None
         self._max_wait = 0.1  # for process loop
 
         # Max number of records in queue before it blocks for processing.
@@ -168,16 +169,17 @@ class Client(object):
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
-    def get_data(self, start=None, end=None):
-        """ Gets data from the buffer.
+    def get_data(self, start=None, end=None, field='_rowid_'):
+        """Queries the buffer by field.
 
         Parameters
         ----------
-            start : float, optional
-                start of time slice
+            start : number, optional
+                start of time slice; units are those of the acquisition clock.
             end : float, optional
-                end of time slice
-
+                end of time slice; units are those of the acquisition clock.
+            field: str, optional
+                field on which to query; default value is the row id.
         Returns
         -------
             list of Records
@@ -186,7 +188,45 @@ class Client(object):
         if self._buf is None:
             return []
         else:
-            return buffer_server.get_data(self._buf, start, end)
+            return buffer_server.get_data(self._buf, start, end, field)
+
+    def get_data_for_clock(self, calib_time: float, start_time: float,
+                           end_time: float):
+        """Queries the database, using start and end values relative to a
+        clock different than the acquisition clock.
+
+        Parameters
+        ----------
+            calib_time: float
+                experiment_clock time (in seconds) at calibration.
+            start_time : float, optional
+                start of time slice; units are those of the experiment clock.
+            end_time : float, optional
+                end of time slice; units are those of the experiment clock.
+        Returns
+        -------
+            list of Records
+        """
+
+        fs = self._device_info.fs
+
+        rownum_at_calib: int
+        if self._record_at_calib is None:
+            rownum_at_calib = 1
+        else:
+            rownum_at_calib = self._record_at_calib.rownum
+
+        # Calculate number of samples since experiment_clock calibration;
+        # multiplying by the fs converts from seconds to samples.
+        start_offset = (start_time - calib_time) * fs
+        start = rownum_at_calib + start_offset
+
+        end = None
+        if end_time:
+            end_offset = (end_time - calib_time) * fs
+            end = rownum_at_calib + end_offset
+
+        return self.get_data(start=start, end=end, field='_rowid_')
 
     def get_data_len(self):
         """Efficient way to calculate the amount of data cached."""
@@ -237,6 +277,8 @@ class Client(object):
             return None
 
         logging.debug("Querying database for offset")
+        # Assumes that the TRG column is present and used for calibration, and
+        # that non-calibration values are all 0.
         rows = buffer_server.query(self._buf,
                                    filters=[("TRG", ">", 0)],
                                    ordering=("timestamp", "asc"),
@@ -246,7 +288,10 @@ class Client(object):
             return None
         else:
             logging.debug(rows[0])
-            self._cached_offset = rows[0].timestamp / self._device_info.fs
+            # Calculate offset from the number of samples recorded by the time
+            # of calibration.
+            self._record_at_calib = rows[0]
+            self._cached_offset = rows[0].rownum / self._device_info.fs
             logging.debug("Cached offset: " + str(self._cached_offset))
             return self._cached_offset
 
@@ -293,7 +338,7 @@ class AcquisitionProcess(StoppableProcess):
             if DEBUG and sample % DEBUG_FREQ == 0:
                 logging.debug("Read sample: " + str(sample))
 
-            self._data_queue.put(Record(data, self._clock.getTime()))
+            self._data_queue.put(Record(data, self._clock.getTime(), sample))
             try:
                 # Read data again
                 data = self._device.read_data()
