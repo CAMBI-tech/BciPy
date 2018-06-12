@@ -10,6 +10,7 @@ MSG_QUERY_SLICE = 'query_slice'
 MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
+MSG_STARTED = 'started'
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -61,11 +62,13 @@ def _loop(mailbox, channels, archive_name):
             # Generic query
             filters, ordering, max_results = params
             sender.put(buf.query_data(filters, ordering, max_results))
+        elif command == MSG_STARTED:
+            sender.put(('started', 'ok'))
         else:
             logging.debug("Error; message not understood: {}".format(msg))
 
 
-def start(channels, archive_name):
+def start(channels, archive_name, async=False):
     """Starts a server Process.
 
     Parameters
@@ -75,6 +78,9 @@ def start(channels, archive_name):
             for each channel.
         archive_name : str
             underlying database name
+        async : boolean, optional; default False
+            if true, returns immediately; otherwise waits for a response
+            from the newly started server.
     Returns
     -------
         Queue used to communicate with this server instance.
@@ -84,6 +90,10 @@ def start(channels, archive_name):
     p = mp.Process(target=_loop,
                    args=(msg_queue, channels, archive_name))
     p.start()
+    if not async:
+        request = (MSG_STARTED, None)
+        _rpc(msg_queue, request, wait_reply=True)
+
     return msg_queue
 
 
