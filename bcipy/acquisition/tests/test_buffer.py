@@ -51,11 +51,11 @@ class TestBuffer(unittest.TestCase):
             if i % 1000 == 0:
                 timevalues[timestamp] = d
             with append_timer:
-                b.append(Record(d, timestamp))
+                b.append(Record(d, timestamp, None))
 
         self.assertEqual(b.start_time, 0.0)
         starttime = 0.0
-        rows = b.query(start=starttime, end=starttime + 1.0)
+        rows = b.query(start=starttime, end=starttime + 1.0, field='timestamp')
 
         self.assertEqual(len(rows), 1, "Results should not include end value.")
 
@@ -64,11 +64,11 @@ class TestBuffer(unittest.TestCase):
 
         st = 1000.0
         et = 2000.0
-        rows = b.query(start=st, end=et)
+        rows = b.query(start=st, end=et, field='timestamp')
         self.assertEqual(len(rows), st)
         self.assertEqual(rows[0].data, timevalues[st])
 
-        rows = b.query(start=b.start_time)
+        rows = b.query(start=b.start_time, field='timestamp')
         self.assertEqual(
             len(rows), n, "Providing only the start should return the rest.")
         b.cleanup()
@@ -86,8 +86,8 @@ class TestBuffer(unittest.TestCase):
         for i, d in enumerate(_mockdata(n, channel_count)):
             timestamp = float(i)
             if i >= n - latest_n:
-                latest.append((d, timestamp))
-            b.append(Record(d, timestamp))
+                latest.append((d, timestamp, i+1))
+            b.append(Record(d, timestamp, None))
 
         rows = b.latest(latest_n)
         for j, item in enumerate(reversed(latest)):
@@ -103,7 +103,7 @@ class TestBuffer(unittest.TestCase):
         b = Buffer(channels=channels)
 
         for i, d in enumerate(_mockdata(n, channel_count)):
-            b.append(Record(d, float(i)))
+            b.append(Record(d, float(i), None))
 
         self.assertEqual(len(b), n)
         b.cleanup()
@@ -120,9 +120,9 @@ class TestBuffer(unittest.TestCase):
 
         for i, d in enumerate(_mockdata(n, channel_count)):
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
-        rows = b.query(start=b.start_time)
+        rows = b.query(start=b.start_time, field='timestamp')
         self.assertEqual(len(rows), n)
         self.assertEqual(len(b.all()), n)
 
@@ -140,7 +140,7 @@ class TestBuffer(unittest.TestCase):
         for i, d in enumerate(_mockdata(n, channel_count)):
             d[trg_index] = 1.0 if i >= 10 else 0.0
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
         rows = b.query_data(filters=[("TRG", ">", 0)],
                             ordering=("timestamp", "asc"),
@@ -163,7 +163,7 @@ class TestBuffer(unittest.TestCase):
 
         for i, d in enumerate(_mockdata(n, channel_count)):
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
         with pytest.raises(Exception):
             b.query_data(filters=[("ch3", ">", 0)])
@@ -179,7 +179,7 @@ class TestBuffer(unittest.TestCase):
 
         for i, d in enumerate(_mockdata(n, channel_count)):
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
         with pytest.raises(Exception):
             b.query_data(filters=[("TRG", "> 0; DROP TABLE data; --", 0)])
@@ -198,7 +198,7 @@ class TestBuffer(unittest.TestCase):
         for i, d in enumerate(_mockdata(n, channel_count)):
             d[trg_index] = 1.0 if i >= 10 else 0.0
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
         with pytest.raises(Exception):
             b.query_data(ordering=("ch3", "asc"))
@@ -216,7 +216,7 @@ class TestBuffer(unittest.TestCase):
         for i, d in enumerate(_mockdata(n, channel_count)):
             d[trg_index] = 1.0 if i >= 10 else 0.0
             timestamp = float(i)
-            b.append(Record(d, timestamp))
+            b.append(Record(d, timestamp, None))
 
         with pytest.raises(Exception):
             b.query_data(ordering=("ch1", "ascending"))

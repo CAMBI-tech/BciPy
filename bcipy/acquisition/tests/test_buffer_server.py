@@ -38,7 +38,8 @@ class TestBufferServer(unittest.TestCase):
         n = 500
         for i in range(n):
             d = self._new_data()
-            buffer_server.append(self.pid, Record(data=d, timestamp=i))
+            buffer_server.append(self.pid, Record(data=d, timestamp=i,
+                                                  rownum=None))
 
         self.assertEqual(buffer_server.count(self.pid), n)
 
@@ -46,12 +47,13 @@ class TestBufferServer(unittest.TestCase):
         n = 150
         data = [self._new_data() for x in range(n)]
         for i, d in enumerate(data):
-            buffer_server.append(self.pid, Record(data=d, timestamp=i))
+            buffer_server.append(self.pid, Record(data=d, timestamp=i,
+                                                  rownum=None))
 
         start = 10
         end = 20
 
-        result = buffer_server.get_data(self.pid, start, end)
+        result = buffer_server.get_data(self.pid, start, end, field='timestamp')
         self.assertEqual([r.data for r in result], data[start:end], "Should \
             return the slice of data requested.")
 
@@ -62,7 +64,8 @@ class TestBufferServer(unittest.TestCase):
 
         for i, d in enumerate(data):
             d[-1] = 1.0 if i >= 100 else 0.0
-            buffer_server.append(self.pid, Record(data=d, timestamp=i))
+            buffer_server.append(self.pid, Record(data=d, timestamp=i,
+                                                  rownum=None))
 
         result = buffer_server.query(self.pid,
                                      filters=[(last_channel, ">", 0)],
@@ -76,7 +79,8 @@ class TestBufferServer(unittest.TestCase):
         n = 150
         data = [self._new_data() for x in range(n)]
         for i, d in enumerate(data):
-            buffer_server.append(self.pid, Record(data=d, timestamp=i))
+            buffer_server.append(self.pid, Record(data=d, timestamp=i,
+                                                  rownum=None))
 
         result = buffer_server.get_data(self.pid)
         self.assertEqual([r.data for r in result], data, "Should return all \
@@ -90,9 +94,9 @@ class TestBufferServer(unittest.TestCase):
             d = [np.random.uniform(-1000, 1000) for cc in
                  range(self.channel_count)]
             if i % 2 == 0:
-                buffer_server.append(self.pid, Record(d, i))
+                buffer_server.append(self.pid, Record(d, i, None))
             else:
-                buffer_server.append(pid2, Record(d, i))
+                buffer_server.append(pid2, Record(d, i, None))
 
         self.assertEqual(buffer_server.count(self.pid), n / 2)
         self.assertEqual(buffer_server.count(pid2), n / 2)

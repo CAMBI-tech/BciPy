@@ -151,23 +151,23 @@ class Buffer(object):
         return self.query_data(ordering=("timestamp", "desc"),
                                max_results=limit)
 
-    def query(self, start, end=None):
-        """Query the buffer for a time slice.
+    def query(self, start, end=None, field="_rowid_"):
+        """Query the buffer by for a slice of data.
 
         Parameters
         ----------
-            start : timestamp
-            end : timestamp, optional
+            start : number, starting value
+            end : number, optional; ending value
                 if missing returns the rest of the data
+            field : str, optional; query field.
         Returns
         -------
-            list of tuple(timestamp, data)
+            list of Records
         """
+        filters = [(field, ">=", start)]
         if end:
-            return self.query_data(filters=[("timestamp", ">=", start),
-                                            ("timestamp", "<", end)])
-        else:
-            return self.query_data(filters=[("timestamp", ">=", start)])
+            filters.append((field, "<", end))
+        return self.query_data(filters=filters)
 
     def query_data(self, filters=[], ordering=None, max_results=None):
         """Query the data with the provided filters.
@@ -189,13 +189,13 @@ class Buffer(object):
         valid_ops = ["<", "<=", ">", ">=", "=", "==", "!=", "<>", "IS",
                      "IS NOT", "IN"]
         for field, op, value in filters:
-            if not field in self.fields:
-                raise Exception("Invalid SQL data filter field. Must be one "\
-                 "of: " + str(self.fields))
+            if not field in ["_rowid_"] + self.fields:
+                raise Exception("Invalid SQL data filter field. Must be one "
+                                "of: " + str(self.fields))
             elif not op in valid_ops:
                 raise Exception("Invalid SQL operator")
 
-        select = "select * from data"
+        select = "select _rowid_, * from data"
 
         where = ''
         params = ()
@@ -246,7 +246,7 @@ def _convert_row(row):
     ----------
         row : tuple
     """
-    return Record(data=list(row[1:]), timestamp=row[0])
+    return Record(data=list(row[2:]), timestamp=row[1], rownum=row[0])
 
 
 def _main():
@@ -281,9 +281,9 @@ def _main():
             i += 1
 
     starttime = timeit.default_timer()
-    for d in data(n, channel_count):
+    for j, d in enumerate(data(n, channel_count)):
         timestamp = timeit.default_timer()
-        b.append(Record(d, timestamp))
+        b.append(Record(d, timestamp, None))
 
     endtime = timeit.default_timer()
     totaltime = endtime - starttime
@@ -291,6 +291,9 @@ def _main():
     print("Total records inserted: " + str(len(b)))
     print("Total time: " + str(totaltime))
     print("Records per second: " + str(n / totaltime))
+
+    print("First 5 records")
+    print(b.query(start=0, end=6))
 
     b.cleanup()
 
