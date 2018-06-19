@@ -35,12 +35,12 @@ class LslDataServer(StoppableThread):
     """
 
     def __init__(self, params, generator, include_meta=True,
-                 add_markers=False):
+                 add_markers=False, name='TestStream'):
         super(LslDataServer, self).__init__()
 
         self.channels = params['channels']
         self.hz = int(params['hz'])
-        stream_name = params.get('name', 'TestStream')
+        stream_name = params.get('name', name)
 
         params['channel_count'] = len(self.channels)
         self.channel_count = len(self.channels)
@@ -144,6 +144,7 @@ def main():
                         help='sample rate in hz')
 
     parser.add_argument('-m', '--markers', action="store_true", default=False)
+    parser.add_argument('-n', '--name', default='LSL')
     args = parser.parse_args()
 
     params = {'channels': args.channels.split(','),
@@ -156,7 +157,7 @@ def main():
     markers = True if args.markers else False
     try:
         server = LslDataServer(params=params, generator=generator,
-                               add_markers=markers)
+                               add_markers=markers, name=args.name)
 
         logging.debug("New server created")
         server.start()
