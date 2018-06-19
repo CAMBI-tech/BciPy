@@ -93,12 +93,12 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq._device.fs,
+            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=task_list,
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
-                                                 device_name=self.daq._device.name,
-                                                 device_channels=self.daq._device.channels)
+                                                 device_name=self.daq.device_info.name,
+                                                 device_channels=self.daq.device_info.channels)
         except Exception as e:
             print("Error initializing Copy Phrase Task")
             raise e
