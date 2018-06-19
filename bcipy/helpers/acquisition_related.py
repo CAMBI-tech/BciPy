@@ -75,7 +75,7 @@ def init_eeg_acquisition(parameters, save_folder,
             channels = ['ch{}'.format(c + 1) for c in range(16)]
             dataserver = LslDataServer(params={'name': 'LSL',
                                                'channels': channels,
-                                               'hz': 512},
+                                               'hz': 256},
                                        generator=generator.random_data(
                                            channel_count=16))
             await_start(dataserver)
