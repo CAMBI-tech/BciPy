@@ -10,6 +10,7 @@ from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
+import logging
 
 
 class RSVPCopyPhraseTask(Task):
@@ -37,6 +38,7 @@ class RSVPCopyPhraseTask(Task):
         file_save : str,
             path location of where to save data from the session
     """
+
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake):
 
@@ -78,6 +80,11 @@ class RSVPCopyPhraseTask(Task):
         self.is_txt_sti = parameters['is_txt_sti']
         self.eeg_buffer = parameters['eeg_buffer_len']
         self.copy_phrase = parameters['text_task']
+        self.spelled_letters_count = int(
+            parameters['spelled_letters_count'])
+        if self.spelled_letters_count > len(self.copy_phrase):
+            logging.debug("Already spelled letters exceeds phrase length.")
+            self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
@@ -86,9 +93,9 @@ class RSVPCopyPhraseTask(Task):
         self.down_sample_rate = parameters['down_sampling_rate']
 
     def execute(self):
-        text_task = str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)])
+        text_task = str(self.copy_phrase[0:self.spelled_letters_count])
         task_list = [(str(self.copy_phrase),
-                      str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)]))]
+                      str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
