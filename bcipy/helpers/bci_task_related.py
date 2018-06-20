@@ -1,6 +1,7 @@
 import os
 from psychopy import visual, event
 import numpy as np
+from typing import Any
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -75,7 +76,7 @@ def process_data_for_decision(sequence_timing, daq):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
-        signal processing and classifiers.
+    signal processing and classifiers.
 
     Parameters
     ----------
@@ -122,15 +123,26 @@ def process_data_for_decision(sequence_timing, daq):
             if len(raw_data) < data_limit:
                 raise Exception("Not enough data received")
 
-        # Take only the sensor data from raw data and transpose it
-        raw_data = np.array([np.array(raw_data[i][0]) for i in
-                             range(len(raw_data))]).transpose()
+        # Take only the sensor data from raw data and transpose it;
+        raw_data = np.array([np.array([_float_val(col) for col in record.data])
+                             for record in raw_data],
+                            dtype=np.float64).transpose()
 
     except Exception as e:
         print("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info
+
+
+def _float_val(col: Any) -> float:
+    """Convert marker data to float values so we can put them in a
+    typed np.array. The marker column has type float if it has a 0.0
+    value, and would only have type str for a marker value."""
+    if isinstance(col, str):
+        return 1.0
+    else:
+        return float(col)
 
 
 def trial_complete_message(win, parameters):
@@ -276,7 +288,8 @@ def trial_reshaper(trial_target_info: list,
             timing_info = list(filter(lambda x: x != -1, timing_info))
 
             # triggers in seconds are mapped to triggers in number of samples.
-            triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+            triggers = list(
+                map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -355,10 +368,12 @@ def trial_reshaper(trial_target_info: list,
             # Since there is only one sequence, all trials are in the sequence
             trials_per_seq = len(triggers)
         else:
-            raise Exception('Trial_reshaper does not work in this operating mode.')
+            raise Exception(
+                'Trial_reshaper does not work in this operating mode.')
 
         # Return our trials, labels and some useful information about the arrays
         return reshaped_trials, labels, num_of_sequences, trials_per_seq
 
     except Exception as e:
-        raise Exception(f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
+        raise Exception(
+            f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
