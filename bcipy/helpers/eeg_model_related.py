@@ -70,7 +70,7 @@ class CopyPhraseWrapper(object):
         del time[letters.index('+')]
         del letters[letters.index('+')]
 
-        x, y, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
+        x, _, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map)
 

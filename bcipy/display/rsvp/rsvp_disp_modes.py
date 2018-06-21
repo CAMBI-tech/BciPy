@@ -40,7 +40,8 @@ class CopyPhraseDisplay(RSVPDisplay):
                  trigger_type='image'):
         """ Initializes Copy Phrase Task Objects """
 
-        tmp = visual.TextStim(win=window, font=font_task, text=static_text_task)
+        tmp = visual.TextStim(win=window, font=font_task,
+                              text=static_text_task)
         static_pos_task = (
             tmp.boundingBox[0] / window.size[0] - 1, 1 - height_task)
 
@@ -91,7 +92,10 @@ class CopyPhraseDisplay(RSVPDisplay):
             Args:
                 text(string): new text for task state
                 color_list(list[string]): list of colors for each """
-        tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=text)
+        # An empty string will cause an error when we attempt to find its
+        # bounding box.
+        txt = text if len(text) > 0 else ' '
+        tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=txt)
         x_pos_task = tmp2.boundingBox[0] / self.win.size[0] - 1
         pos_task = (x_pos_task, self.text[0].pos[1] - self.task.height)
 

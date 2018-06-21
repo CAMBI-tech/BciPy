@@ -165,7 +165,7 @@ def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
     else:
         # get relevant spelling info to determine what was and should be typed
         spelling_length = len(typed_text)
-        last_typed = typed_text[-1]
+        last_typed = typed_text[-1] if typed_text else None
         correct_letter = copy_text[spelling_length - 1]
 
         # because there is the impassibility of incorrect letter and correction,
