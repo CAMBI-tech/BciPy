@@ -4,11 +4,18 @@ import wx
 
 
 class RSVPKeyboard(BCIGui):
+
+    event_started = False
+
     def bind_action(self, action: str, btn: wx.Button) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
         elif action == 'edit_parameters':
             self.Bind(wx.EVT_BUTTON, self.edit_parameters, btn)
+        elif action == 'refresh':
+            self.Bind(wx.EVT_BUTTON, self.refresh, btn)
+        elif action == 'offline_analysis':
+            self.Bind(wx.EVT_BUTTON, self.offline_analysis, btn)
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
@@ -30,6 +37,7 @@ class RSVPKeyboard(BCIGui):
                 mode, experiment_type, username)
 
             subprocess.call(cmd, shell=True)
+            self.event_started = True
 
     def check_input(self) -> bool:
         """Check Input."""
@@ -41,14 +49,24 @@ class RSVPKeyboard(BCIGui):
                 dialog.ShowModal()
                 dialog.Destroy()
                 return False
-        except:
+            if self.event_started:
+                return False
+        except Exception as e:
             dialog = wx.MessageDialog(
-                self, "Error, expected input field for this function",
+                self, f'Error, {e}',
                 'Info', wx.OK | wx.ICON_WARNING)
             dialog.ShowModal()
             dialog.Destroy()
             return False
         return True
+
+    def offline_analysis(self, event: wx.Event) -> None:
+        cmd = 'python bcipy/signal_model/offline_analysis.py'
+        subprocess.call(cmd, shell=True)
+        event_started = True
+
+    def refresh(self, event: wx.Event) -> None:
+        self.event_started = False
 
     def _cast_experiment_type(self, experiment_type_string: str) -> None:
         if experiment_type_string == 'Calibration':
@@ -75,48 +93,56 @@ gui = RSVPKeyboard(
 
 # STATIC TEXT!
 gui.add_static_text(
-    text='RSVPKeyboard', position=(120, 0), size=40, color='white')
+    text='RSVPKeyboard', position=(185, 0), size=25, color='white')
 gui.add_static_text(
-    text='User ID:', position=(170, 70), size=15, color='white')
+    text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
 gui.add_static_text(
-    text='Chose your experiment type:',
+    text='2.) Chose your experiment type:',
     position=(75, 250), size=15, color='white')
 
 # BUTTONS!
 gui.add_button(
     message="Calibration",
     position=(75, 300), size=(100, 100),
-    color='red',
+    color='grey',
     action='launch_bci')
 gui.add_button(
     message="Copy Phrase", position=(200, 300),
     size=(100, 100),
-    color='blue',
+    color='grey',
     action='launch_bci')
 gui.add_button(
     message="Copy Phrase C.", position=(325, 300),
     size=(100, 100),
-    color='green',
+    color='grey',
     action='launch_bci')
 gui.add_button(
     message="Free Spell", position=(450, 300),
     size=(100, 100),
-    color='orange',
+    color='grey',
     action='launch_bci')
 gui.add_button(
     message='Edit Parameters', position=(0, 450),
     size=(100, 50), color='white',
     action='edit_parameters')
+gui.add_button(
+    message='Calculate AUC', position=(535, 450),
+    size=(100, 50), color='white',
+    action='offline_analysis')
+gui.add_button(
+    message='Refresh', position=(585, 325),
+    size=(50, 50), color='white',
+    action='refresh')
 
 # TEXT INPUT
-gui.add_text_input(position=(170, 100), size=(250, 25))
+gui.add_text_input(position=(75, 150), size=(250, 25))
 
 
 # IMAGES
 gui.add_image(
-    path='bcipy/static/images/gui_images/ohsu.png', position=(5, 0), size=125)
+    path='bcipy/static/images/gui_images/ohsu.png', position=(10, 0), size=100)
 gui.add_image(
-    path='bcipy/static/images/gui_images/neu.png', position=(510, 0), size=125)
+    path='bcipy/static/images/gui_images/neu.png', position=(530, 0), size=100)
 
 
 # Make the GUI Show now
