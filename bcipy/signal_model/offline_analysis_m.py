@@ -4,7 +4,7 @@ from bcipy.signal_processing.sig_pro import sig_pro
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.signal_model.mach_learning.train_model import train_m_estimator_pipeline
-from bcipy.helpers.data_visualization import generate_offline_analysis_screen
+from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
 from bcipy.helpers.acquisition_related import analysis_channels
 from time import time
 import pickle
