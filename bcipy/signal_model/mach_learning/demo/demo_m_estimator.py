@@ -27,8 +27,8 @@ def demo_m_estimator():
     sample_mean = np.mean(X, axis=0)
     sample_sigma = 1./N*np.dot(np.transpose(X-sample_mean), X-sample_mean)
 
-    print 'Sample mean - true mean:\n', sample_mean - true_mean
-    print 'Sample cov - true cov:\n', sample_sigma - true_sigma
+    print('Sample mean - true mean:\n', sample_mean - true_mean)
+    print('Sample cov - true cov:\n', sample_sigma - true_sigma)
 
     # inverse CDF of chi2 with p degrees of freedom at q'th quantile
     c_square = sc.stats.chi2.ppf(q, p)
@@ -51,7 +51,7 @@ def demo_m_estimator():
 
         s_a_c = np.sum(np.abs(M_est_mean_new-M_est_mean_old)) +\
                   np.sum(np.sum(np.abs(M_est_sigma_new-M_est_sigma_old)))
-        print s_a_c
+        print(s_a_c)
         iteration += 1
 
     print('\n\nFinished in {} iterations.\n\n'.format(iteration))

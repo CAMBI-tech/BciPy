@@ -52,6 +52,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             x_valid = fold_x[list_valid]
             y_valid = fold_y[list_valid]
 
+            # In robust method, attribute current_fold exists and is assigned.
+            # if in another mode it does not exist, we will simply pass.
             try:
                 model.pipeline[0].current_fold = idx_fold
                 model.pipeline[1].current_fold = idx_fold

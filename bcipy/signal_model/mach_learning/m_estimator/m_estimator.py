@@ -5,9 +5,9 @@ import scipy as sc
 
 def eigsorted(cov):
     """
-    Find and sort eigen values and vectors
+    Find and sort Eigenvalues and vectors
     :param cov: covariance matrix
-    :return: sorted eigen values and vectors
+    :return: sorted Eigenvalues and vectors
     """
 
     vals, vecs = np.linalg.eigh(cov)
@@ -15,30 +15,30 @@ def eigsorted(cov):
     return vals[order], vecs[:, order]
 
 
-def u_func(t, b, c_square):
+def u_func(mahalanobis_dist, b, c_square):
     """
     Huber's loss function
-    :param t: Mahalanobis distance
-    :param b: a constant in p
-    :param c_square: a constant in p and q
+    :param mahalanobis_dist: Mahalanobis distance
+    :param b: A constant in p (number of features)
+    :param c_square: A constant in p and q (trade-off variable)
     :return: weight of sample
     """
 
-    if t <= c_square:
+    if mahalanobis_dist <= c_square:
         return 1./b
     else:
-        return c_square/(t*b)
+        return c_square/(mahalanobis_dist*b)
 
 
 def mean_update(X, mean, sigma_inv, b, c_square):
     """
     Update mean estimate
     :param X: Data
-    :param mean: current mean
-    :param sigma_inv: current covariance inverse
-    :param b: a constant in p
-    :param c_square: a constant in p and q
-    :return: new mean
+    :param mean: Current mean
+    :param sigma_inv: Current covariance inverse
+    :param b: A constant in p (number of features)
+    :param c_square: A constant in p and q (trade-off variable)
+    :return: New mean
     """
 
     N, p = X.shape
@@ -46,8 +46,8 @@ def mean_update(X, mean, sigma_inv, b, c_square):
     sum_u = 0
     for z in range(N):
 
-        t = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean)
-        u = u_func(t=t, b=b, c_square=c_square)
+        mahalanobis_dist = np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean)
+        u = u_func(mahalanobis_dist=mahalanobis_dist, b=b, c_square=c_square)
 
         sum_u += u
         mean_hat += u*X[z]
@@ -61,18 +61,18 @@ def sigma_update(X, mean, sigma_inv, b, c_square):
     """
     Update sigma estimate
     :param X: Data
-    :param mean: current mean
-    :param sigma_inv: current covariance inverse
-    :param b: a constant in p
-    :param c_square: a constant in p and q
-    :return: new sigma
+    :param mean: Current mean
+    :param sigma_inv: Current covariance inverse
+    :param b: A constant in p (number of features)
+    :param c_square: A constant in p and q (trade-off variable)
+    :return: New sigma
     """
 
     N, p = X.shape
     sigma_hat = np.zeros((p,p))
 
     for z in range(N):
-        sigma_hat += 1./N*u_func(t=np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean), b=b, c_square=c_square)*np.outer(X[z]- mean, X[z]- mean)
+        sigma_hat += 1./N*u_func(mahalanobis_dist=np.dot(np.dot(X[z] - mean, sigma_inv), X[z] - mean), b=b, c_square=c_square)*np.outer(X[z]- mean, X[z]- mean)
 
     return sigma_hat
 

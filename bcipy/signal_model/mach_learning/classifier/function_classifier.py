@@ -117,13 +117,13 @@ class RegularizedDiscriminantAnalysis:
         self.gam = param[1]
 
         # Shrinked class covariances
-        shr_cov_i = [((1 - self.lam) * self.S_i[i] + self.lam * self.S) /
+        shrinked_covariance_i = [((1 - self.lam) * self.S_i[i] + self.lam * self.S) /
                      ((1 - self.lam) * self.N_i[i] + self.lam * self.N)
                      for i in range(len(self.class_i))]
 
         # Regularized class covariances
-        reg_cov_i = [((1 - self.gam) * shr_cov_i[i] +
-                      self.gam / self.k * np.trace(shr_cov_i[i]) *
+        reg_cov_i = [((1 - self.gam) * shrinked_covariance_i[i] +
+                      self.gam / self.k * np.trace(shrinked_covariance_i[i]) *
                       np.eye(self.k)) for i in range(len(self.class_i))]
 
         self.inv_reg_cov_i, self.log_det_reg_cov_i = [], []
@@ -202,7 +202,7 @@ class MDiscriminantAnalysis:
         gam(float): threshold param (a.k.a. regularization param)
         means(list): Means' of each channel
         covariances(list): Covariances' of each channel
-        S_matrices(list): Covariance times N for each class
+        covariance_times_N_matrices(list): Covariance times N for each class
         S(list): Covariance times N for all data
         N_list(list): List of number of samples of each class
         class_list(list): List of classes
@@ -214,7 +214,7 @@ class MDiscriminantAnalysis:
         # means and covariances of each channel with the order inherent in data.
         self.means = []
         self.covariances = []
-        self.S_matrices = []  # Covariance times N for each class
+        self.covariance_times_N_matrices = []  # Covariance times N for each class
         self.S = []
         self.N_list = []  # List of number of samples of each class
         self.class_list = []
@@ -225,7 +225,7 @@ class MDiscriminantAnalysis:
         for z in range(10):  # add an empty list to the list will store every folds stats.
             self.means.append([])
             self.covariances.append([])
-            self.S_matrices.append([])
+            self.covariance_times_N_matrices.append([])
             self.S.append([])
             self.N_list.append([])
             self.priors.append([])
@@ -257,22 +257,22 @@ class MDiscriminantAnalysis:
 
                 self.means[self.current_fold].append(mean)
                 self.covariances[self.current_fold].append(cov)
-                self.S_matrices[self.current_fold].append(cov*(self.N_list[self.current_fold][-1]))
+                self.covariance_times_N_matrices[self.current_fold].append(cov*(self.N_list[self.current_fold][-1]))
 
             self.priors[self.current_fold] = [self.N_list[self.current_fold][0]*1./N, self.N_list[self.current_fold][1]*1./N]
 
             self.S[self.current_fold] = np.zeros((p, p))
             for i in range(len(self.class_list)):
-                self.S[self.current_fold] += self.S_matrices[self.current_fold][i]
+                self.S[self.current_fold] += self.covariance_times_N_matrices[self.current_fold][i]
 
         # Shrinked class covariances
-        shr_cov_i = [((1 - self.lam) * self.S_matrices[self.current_fold][i] + self.lam * self.S[self.current_fold]) /
+        shrinked_covariance_i = [((1 - self.lam) * self.covariance_times_N_matrices[self.current_fold][i] + self.lam * self.S[self.current_fold]) /
                      ((1 - self.lam) * self.N_list[self.current_fold][i] + self.lam * N)
                      for i in range(len(self.class_list))]
 
         # Regularized class covariances
-        reg_cov_i = [((1 - self.gam) * shr_cov_i[i] +
-                      self.gam / p * np.trace(shr_cov_i[i]) *
+        reg_cov_i = [((1 - self.gam) * shrinked_covariance_i[i] +
+                      self.gam / p * np.trace(shrinked_covariance_i[i]) *
                       np.eye(p)) for i in range(len(self.class_list))]
 
         # Make sure part below works fine
@@ -294,6 +294,14 @@ class MDiscriminantAnalysis:
         return scores[:, 1] - scores[:, 0]
 
     def fit_transform(self, x, y):
+        """
+        Call fit and transform methods on parameter x.
+
+        :param x: Design matrix, dimension Nxp where N is number
+            of samples and number of p is features.
+        :param y: labels
+        :return: Discriminant scores
+        """
 
         self.fit(x, y)
         return self.transform(x)

@@ -36,8 +36,8 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.add(rda)
 
     # Get the AUC before the regularization
-    sc = model.fit_transform(x, y)
-    fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
+    scores = model.fit_transform(x, y)
+    fpr, tpr, _ = metrics.roc_curve(y, scores, pos_label=1)
     auc_init = metrics.auc(fpr, tpr)
 
     # Cross validate
@@ -49,7 +49,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Insert the density estimates to the model and train
     bandwidth = 1.06 * min(
-        np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
+        np.std(scores), iqr(scores) / 1.34) * np.power(x.shape[0], -0.2)
     model.add(KernelDensityEstimate(bandwidth=bandwidth))
     model.fit(x, y)
 
@@ -97,11 +97,11 @@ def train_m_estimator_pipeline(x, y):
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
 
-    sc = model.fit_transform(x, y)
-    fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
+    scores = model.fit_transform(x, y)
+    fpr, tpr, _ = metrics.roc_curve(y, scores, pos_label=1)
     auc_all = metrics.auc(fpr, tpr)
 
-    bandwidth = 1.06 * min(np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
+    bandwidth = 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(x.shape[0], -0.2)
 
     model = Pipeline()
 
