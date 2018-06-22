@@ -107,7 +107,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
                                              disp=False,
                                              cons=[cst_1, cst_2, cst_3,
-                                                   cst_4], rhobeg=.8, rhoend=.05)
+                                                   cst_4], rhobeg=.8, rhoend=.025)
     return arg_opt
 
 
@@ -140,11 +140,11 @@ def cross_validate_model(x, y, model, k_folds=10):
     # Given a model and data, create folds and apply k fold cross validation.
     # The aim here is to evaluate our model and estimate its performance as good as we can.
 
-    skf = StratifiedKFold(n_splits=k_folds)
+    stratified_k_fold = StratifiedKFold(n_splits=k_folds)
 
     auc_list = []
     fold = 0
-    for train_index, test_index in skf.split(X=x[0], y=y):
+    for train_index, test_index in stratified_k_fold.split(X=x[0], y=y):
         x_train, y_train = x[:, train_index, :], y[train_index]
         x_test, y_test = x[:, test_index, :], y[test_index]
 

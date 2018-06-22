@@ -36,10 +36,10 @@ class ChannelWisePrincipalComponentAnalysis:
         """ Inherits PCA fit() function from scikit-learn. Fits the
             transformation matrix wrt. tolerance to each PCA.
             Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x k observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
+                x(ndarray[float]): num_channels x num_samples x k data array
+                y(ndarray[int]): num_samples x k observation (class) array
+                    num_samples is number of samples k is dimensionality of features
+                    num_channels is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
                 """
 
@@ -68,13 +68,13 @@ class ChannelWisePrincipalComponentAnalysis:
         """ Fits parameters wrt. the input matrix and outputs corresponding
             reduced form feature vector.
             Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x k observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
+                x(ndarray[float]): num_channels x num_samples x k data array
+                y(ndarray[int]): num_samples x k observation (class) array
+                    num_samples is number of samples k is dimensionality of features
+                    num_channels is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
             Return:
-                y(ndarray(float)): N x ( sum_i (C x k')) data array
+                y(ndarray(float)): num_samples x ( sum_i (num_channels x k')) data array
                     where k' is the new dimension for each PCA
                 """
 
@@ -98,21 +98,21 @@ class MPCA:
     def fit(self, x, y=None, var_tol=None):
         """ Find channel wise robust covariances and apply pca.
             Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x 1 observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
+                x(ndarray[float]): num_channels x num_samples x k data array
+                y(ndarray[int]): num_samples x 1 observation (class) array
+                    num_samples is number of samples k is dimensionality of features
+                    num_channels is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
                 """
 
-        C, N, p = x.shape  # C: number of channels, N:Number of samples, p: number of parameters
+        num_channels, num_samples, num_features = x.shape
 
         if not self.transform_matrix_list[self.current_fold]:  # if does not exist
 
-            for channel in range(C):
-                X = x[channel]
+            for channel in range(num_channels):
+                X_channel = x[channel]
 
-                M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
+                M_est_mean, M_est_sigma = robust_mean_covariance(data=X_channel)
                 vals, vecs = eigsorted(M_est_sigma)
 
                 lim = vals[0]*self.var_tol
@@ -127,17 +127,17 @@ class MPCA:
 
     def transform(self, x, y=None):
 
-        C, N, p = x.shape
+        num_channels, num_samples, num_features = x.shape
 
         new_x = []
-        for channel in range(C):
+        for channel in range(num_channels):
             new_x.append(np.dot(x[channel], self.transform_matrix_list[self.current_fold][channel]))
 
         concatenated_new_x = []
 
-        for sample_index in range(N):
+        for sample_index in range(num_samples):
             new_sample = []
-            for channel in range(C):
+            for channel in range(num_channels):
                 new_sample = np.append(new_sample, new_x[channel][sample_index])
             concatenated_new_x.append(new_sample)
 
@@ -147,13 +147,13 @@ class MPCA:
         """ Fits parameters wrt. the input matrix and outputs corresponding
             reduced form feature vector.
             Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x k observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
+                x(ndarray[float]): num_channels x num_samples x k data array
+                y(ndarray[int]): num_samples x k observation (class) array
+                    num_samples is number of samples k is dimensionality of features
+                    num_channels is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
             Return:
-                y(ndarray(float)): N x ( sum_i (C x k')) data array
+                y(ndarray(float)): num_samples x ( sum_i (num_channels x k')) data array
                     where k' is the new dimension for each PCA
                 """
 

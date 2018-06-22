@@ -9,23 +9,23 @@ import scipy as sc
 def demo_m_estimator():
     # Simple demo for m estimators.
 
-    N = 150
+    num_samples = 150
     p = 2
     q = .5
     true_mean = 0 + 0*np.random.standard_normal(p)
     true_sigma = make_spd_matrix(n_dim=p)
 
     # Outliers have a completely different distribution.
-    N_outlier = int(N*.05)
+    N_outlier = int(num_samples*.05)
     true_mean_outlier = 3 + 0*np.random.standard_normal(p)
     true_sigma_outlier = make_spd_matrix(n_dim=p)
 
-    X_positive = np.random.multivariate_normal(mean=true_mean, cov=true_sigma, size=N-N_outlier)
+    X_positive = np.random.multivariate_normal(mean=true_mean, cov=true_sigma, size=num_samples-N_outlier)
     X_outlier = np.random.multivariate_normal(mean=true_mean_outlier, cov=true_sigma_outlier, size=N_outlier)
     X = np.vstack((X_positive, X_outlier))
 
     sample_mean = np.mean(X, axis=0)
-    sample_sigma = 1./N*np.dot(np.transpose(X-sample_mean), X-sample_mean)
+    sample_sigma = 1./num_samples*np.dot(np.transpose(X-sample_mean), X-sample_mean)
 
     print('Sample mean - true mean:\n', sample_mean - true_mean)
     print('Sample cov - true cov:\n', sample_sigma - true_sigma)

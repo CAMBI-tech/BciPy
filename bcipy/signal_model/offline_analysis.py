@@ -138,4 +138,4 @@ if __name__ == "__main__":
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
 
-    offline_analysis(args.data_folder, parameters)
+    offline_analysis(args.data_folder, parameters, mode=args.mode)
