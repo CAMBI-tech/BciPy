@@ -100,6 +100,14 @@
     "recommended_values": "",
     "type": "int"
   },
+  "max_minutes": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Max Time to Spell",
+    "helpTip": "The maximum time (in minutes) allowed to attempt to spell a Copy Phrase before stopping.",
+    "recommended_values": "",
+    "type": "int"
+  },
   "color_text": {
     "value": "white",
     "section": "bci_config",
