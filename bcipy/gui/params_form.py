@@ -167,7 +167,7 @@ class Form(wx.Panel):
 
     # Callback methods:
     def onSave(self, event: wx.EVT_BUTTON) -> None:
-        logging.debug("Saving data")
+        logging.debug("Saving parameter data")
 
         with open(self.json_file, 'w') as outfile:
             json.dump({k: v._asdict() for k, v in self.params.items()},
