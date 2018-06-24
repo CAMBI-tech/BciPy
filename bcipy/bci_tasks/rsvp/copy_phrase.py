@@ -10,6 +10,7 @@ from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
+import logging
 
 
 class RSVPCopyPhraseTask(Task):
@@ -37,6 +38,7 @@ class RSVPCopyPhraseTask(Task):
         file_save : str,
             path location of where to save data from the session
     """
+
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake):
 
@@ -78,27 +80,33 @@ class RSVPCopyPhraseTask(Task):
         self.is_txt_sti = parameters['is_txt_sti']
         self.eeg_buffer = parameters['eeg_buffer_len']
         self.copy_phrase = parameters['text_task']
+        self.spelled_letters_count = int(
+            parameters['spelled_letters_count'])
+        if self.spelled_letters_count > len(self.copy_phrase):
+            logging.debug("Already spelled letters exceeds phrase length.")
+            self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
+        self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.fake = fake
         self.lmodel = lmodel
         self.classifier = classifier
         self.down_sample_rate = parameters['down_sampling_rate']
 
     def execute(self):
-        text_task = str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)])
+        text_task = str(self.copy_phrase[0:self.spelled_letters_count])
         task_list = [(str(self.copy_phrase),
-                      str(self.copy_phrase[0:int(len(self.copy_phrase) / 2)]))]
+                      str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq._device.fs,
+            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=task_list,
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
-                                                 device_name=self.daq._device.name,
-                                                 device_channels=self.daq._device.channels)
+                                                 device_name=self.daq.device_info.name,
+                                                 device_channels=self.daq.device_info.channels)
         except Exception as e:
             print("Error initializing Copy Phrase Task")
             raise e
@@ -209,7 +217,7 @@ class RSVPCopyPhraseTask(Task):
                     'current_text': text_task,
                     'copy_phrase': self.copy_phrase}
 
-                # Evaulate this sequence
+                # Evaluate this sequence
                 (target_letter, text_task, run) = \
                     fake_copy_phrase_decision(self.copy_phrase,
                                               target_letter,
@@ -239,7 +247,7 @@ class RSVPCopyPhraseTask(Task):
                     'current_text': text_task,
                     'copy_phrase': self.copy_phrase,
                     'next_display_state':
-                    copy_phrase_task.decision_maker.displayed_state,
+                        copy_phrase_task.decision_maker.displayed_state,
                     'lm_evidence': copy_phrase_task
                         .conjugator
                         .evidence_history['LM'][0]
@@ -267,9 +275,17 @@ class RSVPCopyPhraseTask(Task):
             _save_session_related_data(self.session_save_location, data)
 
             # Decide whether to keep the task going
-            if (text_task == self.copy_phrase or
-                    seq_counter > self.max_seq_length):
-
+            max_tries_exceeded = seq_counter >= self.max_seq_length
+            max_time_exceeded = data['total_time_spent'] >= self.max_seconds
+            if (text_task == self.copy_phrase or max_tries_exceeded or
+                    max_time_exceeded):
+                if max_tries_exceeded:
+                    logging.debug("Max tries exceeded: to allow for more tries"
+                                  " adjust the Maximum Sequence Length "
+                                  "(max_seq_len) parameter.")
+                if max_time_exceeded:
+                    logging.debug("Max time exceeded. To allow for more time "
+                                  "adjust the max_minutes parameter.")
                 run = False
 
             # Increment sequence counter

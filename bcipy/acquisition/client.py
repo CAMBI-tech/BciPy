@@ -391,7 +391,7 @@ if __name__ == "__main__":
 
     import argparse
     import json
-    import protocols.registry as registry
+    import bcipy.acquisition.protocols.registry as registry
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',
