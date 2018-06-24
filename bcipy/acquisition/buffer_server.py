@@ -10,6 +10,7 @@ MSG_QUERY_SLICE = 'query_slice'
 MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
+MSG_STARTED = 'started'
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -54,18 +55,20 @@ def _loop(mailbox, channels, archive_name):
         elif command == MSG_COUNT:
             sender.put(len(buf))
         elif command == MSG_QUERY_SLICE:
-            start, end = params
-            logging.debug("Sending query: {}".format((start, end)))
-            sender.put(buf.query(start, end))
+            start, end, field = params
+            logging.debug("Sending query: {}".format((start, end, field)))
+            sender.put(buf.query(start, end, field))
         elif command == MSG_QUERY:
             # Generic query
             filters, ordering, max_results = params
             sender.put(buf.query_data(filters, ordering, max_results))
+        elif command == MSG_STARTED:
+            sender.put(('started', 'ok'))
         else:
             logging.debug("Error; message not understood: {}".format(msg))
 
 
-def start(channels, archive_name):
+def start(channels, archive_name, async=False):
     """Starts a server Process.
 
     Parameters
@@ -75,6 +78,9 @@ def start(channels, archive_name):
             for each channel.
         archive_name : str
             underlying database name
+        async : boolean, optional; default False
+            if true, returns immediately; otherwise waits for a response
+            from the newly started server.
     Returns
     -------
         Queue used to communicate with this server instance.
@@ -84,6 +90,10 @@ def start(channels, archive_name):
     p = mp.Process(target=_loop,
                    args=(msg_queue, channels, archive_name))
     p.start()
+    if not async:
+        request = (MSG_STARTED, None)
+        _rpc(msg_queue, request, wait_reply=True)
+
     return msg_queue
 
 
@@ -160,8 +170,8 @@ def count(mailbox):
     return _rpc(mailbox, request)
 
 
-def get_data(mailbox, start=None, end=None):
-    """Query the buffer for a time slice of data records.
+def get_data(mailbox, start=None, end=None, field='_rowid_'):
+    """Query the buffer for a slice of data records.
 
     Parameters
     ----------
@@ -178,7 +188,7 @@ def get_data(mailbox, start=None, end=None):
     if start is None:
         request = (MSG_GET_ALL, None)
     else:
-        request = (MSG_QUERY_SLICE, (start, end))
+        request = (MSG_QUERY_SLICE, (start, end, field))
 
     return _rpc(mailbox, request)
 
@@ -220,9 +230,9 @@ def main():
     for i in range(n):
         d = [np.random.uniform(-1000, 1000) for cc in range(channel_count)]
         if i % 2 == 0:
-            append(pid1, Record(d, i))
+            append(pid1, Record(d, i, None))
         else:
-            append(pid2, Record(d, i))
+            append(pid2, Record(d, i, None))
 
     endtime = timeit.default_timer()
     totaltime = endtime - starttime

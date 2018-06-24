@@ -1,6 +1,7 @@
 import os
 from psychopy import visual, event
 import numpy as np
+from typing import Any
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -75,7 +76,7 @@ def process_data_for_decision(sequence_timing, daq):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
-        signal processing and classifiers.
+    signal processing and classifiers.
 
     Parameters
     ----------
@@ -93,10 +94,10 @@ def process_data_for_decision(sequence_timing, daq):
 
     # define my first and last time points #changeforrelease
     time1 = first_stim_time * daq.device_info.fs
-    time2 = (last_stim_time + 2) * daq.device_info.fs
+    time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
-    triggers = [(text, timing - time1)
+    triggers = [(text, ((timing * daq.device_info.fs) - time1))
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
@@ -120,17 +121,28 @@ def process_data_for_decision(sequence_timing, daq):
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
-                raise Exception("Not enough data recieved")
+                raise Exception("Not enough data received")
 
-        # Take only the sensor data from raw data and transpose it
-        raw_data = np.array([np.array(raw_data[i][0]) for i in
-                             range(len(raw_data))]).transpose()
+        # Take only the sensor data from raw data and transpose it;
+        raw_data = np.array([np.array([_float_val(col) for col in record.data])
+                             for record in raw_data],
+                            dtype=np.float64).transpose()
 
     except Exception as e:
         print("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info
+
+
+def _float_val(col: Any) -> float:
+    """Convert marker data to float values so we can put them in a
+    typed np.array. The marker column has type float if it has a 0.0
+    value, and would only have type str for a marker value."""
+    if isinstance(col, str):
+        return 1.0
+    else:
+        return float(col)
 
 
 def trial_complete_message(win, parameters):
@@ -208,7 +220,9 @@ def get_user_input(window, message, color, first_run=False):
 
 
 def trial_reshaper(trial_target_info: list,
-                   timing_info: list, filtered_eeg: np.array, fs: int, k: int, mode: str,
+                   timing_info: list,
+                   filtered_eeg: np.array,
+                   fs: int, k: int, mode: str,
                    offset: float=0,
                    channel_map: tuple=(
         1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
@@ -217,140 +231,149 @@ def trial_reshaper(trial_target_info: list,
 
     Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
         timing information (sec), filtered_eeg, sampling rate (fs), down-sampling rate (k),
-        mode of oberation (ex. 'calibration'),
+        mode of operation (ex. 'calibration'),
         offset (any calculated or hypothesized offsets in timings),
         channel map (which channels to include in reshaping) and
-        trial lenght (length of reshaped trials in secs)
+        trial length (length of reshaped trials in secs)
+
+    In all modes > calibration, we assume the timing info is given in samples not seconds.
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
 
     """
-    # Remove the channels that we are not interested in
-    channel_indexes_to_remove = []
-    for channel_index in range(len(filtered_eeg)):
-        if channel_map[channel_index] == 0:
-            channel_indexes_to_remove.append(channel_index)
+    try:
+        # Remove the channels that we are not interested in
+        channel_indexes_to_remove = []
+        for channel_index in range(len(filtered_eeg)):
+            if channel_map[channel_index] == 0:
+                channel_indexes_to_remove.append(channel_index)
 
-    # define our filtered eeg and frequency
-    filtered_eeg = np.delete(filtered_eeg,
-                             channel_indexes_to_remove, axis=0)
-    after_filter_frequency = fs / k
-    # Number of samples we are interested per trial
-    num_samples = int(trial_length * after_filter_frequency)
+        # define our filtered eeg and frequency
+        filtered_eeg = np.delete(filtered_eeg,
+                                 channel_indexes_to_remove, axis=0)
+        after_filter_frequency = fs / k
+        # Number of samples we are interested per trial
+        num_samples = int(trial_length * after_filter_frequency)
 
-    # MODE CALIBRATION
-    if mode == 'calibration':
-        trials_per_seq = []
-        count = 0
-        # Count every sequences trials
-        for symbol_info in trial_target_info:
-            if symbol_info == 'first_pres_target':
-                trials_per_seq.append(count)
-                count = 0
-            elif symbol_info == 'nontarget' or 'target':
-                count += 1
-            else:
-                raise Exception('Incorrectly formatted trigger file. \
-                See trial_reshaper documentation for expected input.')
+        # MODE CALIBRATION
+        if mode == 'calibration':
+            trials_per_seq = []
+            count = 0
+            # Count every sequences trials
+            for symbol_info in trial_target_info:
+                if symbol_info == 'first_pres_target':
+                    trials_per_seq.append(count)
+                    count = 0
+                elif symbol_info == 'nontarget' or 'target':
+                    count += 1
+                else:
+                    raise Exception('Incorrectly formatted trigger file. \
+                    See trial_reshaper documentation for expected input.')
 
-        # The first element is garbage. Get rid of it.
-        trials_per_seq = trials_per_seq[1:]
-        # Append the last sequences trial number
-        trials_per_seq.append(count)
-        # Make the list a numpy array.
-        trials_per_seq = np.array(trials_per_seq)
+            # The first element is garbage. Get rid of it.
+            trials_per_seq = trials_per_seq[1:]
+            # Append the last sequences trial number
+            trials_per_seq.append(count)
+            # Make the list a numpy array.
+            trials_per_seq = np.array(trials_per_seq)
 
-        # Mark every element in timing_info if 'first_pres_target'
-        for symbol_info_index in range(len(trial_target_info)):
-            if trial_target_info[symbol_info_index] == 'first_pres_target':
-                timing_info[symbol_info_index] = -1
+            # Mark every element in timing_info if 'first_pres_target'
+            for symbol_info_index in range(len(trial_target_info)):
+                if trial_target_info[symbol_info_index] == 'first_pres_target':
+                    timing_info[symbol_info_index] = -1
 
-        # Get rid of 'first_pres_target' trials information
-        trial_target_info = list(filter(lambda x: x != 'first_pres_target',
-                                        trial_target_info))
-        timing_info = list(filter(lambda x: x != -1, timing_info))
+            # Get rid of 'first_pres_target' trials information
+            trial_target_info = list(filter(lambda x: x != 'first_pres_target',
+                                            trial_target_info))
+            timing_info = list(filter(lambda x: x != -1, timing_info))
 
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+            # triggers in seconds are mapped to triggers in number of samples.
+            triggers = list(
+                map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
-        # 3 dimensional np array first dimension is channels
-        # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros(
-            (len(filtered_eeg), len(triggers), num_samples))
+            # 3 dimensional np array first dimension is channels
+            # second dimension is trials and third dimension is time samples.
+            reshaped_trials = np.zeros(
+                (len(filtered_eeg), len(triggers), num_samples))
 
-        # Label for every trial
-        labels = np.zeros(len(triggers))
+            # Label for every trial
+            labels = np.zeros(len(triggers))
 
-        for trial in range(len(triggers)):
-            # Assign targetness to labels for each trial
-            if trial_target_info[trial] == 'target':
-                labels[trial] = 1
+            for trial in range(len(triggers)):
+                # Assign targetness to labels for each trial
+                if trial_target_info[trial] == 'target':
+                    labels[trial] = 1
 
-            # For every channel append filtered channel data to trials
-            for channel in range(len(filtered_eeg)):
-                reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][
-                    triggers[trial]:triggers[trial] + num_samples]
+                # For every channel append filtered channel data to trials
+                for channel in range(len(filtered_eeg)):
+                    reshaped_trials[channel][trial] = \
+                        filtered_eeg[channel][
+                        triggers[trial]:triggers[trial] + num_samples]
 
-        num_of_sequences = int(sum(labels))
+            num_of_sequences = int(sum(labels))
 
-    # MODE COPY PHRASE
-    elif mode == 'copy_phrase':
+        # MODE COPY PHRASE
+        elif mode == 'copy_phrase':
 
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+            # triggers in samples are mapped to triggers in number of filtered samples.
+            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
 
-        # 3 dimensional np array first dimension is channels
-        # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros(
-            (len(filtered_eeg), len(triggers), num_samples))
+            # 3 dimensional np array first dimension is channels
+            # second dimension is trials and third dimension is time samples.
+            reshaped_trials = np.zeros(
+                (len(filtered_eeg), len(triggers), num_samples))
 
-        # Label for every trial
-        labels = np.zeros(len(triggers))
+            # Label for every trial
+            labels = np.zeros(len(triggers))
 
-        for trial in range(len(triggers)):
-            # Assign targetness to labels for each trial
-            if trial_target_info[trial] == 'target':
-                labels[trial] = 1
+            for trial in range(len(triggers)):
+                # Assign targetness to labels for each trial
+                if trial_target_info[trial] == 'target':
+                    labels[trial] = 1
 
-            # For every channel append filtered channel data to trials
-            for channel in range(len(filtered_eeg)):
-                reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][
-                    triggers[trial]:triggers[trial] + num_samples]
+                # For every channel append filtered channel data to trials
+                for channel in range(len(filtered_eeg)):
+                    reshaped_trials[channel][trial] = \
+                        filtered_eeg[channel][
+                        triggers[trial]:triggers[trial] + num_samples]
 
-        # In copy phrase, num of sequence is assumed to be 1.
-        num_of_sequences = 1
-        # Since there is only one sequence, all trials are in the sequence
-        trials_per_seq = len(triggers)
+            # In copy phrase, num of sequence is assumed to be 1.
+            num_of_sequences = 1
+            # Since there is only one sequence, all trials are in the sequence
+            trials_per_seq = len(triggers)
 
-    # MODE FREE SPELL
-    elif mode == 'free_spell':
+        # MODE FREE SPELL
+        elif mode == 'free_spell':
 
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+            # triggers in sample are mapped to triggers in number of filtered samples.
+            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
 
-        # 3 dimensional np array first dimension is channels
-        # second dimension is trials and third dimension is time samples.
-        reshaped_trials = np.zeros(
-            (len(filtered_eeg), len(triggers), num_samples))
+            # 3 dimensional np array first dimension is channels
+            # second dimension is trials and third dimension is time samples.
+            reshaped_trials = np.zeros(
+                (len(filtered_eeg), len(triggers), num_samples))
 
-        labels = None
+            labels = None
 
-        for trial in range(len(triggers)):
+            for trial in range(len(triggers)):
 
-            # For every channel append filtered channel data to trials
-            for channel in range(len(filtered_eeg)):
-                reshaped_trials[channel][trial] = \
-                    filtered_eeg[channel][
-                    triggers[trial]:triggers[trial] + num_samples]
+                # For every channel append filtered channel data to trials
+                for channel in range(len(filtered_eeg)):
+                    reshaped_trials[channel][trial] = \
+                        filtered_eeg[channel][
+                        triggers[trial]:triggers[trial] + num_samples]
 
-        # In copy phrase, num of sequence is assumed to be 1.
-        num_of_sequences = 1
-        # Since there is only one sequence, all trials are in the sequence
-        trials_per_seq = len(triggers)
-    else:
-        raise Exception('Trial_reshaper does not work in this operating mode.')
+            # In copy phrase, num of sequence is assumed to be 1.
+            num_of_sequences = 1
+            # Since there is only one sequence, all trials are in the sequence
+            trials_per_seq = len(triggers)
+        else:
+            raise Exception(
+                'Trial_reshaper does not work in this operating mode.')
 
-    # Return our trials, labels and some useful information about the arrays
-    return reshaped_trials, labels, num_of_sequences, trials_per_seq
+        # Return our trials, labels and some useful information about the arrays
+        return reshaped_trials, labels, num_of_sequences, trials_per_seq
+
+    except Exception as e:
+        raise Exception(
+            f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')

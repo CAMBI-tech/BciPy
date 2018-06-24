@@ -23,7 +23,7 @@ class EvidenceFusion(object):
             Args:
                 dict_evidence(dict{name: ndarray[float]}): dictionary of
                     evidences (EEG and other likelihoods)
-                """
+        """
 
         for key in dict_evidence.keys():
             self.evidence_history[key].append(dict_evidence[key])
@@ -31,7 +31,9 @@ class EvidenceFusion(object):
         # TODO: Current rule is to multiply
         for value in dict_evidence.values():
             self.likelihood *= value
-        self.likelihood = self.likelihood / np.sum(self.likelihood)
+
+        if not np.isnan(np.sum(self.likelihood)):
+            self.likelihood = self.likelihood / np.sum(self.likelihood)
 
         return self.likelihood
 

@@ -161,10 +161,11 @@ def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
         (letter, time) = array
         targetness = 'offset_correction'
         trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+
     else:
         # get relevant spelling info to determine what was and should be typed
         spelling_length = len(typed_text)
-        last_typed = typed_text[-1]
+        last_typed = typed_text[-1] if typed_text else None
         correct_letter = copy_text[spelling_length - 1]
 
         # because there is the impassibility of incorrect letter and correction,
@@ -231,9 +232,10 @@ def trigger_decoder(mode, trigger_loc=None):
         # [['words', 'in', 'line'], ['second', 'line']...]
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
-
-        trigger_txt = [line.split() for line in text_file if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line and 'calibration_trigger' not in line]
+        trigger_txt = [line.split() for line in text_file
+                       if 'fixation' not in line and '+' not in line
+                       and 'offset_correction' not in line 
+                       and 'calibration_trigger' not in line]
 
     # If operating mode is calibration, trigger.txt has three columns.
     if mode == 'calibration' or mode == 'copy_phrase':

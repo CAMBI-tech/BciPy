@@ -164,7 +164,7 @@ class RegularizedDiscriminantAnalysis:
                 evidence = np.dot(zero_mean,
                                   np.dot(self.inv_reg_cov_i[i],zero_mean))
 
-                neg_log_l[s][i] = -evidence + np.log(self.prior_i[i])
+                neg_log_l[s][i] = -.5*evidence + np.log(self.prior_i[i])
 
         return neg_log_l
 
