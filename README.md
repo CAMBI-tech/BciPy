@@ -1,9 +1,18 @@
 # Brain- Computer Interface Codebase
 ------------------------------------
 
-This is the codebase for BCI suite. Designed and written by OHSU and NEU. Contributions Welcome!
+What is it? 
 
-WARNING THIS IS DEV RELEASE! PLEASE USE WITH CAUTION; OFFICAL RELEASE WILL BE OUT END OF JUNE. Thanks for waiting!
+It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
+
+Contributions Welcome! 
+
+This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. I comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack. P
+
+*Please cite us when using!*
+
+Use this citation for now:
+Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Oken, M. & Oken, B. (2018, May). BciPy: A Python Framework for Brain-Computer Interface Research. Poster presented at the 7th International BCI meeting 2018 in Asilomar, CA.
 
 
 ## Features
@@ -22,20 +31,11 @@ WARNING THIS IS DEV RELEASE! PLEASE USE WITH CAUTION; OFFICAL RELEASE WILL BE OU
 
 	To run on windows, execute the .exe to start with GUI. Otherwise, run `python gui/RSVPKeyboard.py` in your terminal to begin.
 ```
-*Shuffle Speller*
-```
-	TBD.
-```
-
-*Matrix*
-```
-	TBD.
-```
 
 ## Dependencies
 ---------------
 This project requires Psychopy, Python v 3.6.5, and other packages. See requirements.txt. When possible integration with other open source
-libraries will be done.
+libraries will be done. We will prioritize those integrations or refactors.
 
 
 ## Installation
@@ -43,7 +43,9 @@ libraries will be done.
 
 # BCI Setup
 
-In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) Then, you need to install required modules using pip (python's package manager). Pip should already be installed, but if not go [here.](https://pip.pypa.io/en/stable/installing/). You must also use git if you would like to see the demos or contribute to the project [found here.](https://git-scm.com/). You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file. Depending on your OS, you may also need some compiling libraries. For example, some of the data science libraries (numpy, scipy) need C compiling libraries for python especially for Windows [from here.](https://www.microsoft.com/en-us/download/details.aspx?id=44266). When trying to install it will let you know, so give it a try first :)
+In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) 
+
+You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file. 
 
 To use all the goodies locally (including the GUI and demo scripts)
 1. git clone https://github.com/BciPy/BciPy.git
@@ -60,7 +62,7 @@ Start by running `python gui/BCInterface.py` in your command prompt or terminal.
 You may also invoke the experiment directly using command line tools for bci_main.py
 
 Ex.
-	 `python bci_main.py` *this will default parameters, mode, user, and type.*
+	 `python bci_main.py` *this will default parameters, mode, user, and types.*
 
 You can pass it attributes with flags, if desired.
     	Ex.
@@ -68,9 +70,10 @@ You can pass it attributes with flags, if desired.
 
 ## Example usage as a package
 
-`python`
-`from bcipy.helpers import system_utils`
-`system_utils.get_system_info()`
+```
+from bcipy.helpers import system_utils
+system_utils.get_system_info()
+```
 
 ## Modules and Vital Functions
 ------------------------------
@@ -156,7 +159,7 @@ Tab Memmott (OHSU)
 Aziz Kocanaogullari (NEU)
 
 
-Matthew Lawhead (OSHU- OCTRI)
+Matthew Lawhead (OHSU- OCTRI)
 
 
 Berkan Kadioglu (NEU)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+# Modified from https://github.com/kennethreitz/setup.py
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pip install twine
 
@@ -18,7 +18,7 @@ URL = 'https://github.com/BciPy/BciPy'
 EMAIL = 'tab.memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
-VERSION = '0.1dev'
+VERSION = '1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -109,7 +109,7 @@ class UploadCommand(Command):
         self.status('Pushing git tags…')
         os.system('git tag v{0}'.format(about['__version__']))
         os.system('git push --tags')
-        
+
         sys.exit()
 
 
