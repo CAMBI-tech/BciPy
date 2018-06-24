@@ -87,6 +87,7 @@ class RSVPCopyPhraseTask(Task):
             self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
+        self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.fake = fake
         self.lmodel = lmodel
         self.classifier = classifier
@@ -274,9 +275,17 @@ class RSVPCopyPhraseTask(Task):
             _save_session_related_data(self.session_save_location, data)
 
             # Decide whether to keep the task going
-            if (text_task == self.copy_phrase or
-                    seq_counter > self.max_seq_length):
-
+            max_tries_exceeded = seq_counter >= self.max_seq_length
+            max_time_exceeded = data['total_time_spent'] >= self.max_seconds
+            if (text_task == self.copy_phrase or max_tries_exceeded or
+                    max_time_exceeded):
+                if max_tries_exceeded:
+                    logging.debug("Max tries exceeded: to allow for more tries"
+                                  " adjust the Maximum Sequence Length "
+                                  "(max_seq_len) parameter.")
+                if max_time_exceeded:
+                    logging.debug("Max time exceeded. To allow for more time "
+                                  "adjust the max_minutes parameter.")
                 run = False
 
             # Increment sequence counter
