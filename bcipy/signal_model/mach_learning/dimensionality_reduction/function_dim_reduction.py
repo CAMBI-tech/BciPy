@@ -1,6 +1,5 @@
-from sklearn.decomposition import PCA
-from bcipy.signal_model.mach_learning.m_estimator.m_estimator import eigsorted, robust_mean_covariance
 import numpy as np
+from sklearn.decomposition import PCA
 
 
 class ChannelWisePrincipalComponentAnalysis:
@@ -50,7 +49,6 @@ class ChannelWisePrincipalComponentAnalysis:
             self.list_pca[i].fit(x[i, :, :], y)
             max_sv = self.list_pca[i].singular_values_[0]
             self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
-            # self.list_pca[i].n_components = 5
             try:
                 self.list_pca[i].fit(x[i, :, :], y)
             except Exception as e:
@@ -82,80 +80,27 @@ class ChannelWisePrincipalComponentAnalysis:
         return self.transform(x)
 
 
-class MPCA:
-    """ Channel wise MPCA
-        attributes:
-            var_tol(float): Variance tolerance with respect to principal component(eigen value)
-    """
+class DummyDimReduction:
+    """ Just concatenation without any PCA
+        Attr:
+        none(None): nothing
+         """
 
-    def __init__(self, var_tol=1):
-        self.var_tol = var_tol
-        self.transform_matrix_list = []
-        for z in range(10):  # 10 for 10 fold cross validation
-            self.transform_matrix_list.append([])
-        self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
+    def __init__(self):
+        self.none = None
 
     def fit(self, x, y=None, var_tol=None):
-        """ Find channel wise robust covariances and apply pca.
-            Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x 1 observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
-                var_tol(float): Threshold to remove lower variance dims.
-                """
-
-        C, N, p = x.shape  # C: number of channels, N:Number of samples, p: number of parameters
-
-        if not self.transform_matrix_list[self.current_fold]:  # if does not exist
-
-            for channel in range(C):
-                X = x[channel]
-
-                M_est_mean, M_est_sigma = robust_mean_covariance(X=X)
-                vals, vecs = eigsorted(M_est_sigma)
-
-                lim = vals[0]*self.var_tol
-
-                transform_matrix = []
-                # for index in range(len(vals)):
-                for index in range(5):
-                    if vals[index] > lim:
-                        transform_matrix.append(vecs[:, index])
-
-                self.transform_matrix_list[self.current_fold].append(np.transpose(np.array(transform_matrix)))
+        self.none = None
 
     def transform(self, x, y=None):
+        self.none = None
+        num_ch = x.shape[0]
+        f_vector = []
+        for i in range(num_ch):
+            f_vector.append(x[i, :, :])
 
-        C, N, p = x.shape
-
-        new_x = []
-        for channel in range(C):
-            new_x.append(np.dot(x[channel], self.transform_matrix_list[self.current_fold][channel]))
-
-        concatenated_new_x = []
-
-        for sample_index in range(N):
-            new_sample = []
-            for channel in range(C):
-                new_sample = np.append(new_sample, new_x[channel][sample_index])
-            concatenated_new_x.append(new_sample)
-
-        return np.array(concatenated_new_x)
+        return np.concatenate(f_vector, axis=1)
 
     def fit_transform(self, x, y=None, var_tol=None):
-        """ Fits parameters wrt. the input matrix and outputs corresponding
-            reduced form feature vector.
-            Args:
-                x(ndarray[float]): C x N x k data array
-                y(ndarray[int]): N x k observation (class) array
-                    N is number of samples k is dimensionality of features
-                    C is number of channels
-                var_tol(float): Threshold to remove lower variance dims.
-            Return:
-                y(ndarray(float)): N x ( sum_i (C x k')) data array
-                    where k' is the new dimension for each PCA
-                """
-
-        self.fit(x, var_tol=var_tol)
-        return self.transform(x)
+        arg = self.transform(x, y)
+        return arg

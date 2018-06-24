@@ -20,7 +20,6 @@ class Pipeline(object):
     def __init__(self):
         self.pipeline = []
         self.line_el = []
-        self.last_cv_auc = 0
 
     def add(self, method):
         """ Adds an object to the pipeline.

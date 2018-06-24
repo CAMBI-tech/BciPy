@@ -229,7 +229,7 @@ def trial_reshaper(trial_target_info: list,
         1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0), trial_length: float=0.5) -> tuple:
     """Trial Reshaper.
 
-    Trial reshaper is used to reshape trials, based on trial target info (target, non-target),
+    Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
         timing information (sec), filtered_eeg, sampling rate (fs), down-sampling rate (k),
         mode of operation (ex. 'calibration'),
         offset (any calculated or hypothesized offsets in timings),
