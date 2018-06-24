@@ -1,19 +1,21 @@
 # Brain- Computer Interface Codebase
 ------------------------------------
 
-What is it? 
+### What is it? 
 
 It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
 
-Contributions Welcome! 
+### Contributions Welcome! 
 
-This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. I comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack. P
+This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
 
 *Please cite us when using!*
 
 Use this citation for now:
-Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Oken, M. & Oken, B. (2018, May). BciPy: A Python Framework for Brain-Computer Interface Research. Poster presented at the 7th International BCI meeting 2018 in Asilomar, CA.
 
+```
+Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Oken, M. & Oken, B. (2018, May). BciPy: A Python Framework for Brain-Computer Interface Research. Poster presented at the 7th International BCI meeting 2018 in Asilomar, CA.
+```
 
 ## Features
 -----------
@@ -41,36 +43,35 @@ libraries will be done. We will prioritize those integrations or refactors.
 ## Installation
 ---------------
 
-# BCI Setup
+#### BCI Setup
 
 In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) 
 
 You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file. 
 
 To use all the goodies locally (including the GUI and demo scripts)
-1. git clone https://github.com/BciPy/BciPy.git
-1. Run `pip install -e .`
-3. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
+1. Git clone https://github.com/BciPy/BciPy.git
+2. Change directory in your terminal to the repo
+3. Run `pip install -e .`
+4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 
 To just use the built-in functions:
 1. `pip install bcipy`
 
 ## Usage Locally
 
-Start by running `python gui/BCInterface.py` in your command prompt or terminal.
+Start by running `python gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
 
-You may also invoke the experiment directly using command line tools for bci_main.py
+Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
 
-Ex.
-	 `python bci_main.py` *this will default parameters, mode, user, and types.*
 
 You can pass it attributes with flags, if desired.
-    	Ex.
-    		`python bci_main.py --user "bci_user" --mode "RSVP"`
+
+Ex. `python bci_main.py --user "bci_user" --mode "RSVP"`
 
 ## Example usage as a package
 
-```
+```python
 from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
@@ -97,13 +98,14 @@ This a list of the major modules and their functionality. Each module will conta
 All major functions and modules have demo and test files associated with them which may be run locally. This should help orient you to the functionality as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.*
 
 For example, you may run the bci_main demo by:
-> run `python demo/bci_main_demo.py`
+
+`python demo/bci_main_demo.py`
 
 This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
 
 This repository uses pytest for execution of tests. You may execute them by:
 
-> run `py.test` or `pytest` depending on your OS
+`py.test` or `pytest` depending on your OS
 
 ## Contribution Guidelines
 --------------------------
