@@ -10,15 +10,15 @@ def demo_m_estimator():
     # Simple demo for m estimators.
 
     num_samples = 150
-    p = 2
-    q = .5
-    true_mean = 0 + 0*np.random.standard_normal(p)
-    true_sigma = make_spd_matrix(n_dim=p)
+    num_features = 2
+    quantile = .5
+    true_mean = 0 + 0*np.random.standard_normal(num_features)
+    true_sigma = make_spd_matrix(n_dim=num_features)
 
     # Outliers have a completely different distribution.
     N_outlier = int(num_samples*.05)
-    true_mean_outlier = 3 + 0*np.random.standard_normal(p)
-    true_sigma_outlier = make_spd_matrix(n_dim=p)
+    true_mean_outlier = 3 + 0*np.random.standard_normal(num_features)
+    true_sigma_outlier = make_spd_matrix(n_dim=num_features)
 
     X_positive = np.random.multivariate_normal(mean=true_mean, cov=true_sigma, size=num_samples-N_outlier)
     X_outlier = np.random.multivariate_normal(mean=true_mean_outlier, cov=true_sigma_outlier, size=N_outlier)
@@ -30,9 +30,9 @@ def demo_m_estimator():
     print('Sample mean - true mean:\n', sample_mean - true_mean)
     print('Sample cov - true cov:\n', sample_sigma - true_sigma)
 
-    # inverse CDF of chi2 with p degrees of freedom at q'th quantile
-    c_square = sc.stats.chi2.ppf(q, p)
-    b = sc.stats.chi2.cdf(c_square, p + 2) + c_square/p*(1 - sc.stats.chi2.cdf(c_square, p))
+    # inverse CDF of chi2 with num_features degrees of freedom at quantile'th quantile
+    c_square = sc.stats.chi2.ppf(quantile, num_features)
+    b = sc.stats.chi2.cdf(c_square, num_features + 2) + c_square/num_features*(1 - sc.stats.chi2.cdf(c_square, num_features))
 
     iteration = 0
     M_est_mean_new = sample_mean
@@ -63,7 +63,7 @@ def demo_m_estimator():
     print('Σ|M estimate sigma - true sigma|:', np.sum(np.sum(np.abs(M_est_sigma_new - true_sigma))))
 
     # If data is two dimensional plot the results.
-    if p == 2:
+    if num_features == 2:
         plt.scatter(X_positive[:, 0], X_positive[:, 1], 1)
         plt.hold(True)
         plt.scatter(X_outlier[:, 0], X_outlier[:, 1], c='red', s=1)

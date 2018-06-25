@@ -95,22 +95,22 @@ class MPCA:
             self.transform_matrix_list.append([])
         self.current_fold = -1  # if -1, uses complete data, else uses data when fold i is removed.
 
-    def fit(self, x, y=None, var_tol=None):
+    def fit(self, data, y=None, var_tol=None):
         """ Find channel wise robust covariances and apply pca.
             Args:
-                x(ndarray[float]): num_channels x num_samples x k data array
+                data(ndarray[float]): num_channels x num_samples x k data array
                 y(ndarray[int]): num_samples x 1 observation (class) array
                     num_samples is number of samples k is dimensionality of features
                     num_channels is number of channels
                 var_tol(float): Threshold to remove lower variance dims.
                 """
 
-        num_channels, num_samples, num_features = x.shape
+        num_channels, num_samples, num_features = data.shape
 
         if not self.transform_matrix_list[self.current_fold]:  # if does not exist
 
             for channel in range(num_channels):
-                X_channel = x[channel]
+                X_channel = data[channel]
 
                 M_est_mean, M_est_sigma = robust_mean_covariance(data=X_channel)
                 vals, vecs = eigsorted(M_est_sigma)
@@ -125,29 +125,29 @@ class MPCA:
 
                 self.transform_matrix_list[self.current_fold].append(np.transpose(np.array(transform_matrix)))
 
-    def transform(self, x, y=None):
+    def transform(self, data, y=None):
 
-        num_channels, num_samples, num_features = x.shape
+        num_channels, num_samples, num_features = data.shape
 
-        new_x = []
+        new_data = []
         for channel in range(num_channels):
-            new_x.append(np.dot(x[channel], self.transform_matrix_list[self.current_fold][channel]))
+            new_data.append(np.dot(data[channel], self.transform_matrix_list[self.current_fold][channel]))
 
         concatenated_new_x = []
 
         for sample_index in range(num_samples):
             new_sample = []
             for channel in range(num_channels):
-                new_sample = np.append(new_sample, new_x[channel][sample_index])
+                new_sample = np.append(new_sample, new_data[channel][sample_index])
             concatenated_new_x.append(new_sample)
 
         return np.array(concatenated_new_x)
 
-    def fit_transform(self, x, y=None, var_tol=None):
+    def fit_transform(self, data, y=None, var_tol=None):
         """ Fits parameters wrt. the input matrix and outputs corresponding
             reduced form feature vector.
             Args:
-                x(ndarray[float]): num_channels x num_samples x k data array
+                data(ndarray[float]): num_channels x num_samples x k data array
                 y(ndarray[int]): num_samples x k observation (class) array
                     num_samples is number of samples k is dimensionality of features
                     num_channels is number of channels
@@ -157,5 +157,5 @@ class MPCA:
                     where k' is the new dimension for each PCA
                 """
 
-        self.fit(x, var_tol=var_tol)
-        return self.transform(x)
+        self.fit(data, var_tol=var_tol)
+        return self.transform(data)

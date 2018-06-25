@@ -14,17 +14,17 @@ class RegularizedDiscriminantAnalysis:
         lam(float): shrinkage param
         gam(float): threshold param (a.k.a. regularization param)
         class_i(list[int]): class labels
-        mean_i(list[ndarray]): list of k x 1 dimensional mean vectors
+        mean_i(list[ndarray]): list of num_features x 1 dimensional mean vectors
         prior_i(list[float]): list of prior probabilities
-        k (int): Number of features in one sample
-        S (ndarray): k x k ndarray
+        num_features (int): Number of features in one sample
+        covariance_times_N_data (ndarray): num_features x num_features ndarray
             total data covariance matrix multiplied by number of data samples num_samples
         num_samples (int): Number of samples in x
-        cov (ndarray): k x k ndarray, sample covariance of x
-        S_i (list[ndarray]): k x k ndarray
-            class covariance matrix multiplied by number of data samples N_i in class i
-        N_i (list[int]): Number of samples in class i
-        cov_i (list[ndarray]): list of k x k ndarray, sample covariance for class i
+        cov (ndarray): num_features x num_features ndarray, sample covariance of x
+        covariance_times_N_i (list[ndarray]): num_features x num_features ndarray
+            class covariance matrix multiplied by number of data samples num_samples_i in class i
+        num_samples_i (list[int]): Number of samples in class i
+        cov_i (list[ndarray]): list of num_features x num_features ndarray, sample covariance for class i
         log_det_cov(list[float]): list of negative det(cov_i)
         inv_reg_cov_i(list[ndarray]): inverse of regularized covariance matrix for class i
 
@@ -38,66 +38,66 @@ class RegularizedDiscriminantAnalysis:
         self.mean_i = None
         self.prior_i = None
 
-        self.k = None
+        self.num_features = None
 
-        self.S = None
+        self.covariance_times_N_data = None
         self.num_samples = None
 
-        self.S_i = None
-        self.N_i = None
+        self.covariance_times_N_i = None
+        self.num_samples_i = None
         self.cov_i = None
 
         self.log_det_reg_cov_i = None
         self.inv_reg_cov_i = None
 
-    def fit(self, x, y, p=[]):
+    def fit(self, data, label, p=[]):
         """ Fits mean and covariance to the provided data
             and computes regularized covariances based on hyper parameters
             Args:
-                x(ndarray[float]): num_samples x k data array
-                    num_samples is number of samples k is dimensionality of features
-                y(ndarray[int]): num_samples x 1 observation (class) array
+                data(ndarray[float]): num_samples x num_features data array
+                    num_samples is number of samples num_features is dimensionality of features
+                label(ndarray[int]): num_samples x 1 observation (class) array
                 p(ndarray[float]): c x 1 array with prior probabilities
                     c is number of classes in data
                 """
 
-        self.num_samples, self.k = x.shape
+        self.num_samples, self.num_features = data.shape
 
         # Unique labels/classes
-        self.class_i = np.unique(y)
+        self.class_i = np.unique(label)
 
         # Number of data samples in each class
-        self.N_i = [np.sum(y == i)
+        self.num_samples_i = [np.sum(label == i)
                     for i in self.class_i]
 
         # MATLAB gets confused if np.where is not used. Insert this relation
         #  in order to make the ndarray readable from MATLAB side. There are
         #  two arrays, [0] for the correctness, choose it
         # Class means
-        self.mean_i = [np.mean(x[np.where(y == i)[0]], axis=0)
+        self.mean_i = [np.mean(data[np.where(label == i)[0]], axis=0)
                        for i in self.class_i]
 
-        # Normalized x
-        norm_vec = [x[np.where(y == self.class_i[i])[0]] - self.mean_i[i]
+        # Normalized data
+        norm_vec = [data[np.where(label == self.class_i[i])[0]] - self.mean_i[i]
                     for i in range(len(self.class_i))]
 
         # Outer product of data matrix, Xi'Xi for each class
-        self.S_i = [np.dot(np.transpose(norm_vec[i]), norm_vec[i])
+        self.covariance_times_N_i = [np.dot(np.transpose(norm_vec[i]), norm_vec[i])
                     for i in range(len(self.class_i))]
 
         # Sample covariances are calculated Si/Ni for each class
-        self.cov_i = [self.S_i[i] / self.N_i[i]
+        self.cov_i = [self.covariance_times_N_i[i] / self.num_samples_i[i]
                       for i in range(len(self.class_i))]
 
         # Sample covariance of total data
-        self.S = np.zeros((self.k, self.k))
+        self.covariance_times_N_data = np.zeros((self.num_features, self.num_features))
 
         for i in range(len(self.class_i)):
-            self.S += self.S_i[i]
+            self.covariance_times_N_data += self.covariance_times_N_i[i]
 
         # Set priors
         if len(p) == 0:
-            prior = np.asarray([np.sum(y == self.class_i[i]) for i in
+            prior = np.asarray([np.sum(label == self.class_i[i]) for i in
                                 range(len(self.class_i))], dtype=float)
             self.prior_i = np.divide(prior, np.sum(prior))
         else:
@@ -117,14 +117,14 @@ class RegularizedDiscriminantAnalysis:
         self.gam = param[1]
 
         # Shrinked class covariances
-        shrinked_covariance_i = [((1 - self.lam) * self.S_i[i] + self.lam * self.S) /
-                     ((1 - self.lam) * self.N_i[i] + self.lam * self.num_samples)
+        shrinked_covariance_i = [((1 - self.lam) * self.covariance_times_N_i[i] + self.lam * self.covariance_times_N_data) /
+                     ((1 - self.lam) * self.num_samples_i[i] + self.lam * self.num_samples)
                      for i in range(len(self.class_i))]
 
         # Regularized class covariances
         reg_cov_i = [((1 - self.gam) * shrinked_covariance_i[i] +
-                      self.gam / self.k * np.trace(shrinked_covariance_i[i]) *
-                      np.eye(self.k)) for i in range(len(self.class_i))]
+                      self.gam / self.num_features * np.trace(shrinked_covariance_i[i]) *
+                      np.eye(self.num_features)) for i in range(len(self.class_i))]
 
         self.inv_reg_cov_i, self.log_det_reg_cov_i = [], []
 
@@ -135,9 +135,9 @@ class RegularizedDiscriminantAnalysis:
             self.inv_reg_cov_i.append(np.linalg.solve(r, np.transpose(q)))
             # self.log_det_reg_cov_i.append(np.sum(np.log(np.abs(np.diag(r)))))
 
-    def transform(self, x):
+    def transform(self, data):
 
-        val = self.get_prob(x)
+        val = self.get_prob(data)
         # as the val includes negative log likelihoods it outputs the
         # likelihood ratio for log(p(x|l=1)/p(x|l=0))
         if val.shape[1] == 2:
@@ -145,20 +145,20 @@ class RegularizedDiscriminantAnalysis:
 
         return val
 
-    def get_prob(self, x):
+    def get_prob(self, data):
         """ Gets -log likelihoods for each class
             Args:
-                x(ndarray): num_samples x k data array where
-                    num_samples is number of samples k is dimensionality of features
+                data(ndarray): num_samples x num_features data array where
+                    num_samples is number of samples num_features is dimensionality of features
             Return:
                 neg_log_l(ndarray): num_samples x c negative log likelihood array
                     num_samples is number of samples c is number of classes
                 """
 
-        neg_log_l = np.zeros([x.shape[0], len(self.class_i)])
-        for s in range(x.shape[0]):
+        neg_log_l = np.zeros([data.shape[0], len(self.class_i)])
+        for s in range(data.shape[0]):
             for i in range(len(self.class_i)):
-                zero_mean = x[s] - self.mean_i[i]
+                zero_mean = data[s] - self.mean_i[i]
 
                 # Every constant at the end of score calculation is omitted.
                 # This is why we omit log det of class regularized covariances.
@@ -169,22 +169,22 @@ class RegularizedDiscriminantAnalysis:
 
         return neg_log_l
 
-    def fit_transform(self, x, y, p=[]):
-        """ Fits the model to provided (x,y) = (data,obs) couples and
+    def fit_transform(self, data, label, p=[]):
+        """ Fits the model to provided (x,label) = (data,obs) couples and
         returns the negative log likelihoods.
             Args:
-                x(ndarray[float]): num_samples x k data array
-                    num_samples is number of samples k is dimensionality of features
-                y(ndarray[int]): num_samples x 1 observation (class) array
+                data(ndarray[float]): num_samples x num_features data array
+                    num_samples is number of samples num_features is dimensionality of features
+                label(ndarray[int]): num_samples x 1 observation (class) array
                 p(ndarray[float]): c x 1 array with prior probabilities
                     c is number  of classes in data
             Return:
                 val(ndarray[float]): num_samples x c negative log likelihood array
                 """
 
-        self.fit(x, y, p)
+        self.fit(data, label, p)
 
-        return self.transform(x)
+        return self.transform(data)
 
 
 class MDiscriminantAnalysis:
@@ -203,8 +203,8 @@ class MDiscriminantAnalysis:
         means(list): Means' of each channel
         covariances(list): Covariances' of each channel
         covariance_times_N_matrices(list): Covariance times num_samples for each class
-        S(list): Covariance times num_samples for all data
-        N_list(list): List of number of samples of each class
+        covariance_times_N_data(list): Covariance times num_samples for all data
+        num_samples_list(list): List of number of samples of each class
         class_list(list): List of classes
         priors(list): List of priors for each class
         inv_reg_covariances(list): List of inverse regularized covariances for each class
@@ -215,8 +215,8 @@ class MDiscriminantAnalysis:
         self.means = []
         self.covariances = []
         self.covariance_times_N_matrices = []  # Covariance times num_samples for each class
-        self.S = []
-        self.N_list = []  # List of number of samples of each class
+        self.covariance_times_N_data = []
+        self.num_samples_list = []  # List of number of samples of each class
         self.class_list = []
         self.priors = []
 
@@ -226,8 +226,8 @@ class MDiscriminantAnalysis:
             self.means.append([])
             self.covariances.append([])
             self.covariance_times_N_matrices.append([])
-            self.S.append([])
-            self.N_list.append([])
+            self.covariance_times_N_data.append([])
+            self.num_samples_list.append([])
             self.priors.append([])
 
             self.inv_reg_covariances.append([])
@@ -237,37 +237,39 @@ class MDiscriminantAnalysis:
 
         self.current_fold = -1
 
-    def fit(self, x, y):
+    def fit(self, data, label):
         """
-        :list x: data, each element is every channel's trials.
+        Find robust mean and covariances for each class. Shrink and regularize these covariances.
+        :param data: Design matrix
+        :param label: labels
         """
-        num_samples, num_features = x.shape
+        num_samples, num_features = data.shape
 
         if not self.means[self.current_fold]:  # current fold had not been processed yet
 
             # Unique labels/classes
             if self.class_list == []:
-                self.class_list = np.unique(y)
+                self.class_list = np.unique(label)
 
             for i in range(len(self.class_list)):
-                self.N_list[self.current_fold].append(np.sum(y == self.class_list[i]))  # Number of samples of current class
-                x_i = x[np.where(y == self.class_list[i])[0], :]
+                self.num_samples_list[self.current_fold].append(np.sum(label == self.class_list[i]))  # Number of samples of current class
+                x_i = data[np.where(label == self.class_list[i])[0], :]
 
                 mean, cov = robust_mean_covariance(data=x_i)
 
                 self.means[self.current_fold].append(mean)
                 self.covariances[self.current_fold].append(cov)
-                self.covariance_times_N_matrices[self.current_fold].append(cov*(self.N_list[self.current_fold][-1]))
+                self.covariance_times_N_matrices[self.current_fold].append(cov*(self.num_samples_list[self.current_fold][-1]))
 
-            self.priors[self.current_fold] = [self.N_list[self.current_fold][0]*1./num_samples, self.N_list[self.current_fold][1]*1./num_samples]
+            self.priors[self.current_fold] = [self.num_samples_list[self.current_fold][0]*1./num_samples, self.num_samples_list[self.current_fold][1]*1./num_samples]
 
-            self.S[self.current_fold] = np.zeros((num_features, num_features))
+            self.covariance_times_N_data[self.current_fold] = np.zeros((num_features, num_features))
             for i in range(len(self.class_list)):
-                self.S[self.current_fold] += self.covariance_times_N_matrices[self.current_fold][i]
+                self.covariance_times_N_data[self.current_fold] += self.covariance_times_N_matrices[self.current_fold][i]
 
         # Shrinked class covariances
-        shrinked_covariance_i = [((1 - self.lam) * self.covariance_times_N_matrices[self.current_fold][i] + self.lam * self.S[self.current_fold]) /
-                     ((1 - self.lam) * self.N_list[self.current_fold][i] + self.lam * num_samples)
+        shrinked_covariance_i = [((1 - self.lam) * self.covariance_times_N_matrices[self.current_fold][i] + self.lam * self.covariance_times_N_data[self.current_fold]) /
+                     ((1 - self.lam) * self.num_samples_list[self.current_fold][i] + self.lam * num_samples)
                      for i in range(len(self.class_list))]
 
         # Regularized class covariances
@@ -279,28 +281,35 @@ class MDiscriminantAnalysis:
         self.inv_reg_covariances[self.current_fold] = []
         self.inv_reg_covariances[self.current_fold].append(np.linalg.inv(np.array(reg_cov_i)))
 
-    def transform(self, x, y=None):
-        num_samples, _ = x.shape
+    def transform(self, data, label=None):
+        """
+        Find discriminant score with data.
+
+        :param data: Design matrix
+        :param label: labels
+        :return: Discriminant scores
+        """
+        num_samples, _ = data.shape
 
         scores = np.zeros((num_samples, self.class_list.size))
 
         for i in range(len(self.class_list)):
             for num_samples in range(num_samples):
-                temp = x[num_samples, :] - self.means[self.current_fold][i]
+                temp = data[num_samples, :] - self.means[self.current_fold][i]
 
                 scores[num_samples][i] = -.5*np.dot(np.dot(temp, self.inv_reg_covariances[self.current_fold][0][i]), temp) \
                                + np.log(self.priors[self.current_fold][i])
 
         return scores[:, 1] - scores[:, 0]
 
-    def fit_transform(self, x, y):
+    def fit_transform(self, data, label):
         """
-        Call fit and transform methods on parameter x.
+        Call fit and transform methods on parameter data.
 
-        :param x: Design matrix
-        :param y: labels
+        :param data: Design matrix
+        :param label: labels
         :return: Discriminant scores
         """
 
-        self.fit(x, y)
-        return self.transform(x)
+        self.fit(data, label)
+        return self.transform(data)

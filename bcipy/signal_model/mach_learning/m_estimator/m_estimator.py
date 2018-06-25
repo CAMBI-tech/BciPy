@@ -19,8 +19,8 @@ def u_func(mahalanobis_dist, huber_denom, c_square):
     """
     Huber's loss function
     :param mahalanobis_dist: Mahalanobis distance
-    :param huber_denom: A constant in p (number of features)
-    :param c_square: A constant in p and q (trade-off variable)
+    :param huber_denom: A constant in num_features (number of features)
+    :param c_square: A constant in num_features and quantile (trade-off variable)
     :return: weight of sample
     """
 
@@ -36,15 +36,15 @@ def mean_update(data, mean, sigma_inv, huber_denom, c_square):
     :param data: Data
     :param mean: Current mean
     :param sigma_inv: Current covariance inverse
-    :param huber_denom: A constant in p (number of features)
-    :param c_square: A constant in p and q (trade-off variable)
+    :param huber_denom: A constant in num_features (number of features)
+    :param c_square: A constant in num_features and quantile (trade-off variable)
     :return: New mean
     """
 
-    N, p = data.shape
-    mean_hat = np.zeros(p)
+    num_samples, num_features = data.shape
+    mean_hat = np.zeros(num_features)
     sum_u = 0
-    for z in range(N):
+    for z in range(num_samples):
 
         mahalanobis_dist = np.dot(np.dot(data[z] - mean, sigma_inv), data[z] - mean)
         u = u_func(mahalanobis_dist=mahalanobis_dist, huber_denom=huber_denom, c_square=c_square)
@@ -63,37 +63,37 @@ def sigma_update(data, mean, sigma_inv, huber_denom, c_square):
     :param data: Data
     :param mean: Current mean
     :param sigma_inv: Current covariance inverse
-    :param huber_denom: A constant in p (number of features)
-    :param c_square: A constant in p and q (trade-off variable)
+    :param huber_denom: A constant in num_features (number of features)
+    :param c_square: A constant in num_features and quantile (trade-off variable)
     :return: New sigma
     """
 
-    N, p = data.shape
-    sigma_hat = np.zeros((p,p))
+    num_samples, num_features = data.shape
+    sigma_hat = np.zeros((num_features,num_features))
 
-    for z in range(N):
-        sigma_hat += 1./N*u_func(mahalanobis_dist=np.dot(np.dot(data[z] - mean, sigma_inv), data[z] - mean), huber_denom=huber_denom, c_square=c_square)*np.outer(data[z]- mean, data[z]- mean)
+    for z in range(num_samples):
+        sigma_hat += 1./num_samples*u_func(mahalanobis_dist=np.dot(np.dot(data[z] - mean, sigma_inv), data[z] - mean), huber_denom=huber_denom, c_square=c_square)*np.outer(data[z]- mean, data[z]- mean)
 
     return sigma_hat
 
 
-def robust_mean_covariance(data, q=.85):
+def robust_mean_covariance(data, quantile=.85):
     """
     Use m estimation theory to find robust mean and covariance for data data.
     http://www.spg.tu-darmstadt.de/media/spg/ieee_ssrsp/material/SummerSchool_Ollila.pdf
     or checkout paper by Berkan Kadioglu 'M estimation based subspace learning for brain computer interfaces'
 
     :param data: Data matrix with dimensions Nxp
-    :param q: Trade-off variable between regular covariance and weighted covariance.
+    :param quantile: Trade-off variable between regular covariance and weighted covariance.
     :return: Tuple of mean and covariance for data
     """
 
-    N, p = data.shape  # N: number of samples, p: number of features
-    c_square = sc.stats.chi2.ppf(q, p)
-    huber_denom = sc.stats.chi2.cdf(c_square, p + 2) + c_square / p * (1 - sc.stats.chi2.cdf(c_square, p))
+    num_samples, num_features = data.shape
+    c_square = sc.stats.chi2.ppf(quantile, num_features)
+    huber_denom = sc.stats.chi2.cdf(c_square, num_features + 2) + c_square / num_features * (1 - sc.stats.chi2.cdf(c_square, num_features))
 
     sample_mean = np.mean(data, axis=0)
-    sample_sigma = 1. / N * np.dot(np.transpose(data - sample_mean), data - sample_mean)
+    sample_sigma = 1. / num_samples * np.dot(np.transpose(data - sample_mean), data - sample_mean)
 
     M_est_mean_new = sample_mean
     M_est_sigma_new = sample_sigma
@@ -115,7 +115,7 @@ def robust_mean_covariance(data, q=.85):
 
         s_a_c = np.sum(np.abs(M_est_mean_new - M_est_mean_old)) + \
                 np.sum(np.sum(np.abs(M_est_sigma_new - M_est_sigma_old)))
-        # print s_a_c
+
         iteration += 1
         if iteration == 999 and s_a_c > 1:
             print('Max number of iterations reached for m estimation. Last s_a_c: {}.'.format(s_a_c))
