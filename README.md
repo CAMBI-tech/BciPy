@@ -31,7 +31,7 @@ Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Ok
 		shown at the center of screen. When the subject wants to select a symbol,
 		they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
 
-	To run on windows, execute the .exe to start with GUI. Otherwise, run `python gui/BCInterface.py` in your terminal to begin.
+	To run on windows, run `python bcipy/gui/BCInterface.py` in your terminal to begin.
 ```
 
 ## Dependencies
