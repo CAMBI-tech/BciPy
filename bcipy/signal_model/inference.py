@@ -17,7 +17,7 @@ def inference(x, targets, model, alphabet):
     """
 
     # Evaluates the likelihood probabilities for p(e|l=1) and p(e|l=0)
-    scores = np.exp(model.transform(x))
+    scores = model.transform(x)
     # Evaluates the log likelihood ratios
     scores = scores[:, 1] / (scores[:, 0] + np.power(.1, 10))
 

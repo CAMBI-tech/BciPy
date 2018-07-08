@@ -205,7 +205,7 @@ class RSVPCopyPhraseTask(Task):
 
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
-            if self.fake:
+            if not self.fake:
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {
                     'stimuli': ele_sti,
