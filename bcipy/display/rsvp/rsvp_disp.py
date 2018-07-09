@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from psychopy import visual, core
+from PIL import Image
 
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
@@ -203,6 +204,16 @@ class RSVPDisplay(object):
                 sti_label = self.sti.text
             else:
                 self.sti.image = self.stim_sequence[idx]
+                
+                #Retrieve image width and height
+                with Image.open(self.sti.image) as pillow_image:
+                    image_width, image_height = pillow_image.size
+                #Resize image so that its largest dimension is the stimuli size defined in the parameters file
+                if image_width >= image_height:
+                    self.sti.size = (self.height_stim, (image_height/image_width) * self.height_stim)
+                else:
+                    self.sti.size = ((image_width/image_height) * self.height_stim, self.height_stim)
+                    
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
                 sti_label = self.sti.image.split('/')[-1].split('.')[0]

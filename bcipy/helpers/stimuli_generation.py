@@ -35,7 +35,7 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
         if is_txt:
             sample = ['+']
         else:
-            sample = ['../bci/static/images/bci_main_images/PLUS.png']
+            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
         idx = np.random.permutation(idx)
         sample += [alp[i] for i in idx]
         samples.append(sample)
@@ -78,7 +78,7 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
         if not is_txt:
             sample = [
                 alp[rand_smp[0]],
-                '../bci/static/images/bci_main_images/PLUS.png']
+                'bcipy/static/images/bci_main_images/PLUS.png']
         else:
             sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
