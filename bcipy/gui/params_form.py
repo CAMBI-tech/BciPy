@@ -67,6 +67,8 @@ class Form(wx.Panel):
         for key, param in self.params.items():
             if param.type == "bool":
                 form_input = self.bool_input(param)
+            elif "path" in param.type:
+                form_input = self.file_input(param)
             elif type(param.recommended_values) == list:
                 form_input = self.selection_input(param)
             # TODO: NumCtrl for numeric input types.
@@ -114,6 +116,23 @@ class Form(wx.Panel):
         ctl.SetFont(font())
         label, help_tip = self.input_label(param)
         return FormInput(ctl, label, help_tip)
+        
+    def file_input(self, param: Parameter) -> FormInput:
+        """Creates a text field or selection pulldown FormInput with a button 
+        to browse for a file."""
+        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        if type(param.recommended_values) == list:
+            ctl = wx.ComboBox(self, -1, param.value,
+                size=self.control_size,
+                choices=param.recommended_values,
+                style=wx.CB_DROPDOWN)   
+        else:
+            ctl = wx.TextCtrl(self, size=self.control_size, value=param.value)
+        ctl.SetFont(font())
+        btn = wx.Button(self, label="...", size=(self.control_size[1], self.control_size[1]))
+        ctl_array = [ctl, btn]
+        label, help_tip = self.input_label(param)
+        return FormInput(ctl_array, label, help_tip)
 
     def input_label(self, param: Parameter) -> Tuple[wx.Control, wx.Control]:
         """Returns a label control and maybe a help Control if the help
@@ -137,6 +156,10 @@ class Form(wx.Panel):
                 param = self.params[k]
                 if param.type == "bool":
                     control.Bind(wx.EVT_CHECKBOX, self.checkboxEventHandler(k))
+                elif "path" in param.type:
+                    is_directory = param.type == "directorypath"
+                    control[0].Bind(wx.EVT_TEXT, self.textEventHandler(k))
+                    control[1].Bind(wx.EVT_BUTTON, self.buttonEventHandler(k, is_directory))
                 elif type(param.recommended_values) == list:
                     control.Bind(wx.EVT_COMBOBOX, self.selectEventHandler(k))
                 else:
@@ -157,7 +180,13 @@ class Form(wx.Panel):
 
         # Add the controls to the grid:
         for control in self.controls.values():
-            gridSizer.Add(control, **noOptions)
+            if isinstance(control, list):
+                hbox = wx.BoxSizer(wx.HORIZONTAL)
+                hbox.Add(control[0], flag=wx.RIGHT, border=5)
+                hbox.Add(control[1], **noOptions)
+                gridSizer.Add(hbox, **noOptions)
+            else:
+                gridSizer.Add(control, **noOptions)
 
         # Add the save button
         gridSizer.Add(self.saveButton, flag=wx.ALIGN_CENTER)
@@ -208,6 +237,34 @@ class Form(wx.Panel):
             value = "true" if event.IsChecked() else "false"
             self.params[key] = p._replace(value=value)
             logging.debug(f"{key}: {bool(event.IsChecked())}")
+        return handler
+        
+    def buttonEventHandler(self, key: str, directory: bool) -> Callable[[wx.EVT_BUTTON], None]:
+        """Returns a handler function that updates the parameter for the
+        provided key.
+        """
+        def handler(event: wx.EVT_BUTTON):
+            if directory:
+                file_dialog = wx.DirDialog(self, "Select a path", style=wx.FD_OPEN)
+            else: 
+                file_dialog = wx.FileDialog(self, "Select a file", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                new_path = None
+            else:
+                new_path = str(file_dialog.GetPath())
+                if directory:
+                    new_path = new_path + "\\"
+                logging.debug(new_path)
+                    
+            if new_path:
+                for k, field in self.controls.items():
+                    if k == key:
+                        field[0].SetValue(new_path)                            
+                p = self.params[key]
+                self.params[key] = p._replace(value=new_path)
+                logging.debug(f"Selected path: {new_path}")
+                
         return handler
 
 

@@ -33,7 +33,7 @@ def cast_value(value):
             new_value = float(actual_value)
         elif actual_type == 'bool':
             new_value = True if actual_value == 'true' else False
-        elif actual_type == 'str':
+        elif actual_type == 'str' or actual_type == 'filepath' or actual_type == 'directorypath':
             new_value = str(actual_value)
         else:
             raise ValueError('Unrecognized value type')
