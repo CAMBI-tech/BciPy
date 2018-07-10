@@ -1,5 +1,7 @@
 import subprocess
 from bcipy.gui.gui_main import BCIGui
+from bcipy.helpers.load import load_json_parameters
+import os
 import wx
 
 
@@ -7,7 +9,7 @@ class RSVPKeyboard(BCIGui):
 
     event_started = False
 
-    def bind_action(self, action: str, btn: wx.Button) -> None:
+    def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
         elif action == 'edit_parameters':
@@ -16,6 +18,8 @@ class RSVPKeyboard(BCIGui):
             self.Bind(wx.EVT_BUTTON, self.refresh, btn)
         elif action == 'offline_analysis':
             self.Bind(wx.EVT_BUTTON, self.offline_analysis, btn)
+        elif action == 'load_items_from_txt':
+            self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.load_items_from_txt, btn)
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
@@ -29,7 +33,7 @@ class RSVPKeyboard(BCIGui):
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
         if self.check_input():
-            username = self.input_text[0].GetValue().replace(" ", "_")
+            username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = self._cast_experiment_type(
                 event.GetEventObject().GetLabel())
             mode = 'RSVP'
@@ -42,7 +46,7 @@ class RSVPKeyboard(BCIGui):
     def check_input(self) -> bool:
         """Check Input."""
         try:
-            if self.input_text[0].GetValue() == '':
+            if self.comboboxes[0].GetValue() == '':
                 dialog = wx.MessageDialog(
                     self, "Please Input User ID", 'Info',
                     wx.OK | wx.ICON_WARNING)
@@ -84,6 +88,28 @@ class RSVPKeyboard(BCIGui):
             raise ValueError('Register this experiment type or remove button')
 
         return experiment_type
+        
+    def load_items_from_txt(self, event):
+        parameters = load_json_parameters('bcipy/parameters/parameters.json', value_cast=True)
+        data_save_loc = parameters['data_save_loc']
+        #Is this an absolute path?
+        if(os.path.isdir(data_save_loc)):
+            saved_users = os.listdir(data_save_loc)
+        else:
+            saved_users = os.listdir('bcipy/' + data_save_loc)
+        #Reads users that should not be listed from the file "ignore.txt",
+        #and removes them from the users list
+        try:
+            ignore_file = open('bcipy/gui/ignore.txt', 'r')
+            ignore_users = [user.strip() for user in ignore_file.readlines()]
+            ignore_file.close()
+            for unwanted_user in ignore_users:
+                if unwanted_user in saved_users:
+                    saved_users.remove(unwanted_user)
+        except IOError:
+            ignore_file = open('bcipy/gui/ignore.txt', 'w')
+        self.comboboxes[0].Clear()
+        self.comboboxes[0].AppendItems(saved_users)
 
 
 # Start the app and init the main GUI
@@ -135,7 +161,7 @@ gui.add_button(
     action='refresh')
 
 # TEXT INPUT
-gui.add_text_input(position=(75, 150), size=(250, 25))
+gui.add_combobox(position=(75, 150), size=(250, 25), action='load_items_from_txt')
 
 
 # IMAGES
