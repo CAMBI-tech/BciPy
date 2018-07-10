@@ -210,9 +210,9 @@ class RSVPDisplay(object):
                     image_width, image_height = pillow_image.size
                 #Resize image so that its largest dimension is the stimuli size defined in the parameters file
                 if image_width >= image_height:
-                    self.sti.size = (self.height_stim, (image_height/image_width) * self.height_stim)
+                    self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
                 else:
-                    self.sti.size = ((image_width/image_height) * self.height_stim, self.height_stim)
+                    self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
                     
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.

@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple
+from os import sep
 
 JSON_INDENT = 2
 
@@ -120,7 +121,7 @@ class Form(wx.Panel):
     def file_input(self, param: Parameter) -> FormInput:
         """Creates a text field or selection pulldown FormInput with a button 
         to browse for a file."""
-        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        #Creates a combobox instead of text field if the parameter has recommended values
         if type(param.recommended_values) == list:
             ctl = wx.ComboBox(self, -1, param.value,
                 size=self.control_size,
@@ -157,7 +158,9 @@ class Form(wx.Panel):
                 if param.type == "bool":
                     control.Bind(wx.EVT_CHECKBOX, self.checkboxEventHandler(k))
                 elif "path" in param.type:
-                    is_directory = param.type == "directorypath"
+                    is_directory = False
+                    if param.type == "directorypath":
+                        is_directory = True
                     control[0].Bind(wx.EVT_TEXT, self.textEventHandler(k))
                     control[1].Bind(wx.EVT_BUTTON, self.buttonEventHandler(k, is_directory))
                 elif type(param.recommended_values) == list:
@@ -244,6 +247,7 @@ class Form(wx.Panel):
         provided key.
         """
         def handler(event: wx.EVT_BUTTON):
+            #Change dialog type depending on whether parameter requires a directory or file
             if directory:
                 file_dialog = wx.DirDialog(self, "Select a path", style=wx.FD_OPEN)
             else: 
@@ -254,12 +258,13 @@ class Form(wx.Panel):
             else:
                 new_path = str(file_dialog.GetPath())
                 if directory:
-                    new_path = new_path + "\\"
+                    #Add operating system separator character to end of directory path
+                    new_path = new_path + sep
                 logging.debug(new_path)
                     
             if new_path:
-                for k, field in self.controls.items():
-                    if k == key:
+                for item_key, field in self.controls.items():
+                    if item_key == key:
                         field[0].SetValue(new_path)                            
                 p = self.params[key]
                 self.params[key] = p._replace(value=new_path)

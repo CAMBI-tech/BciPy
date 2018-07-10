@@ -8,7 +8,8 @@ import wx
 class RSVPKeyboard(BCIGui):
 
     event_started = False
-
+    PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
+    
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
@@ -90,24 +91,18 @@ class RSVPKeyboard(BCIGui):
         return experiment_type
         
     def load_items_from_txt(self, event):
-        parameters = load_json_parameters('bcipy/parameters/parameters.json', value_cast=True)
+        """Loads user directory names from the data path defined in 
+        parameters.json, and adds those directory names as items to the user id
+        selection combobox."""
+        parameters = load_json_parameters(self.PARAMETER_LOCATION, value_cast=True)
         data_save_loc = parameters['data_save_loc']
         #Is this an absolute path?
-        if(os.path.isdir(data_save_loc)):
+        if os.path.isdir(data_save_loc):
             saved_users = os.listdir(data_save_loc)
-        else:
+        elif os.path.isdir('bcipy/' + data_save_loc):
             saved_users = os.listdir('bcipy/' + data_save_loc)
-        #Reads users that should not be listed from the file "ignore.txt",
-        #and removes them from the users list
-        try:
-            ignore_file = open('bcipy/gui/ignore.txt', 'r')
-            ignore_users = [user.strip() for user in ignore_file.readlines()]
-            ignore_file.close()
-            for unwanted_user in ignore_users:
-                if unwanted_user in saved_users:
-                    saved_users.remove(unwanted_user)
-        except IOError:
-            ignore_file = open('bcipy/gui/ignore.txt', 'w')
+        else:
+            raise IOError('User data save location not found')
         self.comboboxes[0].Clear()
         self.comboboxes[0].AppendItems(saved_users)
 
