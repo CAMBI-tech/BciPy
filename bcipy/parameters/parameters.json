@@ -613,5 +613,21 @@
       "25"
     ],
     "type": "int"
+  },
+  "break_len": {
+    "value": "30",
+    "section": "bci_config",
+    "readableName": "Break length (seconds)",
+    "helpTip": "break_len",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trials_before_break": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Number of calibration trials before break",
+    "helpTip": "The number of trials that will take place before a break (set to 0 for no breaks)",
+    "recommended_values": "",
+    "type": "int"
   }
 }

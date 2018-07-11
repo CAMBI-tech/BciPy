@@ -102,7 +102,19 @@ class RSVPCalibrationTask(Task):
                 if not get_user_input(self.rsvp, self.wait_screen_message,
                                       self.wait_screen_message_color):
                     break
-
+                
+                #Take a break every number of trials defined in parameters.json
+                if not self.parameters['trials_before_break'] == 0:
+                    if (not idx_o == 0) and ((idx_o % self.parameters['trials_before_break']) == 0):
+                        #Update countdown every second
+                        for counter in range(0,self.parameters['break_len']):
+                            self.rsvp.update_task_state(
+                                text=('Take a Break! ' + str(self.parameters['break_len'] - counter) + 's'),
+                                color_list=task_color[idx_o])
+                            self.rsvp.draw_static()
+                            self.window.flip()
+                            core.wait(1)
+                    
                 # update task state
                 self.rsvp.update_task_state(
                     text=task_text[idx_o],
