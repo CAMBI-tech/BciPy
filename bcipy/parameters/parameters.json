@@ -629,5 +629,13 @@
     "helpTip": "The number of trials that will take place before a break (set to 0 for no breaks)",
     "recommended_values": "",
     "type": "int"
+  },
+  "break_message": {
+    "value": "Take a break!",
+    "section": "bci_config",
+    "readableName": "Break Message",
+    "helpTip": "The message that displays during a break in calibration",
+    "recommended_values": "",
+    "type": "str"
   }
 }

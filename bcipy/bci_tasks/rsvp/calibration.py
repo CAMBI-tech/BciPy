@@ -109,7 +109,7 @@ class RSVPCalibrationTask(Task):
                         #Update countdown every second
                         for counter in range(0,self.parameters['break_len']):
                             self.rsvp.update_task_state(
-                                text=('Take a Break! ' + str(self.parameters['break_len'] - counter) + 's'),
+                                text=(self.parameters['break_message'] + ' ' + str(self.parameters['break_len'] - counter) + 's'),
                                 color_list=task_color[idx_o])
                             self.rsvp.draw_static()
                             self.window.flip()
