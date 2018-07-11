@@ -266,8 +266,8 @@ class Form(wx.Panel):
                 for item_key, field in self.controls.items():
                     if item_key == key:
                         field[0].SetValue(new_path)                            
-                p = self.params[key]
-                self.params[key] = p._replace(value=new_path)
+                parameter_key = self.params[key]
+                self.params[key] = parameter_key._replace(value=new_path)
                 logging.debug(f"Selected path: {new_path}")
                 
         return handler
