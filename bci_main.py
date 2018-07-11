@@ -125,6 +125,7 @@ def _clean_up_session(display, daq, server):
 
     return True
 
+
 if __name__ == "__main__":
     import argparse
     from bcipy.helpers.load import load_json_parameters

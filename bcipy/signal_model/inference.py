@@ -17,9 +17,10 @@ def inference(x, targets, model, alphabet):
     """
 
     # Evaluates the likelihood probabilities for p(e|l=1) and p(e|l=0)
-    scores = model.transform(x)
-    # Evaluates the log likelihood ratios
+    scores = np.exp(model.transform(x))
+    # Evaluates the likelihood ratios
     scores = scores[:, 1] / (scores[:, 0] + np.power(.1, 10))
+    print("These values should be between 0 and 1: ", scores)
 
     # This maps the likelihood distribution over the alphabet
     #   If the letter in the alphabet does not exist in the target string,
@@ -27,5 +28,7 @@ def inference(x, targets, model, alphabet):
     lik_r = np.ones(len(alphabet))
     for idx in range(len(scores)):
         lik_r[alphabet.index(targets[idx])] *= scores[idx]
+
+    lik_r /= np.sum(lik_r)
 
     return lik_r
