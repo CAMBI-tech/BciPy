@@ -29,3 +29,4 @@ sounddevice==0.3.10
 SoundFile==0.10.1
 PySoundCard==0.5.2
 PySoundFile==0.9.0
+Pillow==4.3.0

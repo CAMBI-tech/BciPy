@@ -21,6 +21,7 @@ class BCIGui(wx.Frame):
         self.input_text = []
         self.static_text = []
         self.images = []
+        self.comboboxes = []
 
     def show_gui(self):
         """Show GUI."""
@@ -54,9 +55,14 @@ class BCIGui(wx.Frame):
 
         self.buttons.append(btn)
 
-    def bind_action(self, action: str, btn: wx.Button) -> None:
-        if action == 'default':
-            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
+    def bind_action(self, action: str, btn) -> None:
+        """Default action for buttons or comboboxes that do not have an action
+        assigned"""
+        if action == 'default': 
+            if isinstance(btn, wx.Button):
+                self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
+            elif isinstance(btn, wx.ComboBox):
+                self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.on_dropdown, btn)
 
     def add_text_input(self, position: tuple, size: tuple) -> None:
         """Add Text Input."""
@@ -76,6 +82,12 @@ class BCIGui(wx.Frame):
         static_text.SetFont(font)
 
         self.static_text.append(static_text)
+        
+    def add_combobox(self, position: tuple, size: tuple, action: str='default') -> None:
+        """Add combobox."""
+        combobox = wx.ComboBox(self.panel, pos=position, size=size)
+        self.comboboxes.append(combobox)
+        self.bind_action(action, combobox)
 
     def add_image(self, path: str, position: tuple, size: int) -> None:
         """Add Image."""
@@ -108,6 +120,13 @@ class BCIGui(wx.Frame):
         """
         btn = event.GetEventObject().GetLabel()
         print(f'pressed {btn}')
+        
+    def on_dropdown(self, event):
+        """on_dropdown.
+        
+        Default event to bind to comboboxes
+        """
+        print('dropdown selected')
 
 
 
