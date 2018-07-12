@@ -58,14 +58,14 @@ def alphabet(parameters=None):
     """
     if parameters:
         if not parameters['is_txt_sti']:
-            # construct an array of paths to images
+            # construct an array of paths to images and wav files
             path = parameters['path_to_presentation_images']
-            image_array = []
-            for image_filename in os.listdir(path):
-                if image_filename.endswith(".png") or image_filename.endswith(".wav"):
-                    image_array.append(os.path.join(path, image_filename))
+            stimulus_array = []
+            for stimulus_filename in os.listdir(path):
+                if stimulus_filename.endswith(".png") or stimulus_filename.endswith(".wav"):
+                    stimulus_array.append(os.path.join(path, stimulus_filename))
 
-            return image_array
+            return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',

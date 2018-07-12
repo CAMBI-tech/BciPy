@@ -614,12 +614,28 @@
     ],
     "type": "int"
   },
-  "path_to_sounds": {
+  "novel_stimuli_location": {
     "value": "bcipy/static/sounds",
     "section": "bci_config",
-    "readableName": "Path to sound files for presentation",
-    "helpTip": "Path to sound files",
+    "readableName": "Path to novel stimuli for insertion into tasks",
+    "helpTip": "Path to stimuli files",
     "recommended_values": "",
     "type": "directorypath"
+  },
+  "enable_novel_stimuli": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable novel stimuli",
+    "helpTip": "Whether or not to insert novel stimuli into RSVP tasks",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "novel_stimuli_frequency": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Novel stimuli appearance frequency",
+    "helpTip": "The number of trials that pass between the insertion of novel stimuli (set to 0 for random)",
+    "recommended_values": "",
+    "type": "int"
   }
 }

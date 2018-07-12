@@ -79,6 +79,7 @@ class RSVPDisplay(object):
         self.static_period_time = static_period_time
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
+        
 
         # Used to handle writing the marker stimulus
         self.marker_writer = marker_writer or NullMarkerWriter()
@@ -203,36 +204,40 @@ class RSVPDisplay(object):
             is_sound = False
             
             # Set the Stimuli attrs
-            if self.is_txt_sti:
+            #Test if stimulus is an image or sound file
+            if self.stim_sequence[idx].endswith('.png'):
+                self.sti = self.create_stimulus(mode='image', height_int=self.height_stim)
+                self.sti.image = self.stim_sequence[idx]
+                #Retrieve image width and height
+                with Image.open(self.sti.image) as pillow_image:
+                    image_width, image_height = pillow_image.size
+                #Resize image so that its largest dimension is the stimuli size defined in the parameters file
+                if image_width >= image_height:
+                    self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
+                else:
+                    self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+                
+            elif self.stim_sequence[idx].endswith('.wav'):  
+                is_sound = True
+                #Create text stimulus to display file path
+                self.sti = self.create_stimulus(mode='text', height_int = 0.05)
+                sound_file = soundfile.SoundFile(self.stim_sequence[idx])
                 self.sti.text = self.stim_sequence[idx]
-                self.sti.color = self.color_list_sti[idx]
-                sti_label = self.sti.text
-            else:
-                if self.stim_sequence[idx].endswith('.png'):
-                    self.sti = self.create_stimulus(mode='image')
-                    self.sti.image = self.stim_sequence[idx]
-                    #Retrieve image width and height
-                    with Image.open(self.sti.image) as pillow_image:
-                        image_width, image_height = pillow_image.size
-                    #Resize image so that its largest dimension is the stimuli size defined in the parameters file
-                    if image_width >= image_height:
-                        self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
-                    else:
-                        self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
-                else:   
-                    is_sound = True
-                    self.sti = self.create_stimulus(mode='text', Height = 0.05)
-                    sound_file = soundfile.SoundFile(self.stim_sequence[idx])
-                    self.sti.text = self.stim_sequence[idx]
-                    sti_label = self.sti.text
-                    self.sti.image = None
-                    #Adjust presentation time based on length of sound file
-                    duration = len(sound_file) / float(sound_file.samplerate)
-                    time_to_present = math.ceil(duration * self.refresh_rate)
-                    
+                #Adjust presentation time based on length of sound file
+                duration = len(sound_file) / float(sound_file.samplerate)
+                time_to_present = math.ceil(duration * self.refresh_rate)
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
                 sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+                
+            else:
+                #Text stimulus
+                self.sti = self.create_stimulus(mode='text', height_int=self.height_stim)
+                self.sti.text = self.stim_sequence[idx]
+                self.sti.color = self.color_list_sti[idx]
+                sti_label = self.sti.text
+                   
 
             # End static period
             self.staticPeriod.complete()
@@ -332,15 +337,15 @@ class RSVPDisplay(object):
         wait_message.draw()
         self.win.flip()
         
-    def create_stimulus(self, mode="text", Height=0.6):
+    def create_stimulus(self, height_int: int, mode="text"):
         if mode == "text":
             return visual.TextStim(win=self.win, color='white',
-                   height=Height, text='+',
+                   height=height_int, text='+',
                    font=self.font_stim, pos=self.pos_sti,
                    wrapWidth=None, colorSpace='rgb',
                    opacity=1, depth=-6.0)
         if mode == "image":
             return visual.ImageStim(win=self.win, image=None, mask=None,
                       units='', pos=self.pos_sti,
-                      size=(self.height_stim, self.height_stim), ori=0.0)
+                      size=(height_int, height_int), ori=0.0)
     
