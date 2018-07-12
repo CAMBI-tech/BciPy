@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from psychopy import visual, core
 from PIL import Image
+import math
+import soundfile
+import sounddevice
 
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
@@ -196,27 +199,40 @@ class RSVPDisplay(object):
 
             # Turn ms timing into frames! Much more accurate!
             time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
-
+            
+            is_sound = False
+            
             # Set the Stimuli attrs
             if self.is_txt_sti:
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
             else:
-                self.sti.image = self.stim_sequence[idx]
-                
-                #Retrieve image width and height
-                with Image.open(self.sti.image) as pillow_image:
-                    image_width, image_height = pillow_image.size
-                #Resize image so that its largest dimension is the stimuli size defined in the parameters file
-                if image_width >= image_height:
-                    self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
-                else:
-                    self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
+                if self.stim_sequence[idx].endswith('.png'):
+                    self.sti = self.create_stimulus(mode='image')
+                    self.sti.image = self.stim_sequence[idx]
+                    #Retrieve image width and height
+                    with Image.open(self.sti.image) as pillow_image:
+                        image_width, image_height = pillow_image.size
+                    #Resize image so that its largest dimension is the stimuli size defined in the parameters file
+                    if image_width >= image_height:
+                        self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
+                    else:
+                        self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
+                else:   
+                    is_sound = True
+                    self.sti = self.create_stimulus(mode='text', Height = 0.05)
+                    sound_file = soundfile.SoundFile(self.stim_sequence[idx])
+                    self.sti.text = self.stim_sequence[idx]
+                    sti_label = self.sti.text
+                    self.sti.image = None
+                    #Adjust presentation time based on length of sound file
+                    duration = len(sound_file) / float(sound_file.samplerate)
+                    time_to_present = math.ceil(duration * self.refresh_rate)
                     
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
-                sti_label = self.sti.image.split('/')[-1].split('.')[0]
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
 
             # End static period
             self.staticPeriod.complete()
@@ -228,10 +244,14 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
+            if is_sound == True:
+                sound_to_play = soundfile.read(self.stim_sequence[idx], dtype='float32')
+                sounddevice.play(sound_to_play[0], sound_to_play[1])
             for n_frames in range(time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
+
 
             # Get trigger time (takes < .01ms)
             trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
@@ -311,3 +331,16 @@ class RSVPDisplay(object):
         # Draw and flip the screen.
         wait_message.draw()
         self.win.flip()
+        
+    def create_stimulus(self, mode="text", Height=0.6):
+        if mode == "text":
+            return visual.TextStim(win=self.win, color='white',
+                   height=Height, text='+',
+                   font=self.font_stim, pos=self.pos_sti,
+                   wrapWidth=None, colorSpace='rgb',
+                   opacity=1, depth=-6.0)
+        if mode == "image":
+            return visual.ImageStim(win=self.win, image=None, mask=None,
+                      units='', pos=self.pos_sti,
+                      size=(self.height_stim, self.height_stim), ori=0.0)
+    

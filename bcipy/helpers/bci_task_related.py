@@ -62,7 +62,7 @@ def alphabet(parameters=None):
             path = parameters['path_to_presentation_images']
             image_array = []
             for image_filename in os.listdir(path):
-                if image_filename.endswith(".png"):
+                if image_filename.endswith(".png") or image_filename.endswith(".wav"):
                     image_array.append(os.path.join(path, image_filename))
 
             return image_array
@@ -173,7 +173,6 @@ def trial_complete_message(win, parameters):
         colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]
-
 
 def get_user_input(window, message, color, first_run=False):
     """Get User Input.

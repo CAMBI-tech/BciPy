@@ -613,5 +613,13 @@
       "25"
     ],
     "type": "int"
+  },
+  "path_to_sounds": {
+    "value": "bcipy/static/sounds",
+    "section": "bci_config",
+    "readableName": "Path to sound files for presentation",
+    "helpTip": "Path to sound files",
+    "recommended_values": "",
+    "type": "directorypath"
   }
 }
