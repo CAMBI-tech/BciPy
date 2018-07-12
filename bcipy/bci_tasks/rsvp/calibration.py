@@ -6,7 +6,7 @@ from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
 from bcipy.bci_tasks.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
+from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info, insert_novel_stimulus
 from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input)
     
@@ -123,19 +123,11 @@ class RSVPCalibrationTask(Task):
                 self.rsvp.stim_sequence = ele_sti[idx_o]
                 
                 #Insert novel stimuli randomly or based on parameters.json if enabled
-                if self.parameters['enable_novel_stimuli'] == True:
-                    activate_stimuli = False
-                    if (self.parameters['novel_stimuli_frequency'] == 0):
-                        if (random.randint(0,10) == 5):
-                            activate_stimuli = True
-                    elif (idx_o % self.parameters['novel_stimuli_frequency']) == 0: 
-                        if not idx_o == 0:
-                            activate_stimuli = True
-                            
-                    if activate_stimuli == True:
-                        random_stimuli_array = glob.glob(self.parameters['novel_stimuli_location']+'*.png') + glob.glob(self.parameters['novel_stimuli_location']+'*.wav')
-                        del self.rsvp.stim_sequence[random.randint(0,len(self.rsvp.stim_sequence) - 1)]
-                        self.rsvp.stim_sequence.append(random_stimuli_array[random.randint(0,len(random_stimuli_array) - 1)])
+                novel_stimulus_array = insert_novel_stimulus(target_letter=None, counter_pos=idx_o, stim_sequence=self.rsvp.stim_sequence, parameters=self.parameters)
+                if novel_stimulus_array:
+                    for item in self.rsvp.stim_sequence:
+                        if item == novel_stimulus_array[0]:
+                            self.rsvp.stim_sequence[self.rsvp.stim_sequence.index(item)] = novel_stimulus_array[1]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_sti:

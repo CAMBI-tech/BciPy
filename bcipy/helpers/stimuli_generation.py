@@ -1,6 +1,6 @@
 import numpy as np
 import random
-
+import glob
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                            color=['red', 'white'], num_sti=1,
@@ -216,3 +216,26 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     schedule_seq = (samples, times, colors)
 
     return schedule_seq
+    
+def insert_novel_stimulus(target_letter: str, counter_pos: int, stim_sequence, parameters):
+    """For inserting novel stimuli into an array.
+    Returns either a list of the item to be deleted, and the item to be 
+    appended to the array, or None."""
+    if parameters['enable_novel_stimuli'] == True:
+        activate_stimuli = False
+        if (parameters['novel_stimuli_frequency'] == 0):
+            if (random.randint(0,10) == 5):
+                activate_stimuli = True
+        elif (counter_pos % parameters['novel_stimuli_frequency']) == 0: 
+            if not counter_pos == 0:
+                activate_stimuli = True
+                
+        if activate_stimuli == True:
+            random_stimuli_array = glob.glob(parameters['novel_stimuli_location']+'*.png') + glob.glob(parameters['novel_stimuli_location']+'*.wav')
+            can_continue = False
+            while can_continue == False:
+                random_letter = stim_sequence[random.randint(1,len(stim_sequence) - 1)]
+                if not random_letter == target_letter and not random_letter == '+':
+                    can_continue = True
+            return[random_letter, random_stimuli_array[random.randint(0,len(random_stimuli_array) - 1)]]
+    return None
