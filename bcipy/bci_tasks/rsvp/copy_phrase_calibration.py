@@ -11,7 +11,7 @@ from bcipy.helpers.stimuli_generation import target_rsvp_sequence_generator, get
 
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, get_user_input,
-    trial_complete_message)
+    trial_complete_message, pause_calibration)
 
 
 class RSVPCopyPhraseCalibrationTask(Task):
@@ -113,24 +113,12 @@ class RSVPCopyPhraseCalibrationTask(Task):
 
             #Take a break every number of trials defined in parameters.json
             if self.enable_breaks:
-                if not self.trials_before_break == 0:
-                    #Check whether any trials have taken place, and, if so,
-                    #whether the number of trials performed is divisible
-                    #by the number of trials before a break set in parameters
-                    #Get number of trials by getting the length of the currently
-                    #typed string
-                    number_of_trials = len(text_task.replace('*',''))
-                    if (number_of_trials != 0) and (number_of_trials % self.trials_before_break) == 0:
-                        #Update countdown every second
-                        for counter in range(0,self.break_len):
-                            time = self.break_len - counter
-                            message = f'{self.break_message} {time}s'
-                            self.rsvp.update_task_state(
-                                text=(message),
-                                color_list=task_color[number_of_trials])
-                            self.rsvp.draw_static()
-                            self.window.flip()
-                            core.wait(1)
+                #Get number of trials by getting the length of the currently
+                #typed string
+                number_of_trials = len(text_task.replace('*',''))
+                pause_calibration(self.window, self.rsvp, number_of_trials,
+                                  self.trials_before_break, self.break_len,
+                                  self.break_message)
 
             # Generate some sequences to present based on parameters
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(

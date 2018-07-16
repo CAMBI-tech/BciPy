@@ -8,7 +8,7 @@ from bcipy.bci_tasks.task import Task
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
 from bcipy.helpers.bci_task_related import (
-    alphabet, trial_complete_message, get_user_input)
+    alphabet, trial_complete_message, get_user_input, pause_calibration)
 
 
 class RSVPCalibrationTask(Task):
@@ -110,21 +110,9 @@ class RSVPCalibrationTask(Task):
 
                 #Take a break every number of trials defined in parameters.json
                 if self.enable_breaks:
-                    if not self.trials_before_break == 0:
-                        #Check whether any trials have taken place, and, if so,
-                        #whether the number of trials performed is divisible
-                        #by the number of trials before a break set in parameters
-                        if (idx_o != 0) and (idx_o % self.trials_before_break) == 0:
-                            #Update countdown every second
-                            for counter in range(0,self.break_len):
-                                time = self.break_len - counter
-                                message = f'{self.break_message} {time}s'
-                                self.rsvp.update_task_state(
-                                    text=(message),
-                                    color_list=task_color[idx_o])
-                                self.rsvp.draw_static()
-                                self.window.flip()
-                                core.wait(1)
+                    pause_calibration(self.window, self.rsvp, idx_o,
+                                      self.trials_before_break, self.break_len,
+                                      self.break_message)
 
                 # update task state
                 self.rsvp.update_task_state(
