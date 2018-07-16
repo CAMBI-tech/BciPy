@@ -284,7 +284,7 @@
   "path_to_presentation_images": {
     "value": "../bci/static/images/rsvp_images/",
     "section": "bci_config",
-    "readableName": "Path to Images",
+    "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
     "type": "directorypath"
