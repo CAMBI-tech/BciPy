@@ -614,6 +614,14 @@
     ],
     "type": "int"
   },
+  "enable_breaks": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable calibration breaks",
+    "helpTip": "Enable breaks in RSVP calibration",
+    "recommended_values": "",
+    "type": "bool"
+  },
   "break_len": {
     "value": "30",
     "section": "bci_config",

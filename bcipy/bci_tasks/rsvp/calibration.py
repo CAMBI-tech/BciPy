@@ -72,6 +72,11 @@ class RSVPCalibrationTask(Task):
         self.is_txt_sti = parameters['is_txt_sti']
         self.eeg_buffer = parameters['eeg_buffer_len']
 
+        self.enable_breaks = parameters['enable_breaks']
+        self.break_len = parameters['break_len']
+        self.break_message = parameters['break_message']
+        self.trials_before_break = parameters['trials_before_break']
+
     def execute(self):
         run = True
 
@@ -102,19 +107,25 @@ class RSVPCalibrationTask(Task):
                 if not get_user_input(self.rsvp, self.wait_screen_message,
                                       self.wait_screen_message_color):
                     break
-                
+
                 #Take a break every number of trials defined in parameters.json
-                if not self.parameters['trials_before_break'] == 0:
-                    if (not idx_o == 0) and ((idx_o % self.parameters['trials_before_break']) == 0):
-                        #Update countdown every second
-                        for counter in range(0,self.parameters['break_len']):
-                            self.rsvp.update_task_state(
-                                text=(self.parameters['break_message'] + ' ' + str(self.parameters['break_len'] - counter) + 's'),
-                                color_list=task_color[idx_o])
-                            self.rsvp.draw_static()
-                            self.window.flip()
-                            core.wait(1)
-                    
+                if self.enable_breaks:
+                    if not self.trials_before_break == 0:
+                        #Check whether any trials have taken place, and, if so,
+                        #whether the number of trials performed is divisible
+                        #by the number of trials before a break set in parameters
+                        if (idx_o != 0) and (idx_o % self.trials_before_break) == 0:
+                            #Update countdown every second
+                            for counter in range(0,self.break_len):
+                                time = self.break_len - counter
+                                message = f'{self.break_message} {time}s'
+                                self.rsvp.update_task_state(
+                                    text=(message),
+                                    color_list=task_color[idx_o])
+                                self.rsvp.draw_static()
+                                self.window.flip()
+                                core.wait(1)
+
                 # update task state
                 self.rsvp.update_task_state(
                     text=task_text[idx_o],
