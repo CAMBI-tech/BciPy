@@ -11,7 +11,7 @@ from bcipy.helpers.stimuli_generation import target_rsvp_sequence_generator, get
 
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, get_user_input,
-    trial_complete_message)
+    trial_complete_message, pause_calibration)
 
 
 class RSVPCopyPhraseCalibrationTask(Task):
@@ -85,6 +85,11 @@ class RSVPCopyPhraseCalibrationTask(Task):
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
 
+        self.enable_breaks = parameters['enable_breaks']
+        self.break_len = parameters['break_len']
+        self.break_message = parameters['break_message']
+        self.trials_before_break = parameters['trials_before_break']
+
     def execute(self):
 
         run = True
@@ -105,6 +110,15 @@ class RSVPCopyPhraseCalibrationTask(Task):
             if not get_user_input(self.rsvp, self.wait_screen_message,
                                   self.wait_screen_message_color):
                 break
+
+            #Take a break every number of trials defined in parameters.json
+            if self.enable_breaks:
+                #Get number of trials by getting the length of the currently
+                #typed string
+                number_of_trials = len(text_task.replace('*',''))
+                pause_calibration(self.window, self.rsvp, number_of_trials,
+                                  self.trials_before_break, self.break_len,
+                                  self.break_message)
 
             # Generate some sequences to present based on parameters
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(

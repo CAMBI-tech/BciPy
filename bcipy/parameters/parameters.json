@@ -613,5 +613,37 @@
       "25"
     ],
     "type": "int"
+  },
+  "enable_breaks": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable calibration breaks",
+    "helpTip": "Enable breaks in RSVP calibration",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "break_len": {
+    "value": "30",
+    "section": "bci_config",
+    "readableName": "Break length (seconds)",
+    "helpTip": "break_len",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trials_before_break": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Number of calibration trials before break",
+    "helpTip": "The number of trials that will take place before a break",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "break_message": {
+    "value": "Take a break!",
+    "section": "bci_config",
+    "readableName": "Break Message",
+    "helpTip": "The message that displays during a break in calibration",
+    "recommended_values": "",
+    "type": "str"
   }
 }
