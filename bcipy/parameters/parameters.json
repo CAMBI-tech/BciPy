@@ -282,7 +282,7 @@
     "type": "str"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/rsvp_images/",
+    "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
     "readableName": "Path to Images",
     "helpTip": "Is this Text -True- or Image -False-",

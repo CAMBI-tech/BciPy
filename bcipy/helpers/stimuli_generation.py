@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import glob
 
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
@@ -216,3 +217,31 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     schedule_seq = (samples, times, colors)
 
     return schedule_seq
+
+def generate_icon_match_images(experiment_length, image_path, number_of_sequences):
+    """Generates an array of images to use for the icon matching task.
+    Args:
+        experiment_length(int): Number of images per sequence
+        image_path(str): Path to image files
+        number_of_sequences(int): Number of sequences to generate
+    Return generate_icon_match_images(array of paths to images to display)
+    """
+    image_array = glob.glob(image_path + '*.png')
+
+    #Remove plus image from array
+    for image in image_array:
+        if image.endswith('PLUS.png'):
+            image_array.remove(image)
+
+    if experiment_length > len(image_array) - 1:
+        raise Exception('Number of images to be displayed on screen is longer than number of images available')
+        return
+
+    random_number_array = np.random.permutation(len(image_array))
+    return_array = []
+    for sequence in range(number_of_sequences):
+        return_array.append([])
+        for item in range(experiment_length):
+            return_array[sequence].append(image_array[random_number_array[item]])
+
+    return return_array
