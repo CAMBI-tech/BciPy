@@ -218,14 +218,17 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     return schedule_seq
 
-def generate_icon_match_images(experiment_length, image_path, number_of_sequences):
+def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing):
     """Generates an array of images to use for the icon matching task.
     Args:
         experiment_length(int): Number of images per sequence
         image_path(str): Path to image files
         number_of_sequences(int): Number of sequences to generate
-    Return generate_icon_match_images(array of paths to images to display)
+        timing(list): List of timings
+    Return generate_icon_match_images(arrays of tuples of paths to images to
+    display, and timings)
     """
+    #Get all png images in image path
     image_array = glob.glob(image_path + '*.png')
 
     #Remove plus image from array
@@ -237,11 +240,34 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         raise Exception('Number of images to be displayed on screen is longer than number of images available')
         return
 
-    random_number_array = np.random.permutation(len(image_array))
+    #Generate indexes of target images
+    target_image_numbers = np.random.randint(0, len(image_array), number_of_sequences)
+
+    #Array of images to return
     return_array = []
+
+    #Array of timings to return
+    return_timing = []
+    for specific_time in range(len(timing) - 1):
+        return_timing.append(timing[specific_time])
+    for item_without_timing in range(len(return_timing), experiment_length):
+        return_timing.append(timing[-1])
+
     for sequence in range(number_of_sequences):
         return_array.append([])
-        for item in range(experiment_length):
+        #Generate random permutation of image indexes
+        random_number_array = np.random.permutation(len(image_array))
+        #Add target image to image array
+        return_array[sequence].append(image_array[target_image_numbers[sequence]])
+        #Add PLUS.png to image array
+        return_array[sequence].append('bcipy/static/images/bci_main_images/PLUS.png')
+
+        #Add target image to sequence, if it is not already there
+        if not target_image_numbers[sequence] in random_number_array[2:experiment_length]:
+            random_number_array[np.random.randint(2, experiment_length)] = target_image_numbers[sequence]
+
+        #Fill the rest of the image array with random images
+        for item in range(2, experiment_length):
             return_array[sequence].append(image_array[random_number_array[item]])
 
-    return return_array
+    return (return_array, return_timing)

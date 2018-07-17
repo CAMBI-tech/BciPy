@@ -69,13 +69,14 @@ class RSVPIconToIconTask(Task):
 
         self.stimuli_height = parameters['sti_height']
 
-        self.is_txt_sti = parameters['is_txt_sti']
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
 
         self.image_path = parameters['path_to_presentation_images']
+
+        self.is_txt_sti = False
 
     def execute(self):
         run = True
@@ -86,14 +87,47 @@ class RSVPIconToIconTask(Task):
                               first_run=True):
             run = False
 
-        image_array = generate_icon_match_images(self.len_sti, self.image_path,
-                                                 self.num_sti)
+        image_array, timing_array = generate_icon_match_images(self.len_sti,
+                                                               self.image_path,
+                                                               self.num_sti,
+                                                               self.timing)
 
         while run:
-            # check user input to make sure we should be going
-            if not get_user_input(self.rsvp, self.wait_screen_message,
-                                  self.wait_screen_message_color):
-                break
+            for each_trial in range(len(image_array)):
+                # check user input to make sure we should be going
+                if not get_user_input(self.rsvp, self.wait_screen_message,
+                                      self.wait_screen_message_color):
+                    break
+
+                self.rsvp.sti.height = self.stimuli_height
+
+                self.rsvp.stim_sequence = image_array[each_trial]
+                self.rsvp.time_list_sti = timing_array
+                core.wait(self.buffer_val)
+
+                # Do the sequence
+                last_sequence_timing = self.rsvp.do_sequence()
+
+                # Wait for a time
+                core.wait(self.buffer_val)
+
+            run = False
+
+        # Say Goodbye!
+        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.draw_static()
+        self.window.flip()
+
+        # Give the system time to process
+        core.wait(self.buffer_val)
+
+        # Close this sessions trigger file and return some data
+        self.trigger_file.close()
+
+        # Wait some time before exiting so there is trailing eeg data saved
+        core.wait(self.eeg_buffer)
+
+        return self.file_save
 
 
 def _init_icon_to_icon_display_task(
@@ -125,7 +159,7 @@ def _init_icon_to_icon_display_task(
         color_bg_txt=parameters['color_bg_txt'],
         font_bg_txt=parameters['font_bg_txt'],
         color_bar_bg=parameters['color_bar_bg'],
-        is_txt_sti=parameters['is_txt_sti'],
+        is_txt_sti=False,
         trigger_type=parameters['trigger_type'])
 
     return rsvp
