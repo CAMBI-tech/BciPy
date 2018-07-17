@@ -75,6 +75,7 @@ class RSVPIconToIconTask(Task):
         self.fake = fake
 
         self.image_path = parameters['path_to_presentation_images']
+        self.task_height = parameters['height_task']
 
         self.is_txt_sti = False
 
@@ -104,6 +105,8 @@ class RSVPIconToIconTask(Task):
                 self.rsvp.stim_sequence = image_array[each_trial]
                 self.rsvp.time_list_sti = timing_array
                 core.wait(self.buffer_val)
+
+                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height)
 
                 # Do the sequence
                 last_sequence_timing = self.rsvp.do_sequence()
@@ -142,7 +145,7 @@ def _init_icon_to_icon_display_task(
                   parameters['pos_text_y']),
         height_info=parameters['txt_height'],
         font_info=parameters['font_text'],
-        color_task=['white'],
+        color_task=['black'],
         font_task=parameters['font_task'],
         height_task=parameters['height_task'],
         font_sti=parameters['font_sti'],
