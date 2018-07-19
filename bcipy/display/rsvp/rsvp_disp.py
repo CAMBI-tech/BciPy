@@ -126,7 +126,7 @@ class RSVPDisplay(object):
                                        opacity=1, depth=-6.0)
         else:
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
-                                        units='', pos=pos_sti, ori=0.0)
+                                        pos=pos_sti, ori=0.0)
 
         if bg:
             # Create Bar Graph

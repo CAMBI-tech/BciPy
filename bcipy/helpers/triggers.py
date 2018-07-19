@@ -59,7 +59,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
             from psychopy import visual, core
 
             calibration_box = visual.ImageStim(
-                display,
+                win=display,
                 image='bcipy/static/images/testing_images/white.png',
                 pos=(-.5, -.5),
                 mask=None,
