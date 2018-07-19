@@ -70,7 +70,6 @@ class VisualFeedback(Feedback):
         if '.png' in stimulus:
             return visual.ImageStim(win=self.display,
                                     image=stimulus,
-                                    size=(self.height_stim, self.height_stim),
                                     mask=None,
                                     pos=pos,
                                     ori=0.0)
