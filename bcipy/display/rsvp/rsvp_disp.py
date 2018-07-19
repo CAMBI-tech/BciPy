@@ -195,7 +195,7 @@ class RSVPDisplay(object):
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             # Set the Stimuli attrs
             if self.is_txt_sti:
@@ -204,7 +204,7 @@ class RSVPDisplay(object):
                 sti_label = self.sti.text
             else:
                 self.sti.image = self.stim_sequence[idx]
-                
+
                 #Retrieve image width and height
                 with Image.open(self.sti.image) as pillow_image:
                     image_width, image_height = pillow_image.size
@@ -213,7 +213,7 @@ class RSVPDisplay(object):
                     self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
                 else:
                     self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
-                    
+
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
                 sti_label = self.sti.image.split('/')[-1].split('.')[0]
@@ -228,7 +228,7 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(time_to_present):
+            for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

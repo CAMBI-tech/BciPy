@@ -106,7 +106,7 @@ class RSVPIconToIconTask(Task):
                 self.rsvp.time_list_sti = timing_array
                 core.wait(self.buffer_val)
 
-                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height)
+                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow')
 
                 # Do the sequence
                 last_sequence_timing = self.rsvp.do_sequence()
