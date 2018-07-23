@@ -644,7 +644,7 @@
     "value": "0",
     "section": "bci_config",
     "readableName": "Number of calibration trials before break",
-    "helpTip": "The number of trials that will take place before a break (set to 0 for no breaks)",
+    "helpTip": "The number of trials that will take place before a break",
     "recommended_values": "",
     "type": "int"
   },
