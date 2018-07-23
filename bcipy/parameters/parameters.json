@@ -614,6 +614,16 @@
     ],
     "type": "int"
   },
+  "min_seq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Sequence Length",
+    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
   "enable_breaks": {
     "value": "false",
     "section": "bci_config",
