@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',
-                        default='parameters/parameters.json',
+                        default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. \
                           Pass as parameters/parameters.json')
 
