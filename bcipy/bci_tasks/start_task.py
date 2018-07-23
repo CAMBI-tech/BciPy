@@ -3,7 +3,6 @@
 from bcipy.bci_tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.bci_tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.bci_tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
-from bcipy.bci_tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,
@@ -50,18 +49,6 @@ def start_task(display_window, daq, task_type, parameters, file_save,
                 copy_phrase_calibration.execute()
 
             # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
-
-        if task_type['exp_type'] == 4:
-            #try running the experiment
-            try:
-                icon_to_icon = RSVPIconToIconTask(display_window, daq,
-                                                  parameters, file_save, fake)
-
-                icon_to_icon.execute()
-
-            #Raise exceptions if any encountered and clean up!!
             except Exception as e:
                 raise e
 

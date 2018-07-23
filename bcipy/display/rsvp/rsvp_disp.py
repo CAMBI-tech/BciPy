@@ -194,7 +194,7 @@ class RSVPDisplay(object):
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             # Set the Stimuli attrs
             if self.is_txt_sti:
@@ -235,7 +235,7 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(self.time_to_present):
+            for n_frames in range(time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

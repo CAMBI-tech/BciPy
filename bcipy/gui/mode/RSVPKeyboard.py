@@ -9,7 +9,7 @@ class RSVPKeyboard(BCIGui):
 
     event_started = False
     PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
-
+    
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
@@ -80,8 +80,6 @@ class RSVPKeyboard(BCIGui):
             experiment_type = 2
         elif experiment_type_string == 'Copy Phrase C.':
             experiment_type = 3
-        elif experiment_type_string == 'Icon to Icon':
-            experiment_type = 4
         else:
             dialog = wx.MessageDialog(
                 self, "Not a registered experiment type!", 'Info',
@@ -91,9 +89,9 @@ class RSVPKeyboard(BCIGui):
             raise ValueError('Register this experiment type or remove button')
 
         return experiment_type
-
+        
     def load_items_from_txt(self, event):
-        """Loads user directory names from the data path defined in
+        """Loads user directory names from the data path defined in 
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
         parameters = load_json_parameters(self.PARAMETER_LOCATION, value_cast=True)
@@ -126,26 +124,21 @@ gui.add_static_text(
 # BUTTONS!
 gui.add_button(
     message="Calibration",
-    position=(25, 300), size=(100, 100),
+    position=(75, 300), size=(100, 100),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase", position=(150, 300),
+    message="Copy Phrase", position=(200, 300),
     size=(100, 100),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase C.", position=(275, 300),
+    message="Copy Phrase C.", position=(325, 300),
     size=(100, 100),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Free Spell", position=(400, 300),
-    size=(100, 100),
-    color='grey',
-    action='launch_bci')
-gui.add_button(
-    message="Icon to Icon", position=(525, 300),
+    message="Free Spell", position=(450, 300),
     size=(100, 100),
     color='grey',
     action='launch_bci')
@@ -158,7 +151,7 @@ gui.add_button(
     size=(100, 50), color='white',
     action='offline_analysis')
 gui.add_button(
-    message='Refresh', position=(585, 230),
+    message='Refresh', position=(585, 325),
     size=(50, 50), color='white',
     action='refresh')
 
