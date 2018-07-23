@@ -47,7 +47,6 @@ class TestVisualFeedback(unittest.TestCase):
         when(psychopy.visual).ImageStim(
             win=self.display,
             image=any(),
-            size=any(),
             mask=None,
             pos=any(),
             ori=any()

@@ -59,12 +59,12 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
             from psychopy import visual, core
 
             calibration_box = visual.ImageStim(
-                display,
+                win=display,
                 image='bcipy/static/images/testing_images/white.png',
-                size=(.75, .75),
                 pos=(-.5, -.5),
                 mask=None,
                 ori=0.0)
+            calibration_box.size *= 0.75 / max(calibration_box.size)
             timing = ['calibration_trigger', experiment_clock.getTime()]
             if on_trigger:
                 on_trigger(timing)
@@ -234,7 +234,7 @@ def trigger_decoder(mode, trigger_loc=None):
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
         trigger_txt = [line.split() for line in text_file
                        if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line 
+                       and 'offset_correction' not in line
                        and 'calibration_trigger' not in line]
 
     # If operating mode is calibration, trigger.txt has three columns.

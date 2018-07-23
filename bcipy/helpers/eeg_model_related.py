@@ -25,12 +25,14 @@ class CopyPhraseWrapper(object):
             the copy phrase task
     """
 
-    def __init__(self, signal_model=None, fs=300, k=2, alp=None, evidence_names=['LM', 'ERP'],
+    def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2, 
+                 alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
-        self.decision_maker = DecisionMaker(state=task_list[0][1],
+        self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
+                                            state=task_list[0][1],
                                             alphabet=alp,
                                             is_txt_sti=is_txt_sti)
         self.alp = alp

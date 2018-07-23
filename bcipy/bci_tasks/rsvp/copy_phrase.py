@@ -92,6 +92,8 @@ class RSVPCopyPhraseTask(Task):
         self.lmodel = lmodel
         self.classifier = classifier
         self.down_sample_rate = parameters['down_sampling_rate']
+        
+        self.min_num_seq = parameters['min_seq_len']
 
     def execute(self):
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
@@ -101,7 +103,7 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq.device_info.fs,
+            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length, signal_model=self.classifier, fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=task_list,
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
@@ -154,6 +156,7 @@ class RSVPCopyPhraseTask(Task):
             else:
                 target_letter = '<'
 
+            
             # Get sequence information
             if new_epoch:
 

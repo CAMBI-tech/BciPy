@@ -93,7 +93,7 @@ class DecisionMaker(object):
                 (e.g pick n-highest likely letters and randomly shuffle)
         """
 
-    def __init__(self, state='',
+    def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + ['_'],
                  is_txt_sti=True):
         self.state = state
@@ -110,8 +110,8 @@ class DecisionMaker(object):
 
         # Stopping Criteria
         # TODO: Read from parameters
-        self.min_num_seq = 1
-        self.max_num_seq = 10
+        self.min_num_seq = min_num_seq
+        self.max_num_seq = max_num_seq
         self.posterior_commit_threshold = .8
 
     def form_display_state(self, state):

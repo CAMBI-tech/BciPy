@@ -126,8 +126,7 @@ class RSVPDisplay(object):
                                        opacity=1, depth=-6.0)
         else:
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
-                                        units='', pos=pos_sti,
-                                        size=(sti_height, sti_height), ori=0.0)
+                                        pos=pos_sti, ori=0.0)
 
         if bg:
             # Create Bar Graph
@@ -195,7 +194,7 @@ class RSVPDisplay(object):
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             # Set the Stimuli attrs
             if self.is_txt_sti:
@@ -204,16 +203,24 @@ class RSVPDisplay(object):
                 sti_label = self.sti.text
             else:
                 self.sti.image = self.stim_sequence[idx]
-                
+
                 #Retrieve image width and height
                 with Image.open(self.sti.image) as pillow_image:
                     image_width, image_height = pillow_image.size
+
                 #Resize image so that its largest dimension is the stimuli size defined in the parameters file
                 if image_width >= image_height:
-                    self.sti.size = (self.height_stim, (image_height / image_width) * self.height_stim)
+                    proportions = (1, (image_height / image_width))
                 else:
-                    self.sti.size = ((image_width / image_height) * self.height_stim, self.height_stim)
-                    
+                    proportions = ((image_width / image_height), 1)
+
+                #Adjust image size to scale with monitor size
+                screen_width, screen_height = self.sti.win.size
+                if screen_width >= screen_height:
+                    self.sti.size = ((screen_height / screen_width) * self.sti.height * proportions[0],  self.sti.height * proportions[1])
+                else:
+                    self.sti.size = (self.sti.height * proportions[0], (screen_width / screen_height) * self.sti.height * proportions[1])
+
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
                 sti_label = self.sti.image.split('/')[-1].split('.')[0]
@@ -228,7 +235,7 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(time_to_present):
+            for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
@@ -298,10 +305,10 @@ class RSVPDisplay(object):
             wait_logo = visual.ImageStim(
                 self.win,
                 image='bcipy/static/images/gui_images/bci_cas_logo.png',
-                size=(1, 1),
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
+            wait_logo.size *= 1 / max(wait_logo.size)
             wait_logo.draw()
 
         except Exception:
