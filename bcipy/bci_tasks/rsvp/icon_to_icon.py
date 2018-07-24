@@ -6,9 +6,19 @@ from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
 
 from bcipy.helpers.stimuli_generation import generate_icon_match_images
 
+from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
+
+from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
+
+from bcipy.helpers.save import _save_session_related_data
+
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
+
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
+    
+import glob
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -32,7 +42,7 @@ class RSVPIconToIconTask(Task):
     """
 
     def __init__(
-            self, win, daq, parameters, file_save, fake):
+            self, win, daq, parameters, file_save, classifier, lmodel, fake):
 
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -73,14 +83,61 @@ class RSVPIconToIconTask(Task):
 
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
+        self.lmodel = lmodel
+        self.classifier = classifier
 
         self.image_path = parameters['path_to_presentation_images']
         self.task_height = parameters['height_task']
 
         self.is_txt_sti = False
+        
+        self.min_num_seq = parameters['min_seq_len']
 
     def execute(self):
+        image_array, timing_array = generate_icon_match_images(self.len_sti,
+                                                           self.image_path,
+                                                           self.num_sti,
+                                                           self.timing)
+                     
+        #Get all png images in image path
+        alp_image_array = glob.glob(self.image_path + '*.png')
+
+        #Remove plus image from array
+        for image in alp_image_array:
+            if image.endswith('PLUS.png'):
+                alp_image_array.remove(image)
+        for image in alp_image_array:
+            alp_image_array[alp_image_array.index(image)] = image.replace('.png', '')
+                
+        self.alp = alp_image_array
+        
+        # Try Initializing Copy Phrase Wrapper:
+        #       (sig_pro, decision maker, signal_model)
+        try:
+            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length, signal_model=self.classifier, fs=self.daq.device_info.fs,
+                                                 k=2, alp=self.alp, task_list=['unnecessary_string', 'unnecessary_string'],
+                                                 lmodel=self.lmodel,
+                                                 is_txt_sti=self.is_txt_sti,
+                                                 device_name=self.daq.device_info.name,
+                                                 device_channels=self.daq.device_info.channels)
+        except Exception as e:
+            print("Error initializing Copy Phrase Task")
+            raise e
+            
         run = True
+        
+        # Init session data and save before beginning
+        data = {
+            'session': self.file_save,
+            'session_type': 'Icon to Icon Matching',
+            'paradigm': 'RSVP',
+            'epochs': {},
+            'total_time_spent': self.experiment_clock.getTime(),
+            'total_number_epochs': 0,
+        }
+        
+        # Save session data
+        _save_session_related_data(self.session_save_location, data)
 
         # Check user input to make sure we should be going
         if not get_user_input(self.rsvp, self.wait_screen_message,
@@ -88,31 +145,51 @@ class RSVPIconToIconTask(Task):
                               first_run=True):
             run = False
 
-        image_array, timing_array = generate_icon_match_images(self.len_sti,
-                                                               self.image_path,
-                                                               self.num_sti,
-                                                               self.timing)
-
         while run:
             for each_trial in range(len(image_array)):
                 # check user input to make sure we should be going
                 if not get_user_input(self.rsvp, self.wait_screen_message,
                                       self.wait_screen_message_color):
                     break
-
+                
                 self.rsvp.sti.height = self.stimuli_height
 
                 self.rsvp.stim_sequence = image_array[each_trial]
                 self.rsvp.time_list_sti = timing_array
                 core.wait(self.buffer_val)
-
-                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow')
+                
+                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size)
 
                 # Do the sequence
-                last_sequence_timing = self.rsvp.do_sequence()
+                sequence_timing = self.rsvp.do_sequence()
 
                 # Wait for a time
                 core.wait(self.buffer_val)
+                
+                # reshape the data and triggers as needed for later modules
+                raw_data, triggers, target_info = \
+                    process_data_for_decision(sequence_timing, self.daq)
+                    
+                
+                if self.fake:
+                    correct_decision = True
+                else:
+                    correct_decision, sti = \
+                        copy_phrase_task.evaluate_sequence(raw_data, triggers,
+                                                           target_info)
+                                                       
+                
+                if correct_decision:
+                    message_color = 'green'
+                else:
+                    message_color = 'red'
+                    
+                #Display feedback about whether decision was correct
+                visual_feedback = VisualFeedback(
+                display=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock)
+                stimulus = self.rsvp.stim_sequence[0]
+                visual_feedback.message_color = message_color
+                visual_feedback.administer(stimulus, compare_assertion=None, message='Decision:')
 
             run = False
 

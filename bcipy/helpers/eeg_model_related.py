@@ -5,7 +5,6 @@ from bcipy.signal_processing.sig_pro import sig_pro
 from bcipy.bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
 
-
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
 
@@ -64,18 +63,31 @@ class CopyPhraseWrapper(object):
         time = [triggers[i][1] for i in range(0, len(triggers))]
 
         # Raise an error if the stimuli includes unexpected terms
-        if not set(letters).issubset(set(self.alp+['+'])):
+        if not set(letters).issubset(set(self.alp+['+']+['PLUS']+['calibration_trigger'])):
             raise Exception('unexpected letters received in copy phrase')
 
         # Remove information in any trigger related with the fixation
-        del target_info[letters.index('+')]
-        del time[letters.index('+')]
-        del letters[letters.index('+')]
+        if '+' in letters:
+            del_letter = '+'
+        elif 'PLUS' in letters:
+            del_letter = 'PLUS'
+        else:
+            raise Exception('cound not find target + sign in letters')
+        
+        if 'calibration_trigger' in letters:
+            del target_info[letters.index('calibration_trigger')]
+            del time[letters.index('calibration_trigger')]
+            del letters[letters.index('calibration_trigger')]
+            
+        del target_info[letters.index(del_letter)]
+        del time[letters.index(del_letter)]
+        del letters[letters.index(del_letter)]
 
         x, _, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map)
 
+        
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
         decision, arg = self.decision_maker.decide(prob)

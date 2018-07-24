@@ -205,7 +205,7 @@ class RSVPDisplay(object):
                 self.sti.image = self.stim_sequence[idx]
 
                 self.sti.size = resize_image(self.sti.image, self.sti.win.size, 
-                                                             self.sti.height)
+                                                             self.height_stim)
 
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
