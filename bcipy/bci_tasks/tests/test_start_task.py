@@ -23,14 +23,14 @@ class TestStartTask(unittest.TestCase):
 
         # Mock the display window
         self.display_window = mock()
-        self.display_window.size = [1]
+        self.display_window.size = [1, 1]
 
         # Mock the frame rate return
         when(self.display_window).getActualFrameRate().thenReturn(60)
         self.text_stim = mock()
         self.text_stim.height = 2
         self.text_stim.boundingBox = [1]
-        self.text_stim.size = np.array([100.0, 100.0])
+        self.text_stim.size = [100.0, 100.0]
         self.text_stim.win = mock()
         self.text_stim.win.size = (500, 500)
 

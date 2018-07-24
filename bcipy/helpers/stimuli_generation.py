@@ -272,8 +272,8 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
             return_array[sequence].append(image_array[random_number_array[item]])
 
     return (return_array, return_timing)
-    
-def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+
+def resize_image(image_path: str, screen_size: tuple, sti_height):
     """Returns the width and height that a given image should be displayed at
     given the screen size, size of the original image, and stimuli height
     parameter"""
@@ -293,6 +293,5 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
         sti_size = ((screen_height / screen_width) * sti_height * proportions[0],  sti_height * proportions[1])
     else:
         sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
-    
+        
     return sti_size
-    

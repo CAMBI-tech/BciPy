@@ -24,7 +24,7 @@ class CopyPhraseWrapper(object):
             the copy phrase task
     """
 
-    def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2, 
+    def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None):
@@ -72,13 +72,13 @@ class CopyPhraseWrapper(object):
         elif 'PLUS' in letters:
             del_letter = 'PLUS'
         else:
-            raise Exception('cound not find target + sign in letters')
-        
+            raise Exception('could not find target + sign in letters')
+
         if 'calibration_trigger' in letters:
             del target_info[letters.index('calibration_trigger')]
             del time[letters.index('calibration_trigger')]
             del letters[letters.index('calibration_trigger')]
-            
+
         del target_info[letters.index(del_letter)]
         del time[letters.index(del_letter)]
         del letters[letters.index(del_letter)]
@@ -87,7 +87,7 @@ class CopyPhraseWrapper(object):
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map)
 
-        
+
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
         decision, arg = self.decision_maker.decide(prob)

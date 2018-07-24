@@ -69,12 +69,13 @@ class VisualFeedback(Feedback):
 
     def _construct_stimulus(self, stimulus, pos):
         if '.png' in stimulus:
-            image_size = resize_image(stimulus, self.display.size, self.height_stim)
-            return visual.ImageStim(win=self.display,
+            image_stim = visual.ImageStim(win=self.display,
                                     image=stimulus,
                                     mask=None,
                                     pos=pos,
-                                    ori=0.0, size=image_size)
+                                    ori=0.0)
+            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
+            return image_stim
         else:
             return visual.TextStim(win=self.display, font=self.font_stim,
                                    text=stimulus,

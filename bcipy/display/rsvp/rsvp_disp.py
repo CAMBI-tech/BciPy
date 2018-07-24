@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from psychopy import visual, core
-from PIL import Image
+from bcipy.helpers.stimuli_generation import resize_image
 
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
@@ -204,8 +204,8 @@ class RSVPDisplay(object):
             else:
                 self.sti.image = self.stim_sequence[idx]
 
-                self.sti.size = resize_image(self.sti.image, self.sti.win.size, 
-                                                             self.height_stim)
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
+                                                             self.sti.height)
 
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
@@ -294,7 +294,9 @@ class RSVPDisplay(object):
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
-            wait_logo.size *= 1 / max(wait_logo.size)
+            wait_logo.size = resize_image(
+                'bcipy/static/images/gui_images/bci_cas_logo.png',
+                self.win.size, 1)
             wait_logo.draw()
 
         except Exception:
