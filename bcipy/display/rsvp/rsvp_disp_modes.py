@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from psychopy import visual
-from PIL import Image
 from bcipy.display.rsvp.rsvp_disp import RSVPDisplay
+from bcipy.helpers.stimuli_generation import resize_image
 
 """ RSVP Tasks are RSVPDisplay objects with different structure. They share
     the tasks and the essential elements and stimuli. However layout, length of
@@ -314,7 +314,7 @@ class IconToIconDisplay(RSVPDisplay):
 
         super(IconToIconDisplay, self).draw_static()
 
-    def update_task_state(self, image_path, task_height, rect_color):
+    def update_task_state(self, image_path, task_height, rect_color, window_size):
         """ Updates task state of Icon to Icon Matching Task by changing the
         image displayed at the top of the screen.
         Also updates rectangle size.
@@ -325,16 +325,7 @@ class IconToIconDisplay(RSVPDisplay):
 
         self.task.image = image_path
 
-        #Retrieve image width and height
-        with Image.open(image_path) as pillow_image:
-            image_width, image_height = pillow_image.size
-        #Resize image so that its largest dimension is the stimuli size defined in the parameters file
-        if image_width >= image_height:
-            image_height = (image_height / image_width) * task_height
-            image_width = task_height
-        else:
-            image_width = (image_width / image_height) * task_height
-            image_height = task_height
+        image_width, image_height = resize_image(image_path, window_size, task_height)
 
         self.target_text.pos = (self.pos_sti[0] - image_width - 0.5, self.pos_sti[1])
 

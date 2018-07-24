@@ -5,7 +5,7 @@ from PIL import Image
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
-
+from bcipy.helpers.stimuli_generation import resize_image
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -204,22 +204,8 @@ class RSVPDisplay(object):
             else:
                 self.sti.image = self.stim_sequence[idx]
 
-                #Retrieve image width and height
-                with Image.open(self.sti.image) as pillow_image:
-                    image_width, image_height = pillow_image.size
-
-                #Resize image so that its largest dimension is the stimuli size defined in the parameters file
-                if image_width >= image_height:
-                    proportions = (1, (image_height / image_width))
-                else:
-                    proportions = ((image_width / image_height), 1)
-
-                #Adjust image size to scale with monitor size
-                screen_width, screen_height = self.sti.win.size
-                if screen_width >= screen_height:
-                    self.sti.size = ((screen_height / screen_width) * self.sti.height * proportions[0],  self.sti.height * proportions[1])
-                else:
-                    self.sti.size = (self.sti.height * proportions[0], (screen_width / screen_height) * self.sti.height * proportions[1])
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size, 
+                                                             self.sti.height)
 
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.

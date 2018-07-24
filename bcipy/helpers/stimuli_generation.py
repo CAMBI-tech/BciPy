@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import glob
+from PIL import Image
 
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
@@ -271,3 +272,27 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
             return_array[sequence].append(image_array[random_number_array[item]])
 
     return (return_array, return_timing)
+    
+def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+    """Returns the width and height that a given image should be displayed at
+    given the screen size, size of the original image, and stimuli height
+    parameter"""
+    #Retrieve image width and height
+    with Image.open(image_path) as pillow_image:
+        image_width, image_height = pillow_image.size
+
+    #Resize image so that its largest dimension is the stimuli size defined in the parameters file
+    if image_width >= image_height:
+        proportions = (1, (image_height / image_width))
+    else:
+        proportions = ((image_width / image_height), 1)
+
+    #Adjust image size to scale with monitor size
+    screen_width, screen_height = screen_size
+    if screen_width >= screen_height:
+        sti_size = ((screen_height / screen_width) * sti_height * proportions[0],  sti_height * proportions[1])
+    else:
+        sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
+    
+    return sti_size
+    
