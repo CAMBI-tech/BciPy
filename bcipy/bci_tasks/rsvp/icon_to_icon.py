@@ -19,6 +19,11 @@ from bcipy.helpers.bci_task_related import (
     trial_complete_message, get_user_input)
 
 import glob
+import logging
+from os import path 
+
+from psychopy import logging as lg
+lg.console.setLevel(logging.WARNING)
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -42,7 +47,7 @@ class RSVPIconToIconTask(Task):
     """
 
     def __init__(
-            self, win, daq, parameters, file_save, classifier, lmodel, fake):
+            self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word):
 
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -54,8 +59,9 @@ class RSVPIconToIconTask(Task):
         self.alp = alphabet(parameters)
         self.rsvp = _init_icon_to_icon_display_task(
             self.parameters, self.window, self.daq,
-            self.static_clock, self.experiment_clock)
+            self.static_clock, self.experiment_clock, is_word)
         self.file_save = file_save
+        self.is_word = is_word
 
         trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
         self.trigger_file = open(trigger_save_location, 'w')
@@ -98,7 +104,8 @@ class RSVPIconToIconTask(Task):
         image_array, timing_array = generate_icon_match_images(self.len_sti,
                                                            self.image_path,
                                                            self.num_sti,
-                                                           self.timing)
+                                                           self.timing,
+                                                           self.is_word)
 
         #Get all png images in image path
         alp_image_array = glob.glob(self.image_path + '*.png')
@@ -107,6 +114,13 @@ class RSVPIconToIconTask(Task):
         for image in alp_image_array:
             if image.endswith('PLUS.png'):
                 alp_image_array.remove(image)
+            
+        if self.is_word:
+            image_name_array = glob.glob(self.image_path + '*.png')
+            for image in image_name_array:
+                image_name_array[image_name_array.index(image)] = path.basename(image)
+            alp_image_array.extend(image_name_array)    
+            
         for image in alp_image_array:
             alp_image_array[alp_image_array.index(image)] = image.replace('.png', '')
 
@@ -150,7 +164,6 @@ class RSVPIconToIconTask(Task):
 
         current_trial = 0
         while run:
-            #for each_trial in range(len(image_array)):
             # check user input to make sure we should be going
             if not get_user_input(self.rsvp, self.wait_screen_message,
                                   self.wait_screen_message_color):
@@ -175,7 +188,7 @@ class RSVPIconToIconTask(Task):
                 self.rsvp.time_list_sti = timing_array
                 core.wait(self.buffer_val)
 
-                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size)
+                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size, self.is_word)
 
                 # Do the sequence
                 sequence_timing = self.rsvp.do_sequence()
@@ -187,7 +200,7 @@ class RSVPIconToIconTask(Task):
                 raw_data, triggers, target_info = \
                     process_data_for_decision(sequence_timing, self.daq)
 
-                self.fake = False
+                # self.fake = False
 
                 display_stimulus = self.rsvp.stim_sequence[0]
                 
@@ -293,7 +306,7 @@ class RSVPIconToIconTask(Task):
 
 
 def _init_icon_to_icon_display_task(
-        parameters, win, daq, static_clock, experiment_clock):
+        parameters, win, daq, static_clock, experiment_clock, is_word):
     rsvp = IconToIconDisplay(
         window=win, clock=static_clock,
         experiment_clock=experiment_clock,
@@ -322,6 +335,7 @@ def _init_icon_to_icon_display_task(
         font_bg_txt=parameters['font_bg_txt'],
         color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=False,
-        trigger_type=parameters['trigger_type'])
+        trigger_type=parameters['trigger_type'],
+        is_word=is_word)
 
     return rsvp

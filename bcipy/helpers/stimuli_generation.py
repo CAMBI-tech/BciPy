@@ -3,6 +3,7 @@ import random
 import glob
 from PIL import Image
 import logging
+from os import path
 
 #Prevents pillow from filling the console with debug info
 logging.getLogger("PIL").setLevel(logging.WARNING)
@@ -222,7 +223,7 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     return schedule_seq
 
-def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing):
+def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing, is_word):
     """Generates an array of images to use for the icon matching task.
     Args:
         experiment_length(int): Number of images per sequence
@@ -261,8 +262,13 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         return_array.append([])
         #Generate random permutation of image indexes
         random_number_array = np.random.permutation(len(image_array))
-        #Add target image to image array
-        return_array[sequence].append(image_array[target_image_numbers[sequence]])
+        if is_word:
+            #Add name of target image to array
+            image_path = path.basename(image_array[target_image_numbers[sequence]])
+            return_array[sequence].append(image_path.replace('.png', ''))
+        else:
+            #Add target image to image array
+            return_array[sequence].append(image_array[target_image_numbers[sequence]])
         #Add PLUS.png to image array
         return_array[sequence].append('bcipy/static/images/bci_main_images/PLUS.png')
 

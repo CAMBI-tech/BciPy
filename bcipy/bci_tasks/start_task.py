@@ -58,7 +58,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             try:
                 icon_to_icon = RSVPIconToIconTask(display_window, daq,
                                                   parameters, file_save, classifier,
-                                                  lmodel, fake)
+                                                  lmodel, fake, False)
 
                 icon_to_icon.execute()
 
@@ -71,7 +71,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             try:
                 icon_to_word = RSVPIconToIconTask(display_window, daq,
                                                   parameters, file_save, classifier,
-                                                  lmodel, fake)
+                                                  lmodel, fake, True)
 
                 icon_to_word.execute()
 

@@ -255,7 +255,7 @@ class IconToIconDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image', is_word=False):
         """ Initializes Icon Matching Task Objects """
 
         color_text = [color_info]
@@ -297,27 +297,31 @@ class IconToIconDisplay(RSVPDisplay):
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type)
+        
+        self.is_word = is_word
+        
+        if not is_word:
+            self.rect = visual.Rect(win=window, width=height_task, height=height_task, lineColor='black', pos=(pos_sti), lineWidth=10, ori=0.0)
+            self.rect_drawn_frames = 0
 
-        self.rect = visual.Rect(win=window, width=height_task, height=height_task, lineColor='black', pos=(pos_sti), lineWidth=10, ori=0.0)
-        self.rect_drawn_frames = 0
+            self.task = visual.ImageStim(win=window, image=None, mask=None,
+                                        units='', pos=self.pos_task,
+                                        size=(height_task * 2, height_task * 2),
+                                        ori=0.0)
 
-        self.task = visual.ImageStim(win=window, image=None, mask=None,
-                                    units='', pos=self.pos_task,
-                                    size=(height_task * 2, height_task * 2),
-                                    ori=0.0)
-
-        self.target_text = visual.TextStim(win=window, color='yellow', text='TARGET:', pos=(pos_sti[0] - 0.5, pos_sti[1]), height=height_task)
+            self.target_text = visual.TextStim(win=window, color='yellow', text='TARGET:', pos=(pos_sti[0] - 0.5, pos_sti[1]), height=height_task)
 
     def draw_static(self):
-        """Draw static elements in a stimulus."""
-        if(self.rect_drawn_frames < self.time_to_present):
-            self.rect.draw()
-            self.target_text.draw()
-            self.rect_drawn_frames += 1
+        if not self.is_word:
+            """Draw static elements in a stimulus."""
+            if(self.rect_drawn_frames < self.time_to_present):
+                self.rect.draw()
+                self.target_text.draw()
+                self.rect_drawn_frames += 1
 
-        super(IconToIconDisplay, self).draw_static()
+            super(IconToIconDisplay, self).draw_static()
 
-    def update_task_state(self, image_path, task_height, rect_color, window_size):
+    def update_task_state(self, image_path, task_height, rect_color, window_size, is_word):
         """ Updates task state of Icon to Icon Matching Task by changing the
         image displayed at the top of the screen.
         Also updates rectangle size.
@@ -326,16 +330,24 @@ class IconToIconDisplay(RSVPDisplay):
                 task_height: the height of the task image
                 rect_color: the color of the rectangle"""
 
-        self.task.image = image_path
+        if is_word:
+            txt = image_path if len(image_path) > 0 else ' '
+            tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=txt)
+            x_pos_task = tmp2.boundingBox[0] / self.win.size[0] - 1
+            pos_task = (x_pos_task, self.text[0].pos[1] - self.task.height)
+            
+            self.update_task(text=txt, color_list=['white'], pos=pos_task)
+        else:
+            self.task.image = image_path
 
-        image_width, image_height = resize_image(image_path, window_size, task_height)
+            image_width, image_height = resize_image(image_path, window_size, task_height)
 
-        self.target_text.pos = (self.pos_sti[0] - image_width - 0.5, self.pos_sti[1])
+            self.target_text.pos = (self.pos_sti[0] - image_width - 0.5, self.pos_sti[1])
 
-        self.task.pos=(self.pos_task[0] + image_width * 2, self.pos_task[1] - image_width/2)
-        self.task.size = (image_width * 2, image_height * 2)
+            self.task.pos=(self.pos_task[0] + image_width * 2, self.pos_task[1] - image_width/2)
+            self.task.size = (image_width * 2, image_height * 2)
 
-        self.rect_drawn_frames = 0
-        self.rect.width = image_width/task_height * self.sti_height
-        self.rect.height = image_height/task_height * self.sti_height
-        self.rect.lineColor = rect_color
+            self.rect_drawn_frames = 0
+            self.rect.width = image_width/task_height * self.sti_height
+            self.rect.height = image_height/task_height * self.sti_height
+            self.rect.lineColor = rect_color
