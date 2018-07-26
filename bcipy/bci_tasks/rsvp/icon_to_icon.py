@@ -81,6 +81,7 @@ class RSVPIconToIconTask(Task):
 
         self.eeg_buffer = parameters['eeg_buffer_len']
 
+        self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
         self.lmodel = lmodel
@@ -125,6 +126,8 @@ class RSVPIconToIconTask(Task):
             raise e
 
         run = True
+        new_epoch = True
+        epoch_index = 0
 
         # Init session data and save before beginning
         data = {
@@ -145,16 +148,30 @@ class RSVPIconToIconTask(Task):
                               first_run=True):
             run = False
 
+        current_trial = 0
         while run:
-            for each_trial in range(len(image_array)):
-                # check user input to make sure we should be going
-                if not get_user_input(self.rsvp, self.wait_screen_message,
-                                      self.wait_screen_message_color):
-                    break
+            #for each_trial in range(len(image_array)):
+            # check user input to make sure we should be going
+            if not get_user_input(self.rsvp, self.wait_screen_message,
+                                  self.wait_screen_message_color):
+                break
+                
+            if new_epoch:
+                # Init an epoch, getting initial stimuli
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
 
+                # Increase epoch number and reset epoch index
+                data['epochs'][current_trial] = {}
+                epoch_index = 0
+            else:
+                epoch_index += 1
+            
+            data['epochs'][current_trial][epoch_index] = {}
+                
+            if current_trial < len(image_array) or not new_epoch:
                 self.rsvp.sti.height = self.stimuli_height
 
-                self.rsvp.stim_sequence = image_array[each_trial]
+                self.rsvp.stim_sequence = image_array[current_trial]
                 self.rsvp.time_list_sti = timing_array
                 core.wait(self.buffer_val)
 
@@ -170,35 +187,93 @@ class RSVPIconToIconTask(Task):
                 raw_data, triggers, target_info = \
                     process_data_for_decision(sequence_timing, self.daq)
 
-                # self.fake = False
+                self.fake = False
 
                 display_stimulus = self.rsvp.stim_sequence[0]
-
+                
+                display_message = False
                 if self.fake:
+                    # Construct Data Record
+                    #TODO: get stimuli timing array
+                    data['epochs'][current_trial][epoch_index] = {
+                        'stimuli': image_array[current_trial],
+                        'eeg_len': len(raw_data),
+                        'timing_sti': 'teststring',
+                        'triggers': triggers,
+                        'target_info': target_info,
+                        'target_letter': display_stimulus
+                        }
                     correct_decision = True
+                    display_message = True
+                    message_color = 'green'
+                    current_trial += 1
+                    new_epoch = True
                 else:
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
+                    
+                    # Construct Data Record
+                    data['epochs'][current_trial][epoch_index] = {
+                        'stimuli': image_array[current_trial],
+                        'eeg_len': len(raw_data),
+                        'timing_sti': 'teststring',
+                        'triggers': triggers,
+                        'target_info': target_info,
+                        'lm_evidence': copy_phrase_task
+                            .conjugator
+                            .evidence_history['LM'][0]
+                            .tolist(),
+                        'eeg_evidence': copy_phrase_task
+                            .conjugator
+                            .evidence_history['ERP'][0]
+                            .tolist(),
+                        'likelihood': copy_phrase_task
+                            .conjugator.likelihood.tolist()
+                    }
+                    
                     if new_epoch:
-                        correct_decision = copy_phrase_task.decision_maker.last_selection == self.rsvp.stim_sequence[0]
-                        display_stimulus = copy_phrase_task.decision_maker.last_selection
+                        decide_image_path = copy_phrase_task.decision_maker.last_selection + '.png'
+                        correct_decision = decide_image_path == self.rsvp.stim_sequence[0]
+                        display_stimulus = decide_image_path
+                        current_trial += 1
+                        if correct_decision:
+                            message_color = 'green'
+                        else:
+                            message_color = 'red'
+                        display_message = True
                     else:
-                        correct_decision = True
+                        display_message = False
+                        
+                if display_message:
+                    #Display feedback about whether decision was correct
+                    visual_feedback = VisualFeedback(
+                    display=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock)
+                    stimulus = display_stimulus
+                    visual_feedback.message_color = message_color
+                    visual_feedback.administer(stimulus, compare_assertion=None, message='Decision:')
+                    
+            
+                # Update time spent and save data
+                data['total_time_spent'] = self.experiment_clock.getTime()
+                data['total_number_epochs'] = current_trial
+                _save_session_related_data(self.session_save_location, data)
 
-                if correct_decision:
-                    message_color = 'green'
-                else:
-                    message_color = 'red'
-
-                #Display feedback about whether decision was correct
-                visual_feedback = VisualFeedback(
-                display=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock)
-                stimulus = self.rsvp.stim_sequence[0]
-                visual_feedback.message_color = message_color
-                visual_feedback.administer(stimulus, compare_assertion=None, message='Decision:')
-
-            run = False
+                # Decide whether to keep the task going
+                max_tries_exceeded = current_trial >= self.max_seq_length
+                max_time_exceeded = data['total_time_spent'] >= self.max_seconds
+                if (max_tries_exceeded or max_time_exceeded):
+                    if max_tries_exceeded:
+                        logging.debug("Max tries exceeded: to allow for more tries"
+                                      " adjust the Maximum Sequence Length "
+                                      "(max_seq_len) parameter.")
+                    if max_time_exceeded:
+                        logging.debug("Max time exceeded. To allow for more time "
+                                      "adjust the max_minutes parameter.")
+                    run = False
+                
+            else:
+                run = False
 
         # Say Goodbye!
         self.rsvp.text = trial_complete_message(self.window, self.parameters)
