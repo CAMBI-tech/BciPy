@@ -201,5 +201,6 @@ def init_calibration_display_task(
         font_bg_txt=parameters['font_bg_txt'],
         color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
-        trigger_type=parameters['trigger_type'])
+        trigger_type=parameters['trigger_type'],
+        show_sound_text=parameters['show_sound_path_text'])
     return rsvp

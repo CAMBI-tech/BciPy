@@ -37,7 +37,7 @@ class CopyPhraseDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image', show_sound_text=False):
         """ Initializes Copy Phrase Task Objects """
 
         tmp = visual.TextStim(win=window, font=font_task,
@@ -84,7 +84,8 @@ class CopyPhraseDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            show_sound_text=show_sound_text)
 
     def update_task_state(self, text, color_list):
         """ Updates task state of Copy Phrase Task by removing letters or
@@ -122,7 +123,7 @@ class FreeSpellingDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image', show_sound_text=False):
         """ Initializes Free Spelling Task Objects """
 
         color_text = [color_info]
@@ -162,7 +163,8 @@ class FreeSpellingDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            show_sound_text=show_sound_text)
 
 
 class CalibrationDisplay(RSVPDisplay):
@@ -187,7 +189,7 @@ class CalibrationDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image', show_sound_text=False):
         """ Initializes Calibration Task Objects """
 
         color_text = [color_info]
@@ -227,4 +229,5 @@ class CalibrationDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            show_sound_text=show_sound_text)

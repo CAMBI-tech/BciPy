@@ -30,7 +30,7 @@ class RSVPDisplay(object):
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  bg_step_num=20, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bg=False):
+                 trigger_type='image', bg=False, show_sound_text=False):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -91,6 +91,7 @@ class RSVPDisplay(object):
         self.font_stim = font_sti
         self.height_stim = sti_height
         self.pos_sti = pos_sti
+        self.show_sound_text = show_sound_text
 
         self.first_run = True
         self.trigger_type = trigger_type
@@ -223,7 +224,8 @@ class RSVPDisplay(object):
                 #Create text stimulus to display file path
                 self.sti = self.create_stimulus(mode='text', height_int = 0.05)
                 sound_file = soundfile.SoundFile(self.stim_sequence[idx])
-                self.sti.text = self.stim_sequence[idx]
+                if self.show_sound_text:
+                    self.sti.text = self.stim_sequence[idx]
                 #Adjust presentation time based on length of sound file
                 duration = len(sound_file) / float(sound_file.samplerate)
                 time_to_present = math.ceil(duration * self.refresh_rate)

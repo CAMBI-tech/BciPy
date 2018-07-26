@@ -62,7 +62,16 @@ def alphabet(parameters=None):
             path = parameters['path_to_presentation_images']
             stimulus_array = []
             for stimulus_filename in os.listdir(path):
-                if stimulus_filename.endswith(".png") or stimulus_filename.endswith(".wav"):
+                append_stimulus = False
+                
+                if parameters['stimulus_type'] == 'image' or parameters['stimulus_type'] == 'image and sound':
+                    if stimulus_filename.endswith(".png"):
+                        append_stimulus = True
+                if parameters['stimulus_type'] == 'sound' or parameters['stimulus_type'] == 'image and sound':
+                    if stimulus_filename.endswith(".wav"):
+                        append_stimulus = True
+                
+                if append_stimulus:
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array

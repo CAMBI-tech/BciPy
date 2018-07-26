@@ -281,8 +281,20 @@
     ],
     "type": "str"
   },
+  "stimulus_type": {
+    "value": "image",
+    "section": "bci_config",
+    "readableName": "What type of stimulus to use",
+    "helpTip": "Select a type of stimulus to use",
+    "recommended_values": [
+      "image",
+      "sound",
+      "image and sound"
+    ],
+    "type": "str"
+  },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/rsvp_images/",
+    "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
     "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -637,5 +649,13 @@
     "helpTip": "The number of trials that pass between the insertion of novel stimuli (set to 0 for random)",
     "recommended_values": "",
     "type": "int"
+  },
+  "show_sound_path_text": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Show paths for sound stimuli",
+    "helpTip": "Whether or not to show the paths for sound stimuli as text on screen",
+    "recommended_values": "",
+    "type": "bool"
   }
 }
