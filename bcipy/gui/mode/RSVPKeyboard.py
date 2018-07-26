@@ -82,6 +82,8 @@ class RSVPKeyboard(BCIGui):
             experiment_type = 3
         elif experiment_type_string == 'Icon to Icon':
             experiment_type = 4
+        elif experiment_type_string == 'Icon to Word':
+            experiment_type = 5
         else:
             dialog = wx.MessageDialog(
                 self, "Not a registered experiment type!", 'Info',
@@ -126,27 +128,32 @@ gui.add_static_text(
 # BUTTONS!
 gui.add_button(
     message="Calibration",
-    position=(25, 300), size=(100, 100),
+    position=(15, 300), size=(80, 80),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase", position=(150, 300),
-    size=(100, 100),
+    message="Copy Phrase", position=(120, 300),
+    size=(80, 80),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase C.", position=(275, 300),
-    size=(100, 100),
+    message="Copy Phrase C.", position=(225, 300),
+    size=(80, 80),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Free Spell", position=(400, 300),
-    size=(100, 100),
+    message="Free Spell", position=(330, 300),
+    size=(80, 80),
     color='grey',
     action='launch_bci')
 gui.add_button(
-    message="Icon to Icon", position=(525, 300),
-    size=(100, 100),
+    message="Icon to Icon", position=(435, 300),
+    size=(80, 80),
+    color='grey',
+    action='launch_bci')
+gui.add_button(
+    message="Icon to Word", position=(540, 300),
+    size=(80, 80),
     color='grey',
     action='launch_bci')
 gui.add_button(
