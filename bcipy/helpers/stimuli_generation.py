@@ -2,6 +2,10 @@ import numpy as np
 import random
 import glob
 from PIL import Image
+import logging
+
+#Prevents pillow from filling the console with debug info
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],

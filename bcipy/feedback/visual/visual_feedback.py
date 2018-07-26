@@ -83,7 +83,8 @@ class VisualFeedback(Feedback):
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
             self.rect.width = image_stim.size[0]
             self.rect.height = image_stim.size[1]
-            self.rect.opacity = 100
+            self.rect.opacity = 1
+            self.rect.lineColor = self.message_color
             return image_stim
         else:
             return visual.TextStim(win=self.display, font=self.font_stim,
