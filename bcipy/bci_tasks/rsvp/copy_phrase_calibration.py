@@ -8,6 +8,7 @@ from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.stimuli_generation import target_rsvp_sequence_generator, get_task_info
+from bcipy.helpers.stimuli_generation import insert_novel_stimulus
 
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, get_user_input,
@@ -138,6 +139,13 @@ class RSVPCopyPhraseCalibrationTask(Task):
 
             # update task state
             self.rsvp.stim_sequence = ele_sti[0]
+            
+            #Insert novel stimuli randomly or based on parameters.json if enabled
+            novel_stimulus_array = insert_novel_stimulus(target_letter=target_letter, counter_pos=self.copy_phrase.index(target_letter), stim_sequence=self.rsvp.stim_sequence, parameters=self.parameters)
+            if novel_stimulus_array:
+                for item in self.rsvp.stim_sequence:
+                    if item == novel_stimulus_array[0]:
+                        self.rsvp.stim_sequence[self.rsvp.stim_sequence.index(item)] = novel_stimulus_array[1]
 
             # self.rsvp.text_task = text_task
             if self.is_txt_sti:
@@ -219,6 +227,7 @@ def _init_copy_phrase_display_task(
         font_bg_txt=parameters['font_bg_txt'],
         color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
-        trigger_type=parameters['trigger_type'])
+        trigger_type=parameters['trigger_type'],
+        show_sound_text=parameters['show_sound_path_text'])
 
     return rsvp

@@ -281,10 +281,22 @@
     ],
     "type": "str"
   },
+  "stimulus_type": {
+    "value": "image and sound",
+    "section": "bci_config",
+    "readableName": "What type of stimulus to use",
+    "helpTip": "Select a type of stimulus to use",
+    "recommended_values": [
+      "image",
+      "sound",
+      "image and sound"
+    ],
+    "type": "str"
+  },
   "path_to_presentation_images": {
     "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
-    "readableName": "Path to Images",
+    "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
     "type": "directorypath"
@@ -655,5 +667,37 @@
     "helpTip": "The message that displays during a break in calibration",
     "recommended_values": "",
     "type": "str"
+  },
+  "novel_stimuli_location": {
+    "value": "bcipy/static/sounds",
+    "section": "bci_config",
+    "readableName": "Path to novel stimuli for insertion into tasks",
+    "helpTip": "Path to stimuli files",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "enable_novel_stimuli": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable novel stimuli",
+    "helpTip": "Whether or not to insert novel stimuli into RSVP tasks",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "novel_stimuli_frequency": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Novel stimuli appearance frequency",
+    "helpTip": "The number of trials that pass between the insertion of novel stimuli (set to 0 for random)",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "show_sound_path_text": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Show paths for sound stimuli",
+    "helpTip": "Whether or not to show the paths for sound stimuli as text on screen",
+    "recommended_values": "",
+    "type": "bool"
   }
 }

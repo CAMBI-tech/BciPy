@@ -7,7 +7,6 @@ import logging
 #Prevents pillow from filling the console with debug info
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
-
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                            color=['red', 'white'], num_sti=1,
                            len_sti=10, is_txt=True):
@@ -299,3 +298,27 @@ def resize_image(image_path: str, screen_size: tuple, sti_height):
         sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
         
     return sti_size
+
+def insert_novel_stimulus(target_letter: str, counter_pos: int, stim_sequence, parameters):
+    """For inserting novel stimuli into an array.
+    Returns either a list of the item to be deleted, and the item to be
+    appended to the array, or None."""
+    if parameters['enable_novel_stimuli'] == True:
+        activate_stimuli = False
+        if (parameters['novel_stimuli_frequency'] == 0):
+            if (random.randint(0,10) == 5):
+                activate_stimuli = True
+        elif (counter_pos % parameters['novel_stimuli_frequency']) == 0:
+            if not counter_pos == 0:
+                activate_stimuli = True
+
+        if activate_stimuli == True:
+            random_stimuli_array = glob.glob(parameters['novel_stimuli_location']+'*.png') + glob.glob(parameters['novel_stimuli_location']+'*.wav')
+            can_continue = False
+            while can_continue == False:
+                random_letter = stim_sequence[random.randint(1,len(stim_sequence) - 1)]
+                #Make sure not to select the calibration '+' sign or target letter
+                if not random_letter == target_letter and not stim_sequence.index(random_letter) == 1 and not random_letter == stim_sequence[0]:
+                    can_continue = True
+            return[random_letter, random_stimuli_array[random.randint(0,len(random_stimuli_array) - 1)]]
+    return None

@@ -2,6 +2,10 @@
 from psychopy import visual, core
 from bcipy.helpers.stimuli_generation import resize_image
 
+import math
+import soundfile
+import sounddevice
+
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
@@ -27,7 +31,7 @@ class RSVPDisplay(object):
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  bg_step_num=20, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bg=False):
+                 trigger_type='image', bg=False, show_sound_text=False):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -76,6 +80,7 @@ class RSVPDisplay(object):
         self.static_period_time = static_period_time
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
+        
 
         # Used to handle writing the marker stimulus
         self.marker_writer = marker_writer or NullMarkerWriter()
@@ -87,6 +92,7 @@ class RSVPDisplay(object):
         self.font_stim = font_sti
         self.height_stim = sti_height
         self.pos_sti = pos_sti
+        self.show_sound_text = show_sound_text
 
         self.first_run = True
         self.trigger_type = trigger_type
@@ -195,21 +201,39 @@ class RSVPDisplay(object):
 
             # Turn ms timing into frames! Much more accurate!
             self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            
+            is_sound = False
 
             # Set the Stimuli attrs
-            if self.is_txt_sti:
+            #Test if stimulus is an image or sound file
+            if self.stim_sequence[idx].endswith('.png'):
+                self.sti = self.create_stimulus(mode='image', height_int=self.height_stim)
+                self.sti.image = self.stim_sequence[idx]
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
+                                                             self.height_stim)
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+                
+            elif self.stim_sequence[idx].endswith('.wav'):  
+                is_sound = True
+                #Create text stimulus to display file path
+                self.sti = self.create_stimulus(mode='text', height_int = 0.05)
+                sound_file = soundfile.SoundFile(self.stim_sequence[idx])
+                if self.show_sound_text:
+                    self.sti.text = self.stim_sequence[idx]
+                #Adjust presentation time based on length of sound file
+                duration = len(sound_file) / float(sound_file.samplerate)
+                self.time_to_present = math.ceil(duration * self.refresh_rate)
+                # We expect a path for images, so split on forward slash and
+                # extension to get the name of the file.
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+                
+            else:
+                #Text stimulus
+                self.sti = self.create_stimulus(mode='text', height_int=self.height_stim)
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
-            else:
-                self.sti.image = self.stim_sequence[idx]
-
-                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
-                                                             self.sti.height)
-
-                # We expect a path for images, so split on forward slash and
-                # extension to get the name of the file.
-                sti_label = self.sti.image.split('/')[-1].split('.')[0]
+                   
 
             # End static period
             self.staticPeriod.complete()
@@ -221,10 +245,14 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
+            if is_sound == True:
+                sound_to_play = soundfile.read(self.stim_sequence[idx], dtype='float32')
+                sounddevice.play(sound_to_play[0], sound_to_play[1])
             for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
+
 
             # Get trigger time (takes < .01ms)
             trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
@@ -306,3 +334,16 @@ class RSVPDisplay(object):
         # Draw and flip the screen.
         wait_message.draw()
         self.win.flip()
+        
+    def create_stimulus(self, height_int: int, mode="text"):
+        if mode == "text":
+            return visual.TextStim(win=self.win, color='white',
+                   height=height_int, text='+',
+                   font=self.font_stim, pos=self.pos_sti,
+                   wrapWidth=None, colorSpace='rgb',
+                   opacity=1, depth=-6.0)
+        if mode == "image":
+            return visual.ImageStim(win=self.win, image=None, mask=None,
+                      units='', pos=self.pos_sti,
+                      size=(height_int, height_int), ori=0.0)
+    

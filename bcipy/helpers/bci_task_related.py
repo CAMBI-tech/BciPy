@@ -58,14 +58,23 @@ def alphabet(parameters=None):
     """
     if parameters:
         if not parameters['is_txt_sti']:
-            # construct an array of paths to images
+            # construct an array of paths to images and wav files
             path = parameters['path_to_presentation_images']
-            image_array = []
-            for image_filename in os.listdir(path):
-                if image_filename.endswith(".png"):
-                    image_array.append(os.path.join(path, image_filename))
+            stimulus_array = []
+            for stimulus_filename in os.listdir(path):
+                append_stimulus = False
+                
+                if parameters['stimulus_type'] == 'image' or parameters['stimulus_type'] == 'image and sound':
+                    if stimulus_filename.endswith(".png"):
+                        append_stimulus = True
+                if parameters['stimulus_type'] == 'sound' or parameters['stimulus_type'] == 'image and sound':
+                    if stimulus_filename.endswith(".wav"):
+                        append_stimulus = True
+                
+                if append_stimulus:
+                    stimulus_array.append(os.path.join(path, stimulus_filename))
 
-            return image_array
+            return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -173,7 +182,6 @@ def trial_complete_message(win, parameters):
         colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]
-
 
 def get_user_input(window, message, color, first_run=False):
     """Get User Input.
