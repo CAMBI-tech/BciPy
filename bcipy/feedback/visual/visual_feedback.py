@@ -1,5 +1,6 @@
 from bcipy.feedback.feedback import Feedback
 from psychopy import visual, core
+from bcipy.helpers.stimuli_generation import resize_image
 
 
 class VisualFeedback(Feedback):
@@ -68,12 +69,13 @@ class VisualFeedback(Feedback):
 
     def _construct_stimulus(self, stimulus, pos):
         if '.png' in stimulus:
-            return visual.ImageStim(win=self.display,
-                                    image=stimulus,
-                                    size=(self.height_stim, self.height_stim),
-                                    mask=None,
-                                    pos=pos,
-                                    ori=0.0)
+            image_stim = visual.ImageStim(win=self.display,
+                                          image=stimulus,
+                                          mask=None,
+                                          pos=pos,
+                                          ori=0.0)
+            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
+            return image_stim
         else:
             return visual.TextStim(win=self.display, font=self.font_stim,
                                    text=stimulus,
@@ -99,7 +101,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',
-                        default='parameters/parameters.json',
+                        default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. \
                           Pass as parameters/parameters.json')
 

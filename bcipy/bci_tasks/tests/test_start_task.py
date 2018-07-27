@@ -22,13 +22,16 @@ class TestStartTask(unittest.TestCase):
 
         # Mock the display window
         self.display_window = mock()
-        self.display_window.size = [1]
+        self.display_window.size = [1, 1]
 
         # Mock the frame rate return
         when(self.display_window).getActualFrameRate().thenReturn(60)
         self.text_stim = mock()
         self.text_stim.height = 2
         self.text_stim.boundingBox = [1]
+        self.text_stim.size = [100.0, 100.0]
+        self.text_stim.win = mock()
+        self.text_stim.win.size = (500, 500)
 
         # Mock the psychopy text stims and image stims we would expect
         when(psychopy.visual).TextStim(
@@ -39,8 +42,9 @@ class TestStartTask(unittest.TestCase):
             text=any(), font=any(), pos=any(), wrapWidth=any(), colorSpace=any(),
             opacity=any(), depth=any()).thenReturn(self.text_stim)
         when(psychopy.visual).ImageStim(
-            self.display_window, image=any(str),
-            size=any(), pos=any(), mask=None, ori=any()).thenReturn(self.text_stim)
+            win=self.display_window, image=any(), mask=None,
+            pos=any(), ori=any()).thenReturn(self.text_stim)
+
 
         # save data information
         self.data_save_path = 'data/'
