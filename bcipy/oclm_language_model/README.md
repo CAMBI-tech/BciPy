@@ -28,3 +28,5 @@ The current Wrapper has 3 different methods:
 
 In addition, demo.py provides a show case for how to call langModel class methods from the language\_model module.
 If there are problems in the process there are different error messages that can be raised: connection error, status code of response, correctness of input. 
+
+The new image is provided via box site
