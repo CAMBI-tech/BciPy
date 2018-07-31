@@ -129,32 +129,32 @@ gui.add_static_text(
 gui.add_button(
     message="Calibration",
     position=(15, 300), size=(80, 80),
-    color='grey',
+    color=wx.Colour(221, 37, 56),
     action='launch_bci')
 gui.add_button(
     message="Copy Phrase", position=(120, 300),
     size=(80, 80),
-    color='grey',
+    color=wx.Colour(239, 146, 40),
     action='launch_bci')
 gui.add_button(
     message="Copy Phrase C.", position=(225, 300),
     size=(80, 80),
-    color='grey',
+    color=wx.Colour(239, 212, 105),
     action='launch_bci')
 gui.add_button(
     message="Free Spell", position=(330, 300),
     size=(80, 80),
-    color='grey',
+    color=wx.Colour(117, 173, 48),
     action='launch_bci')
 gui.add_button(
     message="Icon to Icon", position=(435, 300),
     size=(80, 80),
-    color='grey',
+    color=wx.Colour(62, 161, 232),
     action='launch_bci')
 gui.add_button(
     message="Icon to Word", position=(540, 300),
     size=(80, 80),
-    color='grey',
+    color=wx.Colour(192, 122, 224),
     action='launch_bci')
 gui.add_button(
     message='Edit Parameters', position=(0, 450),
