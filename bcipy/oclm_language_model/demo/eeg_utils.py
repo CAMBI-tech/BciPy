@@ -51,7 +51,6 @@ def generate_eeg(eeg, ch, syms):
     symbols a simulated
     EEG distribution"""
 
-    n_best = 3
     # generate a tuple with all symbols (currently does not include "<")
     symsC = syms[:]
     idx = symsC.index(ch)
