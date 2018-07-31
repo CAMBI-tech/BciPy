@@ -260,8 +260,12 @@ class IconToIconDisplay(RSVPDisplay):
         pos_text = [pos_info]
         height_text = [height_info]
 
+        if is_word:
+            height_task *= 2
+
         tmp = visual.TextStim(win=window, font=font_task, text=' ')
         x_pos_task = tmp.boundingBox[0] / window.size[0] - 1
+
         self.pos_task = (x_pos_task, 1 - height_task)
         self.sti_height = sti_height
         self.pos_sti = pos_sti
@@ -315,7 +319,7 @@ class IconToIconDisplay(RSVPDisplay):
                 self.target_text.draw()
                 self.rect_drawn_frames += 1
 
-            super(IconToIconDisplay, self).draw_static()
+        super(IconToIconDisplay, self).draw_static()
 
     def update_task_state(self, image_path, task_height, rect_color, window_size, is_word):
         """ Updates task state of Icon to Icon Matching Task by changing the
@@ -329,10 +333,9 @@ class IconToIconDisplay(RSVPDisplay):
         if is_word:
             txt = image_path if len(image_path) > 0 else ' '
             tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=txt)
-            x_pos_task = tmp2.boundingBox[0] / self.win.size[0] - 1
-            pos_task = (x_pos_task, self.text[0].pos[1] - self.task.height)
-
-            self.update_task(text=txt, color_list=['white'], pos=pos_task)
+            x_pos_task = (tmp2.boundingBox[0] * 2.2) / self.win.size[0] - 1
+            self.pos_task = (x_pos_task, self.pos_task[1])
+            self.update_task(text=txt, color_list=['white'], pos=self.pos_task)
         else:
             self.task.image = image_path
 
