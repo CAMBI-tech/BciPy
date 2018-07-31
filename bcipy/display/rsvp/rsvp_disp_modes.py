@@ -38,7 +38,7 @@ class CopyPhraseDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image', show_sound_text=False):
+                 trigger_type='image'):
         """ Initializes Copy Phrase Task Objects """
 
         tmp = visual.TextStim(win=window, font=font_task,
@@ -85,8 +85,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type,
-            show_sound_text=show_sound_text)
+            trigger_type=trigger_type)
 
     def update_task_state(self, text, color_list):
         """ Updates task state of Copy Phrase Task by removing letters or
@@ -124,7 +123,7 @@ class FreeSpellingDisplay(RSVPDisplay):
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  is_txt_sti=True,
-                 trigger_type='image', show_sound_text=False):
+                 trigger_type='image'):
         """ Initializes Free Spelling Task Objects """
 
         color_text = [color_info]
@@ -164,8 +163,7 @@ class FreeSpellingDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type,
-            show_sound_text=show_sound_text)
+            trigger_type=trigger_type)
 
 
 class CalibrationDisplay(RSVPDisplay):
@@ -189,8 +187,7 @@ class CalibrationDisplay(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 is_txt_sti=True,
-                 trigger_type='image', show_sound_text=False):
+                 is_txt_sti=True, trigger_type='image'):
         """ Initializes Calibration Task Objects """
 
         color_text = [color_info]
@@ -230,8 +227,7 @@ class CalibrationDisplay(RSVPDisplay):
             font_bg_txt=font_bg_txt,
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type,
-            show_sound_text=show_sound_text)
+            trigger_type=trigger_type)
 
 class IconToIconDisplay(RSVPDisplay):
     """ Icon matching task object of RSVP
@@ -297,9 +293,9 @@ class IconToIconDisplay(RSVPDisplay):
             color_bar_bg=color_bar_bg,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type)
-        
+
         self.is_word = is_word
-        
+
         if not is_word:
             self.rect = visual.Rect(win=window, width=height_task, height=height_task, lineColor='black', pos=(pos_sti), lineWidth=10, ori=0.0)
             self.rect_drawn_frames = 0
@@ -335,7 +331,7 @@ class IconToIconDisplay(RSVPDisplay):
             tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=txt)
             x_pos_task = tmp2.boundingBox[0] / self.win.size[0] - 1
             pos_task = (x_pos_task, self.text[0].pos[1] - self.task.height)
-            
+
             self.update_task(text=txt, color_list=['white'], pos=pos_task)
         else:
             self.task.image = image_path
