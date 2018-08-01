@@ -6,10 +6,12 @@ from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
 from bcipy.bci_tasks.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info, insert_novel_stimulus
+from bcipy.helpers.stimuli_generation import (
+    random_rsvp_calibration_seq_gen, get_task_info, insert_novel_stimulus,
+    display_novel_stimulus)
 from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input)
-    
+
 import random
 import glob
 
@@ -97,8 +99,8 @@ class RSVPCalibrationTask(Task):
 
             (task_text, task_color) = get_task_info(self.num_sti,
                                                     self.task_info_color)
-                                                    
-              
+
+
             # Execute the RSVP sequences
             for idx_o in range(len(task_text)):
 
@@ -121,7 +123,7 @@ class RSVPCalibrationTask(Task):
 
                 # Schedule a sequence
                 self.rsvp.stim_sequence = ele_sti[idx_o]
-                
+
                 #Insert novel stimuli randomly or based on parameters.json if enabled
                 novel_stimulus_array = insert_novel_stimulus(target_letter=None, counter_pos=idx_o, stim_sequence=self.rsvp.stim_sequence, parameters=self.parameters)
                 if novel_stimulus_array:
@@ -140,6 +142,8 @@ class RSVPCalibrationTask(Task):
 
                 # Do the sequence
                 last_sequence_timing = self.rsvp.do_sequence()
+
+                display_novel_stimulus(win=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock, counter_pos=idx_o)
 
                 # Write triggers for the sequence
                 _write_triggers_from_sequence_calibration(

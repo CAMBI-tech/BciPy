@@ -627,7 +627,7 @@
     "type": "int"
   },
   "novel_stimuli_location": {
-    "value": "bcipy/static/sounds",
+    "value": "bcipy/static/sounds/",
     "section": "bci_config",
     "readableName": "Path to novel stimuli for insertion into tasks",
     "helpTip": "Path to stimuli files",
@@ -657,5 +657,16 @@
     "helpTip": "Whether or not to show the paths for sound stimuli as text on screen",
     "recommended_values": "",
     "type": "bool"
+  },
+  "novel_stimuli_type": {
+    "value": "end of trial",
+    "section": "bci_config",
+    "readableName": "The way that novel stimuli should be displayed",
+    "helpTip": "'end of trial' will cause stimuli to be displayed at the end of the trial, and 'random' \n will cause stimuli to be randomly inserted into trials",
+    "recommended_values": [
+      "end of trial",
+      "random"
+    ],
+    "type": "str"
   }
 }

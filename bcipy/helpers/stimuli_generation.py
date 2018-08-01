@@ -1,6 +1,9 @@
 import numpy as np
 import random
 import glob
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
+import soundfile as sf
 
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                            color=['red', 'white'], num_sti=1,
@@ -221,12 +224,12 @@ def insert_novel_stimulus(target_letter: str, counter_pos: int, stim_sequence, p
     """For inserting novel stimuli into an array.
     Returns either a list of the item to be deleted, and the item to be
     appended to the array, or None."""
-    if parameters['enable_novel_stimuli'] == True:
+    if parameters['enable_novel_stimuli'] and parameters['novel_stimuli_type'] == 'random':
         activate_stimuli = False
         if (parameters['novel_stimuli_frequency'] == 0):
             if (random.randint(0,10) == 5):
                 activate_stimuli = True
-        elif (counter_pos % parameters['novel_stimuli_frequency']) == 0:
+        elif ((counter_pos - 1) % parameters['novel_stimuli_frequency']) == 0:
             if not counter_pos == 0:
                 activate_stimuli = True
 
@@ -240,3 +243,26 @@ def insert_novel_stimulus(target_letter: str, counter_pos: int, stim_sequence, p
                     can_continue = True
             return[random_letter, random_stimuli_array[random.randint(0,len(random_stimuli_array) - 1)]]
     return None
+
+def display_novel_stimulus(win, parameters, clock, counter_pos):
+    """If novel stimuli are enabled, and set to 'end of trial', this function will
+    display a random novel stimulus from the directory set in parameters."""
+    if parameters['enable_novel_stimuli'] and parameters['novel_stimuli_type'] == 'end of trial':
+        activate_stimuli = False
+        if (parameters['novel_stimuli_frequency'] == 0):
+            if (random.randint(0,10) == 5):
+                activate_stimuli = True
+        if ((counter_pos - 1) % parameters['novel_stimuli_frequency']) == 0 and counter_pos != 0:
+            activate_stimuli = True
+        if activate_stimuli:
+            random_stimuli_array = glob.glob(parameters['novel_stimuli_location']+'*.png') + glob.glob(parameters['novel_stimuli_location']+'*.wav')
+            random_letter = random_stimuli_array[random.randint(1,len(random_stimuli_array) - 1)]
+            if random_letter.endswith('.png'):
+                visual_feedback = VisualFeedback(
+                display=win, parameters=parameters, clock=clock)
+                visual_feedback.administer(random_letter, compare_assertion=None, message=' ')
+            else:
+                auditory_feedback = AuditoryFeedback(
+                parameters=parameters, clock=clock)
+                data, fs = sf.read(random_letter, dtype='float32')
+                auditory_feedback.administer(data, fs)
