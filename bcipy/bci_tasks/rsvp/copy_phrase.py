@@ -6,7 +6,7 @@ from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
-from bcipy.helpers.stimuli_generation import insert_novel_stimulus
+from bcipy.helpers.stimuli_generation import insert_novel_stimulus, display_novel_stimulus
 
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
@@ -180,14 +180,14 @@ class RSVPCopyPhraseTask(Task):
             if self.is_txt_sti:
                 self.rsvp.color_list_sti = color_sti[0]
             self.rsvp.time_list_sti = timing_sti[0]
-            
+
             #Insert novel stimuli randomly or based on parameters.json if enabled
             novel_stimulus_array = insert_novel_stimulus(target_letter=target_letter, counter_pos=seq_counter, stim_sequence=self.rsvp.stim_sequence, parameters=self.parameters)
             if novel_stimulus_array:
                 for item in self.rsvp.stim_sequence:
                     if item == novel_stimulus_array[0]:
                         self.rsvp.stim_sequence[self.rsvp.stim_sequence.index(item)] = novel_stimulus_array[1]
-            
+
             # Pause for a time
             core.wait(self.buffer_val)
 
@@ -275,6 +275,8 @@ class RSVPCopyPhraseTask(Task):
 
                 # Get the current task text from the decision maker
                 text_task = copy_phrase_task.decision_maker.displayed_state
+
+            display_novel_stimulus(win=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock, counter_pos=seq_counter)
 
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()
