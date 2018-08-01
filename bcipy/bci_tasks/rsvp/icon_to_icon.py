@@ -20,7 +20,7 @@ from bcipy.helpers.bci_task_related import (
 
 import glob
 import logging
-from os import path 
+from os import path
 
 from psychopy import logging as lg
 lg.console.setLevel(logging.WARNING)
@@ -114,13 +114,13 @@ class RSVPIconToIconTask(Task):
         for image in alp_image_array:
             if image.endswith('PLUS.png'):
                 alp_image_array.remove(image)
-            
+
         if self.is_word:
             image_name_array = glob.glob(self.image_path + '*.png')
             for image in image_name_array:
                 image_name_array[image_name_array.index(image)] = path.basename(image)
-            alp_image_array.extend(image_name_array)    
-            
+            alp_image_array.extend(image_name_array)
+
         for image in alp_image_array:
             alp_image_array[alp_image_array.index(image)] = image.replace('.png', '')
 
@@ -168,7 +168,7 @@ class RSVPIconToIconTask(Task):
             if not get_user_input(self.rsvp, self.wait_screen_message,
                                   self.wait_screen_message_color):
                 break
-                
+
             if new_epoch:
                 # Init an epoch, getting initial stimuli
                 new_epoch, sti = copy_phrase_task.initialize_epoch()
@@ -178,9 +178,9 @@ class RSVPIconToIconTask(Task):
                 epoch_index = 0
             else:
                 epoch_index += 1
-            
+
             data['epochs'][current_trial][epoch_index] = {}
-                
+
             if current_trial < len(image_array) or not new_epoch:
                 self.rsvp.sti.height = self.stimuli_height
 
@@ -203,7 +203,7 @@ class RSVPIconToIconTask(Task):
                 # self.fake = False
 
                 display_stimulus = self.rsvp.stim_sequence[0]
-                
+
                 display_message = False
                 if self.fake:
                     # Construct Data Record
@@ -221,11 +221,13 @@ class RSVPIconToIconTask(Task):
                     message_color = 'green'
                     current_trial += 1
                     new_epoch = True
+                    if self.is_word:
+                        display_stimulus = self.image_path + self.rsvp.stim_sequence[0] + '.png'
                 else:
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
                                                            target_info)
-                    
+
                     # Construct Data Record
                     data['epochs'][current_trial][epoch_index] = {
                         'stimuli': image_array[current_trial],
@@ -244,9 +246,12 @@ class RSVPIconToIconTask(Task):
                         'likelihood': copy_phrase_task
                             .conjugator.likelihood.tolist()
                     }
-                    
+
                     if new_epoch:
-                        decide_image_path = copy_phrase_task.decision_maker.last_selection + '.png'
+                        if self.is_word:
+                            decide_image_path = self.image_path + copy_phrase_task.decision_maker.last_selection + '.png'
+                        else:
+                            decide_image_path = copy_phrase_task.decision_maker.last_selection + '.png'
                         correct_decision = decide_image_path == self.rsvp.stim_sequence[0]
                         display_stimulus = decide_image_path
                         current_trial += 1
@@ -257,16 +262,16 @@ class RSVPIconToIconTask(Task):
                         display_message = True
                     else:
                         display_message = False
-                        
+
                 if display_message:
                     #Display feedback about whether decision was correct
                     visual_feedback = VisualFeedback(
-                    display=self.rsvp.win, parameters=self.parameters, clock=self.experiment_clock)
+                    display=self.window, parameters=self.parameters, clock=self.experiment_clock)
                     stimulus = display_stimulus
                     visual_feedback.message_color = message_color
                     visual_feedback.administer(stimulus, compare_assertion=None, message='Decision:')
-                    
-            
+
+
                 # Update time spent and save data
                 data['total_time_spent'] = self.experiment_clock.getTime()
                 data['total_number_epochs'] = current_trial
@@ -284,7 +289,7 @@ class RSVPIconToIconTask(Task):
                         logging.debug("Max time exceeded. To allow for more time "
                                       "adjust the max_minutes parameter.")
                     run = False
-                
+
             else:
                 run = False
 
