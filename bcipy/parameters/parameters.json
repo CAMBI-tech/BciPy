@@ -655,5 +655,13 @@
     "helpTip": "The message that displays during a break in calibration",
     "recommended_values": "",
     "type": "str"
+  },
+  "word_matching_text_size": {
+    "value": "0.2",
+    "section": "bci_config",
+    "readableName": "Word to icon matching text height",
+    "helpTip": "Default height to use for words that match icons",
+    "recommended_values": "",
+    "type": "float"
   }
 }

@@ -92,6 +92,8 @@ class RSVPDisplay(object):
         self.first_run = True
         self.trigger_type = trigger_type
 
+        self.size_list_sti = None
+
         # Check if task text is multicolored
         if len(color_task) == 1:
             self.task = visual.TextStim(win=window, color=color_task[0],
@@ -197,17 +199,23 @@ class RSVPDisplay(object):
             # Turn ms timing into frames! Much more accurate!
             self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
+            #Check if stimulus needs to use a non-default size
+            if self.size_list_sti:
+                this_stimuli_size = self.size_list_sti[idx]
+            else:
+                this_stimuli_size = self.height_stim
+
             # Set the Stimuli attrs
             #Test if stimulus is an image or sound file
             if self.stim_sequence[idx].endswith('.png'):
-                self.sti = self.create_stimulus(mode='image', height_int=self.height_stim)
+                self.sti = self.create_stimulus(mode='image', height_int=this_stimuli_size)
                 self.sti.image = self.stim_sequence[idx]
                 self.sti.size = resize_image(self.sti.image, self.sti.win.size,
-                                                             self.height_stim)
+                                                             this_stimuli_size)
                 sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
             else:
                 #Text stimulus
-                self.sti = self.create_stimulus(mode='text', height_int=self.height_stim)
+                self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text

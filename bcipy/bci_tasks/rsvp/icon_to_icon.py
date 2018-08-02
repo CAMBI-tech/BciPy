@@ -1,4 +1,5 @@
 from psychopy import core
+from itertools import repeat
 
 from bcipy.bci_tasks.task import Task
 
@@ -186,6 +187,11 @@ class RSVPIconToIconTask(Task):
 
                 self.rsvp.stim_sequence = image_array[current_trial]
                 self.rsvp.time_list_sti = timing_array
+                #Change size of target word if we are in word matching mode
+                if self.is_word:
+                    self.rsvp.size_list_sti = list(repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
+                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']
+
                 core.wait(self.buffer_val)
 
                 self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size, self.is_word)
