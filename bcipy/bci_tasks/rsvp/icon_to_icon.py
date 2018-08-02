@@ -198,7 +198,7 @@ class RSVPIconToIconTask(Task):
 
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
-                    process_data_for_decision(sequence_timing, self.daq)
+                    process_data_for_decision(sequence_timing, self.daq, self.window)
 
                 # self.fake = False
 

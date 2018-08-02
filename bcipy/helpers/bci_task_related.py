@@ -72,7 +72,7 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(sequence_timing, daq, window):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -109,7 +109,7 @@ def process_data_for_decision(sequence_timing, daq):
     # Query for raw data
     try:
         # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2)
+        raw_data = daq.get_data(start=time1, end=time2, win=window)
 
         # If not enough raw_data returned in the first query, let's try again
         #  using only the start param. This is known issue on Windows.
@@ -117,7 +117,7 @@ def process_data_for_decision(sequence_timing, daq):
         if len(raw_data) < data_limit:
 
             # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1)
+            raw_data = daq.get_data(start=time1, win=window)
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:

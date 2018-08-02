@@ -111,7 +111,7 @@ def stop(mailbox, delete_archive=True):
     return _rpc(mailbox, request)
 
 
-def _rpc(mailbox, request, wait_reply=True):
+def _rpc(mailbox, request, win=None, wait_reply=True):
     """Makes a process call and optionally awaits its reply.
 
     Parameters
@@ -129,6 +129,10 @@ def _rpc(mailbox, request, wait_reply=True):
     """
     if wait_reply:
         m = mp.Manager()
+        #Refocus on the window in case Windows changes focus
+        if win:
+            win.winHandle.activate()
+            
         q = m.Queue()
 
         mailbox.put((q, request))
@@ -170,7 +174,7 @@ def count(mailbox):
     return _rpc(mailbox, request)
 
 
-def get_data(mailbox, start=None, end=None, field='_rowid_'):
+def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
     """Query the buffer for a slice of data records.
 
     Parameters
@@ -189,6 +193,8 @@ def get_data(mailbox, start=None, end=None, field='_rowid_'):
         request = (MSG_GET_ALL, None)
     else:
         request = (MSG_QUERY_SLICE, (start, end, field))
+    if win:
+        return _rpc(mailbox, request, win)
 
     return _rpc(mailbox, request)
 
