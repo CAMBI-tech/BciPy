@@ -123,7 +123,7 @@ class RSVPIconToIconTask(Task):
             alp_image_array.extend(image_name_array)
 
         for image in alp_image_array:
-            alp_image_array[alp_image_array.index(image)] = image.replace('.png', '')
+            alp_image_array[alp_image_array.index(image)] = image.split('/')[-1].split('.')[0]
 
         self.alp = alp_image_array
 
@@ -189,8 +189,10 @@ class RSVPIconToIconTask(Task):
                 self.rsvp.time_list_sti = timing_array
                 #Change size of target word if we are in word matching mode
                 if self.is_word:
+                    #Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
                     self.rsvp.size_list_sti = list(repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
-                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']
+                    #Set the target word font size to the font size defined in parameters
+                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']                 
 
                 core.wait(self.buffer_val)
 
@@ -206,7 +208,7 @@ class RSVPIconToIconTask(Task):
                 raw_data, triggers, target_info = \
                     process_data_for_decision(sequence_timing, self.daq, self.window)
 
-                # self.fake = False
+                #self.fake = False
 
                 display_stimulus = self.rsvp.stim_sequence[0]
 

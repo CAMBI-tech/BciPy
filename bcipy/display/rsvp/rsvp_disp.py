@@ -6,6 +6,7 @@ from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.system_utils import get_system_info
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -219,6 +220,20 @@ class RSVPDisplay(object):
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
+                
+                #Test whether the word will be too big for the screen
+                text_width = self.sti.boundingBox[0]
+                if text_width > self.win.size[0]:
+                    info = get_system_info()
+                    text_height = self.sti.boundingBox[1]
+                    #Are we in fullscreen?
+                    if self.win.size[0] == info['RESOLUTION'][0]:
+                        new_text_width = info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                    else:
+                        #If not, calculate size of window relative to size of monitor
+                        new_text_width = (self.win.size[1]/info['RESOLUTION'][1]) * info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                    new_text_height = (text_height * new_text_width) / text_width
+                    self.sti.height = new_text_height
 
 
             # End static period
