@@ -250,6 +250,7 @@ def display_novel_stimulus(win, parameters, clock, counter_pos):
     display a random novel stimulus from the directory set in parameters."""
     if parameters['enable_novel_stimuli'] and parameters['novel_stimuli_type'] == 'end of trial':
         activate_stimuli = False
+        random.seed(parameters['novel_stimuli_seed'])
         if (parameters['novel_stimuli_frequency'] == 0):
             if (random.randint(0,10) == 5):
                 activate_stimuli = True
@@ -261,12 +262,16 @@ def display_novel_stimulus(win, parameters, clock, counter_pos):
                     with open(parameters['novel_txt_source_file']) as json_text_file:
                         json_text_data = json.load(json_text_file)
                         values_per_item = len(json_text_data[0])
-                        strings_seen = (counter_pos - 1) / parameters['novel_stimuli_frequency']
+                        strings_seen = int((counter_pos - 1) / parameters['novel_stimuli_frequency'])
                         #Loop back around if we exceed the total number of phrases
                         if strings_seen >= len(json_text_data) * values_per_item:
-                            strings_seen = strings_seen % (len(json_text_data) * values_per_item)
-                        current_item = int(strings_seen//values_per_item)
+                            strings_seen = int(strings_seen % (len(json_text_data) * values_per_item))
                         current_subitem = int(strings_seen % values_per_item)
+                        current_item = int(strings_seen//values_per_item)
+                        if parameters['shuffle_novel_txt']:
+                            random.seed(parameters['novel_stimuli_seed'])
+                            random_array = random.sample(range(0, len(json_text_data)), len(json_text_data))
+                            current_item = random_array[current_item]
                         display_text = json_text_data[current_item][current_subitem]
                         visual_feedback = VisualFeedback(
                             display=win, parameters=parameters, clock=clock)

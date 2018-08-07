@@ -684,5 +684,21 @@
     "helpTip": "novel_txt_source_file",
     "recommended_values": "",
     "type": "str"
+  },
+  "novel_stimuli_seed": {
+    "value": "42",
+    "section": "bci_config",
+    "readableName": "Seed for novel stimuli randomization",
+    "helpTip": "novel_stimuli_seed",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "shuffle_novel_txt": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Should the order of novel text stimuli be randomized?",
+    "helpTip": "shuffle_novel_txt",
+    "recommended_values": "",
+    "type": "bool"
   }
 }
