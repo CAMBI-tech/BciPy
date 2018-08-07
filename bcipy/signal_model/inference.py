@@ -20,7 +20,7 @@ def inference(x, targets, model, alphabet):
     scores = np.exp(model.transform(x))
     # Evaluates the likelihood ratios
     scores = scores[:, 1] / (scores[:, 0] + np.power(.1, 10))
-    print("These values should be between 0 and 1: ", scores)
+    # print("These values should be between 0 and 1: ", scores)
 
     # This maps the likelihood distribution over the alphabet
     #   If the letter in the alphabet does not exist in the target string,
