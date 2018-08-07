@@ -568,7 +568,7 @@
     "type": "float"
   },
   "feedback_stim_height": {
-    "value": "0.6",
+    "value": "0.2",
     "section": "feedback_config",
     "readableName": "feedback_stim_height",
     "helpTip": "feedback_stim_height",
@@ -667,6 +667,22 @@
       "end of trial",
       "random"
     ],
+    "type": "str"
+  },
+  "is_novel_stimuli_txt": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Should the novel stimuli be read from a text file?",
+    "helpTip": "is_novel_stimuli_txt",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "novel_txt_source_file": {
+    "value": "bcipy/static/text.json",
+    "section": "bci_config",
+    "readableName": "Source file for novel stimuli text",
+    "helpTip": "novel_txt_source_file",
+    "recommended_values": "",
     "type": "str"
   }
 }

@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import glob
+import json
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
 import soundfile as sf
@@ -255,14 +256,32 @@ def display_novel_stimulus(win, parameters, clock, counter_pos):
         if ((counter_pos - 1) % parameters['novel_stimuli_frequency']) == 0 and counter_pos != 0:
             activate_stimuli = True
         if activate_stimuli:
-            random_stimuli_array = glob.glob(parameters['novel_stimuli_location']+'*.png') + glob.glob(parameters['novel_stimuli_location']+'*.wav')
-            random_letter = random_stimuli_array[random.randint(1,len(random_stimuli_array) - 1)]
-            if random_letter.endswith('.png'):
-                visual_feedback = VisualFeedback(
-                display=win, parameters=parameters, clock=clock)
-                visual_feedback.administer(random_letter, compare_assertion=None, message=' ')
+            if parameters['is_novel_stimuli_txt']:
+                try:
+                    with open(parameters['novel_txt_source_file']) as json_text_file:
+                        json_text_data = json.load(json_text_file)
+                        values_per_item = len(json_text_data[0])
+                        strings_seen = (counter_pos - 1) / parameters['novel_stimuli_frequency']
+                        #Loop back around if we exceed the total number of phrases
+                        if strings_seen >= len(json_text_data) * values_per_item:
+                            strings_seen = strings_seen % (len(json_text_data) * values_per_item)
+                        current_item = int(strings_seen//values_per_item)
+                        current_subitem = int(strings_seen % values_per_item)
+                        display_text = json_text_data[current_item][current_subitem]
+                        visual_feedback = VisualFeedback(
+                            display=win, parameters=parameters, clock=clock)
+                        visual_feedback.administer(display_text, compare_assertion=None, message=' ')
+                except ValueError:
+                    print('Error loading json text file for novel stimuli insertion')
             else:
-                auditory_feedback = AuditoryFeedback(
-                parameters=parameters, clock=clock)
-                data, fs = sf.read(random_letter, dtype='float32')
-                auditory_feedback.administer(data, fs)
+                random_stimuli_array = glob.glob(parameters['novel_stimuli_location']+'*.png') + glob.glob(parameters['novel_stimuli_location']+'*.wav')
+                random_letter = random_stimuli_array[random.randint(1,len(random_stimuli_array) - 1)]
+                if random_letter.endswith('.png'):
+                    visual_feedback = VisualFeedback(
+                    display=win, parameters=parameters, clock=clock)
+                    visual_feedback.administer(random_letter, compare_assertion=None, message=' ')
+                elif random_letter.endswith('.wav'):
+                    auditory_feedback = AuditoryFeedback(
+                    parameters=parameters, clock=clock)
+                    data, fs = sf.read(random_letter, dtype='float32')
+                    auditory_feedback.administer(data, fs)
