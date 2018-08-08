@@ -72,7 +72,7 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq, window):
+def process_data_for_decision(sequence_timing, daq, window, window_length):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -94,7 +94,7 @@ def process_data_for_decision(sequence_timing, daq, window):
 
     # define my first and last time points #changeforrelease
     time1 = first_stim_time * daq.device_info.fs
-    time2 = (last_stim_time + .5) * daq.device_info.fs
+    time2 = (last_stim_time + window_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing * daq.device_info.fs) - time1))
@@ -104,7 +104,7 @@ def process_data_for_decision(sequence_timing, daq, window):
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + .5) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time + window_length) * daq.device_info.fs
 
     # Query for raw data
     try:

@@ -663,5 +663,13 @@
     "helpTip": "Default height to use for words that match icons",
     "recommended_values": "",
     "type": "float"
+  },
+  "collection_window_after_trial_length": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data collection window after the end of each trial (seconds)",
+    "helpTip": "collection_window_after_trial_length",
+    "recommended_values": "",
+    "type": "float"
   }
 }

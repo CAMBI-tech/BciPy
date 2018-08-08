@@ -7,7 +7,7 @@ from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
 
 from bcipy.helpers.stimuli_generation import generate_icon_match_images
 
-from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
+from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 
 from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
 
@@ -192,7 +192,7 @@ class RSVPIconToIconTask(Task):
                     #Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
                     self.rsvp.size_list_sti = list(repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
                     #Set the target word font size to the font size defined in parameters
-                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']                 
+                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']
 
                 core.wait(self.buffer_val)
 
@@ -201,12 +201,18 @@ class RSVPIconToIconTask(Task):
                 # Do the sequence
                 sequence_timing = self.rsvp.do_sequence()
 
+                # Write triggers to file
+                _write_triggers_from_sequence_calibration(
+                    sequence_timing,
+                    self.trigger_file)
+
                 # Wait for a time
                 core.wait(self.buffer_val)
 
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
-                    process_data_for_decision(sequence_timing, self.daq, self.window)
+                    process_data_for_decision(sequence_timing, self.daq, self.window,
+                            self.parameters['collection_window_after_trial_length'])
 
                 #self.fake = False
 
@@ -215,11 +221,10 @@ class RSVPIconToIconTask(Task):
                 display_message = False
                 if self.fake:
                     # Construct Data Record
-                    #TODO: get stimuli timing array
                     data['epochs'][current_trial][epoch_index] = {
                         'stimuli': image_array[current_trial],
                         'eeg_len': len(raw_data),
-                        'timing_sti': 'teststring',
+                        'timing_sti': timing_array,
                         'triggers': triggers,
                         'target_info': target_info,
                         'target_letter': display_stimulus
@@ -240,7 +245,7 @@ class RSVPIconToIconTask(Task):
                     data['epochs'][current_trial][epoch_index] = {
                         'stimuli': image_array[current_trial],
                         'eeg_len': len(raw_data),
-                        'timing_sti': 'teststring',
+                        'timing_sti': timing_array,
                         'triggers': triggers,
                         'target_info': target_info,
                         'lm_evidence': copy_phrase_task
