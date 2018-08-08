@@ -318,10 +318,8 @@ class RSVPIconToIconTask(Task):
             icon_output_writer.writerow(['Date/Time', datetime.datetime.now()])
             #if self.classifier:
             #icon_output_writer.writerow(['Calibration AUC',])
-            temp_epoch_index = 1
-            if epoch_index != 0:
-                temp_epoch_index = epoch_index
-            temp_current_trial = current_trial + 1
+            temp_epoch_index = 1 if epoch_index == 0 else epoch_index
+            temp_current_trial = 1 if current_trial == 0 else current_trial
             icon_output_writer.writerow(['Percentage of correctly selected icons', (correct_trials / (temp_current_trial * temp_epoch_index)) * 100])
             icon_output_writer.writerow(['Task type', ('Icon to word' if self.is_word else 'Icon to icon')])
 
