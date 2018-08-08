@@ -6,7 +6,7 @@ import soundfile as sf
 
 # Load a parameters file
 parameters = load_json_parameters(
-    'bcipyparameters/parameters.json', value_cast=True)
+    'bcipy/parameters/parameters.json', value_cast=True)
 clock = core.Clock()
 
 # Init the sound object and give it some time to buffer

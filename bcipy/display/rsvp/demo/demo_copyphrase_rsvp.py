@@ -125,7 +125,6 @@ counter = 0
 # trigger_file = open('copy_phrase_triggers.txt','w')
 for idx_o in range(len(task_text)):
 
-    rsvp.bg.reset_weights()
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
     rsvp.draw_static()
     win.flip()

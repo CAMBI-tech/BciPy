@@ -1,5 +1,8 @@
 from psychopy import core
 from itertools import repeat
+import csv
+import datetime
+from os.path import dirname
 
 from bcipy.bci_tasks.task import Task
 
@@ -143,6 +146,7 @@ class RSVPIconToIconTask(Task):
         run = True
         new_epoch = True
         epoch_index = 0
+        correct_trials = 0
 
         # Init session data and save before beginning
         data = {
@@ -233,6 +237,7 @@ class RSVPIconToIconTask(Task):
                     display_message = True
                     message_color = 'green'
                     current_trial += 1
+                    correct_trials += 1
                     new_epoch = True
                     if self.is_word:
                         display_stimulus = self.image_path + self.rsvp.stim_sequence[0] + '.png'
@@ -270,6 +275,7 @@ class RSVPIconToIconTask(Task):
                         current_trial += 1
                         if correct_decision:
                             message_color = 'green'
+                            correct_trials += 1
                         else:
                             message_color = 'red'
                         display_message = True
@@ -305,6 +311,19 @@ class RSVPIconToIconTask(Task):
 
             else:
                 run = False
+
+        with open(f"{self.file_save}/icon_data.csv", 'w+') as icon_output_csv:
+            icon_output_writer = csv.writer(icon_output_csv, delimiter=',')
+            icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.parameters['data_save_loc'], '')])
+            icon_output_writer.writerow(['Date/Time', datetime.datetime.now()])
+            #if self.classifier:
+            #icon_output_writer.writerow(['Calibration AUC',])
+            temp_epoch_index = 1
+            if epoch_index != 0:
+                temp_epoch_index = epoch_index
+            temp_current_trial = current_trial + 1
+            icon_output_writer.writerow(['Percentage of correctly selected icons', (correct_trials / (temp_current_trial * temp_epoch_index)) * 100])
+            icon_output_writer.writerow(['Task type', ('Icon to word' if self.is_word else 'Icon to icon')])
 
         # Say Goodbye!
         self.rsvp.text = trial_complete_message(self.window, self.parameters)

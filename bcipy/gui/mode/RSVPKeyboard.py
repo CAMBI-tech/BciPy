@@ -122,7 +122,7 @@ gui.add_static_text(
 gui.add_static_text(
     text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
 gui.add_static_text(
-    text='2.) Chose your experiment type:',
+    text='2.) Choose your experiment type:',
     position=(75, 250), size=15, color='white')
 
 # BUTTONS!
