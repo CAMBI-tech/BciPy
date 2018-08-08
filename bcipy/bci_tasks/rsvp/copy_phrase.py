@@ -238,7 +238,7 @@ class RSVPCopyPhraseTask(Task):
                 #  epoch (seq) or stimuli to present
                 new_epoch, sti = \
                     copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info)
+                                                       target_info, self.parameters['collection_window_after_trial_length'])
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {

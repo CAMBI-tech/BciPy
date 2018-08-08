@@ -45,7 +45,7 @@ class CopyPhraseWrapper(object):
         self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
 
-    def evaluate_sequence(self, raw_dat, triggers, target_info):
+    def evaluate_sequence(self, raw_dat, triggers, target_info, window_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -85,7 +85,8 @@ class CopyPhraseWrapper(object):
 
         x, _, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
-                                    channel_map=self.channel_map)
+                                    channel_map=self.channel_map,
+                                    trial_length=window_length)
 
 
         lik_r = inference(x, letters, self.signal_model, self.alp)

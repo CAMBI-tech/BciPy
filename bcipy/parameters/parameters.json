@@ -667,7 +667,7 @@
   "collection_window_after_trial_length": {
     "value": "0.5",
     "section": "bci_config",
-    "readableName": "Length of the data collection window after the end of each trial (seconds)",
+    "readableName": "Length of the data collection window after each stimuli (seconds)",
     "helpTip": "collection_window_after_trial_length",
     "recommended_values": "",
     "type": "float"
