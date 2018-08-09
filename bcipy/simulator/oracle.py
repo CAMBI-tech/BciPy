@@ -91,7 +91,7 @@ class SequenceRSVPOracle(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('-d', '--data_folder', default=None)
         parser.add_argument('-p', '--parameters_file',
-                            default='D:/BCIpy/BciPy/bcipy/parameters/parameters.json')
+                            default='C:\\Users\\berkan\\Desktop\\GitProjects\\BciPy\\bcipy\\parameters\\parameters.json')
         args = parser.parse_args()
         parameters = load_json_parameters(args.parameters_file, value_cast=True)
         raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(

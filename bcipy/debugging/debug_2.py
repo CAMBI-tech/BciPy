@@ -27,7 +27,6 @@ def progress_bar(iteration, total, prefix='', suffix='', decimals=1,
     if iteration == total:
         print('')
 
-
 alp = list(string.ascii_uppercase) + ['_'] + ['<']
 len_alp = len(alp)
 evidence_names = ['LM', 'Eps']
@@ -40,8 +39,8 @@ backspace_prob = 1. / 35.
 min_num_seq = 1
 max_num_seq = 15
 max_num_mc = 10
-data_folder = 'D:/BCIpy/Model-20180807T144701Z-001/Model/'
-model_folder = 'D:/BCIpy/test_BE_6.14_DSI.LSL_Thu_14_Jun_2018_14hr54min37sec_-0700/'
+data_folder = 'C:\\Users\\berkan\\Desktop\\Model\\'
+model_folder = 'C:\\Users\\berkan\\Desktop\\Model\\'
 
 model = load_classifier(filename=model_folder + 'model.pkl')
 
@@ -68,7 +67,7 @@ mode = 'copy_phrase'
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--data_folder', default=None)
 parser.add_argument('-p', '--parameters_file',
-                    default='D:/BCIpy/BciPy/bcipy/parameters/parameters.json')
+                    default='C:\\Users\\berkan\\Desktop\\GitProjects\\BciPy\\bcipy\\parameters\\parameters.json')
 triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
 args = parser.parse_args()
 parameters = load_json_parameters(args.parameters_file, value_cast=True)
@@ -104,7 +103,7 @@ for idx in range(max_num_mc):
             t_t_i = ["nontarget"] * len(t_i)
 
             x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, data,
-                                              mode='calibration', fs=fs, k=downsample_rate,
+                                              mode='copy_phrase', fs=fs, k=downsample_rate,
                                               offset=offset, channel_map=channel_map)
 
             score = model.transform(x)

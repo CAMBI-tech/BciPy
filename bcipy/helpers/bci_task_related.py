@@ -307,8 +307,7 @@ def trial_reshaper(trial_target_info: list,
                 # For every channel append filtered channel data to trials
                 for channel in range(len(filtered_eeg)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
+                        filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 
@@ -316,7 +315,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'copy_phrase':
 
             # triggers in samples are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
