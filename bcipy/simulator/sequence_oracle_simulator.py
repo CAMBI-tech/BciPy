@@ -1,8 +1,5 @@
 from bcipy.simulator.oracle import SequenceRSVPOracle
-import scipy.io as sio
 from bcipy.bci_tasks.main_frame import DecisionMaker, EvidenceFusion
-from scipy.stats import iqr
-from sklearn.neighbors.kde import KernelDensity
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.acquisition_related import analysis_channels
 from bcipy.helpers.load import read_data_csv, load_experimental_data, load_json_parameters
