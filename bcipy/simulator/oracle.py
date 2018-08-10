@@ -76,24 +76,22 @@ class SequenceRSVPOracle(object):
             phrase(str): user's intention to write (can be anything / sentence,word etc.)
             state(char): at a particular time, what letter user wants to type
             alp(list[char]): alphabet. final symbol should be the erase symbol
+            filtered_data(ndarray[float]): C x n numpy array that contains filtered data to be used in the experiment
+            trigger_holder(list[list[float]]): Given a particular query, the target appears on a location. This holder
+                contains triggers for sequences that have target at specific location. e.g. trigger_holder[0] contains
+                sequence triggers where target is at position 0
         """
 
-    def __init__(self, data_folder, phrase, alp=list(string.ascii_uppercase) + ['_'] + ['<']):
+    def __init__(self, data_folder, parameters, phrase, alp=list(string.ascii_uppercase) + ['_'] + ['<']):
         """ Args:
-                x(ndarray[float]): scores of trial samples
-                y(ndarray[int]): label values of trial samples (1 is for positive)
-                phrase(str): phrase in users ming (e.g.: I_love_cookies)
-            """
+                data_folder(float): local path for the calibration data folder. WARNING! Needs to be calibration
+                parameters(rsvpParam): rsvp keybard parameters
+                phrase(str): user's intention to write (can be anything / sentence,word etc.)
+                alp(list[char]): alphabet. WARNING! Needs to match system alphabet """
+
         self.alp = alp
         self.phrase = phrase
         self.state = self.phrase[0]
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-d', '--data_folder', default=None)
-        parser.add_argument('-p', '--parameters_file',
-                            default='C:\\Users\\berkan\\Desktop\\GitProjects\\BciPy\\bcipy\\parameters\\parameters.json')
-        args = parser.parse_args()
-        parameters = load_json_parameters(args.parameters_file, value_cast=True)
         raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
             data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
 
@@ -142,6 +140,11 @@ class SequenceRSVPOracle(object):
         return trig
 
     def form_trigger_list(self, data_folder, triggers_file):
+        """ given the data folder and trigger files of a calibration file. Extracts possible sequences for each target
+            location in the calibration file.
+            Args:
+                data_folder(float): local path for the calibration data folder
+                triggers_file(float): local path for the trigger.txt file """
 
         _, t_t_i, t_i, offset = trigger_decoder(mode='calibration', trigger_loc=f"{data_folder}/{triggers_file}")
         start_idx = np.where([a == 'first_pres_target' for a in t_t_i])[0]
@@ -155,35 +158,6 @@ class SequenceRSVPOracle(object):
                 tmp.append(list(t_i[start_idx[idx_2] + 1:start_idx[idx_2] + 11]))
 
             self.trigger_holder[idx] = tmp
-
-        # with open(trigger_loc, 'r') as text_file:
-        #     lines = [line.split() for line in text_file]
-        #
-        # targets, triggers, tar_info, tri_info = [], [], [], []
-        # for line in lines:
-        #     if 'calibration_trigger' not in line:
-        #         if 'first_pres_target' not in line:
-        #             if 'fixation' in line:
-        #                 targets.append(tar_info)
-        #                 triggers.append(tri_info)
-        #
-        #                 tar_info = []
-        #                 tri_info = []
-        #             else:
-        #                 tar_info.append(int(line[1] == 'target'))
-        #                 tri_info.append(float(line[2]))
-        #
-        # targets = np.array(targets[1::])
-        # triggers = np.array(triggers[1::])
-        # locations = np.where(targets == 1)[1]
-        #
-        # self.trigger_holder = [[]] * (np.max(locations) + 1)
-        # for idx in range(np.max(locations)):
-        #     tmp = []
-        #     for idx_2 in list(list(np.where(locations == idx)[0])):
-        #         tmp.append(list(triggers[idx_2]))
-        #
-        #     self.trigger_holder[idx] = tmp
 
 
 def form_kde_densities(x, y):
