@@ -84,7 +84,7 @@ class SequenceRSVPOracle(object):
 
     def __init__(self, data_folder, parameters, phrase, alp=list(string.ascii_uppercase) + ['_'] + ['<']):
         """ Args:
-                data_folder(float): local path for the calibration data folder. WARNING! Needs to be calibration
+                data_folder(str): local path for the calibration data folder. WARNING! Needs to be calibration
                 parameters(rsvpParam): rsvp keybard parameters
                 phrase(str): user's intention to write (can be anything / sentence,word etc.)
                 alp(list[char]): alphabet. WARNING! Needs to match system alphabet """

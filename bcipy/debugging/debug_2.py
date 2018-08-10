@@ -27,6 +27,7 @@ def progress_bar(iteration, total, prefix='', suffix='', decimals=1,
     if iteration == total:
         print('')
 
+
 alp = list(string.ascii_uppercase) + ['_'] + ['<']
 len_alp = len(alp)
 evidence_names = ['LM', 'Eps']
@@ -39,17 +40,26 @@ backspace_prob = 1. / 35.
 min_num_seq = 1
 max_num_seq = 15
 max_num_mc = 10
-data_folder = 'C:\\Users\\berkan\\Desktop\\Model\\'
-model_folder = 'C:\\Users\\berkan\\Desktop\\Model\\'
-
+data_folder = 'D:/BCIpy/Abby100ms_iconset1_Thu_21_Jun_2018_15hr02min41sec_-0700/'
+model_folder = 'D:/BCIpy/test_BE_6.14_DSI.LSL_Thu_14_Jun_2018_14hr54min37sec_-0700/'
 model = load_classifier(filename=model_folder + 'model.pkl')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--data_folder', default=None)
+parser.add_argument('-p', '--parameters_file',
+                    default='D:/BCIpy/BciPy/bcipy/parameters/parameters.json')
 
 conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
 decision_maker = DecisionMaker(state='', alphabet=alp)
 decision_maker.min_num_seq = min_num_seq
 decision_maker.max_num_seq = max_num_seq
+parameters = {}
+triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
+downsample_rate = parameters.get('down_sampling_rate', 2)
+args = parser.parse_args()
+parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-oracle = SequenceRSVPOracle(data_folder=data_folder, phrase=phrase, alp=alp)
+oracle = SequenceRSVPOracle(data_folder=data_folder, phrase=phrase, alp=alp, parameters=parameters)
 data = oracle.filtered_data
 
 # number of sequences spent for correct decision (adds incorrect decisions)
@@ -60,17 +70,10 @@ target_dist = [[], []]
 bar_counter = 0
 method_count = 0
 
-parameters = {}
 sum_seq_till_correct = np.zeros(len(phrase))
-downsample_rate = parameters.get('down_sampling_rate', 2)
+
 mode = 'copy_phrase'
-parser = argparse.ArgumentParser()
-parser.add_argument('-d', '--data_folder', default=None)
-parser.add_argument('-p', '--parameters_file',
-                    default='C:\\Users\\berkan\\Desktop\\GitProjects\\BciPy\\bcipy\\parameters\\parameters.json')
-triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
-args = parser.parse_args()
-parameters = load_json_parameters(args.parameters_file, value_cast=True)
+
 raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
     data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
 _, t_t_i, t_i, offset = trigger_decoder(mode=mode, trigger_loc=f"{data_folder}/{triggers_file}")
