@@ -2,6 +2,29 @@ import numpy as np
 import random
 
 
+def best_selection(list_el, val, len_query):
+    """ given set of elements and a value function over the set, picks the len_query
+        number of elements with the best value.
+        Args:
+            list_el(list[str]): the set of elements
+            val(list[float]): values for the corresponding elements
+            len_query(int): number of elements to be picked from the set
+        Return:
+            query(list[str]): elements from list_el with the best value """
+    max_p_val = np.sort(val)[::-1]
+    max_p_val = max_p_val[0:len_query]
+
+    query = []
+    for idx in range(len_query):
+        idx_q = np.where(val == max_p_val[idx])[0][0]
+        q = list_el[idx_q]
+        val = np.delete(val, idx_q)
+        list_el.remove(q)
+        query.append(q)
+
+    return query
+
+
 def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                            color=['red', 'white'], num_sti=1,
                            len_sti=10, is_txt=True):
@@ -28,7 +51,9 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
         raise Exception('Missing information about alphabet. len(alp):{}, '
                         'len(p):{}, should be same!'.format(len(alp), len(p)))
 
-    idx = np.argsort(p)[::-1][0:len_sti]
+    tmp = [i for i in alp]
+    query = best_selection(tmp, p, len_sti)
+    random.shuffle(query)
 
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
@@ -36,8 +61,7 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
             sample = ['+']
         else:
             sample = ['../bci/static/images/bci_main_images/PLUS.png']
-        idx = np.random.permutation(idx)
-        sample += [alp[i] for i in idx]
+        sample += [i for i in query]
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * len_sti)
@@ -97,7 +121,6 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
 def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
                                    len_sti=10, is_txt=True):
-
     """Generate target RSVPKeyboard sequences.
 
         Args:
@@ -125,7 +148,7 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
     else:
         sample = ['../bci/static/images/bci_main_images/PLUS.png']
         target_letter = parameters[
-            'path_to_presentation_images'] + target_letter + '.png'
+                            'path_to_presentation_images'] + target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
