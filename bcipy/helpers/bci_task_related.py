@@ -97,7 +97,7 @@ def process_data_for_decision(sequence_timing, daq):
     time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
-    triggers = [(text, ((timing * daq.device_info.fs) - time1))
+    triggers = [(text, ((timing) - time1))
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
