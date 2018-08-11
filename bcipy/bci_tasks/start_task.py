@@ -7,7 +7,7 @@ from bcipy.bci_tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,
-               classifier=None, lmodel=None, fake=True):
+               classifier=None, lmodel=None, fake=True, auc_filename=None):
     # Determine the mode and exp type: send to the correct task.
 
     # RSVP
@@ -58,7 +58,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             try:
                 icon_to_icon = RSVPIconToIconTask(display_window, daq,
                                                   parameters, file_save, classifier,
-                                                  lmodel, fake, False)
+                                                  lmodel, fake, False, auc_filename)
 
                 icon_to_icon.execute()
 
@@ -71,7 +71,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             try:
                 icon_to_word = RSVPIconToIconTask(display_window, daq,
                                                   parameters, file_save, classifier,
-                                                  lmodel, fake, True)
+                                                  lmodel, fake, True, auc_filename)
 
                 icon_to_word.execute()
 

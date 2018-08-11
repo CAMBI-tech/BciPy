@@ -70,8 +70,9 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
             # EEG Model, Load in pre-trained classifier
             if fake:
                 classifier = None
+                filename = None
             else:
-                classifier = load_classifier()
+                classifier, filename = load_classifier()
 
         except Exception as e:
             print("Cannot load EEG classifier. Exiting")
@@ -91,6 +92,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     else:
         classifier = None
         lmodel = None
+        filename = None
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(
@@ -104,7 +106,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         start_task(
             display, daq, task_type, parameters, save_folder,
             lmodel=lmodel,
-            classifier=classifier, fake=fake)
+            classifier=classifier, fake=fake, auc_filename=filename)
 
     # If exception, close all display and acquisition objects
     except Exception as e:

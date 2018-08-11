@@ -2,7 +2,7 @@ from psychopy import core
 from itertools import repeat
 import csv
 import datetime
-from os.path import dirname
+from os.path import dirname, basename
 
 from bcipy.bci_tasks.task import Task
 
@@ -51,7 +51,7 @@ class RSVPIconToIconTask(Task):
     """
 
     def __init__(
-            self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word):
+            self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word, auc_filename):
 
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -96,6 +96,7 @@ class RSVPIconToIconTask(Task):
         self.fake = fake
         self.lmodel = lmodel
         self.classifier = classifier
+        self.auc_filename = auc_filename
 
         self.image_path = parameters['path_to_presentation_images']
         self.task_height = parameters['height_task']
@@ -103,6 +104,7 @@ class RSVPIconToIconTask(Task):
         self.is_txt_sti = False
 
         self.min_num_seq = parameters['min_seq_len']
+        
 
     def execute(self):
         image_array, timing_array = generate_icon_match_images(self.len_sti,
@@ -316,8 +318,8 @@ class RSVPIconToIconTask(Task):
             icon_output_writer = csv.writer(icon_output_csv, delimiter=',')
             icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.parameters['data_save_loc'], '')])
             icon_output_writer.writerow(['Date/Time', datetime.datetime.now()])
-            #if self.classifier:
-            #icon_output_writer.writerow(['Calibration AUC',])
+            if self.auc_filename:
+                icon_output_writer.writerow(['Calibration AUC', basename(self.auc_filename).replace('.pkl', '')])
             temp_epoch_index = 1 if epoch_index == 0 else epoch_index
             temp_current_trial = 1 if current_trial == 0 else current_trial
             icon_output_writer.writerow(['Percentage of correctly selected icons', (correct_trials / (temp_current_trial * temp_epoch_index)) * 100])

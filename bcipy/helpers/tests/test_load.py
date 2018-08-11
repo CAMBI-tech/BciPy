@@ -55,4 +55,4 @@ class TestLoad(unittest.TestCase):
         unpickled_parameters = load_classifier(pickle_file)
 
         # assert the same data was returned
-        self.assertEqual(unpickled_parameters, self.parameters)
+        self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
