@@ -20,6 +20,7 @@ class TestVisualFeedback(unittest.TestCase):
             value_cast=True)
 
         self.display = mock()
+        self.display.size = [1, 1]
         self.text_mock = mock()
         self.image_mock = mock()
 
@@ -47,7 +48,6 @@ class TestVisualFeedback(unittest.TestCase):
         when(psychopy.visual).ImageStim(
             win=self.display,
             image=any(),
-            size=any(),
             mask=None,
             pos=any(),
             ori=any()

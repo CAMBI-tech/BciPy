@@ -4,7 +4,7 @@ from psychopy import visual, core
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
-
+from bcipy.helpers.stimuli_generation import resize_image
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -125,8 +125,7 @@ class RSVPDisplay(object):
                                        opacity=1, depth=-6.0)
         else:
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
-                                        units='', pos=pos_sti,
-                                        size=(sti_height, sti_height), ori=0.0)
+                                        pos=pos_sti, ori=0.0)
 
         if bg:
             # Create Bar Graph
@@ -203,6 +202,10 @@ class RSVPDisplay(object):
                 sti_label = self.sti.text
             else:
                 self.sti.image = self.stim_sequence[idx]
+
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
+                                                             self.height_stim)
+
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.
                 sti_label = self.sti.image.split('/')[-1].split('.')[0]
@@ -287,10 +290,12 @@ class RSVPDisplay(object):
             wait_logo = visual.ImageStim(
                 self.win,
                 image='bcipy/static/images/gui_images/bci_cas_logo.png',
-                size=(1, 1),
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
+            wait_logo.size = resize_image(
+                'bcipy/static/images/gui_images/bci_cas_logo.png',
+                self.win.size, 1)
             wait_logo.draw()
 
         except Exception:

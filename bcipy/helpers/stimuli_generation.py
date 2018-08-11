@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from PIL import Image
 
 
 def best_selection(list_el, val, len_query):
@@ -60,7 +61,7 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
         if is_txt:
             sample = ['+']
         else:
-            sample = ['../bci/static/images/bci_main_images/PLUS.png']
+            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
         sample += [i for i in query]
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
@@ -102,7 +103,7 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
         if not is_txt:
             sample = [
                 alp[rand_smp[0]],
-                '../bci/static/images/bci_main_images/PLUS.png']
+                'bcipy/static/images/bci_main_images/PLUS.png']
         else:
             sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
@@ -239,3 +240,26 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     schedule_seq = (samples, times, colors)
 
     return schedule_seq
+
+def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+    """Returns the width and height that a given image should be displayed at
+    given the screen size, size of the original image, and stimuli height
+    parameter"""
+    #Retrieve image width and height
+    with Image.open(image_path) as pillow_image:
+        image_width, image_height = pillow_image.size
+
+    #Resize image so that its largest dimension is the stimuli size defined in the parameters file
+    if image_width >= image_height:
+        proportions = (1, (image_height / image_width))
+    else:
+        proportions = ((image_width / image_height), 1)
+
+    #Adjust image size to scale with monitor size
+    screen_width, screen_height = screen_size
+    if screen_width >= screen_height:
+        sti_size = ((screen_height / screen_width) * sti_height * proportions[0],  sti_height * proportions[1])
+    else:
+        sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
+
+    return sti_size
