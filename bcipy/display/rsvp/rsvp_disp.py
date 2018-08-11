@@ -156,7 +156,7 @@ class RSVPDisplay(object):
 
     def update_task(self, text, color_list, pos):
         """Update Task Object.
-
+s
         Args:
                 text(string): text for task
                 color_list(list[string]): list of the colors for each char
@@ -183,6 +183,8 @@ class RSVPDisplay(object):
                 on_trigger=self.marker_writer.push_marker)
 
             timing.append(stim_timing)
+
+            self.first_stim_time = stim_timing[-1]
 
             self.first_run = False
 

@@ -72,7 +72,7 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -83,20 +83,27 @@ def process_data_for_decision(sequence_timing, daq):
         sequence_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
+        first_session_stim_time (float): time that the first stimuli was presented
+            for the session. Used to calculate offsets.
 
     Returns
     -------
         (raw_data, triggers, target_info) tuple
     """
-    # get any offset calculated from the daq
-    offset = daq.offset
 
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
 
-    # define my first and last time points #changeforrelease
-    time1 = first_stim_time - offset * daq.device_info.fs
+
+    # get any offset calculated from the daq
+    daq_offset = daq.offset
+
+    if daq_offset:
+        offset = daq_offset - first_session_stim_time
+        time1 = first_stim_time - offset * daq.device_info.fs
+    else:
+        time1 = first_stim_time * daq.device_info.fs
     time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
