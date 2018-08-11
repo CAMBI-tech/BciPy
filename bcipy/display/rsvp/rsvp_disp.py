@@ -6,6 +6,7 @@ from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
 
+
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
 
@@ -203,8 +204,10 @@ class RSVPDisplay(object):
             else:
                 self.sti.image = self.stim_sequence[idx]
 
-                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
-                                                             self.height_stim)
+                self.sti.size = resize_image(
+                    self.sti.image,
+                    self.sti.win.size,
+                    self.height_stim)
 
                 # We expect a path for images, so split on forward slash and
                 # extension to get the name of the file.

@@ -88,16 +88,19 @@ def process_data_for_decision(sequence_timing, daq):
     -------
         (raw_data, triggers, target_info) tuple
     """
+    # get any offset calculated from the daq
+    offset = daq.offset
+
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
-    _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
+    _, last_stim_time = sequence_timing[-1]
 
     # define my first and last time points #changeforrelease
-    time1 = first_stim_time * daq.device_info.fs
+    time1 = first_stim_time - offset * daq.device_info.fs
     time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
-    triggers = [(text, ((timing) - time1))
+    triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
