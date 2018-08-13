@@ -108,6 +108,9 @@ class RSVPIconToIconTask(Task):
         self.is_txt_sti = False
 
         self.min_num_seq = parameters['min_seq_len']
+        self.word_matching_text_size = parameters['word_matching_text_size']
+        self.collection_window_len = parameters['collection_window_after_trial_length']
+        self.data_save_path = parameters['data_save_loc']
 
 
     def execute(self):
@@ -202,7 +205,7 @@ class RSVPIconToIconTask(Task):
                     #Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
                     self.rsvp.size_list_sti = list(repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
                     #Set the target word font size to the font size defined in parameters
-                    self.rsvp.size_list_sti[0] = self.parameters['word_matching_text_size']
+                    self.rsvp.size_list_sti[0] = self.word_matching_text_size
 
                 core.wait(self.buffer_val)
 
@@ -252,7 +255,7 @@ class RSVPIconToIconTask(Task):
                 else:
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                           target_info, self.parameters['collection_window_after_trial_length'])
+                                                           target_info, self.collection_window_len)
 
                     # Construct Data Record
                     data['epochs'][current_trial][epoch_index] = {
@@ -322,7 +325,7 @@ class RSVPIconToIconTask(Task):
 
         with open(f"{self.file_save}/icon_data.csv", 'w+') as icon_output_csv:
             icon_output_writer = csv.writer(icon_output_csv, delimiter=',')
-            icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.parameters['data_save_loc'], '')])
+            icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.data_save_path, '')])
             icon_output_writer.writerow(['Date/Time', datetime.datetime.now()])
             if self.auc_filename:
                 icon_output_writer.writerow(['Calibration AUC', basename(self.auc_filename).replace('.pkl', '')])

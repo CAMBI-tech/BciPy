@@ -92,6 +92,7 @@ class RSVPCopyPhraseTask(Task):
         self.classifier = classifier
         self.down_sample_rate = parameters['down_sampling_rate']
         self.min_num_seq = parameters['min_seq_len']
+        self.collection_window_len = parameters['collection_window_after_trial_length']
 
     def execute(self):
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
@@ -241,7 +242,7 @@ class RSVPCopyPhraseTask(Task):
                 #  epoch (seq) or stimuli to present
                 new_epoch, sti = \
                     copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info, self.parameters['collection_window_after_trial_length'])
+                                                       target_info, self.collection_window_len)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {
