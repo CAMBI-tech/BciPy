@@ -3,37 +3,46 @@ import random
 from PIL import Image
 
 
-def best_selection(list_el, val, len_query):
-    """ given set of elements and a value function over the set, picks the len_query
+def best_selection(selection_elements: list, val: list, len_query: int) -> list:
+    """Best Selection.
+
+     given set of elements and a value function over the set, picks the len_query
         number of elements with the best value.
+
         Args:
-            list_el(list[str]): the set of elements
+            selection_elements(list[str]): the set of elements
             val(list[float]): values for the corresponding elements
             len_query(int): number of elements to be picked from the set
         Return:
-            query(list[str]): elements from list_el with the best value """
+            best_selection(list[str]): elements from selection_elements with the best values """
     max_p_val = np.sort(val)[::-1]
     max_p_val = max_p_val[0:len_query]
 
-    query = []
+    best_selection = []
     for idx in range(len_query):
-        idx_q = np.where(val == max_p_val[idx])[0][0]
-        q = list_el[idx_q]
-        val = np.delete(val, idx_q)
-        list_el.remove(q)
-        query.append(q)
+        query_index = np.where(val == max_p_val[idx])[0][0]
+        query = selection_elements[query_index]
+        val = np.delete(val, query_index)
+        selection_elements.remove(query)
+        best_selection.append(query)
 
-    return query
+    return best_selection
 
 
-def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
-                           color=['red', 'white'], num_sti=1,
-                           len_sti=10, is_txt=True):
-    """ generates RSVPKeyboard sequence by picking n-most likeliy letters.
+def best_case_rsvp_seq_gen(alp: list,
+                           session_stimuli: list,
+                           timing=[1, 0.2],
+                           color=['red', 'white'],
+                           num_sti=1,
+                           len_sti=10,
+                           is_txt=True) -> tuple:
+    """Best Case RSVP Sequence Generation.
+
+    generates RSVPKeyboard sequence by picking n-most likeliy letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
-            p(ndarray[float]): quantifier metric for query selection
-                dim(p) = card(alp)!
+            session_stimuli(ndarray[float]): quantifier metric for query selection
+                dim(session_stimuli) = card(alp)!
             timing(list[float]): Task specific timing for generator
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
@@ -47,31 +56,43 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                 color(list(list[str])): list of colors)): scheduled sequences
             """
 
-    len_alp = len(alp)
-    if len_alp != len(p):
+    if len(alp) != len(session_stimuli):
         raise Exception('Missing information about alphabet. len(alp):{}, '
-                        'len(p):{}, should be same!'.format(len(alp), len(p)))
+                        'len(session_stimuli):{}, should be same!'.format(
+                            len(alp), len(session_stimuli)))
 
-    tmp = [i for i in alp]
-    query = best_selection(tmp, p, len_sti)
+    # create a list of alphabet letters
+    alphabet = [i for i in alp]
+
+    # query for the best selection
+    query = best_selection(alphabet, session_stimuli, len_sti)
+
+    # shuffle the returned values
     random.shuffle(query)
 
+    # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
+
+        # append a fixation cross. if not text, append path to image fixation
         if is_txt:
             sample = ['+']
         else:
             sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+
+        # construct the sample from the query
         sample += [i for i in query]
         samples.append(sample)
+
+        # append timing
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * len_sti)
+
+        # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * len_sti)
 
-    schedule_seq = (samples, times, colors)
-
-    return schedule_seq
+    return (samples, times, colors)
 
 
 def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
