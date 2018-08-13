@@ -231,12 +231,8 @@ class CalibrationDisplay(RSVPDisplay):
 
 
 class IconToIconDisplay(RSVPDisplay):
-    """ Icon matching task object of RSVP
-        Attr:
-            information(visual_Text_Stimuli): information text.
-            task(visual_Text_Stimuli): task visualization.
-            sti(visual_Text_Stimuli): stimuli text
-            bg(BarGraph): bar graph display unit in display """
+    """ Icon to Icon or Icon to Word task display
+        is_word determines whether this is an icon to word matching task"""
 
     def __init__(self, window, clock,
                  experiment_clock,
@@ -323,21 +319,25 @@ class IconToIconDisplay(RSVPDisplay):
         super(IconToIconDisplay, self).draw_static()
 
     def update_task_state(self, image_path, task_height, rect_color, window_size, is_word):
-        """ Updates task state of Icon to Icon Matching Task by changing the
-        image displayed at the top of the screen.
+        """ Updates task state of Icon to Icon/Word Matching Task by changing the
+        image or text displayed at the top of the screen.
         Also updates rectangle size.
             Args:
-                image_path: the path to the image to be displayed
-                task_height: the height of the task image
-                rect_color: the color of the rectangle"""
+                image_path(str): the path to the image to be displayed
+                task_height(int): the height of the task image
+                rect_color(str): the color of the rectangle
+                window_size(tuple): The size of the window
+                is_word(bool): Whether or not this is an icon to word matching task"""
 
         if is_word:
+            #Display text at top of screen if we are matching icons to words
             txt = image_path if len(image_path) > 0 else ' '
             tmp2 = visual.TextStim(win=self.win, font=self.task.font, text=txt)
             x_pos_task = (tmp2.boundingBox[0] * 2.2) / self.win.size[0] - 1
             self.pos_task = (x_pos_task, self.pos_task[1])
             self.update_task(text=txt, color_list=['white'], pos=self.pos_task)
         else:
+            #Otherwise, display an image at the top of the screen
             self.task.image = image_path
 
             image_width, image_height = resize_image(image_path, window_size, task_height)

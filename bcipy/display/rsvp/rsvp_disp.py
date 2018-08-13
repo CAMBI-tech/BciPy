@@ -228,11 +228,13 @@ s
                 if text_width > self.win.size[0]:
                     info = get_system_info()
                     text_height = self.sti.boundingBox[1]
-                    #Are we in fullscreen?
+                    #If we are in fullscreen, text size in Psychopy norm units
+                    #is monitor width/monitor height
                     if self.win.size[0] == info['RESOLUTION'][0]:
                         new_text_width = info['RESOLUTION'][0]/info['RESOLUTION'][1]
                     else:
-                        #If not, calculate size of window relative to size of monitor
+                        #If not, text width is calculated relative to both
+                        #monitor size and window size
                         new_text_width = (self.win.size[1]/info['RESOLUTION'][1]) * info['RESOLUTION'][0]/info['RESOLUTION'][1]
                     new_text_height = (text_height * new_text_width) / text_width
                     self.sti.height = new_text_height
@@ -335,6 +337,11 @@ s
         self.win.flip()
 
     def create_stimulus(self, height_int: int, mode="text"):
+        """Returns a TextStim or ImageStim object.
+            Args:
+            height_int: The height of the stimulus
+            mode: "text" or "image", determines which to return
+        """
         if mode == "text":
             return visual.TextStim(win=self.win, color='white',
                    height=height_int, text='+',
