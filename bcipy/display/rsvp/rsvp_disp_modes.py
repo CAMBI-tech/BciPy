@@ -229,6 +229,7 @@ class CalibrationDisplay(RSVPDisplay):
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type)
 
+
 class IconToIconDisplay(RSVPDisplay):
     """ Icon matching task object of RSVP
         Attr:

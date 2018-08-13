@@ -23,7 +23,6 @@ class CopyPhraseWrapper(object):
         task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
             the copy phrase task
     """
-
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
@@ -87,7 +86,6 @@ class CopyPhraseWrapper(object):
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
-
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})

@@ -65,7 +65,9 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
                 pos=(-.5, -.5),
                 mask=None,
                 ori=0.0)
-            calibration_box.size = resize_image('bcipy/static/images/testing_images/white.png', display.size, 0.75)
+            calibration_box.size = resize_image(
+                'bcipy/static/images/testing_images/white.png',
+                display.size, 0.75)
             timing = ['calibration_trigger', experiment_clock.getTime()]
             if on_trigger:
                 on_trigger(timing)

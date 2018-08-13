@@ -72,13 +72,17 @@ def init_eeg_acquisition(parameters, save_folder,
             dataserver, port = start_socket_server(protocol, host, port)
             connection_params['port'] = port
         elif device_name == 'LSL':
-            channels = ['ch{}'.format(c + 1) for c in range(16)]
+            channel_count = 16
+            sample_rate = 256
+            channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
             dataserver = LslDataServer(params={'name': 'LSL',
                                                'channels': channels,
-                                               'hz': 256},
+                                               'hz': sample_rate},
                                        generator=generator.random_data(
-                                           channel_count=16))
+                                           channel_count=channel_count))
             await_start(dataserver)
+        else:
+            raise ValueError('Server (fake data mode) for this device type not supported')
 
     Device = registry.find_device(device_name)
 

@@ -30,7 +30,6 @@ class VisualFeedback(Feedback):
         self.clock = clock
 
         self.message_color = self.parameters['feedback_message_color']
-        
         self.rect = visual.Rect(win=display, width=self.height_stim, height=self.height_stim, lineColor=self.message_color, pos=(self.pos_stim), lineWidth=10, ori=0.0)
         self.rect.opacity = 0
 
@@ -66,7 +65,6 @@ class VisualFeedback(Feedback):
             self.display.flip()
 
             time = ['visual_feedback', self.clock.getTime()]
-           
 
         core.wait(self.feedback_length)
         timing.append(time)

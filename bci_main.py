@@ -66,8 +66,6 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
         # Try loading in our classifier and starting a langmodel(if enabled)
         try:
-
-            # EEG Model, Load in pre-trained classifier
             if fake:
                 classifier = None
                 filename = None
@@ -129,6 +127,7 @@ def _clean_up_session(display, daq, server):
         server.stop()
 
     return True
+
 
 if __name__ == "__main__":
     import argparse

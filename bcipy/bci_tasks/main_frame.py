@@ -26,16 +26,25 @@ class EvidenceFusion(object):
         """
 
         for key in dict_evidence.keys():
-            self.evidence_history[key].append(dict_evidence[key])
+            tmp = dict_evidence[key][:][:]
+            self.evidence_history[key].append(tmp)
 
         # TODO: Current rule is to multiply
         for value in dict_evidence.values():
-            self.likelihood *= value
+            self.likelihood *= value[:]
+
+        # I
+        if np.isinf(np.sum(self.likelihood)):
+            tmp = np.zeros(len(self.likelihood))
+            tmp[np.where(self.likelihood == np.inf)[0][0]] = 1
+            self.likelihood = tmp
 
         if not np.isnan(np.sum(self.likelihood)):
             self.likelihood = self.likelihood / np.sum(self.likelihood)
 
-        return self.likelihood
+        likelihood = self.likelihood[:]
+
+        return likelihood
 
     def reset_history(self):
         """ Clears evidence history """
@@ -104,7 +113,7 @@ class DecisionMaker(object):
         self.is_txt_sti = is_txt_sti
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': []}]
+                            'list_sti': [], 'list_distribution': [], 'decision': None}]
         self.time = 0
         self.sequence_counter = 0
 
@@ -114,6 +123,18 @@ class DecisionMaker(object):
         self.posterior_commit_threshold = .8
 
         self.last_selection = ''
+
+    def reset(self, state=''):
+        """ Resets the decision maker with the initial state
+            Args:
+                state(str): current state of the system """
+        self.state = state
+        self.displayed_state = self.form_display_state(self.state)
+
+        self.list_epoch = [{'target': None, 'time_spent': 0,
+                            'list_sti': [], 'list_distribution': []}]
+        self.time = 0
+        self.sequence_counter = 0
 
     def form_display_state(self, state):
         """ Forms the state information or the user that fits to the
@@ -150,7 +171,7 @@ class DecisionMaker(object):
                 args(dict[]): Extra arguments depending on the decision
                 """
 
-        self.list_epoch[-1]['list_distribution'].append(p)
+        self.list_epoch[-1]['list_distribution'].append(p[:])
 
         # Check stopping criteria
         if self.sequence_counter < self.min_num_seq or \
@@ -194,6 +215,7 @@ class DecisionMaker(object):
             self.list_epoch[-1]['list_distribution'][-1] ==
             np.max(self.list_epoch[-1]['list_distribution'][-1]))[0][0]
         decision = self.alphabet[idx]
+        self.list_epoch[-1]['decision'] = decision
         return decision
 
     def prepare_stimuli(self):

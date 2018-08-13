@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from psychopy import visual, core
-from bcipy.helpers.stimuli_generation import resize_image
 
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
+
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -160,7 +160,7 @@ class RSVPDisplay(object):
 
     def update_task(self, text, color_list, pos):
         """Update Task Object.
-
+s
         Args:
                 text(string): text for task
                 color_list(list[string]): list of the colors for each char
@@ -188,6 +188,8 @@ class RSVPDisplay(object):
 
             timing.append(stim_timing)
 
+            self.first_stim_time = stim_timing[-1]
+
             self.first_run = False
 
         # Do the sequence
@@ -198,7 +200,7 @@ class RSVPDisplay(object):
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             #Check if stimulus needs to use a non-default size
             if self.size_list_sti:
@@ -235,7 +237,6 @@ class RSVPDisplay(object):
                     new_text_height = (text_height * new_text_width) / text_width
                     self.sti.height = new_text_height
 
-
             # End static period
             self.staticPeriod.complete()
 
@@ -246,7 +247,7 @@ class RSVPDisplay(object):
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(self.time_to_present):
+            for n_frames in range(time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

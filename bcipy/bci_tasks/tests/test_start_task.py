@@ -1,7 +1,6 @@
 import unittest
 import shutil
 import psychopy
-import numpy as np
 
 from mockito import any, mock, unstub, when
 

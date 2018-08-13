@@ -5,17 +5,50 @@ from PIL import Image
 import logging
 from os import path
 
+
 #Prevents pillow from filling the console with debug info
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
-def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
-                           color=['red', 'white'], num_sti=1,
-                           len_sti=10, is_txt=True):
-    """ generates RSVPKeyboard sequence by picking n-most likeliy letters.
+def best_selection(selection_elements: list, val: list, len_query: int) -> list:
+    """Best Selection.
+
+     given set of elements and a value function over the set, picks the len_query
+        number of elements with the best value.
+
+        Args:
+            selection_elements(list[str]): the set of elements
+            val(list[float]): values for the corresponding elements
+            len_query(int): number of elements to be picked from the set
+        Return:
+            best_selection(list[str]): elements from selection_elements with the best values """
+    max_p_val = np.sort(val)[::-1]
+    max_p_val = max_p_val[0:len_query]
+
+    best_selection = []
+    for idx in range(len_query):
+        query_index = np.where(val == max_p_val[idx])[0][0]
+        query = selection_elements[query_index]
+        val = np.delete(val, query_index)
+        selection_elements.remove(query)
+        best_selection.append(query)
+
+    return best_selection
+
+
+def best_case_rsvp_seq_gen(alp: list,
+                           session_stimuli: list,
+                           timing=[1, 0.2],
+                           color=['red', 'white'],
+                           num_sti=1,
+                           len_sti=10,
+                           is_txt=True) -> tuple:
+    """Best Case RSVP Sequence Generation.
+
+    generates RSVPKeyboard sequence by picking n-most likeliy letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
-            p(ndarray[float]): quantifier metric for query selection
-                dim(p) = card(alp)!
+            session_stimuli(ndarray[float]): quantifier metric for query selection
+                dim(session_stimuli) = card(alp)!
             timing(list[float]): Task specific timing for generator
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
@@ -29,30 +62,43 @@ def best_case_rsvp_seq_gen(alp, p, timing=[1, 0.2],
                 color(list(list[str])): list of colors)): scheduled sequences
             """
 
-    len_alp = len(alp)
-    if len_alp != len(p):
+    if len(alp) != len(session_stimuli):
         raise Exception('Missing information about alphabet. len(alp):{}, '
-                        'len(p):{}, should be same!'.format(len(alp), len(p)))
+                        'len(session_stimuli):{}, should be same!'.format(
+                            len(alp), len(session_stimuli)))
 
-    idx = np.argsort(p)[::-1][0:len_sti]
+    # create a list of alphabet letters
+    alphabet = [i for i in alp]
 
+    # query for the best selection
+    query = best_selection(alphabet, session_stimuli, len_sti)
+
+    # shuffle the returned values
+    random.shuffle(query)
+
+    # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
     for idx_num in range(num_sti):
+
+        # append a fixation cross. if not text, append path to image fixation
         if is_txt:
             sample = ['+']
         else:
             sample = ['bcipy/static/images/bci_main_images/PLUS.png']
-        idx = np.random.permutation(idx)
-        sample += [alp[i] for i in idx]
+
+        # construct the sample from the query
+        sample += [i for i in query]
         samples.append(sample)
+
+        # append timing
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * len_sti)
+
+        # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * len_sti)
 
-    schedule_seq = (samples, times, colors)
-
-    return schedule_seq
+    return (samples, times, colors)
 
 
 def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
@@ -103,7 +149,6 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
 def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
                                    len_sti=10, is_txt=True):
-
     """Generate target RSVPKeyboard sequences.
 
         Args:
@@ -131,7 +176,7 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
     else:
         sample = ['../bci/static/images/bci_main_images/PLUS.png']
         target_letter = parameters[
-            'path_to_presentation_images'] + target_letter + '.png'
+                            'path_to_presentation_images'] + target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
@@ -223,6 +268,7 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     return schedule_seq
 
+
 def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing, is_word):
     """Generates an array of images to use for the icon matching task.
     Args:
@@ -282,7 +328,8 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
 
     return (return_array, return_timing)
 
-def resize_image(image_path: str, screen_size: tuple, sti_height):
+def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+
     """Returns the width and height that a given image should be displayed at
     given the screen size, size of the original image, and stimuli height
     parameter"""

@@ -91,7 +91,6 @@ class RSVPCopyPhraseTask(Task):
         self.lmodel = lmodel
         self.classifier = classifier
         self.down_sample_rate = parameters['down_sampling_rate']
-
         self.min_num_seq = parameters['min_seq_len']
 
     def execute(self):
@@ -102,7 +101,7 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length, signal_model=self.classifier, fs=self.daq.device_info.fs,
+            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=task_list,
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
@@ -155,7 +154,6 @@ class RSVPCopyPhraseTask(Task):
             else:
                 target_letter = '<'
 
-
             # Get sequence information
             if new_epoch:
 
@@ -189,6 +187,8 @@ class RSVPCopyPhraseTask(Task):
             # Do the self.RSVP sequence!
             sequence_timing = self.rsvp.do_sequence()
 
+            self.first_stim_time = self.rsvp.first_stim_time
+
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
@@ -203,8 +203,8 @@ class RSVPCopyPhraseTask(Task):
 
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
-                process_data_for_decision(sequence_timing, self.daq, self.window,
-                        self.parameters['collection_window_after_trial_length'])
+                process_data_for_decision(sequence_timing, self.daq, self.parameters['collection_window_after_trial_length'], self.first_stim_time)
+
 
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
