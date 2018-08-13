@@ -72,7 +72,7 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -83,21 +83,31 @@ def process_data_for_decision(sequence_timing, daq):
         sequence_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
+        first_session_stim_time (float): time that the first stimuli was presented
+            for the session. Used to calculate offsets.
 
     Returns
     -------
         (raw_data, triggers, target_info) tuple
     """
+
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
-    _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
+    _, last_stim_time = sequence_timing[-1]
 
-    # define my first and last time points #changeforrelease
-    time1 = first_stim_time * daq.device_info.fs
+
+    # get any offset calculated from the daq
+    daq_offset = daq.offset
+
+    if daq_offset:
+        offset = daq_offset - first_session_stim_time
+        time1 = first_stim_time - offset * daq.device_info.fs
+    else:
+        time1 = first_stim_time * daq.device_info.fs
     time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
-    triggers = [(text, ((timing * daq.device_info.fs) - time1))
+    triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
@@ -307,8 +317,7 @@ def trial_reshaper(trial_target_info: list,
                 # For every channel append filtered channel data to trials
                 for channel in range(len(filtered_eeg)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
+                        filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 
@@ -316,7 +325,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'copy_phrase':
 
             # triggers in samples are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.

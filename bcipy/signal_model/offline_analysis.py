@@ -75,7 +75,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', default=None)
     parser.add_argument('-p', '--parameters_file',
-                        default='parameters/parameters.json')
+                        default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
     print(f'Loading params from {args.parameters_file}')

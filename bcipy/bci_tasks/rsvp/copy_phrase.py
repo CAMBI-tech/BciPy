@@ -187,6 +187,8 @@ class RSVPCopyPhraseTask(Task):
             # Do the self.RSVP sequence!
             sequence_timing = self.rsvp.do_sequence()
 
+            self.first_stim_time = self.rsvp.first_stim_time
+
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
@@ -201,7 +203,7 @@ class RSVPCopyPhraseTask(Task):
 
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
-                process_data_for_decision(sequence_timing, self.daq)
+                process_data_for_decision(sequence_timing, self.daq, self.first_stim_time)
 
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
