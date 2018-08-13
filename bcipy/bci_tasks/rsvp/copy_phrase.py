@@ -206,8 +206,7 @@ class RSVPCopyPhraseTask(Task):
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
                 process_data_for_decision(sequence_timing, self.daq, self.window,
-                    self.parameters['collection_window_after_trial_length'],
-                    self.first_stim_time)
+                    self.parameters, self.first_stim_time)
 
 
             # Uncomment this to turn off fake decisions, but use fake data.

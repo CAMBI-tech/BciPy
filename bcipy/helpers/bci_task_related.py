@@ -73,7 +73,7 @@ def alphabet(parameters=None):
 
 
 
-def process_data_for_decision(sequence_timing, daq, window, window_length, first_session_stim_time):
+def process_data_for_decision(sequence_timing, daq, window, parameters, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -95,6 +95,8 @@ def process_data_for_decision(sequence_timing, daq, window, window_length, first
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
+
+    window_length = parameters['len_data_sequence_buffer']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset

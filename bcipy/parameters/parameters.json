@@ -668,7 +668,15 @@
     "value": "0.5",
     "section": "bci_config",
     "readableName": "Length of the data collection window after each stimuli (seconds)",
-    "helpTip": "collection_window_after_trial_length",
+    "helpTip": "Length of the data collection window after each stimuli (seconds)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "len_data_sequence_buffer": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data sequence buffer",
+    "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
   }
