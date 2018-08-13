@@ -200,7 +200,7 @@ s
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
             #Check if stimulus needs to use a non-default size
             if self.size_list_sti:
@@ -222,7 +222,7 @@ s
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
-                
+
                 #Test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
                 if text_width > self.win.size[0]:
@@ -247,7 +247,7 @@ s
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(time_to_present):
+            for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

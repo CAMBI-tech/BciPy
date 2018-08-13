@@ -9,7 +9,7 @@ class RSVPKeyboard(BCIGui):
 
     event_started = False
     PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
-    
+
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
@@ -95,7 +95,7 @@ class RSVPKeyboard(BCIGui):
         return experiment_type
 
     def load_items_from_txt(self, event):
-        """Loads user directory names from the data path defined in 
+        """Loads user directory names from the data path defined in
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
         parameters = load_json_parameters(self.PARAMETER_LOCATION, value_cast=True)
@@ -164,7 +164,7 @@ gui.add_button(
     size=(100, 50), color='white',
     action='offline_analysis')
 gui.add_button(
-    message='Refresh', position=(585, 325),
+    message='Refresh', position=(585, 230),
     size=(50, 50), color='white',
     action='refresh')
 

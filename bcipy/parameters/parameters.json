@@ -271,7 +271,7 @@
     "type": "str"
   },
   "trigger_type": {
-    "value": "sound",
+    "value": "image",
     "section": "bci_config",
     "readableName": "What type of Calibration Trigger should be used",
     "helpTip": "Select a calibration trigger type to be used",
@@ -282,7 +282,7 @@
     "type": "str"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/rsvp_images/",
+    "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
     "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
@@ -611,6 +611,16 @@
     "recommended_values": [
       "20",
       "25"
+    ],
+    "type": "int"
+  },
+  "min_seq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Sequence Length",
+    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "1"
     ],
     "type": "int"
   },

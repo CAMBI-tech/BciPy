@@ -101,7 +101,9 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(signal_model=self.classifier, fs=self.daq.device_info.fs,
+            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length,
+                                                 signal_model=self.classifier,
+                                                 fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=task_list,
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
@@ -203,7 +205,9 @@ class RSVPCopyPhraseTask(Task):
 
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
-                process_data_for_decision(sequence_timing, self.daq, self.parameters['collection_window_after_trial_length'], self.first_stim_time)
+                process_data_for_decision(sequence_timing, self.daq, self.window,
+                    self.parameters['collection_window_after_trial_length'],
+                    self.first_stim_time)
 
 
             # Uncomment this to turn off fake decisions, but use fake data.

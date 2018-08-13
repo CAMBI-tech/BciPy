@@ -20,8 +20,11 @@ class TestVisualFeedback(unittest.TestCase):
             self.parameters_used,
             value_cast=True)
 
-        self.display = mock()
-        self.display.size = [1, 1]
+        self.display = visual.Window(size=[1,1], screen=0,
+                                    allowGUI=False, useFBO=False, fullscr=False,
+                                    allowStencil=False, monitor='mainMonitor',
+                                    winType='pyglet', units='norm', waitBlanking=False,
+                                    color='black')
         self.text_mock = mock()
         self.image_mock = mock()
         self.rect_mock = mock()

@@ -104,7 +104,7 @@ class RSVPIconToIconTask(Task):
         self.is_txt_sti = False
 
         self.min_num_seq = parameters['min_seq_len']
-        
+
 
     def execute(self):
         image_array, timing_array = generate_icon_match_images(self.len_sti,
@@ -207,6 +207,8 @@ class RSVPIconToIconTask(Task):
                 # Do the sequence
                 sequence_timing = self.rsvp.do_sequence()
 
+                self.first_stim_time = self.rsvp.first_stim_time
+
                 # Write triggers to file
                 _write_triggers_from_sequence_calibration(
                     sequence_timing,
@@ -218,7 +220,8 @@ class RSVPIconToIconTask(Task):
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
                     process_data_for_decision(sequence_timing, self.daq, self.window,
-                            self.parameters['collection_window_after_trial_length'])
+                        self.parameters['collection_window_after_trial_length'],
+                        self.first_stim_time)
 
                 #self.fake = False
 

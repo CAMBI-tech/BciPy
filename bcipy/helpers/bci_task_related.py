@@ -73,7 +73,7 @@ def alphabet(parameters=None):
 
 
 
-def process_data_for_decision(sequence_timing, daq, window_length, first_session_stim_time):
+def process_data_for_decision(sequence_timing, daq, window, window_length, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
