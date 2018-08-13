@@ -66,9 +66,11 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
         # Try loading in our classifier and starting a langmodel(if enabled)
         try:
-
-            # EEG Model, Load in pre-trained classifier
-            classifier = load_classifier()
+            if fake:
+                classifier = None
+            else:
+                # EEG Model, Load in pre-trained classifier
+                classifier = load_classifier()
 
         except Exception as e:
             print("Cannot load EEG classifier. Exiting")
@@ -139,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
-    parser.add_argument('-t', '--type', default=2,
+    parser.add_argument('-t', '--type', default=1,
                         help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
