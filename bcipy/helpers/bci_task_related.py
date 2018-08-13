@@ -84,6 +84,8 @@ def process_data_for_decision(sequence_timing, daq, window, parameters, first_se
         sequence_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
+        window: window to reactivate if deactivated by windows
+        parameters: parameters dictionary
         first_session_stim_time (float): time that the first stimuli was presented
             for the session. Used to calculate offsets.
 
@@ -388,8 +390,7 @@ def trial_reshaper(trial_target_info: list,
         raise Exception(
             f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
 
-def pause_calibration(window, rsvp, current_index: int, trials_before_break: int,
-                      break_len: int, break_message: str):
+def pause_calibration(window, rsvp, current_index: int, parameters: dict):
     """Pause calibration.
 
     Pauses calibration for a given number of seconds and displays a countdown
@@ -398,16 +399,17 @@ def pause_calibration(window, rsvp, current_index: int, trials_before_break: int
     window: Currently active PsychoPy window
     rsvp: The current RSVPDisplay
     current_index: The current number of trials that have taken place
-    trials_before_break: The number of trials that should take place before a
-    break
-    break_len: The length of the break (in seconds)
-    break_message: The message to display to the user during the break
+    parameters: Parameters dictionary
 
     Returns true/false depending on whether a break has taken place
     """
     #Check whether any trials have taken place, and, if so,
     #whether the number of trials performed is divisible
     #by the number of trials before a break set in parameters
+    trials_before_break = parameters['trials_before_break']
+    break_len = parameters['break_len']
+    break_message = parameters['break_message']
+
     if (current_index != 0) and (current_index % trials_before_break) == 0:
         #Update countdown every second
         for counter in range(break_len):

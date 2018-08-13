@@ -10,18 +10,21 @@ class CopyPhraseWrapper(object):
 
     Given the phrases once operate() is called performs the task.
     Attr:
-        conjugator(EvidenceFusion): fuses evidences in the task
-        decision_maker(DecisionMaker): mastermind of the task
-        alp(list[str]): symbol set of the task
+        min_num_seq: The minimum number of sequences to be displayed
+        max_num_seq: The maximum number of sequences to be displayed
         model(pipeline): model trained using a calibration session of the
             same user.
         fs(int): sampling frequency
         k(int): down sampling rate
+        alp(list[str]): symbol set of the task
+        task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
+            the copy phrase task
+        is_txt_sti: Whether or not the stimuli are text objects
+        conjugator(EvidenceFusion): fuses evidences in the task
+        decision_maker(DecisionMaker): mastermind of the task
         mode(str): mode of thet task (should be copy phrase)
         d(binary): decision flag
         sti(list(tuple)): stimuli for the display
-        task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
-            the copy phrase task
     """
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
@@ -53,6 +56,7 @@ class CopyPhraseWrapper(object):
             triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
                 as letter and flash time for the letter
             target_info(list[str]): target information about the stimuli
+            window_length(int): The length of the time between stimuli presentation
         """
         # Send the raw data to signal processing / in demo mode do not use sig_pro
         dat = sig_pro(raw_dat, fs=self.fs, k=self.k)

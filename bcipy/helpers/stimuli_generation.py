@@ -276,6 +276,7 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         image_path(str): Path to image files
         number_of_sequences(int): Number of sequences to generate
         timing(list): List of timings
+        is_word(bool): Whether or not this is an icon to word matching task
     Return generate_icon_match_images(arrays of tuples of paths to images to
     display, and timings)
     """

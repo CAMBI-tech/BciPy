@@ -42,8 +42,12 @@ class RSVPIconToIconTask(Task):
             path location of where to save data from the session
         classifier : loaded pickle file,
             trained signal_model, loaded before session started
-        fake : boolean, optional
+        fake : boolean, optional,
             boolean to indicate whether this is a fake session or not.
+        is_word: boolean,
+            boolean to indicate whether or not this is an icon to word matching session
+        auc_filename: str,
+            name of the loaded pickle file
     Returns
     -------
         file_save : str,

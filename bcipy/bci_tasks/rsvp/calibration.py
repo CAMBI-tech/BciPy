@@ -72,9 +72,6 @@ class RSVPCalibrationTask(Task):
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.enable_breaks = parameters['enable_breaks']
-        self.break_len = parameters['break_len']
-        self.break_message = parameters['break_message']
-        self.trials_before_break = parameters['trials_before_break']
 
     def execute(self):
         run = True
@@ -111,8 +108,7 @@ class RSVPCalibrationTask(Task):
                 #Take a break every number of trials defined in parameters.json
                 if self.enable_breaks:
                     pause_calibration(self.window, self.rsvp, idx_o,
-                                      self.trials_before_break, self.break_len,
-                                      self.break_message)
+                                      self.parameters)
 
                 # update task state
                 self.rsvp.update_task_state(

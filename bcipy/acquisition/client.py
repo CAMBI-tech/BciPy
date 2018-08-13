@@ -180,6 +180,8 @@ class Client(object):
                 end of time slice; units are those of the acquisition clock.
             field: str, optional
                 field on which to query; default value is the row id.
+            win : Window
+                window to pass to server for reloading
         Returns
         -------
             list of Records
