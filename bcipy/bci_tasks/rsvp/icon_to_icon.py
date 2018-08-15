@@ -72,7 +72,7 @@ class RSVPIconToIconTask(Task):
         self.is_word = is_word
 
         trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
-        self.trigger_file = open(trigger_save_location, 'w')
+        self.trigger_file = open(trigger_save_location, 'w+')
         self.session_save_location = f"{self.file_save}/{parameters['session_file_name']}"
 
         self.wait_screen_message = parameters['wait_screen_message']
@@ -187,6 +187,11 @@ class RSVPIconToIconTask(Task):
                 # Init an epoch, getting initial stimuli
                 new_epoch, sti = copy_phrase_task.initialize_epoch()
 
+                #If correct decisions are being faked, make sure that we always
+                #are starting a new epoch
+                if self.fake:
+                    new_epoch = True
+
                 # Increase epoch number and reset epoch index
                 data['epochs'][current_trial] = {}
                 epoch_index = 0
@@ -276,6 +281,8 @@ class RSVPIconToIconTask(Task):
                             .conjugator.likelihood.tolist()
                     }
 
+                    #Test whether to display feedback message, and what color
+                    #the message should be
                     if new_epoch:
                         if self.is_word:
                             decide_image_path = self.image_path + copy_phrase_task.decision_maker.last_selection + '.png'
@@ -323,6 +330,7 @@ class RSVPIconToIconTask(Task):
             else:
                 run = False
 
+        #Write trial data to icon_data.csv in file save location
         with open(f"{self.file_save}/icon_data.csv", 'w+') as icon_output_csv:
             icon_output_writer = csv.writer(icon_output_csv, delimiter=',')
             icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.data_save_path, '')])
