@@ -101,10 +101,11 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
 
     if daq_offset:
         offset = daq_offset - first_session_stim_time
-        time1 = first_stim_time - offset * daq.device_info.fs
+        time1 = (first_stim_time + offset) * daq.device_info.fs
+        time2 = (last_stim_time + .5 + offset) * daq.device_info.fs
     else:
         time1 = first_stim_time * daq.device_info.fs
-    time2 = (last_stim_time + .5) * daq.device_info.fs
+        time2 = (last_stim_time + .5) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))

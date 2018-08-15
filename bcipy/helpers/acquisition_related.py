@@ -97,7 +97,7 @@ def init_eeg_acquisition(parameters, save_folder,
 
     # If we're using a server or data generator, there is no reason to
     # calibrate data.
-    if server:
+    if server and device_name != 'LSL':
         client.is_calibrated = True
 
     return (client, dataserver)
