@@ -2,8 +2,8 @@ import os
 import sys
 sys.path.insert(0, "./oclm_language_model")
 import unittest
-from language_model import LangModel
-from errors import NBestError, EvidenceDataStructError
+from bcipy.oclm_language_model.language_model import LangModel
+from bcipy.oclm_language_model.errors import NBestError, EvidenceDataStructError
 
 # a docker mockup could have been a great idea is I had further processed the output. In the current case it's more reliable to test directly docker's output to ensure a valid output.
 
@@ -61,8 +61,8 @@ class TestOCLM(unittest.TestCase):
         # try to get priors
         priors = lm.state_update(evidence, return_mode)
         self.assertIsInstance(priors, dict)
-        self.assertEqual(priors.keys()[0], 'letter')
-        self.assertIsInstance(priors.values()[0], list)
+        self.assertEqual(list(priors.keys())[0], 'letter')
+        self.assertIsInstance(list(priors.values())[0], list)
 
 
 if __name__ == '__main__':

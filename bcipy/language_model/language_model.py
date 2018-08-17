@@ -34,7 +34,7 @@ class LangModel:
         if os_version.startswith('Windows'):
             # Setup the environment variables.
             docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
-            docker_instructions = docker_env_cmd.stdout.read().split('\n')
+            docker_instructions = docker_env_cmd.stdout.read().decode().split('\n')
             for instruction in docker_instructions:
                 if instruction.startswith('SET'):
                     environ_pair_str = instruction[instruction.find(' ')+1:]
@@ -43,7 +43,7 @@ class LangModel:
             # Overides the local ip as Windows 7 uses docker machine hence would
             # fail to bind.
             docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
-            host = docker_machine_ip_cmd.stdout.read().strip()
+            host = str(docker_machine_ip_cmd.stdout.read().strip())
 
 
         # assert input path validity

@@ -8,8 +8,8 @@ import time
 import re
 import logging
 import unittest
-from errors import ConnectionErr, StatusCodeError, DockerDownError, NBestHighValue, EvidenceDataStructError, NBestError
-from helpers.bci_task_related import alphabet
+from bcipy.oclm_language_model.errors import ConnectionErr, StatusCodeError, DockerDownError, NBestHighValue, EvidenceDataStructError, NBestError
+from bcipy.helpers.bci_task_related import alphabet
 from subprocess import Popen, PIPE
 import platform
 ALPHABET = alphabet()
@@ -36,7 +36,7 @@ class LangModel:
         if os_version.startswith('Windows'):
             # Setup the environment variables.
             docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
-            docker_instructions = docker_env_cmd.stdout.read().split('\n')
+            docker_instructions = docker_env_cmd.stdout.read().decode().split('\n')
             for instruction in docker_instructions:
                 if instruction.startswith('SET'):
                     environ_pair_str = instruction[instruction.find(' ') + 1:]
@@ -45,7 +45,7 @@ class LangModel:
             # Overides the local ip as Windows 7 uses docker machine hence would
             # fail to bind.
             docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
-            host = docker_machine_ip_cmd.stdout.read().strip()
+            host = docker_machine_ip_cmd.stdout.read().decode().strip()
 
         # assert strings
         assert type(host) == str, "%r is not a string type" % host
@@ -118,7 +118,7 @@ class LangModel:
         try:
             r = requests.post(
                 'http://' +
-                self.host +
+                str(self.host) +
                 ':' +
                 self.port +
                 '/init',

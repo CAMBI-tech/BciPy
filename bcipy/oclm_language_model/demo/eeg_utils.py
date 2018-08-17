@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 from random import shuffle, randint
 import math
-from helpers.bci_task_related import alphabet
+from bcipy.helpers.bci_task_related import alphabet
 
 class simulate_eeg:
     """
@@ -60,7 +60,7 @@ def generate_eeg(eeg, ch, syms):
     sample = eeg[sample_id]
     dist = []
     dist.append((ch, sample[0]))
-    for i in xrange(len(symsC)):
+    for i in range(len(symsC)):
         dist.append((symsC[i], sample[i + 1]))
     #dist = sorted(dist, key=lambda symbol: symbol[1])
     dist = [dist[0]] + sorted(dist[1:], key=lambda symbol: symbol[1])
