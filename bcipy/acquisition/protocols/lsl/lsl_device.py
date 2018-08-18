@@ -77,10 +77,10 @@ class LslDevice(Device):
 
     @property
     def name(self):
-        # if 'stream_name' in self._connection_params:
-        #     return self._connection_params['stream_name']
-        # elif self._inlet and self._inlet.info().name():
-        #     return self._inlet.info().name()
+        if 'stream_name' in self._connection_params:
+            return self._connection_params['stream_name']
+        elif self._inlet and self._inlet.info().name():
+            return self._inlet.info().name()
         return 'LSL'
 
     def connect(self):
