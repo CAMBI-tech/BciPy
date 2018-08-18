@@ -492,7 +492,7 @@
     "type": "bool"
   },
   "num_sti": {
-    "value": "50",
+    "value": "100",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",
@@ -604,7 +604,7 @@
     "type": "int"
   },
   "max_seq_len": {
-    "value": "20",
+    "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
     "helpTip": "Maximum number of sequences to present in spelling tasks",
