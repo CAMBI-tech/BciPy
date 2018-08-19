@@ -1,7 +1,7 @@
 import os
 from psychopy import visual, event, core
 import numpy as np
-from typing import Any
+from typing import Any, List
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -72,10 +72,10 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
+def process_data_for_decision(sequence_timing: List[tuple], daq: , first_session_stim_time):
     """Process Data for Decision.
 
-    Processes the raw data (triggers and eeg) into a form that can be passed to
+    Processes the raw data (triggers and EEG) into a form that can be passed to
     signal processing and classifiers.
 
     Parameters
@@ -300,7 +300,7 @@ def trial_reshaper(trial_target_info: list,
 
             # triggers in seconds are mapped to triggers in number of samples.
             triggers = list(
-                map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -326,7 +326,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'copy_phrase':
 
             # triggers in samples are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -356,7 +356,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'free_spell':
 
             # triggers in sample are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x + offset) / k), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.

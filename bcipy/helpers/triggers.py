@@ -229,45 +229,39 @@ def trigger_decoder(mode, trigger_loc=None):
     if not trigger_loc:
         trigger_loc = load_txt_data()
 
-    with open(trigger_loc, 'r') as text_file:
+    with open(trigger_loc, 'r+') as text_file:
         # Get every line of trigger.txt if that line does not contain
         # 'fixation' or 'offset_correction'
         # [['words', 'in', 'line'], ['second', 'line']...]
 
         # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
-        trigger_txt = [line.split() for line in text_file
-                       if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line
-                       and 'calibration_trigger' not in line]
+        trigger_txt = [line.split() for line in text_file]
 
+    # extract offset events and stimuli from the text
+    stimuli_triggers = [line for line in trigger_txt
+                        if line[1] == 'target' or
+                        line[1] == 'nontarget']
+
+    symbol_info = list(map(lambda x: x[0], stimuli_triggers))
     # If operating mode is calibration, trigger.txt has three columns.
-    if mode == 'calibration' or mode == 'copy_phrase':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = list(map(lambda x: x[1], trigger_txt))
-        timing_info = list(map(lambda x: eval(x[2]), trigger_txt))
-    elif mode == 'free_spell':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = None
-        timing_info = list(map(lambda x: eval(x[1]), trigger_txt))
+    if mode != 'free_spell':
+        trial_target_info = list(map(lambda x: x[1], stimuli_triggers))
+        timing_info = list(map(lambda x: eval(x[2]), stimuli_triggers))
     else:
-        raise Exception("You have not provided a valid operating mode for trigger_decoder. "
-                        "Valid modes are: 'calibration','copy_phrase','free_spell'")
+        trial_target_info = None
+        timing_info = list(map(lambda x: eval(x[1]), stimuli_triggers))
 
-    with open(trigger_loc, 'r') as text_file:
-        offset_array = [line.split()
-                        for line in text_file if 'offset_correction' in line]
+    offset_array = [line[2] for line in trigger_txt
+                    if line[0] == 'offset']
+    calib_trigger_array = [line[2] for line in trigger_txt
+                           if line[0] == 'calibration_trigger']
 
-    if offset_array:
-        with open(trigger_loc, 'r') as text_file:
-            calib_trigger_time = [
-                line.split() for line in text_file if 'calibration_trigger' in line]
+    if len(offset_array) == 1 and len(calib_trigger_array) == 1:
 
-        if calib_trigger_time:
-            if offset_array:
-                offset = float(
-                    calib_trigger_time[0][2]) - float(offset_array[0][2])
-            else:
-                offset = timing_info[0] - float(offset_array[0][2])
+        offset_time = float(offset_array[0])
+        calib_trigger_time = float(calib_trigger_array[0])
+
+        offset = offset_time - calib_trigger_time
     else:
         offset = 0
 
