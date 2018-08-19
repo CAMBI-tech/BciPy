@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import List
+
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import Client, _Clock
@@ -20,9 +22,10 @@ analysis_channels_by_device = {
 }
 
 
-def init_eeg_acquisition(parameters, save_folder,
-                         clock=_Clock(), server=False):
-    """
+def init_eeg_acquisition(parameters: dict, save_folder: str,
+                         clock=_Clock(), server: bool=False):
+    """Initialize EEG Acquisition.
+
     Initializes a client that connects with the EEG data source and begins
     data collection.
 
@@ -103,8 +106,11 @@ def init_eeg_acquisition(parameters, save_folder,
     return (client, dataserver)
 
 
-def analysis_channels(channels, device_name):
-    """
+def analysis_channels(channels: List[str], device_name: str) -> list:
+    """Analysis Channels.
+
+    Defines the channels within a device that should be used for analysis.
+
     Parameters:
     ----------
         channels(list(str)): list of channel names from the raw_data

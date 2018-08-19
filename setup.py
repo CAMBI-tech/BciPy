@@ -32,7 +32,7 @@ REQUIRED = [
     'docker==2.6.1',
     'json-tricks==3.8.0',
     'olefile==0.44',
-    'Pillow==4.3',
+    'Pillow==4.3.0',
     'PyOpenGL==3.1.0',
     'pyOpenSSL==17.5.0',
     'mockito==1.1.0',

@@ -8,7 +8,7 @@ NONE_VALUE = '0'
 
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
-                         on_trigger=None) -> List[str, float]:
+                         on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
         Outputs triggers for the purpose of calibrating data and stimuli.

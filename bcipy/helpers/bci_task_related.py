@@ -389,37 +389,37 @@ def trial_reshaper(trial_target_info: list,
             f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
 
 
-def pause_calibration(window, rsvp, current_index: int, trials_before_break: int,
-                      break_len: int, break_message: str):
+def pause_calibration(window, display, current_index: int, trials_before_break: int,
+                      break_len: int, break_message: str) -> bool:
     """Pause calibration.
 
     Pauses calibration for a given number of seconds and displays a countdown
     to the user.
-    Args:
-    window: Currently active PsychoPy window
-    rsvp: The current RSVPDisplay
-    current_index: The current number of trials that have taken place
-    trials_before_break: The number of trials that should take place before a
-    break
-    break_len: The length of the break (in seconds)
-    break_message: The message to display to the user during the break
 
-    Returns true/false depending on whether a break has taken place
+    PARAMETERS
+    ----------
+    :param: window: Currently active PsychoPy window
+    :param: display: The current display
+    :param: current_index: number of trials that have already taken place
+    :param: trials_before_break: number of trials before break
+    :param: break_len: length of the break time (in seconds)
+    :param: break_message: message to display to the user during the break
+
+    :returns: bool: break has taken place
     """
-    #Check whether any trials have taken place, and, if so,
-    #whether the number of trials performed is divisible
-    #by the number of trials before a break set in parameters
+    # Check whether or not to present a break
     if (current_index != 0) and (current_index % trials_before_break) == 0:
-        #Update countdown every second
+
+        # present break message for break length
         for counter in range(break_len):
             time = break_len - counter
             message = f'{break_message} {time}s'
-            rsvp.update_task_state(
+            display.update_task_state(
                 text=message,
                 color_list=['white'])
-            rsvp.draw_static()
+            display.draw_static()
             window.flip()
             core.wait(1)
         return True
-    else:
-        return False
+
+    return False
