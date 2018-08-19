@@ -72,7 +72,7 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing: List[tuple], daq: , first_session_stim_time):
+def process_data_for_decision(sequence_timing: List[tuple], daq, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and EEG) into a form that can be passed to
@@ -387,6 +387,7 @@ def trial_reshaper(trial_target_info: list,
     except Exception as e:
         raise Exception(
             f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
+
 
 def pause_calibration(window, rsvp, current_index: int, trials_before_break: int,
                       break_len: int, break_message: str):
