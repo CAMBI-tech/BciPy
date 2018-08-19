@@ -17,7 +17,7 @@ try:
     import sounddevice as sd
     import soundfile as sf
     devices = sd.query_devices()
-    print devices
+    print(devices)
     data, fs = sf.read(args.filename, dtype='float32')
     sd.play(data, fs, device=args.device, blocking=True)
     status = sd.get_status()

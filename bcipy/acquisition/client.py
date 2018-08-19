@@ -169,7 +169,7 @@ class Client(object):
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
-    def get_data(self, start=None, end=None, field='_rowid_'):
+    def get_data(self, start=None, end=None, field='_rowid_', win=None):
         """Queries the buffer by field.
 
         Parameters
@@ -180,6 +180,8 @@ class Client(object):
                 end of time slice; units are those of the acquisition clock.
             field: str, optional
                 field on which to query; default value is the row id.
+            win : Window
+                window to pass to server for reloading
         Returns
         -------
             list of Records
@@ -188,7 +190,7 @@ class Client(object):
         if self._buf is None:
             return []
         else:
-            return buffer_server.get_data(self._buf, start, end, field)
+            return buffer_server.get_data(self._buf, start, end, field, win)
 
     def get_data_for_clock(self, calib_time: float, start_time: float,
                            end_time: float):

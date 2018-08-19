@@ -102,7 +102,7 @@ class DecisionMaker(object):
                 (e.g pick n-highest likely letters and randomly shuffle)
         """
 
-    def __init__(self, state='',
+    def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + ['_'],
                  is_txt_sti=True):
         self.state = state
@@ -118,10 +118,11 @@ class DecisionMaker(object):
         self.sequence_counter = 0
 
         # Stopping Criteria
-        # TODO: Read from parameters
-        self.min_num_seq = 1
-        self.max_num_seq = 10
+        self.min_num_seq = min_num_seq
+        self.max_num_seq = max_num_seq
         self.posterior_commit_threshold = .8
+
+        self.last_selection = ''
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -191,6 +192,7 @@ class DecisionMaker(object):
             a new epoch is appended. """
         self.sequence_counter = 0
         decision = self.decide_state_update()
+        self.last_selection = decision
         self.state += decision
         self.displayed_state = self.form_display_state(self.state)
 

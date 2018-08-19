@@ -3,10 +3,11 @@
 from bcipy.bci_tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.bci_tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.bci_tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
+from bcipy.bci_tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 
 def start_task(display_window, daq, task_type, parameters, file_save,
-               classifier=None, lmodel=None, fake=True):
+               classifier=None, lmodel=None, fake=True, auc_filename=None):
     # Determine the mode and exp type: send to the correct task.
 
     # RSVP
@@ -40,7 +41,7 @@ def start_task(display_window, daq, task_type, parameters, file_save,
                 raise e
 
         # COPY PHRASE CALIBRATION
-        if task_type['exp_type'] == 3:
+        elif task_type['exp_type'] == 3:
             # try running the experiment
             try:
                 copy_phrase_calibration = RSVPCopyPhraseCalibrationTask(
@@ -52,6 +53,34 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             except Exception as e:
                 raise e
 
+        elif task_type['exp_type'] == 4:
+            # try running the experiment
+            try:
+                icon_to_icon = RSVPIconToIconTask(display_window, daq,
+                                                  parameters, file_save, classifier,
+                                                  lmodel, fake, False, auc_filename)
+
+                icon_to_icon.execute()
+
+            # Raise exceptions if any encountered and clean up!!
+            except Exception as e:
+                raise e
+
+        elif task_type['exp_type'] == 5:
+            # try running the experiment
+            try:
+                icon_to_word = RSVPIconToIconTask(display_window, daq,
+                                                  parameters, file_save, classifier,
+                                                  lmodel, fake, True, auc_filename)
+
+                icon_to_word.execute()
+
+            # Raise exceptions if any encountered and clean up!!
+            except Exception as e:
+                raise e
+
+        else:
+            raise Exception('Experiment type for RSVP not registerd in start task')
     else:
         raise Exception(
             '%s %s Not implemented yet!' % (

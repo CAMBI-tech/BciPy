@@ -55,7 +55,8 @@ def offline_analysis(data_folder=None, parameters={}):
     x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, filtered_data,
                                       mode=mode, fs=fs, k=downsample_rate,
                                       offset=offset,
-                                      channel_map=channel_map)
+                                      channel_map=channel_map,
+                                      trial_length=parameters.get('collection_window_after_trial_length'))
 
     k_folds = parameters.get('k_folds', 10)
     model = train_pca_rda_kde_model(x, y, k_folds=10)

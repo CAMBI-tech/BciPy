@@ -1,7 +1,13 @@
 import numpy as np
 import random
+import glob
 from PIL import Image
+import logging
+from os import path
 
+
+#Prevents pillow from filling the console with debug info
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 def best_selection(selection_elements: list, val: list, len_query: int) -> list:
     """Best Selection.
@@ -262,7 +268,69 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
 
     return schedule_seq
 
+
+def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing, is_word):
+    """Generates an array of images to use for the icon matching task.
+    Args:
+        experiment_length(int): Number of images per sequence
+        image_path(str): Path to image files
+        number_of_sequences(int): Number of sequences to generate
+        timing(list): List of timings
+        is_word(bool): Whether or not this is an icon to word matching task
+    Return generate_icon_match_images(arrays of tuples of paths to images to
+    display, and timings)
+    """
+    #Get all png images in image path
+    image_array = glob.glob(image_path + '*.png')
+
+    #Remove plus image from array
+    for image in image_array:
+        if image.endswith('PLUS.png'):
+            image_array.remove(image)
+
+    if experiment_length > len(image_array) - 1:
+        raise Exception('Number of images to be displayed on screen is longer than number of images available')
+        return
+
+    #Generate indexes of target images
+    target_image_numbers = np.random.randint(0, len(image_array), number_of_sequences)
+
+    #Array of images to return
+    return_array = []
+
+    #Array of timings to return
+    return_timing = []
+    for specific_time in range(len(timing) - 1):
+        return_timing.append(timing[specific_time])
+    for item_without_timing in range(len(return_timing), experiment_length):
+        return_timing.append(timing[-1])
+
+    for sequence in range(number_of_sequences):
+        return_array.append([])
+        #Generate random permutation of image indexes
+        random_number_array = np.random.permutation(len(image_array))
+        if is_word:
+            #Add name of target image to array
+            image_path = path.basename(image_array[target_image_numbers[sequence]])
+            return_array[sequence].append(image_path.replace('.png', ''))
+        else:
+            #Add target image to image array
+            return_array[sequence].append(image_array[target_image_numbers[sequence]])
+        #Add PLUS.png to image array
+        return_array[sequence].append('bcipy/static/images/bci_main_images/PLUS.png')
+
+        #Add target image to sequence, if it is not already there
+        if not target_image_numbers[sequence] in random_number_array[2:experiment_length]:
+            random_number_array[np.random.randint(2, experiment_length)] = target_image_numbers[sequence]
+
+        #Fill the rest of the image array with random images
+        for item in range(2, experiment_length):
+            return_array[sequence].append(image_array[random_number_array[item]])
+
+    return (return_array, return_timing)
+
 def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+
     """Returns the width and height that a given image should be displayed at
     given the screen size, size of the original image, and stimuli height
     parameter"""

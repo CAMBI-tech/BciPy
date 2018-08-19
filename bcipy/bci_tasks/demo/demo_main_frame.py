@@ -38,7 +38,7 @@ def _demo_decision_maker():
     num_epochs = 10
 
     conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
-    decision_maker = DecisionMaker(state='', alphabet=alp)
+    decision_maker = DecisionMaker(min_num_seq=1, max_num_seq=10, state='', alphabet=alp)
 
     for idx_epoch in range(num_epochs):
 
