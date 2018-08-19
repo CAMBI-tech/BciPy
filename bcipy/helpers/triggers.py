@@ -8,7 +8,7 @@ NONE_VALUE = '0'
 
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
-                         on_trigger=None):
+                         on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
         Outputs triggers for the purpose of calibrating data and stimuli.
@@ -42,18 +42,14 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         except:
             raise Exception('Sound object could not be found or Initialized')
 
-        core.wait(.2)
+        core.wait(.5)
 
         # Play the fist sound (used to calibrate) and wait.
         sd.play(data, fs)
         timing = ['calibration_trigger', experiment_clock.getTime()]
         if on_trigger:
             on_trigger(timing)
-        core.wait(.3)
-
-        # Play another to have active control over sound latency
-        sd.play(data, fs)
-        core.wait(.3)
+        core.wait(1)
 
     elif trigger_type == 'image':
         if display:
@@ -77,16 +73,6 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
 
             core.wait(1)
 
-            # delete the stimuli off screen
-            display.flip()
-            core.wait(.1)
-
-            # Draw it again and flip
-            calibration_box.draw()
-            display.flip()
-
-            core.wait(1)
-
         else:
             raise Exception(
                 'No Display Object passed for calibration with images!')
@@ -97,7 +83,10 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
     return timing
 
 
-def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
+def _write_triggers_from_sequence_calibration(
+        array,
+        trigger_file,
+        offset=None):
     """
     Write triggers from calibration.
 
@@ -146,8 +135,12 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
     return trigger_file
 
 
-def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
-                                              copy_text, typed_text, offset=None):
+def _write_triggers_from_sequence_copy_phrase(
+        array,
+        trigger_file,
+        copy_text,
+        typed_text,
+        offset=None):
     """
     Write triggers from copy phrase.
 
@@ -223,51 +216,67 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
     return trigger_file
 
 
-def trigger_decoder(mode, trigger_loc=None):
+def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
+    """Trigger Decoder.
+
+    Given a mode of operation (calibration, copy phrase, etc) and
+        a path to the trigger location (*.txt file), this function
+        will split into symbols (A, ..., Z), timing info (32.222), and
+        targetness (target, nontarget). It will also extract any saved
+        offset information and pass that back.
+
+    PARAMETERS
+    ----------
+    :param: mode: mode of bci operation. Note the mode changes how triggers
+        are saved.
+    :param: trigger_path: [Optional] path to triggers.txt file
+    :return: tuple: symbol_info, trial_target_info, timing_info, offset.
+    """
 
     # Load triggers.txt
-    if not trigger_loc:
-        trigger_loc = load_txt_data()
+    if not trigger_path:
+        trigger_path = load_txt_data()
 
-    with open(trigger_loc, 'r') as text_file:
-        # Get every line of trigger.txt if that line does not contain
-        # 'fixation' or 'offset_correction'
-        # [['words', 'in', 'line'], ['second', 'line']...]
+    # Get every line of trigger.txt
+    with open(trigger_path, 'r+') as text_file:
+        # most trigger files has three columns:
+        #   SYMBOL, TARGETNESS_INFO[OPTIONAL], TIMING
+        trigger_txt = [line.split() for line in text_file]
 
-        # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
-        trigger_txt = [line.split() for line in text_file
-                       if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line
-                       and 'calibration_trigger' not in line]
+    # extract stimuli from the text
+    stimuli_triggers = [line for line in trigger_txt
+                        if line[1] == 'target' or
+                        line[1] == 'nontarget']
 
-    # If operating mode is calibration, trigger.txt has three columns.
-    if mode == 'calibration' or mode == 'copy_phrase':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = list(map(lambda x: x[1], trigger_txt))
-        timing_info = list(map(lambda x: eval(x[2]), trigger_txt))
-    elif mode == 'free_spell':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = None
-        timing_info = list(map(lambda x: eval(x[1]), trigger_txt))
+    # from the stimuli array, pull our the symbol information
+    symbol_info = list(map(lambda x: x[0], stimuli_triggers))
+
+    # If operating mode is free spell, it only has 2 columns
+    #   otherwise, it has 3
+    if mode != 'free_spell':
+        trial_target_info = list(map(lambda x: x[1], stimuli_triggers))
+        timing_info = list(map(lambda x: eval(x[2]), stimuli_triggers))
     else:
-        raise Exception("You have not provided a valid operating mode for trigger_decoder. "
-                        "Valid modes are: 'calibration','copy_phrase','free_spell'")
+        trial_target_info = None
+        timing_info = list(map(lambda x: eval(x[1]), stimuli_triggers))
 
-    with open(trigger_loc, 'r') as text_file:
-        offset_array = [line.split()
-                        for line in text_file if 'offset_correction' in line]
+    # Get any offset or calibration triggers
+    offset_array = [line[2] for line in trigger_txt
+                    if line[0] == 'offset']
+    calib_trigger_array = [line[2] for line in trigger_txt
+                           if line[0] == 'calibration_trigger']
 
-    if offset_array:
-        with open(trigger_loc, 'r') as text_file:
-            calib_trigger_time = [
-                line.split() for line in text_file if 'calibration_trigger' in line]
+    # If present, calculate the offset between the DAQ and Triggers from display
+    if len(offset_array) == 1 and len(calib_trigger_array) == 1:
 
-        if calib_trigger_time:
-            if offset_array:
-                offset = float(
-                    calib_trigger_time[0][2]) - float(offset_array[0][2])
-            else:
-                offset = timing_info[0] - float(offset_array[0][2])
+        # Extract the offset and calibration trigger time
+        offset_time = float(offset_array[0])
+        calib_trigger_time = float(calib_trigger_array[0])
+
+        # Calculate the offset (ASSUMES DAQ STARTED FIRST!)
+        offset = offset_time - calib_trigger_time
+
+    # Otherwise, assume no observed offset
     else:
         offset = 0
 

@@ -39,7 +39,7 @@ def generate_offline_analysis_screen(x, y, model, folder):
              rotation='vertical')
 
     ax1.set_title(
-        'Mean distractor ERP (averaged over trials in the calibration data')
+        'Mean distractor ERP (averaged over trials in the calibration data)')
     ax2.set_title(
         'Mean target ERP (averaged over trials in the calibration data)')
 

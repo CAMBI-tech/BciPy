@@ -271,7 +271,7 @@
     "type": "str"
   },
   "trigger_type": {
-    "value": "image",
+    "value": "sound",
     "section": "bci_config",
     "readableName": "What type of Calibration Trigger should be used",
     "helpTip": "Select a calibration trigger type to be used",
@@ -378,7 +378,7 @@
     "type": "filepath"
   },
   "acq_device": {
-    "value": "DSI",
+    "value": "LSL",
     "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
@@ -476,7 +476,7 @@
     "type": "bool"
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -484,7 +484,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -492,7 +492,7 @@
     "type": "bool"
   },
   "num_sti": {
-    "value": "50",
+    "value": "100",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",
@@ -604,7 +604,7 @@
     "type": "int"
   },
   "max_seq_len": {
-    "value": "20",
+    "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
     "helpTip": "Maximum number of sequences to present in spelling tasks",
