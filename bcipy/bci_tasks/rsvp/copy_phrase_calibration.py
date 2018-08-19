@@ -86,9 +86,6 @@ class RSVPCopyPhraseCalibrationTask(Task):
         self.fake = fake
 
         self.enable_breaks = parameters['enable_breaks']
-        self.break_len = parameters['break_len']
-        self.break_message = parameters['break_message']
-        self.trials_before_break = parameters['trials_before_break']
 
     def execute(self):
 
@@ -117,8 +114,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
                 #typed string
                 number_of_trials = len(text_task.replace('*',''))
                 pause_calibration(self.window, self.rsvp, number_of_trials,
-                                  self.trials_before_break, self.break_len,
-                                  self.break_message)
+                                  self.parameters)
 
             # Generate some sequences to present based on parameters
             (ele_sti, timing_sti, color_sti) = target_rsvp_sequence_generator(

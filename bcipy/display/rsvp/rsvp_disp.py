@@ -5,6 +5,7 @@ from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.system_utils import get_system_info
 
 
 class RSVPDisplay(object):
@@ -77,6 +78,7 @@ class RSVPDisplay(object):
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
 
+
         # Used to handle writing the marker stimulus
         self.marker_writer = marker_writer or NullMarkerWriter()
 
@@ -90,6 +92,8 @@ class RSVPDisplay(object):
 
         self.first_run = True
         self.trigger_type = trigger_type
+
+        self.size_list_sti = None
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -196,24 +200,44 @@ s
             self.staticPeriod.start(self.static_period_time)
 
             # Turn ms timing into frames! Much more accurate!
-            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+
+            #Check if stimulus needs to use a non-default size
+            if self.size_list_sti:
+                this_stimuli_size = self.size_list_sti[idx]
+            else:
+                this_stimuli_size = self.height_stim
 
             # Set the Stimuli attrs
-            if self.is_txt_sti:
+            #Test if stimulus is an image or sound file
+            if self.stim_sequence[idx].endswith('.png'):
+                self.sti = self.create_stimulus(mode='image', height_int=this_stimuli_size)
+                self.sti.image = self.stim_sequence[idx]
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
+                                                             this_stimuli_size)
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+            else:
+                #Text stimulus
+                self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
-            else:
-                self.sti.image = self.stim_sequence[idx]
 
-                self.sti.size = resize_image(
-                    self.sti.image,
-                    self.sti.win.size,
-                    self.height_stim)
-
-                # We expect a path for images, so split on forward slash and
-                # extension to get the name of the file.
-                sti_label = self.sti.image.split('/')[-1].split('.')[0]
+                #Test whether the word will be too big for the screen
+                text_width = self.sti.boundingBox[0]
+                if text_width > self.win.size[0]:
+                    info = get_system_info()
+                    text_height = self.sti.boundingBox[1]
+                    #If we are in fullscreen, text size in Psychopy norm units
+                    #is monitor width/monitor height
+                    if self.win.size[0] == info['RESOLUTION'][0]:
+                        new_text_width = info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                    else:
+                        #If not, text width is calculated relative to both
+                        #monitor size and window size
+                        new_text_width = (self.win.size[1]/info['RESOLUTION'][1]) * info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                    new_text_height = (text_height * new_text_width) / text_width
+                    self.sti.height = new_text_height
 
             # End static period
             self.staticPeriod.complete()
@@ -225,10 +249,11 @@ s
             self.marker_writer.push_marker(sti_label)
 
             # Draw stimulus for n frames
-            for n_frames in range(time_to_present):
+            for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
+
 
             # Get trigger time (takes < .01ms)
             trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
@@ -310,3 +335,20 @@ s
         # Draw and flip the screen.
         wait_message.draw()
         self.win.flip()
+
+    def create_stimulus(self, height_int: int, mode="text"):
+        """Returns a TextStim or ImageStim object.
+            Args:
+            height_int: The height of the stimulus
+            mode: "text" or "image", determines which to return
+        """
+        if mode == "text":
+            return visual.TextStim(win=self.win, color='white',
+                   height=height_int, text='+',
+                   font=self.font_stim, pos=self.pos_sti,
+                   wrapWidth=None, colorSpace='rgb',
+                   opacity=1, depth=-6.0)
+        if mode == "image":
+            return visual.ImageStim(win=self.win, image=None, mask=None,
+                      units='', pos=self.pos_sti,
+                      size=(height_int, height_int), ori=0.0)

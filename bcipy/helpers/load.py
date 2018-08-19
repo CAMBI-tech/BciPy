@@ -94,7 +94,7 @@ def load_classifier(filename=None):
     # load the classifier with pickle
     classifier = pickle.load(open(filename, 'rb'))
 
-    return classifier
+    return (classifier, filename)
 
 
 def load_csv_data(filename=None):

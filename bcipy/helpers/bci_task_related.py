@@ -60,19 +60,20 @@ def alphabet(parameters=None):
         if not parameters['is_txt_sti']:
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
-            image_array = []
-            for image_filename in os.listdir(path):
-                if image_filename.endswith(".png"):
-                    image_array.append(os.path.join(path, image_filename))
+            stimulus_array = []
+            for stimulus_filename in os.listdir(path):
+                if stimulus_filename.endswith(".png"):
+                    stimulus_array.append(os.path.join(path, stimulus_filename))
 
-            return image_array
+            return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
+
+def process_data_for_decision(sequence_timing, daq, window, parameters, first_session_stim_time):
     """Process Data for Decision.
 
     Processes the raw data (triggers and eeg) into a form that can be passed to
@@ -83,6 +84,8 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
         sequence_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
+        window: window to reactivate if deactivated by windows
+        parameters: parameters dictionary
         first_session_stim_time (float): time that the first stimuli was presented
             for the session. Used to calculate offsets.
 
@@ -95,6 +98,7 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
 
+    window_length = parameters['len_data_sequence_buffer']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset
@@ -104,7 +108,7 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
         time1 = first_stim_time - offset * daq.device_info.fs
     else:
         time1 = first_stim_time * daq.device_info.fs
-    time2 = (last_stim_time + .5) * daq.device_info.fs
+    time2 = (last_stim_time + window_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -114,12 +118,12 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + .5) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time + window_length) * daq.device_info.fs
 
     # Query for raw data
     try:
         # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2)
+        raw_data = daq.get_data(start=time1, end=time2, win=window)
 
         # If not enough raw_data returned in the first query, let's try again
         #  using only the start param. This is known issue on Windows.
@@ -127,7 +131,7 @@ def process_data_for_decision(sequence_timing, daq, first_session_stim_time):
         if len(raw_data) < data_limit:
 
             # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1)
+            raw_data = daq.get_data(start=time1, win=window)
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
@@ -183,7 +187,6 @@ def trial_complete_message(win, parameters):
         colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]
-
 
 def get_user_input(window, message, color, first_run=False):
     """Get User Input.
@@ -387,8 +390,7 @@ def trial_reshaper(trial_target_info: list,
         raise Exception(
             f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
 
-def pause_calibration(window, rsvp, current_index: int, trials_before_break: int,
-                      break_len: int, break_message: str):
+def pause_calibration(window, rsvp, current_index: int, parameters: dict):
     """Pause calibration.
 
     Pauses calibration for a given number of seconds and displays a countdown
@@ -397,16 +399,17 @@ def pause_calibration(window, rsvp, current_index: int, trials_before_break: int
     window: Currently active PsychoPy window
     rsvp: The current RSVPDisplay
     current_index: The current number of trials that have taken place
-    trials_before_break: The number of trials that should take place before a
-    break
-    break_len: The length of the break (in seconds)
-    break_message: The message to display to the user during the break
+    parameters: Parameters dictionary
 
     Returns true/false depending on whether a break has taken place
     """
     #Check whether any trials have taken place, and, if so,
     #whether the number of trials performed is divisible
     #by the number of trials before a break set in parameters
+    trials_before_break = parameters['trials_before_break']
+    break_len = parameters['break_len']
+    break_message = parameters['break_message']
+
     if (current_index != 0) and (current_index % trials_before_break) == 0:
         #Update countdown every second
         for counter in range(break_len):

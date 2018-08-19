@@ -30,17 +30,17 @@ gui.add_static_text(
 gui.add_button(
     message="RSVP",
     position=(155, 200), size=(100, 100),
-    color='red',
+    color=wx.Colour(221, 37, 56),
     action='launch_mode')
 gui.add_button(
     message="Matrix", position=(280, 200),
     size=(100, 100),
-    color='blue',
+    color=wx.Colour(62, 161, 232),
     action='launch_mode')
 gui.add_button(
     message="Shuffle", position=(405, 200),
     size=(100, 100),
-    color='green',
+    color=wx.Colour(117, 173, 48),
     action='launch_mode')
 
 # Images

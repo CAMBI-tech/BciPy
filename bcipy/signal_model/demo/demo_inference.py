@@ -1,8 +1,8 @@
 """ Inference demo """
 
 import numpy as np
-from signal_model.inference import inference
-from signal_model.mach_learning.train_model import train_pca_rda_kde_model
+from bcipy.signal_model.inference import inference
+from bcipy.signal_model.mach_learning.train_model import train_pca_rda_kde_model
 
 import matplotlib as mpl
 

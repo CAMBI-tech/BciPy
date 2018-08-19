@@ -5,32 +5,35 @@ from bcipy.signal_processing.sig_pro import sig_pro
 from bcipy.bci_tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
 
-
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
 
     Given the phrases once operate() is called performs the task.
     Attr:
-        conjugator(EvidenceFusion): fuses evidences in the task
-        decision_maker(DecisionMaker): mastermind of the task
-        alp(list[str]): symbol set of the task
+        min_num_seq: The minimum number of sequences to be displayed
+        max_num_seq: The maximum number of sequences to be displayed
         model(pipeline): model trained using a calibration session of the
             same user.
         fs(int): sampling frequency
         k(int): down sampling rate
+        alp(list[str]): symbol set of the task
+        task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
+            the copy phrase task
+        is_txt_sti: Whether or not the stimuli are text objects
+        conjugator(EvidenceFusion): fuses evidences in the task
+        decision_maker(DecisionMaker): mastermind of the task
         mode(str): mode of thet task (should be copy phrase)
         d(binary): decision flag
         sti(list(tuple)): stimuli for the display
-        task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
-            the copy phrase task
     """
-
-    def __init__(self, signal_model=None, fs=300, k=2, alp=None, evidence_names=['LM', 'ERP'],
+    def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
+                 alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
-        self.decision_maker = DecisionMaker(state=task_list[0][1],
+        self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
+                                            state=task_list[0][1],
                                             alphabet=alp,
                                             is_txt_sti=is_txt_sti)
         self.alp = alp
@@ -44,7 +47,7 @@ class CopyPhraseWrapper(object):
         self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
 
-    def evaluate_sequence(self, raw_dat, triggers, target_info):
+    def evaluate_sequence(self, raw_dat, triggers, target_info, window_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -53,6 +56,7 @@ class CopyPhraseWrapper(object):
             triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
                 as letter and flash time for the letter
             target_info(list[str]): target information about the stimuli
+            window_length(int): The length of the time between stimuli presentation
         """
         # Send the raw data to signal processing / in demo mode do not use sig_pro
         dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
@@ -62,17 +66,30 @@ class CopyPhraseWrapper(object):
         time = [triggers[i][1] for i in range(0, len(triggers))]
 
         # Raise an error if the stimuli includes unexpected terms
-        if not set(letters).issubset(set(self.alp+['+'])):
+        if not set(letters).issubset(set(self.alp+['+']+['PLUS']+['calibration_trigger'])):
             raise Exception('unexpected letters received in copy phrase')
 
         # Remove information in any trigger related with the fixation
-        del target_info[letters.index('+')]
-        del time[letters.index('+')]
-        del letters[letters.index('+')]
+        if '+' in letters:
+            del_letter = '+'
+        elif 'PLUS' in letters:
+            del_letter = 'PLUS'
+        else:
+            raise Exception('could not find target + sign in letters')
+
+        if 'calibration_trigger' in letters:
+            del target_info[letters.index('calibration_trigger')]
+            del time[letters.index('calibration_trigger')]
+            del letters[letters.index('calibration_trigger')]
+
+        del target_info[letters.index(del_letter)]
+        del time[letters.index(del_letter)]
+        del letters[letters.index(del_letter)]
 
         x, _, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
-                                    channel_map=self.channel_map)
+                                    channel_map=self.channel_map,
+                                    trial_length=window_length)
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})

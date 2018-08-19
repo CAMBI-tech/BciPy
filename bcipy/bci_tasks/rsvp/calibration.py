@@ -10,7 +10,6 @@ from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, ge
 from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
-
 class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
@@ -73,9 +72,6 @@ class RSVPCalibrationTask(Task):
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.enable_breaks = parameters['enable_breaks']
-        self.break_len = parameters['break_len']
-        self.break_message = parameters['break_message']
-        self.trials_before_break = parameters['trials_before_break']
 
     def execute(self):
         run = True
@@ -100,6 +96,7 @@ class RSVPCalibrationTask(Task):
             (task_text, task_color) = get_task_info(self.num_sti,
                                                     self.task_info_color)
 
+
             # Execute the RSVP sequences
             for idx_o in range(len(task_text)):
 
@@ -111,8 +108,7 @@ class RSVPCalibrationTask(Task):
                 #Take a break every number of trials defined in parameters.json
                 if self.enable_breaks:
                     pause_calibration(self.window, self.rsvp, idx_o,
-                                      self.trials_before_break, self.break_len,
-                                      self.break_message)
+                                      self.parameters)
 
                 # update task state
                 self.rsvp.update_task_state(

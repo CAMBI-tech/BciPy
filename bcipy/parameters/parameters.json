@@ -271,7 +271,7 @@
     "type": "str"
   },
   "trigger_type": {
-    "value": "sound",
+    "value": "image",
     "section": "bci_config",
     "readableName": "What type of Calibration Trigger should be used",
     "helpTip": "Select a calibration trigger type to be used",
@@ -282,9 +282,9 @@
     "type": "str"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/rsvp_images/",
+    "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
-    "readableName": "Path to Images",
+    "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
     "type": "directorypath"
@@ -614,6 +614,16 @@
     ],
     "type": "int"
   },
+  "min_seq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Sequence Length",
+    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
   "enable_breaks": {
     "value": "false",
     "section": "bci_config",
@@ -645,5 +655,29 @@
     "helpTip": "The message that displays during a break in calibration",
     "recommended_values": "",
     "type": "str"
+  },
+  "word_matching_text_size": {
+    "value": "0.2",
+    "section": "bci_config",
+    "readableName": "Word to icon matching text height",
+    "helpTip": "Default height to use for words that match icons",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "collection_window_after_trial_length": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data collection window after each stimuli (seconds)",
+    "helpTip": "Length of the data collection window after each stimuli (seconds)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "len_data_sequence_buffer": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data sequence buffer",
+    "helpTip": "Length of the data sequence buffer",
+    "recommended_values": "",
+    "type": "float"
   }
 }
