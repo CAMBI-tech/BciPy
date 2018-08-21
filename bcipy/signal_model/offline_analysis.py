@@ -59,13 +59,13 @@ def offline_analysis(data_folder=None, parameters={}):
                                       trial_length=parameters.get('collection_window_after_trial_length'))
 
     k_folds = parameters.get('k_folds', 10)
-    model = train_pca_rda_kde_model(x, y, k_folds=10)
+    model, auc = train_pca_rda_kde_model(x, y, k_folds=10)
 
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder)
 
     print('Saving the model!')
-    with open(data_folder + '/model.pkl', 'wb') as output:
+    with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
         pickle.dump(model, output)
     return model
 

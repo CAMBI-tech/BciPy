@@ -33,7 +33,7 @@ def demo_copy_phrase_wrapper():
     train_x = train_x[list(np.where(np.asarray(channel_map) == 1)[0]), :, :]
 
     k_folds = 10
-    model = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
+    model, _ = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
 
     # Define task and operate
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),

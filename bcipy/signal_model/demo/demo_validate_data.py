@@ -36,7 +36,7 @@ def _demo_validate_data():
     x_train = x_train[:, permutation, :]
     y_train = y_train[permutation]
 
-    model = train_pca_rda_kde_model(x_train, y_train, k_folds=10)
+    model, _ = train_pca_rda_kde_model(x_train, y_train, k_folds=10)
 
     fig = plt.figure()
     ax = fig.add_subplot(211)

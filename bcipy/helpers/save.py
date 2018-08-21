@@ -8,21 +8,28 @@ import json
 
 def init_save_data_structure(data_save_path,
                              user_information,
-                             parameters_used):
+                             parameters_used,
+                             mode=None,
+                             experiment_type=None):
     """
     Initialize Save Data Strucutre.
 
         data_save_path[str]: string of path to save our data in
-        user_information[str]: string of user name / realted information
+        user_information[str]: string of user name / related information
         parameters_used[str]: a path to parameters file for the experiment
 
     """
 
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information
-    save_folder_run_name = save_folder_name + '/' + \
-        user_information + '_' + strftime(
-            '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
+    if mode and experiment_type:
+        save_folder_run_name = save_folder_name + '/' + \
+            user_information + '_' + str(mode) + '_' + str(experiment_type) + '_' + strftime(
+                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
+    else:
+        save_folder_run_name = save_folder_name + '/' + \
+            user_information + '_' + strftime(
+                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
     helper_folder_name = save_folder_run_name + '/helpers/'
 
     # try making the given path

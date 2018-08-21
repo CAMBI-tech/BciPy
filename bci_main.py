@@ -34,7 +34,7 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
-        data_save_location, user, parameter_location)
+        data_save_location, user, parameter_location, mode, exp_type)
 
     # Register Task Type
     task_type = {

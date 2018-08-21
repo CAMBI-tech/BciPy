@@ -31,7 +31,7 @@ x = x[:, permutation, :]
 y = y[permutation]
 
 k_folds = 10
-model = train_pca_rda_kde_model(x, y, k_folds=k_folds)
+model, _ = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
 alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
        'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']

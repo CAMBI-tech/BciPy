@@ -57,4 +57,4 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     # Report AUC
     print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
-    return model
+    return model, auc_cv
