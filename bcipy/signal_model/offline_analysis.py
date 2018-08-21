@@ -46,7 +46,7 @@ def offline_analysis(data_folder=None, parameters={}):
     triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
     _, t_t_i, t_i, offset = trigger_decoder(
         mode=mode,
-        trigger_loc=f"{data_folder}/{triggers_file}")
+        trigger_path=f"{data_folder}/{triggers_file}")
 
     # Channel map can be checked from raw_data.csv file.
     # read_data_csv already removes the timespamp column.
