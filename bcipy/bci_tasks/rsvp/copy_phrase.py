@@ -256,7 +256,7 @@ class RSVPCopyPhraseTask(Task):
                         .tolist(),
                     'eeg_evidence': copy_phrase_task
                         .conjugator
-                        .evidence_history['ERP'][0]
+                        .evidence_history['ERP'][-1]
                         .tolist(),
                     'likelihood': copy_phrase_task
                         .conjugator.likelihood.tolist()
