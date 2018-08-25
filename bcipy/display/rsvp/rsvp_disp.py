@@ -245,18 +245,19 @@ s
             # Reset the timing clock to start presenting
             self.timing_clock.reset()
 
-            # Push to configured marker stream (ex. LslMarkerWriter)
-            self.marker_writer.push_marker(sti_label)
+            first_stim = True
 
             # Draw stimulus for n frames
             for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
+                if first_stim:
+                    # Push to configured marker stream (ex. LslMarkerWriter)
+                    self.marker_writer.push_marker(sti_label)
+                    # Get trigger time (takes < .01ms)
+                    trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
+                    first_stim = False
                 self.win.flip()
-
-
-            # Get trigger time (takes < .01ms)
-            trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
 
             # Start another ISI for trigger saving
             self.staticPeriod.start(self.static_period_time)

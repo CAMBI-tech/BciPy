@@ -48,8 +48,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
             on_trigger(timing)
 
         # Play the fist sound (used to calibrate) and wait.
-        sd.play(data, fs, blocking=True)
-
+        sd.play(data, fs)
 
     elif trigger_type == 'image':
         if display:
