@@ -41,7 +41,7 @@ class RSVPKeyboard(BCIGui):
             cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
                 mode, experiment_type, username)
 
-            subprocess.call(cmd, shell=True)
+            subprocess.Popen(cmd, shell=True)
             self.event_started = True
 
     def check_input(self) -> bool:
@@ -67,8 +67,8 @@ class RSVPKeyboard(BCIGui):
 
     def offline_analysis(self, event: wx.Event) -> None:
         cmd = 'python bcipy/signal_model/offline_analysis.py'
-        subprocess.call(cmd, shell=True)
-        event_started = True
+        subprocess.Popen(cmd, shell=True)
+        self.event_started = True
 
     def refresh(self, event: wx.Event) -> None:
         self.event_started = False
