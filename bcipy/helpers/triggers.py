@@ -39,17 +39,17 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         try:
             data, fs = sf.read(
                 'bcipy/static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
+            core.wait(.5)
         except:
             raise Exception('Sound object could not be found or Initialized')
 
-        core.wait(.5)
-
-        # Play the fist sound (used to calibrate) and wait.
-        sd.play(data, fs)
         timing = ['calibration_trigger', experiment_clock.getTime()]
         if on_trigger:
             on_trigger(timing)
-        core.wait(1)
+
+        # Play the fist sound (used to calibrate) and wait.
+        sd.play(data, fs, blocking=True)
+
 
     elif trigger_type == 'image':
         if display:
@@ -64,14 +64,14 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
             calibration_box.size = resize_image(
                 'bcipy/static/images/testing_images/white.png',
                 display.size, 0.75)
+
+            calibration_box.draw()
+
             timing = ['calibration_trigger', experiment_clock.getTime()]
             if on_trigger:
                 on_trigger(timing)
 
-            calibration_box.draw()
             display.flip()
-
-            core.wait(1)
 
         else:
             raise Exception(
@@ -80,6 +80,8 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
+    # wait some time to allow anything to finish
+    core.wait(1)
     return timing
 
 
