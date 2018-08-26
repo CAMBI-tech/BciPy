@@ -403,11 +403,12 @@ def play_sound(sound_file_path: str,
                 sound_file_path, dtype=dtype)
         core.wait(sound_load_buffer_time)
     except:
-        raise Exception('StimGenError: sound file could not be found or initialized.')
+        raise Exception('StimGenPlaySoundError: sound file could not be found or initialized.')
 
     #  if timing is wanted, get trigger timing for this sound stimuli
     if track_timing:
-        timing = timing.extend(trigger_name, experiment_clock.getTime())
+        timing.append(trigger_name)
+        timing.append(experiment_clock.getTime())
 
         # if there is a timing callback for sound, evoke it with the timing list
         if sound_callback is not None:
