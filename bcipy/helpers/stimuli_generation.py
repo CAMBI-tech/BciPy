@@ -5,8 +5,12 @@ from PIL import Image
 import logging
 from os import path
 
+import sounddevice as sd
+import soundfile as sf
+from psychopy import core
 
-#Prevents pillow from filling the console with debug info
+
+# Prevents pillow from filling the console with debug info
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 def best_selection(selection_elements: list, val: list, len_query: int) -> list:
@@ -352,3 +356,29 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
         sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
 
     return sti_size
+
+
+def play_sound(sound_file_path: str,
+               dtype: str='float32',
+               track_timing: bool=False,
+               sound_callback=None,
+               sound_load_buffer_time: float=0.5,
+               experiment_clock=None,
+               trigger_name: str=None) -> list:
+    """Play Sound."""
+    data, fs = sf.read(sound_file_path, dtype=dtype)
+
+    try:
+        data, fs = sf.read(
+                sound_file_path, dtype=dtype)
+        core.wait(sound_load_buffer_time)
+    except:
+        raise Exception('StimGenError: sound file could not be found or initialized.')
+
+    timing = [trigger_name, experiment_clock.getTime()]
+    if track_timing:
+        sound_callback(timing)
+
+    sd.play(data, fs)
+
+    return timing

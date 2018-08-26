@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.stimuli_generation import resize_image, play_sound
 import csv
 from typing import TextIO, List, Tuple
 
@@ -35,20 +35,14 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         import soundfile as sf
         from psychopy import core
 
-        # Init the sound object and give it some time to buffer
-        try:
-            data, fs = sf.read(
-                'bcipy/static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
-            core.wait(.5)
-        except:
-            raise Exception('Sound object could not be found or Initialized')
-
-        timing = ['calibration_trigger', experiment_clock.getTime()]
-        if on_trigger:
-            on_trigger(timing)
-
-        # Play the fist sound (used to calibrate) and wait.
-        sd.play(data, fs)
+        timing = play_sound(
+            sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
+            dtype='float32',
+            track_timing=True,
+            sound_callback=on_trigger,
+            sound_load_buffer_time=0.5,
+            experiment_clock=experiment_clock,
+            trigger_name='calibration_trigger')
 
     elif trigger_type == 'image':
         if display:
