@@ -5,6 +5,8 @@ import csv
 from typing import TextIO, List, Tuple
 
 NONE_VALUE = '0'
+SOUND_TYPE = 'sound'
+IMAGE_TYPE = 'image'
 
 
 def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
@@ -30,7 +32,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
     """
 
     # If sound trigger is selected, output calibration tones
-    if trigger_type == 'sound':
+    if trigger_type == SOUND_TYPE:
         import sounddevice as sd
         import soundfile as sf
         from psychopy import core
@@ -44,7 +46,7 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
             experiment_clock=experiment_clock,
             trigger_name='calibration_trigger')
 
-    elif trigger_type == 'image':
+    elif trigger_type == IMAGE_TYPE:
         if display:
             from psychopy import visual, core
 
@@ -73,8 +75,6 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
-    # wait some time to allow anything to finish
-    core.wait(1)
     return timing
 
 

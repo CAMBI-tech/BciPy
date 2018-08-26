@@ -1,22 +1,29 @@
-from bcipy.helpers.load import read_data_csv, load_experimental_data, \
+import pickle
+
+from bcipy.helpers.load import (
+    read_data_csv,
+    load_experimental_data,
     load_json_parameters
+    )
 from bcipy.signal_processing.sig_pro import sig_pro
 from bcipy.signal_model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition_related import analysis_channels
-import pickle
+from bcipy.helpers.stimuli_generation import play_sound
 
 
-def offline_analysis(data_folder=None, parameters={}):
+def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished: bool=True):
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
             data_folder(str): folder of the data
                 save all information and load all from this folder
+            parameter(dict): parameters for running offline analysis 
+            alert_finished(bool): whether or not to alert the user offline analysis complete
 
-        Duty cycle
+        How it Works:
         - reads data and information from a .csv calibration file
         - reads trigger information from a .txt trigger file
         - filters data
@@ -26,6 +33,7 @@ def offline_analysis(data_folder=None, parameters={}):
             - based on the parameters, trains system using all the data
         - pickle dumps model into .pkl file
         - generates and saves offline analysis screen
+        - [optional] alert the user finished processing
     """
 
     if not data_folder:
@@ -59,7 +67,7 @@ def offline_analysis(data_folder=None, parameters={}):
                                       trial_length=parameters.get('collection_window_after_trial_length'))
 
     k_folds = parameters.get('k_folds', 10)
-    model, auc = train_pca_rda_kde_model(x, y, k_folds=10)
+    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     print('Saving offline analysis plots!')
     generate_offline_analysis_screen(x, y, model, data_folder)
@@ -67,6 +75,11 @@ def offline_analysis(data_folder=None, parameters={}):
     print('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
         pickle.dump(model, output)
+
+    if alert_finished:
+        offline_analysis_tone = parameters.get('offline_analysis_tone')
+        play_sound(offline_analysis_tone)
+
     return model
 
 
