@@ -19,6 +19,7 @@ numpy==1.13.3
 scipy==1.0.0
 future==0.16.0
 sklearn==0.0
+seaborn==0.9.0
 construct==2.8.14
 mock==2.0.0
 matplotlib==2.1.1
