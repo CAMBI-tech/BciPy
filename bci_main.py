@@ -2,7 +2,7 @@ from bcipy.helpers.save import init_save_data_structure
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 
-from bcipy.bci_tasks.start_task import start_task
+from bcipy.tasks.start_task import start_task
 from bcipy.helpers.load import load_classifier
 from bcipy.helpers.lang_model_related import init_language_model
 

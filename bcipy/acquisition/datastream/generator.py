@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 from past.builtins import map, range
+from bcipy.signal.generator.generator import gen_random_data
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -36,8 +37,7 @@ def random_data(encoder=_DefaultEncoder(), low=-1000, high=1000,
     """
 
     while True:
-        sensor_data = [np.random.uniform(low, high)
-                       for i in range(channel_count)]
+        sensor_data = gen_random_data(low, high, channel_count)
         yield encoder.encode(sensor_data)
 
 
