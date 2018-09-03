@@ -18,7 +18,7 @@ def main():
 
     import bcipy.acquisition.datastream.generator as generator
     import bcipy.acquisition.protocols.registry as registry
-    from bcipy.acquisition.client import Client
+    from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.datastream.server import start_socket_server, await_start
 
@@ -40,7 +40,7 @@ def main():
     # Device is for reading data.
     Device = registry.find_device('LSL')
     device = Device(connection_params={'host': host, 'port': port})
-    client = Client(device=device)
+    client = DataAcquisitionClient(device=device)
 
     try:
         client.start_acquisition()
@@ -48,14 +48,13 @@ def main():
         print("\nCollecting data for 10s... (Interrupt [Ctl-C] to stop)\n")
 
         while True:
-            # time.sleep(10)
-            # client.stop_acquisition()
-            # client.cleanup()
-            # print("Number of samples: {0}".format(client.get_data_len()))
-            # server.stop()
-            # print("The collected data has been written to rawdata.csv")
-            # break
-            pass
+            time.sleep(10)
+            client.stop_acquisition()
+            client.cleanup()
+            print("Number of samples: {0}".format(client.get_data_len()))
+            server.stop()
+            print("The collected data has been written to rawdata.csv")
+            break
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt; stopping.")
