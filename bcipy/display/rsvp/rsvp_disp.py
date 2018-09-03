@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from psychopy import visual, core
 
-from bcipy.helpers.triggers import _calibration_trigger
+from bcipy.helpers.triggers import _calibration_trigger, TriggerCallback
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
@@ -92,6 +92,7 @@ class RSVPDisplay(object):
 
         self.first_run = True
         self.trigger_type = trigger_type
+        self.trigger_callback = TriggerCallback()
 
         self.size_list_sti = None
 
@@ -160,7 +161,6 @@ class RSVPDisplay(object):
 
     def update_task(self, text, color_list, pos):
         """Update Task Object.
-s
         Args:
                 text(string): text for task
                 color_list(list[string]): list of the colors for each char
@@ -189,7 +189,6 @@ s
             timing.append(stim_timing)
 
             self.first_stim_time = stim_timing[-1]
-
             self.first_run = False
 
         # Do the sequence
@@ -243,33 +242,22 @@ s
             self.staticPeriod.complete()
 
             # Reset the timing clock to start presenting
-            self.timing_clock.reset()
-
-            first_stim = True
+            self.win.callOnFlip(self.trigger_callback.callback, self.experiment_clock, sti_label)
+            self.win.callOnFlip(self.marker_writer.push_marker, sti_label)
 
             # Draw stimulus for n frames
             for n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
-                if first_stim:
-                    # Push to configured marker stream (ex. LslMarkerWriter)
-                    self.marker_writer.push_marker(sti_label)
-                    # Get trigger time (takes < .01ms)
-                    trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
-                    first_stim = False
                 self.win.flip()
-
-            # Start another ISI for trigger saving
-            self.staticPeriod.start(self.static_period_time)
 
             # append timing information
             if self.is_txt_sti:
-                timing.append((sti_label, (trigger_time)))
+                timing.append(self.trigger_callback.timing)
             else:
-                timing.append((sti_label, trigger_time))
+                timing.append(self.trigger_callback.timing)
 
-            # End the static period
-            self.staticPeriod.complete()
+            self.trigger_callback.reset()
 
         # draw in static and flip once more
         self.draw_static()

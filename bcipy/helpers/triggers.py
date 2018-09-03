@@ -4,10 +4,29 @@ from bcipy.helpers.stimuli_generation import resize_image
 import csv
 from typing import TextIO, List, Tuple
 
+from psychopy import visual, core
+
 NONE_VALUE = '0'
 
+class TriggerCallback:
+    timing = None
+    first_time = True
 
-def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
+    def callback(self, clock: core.Clock, stimuli:str):
+        if self.first_time:
+            self.timing = [stimuli, clock.getTime()]
+            self.first_time = False
+
+
+    def reset(self):
+        self.timing = None
+        self.first_time = True
+
+
+def _calibration_trigger(experiment_clock,
+                         trigger_type='sound',
+                         trigger_name='calibration_trigger',
+                         display=None,
                          on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
@@ -28,12 +47,12 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
                 timing(array): timing values for the calibration triggers to be written to trigger file or
                     used to calculate offsets.
     """
+    trigger_callback = TriggerCallback()
 
     # If sound trigger is selected, output calibration tones
     if trigger_type == 'sound':
         import sounddevice as sd
         import soundfile as sf
-        from psychopy import core
 
         # Init the sound object and give it some time to buffer
         try:
@@ -43,17 +62,17 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         except:
             raise Exception('Sound object could not be found or Initialized')
 
-        timing = ['calibration_trigger', experiment_clock.getTime()]
-        if on_trigger:
-            on_trigger(timing)
-
         # Play the fist sound (used to calibrate) and wait.
         sd.play(data, fs)
 
+        trigger_callback.callback(experiment_clock, trigger_name)
+        if on_trigger:
+            on_trigger(trigger_callback.timing)
+
+        core.wait(1)
+
     elif trigger_type == 'image':
         if display:
-            from psychopy import visual, core
-
             calibration_box = visual.ImageStim(
                 win=display,
                 image='bcipy/static/images/testing_images/white.png',
@@ -64,24 +83,24 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
                 'bcipy/static/images/testing_images/white.png',
                 display.size, 0.75)
 
-            calibration_box.draw()
 
-            timing = ['calibration_trigger', experiment_clock.getTime()]
+            display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
             if on_trigger:
-                on_trigger(timing)
+                display.callOnFlip(on_trigger, trigger_name)
 
-            display.flip()
+            presentation_time = int(1 * display.getActualFrameRate())
+            for Nframes in range(presentation_time):
+                calibration_box.draw()
+                display.flip()
 
         else:
             raise Exception(
-                'No Display Object passed for calibration with images!')
+                'Dispaly object required for calibration with images!')
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
-    # wait some time to allow anything to finish
-    core.wait(1)
-    return timing
+    return trigger_callback.timing
 
 
 def _write_triggers_from_sequence_calibration(

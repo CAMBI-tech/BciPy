@@ -1,8 +1,8 @@
 import numpy as np
 from bcipy.helpers.bci_task_related import trial_reshaper
-from bcipy.signal_model.inference import inference
-from bcipy.signal_processing.sig_pro import sig_pro
-from bcipy.bci_tasks.main_frame import EvidenceFusion, DecisionMaker
+from bcipy.signal.model.inference import inference
+from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
 
 class CopyPhraseWrapper(object):
