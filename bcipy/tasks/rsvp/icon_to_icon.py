@@ -12,7 +12,7 @@ from bcipy.helpers.stimuli_generation import generate_icon_match_images
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 
-from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
+from bcipy.helpers.signal_model_related import CopyPhraseWrapper
 
 from bcipy.helpers.save import _save_session_related_data
 

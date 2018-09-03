@@ -5,12 +5,13 @@ from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
+from bcipy.helpers.signal_model_related import CopyPhraseWrapper
 
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
 import logging
+
 
 class RSVPCopyPhraseTask(Task):
     """RSVP Copy Phrase Task.
@@ -102,7 +103,8 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length,
+            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq,
+                                                 self.max_seq_length,
                                                  signal_model=self.classifier,
                                                  fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp,
@@ -110,7 +112,8 @@ class RSVPCopyPhraseTask(Task):
                                                  lmodel=self.lmodel,
                                                  is_txt_sti=self.is_txt_sti,
                                                  device_name=self.daq.device_info.name,
-                                                 device_channels=self.daq.device_info.channels)
+                                                 device_channels=self.daq.device_info.channels,
+                                                 stimuli_timing=[self.time_cross, self.time_flash])
         except Exception as e:
             print("Error initializing Copy Phrase Task")
             raise e
@@ -152,7 +155,6 @@ class RSVPCopyPhraseTask(Task):
                                   self.wait_screen_message_color):
                 break
 
-            # Why bs for else? #changeforrelease
             if self.copy_phrase[0:len(text_task)] == text_task:
                 target_letter = self.copy_phrase[len(text_task)]
             else:
@@ -207,8 +209,12 @@ class RSVPCopyPhraseTask(Task):
 
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
-                process_data_for_decision(sequence_timing, self.daq, self.window,
-                    self.parameters, self.first_stim_time)
+                process_data_for_decision(
+                    sequence_timing,
+                    self.daq,
+                    self.window,
+                    self.parameters,
+                    self.first_stim_time)
 
 
             # Uncomment this to turn off fake decisions, but use fake data.
