@@ -32,6 +32,7 @@ def offline_analysis(data_folder=None, parameters={}):
         data_folder = load_experimental_data()
 
     mode = 'calibration'
+    trial_length = parameters.get('collection_window_after_trial_length')
 
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
         data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
@@ -46,7 +47,7 @@ def offline_analysis(data_folder=None, parameters={}):
     triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
     _, t_t_i, t_i, offset = trigger_decoder(
         mode=mode,
-        trigger_path=f"{data_folder}/{triggers_file}")
+        trigger_path=f'{data_folder}/{triggers_file}')
 
     # Channel map can be checked from raw_data.csv file.
     # read_data_csv already removes the timespamp column.
@@ -56,13 +57,17 @@ def offline_analysis(data_folder=None, parameters={}):
                                       mode=mode, fs=fs, k=downsample_rate,
                                       offset=offset,
                                       channel_map=channel_map,
-                                      trial_length=parameters.get('collection_window_after_trial_length'))
+                                      trial_length=trial_length)
 
     k_folds = parameters.get('k_folds', 10)
-    model, auc = train_pca_rda_kde_model(x, y, k_folds=10)
+    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     print('Saving offline analysis plots!')
-    generate_offline_analysis_screen(x, y, model, data_folder)
+
+    generate_offline_analysis_screen(
+        x, y, model=model, folder=data_folder,
+        down_sample_rate=downsample_rate,
+        fs=fs)
 
     print('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:

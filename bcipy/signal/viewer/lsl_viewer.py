@@ -17,6 +17,7 @@ from threading import Thread
 
 sns.set(style="whitegrid")
 
+
 class LSLViewer():
 
     def __init__(self, stream, fig, axes,  window, scale, filter_data=True, dejitter=True):
