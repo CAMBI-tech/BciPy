@@ -104,9 +104,11 @@ class DecisionMaker(object):
 
     def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + ['_'],
-                 is_txt_sti=True):
+                 is_txt_sti=True,
+                 stimuli_timing=[1, .2]):
         self.state = state
         self.displayed_state = self.form_display_state(state)
+        self.stimuli_timing = stimuli_timing
 
         # TODO: read from parameters file
         self.alphabet = alphabet
@@ -227,5 +229,6 @@ class DecisionMaker(object):
                 """
         stimuli = \
             best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
-                'list_distribution'][-1], num_sti=1, is_txt=self.is_txt_sti)
+                'list_distribution'][-1], num_sti=1, is_txt=self.is_txt_sti,
+                timing=self.stimuli_timing)
         return stimuli

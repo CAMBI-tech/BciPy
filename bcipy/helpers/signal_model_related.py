@@ -5,6 +5,7 @@ from bcipy.signal.processing.sig_pro import sig_pro
 from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
 
+
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
 
@@ -29,7 +30,8 @@ class CopyPhraseWrapper(object):
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
-                 is_txt_sti=True, device_name='LSL', device_channels=None):
+                 is_txt_sti=True, device_name='LSL', device_channels=None,
+                 stimuli_timing=[1, .2]):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
