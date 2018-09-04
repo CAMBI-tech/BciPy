@@ -7,6 +7,11 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 class RSVPDisplay(object):
     """RSVP Display Object for Sequence Presentation.
@@ -66,6 +71,8 @@ class RSVPDisplay(object):
         """
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
+
+        self.logger = logging
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti
@@ -318,7 +325,7 @@ class RSVPDisplay(object):
             wait_logo.draw()
 
         except Exception:
-            print("Cannot load logo image")
+            self.logger.debug("Cannot load logo image")
             pass
 
         # Draw and flip the screen.

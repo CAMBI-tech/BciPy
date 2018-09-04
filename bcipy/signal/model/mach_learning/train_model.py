@@ -10,6 +10,11 @@ from bcipy.signal.model.mach_learning.generative_mods.function_density_estimatio
 from sklearn import metrics
 from scipy.stats import iqr
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 def train_pca_rda_kde_model(x, y, k_folds=10):
     """ Trains the Cw-PCA RDA KDE model given the input data and labels with
@@ -42,7 +47,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     lam = arg_cv[0]
     gam = arg_cv[1]
-    print('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
+    logging.debug('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
@@ -55,6 +60,6 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.fit(x, y)
 
     # Report AUC
-    print('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
+    logging.debug('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
     return model, auc_cv

@@ -2,6 +2,11 @@ import numpy as np
 import scipy.optimize
 from sklearn import metrics
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
                               split='uniform'):
@@ -169,7 +174,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
                 gamma and AUC values for each fold respectively.
             """
 
-    print('Starting Cross Validation !')
+    logging.debug('Starting Cross Validation !')
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
     return arg_opt

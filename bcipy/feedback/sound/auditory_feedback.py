@@ -10,6 +10,8 @@ class AuditoryFeedback(Feedback):
         # Register Feedback Type
         self.feedback_type = 'Auditory Feedback'
 
+        super(AuditoryFeedback, self).__init__(self.feedback_type)
+
         # Parameters Dictionary
         self.parameters = parameters
 

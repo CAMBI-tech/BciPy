@@ -1,6 +1,11 @@
 import numpy as np
 import os
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
     """
@@ -35,14 +40,14 @@ def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
         with open(filter_location, 'r') as text_file:
             dict_of_filters = eval(text_file.readline())
     except Exception as e:
-        print('filters.txt cannot be found in path that is passed:', filter_location)
+        logging.error('filters.txt cannot be found in path that is passed:', filter_location)
         raise e
 
     # Try to get the required filter from the text file.
     try:
         filt = dict_of_filters[fs]
     except Exception as e:
-        print('filters.txt does not have a filter with sampling frequency provided.')
+        logging.error('filters.txt does not have a filter with sampling frequency provided.')
         raise e
 
     # Precision correction

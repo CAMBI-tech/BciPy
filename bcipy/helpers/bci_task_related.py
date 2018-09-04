@@ -3,6 +3,11 @@ from psychopy import visual, event, core
 import numpy as np
 from typing import Any, List
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
@@ -144,7 +149,7 @@ def process_data_for_decision(sequence_timing, daq, window, parameters, first_se
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        print("Error in daq: get_data()")
+        logging.error("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info

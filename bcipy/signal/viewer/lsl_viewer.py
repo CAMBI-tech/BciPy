@@ -15,6 +15,11 @@ from optparse import OptionParser
 import seaborn as sns
 from threading import Thread
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 sns.set(style="whitegrid")
 
 
@@ -134,7 +139,7 @@ class LSLViewer():
                 sleep(0.2)
 
     def onclick(self, event):
-        print((event.button, event.x, event.y, event.xdata, event.ydata))
+        logging.debug((event.button, event.x, event.y, event.xdata, event.ydata))
 
     def OnKeypress(self, event):
         if event.key == '/':
@@ -185,12 +190,12 @@ if __name__ == '__main__':
     scale = options.scale
     figsize = np.int16(options.figure.split('x'))
 
-    print("looking for an EEG stream...")
+    logging.debug("looking for an EEG stream...")
     streams = resolve_byprop('type', 'EEG', timeout=2)
 
     if len(streams) == 0:
         raise(RuntimeError("Cant find EEG stream"))
-    print("Start aquiring data")
+    logging.debug("Start aquiring data")
 
     fig, axes = plt.subplots(1, 1, figsize=figsize, sharex=True)
     lslv = LSLViewer(streams[0], fig, axes, window, scale, filter_data=filt)

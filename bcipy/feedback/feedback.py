@@ -1,10 +1,17 @@
 REGISTERED_FEEDBACK_TYPES = ['sound', 'visual']
 
+import logging
 
-class Feedback(object):
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
+
+class Feedback:
     """Feedback."""
     def __init__(self, feedback_type):
+        super(Feedback, self).__init__()
         self.feedback_type = feedback_type
+        self.logger = logging
 
     def configure(self):
         raise NotImplementedError()
