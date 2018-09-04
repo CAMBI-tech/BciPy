@@ -271,7 +271,7 @@
     "type": "str"
   },
   "trigger_type": {
-    "value": "sound",
+    "value": "image",
     "section": "bci_config",
     "readableName": "What type of Calibration Trigger should be used",
     "helpTip": "Select a calibration trigger type to be used",

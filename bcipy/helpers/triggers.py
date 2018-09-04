@@ -8,6 +8,7 @@ from psychopy import visual, core
 
 NONE_VALUE = '0'
 
+
 class TriggerCallback:
     timing = None
     first_time = True
@@ -16,7 +17,6 @@ class TriggerCallback:
         if self.first_time:
             self.timing = [stimuli, clock.getTime()]
             self.first_time = False
-
 
     def reset(self):
         self.timing = None
@@ -83,7 +83,6 @@ def _calibration_trigger(experiment_clock,
                 'bcipy/static/images/testing_images/white.png',
                 display.size, 0.75)
 
-
             display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
             if on_trigger:
                 display.callOnFlip(on_trigger, trigger_name)
@@ -95,7 +94,7 @@ def _calibration_trigger(experiment_clock,
 
         else:
             raise Exception(
-                'Dispaly object required for calibration with images!')
+                'Display object required for calibration with images!')
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')

@@ -43,7 +43,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
 
     def __init__(
             self, win, daq, parameters, file_save, fake):
-
+        super(RSVPCopyPhraseCalibrationTask, self).__init__()
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
@@ -88,7 +88,7 @@ class RSVPCopyPhraseCalibrationTask(Task):
         self.enable_breaks = parameters['enable_breaks']
 
     def execute(self):
-
+        self.logger.debug('Starting Copy Phrase Calibration Task!')
         run = True
 
         # get the initial target letter

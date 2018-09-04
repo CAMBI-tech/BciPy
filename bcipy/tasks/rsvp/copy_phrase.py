@@ -41,6 +41,7 @@ class RSVPCopyPhraseTask(Task):
 
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake):
+        super(RSVPCopyPhraseTask, self).__init__()
 
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -65,9 +66,12 @@ class RSVPCopyPhraseTask(Task):
 
         self.num_sti = parameters['num_sti']
         self.len_sti = parameters['len_sti']
-        self.timing = [parameters['time_target'],
-                       parameters['time_cross'],
-                       parameters['time_flash']]
+        self.time_cross = parameters['time_cross']
+        self.time_target = parameters['time_target']
+        self.time_flash = parameters['time_flash']
+        self.timing = [self.time_target,
+                       self.time_cross,
+                       self.time_flash]
 
         self.color = [parameters['target_letter_color'],
                       parameters['fixation_color'],
@@ -96,6 +100,7 @@ class RSVPCopyPhraseTask(Task):
         self.collection_window_len = parameters['collection_window_after_trial_length']
 
     def execute(self):
+        self.logger.debug('Starting Copy Phrase Task!')
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
         task_list = [(str(self.copy_phrase),
                       str(self.copy_phrase[0:self.spelled_letters_count]))]

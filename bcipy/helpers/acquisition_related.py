@@ -91,10 +91,11 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
-    client = DataAcquisitionClient(device=Device(connection_params=connection_params),
-                    processor=FileWriter(filename=filename),
-                    buffer_name=buffer_name,
-                    clock=clock)
+    client = DataAcquisitionClient(
+        device=Device(connection_params=connection_params),
+        processor=FileWriter(filename=filename),
+        buffer_name=buffer_name,
+        clock=clock)
 
     client.start_acquisition()
 

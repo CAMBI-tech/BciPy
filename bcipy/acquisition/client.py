@@ -35,7 +35,7 @@ class _Clock(object):
         return float(self.counter)
 
 
-class DataAcquisitionClient(object):
+class DataAcquisitionClient:
     """Data Acquisition client. The client sets up a separate thread for
     acquisition, writes incoming data to a queue, and processes the data from
     the queue.
@@ -212,7 +212,6 @@ class DataAcquisitionClient(object):
 
         fs = self._device_info.fs
 
-        rownum_at_calib: int
         if self._record_at_calib is None:
             rownum_at_calib = 1
         else:

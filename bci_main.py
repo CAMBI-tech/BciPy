@@ -49,7 +49,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     """Excecute Task.
 
     Executes the desired task by setting up the display window and
-        data acquistion, then passing on to the start_task funtion
+        data acquisition, then passing on to the start_task funtion
         which will initialize experiment.
 
     Input:
@@ -60,7 +60,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
     fake = parameters['fake_data']
 
-    # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
+    # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     #   modules to be loaded.
     if task_type['exp_type'] > 1:
 

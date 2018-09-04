@@ -10,6 +10,7 @@ from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, ge
 from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
+
 class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
@@ -25,7 +26,7 @@ class RSVPCalibrationTask(Task):
 
     Input:
         win (PsychoPy Display Object)
-        daq (Data Acquistion Object)
+        daq (Data Acquisition Object)
         parameters (Dictionary)
         file_save (String)
         fake (Boolean)
@@ -35,6 +36,8 @@ class RSVPCalibrationTask(Task):
 
     """
     def __init__(self, win, daq, parameters, file_save, fake):
+        super(RSVPCalibrationTask, self).__init__()
+
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
@@ -74,6 +77,8 @@ class RSVPCalibrationTask(Task):
         self.enable_breaks = parameters['enable_breaks']
 
     def execute(self):
+
+        self.logger.debug('Starting Calibration Task!')
         run = True
 
         # Check user input to make sure we should be going

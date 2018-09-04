@@ -34,6 +34,7 @@ class RSVPKeyboard(BCIGui):
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
         if self.check_input():
+            self.event_started = True
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = self._cast_experiment_type(
                 event.GetEventObject().GetLabel())
@@ -42,7 +43,6 @@ class RSVPKeyboard(BCIGui):
                 mode, experiment_type, username)
 
             subprocess.Popen(cmd, shell=True)
-            self.event_started = True
 
     def check_input(self) -> bool:
         """Check Input."""
@@ -66,7 +66,7 @@ class RSVPKeyboard(BCIGui):
         return True
 
     def offline_analysis(self, event: wx.Event) -> None:
-        cmd = 'python bcipy/signal_model/offline_analysis.py'
+        cmd = 'python bcipy/signal/model/offline_analysis.py'
         subprocess.Popen(cmd, shell=True)
         self.event_started = True
 

@@ -5,17 +5,11 @@ import datetime
 from os.path import dirname, basename
 
 from bcipy.tasks.task import Task
-
 from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
-
 from bcipy.helpers.stimuli_generation import generate_icon_match_images
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-
 from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-
 from bcipy.helpers.save import _save_session_related_data
-
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 
 from bcipy.helpers.bci_task_related import (
@@ -26,8 +20,6 @@ import glob
 import logging
 from os import path
 
-from psychopy import logging as lg
-lg.console.setLevel(logging.WARNING)
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -56,7 +48,7 @@ class RSVPIconToIconTask(Task):
 
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word, auc_filename):
-
+        super(RSVPIconToIconTask, self).__init__()
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
@@ -114,6 +106,7 @@ class RSVPIconToIconTask(Task):
 
 
     def execute(self):
+        self.logger.debug('Starting Icon to Icon Task!')
         image_array, timing_array = generate_icon_match_images(self.len_sti,
                                                            self.image_path,
                                                            self.num_sti,
@@ -149,7 +142,7 @@ class RSVPIconToIconTask(Task):
                                                  device_name=self.daq.device_info.name,
                                                  device_channels=self.daq.device_info.channels)
         except Exception as e:
-            print("Error initializing Copy Phrase Task")
+            self.logger.debug(f'Error Initializing Icon to Icon Task! {e}')
             raise e
 
         run = True

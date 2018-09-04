@@ -1,3 +1,5 @@
+import logging
+
 from bcipy.helpers.load import read_data_csv, load_experimental_data, \
     load_json_parameters
 from bcipy.signal.processing.sig_pro import sig_pro
@@ -7,6 +9,10 @@ from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition_related import analysis_channels
 import pickle
+
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
 
 def offline_analysis(data_folder=None, parameters={}):
@@ -37,8 +43,8 @@ def offline_analysis(data_folder=None, parameters={}):
     raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
         data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
 
-    print(f'Channels read from csv: {channels}')
-    print(f'Device type: {type_amp}')
+    logging.debug(f'Channels read from csv: {channels}')
+    logging.debug(f'Device type: {type_amp}')
 
     downsample_rate = parameters.get('down_sampling_rate', 2)
     filtered_data = sig_pro(raw_dat, fs=fs, k=downsample_rate)
@@ -62,14 +68,14 @@ def offline_analysis(data_folder=None, parameters={}):
     k_folds = parameters.get('k_folds', 10)
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
-    print('Saving offline analysis plots!')
+    logging.debug('Saving offline analysis plots!')
 
     generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs)
 
-    print('Saving the model!')
+    logging.debug('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
         pickle.dump(model, output)
     return model
