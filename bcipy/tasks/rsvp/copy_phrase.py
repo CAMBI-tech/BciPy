@@ -99,6 +99,8 @@ class RSVPCopyPhraseTask(Task):
         self.min_num_seq = parameters['min_seq_len']
         self.collection_window_len = parameters['collection_window_after_trial_length']
 
+        self.static_offset = parameters['static_trigger_offset']
+
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
@@ -219,7 +221,8 @@ class RSVPCopyPhraseTask(Task):
                     self.daq,
                     self.window,
                     self.parameters,
-                    self.first_stim_time)
+                    self.first_stim_time,
+                    self.static_offset)
 
 
             # Uncomment this to turn off fake decisions, but use fake data.
