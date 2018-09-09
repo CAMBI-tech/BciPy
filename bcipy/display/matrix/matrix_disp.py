@@ -5,6 +5,11 @@ import numpy as np
 import time
 from bcipy.helpers.bci_task_related import alphabet
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 class DisplayMatrix(object):
     """ Matrix Display Object for Sequence Presentation. Animates a sequence
@@ -25,6 +30,7 @@ class DisplayMatrix(object):
                  is_txt_sti=True, alp=None):
 
         self.win = window
+        self.logger = logging
 
         # TASK TEXT
         self.font_task_text = font_task
@@ -94,7 +100,7 @@ class DisplayMatrix(object):
         self.win.flip()
 
     def make_spelling_grid(self):
-                # First Draw the grid!
+        # First Draw the grid!
         alp_idx = 0
 
         # Loop through each row
@@ -157,8 +163,7 @@ def determine_position_on_grid(row_idx, col_idx,
         x = uniform_grid_values_col[col_idx]
         y = uniform_grid_values_row[row_idx]
     except Exception as e:
-        print col_idx
-        print e
+        logging.debug(f'at index: {col_idx} Error: {e}')
 
     # # else:
     # x = 0

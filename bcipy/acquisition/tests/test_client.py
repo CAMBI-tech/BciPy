@@ -5,7 +5,7 @@ Generators are used by a Producer to stream the data at a given frequency.
 import time
 
 import numpy as np
-from bcipy.acquisition.client import Client
+from bcipy.acquisition.client import DataAcquisitionClient
 from bcipy.acquisition.processor import Processor
 from bcipy.acquisition.protocols.device import Device
 from mock import mock_open, patch
@@ -68,11 +68,11 @@ class _AccumulatingProcessor(Processor):
         self.data.put(record)
 
 
-class TestClient(unittest.TestCase):
-    """Main Test class for client code."""
+class TestDataAcquistionClient(unittest.TestCase):
+    """Main Test class for DataAcquisitionClient code."""
 
     def __init__(self, *args, **kwargs):
-        super(TestClient, self).__init__(*args, **kwargs)
+        super(TestDataAcquistionClient, self).__init__(*args, **kwargs)
         num_channels = 25
         num_records = 500
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
@@ -87,7 +87,7 @@ class TestClient(unittest.TestCase):
     #     q = multiprocessing.Queue()
     #     processor = _AccumulatingProcessor(q)
 
-    #     daq = Client(device=device, processor=processor)
+    #     daq = DataAcquisitionClient(device=device, processor=processor)
     #     daq.start_acquisition()
     #     time.sleep(0.1)
     #     daq.stop_acquisition()
@@ -108,7 +108,7 @@ class TestClient(unittest.TestCase):
         """Data should be queryable."""
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        daq = Client(device=device,
+        daq = DataAcquisitionClient(device=device,
                      processor=_MockProcessor())
         daq.start_acquisition()
         time.sleep(0.1)
@@ -116,7 +116,7 @@ class TestClient(unittest.TestCase):
 
         # Get all records
         data = daq.get_data()
-        self.assertTrue(len(data) > 0, "Client should have data.")
+        self.assertTrue(len(data) > 0, "DataAcquisitionClient should have data.")
         for i, record in enumerate(data):
             self.assertEqual(record.data, self.mock_data[i])
 
@@ -127,7 +127,7 @@ class TestClient(unittest.TestCase):
 
         clock = _MockClock()
         clock.counter = 10  # ensures that clock gets reset.
-        daq = Client(device=_MockDevice(data=self.mock_data,
+        daq = DataAcquisitionClient(device=_MockDevice(data=self.mock_data,
                                         channels=self.mock_channels),
                      processor=_MockProcessor(),
                      buffer_name='buffer_client_test_clock.db',

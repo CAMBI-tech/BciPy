@@ -35,7 +35,7 @@ class _Clock(object):
         return float(self.counter)
 
 
-class Client(object):
+class DataAcquisitionClient:
     """Data Acquisition client. The client sets up a separate thread for
     acquisition, writes incoming data to a queue, and processes the data from
     the queue.
@@ -212,7 +212,6 @@ class Client(object):
 
         fs = self._device_info.fs
 
-        rownum_at_calib: int
         if self._record_at_calib is None:
             rownum_at_calib = 1
         else:
@@ -414,7 +413,7 @@ if __name__ == "__main__":
     device = Device(connection_params=args.params)
     if args.channels:
         device.channels = args.channels.split(',')
-    daq = Client(device=device,
+    daq = DataAcquisitionClient(device=device,
                  processor=FileWriter(filename=args.filename),
                  buffer_name=args.buffer,
                  delete_archive=True)

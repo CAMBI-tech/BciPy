@@ -18,7 +18,7 @@ def main():
 
     import bcipy.acquisition.datastream.generator as generator
     import bcipy.acquisition.protocols.registry as registry
-    from bcipy.acquisition.client import Client
+    from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.server import DataServer
 
     host = '127.0.0.1'
@@ -33,7 +33,7 @@ def main():
     # Device is for reading data.
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': host, 'port': port})
-    client = Client(device=dsi_device)
+    client = DataAcquisitionClient(device=dsi_device)
 
     try:
         server.start()

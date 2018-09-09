@@ -3,7 +3,7 @@ from typing import List
 
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import Client, _Clock
+from bcipy.acquisition.client import DataAcquisitionClient, _Clock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
 from bcipy.acquisition.processor import FileWriter
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
@@ -91,10 +91,11 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
-    client = Client(device=Device(connection_params=connection_params),
-                    processor=FileWriter(filename=filename),
-                    buffer_name=buffer_name,
-                    clock=clock)
+    client = DataAcquisitionClient(
+        device=Device(connection_params=connection_params),
+        processor=FileWriter(filename=filename),
+        buffer_name=buffer_name,
+        clock=clock)
 
     client.start_acquisition()
 

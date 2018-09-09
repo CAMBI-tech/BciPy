@@ -1,6 +1,6 @@
 import numpy as np
-from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
-from bcipy.signal_model.mach_learning.train_model import train_pca_rda_kde_model
+from bcipy.helpers.signal_model_related import CopyPhraseWrapper
+from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.bci_task_related import alphabet
 
 channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]

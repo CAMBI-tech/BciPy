@@ -3,6 +3,11 @@ from psychopy import visual, event, core
 import numpy as np
 from typing import Any, List
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     """Fake Copy Phrase Decision.
@@ -72,7 +77,13 @@ def alphabet(parameters=None):
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq, window, parameters, first_session_stim_time):
+def process_data_for_decision(
+        sequence_timing,
+        daq,
+        window,
+        parameters,
+        first_session_stim_time,
+        static_offset=0):
     """Process Data for Decision.
 
     Processes the raw data (triggers and EEG) into a form that can be passed to
@@ -103,13 +114,12 @@ def process_data_for_decision(sequence_timing, daq, window, parameters, first_se
     daq_offset = daq.offset
 
     if daq_offset:
-        offset = daq_offset - first_session_stim_time
+        offset = daq_offset - first_session_stim_time + static_offset
         time1 = (first_stim_time + offset) * daq.device_info.fs
         time2 = (last_stim_time + offset + window_length) * daq.device_info.fs
     else:
-        time1 = first_stim_time * daq.device_info.fs
-        time2 = (last_stim_time + window_length) * daq.device_info.fs
-
+        time1 = (first_stim_time + static_offset) * daq.device_info.fs
+        time2 = (last_stim_time + static_offset + window_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -144,7 +154,7 @@ def process_data_for_decision(sequence_timing, daq, window, parameters, first_se
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        print("Error in daq: get_data()")
+        logging.error("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info

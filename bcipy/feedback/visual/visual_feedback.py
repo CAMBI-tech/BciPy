@@ -11,6 +11,8 @@ class VisualFeedback(Feedback):
         # Register Feedback Type
         self.feedback_type = 'Visual Feedback'
 
+        super(VisualFeedback, self).__init__(self.feedback_type)
+        
         # Display Window
         self.display = display
 
@@ -36,7 +38,7 @@ class VisualFeedback(Feedback):
     def administer(self, stimulus, message=None, compare_assertion=None):
         """Administer.
 
-        Adminster visual feedback. Timing information from parameters,
+        Administer visual feedback. Timing information from parameters,
             current feedback given by stimulus, if assertion type feedback
             wanted, it's added as an optional argument.
         """
