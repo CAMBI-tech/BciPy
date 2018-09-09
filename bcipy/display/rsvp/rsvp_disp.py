@@ -85,7 +85,6 @@ class RSVPDisplay(object):
         self.experiment_clock = experiment_clock
         self.timing_clock = core.Clock()
 
-
         # Used to handle writing the marker stimulus
         self.marker_writer = marker_writer or NullMarkerWriter()
 
@@ -181,13 +180,16 @@ class RSVPDisplay(object):
             self.task.update(text=text, color_list=color_list, pos=pos)
 
     def do_sequence(self):
-        """Animate a sequence."""
+        """Do Sequence.
+
+        Animates a sequence of flashing letters to achieve RSVP.
+        """
 
         # init an array for timing information
         timing = []
 
         if self.first_run:
-            # Play a sequence start sound to help orient triggers
+            # play a sequence start sound to help orient triggers
             stim_timing = _calibration_trigger(
                 self.experiment_clock,
                 trigger_type=self.trigger_type, display=self.win,
@@ -198,50 +200,50 @@ class RSVPDisplay(object):
             self.first_stim_time = stim_timing[-1]
             self.first_run = False
 
-        # Do the sequence
+        # do the sequence
         for idx in range(len(self.stim_sequence)):
 
-            # Set a static period to do all our stim setting.
-            #   Will warn if ISI value is violated.
+            # set a static period to do all our stim setting.
+            #   will warn if ISI value is violated.
             self.staticPeriod.start(self.static_period_time)
 
-            # Turn ms timing into frames! Much more accurate!
+            # turn ms timing into frames! Much more accurate!
             self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
 
-            #Check if stimulus needs to use a non-default size
+            # check if stimulus needs to use a non-default size
             if self.size_list_sti:
                 this_stimuli_size = self.size_list_sti[idx]
             else:
                 this_stimuli_size = self.height_stim
 
             # Set the Stimuli attrs
-            #Test if stimulus is an image or sound file
             if self.stim_sequence[idx].endswith('.png'):
                 self.sti = self.create_stimulus(mode='image', height_int=this_stimuli_size)
                 self.sti.image = self.stim_sequence[idx]
-                self.sti.size = resize_image(self.sti.image, self.sti.win.size,
-                                                             this_stimuli_size)
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size, this_stimuli_size)
                 sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
             else:
-                #Text stimulus
+                # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
 
-                #Test whether the word will be too big for the screen
+                # test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
                 if text_width > self.win.size[0]:
                     info = get_system_info()
                     text_height = self.sti.boundingBox[1]
-                    #If we are in fullscreen, text size in Psychopy norm units
-                    #is monitor width/monitor height
+                    # If we are in full-screen, text size in Psychopy norm units
+                    # is monitor width/monitor height
                     if self.win.size[0] == info['RESOLUTION'][0]:
-                        new_text_width = info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                        new_text_width = info['RESOLUTION'][0] / info['RESOLUTION'][1]
                     else:
-                        #If not, text width is calculated relative to both
-                        #monitor size and window size
-                        new_text_width = (self.win.size[1]/info['RESOLUTION'][1]) * info['RESOLUTION'][0]/info['RESOLUTION'][1]
+                        # If not, text width is calculated relative to both
+                        # monitor size and window size
+                        new_text_width = (
+                            self.win.size[1] / info['RESOLUTION'][1]) * (
+                                info['RESOLUTION'][0] / info['RESOLUTION'][1])
                     new_text_height = (text_height * new_text_width) / text_width
                     self.sti.height = new_text_height
 
@@ -339,12 +341,23 @@ class RSVPDisplay(object):
             mode: "text" or "image", determines which to return
         """
         if mode == "text":
-            return visual.TextStim(win=self.win, color='white',
-                   height=height_int, text='+',
-                   font=self.font_stim, pos=self.pos_sti,
-                   wrapWidth=None, colorSpace='rgb',
-                   opacity=1, depth=-6.0)
+            return visual.TextStim(
+                win=self.win,
+                color='white',
+                height=height_int,
+                text='+',
+                font=self.font_stim,
+                pos=self.pos_sti,
+                wrapWidth=None,
+                colorSpace='rgb',
+                opacity=1,
+                depth=-6.0)
         if mode == "image":
-            return visual.ImageStim(win=self.win, image=None, mask=None,
-                      units='', pos=self.pos_sti,
-                      size=(height_int, height_int), ori=0.0)
+            return visual.ImageStim(
+                win=self.win,
+                image=None,
+                mask=None,
+                units='',
+                pos=self.pos_sti,
+                size=(height_int, height_int),
+                ori=0.0)

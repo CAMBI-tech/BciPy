@@ -20,8 +20,7 @@ def main():
     import bcipy.acquisition.protocols.registry as registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
-    from bcipy.acquisition.datastream.server import start_socket_server, await_start
-
+    from bcipy.acquisition.datastream.server import await_start
 
     host = '127.0.0.1'
     port = 9000
@@ -31,10 +30,10 @@ def main():
     channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
     # The Protocol is for mocking data.
     server = LslDataServer(params={'name': 'LSL',
-                                            'channels': channels,
-                                            'hz': sample_rate},
-                            generator=generator.random_data(
-                                channel_count=channel_count))
+                                   'channels': channels,
+                                   'hz': sample_rate},
+                           generator=generator.random_data(
+                           channel_count=channel_count))
     await_start(server)
 
     # Device is for reading data.

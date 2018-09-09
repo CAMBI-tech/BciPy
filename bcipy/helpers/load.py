@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from tkinter import Tk
 import numpy as np
 import pandas as pd

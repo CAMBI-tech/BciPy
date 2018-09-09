@@ -15,7 +15,7 @@ class TriggerCallback:
     timing = None
     first_time = True
 
-    def callback(self, clock: core.Clock, stimuli:str):
+    def callback(self, clock: core.Clock, stimuli: str) -> None:
         if self.first_time:
             self.timing = [stimuli, clock.getTime()]
             self.first_time = False
@@ -25,9 +25,9 @@ class TriggerCallback:
         self.first_time = True
 
 
-def _calibration_trigger(experiment_clock,
-                         trigger_type='sound',
-                         trigger_name='calibration_trigger',
+def _calibration_trigger(experiment_clock: core.Clock,
+                         trigger_type: str='sound',
+                         trigger_name: str='calibration_trigger',
                          display=None,
                          on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
@@ -37,16 +37,17 @@ def _calibration_trigger(experiment_clock,
         code aims to operationalize the approach to finding the correct DAQ samples in
         relation to our trigger code.
 
-        Args:
-                experiment_clock(clock): clock with getTime() method, which is used in the code
-                    to report timing of stimuli
-                trigger_type(string): type of trigger that is desired (sound, image, etc)
-                display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
-                on_trigger(function): optional callback; if present gets called
-                         when the calibration trigger is fired; accepts a single
-                         parameter for the timing information.
+    PARAMETERS
+    ---------
+        experiment_clock(clock): clock with getTime() method, which is used in the code
+            to report timing of stimuli
+        trigger_type(string): type of trigger that is desired (sound, image, etc)
+        display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
+        on_trigger(function): optional callback; if present gets called
+                 when the calibration trigger is fired; accepts a single
+                 parameter for the timing information.
         Return:
-                timing(array): timing values for the calibration triggers to be written to trigger file or
+            timing(array): timing values for the calibration triggers to be written to trigger file or
                     used to calculate offsets.
     """
     trigger_callback = TriggerCallback()
@@ -56,11 +57,11 @@ def _calibration_trigger(experiment_clock,
         import sounddevice as sd
         import soundfile as sf
 
-        timing = play_sound(
+        play_sound(
             sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
             dtype='float32',
             track_timing=True,
-            sound_callback=on_trigger,
+            sound_callback=trigger_callback,
             sound_load_buffer_time=0.5,
             experiment_clock=experiment_clock,
             trigger_name='calibration_trigger')
@@ -78,11 +79,11 @@ def _calibration_trigger(experiment_clock,
                 display.size, 0.75)
 
             display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
-            if on_trigger:
+            if on_trigger is not None:
                 display.callOnFlip(on_trigger, trigger_name)
 
             presentation_time = int(1 * display.getActualFrameRate())
-            for Nframes in range(presentation_time):
+            for num_frames in range(presentation_time):
                 calibration_box.draw()
                 display.flip()
 
@@ -96,13 +97,11 @@ def _calibration_trigger(experiment_clock,
     return trigger_callback.timing
 
 
-
 def _write_triggers_from_sequence_calibration(
-        array,
-        trigger_file,
-        offset=None):
-    """
-    Write triggers from calibration.
+        array: list,
+        trigger_file: TextIO,
+        offset: bool=False):
+    """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
         target letter based on the first presented letter in sequence, then
