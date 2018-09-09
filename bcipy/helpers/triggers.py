@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.stimuli_generation import resize_image, play_sound
 import csv
 from typing import TextIO, List, Tuple
 
 from psychopy import visual, core
 
 NONE_VALUE = '0'
+SOUND_TYPE = 'sound'
+IMAGE_TYPE = 'image'
 
 
 class TriggerCallback:
@@ -50,28 +52,20 @@ def _calibration_trigger(experiment_clock,
     trigger_callback = TriggerCallback()
 
     # If sound trigger is selected, output calibration tones
-    if trigger_type == 'sound':
+    if trigger_type == SOUND_TYPE:
         import sounddevice as sd
         import soundfile as sf
 
-        # Init the sound object and give it some time to buffer
-        try:
-            data, fs = sf.read(
-                'bcipy/static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
-            core.wait(.5)
-        except:
-            raise Exception('Sound object could not be found or Initialized')
+        timing = play_sound(
+            sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
+            dtype='float32',
+            track_timing=True,
+            sound_callback=on_trigger,
+            sound_load_buffer_time=0.5,
+            experiment_clock=experiment_clock,
+            trigger_name='calibration_trigger')
 
-        # Play the fist sound (used to calibrate) and wait.
-        sd.play(data, fs)
-
-        trigger_callback.callback(experiment_clock, trigger_name)
-        if on_trigger:
-            on_trigger(trigger_callback.timing)
-
-        core.wait(1)
-
-    elif trigger_type == 'image':
+    elif trigger_type == IMAGE_TYPE:
         if display:
             calibration_box = visual.ImageStim(
                 win=display,
@@ -100,6 +94,7 @@ def _calibration_trigger(experiment_clock,
         raise Exception('Trigger type not implemented for Calibration yet!')
 
     return trigger_callback.timing
+
 
 
 def _write_triggers_from_sequence_calibration(

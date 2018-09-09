@@ -29,8 +29,11 @@ class TestAcquisition(unittest.TestCase):
     def test_default_values(self):
         print("Testing init_eeg_acquisition with default values.")
 
+        self.parameters['acq_device'] = 'DSI'
+
         client, server = init_eeg_acquisition(
             self.parameters, self.save, server=True)
+
         client.start_acquisition()
         time.sleep(0.1)
         client.stop_acquisition()
@@ -39,7 +42,7 @@ class TestAcquisition(unittest.TestCase):
         server.join()
 
         self.assertTrue('raw_data.csv' in client._processor._filename)
-        self.assertEqual(client.device_info.name, 'DSI')
+        self.assertEqual(client.device_info.name, self.parameters['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
     def test_allows_customization(self):
@@ -49,6 +52,7 @@ class TestAcquisition(unittest.TestCase):
         params = self.parameters
         params['raw_data_name'] = f
         params['acq_port'] = 9000
+        params['acq_device'] = 'DSI'
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 
@@ -59,7 +63,7 @@ class TestAcquisition(unittest.TestCase):
         server.join()
 
         self.assertTrue(f in client._processor._filename)
-        self.assertEqual(client.device_info.name, 'DSI')
+        self.assertEqual(client.device_info.name, params['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
     def test_can_use_lsl(self):
@@ -77,7 +81,7 @@ class TestAcquisition(unittest.TestCase):
         server.join()
 
         self.assertEqual(client.device_info.name, 'LSL')
-        self.assertEqual(client.device_info.fs, 512)
+        self.assertEqual(client.device_info.fs, 256)
 
 
 if __name__ == '__main__':

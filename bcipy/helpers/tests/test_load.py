@@ -53,3 +53,6 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
+
+if __name__ == '__main__':
+    unittest.main()

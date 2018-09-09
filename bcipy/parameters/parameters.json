@@ -289,6 +289,14 @@
     "recommended_values": "",
     "type": "directorypath"
   },
+  "offline_analysis_tone": {
+    "value": "bcipy/static/sounds/beep.wav",
+    "section": "bci_config",
+    "readableName": "Path to offline analysis tone sound files",
+    "helpTip": "Where is the tone you want to play after offline analysis completes.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
   "time_flash": {
     "value": "0.25",
     "section": "bci_config",
