@@ -17,19 +17,30 @@ def generate_offline_analysis_screen(
         save_figure=True,
         down_sample_rate=2,
         fs=300,
-        plot_x_ticks=8) -> None:
+        plot_x_ticks=8,
+        plot_average=True,
+        show_figure=False) -> None:
     """ Offline Analysis Screen.
+
     Generates the information figure following the offlineAnalysis.
     The figure has multiple tabs containing the average ERP plots
 
-    Args:
-        x(ndarray[float]): C x N x k data array
-        y(ndarray[int]): N x k observation (class) array
-            N is number of samples k is dimensionality of features
-            C is number of channels
-        model(): trained model for data
-        folder(str): Folder of the data
+    PARAMETERS
+    ----------
 
+    x(ndarray[float]): C x N x k data array
+    y(ndarray[int]): N x k observation (class) array
+        N is number of samples k is dimensionality of features
+        C is number of channels
+    model(): trained model for data
+    folder(str): Folder of the data
+    plot_lik_dens: boolean: whether or not to plot likelihood densities
+    save_figures: boolean: whether or not to save the plots as PDF
+    down_sample_rate: downsampling rate applied to signal (if any)
+    fs (sampling_rate): original sampling rate of the signal
+    plot_x_ticks: number of ticks desired on the ERP plot
+    plot_average: boolean: whether or not to average over all channels
+    show_figure: boolean: whether or not to show the figures generated
     """
     classes = np.unique(y)
 
@@ -39,20 +50,39 @@ def generate_offline_analysis_screen(
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
 
-    count = 1
-    while count < means[0].shape[0]:
-        ax1.plot(means[0][count, :])
-        ax2.plot(means[1][count, :])
-        count += 1
+    if plot_average:
+        # find the mean across rows for non target and target
+        non_target_mean = np.mean(means[0], axis=0)
+        target_mean = np.mean(means[1], axis=0)
+
+        # plot the means
+        ax1.plot(non_target_mean)
+        ax2.plot(target_mean)
+
+    else:
+        count = 1
+        # Loop through all the channels and plot each on the non target/target subplots
+        while count < means[0].shape[0]:
+            ax1.plot(means[0][count, :])
+            ax2.plot(means[1][count, :])
+            count += 1
 
     # data points
     data_length = len(means[0][1, :])
 
-    labels = [(x * down_sample_rate / fs) * 1000 for x in range(data_length)
-              if (x% round(data_length/plot_x_ticks)) == 0]
+    # generate appropriate data labels for the figure
+    lower = 0
 
+    # find the upper length of data and convert to seconds
+    upper = data_length * down_sample_rate / fs * 1000
+
+    # make the labels
+    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in range(plot_x_ticks)]
+
+    # make sure it starts at zero
     labels.insert(0, 0)
 
+    # set the labels
     ax1.set_xticklabels(labels)
     ax2.set_xticklabels(labels)
 
@@ -61,12 +91,11 @@ def generate_offline_analysis_screen(
     fig.text(0.06, 0.5, '$\mu V$', ha='center', va='center',
              rotation='vertical')
 
-    ax1.set_title('Mean non-target ERP')
-    ax2.set_title('Mean target ERP')
+    ax1.set_title('Non-target ERP')
+    ax2.set_title('Target ERP')
 
     if save_figure:
         fig.savefig(f'{folder}\mean_erp.pdf', bbox_inches='tight', format='pdf')
-
 
     if plot_lik_dens:
         fig, ax = plt.subplots()
@@ -88,6 +117,9 @@ def generate_offline_analysis_screen(
 
         if save_figure:
             fig.savefig(f'{folder}\lik_dens.pdf', bbox_inches='tight', format='pdf')
+
+    if show_figure:
+        plt.show()
 
 
 def visualize_csv_eeg_triggers(trigger_col=None):
@@ -133,4 +165,6 @@ if __name__ == '__main__':
     x = pickle.load(open('bcipy/helpers/tests/resources/mock_x_generate_erp.pkl', 'rb'))
     y = pickle.load(open('bcipy/helpers/tests/resources/mock_y_generate_erp.pkl', 'rb'))
 
-    generate_offline_analysis_screen(x, y, folder='bcipy', plot_lik_dens=False, save_figure=True)
+    # generate the offline analysis screen. show figure at the end
+    generate_offline_analysis_screen(
+        x, y, folder='bcipy', plot_lik_dens=False, save_figure=False, show_figure=True)
