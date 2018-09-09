@@ -37,7 +37,8 @@ class CopyPhraseWrapper(object):
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
                                             state=task_list[0][1],
                                             alphabet=alp,
-                                            is_txt_sti=is_txt_sti)
+                                            is_txt_sti=is_txt_sti,
+                                            stimuli_timing=stimuli_timing)
         self.alp = alp
 
         self.signal_model = signal_model
