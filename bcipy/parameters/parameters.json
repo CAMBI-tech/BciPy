@@ -85,7 +85,7 @@
     "type": "float"
   },
   "text_task": {
-    "value": "SPELL_THIS_WORD",
+    "value": "HELLO_WORLD",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
@@ -101,7 +101,7 @@
     "type": "int"
   },
   "max_minutes": {
-    "value": "5",
+    "value": "10",
     "section": "bci_config",
     "readableName": "Max Time to Spell",
     "helpTip": "The maximum time (in minutes) allowed to attempt to spell a Copy Phrase before stopping.",
@@ -271,7 +271,7 @@
     "type": "str"
   },
   "trigger_type": {
-    "value": "sound",
+    "value": "image",
     "section": "bci_config",
     "readableName": "What type of Calibration Trigger should be used",
     "helpTip": "Select a calibration trigger type to be used",
@@ -438,6 +438,14 @@
     "helpTip": "Raw Data Filename",
     "recommended_values": "",
     "type": "str"
+  },
+  "static_trigger_offset": {
+    "value": ".1",
+    "section": "bci_config",
+    "readableName": "Static Trigger Offset",
+    "helpTip": "Known offset of the system being used in seconds. Do not edit this unless you know what you are doing!",
+    "recommended_values": "",
+    "type": "float"
   },
   "triggers_file_name": {
     "value": "triggers.txt",
