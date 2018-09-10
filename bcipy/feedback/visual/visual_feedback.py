@@ -12,7 +12,7 @@ class VisualFeedback(Feedback):
         self.feedback_type = 'Visual Feedback'
 
         super(VisualFeedback, self).__init__(self.feedback_type)
-        
+
         # Display Window
         self.display = display
 

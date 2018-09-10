@@ -2,6 +2,7 @@ from psychopy import core
 from bcipy.tasks.task import Task
 
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
@@ -100,6 +101,10 @@ class RSVPCopyPhraseTask(Task):
         self.collection_window_len = parameters['collection_window_after_trial_length']
 
         self.static_offset = parameters['static_trigger_offset']
+        self.show_feedback = parameters['show_feedback']
+
+        if self.show_feedback:
+            self.feedback = VisualFeedback(self.window, self.parameters, self.experiment_clock)
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
@@ -224,7 +229,6 @@ class RSVPCopyPhraseTask(Task):
                     self.first_stim_time,
                     self.static_offset)
 
-
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
             if self.fake:
@@ -291,6 +295,10 @@ class RSVPCopyPhraseTask(Task):
                 # Get the current task text from the decision maker
                 text_task = copy_phrase_task.decision_maker.displayed_state
 
+            # if a letter was selected and feedback enabled, show the chosen letter
+            if new_epoch and self.show_feedback:
+                self.feedback.administer(text_task[-1], message='Selected:')
+
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()
             data['total_number_epochs'] = epoch_counter
@@ -312,6 +320,9 @@ class RSVPCopyPhraseTask(Task):
 
             # Increment sequence counter
             seq_counter += 1
+
+        # Update task state and reset the static
+        self.rsvp.update_task_state(text=text_task, color_list=['white'])
 
         # Say Goodbye!
         self.rsvp.text = trial_complete_message(self.window, self.parameters)
