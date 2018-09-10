@@ -588,7 +588,7 @@
     "type": "str"
   },
   "show_feedback": {
-    "value": "false",
+    "value": "true",
     "section": "feedback_config",
     "readableName": "show_feedback",
     "helpTip": "Show Feedback for the Task. Must be configured per task.",

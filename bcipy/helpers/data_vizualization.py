@@ -18,7 +18,7 @@ def generate_offline_analysis_screen(
         down_sample_rate=2,
         fs=300,
         plot_x_ticks=8,
-        plot_average=True,
+        plot_average=False,
         show_figure=False) -> None:
     """ Offline Analysis Screen.
 
