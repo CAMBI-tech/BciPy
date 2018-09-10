@@ -163,7 +163,7 @@ class TestDataAcquistionClient(unittest.TestCase):
             mock_data.append(d)
 
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
-        daq = Client(device=device,
+        daq = DataAcquisitionClient(device=device,
                      processor=_MockProcessor(),
                      buffer_name='buffer_client_test_offset.db',
                      clock=_MockClock())
@@ -195,7 +195,7 @@ class TestDataAcquistionClient(unittest.TestCase):
             mock_data.append(d)
 
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
-        daq = Client(device=device,
+        daq = DataAcquisitionClient(device=device,
                      processor=_MockProcessor(),
                      clock=_MockClock(),
                      buffer_name='buffer_client_test_missing_offset.db')
@@ -224,7 +224,7 @@ class TestDataAcquistionClient(unittest.TestCase):
             mock_data.append(d)
 
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
-        daq = Client(device=device,
+        daq = DataAcquisitionClient(device=device,
                      processor=_MockProcessor(),
                      buffer_name='buffer_client_test_offset.db',
                      clock=_MockClock())
@@ -257,7 +257,7 @@ class TestDataAcquistionClient(unittest.TestCase):
             mock_data.append(d)
 
         device = _MockDevice(data=mock_data, channels=channels, fs=fs)
-        daq = Client(device=device,
+        daq = DataAcquisitionClient(device=device,
                      processor=_MockProcessor(),
                      buffer_name='buffer_client_test_get_data_for_clock.db',
                      clock=_MockClock())

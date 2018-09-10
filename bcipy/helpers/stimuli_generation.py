@@ -301,7 +301,6 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
 
     if experiment_length > len(image_array) - 1:
         raise Exception('Number of images to be displayed on screen is longer than number of images available')
-        return
 
     # Generate indexes of target images
     target_image_numbers = np.random.randint(0, len(image_array), number_of_sequences)
@@ -382,7 +381,7 @@ def play_sound(sound_file_path: str,
         loading sound into memory and after playing. If desired, marker writers or list based
         timing with psychopy clocks may be passed and sound timing returned.
 
-    
+
     PARAMETERS
     ----------
     :param: sound_file_path
@@ -394,15 +393,16 @@ def play_sound(sound_file_path: str,
     :param: experiment_clock: psychopy clock to get time of sound stimuli
     :param: trigger_name: name of the sound trigger
     :param: timing: list of triggers in the form of trigger name, trigger timing
-    :resp: timing 
+    :resp: timing
     """
 
     try:
         # load in the sound file and wait some time before playing
         data, fs = sf.read(
-                sound_file_path, dtype=dtype)
+            sound_file_path, dtype=dtype)
         core.wait(sound_load_buffer_time)
-    except:
+
+    except Exception:
         raise Exception('StimGenPlaySoundError: sound file could not be found or initialized.')
 
     #  if timing is wanted, get trigger timing for this sound stimuli
