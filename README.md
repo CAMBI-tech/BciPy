@@ -5,6 +5,8 @@
 
 It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
 
+It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (10) and Mac OSx (High Sierra) at this time.
+
 ### Contributions Welcome!
 
 This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
@@ -36,8 +38,7 @@ Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Ok
 
 ## Dependencies
 ---------------
-This project requires Psychopy, Python v 3.6.5, and other packages. See requirements.txt. When possible integration with other open source
-libraries will be done. We will prioritize those integrations or refactors.
+This project requires Psychopy, Python v 3.6.5 (or for Windows 7: v.3.6.0), and other packages. See requirements.txt. When possible integration with other open source libraries will be done.
 
 
 ## Installation
@@ -110,6 +111,8 @@ This repository uses pytest for execution of tests. You may execute them by:
 
 ## Contribution Guidelines
 --------------------------
+
+We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
 1. All added code will need tests and a demo (if a large feature).
 2. All tests must pass to merge, even if they are seemingly unrelated to your task.

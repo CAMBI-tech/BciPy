@@ -492,7 +492,7 @@
     "type": "bool"
   },
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -500,7 +500,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
