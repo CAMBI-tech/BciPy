@@ -39,7 +39,7 @@ REQUIRED = [
     'PsychoPy==1.90.2',
     'pytz==2017.2',
     'six==1.11.0',
-    'numpy==1.13.3',
+    'numpy==1.15.1',
     'scipy==1.0.0',
     'future==0.16.0',
     'sklearn==0.0',
