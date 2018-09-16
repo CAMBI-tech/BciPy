@@ -16,12 +16,12 @@ class LangModel:
 
     def __init__(self, localpath2fst, host="127.0.0.1", port="5000", logfile="log"):
         """
-        Initiate the langModel class. Primarly initializing
+        Initiate the langModel class. Primarily initializing
         is aimed at establishing the tcp/ip connection
         between the host (local machine) and its server
         (the docker machine)
         Establishing the connection and running the server
-        are done in a single operartion
+        are done in a single operation
         Input:
           localpath2fst (str) - the local path to the fst file
           host (str) - host machine ip address
@@ -34,16 +34,16 @@ class LangModel:
         if os_version.startswith('Windows'):
             # Setup the environment variables.
             docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
-            docker_instructions = docker_env_cmd.stdout.read().split('\n')
+            docker_instructions = docker_env_cmd.stdout.read().decode().split('\n')
             for instruction in docker_instructions:
                 if instruction.startswith('SET'):
                     environ_pair_str = instruction[instruction.find(' ')+1:]
                     var_name, var_value = environ_pair_str.split('=')
                     os.environ[var_name] = var_value
-            # Overides the local ip as Windows 7 uses docker machine hence would
+            # Overrides the local ip as Windows 7 uses docker machine hence would
             # fail to bind.
             docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
-            host = docker_machine_ip_cmd.stdout.read().strip()
+            host = str(docker_machine_ip_cmd.stdout.read().strip())
 
 
         # assert input path validity
@@ -80,7 +80,7 @@ class LangModel:
         except:
             pass
 
-        # create a new contaienr from image
+        # create a new container from image
         self.container = client.containers.run(
             image='lmimage',
             command='python server.py',
@@ -215,5 +215,3 @@ class LangModel:
         # print a json dict of the priors
         return self.priors
 
-if __name__ == '__main__':
-    unittest.main()

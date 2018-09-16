@@ -3,7 +3,7 @@ import os
 from bcipy.language_model.language_model import LangModel
 
 # path to fst in bci repo on local machiene
-abs_path_fst = os.path.abspath("./language_model/fst/brown_closure.n5.kn.fst")
+abs_path_fst = os.path.abspath("bcipy/language_model/fst/brown_closure.n5.kn.fst")
 
 # local fst
 localfst = abs_path_fst

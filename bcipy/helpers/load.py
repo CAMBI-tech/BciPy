@@ -1,11 +1,15 @@
 from tkinter import Tk
 import numpy as np
 import pandas as pd
+import logging
 from codecs import open as codecsopen
 from json import load as jsonload
 import pickle
 
 from tkinter.filedialog import askopenfilename, askdirectory
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
 
 def _cast_parameters(parameters: dict) -> dict:
@@ -98,7 +102,7 @@ def load_experimental_data() -> str:
     except Exception as error:
         raise error
 
-    print("Loaded Experimental Data From: %s" % filename)
+    logging.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
