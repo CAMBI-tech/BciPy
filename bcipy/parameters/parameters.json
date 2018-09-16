@@ -1,6 +1,6 @@
 {
   "languagemodelenabled": {
-    "value": "true",
+    "value": "false",
     "section": "lang_model_config",
     "readableName": "Language Model Enabled",
     "helpTip": "This is the language model.",
