@@ -1,6 +1,6 @@
 {
   "languagemodelenabled": {
-    "value": "true",
+    "value": "false",
     "section": "lang_model_config",
     "readableName": "Language Model Enabled",
     "helpTip": "This is the language model.",
@@ -21,7 +21,7 @@
     "readableName": "Language Model",
     "helpTip": "FST file for language model",
     "recommended_values": "",
-    "type": "str"
+    "type": "filepath"
   },
   "lang_model_server_host": {
     "value": "127.0.0.1",
@@ -85,7 +85,7 @@
     "type": "float"
   },
   "text_task": {
-    "value": "SPELL_THIS_WORD",
+    "value": "HELLO_WORLD",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",
@@ -101,7 +101,7 @@
     "type": "int"
   },
   "max_minutes": {
-    "value": "5",
+    "value": "10",
     "section": "bci_config",
     "readableName": "Max Time to Spell",
     "helpTip": "The maximum time (in minutes) allowed to attempt to spell a Copy Phrase before stopping.",
@@ -282,12 +282,20 @@
     "type": "str"
   },
   "path_to_presentation_images": {
-    "value": "../bci/static/images/rsvp_images/",
+    "value": "bcipy/static/images/bci_main_images/",
     "section": "bci_config",
-    "readableName": "Path to Images",
+    "readableName": "Path to images and/or sound files",
     "helpTip": "Is this Text -True- or Image -False-",
     "recommended_values": "",
-    "type": "str"
+    "type": "directorypath"
+  },
+  "offline_analysis_tone": {
+    "value": "bcipy/static/sounds/beep.wav",
+    "section": "bci_config",
+    "readableName": "Path to offline analysis tone sound files",
+    "helpTip": "Where is the tone you want to play after offline analysis completes.",
+    "recommended_values": "",
+    "type": "directorypath"
   },
   "time_flash": {
     "value": "0.25",
@@ -375,10 +383,10 @@
     "readableName": "Path to the buffer database for data acquistion",
     "helpTip": "Path to the buffer database for data acquistion",
     "recommended_values": "",
-    "type": "str"
+    "type": "filepath"
   },
   "acq_device": {
-    "value": "DSI",
+    "value": "LSL",
     "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Acquisition Device",
@@ -431,6 +439,14 @@
     "recommended_values": "",
     "type": "str"
   },
+  "static_trigger_offset": {
+    "value": ".1",
+    "section": "bci_config",
+    "readableName": "Static Trigger Offset",
+    "helpTip": "Known offset of the system being used in seconds. Do not edit this unless you know what you are doing!",
+    "recommended_values": "",
+    "type": "float"
+  },
   "triggers_file_name": {
     "value": "triggers.txt",
     "section": "bci_config",
@@ -455,7 +471,7 @@
     "recommended_values": [
       "data/"
     ],
-    "type": "str"
+    "type": "directorypath"
   },
   "parameter_location": {
     "value": "bcipy/parameters/parameters.json",
@@ -465,7 +481,7 @@
     "recommended_values": [
       "parameters/parameters.json"
     ],
-    "type": "str"
+    "type": "filepath"
   },
   "is_txt_sti": {
     "value": "true",
@@ -476,7 +492,7 @@
     "type": "bool"
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -484,7 +500,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -492,7 +508,7 @@
     "type": "bool"
   },
   "num_sti": {
-    "value": "50",
+    "value": "100",
     "section": "bci_config",
     "readableName": "Number of sequences to present over the experiment",
     "helpTip": "Number of sequences to present over the experiment",
@@ -575,7 +591,7 @@
     "value": "true",
     "section": "feedback_config",
     "readableName": "show_feedback",
-    "helpTip": "show_feedback",
+    "helpTip": "Show Feedback for the Task. Must be configured per task.",
     "recommended_values": "",
     "type": "bool"
   },
@@ -604,7 +620,7 @@
     "type": "int"
   },
   "max_seq_len": {
-    "value": "20",
+    "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
     "helpTip": "Maximum number of sequences to present in spelling tasks",
@@ -613,5 +629,71 @@
       "25"
     ],
     "type": "int"
+  },
+  "min_seq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Sequence Length",
+    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
+  "enable_breaks": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable calibration breaks",
+    "helpTip": "Enable breaks in RSVP calibration",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "break_len": {
+    "value": "30",
+    "section": "bci_config",
+    "readableName": "Break length (seconds)",
+    "helpTip": "break_len",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trials_before_break": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Number of calibration trials before break",
+    "helpTip": "The number of trials that will take place before a break",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "break_message": {
+    "value": "Take a break!",
+    "section": "bci_config",
+    "readableName": "Break Message",
+    "helpTip": "The message that displays during a break in calibration",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "word_matching_text_size": {
+    "value": "0.2",
+    "section": "bci_config",
+    "readableName": "Word to icon matching text height",
+    "helpTip": "Default height to use for words that match icons",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "collection_window_after_trial_length": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data collection window after each stimuli (seconds)",
+    "helpTip": "Length of the data collection window after each stimuli (seconds)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "len_data_sequence_buffer": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data sequence buffer",
+    "helpTip": "Length of the data sequence buffer",
+    "recommended_values": "",
+    "type": "float"
   }
 }

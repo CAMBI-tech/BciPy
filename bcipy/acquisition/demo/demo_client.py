@@ -17,14 +17,14 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.client import Client
+    from bcipy.acquisition.client import DataAcquisitionClient
     import bcipy.acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = Client(device=dsi_device, clock=clock.Clock())
+    client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())
 
     try:
         client.start_acquisition()

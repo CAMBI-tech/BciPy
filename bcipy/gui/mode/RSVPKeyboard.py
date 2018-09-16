@@ -1,13 +1,16 @@
 import subprocess
 from bcipy.gui.gui_main import BCIGui
+from bcipy.helpers.load import load_json_parameters
+import os
 import wx
 
 
 class RSVPKeyboard(BCIGui):
 
     event_started = False
+    PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
 
-    def bind_action(self, action: str, btn: wx.Button) -> None:
+    def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
         elif action == 'edit_parameters':
@@ -16,6 +19,8 @@ class RSVPKeyboard(BCIGui):
             self.Bind(wx.EVT_BUTTON, self.refresh, btn)
         elif action == 'offline_analysis':
             self.Bind(wx.EVT_BUTTON, self.offline_analysis, btn)
+        elif action == 'load_items_from_txt':
+            self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.load_items_from_txt, btn)
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
@@ -29,20 +34,20 @@ class RSVPKeyboard(BCIGui):
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
         if self.check_input():
-            username = self.input_text[0].GetValue().replace(" ", "_")
+            self.event_started = True
+            username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = self._cast_experiment_type(
                 event.GetEventObject().GetLabel())
             mode = 'RSVP'
             cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
                 mode, experiment_type, username)
 
-            subprocess.call(cmd, shell=True)
-            self.event_started = True
+            subprocess.Popen(cmd, shell=True)
 
     def check_input(self) -> bool:
         """Check Input."""
         try:
-            if self.input_text[0].GetValue() == '':
+            if self.comboboxes[0].GetValue() == '':
                 dialog = wx.MessageDialog(
                     self, "Please Input User ID", 'Info',
                     wx.OK | wx.ICON_WARNING)
@@ -61,9 +66,9 @@ class RSVPKeyboard(BCIGui):
         return True
 
     def offline_analysis(self, event: wx.Event) -> None:
-        cmd = 'python bcipy/signal_model/offline_analysis.py'
-        subprocess.call(cmd, shell=True)
-        event_started = True
+        cmd = 'python bcipy/signal/model/offline_analysis.py'
+        subprocess.Popen(cmd, shell=True)
+        self.event_started = True
 
     def refresh(self, event: wx.Event) -> None:
         self.event_started = False
@@ -75,6 +80,10 @@ class RSVPKeyboard(BCIGui):
             experiment_type = 2
         elif experiment_type_string == 'Copy Phrase C.':
             experiment_type = 3
+        elif experiment_type_string == 'Icon to Icon':
+            experiment_type = 4
+        elif experiment_type_string == 'Icon to Word':
+            experiment_type = 5
         else:
             dialog = wx.MessageDialog(
                 self, "Not a registered experiment type!", 'Info',
@@ -84,6 +93,21 @@ class RSVPKeyboard(BCIGui):
             raise ValueError('Register this experiment type or remove button')
 
         return experiment_type
+
+    def load_items_from_txt(self, event):
+        """Loads user directory names from the data path defined in
+        parameters.json, and adds those directory names as items to the user id
+        selection combobox."""
+        parameters = load_json_parameters(self.PARAMETER_LOCATION, value_cast=True)
+        data_save_loc = parameters['data_save_loc']
+        if os.path.isdir(data_save_loc):
+            saved_users = os.listdir(data_save_loc)
+        elif os.path.isdir('bcipy/' + data_save_loc):
+            saved_users = os.listdir('bcipy/' + data_save_loc)
+        else:
+            raise IOError('User data save location not found')
+        self.comboboxes[0].Clear()
+        self.comboboxes[0].AppendItems(saved_users)
 
 
 # Start the app and init the main GUI
@@ -97,29 +121,39 @@ gui.add_static_text(
 gui.add_static_text(
     text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
 gui.add_static_text(
-    text='2.) Chose your experiment type:',
+    text='2.) Choose your experiment type:',
     position=(75, 250), size=15, color='white')
 
 # BUTTONS!
 gui.add_button(
     message="Calibration",
-    position=(75, 300), size=(100, 100),
-    color='grey',
+    position=(15, 300), size=(85, 80),
+    color=wx.Colour(221, 37, 56),
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase", position=(200, 300),
-    size=(100, 100),
-    color='grey',
+    message="Copy Phrase", position=(120, 300),
+    size=(85, 80),
+    color=wx.Colour(239, 146, 40),
     action='launch_bci')
 gui.add_button(
-    message="Copy Phrase C.", position=(325, 300),
-    size=(100, 100),
-    color='grey',
+    message="Copy Phrase C.", position=(225, 300),
+    size=(85, 80),
+    color=wx.Colour(239, 212, 105),
     action='launch_bci')
 gui.add_button(
-    message="Free Spell", position=(450, 300),
-    size=(100, 100),
-    color='grey',
+    message="Free Spell", position=(330, 300),
+    size=(85, 80),
+    color=wx.Colour(117, 173, 48),
+    action='launch_bci')
+gui.add_button(
+    message="Icon to Icon", position=(435, 300),
+    size=(85, 80),
+    color=wx.Colour(62, 161, 232),
+    action='launch_bci')
+gui.add_button(
+    message="Icon to Word", position=(540, 300),
+    size=(85, 80),
+    color=wx.Colour(192, 122, 224),
     action='launch_bci')
 gui.add_button(
     message='Edit Parameters', position=(0, 450),
@@ -130,12 +164,12 @@ gui.add_button(
     size=(100, 50), color='white',
     action='offline_analysis')
 gui.add_button(
-    message='Refresh', position=(585, 325),
+    message='Refresh', position=(585, 230),
     size=(50, 50), color='white',
     action='refresh')
 
 # TEXT INPUT
-gui.add_text_input(position=(75, 150), size=(250, 25))
+gui.add_combobox(position=(75, 150), size=(250, 25), action='load_items_from_txt')
 
 
 # IMAGES

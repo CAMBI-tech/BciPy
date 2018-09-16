@@ -2,7 +2,7 @@ from bcipy.helpers.save import init_save_data_structure
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 
-from bcipy.bci_tasks.start_task import start_task
+from bcipy.tasks.start_task import start_task
 from bcipy.helpers.load import load_classifier
 from bcipy.helpers.lang_model_related import init_language_model
 
@@ -34,7 +34,7 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
-        data_save_location, user, parameter_location)
+        data_save_location, user, parameter_location, mode, exp_type)
 
     # Register Task Type
     task_type = {
@@ -49,7 +49,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     """Excecute Task.
 
     Executes the desired task by setting up the display window and
-        data acquistion, then passing on to the start_task funtion
+        data acquisition, then passing on to the start_task funtion
         which will initialize experiment.
 
     Input:
@@ -60,18 +60,17 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
     fake = parameters['fake_data']
 
-    # Init EEG Model, if needed. Calibration Tasks Don't require probalistic
+    # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     #   modules to be loaded.
     if task_type['exp_type'] > 1:
 
         # Try loading in our classifier and starting a langmodel(if enabled)
         try:
-
-            # EEG Model, Load in pre-trained classifier
             if fake:
                 classifier = None
+                filename = None
             else:
-                classifier = load_classifier()
+                classifier, filename = load_classifier()
 
         except Exception as e:
             print("Cannot load EEG classifier. Exiting")
@@ -91,6 +90,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     else:
         classifier = None
         lmodel = None
+        filename = None
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(
@@ -104,7 +104,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         start_task(
             display, daq, task_type, parameters, save_folder,
             lmodel=lmodel,
-            classifier=classifier, fake=fake)
+            classifier=classifier, fake=fake, auc_filename=filename)
 
     # If exception, close all display and acquisition objects
     except Exception as e:
@@ -127,6 +127,7 @@ def _clean_up_session(display, daq, server):
         server.stop()
 
     return True
+
 
 if __name__ == "__main__":
     import argparse

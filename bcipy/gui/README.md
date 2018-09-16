@@ -1,35 +1,35 @@
 # RSVP Keyboard GUI
 ======================================
 
-This is the GUI for RSVP Keyboard. All GUI elements (buttons, input boxes, etc.) are registered in RSVPKeyboard.py, and gui_fx.py runs the program and handles user interaction.
+This is the GUI for BciPy. The base window class, BCIGui, is contained in gui_main.py, and contains methods for easily adding wxPython widgets to a given window. BCInterface.py launches the main GUI window. 
 
 ## Features
 -----------
 
--Buttons, text boxes, drop-down menus, windows, and other GUI elements are easy to add  
--Scroll bars  
+-Buttons, text boxes, drop-down menus, and other GUI elements are easy to add  
 -Read/write framework for JSON files  
 
 ## Dependencies
 -------------
-This project was written in wxPython version 4.0.0a3, and pyglet version 1.3.0b1.  
-Both wxPython and pyglet are dependencies of Psychopy.
+This project was written in wxPython version 4.0.0.  
+wxPython is a dependency of Psychopy.
 
 ## Project structure
 ---------------
 Name | Description
 ------------- | -------------
-utility/gui_fx.py  | All GUI execution code
-utility/parameters.json  | Parameters file containing all parameter names, default values, suggested values, etc.
-RSVPKeyboard.py | Registration of all GUI elements
+BCInterface.py | Defines main GUI window
+gui_main.py | BCIGui class extending wx.Frame, containing methods for adding buttons, images, etc. to GUI window
+mode/RSVPKeyboard.py | Defines window for launching RSVPKeyboard
+params_form.py | Defines window for setting RSVPKeyboard parameters
 
 
-The 'static' folder contains images.
+The folder 'bcipy/static/images/gui_images' contains images for the GUI.
+Parameters loaded by the RSVPKeyboard parameter definition form can be found in 'bcipy/parameters/parameters.json'.
 
-To run the GUI:  
+To run the GUI from this directory:  
 
-`python RSVPKeyboard.py`  
+`python BCInterface.py`  
 
 
 Initially written by. Dani Smektala under the supervision of Tab Memmott @ OHSU
-

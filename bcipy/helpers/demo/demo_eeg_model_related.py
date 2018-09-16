@@ -1,6 +1,6 @@
 import numpy as np
-from bcipy.helpers.eeg_model_related import CopyPhraseWrapper
-from bcipy.signal_model.mach_learning.train_model import train_pca_rda_kde_model
+from bcipy.helpers.signal_model_related import CopyPhraseWrapper
+from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.bci_task_related import alphabet
 
 channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]
@@ -33,13 +33,17 @@ def demo_copy_phrase_wrapper():
     train_x = train_x[list(np.where(np.asarray(channel_map) == 1)[0]), :, :]
 
     k_folds = 10
-    model = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
+    model, _ = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
 
     # Define task and operate
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),
                  ('THIS_IS_A_DEMO', 'THIS_IS_A_')]
 
-    task = CopyPhraseWrapper(model, fs=dim_x * 2, k=1, alp=alphabet(),
+    task = CopyPhraseWrapper(min_num_seq=1, max_num_seq=25, signal_model=model,
+                             fs=dim_x * 2, k=1, alp=alphabet(),
                              task_list=task_list)
 
     print(task)
+
+if __name__ == '__main__':
+    demo_copy_phrase_wrapper()

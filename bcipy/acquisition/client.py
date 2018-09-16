@@ -35,7 +35,7 @@ class _Clock(object):
         return float(self.counter)
 
 
-class Client(object):
+class DataAcquisitionClient:
     """Data Acquisition client. The client sets up a separate thread for
     acquisition, writes incoming data to a queue, and processes the data from
     the queue.
@@ -169,7 +169,7 @@ class Client(object):
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
-    def get_data(self, start=None, end=None, field='_rowid_'):
+    def get_data(self, start=None, end=None, field='_rowid_', win=None):
         """Queries the buffer by field.
 
         Parameters
@@ -180,6 +180,8 @@ class Client(object):
                 end of time slice; units are those of the acquisition clock.
             field: str, optional
                 field on which to query; default value is the row id.
+            win : Window
+                window to pass to server for reloading
         Returns
         -------
             list of Records
@@ -188,7 +190,7 @@ class Client(object):
         if self._buf is None:
             return []
         else:
-            return buffer_server.get_data(self._buf, start, end, field)
+            return buffer_server.get_data(self._buf, start, end, field, win)
 
     def get_data_for_clock(self, calib_time: float, start_time: float,
                            end_time: float):
@@ -210,7 +212,6 @@ class Client(object):
 
         fs = self._device_info.fs
 
-        rownum_at_calib: int
         if self._record_at_calib is None:
             rownum_at_calib = 1
         else:
@@ -412,7 +413,7 @@ if __name__ == "__main__":
     device = Device(connection_params=args.params)
     if args.channels:
         device.channels = args.channels.split(',')
-    daq = Client(device=device,
+    daq = DataAcquisitionClient(device=device,
                  processor=FileWriter(filename=args.filename),
                  buffer_name=args.buffer,
                  delete_archive=True)

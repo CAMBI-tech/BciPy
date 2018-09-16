@@ -1,19 +1,22 @@
-# -*- coding: utf-8 -*-
 from tkinter import Tk
 import numpy as np
 import pandas as pd
+import logging
 from codecs import open as codecsopen
 from json import load as jsonload
 import pickle
 
 from tkinter.filedialog import askopenfilename, askdirectory
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
-def _cast_parameters(parameters):
+
+def _cast_parameters(parameters: dict) -> dict:
     """Cast to Value.
 
-    Take in a parameters json and coverts to a dictionary with type converted
-        and extranous information removed
+    Take in a parameters dictionary and coverts to a dictionary with type converted
+        and extranous information removed.
     """
     new_parameters = {}
     for key, value in parameters.items():
@@ -23,6 +26,10 @@ def _cast_parameters(parameters):
 
 
 def cast_value(value):
+    """Cast Value.
+
+    Takes in a value with a desired type and attempts to cast it to that type.
+    """
     actual_value = str(value['value'])
     actual_type = value['type']
 
@@ -33,7 +40,7 @@ def cast_value(value):
             new_value = float(actual_value)
         elif actual_type == 'bool':
             new_value = True if actual_value == 'true' else False
-        elif actual_type == 'str':
+        elif actual_type == 'str' or 'path' in actual_type:
             new_value = str(actual_value)
         else:
             raise ValueError('Unrecognized value type')
@@ -44,7 +51,27 @@ def cast_value(value):
     return new_value
 
 
-def load_json_parameters(path, value_cast=False):
+def load_json_parameters(path: str, value_cast: bool=False) -> dict:
+    """Load JSON Parameters.
+
+    Given a path to a json of parameters, convert to a dictionary and optionally
+        cast the type.
+    
+    Expects the following format:
+    "fake_data": {
+        "value": "true",
+        "section": "bci_config",
+        "readableName": "Fake Data Sessions",
+        "helpTip": "If true, fake data server used",
+        "recommended_values": "",
+        "type": "bool"
+        }
+
+    PARAMETERS
+    ----------
+    :param: path: string path to the parameters file.
+    :param: value_case: True/False cast values to specified type.
+    """
     # loads in json parameters and turns it into a dictionary
     try:
         with codecsopen(path, 'r', encoding='utf-8') as f:
@@ -66,7 +93,7 @@ def load_json_parameters(path, value_cast=False):
     return parameters
 
 
-def load_experimental_data():
+def load_experimental_data() -> str:
     # use python's internal gui to call file explorers and get the filename
     try:
         Tk().withdraw()  # we don't want a full GUI
@@ -75,11 +102,11 @@ def load_experimental_data():
     except Exception as error:
         raise error
 
-    print("Loaded Experimental Data From: %s" % filename)
+    logging.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
-def load_classifier(filename=None):
+def load_classifier(filename: str=None):
     # use python's internal gui to call file explorers and get the filename
 
     if not filename:
@@ -94,10 +121,10 @@ def load_classifier(filename=None):
     # load the classifier with pickle
     classifier = pickle.load(open(filename, 'rb'))
 
-    return classifier
+    return (classifier, filename)
 
 
-def load_csv_data(filename=None):
+def load_csv_data(filename: str=None) -> str:
     if not filename:
         try:
             Tk().withdraw()  # we don't want a full GUI
@@ -116,7 +143,7 @@ def load_csv_data(filename=None):
     return filename
 
 
-def read_data_csv(folder, dat_first_row=2, info_end_row=1):
+def read_data_csv(folder: str, dat_first_row: int=2, info_end_row: int=1) -> tuple:
     """ Reads the data (.csv) provided by the data acquisition
         Arg:
             folder(str): file location for the data
@@ -150,7 +177,7 @@ def read_data_csv(folder, dat_first_row=2, info_end_row=1):
     return raw_dat, stamp_time, channels, type_amp, fs
 
 
-def load_txt_data():
+def load_txt_data() -> str:
     try:
         Tk().withdraw()  # we don't want a full GUI
         filename = askopenfilename()  # show dialog box and return the path

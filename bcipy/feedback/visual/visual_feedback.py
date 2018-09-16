@@ -1,5 +1,6 @@
 from bcipy.feedback.feedback import Feedback
 from psychopy import visual, core
+from bcipy.helpers.stimuli_generation import resize_image
 
 
 class VisualFeedback(Feedback):
@@ -9,6 +10,8 @@ class VisualFeedback(Feedback):
 
         # Register Feedback Type
         self.feedback_type = 'Visual Feedback'
+
+        super(VisualFeedback, self).__init__(self.feedback_type)
 
         # Display Window
         self.display = display
@@ -29,11 +32,13 @@ class VisualFeedback(Feedback):
         self.clock = clock
 
         self.message_color = self.parameters['feedback_message_color']
+        self.rect = visual.Rect(win=display, width=self.height_stim, height=self.height_stim, lineColor=self.message_color, pos=(self.pos_stim), lineWidth=10, ori=0.0)
+        self.rect.opacity = 0
 
     def administer(self, stimulus, message=None, compare_assertion=None):
         """Administer.
 
-        Adminster visual feedback. Timing information from parameters,
+        Administer visual feedback. Timing information from parameters,
             current feedback given by stimulus, if assertion type feedback
             wanted, it's added as an optional argument.
         """
@@ -49,6 +54,7 @@ class VisualFeedback(Feedback):
                 stimulus, compare_assertion)
 
             assert_stim.draw()
+            self.rect.draw()
             stim.draw()
 
             self.display.flip()
@@ -57,6 +63,7 @@ class VisualFeedback(Feedback):
             stim = self._construct_stimulus(stimulus, self.pos_stim)
 
             stim.draw()
+            self.rect.draw()
             self.display.flip()
 
             time = ['visual_feedback', self.clock.getTime()]
@@ -68,12 +75,17 @@ class VisualFeedback(Feedback):
 
     def _construct_stimulus(self, stimulus, pos):
         if '.png' in stimulus:
-            return visual.ImageStim(win=self.display,
+            image_stim = visual.ImageStim(win=self.display,
                                     image=stimulus,
-                                    size=(self.height_stim, self.height_stim),
                                     mask=None,
                                     pos=pos,
                                     ori=0.0)
+            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
+            self.rect.width = image_stim.size[0]
+            self.rect.height = image_stim.size[1]
+            self.rect.opacity = 1
+            self.rect.lineColor = self.message_color
+            return image_stim
         else:
             return visual.TextStim(win=self.display, font=self.font_stim,
                                    text=stimulus,
@@ -99,7 +111,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',
-                        default='parameters/parameters.json',
+                        default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. \
                           Pass as parameters/parameters.json')
 

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from typing import List
+
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import Client, _Clock
+from bcipy.acquisition.client import DataAcquisitionClient, _Clock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
 from bcipy.acquisition.processor import FileWriter
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
@@ -20,9 +22,10 @@ analysis_channels_by_device = {
 }
 
 
-def init_eeg_acquisition(parameters, save_folder,
-                         clock=_Clock(), server=False):
-    """
+def init_eeg_acquisition(parameters: dict, save_folder: str,
+                         clock=_Clock(), server: bool=False):
+    """Initialize EEG Acquisition.
+
     Initializes a client that connects with the EEG data source and begins
     data collection.
 
@@ -72,35 +75,43 @@ def init_eeg_acquisition(parameters, save_folder,
             dataserver, port = start_socket_server(protocol, host, port)
             connection_params['port'] = port
         elif device_name == 'LSL':
-            channels = ['ch{}'.format(c + 1) for c in range(16)]
+            channel_count = 16
+            sample_rate = 256
+            channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
             dataserver = LslDataServer(params={'name': 'LSL',
                                                'channels': channels,
-                                               'hz': 256},
+                                               'hz': sample_rate},
                                        generator=generator.random_data(
-                                           channel_count=16))
+                                           channel_count=channel_count))
             await_start(dataserver)
+        else:
+            raise ValueError('Server (fake data mode) for this device type not supported')
 
     Device = registry.find_device(device_name)
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
-    client = Client(device=Device(connection_params=connection_params),
-                    processor=FileWriter(filename=filename),
-                    buffer_name=buffer_name,
-                    clock=clock)
+    client = DataAcquisitionClient(
+        device=Device(connection_params=connection_params),
+        processor=FileWriter(filename=filename),
+        buffer_name=buffer_name,
+        clock=clock)
 
     client.start_acquisition()
 
     # If we're using a server or data generator, there is no reason to
     # calibrate data.
-    if server:
+    if server and device_name != 'LSL':
         client.is_calibrated = True
 
     return (client, dataserver)
 
 
-def analysis_channels(channels, device_name):
-    """
+def analysis_channels(channels: List[str], device_name: str) -> list:
+    """Analysis Channels.
+
+    Defines the channels within a device that should be used for analysis.
+
     Parameters:
     ----------
         channels(list(str)): list of channel names from the raw_data
