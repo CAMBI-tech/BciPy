@@ -36,7 +36,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     model.pipeline[1].gam = param[1]
 
     fold_x, fold_y = [], []
-    sc_h, y_valid_h = []
+    sc_h, y_valid_h = [], []
     if split == 'uniform':
         for idx_fold in range(k_folds + 1):
             fold_x.append(x[:, int(idx_fold * fold_len):int(
