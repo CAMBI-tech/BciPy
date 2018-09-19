@@ -5,7 +5,7 @@ from bcipy.helpers.load import load_csv_data, read_data_csv
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s', )
 
 
 def generate_offline_analysis_screen(
@@ -77,7 +77,8 @@ def generate_offline_analysis_screen(
     upper = data_length * down_sample_rate / fs * 1000
 
     # make the labels
-    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in range(plot_x_ticks)]
+    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in
+              range(plot_x_ticks)]
 
     # make sure it starts at zero
     labels.insert(0, 0)
@@ -99,16 +100,12 @@ def generate_offline_analysis_screen(
 
     if plot_lik_dens:
         fig, ax = plt.subplots()
-        x_plot = np.linspace(np.min(model.line_el[-1]), np.max(model.line_el[-1]),
-                             1000)[:, np.newaxis]
-        ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(
-            model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
-        ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(
-            model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
+        x_plot = np.linspace(np.min(model.line_el[-2]), np.max(model.line_el[-2]), 1000)[:, np.newaxis]
+        ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
+        ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
         for idx in range(len(model.pipeline[2].list_den_est)):
             log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
-            ax.plot(x_plot[:, 0], np.exp(log_dens),
-                    'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
+            ax.plot(x_plot[:, 0], np.exp(log_dens),'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
 
         ax.legend(loc='upper right')
         plt.title('Likelihoods Given the Labels')
