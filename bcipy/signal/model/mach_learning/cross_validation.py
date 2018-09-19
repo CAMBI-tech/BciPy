@@ -5,7 +5,7 @@ from sklearn import metrics
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s', )
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
@@ -36,7 +36,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     model.pipeline[1].gam = param[1]
 
     fold_x, fold_y = [], []
-    auc_h = []
+    sc_h, y_valid_h = []
     if split == 'uniform':
         for idx_fold in range(k_folds + 1):
             fold_x.append(x[:, int(idx_fold * fold_len):int(
@@ -57,11 +57,14 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             y_valid = fold_y[list_valid]
 
             model.fit(x_train, y_train)
-            sc=model.transform(x_valid)
-            fpr, tpr, _ = metrics.roc_curve(y_valid, sc, pos_label=1)
-            auc_h.append(metrics.auc(fpr, tpr))
+            sc = model.transform(x_valid)
 
-    auc = np.mean(np.array(auc_h))
+            sc_h.append(sc)
+            y_valid_h.append(y_valid)
+
+    fpr, tpr, _ = metrics.roc_curve(np.concatenate(np.array(y_valid_h)),
+                                    np.concatenate(np.array(sc_h)), pos_label=1)
+    auc = metrics.auc(fpr, tpr)
 
     return -auc
 
