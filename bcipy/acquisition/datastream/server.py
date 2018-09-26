@@ -69,7 +69,7 @@ class DataServer(StoppableThread):
             errors = []
 
             # Polls for readable state
-            readable, w, e = select.select(inputs, outputs, errors, 0.05)
+            readable, _w, _e = select.select(inputs, outputs, errors, 0.05)
 
             if readable:
                 client, addr = self.server_socket.accept()
@@ -79,7 +79,7 @@ class DataServer(StoppableThread):
         try:
             self.server_socket.shutdown(2)
             self.server_socket.close()
-        except Exception as e:
+        except Exception:
             pass
         self.server_socket = None
         logging.debug("[*] No longer accepting connections")
@@ -118,7 +118,7 @@ class DataServer(StoppableThread):
                     break
                 try:
                     wfile.write(item)
-                except IOError as e:
+                except IOError:
                     break
         client_socket.close()
         logging.debug("[*] Client disconnected")

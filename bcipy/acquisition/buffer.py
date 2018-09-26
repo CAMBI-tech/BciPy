@@ -1,4 +1,7 @@
-
+"""The Buffer is used by the DataAcquisitionClient internally to store data
+so it can be queried again. The default buffer uses a Sqlite3 database to
+store data. By default it writes to a file called buffer.db, but this can be
+configured."""
 import os
 import sqlite3
 from collections import deque
@@ -8,10 +11,10 @@ from builtins import range
 from bcipy.acquisition.record import Record
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s')
 
 
-class Buffer(object):
+class Buffer():
     """Queryable Data Structure for caching data acquisition data.
 
     Parameters
@@ -31,9 +34,9 @@ class Buffer(object):
 
     def __init__(self, channels, chunksize=10000, archive_name='buffer.db'):
 
-        assert len(channels) > 0, "Buffer wasn't given any channels!"
+        assert channels, "Buffer wasn't given any channels!"
         assert chunksize > 0, "Chunksize for Buffer must be greater than 0!"
-        assert len(archive_name) > 0, "An empty archive name will result in " \
+        assert archive_name, "An empty archive name will result in " \
             "an in-memory database that cannot be shared across processes."
 
         # Flush to data store when buf is this size.
@@ -57,7 +60,8 @@ class Buffer(object):
         # Create a data table with the correct number of channels (+ timestamp)
         fields = ['timestamp'] + channels
         self.fields = fields
-        # TODO: str type for marker field.
+        # TODO: Field type should be configurable. For example, if a marker
+        # is written to the buffer, this should be a string type.
         defs = ','.join([field + ' real' for field in fields])
         cursor.execute('DROP TABLE IF EXISTS data')
 
@@ -68,8 +72,7 @@ class Buffer(object):
         # Create SQL INSERT statement
         field_names = ','.join(fields)
         placeholders = ','.join('?' for i in range(len(fields)))
-        self._insert_stmt = 'INSERT INTO data (%s) VALUES (%s)' % \
-            (field_names, placeholders)
+        self._insert_stmt = f'INSERT INTO data ({field_names}) VALUES ({placeholders})'
 
     def _new_connection(self):
         """Returns a new database connection."""
@@ -79,6 +82,7 @@ class Buffer(object):
         return sqlite3.connect(self._archive_name)
 
     def close(self):
+        """Close the buffer."""
         self._flush()
 
     def cleanup(self, delete_archive=True):
@@ -169,7 +173,76 @@ class Buffer(object):
             filters.append((field, "<", end))
         return self.query_data(filters=filters)
 
-    def query_data(self, filters=[], ordering=None, max_results=None):
+    def _validate_query_filters(self, filters):
+        """Validates query filters."""
+        # Guard against sql injection by limiting query inputs.
+        valid_ops = ["<", "<=", ">", ">=", "=", "==", "!=", "<>", "IS",
+                     "IS NOT", "IN"]
+        valid_fields = ["_rowid_"] + self.fields
+
+        if filters:
+            for filter_field, filter_op, _value in filters:
+                if not filter_field in valid_fields:
+                    raise Exception("Invalid SQL data filter field. Must be one "
+                                    "of: " + str(valid_fields))
+                elif not filter_op in valid_ops:
+                    raise Exception("Invalid SQL operator")
+
+    def _validate_query_ordering(self, ordering):
+        """Validates column ordering in sql query
+        Parameters:
+        -----------
+            ordering: tuple(fieldname, direction)
+        """
+
+        valid_fields = ["_rowid_"] + self.fields
+        valid_directions = ["asc", "desc"]
+        if ordering:
+            order_field, order_direction = ordering
+            if not order_field in valid_fields:
+                raise Exception("Invalid field for SQL order by.")
+            elif not order_direction in valid_directions:
+                raise Exception("Invalid order by direction.")
+
+    def _build_query(self, filters, ordering, max_results):
+        """Builds the SQL query with the provided filters.
+
+        Parameters:
+        -----------
+            filters: list(tuple(field, operator, value)), optional
+                list of tuples of the field_name, sql operator, and value.
+            ordering: tuple(fieldname, direction), optional
+                optional tuple indicating sort order
+            max_results: int, optional
+
+        Returns
+        -------
+            tuple(query:str, params:tuple)
+        """
+        select = "select _rowid_, * from data"
+
+        where = ''
+        query_params = ()
+        if filters:
+            self._validate_query_filters(filters)
+            conditions = " AND ".join([" ".join([field, filter_op, "?"])
+                                       for field, filter_op, _ in filters])
+            query_params = tuple(filter_val for _, _, filter_val in filters)
+            where = "where " + conditions
+
+        order = ''
+        if ordering:
+            self._validate_query_ordering(ordering)
+            order_field, order_direction = ordering
+            order = ' '.join(["order by", order_field, order_direction])
+
+        limit = "limit " + \
+            str(max_results) if isinstance(max_results, int) else ''
+
+        sql_query = ' '.join(filter(None, [select, where, order, limit]))
+        return sql_query, query_params
+
+    def query_data(self, filters=None, ordering=None, max_results=None):
         """Query the data with the provided filters.
 
         Parameters:
@@ -184,46 +257,15 @@ class Buffer(object):
         -------
             list of Records matching the query.
         """
-
-        # Guard against sql injection by limiting query inputs.
-        valid_ops = ["<", "<=", ">", ">=", "=", "==", "!=", "<>", "IS",
-                     "IS NOT", "IN"]
-        for field, op, value in filters:
-            if not field in ["_rowid_"] + self.fields:
-                raise Exception("Invalid SQL data filter field. Must be one "
-                                "of: " + str(self.fields))
-            elif not op in valid_ops:
-                raise Exception("Invalid SQL operator")
-
-        select = "select _rowid_, * from data"
-
-        where = ''
-        params = ()
-        if filters:
-            where = "where " + " AND ".join([" ".join([field, op, "?"])
-                                             for field, op, value in filters])
-            params = tuple(value for field, op, value in filters)
-
-        order = ''
-        if ordering is not None:
-            f, direction = ordering
-            if not f in self.fields:
-                raise Exception("Invalid field for SQL order by.")
-            elif not direction in ["asc", "desc"]:
-                raise Exception("Invalid order by direction.")
-
-            order = ' '.join(["order by", f, direction])
-
-        limit = "limit " + \
-            str(max_results) if isinstance(max_results, int) else ''
-
-        q = ' '.join(filter(None, [select, where, order, limit]))
+        query, query_params = self._build_query(filters, ordering, max_results)
 
         self._flush()
         conn = self._new_connection()
         result = []
-        logging.debug(q)
-        result = conn.execute(q, params) if params else conn.execute(q)
+        logging.debug('sql query: %s', query)
+        logging.debug('query params: %s', query_params)
+        result = conn.execute(
+            query, query_params) if query_params else conn.execute(query)
 
         # Return the data in the format it was provided
         return [_convert_row(r) for r in result]
@@ -252,7 +294,7 @@ def _convert_row(row):
 def _main():
     import argparse
     import timeit
-    import numpy as np
+    from bcipy.acquisition.util import mock_data
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--n_records', default=100000, type=int,
@@ -263,39 +305,29 @@ def _main():
                         help="default is 25")
 
     args = parser.parse_args()
-    n = args.n_records
-    chunksize = args.chunk_size
-    channel_count = args.channel_count
+    channels = ["ch" + str(c) for c in range(args.channel_count)]
 
-    channels = ["ch" + str(c) for c in range(channel_count)]
-
-    print("Running with %d samples of %d channels each and chunksize %d" %
-          (n, channel_count, chunksize))
-    b = Buffer(channels=channels, chunksize=chunksize)
-
-    def data(n, c):
-        """Generater for mock data"""
-        i = 0
-        while i < n:
-            yield [np.random.uniform(-1000, 1000) for cc in range(c)]
-            i += 1
+    print(
+        (f"Running with {args.n_records} samples of {args.channel_count} ",
+         f"channels each and chunksize {args.chunk_size}"))
+    buf = Buffer(channels=channels, chunksize=args.chunk_size)
 
     starttime = timeit.default_timer()
-    for j, d in enumerate(data(n, channel_count)):
+    for record_data in mock_data(args.n_records, args.channel_count):
         timestamp = timeit.default_timer()
-        b.append(Record(d, timestamp, None))
+        buf.append(Record(record_data, timestamp, None))
 
     endtime = timeit.default_timer()
     totaltime = endtime - starttime
 
-    print("Total records inserted: " + str(len(b)))
+    print("Total records inserted: " + str(len(buf)))
     print("Total time: " + str(totaltime))
-    print("Records per second: " + str(n / totaltime))
+    print("Records per second: " + str(args.n_records / totaltime))
 
     print("First 5 records")
-    print(b.query(start=0, end=6))
+    print(buf.query(start=0, end=6))
 
-    b.cleanup()
+    buf.cleanup()
 
 
 if __name__ == '__main__':

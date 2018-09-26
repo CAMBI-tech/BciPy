@@ -1,6 +1,8 @@
+"""Defines the driver for the Device for communicating with the DSI headset."""
 import logging
 import socket
 
+# pylint: disable=useless-import-alias
 import bcipy.acquisition.protocols.dsi.dsi as dsi
 import bcipy.acquisition.protocols.util as util
 from bcipy.acquisition.protocols.device import Device
@@ -22,8 +24,9 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
+    def __init__(self, connection_params, fs=dsi.DEFAULT_FS, channels=None):
         """Init DsiDevice."""
+        channels = channels if channels is not None else dsi.DEFAULT_CHANNELS
         super(DsiDevice, self).__init__(connection_params, fs, channels)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
@@ -85,7 +88,7 @@ class DsiDevice(Device):
             response = self._read_packet()
 
         channels = response.message.split(',')
-        logging.debug("Channels: " + ','.join(channels))
+        logging.debug("Channels: %s", ','.join(channels))
         if self._channels_provided and len(channels) != len(self.channels):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
@@ -96,10 +99,10 @@ class DsiDevice(Device):
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
             raise Exception("Unexpected packet; expected DATA RATE Event")
 
-        fs = int(response.message.split(',')[1])
-        logging.debug("Sample frequency: " + str(fs))
+        sample_freq = int(response.message.split(',')[1])
+        logging.debug("Sample frequency: %s", str(sample_freq))
 
-        if fs != self.fs:
+        if sample_freq != self.fs:
             raise Exception("Sample frequency read from DSI device does not "
                             "match the provided parameter")
 

@@ -1,14 +1,18 @@
 """DAQ Item Processors"""
 
-from bcipy.acquisition.device_info import DeviceInfo
 import csv
 import sys
+from bcipy.acquisition.device_info import DeviceInfo
 
 
-class Processor(object):
+class Processor():
     """Abstract base class for an object that can be used to process data
     acquisition data.
     """
+
+    def __init__(self):
+        super(Processor, self).__init__()
+        self._device_info = None
 
     def set_device_info(self, device_info: DeviceInfo):
         """
@@ -73,6 +77,7 @@ class FileWriter(Processor):
     def __init__(self, filename):
         super(FileWriter, self).__init__()
         self._filename = filename
+        self._file = None
         self._writer = None
 
     # @override ; context manager
@@ -104,7 +109,7 @@ class FileWriter(Processor):
 class LslProcessor(Processor):
     """A DAQ item processor that writes to an LSL data stream."""
 
-    def __init__(self, filename):
+    def __init__(self):
         super(LslProcessor, self).__init__()
         self._outlet = None
 
@@ -120,9 +125,9 @@ class LslProcessor(Processor):
                                 self._device_info.fs,
                                 'float32', str(uuid.uuid4()))
         meta_channels = info.desc().append_child('channels')
-        for c in channels:
+        for channel in channels:
             meta_channels.append_child('channel') \
-                .append_child_value('label', str(c)) \
+                .append_child_value('label', str(channel)) \
                 .append_child_value('unit', 'microvolts') \
                 .append_child_value('type', 'EEG')
 

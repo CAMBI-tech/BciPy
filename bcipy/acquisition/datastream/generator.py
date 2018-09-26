@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 def advance_to_row(filehandle, rownum):
     """Utility function to advance a file cursor to the given row."""
-    for i in range(rownum - 1):
+    for _ in range(rownum - 1):
         filehandle.readline()
 
 

@@ -1,3 +1,5 @@
+"""Sample script to demonstrate usage of the LSL DataAcquisitionClient."""
+
 
 def main():
     """Creates a sample client that reads data from a TCP server
@@ -7,7 +9,6 @@ def main():
 
     The client can be stopped with a Keyboard Interrupt (Ctl-C)."""
 
-    import time
     import sys
     from psychopy import clock
 
@@ -18,8 +19,10 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.client import DataAcquisitionClient
+    # pylint: disable=useless-import-alias
     import bcipy.acquisition.protocols.registry as registry
 
+    # pylint: disable=invalid-name
     Device = registry.find_device('LSL')
     dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
 

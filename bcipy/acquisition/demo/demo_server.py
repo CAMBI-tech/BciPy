@@ -1,3 +1,6 @@
+"""Sample program to demonstrate creating a data server."""
+
+
 def main():
     """Creates a new TCP server that serves up random EEG-like data in the
     DSI format. The server can be stopped with a Keyboard Interrupt (Ctl-C)"""
@@ -11,6 +14,7 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
+    # pylint: disable=useless-import-alias
     import bcipy.acquisition.datastream.generator as generator
     import bcipy.acquisition.protocols.registry as registry
     from bcipy.acquisition.datastream.server import DataServer

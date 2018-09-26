@@ -1,3 +1,4 @@
+# pylint: disable=fixme,invalid-name
 """
 Binary protocol for DSI; ported to construct 2.8 from the original
 rsvpkeyboard app.

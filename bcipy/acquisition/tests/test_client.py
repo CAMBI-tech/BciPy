@@ -3,21 +3,20 @@ Generators are used by a Producer to stream the data at a given frequency.
 """
 
 import time
-
-import numpy as np
-from bcipy.acquisition.client import DataAcquisitionClient
-from bcipy.acquisition.processor import Processor
-from bcipy.acquisition.protocols.device import Device
-from mock import mock_open, patch
-import multiprocessing
 import unittest
+from bcipy.acquisition.client import DataAcquisitionClient, CountClock
+from bcipy.acquisition.processor import Processor, NullProcessor
+from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.util import mock_data, mock_record
 
 
 class _MockDevice(Device):
     """Device that mocks reading data. Does not need a server. Continues as
     long as there is mock data."""
 
-    def __init__(self, data=[], channels=[], fs=500):
+    def __init__(self, data=None, channels=None, fs=500):
+        data = data or []
+        channels = channels or []
         super(_MockDevice, self).__init__(
             connection_params={}, channels=channels, fs=fs)
         self.data = data
@@ -27,34 +26,11 @@ class _MockDevice(Device):
         return 'MockDevice'
 
     def read_data(self):
-        if (self.i < len(self.data)):
+        if self.i < len(self.data):
             row = self.data[self.i]
             self.i += 1
             return row
         return None
-
-
-class _MockProcessor(Processor):
-    """Processor that doesn't do anything."""
-
-    def process(self, record, timestamp=None):
-        pass
-
-
-class _MockClock(object):
-    """Clock that provides timestamp values starting at 1.0; the next value
-    is the increment of the previous."""
-
-    def __init__(self):
-        super(_MockClock, self).__init__()
-        self.counter = 0
-
-    def reset(self):
-        self.counter = 0
-
-    def getTime(self):
-        self.counter += 1
-        return float(self.counter)
 
 
 class _AccumulatingProcessor(Processor):
@@ -76,47 +52,22 @@ class TestDataAcquistionClient(unittest.TestCase):
         num_channels = 25
         num_records = 500
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
-        self.mock_data = [[np.random.uniform(-1000, 1000)
-                           for i in range(num_channels)]
-                          for j in range(num_records)]
-
-    # def test_processor(self):
-    #     """Test processor calls."""
-
-    #     device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-    #     q = multiprocessing.Queue()
-    #     processor = _AccumulatingProcessor(q)
-
-    #     daq = DataAcquisitionClient(device=device, processor=processor)
-    #     daq.start_acquisition()
-    #     time.sleep(0.1)
-    #     daq.stop_acquisition()
-
-    #     q.put('exit')
-    #     data = []
-    #     for d in iter(q.get, 'exit'):
-    #         data.append(d)
-
-    #     self.assertTrue(len(data) > 0)
-
-    #     for i, record in enumerate(data):
-    #         self.assertEqual(record, self.mock_data[i])
-
-    #     daq.cleanup()
+        self.mock_data = list(mock_data(num_records, num_channels))
 
     def test_get_data(self):
         """Data should be queryable."""
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,
-                     processor=_MockProcessor())
+                                    processor=NullProcessor())
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
 
         # Get all records
         data = daq.get_data()
-        self.assertTrue(len(data) > 0, "DataAcquisitionClient should have data.")
+        self.assertTrue(
+            len(data) > 0, "DataAcquisitionClient should have data.")
         for i, record in enumerate(data):
             self.assertEqual(record.data, self.mock_data[i])
 
@@ -125,13 +76,13 @@ class TestDataAcquistionClient(unittest.TestCase):
     def test_clock(self):
         """Test clock integration."""
 
-        clock = _MockClock()
+        clock = CountClock()
         clock.counter = 10  # ensures that clock gets reset.
         daq = DataAcquisitionClient(device=_MockDevice(data=self.mock_data,
-                                        channels=self.mock_channels),
-                     processor=_MockProcessor(),
-                     buffer_name='buffer_client_test_clock.db',
-                     clock=clock)
+                                                       channels=self.mock_channels),
+                                    processor=NullProcessor(),
+                                    buffer_name='buffer_client_test_clock.db',
+                                    clock=clock)
         with daq:
             time.sleep(0.1)
 
@@ -150,23 +101,19 @@ class TestDataAcquistionClient(unittest.TestCase):
         """Test offset calculation"""
 
         channels = ['ch1', 'ch2', 'TRG']
-        fs = 100
+        sample_hz = 100
         trigger_at = 10
         num_records = 500
-        num_channels = len(channels)
+        n_channels = len(channels) - 1
 
-        mock_data = []
-        for i in range(num_records):
-            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
-            trigger_channel = 0 if (i + 1) < trigger_at else 1
-            d.append(trigger_channel)
-            mock_data.append(d)
+        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+                for i in range(num_records)]
 
-        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                     processor=_MockProcessor(),
-                     buffer_name='buffer_client_test_offset.db',
-                     clock=_MockClock())
+                                    processor=NullProcessor(),
+                                    buffer_name='buffer_client_test_offset.db',
+                                    clock=CountClock())
 
         daq.start_acquisition()
         time.sleep(0.1)
@@ -176,29 +123,25 @@ class TestDataAcquistionClient(unittest.TestCase):
         # Windows environments the tests were taking too long to setup and the
         # time would complete before any data had been processed.
         self.assertTrue(daq.is_calibrated)
-        self.assertEqual(daq.offset, float(trigger_at) / fs)
+        self.assertEqual(daq.offset, float(trigger_at) / sample_hz)
 
         daq.cleanup()
 
     def test_missing_offset(self):
-
+        """Test missing offset when no triggers are present in the data."""
         channels = ['ch1', 'ch2', 'TRG']
-        fs = 100
-        trigger_at = 10
+        sample_hz = 100
         num_records = 500
-        num_channels = len(channels)
 
-        mock_data = []
-        for i in range(num_records):
-            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
-            d.append(0)
-            mock_data.append(d)
+        # mock_data only has empty trigger values.
+        n_channels = len(channels) - 1
+        data = [mock_record(n_channels) + [0] for i in range(num_records)]
 
-        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                     processor=_MockProcessor(),
-                     clock=_MockClock(),
-                     buffer_name='buffer_client_test_missing_offset.db')
+                                    processor=NullProcessor(),
+                                    clock=CountClock(),
+                                    buffer_name='buffer_client_test_missing_offset.db')
 
         with daq:
             time.sleep(0.1)
@@ -211,23 +154,19 @@ class TestDataAcquistionClient(unittest.TestCase):
         """Test offset value override"""
 
         channels = ['ch1', 'ch2', 'TRG']
-        fs = 100
+        sample_hz = 100
         trigger_at = 10
         num_records = 500
-        num_channels = len(channels)
+        n_channels = len(channels) - 1
 
-        mock_data = []
-        for i in range(num_records):
-            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
-            trigger_channel = 0 if (i + 1) < trigger_at else 1
-            d.append(trigger_channel)
-            mock_data.append(d)
+        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+                for i in range(num_records)]
 
-        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                     processor=_MockProcessor(),
-                     buffer_name='buffer_client_test_offset.db',
-                     clock=_MockClock())
+                                    processor=NullProcessor(),
+                                    buffer_name='buffer_client_test_offset.db',
+                                    clock=CountClock())
 
         daq.is_calibrated = True  # force the override.
         daq.start_acquisition()
@@ -241,26 +180,21 @@ class TestDataAcquistionClient(unittest.TestCase):
         daq.cleanup()
 
     def test_get_data_for_clock(self):
-        """Test get_data_for_clock."""
+        """Test queries to the data store by experiment clock units."""
 
         channels = ['ch1', 'ch2', 'TRG']
-        fs = 100
+        sample_hz = 100
         trigger_at = 10
         num_records = 1000
-        num_channels = len(channels)
+        n_channels = len(channels) - 1
+        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+                for i in range(num_records)]
 
-        mock_data = []
-        for i in range(num_records):
-            d = [np.random.uniform(-100, 100) for _ in range(num_channels - 1)]
-            trigger_channel = 0 if (i + 1) < trigger_at else 1
-            d.append(trigger_channel)
-            mock_data.append(d)
-
-        device = _MockDevice(data=mock_data, channels=channels, fs=fs)
+        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                     processor=_MockProcessor(),
-                     buffer_name='buffer_client_test_get_data_for_clock.db',
-                     clock=_MockClock())
+                                    processor=NullProcessor(),
+                                    buffer_name='buffer_client_test_get_data_for_clock.db',
+                                    clock=CountClock())
 
         daq.start_acquisition()
         time.sleep(0.2)
@@ -269,32 +203,31 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.assertTrue(daq.is_calibrated)
 
         # rownum at calibration should be trigger_at
-        self.assertEqual(trigger_at, daq._record_at_calib.rownum)
-        self.assertEqual(trigger_at, daq._record_at_calib.timestamp)
-        self.assertEqual(mock_data[trigger_at - 1], daq._record_at_calib.data)
+        self.assertEqual(trigger_at, daq.record_at_calib.rownum)
+        self.assertEqual(trigger_at, daq.record_at_calib.timestamp)
+        self.assertEqual(data[trigger_at - 1], daq.record_at_calib.data)
 
         # Test with clocks exactly synchronized.
         self.assertEqual(0.1, daq.offset)
-        data = daq.get_data_for_clock(calib_time=0.1, start_time=0.2,
-                                      end_time=0.3)
-        self.assertEqual(10, len(data))
+        data_slice = daq.get_data_for_clock(calib_time=0.1, start_time=0.2,
+                                            end_time=0.3)
+        self.assertEqual(10, len(data_slice))
 
         start_offset = 20
-        for i, record in enumerate(data):
+        for i, record in enumerate(data_slice):
             # mock-data is 0-based, so we have to subtract 1 from the start.
             mock_data_index = i + start_offset - 1
-            self.assertEqual(record.data, mock_data[mock_data_index])
-
+            self.assertEqual(record.data, data[mock_data_index])
 
         # Test with clocks offset
-        data = daq.get_data_for_clock(calib_time=0.2, start_time=0.4,
-                                      end_time=0.6)
-        self.assertEqual(20, len(data))
+        data_slice = daq.get_data_for_clock(calib_time=0.2, start_time=0.4,
+                                            end_time=0.6)
+        self.assertEqual(20, len(data_slice))
         start_offset = 30
-        for i, record in enumerate(data):
+        for i, record in enumerate(data_slice):
             # mock-data is 0-based, so we have to subtract 1 from the start.
             mock_data_index = i + start_offset - 1
-            self.assertEqual(record.data, mock_data[mock_data_index])
+            self.assertEqual(record.data, data[mock_data_index])
 
         daq.cleanup()
 
