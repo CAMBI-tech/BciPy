@@ -2,9 +2,8 @@
 import logging
 import socket
 
-# pylint: disable=useless-import-alias
-import bcipy.acquisition.protocols.dsi.dsi as dsi
-import bcipy.acquisition.protocols.util as util
+from bcipy.acquisition.protocols.dsi import dsi
+from bcipy.acquisition.protocols import util
 from bcipy.acquisition.protocols.device import Device
 
 logging.basicConfig(level=logging.DEBUG,

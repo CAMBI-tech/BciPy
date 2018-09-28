@@ -1,4 +1,5 @@
-
+"""Code for mocking an EEG data stream. Code in this module produces data
+at a specified frequency."""
 import logging
 from builtins import next
 from queue import Queue
@@ -82,18 +83,18 @@ class Producer(threading.Thread):
         def tick():
             """Corrects the time interval if the time of the work to add the
             item causes drift."""
-            t = time.time()
+            current_time = time.time()
             count = 0
             while True:
                 count += 1
-                yield max(t + count * self.freq - time.time(), 0)
+                yield max(current_time + count * self.freq - time.time(), 0)
 
-        g = tick()
+        sleep_len = tick()
         times = 0
         while self._running and (self.maxiters is None
                                  or times < self.maxiters):
             times += 1
-            time.sleep(next(g))
+            time.sleep(next(sleep_len))
             self._additem()
 
 
@@ -105,23 +106,26 @@ class _ConsumerThread(threading.Thread):
         self.daemon = True
         self.name = name
         self._q = queue
-        return
 
     def run(self):
         while True:
             if not self._q.empty():
                 item = self._q.get()
-                logging.debug('Getting ' + str(item) + ' : ' +
-                              str(self._q.qsize()) + ' items in queue')
+                logging.debug('Getting %s: %s items in queue',
+                              str(item), str(self._q.qsize()))
                 time.sleep(random.random())
-        return
+
+
+def main():
+    """Main method"""
+    data_queue = Queue()
+    producer = Producer(data_queue)
+    consumer = _ConsumerThread(data_queue)
+
+    producer.start()
+    consumer.start()
+    time.sleep(5)
 
 
 if __name__ == '__main__':
-    q = Queue()
-    p = Producer(q)
-    c = _ConsumerThread(q)
-
-    p.start()
-    c.start()
-    time.sleep(5)
+    main()

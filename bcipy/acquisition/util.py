@@ -1,7 +1,7 @@
 """Defines utility classes and functions used by the acquisition module."""
-import numpy as np
 import multiprocessing
 import threading
+import numpy as np
 
 
 def mock_data(n_records: int, n_cols: int, low: int = -1000, high: int = 1000):

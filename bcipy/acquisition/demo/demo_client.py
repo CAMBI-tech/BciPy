@@ -20,8 +20,7 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.client import DataAcquisitionClient
-    # pylint: disable=useless-import-alias
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.protocols import registry
 
     # pylint: disable=invalid-name
     Device = registry.find_device('DSI')

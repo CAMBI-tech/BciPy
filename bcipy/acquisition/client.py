@@ -1,4 +1,4 @@
-# pylint: disable=fixme,useless-import-alias
+# pylint: disable=fixme,too-many-instance-attributes,too-many-arguments
 """Data Acquisition Client"""
 import logging
 import multiprocessing
@@ -6,7 +6,7 @@ import time
 
 from queue import Empty
 
-import bcipy.acquisition.buffer_server as buffer_server
+from bcipy.acquisition import buffer_server
 from bcipy.acquisition.processor import FileWriter
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
@@ -424,7 +424,7 @@ def main():
 
     import argparse
     import json
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.protocols import registry
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',

@@ -2,7 +2,6 @@
 
 import logging
 
-import numpy as np
 from past.builtins import map, range
 from bcipy.signal.generator.generator import gen_random_data
 
@@ -15,14 +14,15 @@ def advance_to_row(filehandle, rownum):
     for _ in range(rownum - 1):
         filehandle.readline()
 
+# pylint: disable=too-few-public-methods
 
-class _DefaultEncoder(object):
+
+class _DefaultEncoder():
     """Encodes data by returning the raw data."""
 
-    def __init__(self):
-        super(_DefaultEncoder, self).__init__()
-
+    # pylint: disable=no-self-use
     def encode(self, data):
+        """Encode the data that will be output by the file_data generator."""
         return data
 
 
@@ -58,13 +58,12 @@ def file_data(filename, header_row=3, encoder=_DefaultEncoder()):
 
     """
 
-    # TODO: detect timestamp column and omit if present
-    with open(filename, 'r') as f:
+    with open(filename, 'r') as infile:
         # advance to first data row, since channel names are unused.
-        advance_to_row(f, header_row + 1)
+        advance_to_row(infile, header_row + 1)
 
         while True:
-            line = f.readline()
+            line = infile.readline()
             if not line:
                 break
             sensor_data = map(float, line.split(","))

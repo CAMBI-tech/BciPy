@@ -1,11 +1,9 @@
+# pylint: disable=invalid-name
 """Protocol with information for generating and serving mock DSI data."""
 import timeit
 
-# pylint: disable=useless-import-alias
-import bcipy.acquisition.protocols.dsi.dsi as dsi
-import bcipy.acquisition.protocols.protocol as protocol
-
-# pylint: disable=invalid-name
+from bcipy.acquisition.protocols.dsi import dsi
+from bcipy.acquisition.protocols import protocol
 
 
 def DsiProtocol(fs=dsi.DEFAULT_FS, channels=None):

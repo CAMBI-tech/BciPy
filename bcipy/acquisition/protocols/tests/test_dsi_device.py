@@ -1,11 +1,11 @@
-
+"""Tests for DSI headset device driver."""
+import unittest
 import pytest
-from datastream import server
+from bcipy.acquisition.datastream import server
 from bcipy.acquisition.protocols.dsi.dsi_device import dsi
 from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 
-import unittest
 
 HOST = '127.0.0.1'
 DEFAULT_PORT = 9000
@@ -19,6 +19,7 @@ class TestDsiDevice(unittest.TestCase):
         self.host = HOST
 
     def connection_params(self):
+        """Return connection params dict"""
         return {'host': self.host, 'port': self.port}
 
     @classmethod
@@ -85,8 +86,8 @@ class TestDsiDevice(unittest.TestCase):
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(len(data), len(device.channels))
-        for f in data:
-            self.assertTrue(isinstance(f, float))
+        for channel in data:
+            self.assertTrue(isinstance(channel, float))
 
 
 if __name__ == '__main__':

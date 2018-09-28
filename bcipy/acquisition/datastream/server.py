@@ -1,12 +1,10 @@
 """TCP Server to stream mock EEG data."""
 
-import errno
 import logging
 from queue import Queue, Empty
 import select
 import socket
 import time
-import threading
 
 
 from bcipy.acquisition.datastream.producer import Producer
@@ -32,12 +30,13 @@ class DataServer(StoppableThread):
         port : int, optional
     """
 
-    def __init__(self, protocol, generator, gen_params={}, host='127.0.0.1',
+    # pylint: disable=too-many-arguments
+    def __init__(self, protocol, generator, gen_params=None, host='127.0.0.1',
                  port=9999):
         super(DataServer, self).__init__(name="DataServer")
         self.protocol = protocol
         self.generator = generator
-        self.gen_params = gen_params
+        self.gen_params = gen_params or {}
         self.gen_params['encoder'] = protocol.encoder
 
         self.host = host
@@ -58,8 +57,8 @@ class DataServer(StoppableThread):
         self.server_socket.listen(1)
 
         self.started = True
-        logging.debug("[*] Accepting connections on %s:%d" %
-                      (self.host, self.port))
+        logging.debug("[*] Accepting connections on %s:%d", self.host,
+                      self.port)
 
         while self.running():
 
@@ -73,12 +72,13 @@ class DataServer(StoppableThread):
 
             if readable:
                 client, addr = self.server_socket.accept()
-                logging.debug("[*] Accepted connection from: %s:%d" %
-                              (addr[0], addr[1]))
+                logging.debug("[*] Accepted connection from: %s:%d", addr[0],
+                              addr[1])
                 self._handle_client(client)
         try:
             self.server_socket.shutdown(2)
             self.server_socket.close()
+        # pylint: disable=broad-except
         except Exception:
             pass
         self.server_socket = None
@@ -104,15 +104,15 @@ class DataServer(StoppableThread):
         # This needs to be handled differently if we decide to allow
         # multiple clients. Producer needs to be managed by the class,
         # and the same message should be sent to each client.
-        q = Queue()
+        data_queue = Queue()
 
         # Construct a new generator each time to get consistent results.
         generator = self.generator(**self.gen_params)
-        with Producer(q, generator=generator, freq=1 / self.protocol.fs):
+        with Producer(data_queue, generator=generator, freq=1 / self.protocol.fs):
             while self.running():
                 try:
                     # block if necessary, for up to 5 seconds
-                    item = q.get(True, 5)
+                    item = data_queue.get(True, 5)
                 except Empty:
                     client_socket.close()
                     break
@@ -149,14 +149,13 @@ def start_socket_server(protocol, host, port, retries=2):
                                 host=host,
                                 port=port)
 
-    except IOError as e:
+    except IOError as error:
         if retries > 0:
             # try a different port when 'Address already in use'.
             port = port + 1
-            logging.debug("Address in use: trying port {}".format(port))
+            logging.debug("Address in use: trying port %d", port)
             return start_socket_server(protocol, host, port, retries - 1)
-        else:
-            raise e
+        raise error
 
     await_start(dataserver)
     return dataserver, port
@@ -165,7 +164,6 @@ def start_socket_server(protocol, host, port, retries=2):
 def await_start(dataserver, max_wait=2):
     """Blocks until server is started. Raises if max_wait is exceeded before
     server is started."""
-    import time
 
     dataserver.start()
     wait = 0
@@ -181,17 +179,15 @@ def await_start(dataserver, max_wait=2):
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
-    with open(filename, 'r') as f:
-        daq_type = f.readline().strip().split(',')[1]
-        fs = int(f.readline().strip().split(',')[1])
-        channels = f.readline().strip().split(',')
-        return (daq_type, fs, channels)
+    with open(filename, 'r') as infile:
+        daq_type = infile.readline().strip().split(',')[1]
+        sample_hz = int(infile.readline().strip().split(',')[1])
+        channels = infile.readline().strip().split(',')
+        return (daq_type, sample_hz, channels)
 
 
-if __name__ == '__main__':
-    # Run this as: python -m acquisition.datastream.server
-
-    import time
+def main():
+    """Initialize and run the server."""
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data, random_data
@@ -206,8 +202,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.filename:
-        daq_type, fs, channels = _settings(args.filename)
-        protocol = protocol_with(daq_type, fs, channels)
+        daq_type, sample_hz, channels = _settings(args.filename)
+        protocol = protocol_with(daq_type, sample_hz, channels)
         generator, params = (file_data, {'filename': args.filename})
     else:
         protocol = default_protocol('DSI')
@@ -227,3 +223,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
         server.stop()
+
+
+if __name__ == '__main__':
+    # Run this as: python -m acquisition.datastream.server
+    main()

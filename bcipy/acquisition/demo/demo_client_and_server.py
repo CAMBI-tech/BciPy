@@ -1,4 +1,4 @@
- # pylint: disable=fixme,useless-import-alias
+ # pylint: disable=fixme
 """Demo script demonstrating both the acquisition server and client."""
 
 
@@ -19,8 +19,8 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    import bcipy.acquisition.datastream.generator as generator
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.datastream import generator
+    from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.server import DataServer
 

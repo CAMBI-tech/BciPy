@@ -1,3 +1,4 @@
+# pylint: disable=fixme,too-many-instance-attributes
 """The Buffer is used by the DataAcquisitionClient internally to store data
 so it can be queried again. The default buffer uses a Sqlite3 database to
 store data. By default it writes to a file called buffer.db, but this can be

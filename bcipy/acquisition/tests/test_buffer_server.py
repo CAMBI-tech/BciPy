@@ -1,7 +1,6 @@
 """Tests for the buffer_server module"""
 import unittest
-# pylint: disable=useless-import-alias
-import bcipy.acquisition.buffer_server as buffer_server
+from bcipy.acquisition import buffer_server
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import mock_data
 

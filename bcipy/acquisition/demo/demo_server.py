@@ -14,9 +14,8 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    # pylint: disable=useless-import-alias
-    import bcipy.acquisition.datastream.generator as generator
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.datastream import generator
+    from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.datastream.server import DataServer
 
     # Find the DSI protocol by name.
