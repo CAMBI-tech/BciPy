@@ -79,6 +79,8 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
 
     logging.debug('Saving offline analysis plots!')
 
+    # After obtaining the model get the transformed data for plotting purposes
+    model.transform(x)
     generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,

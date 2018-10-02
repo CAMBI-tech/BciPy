@@ -5,7 +5,7 @@ from sklearn import metrics
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s', )
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
@@ -27,7 +27,10 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             split(string): split type,
                 'uniform': Takes the data as is
         Return:
-            -auc(float): negative AUC value for current setup """
+            -auc(float): negative AUC value for current setup
+            sc_h(ndarray[float]): scores computed for each validation fold
+            y_valid_h(ndarray[int]): labels of the scores for each validation fold
+                y_valid_h[i] is basically the label for sc_h[i] """
 
     num_samples = x.shape[1]
     fold_len = np.floor(float(num_samples) / k_folds)
@@ -36,7 +39,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     model.pipeline[1].gam = param[1]
 
     fold_x, fold_y = [], []
-    auc_h = []
+    sc_h, y_valid_h = [], []
     if split == 'uniform':
         for idx_fold in range(k_folds + 1):
             fold_x.append(x[:, int(idx_fold * fold_len):int(
@@ -57,13 +60,17 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             y_valid = fold_y[list_valid]
 
             model.fit(x_train, y_train)
-            sc=model.transform(x_valid)
-            fpr, tpr, _ = metrics.roc_curve(y_valid, sc, pos_label=1)
-            auc_h.append(metrics.auc(fpr, tpr))
+            sc = model.transform(x_valid)
 
-    auc = np.mean(np.array(auc_h))
+            sc_h.append(sc)
+            y_valid_h.append(y_valid)
 
-    return -auc
+    y_valid_h = np.concatenate(np.array(y_valid_h))
+    sc_h = np.concatenate(np.array(sc_h))
+    fpr, tpr, _ = metrics.roc_curve(y_valid_h, sc_h, pos_label=1)
+    auc = metrics.auc(fpr, tpr)
+
+    return -auc, sc_h, y_valid_h
 
 
 def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
@@ -103,7 +110,7 @@ def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
                 auc = -cost_cross_validation_auc(model, opt_el, x, y,
                                                  [param_cand['lam'][i],
                                                   param_cand['gam'][j]],
-                                                 k_folds=k_folds, split=split)
+                                                 k_folds=k_folds, split=split)[0]
                 if auc > best_auc:
                     best_auc = auc
                     arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
@@ -141,7 +148,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
             k_folds, split = arg_op_type
             cost_fun_param = lambda b: cost_cross_validation_auc(
                 model, opt_el, x, y, [b[0], b[1]], k_folds=k_folds,
-                split=split)
+                split=split)[0]
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
