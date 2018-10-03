@@ -67,6 +67,7 @@ class LslDevice(Device):
             marker_channel added is used.
     """
 
+    # pylint: disable=too-many-instance-attributes,too-many-arguments
     def __init__(self, connection_params, fs=None, channels=None,
                  include_lsl_timestamp=False,
                  trg_channel_name='BCI_Stimulus_Markers'):
@@ -232,7 +233,8 @@ class LslDevice(Device):
             trg = "0"
             if not marker.is_empty and timestamp >= marker.timestamp:
                 trg = marker.trg
-                logging.debug("Appending %s marker %s to sample at time %s; time diff: %s",
+                logging.debug(("Appending %s marker %s to sample at time %s; ",
+                               "time diff: %s"),
                               name, marker, timestamp,
                               timestamp - marker.timestamp)
                 self.current_markers[name] = Marker.empty()  # clear current

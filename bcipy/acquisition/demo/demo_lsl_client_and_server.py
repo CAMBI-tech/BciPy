@@ -2,6 +2,7 @@
 
 
 def main():
+    # pylint: disable=too-many-locals
     """Creates a sample lsl client that reads data from a sample TCP server
     (see demo/server.py). Data is written to a rawdata.csv file, as well as a
     buffer.db sqlite3 database. These files are written in whichever directory
@@ -34,7 +35,8 @@ def main():
     server = LslDataServer(params={'name': 'LSL',
                                    'channels': channels,
                                    'hz': sample_rate},
-                           generator=generator.random_data(channel_count=channel_count))
+                           generator=generator.random_data(
+                               channel_count=channel_count))
     await_start(server)
 
     # Device is for reading data.

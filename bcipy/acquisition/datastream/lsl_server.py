@@ -74,7 +74,8 @@ class LslDataServer(StoppableThread):
             # "_markers");
             logging.debug("Creating marker stream")
             markers_info = StreamInfo("TestStream Markers",
-                                      "Markers", 1, 0, 'string', "uid12345_markers")
+                                      "Markers", 1, 0, 'string',
+                                      "uid12345_markers")
             self.markers_outlet = StreamOutlet(markers_info)
         self.started = False
 
@@ -102,7 +103,8 @@ class LslDataServer(StoppableThread):
         self.started = True
 
         data_queue = Queue()
-        with Producer(data_queue, generator=self.generator, freq=1 / self.sample_hz):
+        with Producer(data_queue, generator=self.generator,
+                      freq=1 / self.sample_hz):
             while self.running():
                 sample_counter += 1
                 try:

@@ -78,11 +78,12 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         clock = CountClock()
         clock.counter = 10  # ensures that clock gets reset.
-        daq = DataAcquisitionClient(device=_MockDevice(data=self.mock_data,
-                                                       channels=self.mock_channels),
-                                    processor=NullProcessor(),
-                                    buffer_name='buffer_client_test_clock.db',
-                                    clock=clock)
+        daq = DataAcquisitionClient(
+            device=_MockDevice(data=self.mock_data,
+                               channels=self.mock_channels),
+            processor=NullProcessor(),
+            buffer_name='buffer_client_test_clock.db',
+            clock=clock)
         with daq:
             time.sleep(0.1)
 
@@ -138,10 +139,11 @@ class TestDataAcquistionClient(unittest.TestCase):
         data = [mock_record(n_channels) + [0] for i in range(num_records)]
 
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
-        daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
-                                    clock=CountClock(),
-                                    buffer_name='buffer_client_test_missing_offset.db')
+        daq = DataAcquisitionClient(
+            device=device,
+            processor=NullProcessor(),
+            clock=CountClock(),
+            buffer_name='buffer_client_test_missing_offset.db')
 
         with daq:
             time.sleep(0.1)
@@ -191,10 +193,11 @@ class TestDataAcquistionClient(unittest.TestCase):
                 for i in range(num_records)]
 
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
-        daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
-                                    buffer_name='buffer_client_test_get_data_for_clock.db',
-                                    clock=CountClock())
+        daq = DataAcquisitionClient(
+            device=device,
+            processor=NullProcessor(),
+            buffer_name='buffer_client_test_get_data_for_clock.db',
+            clock=CountClock())
 
         daq.start_acquisition()
         time.sleep(0.2)

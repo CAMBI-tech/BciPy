@@ -153,10 +153,11 @@ class DataAcquisitionClient:
             self._buf = buffer_server.start(self._device_info.channels,
                                             self._buffer_name)
 
-            self._data_processor = DataProcessor(data_queue=self._process_queue,
-                                                 processor=self._processor,
-                                                 buf=self._buf,
-                                                 wait=self._max_wait)
+            self._data_processor = DataProcessor(
+                data_queue=self._process_queue,
+                processor=self._processor,
+                buf=self._buf,
+                wait=self._max_wait)
             self._data_processor.start()
             self._is_streaming = True
 

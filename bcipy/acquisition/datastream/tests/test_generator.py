@@ -93,7 +93,8 @@ class TestGenerator(unittest.TestCase):
                    mock_open(read_data=test_data), create=True):
             gen = file_data(filename='foo', header_row=1)
             # exhaust the generator
-            _generated_data = [next(gen) for _ in range(row_count)]
+            for _ in range(row_count):
+                next(gen)
 
             with pytest.raises(StopIteration):
                 data.append(next(gen))

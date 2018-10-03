@@ -108,7 +108,8 @@ class DataServer(StoppableThread):
 
         # Construct a new generator each time to get consistent results.
         generator = self.generator(**self.gen_params)
-        with Producer(data_queue, generator=generator, freq=1 / self.protocol.fs):
+        with Producer(data_queue, generator=generator,
+                      freq=1 / self.protocol.fs):
             while self.running():
                 try:
                     # block if necessary, for up to 5 seconds
@@ -191,7 +192,8 @@ def main():
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data, random_data
-    from bcipy.acquisition.protocols.registry import protocol_with, default_protocol
+    from bcipy.acquisition.protocols.registry import protocol_with, \
+        default_protocol
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='127.0.0.1')

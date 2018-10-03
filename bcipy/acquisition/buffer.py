@@ -1,4 +1,3 @@
-# pylint: disable=fixme,too-many-instance-attributes
 """The Buffer is used by the DataAcquisitionClient internally to store data
 so it can be queried again. The default buffer uses a Sqlite3 database to
 store data. By default it writes to a file called buffer.db, but this can be
@@ -33,6 +32,7 @@ class Buffer():
     http://sebastianraschka.com/Articles/2014_sqlite_in_python_tutorial.html
     """
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, channels, chunksize=10000, archive_name='buffer.db'):
 
         assert channels, "Buffer wasn't given any channels!"
@@ -61,6 +61,7 @@ class Buffer():
         # Create a data table with the correct number of channels (+ timestamp)
         fields = ['timestamp'] + channels
         self.fields = fields
+        # pylint: disable=fixme
         # TODO: Field type should be configurable. For example, if a marker
         # is written to the buffer, this should be a string type.
         defs = ','.join([field + ' real' for field in fields])
@@ -73,7 +74,8 @@ class Buffer():
         # Create SQL INSERT statement
         field_names = ','.join(fields)
         placeholders = ','.join('?' for i in range(len(fields)))
-        self._insert_stmt = f'INSERT INTO data ({field_names}) VALUES ({placeholders})'
+        self._insert_stmt = (f'INSERT INTO data ({field_names}) '
+                             f'VALUES ({placeholders})')
 
     def _new_connection(self):
         """Returns a new database connection."""
@@ -183,10 +185,10 @@ class Buffer():
 
         if filters:
             for filter_field, filter_op, _value in filters:
-                if not filter_field in valid_fields:
-                    raise Exception("Invalid SQL data filter field. Must be one "
-                                    "of: " + str(valid_fields))
-                elif not filter_op in valid_ops:
+                if filter_field not in valid_fields:
+                    raise Exception("Invalid SQL data filter field. Must be "
+                                    "one of: " + str(valid_fields))
+                elif filter_op not in valid_ops:
                     raise Exception("Invalid SQL operator")
 
     def _validate_query_ordering(self, ordering):
@@ -200,9 +202,9 @@ class Buffer():
         valid_directions = ["asc", "desc"]
         if ordering:
             order_field, order_direction = ordering
-            if not order_field in valid_fields:
+            if order_field not in valid_fields:
                 raise Exception("Invalid field for SQL order by.")
-            elif not order_direction in valid_directions:
+            elif order_direction not in valid_directions:
                 raise Exception("Invalid order by direction.")
 
     def _build_query(self, filters, ordering, max_results):

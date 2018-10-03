@@ -8,8 +8,9 @@ from bcipy.acquisition.buffer import Buffer
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import mock_data
 
+
 class _Timer():
-    """Repeatedly use _Timer to accumulate timing information. """
+    """Repeatedly use _Timer to accumulate timing information."""
 
     def __init__(self):
         super(_Timer, self).__init__()
@@ -65,7 +66,8 @@ class TestBuffer(unittest.TestCase):
 
         rows = buf.query(start=buf.start_time, field='timestamp')
         self.assertEqual(
-            len(rows), n_records, "Providing only the start should return the rest.")
+            len(rows), n_records, ("Providing only the start should return "
+                                   "the rest."))
         buf.cleanup()
 
     def test_latest(self):

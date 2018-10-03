@@ -175,6 +175,8 @@ def count(mailbox):
     return _rpc(mailbox, request)
 
 # pylint: disable=redefined-outer-name
+
+
 def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
     """Query the buffer for a slice of data records.
 
