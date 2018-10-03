@@ -1,5 +1,8 @@
+"""Sample script to demonstrate usage of LSL client and server."""
+
 
 def main():
+    # pylint: disable=too-many-locals
     """Creates a sample lsl client that reads data from a sample TCP server
     (see demo/server.py). Data is written to a rawdata.csv file, as well as a
     buffer.db sqlite3 database. These files are written in whichever directory
@@ -16,8 +19,8 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    import bcipy.acquisition.datastream.generator as generator
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.datastream import generator
+    from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.datastream.server import await_start
@@ -33,10 +36,11 @@ def main():
                                    'channels': channels,
                                    'hz': sample_rate},
                            generator=generator.random_data(
-                           channel_count=channel_count))
+                               channel_count=channel_count))
     await_start(server)
 
     # Device is for reading data.
+    # pylint: disable=invalid-name
     Device = registry.find_device('LSL')
     device = Device(connection_params={'host': host, 'port': port})
     client = DataAcquisitionClient(device=device)

@@ -1,7 +1,8 @@
+"""Interface for creating new device drivers."""
 from bcipy.acquisition.device_info import DeviceInfo
 
 
-class Device(object):
+class Device():
     """Base class for device-specific behavior.
 
     Parameters
@@ -14,6 +15,7 @@ class Device(object):
             List of channel names.
     """
 
+    # pylint: disable=invalid-name
     def __init__(self, connection_params, fs, channels):
         self._connection_params = connection_params
         self.fs = fs
@@ -21,6 +23,7 @@ class Device(object):
 
     @property
     def name(self):
+        """Device name to be written to the output."""
         raise NotImplementedError('Subclass must define a name property')
 
     @property
@@ -52,4 +55,5 @@ class Device(object):
             'Subclass must define the read_sensor_data method')
 
     def disconnect(self):
+        """Optional method to disconnect from the device and do any cleanup"""
         pass

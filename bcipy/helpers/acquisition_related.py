@@ -3,7 +3,7 @@ from typing import List
 
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import DataAcquisitionClient, _Clock
+from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
 from bcipy.acquisition.processor import FileWriter
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
@@ -23,7 +23,7 @@ analysis_channels_by_device = {
 
 
 def init_eeg_acquisition(parameters: dict, save_folder: str,
-                         clock=_Clock(), server: bool=False):
+                         clock=CountClock(), server: bool=False):
     """Initialize EEG Acquisition.
 
     Initializes a client that connects with the EEG data source and begins

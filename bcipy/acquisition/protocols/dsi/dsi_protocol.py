@@ -1,12 +1,14 @@
+# pylint: disable=invalid-name
 """Protocol with information for generating and serving mock DSI data."""
 import timeit
 
-import bcipy.acquisition.protocols.dsi.dsi as dsi
-import bcipy.acquisition.protocols.protocol as protocol
+from bcipy.acquisition.protocols.dsi import dsi
+from bcipy.acquisition.protocols import protocol
 
 
-def DsiProtocol(fs=dsi.DEFAULT_FS, channels=dsi.DEFAULT_CHANNELS):
+def DsiProtocol(fs=dsi.DEFAULT_FS, channels=None):
     """Protocol for mocking DSI data."""
+    channels = channels or dsi.DEFAULT_CHANNELS
     return protocol.Protocol(encoder=Encoder(),
                              init_messages=_init_messages(fs, channels),
                              fs=fs,
@@ -53,7 +55,7 @@ def _init_messages(fs, channels):
     return [sensor_msg, freq_msg]
 
 
-class Encoder(object):
+class Encoder():
     """Encodes sensor data as binary data in the DSI format."""
 
     def __init__(self):
