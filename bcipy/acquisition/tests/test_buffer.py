@@ -21,7 +21,7 @@ class _Timer():
         self._start = timeit.default_timer()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         stop = timeit.default_timer()
         self.timings.append(stop - self._start)
         self._start = None

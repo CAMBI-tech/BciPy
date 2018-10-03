@@ -50,7 +50,7 @@ class Producer(threading.Thread):
         return self
 
     # @override to make this class a context manager
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         self.stop()
 
     def _genitem(self):

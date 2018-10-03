@@ -41,7 +41,7 @@ class Processor():
         self._check_device_info()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         pass
 
     def process(self, record, timestamp=None):
@@ -98,7 +98,7 @@ class FileWriter(Processor):
         return self
 
     # @override ; context manager
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         self._file.close()
 
     def process(self, record, timestamp=None):

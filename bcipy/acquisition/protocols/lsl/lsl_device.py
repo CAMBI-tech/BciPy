@@ -9,7 +9,6 @@ from bcipy.acquisition.protocols.device import Device
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 
-TRG = "TRG"
 LSL_TIMESTAMP = 'LSL_timestamp'
 
 
@@ -79,7 +78,6 @@ class LslDevice(Device):
         if include_lsl_timestamp:
             self._appended_channels.append(LSL_TIMESTAMP)
 
-        self._marker_channels = []
         self._inlet = None
         self._marker_inlets = None
         # There can be 1 current marker for each marker channel.

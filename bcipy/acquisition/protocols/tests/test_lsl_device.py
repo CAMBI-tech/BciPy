@@ -124,7 +124,7 @@ class TestLslWithMetadata(TestLslDevice):
         with pytest.raises(Exception):
             device.acquisition_init()
 
-    def _test_channel_init(self):
+    def test_channel_init(self):
         """Channels should be initialized from device metadata if not
          provided."""
         device = LslDevice(connection_params={}, fs=self.hz,

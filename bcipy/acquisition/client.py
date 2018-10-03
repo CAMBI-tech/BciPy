@@ -101,7 +101,7 @@ class DataAcquisitionClient:
         return self
 
     # @override ; context manager
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         self.stop_acquisition()
 
     def start_acquisition(self):

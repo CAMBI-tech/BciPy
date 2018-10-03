@@ -239,7 +239,7 @@ def main():
 
     starttime = timeit.default_timer()
     for i in range(n_rows):
-        data = [np.random.uniform(-1000, 1000) for cc in range(channel_count)]
+        data = [np.random.uniform(-1000, 1000) for _ in range(channel_count)]
         if i % 2 == 0:
             append(pid1, Record(data, i, None))
         else:
