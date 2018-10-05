@@ -1,12 +1,23 @@
+# pylint: disable=no-member,fixme
+"""GUI for running RSVP Tasks"""
+import itertools
+import os
 import subprocess
+
+import wx
+
 from bcipy.gui.gui_main import BCIGui
 from bcipy.helpers.load import load_json_parameters
-import os
-import wx
+
+# Order must be the same as the start_task.py experiment types.
+# TODO: Encapulate this logic elsewhere so it can be used in both places.
+# TODO: Get tasks by introspecting on Task subclasses (recursively)
+TASKS = ['Calibration', 'Copy Phrase', 'Copy Phrase C.', 'Icon to Icon',
+         'Icon to Word', 'Alert Tone']
 
 
 class RSVPKeyboard(BCIGui):
-
+    """GUI for launching the RSVP Tasks."""
     event_started = False
     PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
 
@@ -24,7 +35,7 @@ class RSVPKeyboard(BCIGui):
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
-    def edit_parameters(self, event) -> None:
+    def edit_parameters(self, _event) -> None:
         """Edit Parameters.
 
         Function for executing the edit parameter window
@@ -36,8 +47,7 @@ class RSVPKeyboard(BCIGui):
         if self.check_input():
             self.event_started = True
             username = self.comboboxes[0].GetValue().replace(" ", "_")
-            experiment_type = self._cast_experiment_type(
-                event.GetEventObject().GetLabel())
+            experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
             cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
                 mode, experiment_type, username)
@@ -65,40 +75,21 @@ class RSVPKeyboard(BCIGui):
             return False
         return True
 
-    def offline_analysis(self, event: wx.Event) -> None:
+    def offline_analysis(self, _event: wx.Event) -> None:
+        """Run the offline analysis in a new Process."""
         cmd = 'python bcipy/signal/model/offline_analysis.py'
         subprocess.Popen(cmd, shell=True)
         self.event_started = True
 
-    def refresh(self, event: wx.Event) -> None:
+    def refresh(self, _event: wx.Event) -> None:
         self.event_started = False
 
-    def _cast_experiment_type(self, experiment_type_string: str) -> None:
-        if experiment_type_string == 'Calibration':
-            experiment_type = 1
-        elif experiment_type_string == 'Copy Phrase':
-            experiment_type = 2
-        elif experiment_type_string == 'Copy Phrase C.':
-            experiment_type = 3
-        elif experiment_type_string == 'Icon to Icon':
-            experiment_type = 4
-        elif experiment_type_string == 'Icon to Word':
-            experiment_type = 5
-        else:
-            dialog = wx.MessageDialog(
-                self, "Not a registered experiment type!", 'Info',
-                wx.OK | wx.ICON_WARNING)
-            dialog.ShowModal()
-            dialog.Destroy()
-            raise ValueError('Register this experiment type or remove button')
-
-        return experiment_type
-
-    def load_items_from_txt(self, event):
+    def load_items_from_txt(self, _event):
         """Loads user directory names from the data path defined in
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
-        parameters = load_json_parameters(self.PARAMETER_LOCATION, value_cast=True)
+        parameters = load_json_parameters(
+            self.PARAMETER_LOCATION, value_cast=True)
         data_save_loc = parameters['data_save_loc']
         if os.path.isdir(data_save_loc):
             saved_users = os.listdir(data_save_loc)
@@ -110,75 +101,82 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-# Start the app and init the main GUI
-app = wx.App(False)
-gui = RSVPKeyboard(
-    title="RSVPKeyboard", size=(650, 550), background_color='black')
+def main():
+    """Create the GUI and run"""
+    task_colors = itertools.cycle(
+        [wx.Colour(221, 37, 56), wx.Colour(239, 146, 40),
+         wx.Colour(239, 212, 105), wx.Colour(117, 173, 48),
+         wx.Colour(62, 161, 232), wx.Colour(192, 122, 224),
+         wx.Colour(5, 62, 221)])
 
-# STATIC TEXT!
-gui.add_static_text(
-    text='RSVPKeyboard', position=(185, 0), size=25, color='white')
-gui.add_static_text(
-    text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
-gui.add_static_text(
-    text='2.) Choose your experiment type:',
-    position=(75, 250), size=15, color='white')
+    side_padding = 15
+    btn_width_apart = 105
+    btn_padding = 20
 
-# BUTTONS!
-gui.add_button(
-    message="Calibration",
-    position=(15, 300), size=(85, 80),
-    color=wx.Colour(221, 37, 56),
-    action='launch_bci')
-gui.add_button(
-    message="Copy Phrase", position=(120, 300),
-    size=(85, 80),
-    color=wx.Colour(239, 146, 40),
-    action='launch_bci')
-gui.add_button(
-    message="Copy Phrase C.", position=(225, 300),
-    size=(85, 80),
-    color=wx.Colour(239, 212, 105),
-    action='launch_bci')
-gui.add_button(
-    message="Free Spell", position=(330, 300),
-    size=(85, 80),
-    color=wx.Colour(117, 173, 48),
-    action='launch_bci')
-gui.add_button(
-    message="Icon to Icon", position=(435, 300),
-    size=(85, 80),
-    color=wx.Colour(62, 161, 232),
-    action='launch_bci')
-gui.add_button(
-    message="Icon to Word", position=(540, 300),
-    size=(85, 80),
-    color=wx.Colour(192, 122, 224),
-    action='launch_bci')
-gui.add_button(
-    message='Edit Parameters', position=(0, 450),
-    size=(100, 50), color='white',
-    action='edit_parameters')
-gui.add_button(
-    message='Calculate AUC', position=(535, 450),
-    size=(100, 50), color='white',
-    action='offline_analysis')
-gui.add_button(
-    message='Refresh', position=(585, 230),
-    size=(50, 50), color='white',
-    action='refresh')
+    window_width = (len(TASKS) * btn_width_apart) + btn_padding
+    # Start the app and init the main GUI
+    app = wx.App(False)
+    gui = RSVPKeyboard(
+        title="RSVPKeyboard", size=(window_width, 550), background_color='black')
 
-# TEXT INPUT
-gui.add_combobox(position=(75, 150), size=(250, 25), action='load_items_from_txt')
+    # STATIC TEXT!
+    gui.add_static_text(
+        text='RSVPKeyboard', position=(185, 0), size=25, color='white')
+    gui.add_static_text(
+        text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
+    gui.add_static_text(
+        text='2.) Choose your experiment type:',
+        position=(75, 250), size=15, color='white')
+
+    # BUTTONS!
+    btn_size = (85, 80)
+    btn_pos_x = side_padding
+    btn_pos_y = 300
+    for btn_id, btn_label in enumerate(TASKS):
+        # The btn_id should correspond to the task_type['exp_type'] value in
+        # start_task.py
+        gui.add_button(
+            message=btn_label,
+            position=(btn_pos_x, btn_pos_y),
+            size=btn_size,
+            color=next(task_colors),
+            action='launch_bci',
+            id=btn_id + 1)
+        btn_pos_x += btn_width_apart
+
+    gui.add_button(
+        message='Edit Parameters', position=(side_padding, 450),
+        size=(100, 50), color='white',
+        action='edit_parameters')
+
+    btn_auc_width = 100
+    btn_auc_x = window_width - (side_padding + btn_auc_width)
+    gui.add_button(
+        message='Calculate AUC', position=(btn_auc_x, 450),
+        size=(btn_auc_width, 50), color='white',
+        action='offline_analysis')
+
+    btn_refresh_width = 50
+    btn_refresh_x = window_width - (side_padding + btn_refresh_width)
+    gui.add_button(
+        message='Refresh', position=(btn_refresh_x, 230),
+        size=(btn_refresh_width, 50), color='white',
+        action='refresh')
+
+    # TEXT INPUT
+    gui.add_combobox(position=(75, 150), size=(
+        250, 25), action='load_items_from_txt')
+
+    # IMAGES
+    gui.add_image(
+        path='bcipy/static/images/gui_images/ohsu.png', position=(side_padding, 0), size=100)
+    gui.add_image(
+        path='bcipy/static/images/gui_images/neu.png', position=(530, 0), size=100)
+
+    # Make the GUI Show now
+    gui.show_gui()
+    app.MainLoop()
 
 
-# IMAGES
-gui.add_image(
-    path='bcipy/static/images/gui_images/ohsu.png', position=(10, 0), size=100)
-gui.add_image(
-    path='bcipy/static/images/gui_images/neu.png', position=(530, 0), size=100)
-
-
-# Make the GUI Show now
-gui.show_gui()
-app.MainLoop()
+if __name__ == "__main__":
+    main()

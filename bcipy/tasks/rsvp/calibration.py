@@ -78,7 +78,7 @@ class RSVPCalibrationTask(Task):
 
     def execute(self):
 
-        self.logger.debug('Starting Calibration Task!')
+        self.logger.debug(f'Starting {self.name()}!')
         run = True
 
         # Check user input to make sure we should be going

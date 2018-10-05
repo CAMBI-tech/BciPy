@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from bcipy.tasks.rsvp.alert_tone_calibration import RSVPAlertToneCalibrationTask
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
+# TODO
+from bcipy.tasks.task import Task
 
 def start_task(display_window, daq, task_type, parameters, file_save,
                classifier=None, lmodel=None, fake=True, auc_filename=None):
@@ -12,78 +15,46 @@ def start_task(display_window, daq, task_type, parameters, file_save,
 
     # RSVP
     if task_type['mode'] == 'RSVP':
-
+        task = None
         # CALIBRATION
         if task_type['exp_type'] == 1:
-
-            # try running the experiment
-            try:
-                calibration_task = RSVPCalibrationTask(
-                    display_window, daq, parameters, file_save, fake)
-
-                calibration_task.execute()
-            # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
+            task = RSVPCalibrationTask(
+                display_window, daq, parameters, file_save, fake)
 
         # COPY PHRASE
         elif task_type['exp_type'] == 2:
-            # try running the experiment
-            try:
-                copy_phrase_task = RSVPCopyPhraseTask(
-                    display_window, daq, parameters, file_save, classifier,
-                    lmodel=lmodel,
-                    fake=fake)
-                copy_phrase_task.execute()
-
-            # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
+            task = RSVPCopyPhraseTask(
+                display_window, daq, parameters, file_save, classifier,
+                lmodel=lmodel,
+                fake=fake)
 
         # COPY PHRASE CALIBRATION
         elif task_type['exp_type'] == 3:
-            # try running the experiment
-            try:
-                copy_phrase_calibration = RSVPCopyPhraseCalibrationTask(
-                    display_window, daq, parameters, file_save, fake)
+            task = RSVPCopyPhraseCalibrationTask(
+                display_window, daq, parameters, file_save, fake)
 
-                copy_phrase_calibration.execute()
-
-            # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
-
+        # IconToIcon where icon is not word
         elif task_type['exp_type'] == 4:
-            # try running the experiment
-            try:
-                icon_to_icon = RSVPIconToIconTask(display_window, daq,
-                                                  parameters, file_save, classifier,
-                                                  lmodel, fake, False, auc_filename)
-
-                icon_to_icon.execute()
-
-            # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
-
+            task = RSVPIconToIconTask(display_window, daq,
+                                      parameters, file_save, classifier,
+                                      lmodel, fake, False, auc_filename)
+        # IconToIcon where icon is word
+        # TODO: create a different class for the other scenario.
         elif task_type['exp_type'] == 5:
-            # try running the experiment
-            try:
-                icon_to_word = RSVPIconToIconTask(display_window, daq,
-                                                  parameters, file_save, classifier,
-                                                  lmodel, fake, True, auc_filename)
+            task = RSVPIconToIconTask(display_window, daq,
+                                      parameters, file_save, classifier,
+                                      lmodel, fake, True, auc_filename)
+        # Alert tone calibration
+        elif task_type['exp_type'] == 6:
+            task = RSVPAlertToneCalibrationTask(
+                display_window, daq, parameters, file_save, fake)
 
-                icon_to_word.execute()
+        if not task:
+            raise Exception(
+                'Experiment type for RSVP not registered in start task')
 
-            # Raise exceptions if any encountered and clean up!!
-            except Exception as e:
-                raise e
-
-        else:
-            raise Exception('Experiment type for RSVP not registerd in start task')
+        task.execute()
     else:
         raise Exception(
             '%s %s Not implemented yet!' % (
                 task_type['mode'], task_type['exp_type']))
-
-    return

@@ -289,6 +289,14 @@
     "recommended_values": "",
     "type": "directorypath"
   },
+  "alert_sounds_path": {
+    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "section": "bci_config",
+    "readableName": "Alert sounds directory",
+    "helpTip": "Path to the sound files used in the Alert Tone Calibration Task",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
   "offline_analysis_tone": {
     "value": "bcipy/static/sounds/beep.wav",
     "section": "bci_config",
@@ -356,8 +364,8 @@
   "color_bar_bg": {
     "value": "green",
     "section": "bci_config",
-    "readableName": "Color Bar Gragh Bars",
-    "helpTip": "Color Bar Gragh Bars",
+    "readableName": "Color Bar Graph Bars",
+    "helpTip": "Color Bar Graph Bars",
     "recommended_values": "",
     "type": "str"
   },
