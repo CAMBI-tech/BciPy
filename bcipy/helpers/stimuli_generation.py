@@ -2,7 +2,8 @@ import glob
 import itertools
 import logging
 import random
-from os import path
+from os import path, sep
+
 from typing import Iterator
 
 import numpy as np
@@ -448,6 +449,6 @@ def soundfiles(directory: str) -> Iterator[str]:
     if not path.isdir(directory):
         raise Exception(("Invalid directory for sound files. Please check "
                          "your configuration."))
-    if not directory.endswith("/"):
-        directory += "/"
+    if not directory.endswith(sep):
+        directory += sep
     return itertools.cycle(glob.glob(directory + '*.wav'))

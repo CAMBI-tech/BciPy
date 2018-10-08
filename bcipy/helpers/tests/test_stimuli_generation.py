@@ -1,7 +1,7 @@
 """Tests for stimuli_generation helpers."""
 import glob
 import unittest
-
+from os import path
 import sounddevice as sd
 import soundfile as sf
 from mockito import any, mock, unstub, verify, when
@@ -81,11 +81,13 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_soundfiles_generator(self):
         """Test that soundfiles function returns an cyclic generator."""
 
+        directory = "./sounds"
         soundfile_paths = ["./sounds/0.wav",
                            "./sounds/1.wav", "./sounds/2.wav"]
         when(glob).glob("./sounds/*.wav").thenReturn(soundfile_paths)
+        when(path).isdir(directory).thenReturn(True)
 
-        gen = soundfiles("./sounds")
+        gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
         self.assertEqual(next(gen), soundfile_paths[1])
         self.assertEqual(next(gen), soundfile_paths[2])
@@ -96,11 +98,12 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_soundfiles_generator_path_arg(self):
         """Test that soundfiles function constructs the correct path."""
+        directory = "./sounds/"
         soundfile_paths = ["./sounds/0.wav",
                            "./sounds/1.wav", "./sounds/2.wav"]
         when(glob).glob("./sounds/*.wav").thenReturn(soundfile_paths)
-
-        gen = soundfiles("./sounds/")
+        when(path).isdir(directory).thenReturn(True)
+        gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
 
     def tearDown(self):
