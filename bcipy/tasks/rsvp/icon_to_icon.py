@@ -20,6 +20,8 @@ import glob
 import logging
 from os import path
 
+TASK_NAME = 'RSVP Icon to Icon Task'
+
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -104,19 +106,18 @@ class RSVPIconToIconTask(Task):
         self.collection_window_len = parameters['collection_window_after_trial_length']
         self.data_save_path = parameters['data_save_loc']
 
-
     def execute(self):
         self.logger.debug('Starting Icon to Icon Task!')
         image_array, timing_array = generate_icon_match_images(self.len_sti,
-                                                           self.image_path,
-                                                           self.num_sti,
-                                                           self.timing,
-                                                           self.is_word)
+                                                               self.image_path,
+                                                               self.num_sti,
+                                                               self.timing,
+                                                               self.is_word)
 
-        #Get all png images in image path
+        # Get all png images in image path
         alp_image_array = glob.glob(self.image_path + '*.png')
 
-        #Remove plus image from array
+        # Remove plus image from array
         for image in alp_image_array:
             if image.endswith('PLUS.png'):
                 alp_image_array.remove(image)
@@ -124,11 +125,13 @@ class RSVPIconToIconTask(Task):
         if self.is_word:
             image_name_array = glob.glob(self.image_path + '*.png')
             for image in image_name_array:
-                image_name_array[image_name_array.index(image)] = path.basename(image)
+                image_name_array[image_name_array.index(
+                    image)] = path.basename(image)
             alp_image_array.extend(image_name_array)
 
         for image in alp_image_array:
-            alp_image_array[alp_image_array.index(image)] = image.split('/')[-1].split('.')[0]
+            alp_image_array[alp_image_array.index(
+                image)] = image.split('/')[-1].split('.')[0]
 
         self.alp = alp_image_array
 
@@ -180,8 +183,8 @@ class RSVPIconToIconTask(Task):
                 # Init an epoch, getting initial stimuli
                 new_epoch, sti = copy_phrase_task.initialize_epoch()
 
-                #If correct decisions are being faked, make sure that we always
-                #are starting a new epoch
+                # If correct decisions are being faked, make sure that we always
+                # are starting a new epoch
                 if self.fake:
                     new_epoch = True
 
@@ -198,16 +201,18 @@ class RSVPIconToIconTask(Task):
 
                 self.rsvp.stim_sequence = image_array[current_trial]
                 self.rsvp.time_list_sti = timing_array
-                #Change size of target word if we are in word matching mode
+                # Change size of target word if we are in word matching mode
                 if self.is_word:
-                    #Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
-                    self.rsvp.size_list_sti = list(repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
-                    #Set the target word font size to the font size defined in parameters
+                    # Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
+                    self.rsvp.size_list_sti = list(
+                        repeat(self.stimuli_height, len(self.rsvp.stim_sequence) + 1))
+                    # Set the target word font size to the font size defined in parameters
                     self.rsvp.size_list_sti[0] = self.word_matching_text_size
 
                 core.wait(self.buffer_val)
 
-                self.rsvp.update_task_state(self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size, self.is_word)
+                self.rsvp.update_task_state(
+                    self.rsvp.stim_sequence[0], self.task_height, 'yellow', self.rsvp.win.size, self.is_word)
 
                 # Do the sequence
                 sequence_timing = self.rsvp.do_sequence()
@@ -225,9 +230,9 @@ class RSVPIconToIconTask(Task):
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
                     process_data_for_decision(sequence_timing, self.daq, self.window,
-                        self.parameters, self.first_stim_time)
+                                              self.parameters, self.first_stim_time)
 
-                #self.fake = False
+                # self.fake = False
 
                 display_stimulus = self.rsvp.stim_sequence[0]
 
@@ -241,7 +246,7 @@ class RSVPIconToIconTask(Task):
                         'triggers': triggers,
                         'target_info': target_info,
                         'target_letter': display_stimulus
-                        }
+                    }
                     correct_decision = True
                     display_message = True
                     message_color = 'green'
@@ -249,7 +254,8 @@ class RSVPIconToIconTask(Task):
                     correct_trials += 1
                     new_epoch = True
                     if self.is_word:
-                        display_stimulus = self.image_path + self.rsvp.stim_sequence[0] + '.png'
+                        display_stimulus = self.image_path + \
+                            self.rsvp.stim_sequence[0] + '.png'
                 else:
                     new_epoch, sti = \
                         copy_phrase_task.evaluate_sequence(raw_data, triggers,
@@ -263,22 +269,23 @@ class RSVPIconToIconTask(Task):
                         'triggers': triggers,
                         'target_info': target_info,
                         'lm_evidence': copy_phrase_task
-                            .conjugator
-                            .evidence_history['LM'][0]
-                            .tolist(),
+                        .conjugator
+                        .evidence_history['LM'][0]
+                        .tolist(),
                         'eeg_evidence': copy_phrase_task
-                            .conjugator
-                            .evidence_history['ERP'][0]
-                            .tolist(),
+                        .conjugator
+                        .evidence_history['ERP'][0]
+                        .tolist(),
                         'likelihood': copy_phrase_task
-                            .conjugator.likelihood.tolist()
+                        .conjugator.likelihood.tolist()
                     }
 
-                    #Test whether to display feedback message, and what color
-                    #the message should be
+                    # Test whether to display feedback message, and what color
+                    # the message should be
                     if new_epoch:
                         if self.is_word:
-                            decide_image_path = self.image_path + copy_phrase_task.decision_maker.last_selection + '.png'
+                            decide_image_path = self.image_path + \
+                                copy_phrase_task.decision_maker.last_selection + '.png'
                         else:
                             decide_image_path = copy_phrase_task.decision_maker.last_selection + '.png'
                         correct_decision = decide_image_path == self.rsvp.stim_sequence[0]
@@ -294,13 +301,13 @@ class RSVPIconToIconTask(Task):
                         display_message = False
 
                 if display_message:
-                    #Display feedback about whether decision was correct
+                    # Display feedback about whether decision was correct
                     visual_feedback = VisualFeedback(
-                    display=self.window, parameters=self.parameters, clock=self.experiment_clock)
+                        display=self.window, parameters=self.parameters, clock=self.experiment_clock)
                     stimulus = display_stimulus
                     visual_feedback.message_color = message_color
-                    visual_feedback.administer(stimulus, compare_assertion=None, message='Decision:')
-
+                    visual_feedback.administer(
+                        stimulus, compare_assertion=None, message='Decision:')
 
                 # Update time spent and save data
                 data['total_time_spent'] = self.experiment_clock.getTime()
@@ -323,17 +330,21 @@ class RSVPIconToIconTask(Task):
             else:
                 run = False
 
-        #Write trial data to icon_data.csv in file save location
+        # Write trial data to icon_data.csv in file save location
         with open(f"{self.file_save}/icon_data.csv", 'w+') as icon_output_csv:
             icon_output_writer = csv.writer(icon_output_csv, delimiter=',')
-            icon_output_writer.writerow(['Participant ID', dirname(self.file_save).replace(self.data_save_path, '')])
+            icon_output_writer.writerow(['Participant ID', dirname(
+                self.file_save).replace(self.data_save_path, '')])
             icon_output_writer.writerow(['Date/Time', datetime.datetime.now()])
             if self.auc_filename:
-                icon_output_writer.writerow(['Calibration AUC', basename(self.auc_filename).replace('.pkl', '')])
+                icon_output_writer.writerow(
+                    ['Calibration AUC', basename(self.auc_filename).replace('.pkl', '')])
             temp_epoch_index = 1 if epoch_index == 0 else epoch_index
             temp_current_trial = 1 if current_trial == 0 else current_trial
-            icon_output_writer.writerow(['Percentage of correctly selected icons', (correct_trials / (temp_current_trial * temp_epoch_index)) * 100])
-            icon_output_writer.writerow(['Task type', ('Icon to word' if self.is_word else 'Icon to icon')])
+            icon_output_writer.writerow(['Percentage of correctly selected icons', (
+                correct_trials / (temp_current_trial * temp_epoch_index)) * 100])
+            icon_output_writer.writerow(
+                ['Task type', ('Icon to word' if self.is_word else 'Icon to icon')])
 
         # Say Goodbye!
         self.rsvp.text = trial_complete_message(self.window, self.parameters)
@@ -350,6 +361,13 @@ class RSVPIconToIconTask(Task):
         core.wait(self.eeg_buffer)
 
         return self.file_save
+
+    @classmethod
+    def label(cls):
+        return TASK_NAME
+
+    def name(self):
+        return TASK_NAME
 
 
 def _init_icon_to_icon_display_task(
