@@ -10,7 +10,7 @@ from bcipy.gui.gui_main import BCIGui
 from bcipy.helpers.load import load_json_parameters
 
 # Order must be the same as the start_task.py experiment types.
-# TODO: Encapulate this logic elsewhere so it can be used in both places.
+# TODO: Encapsulate this logic elsewhere so it can be used in both places.
 # TODO: Get tasks by introspecting on Task subclasses (recursively)
 TASKS = ['Calibration', 'Copy Phrase', 'Copy Phrase C.', 'Icon to Icon',
          'Icon to Word', 'Alert Tone']
@@ -150,14 +150,14 @@ def main():
         action='edit_parameters')
 
     btn_auc_width = 100
-    btn_auc_x = window_width - (side_padding + btn_auc_width)
+    btn_auc_x = window_width - (2 * side_padding + btn_auc_width)
     gui.add_button(
         message='Calculate AUC', position=(btn_auc_x, 450),
         size=(btn_auc_width, 50), color='white',
         action='offline_analysis')
 
     btn_refresh_width = 50
-    btn_refresh_x = window_width - (side_padding + btn_refresh_width)
+    btn_refresh_x = window_width - (2 * side_padding + btn_refresh_width)
     gui.add_button(
         message='Refresh', position=(btn_refresh_x, 230),
         size=(btn_refresh_width, 50), color='white',
