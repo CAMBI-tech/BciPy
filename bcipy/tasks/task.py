@@ -11,12 +11,6 @@ class Task(object):
         super(Task, self).__init__()
         self.logger = logging
 
-    @classmethod
-    def label(cls):
-        """Label to be displayed in GUI and command line interfaces."""
-        obj = cls.__new__(cls)
-        return obj.name()
-
     def configure(self):
         pass
 

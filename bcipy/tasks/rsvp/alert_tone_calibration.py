@@ -1,12 +1,13 @@
 """Calibration Task that uses alert tones to help the user retain focus."""
 
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
+from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 
 TASK_NAME = 'RSVP Alert Tone Calibration Task'
 
 
-class RSVPAlertToneCalibrationTask(RSVPCalibrationTask):
+class RSVPAlertToneCalibrationTask(Task):
     """RSVP Calibration Task that uses alert tones to maintain user focus.
 
     Calibration task performs an RSVP stimulus sequence to elicit an ERP.
@@ -24,15 +25,14 @@ class RSVPAlertToneCalibrationTask(RSVPCalibrationTask):
         daq (Data Acquisition Object)
         parameters (Dictionary)
         file_save (String)
-        fake (Boolean)
 
     Output:
         file_save (String)
     """
 
-    def __init__(self, win, daq, parameters, file_save, fake):
-        super(RSVPAlertToneCalibrationTask, self).__init__(
-            win, daq, parameters, file_save, fake)
+    def __init__(self, win, daq, parameters, file_save):
+        super(RSVPAlertToneCalibrationTask, self).__init__()
+        self._task = RSVPCalibrationTask(win, daq, parameters, file_save)
 
         alerts = soundfiles(parameters['alert_sounds_path'])
 
@@ -42,7 +42,11 @@ class RSVPAlertToneCalibrationTask(RSVPCalibrationTask):
                 return
             play_sound(sound_path, sound_load_buffer_time=0,
                        sound_post_buffer_time=0)
-        self.rsvp.first_stim_callback = play_sound_callback
+        self._task.rsvp.first_stim_callback = play_sound_callback
+
+    def execute(self):
+        self.logger.debug(f'Starting {self.name()}!')
+        self._task.execute()
 
     @classmethod
     def label(cls):

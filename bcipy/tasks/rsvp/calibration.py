@@ -29,13 +29,13 @@ class RSVPCalibrationTask(Task):
         daq (Data Acquisition Object)
         parameters (Dictionary)
         file_save (String)
-        fake (Boolean)
 
     Output:
         file_save (String)
 
     """
-    def __init__(self, win, daq, parameters, file_save, fake):
+
+    def __init__(self, win, daq, parameters, file_save):
         super(RSVPCalibrationTask, self).__init__()
 
         self.window = win
@@ -93,14 +93,15 @@ class RSVPCalibrationTask(Task):
             # Get random sequence information given stimuli parameters
             (ele_sti, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
-                self.alp, num_sti=self.num_sti,
-                len_sti=self.len_sti, timing=self.timing,
-                is_txt=self.rsvp.is_txt_sti,
-                color=self.color)
+                 self.alp,
+                 num_sti=self.num_sti,
+                 len_sti=self.len_sti,
+                 timing=self.timing,
+                 is_txt=self.rsvp.is_txt_sti,
+                 color=self.color)
 
             (task_text, task_color) = get_task_info(self.num_sti,
                                                     self.task_info_color)
-
 
             # Execute the RSVP sequences
             for idx_o in range(len(task_text)):
@@ -110,7 +111,7 @@ class RSVPCalibrationTask(Task):
                                       self.wait_screen_message_color):
                     break
 
-                #Take a break every number of trials defined in parameters.json
+                # Take a break every number of trials defined in parameters.json
                 if self.enable_breaks:
                     pause_calibration(self.window, self.rsvp, idx_o,
                                       self.parameters)
