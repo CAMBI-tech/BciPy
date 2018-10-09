@@ -1,5 +1,5 @@
-# pylint: disable=no-member,fixme
-"""GUI for running RSVP Tasks"""
+# pylint: disable=no-member
+"""GUI for running RSVP tasks"""
 import itertools
 import os
 import subprocess
@@ -9,15 +9,11 @@ import wx
 from bcipy.gui.gui_main import BCIGui
 from bcipy.helpers.load import load_json_parameters
 
-# Order must be the same as the start_task.py experiment types.
-# TODO: Encapsulate this logic elsewhere so it can be used in both places.
-# TODO: Get tasks by introspecting on Task subclasses (recursively)
-TASKS = ['Calibration', 'Copy Phrase', 'Copy Phrase C.', 'Icon to Icon',
-         'Icon to Word', 'Alert Tone']
+from bcipy.tasks.task_registry import ExperimentType
 
 
 class RSVPKeyboard(BCIGui):
-    """GUI for launching the RSVP Tasks."""
+    """GUI for launching the RSVP tasks."""
     event_started = False
     PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
 
@@ -103,6 +99,8 @@ class RSVPKeyboard(BCIGui):
 
 def main():
     """Create the GUI and run"""
+    tasks = ExperimentType.by_mode()['RSVP']
+
     task_colors = itertools.cycle(
         [wx.Colour(221, 37, 56), wx.Colour(239, 146, 40),
          wx.Colour(239, 212, 105), wx.Colour(117, 173, 48),
@@ -113,7 +111,7 @@ def main():
     btn_width_apart = 105
     btn_padding = 20
 
-    window_width = (len(TASKS) * btn_width_apart) + btn_padding
+    window_width = (len(tasks) * btn_width_apart) + btn_padding
     # Start the app and init the main GUI
     app = wx.App(False)
     gui = RSVPKeyboard(
@@ -132,16 +130,14 @@ def main():
     btn_size = (85, 80)
     btn_pos_x = side_padding
     btn_pos_y = 300
-    for btn_id, btn_label in enumerate(TASKS):
-        # The btn_id should correspond to the task_type['exp_type'] value in
-        # start_task.py
+    for task in tasks:
         gui.add_button(
-            message=btn_label,
+            message=task.label,
             position=(btn_pos_x, btn_pos_y),
             size=btn_size,
             color=next(task_colors),
             action='launch_bci',
-            id=btn_id + 1)
+            id=task.value)
         btn_pos_x += btn_width_apart
 
     gui.add_button(

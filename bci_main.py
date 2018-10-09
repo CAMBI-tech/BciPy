@@ -3,6 +3,7 @@ from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 
 from bcipy.tasks.start_task import start_task
+
 from bcipy.helpers.load import load_classifier
 from bcipy.helpers.lang_model_related import init_language_model
 
@@ -131,19 +132,23 @@ def _clean_up_session(display, daq, server):
 
 if __name__ == "__main__":
     import argparse
-    from bcipy.helpers.load import load_json_parameters
     import multiprocessing
+    from bcipy.helpers.load import load_json_parameters
+    from bcipy.tasks.task_registry import ExperimentType
 
     # Needed for windows machines
     multiprocessing.freeze_support()
 
+    task_options = '; '.join([(f"{task.name.title().replace('_',' ')}:"
+                               f" {task.value}")
+                              for task in ExperimentType])
     parser = argparse.ArgumentParser()
     # Command line utility for adding arguments/ paths via command line
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--type', default=1,
-                        help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
+                        help=f'Task type. Options: ({task_options})')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
     args = parser.parse_args()

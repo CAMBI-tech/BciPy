@@ -1,60 +1,71 @@
 # -*- coding: utf-8 -*-
-
+"""Code for constructing and executing Tasks"""
 from bcipy.tasks.rsvp.alert_tone_calibration import RSVPAlertToneCalibrationTask
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
-# TODO
 from bcipy.tasks.task import Task
+from bcipy.tasks.task_registry import ExperimentType
 
-def start_task(display_window, daq, task_type, parameters, file_save,
-               classifier=None, lmodel=None, fake=True, auc_filename=None):
-    # Determine the mode and exp type: send to the correct task.
 
-    # RSVP
+def make_task(display_window, daq, task_type, parameters, file_save,
+              classifier=None, lmodel=None, fake=True,
+              auc_filename=None) -> Task:
+    """Creates a Task based on the provided parameters.
+
+    Parameters:
+    -----------
+        display_window: pyschopy Window
+        daq: DataAcquisitionClient
+        task_type: dict
+        parameters: dict
+        file_save: str - path to file in which to save data
+        classifier
+        lmodel - language model
+        fake: boolean - true if eeg stream is randomly generated
+        auc_filename: str
+    """
     if task_type['mode'] == 'RSVP':
-        task = None
-        # CALIBRATION
-        if task_type['exp_type'] == 1:
-            task = RSVPCalibrationTask(
-                display_window, daq, parameters, file_save, fake)
+        exp_type = ExperimentType(task_type['exp_type'])
 
-        # COPY PHRASE
-        elif task_type['exp_type'] == 2:
-            task = RSVPCopyPhraseTask(
+        if exp_type is ExperimentType.RSVP_CALIBRATION:
+            return RSVPCalibrationTask(
+                display_window, daq, parameters, file_save)
+
+        if exp_type is ExperimentType.RSVP_COPY_PHRASE:
+            return RSVPCopyPhraseTask(
                 display_window, daq, parameters, file_save, classifier,
                 lmodel=lmodel,
                 fake=fake)
 
-        # COPY PHRASE CALIBRATION
-        elif task_type['exp_type'] == 3:
-            task = RSVPCopyPhraseCalibrationTask(
+        if exp_type is ExperimentType.RSVP_COPY_PHRASE_CALIBRATION:
+            return RSVPCopyPhraseCalibrationTask(
                 display_window, daq, parameters, file_save, fake)
 
-        # IconToIcon where icon is not word
-        elif task_type['exp_type'] == 4:
-            task = RSVPIconToIconTask(display_window, daq,
+        if exp_type is ExperimentType.RSVP_ICON_TO_ICON:
+            return RSVPIconToIconTask(display_window, daq,
                                       parameters, file_save, classifier,
                                       lmodel, fake, False, auc_filename)
-        # IconToIcon where icon is word
-        # TODO: create a different class for the other scenario.
-        elif task_type['exp_type'] == 5:
-            task = RSVPIconToIconTask(display_window, daq,
+
+        if exp_type is ExperimentType.RSVP_ICON_TO_WORD:
+            # pylint: disable=fixme
+            # TODO: create a different class for this scenario.
+            return RSVPIconToIconTask(display_window, daq,
                                       parameters, file_save, classifier,
                                       lmodel, fake, True, auc_filename)
-        # Alert tone calibration
-        elif task_type['exp_type'] == 6:
-            task = RSVPAlertToneCalibrationTask(
-                display_window, daq, parameters, file_save, fake)
 
-        if not task:
-            raise Exception(
-                'Experiment type for RSVP not registered in start task')
+        if exp_type is ExperimentType.RSVP_ALERT_TONE_CALIBRATION:
+            return RSVPAlertToneCalibrationTask(
+                display_window, daq, parameters, file_save)
 
-        task.execute()
-    else:
-        raise Exception(
-            '%s %s Not implemented yet!' % (
-                task_type['mode'], task_type['exp_type']))
+    raise Exception('The provided task is not registered.')
+
+
+def start_task(display_window, daq, task_type, parameters, file_save,
+               classifier=None, lmodel=None, fake=True, auc_filename=None):
+    """Creates a Task and starts execution."""
+    task = make_task(display_window, daq, task_type, parameters, file_save,
+                     classifier, lmodel, fake, auc_filename)
+    task.execute()
