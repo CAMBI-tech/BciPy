@@ -61,3 +61,8 @@ class ExperimentType(Enum):
         for key, group in groupby(cls, prefix):
             mode_map[key] = [task for task in group]
         return mode_map
+
+    @classmethod
+    def calibration_tasks(cls) -> List['ExperimentType']:
+        return [task for task in cls if task.name.endswith('CALIBRATION')
+                and 'COPY_PHRASE' not in task.name]
