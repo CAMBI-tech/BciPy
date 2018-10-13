@@ -1,10 +1,15 @@
 import sys
 import os
+sys.path.append('.')
 from bcipy.language_model.language_model import LangModel
+from bcipy.helpers.load import load_json_parameters
 
-# path to fst in bci repo on local machiene
-abs_path_fst = os.path.abspath("bcipy/language_model/fst/brown_closure.n5.kn.fst")
-
+parameters_path = 'bcipy/parameters/parameters.json'
+# call the load parameters function
+parameters = load_json_parameters(parameters_path)
+# pbsolute ath to fst 
+abs_path_fst = parameters["path_to_fst"]["value"]
+print(abs_path_fst)
 # local fst
 localfst = abs_path_fst
 # init LMWrapper

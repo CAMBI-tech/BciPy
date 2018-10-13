@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append('.')
 import docker
 import requests
 import time
@@ -29,35 +31,9 @@ class LangModel:
           logfile (str) - a valid filename to function as a logger
         """
 
-        # Windows requires a special handling on to setup the access to Docker.
-        os_version = platform.platform()
-        if os_version.startswith('Windows'):
-            # Setup the environment variables.
-            docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
-            docker_instructions = docker_env_cmd.stdout.read().decode().split('\n')
-            for instruction in docker_instructions:
-                if instruction.startswith('SET'):
-                    environ_pair_str = instruction[instruction.find(' ')+1:]
-                    var_name, var_value = environ_pair_str.split('=')
-                    os.environ[var_name] = var_value
-            # Overides the local ip as Windows 7 uses docker machine hence would
-            # fail to bind.
-            docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
-            host = str(docker_machine_ip_cmd.stdout.read().strip())
-
-
         # assert input path validity
         assert os.path.exists(os.path.dirname(
             localpath2fst)), "%r is not a valid path" % localpath2fst
-
-        # Correct the format of path in Windows
-        if os_version.startswith('Windows'):
-            path = re.compile(r'([a-zA-Z]):\\(.*)')
-            match = path.search(localpath2fst)
-            if match:
-                drive = match.group(1).lower()
-                remaining_path = match.group(2).replace("\\", "/")
-                localpath2fst = "/{0}/{1}".format(drive, remaining_path)
 
         # assert strings
         assert type(host) == str, "%r is not a string type" % host
@@ -95,9 +71,9 @@ class LangModel:
         print("INITIALIZING SERVER..")
         time.sleep(1)
         # assert a new container was generated
-        con_id = str(self.container.short_id)
-        con_list = str(client.containers.list())
-        con_id_fromlist = re.findall('Container: (.+?)>', con_list)[0]
+        con_id = self.container.short_id
+        for con in client.containers.list(filters={"ancestor": "0dd3f920287c"}):
+            con_id_fromlist = con.short_id
         assert con_id == con_id_fromlist, \
             "internal container exsistance failed"
 
@@ -106,16 +82,9 @@ class LangModel:
         Remove existing containers as they
         occupy the required ports
         """
-        con_list = str(client.containers.list())
-        con_ids = re.findall('Container: (.+?)>', con_list)
-        if con_ids:
-            for container in con_ids:
-                open_con = client.containers.get(container)
-                open_con.stop()
-                try:
-                    open_con.remove()
-                except BaseException:
-                    pass
+        for con in client.containers.list(filters={"ancestor": "0dd3f920287c"}):
+            con.stop()
+            con.remove()
 
     def init(self):
         """
@@ -129,8 +98,10 @@ class LangModel:
                 self.port +
                 '/init')
         except requests.ConnectionError:
+            r.close()
             raise ConnectionErr(self.host, self.port)
         if not r.status_code == requests.codes.ok:
+            r.close()
             raise StatusCodeError(r.status_code)
 
     def reset(self):
@@ -145,8 +116,10 @@ class LangModel:
                 self.port +
                 '/reset')
         except requests.ConnectionError:
+            r.close()
             raise ConnectionErr(self.host, self.port)
         if not r.status_code == requests.codes.ok:
+            r.close()
             raise StatusCodeError(r.status_code)
         logging.info("\ncleaning history\n")
 
@@ -177,8 +150,10 @@ class LangModel:
                     json={
                         'decision': symbol.lower()})
             except requests.ConnectionError:
+                r.close()
                 raise ConnectionErr(self.host, self.port)
             if not r.status_code == requests.codes.ok:
+                r.close()
                 raise StatusCodeError(r.status_code)
             self.priors = r.json()
             self.decision = symbol.upper()
