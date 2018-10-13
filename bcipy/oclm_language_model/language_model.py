@@ -1,4 +1,3 @@
-import os
 import sys
 sys.path.insert(0, ".")
 import docker
@@ -17,7 +16,7 @@ ALPHABET = alphabet()
 
 class LangModel:
 
-    def __init__(self, host="127.0.0.1", port="5000", logfile="log"):
+    def __init__(self, host="127.0.0.1", port="6000", logfile="log"):
         """
         Initiate the langModel class. Primarly initializing
         is aimed at establishing the tcp/ip connection
@@ -30,22 +29,6 @@ class LangModel:
           port (str) - the port used in docker
           logfile (str) - a valid filename to function as a logger
         """
-
-        # Windows requires a special handling on to setup the access to Docker.
-        os_version = platform.platform()
-        if os_version.startswith('Windows'):
-            # Setup the environment variables.
-            docker_env_cmd = Popen('docker-machine env --shell cmd', stdout=PIPE)
-            docker_instructions = docker_env_cmd.stdout.read().decode().split('\n')
-            for instruction in docker_instructions:
-                if instruction.startswith('SET'):
-                    environ_pair_str = instruction[instruction.find(' ') + 1:]
-                    var_name, var_value = environ_pair_str.split('=')
-                    os.environ[var_name] = var_value
-            # Overides the local ip as Windows 7 uses docker machine hence would
-            # fail to bind.
-            docker_machine_ip_cmd = Popen('docker-machine ip', stdout=PIPE)
-            host = docker_machine_ip_cmd.stdout.read().decode().strip()
 
         # assert strings
         assert type(host) == str, "%r is not a string type" % host
@@ -72,7 +55,8 @@ class LangModel:
             command='python server.py',
             detach=True,
             ports={
-                self.port + '/tcp': (
+                '5000/tcp': (
+                #self.port + '/tcp': (
                     self.host,
                     self.port)},
             remove=True)
@@ -80,9 +64,9 @@ class LangModel:
         print("INITIALIZING SERVER..\n")
         time.sleep(16)
         # assert a new container was generated
-        con_id = str(self.container.short_id)
-        con_list = str(client.containers.list())
-        con_id_fromlist = re.findall('Container: (.+?)>', con_list)[0]
+        con_id = self.container.short_id
+        for con in client.containers.list(filters={"ancestor": "2ff1cea8936b"}):
+            con_id_fromlist = con.short_id
         assert con_id == con_id_fromlist, \
             "internal container exsistance failed"
 
@@ -91,16 +75,10 @@ class LangModel:
         Remove existing containers as they
         occupy the required ports
         """
-        con_list = str(client.containers.list())
-        con_ids = re.findall('Container: (.+?)>', con_list)
-        if con_ids:
-            for container in con_ids:
-                open_con = client.containers.get(container)
-                open_con.stop()
-                try:
-                    open_con.remove()
-                except BaseException:
-                    pass
+        for con in client.containers.list(filters={"ancestor": "2ff1cea8936b"}):
+            con.stop()
+            con.remove()
+            time.sleep(16)
 
     def init(self, nbest):
         """
@@ -225,6 +203,3 @@ class LangModel:
         # print a json dict of the priors
         return self.priors
 
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.insert(0, "./oclm_language_model")
+sys.path.append('.')
 import unittest
 from bcipy.oclm_language_model.language_model import LangModel
 from bcipy.oclm_language_model.errors import NBestError, EvidenceDataStructError

@@ -7,7 +7,7 @@ from eeg_utils import simulate_eeg
 # init LMWrapper
 lmodel = LangModel(
     host='127.0.0.1',
-    port='5000',
+    port='6000',
     logfile="lmwrap.log")
 
 # init LM
