@@ -1,15 +1,24 @@
-# -*- coding: utf-8 -*-
-
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 
-def start_task(display_window, daq, task_type, parameters, file_save,
-               classifier=None, lmodel=None, fake=True, auc_filename=None):
-    # Determine the mode and exp type: send to the correct task.
+def start_task(
+        display_window,
+        daq,
+        task_type,
+        parameters,
+        file_save,
+        signal_model=None,
+        language_model=None,
+        fake=True,
+        auc_filename=None):
+    """Start Task.
 
+    Determine the mode and exp type: send to the correct task.
+
+    """
     # RSVP
     if task_type['mode'] == 'RSVP':
 
@@ -31,8 +40,8 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             # try running the experiment
             try:
                 copy_phrase_task = RSVPCopyPhraseTask(
-                    display_window, daq, parameters, file_save, classifier,
-                    lmodel=lmodel,
+                    display_window, daq, parameters, file_save, signal_model,
+                    language_model,
                     fake=fake)
                 copy_phrase_task.execute()
 
@@ -57,8 +66,8 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             # try running the experiment
             try:
                 icon_to_icon = RSVPIconToIconTask(display_window, daq,
-                                                  parameters, file_save, classifier,
-                                                  lmodel, fake, False, auc_filename)
+                                                  parameters, file_save, signal_model,
+                                                  language_model, fake, False, auc_filename)
 
                 icon_to_icon.execute()
 
@@ -70,8 +79,8 @@ def start_task(display_window, daq, task_type, parameters, file_save,
             # try running the experiment
             try:
                 icon_to_word = RSVPIconToIconTask(display_window, daq,
-                                                  parameters, file_save, classifier,
-                                                  lmodel, fake, True, auc_filename)
+                                                  parameters, file_save, signal_model,
+                                                  language_model, fake, True, auc_filename)
 
                 icon_to_word.execute()
 

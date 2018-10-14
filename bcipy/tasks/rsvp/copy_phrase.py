@@ -18,20 +18,24 @@ class RSVPCopyPhraseTask(Task):
     """RSVP Copy Phrase Task.
 
     Initializes and runs all needed code for executing a copy phrase task. A
-        phrase is set in parameters and necessary objects (eeg, display) are
+        phrase is set in parameters and necessary objects (daq, display) are
         passed to this function. Certain Wrappers and Task Specific objects are
         executed here.
 
     Parameters
     ----------
-        parameters : dict,
-            configuration details regarding the experiment. See parameters.json
+        win : object,
+            display window to present visual stimuli.
         daq : object,
             data acquisition object initialized for the desired protocol
+        parameters : dict,
+            configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        classifier : loaded pickle file,
-            trained signal_model, loaded before session started
+        signal_model : loaded pickle file,
+            trained signal model.
+        language_model: object,
+            trained language model.
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns
@@ -40,8 +44,10 @@ class RSVPCopyPhraseTask(Task):
             path location of where to save data from the session
     """
 
+    TASK_NAME = 'RSVP Copy Phrase Task'
+
     def __init__(
-            self, win, daq, parameters, file_save, classifier, lmodel, fake):
+            self, win, daq, parameters, file_save, signal_model, language_model, fake):
         super(RSVPCopyPhraseTask, self).__init__()
 
         self.window = win
@@ -94,8 +100,8 @@ class RSVPCopyPhraseTask(Task):
         self.max_seq_length = parameters['max_seq_len']
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.fake = fake
-        self.lmodel = lmodel
-        self.classifier = classifier
+        self.language_model = language_model
+        self.signal_model = signal_model
         self.down_sample_rate = parameters['down_sampling_rate']
         self.min_num_seq = parameters['min_seq_len']
         self.collection_window_len = parameters['collection_window_after_trial_length']
@@ -113,22 +119,17 @@ class RSVPCopyPhraseTask(Task):
                       str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
-        #       (sig_pro, decision maker, signal_model)
-        try:
-            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq,
-                                                 self.max_seq_length,
-                                                 signal_model=self.classifier,
-                                                 fs=self.daq.device_info.fs,
-                                                 k=2, alp=self.alp,
-                                                 task_list=task_list,
-                                                 lmodel=self.lmodel,
-                                                 is_txt_sti=self.is_txt_sti,
-                                                 device_name=self.daq.device_info.name,
-                                                 device_channels=self.daq.device_info.channels,
-                                                 stimuli_timing=[self.time_cross, self.time_flash])
-        except Exception as e:
-            print("Error initializing Copy Phrase Task")
-            raise e
+        copy_phrase_task = CopyPhraseWrapper(self.min_num_seq,
+                                             self.max_seq_length,
+                                             signal_model=self.signal_model,
+                                             fs=self.daq.device_info.fs,
+                                             k=2, alp=self.alp,
+                                             task_list=task_list,
+                                             lmodel=self.language_model,
+                                             is_txt_sti=self.is_txt_sti,
+                                             device_name=self.daq.device_info.name,
+                                             device_channels=self.daq.device_info.channels,
+                                             stimuli_timing=[self.time_cross, self.time_flash])
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
@@ -248,6 +249,9 @@ class RSVPCopyPhraseTask(Task):
                     fake_copy_phrase_decision(self.copy_phrase,
                                               target_letter,
                                               text_task)
+
+                # here we assume, in fake mode, all sequences result in a selection.
+                last_selection = text_task[-1]
                 new_epoch = True
                 # Update next state for this record
                 data['epochs'][
@@ -294,10 +298,11 @@ class RSVPCopyPhraseTask(Task):
 
                 # Get the current task text from the decision maker
                 text_task = copy_phrase_task.decision_maker.displayed_state
+                last_selection = copy_phrase_task.decision_maker.last_selection
 
             # if a letter was selected and feedback enabled, show the chosen letter
             if new_epoch and self.show_feedback:
-                self.feedback.administer(text_task[-1], message='Selected:')
+                self.feedback.administer(last_selection, message='Selected:')
 
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()
@@ -346,7 +351,7 @@ class RSVPCopyPhraseTask(Task):
         return self.file_save
 
     def name(self):
-        return 'RSVP Copy Phrase Task'
+        return self.TASK_NAME
 
 
 def _init_copy_phrase_display(

@@ -38,7 +38,7 @@ Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Ok
 
 ## Dependencies
 ---------------
-This project requires Psychopy, Python v 3.6.5 (or for Windows 7: v.3.6.0), and other packages. See requirements.txt. When possible integration with other open source libraries will be done.
+This project requires Psychopy, Python v 3.6.5, and other packages. See requirements.txt. When possible integration with other open source libraries will be done.
 
 
 ## Installation

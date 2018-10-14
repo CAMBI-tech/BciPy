@@ -32,7 +32,7 @@ class RSVPIconToIconTask(Task):
             data acquisition object initialized for the desired protocol
         file_save : str,
             path location of where to save data from the session
-        classifier : loaded pickle file,
+        signal_model : loaded pickle file,
             trained signal_model, loaded before session started
         fake : boolean, optional,
             boolean to indicate whether this is a fake session or not.
@@ -47,7 +47,7 @@ class RSVPIconToIconTask(Task):
     """
 
     def __init__(
-            self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word, auc_filename):
+            self, win, daq, parameters, file_save, signal_model, language_model, fake, is_word, auc_filename):
         super(RSVPIconToIconTask, self).__init__()
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -90,8 +90,8 @@ class RSVPIconToIconTask(Task):
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.max_seq_length = parameters['max_seq_len']
         self.fake = fake
-        self.lmodel = lmodel
-        self.classifier = classifier
+        self.language_model = language_model
+        self.signal_model = signal_model
         self.auc_filename = auc_filename
 
         self.image_path = parameters['path_to_presentation_images']
@@ -135,9 +135,9 @@ class RSVPIconToIconTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         #       (sig_pro, decision maker, signal_model)
         try:
-            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length, signal_model=self.classifier, fs=self.daq.device_info.fs,
+            copy_phrase_task = CopyPhraseWrapper(self.min_num_seq, self.max_seq_length, signal_model=self.signal_model, fs=self.daq.device_info.fs,
                                                  k=2, alp=self.alp, task_list=['unnecessary_string', 'unnecessary_string'],
-                                                 lmodel=self.lmodel,
+                                                 lmodel=self.language_model,
                                                  is_txt_sti=self.is_txt_sti,
                                                  device_name=self.daq.device_info.name,
                                                  device_channels=self.daq.device_info.channels)

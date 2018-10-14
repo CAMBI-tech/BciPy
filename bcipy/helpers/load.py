@@ -106,7 +106,7 @@ def load_experimental_data() -> str:
     return filename
 
 
-def load_classifier(filename: str=None):
+def load_signal_model(filename: str=None):
     # use python's internal gui to call file explorers and get the filename
 
     if not filename:
@@ -118,10 +118,10 @@ def load_classifier(filename: str=None):
         except Exception as error:
             raise error
 
-    # load the classifier with pickle
-    classifier = pickle.load(open(filename, 'rb'))
+    # load the signal_model with pickle
+    signal_model = pickle.load(open(filename, 'rb'))
 
-    return (classifier, filename)
+    return (signal_model, filename)
 
 
 def load_csv_data(filename: str=None) -> str:
