@@ -83,16 +83,17 @@ system_utils.get_system_info()
 
 This a list of the major modules and their functionality. Each module will contain its own README, demo and test scripts. Please check them out for more information!
 
-- `acquistion`: acquires data, gives back desired time series, saves at end of session.
-- `display`: handles display of stimuli on screen, passing back stimuli timing.
-- `signal_model`: trains and classifies eeg responses based on eeg and triggers.
-- `gui`: end-user interface into system. See BCInterface.py and RSVPKeyboard.py.
-- `helpers`: input/output functions needed for system, as well as helpful intilization functions.
-- `utils`: utility functions needed for operation and installation.
-- `language_model`: gives prob of letters during typing.
-- `parameters`: json file for parameters.
-- `static`: images, misc manuals, and readable texts for gui.
-- `bci_main`: executor of experiments.
+- `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
+- `display`: handles display of stimuli on screen and passes back stimuli timing.
+- `signal`: eeg signal models, filters, processing and viewers. 
+- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py and mode/RSVPKeyboard.py.
+- `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
+- `language_model`: gives probalities of next letters during typing.
+- `parameters`: location of json parameters.
+- `static`: image and sound stimuli, misc manuals, and readable texts for gui.
+- `tasks`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVPCalibration.
+- `feedback`: feedback mechanisms for sound and visual stimuli.
+- `bci_main`: executor of experiments. Main entry point into the application
 
 ## Demo and Tests
 -----------------
@@ -159,25 +160,11 @@ coverage html
 ## Authorship
 --------------
 
-Tab Memmott (OHSU)
-
-
-Aziz Kocanaogullari (NEU)
-
-
-Matthew Lawhead (OHSU- OCTRI)
-
-
-Berkan Kadioglu (NEU)
-
-
-Dani Smektala (OHSU)
-
-
-Andac Demir (NEU)
-
-
-Shaobin Xu (NEU)
-
-
-Shiran Dudy (OHSU)
+- Tab Memmott (OHSU)
+- Aziz Kocanaogullari (NEU)
+- Matthew Lawhead (OHSU- OCTRI)
+- Berkan Kadioglu (NEU)
+- Dani Smektala (OHSU)
+- Andac Demir (NEU)
+- Shaobin Xu (NEU)
+- Shiran Dudy (OHSU)
