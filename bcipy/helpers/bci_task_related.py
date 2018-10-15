@@ -200,6 +200,25 @@ def trial_complete_message(win, parameters):
     return [message_stim]
 
 
+def print_message(window: visual.Window, message: str="Initializing..."):
+    """Draws a message on the display window using default config.
+
+    Parameters
+    ----------
+        window (object): Psychopy Window Object, should be the same as the one
+            used in the experiment
+        parameters (dict): Dictionary of session parameters
+
+    Returns
+    -------
+        TextStim object
+    """
+    message_stim = visual.TextStim(win=window, text=message)
+    message_stim.draw()
+    window.flip()
+    return message_stim
+
+
 def get_user_input(window, message, color, first_run=False):
     """Get User Input.
 

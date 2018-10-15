@@ -1,17 +1,20 @@
-import numpy as np
-import random
 import glob
-from PIL import Image
+import itertools
 import logging
-from os import path
+import random
+from os import path, sep
 
+from typing import Iterator
+
+import numpy as np
 import sounddevice as sd
 import soundfile as sf
+from PIL import Image
 from psychopy import core
-
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger("PIL").setLevel(logging.WARNING)
+
 
 def best_selection(selection_elements: list, val: list, len_query: int) -> list:
     """Best Selection.
@@ -183,7 +186,8 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
         sample = ['+']
     else:
         sample = ['bcipy/static/images/bci_main_images/PLUS.png']
-        target_letter = parameters['path_to_presentation_images'] + target_letter + '.png'
+        target_letter = parameters['path_to_presentation_images'] + \
+            target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
@@ -300,10 +304,12 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
             image_array.remove(image)
 
     if experiment_length > len(image_array) - 1:
-        raise Exception('Number of images to be displayed on screen is longer than number of images available')
+        raise Exception(
+            'Number of images to be displayed on screen is longer than number of images available')
 
     # Generate indexes of target images
-    target_image_numbers = np.random.randint(0, len(image_array), number_of_sequences)
+    target_image_numbers = np.random.randint(
+        0, len(image_array), number_of_sequences)
 
     # Array of images to return
     return_array = []
@@ -321,21 +327,26 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         random_number_array = np.random.permutation(len(image_array))
         if is_word:
             # Add name of target image to array
-            image_path = path.basename(image_array[target_image_numbers[sequence]])
+            image_path = path.basename(
+                image_array[target_image_numbers[sequence]])
             return_array[sequence].append(image_path.replace('.png', ''))
         else:
             # Add target image to image array
-            return_array[sequence].append(image_array[target_image_numbers[sequence]])
+            return_array[sequence].append(
+                image_array[target_image_numbers[sequence]])
         # Add PLUS.png to image array
-        return_array[sequence].append('bcipy/static/images/bci_main_images/PLUS.png')
+        return_array[sequence].append(
+            'bcipy/static/images/bci_main_images/PLUS.png')
 
         # Add target image to sequence, if it is not already there
         if not target_image_numbers[sequence] in random_number_array[2:experiment_length]:
-            random_number_array[np.random.randint(2, experiment_length)] = target_image_numbers[sequence]
+            random_number_array[np.random.randint(
+                2, experiment_length)] = target_image_numbers[sequence]
 
         # Fill the rest of the image array with random images
         for item in range(2, experiment_length):
-            return_array[sequence].append(image_array[random_number_array[item]])
+            return_array[sequence].append(
+                image_array[random_number_array[item]])
 
     return (return_array, return_timing)
 
@@ -359,9 +370,11 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
     # Adjust image size to scale with monitor size
     screen_width, screen_height = screen_size
     if screen_width >= screen_height:
-        sti_size = ((screen_height / screen_width) * sti_height * proportions[0],  sti_height * proportions[1])
+        sti_size = ((screen_height / screen_width) * sti_height *
+                    proportions[0],  sti_height * proportions[1])
     else:
-        sti_size = (sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
+        sti_size = (
+            sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
 
     return sti_size
 
@@ -403,7 +416,8 @@ def play_sound(sound_file_path: str,
         core.wait(sound_load_buffer_time)
 
     except Exception:
-        raise Exception('StimGenPlaySoundError: sound file could not be found or initialized.')
+        raise Exception(
+            'StimGenPlaySoundError: sound file could not be found or initialized.')
 
     #  if timing is wanted, get trigger timing for this sound stimuli
     if track_timing:
@@ -419,3 +433,22 @@ def play_sound(sound_file_path: str,
     core.wait(sound_post_buffer_time)
 
     return timing
+
+
+def soundfiles(directory: str) -> Iterator[str]:
+    """Creates a generator that cycles through sound files (.wav) in a 
+    directory and returns the path to next sound file on each iteration.
+
+    Parameters:
+    -----------
+        directory - path to the directory which contains .wav files
+    Returns:
+    --------
+        iterator that infinitely cycles through the filenames.
+    """
+    if not path.isdir(directory):
+        raise Exception(("Invalid directory for sound files. Please check "
+                         "your configuration."))
+    if not directory.endswith(sep):
+        directory += sep
+    return itertools.cycle(glob.glob(directory + '*.wav'))

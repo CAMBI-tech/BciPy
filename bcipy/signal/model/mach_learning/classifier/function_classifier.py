@@ -29,7 +29,7 @@ class RegularizedDiscriminantAnalysis:
 
     """
 
-    def __init__(self): # TODO: Make it more modular
+    def __init__(self):  # TODO: Make it more modular
         self.lam = .9
         self.gam = .1
 
@@ -104,7 +104,7 @@ class RegularizedDiscriminantAnalysis:
 
         self.regularize(param=[self.gam, self.lam])
 
-    def regularize(self, param): # TODO: what if no param passed?
+    def regularize(self, param):  # TODO: what if no param passed?
         """ Regularizes the covariance based on hyper parameters
             Args:
                 param(list[gam(float),lam(float)]): List of regularization
@@ -112,8 +112,8 @@ class RegularizedDiscriminantAnalysis:
                     individual elements for training purposes.
                  """
 
-        self.lam = param[0]
-        self.gam = param[1]
+        self.gam = param[0]
+        self.lam = param[1]
 
         # Shrinked class covariances
         shr_cov_i = [((1 - self.lam) * self.S_i[i] + self.lam * self.S) /
@@ -162,9 +162,9 @@ class RegularizedDiscriminantAnalysis:
                 # Every constant at the end of score calculation is omitted.
                 # This is why we omit log det of class regularized covariances.
                 evidence = np.dot(zero_mean,
-                                  np.dot(self.inv_reg_cov_i[i],zero_mean))
+                                  np.dot(self.inv_reg_cov_i[i], zero_mean))
 
-                neg_log_l[s][i] = -.5*evidence + np.log(self.prior_i[i])
+                neg_log_l[s][i] = -.5 * evidence + np.log(self.prior_i[i])
 
         return neg_log_l
 
@@ -184,4 +184,3 @@ class RegularizedDiscriminantAnalysis:
         self.fit(x, y, p)
 
         return self.transform(x)
-

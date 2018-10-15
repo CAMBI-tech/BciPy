@@ -1,3 +1,4 @@
+# pylint: disable=fixme,too-many-instance-attributes,too-many-arguments
 """Data Acquisition Client"""
 import logging
 import multiprocessing
@@ -5,7 +6,7 @@ import time
 
 from queue import Empty
 
-import bcipy.acquisition.buffer_server as buffer_server
+from bcipy.acquisition import buffer_server
 from bcipy.acquisition.processor import FileWriter
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
@@ -19,18 +20,22 @@ MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
 
 
-class _Clock(object):
+class CountClock():
     """Clock that provides timestamp values starting at 1.0; the next value
-    is the increment of the previous."""
+    is the increment of the previous. Implements the monotonic clock interface.
+    """
 
     def __init__(self):
-        super(_Clock, self).__init__()
+        super(CountClock, self).__init__()
         self.counter = 0
 
     def reset(self):
+        """Resets the counter"""
         self.counter = 0
 
+    # pylint: disable=invalid-name
     def getTime(self):
+        """Gets the current count."""
         self.counter += 1
         return float(self.counter)
 
@@ -61,7 +66,7 @@ class DataAcquisitionClient:
                  device,
                  processor=FileWriter(filename='rawdata.csv'),
                  buffer_name='buffer.db',
-                 clock=_Clock(),
+                 clock=CountClock(),
                  delete_archive=True):
 
         self._device = device
@@ -86,6 +91,9 @@ class DataAcquisitionClient:
 
         self._process_queue = multiprocessing.JoinableQueue(maxsize=maxsize)
         self.marker_writer = NullMarkerWriter()
+        self._acq_process = None
+        self._data_processor = None
+        self._buf = None
 
     # @override ; context manager
     def __enter__(self):
@@ -93,7 +101,7 @@ class DataAcquisitionClient:
         return self
 
     # @override ; context manager
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, _exc_type, _exc_value, _traceback):
         self.stop_acquisition()
 
     def start_acquisition(self):
@@ -145,10 +153,11 @@ class DataAcquisitionClient:
             self._buf = buffer_server.start(self._device_info.channels,
                                             self._buffer_name)
 
-            self._data_processor = DataProcessor(data_queue=self._process_queue,
-                                                 processor=self._processor,
-                                                 buf=self._buf,
-                                                 wait=self._max_wait)
+            self._data_processor = DataProcessor(
+                data_queue=self._process_queue,
+                processor=self._processor,
+                buf=self._buf,
+                wait=self._max_wait)
             self._data_processor.start()
             self._is_streaming = True
 
@@ -189,8 +198,8 @@ class DataAcquisitionClient:
 
         if self._buf is None:
             return []
-        else:
-            return buffer_server.get_data(self._buf, start, end, field, win)
+
+        return buffer_server.get_data(self._buf, start, end, field, win)
 
     def get_data_for_clock(self, calib_time: float, start_time: float,
                            end_time: float):
@@ -210,7 +219,7 @@ class DataAcquisitionClient:
             list of Records
         """
 
-        fs = self._device_info.fs
+        sample_rate = self._device_info.fs
 
         if self._record_at_calib is None:
             rownum_at_calib = 1
@@ -219,12 +228,12 @@ class DataAcquisitionClient:
 
         # Calculate number of samples since experiment_clock calibration;
         # multiplying by the fs converts from seconds to samples.
-        start_offset = (start_time - calib_time) * fs
+        start_offset = (start_time - calib_time) * sample_rate
         start = rownum_at_calib + start_offset
 
         end = None
         if end_time:
-            end_offset = (end_time - calib_time) * fs
+            end_offset = (end_time - calib_time) * sample_rate
             end = rownum_at_calib + end_offset
 
         return self.get_data(start=start, end=end, field='_rowid_')
@@ -233,11 +242,11 @@ class DataAcquisitionClient:
         """Efficient way to calculate the amount of data cached."""
         if self._buf is None:
             return 0
-        else:
-            return buffer_server.count(self._buf)
+        return buffer_server.count(self._buf)
 
     @property
     def device_info(self):
+        """Get the latest device_info."""
         return self._device_info
 
     @property
@@ -284,17 +293,22 @@ class DataAcquisitionClient:
                                    filters=[("TRG", ">", 0)],
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
-        if len(rows) == 0:
+        if not rows:
             logging.debug("No rows have a TRG value.")
             return None
-        else:
-            logging.debug(rows[0])
-            # Calculate offset from the number of samples recorded by the time
-            # of calibration.
-            self._record_at_calib = rows[0]
-            self._cached_offset = rows[0].rownum / self._device_info.fs
-            logging.debug("Cached offset: " + str(self._cached_offset))
-            return self._cached_offset
+
+        logging.debug(rows[0])
+        # Calculate offset from the number of samples recorded by the time
+        # of calibration.
+        self._record_at_calib = rows[0]
+        self._cached_offset = rows[0].rownum / self._device_info.fs
+        logging.debug("Cached offset: %s", str(self._cached_offset))
+        return self._cached_offset
+
+    @property
+    def record_at_calib(self):
+        """Data record at the calibration trigger"""
+        return self._record_at_calib
 
     def cleanup(self):
         """Performs cleanup tasks, such as deleting the buffer archive. Note
@@ -305,6 +319,23 @@ class DataAcquisitionClient:
 
 
 class AcquisitionProcess(StoppableProcess):
+    """Process that continuously reads data from the data source and sends it
+    to the data_queue for processing.
+
+
+    Parameters
+    ----------
+        device: Device instance
+            Object with device-specific implementations for connecting,
+            initializing, and reading a packet.
+        clock : Clock
+            Used to timestamp each record as it is read.
+        data_queue : Queue
+            Data will be written to the queue as it is acquired.
+        msg_queue : Queue
+            Used to communicate messages to the main thread.
+    """
+
     def __init__(self, device, clock, data_queue, msg_queue):
         super(AcquisitionProcess, self).__init__()
         self._device = device
@@ -313,17 +344,18 @@ class AcquisitionProcess(StoppableProcess):
         self._msg_queue = msg_queue
 
     def run(self):
-        """Continuously reads data from the source and sends it to the buffer
-        for processing.
+        """Process startup. Connects to the device and start reading data.
+        Since this is done in a separate process from the main thread, any
+        errors encountered will be written to the msg_queue.
         """
 
         try:
             logging.debug("Connecting to device")
             self._device.connect()
             self._device.acquisition_init()
-        except Exception as e:
-            self._msg_queue.put((MSG_ERROR, str(e)))
-            raise e
+        except Exception as error:
+            self._msg_queue.put((MSG_ERROR, str(error)))
+            raise error
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
@@ -337,17 +369,18 @@ class AcquisitionProcess(StoppableProcess):
         while self.running() and data:
             sample += 1
             if DEBUG and sample % DEBUG_FREQ == 0:
-                logging.debug("Read sample: " + str(sample))
+                logging.debug("Read sample: %s", str(sample))
 
             self._data_queue.put(Record(data, self._clock.getTime(), sample))
             try:
                 # Read data again
                 data = self._device.read_data()
-            except Exception as e:
-                logging.debug("Error reading data from device: " + str(e))
+            # pylint: disable=broad-except
+            except Exception as error:
+                logging.debug("Error reading data from device: %s", str(error))
                 data = None
                 break
-        logging.debug("Total samples read: " + str(sample))
+        logging.debug("Total samples read: %s", str(sample))
         self._device.disconnect()
 
 
@@ -367,23 +400,23 @@ class DataProcessor(StoppableProcess):
 
         logging.debug("Starting Data Processing loop.")
         count = 0
-        with self._processor as p:
+        with self._processor as processor:
             while self.running():
                 try:
                     record = self._data_queue.get(True, self._wait)
                     count += 1
                     if DEBUG and count % DEBUG_FREQ == 0:
-                        logging.debug("Processed sample: " + str(count))
+                        logging.debug("Processed sample: %s", str(count))
                     buffer_server.append(self._buf, record)
-                    p.process(record.data, record.timestamp)
+                    processor.process(record.data, record.timestamp)
                     self._data_queue.task_done()
                 except Empty:
                     pass
-            logging.debug("Total samples processed: " + str(count))
+            logging.debug("Total samples processed: %s", str(count))
 
 
-if __name__ == "__main__":
-
+def main():
+    """Test script."""
     import sys
     if sys.version_info >= (3, 0, 0):
         # Only available in Python 3; allows us to test process code as it
@@ -392,7 +425,7 @@ if __name__ == "__main__":
 
     import argparse
     import json
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.protocols import registry
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',
@@ -407,16 +440,16 @@ if __name__ == "__main__":
                         help="device connection params; json")
     args = parser.parse_args()
 
-    Device = registry.find_device(args.device)
+    device_builder = registry.find_device(args.device)
 
     # Instantiate and start collecting data
-    device = Device(connection_params=args.params)
+    dev = device_builder(connection_params=args.params)
     if args.channels:
-        device.channels = args.channels.split(',')
-    daq = DataAcquisitionClient(device=device,
-                 processor=FileWriter(filename=args.filename),
-                 buffer_name=args.buffer,
-                 delete_archive=True)
+        dev.channels = args.channels.split(',')
+    daq = DataAcquisitionClient(device=dev,
+                                processor=FileWriter(filename=args.filename),
+                                buffer_name=args.buffer,
+                                delete_archive=True)
 
     daq.start_acquisition()
 
@@ -431,3 +464,7 @@ if __name__ == "__main__":
 
     daq.stop_acquisition()
     daq.cleanup()
+
+
+if __name__ == "__main__":
+    main()

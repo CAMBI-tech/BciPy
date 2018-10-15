@@ -1,14 +1,16 @@
-
+"""Data server that streams EEG data over a LabStreamingLayer StreamOutlet
+using pylsl."""
 import logging
 import random
-import time
-from bcipy.acquisition.util import StoppableThread
-from pylsl import StreamInfo, StreamOutlet
 from queue import Queue, Empty
+from pylsl import StreamInfo, StreamOutlet
 from bcipy.acquisition.datastream.producer import Producer
+from bcipy.acquisition.util import StoppableThread
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
+
+# pylint: disable=too-many-arguments
 
 
 class LslDataServer(StoppableThread):
@@ -38,26 +40,25 @@ class LslDataServer(StoppableThread):
                  add_markers=False, name='TestStream'):
         super(LslDataServer, self).__init__()
 
-        self.channels = params['channels']
-        self.hz = int(params['hz'])
-        stream_name = params.get('name', name)
+        channels = params['channels']
+        self.sample_hz = int(params['hz'])
+        assert channels, "Channels must be provided as a parameter"
 
-        params['channel_count'] = len(self.channels)
-        self.channel_count = len(self.channels)
+        stream_name = params.get('name', name)
         self.generator = generator
 
-        logging.debug("Starting server with params: " + str(params))
+        logging.debug("Starting server with params: %s", str(params))
         info = StreamInfo(stream_name,
-                          "EEG", self.channel_count,
-                          self.hz,
+                          "EEG", len(channels),
+                          self.sample_hz,
                           'float32',
                           "uid12345")
 
         if include_meta:
             meta_channels = info.desc().append_child('channels')
-            for c in params['channels']:
+            for channel in channels:
                 meta_channels.append_child('channel') \
-                    .append_child_value('label', c) \
+                    .append_child_value('label', channel) \
                     .append_child_value('unit', 'microvolts') \
                     .append_child_value('type', 'EEG')
 
@@ -65,11 +66,16 @@ class LslDataServer(StoppableThread):
 
         self.add_markers = add_markers
         if add_markers:
-            # Marker stream
-            # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers","Markers",1,0,lsl::cf_string,"gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) + "_" + boost::lexical_cast<std::string>(serialNumber) + "_markers");
+            # Marker stream (C++ source below):
+            # lsl::stream_info marker_info("gUSBamp-"+deviceNumber+"Markers",
+            # "Markers",1,0,lsl::cf_string,
+            # "gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) +
+            # "_" + boost::lexical_cast<std::string>(serialNumber) +
+            # "_markers");
             logging.debug("Creating marker stream")
             markers_info = StreamInfo("TestStream Markers",
-                                      "Markers", 1, 0, 'string', "uid12345_markers")
+                                      "Markers", 1, 0, 'string',
+                                      "uid12345_markers")
             self.markers_outlet = StreamOutlet(markers_info)
         self.started = False
 
@@ -96,17 +102,18 @@ class LslDataServer(StoppableThread):
         sample_counter = 0
         self.started = True
 
-        q = Queue()
-        with Producer(q, generator=self.generator, freq=1 / self.hz):
+        data_queue = Queue()
+        with Producer(data_queue, generator=self.generator,
+                      freq=1 / self.sample_hz):
             while self.running():
                 sample_counter += 1
                 try:
-                    sample = q.get(True, 2)
+                    sample = data_queue.get(True, 2)
                     self.outlet.push_sample(sample)
                     if self.add_markers and sample_counter % 1000 == 0:
                         self.markers_outlet.push_sample(
                             [str(random.randint(1, 100))])
-                except (Empty, AttributeError) as err:
+                except (Empty, AttributeError):
                     # outlet.push_sample(sample) may cause an error after
                     # the server has been stopped since the attribute is
                     # deleted in another thread.
@@ -118,14 +125,15 @@ class LslDataServer(StoppableThread):
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
-    with open(filename, 'r') as f:
-        daq_type = f.readline().strip().split(',')[1]
-        fs = int(f.readline().strip().split(',')[1])
-        channels = f.readline().strip().split(',')
-        return (daq_type, fs, channels)
+    with open(filename, 'r') as datafile:
+        daq_type = datafile.readline().strip().split(',')[1]
+        sample_hz = int(datafile.readline().strip().split(',')[1])
+        channels = datafile.readline().strip().split(',')
+        return (daq_type, sample_hz, channels)
 
 
 def main():
+    """Initialize and start the server."""
     import time
     import argparse
 
@@ -170,5 +178,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # Run this as: python -m acquisition.datastream.lsl_server
+    # Run this as: python -m bcipy.acquisition.datastream.lsl_server
     main()
