@@ -20,8 +20,6 @@ import glob
 import logging
 from os import path
 
-TASK_NAME = 'RSVP Icon to Icon Task'
-
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -47,6 +45,7 @@ class RSVPIconToIconTask(Task):
         file_save : str,
             path location of where to save data from the session
     """
+    TASK_NAME = 'RSVP Icon to Icon Task'
 
     def __init__(
             self, win, daq, parameters, file_save, classifier, lmodel, fake, is_word, auc_filename):
@@ -364,10 +363,10 @@ class RSVPIconToIconTask(Task):
 
     @classmethod
     def label(cls):
-        return TASK_NAME
+        return RSVPIconToIconTask.TASK_NAME
 
     def name(self):
-        return TASK_NAME
+        return RSVPIconToIconTask.TASK_NAME
 
 
 def _init_icon_to_icon_display_task(

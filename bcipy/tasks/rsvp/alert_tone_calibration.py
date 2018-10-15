@@ -4,8 +4,6 @@ from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 
-TASK_NAME = 'RSVP Alert Tone Calibration Task'
-
 
 class RSVPAlertToneCalibrationTask(Task):
     """RSVP Calibration Task that uses alert tones to maintain user focus.
@@ -29,6 +27,7 @@ class RSVPAlertToneCalibrationTask(Task):
     Output:
         file_save (String)
     """
+    TASK_NAME = 'RSVP Alert Tone Calibration Task'
 
     def __init__(self, win, daq, parameters, file_save):
         super(RSVPAlertToneCalibrationTask, self).__init__()
@@ -50,7 +49,7 @@ class RSVPAlertToneCalibrationTask(Task):
 
     @classmethod
     def label(cls):
-        return TASK_NAME
+        return RSVPAlertToneCalibrationTask.TASK_NAME
 
     def name(self):
-        return TASK_NAME
+        return RSVPAlertToneCalibrationTask.TASK_NAME
