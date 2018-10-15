@@ -6,6 +6,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 class Task(object):
     """Task."""
+
     def __init__(self):
         super(Task, self).__init__()
         self.logger = logging

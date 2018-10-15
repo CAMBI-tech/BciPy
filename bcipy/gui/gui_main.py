@@ -32,7 +32,7 @@ class BCIGui(wx.Frame):
 
     def add_button(self, message: str, position: tuple, size: tuple,
                    button_type: str=None, color: str=None,
-                   action: str='default') -> None:
+                   action: str='default', id=-1) -> None:
         """Add Button."""
         # Button Type
         if button_type == 'gradient_button':
@@ -43,7 +43,7 @@ class BCIGui(wx.Frame):
                 self.panel, label=message, pos=position, size=size)
         else:
             btn = buttons.GenButton(
-                self.panel, label=message, pos=position, size=size)
+                self.panel, label=message, pos=position, size=size, id=id)
 
             # You can really only set colors with GenButtons as the others
             #  use native widgets!

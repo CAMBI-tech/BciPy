@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-from psychopy import visual, core
+import logging
+from typing import Callable
 
-from bcipy.helpers.triggers import _calibration_trigger, TriggerCallback
-from bcipy.display.display_main import BarGraph, MultiColorText
+from psychopy import core, visual
+
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
-
-import logging
+from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -99,8 +100,9 @@ class RSVPDisplay(object):
         self.first_run = True
         self.trigger_type = trigger_type
         self.trigger_callback = TriggerCallback()
-
-        self.size_list_sti = None
+        # Callback used on presentation of first stimulus.
+        self.first_stim_callback = lambda _sti: None
+        self.size_list_sti = []
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -254,8 +256,11 @@ class RSVPDisplay(object):
             self.win.callOnFlip(self.trigger_callback.callback, self.experiment_clock, sti_label)
             self.win.callOnFlip(self.marker_writer.push_marker, sti_label)
 
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(self.sti)
+
             # Draw stimulus for n frames
-            for n_frames in range(self.time_to_present):
+            for _n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

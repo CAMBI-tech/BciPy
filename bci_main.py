@@ -1,10 +1,11 @@
-from bcipy.helpers.save import init_save_data_structure
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
-
-from bcipy.tasks.start_task import start_task
-from bcipy.helpers.load import load_classifier
+from bcipy.helpers.bci_task_related import print_message
 from bcipy.helpers.lang_model_related import init_language_model
+from bcipy.helpers.load import load_classifier
+from bcipy.helpers.save import init_save_data_structure
+from bcipy.tasks.start_task import start_task
+from bcipy.tasks.task_registry import ExperimentType
 
 
 def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
@@ -58,11 +59,17 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         save_folder (str): path to save folder
     """
 
+    exp_type = ExperimentType(task_type['exp_type'])
+
+    # Initialize Display Window
+    display = init_display_window(parameters)
+    print_message(display, "Initializing...")
+
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
-    #   modules to be loaded.
-    if task_type['exp_type'] > 1:
+    # modules to be loaded.
+    if exp_type not in ExperimentType.calibration_tasks():
 
         # Try loading in our classifier and starting a langmodel(if enabled)
         try:
@@ -96,13 +103,10 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     daq, server = init_eeg_acquisition(
         parameters, save_folder, server=fake)
 
-    # Initialize Display Window
-    display = init_display_window(parameters)
-
     # Start Task
     try:
         start_task(
-            display, daq, task_type, parameters, save_folder,
+            display, daq, exp_type, parameters, save_folder,
             lmodel=lmodel,
             classifier=classifier, fake=fake, auc_filename=filename)
 
@@ -131,19 +135,23 @@ def _clean_up_session(display, daq, server):
 
 if __name__ == "__main__":
     import argparse
-    from bcipy.helpers.load import load_json_parameters
     import multiprocessing
+    from bcipy.helpers.load import load_json_parameters
+    from bcipy.tasks.task_registry import ExperimentType
 
     # Needed for windows machines
     multiprocessing.freeze_support()
 
+    task_options = '; '.join([(f"{task.name.title().replace('_',' ')}:"
+                               f" {task.value}")
+                              for task in ExperimentType])
     parser = argparse.ArgumentParser()
     # Command line utility for adding arguments/ paths via command line
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--type', default=1,
-                        help='Task Type for a given mode. Ex. RSVP, 1 is calibration')
+                        help=f'Task type. Options: ({task_options})')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
     args = parser.parse_args()

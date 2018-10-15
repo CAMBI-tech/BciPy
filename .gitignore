@@ -4,6 +4,7 @@
 .cache/
 .vscode/
 .tm_properties
+.mypy_cache/
 data/
 # Virtualenv
 venv/

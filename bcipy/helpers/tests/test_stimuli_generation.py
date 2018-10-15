@@ -1,10 +1,14 @@
+"""Tests for stimuli_generation helpers."""
+import glob
 import unittest
-from mockito import any, mock, when, verify, unstub
-from bcipy.helpers.stimuli_generation import play_sound
-
+from os import path
 import sounddevice as sd
 import soundfile as sf
+from mockito import any, mock, unstub, verify, when
 from psychopy import core
+
+from bcipy.helpers.stimuli_generation import play_sound, soundfiles
+
 
 class TestStimuliGeneration(unittest.TestCase):
     """This is Test Case for Stimuli Generation BCI data."""
@@ -28,7 +32,6 @@ class TestStimuliGeneration(unittest.TestCase):
         verify(sf, times=1).read(sound_file_path, dtype='float32')
         verify(sd, times=1).play('data', 'fs')
         verify(core, times=2).wait(any())
-
 
     def test_play_sound_raises_exception_if_soundfile_cannot_read_file(self):
         # fake sound file path
@@ -68,18 +71,41 @@ class TestStimuliGeneration(unittest.TestCase):
             sound_callback=mock_callback_function,
             trigger_name=test_trigger_name,
             experiment_clock=experiment_clock,
-            )
+        )
 
         # verify all the expected calls happended and the expected number of times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
         verify(sd, times=1).play('data', 'fs')
         verify(core, times=2).wait(any())
 
+    def test_soundfiles_generator(self):
+        """Test that soundfiles function returns an cyclic generator."""
 
+        directory = "./sounds"
+        soundfile_paths = ["./sounds/0.wav",
+                           "./sounds/1.wav", "./sounds/2.wav"]
+        when(glob).glob("./sounds/*.wav").thenReturn(soundfile_paths)
+        when(path).isdir(directory).thenReturn(True)
 
+        gen = soundfiles(directory)
+        self.assertEqual(next(gen), soundfile_paths[0])
+        self.assertEqual(next(gen), soundfile_paths[1])
+        self.assertEqual(next(gen), soundfile_paths[2])
+        self.assertEqual(next(gen), soundfile_paths[0])
+        self.assertEqual(next(gen), soundfile_paths[1])
+        for _ in range(10):
+            self.assertTrue(next(gen) in soundfile_paths)
 
+    def test_soundfiles_generator_path_arg(self):
+        """Test that soundfiles function constructs the correct path."""
+        directory = "./sounds/"
+        soundfile_paths = ["./sounds/0.wav",
+                           "./sounds/1.wav", "./sounds/2.wav"]
+        when(glob).glob("./sounds/*.wav").thenReturn(soundfile_paths)
+        when(path).isdir(directory).thenReturn(True)
+        gen = soundfiles(directory)
+        self.assertEqual(next(gen), soundfile_paths[0])
 
-   
     def tearDown(self):
         unstub()
 

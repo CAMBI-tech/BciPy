@@ -1,11 +1,12 @@
 # BCI TASKS
 -----------
 
-These are the experimental tasks that can be implemented
+These are the experimental tasks that can be implemented.
 
 ## Modes
 ---------
-Within `tasks/` there are folders for each of the supported modes, and within them, the supported experiment types. To add new modes, create a folder for it and place the tasks in files within it. Be sure to add it to the `start_task` file at the root to be able execute it!
+Within `tasks/` there are folders for each of the supported modes, and within them, the supported experiment types. To add new modes, create a folder for it and place the tasks in files within it. Be sure to add it to the `start_task` file at the root to be able execute it! An entry must also be added to the task_registry ExperimentType
+enum. This updates the GUI (RSVPKeyboard.py) as well makes the task available to `start_task`.
 
 Currently, these are the modes and experiment types implemented:
 
@@ -14,6 +15,9 @@ Currently, these are the modes and experiment types implemented:
 > Calibration
 > Copy Phrase
 > Copy Phrase Calibration
+> Icon to Icon
+> Icon to Word
+> Alert Tone
 
 
 ## Start Task
@@ -37,7 +41,7 @@ It is called in the following way:
 
 ```
 
-It will through an error that the task isn't implemented if given a mode or experiment type that's unavailable to it. 
+It will throw an error that the task isn't implemented if given a mode or experiment type that's unavailable to it. 
 
 
 ## Using Images
