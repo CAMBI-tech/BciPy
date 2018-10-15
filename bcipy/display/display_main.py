@@ -57,14 +57,6 @@ def init_display_window(parameters):
     return display_window
 
 
-def print_message(window: visual.Window, message: str="Initializing..."):
-    """Prints a message on the display window."""
-    loading_text = visual.TextStim(win=window, text=message)
-    loading_text.draw()
-    window.flip()
-    return loading_text
-
-
 class MultiColorText(object):
     """Multi Color Text.
 

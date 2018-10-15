@@ -1,11 +1,11 @@
-from bcipy.helpers.save import init_save_data_structure
-from bcipy.display.display_main import init_display_window, print_message
+from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
-
+from bcipy.helpers.bci_task_related import print_message
+from bcipy.helpers.lang_model_related import init_language_model
+from bcipy.helpers.load import load_classifier
+from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
-from bcipy.helpers.load import load_classifier
-from bcipy.helpers.lang_model_related import init_language_model
 
 
 def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
