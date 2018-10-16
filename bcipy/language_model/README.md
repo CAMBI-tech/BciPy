@@ -10,7 +10,9 @@ Contact LM Team (Shiran Dudy, Steven Bedrick) or BCI Codebase maintainers for a 
 
 ###LMWrapper Module
 
-This assumes you have a working Docker image on your local computer!
+This assumes you have a working the specific Docker image on your local computer!
+
+lmimage for prefix LM or oclm image for oclm.
 
 language\_model module provides the LangModel class from which requests are sent to the language model server and itself serve as the client. 
 
