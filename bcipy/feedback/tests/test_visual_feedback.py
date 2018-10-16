@@ -1,5 +1,6 @@
 import shutil
 from psychopy import core
+from psychopy import visual
 import psychopy
 import unittest
 
@@ -19,9 +20,14 @@ class TestVisualFeedback(unittest.TestCase):
             self.parameters_used,
             value_cast=True)
 
-        self.display = mock()
+        self.display = visual.Window(size=[1,1], screen=0,
+                                    allowGUI=False, useFBO=False, fullscr=False,
+                                    allowStencil=False, monitor='mainMonitor',
+                                    winType='pyglet', units='norm', waitBlanking=False,
+                                    color='black')
         self.text_mock = mock()
         self.image_mock = mock()
+        self.rect_mock = mock()
 
         self.clock = core.Clock()
 
@@ -47,11 +53,20 @@ class TestVisualFeedback(unittest.TestCase):
         when(psychopy.visual).ImageStim(
             win=self.display,
             image=any(),
-            size=any(),
             mask=None,
             pos=any(),
             ori=any()
             ).thenReturn(self.image_mock)
+
+        when(psychopy.visual).Rect(
+            win=self.display,
+            width=any(),
+            height=any(),
+            lineColor=any(),
+            pos=any(),
+            lineWidth=any(),
+            ori=any()
+            ).thenReturn(self.rect_mock)
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing

@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
-from psychopy import visual, core
+import logging
+from typing import Callable
 
-from bcipy.helpers.triggers import _calibration_trigger
-from bcipy.display.display_main import BarGraph, MultiColorText
+from psychopy import core, visual
+
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.display.display_main import BarGraph, MultiColorText
+from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.system_utils import get_system_info
+from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
 
 class RSVPDisplay(object):
@@ -65,6 +73,8 @@ class RSVPDisplay(object):
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
 
+        self.logger = logging
+
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti
         self.time_list_sti = time_list_sti
@@ -89,6 +99,10 @@ class RSVPDisplay(object):
 
         self.first_run = True
         self.trigger_type = trigger_type
+        self.trigger_callback = TriggerCallback()
+        # Callback used on presentation of first stimulus.
+        self.first_stim_callback = lambda _sti: None
+        self.size_list_sti = []
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -125,8 +139,7 @@ class RSVPDisplay(object):
                                        opacity=1, depth=-6.0)
         else:
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
-                                        units='', pos=pos_sti,
-                                        size=(sti_height, sti_height), ori=0.0)
+                                        pos=pos_sti, ori=0.0)
 
         if bg:
             # Create Bar Graph
@@ -156,7 +169,6 @@ class RSVPDisplay(object):
 
     def update_task(self, text, color_list, pos):
         """Update Task Object.
-
         Args:
                 text(string): text for task
                 color_list(list[string]): list of the colors for each char
@@ -170,13 +182,16 @@ class RSVPDisplay(object):
             self.task.update(text=text, color_list=color_list, pos=pos)
 
     def do_sequence(self):
-        """Animate a sequence."""
+        """Do Sequence.
+
+        Animates a sequence of flashing letters to achieve RSVP.
+        """
 
         # init an array for timing information
         timing = []
 
         if self.first_run:
-            # Play a sequence start sound to help orient triggers
+            # play a sequence start sound to help orient triggers
             stim_timing = _calibration_trigger(
                 self.experiment_clock,
                 trigger_type=self.trigger_type, display=self.win,
@@ -184,58 +199,79 @@ class RSVPDisplay(object):
 
             timing.append(stim_timing)
 
+            self.first_stim_time = stim_timing[-1]
             self.first_run = False
 
-        # Do the sequence
+        # do the sequence
         for idx in range(len(self.stim_sequence)):
 
-            # Set a static period to do all our stim setting.
-            #   Will warn if ISI value is violated.
+            # set a static period to do all our stim setting.
+            #   will warn if ISI value is violated.
             self.staticPeriod.start(self.static_period_time)
 
-            # Turn ms timing into frames! Much more accurate!
-            time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+            # turn ms timing into frames! Much more accurate!
+            self.time_to_present = int(self.time_list_sti[idx] * self.refresh_rate)
+
+            # check if stimulus needs to use a non-default size
+            if self.size_list_sti:
+                this_stimuli_size = self.size_list_sti[idx]
+            else:
+                this_stimuli_size = self.height_stim
 
             # Set the Stimuli attrs
-            if self.is_txt_sti:
+            if self.stim_sequence[idx].endswith('.png'):
+                self.sti = self.create_stimulus(mode='image', height_int=this_stimuli_size)
+                self.sti.image = self.stim_sequence[idx]
+                self.sti.size = resize_image(self.sti.image, self.sti.win.size, this_stimuli_size)
+                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+            else:
+                # text stimulus
+                self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
                 self.sti.text = self.stim_sequence[idx]
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.sti.text
-            else:
-                self.sti.image = self.stim_sequence[idx]
-                # We expect a path for images, so split on forward slash and
-                # extension to get the name of the file.
-                sti_label = self.sti.image.split('/')[-1].split('.')[0]
+
+                # test whether the word will be too big for the screen
+                text_width = self.sti.boundingBox[0]
+                if text_width > self.win.size[0]:
+                    info = get_system_info()
+                    text_height = self.sti.boundingBox[1]
+                    # If we are in full-screen, text size in Psychopy norm units
+                    # is monitor width/monitor height
+                    if self.win.size[0] == info['RESOLUTION'][0]:
+                        new_text_width = info['RESOLUTION'][0] / info['RESOLUTION'][1]
+                    else:
+                        # If not, text width is calculated relative to both
+                        # monitor size and window size
+                        new_text_width = (
+                            self.win.size[1] / info['RESOLUTION'][1]) * (
+                                info['RESOLUTION'][0] / info['RESOLUTION'][1])
+                    new_text_height = (text_height * new_text_width) / text_width
+                    self.sti.height = new_text_height
 
             # End static period
             self.staticPeriod.complete()
 
             # Reset the timing clock to start presenting
-            self.timing_clock.reset()
+            self.win.callOnFlip(self.trigger_callback.callback, self.experiment_clock, sti_label)
+            self.win.callOnFlip(self.marker_writer.push_marker, sti_label)
 
-            # Push to configured marker stream (ex. LslMarkerWriter)
-            self.marker_writer.push_marker(sti_label)
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(self.sti)
 
             # Draw stimulus for n frames
-            for n_frames in range(time_to_present):
+            for _n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()
 
-            # Get trigger time (takes < .01ms)
-            trigger_time = self.experiment_clock.getTime() - self.timing_clock.getTime()
-
-            # Start another ISI for trigger saving
-            self.staticPeriod.start(self.static_period_time)
-
             # append timing information
             if self.is_txt_sti:
-                timing.append((sti_label, (trigger_time)))
+                timing.append(self.trigger_callback.timing)
             else:
-                timing.append((sti_label, trigger_time))
+                timing.append(self.trigger_callback.timing)
 
-            # End the static period
-            self.staticPeriod.complete()
+            self.trigger_callback.reset()
 
         # draw in static and flip once more
         self.draw_static()
@@ -287,16 +323,46 @@ class RSVPDisplay(object):
             wait_logo = visual.ImageStim(
                 self.win,
                 image='bcipy/static/images/gui_images/bci_cas_logo.png',
-                size=(1, 1),
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
+            wait_logo.size = resize_image(
+                'bcipy/static/images/gui_images/bci_cas_logo.png',
+                self.win.size, 1)
             wait_logo.draw()
 
         except Exception:
-            print("Cannot load logo image")
+            self.logger.debug("Cannot load logo image")
             pass
 
         # Draw and flip the screen.
         wait_message.draw()
         self.win.flip()
+
+    def create_stimulus(self, height_int: int, mode="text"):
+        """Returns a TextStim or ImageStim object.
+            Args:
+            height_int: The height of the stimulus
+            mode: "text" or "image", determines which to return
+        """
+        if mode == "text":
+            return visual.TextStim(
+                win=self.win,
+                color='white',
+                height=height_int,
+                text='+',
+                font=self.font_stim,
+                pos=self.pos_sti,
+                wrapWidth=None,
+                colorSpace='rgb',
+                opacity=1,
+                depth=-6.0)
+        if mode == "image":
+            return visual.ImageStim(
+                win=self.win,
+                image=None,
+                mask=None,
+                units='',
+                pos=self.pos_sti,
+                size=(height_int, height_int),
+                ori=0.0)

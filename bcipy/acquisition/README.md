@@ -9,13 +9,13 @@ The `client` is the primary module for receiving data from the EEG hardware, per
 ### Examples
 
     import time
-    from acquisition.client import Client
+    from acquisition.client import DataAcquisitionClient
     import acquisition.protocols.registry as registry
 
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 8844})
     # Use default processor (FileWriter), buffer, and clock.
-    client = Client(device=dsi_device)
+    client = DataAcquisitionClient(device=dsi_device)
 
     try:
         client.start_acquisition()
@@ -30,9 +30,9 @@ The daq/tests/client_test.py file also demonstrates how the various components i
 
 ### Client Architecture
 
-A `Client` is initialized with a `Device`  and optionally a `Processor`, `Buffer`, and `Clock`. A device is a driver that knows how to connect to and communicate with specific EEG hardware/software, as well as decode the sensor data. Supported devices can be queried through the `registry`.
+A `DataAcquisitionClient` is initialized with a `Device`  and optionally a `Processor`, `Buffer`, and `Clock`. A device is a driver that knows how to connect to and communicate with specific EEG hardware/software, as well as decode the sensor data. Supported devices can be queried through the `registry`.
 
-A `Client` manages two threads, one for acquisition and one for processing. The acquisition thread continually receives data and writes it to a process queue with an associated timestamp from the `clock`. The process thread watches the queue and sends data to the processor, as well as storing it in the `Buffer` to be queried and archived.
+A `DataAcquisitionClient` manages two threads, one for acquisition and one for processing. The acquisition thread continually receives data and writes it to a process queue with an associated timestamp from the `clock`. The process thread watches the queue and sends data to the processor, as well as storing it in the `Buffer` to be queried and archived.
 
 #### Registry
 
@@ -94,7 +94,8 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
 
 #### Generator
 
-Generators are Python functions that yield encoded data. They have a parameter for an `Encoder`, and may include other parameters. Currently there is a `random_generator`, which generates random data, and a `file_generator`, which reads through a provided file (ex. a calibration file), and yields one row at a time. The `file_generator` is useful for repeatable tests with known data.
+Generators are Python functions that yield encoded data. They have a parameter for an 
+`Encoder`, and may include other parameters. Currently there is a `random_generator`, which generates random data, and a `file_generator`, which reads through a provided file (ex. a calibration file), and yields one row at a time. The `file_generator` is useful for repeatable tests with known data.
 
 #### Protocol
 

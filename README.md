@@ -1,11 +1,13 @@
 # Brain- Computer Interface Codebase
 ------------------------------------
 
-### What is it? 
+### What is it?
 
 It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
 
-### Contributions Welcome! 
+It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (10) and Mac OSx (High Sierra) at this time.
+
+### Contributions Welcome!
 
 This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
 
@@ -31,13 +33,12 @@ Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Ok
 		shown at the center of screen. When the subject wants to select a symbol,
 		they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
 
-	To run on windows, execute the .exe to start with GUI. Otherwise, run `python gui/RSVPKeyboard.py` in your terminal to begin.
+	To run on windows, run `python bcipy/gui/BCInterface.py` in your terminal to begin.
 ```
 
 ## Dependencies
 ---------------
-This project requires Psychopy, Python v 3.6.5, and other packages. See requirements.txt. When possible integration with other open source
-libraries will be done. We will prioritize those integrations or refactors.
+This project requires Psychopy, Python v 3.6.5 (or for Windows 7: v.3.6.0), and other packages. See requirements.txt. When possible integration with other open source libraries will be done.
 
 
 ## Installation
@@ -45,22 +46,23 @@ libraries will be done. We will prioritize those integrations or refactors.
 
 #### BCI Setup
 
-In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/) 
+In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/)
 
-You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file. 
+You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file.
 
 To use all the goodies locally (including the GUI and demo scripts)
 1. Git clone https://github.com/BciPy/BciPy.git
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
 4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
+5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we are in this repository!)
 
 To just use the built-in functions:
 1. `pip install bcipy`
 
 ## Usage Locally
 
-Start by running `python gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
+Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
 
 Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
 
@@ -109,6 +111,8 @@ This repository uses pytest for execution of tests. You may execute them by:
 
 ## Contribution Guidelines
 --------------------------
+
+We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
 1. All added code will need tests and a demo (if a large feature).
 2. All tests must pass to merge, even if they are seemingly unrelated to your task.

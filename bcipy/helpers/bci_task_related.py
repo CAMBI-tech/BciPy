@@ -1,7 +1,12 @@
 import os
-from psychopy import visual, event
+from psychopy import visual, event, core
 import numpy as np
-from typing import Any
+from typing import Any, List
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -60,22 +65,28 @@ def alphabet(parameters=None):
         if not parameters['is_txt_sti']:
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
-            image_array = []
-            for image_filename in os.listdir(path):
-                if image_filename.endswith(".png"):
-                    image_array.append(os.path.join(path, image_filename))
+            stimulus_array = []
+            for stimulus_filename in os.listdir(path):
+                if stimulus_filename.endswith(".png"):
+                    stimulus_array.append(os.path.join(path, stimulus_filename))
 
-            return image_array
+            return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_']
 
 
-def process_data_for_decision(sequence_timing, daq):
+def process_data_for_decision(
+        sequence_timing,
+        daq,
+        window,
+        parameters,
+        first_session_stim_time,
+        static_offset=0):
     """Process Data for Decision.
 
-    Processes the raw data (triggers and eeg) into a form that can be passed to
+    Processes the raw data (triggers and EEG) into a form that can be passed to
     signal processing and classifiers.
 
     Parameters
@@ -83,33 +94,47 @@ def process_data_for_decision(sequence_timing, daq):
         sequence_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
+        window: window to reactivate if deactivated by windows
+        parameters: parameters dictionary
+        first_session_stim_time (float): time that the first stimuli was presented
+            for the session. Used to calculate offsets.
 
     Returns
     -------
         (raw_data, triggers, target_info) tuple
     """
+
     # Get timing of the first and last stimuli
     _, first_stim_time = sequence_timing[0]
-    _, last_stim_time = sequence_timing[len(sequence_timing) - 1]
+    _, last_stim_time = sequence_timing[-1]
 
-    # define my first and last time points #changeforrelease
-    time1 = first_stim_time * daq.device_info.fs
-    time2 = (last_stim_time + .5) * daq.device_info.fs
+    window_length = parameters['len_data_sequence_buffer']
+
+    # get any offset calculated from the daq
+    daq_offset = daq.offset
+
+    if daq_offset:
+        offset = daq_offset - first_session_stim_time + static_offset
+        time1 = (first_stim_time + offset) * daq.device_info.fs
+        time2 = (last_stim_time + offset + window_length) * daq.device_info.fs
+    else:
+        time1 = (first_stim_time + static_offset) * daq.device_info.fs
+        time2 = (last_stim_time + static_offset + window_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
-    triggers = [(text, ((timing * daq.device_info.fs) - time1))
+    triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + .5) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time + window_length) * daq.device_info.fs
 
     # Query for raw data
     try:
         # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2)
+        raw_data = daq.get_data(start=time1, end=time2, win=window)
 
         # If not enough raw_data returned in the first query, let's try again
         #  using only the start param. This is known issue on Windows.
@@ -117,7 +142,7 @@ def process_data_for_decision(sequence_timing, daq):
         if len(raw_data) < data_limit:
 
             # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1)
+            raw_data = daq.get_data(start=time1, win=window)
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
@@ -129,7 +154,7 @@ def process_data_for_decision(sequence_timing, daq):
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        print("Error in daq: get_data()")
+        logging.error("Error in daq: get_data()")
         raise e
 
     return raw_data, triggers, target_info
@@ -173,6 +198,25 @@ def trial_complete_message(win, parameters):
         colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]
+
+
+def print_message(window: visual.Window, message: str="Initializing..."):
+    """Draws a message on the display window using default config.
+
+    Parameters
+    ----------
+        window (object): Psychopy Window Object, should be the same as the one
+            used in the experiment
+        parameters (dict): Dictionary of session parameters
+
+    Returns
+    -------
+        TextStim object
+    """
+    message_stim = visual.TextStim(win=window, text=message)
+    message_stim.draw()
+    window.flip()
+    return message_stim
 
 
 def get_user_input(window, message, color, first_run=False):
@@ -289,7 +333,7 @@ def trial_reshaper(trial_target_info: list,
 
             # triggers in seconds are mapped to triggers in number of samples.
             triggers = list(
-                map(lambda x: int((x - offset) * after_filter_frequency), timing_info))
+                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -307,8 +351,7 @@ def trial_reshaper(trial_target_info: list,
                 # For every channel append filtered channel data to trials
                 for channel in range(len(filtered_eeg)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
+                        filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 
@@ -316,7 +359,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'copy_phrase':
 
             # triggers in samples are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -346,7 +389,7 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'free_spell':
 
             # triggers in sample are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x - offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x + offset) / k), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -377,3 +420,43 @@ def trial_reshaper(trial_target_info: list,
     except Exception as e:
         raise Exception(
             f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
+
+
+def pause_calibration(window, display, current_index: int, parameters: dict):
+    """Pause calibration.
+
+    Pauses calibration for a given number of seconds and displays a countdown
+    to the user.
+
+
+    PARAMETERS
+    ----------
+    :param: window: Currently active PsychoPy window
+    :param: display: The current display
+    :param: current_index: number of trials that have already taken place
+    :param: trials_before_break: number of trials before break
+    :param: break_len: length of the break time (in seconds)
+    :param: break_message: message to display to the user during the break
+
+    :returns: bool: break has taken place
+    """
+    # Check whether or not to present a break
+    trials_before_break = parameters['trials_before_break']
+    break_len = parameters['break_len']
+    break_message = parameters['break_message']
+
+    if (current_index != 0) and (current_index % trials_before_break) == 0:
+
+        # present break message for break length
+        for counter in range(break_len):
+            time = break_len - counter
+            message = f'{break_message} {time}s'
+            display.update_task_state(
+                text=message,
+                color_list=['white'])
+            display.draw_static()
+            window.flip()
+            core.wait(1)
+        return True
+
+    return False

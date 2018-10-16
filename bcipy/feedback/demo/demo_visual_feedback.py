@@ -1,12 +1,12 @@
-from feedback.visual.visual_feedback import VisualFeedback
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from psychopy import core
-from helpers.load import load_json_parameters
-from display.display_main import init_display_window
+from bcipy.helpers.load import load_json_parameters
+from bcipy.display.display_main import init_display_window
 
 
 # Load a parameters file
 parameters = load_json_parameters(
-    'parameters/parameters.json', value_cast=True)
+    'bcipy/parameters/parameters.json', value_cast=True)
 display = init_display_window(parameters)
 clock = core.Clock()
 # Start Visual Feedback

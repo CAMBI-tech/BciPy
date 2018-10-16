@@ -1,16 +1,22 @@
+import json
+import logging
+import platform
+import re
 import sys
-sys.path.insert(0, ".")
+import time
+import unittest
+from subprocess import PIPE, Popen
+
 import docker
 import requests
-import json
-import time
-import re
-import logging
-import unittest
-from bcipy.oclm_language_model.errors import ConnectionErr, StatusCodeError, DockerDownError, NBestHighValue, EvidenceDataStructError, NBestError
+
 from bcipy.helpers.bci_task_related import alphabet
-from subprocess import Popen, PIPE
-import platform
+from bcipy.oclm_language_model.errors import (ConnectionErr, DockerDownError,
+                                              EvidenceDataStructError,
+                                              NBestError, NBestHighValue,
+                                              StatusCodeError)
+
+sys.path.insert(0, ".")
 ALPHABET = alphabet()
 
 
@@ -202,4 +208,3 @@ class LangModel:
             print("There are no priors in the history")
         # print a json dict of the priors
         return self.priors
-

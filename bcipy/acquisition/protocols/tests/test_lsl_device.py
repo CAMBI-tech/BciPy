@@ -1,11 +1,12 @@
+# pylint: disable=no-self-use
+"""Tests for the LabStreamingLayer driver."""
 
-
+import unittest
 import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.server import await_start
 from bcipy.acquisition.datastream import generator
 from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
-import unittest
 
 
 class TestLslDevice(unittest.TestCase):
@@ -15,10 +16,12 @@ class TestLslDevice(unittest.TestCase):
         super(TestLslDevice, self).__init__(*args, **kwargs)
         self.channels = ['C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2']
         self.channel_count = len(self.channels)
+        # pylint: disable=invalid-name
         self.hz = 100
 
     @property
     def include_meta(self):
+        """Whether or not to include metadata"""
         raise Exception("Must be implemented in subclass")
 
     def setUp(self):
@@ -99,8 +102,8 @@ class TestLslWithoutMetadata(TestLslDevice):
         self.assertTrue(len(data) > 0)
         self.assertEqual(len(data), len(device.channels))
 
-        for f in data[0:-1]:
-            self.assertTrue(isinstance(f, float))
+        for channel in data[0:-1]:
+            self.assertTrue(isinstance(channel, float))
 
 
 class TestLslWithMetadata(TestLslDevice):
@@ -121,7 +124,7 @@ class TestLslWithMetadata(TestLslDevice):
         with pytest.raises(Exception):
             device.acquisition_init()
 
-    def _test_channel_init(self):
+    def test_channel_init(self):
         """Channels should be initialized from device metadata if not
          provided."""
         device = LslDevice(connection_params={}, fs=self.hz,
@@ -161,8 +164,8 @@ class TestLslWithMetadata(TestLslDevice):
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(len(data), len(device.channels))
-        for f in data[0:-1]:
-            self.assertTrue(isinstance(f, float))
+        for channel in data[0:-1]:
+            self.assertTrue(isinstance(channel, float))
 
 
 if __name__ == '__main__':

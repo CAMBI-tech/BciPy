@@ -1,3 +1,4 @@
+# pylint: disable=fixme,invalid-name
 """Used to find a protocol or device by name."""
 
 from bcipy.helpers.system_utils import import_submodules

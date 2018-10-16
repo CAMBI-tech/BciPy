@@ -1,16 +1,20 @@
+import logging
 import os
+import platform
+import re
 import sys
-sys.path.append('.')
+import time
+import unittest
+from subprocess import PIPE, Popen
+
 import docker
 import requests
-import time
-import re
-import logging
-import unittest
-from errors import ConnectionErr, StatusCodeError, DockerDownError
+
 from bcipy.helpers.bci_task_related import alphabet
-from subprocess import Popen, PIPE
-import platform
+from bcipy.language_model.errors import (ConnectionErr, DockerDownError,
+                                         StatusCodeError)
+
+sys.path.append('.')
 ALPHABET = alphabet()
 
 
@@ -18,12 +22,12 @@ class LangModel:
 
     def __init__(self, localpath2fst, host="127.0.0.1", port="5000", logfile="log"):
         """
-        Initiate the langModel class. Primarly initializing
+        Initiate the langModel class. Primarily initializing
         is aimed at establishing the tcp/ip connection
         between the host (local machine) and its server
         (the docker machine)
         Establishing the connection and running the server
-        are done in a single operartion
+        are done in a single operation
         Input:
           localpath2fst (str) - the local path to the fst file
           host (str) - host machine ip address
@@ -56,7 +60,7 @@ class LangModel:
         except:
             pass
 
-        # create a new contaienr from image
+        # create a new container from image
         self.container = client.containers.run(
             image='lmimage',
             command='python server.py',
@@ -189,6 +193,3 @@ class LangModel:
             print("There are no priors in the history")
         # print a json dict of the priors
         return self.priors
-
-if __name__ == '__main__':
-    unittest.main()

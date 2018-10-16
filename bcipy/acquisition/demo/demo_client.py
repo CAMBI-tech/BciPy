@@ -1,3 +1,5 @@
+"""Sample script to demonstrate usage of the DataAcquisitionClient."""
+
 
 def main():
     """Creates a sample client that reads data from a TCP server
@@ -17,14 +19,15 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.client import Client
-    import bcipy.acquisition.protocols.registry as registry
+    from bcipy.acquisition.client import DataAcquisitionClient
+    from bcipy.acquisition.protocols import registry
 
+    # pylint: disable=invalid-name
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = Client(device=dsi_device, clock=clock.Clock())
+    client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())
 
     try:
         client.start_acquisition()

@@ -1,13 +1,35 @@
 # -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
+from bcipy.helpers.stimuli_generation import resize_image, play_sound
 import csv
 from typing import TextIO, List, Tuple
 
+from psychopy import visual, core
+
 NONE_VALUE = '0'
+SOUND_TYPE = 'sound'
+IMAGE_TYPE = 'image'
 
 
-def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
-                         on_trigger=None):
+class TriggerCallback:
+    timing = None
+    first_time = True
+
+    def callback(self, clock: core.Clock, stimuli: str) -> None:
+        if self.first_time:
+            self.timing = [stimuli, clock.getTime()]
+            self.first_time = False
+
+    def reset(self):
+        self.timing = None
+        self.first_time = True
+
+
+def _calibration_trigger(experiment_clock: core.Clock,
+                         trigger_type: str='sound',
+                         trigger_name: str='calibration_trigger',
+                         display=None,
+                         on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
         Outputs triggers for the purpose of calibrating data and stimuli.
@@ -15,88 +37,71 @@ def _calibration_trigger(experiment_clock, trigger_type='sound', display=None,
         code aims to operationalize the approach to finding the correct DAQ samples in
         relation to our trigger code.
 
-        Args:
-                experiment_clock(clock): clock with getTime() method, which is used in the code
-                    to report timing of stimuli
-                trigger_type(string): type of trigger that is desired (sound, image, etc)
-                display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
-                on_trigger(function): optional callback; if present gets called
-                         when the calibration trigger is fired; accepts a single
-                         parameter for the timing information.
+    PARAMETERS
+    ---------
+        experiment_clock(clock): clock with getTime() method, which is used in the code
+            to report timing of stimuli
+        trigger_type(string): type of trigger that is desired (sound, image, etc)
+        display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
+        on_trigger(function): optional callback; if present gets called
+                 when the calibration trigger is fired; accepts a single
+                 parameter for the timing information.
         Return:
-                timing(array): timing values for the calibration triggers to be written to trigger file or
+            timing(array): timing values for the calibration triggers to be written to trigger file or
                     used to calculate offsets.
     """
+    trigger_callback = TriggerCallback()
 
     # If sound trigger is selected, output calibration tones
-    if trigger_type == 'sound':
+    if trigger_type == SOUND_TYPE:
         import sounddevice as sd
         import soundfile as sf
-        from psychopy import core
 
-        # Init the sound object and give it some time to buffer
-        try:
-            data, fs = sf.read(
-                'bcipy/static/sounds/1k_800mV_20ms_stereo.wav', dtype='float32')
-        except:
-            raise Exception('Sound object could not be found or Initialized')
+        play_sound(
+            sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
+            dtype='float32',
+            track_timing=True,
+            sound_callback=trigger_callback,
+            sound_load_buffer_time=0.5,
+            experiment_clock=experiment_clock,
+            trigger_name='calibration_trigger')
 
-        core.wait(.2)
-
-        # Play the fist sound (used to calibrate) and wait.
-        sd.play(data, fs)
-        timing = ['calibration_trigger', experiment_clock.getTime()]
-        if on_trigger:
-            on_trigger(timing)
-        core.wait(.3)
-
-        # Play another to have active control over sound latency
-        sd.play(data, fs)
-        core.wait(.3)
-
-    elif trigger_type == 'image':
+    elif trigger_type == IMAGE_TYPE:
         if display:
-            from psychopy import visual, core
-
             calibration_box = visual.ImageStim(
-                display,
+                win=display,
                 image='bcipy/static/images/testing_images/white.png',
-                size=(.75, .75),
                 pos=(-.5, -.5),
                 mask=None,
                 ori=0.0)
-            timing = ['calibration_trigger', experiment_clock.getTime()]
-            if on_trigger:
-                on_trigger(timing)
+            calibration_box.size = resize_image(
+                'bcipy/static/images/testing_images/white.png',
+                display.size, 0.75)
 
-            calibration_box.draw()
-            display.flip()
+            display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
+            if on_trigger is not None:
+                display.callOnFlip(on_trigger, trigger_name)
 
-            core.wait(1)
-
-            # delete the stimuli off screen
-            display.flip()
-            core.wait(.1)
-
-            # Draw it again and flip
-            calibration_box.draw()
-            display.flip()
-
-            core.wait(1)
+            presentation_time = int(1 * display.getActualFrameRate())
+            for num_frames in range(presentation_time):
+                calibration_box.draw()
+                display.flip()
 
         else:
             raise Exception(
-                'No Display Object passed for calibration with images!')
+                'Display object required for calibration with images!')
 
     else:
         raise Exception('Trigger type not implemented for Calibration yet!')
 
-    return timing
+    return trigger_callback.timing
 
 
-def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
-    """
-    Write triggers from calibration.
+def _write_triggers_from_sequence_calibration(
+        array: list,
+        trigger_file: TextIO,
+        offset: bool=False):
+    """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
         target letter based on the first presented letter in sequence, then
@@ -143,8 +148,12 @@ def _write_triggers_from_sequence_calibration(array, trigger_file, offset=None):
     return trigger_file
 
 
-def _write_triggers_from_sequence_copy_phrase(array, trigger_file,
-                                              copy_text, typed_text, offset=None):
+def _write_triggers_from_sequence_copy_phrase(
+        array,
+        trigger_file,
+        copy_text,
+        typed_text,
+        offset=None):
     """
     Write triggers from copy phrase.
 
@@ -220,51 +229,67 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
     return trigger_file
 
 
-def trigger_decoder(mode, trigger_loc=None):
+def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
+    """Trigger Decoder.
+
+    Given a mode of operation (calibration, copy phrase, etc) and
+        a path to the trigger location (*.txt file), this function
+        will split into symbols (A, ..., Z), timing info (32.222), and
+        targetness (target, nontarget). It will also extract any saved
+        offset information and pass that back.
+
+    PARAMETERS
+    ----------
+    :param: mode: mode of bci operation. Note the mode changes how triggers
+        are saved.
+    :param: trigger_path: [Optional] path to triggers.txt file
+    :return: tuple: symbol_info, trial_target_info, timing_info, offset.
+    """
 
     # Load triggers.txt
-    if not trigger_loc:
-        trigger_loc = load_txt_data()
+    if not trigger_path:
+        trigger_path = load_txt_data()
 
-    with open(trigger_loc, 'r') as text_file:
-        # Get every line of trigger.txt if that line does not contain
-        # 'fixation' or 'offset_correction'
-        # [['words', 'in', 'line'], ['second', 'line']...]
+    # Get every line of trigger.txt
+    with open(trigger_path, 'r+') as text_file:
+        # most trigger files has three columns:
+        #   SYMBOL, TARGETNESS_INFO[OPTIONAL], TIMING
+        trigger_txt = [line.split() for line in text_file]
 
-        # trigger file has three columns: SYMBOL, TARGETNESS_INFO, TIMING
-        trigger_txt = [line.split() for line in text_file
-                       if 'fixation' not in line and '+' not in line
-                       and 'offset_correction' not in line 
-                       and 'calibration_trigger' not in line]
+    # extract stimuli from the text
+    stimuli_triggers = [line for line in trigger_txt
+                        if line[1] == 'target' or
+                        line[1] == 'nontarget']
 
-    # If operating mode is calibration, trigger.txt has three columns.
-    if mode == 'calibration' or mode == 'copy_phrase':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = list(map(lambda x: x[1], trigger_txt))
-        timing_info = list(map(lambda x: eval(x[2]), trigger_txt))
-    elif mode == 'free_spell':
-        symbol_info = list(map(lambda x: x[0], trigger_txt))
-        trial_target_info = None
-        timing_info = list(map(lambda x: eval(x[1]), trigger_txt))
+    # from the stimuli array, pull our the symbol information
+    symbol_info = list(map(lambda x: x[0], stimuli_triggers))
+
+    # If operating mode is free spell, it only has 2 columns
+    #   otherwise, it has 3
+    if mode != 'free_spell':
+        trial_target_info = list(map(lambda x: x[1], stimuli_triggers))
+        timing_info = list(map(lambda x: eval(x[2]), stimuli_triggers))
     else:
-        raise Exception("You have not provided a valid operating mode for trigger_decoder. "
-                        "Valid modes are: 'calibration','copy_phrase','free_spell'")
+        trial_target_info = None
+        timing_info = list(map(lambda x: eval(x[1]), stimuli_triggers))
 
-    with open(trigger_loc, 'r') as text_file:
-        offset_array = [line.split()
-                        for line in text_file if 'offset_correction' in line]
+    # Get any offset or calibration triggers
+    offset_array = [line[2] for line in trigger_txt
+                    if line[0] == 'offset']
+    calib_trigger_array = [line[2] for line in trigger_txt
+                           if line[0] == 'calibration_trigger']
 
-    if offset_array:
-        with open(trigger_loc, 'r') as text_file:
-            calib_trigger_time = [
-                line.split() for line in text_file if 'calibration_trigger' in line]
+    # If present, calculate the offset between the DAQ and Triggers from display
+    if len(offset_array) == 1 and len(calib_trigger_array) == 1:
 
-        if calib_trigger_time:
-            if offset_array:
-                offset = float(
-                    calib_trigger_time[0][2]) - float(offset_array[0][2])
-            else:
-                offset = timing_info[0] - float(offset_array[0][2])
+        # Extract the offset and calibration trigger time
+        offset_time = float(offset_array[0])
+        calib_trigger_time = float(calib_trigger_array[0])
+
+        # Calculate the offset (ASSUMES DAQ STARTED FIRST!)
+        offset = offset_time - calib_trigger_time
+
+    # Otherwise, assume no observed offset
     else:
         offset = 0
 
