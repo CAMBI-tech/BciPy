@@ -17,20 +17,6 @@ If you receive an error about VT-X or AMD-v being disabled when you run the Quic
 1. Save the BIOS settings and exit the BIOS menu. 
 1. Start your computer normally, and retry running the Quickstart Terminal. 
 
-## Configuring your shell
-
-**These steps will need to be taken every time you want to run the language model.** 
-
-Once the Quickstart Terminal loads the Docker Machine successfully, open a regular terminal, and type the following command:
-
-> docker-machine env --shell cmd default
-
-When this command completes, you should see instructions to enter a command in order to configure your shell. The command will likely look something like this:
-
-> @FOR /f “tokens=*” %i IN (’docker-machine.exe env --shell cmd default’) DO @%i
-
-Enter the command displayed on your terminal to configure your shell. 
-
 ## Setting up the language model
 
 **These steps only need to be taken once.** 
