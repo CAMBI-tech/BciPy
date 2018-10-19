@@ -201,16 +201,11 @@ class LangModel:
             if not r.status_code == requests.codes.ok:
                 raise StatusCodeError(r.status_code)
             self.priors = r.json()
-        return self.priors
 
-#    def recent_priors(self):
-#        """
-#        Display the priors given the recent decision
-#        """
-#        try:
-#            self.priors
-#            self.decision
-#        except BaseException:
-#            print("There are no priors in the history")
-#        # print a json dict of the priors
-#        return self.priors
+        self.priors['prior'] = [
+            [letter.upper(), prob]
+            if letter != '#'
+            else ["_", prob]
+            for (letter, prob) in self.priors['prior']]
+
+        return self.priors
