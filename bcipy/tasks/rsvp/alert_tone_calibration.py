@@ -33,6 +33,11 @@ class RSVPAlertToneCalibrationTask(Task):
         super(RSVPAlertToneCalibrationTask, self).__init__()
         self._task = RSVPCalibrationTask(win, daq, parameters, file_save)
 
+        # Delay between sound and letter presentation; default is 400 ms.
+        # see: Testing the Efficiency and Independence of Attentional Networks
+        # by Jin Fan, Bruce D. McCandliss, Tobias Sommer, Amir Raz, and
+        # Michael I. Posner
+        sound_delay = parameters.get('alert_sound_delay', 0.4)
         alerts = soundfiles(parameters['alert_sounds_path'])
 
         def play_sound_callback(_sti):
@@ -40,7 +45,7 @@ class RSVPAlertToneCalibrationTask(Task):
             if "blank" in sound_path:
                 return
             play_sound(sound_path, sound_load_buffer_time=0,
-                       sound_post_buffer_time=0)
+                       sound_post_buffer_time=sound_delay)
         self._task.rsvp.first_stim_callback = play_sound_callback
 
     def execute(self):

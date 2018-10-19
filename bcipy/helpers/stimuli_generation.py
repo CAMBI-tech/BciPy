@@ -429,9 +429,14 @@ def play_sound(sound_file_path: str,
             sound_callback(timing)
 
     # play our loaded sound and wait for some time before it's finished
+    # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
+    # which I believe happens prior to the sound playing).
     sd.play(data, fs)
-    core.wait(sound_post_buffer_time)
-
+    if sound_post_buffer_time:
+        # sd.play returns immediately (according to the docs); calculate offset
+        # so the sound_post_buffer_time accounts for the duration of the sound.
+        duration = len(data) / fs
+        core.wait(sound_post_buffer_time + duration)
     return timing
 
 
