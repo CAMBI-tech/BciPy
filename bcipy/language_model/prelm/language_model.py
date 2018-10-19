@@ -76,7 +76,7 @@ class LangModel:
         time.sleep(1)
         # assert a new container was generated
         con_id = self.container.short_id
-        for con in client.containers.list(filters={"ancestor": "0dd3f920287c"}):
+        for con in client.containers.list(filters={"ancestor": "lmimage:version2.0"}):
             con_id_fromlist = con.short_id
         assert con_id == con_id_fromlist, \
             "internal container exsistance failed"
@@ -86,7 +86,7 @@ class LangModel:
         Remove existing containers as they
         occupy the required ports
         """
-        for con in client.containers.list(filters={"ancestor": "0dd3f920287c"}):
+        for con in client.containers.list(filters={"ancestor": "lmimage:version2.0"}):
             con.stop()
             con.remove()
 
@@ -102,7 +102,7 @@ class LangModel:
                 self.port +
                 '/init')
         except requests.ConnectionError:
-            r.close()
+            #r.close()
             raise ConnectionErr(self.host, self.port)
         if not r.status_code == requests.codes.ok:
             #r.close()
@@ -188,8 +188,29 @@ class LangModel:
         """
         try:
             self.priors
-            self.decision
-        except BaseException:
-            print("There are no priors in the history")
-        # print a json dict of the priors
+        except:
+            try:
+                r = requests.post(
+                     'http://' +
+                     self.host +
+                     ':' +
+                     self.port +
+                     '/get_priors')
+            except requests.ConnectionError:
+                raise ConnectionErr(self.host, self.port)
+            if not r.status_code == requests.codes.ok:
+                raise StatusCodeError(r.status_code)
+            self.priors = r.json()
         return self.priors
+
+#    def recent_priors(self):
+#        """
+#        Display the priors given the recent decision
+#        """
+#        try:
+#            self.priors
+#            self.decision
+#        except BaseException:
+#            print("There are no priors in the history")
+#        # print a json dict of the priors
+#        return self.priors

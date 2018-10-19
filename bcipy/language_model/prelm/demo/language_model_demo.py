@@ -24,16 +24,23 @@ def main():
         logfile="lmwrap.log")
     # init LM
     lmodel.init()
+    print('\nNo History\n')
+    # get initial priors
+    print(lmodel.recent_priors())
     # get priors
+    print('\nHistory: T\n')
     priors = lmodel.state_update(['T'])
     # display priors
     print(lmodel.recent_priors())
+    print('\nHistory: TH\n')
     priors = lmodel.state_update(['H'])
     print(lmodel.recent_priors())
+    print('\nHistory: THE\n')
     priors = lmodel.state_update(['E'])
     # reset history al together
     lmodel.reset()
     print(lmodel.recent_priors())
+    print('\nHistory: THE (fed as a single string)\n')
     priors = lmodel.state_update(list('THE'))
     print(lmodel.recent_priors())
 
