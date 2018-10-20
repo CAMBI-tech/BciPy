@@ -137,6 +137,7 @@ class LangModel:
             decision - a character (or a string)
         Output:
             priors - a json dictionary with the priors
+                     in the Negative Log probabilty domain
         """
         # assert the input contains a valid symbol
         assert isinstance(decision, list), "%r is not list" % decision

@@ -137,9 +137,11 @@ class LangModel:
         last observation
         Input:
             evidence - a list of (list of) tuples [[(sym1, prob), (sym2, prob2)]]
+            the numbers are assumed to be in the log probabilty domain
         Output:
             priors - a json dictionary with character priors
             word - a json dictionary w word probabilites
+            both in the Negative Log probabilty domain
         """
         # assert the input contains a valid symbol
         assert isinstance(evidence, list), "%r is not list" % evidence
