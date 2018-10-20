@@ -66,10 +66,6 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
     exp_type = ExperimentType(task_type['exp_type'])
 
-    # Initialize Display Window
-    display = init_display_window(parameters)
-    print_message(display, "Initializing...")
-
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
@@ -103,6 +99,13 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         signal_model = None
         language_model = None
         filename = None
+
+    # Initialize Display Window
+    # We have to wait until after the prompt for the prompt to load the signal
+    # model before displaying the window, otherwise in fullscreen mode this 
+    # throws an error.
+    display = init_display_window(parameters)
+    print_message(display, "Initializing...")
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(
