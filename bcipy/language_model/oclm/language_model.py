@@ -48,34 +48,34 @@ class LangModel:
         self.host = host
         self.port = port
         self.priors = {}
-#        logging.basicConfig(filename=logfile, level=logging.INFO)
-#
-#        try:
-#            # remove existing containers
-#            self.__rm_cons__(client)
-#        except:
-#            pass
-#
-#        # create a new contaienr from image
-#        self.container = client.containers.run(
-#            image='oclmimage:version2.0',
-#            command='python server.py',
-#            detach=True,
-#            ports={
-#                '5000/tcp': (
-#                #self.port + '/tcp': (
-#                    self.host,
-#                    self.port)},
-#            remove=True)
-#        # wait for initialization
-#        print("INITIALIZING SERVER..\n")
-#        time.sleep(16)
-#        # assert a new container was generated
-#        con_id = self.container.short_id
-#        for con in client.containers.list(filters={"ancestor": "oclmimage:version2.0"}):
-#            con_id_fromlist = con.short_id
-#        assert con_id == con_id_fromlist, \
-#            "internal container exsistance failed"
+        logging.basicConfig(filename=logfile, level=logging.INFO)
+
+        try:
+            # remove existing containers
+            self.__rm_cons__(client)
+        except:
+            pass
+
+        # create a new contaienr from image
+        self.container = client.containers.run(
+            image='oclmimage:version2.0',
+            command='python server.py',
+            detach=True,
+            ports={
+                '5000/tcp': (
+                #self.port + '/tcp': (
+                    self.host,
+                    self.port)},
+            remove=True)
+        # wait for initialization
+        print("INITIALIZING SERVER..\n")
+        time.sleep(16)
+        # assert a new container was generated
+        con_id = self.container.short_id
+        for con in client.containers.list(filters={"ancestor": "oclmimage:version2.0"}):
+            con_id_fromlist = con.short_id
+        assert con_id == con_id_fromlist, \
+            "internal container exsistance failed"
 
     def __rm_cons__(self, client):
         """
