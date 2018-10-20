@@ -47,41 +47,42 @@ class LangModel:
 
         self.host = host
         self.port = port
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-
-        try:
-            # remove existing containers
-            self.__rm_cons__(client)
-        except:
-            pass
-
-        # create a new contaienr from image
-        self.container = client.containers.run(
-            image='oclmimage',
-            command='python server.py',
-            detach=True,
-            ports={
-                '5000/tcp': (
-                #self.port + '/tcp': (
-                    self.host,
-                    self.port)},
-            remove=True)
-        # wait for initialization
-        print("INITIALIZING SERVER..\n")
-        time.sleep(16)
-        # assert a new container was generated
-        con_id = self.container.short_id
-        for con in client.containers.list(filters={"ancestor": "2ff1cea8936b"}):
-            con_id_fromlist = con.short_id
-        assert con_id == con_id_fromlist, \
-            "internal container exsistance failed"
+        self.priors = {}
+#        logging.basicConfig(filename=logfile, level=logging.INFO)
+#
+#        try:
+#            # remove existing containers
+#            self.__rm_cons__(client)
+#        except:
+#            pass
+#
+#        # create a new contaienr from image
+#        self.container = client.containers.run(
+#            image='oclmimage:version2.0',
+#            command='python server.py',
+#            detach=True,
+#            ports={
+#                '5000/tcp': (
+#                #self.port + '/tcp': (
+#                    self.host,
+#                    self.port)},
+#            remove=True)
+#        # wait for initialization
+#        print("INITIALIZING SERVER..\n")
+#        time.sleep(16)
+#        # assert a new container was generated
+#        con_id = self.container.short_id
+#        for con in client.containers.list(filters={"ancestor": "oclmimage:version2.0"}):
+#            con_id_fromlist = con.short_id
+#        assert con_id == con_id_fromlist, \
+#            "internal container exsistance failed"
 
     def __rm_cons__(self, client):
         """
         Remove existing containers as they
         occupy the required ports
         """
-        for con in client.containers.list(filters={"ancestor": "2ff1cea8936b"}):
+        for con in client.containers.list(filters={"ancestor": "oclmimage:version2.0"}):
             con.stop()
             con.remove()
             time.sleep(16)
@@ -184,8 +185,6 @@ class LangModel:
 
         return self.priors
 
-        # self._logger()
-
     def _logger(self):
         """
         Log the priors given the recent decision
@@ -198,13 +197,32 @@ class LangModel:
             for (symbol, pr) in priors:
                 logging.info('{0} {1:.4f}'.format(symbol, pr))
 
-    def recent_priors(self):
+    def recent_priors(self, return_mode):
         """
         Display the priors given the recent decision
         """
-        try:
-            self.priors
-        except BaseException:
-            print("There are no priors in the history")
-        # print a json dict of the priors
+        if not bool(self.priors):
+            try:
+                r = requests.post(
+                    'http://' +
+                    self.host +
+                    ':' +
+                    self.port +
+                    '/recent_priors',
+                    json={
+                        'return_mode': return_mode})
+            except requests.ConnectionError:
+                raise ConnectionErr(self.host, self.port)
+            if not r.status_code == requests.codes.ok:
+                raise StatusCodeError(r.status_code)
+            output = r.json()
+            self.priors = {}
+            self.priors['letter'] = [
+                [letter.upper(), prob]
+                if letter != '#'
+                else ["_", prob]
+                for (letter, prob) in output['letter']]
+
+            if return_mode != 'letter':
+                self.priors['word'] = output['word']
         return self.priors
