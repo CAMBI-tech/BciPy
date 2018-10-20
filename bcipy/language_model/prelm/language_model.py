@@ -50,6 +50,7 @@ class LangModel:
 
         self.host = host
         self.port = port
+        self.priors = {}
         logging.basicConfig(filename=logfile, level=logging.INFO)
         dockerpath2fst = "/opt/lm/brown_closure.n5.kn.fst"
         volume = {localpath2fst: {'bind': dockerpath2fst, 'mode': 'ro'}}
@@ -186,9 +187,7 @@ class LangModel:
         """
         Display the priors given the recent decision
         """
-        try:
-            self.priors
-        except:
+        if not bool(self.priors):
             try:
                 r = requests.post(
                      'http://' +
@@ -202,10 +201,10 @@ class LangModel:
                 raise StatusCodeError(r.status_code)
             self.priors = r.json()
 
-        self.priors['prior'] = [
-            [letter.upper(), prob]
-            if letter != '#'
-            else ["_", prob]
-            for (letter, prob) in self.priors['prior']]
+            self.priors['prior'] = [
+                [letter.upper(), prob]
+                if letter != '#'
+                else ["_", prob]
+                for (letter, prob) in self.priors['prior']]
 
         return self.priors
