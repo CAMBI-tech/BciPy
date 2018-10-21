@@ -30,4 +30,4 @@ In addition, demo.py provides a show case for how to call langModel class method
 If there are problems in the process there are different error messages that can be raised: connection error, status code of response, correctness of input. 
 
 There is `lmimage` for prefix LM and `oclmimage` for oclm.
-For `lmimage`, before you start go to parameters/parameters.json and paste to absolute path to the fst (given your platform). It should be under the "path\_to\_fst" in "value" field.
+For `lmimage`, before you start go to lm\_modes.py and paste to absolute path to the fst (given your platform). It should be under the "prelm" lmtype, in "self.localfst" field.
