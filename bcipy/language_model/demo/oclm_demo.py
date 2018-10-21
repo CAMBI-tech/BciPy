@@ -1,6 +1,5 @@
 import sys
 sys.path.append('.')
-import os
 from bcipy.language_model.language_model import LangModel
 from bcipy.language_model.lm_modes import lmtype
 from eeg_utils import simulate_eeg
