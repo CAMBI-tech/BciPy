@@ -25,6 +25,7 @@ def main():
     priors = lmodel.state_update(['E'])
     # reset history al together
     lmodel.reset()
+    print("\n--------------RESET-------------\n")
     print(lmodel.recent_priors())
     print('\nHistory: THE (fed as a single string)\n')
     priors = lmodel.state_update(list('THE'))
