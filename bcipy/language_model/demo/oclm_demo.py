@@ -16,7 +16,7 @@ def main():
     print("\nCharacter distribution of no history\n")
     print(lmodel.recent_priors(return_mode))
     # path to eeg samples to simulate eeg input
-    path2eeg = 'bcipy/language_model/oclm/demo/EEGEvidence.txt-high'
+    path2eeg = 'bcipy/language_model/demo/EEGEvidence.txt-high'
     # eeg simulator
     simulator = simulate_eeg(path2eeg)
     
