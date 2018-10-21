@@ -1,7 +1,6 @@
 import os
 import requests
 import docker
-import unittest
 import time
 import json
 import logging
