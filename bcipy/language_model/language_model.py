@@ -105,7 +105,6 @@ class LangModel:
         for con in client.containers.list(filters={"ancestor": self.image}):
             con.stop()
             con.remove()
-        time.sleep(16)
 
     def init(self, nbest=1):
         """
