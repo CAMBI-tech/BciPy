@@ -11,7 +11,6 @@ from bcipy.language_model.errors import (ConnectionErr, DockerDownError,
                                               EvidenceDataStructError,
                                               NBestError, NBestHighValue,
                                               StatusCodeError)
-
 ALPHABET = alphabet()
 
 
@@ -32,8 +31,10 @@ class LangModel:
         """
 
         # assert strings
-        assert type(lmtype.host) == str, "%r is not a string type" % host
-        assert type(lmtype.port) == str, "%r is not a string type" % port
+        assert type(
+            lmtype.host) == str, "%r is not a string type" % host
+        assert type(
+            lmtype.port) == str, "%r is not a string type" % port
         # assert docker is on
         try:
             client = docker.from_env()
@@ -67,10 +68,12 @@ class LangModel:
 
         elif self.lmtype == 'prelm':
             # assert input path validity
-            assert os.path.exists(os.path.dirname(lmtype.localfst)), "%r is not a valid path" % lmtype.localfst
+            assert os.path.exists(os.path.dirname(
+                lmtype.localfst)), "%r is not a valid path" % lmtype.localfst
 
             dockerpath2fst = "/opt/lm/brown_closure.n5.kn.fst"
-            volume = {lmtype.localfst: {'bind': dockerpath2fst, 'mode': 'ro'}}
+            volume = {lmtype.localfst: {
+                'bind': dockerpath2fst, 'mode': 'ro'}}
 
             # create a new container from image
             self.container = client.containers.run(
@@ -174,7 +177,8 @@ class LangModel:
         # assert the input contains a valid symbol
         if self.lmtype == 'oclm':
 
-            assert isinstance(evidence, list), "%r is not list" % evidence
+            assert isinstance(
+                evidence, list), "%r is not list" % evidence
             try:
                 clean_evidence = []
                 for tmp_evidence in evidence:
@@ -193,7 +197,8 @@ class LangModel:
         elif self.lmtype == 'prelm':
 
             decision = evidence  # in prelm the we treat it as a decision
-            assert isinstance(decision, list), "%r is not list" % decision
+            assert isinstance(
+                decision, list), "%r is not list" % decision
             for symbol in decision:
                 assert symbol in ALPHABET or ' ', \
                     "%r contains invalid symbol" % decision
