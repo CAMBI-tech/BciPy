@@ -6,7 +6,7 @@ import time
 import json
 import logging
 import sys
-sys.path.insert(0, ".")
+sys.path.append('.')
 from bcipy.helpers.bci_task_related import alphabet
 from bcipy.language_model.errors import (ConnectionErr, DockerDownError,
                                               EvidenceDataStructError,
