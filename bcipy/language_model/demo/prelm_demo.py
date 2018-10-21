@@ -23,10 +23,10 @@ def main():
     print(lmodel.recent_priors())
     print('\nHistory: THE\n')
     priors = lmodel.state_update(['E'])
+    print(lmodel.recent_priors())
     # reset history al together
     lmodel.reset()
     print("\n--------------RESET-------------\n")
-    print(lmodel.recent_priors())
     print('\nHistory: THE (fed as a single string)\n')
     priors = lmodel.state_update(list('THE'))
     print(lmodel.recent_priors())
