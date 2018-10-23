@@ -155,17 +155,18 @@ def docker_volumes(volumes: Dict) -> Dict:
 
 def main():
     """Starts a docker container for the given language model."""
-    from bcipy.language_model.lm_modes import LmType
+    from bcipy.language_model.lm_modes import LmType, LmServerConfigs
     import argparse
 
     lm_options = '; '.join(
         [f'{i+1} => {str(opt)}' for i, opt in enumerate(LmType)])
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--type', default=1,
+    parser.add_argument('-t', '--type', default=1, type=int,
                         help=f'Language model type. Options: ({lm_options})')
     args = parser.parse_args()
-    lm_type = LmType(int(args.type))
-    start(lm_type.config)
+
+    config = LmServerConfigs.get(LmType(args.type))
+    start(config)
 
 
 if __name__ == '__main__':
