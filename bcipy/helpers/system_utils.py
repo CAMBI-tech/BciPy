@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 import psutil
 import pyglet
 import importlib
@@ -48,3 +49,17 @@ def import_submodules(package, recursive=True):
         if recursive and is_pkg:
             results.update(import_submodules(full_name))
     return results
+
+
+def dot(relative_to: str, *argv) -> str:
+    """
+    Given a file location and one or more subdirectory/filename args, returns
+    a Path as a str for that file.
+
+    Ex. dot(__file__, 'fst', 'brown_closure.n5.kn.fst')
+    """
+    working_dir = Path(os.path.dirname(os.path.realpath(relative_to)))
+    for subdir in argv:
+        # uses the '/' operator in pathlib to construct a new Path.
+        working_dir = working_dir / subdir
+    return str(working_dir)

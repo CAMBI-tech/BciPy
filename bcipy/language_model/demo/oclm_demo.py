@@ -1,11 +1,12 @@
 import sys
 sys.path.append('.')
-from bcipy.language_model.language_model import LangModel
-from bcipy.language_model.lm_modes import lmtype
+#from bcipy.language_model.language_model import LangModel
+#from bcipy.language_model.lm_modes import lmtype
+from bcipy.language_model.lm_modes import LmType, LangModel
 from eeg_utils import simulate_eeg
 
 def main():
-    lm = lmtype('oclm')
+    lm = LmType.OCLM # lmtype('oclm')
     # init LMWrapper
     lmodel = LangModel(lm, logfile="lmwrap.log")
     """Runs the demo"""

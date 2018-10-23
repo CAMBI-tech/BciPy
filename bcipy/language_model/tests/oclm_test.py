@@ -2,8 +2,7 @@ import os
 import sys
 sys.path.append('.')
 import unittest
-from bcipy.language_model.language_model import LangModel
-from bcipy.language_model.lm_modes import lmtype
+from bcipy.language_model.lm_modes import LmType, LangModel
 from bcipy.language_model.errors import NBestError, EvidenceDataStructError
 
 # a docker mockup could have been a great idea is I had further processed the output. In the current case it's more reliable to test directly docker's output to ensure a valid output.
@@ -16,7 +15,7 @@ class TestOCLM(unittest.TestCase):
         confirm an assertion error as
         the provided nbest arg is invalid
         """
-        lm = lmtype('oclm')
+        lm = LmType.OCLM
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 1.6
@@ -29,7 +28,7 @@ class TestOCLM(unittest.TestCase):
         an error given an incorrect
         input
         """
-        lm = lmtype('oclm')
+        lm = LmType.OCLM
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 2
@@ -46,7 +45,7 @@ class TestOCLM(unittest.TestCase):
         a valid output given a valid
         input
         """
-        lm = lmtype('oclm')
+        lm = LmType.OCLM
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 1

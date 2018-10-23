@@ -1,5 +1,12 @@
+from enum import Enum
 import os
+from os.path import dirname, realpath
 from pathlib import Path
+from typing import Dict, List
+from bcipy.language_model.lm_server import LmServerConfig
+from bcipy.language_model import oclm_language_model
+from bcipy.language_model import prelm_language_model
+from bcipy.helpers.system_utils import dot
 
 
 class lmtype:
@@ -19,3 +26,32 @@ class lmtype:
             self.image = "lmimage:version2.0"
             self.localfst = str(Path(os.path.dirname(os.path.realpath(
                 __file__))) / "fst" / "brown_closure.n5.kn.fst")
+
+
+class LmType(Enum):
+    """Enum of the registered language model types.
+    """
+    PRELM = 1
+    OCLM = 2
+
+# Docker configs for each type.
+LmServerConfigs = {
+    LmType.PRELM: LmServerConfig(
+        image="lmimage:version2.0",
+        port=5000,
+        docker_port=5000,
+        volumes={dot(__file__, 'fst', 'brown_closure.n5.kn.fst'):
+                 "/opt/lm/brown_closure.n5.kn.fst"}),
+    LmType.OCLM: LmServerConfig(
+        image="oclmimage:version2.0",
+        port=6000,
+        docker_port=5000)}
+
+LmModels = {LmType.PRELM: prelm_language_model.LangModel,
+            LmType.OCLM: oclm_language_model.LangModel}
+
+
+def LangModel(lmtype: LmType, logfile: str = "log"):
+    """Creates a new Language Model given the LmType."""
+    config = LmServerConfigs[lmtype]
+    return LmModels[lmtype](config, logfile)

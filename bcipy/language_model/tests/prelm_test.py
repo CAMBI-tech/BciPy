@@ -2,24 +2,10 @@ import os
 import sys
 sys.path.append('.')
 import unittest
-from bcipy.language_model.language_model import LangModel
-from bcipy.language_model.lm_modes import lmtype
+from bcipy.language_model.lm_modes import LmType, LangModel
 from bcipy.language_model.errors import StatusCodeError
 
 class TestPreLM(unittest.TestCase):
-
-    def test_incorrect_class_variables(self):
-        """
-        confirm an assertion error as
-        the provided fst file is invalid
-        """
-        lm = lmtype('prelm')
-        abs_path_fst = os.path.abspath("fst/brown_closure.n5.kn.fst")        
-        # local fst
-        lm.localfst = abs_path_fst
-        # init LMWrapper
-        with self.assertRaises(AssertionError):
-            lmodel = LangModel(lm, logfile="lmwrap.log")
 
     def test_correct_process(self):
         """
@@ -27,7 +13,7 @@ class TestPreLM(unittest.TestCase):
         expected prior output given a correct
         input
         """
-        lm = lmtype('prelm')
+        lm = LmType.PRELM
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         # init LM
@@ -48,7 +34,7 @@ class TestPreLM(unittest.TestCase):
 #        an error given an incorrect
 #        input
 #        """
-#        lm = lmtype('prelm')
+#        lm = LmType.PRELM
 #        # init LMWrapper
 #        lmodel = LangModel(lm, logfile="lmwrap.log")
 #        lmodel.init()

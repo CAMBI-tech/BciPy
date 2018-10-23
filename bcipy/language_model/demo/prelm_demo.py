@@ -1,10 +1,11 @@
 import sys
 sys.path.append('.')
-from bcipy.language_model.language_model import LangModel
-from bcipy.language_model.lm_modes import lmtype
+#from bcipy.language_model.language_model import LangModel
+#from bcipy.language_model.lm_modes import lmtype
+from bcipy.language_model.lm_modes import LmType, LangModel
 
 def main():
-    lm = lmtype('prelm')
+    lm = LmType.PRELM # lmtype('prelm')
     # init LMWrapper
     lmodel = LangModel(lm, logfile="lmwrap.log")
     """Runs the demo"""
