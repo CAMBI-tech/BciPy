@@ -81,11 +81,9 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
         except Exception as e:
             print("Cannot load EEG classifier. Exiting")
-            raise e
 
         # if Language Model enabled and data not fake, init lm
-        if parameters['languagemodelenabled'] == 'true' \
-                and not fake:
+        if parameters['languagemodelenabled'] and not fake:
             try:
                 lmodel = init_language_model(parameters)
             except:

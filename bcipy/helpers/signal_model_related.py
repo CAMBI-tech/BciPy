@@ -131,12 +131,12 @@ class CopyPhraseWrapper(object):
                 lm_prior = self.lmodel.state_update(update)
 
                 # hack: Append it with a backspace
-                lm_prior['prior'].append(['<', 0])
+                lm_prior['letter'].append(['<', 0])
 
                 # construct the priors as needed for evidence fusion
                 prior = [float(pr_letter[1])
                          for alp_letter in self.alp
-                         for pr_letter in lm_prior['prior']
+                         for pr_letter in lm_prior['letter']
                          if alp_letter == pr_letter[0]
                          ]
 
