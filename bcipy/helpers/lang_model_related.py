@@ -22,11 +22,11 @@ def init_language_model(parameters):
             instance of lmodel wrapper with connections to docker server
     """
 
-    # TODO: consider parameterizing
-        # host=str(parameters['lang_model_server_host']),
-        # port=str(parameters['lang_model_server_port']),
-    # TODO: select language model type from params.
-    lmodel = LangModel(LmType.PRELM, logfile="lmwrap.log")
+    port = int(parameters['lang_model_server_port'])
+    selected_lmtype = parameters.get("lang_model_type", "PRELM")
+
+    lmodel = LangModel(LmType[selected_lmtype],
+                       logfile="lmwrap.log", port=port)
     lmodel.init()
 
     return lmodel

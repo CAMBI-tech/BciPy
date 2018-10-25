@@ -51,7 +51,9 @@ LmModels = {LmType.PRELM: prelm_language_model.LangModel,
             LmType.OCLM: oclm_language_model.LangModel}
 
 
-def LangModel(lmtype: LmType, logfile: str = "log"):
+def LangModel(lmtype: LmType, logfile: str = "log", port: int = None):
     """Creates a new Language Model given the LmType."""
     config = LmServerConfigs[lmtype]
+    if port:
+        config.port = port
     return LmModels[lmtype](config, logfile)
