@@ -1,8 +1,9 @@
 
 import logging
 import sys
+import math
 from typing import List
-
+from collections import defaultdict
 from bcipy.helpers.bci_task_related import alphabet
 from bcipy.language_model import lm_server
 from bcipy.language_model.lm_server import LmServerConfig
@@ -23,16 +24,22 @@ class LangModel:
           logfile - a valid filename to function as a logger
         """
         self.server_config = server_config
-        self.priors = {}
+        self.priors = defaultdict(list)
         logging.basicConfig(filename=logfile, level=logging.INFO)
         lm_server.start(self.server_config)
 
-    def init(self, nbest: int = 1):
+    def init(self, domain: str = 'log', nbest: int = 1):
         """
         Initialize the language model (on the server side)
         Input:
             nbest - top N symbols from evidence
+            domain - a string to indicate to domain
+                     of expected output. 
+                    'log' is of the negative log domain
+                    'norm' is of the probabilty domain
         """
+        assert isinstance(domain, str)
+        self.domain = domain
         lm_server.post_json_request(
             self.server_config, 'init', data={'nbest': nbest})
 
@@ -54,9 +61,14 @@ class LangModel:
         Input:
             decision - a symbol or a string of symbols in encapsulated in a
             list
+            the numbers are assumed to be in the log probabilty domain
+            return_mode - 'letter' or 'word' (available
+                          for oclm) strings
         Output:
-            priors - a json dictionary with the priors
+            priors - a json dictionary with Normalized priors
                      in the Negative Log probabilty domain
+                     (the default is log) or the probability
+                     domain
         """
         assert return_mode == 'letter', "PRELM only allows letter output"
         # assert the input contains a valid symbol
@@ -75,15 +87,7 @@ class LangModel:
                                              {'evidence': clean_evidence,
                                               'return_mode': return_mode})
 
-        self.priors = {}
-
-        self.priors['letter'] = [
-            [letter.upper(), prob]
-            if letter != '#'
-            else ["_", prob]
-            for (letter, prob) in output['letter']]
-
-        return self.priors
+        return self.__return_priors(output, return_mode)
 
     def _logger(self):
         """
@@ -102,16 +106,34 @@ class LangModel:
         Display the priors given the recent decision
         """
         assert return_mode == 'letter', "PRELM only allows letter output"
-        if not bool(self.priors):
+        if not bool(self.priors[return_mode]):
             output = lm_server.post_json_request(self.server_config,
                                                  'recent_priors',
                                                  {'return_mode': return_mode})
+            return self.__return_priors(output, return_mode)
+        else:
+            return self.priors
+           
+    def __return_priors(self, output, return_mode):
+        """
+        A helper function to provide the desired output 
+        depending on the return_mode and the domain
+        of probaiblities requested
+        """
 
-            self.priors = {}
+        self.priors = defaultdict(list)
+        if self.domain == 'log':
             self.priors['letter'] = [
                 [letter.upper(), prob]
-                if letter != '#'
+                if letter != '#' # hard coded (to deal with in future)
                 else ["_", prob]
+                for (letter, prob) in output['letter']]
+
+        else:
+            self.priors['letter'] = [
+                [letter.upper(), math.e**(-prob)]
+                if letter != '#'
+                else ["_", math.e**(-prob)]
                 for (letter, prob) in output['letter']]
 
         return self.priors
