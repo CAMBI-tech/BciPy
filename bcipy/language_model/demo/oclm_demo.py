@@ -12,7 +12,8 @@ def main():
     """Runs the demo"""
     # init LM
     nbest = 3
-    lmodel.init(nbest)
+    domain = 'norm'
+    lmodel.init(domain, nbest)
     return_mode = 'letter'
     print("\nCharacter distribution of no history\n")
     print(lmodel.recent_priors(return_mode))

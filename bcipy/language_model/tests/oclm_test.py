@@ -20,7 +20,7 @@ class TestOCLM(unittest.TestCase):
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 1.6
         with self.assertRaises(NBestError) as er:
-            lmodel.init(nbest)
+            lmodel.init(nbest=nbest)
 
     def test_incorrect_evidence(self):
         """
@@ -32,7 +32,7 @@ class TestOCLM(unittest.TestCase):
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 2
-        lmodel.init(nbest)
+        lmodel.init(nbest=nbest)
         evidence = ['t']
         return_mode = 'letter'
         # try to get priors
@@ -49,7 +49,7 @@ class TestOCLM(unittest.TestCase):
         # init LMWrapper
         lmodel = LangModel(lm, logfile="lmwrap.log")
         nbest = 1
-        lmodel.init(nbest)
+        lmodel.init(nbest=nbest)
         evidence = [[("A", 0.8), ("O", 0.2)]]
         return_mode = 'letter'
         # try to get priors
