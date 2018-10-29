@@ -10,7 +10,7 @@ def main():
     lmodel = LangModel(lm, logfile="lmwrap.log")
     """Runs the demo"""
     # init LM
-    lmodel.init()
+    lmodel.init(domain='norm')
     print('\nNo History\n')
     # get initial priors
     print(lmodel.recent_priors())
