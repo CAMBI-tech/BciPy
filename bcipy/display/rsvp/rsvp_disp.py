@@ -104,6 +104,9 @@ class RSVPDisplay(object):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []
 
+        # TODO: add parameter
+        self.space_char = u"\u25A0"
+
         # Check if task text is multicolored
         if len(color_task) == 1:
             self.task = visual.TextStim(win=window, color=color_task[0],
@@ -227,9 +230,10 @@ class RSVPDisplay(object):
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                self.sti.text = self.stim_sequence[idx]
+                # TODO: use constant for '_'; presentation_map.get(sti_label, sti_label) ?
+                self.sti.text = self.stim_sequence[idx] if self.stim_sequence[idx] != '_' else self.space_char
                 self.sti.color = self.color_list_sti[idx]
-                sti_label = self.sti.text
+                sti_label = self.stim_sequence[idx]
 
                 # test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
