@@ -12,11 +12,17 @@ from bcipy.language_model.lm_server import LmServerConfig
 
 sys.path.append('.')
 ALPHABET = alphabet()
-
+LM_SPACE = '#'
 
 class LangModel:
 
-    def __init__(self, server_config: LmServerConfig, logfile: str = "log"):
+    DEFAULT_CONFIG = LmServerConfig(
+        image="oclmimage:version2.0",
+        port=6000,
+        docker_port=5000)
+
+    def __init__(self, server_config: LmServerConfig=DEFAULT_CONFIG,
+                 logfile: str = "log"):
         """
         Initiate the langModel class and starts the corresponding docker
         server for the given type.
@@ -30,18 +36,12 @@ class LangModel:
         logging.basicConfig(filename=logfile, level=logging.INFO)
         lm_server.start(server_config)
 
-    def init(self, domain: str = 'log', nbest: int = 1):
+    def init(self, nbest: int = 1):
         """
         Initialize the language model (on the server side)
         Input:
-            domain - a string to indicate to domain
-                     of expected output. 
-                    'log' is of the negative log domain
-                    'norm' is of the probabilty domain
             nbest - top N symbols from evidence
         """
-        assert isinstance(domain, str)
-        self.domain = domain
         if not isinstance(nbest, int):
             raise NBestError(nbest)
         if nbest > 4:
@@ -49,11 +49,16 @@ class LangModel:
         lm_server.post_json_request(
             self.server_config, 'init', data={'nbest': nbest})
 
+    def cleanup(self):
+        """Stop the docker server"""
+        lm_server.stop(self.server_config)
+
     def reset(self):
         """
         Clean observations of the language model use reset
         """
         lm_server.post_json_request(self.server_config, 'reset')
+        self.priors = defaultdict(list)
         logging.info("\ncleaning history\n")
 
     def state_update(self, evidence: List, return_mode: str = 'letter'):
@@ -71,9 +76,7 @@ class LangModel:
                           for oclm) strings
         Output:
             priors - a json dictionary with Normalized priors
-                     in the Negative Log probabilty domain
-                     (the default is log) or the probability
-                     domain
+                     in the Negative Log probabilty domain.
         """
 
         # assert the input contains a valid symbol
@@ -125,31 +128,17 @@ class LangModel:
 
     def __return_priors(self, output, return_mode):
         """
-        A helper function to provide the desired output 
-        depending on the return_mode and the domain
-        of probaiblities requested
+        A helper function to provide the desired output
+        depending on the return_mode
         """
 
         self.priors = defaultdict(list)
-        if self.domain == 'log':
-            self.priors['letter'] = [
-                [letter.upper(), prob]
-                if letter != '#'
-                else ["_", prob]
-                for (letter, prob) in output['letter']]
+        self.priors['letter'] = [
+            (letter.upper(), prob)
+            if letter != LM_SPACE
+            else ("_", prob)
+            for (letter, prob) in output['letter']]
 
-            if return_mode != 'letter':
-                self.priors['word'] = output['word']
-        else:
-            self.priors['letter'] = [
-                [letter.upper(), math.e**(-prob)]
-                if letter != '#'
-                else ["_", math.e**(-prob)]
-                for (letter, prob) in output['letter']]
-
-            if return_mode != 'letter':
-                self.priors['word'] = [
-                [word, math.e**(-prob)]
-                for (word, prob) in output['word']]
-
+        if return_mode != 'letter':
+            self.priors[return_mode] = list(map(tuple, output[return_mode]))
         return self.priors

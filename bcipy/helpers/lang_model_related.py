@@ -1,4 +1,6 @@
-import os
+"""Helper functions for language model use."""
+import math
+from typing import List, Tuple
 from bcipy.language_model.lm_modes import LangModel, LmType
 
 
@@ -21,12 +23,28 @@ def init_language_model(parameters):
         lmodel: instance
             instance of lmodel wrapper with connections to docker server
     """
+    if not parameters['languagemodelenabled'] or parameters['fake_data']:
+        lmtype = None
+    else:
+        selected_lmtype = parameters.get("lang_model_type", "PRELM")
+        lmtype = LmType[selected_lmtype]
 
     port = int(parameters['lang_model_server_port'])
-    selected_lmtype = parameters.get("lang_model_type", "PRELM")
-
-    lmodel = LangModel(LmType[selected_lmtype],
-                       logfile="lmwrap.log", port=port)
+    lmodel = LangModel(lmtype, logfile="lmwrap.log", port=port)
     lmodel.init()
-
     return lmodel
+
+
+def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
+    """Convert a list of (symbol, likelihood) values from negative log
+    likelihood to the probability domain (between 0 and 1)
+
+    Parameters:
+        priors - list of (symbol, likelihood) values.
+            assumes that the units are in the negative log likelihood where
+            the lowest value is the most likely.
+    Returns:
+        list of values in the probability domain (between 0 and 1),
+            where the highest value is the most likely.
+    """
+    return [(sym, math.exp(-prob)) for sym, prob in priors]

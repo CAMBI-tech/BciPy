@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append('.')
 import unittest
-from bcipy.language_model.lm_modes import LmType, LangModel
+from bcipy.language_model.prelm_language_model import LangModel
 from bcipy.language_model.errors import StatusCodeError
 
 class TestPreLM(unittest.TestCase):
@@ -13,9 +13,8 @@ class TestPreLM(unittest.TestCase):
         expected prior output given a correct
         input
         """
-        lm = LmType.PRELM
         # init LMWrapper
-        lmodel = LangModel(lm, logfile="lmwrap.log")
+        lmodel = LangModel(logfile="lmwrap.log")
         # init LM
         lmodel.init()
         # get priors
@@ -34,9 +33,8 @@ class TestPreLM(unittest.TestCase):
 #        an error given an incorrect
 #        input
 #        """
-#        lm = LmType.PRELM
 #        # init LMWrapper
-#        lmodel = LangModel(lm, logfile="lmwrap.log")
+#        lmodel = LangModel(logfile="lmwrap.log")
 #        lmodel.init()
 #        # try to get priors
 #        with self.assertRaises(StatusCodeError) as er:

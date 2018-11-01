@@ -1,16 +1,14 @@
 import sys
 sys.path.append('.')
-#from bcipy.language_model.language_model import LangModel
-#from bcipy.language_model.lm_modes import lmtype
-from bcipy.language_model.lm_modes import LmType, LangModel
+from bcipy.language_model.prelm_language_model import LangModel
+
 
 def main():
-    lm = LmType.PRELM # lmtype('prelm')
-    # init LMWrapper
-    lmodel = LangModel(lm, logfile="lmwrap.log")
     """Runs the demo"""
+    # init LMWrapper
+    lmodel = LangModel(logfile="lmwrap.log")
     # init LM
-    lmodel.init(domain='norm')
+    lmodel.init()
     print('\nNo History\n')
     # get initial priors
     print(lmodel.recent_priors())

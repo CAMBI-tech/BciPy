@@ -6,14 +6,23 @@ from collections import defaultdict
 from bcipy.helpers.bci_task_related import alphabet
 from bcipy.language_model import lm_server
 from bcipy.language_model.lm_server import LmServerConfig
+from bcipy.helpers.system_utils import dot
 
 sys.path.append('.')
 ALPHABET = alphabet()
+LM_SPACE = '#'
 
 
 class LangModel:
+    DEFAULT_CONFIG = LmServerConfig(
+        image="lmimage:version2.0",
+        port=5000,
+        docker_port=5000,
+        volumes={dot(__file__, 'fst', 'brown_closure.n5.kn.fst'):
+                 "/opt/lm/brown_closure.n5.kn.fst"})
 
-    def __init__(self, server_config: LmServerConfig, logfile: str = "log"):
+    def __init__(self, server_config: LmServerConfig = DEFAULT_CONFIG,
+                 logfile: str = "log"):
         """
         Initiate the langModel class and starts the corresponding docker
         server for the given type.
@@ -27,26 +36,25 @@ class LangModel:
         logging.basicConfig(filename=logfile, level=logging.INFO)
         lm_server.start(self.server_config)
 
-    def init(self, domain: str = 'log', nbest: int = 1):
+    def init(self, nbest: int = 1):
         """
         Initialize the language model (on the server side)
         Input:
             nbest - top N symbols from evidence
-            domain - a string to indicate to domain
-                     of expected output. 
-                    'log' is of the negative log domain
-                    'norm' is of the probabilty domain
         """
-        assert isinstance(domain, str)
-        self.domain = domain
         lm_server.post_json_request(
             self.server_config, 'init', data={'nbest': nbest})
+
+    def cleanup(self):
+        """Stop the docker server"""
+        lm_server.stop(self.server_config)
 
     def reset(self):
         """
         Clean observations of the language model use reset
         """
         lm_server.post_json_request(self.server_config, 'reset')
+        self.priors = defaultdict(list)
         logging.info("\ncleaning history\n")
 
     def state_update(self, evidence: List, return_mode: str = 'letter'):
@@ -60,14 +68,12 @@ class LangModel:
         Input:
             decision - a symbol or a string of symbols in encapsulated in a
             list
-            the numbers are assumed to be in the log probabilty domain
+            the numbers are assumed to be in the log probability domain
             return_mode - 'letter' or 'word' (available
                           for oclm) strings
         Output:
             priors - a json dictionary with Normalized priors
-                     in the Negative Log probabilty domain
-                     (the default is log) or the probability
-                     domain
+                     in the Negative Log probability domain.
         """
         assert return_mode == 'letter', "PRELM only allows letter output"
         # assert the input contains a valid symbol
@@ -112,27 +118,17 @@ class LangModel:
             return self.__return_priors(output, return_mode)
         else:
             return self.priors
-           
+
     def __return_priors(self, output, return_mode):
         """
         A helper function to provide the desired output 
-        depending on the return_mode and the domain
-        of probaiblities requested
+        depending on the return_mode.
         """
 
         self.priors = defaultdict(list)
-        if self.domain == 'log':
-            self.priors['letter'] = [
-                [letter.upper(), prob]
-                if letter != '#' # hard coded (to deal with in future)
-                else ["_", prob]
-                for (letter, prob) in output['letter']]
-
-        else:
-            self.priors['letter'] = [
-                [letter.upper(), math.e**(-prob)]
-                if letter != '#'
-                else ["_", math.e**(-prob)]
-                for (letter, prob) in output['letter']]
-
+        self.priors['letter'] = [
+            (letter.upper(), prob)
+            if letter != LM_SPACE  # hard coded (to deal with in future)
+            else ("_", prob)
+            for (letter, prob) in output['letter']]
         return self.priors

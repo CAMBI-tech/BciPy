@@ -1,19 +1,15 @@
 import sys
 sys.path.append('.')
-#from bcipy.language_model.language_model import LangModel
-#from bcipy.language_model.lm_modes import lmtype
-from bcipy.language_model.lm_modes import LmType, LangModel
+from bcipy.language_model.oclm_language_model import LangModel
 from eeg_utils import simulate_eeg
 
 def main():
-    lm = LmType.OCLM # lmtype('oclm')
-    # init LMWrapper
-    lmodel = LangModel(lm, logfile="lmwrap.log")
     """Runs the demo"""
+    # init LMWrapper
+    lmodel = LangModel(logfile="lmwrap.log")
     # init LM
     nbest = 3
-    domain = 'norm'
-    lmodel.init(domain, nbest)
+    lmodel.init(nbest = nbest)
     return_mode = 'letter'
     print("\nCharacter distribution of no history\n")
     print(lmodel.recent_priors(return_mode))

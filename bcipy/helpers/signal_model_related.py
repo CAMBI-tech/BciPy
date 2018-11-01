@@ -4,7 +4,7 @@ from bcipy.signal.model.inference import inference
 from bcipy.signal.processing.sig_pro import sig_pro
 from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.acquisition_related import analysis_channels
-
+from bcipy.helpers.lang_model_related import norm_domain
 
 class CopyPhraseWrapper(object):
     """Basic copy phrase task duty cycle wrapper.
@@ -114,31 +114,34 @@ class CopyPhraseWrapper(object):
 
             # If there is no language model specified, mock the LM prior
             if not self.lmodel:
-                # get probabilites from language model
-                prior = np.ones(len(self.alp))
-                prior /= np.sum(prior)
+                # get probabilities from language model
+                # TODO: is the probability domain correct? ERP evidence is in
+                # the log domain; LM by default returns negative log domain.
+                n_letters = len(self.alp)
+                prior = np.full(n_letters, 1/n_letters)
 
             # Else, let's query the lmodel for priors
             else:
-                # Get the displayed state, and do a list comprehension to place
-                # in a form the LM recognizes
-                update = [letter
-                          if not letter == '_'
-                          else ' '
-                          for letter in self.decision_maker.displayed_state]
+                # Get the displayed state
+                # TODO: for oclm this should be a list of (sym, prob)
+                update = self.decision_maker.displayed_state
 
                 # update the lmodel and get back the priors
                 lm_prior = self.lmodel.state_update(update)
 
-                # hack: Append it with a backspace
-                lm_prior['letter'].append(['<', 0])
+                # normalize to probability domain
+                lm_letter_prior = norm_domain(lm_prior['letter'])
 
-                # construct the priors as needed for evidence fusion
-                prior = [float(pr_letter[1])
+                # hack: Append it with a backspace
+                if not '<' in dict(lm_letter_prior):
+                    lm_letter_prior.append(('<', 0.0))
+
+                # convert to format needed for evidence fusion;
+                # probability value only in alphabet order.
+                prior = [prior_prob
                          for alp_letter in self.alp
-                         for pr_letter in lm_prior['letter']
-                         if alp_letter == pr_letter[0]
-                         ]
+                         for prior_sym, prior_prob in lm_letter_prior
+                         if alp_letter == prior_sym]
 
             # Try fusing the lmodel evidence
             try:
