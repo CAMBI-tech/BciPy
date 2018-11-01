@@ -306,6 +306,14 @@
     "recommended_values": "",
     "type": "directorypath"
   },
+  "alert_sound_delay": {
+    "value": "0.4",
+    "section": "bci_config",
+    "readableName": "Alert sound delay",
+    "helpTip": "Delay in seconds between playing an alert tone and presenting the target",
+    "recommended_values": "",
+    "type": "float"
+  },
   "offline_analysis_tone": {
     "value": "bcipy/static/sounds/beep.wav",
     "section": "bci_config",

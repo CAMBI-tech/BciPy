@@ -1,11 +1,16 @@
+import logging
+
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 from bcipy.helpers.bci_task_related import print_message
 from bcipy.helpers.lang_model_related import init_language_model
-from bcipy.helpers.load import load_classifier
+from bcipy.helpers.load import load_signal_model
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 
 
 def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
@@ -61,41 +66,45 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
     exp_type = ExperimentType(task_type['exp_type'])
 
-    # Initialize Display Window
-    display = init_display_window(parameters)
-    print_message(display, "Initializing...")
-
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
     if exp_type not in ExperimentType.calibration_tasks():
 
-        # Try loading in our classifier and starting a langmodel(if enabled)
+        # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
             if fake:
-                classifier = None
+                signal_model = None
                 filename = None
             else:
-                classifier, filename = load_classifier()
+                signal_model, filename = load_signal_model()
 
         except Exception as e:
-            print("Cannot load EEG classifier. Exiting")
+            logging.debug('Cannot load signal model. Exiting')
+            raise e
 
         # if Language Model enabled and data not fake, init lm
         if parameters['languagemodelenabled'] and not fake:
             try:
-                lmodel = init_language_model(parameters)
+                language_model = init_language_model(parameters)
             except:
-                print("Cannot init language model. Setting to None.")
-                lmodel = None
+                print('Cannot load language model. Setting to None.')
+                language_model = None
         else:
-            lmodel = None
+            language_model = None
 
     else:
-        classifier = None
-        lmodel = None
+        signal_model = None
+        language_model = None
         filename = None
+
+    # Initialize Display Window
+    # We have to wait until after the prompt for the prompt to load the signal
+    # model before displaying the window, otherwise in fullscreen mode this 
+    # throws an error.
+    display = init_display_window(parameters)
+    print_message(display, "Initializing...")
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(
@@ -105,8 +114,8 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     try:
         start_task(
             display, daq, exp_type, parameters, save_folder,
-            lmodel=lmodel,
-            classifier=classifier, fake=fake, auc_filename=filename)
+            language_model=language_model,
+            signal_model=signal_model, fake=fake, auc_filename=filename)
 
     # If exception, close all display and acquisition objects
     except Exception as e:
@@ -135,7 +144,6 @@ if __name__ == "__main__":
     import argparse
     import multiprocessing
     from bcipy.helpers.load import load_json_parameters
-    from bcipy.tasks.task_registry import ExperimentType
 
     # Needed for windows machines
     multiprocessing.freeze_support()

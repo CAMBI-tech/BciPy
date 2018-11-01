@@ -11,7 +11,7 @@ from bcipy.tasks.task_registry import ExperimentType
 
 
 def make_task(display_window, daq, exp_type, parameters, file_save,
-              classifier=None, lmodel=None, fake=True,
+              signal_model=None, language_model=None, fake=True,
               auc_filename=None) -> Task:
     """Creates a Task based on the provided parameters.
 
@@ -22,8 +22,8 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         exp_type: ExperimentType
         parameters: dict
         file_save: str - path to file in which to save data
-        classifier
-        lmodel - language model
+        signal_model
+        language_model - language model
         fake: boolean - true if eeg stream is randomly generated
         auc_filename: str
     Returns:
@@ -37,9 +37,8 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
 
     if exp_type is ExperimentType.RSVP_COPY_PHRASE:
         return RSVPCopyPhraseTask(
-            display_window, daq, parameters, file_save, classifier,
-            lmodel=lmodel,
-            fake=fake)
+            display_window, daq, parameters, file_save, signal_model,
+            language_model, fake=fake)
 
     if exp_type is ExperimentType.RSVP_COPY_PHRASE_CALIBRATION:
         return RSVPCopyPhraseCalibrationTask(
@@ -47,15 +46,15 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
 
     if exp_type is ExperimentType.RSVP_ICON_TO_ICON:
         return RSVPIconToIconTask(display_window, daq,
-                                  parameters, file_save, classifier,
-                                  lmodel, fake, False, auc_filename)
+                                  parameters, file_save, signal_model,
+                                  language_model, fake, False, auc_filename)
 
     if exp_type is ExperimentType.RSVP_ICON_TO_WORD:
         # pylint: disable=fixme
         # TODO: consider a new class for this scenario.
         return RSVPIconToIconTask(display_window, daq,
-                                  parameters, file_save, classifier,
-                                  lmodel, fake, True, auc_filename)
+                                  parameters, file_save, signal_model,
+                                  language_model, fake, True, auc_filename)
 
     if exp_type is ExperimentType.RSVP_ALERT_TONE_CALIBRATION:
         return RSVPAlertToneCalibrationTask(
@@ -65,8 +64,8 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
 
 
 def start_task(display_window, daq, exp_type, parameters, file_save,
-               classifier=None, lmodel=None, fake=True, auc_filename=None):
+               signal_model=None, language_model=None, fake=True, auc_filename=None):
     """Creates a Task and starts execution."""
     task = make_task(display_window, daq, exp_type, parameters, file_save,
-                     classifier, lmodel, fake, auc_filename)
+                     signal_model, language_model, fake, auc_filename)
     task.execute()
