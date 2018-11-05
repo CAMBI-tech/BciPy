@@ -93,7 +93,10 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
 
     run_params = server_config.asdict()
     t_start = time.time()
-    container = client.containers.run(**run_params)
+    try:
+        container = client.containers.run(**run_params)
+    except Exception:
+        raise Exception("Error starting container. Try restarting docker")
 
     # wait for initialization
     print("INITIALIZING SERVER.")
@@ -155,7 +158,7 @@ def docker_volumes(volumes: Dict) -> Dict:
 
 def main():
     """Starts a docker container for the given language model."""
-    from bcipy.language_model.lm_modes import LmType, LmServerConfigs
+    from bcipy.language_model.lm_modes import LmType
     import argparse
 
     lm_options = '; '.join(
@@ -165,7 +168,7 @@ def main():
                         help=f'Language model type. Options: ({lm_options})')
     args = parser.parse_args()
 
-    config = LmServerConfigs.get(LmType(args.type))
+    config = LmType(args.type).model.DEFAULT_CONFIG
     start(config)
 
 
