@@ -23,11 +23,7 @@ def init_language_model(parameters):
         lmodel: instance
             instance of lmodel wrapper with connections to docker server
     """
-    if not parameters['languagemodelenabled'] or parameters['fake_data']:
-        lmtype = None
-    else:
-        selected_lmtype = parameters.get("lang_model_type", "PRELM")
-        lmtype = LmType[selected_lmtype]
+    lmtype = LmType[parameters.get("lang_model_type", "PRELM")]
 
     port = int(parameters['lang_model_server_port'])
     lmodel = LangModel(lmtype, logfile="lmwrap.log", port=port)

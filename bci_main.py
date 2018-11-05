@@ -68,41 +68,27 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
     fake = parameters['fake_data']
 
+    signal_model = None
+    language_model = None
+    filename = None
+
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if exp_type not in ExperimentType.calibration_tasks():
-
+    if not fake and exp_type not in ExperimentType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
-            if fake:
-                signal_model = None
-                filename = None
-            else:
-                signal_model, filename = load_signal_model()
-
+            signal_model, filename = load_signal_model()
         except Exception as e:
             logging.debug('Cannot load signal model. Exiting')
             raise e
 
-        # if Language Model enabled and data not fake, init lm
-        if parameters['languagemodelenabled'] and not fake:
-            try:
-                language_model = init_language_model(parameters)
-            except:
-                print('Cannot load language model. Setting to None.')
-                language_model = None
-        else:
-            language_model = None
-
-    else:
-        signal_model = None
-        language_model = None
-        filename = None
+        # if Language Model enabled init lm
+        if parameters['languagemodelenabled']:
+            language_model = init_language_model(parameters)
 
     # Initialize Display Window
-    # We have to wait until after the prompt for the prompt to load the signal
-    # model before displaying the window, otherwise in fullscreen mode this 
-    # throws an error.
+    # We have to wait until after the prompt to load the signal model before
+    # displaying the window, otherwise in fullscreen mode this throws an error
     display = init_display_window(parameters)
     print_message(display, "Initializing...")
 

@@ -113,10 +113,10 @@ class CopyPhraseWrapper(object):
             self.conjugator.reset_history()
 
             # If there is no language model specified, mock the LM prior
+            # TODO: is the probability domain correct? ERP evidence is in
+            # the log domain; LM by default returns negative log domain.
             if not self.lmodel:
-                # get probabilities from language model
-                # TODO: is the probability domain correct? ERP evidence is in
-                # the log domain; LM by default returns negative log domain.
+                # mock probabilities to be equally likely for all letters.
                 n_letters = len(self.alp)
                 prior = np.full(n_letters, 1/n_letters)
 

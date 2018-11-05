@@ -2,7 +2,6 @@ from enum import Enum
 from bcipy.language_model.lm_server import LmServerConfig
 from bcipy.language_model import oclm_language_model
 from bcipy.language_model import prelm_language_model
-from bcipy.language_model import null_language_model
 from bcipy.helpers.system_utils import dot
 
 
@@ -30,7 +29,8 @@ class LmType(Enum):
 def LangModel(lmtype: LmType, logfile: str = "log", port: int = None):
     """Creates a new Language Model given the LmType."""
 
-    model = lmtype.model if lmtype else null_language_model.LangModel
+    assert lmtype, "Language Model type is required"
+    model = lmtype.model
     config = model.DEFAULT_CONFIG
     if port:
         config.port = port
