@@ -96,11 +96,12 @@ class VisualFeedback(Feedback):
 
     def _construct_stimulus(self, stimulus, pos):
         if '.png' in stimulus:
-            image_stim = visual.ImageStim(win=self.display,
-                                    image=stimulus,
-                                    mask=None,
-                                    pos=pos,
-                                    ori=0.0)
+            image_stim = visual.ImageStim(
+                win=self.display,
+                image=stimulus,
+                mask=None,
+                pos=pos,
+                ori=0.0)
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
             if self.rectangle_message_box:
                 self.rect.width = image_stim.size[0]

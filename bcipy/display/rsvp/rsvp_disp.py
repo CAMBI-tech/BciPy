@@ -137,6 +137,7 @@ class RSVPDisplay(object):
                 pos=self.pos_sti,
                 lineWidth=10,
                 ori=0.0)
+            self.bounding_shape.opacity = 0
 
 
     def draw_static(self):
@@ -243,6 +244,7 @@ class RSVPDisplay(object):
 
             if self.bounding_shape:
                 self.bounding_shape.lineColor = 'green'
+                self.bounding_shape.opacity = 1
 
             # End static period
             self.staticPeriod.complete()
