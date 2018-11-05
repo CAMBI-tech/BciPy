@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from psychopy import visual, core
 
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
@@ -25,15 +23,6 @@ txt_height = 0.2
 font_sti = 'Times'
 pos_sti = (0, 0)
 sti_height = 0.6
-
-# Bar Graph
-show_bg = True
-tr_pos_bg = (0, .5)
-bl_pos_bg = (-1, -.5)
-size_domain_bg = 7
-color_bg_txt = 'red'
-font_bg_txt = 'Arial'
-color_bar_bg = 'green'
 
 # Initialize Stimulus
 is_txt_sti = True
@@ -67,13 +56,6 @@ time_cross = .6
 
 timing_sti = [[time_cross] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
 
-# Dummy Bar Graph Params
-dummy_bar_schedule_t = [['A', 'B', 'C', 'D', '<', '-', 'G'],
-                        ['A', 'B', 'C', 'D', '<', 'H', 'G'],
-                        ['A', 'B', 'C', 'R', 'M', 'K', 'G'],
-                        ['A', 'B', 'C', 'R', '<', 'Z', 'G']]
-dummy_bar_schedule_p = [[1, 1, 1, 2, 3, 2, 3], [1, 1, 1, 2, 7, 2, 1],
-                        [1, 1, 1, 2, 3, 2, 3], [1, 1, 2, 12, 1, 2, 1]]
 
 task_text = ['COPY_PHA', 'COPY_PH']
 task_color = [['white'] * 5 + ['green'] * 2 + ['red'],
@@ -86,7 +68,8 @@ ele_list_dec = [['[<]'], ['[R]']]
 win = visual.Window(size=[500, 500], screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
-                    waitBlanking=True)
+                    waitBlanking=True,
+                    winType='pyglet')
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
@@ -113,10 +96,6 @@ rsvp = CopyPhraseDisplay(
     sti_height=sti_height,
     stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
     time_list_sti=[3] * 10,
-    tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
-    size_domain_bg=size_domain_bg,
-    color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
-    color_bar_bg=color_bar_bg,
     is_txt_sti=is_txt_sti)
 
 counter = 0
@@ -146,14 +125,7 @@ for idx_o in range(len(task_text)):
         #                                           trigger_file, text_task,
         #                                           task_text[idx_o])
 
-        # Get parameters from Bar Graph and schedule
-        rsvp.bg.schedule_to(letters=dummy_bar_schedule_t[counter],
-                            weight=dummy_bar_schedule_p[counter])
-
         core.wait(.5)
-        if show_bg:
-            rsvp.show_bar_graph()
-
         counter += 1
 
     # Get stimuli parameters
