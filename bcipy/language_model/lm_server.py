@@ -1,4 +1,5 @@
 """Manages the creation and shutdown of the language model server"""
+import logging
 import os
 import time
 from typing import Dict, List
@@ -6,7 +7,8 @@ import docker
 import requests
 from bcipy.language_model.errors import DockerDownError, ConnectionErr, \
     StatusCodeError
-
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 # pylint: disable=too-few-public-methods,too-many-arguments
 
 
@@ -61,7 +63,7 @@ def stop(server_config: LmServerConfig):
         raise DockerDownError  # docker ps for instance
     for con in running_containers(client, server_config):
         try:
-            print(f"Stopping existing container: {con.name}")
+            logging.debug(f"Stopping existing container: {con.name}")
             con.stop()
             # Remove may throw an exception
             con.remove()
@@ -99,8 +101,8 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
         raise Exception("Error starting container. Try restarting docker")
 
     # wait for initialization
-    print("INITIALIZING SERVER.")
-    print(run_params)
+    logging.debug("INITIALIZING LM SERVER.")
+    logging.debug(run_params)
 
     # wait for message in the logs or max_wait before continuing.
     sleep_interval = 0.5
@@ -110,9 +112,9 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
         time.sleep(sleep_interval)
     t_end = time.time()
     if start_complete_msg in str(container.logs()):
-        print(f"Container started in {t_end - t_start} seconds")
+        logging.debug(f"Container started in {t_end - t_start} seconds")
     else:
-        print("Wait time exceeded. Container may not be fully initialized.")
+        logging.debug("Wait time exceeded. Container may not be fully initialized.")
 
     # assert a new container was generated
     running_container_ids = [
