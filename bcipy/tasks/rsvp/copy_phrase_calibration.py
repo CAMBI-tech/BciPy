@@ -206,14 +206,6 @@ def _init_copy_phrase_display_task(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'])
 

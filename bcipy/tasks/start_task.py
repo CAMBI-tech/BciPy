@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Code for constructing and executing Tasks"""
 from bcipy.tasks.rsvp.alert_tone_calibration import RSVPAlertToneCalibrationTask
+from bcipy.tasks.rsvp.circular_feedback_calibration import RSVPCircularFeedbackCalibrationTask
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
@@ -58,6 +59,10 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
 
     if exp_type is ExperimentType.RSVP_ALERT_TONE_CALIBRATION:
         return RSVPAlertToneCalibrationTask(
+            display_window, daq, parameters, file_save)
+
+    if exp_type is ExperimentType.RSVP_CIRCULAR_FEEDBACK_CALIBRATION:
+        return RSVPCircularFeedbackCalibrationTask(
             display_window, daq, parameters, file_save)
 
     raise Exception('The provided experiment type is not registered.')

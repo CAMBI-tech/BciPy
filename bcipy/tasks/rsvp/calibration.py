@@ -111,7 +111,7 @@ class RSVPCalibrationTask(Task):
                                       self.wait_screen_message_color):
                     break
 
-                # Take a break every number of trials defined in parameters.json
+                # Take a break every number of trials defined
                 if self.enable_breaks:
                     pause_calibration(self.window, self.rsvp, idx_o,
                                       self.parameters)
@@ -198,10 +198,6 @@ def init_calibration_display_task(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'])
     return rsvp

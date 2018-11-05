@@ -110,7 +110,8 @@ class RSVPCopyPhraseTask(Task):
         self.show_feedback = parameters['show_feedback']
 
         if self.show_feedback:
-            self.feedback = VisualFeedback(self.window, self.parameters, self.experiment_clock)
+            self.feedback = VisualFeedback(
+                self.window, self.parameters, self.experiment_clock)
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
@@ -119,22 +120,24 @@ class RSVPCopyPhraseTask(Task):
                       str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
-        copy_phrase_task = CopyPhraseWrapper(self.min_num_seq,
-                                             self.max_seq_length,
-                                             signal_model=self.signal_model,
-                                             fs=self.daq.device_info.fs,
-                                             k=2, alp=self.alp,
-                                             task_list=task_list,
-                                             lmodel=self.language_model,
-                                             is_txt_sti=self.is_txt_sti,
-                                             device_name=self.daq.device_info.name,
-                                             device_channels=self.daq.device_info.channels,
-                                             stimuli_timing=[self.time_cross, self.time_flash])
+        copy_phrase_task = CopyPhraseWrapper(
+            self.min_num_seq,
+            self.max_seq_length,
+            signal_model=self.signal_model,
+            fs=self.daq.device_info.fs,
+            k=2, alp=self.alp,
+            task_list=task_list,
+            lmodel=self.language_model,
+            is_txt_sti=self.is_txt_sti,
+            device_name=self.daq.device_info.name,
+            device_channels=self.daq.device_info.channels,
+            stimuli_timing=[self.time_cross, self.time_flash])
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
         #   sequence counter (how many seq have occured).
-        #   epoch counter and index (what epoch, and how many sequences within it)
+        #   epoch counter and index
+        #   (what epoch, and how many sequences within it)
         new_epoch = True
         run = True
         seq_counter = 0
@@ -377,14 +380,6 @@ def _init_copy_phrase_display(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'])
 

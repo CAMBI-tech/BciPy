@@ -32,8 +32,22 @@ class VisualFeedback(Feedback):
         self.clock = clock
 
         self.message_color = self.parameters['feedback_message_color']
-        self.rect = visual.Rect(win=display, width=self.height_stim, height=self.height_stim, lineColor=self.message_color, pos=(self.pos_stim), lineWidth=10, ori=0.0)
+        self.rectangle_message_box = True
+        self.rect = visual.Rect(
+            win=display,
+            width=self.height_stim,
+            height=self.height_stim,
+            lineColor=self.message_color,
+            pos=(self.pos_stim), lineWidth=10, ori=0.0)
         self.rect.opacity = 0
+
+        self.circular_message_box = False
+        self.circle = visual.Circle(
+            win=display,
+            radius=0.5,
+            lineColor=self.message_color,
+            pos=(self.pos_stim),
+            lineWidth=10, ori=0.0)
 
     def administer(self, stimulus, message=None, compare_assertion=None):
         """Administer.
@@ -54,7 +68,11 @@ class VisualFeedback(Feedback):
                 stimulus, compare_assertion)
 
             assert_stim.draw()
-            self.rect.draw()
+
+            if self.rectangle_message_box:
+                self.rect.draw()
+            if self.circular_message_box:
+                self.circle.draw()
             stim.draw()
 
             self.display.flip()
@@ -63,7 +81,10 @@ class VisualFeedback(Feedback):
             stim = self._construct_stimulus(stimulus, self.pos_stim)
 
             stim.draw()
-            self.rect.draw()
+            if self.rectangle_message_box:
+                self.rect.draw()
+            if self.circular_message_box:
+                self.circle.draw()
             self.display.flip()
 
             time = ['visual_feedback', self.clock.getTime()]
@@ -81,10 +102,15 @@ class VisualFeedback(Feedback):
                                     pos=pos,
                                     ori=0.0)
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
-            self.rect.width = image_stim.size[0]
-            self.rect.height = image_stim.size[1]
-            self.rect.opacity = 1
-            self.rect.lineColor = self.message_color
+            if self.rectangle_message_box:
+                self.rect.width = image_stim.size[0]
+                self.rect.height = image_stim.size[1]
+                self.rect.opacity = 1
+                self.rect.lineColor = self.message_color
+            if self.circular_message_box:
+                self.circle.radius = 1
+                self.circle.opacity = 1
+                self.circle.lineColor = self.message_color
             return image_stim
         else:
             return visual.TextStim(win=self.display, font=self.font_stim,
