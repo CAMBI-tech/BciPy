@@ -31,3 +31,7 @@ If there are problems in the process there are different error messages that can
 
 There is `lmimage` for prefix LM and `oclmimage` for oclm.
 For `lmimage`, before you start go to lm\_modes.py and paste to absolute path to the fst (given your platform). It should be under the "prelm" lmtype, in "self.localfst" field.
+
+### Domains
+
+The language models output results in the negative log likelihood domain. These values can be converted to the probability domain (between 0 and 1) using the `norm_domain` helper function in `bcipy.helpers.lang_model_related`. See the demos for a sample call.

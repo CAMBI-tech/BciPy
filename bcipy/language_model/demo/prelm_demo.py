@@ -1,6 +1,7 @@
 import sys
 sys.path.append('.')
 from bcipy.language_model.prelm_language_model import LangModel
+from bcipy.helpers.lang_model_related import norm_domain
 
 
 def main():
@@ -29,6 +30,9 @@ def main():
     print('\nHistory: THE (fed as a single string)\n')
     priors = lmodel.state_update(list('THE'))
     print(lmodel.recent_priors())
+
+    print('\n\nLetters in the probability domain:\n')
+    print(norm_domain(lmodel.recent_priors()['letter']))
 
 
 if __name__ == "__main__":
