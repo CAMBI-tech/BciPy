@@ -655,7 +655,7 @@
     "type": "int"
   },
   "max_seq_len": {
-    "value": "30",
+    "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
     "helpTip": "Maximum number of sequences to present in spelling tasks",
