@@ -5,6 +5,7 @@ from typing import Callable
 from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.helpers.bci_task_related import SPACE_CHAR
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
@@ -34,7 +35,7 @@ class RSVPDisplay(object):
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  bg_step_num=20, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bg=False):
+                 trigger_type='image', bg=False, space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -104,8 +105,7 @@ class RSVPDisplay(object):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []
 
-        # TODO: add parameter
-        self.space_char = u"\u25A0"
+        self.space_char = space_char
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -230,8 +230,8 @@ class RSVPDisplay(object):
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                # TODO: use constant for '_'; presentation_map.get(sti_label, sti_label) ?
-                self.sti.text = self.stim_sequence[idx] if self.stim_sequence[idx] != '_' else self.space_char
+                # TODO: consider using a presentation_map
+                self.sti.text = self.stim_sequence[idx] if self.stim_sequence[idx] != SPACE_CHAR else self.space_char
                 self.sti.color = self.color_list_sti[idx]
                 sti_label = self.stim_sequence[idx]
 

@@ -38,4 +38,6 @@ class TestLanguageModelRelated(unittest.TestCase):
             ('Y', 1.7682575696535268e-05), ('J', 1.2377788678084351e-05),
             ('X', 4.420644194323101e-06), ('Z', 4.420635795107107e-06),
             ('Q', 1.7682584413941958e-06)]
-        self.assertEqual(expected, norm_domain(letters))
+        for i, pair in enumerate(norm_domain(letters)):
+            self.assertEqual(expected[i][0], pair[0])
+            self.assertAlmostEqual(expected[i][1], pair[1])

@@ -199,6 +199,19 @@
     ],
     "type": "str"
   },
+  "sti_space_char": {
+    "value": "\u2013",
+    "section": "bci_config",
+    "readableName": "Space Character",
+    "helpTip": "Character displayed to the participant which represents a space",
+    "recommended_values": [
+      "_",
+      "\u2013",
+      "\u2012",
+      "\u25a1"
+    ],
+    "type": "str"
+  },
   "pos_sti_x": {
     "value": "0",
     "section": "bci_config",
@@ -642,7 +655,7 @@
     "type": "int"
   },
   "max_seq_len": {
-    "value": "50",
+    "value": "30",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
     "helpTip": "Maximum number of sequences to present in spelling tasks",
