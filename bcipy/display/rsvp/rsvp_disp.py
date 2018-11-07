@@ -230,10 +230,11 @@ class RSVPDisplay(object):
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                # TODO: consider using a presentation_map
-                self.sti.text = self.stim_sequence[idx] if self.stim_sequence[idx] != SPACE_CHAR else self.space_char
+                txt = self.stim_sequence[idx]
+                # customize presentation of space char.
+                self.sti.text = txt if txt != SPACE_CHAR else self.space_char
                 self.sti.color = self.color_list_sti[idx]
-                sti_label = self.stim_sequence[idx]
+                sti_label = txt
 
                 # test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
