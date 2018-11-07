@@ -386,6 +386,7 @@ def _init_copy_phrase_display(
         font_bg_txt=parameters['font_bg_txt'],
         color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
-        trigger_type=parameters['trigger_type'])
+        trigger_type=parameters['trigger_type'],
+        space_char=parameters['sti_space_char'])
 
     return rsvp

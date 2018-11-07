@@ -3,7 +3,7 @@ import sys
 import math
 from typing import List
 from collections import defaultdict
-from bcipy.helpers.bci_task_related import alphabet
+from bcipy.helpers.bci_task_related import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
 from bcipy.language_model.lm_server import LmServerConfig
 from bcipy.helpers.system_utils import dot
@@ -83,8 +83,8 @@ class LangModel:
                 "%r contains invalid symbol" % decision
         clean_evidence = []
         for symbol in decision:
-            if symbol == '_':
-                symbol = '#'
+            if symbol == SPACE_CHAR:
+                symbol = LM_SPACE
             clean_evidence.append(symbol.lower())
 
         output = lm_server.post_json_request(self.server_config,

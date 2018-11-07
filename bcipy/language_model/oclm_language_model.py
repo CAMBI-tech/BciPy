@@ -3,7 +3,7 @@ import sys
 import math
 from typing import List
 from collections import defaultdict
-from bcipy.helpers.bci_task_related import alphabet
+from bcipy.helpers.bci_task_related import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
 from bcipy.language_model.errors import (EvidenceDataStructError,
                                          NBestError,
@@ -87,8 +87,8 @@ class LangModel:
                 for (symbol, pr) in tmp_evidence:
                     assert symbol in ALPHABET, \
                         "%r contains invalid symbol" % evidence
-                    if symbol == "_":
-                        tmp.append(("#", pr))
+                    if symbol == SPACE_CHAR:
+                        tmp.append((LM_SPACE, pr))
                     else:
                         tmp.append((symbol.lower(), pr))
                 clean_evidence.append(tmp)
@@ -136,7 +136,7 @@ class LangModel:
         self.priors['letter'] = [
             (letter.upper(), prob)
             if letter != LM_SPACE
-            else ("_", prob)
+            else (SPACE_CHAR, prob)
             for (letter, prob) in output['letter']]
 
         if return_mode != 'letter':

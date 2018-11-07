@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from bcipy.helpers.stimuli_generation import best_case_rsvp_seq_gen
+from bcipy.helpers.bci_task_related import SPACE_CHAR
 import numpy as np
 import string
 
@@ -106,7 +107,7 @@ class DecisionMaker(object):
         """
 
     def __init__(self, min_num_seq, max_num_seq, state='',
-                 alphabet=list(string.ascii_uppercase) + ['<'] + ['_'],
+                 alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_sti=True,
                  stimuli_timing=[1, .2]):
         self.state = state
