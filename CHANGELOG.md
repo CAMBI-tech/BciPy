@@ -1,3 +1,24 @@
+# 1.2.0
+
+This release focused on the addition of a new Alert Tone Task, integration of the Language Model, and other fixes to make Copy Phrase work better.
+
+## New Features
+    - Alert Tone Task: a new calibration task that plays an alert tone prior to displaying the presentation letter. Adds parameters for the directory in which sounds (.wav files) are located as well as the length of the delay.
+    - SPACE symbol customization: allows users to customize the display of the SPACE character.
+    - New Language Model: experimental; adds a new oclm Language Model and allows users to select between this and the standard prelm model. Note that this functionality is still incomplete.
+
+## Updates
+    - Language Model integration: the Language Model now correctly starts up a Docker container on both Windows and Mac machines.
+    - Fixes to the CopyPhraseWrapper in its usage of the Language Model, including converting its output to the probability domain for integration, and correctly handling space characters.
+    - Fix for Copy Phrase backspace selection.
+    - Fixed issue loading EEG Classifier pkl files.
+    - General code cleanup in the acquisition module.
+    - Simplified code for starting a new task.
+    - There is now a task_registry which lists all available tasks and allows code to enumerate them.
+    - More obvious feedback when a CopyPhrase letter has been typed.
+    - Users can now override configuration for parameters with a drop-down menu. The previous behavior was to restrict users to the suggested values.
+
+
 # 1.1.0
 
 This is a working version for use with LSL on Calibration and Copy phrase tasks. It will break implementation from previous release. Future minor versions should not do this.
