@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-from psychopy import visual, core
+import logging
+from typing import Callable
 
-from bcipy.helpers.triggers import _calibration_trigger, TriggerCallback
-from bcipy.display.display_main import BarGraph, MultiColorText
+from psychopy import core, visual
+
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
-
-import logging
+from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -33,7 +35,7 @@ class RSVPDisplay(object):
                  color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
                  bg_step_num=20, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bg=False):
+                 trigger_type='image', bg=False, space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -99,8 +101,11 @@ class RSVPDisplay(object):
         self.first_run = True
         self.trigger_type = trigger_type
         self.trigger_callback = TriggerCallback()
+        # Callback used on presentation of first stimulus.
+        self.first_stim_callback = lambda _sti: None
+        self.size_list_sti = []
 
-        self.size_list_sti = None
+        self.space_char = space_char
 
         # Check if task text is multicolored
         if len(color_task) == 1:
@@ -225,9 +230,11 @@ class RSVPDisplay(object):
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                self.sti.text = self.stim_sequence[idx]
+                txt = self.stim_sequence[idx]
+                # customize presentation of space char.
+                self.sti.text = txt if txt != SPACE_CHAR else self.space_char
                 self.sti.color = self.color_list_sti[idx]
-                sti_label = self.sti.text
+                sti_label = txt
 
                 # test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
@@ -254,8 +261,11 @@ class RSVPDisplay(object):
             self.win.callOnFlip(self.trigger_callback.callback, self.experiment_clock, sti_label)
             self.win.callOnFlip(self.marker_writer.push_marker, sti_label)
 
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(self.sti)
+
             # Draw stimulus for n frames
-            for n_frames in range(self.time_to_present):
+            for _n_frames in range(self.time_to_present):
                 self.sti.draw()
                 self.draw_static()
                 self.win.flip()

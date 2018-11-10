@@ -1,7 +1,7 @@
-
+"""Module for creating server (Process) that manages a data buffer."""
 import logging
 import multiprocessing as mp
-from buffer import Buffer
+from bcipy.acquisition.buffer import Buffer
 
 # Commands to which the server can respond.
 MSG_PUT = 'put_data'
@@ -43,21 +43,20 @@ def _loop(mailbox, channels, archive_name):
         sender, body = msg
         command, params = body
         if command == MSG_EXIT:
-            delete_archive = params
-            buf.cleanup(delete_archive=delete_archive)
+            buf.cleanup(delete_archive=params)
             sender.put(('exit', 'ok'))
             break
         elif command == MSG_PUT:
-            record = params
-            buf.append(record)
+            # params is the record to put
+            buf.append(params)
         elif command == MSG_GET_ALL:
             sender.put(buf.all())
         elif command == MSG_COUNT:
             sender.put(len(buf))
         elif command == MSG_QUERY_SLICE:
-            start, end, field = params
-            logging.debug("Sending query: {}".format((start, end, field)))
-            sender.put(buf.query(start, end, field))
+            row_start, row_end, field = params
+            logging.debug("Sending query: %s", (row_start, row_end, field))
+            sender.put(buf.query(row_start, row_end, field))
         elif command == MSG_QUERY:
             # Generic query
             filters, ordering, max_results = params
@@ -65,10 +64,10 @@ def _loop(mailbox, channels, archive_name):
         elif command == MSG_STARTED:
             sender.put(('started', 'ok'))
         else:
-            logging.debug("Error; message not understood: {}".format(msg))
+            logging.debug("Error; message not understood: %s", msg)
 
 
-def start(channels, archive_name, async=False):
+def start(channels, archive_name, asynchronous=False):
     """Starts a server Process.
 
     Parameters
@@ -78,7 +77,7 @@ def start(channels, archive_name, async=False):
             for each channel.
         archive_name : str
             underlying database name
-        async : boolean, optional; default False
+        asynchronous : boolean, optional; default False
             if true, returns immediately; otherwise waits for a response
             from the newly started server.
     Returns
@@ -87,10 +86,10 @@ def start(channels, archive_name, async=False):
     """
 
     msg_queue = mp.Queue()
-    p = mp.Process(target=_loop,
-                   args=(msg_queue, channels, archive_name))
-    p.start()
-    if not async:
+    server_process = mp.Process(target=_loop, args=(
+        msg_queue, channels, archive_name))
+    server_process.start()
+    if not asynchronous:
         request = (MSG_STARTED, None)
         _rpc(msg_queue, request, wait_reply=True)
 
@@ -130,20 +129,20 @@ def _rpc(mailbox, request, win=None, wait_reply=True):
         Response from the server or None.
     """
     if wait_reply:
-        m = mp.Manager()
-        #Refocus on the window in case Windows changes focus
+        manager = mp.Manager()
+        # Refocus on the window in case Windows changes focus
         if win:
             win.winHandle.activate()
 
-        q = m.Queue()
+        queue = manager.Queue()
 
-        mailbox.put((q, request))
+        mailbox.put((queue, request))
         # block until we receive something
-        result = q.get()
+        result = queue.get()
         return result
-    else:
-        mailbox.put((None, request))
-        return None
+
+    mailbox.put((None, request))
+    return None
 
 
 def append(mailbox, record):
@@ -175,6 +174,8 @@ def count(mailbox):
     request = (MSG_COUNT, None)
     return _rpc(mailbox, request)
 
+# pylint: disable=redefined-outer-name
+
 
 def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
     """Query the buffer for a slice of data records.
@@ -203,7 +204,7 @@ def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
     return _rpc(mailbox, request)
 
 
-def query(mailbox, filters=[], ordering=None, max_results=None):
+def query(mailbox, filters=None, ordering=None, max_results=None):
     """Query the buffer for data.
 
     Parameters:
@@ -218,7 +219,7 @@ def query(mailbox, filters=[], ordering=None, max_results=None):
     -------
         list of data rows meeting the query criteria.
     """
-
+    filters = filters or []
     request = (MSG_QUERY, (filters, ordering, max_results))
     return _rpc(mailbox, request)
 
@@ -226,10 +227,10 @@ def query(mailbox, filters=[], ordering=None, max_results=None):
 def main():
     """Test script"""
     import numpy as np
-    from record import Record
+    from bcipy.acquisition.record import Record
     import timeit
 
-    n = 1000
+    n_rows = 1000
     channel_count = 25
     channels = ["ch" + str(c) for c in range(channel_count)]
 
@@ -237,12 +238,12 @@ def main():
     pid2 = start(channels, 'buffer2.db')
 
     starttime = timeit.default_timer()
-    for i in range(n):
-        d = [np.random.uniform(-1000, 1000) for cc in range(channel_count)]
+    for i in range(n_rows):
+        data = [np.random.uniform(-1000, 1000) for _ in range(channel_count)]
         if i % 2 == 0:
-            append(pid1, Record(d, i, None))
+            append(pid1, Record(data, i, None))
         else:
-            append(pid2, Record(d, i, None))
+            append(pid2, Record(data, i, None))
 
     endtime = timeit.default_timer()
     totaltime = endtime - starttime

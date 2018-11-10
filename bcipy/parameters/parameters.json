@@ -23,6 +23,17 @@
     "recommended_values": "",
     "type": "filepath"
   },
+  "lang_model_type": {
+    "value": "PRELM",
+    "section": "lang_model_config",
+    "readableName": "Language Model Type",
+    "helpTip": "Language Model to be used.",
+    "recommended_values": [
+      "PRELM",
+      "OCLM"
+    ],
+    "type": "str"
+  },
   "lang_model_server_host": {
     "value": "127.0.0.1",
     "section": "lang_model_config",
@@ -39,9 +50,7 @@
     "section": "lang_model_config",
     "readableName": "Language Model Port",
     "helpTip": "Language Model Port",
-    "recommended_values": [
-      "5000"
-    ],
+    "recommended_values": "",
     "type": "int"
   },
   "color_task": {
@@ -190,6 +199,19 @@
     ],
     "type": "str"
   },
+  "sti_space_char": {
+    "value": "\u2013",
+    "section": "bci_config",
+    "readableName": "Space Character",
+    "helpTip": "Character displayed to the participant which represents a space",
+    "recommended_values": [
+      "_",
+      "\u2013",
+      "\u2012",
+      "\u25a1"
+    ],
+    "type": "str"
+  },
   "pos_sti_x": {
     "value": "0",
     "section": "bci_config",
@@ -289,6 +311,22 @@
     "recommended_values": "",
     "type": "directorypath"
   },
+  "alert_sounds_path": {
+    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "section": "bci_config",
+    "readableName": "Alert sounds directory",
+    "helpTip": "Path to the sound files used in the Alert Tone Calibration Task",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "alert_sound_delay": {
+    "value": "0.4",
+    "section": "bci_config",
+    "readableName": "Alert sound delay",
+    "helpTip": "Delay in seconds between playing an alert tone and presenting the target",
+    "recommended_values": "",
+    "type": "float"
+  },
   "offline_analysis_tone": {
     "value": "bcipy/static/sounds/beep.wav",
     "section": "bci_config",
@@ -356,8 +394,8 @@
   "color_bar_bg": {
     "value": "green",
     "section": "bci_config",
-    "readableName": "Color Bar Gragh Bars",
-    "helpTip": "Color Bar Gragh Bars",
+    "readableName": "Color Bar Graph Bars",
+    "helpTip": "Color Bar Graph Bars",
     "recommended_values": "",
     "type": "str"
   },
@@ -425,10 +463,7 @@
     "section": "bci_config",
     "readableName": "Task Buffer Length (sec)",
     "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
-    "recommended_values": [
-      "0.5",
-      "0.75"
-    ],
+    "recommended_values": "",
     "type": "float"
   },
   "raw_data_name": {

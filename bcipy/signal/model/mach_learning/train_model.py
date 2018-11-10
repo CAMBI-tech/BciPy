@@ -4,7 +4,8 @@ from bcipy.signal.model.mach_learning.classifier.function_classifier \
 from bcipy.signal.model.mach_learning.dimensionality_reduction.function_dim_reduction \
     import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.mach_learning.pipeline import Pipeline
-from bcipy.signal.model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
+from bcipy.signal.model.mach_learning.cross_validation import cross_validation, \
+    cost_cross_validation_auc
 from bcipy.signal.model.mach_learning.generative_mods.function_density_estimation \
     import KernelDensityEstimate
 from sklearn import metrics
@@ -13,7 +14,7 @@ from scipy.stats import iqr
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+                    format='(%(threadName)-9s) %(message)s', )
 
 
 def train_pca_rda_kde_model(x, y, k_folds=10):
@@ -31,33 +32,39 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
 
     # Pipeline is the model. It can be populated manually
     rda = RegularizedDiscriminantAnalysis()
-    pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1**5,
+    pca = ChannelWisePrincipalComponentAnalysis(var_tol=.1 ** 5,
                                                 num_ch=x.shape[0])
     model = Pipeline()
     model.add(pca)
     model.add(rda)
 
-    # Get the AUC before the regularization
-    sc = model.fit_transform(x, y)
-    fpr, tpr, _ = metrics.roc_curve(y, sc, pos_label=1)
-    auc_init = metrics.auc(fpr, tpr)
-
     # Cross validate
     arg_cv = cross_validation(x, y, model=model, k_folds=k_folds)
 
+    # Get the AUC before the regularization
+    tmp, sc_cv, y_cv = cost_cross_validation_auc(model, 1, x, y, arg_cv,
+                                                 k_folds=10, split='uniform')
+    auc_init = -tmp
+    # Start Cross validation
     lam = arg_cv[0]
     gam = arg_cv[1]
     logging.debug('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
-    auc_cv = -cost_cross_validation_auc(model, 1, x, y, arg_cv,
-                                        k_folds=10, split='uniform')
+    tmp, sc_cv, y_cv = cost_cross_validation_auc(model, 1, x, y, arg_cv,
+                                                 k_folds=10, split='uniform')
+    auc_cv = -tmp
 
-    # Insert the density estimates to the model and train
-    bandwidth = 1.06 * min(
-        np.std(sc), iqr(sc) / 1.34) * np.power(x.shape[0], -0.2)
-    model.add(KernelDensityEstimate(bandwidth=bandwidth))
+    # After finding cross validation scores do one more round to learn the final RDA model
     model.fit(x, y)
+
+    # Insert the density estimates to the model and train using the cross validated
+    # scores to avoid over fitting. Observe that these scores are not obtained using
+    # the final model
+    bandwidth = 1.06 * min(
+        np.std(sc_cv), iqr(sc_cv) / 1.34) * np.power(x.shape[0], -0.2)
+    model.add(KernelDensityEstimate(bandwidth=bandwidth))
+    model.pipeline[-1].fit(sc_cv, y_cv)
 
     # Report AUC
     logging.debug('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))

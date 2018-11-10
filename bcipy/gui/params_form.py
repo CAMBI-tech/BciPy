@@ -165,6 +165,8 @@ class Form(wx.Panel):
                     control[1].Bind(wx.EVT_BUTTON, self.buttonEventHandler(k, is_directory))
                 elif type(param.recommended_values) == list:
                     control.Bind(wx.EVT_COMBOBOX, self.selectEventHandler(k))
+                    # allow user to input a value not in the select list.
+                    control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
                 else:
                     control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
 
