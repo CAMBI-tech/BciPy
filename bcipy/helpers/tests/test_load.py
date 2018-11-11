@@ -7,9 +7,7 @@ import pickle
 from bcipy.helpers.load import (
     load_json_parameters,
     load_experimental_data,
-    load_classifier,
-    load_classifier,
-    load_classifier,
+    load_signal_model,
     load_txt_data)
 
 
@@ -49,7 +47,7 @@ class TestLoad(unittest.TestCase):
         pickle.dump(self.parameters, open(pickle_file, "wb"))
 
         # Load classifier
-        unpickled_parameters = load_classifier(pickle_file)
+        unpickled_parameters = load_signal_model(pickle_file)
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))

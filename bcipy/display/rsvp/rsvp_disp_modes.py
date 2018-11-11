@@ -4,6 +4,7 @@
 from psychopy import visual
 from bcipy.display.rsvp.rsvp_disp import RSVPDisplay
 from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.bci_task_related import SPACE_CHAR
 
 """ RSVP Tasks are RSVPDisplay objects with different structure. They share
     the tasks and the essential elements and stimuli. However layout, length of
@@ -36,7 +37,8 @@ class CopyPhraseDisplay(RSVPDisplay):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image',
+                 space_char=SPACE_CHAR):
         """ Initializes Copy Phrase Task Objects """
 
         tmp = visual.TextStim(win=window, font=font_task,
@@ -77,7 +79,8 @@ class CopyPhraseDisplay(RSVPDisplay):
             color_list_sti=color_list_sti,
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            space_char=space_char)
 
     def update_task_state(self, text, color_list):
         """ Updates task state of Copy Phrase Task by removing letters or
@@ -113,7 +116,8 @@ class FreeSpellingDisplay(RSVPDisplay):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
-                 trigger_type='image'):
+                 trigger_type='image',
+                 space_char=SPACE_CHAR):
         """ Initializes Free Spelling Task Objects """
 
         color_text = [color_info]
@@ -147,7 +151,8 @@ class FreeSpellingDisplay(RSVPDisplay):
             color_list_sti=color_list_sti,
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            space_char=space_char)
 
 
 class CalibrationDisplay(RSVPDisplay):
@@ -169,7 +174,7 @@ class CalibrationDisplay(RSVPDisplay):
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
-                 is_txt_sti=True, trigger_type='image'):
+                 is_txt_sti=True, trigger_type='image', space_char=SPACE_CHAR):
         """ Initializes Calibration Task Objects """
 
         color_text = [color_info]
@@ -203,7 +208,8 @@ class CalibrationDisplay(RSVPDisplay):
             color_list_sti=color_list_sti,
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
-            trigger_type=trigger_type)
+            trigger_type=trigger_type,
+            space_char=space_char)
 
 
 class IconToIconDisplay(RSVPDisplay):

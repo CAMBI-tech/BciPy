@@ -23,6 +23,17 @@
     "recommended_values": "",
     "type": "filepath"
   },
+  "lang_model_type": {
+    "value": "PRELM",
+    "section": "lang_model_config",
+    "readableName": "Language Model Type",
+    "helpTip": "Language Model to be used.",
+    "recommended_values": [
+      "PRELM",
+      "OCLM"
+    ],
+    "type": "str"
+  },
   "lang_model_server_host": {
     "value": "127.0.0.1",
     "section": "lang_model_config",
@@ -39,9 +50,7 @@
     "section": "lang_model_config",
     "readableName": "Language Model Port",
     "helpTip": "Language Model Port",
-    "recommended_values": [
-      "5000"
-    ],
+    "recommended_values": "",
     "type": "int"
   },
   "color_task": {
@@ -187,6 +196,19 @@
       "Courier New",
       "Georgia",
       "Times"
+    ],
+    "type": "str"
+  },
+  "sti_space_char": {
+    "value": "\u2013",
+    "section": "bci_config",
+    "readableName": "Space Character",
+    "helpTip": "Character displayed to the participant which represents a space",
+    "recommended_values": [
+      "_",
+      "\u2013",
+      "\u2012",
+      "\u25a1"
     ],
     "type": "str"
   },
@@ -441,10 +463,7 @@
     "section": "bci_config",
     "readableName": "Task Buffer Length (sec)",
     "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
-    "recommended_values": [
-      "0.5",
-      "0.75"
-    ],
+    "recommended_values": "",
     "type": "float"
   },
   "raw_data_name": {

@@ -1,9 +1,11 @@
 import logging
+from typing import List
 
 from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
-from bcipy.display.display_main import MultiColorText
+from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
@@ -29,7 +31,7 @@ class RSVPDisplay(object):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bounding_shape=True):
+                 trigger_type='image', bounding_shape=True, space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -91,6 +93,8 @@ class RSVPDisplay(object):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []
 
+        self.space_char = space_char
+
         # Check if task text is multicolored
         if len(color_task) == 1:
             self.task = visual.TextStim(win=window, color=color_task[0],
@@ -137,7 +141,6 @@ class RSVPDisplay(object):
                 pos=self.pos_sti,
                 lineWidth=10,
                 ori=0.0)
-
 
     def draw_static(self):
         """Draw static elements in a stimulus."""
@@ -219,9 +222,11 @@ class RSVPDisplay(object):
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                self.sti.text = self.stim_sequence[idx]
+                txt = self.stim_sequence[idx]
+                # customize presentation of space char.
+                self.sti.text = txt if txt != SPACE_CHAR else self.space_char
                 self.sti.color = self.color_list_sti[idx]
-                sti_label = self.sti.text
+                sti_label = txt
 
                 # test whether the word will be too big for the screen
                 text_width = self.sti.boundingBox[0]
@@ -274,7 +279,7 @@ class RSVPDisplay(object):
 
         return timing
 
-    def update_task_state(self, text, color_list):
+    def update_task_state(self, text: str, color_list: List[str]) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
@@ -326,8 +331,10 @@ class RSVPDisplay(object):
         wait_message.draw()
         self.win.flip()
 
-    def create_stimulus(self, height_int: int, mode="text"):
-        """Returns a TextStim or ImageStim object.
+    def create_stimulus(self, height_int: int, mode: str="text"):
+        """Create Stimulus.
+
+        Returns a TextStim or ImageStim object.
             Args:
             height_int: The height of the stimulus
             mode: "text" or "image", determines which to return
