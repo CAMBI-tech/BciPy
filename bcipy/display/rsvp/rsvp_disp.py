@@ -5,7 +5,7 @@ from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.bci_task_related import SPACE_CHAR
-from bcipy.display.display_main import BarGraph, MultiColorText
+from bcipy.display.display_main import MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
@@ -31,7 +31,7 @@ class RSVPDisplay(object):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bounding_shape=True, space_char=SPACE_CHAR):
+                 trigger_type='image', bounding_shape=False, space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -132,7 +132,9 @@ class RSVPDisplay(object):
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
                                         pos=pos_sti, ori=0.0)
 
-        if bounding_shape:
+        self.bounding_shape = bounding_shape
+
+        if self.bounding_shape:
             self.bounding_shape_color = 'red'
             self.bounding_shape = visual.Circle(
                 win=window,
