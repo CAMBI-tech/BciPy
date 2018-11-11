@@ -200,5 +200,6 @@ def init_calibration_display_task(
         time_list_sti=[3] * 10,
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['sti_space_char'])
+        space_char=parameters['sti_space_char'],
+        bounding_shape=parameters['bounding_shape'])
     return rsvp

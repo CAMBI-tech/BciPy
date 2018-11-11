@@ -38,6 +38,7 @@ class CopyPhraseDisplay(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
                  trigger_type='image',
+                 bounding_shape=False,
                  space_char=SPACE_CHAR):
         """ Initializes Copy Phrase Task Objects """
 
@@ -80,6 +81,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
+            bounding_shape=bounding_shape,
             space_char=space_char)
 
     def update_task_state(self, text, color_list):
@@ -117,6 +119,7 @@ class FreeSpellingDisplay(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
                  trigger_type='image',
+                 bounding_shape=False,
                  space_char=SPACE_CHAR):
         """ Initializes Free Spelling Task Objects """
 
@@ -152,7 +155,8 @@ class FreeSpellingDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
-            space_char=space_char)
+            space_char=space_char,
+            bounding_shape=bounding_shape)
 
 
 class CalibrationDisplay(RSVPDisplay):
@@ -162,7 +166,6 @@ class CalibrationDisplay(RSVPDisplay):
             task(visual_Text_Stimuli): task visualization.
             sti(visual_Text_Stimuli): stimuli text
     """
-
     def __init__(self, window, clock,
                  experiment_clock,
                  marker_writer,
@@ -174,9 +177,10 @@ class CalibrationDisplay(RSVPDisplay):
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
-                 is_txt_sti=True, trigger_type='image', space_char=SPACE_CHAR):
+                 is_txt_sti=True, trigger_type='image',
+                 bounding_shape=False,
+                 space_char=SPACE_CHAR):
         """ Initializes Calibration Task Objects """
-
         color_text = [color_info]
         font_text = [font_info]
         text_text = [text_info]
@@ -209,7 +213,8 @@ class CalibrationDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
-            space_char=space_char)
+            space_char=space_char,
+            bounding_shape=bounding_shape)
 
 
 class IconToIconDisplay(RSVPDisplay):

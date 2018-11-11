@@ -58,6 +58,8 @@ class RSVPDisplay(object):
                 stim_sequence(list[string]): list of elements to flash
                 color_list_sti(list[string]): list of colors for stimuli
                 time_list_sti(list[float]): timing for each letter flash
+
+                bounding_shape(boolean): shape around main RSVP sequence letters
         """
         self.win = window
         self.refresh_rate = window.getActualFrameRate()

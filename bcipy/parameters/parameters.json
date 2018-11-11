@@ -730,5 +730,12 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
+  },
+  "bounding_shape": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Whether or not to draw a bounding shape around sequence letters in RSVP",
+    "recommended_values": "",
+    "type": "bool"
   }
 }

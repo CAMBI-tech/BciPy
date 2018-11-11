@@ -34,6 +34,7 @@ class RSVPCircularFeedbackCalibrationTask(Task):
 
     def __init__(self, win, daq, parameters, file_save):
         super(RSVPCircularFeedbackCalibrationTask, self).__init__()
+        parameters['bounding_shape'] = True
         self._task = RSVPCalibrationTask(
             win,
             daq,
