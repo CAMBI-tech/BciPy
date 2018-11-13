@@ -9,7 +9,7 @@ from psychopy import core
 
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 
-
+MOCK_FS = 44100
 class TestStimuliGeneration(unittest.TestCase):
     """This is Test Case for Stimuli Generation BCI data."""
 
@@ -18,7 +18,7 @@ class TestStimuliGeneration(unittest.TestCase):
         sound_file_path = 'test_sound_file_path'
 
         # mock the other library interactions
-        when(sf).read(sound_file_path, dtype='float32').thenReturn(('data', 'fs'))
+        when(sf).read(sound_file_path, dtype='float32').thenReturn(('data', MOCK_FS))
         when(sd).play(any(), any()).thenReturn(None)
         when(core).wait(any()).thenReturn(None)
 
@@ -30,7 +30,7 @@ class TestStimuliGeneration(unittest.TestCase):
 
         # verify all the expected calls happended and the expected number of times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
-        verify(sd, times=1).play('data', 'fs')
+        verify(sd, times=1).play('data', MOCK_FS)
         verify(core, times=2).wait(any())
 
     def test_play_sound_raises_exception_if_soundfile_cannot_read_file(self):
@@ -60,7 +60,7 @@ class TestStimuliGeneration(unittest.TestCase):
             self.assertEqual(timing, self.test_timing)
 
         # mock the other library interactions
-        when(sf).read(sound_file_path, dtype='float32').thenReturn(('data', 'fs'))
+        when(sf).read(sound_file_path, dtype='float32').thenReturn(('data', MOCK_FS))
         when(sd).play(any(), any()).thenReturn(None)
         when(core).wait(any()).thenReturn(None)
         when(experiment_clock).getTime().thenReturn(test_trigger_time)
@@ -75,7 +75,7 @@ class TestStimuliGeneration(unittest.TestCase):
 
         # verify all the expected calls happended and the expected number of times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
-        verify(sd, times=1).play('data', 'fs')
+        verify(sd, times=1).play('data', MOCK_FS)
         verify(core, times=2).wait(any())
 
     def test_soundfiles_generator(self):

@@ -42,7 +42,7 @@ def _demo_best_case_sequence_generator():
     for i in range(num_samples):
         p = np.random.randint(0, 10, len(alp))
         print('Probabilities:{}'.format(p))
-        schedule = best_case_rsvp_seq_gen(alp=alp, p=p, num_sti=1,
+        schedule = best_case_rsvp_seq_gen(alp=alp, session_stimuli=p, num_sti=1,
                                           len_sti=len_samples)
         sequence = schedule[0]
         timing = schedule[1]
