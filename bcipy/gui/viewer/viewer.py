@@ -25,8 +25,6 @@ from bcipy.gui.viewer.ring_buffer import RingBuffer
 
 def downsample(data, factor=2):
     """Decrease the sample rate of a sequence by a given factor."""
-    # selector_pattern = [1] + ((factor-1) * [0])
-    # return it.compress(data[offset:], it.cycle(selector_pattern))
     return np.array(data)[::factor]
 
 
@@ -63,34 +61,16 @@ class CanvasFrame(Frame):
         self.header = next(self.data_gen)
         self.data_indices = [i for i in range(len(self.header))
                              if 'TRG' not in self.header[i] and 'timestamp' not in self.header[i]]
+
+        self.seconds = seconds
         self.downsample_factor = downsample_factor
-        buf_size = int((self.samples_per_second * seconds) /
-                       self.downsample_factor)
-        self.buffer = RingBuffer(buf_size, pre_allocated=True)
+        self.buffer = self.init_buffer()
 
         # figure size is in inches.
         # https://stackoverflow.com/questions/332289/how-do-you-change-the-size-of-figures-drawn-with-matplotlib
         # figsize=(1200 / 80.0, 400 / 80.0)
         self.figure = Figure(figsize=(15, 10), dpi=80, tight_layout=True)
-        self.axes = self.figure.subplots(
-            len(self.data_indices), 1, sharex=True)
-
-        self.subplots = {}
-        for i, ch in enumerate(self.data_indices):
-            ch_name = self.header[ch]
-            self.axes[i].set_frame_on(False)
-            self.axes[i].set_ylabel(ch_name, rotation=0, labelpad=15)
-            # if i == len(self.data_indices) - 1:
-            #     self.axes[i].set_xlabel("Sample")
-            self.axes[i].yaxis.set_major_locator(NullLocator())
-            self.axes[i].xaxis.set_major_formatter(NullFormatter())
-            # x-axis label
-            self.axes[i].yaxis.set_major_formatter(NullFormatter())
-            # self.axes[i].xaxis.set_major_locator(NullLocator())
-
-            # TODO: different color for frame.
-            # self.axes[i].patch
-            self.axes[i].grid()
+        self.axes = self.init_axes()
 
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.timer = Timer(self)
@@ -101,10 +81,14 @@ class CanvasFrame(Frame):
         # Toolbar
         self.toolbar = wx.BoxSizer(wx.HORIZONTAL)
         self.start_stop_btn = wx.Button(self, -1, "Start")
-        self.started = True
+        self.downsample_checkbox = wx.CheckBox(self, label="Downsampled")
+        self.downsample_checkbox.SetValue(downsample_factor > 1)
 
         self.Bind(wx.EVT_BUTTON, self.toggle_stream, self.start_stop_btn)
+        self.Bind(wx.EVT_CHECKBOX, self.toggle_downsampling,
+                  self.downsample_checkbox)
         self.toolbar.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
+        self.toolbar.Add(self.downsample_checkbox, 1, wx.ALIGN_CENTER, 0)
 
         self.sizer = BoxSizer(VERTICAL)
         self.sizer.Add(self.canvas, 1, LEFT | TOP | EXPAND)
@@ -114,16 +98,45 @@ class CanvasFrame(Frame):
         self.Fit()
         self.init_data()
 
+        self.started = True
         self.start()
+
+    def init_buffer(self):
+        buf_size = int((self.samples_per_second * self.seconds) /
+                       self.downsample_factor)
+        return RingBuffer(buf_size, pre_allocated=True)
+
+    def init_axes(self):
+        axes = self.figure.subplots(len(self.data_indices), 1, sharex=True)
+        """Sets configuration for axes"""
+        for i, ch in enumerate(self.data_indices):
+            ch_name = self.header[ch]
+            axes[i].set_frame_on(False)
+            axes[i].set_ylabel(ch_name, rotation=0, labelpad=15)
+            # if i == len(self.data_indices) - 1:
+            #     self.axes[i].set_xlabel("Sample")
+            axes[i].yaxis.set_major_locator(NullLocator())
+            axes[i].xaxis.set_major_formatter(NullFormatter())
+            # x-axis label
+            axes[i].yaxis.set_major_formatter(NullFormatter())
+            # self.axes[i].xaxis.set_major_locator(NullLocator())
+            axes[i].grid()
+        return axes
+
+    def reset_axes(self):
+        self.figure.clear()
+        self.axes = self.init_axes()
 
     def start(self):
         """Start streaming data in the viewer."""
         self.timer.Start(self.refresh_rate)
+        self.started = True
         self.start_stop_btn.SetLabel("Pause")
 
     def stop(self):
         """Stop/Pause the viewer."""
         self.timer.Stop()
+        self.started = False
         self.start_stop_btn.SetLabel("Start")
 
     def toggle_stream(self, event):
@@ -132,7 +145,23 @@ class CanvasFrame(Frame):
             self.stop()
         else:
             self.start()
-        self.started = not self.started
+
+    def toggle_downsampling(self, event):
+        """Toggle whether or not the data gets downsampled"""
+        # TODO: use original configured factor
+        if self.downsample_checkbox.GetValue():
+            self.downsample_factor = 2
+        else:
+            self.downsample_factor = 1
+        previously_running = self.started
+        if self.started:
+            self.stop()
+        # re-initialize
+        self.buffer = self.init_buffer()
+        self.reset_axes()
+        self.init_data()
+        if previously_running:
+            self.start()
 
     def update_buffer(self):
         """Update the buffer with latest data and return the data"""
@@ -165,7 +194,6 @@ class CanvasFrame(Frame):
         for i, ch in enumerate(self.data_indices):
             data = self.data_for_channel(ch, rows)
             self.axes[i].lines[0].set_ydata(data)
-            # TODO: should y-axis be updated?
             self.axes[i].set_ybound(lower=min(data), upper=max(data))
 
         self.canvas.draw()
@@ -197,7 +225,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-f', '--file', help='path to the data file', default='raw_data.csv')
-    parser.add_argument('-s', '--seconds', help='seconds to display', default=2, type=int)
-    parser.add_argument('-d', '--downsample', help='downsample factor', default=2, type=int)
+    parser.add_argument('-s', '--seconds',
+                        help='seconds to display', default=2, type=int)
+    parser.add_argument('-d', '--downsample',
+                        help='downsample factor', default=2, type=int)
     args = parser.parse_args()
     main(args.file, args.seconds, args.downsample)
