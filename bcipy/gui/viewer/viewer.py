@@ -2,8 +2,9 @@
 An example of how to use wx or wxagg in an application with the new
 toolbar - comment out the setA_toolbar line for no toolbar
 """
-import numpy as np
-from numpy import arange, sin, pi
+import csv
+import itertools as it
+
 import matplotlib
 # uncomment the following to use wx rather than wxagg
 # matplotlib.use('WX')
@@ -11,15 +12,17 @@ import matplotlib
 
 # comment out the following to use wx rather than wxagg
 matplotlib.use('WXAgg')
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.pyplot import NullLocator, NullFormatter
-
+import numpy as np
 import wx
 import wx.lib.mixins.inspection as WIT
-from wx import BoxSizer, VERTICAL, LEFT, TOP, BOTTOM, EXPAND, EVT_TIMER, Timer, Frame
-import csv
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.pyplot import NullFormatter, NullLocator
+from numpy import arange, pi, sin
+from wx import (BOTTOM, EVT_TIMER, EXPAND, LEFT, TOP, VERTICAL, BoxSizer,
+                Frame, Timer)
 
+from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 
 
@@ -28,37 +31,32 @@ def downsample(data, factor=2):
     return np.array(data)[::factor]
 
 
-def file_data(filename, n=100):
-    """Read data from a raw_data.csv file"""
-    with open(filename) as csvfile:
-        # skip headers
-        next(csvfile)
-        next(csvfile)
-        # reader = csv.DictReader(f)
-        reader = csv.reader(csvfile)
-        header = next(reader)
-        yield header
-
-        while True:
-            rows = []
-            for _ in range(n):
-                rows.append(next(reader))
-            yield rows
-
-
 class CanvasFrame(Frame):
-    def __init__(self, data_file='raw_data.csv', seconds=2, downsample_factor=2):
-        Frame.__init__(self, None, -1,
-                       'Demo: EEG Viewer', size=(800, 550))
+    """GUI Frame in which data is plotted. Plots a subplot for every channel.
 
-        self.refresh_rate = 500  # ms
-        # TODO: get hz from header or data source
-        self.samples_per_second = 600.0
+    Parameters:
+    -----------
+        data_gen : generator where each `next` value is a row of data.
+        device_info: metadata about the data.
+        seconds - how many seconds worth of data to display.
+        downsample_factor - how much to compress the data. A factor of 1
+            displays the raw data.
+        refresh - time in milliseconds; how often to refresh the plots
+    """
+
+    def __init__(self, data_gen, device_info: DeviceInfo,
+                 seconds: int = 2, downsample_factor: int = 2,
+                 refresh: int = 500):
+        Frame.__init__(self, None, -1,
+                       'EEG Viewer', size=(800, 550))
+
+        self.refresh_rate = refresh
+        self.samples_per_second = device_info.fs
         self.records_per_refresh = int(
             (self.refresh_rate / 1000) * self.samples_per_second)
 
-        self.data_gen = file_data(data_file, n=self.records_per_refresh)
-        self.header = next(self.data_gen)
+        self.data_gen = data_gen
+        self.header = device_info.channels
         self.data_indices = [i for i in range(len(self.header))
                              if 'TRG' not in self.header[i] and 'timestamp' not in self.header[i]]
 
@@ -67,8 +65,6 @@ class CanvasFrame(Frame):
         self.buffer = self.init_buffer()
 
         # figure size is in inches.
-        # https://stackoverflow.com/questions/332289/how-do-you-change-the-size-of-figures-drawn-with-matplotlib
-        # figsize=(1200 / 80.0, 400 / 80.0)
         self.figure = Figure(figsize=(15, 10), dpi=80, tight_layout=True)
         self.axes = self.init_axes()
 
@@ -148,7 +144,7 @@ class CanvasFrame(Frame):
 
     def toggle_downsampling(self, event):
         """Toggle whether or not the data gets downsampled"""
-        # TODO: use original configured factor
+        # TODO: use original configured downsample_factor
         if self.downsample_checkbox.GetValue():
             self.downsample_factor = 2
         else:
@@ -166,7 +162,8 @@ class CanvasFrame(Frame):
     def update_buffer(self):
         """Update the buffer with latest data and return the data"""
         try:
-            for row in downsample(next(self.data_gen), self.downsample_factor):
+            records = list(it.islice(self.data_gen, self.records_per_refresh))
+            for row in downsample(records, self.downsample_factor):
                 self.buffer.append(row)
         except StopIteration:
             self.stop()
@@ -199,24 +196,30 @@ class CanvasFrame(Frame):
         self.canvas.draw()
 
 
-class App(WIT.InspectableApp):
+def main(data_file: str, seconds: int, downsample: int, refresh: int):
+    """Run the viewer gui
 
-    def OnInit(self):
-        'Create the main window and insert the custom frame'
-        self.Init()
-        frame = CanvasFrame()
+    Parameters:
+    -----------
+        data_file - raw_data.csv file to stream.
+        seconds - how many seconds worth of data to display.
+        downsample - how much the data is downsampled. A factor of 1
+            displays the raw data.
+    """
+    with open(data_file) as csvfile:
+        # read metadata
+        name = next(csvfile).strip().split(",")[-1]
+        fs = float(next(csvfile).strip().split(",")[-1])
+
+        reader = csv.reader(csvfile)
+        channels = next(reader)
+
+        app = wx.App(False)
+        frame = CanvasFrame(reader, DeviceInfo(
+            fs=fs, channels=channels, name=name), seconds, downsample,
+            refresh)
         frame.Show(True)
-
-        return True
-
-
-def main(data_file, seconds, downsample):
-    """Run the viewer gui"""
-    # app = App(False)
-    app = wx.App(False)
-    frame = CanvasFrame(data_file, seconds, downsample)
-    frame.Show(True)
-    app.MainLoop()
+        app.MainLoop()
 
 
 if __name__ == "__main__":
@@ -229,5 +232,7 @@ if __name__ == "__main__":
                         help='seconds to display', default=2, type=int)
     parser.add_argument('-d', '--downsample',
                         help='downsample factor', default=2, type=int)
+    parser.add_argument('-r', '--refresh',
+                        help='refresh rate in ms', default=500, type=int)
     args = parser.parse_args()
-    main(args.file, args.seconds, args.downsample)
+    main(args.file, args.seconds, args.downsample, args.refresh)
