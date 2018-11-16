@@ -2,7 +2,7 @@
 An example of how to use wx or wxagg in an application with the new
 toolbar - comment out the setA_toolbar line for no toolbar
 """
-
+import numpy as np
 from numpy import arange, sin, pi
 import matplotlib
 # uncomment the following to use wx rather than wxagg
@@ -19,6 +19,15 @@ import wx
 import wx.lib.mixins.inspection as WIT
 from wx import BoxSizer, VERTICAL, LEFT, TOP, BOTTOM, EXPAND, EVT_TIMER, Timer, Frame
 import csv
+
+from bcipy.gui.viewer.ring_buffer import RingBuffer
+
+
+def downsample(data, factor=2):
+    """Decrease the sample rate of a sequence by a given factor."""
+    # selector_pattern = [1] + ((factor-1) * [0])
+    # return it.compress(data[offset:], it.cycle(selector_pattern))
+    return np.array(data)[::factor]
 
 
 def file_data(filename, n=100):
@@ -40,22 +49,29 @@ def file_data(filename, n=100):
 
 
 class CanvasFrame(Frame):
-    def __init__(self, data_file='raw_data.csv', seconds=5):
+    def __init__(self, data_file='raw_data.csv', seconds=2, downsample_factor=2):
         Frame.__init__(self, None, -1,
-                       'Demo: EEG Viewer', size=(750, 550))
+                       'Demo: EEG Viewer', size=(800, 550))
 
         self.refresh_rate = 500  # ms
         # TODO: get hz from header or data source
         self.samples_per_second = 600.0
-        # TODO: calculate from refresh rate and samples_per_second
-        self.records_per_refresh = 300
+        self.records_per_refresh = int(
+            (self.refresh_rate / 1000) * self.samples_per_second)
 
         self.data_gen = file_data(data_file, n=self.records_per_refresh)
         self.header = next(self.data_gen)
         self.data_indices = [i for i in range(len(self.header))
                              if 'TRG' not in self.header[i] and 'timestamp' not in self.header[i]]
+        self.downsample_factor = downsample_factor
+        buf_size = int((self.samples_per_second * seconds) /
+                       self.downsample_factor)
+        self.buffer = RingBuffer(buf_size, pre_allocated=True)
 
-        self.figure = Figure()
+        # figure size is in inches.
+        # https://stackoverflow.com/questions/332289/how-do-you-change-the-size-of-figures-drawn-with-matplotlib
+        # figsize=(1200 / 80.0, 400 / 80.0)
+        self.figure = Figure(figsize=(15, 10), dpi=80, tight_layout=True)
         self.axes = self.figure.subplots(
             len(self.data_indices), 1, sharex=True)
 
@@ -64,12 +80,13 @@ class CanvasFrame(Frame):
             ch_name = self.header[ch]
             self.axes[i].set_frame_on(False)
             self.axes[i].set_ylabel(ch_name, rotation=0, labelpad=15)
-            if i == len(self.data_indices) - 1:
-                self.axes[i].set_xlabel("Sample")
+            # if i == len(self.data_indices) - 1:
+            #     self.axes[i].set_xlabel("Sample")
             self.axes[i].yaxis.set_major_locator(NullLocator())
+            self.axes[i].xaxis.set_major_formatter(NullFormatter())
+            # x-axis label
             self.axes[i].yaxis.set_major_formatter(NullFormatter())
-            # self.axes[i].xaxis.set_minor_formatter(NullFormatter())
-            # self.axes[i].xaxis.set_minor_locator(NullLocator())
+            # self.axes[i].xaxis.set_major_locator(NullLocator())
 
             # TODO: different color for frame.
             # self.axes[i].patch
@@ -110,44 +127,47 @@ class CanvasFrame(Frame):
         self.start_stop_btn.SetLabel("Start")
 
     def toggle_stream(self, event):
+        """Toggle data streaming"""
         if self.started:
             self.stop()
         else:
             self.start()
         self.started = not self.started
 
+    def update_buffer(self):
+        """Update the buffer with latest data and return the data"""
+        try:
+            for row in downsample(next(self.data_gen), self.downsample_factor):
+                self.buffer.append(row)
+        except StopIteration:
+            self.stop()
+        return self.buffer.get()
+
+    def data_for_channel(self, ch, rows):
+        """Extract the data for a given channel"""
+        return [0.0 if r is None else float(r[ch]) for r in rows]
+
     def init_data(self):
         """Initialize the data."""
-        rows = next(self.data_gen)
-        timestamps = [float(r[0]) for r in rows]
+        rows = self.update_buffer()
 
         # plot each channel
         for i, ch in enumerate(self.data_indices):
-            data = [float(r[ch]) for r in rows]
-            self.axes[i].plot(timestamps, data, linewidth=0.8)
-            box = self.axes[i].get_position()
-            self.axes[i].set_position(
-                [box.x0, box.y0, box.width * 0.8, box.height])
+            data = self.data_for_channel(ch, rows)
+            self.axes[i].plot(data, linewidth=0.8)
 
     def update_data(self, evt):
         """Called by the timer on refresh."""
-        try:
-            rows = next(self.data_gen)
-        except StopIteration:
-            self.stop()
-            return
-
-        timestamps = [float(r[0]) for r in rows]
+        rows = self.update_buffer()
 
         # TODO: more efficient method of splitting out channels
         # plot each channel
         for i, ch in enumerate(self.data_indices):
-            data = [float(r[ch]) for r in rows]
-            self.axes[i].lines[0].set_xdata(timestamps)
+            data = self.data_for_channel(ch, rows)
             self.axes[i].lines[0].set_ydata(data)
             # TODO: should y-axis be updated?
-            self.axes[i].set_xbound(
-                lower=timestamps[0], upper=timestamps[-1])
+            self.axes[i].set_ybound(lower=min(data), upper=max(data))
+
         self.canvas.draw()
 
 
@@ -162,11 +182,11 @@ class App(WIT.InspectableApp):
         return True
 
 
-def main(data_file):
+def main(data_file, seconds, downsample):
     """Run the viewer gui"""
     # app = App(False)
     app = wx.App(False)
-    frame = CanvasFrame(data_file)
+    frame = CanvasFrame(data_file, seconds, downsample)
     frame.Show(True)
     app.MainLoop()
 
@@ -177,5 +197,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-f', '--file', help='path to the data file', default='raw_data.csv')
+    parser.add_argument('-s', '--seconds', help='seconds to display', default=2, type=int)
+    parser.add_argument('-d', '--downsample', help='downsample factor', default=2, type=int)
     args = parser.parse_args()
-    main(args.file)
+    main(args.file, args.seconds, args.downsample)
