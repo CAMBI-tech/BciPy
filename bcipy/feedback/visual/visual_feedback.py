@@ -49,7 +49,13 @@ class VisualFeedback(Feedback):
             pos=(self.pos_stim),
             lineWidth=10, ori=0.0)
 
-    def administer(self, stimulus, message=None, compare_assertion=None):
+    def administer(
+            self,
+            stimulus,
+            pos=None,
+            color='white',
+            message=None,
+            compare_assertion=None):
         """Administer.
 
         Administer visual feedback. Timing information from parameters,
@@ -78,7 +84,7 @@ class VisualFeedback(Feedback):
             self.display.flip()
             time = ['assertion_visual_feedback', self.clock.getTime()]
         else:
-            stim = self._construct_stimulus(stimulus, self.pos_stim)
+            stim = self._construct_stimulus(stimulus, self.pos_stim, color)
 
             stim.draw()
             if self.rectangle_message_box:
@@ -94,13 +100,14 @@ class VisualFeedback(Feedback):
 
         return timing
 
-    def _construct_stimulus(self, stimulus, pos):
+    def _construct_stimulus(self, stimulus, pos, color):
         if '.png' in stimulus:
-            image_stim = visual.ImageStim(win=self.display,
-                                    image=stimulus,
-                                    mask=None,
-                                    pos=pos,
-                                    ori=0.0)
+            image_stim = visual.ImageStim(
+                win=self.display,
+                image=stimulus,
+                mask=None,
+                pos=pos,
+                ori=0.0)
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
             if self.rectangle_message_box:
                 self.rect.width = image_stim.size[0]
@@ -113,10 +120,13 @@ class VisualFeedback(Feedback):
                 self.circle.lineColor = self.message_color
             return image_stim
         else:
-            return visual.TextStim(win=self.display, font=self.font_stim,
-                                   text=stimulus,
-                                   height=self.height_stim,
-                                   pos=pos)
+            return visual.TextStim(
+                win=self.display,
+                font=self.font_stim,
+                text=stimulus,
+                height=self.height_stim,
+                pos=pos,
+                color=color)
 
     def _construct_assertion_stimuli(self, stimulus, assertion):
         stimulus = self._construct_stimulus(stimulus, (-.3, 0))

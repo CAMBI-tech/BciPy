@@ -37,7 +37,8 @@ class ExperimentType(Enum):
     RSVP_ICON_TO_ICON = 'Icon to Icon'
     RSVP_ICON_TO_WORD = 'Icon to Word'
     RSVP_ALERT_TONE_CALIBRATION = 'Alert Tone'
-    RSVP_CIRCULAR_FEEDBACK_CALIBRATION = 'Circular Feed.'
+    RSVP_CIRCULAR_FEEDBACK_CALIBRATION = 'Circular Feed. Calib.'
+    RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION = 'InterSeq. Feed. Calib.'
 
     # pylint: disable=unused-argument,protected-access
     def __new__(cls, *args, **kwds):

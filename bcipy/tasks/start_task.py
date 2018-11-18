@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 """Code for constructing and executing Tasks"""
 from bcipy.tasks.rsvp.alert_tone_calibration import RSVPAlertToneCalibrationTask
 from bcipy.tasks.rsvp.circular_feedback_calibration import RSVPCircularFeedbackCalibrationTask
+from bcipy.tasks.rsvp.inter_sequence_feedback_calibration import RSVPInterSequenceFeedbackCalibration
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
@@ -32,6 +32,7 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         Task instance
     """
 
+    # NORMAL RSVP MODES
     if exp_type is ExperimentType.RSVP_CALIBRATION:
         return RSVPCalibrationTask(
             display_window, daq, parameters, file_save)
@@ -45,6 +46,7 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         return RSVPCopyPhraseCalibrationTask(
             display_window, daq, parameters, file_save, fake)
 
+    # ICON TASKS
     if exp_type is ExperimentType.RSVP_ICON_TO_ICON:
         return RSVPIconToIconTask(display_window, daq,
                                   parameters, file_save, signal_model,
@@ -57,12 +59,17 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
                                   parameters, file_save, signal_model,
                                   language_model, fake, True, auc_filename)
 
+    # CALIBRATION FEEDBACK TASKS
     if exp_type is ExperimentType.RSVP_ALERT_TONE_CALIBRATION:
         return RSVPAlertToneCalibrationTask(
             display_window, daq, parameters, file_save)
 
     if exp_type is ExperimentType.RSVP_CIRCULAR_FEEDBACK_CALIBRATION:
         return RSVPCircularFeedbackCalibrationTask(
+            display_window, daq, parameters, file_save)
+
+    if exp_type is ExperimentType.RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION:
+        return RSVPInterSequenceFeedbackCalibration(
             display_window, daq, parameters, file_save)
 
     raise Exception('The provided experiment type is not registered.')
