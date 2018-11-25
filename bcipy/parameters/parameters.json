@@ -614,6 +614,22 @@
     "recommended_values": "",
     "type": "float"
   },
+  "feedback_stim_width": {
+    "value": "0.6",
+    "section": "feedback_config",
+    "readableName": "feedback_stim_width",
+    "helpTip": "feedback_stim_width",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_line_width": {
+    "value": "10",
+    "section": "feedback_config",
+    "readableName": "feedback_line_width",
+    "helpTip": "feedback_line_width",
+    "recommended_values": "",
+    "type": "float"
+  },
   "feedback_font": {
     "value": "Arial",
     "section": "feedback_config",
@@ -630,11 +646,35 @@
     "recommended_values": "",
     "type": "bool"
   },
+  "rectangle_message_box": {
+    "value": "false",
+    "section": "feedback_config",
+    "readableName": "rectangle_message_box",
+    "helpTip": "Show rectangular shape around feedback.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "circular_message_box": {
+    "value": "false",
+    "section": "feedback_config",
+    "readableName": "circular_message_box",
+    "helpTip": "Show circular shape around feedback.",
+    "recommended_values": "",
+    "type": "bool"
+  },
   "feedback_message_color": {
-    "value": "green",
+    "value": "white",
     "section": "feedback_config",
     "readableName": "feedback_message_color",
     "helpTip": "feedback_message_color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_line_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "feedback_line_color",
+    "helpTip": "feedback_line_color",
     "recommended_values": "",
     "type": "str"
   },

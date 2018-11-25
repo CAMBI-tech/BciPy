@@ -1,4 +1,4 @@
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
@@ -9,11 +9,13 @@ from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
 from psychopy import core
+import random
 
 
 class RSVPInterSequenceFeedbackCalibration(Task):
-    """RSVP Calibration Task that uses circular feedback to alert user
-     to their current ability.
+    """RSVP InterSequenceFeedbackCalibration Task uses inter sequence
+        feedback to alert user to their current state in order to increase performance
+        in a calibration task.
 
     Calibration task performs an RSVP stimulus sequence to elicit an ERP.
     Parameters will change how many stim and for how long they present.
@@ -55,7 +57,12 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.wait_screen_message = self._task.wait_screen_message
         self.wait_screen_message_color = self._task.wait_screen_message_color
 
-        self.visual_feedback = VisualFeedback(self.window, self.parameters, self._task.experiment_clock)
+        self.visual_feedback = VisualFeedback(
+            display=self.window,
+            parameters=self.parameters,
+            clock=self._task.experiment_clock)
+
+        self.feedback_line_color = self.parameters['feedback_line_color']
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -126,9 +133,15 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
-                message, color = self._get_feedback_decision()
-                # TODO: Give the feedback!
-                timing = self.visual_feedback.administer('Hey', color='red')
+                message, color, height = self._get_feedback_decision()
+                # self.visual_feedback.height_stim = height # Changes height of shape
+                timing = self.visual_feedback.administer(
+                    message,
+                    line_color=self.feedback_line_color,
+                    fill_color=color,
+                    stimuli_type=FeedbackType.SHAPE)
+
+                # TODO write the visual feedback timing
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
@@ -157,7 +170,14 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         return self.file_save
 
     def _get_feedback_decision(self):
-        return 'Hey', 'red'
+
+        height = random.uniform(0, 1)
+
+        if height < .5:
+            color = 'red'
+        else:
+            color = 'green'
+        return None, color, height
 
     @classmethod
     def label(cls):
