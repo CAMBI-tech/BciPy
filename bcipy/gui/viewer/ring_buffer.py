@@ -10,10 +10,11 @@ class RingBuffer:
     """Data structure with a fixed size; when full additional elements
     overwrite the oldest items in the data structure."""
 
-    def __init__(self, size_max: int, pre_allocated: bool = False):
+    def __init__(self, size_max: int, pre_allocated: bool = False, empty_value=None):
         assert size_max > 0
+        self.empty_value = empty_value
         self.max = size_max
-        self.data = [None] * size_max if pre_allocated else []
+        self.data = [empty_value] * size_max if pre_allocated else []
         self.cur = 0
         self.full = False
         self.pre_allocated = pre_allocated
@@ -34,3 +35,6 @@ class RingBuffer:
         if self.full:
             return self.data[self.cur:]+self.data[:self.cur]
         return self.data
+
+    def is_empty(self):
+        return len(self.data) == 0 or self.data[0] == self.empty_value

@@ -56,5 +56,37 @@ class TestRingBuffer(unittest.TestCase):
                          ('Data should be returned in order from oldest ',
                           'to newest when full'))
 
+    def test_empty_check(self):
+        """Test empty check"""
+        buf = RingBuffer(3, pre_allocated=True)
+        self.assertTrue(buf.is_empty())
+        buf.append(1)
+        self.assertFalse(buf.is_empty())
+
+        buf = RingBuffer(3, pre_allocated=False)
+        self.assertTrue(buf.is_empty())
+        buf.append(1)
+        self.assertFalse(buf.is_empty())
+
+        buf = RingBuffer(3, pre_allocated=True, empty_value=0)
+        self.assertTrue(buf.is_empty())
+        buf.append(0)
+        self.assertTrue(buf.is_empty())
+
+    def test_empty_value(self):
+        """Test pre-allocated data with empty value."""
+
+        buf = RingBuffer(3, pre_allocated=True, empty_value=0.0)
+        buf.append(1.0)
+        self.assertEqual([1.0, 0.0, 0.0], buf.get())
+        self.assertEqual([1, 0.0, 0.0], buf.data)
+        buf.append(2.0)
+        self.assertEqual([1.0, 2.0, 0.0], buf.get())
+        self.assertEqual([1.0, 2.0, 0.0], buf.data)
+        buf.append(3.0)
+        self.assertEqual([1.0, 2.0, 3.0], buf.get())
+        self.assertEqual([1.0, 2.0, 3.0], buf.data)
+
+
 if __name__ == '__main__':
     unittest.main()
