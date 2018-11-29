@@ -85,7 +85,6 @@ class EegFrame(wx.Frame):
 
         controls = wx.BoxSizer(wx.HORIZONTAL)
         controls.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
-        # controls.Add(self.downsample_checkbox, 1, wx.ALIGN_CENTER, 0)
         controls.Add(self.sigpro_checkbox, 1, wx.ALIGN_CENTER, 0)
 
         self.toolbar.Add(controls, 1, wx.ALIGN_CENTER, 0)
@@ -222,11 +221,7 @@ class EegFrame(wx.Frame):
     def init_data(self):
         """Initialize the data."""
         channel_data = self.filter(self.current_data())
-        # dat = np.array(rows, dtype='float64')
-        # transposed = dat.transpose()
-        # pdb.set_trace()
-        # plot each channel
-        for i, channel in enumerate(self.data_indices):
+        for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
             self.axes[i].plot(data, linewidth=0.8)
 
@@ -244,15 +239,9 @@ class EegFrame(wx.Frame):
         """Called by the timer on refresh."""
         self.update_buffer()
         channel_data = self.filter(self.current_data())
-        # rows = self.filter(self.current_data())
-
-        # dat = np.array(rows, dtype='float64')
-        # transposed = dat.transpose()
-        # pdb.set_trace()
 
         # plot each channel
-        for i, channel in enumerate(self.data_indices):
-            # data = transposed[i].tolist()
+        for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
             self.axes[i].set_ybound(lower=min(data), upper=max(data))

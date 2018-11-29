@@ -20,6 +20,7 @@ from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.util import StoppableProcess, StoppableThread
 from bcipy.gui.viewer.launcher import Launcher
 from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.gui.viewer.filter import downsample_filter, sig_pro_filter
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -65,11 +66,6 @@ class DataPublisher(StoppableThread):
         logging.debug("Stopping EEG Viewer DataPublisher.")
 
 
-def downsample(data, factor=2):
-    """Decrease the sample rate of a sequence by a given factor."""
-    return np.array(data)[::factor]
-
-
 class EegFrame(wx.Frame):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on the data producer to determine the rate at which data is displayed.
@@ -105,6 +101,7 @@ class EegFrame(wx.Frame):
 
         self.seconds = seconds
         self.downsample_factor = downsample_factor
+        self.filter = downsample_filter(downsample_factor, device_info.fs)
         self.buffer = self.init_buffer()
 
         # figure size is in inches.
@@ -112,23 +109,24 @@ class EegFrame(wx.Frame):
         self.axes = self.init_axes()
 
         self.canvas = FigureCanvas(self, -1, self.figure)
+        self.Bind(wx.EVT_CLOSE, self.shutdown)
 
         self.CreateStatusBar()
 
         # Toolbar
         self.toolbar = wx.BoxSizer(wx.VERTICAL)
         self.start_stop_btn = wx.Button(self, -1, "Start")
-        self.downsample_checkbox = wx.CheckBox(self, label="Downsampled")
-        self.downsample_checkbox.SetValue(downsample_factor > 1)
 
         self.Bind(wx.EVT_BUTTON, self.toggle_stream, self.start_stop_btn)
-        self.Bind(wx.EVT_CHECKBOX, self.toggle_downsampling,
-                  self.downsample_checkbox)
-        self.Bind(wx.EVT_CLOSE, self.shutdown)
+
+        self.sigpro_checkbox = wx.CheckBox(self, label="Filtered")
+        self.sigpro_checkbox.SetValue(False)
+        self.Bind(wx.EVT_CHECKBOX, self.toggle_filtering_handler,
+                  self.sigpro_checkbox)
 
         controls = wx.BoxSizer(wx.HORIZONTAL)
         controls.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
-        controls.Add(self.downsample_checkbox, 1, wx.ALIGN_CENTER, 0)
+        controls.Add(self.sigpro_checkbox, 1, wx.ALIGN_CENTER, 0)
 
         self.toolbar.Add(controls, 1, wx.ALIGN_CENTER, 0)
         self.init_channel_buttons()
@@ -169,7 +167,8 @@ class EegFrame(wx.Frame):
     def init_buffer(self):
         """Initialize the buffer"""
         buf_size = int(self.samples_per_second * self.seconds)
-        return RingBuffer(buf_size, pre_allocated=True)
+        empty_val = [0.0 for _x in self.channels]
+        return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
 
     def init_axes(self):
         """Sets configuration for axes"""
@@ -246,49 +245,61 @@ class EegFrame(wx.Frame):
         else:
             self.start()
 
-    def toggle_downsampling(self, _event):
-        """Toggle whether or not the data gets downsampled"""
-        # TODO: use original configured downsample_factor
-        if self.downsample_checkbox.GetValue():
-            self.downsample_factor = 2
+    def toggle_filtering_handler(self, event):
+        """Event handler for toggling data filtering."""
+        self.with_refresh(self.toggle_filtering)
+
+    def toggle_filtering(self):
+        """Toggles data filtering."""
+        if self.sigpro_checkbox.GetValue():
+            self.filter = sig_pro_filter(
+                self.downsample_factor, self.samples_per_second)
         else:
-            # not downsampled
-            self.downsample_factor = 1
+            self.filter = downsample_filter(
+                self.downsample_factor, self.samples_per_second)
+
+    def with_refresh(self, fn):
+        """Performs the given action and refreshes the display."""
         previously_running = self.started
         if self.started:
             self.stop()
-
+        fn()
         # re-initialize
         self.reset_axes()
-        self.init_data()  # TODO: is this necessary?
+        self.init_data()
         if previously_running:
             self.start()
 
-    def data_for_channel(self, channel, rows):
-        """Extract the data for a given channel"""
-        # TODO: more efficient method of splitting out channels (numpy or pandas)?
-        return [0.0 if r is None else float(r[channel]) for r in rows]
+    def current_data(self):
+        """Returns the data as an np array with a row of floats for each
+        displayed channel."""
+
+        # array of 'object'; TRG data may be strings
+        data = np.array(self.buffer.get())
+
+        # select only data columns and convert to float
+        return np.array(data[:, self.data_indices], dtype='float64').transpose()
 
     def init_data(self):
         """Initialize the data."""
-        rows = downsample(self.buffer.get(), self.downsample_factor)
+        channel_data = self.filter(self.current_data())
 
-        # plot each channel
-        for i, channel in enumerate(self.data_indices):
-            data = self.data_for_channel(channel, rows)
+        for i, _channel in enumerate(self.data_indices):
+            data = channel_data[i].tolist()
             self.axes[i].plot(data, linewidth=0.8)
 
-    def update_view(self, _event):
-        """Called by the timer on refresh."""
-        rows = downsample(self.buffer.get(), self.downsample_factor)
+    def update_view(self, _evt):
+        """Called by the data listener."""
+        channel_data = self.filter(self.current_data())
 
         # plot each channel
-        for i, channel in enumerate(self.data_indices):
-            data = self.data_for_channel(channel, rows)
+        for i, _channel in enumerate(self.data_indices):
+            data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
             self.axes[i].set_ybound(lower=min(data), upper=max(data))
 
-        self.canvas.draw()
+        if self.started:
+            self.canvas.draw()
 
 
 def Viewer(data_queue: Queue, device_info: DeviceInfo) -> StoppableProcess:
