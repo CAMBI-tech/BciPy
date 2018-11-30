@@ -136,3 +136,47 @@ class LslProcessor(Processor):
     def process(self, record, timestamp=None):
         if self._outlet:
             self._outlet.push_sample(record, timestamp)
+
+
+class MultiProcessor(Processor):
+    """Processor that delegates to one or more other processors. Processors
+    may be passed in through the constructor or after creating an instance and
+    calling it's add method."""
+
+    def __init__(self, *args):
+        super(MultiProcessor, self).__init__()
+        self.processors = []
+        for proc in args:
+            self.add(proc)
+
+    # @override
+    def set_device_info(self, device_info):
+        super(MultiProcessor, self).set_device_info(device_info)
+        for proc in self.processors:
+            proc.set_device_info(device_info)
+
+    def add(self, proc: Processor):
+        """Add a processor."""
+        self.processors.append(proc)
+        if self._device_info:
+            proc.set_device_info(self._device_info)
+
+    def remove(self, proc: Processor):
+        """Remove a processor."""
+        self.processors.remove(proc)
+
+   # @override
+    def process(self, record, timestamp=None):
+        for proc in self.processors:
+            proc.process(record, timestamp)
+
+    # @override ; context manager
+    def __enter__(self):
+        for proc in self.processors:
+            proc.__enter__()
+        return self
+
+    # @override ; context manager
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        for proc in self.processors:
+            proc.__exit__(_exc_type, _exc_value, _traceback)
