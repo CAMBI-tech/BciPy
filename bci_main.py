@@ -86,15 +86,15 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         if parameters['languagemodelenabled']:
             language_model = init_language_model(parameters)
 
+    # Initialize DAQ
+    daq, server = init_eeg_acquisition(
+        parameters, save_folder, server=fake)
+
     # Initialize Display Window
     # We have to wait until after the prompt to load the signal model before
     # displaying the window, otherwise in fullscreen mode this throws an error
     display = init_display_window(parameters)
     print_message(display, "Initializing...")
-
-    # Initialize DAQ
-    daq, server = init_eeg_acquisition(
-        parameters, save_folder, server=fake)
 
     # Start Task
     try:

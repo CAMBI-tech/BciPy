@@ -29,7 +29,7 @@ class EegFrame(wx.Frame):
 
     Parameters:
     -----------
-        data_queue - data source
+        data_source - data source
         device_info - metadata about the data.
         seconds - how many seconds worth of data to display.
         downsample_factor - how much to compress the data. A factor of 1
@@ -37,14 +37,13 @@ class EegFrame(wx.Frame):
         refresh - time in milliseconds; how often to refresh the plots
     """
 
-    def __init__(self, data_queue, device_info: DeviceInfo,
+    def __init__(self, data_source, device_info: DeviceInfo,
                  seconds: int = 2, downsample_factor: int = 2,
                  refresh: int = 500):
         wx.Frame.__init__(self, None, -1,
                           'EEG Viewer', size=(800, 550))
 
-        self.data_queue = data_queue
-        self.data_source = QueueDataSource(data_queue)
+        self.data_source = data_source
 
         self.refresh_rate = refresh
         self.samples_per_second = device_info.fs
@@ -249,13 +248,40 @@ class EegFrame(wx.Frame):
         self.canvas.draw()
 
 
-def Viewer(data_queue: Queue, device_info: DeviceInfo) -> StoppableProcess:
-    """Creates an EEG Viewer that can be started and stopped.
-    Returns:
-    --------
-        a StoppableProcess
-    """
-    return Launcher(EegFrame, data_queue=data_queue, device_info=device_info)
+# def Viewer(data_queue: Queue, device_info: DeviceInfo) -> StoppableProcess:
+#     """Creates an EEG Viewer that can be started and stopped.
+#     Returns:
+#     --------
+#         a StoppableProcess
+#     """
+#     data_source = QueueDataSource(data_queue)
+#     return Launcher(EegFrame, data_source=data_source, device_info=device_info)
+
+
+def lsl_data():
+    """Constructs an LslDataSource"""
+    from bcipy.gui.viewer.lsl_data_source import LslDataSource
+    data_source = LslDataSource(stream_type='EEG')
+    return (data_source, data_source.device_info, None)
+
+
+def file_data(path):
+    """Constructs a FileStream DataSource"""
+    from bcipy.gui.viewer.file_streamer import FileStreamer
+    # read metadata
+    with open(path) as csvfile:
+        name = next(csvfile).strip().split(",")[-1]
+        freq = float(next(csvfile).strip().split(",")[-1])
+
+        reader = csv.reader(csvfile)
+        channels = next(reader)
+    queue = Queue()
+    streamer = FileStreamer(path, queue)
+    data_source = QueueDataSource(queue)
+    device_info = DeviceInfo(fs=freq, channels=channels, name=name)
+    streamer.start()
+
+    return (data_source, device_info, streamer)
 
 
 def main(data_file: str, seconds: int, downsample_factor: int, refresh: int):
@@ -268,24 +294,23 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int):
         downsample_factor - how much the data is downsampled. A factor of 1
             displays the raw data.
     """
-    from bcipy.gui.viewer.file_streamer import FileStreamer
-    # read metadata
-    with open(data_file) as csvfile:
-        name = next(csvfile).strip().split(",")[-1]
-        freq = float(next(csvfile).strip().split(",")[-1])
-
-        reader = csv.reader(csvfile)
-        channels = next(reader)
+    data_source, device_info, proc = file_data(
+        data_file) if data_file else lsl_data()
 
     app = wx.App(False)
-    queue = Queue()
-    streamer = FileStreamer(data_file, queue)
-    streamer.start()
-    frame = EegFrame(queue, DeviceInfo(fs=freq, channels=channels, name=name),
+    frame = EegFrame(data_source, device_info,
                      seconds, downsample_factor, refresh)
+
+    if wx.Display.GetCount() > 1:
+        # place frame in the second monitor if one exists.
+        s2_x, s2_y, _width, _height = wx.Display(1).GetGeometry()
+        offset = 30
+        frame.SetPosition((s2_x + offset, s2_y + offset))
+
     frame.Show(True)
     app.MainLoop()
-    streamer.stop()
+    if proc:
+        proc.stop()
 
 
 if __name__ == "__main__":
@@ -293,7 +318,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-f', '--file', help='path to the data file', default='raw_data.csv')
+        '-f', '--file', help='path to the data file', default=None)
     parser.add_argument('-s', '--seconds',
                         help='seconds to display', default=2, type=int)
     parser.add_argument('-d', '--downsample',

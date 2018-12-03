@@ -35,7 +35,7 @@ def main():
     try:
         server.start()
         client.start_acquisition()
-        seconds = 5
+        seconds = 10
         print(f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n")
 
         t0 = time.time()
@@ -54,7 +54,6 @@ def main():
         client.cleanup()
         print("Number of samples: {0}".format(client.get_data_len()))
         server.stop()
-        print("The collected data has been written to rawdata.csv")
 
 
 if __name__ == '__main__':

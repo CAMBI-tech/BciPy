@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+import time
 from typing import List
 
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
-from bcipy.acquisition.processor import FileWriter
+from bcipy.acquisition.processor import FileWriter, MultiProcessor
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
+from bcipy.gui.viewer.viewer_processor import ViewerProcessor
 
 # Channels relevant for analysis, for each currently supported device.
 #  Note this leaves out triggers or other non-eeg channels. If desired,
@@ -56,6 +58,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
     port = parameters['acq_port']
 
     parameters = {
+        'acq_show_viewer': parameters['acq_show_viewer'],
         'buffer_name': save_folder + '/' + parameters['buffer_name'],
         'device': parameters['acq_device'],
         'filename': save_folder + '/' + parameters['raw_data_name'],
@@ -85,15 +88,21 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
                                            channel_count=channel_count))
             await_start(dataserver)
         else:
-            raise ValueError('Server (fake data mode) for this device type not supported')
+            raise ValueError(
+                'Server (fake data mode) for this device type not supported')
 
     Device = registry.find_device(device_name)
+
+    filewriter = FileWriter(filename=filename)
+    proc = filewriter
+    if parameters['acq_show_viewer']:
+        proc = MultiProcessor(filewriter, ViewerProcessor())
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
     client = DataAcquisitionClient(
         device=Device(connection_params=connection_params),
-        processor=FileWriter(filename=filename),
+        processor=proc,
         buffer_name=buffer_name,
         clock=clock)
 

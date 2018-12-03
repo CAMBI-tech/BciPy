@@ -18,6 +18,7 @@ DEBUG = False
 DEBUG_FREQ = 500
 MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
+MSG_PROCESSOR_INITIALIZED = "processor_initialized"
 
 
 class CountClock():
@@ -155,10 +156,14 @@ class DataAcquisitionClient:
 
             self._data_processor = DataProcessor(
                 data_queue=self._process_queue,
+                msg_queue = msg_queue,
                 processor=self._processor,
                 buf=self._buf,
                 wait=self._max_wait)
             self._data_processor.start()
+
+            # Block until processor has initialized.
+            msg_type, msg = msg_queue.get()
             self._is_streaming = True
 
     def stop_acquisition(self):
@@ -387,9 +392,10 @@ class AcquisitionProcess(StoppableProcess):
 class DataProcessor(StoppableProcess):
     """Process that gets data from a queue and persists it to the buffer."""
 
-    def __init__(self, data_queue, processor, buf, wait=0.1):
+    def __init__(self, data_queue, msg_queue, processor, buf, wait=0.1):
         super(DataProcessor, self).__init__()
         self._data_queue = data_queue
+        self._msg_queue = msg_queue
         self._processor = processor
         self._buf = buf
         self._wait = wait
@@ -401,6 +407,9 @@ class DataProcessor(StoppableProcess):
         logging.debug("Starting Data Processing loop.")
         count = 0
         with self._processor as processor:
+            # Signal that initialization is complete.
+            self._msg_queue.put((MSG_PROCESSOR_INITIALIZED, True))
+
             while self.running():
                 try:
                     record = self._data_queue.get(True, self._wait)
