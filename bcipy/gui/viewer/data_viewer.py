@@ -58,6 +58,9 @@ class EegFrame(wx.Frame):
         self.downsample_factor = downsample_factor
         self.filter = downsample_filter(downsample_factor, device_info.fs)
 
+        self.autoscale = False
+        self.yscale = 100
+
         self.buffer = self.init_buffer()
 
         # figure size is in inches.
@@ -77,14 +80,35 @@ class EegFrame(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.update_view, self.timer)
         self.Bind(wx.EVT_BUTTON, self.toggle_stream, self.start_stop_btn)
 
+        # Filtered checkbox
         self.sigpro_checkbox = wx.CheckBox(self, label="Filtered")
         self.sigpro_checkbox.SetValue(False)
         self.Bind(wx.EVT_CHECKBOX, self.toggle_filtering_handler,
                   self.sigpro_checkbox)
 
+        # Autoscale checkbox
+        self.autoscale_checkbox = wx.CheckBox(self, label="Autoscale")
+        self.autoscale_checkbox.SetValue(self.autoscale)
+        self.Bind(wx.EVT_CHECKBOX, self.toggle_autoscale_handler,
+                  self.autoscale_checkbox)
+
+        # Number of seconds text box
+        self.seconds_choices = [2, 5, 10]
+        if not self.seconds in self.seconds_choices:
+            self.seconds_choices.append(self.seconds)
+            self.seconds_choices.sort()
+        opts = [str(x) + " seconds" for x in self.seconds_choices]
+        self.seconds_input = wx.Choice(self, choices=opts)
+        cur_sec_selection = self.seconds_choices.index(self.seconds)
+        self.seconds_input.SetSelection(cur_sec_selection)
+        self.Bind(wx.EVT_CHOICE, self.seconds_handler, self.seconds_input)
+
         controls = wx.BoxSizer(wx.HORIZONTAL)
         controls.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
         controls.Add(self.sigpro_checkbox, 1, wx.ALIGN_CENTER, 0)
+        controls.Add(self.autoscale_checkbox, 1, wx.ALIGN_CENTER, 0)
+        # TODO: pull right; currently doesn't do that
+        controls.Add(self.seconds_input, 0, wx.ALIGN_RIGHT, 0)
 
         self.toolbar.Add(controls, 1, wx.ALIGN_CENTER, 0)
         self.init_channel_buttons()
@@ -109,7 +133,8 @@ class EegFrame(wx.Frame):
         """Initialize the buffer"""
         buf_size = int(self.samples_per_second * self.seconds)
         empty_val = [0.0 for _x in self.channels]
-        return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
+        buf = RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
+        return buf
 
     def init_axes(self):
         """Sets configuration for axes"""
@@ -195,6 +220,24 @@ class EegFrame(wx.Frame):
             self.filter = downsample_filter(
                 self.downsample_factor, self.samples_per_second)
 
+    def toggle_autoscale_handler(self, event):
+        """Event handler for toggling autoscale"""
+        self.with_refresh(self.toggle_autoscale)
+
+    def toggle_autoscale(self):
+        """Sets autoscale to checkbox value"""
+        self.autoscale = self.autoscale_checkbox.GetValue()
+
+    def seconds_handler(self, event):
+        """Event handler for changing seconds"""
+        self.with_refresh(self.update_seconds)
+
+    def update_seconds(self):
+        """Set the number of seconds worth of data to display from the
+        pulldown list."""
+        self.seconds = self.seconds_choices[self.seconds_input.GetSelection()]
+        self.buffer = self.init_buffer()
+
     def with_refresh(self, fn):
         """Performs the given action and refreshes the display."""
         previously_running = self.started
@@ -212,7 +255,7 @@ class EegFrame(wx.Frame):
         displayed channel."""
 
         # array of 'object'; TRG data may be strings
-        data = np.array(self.buffer.get())
+        data = np.array(self.buffer.data)
 
         # select only data columns and convert to float
         return np.array(data[:, self.data_indices], dtype='float64').transpose()
@@ -243,19 +286,13 @@ class EegFrame(wx.Frame):
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
-            self.axes[i].set_ybound(lower=min(data), upper=max(data))
+            if self.autoscale:
+                self.axes[i].set_ybound(lower=min(data), upper=max(data))
+            else:
+                # lower=min(data), upper=max(data))
+                self.axes[i].set_ybound(lower=-self.yscale, upper=self.yscale)
 
         self.canvas.draw()
-
-
-# def Viewer(data_queue: Queue, device_info: DeviceInfo) -> StoppableProcess:
-#     """Creates an EEG Viewer that can be started and stopped.
-#     Returns:
-#     --------
-#         a StoppableProcess
-#     """
-#     data_source = QueueDataSource(data_queue)
-#     return Launcher(EegFrame, data_source=data_source, device_info=device_info)
 
 
 def lsl_data():
