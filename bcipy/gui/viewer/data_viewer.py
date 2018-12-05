@@ -13,6 +13,7 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.pyplot import NullFormatter, NullLocator
+import matplotlib.ticker as ticker
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.util import StoppableProcess
@@ -58,13 +59,15 @@ class EegFrame(wx.Frame):
         self.downsample_factor = downsample_factor
         self.filter = downsample_filter(downsample_factor, device_info.fs)
 
-        self.autoscale = False
-        self.yscale = 100
+        self.autoscale = True
+        self.y_min = -200
+        self.y_max = 200
 
         self.buffer = self.init_buffer()
 
         # figure size is in inches.
-        self.figure = Figure(figsize=(12, 9), dpi=80, tight_layout=True)
+        self.figure = Figure(figsize=(12, 9), dpi=80,
+                             tight_layout={'pad': 0.0})
         self.axes = self.init_axes()
 
         self.canvas = FigureCanvas(self, -1, self.figure)
@@ -144,7 +147,11 @@ class EegFrame(wx.Frame):
             axes[i].set_frame_on(False)
             axes[i].set_ylabel(ch_name, rotation=0, labelpad=15)
             axes[i].yaxis.set_major_locator(NullLocator())
-            axes[i].xaxis.set_major_formatter(NullFormatter())
+            tick_names = np.arange(0, self.seconds, 0.5)
+            ticks = [(self.samples_per_second * sec) / self.downsample_factor
+                     for sec in tick_names]
+            axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
+            axes[i].xaxis.set_major_formatter(ticker.FixedFormatter(tick_names))
             axes[i].yaxis.set_major_formatter(NullFormatter())
             axes[i].grid()
         return axes
@@ -260,12 +267,19 @@ class EegFrame(wx.Frame):
         # select only data columns and convert to float
         return np.array(data[:, self.data_indices], dtype='float64').transpose()
 
+    def cursor_x(self):
+        """Current cursor position (x-axis), accounting for downsampling."""
+        return self.buffer.cur // self.downsample_factor
+
     def init_data(self):
         """Initialize the data."""
         channel_data = self.filter(self.current_data())
+
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
             self.axes[i].plot(data, linewidth=0.8)
+            # plot cursor
+            self.axes[i].axvline(self.cursor_x(), color='r')
 
     def update_buffer(self):
         """Update the buffer with latest data and return the data"""
@@ -286,11 +300,15 @@ class EegFrame(wx.Frame):
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
+            # cursor line
+            self.axes[i].lines[1].set_xdata(self.cursor_x())
             if self.autoscale:
-                self.axes[i].set_ybound(lower=min(data), upper=max(data))
+                data_min = min(data)
+                data_max = max(data)
+                self.axes[i].set_ybound(lower=data_min, upper=data_max)
             else:
                 # lower=min(data), upper=max(data))
-                self.axes[i].set_ybound(lower=-self.yscale, upper=self.yscale)
+                self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
 
         self.canvas.draw()
 
