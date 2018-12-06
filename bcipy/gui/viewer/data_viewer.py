@@ -39,8 +39,9 @@ class EegFrame(wx.Frame):
     """
 
     def __init__(self, data_source, device_info: DeviceInfo,
-                 seconds: int = 2, downsample_factor: int = 2,
-                 refresh: int = 500):
+                 seconds: int = 5, downsample_factor: int = 2,
+                 refresh: int = 500,
+                 y_scale=100):
         wx.Frame.__init__(self, None, -1,
                           'EEG Viewer', size=(800, 550))
 
@@ -60,8 +61,8 @@ class EegFrame(wx.Frame):
         self.filter = downsample_filter(downsample_factor, device_info.fs)
 
         self.autoscale = True
-        self.y_min = -200
-        self.y_max = 200
+        self.y_min = -y_scale
+        self.y_max = y_scale
 
         self.buffer = self.init_buffer()
 
@@ -146,12 +147,14 @@ class EegFrame(wx.Frame):
             ch_name = self.channels[channel]
             axes[i].set_frame_on(False)
             axes[i].set_ylabel(ch_name, rotation=0, labelpad=15)
-            axes[i].yaxis.set_major_locator(NullLocator())
+            # x-axis shows seconds in 0.5 sec increments
             tick_names = np.arange(0, self.seconds, 0.5)
             ticks = [(self.samples_per_second * sec) / self.downsample_factor
                      for sec in tick_names]
             axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
-            axes[i].xaxis.set_major_formatter(ticker.FixedFormatter(tick_names))
+            axes[i].xaxis.set_major_formatter(
+                ticker.FixedFormatter(tick_names))
+            axes[i].yaxis.set_major_locator(NullLocator())
             axes[i].yaxis.set_major_formatter(NullFormatter())
             axes[i].grid()
         return axes
@@ -339,7 +342,7 @@ def file_data(path):
     return (data_source, device_info, streamer)
 
 
-def main(data_file: str, seconds: int, downsample_factor: int, refresh: int):
+def main(data_file: str, seconds: int, downsample_factor: int, refresh: int, yscale: int):
     """Run the viewer gui
 
     Parameters:
@@ -354,7 +357,7 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int):
 
     app = wx.App(False)
     frame = EegFrame(data_source, device_info,
-                     seconds, downsample_factor, refresh)
+                     seconds, downsample_factor, refresh, yscale)
 
     if wx.Display.GetCount() > 1:
         # place frame in the second monitor if one exists.
@@ -380,6 +383,8 @@ if __name__ == "__main__":
                         help='downsample factor', default=2, type=int)
     parser.add_argument('-r', '--refresh',
                         help='refresh rate in ms', default=500, type=int)
+    parser.add_argument('-y', '--yscale',
+                        help='yscale', default=150, type=int)
 
     args = parser.parse_args()
-    main(args.file, args.seconds, args.downsample, args.refresh)
+    main(args.file, args.seconds, args.downsample, args.refresh, args.yscale)
