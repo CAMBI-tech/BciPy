@@ -4,6 +4,7 @@ from bcipy.helpers.stimuli_generation import best_case_rsvp_seq_gen
 from bcipy.helpers.bci_task_related import SPACE_CHAR
 from bcipy.tasks.query_selection import NBestQuery
 import numpy as np
+import random
 import string
 
 
@@ -111,7 +112,7 @@ class DecisionMaker(object):
 
     def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
-                 query_method=None,
+                 query_method=None, len_query=14,
                  is_txt_sti=True,
                  stimuli_timing=[1, .2]):
         self.state = state
@@ -122,8 +123,9 @@ class DecisionMaker(object):
         self.alphabet = alphabet
         self.is_txt_sti = is_txt_sti
 
+        self.len_query = len_query
         if not query_method:
-            self.query_method = NBestQuery(len(self.alphabet), 10)
+            self.query_method = NBestQuery(len(self.alphabet), self.len_query)
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
                             'list_sti': [], 'list_distribution': [],
@@ -221,7 +223,7 @@ class DecisionMaker(object):
     def schedule_sequence(self):
         """ Schedules next sequence """
         self.state += '.'
-        stimuli = self.prepare_stimuli()
+        stimuli = self._prepare_stimuli()
         self.list_epoch[-1]['list_sti'].append(stimuli[0])
         self.sequence_counter += 1
 
@@ -236,8 +238,10 @@ class DecisionMaker(object):
         self.list_epoch[-1]['decision'] = decision
         return decision
 
-    def prepare_stimuli(self, timing=[1, 0.2], color=['red', 'white'],
-                        num_sti=1, len_sti=10, is_txt=True):
+    # TODO: think about where timing, color, is_txt, num_sti should go.
+    # e.g. is_txt is predefined with the alphabet directly
+    def _prepare_stimuli(self, timing=[1, 0.2], color=['red', 'white'],
+                         num_sti=1, is_txt=True):
         """ Given the alphabet, under a rule, prepares a stimuli for
             the next sequence
             Return:
@@ -250,21 +254,23 @@ class DecisionMaker(object):
 
         samples, times, colors = [], [], []
         for idx_num in range(num_sti):
-            # append a fixation cross. if not text, append path to image fixation
+            # append a fixation cross. if not text, append path to
+            # image fixation
             if is_txt:
                 sample = ['+']
             else:
                 sample = ['bcipy/static/images/bci_main_images/PLUS.png']
 
             # construct the sample from the query
+            random.shuffle(stimuli_pos)
             sample += [self.alphabet[i] for i in stimuli_pos]
             samples.append(sample)
             # append timing
             times.append([timing[i] for i in range(len(timing) - 1)] +
-                         [timing[-1]] * len_sti)
+                         [timing[-1]] * self.len_query)
             # append colors
             colors.append([color[i] for i in range(len(color) - 1)] +
-                          [color[-1]] * len_sti)
+                          [color[-1]] * self.len_query)
 
         stimuli = (samples, times, colors)
         return stimuli
