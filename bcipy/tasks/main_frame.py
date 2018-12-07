@@ -2,6 +2,7 @@
 
 from bcipy.helpers.stimuli_generation import best_case_rsvp_seq_gen
 from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.tasks.query_selection import NBestQuery
 import numpy as np
 import string
 
@@ -87,6 +88,8 @@ class DecisionMaker(object):
                       sequence
                     - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
+            query_method(QuerySelection): query selection module that selects
+                the following stimuli under a rule
         Functions:
             decide():
                 Checks the criteria for making and epoch, using all
@@ -108,6 +111,7 @@ class DecisionMaker(object):
 
     def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
+                 query_method=None,
                  is_txt_sti=True,
                  stimuli_timing=[1, .2]):
         self.state = state
@@ -118,8 +122,12 @@ class DecisionMaker(object):
         self.alphabet = alphabet
         self.is_txt_sti = is_txt_sti
 
+        if not query_method:
+            self.query_method = NBestQuery(len(self.alphabet), 10)
+
         self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': [], 'decision': None}]
+                            'list_sti': [], 'list_distribution': [],
+                            'decision': None}]
         self.time = 0
         self.sequence_counter = 0
 
@@ -228,15 +236,35 @@ class DecisionMaker(object):
         self.list_epoch[-1]['decision'] = decision
         return decision
 
-    def prepare_stimuli(self):
+    def prepare_stimuli(self, timing=[1, 0.2], color=['red', 'white'],
+                        num_sti=1, len_sti=10, is_txt=True):
         """ Given the alphabet, under a rule, prepares a stimuli for
             the next sequence
             Return:
                 stimuli(tuple[list[char],list[float],list[str]]): tuple of
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
-        stimuli = \
-            best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
-                'list_distribution'][-1], num_sti=1, is_txt=self.is_txt_sti,
-                timing=self.stimuli_timing)
+
+        tmp = self.list_epoch[-1]['list_distribution'][-1][:]
+        stimuli_pos = self.query_method.update_query(tmp[:])
+
+        samples, times, colors = [], [], []
+        for idx_num in range(num_sti):
+            # append a fixation cross. if not text, append path to image fixation
+            if is_txt:
+                sample = ['+']
+            else:
+                sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+
+            # construct the sample from the query
+            sample += [self.alphabet[i] for i in stimuli_pos]
+            samples.append(sample)
+            # append timing
+            times.append([timing[i] for i in range(len(timing) - 1)] +
+                         [timing[-1]] * len_sti)
+            # append colors
+            colors.append([color[i] for i in range(len(color) - 1)] +
+                          [color[-1]] * len_sti)
+
+        stimuli = (samples, times, colors)
         return stimuli
