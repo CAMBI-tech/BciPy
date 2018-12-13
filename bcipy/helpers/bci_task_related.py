@@ -67,8 +67,10 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path):
-                if stimulus_filename.endswith(".png"):
+            for stimulus_filename in os.listdir(path) :
+                # PLUS.png is reserved for the fixation symbol
+                if stimulus_filename.endswith(
+                        ".png") and not stimulus_filename.endswith('PLUS.png'):
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array
@@ -315,7 +317,7 @@ def trial_reshaper(trial_target_info: list,
                     count += 1
                 else:
                     raise Exception('Incorrectly formatted trigger file. \
-                    See trial_reshaper documentation for expected input.')
+                    See trial_reshaper documentation for expected input.'                                                                         )
 
             # The first element is garbage. Get rid of it.
             trials_per_seq = trials_per_seq[1:]

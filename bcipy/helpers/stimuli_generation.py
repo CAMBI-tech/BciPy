@@ -104,7 +104,6 @@ def best_case_rsvp_seq_gen(alp: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * len_sti)
-
     return (samples, times, colors)
 
 
@@ -290,18 +289,18 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         experiment_length(int): Number of images per sequence
         image_path(str): Path to image files
         number_of_sequences(int): Number of sequences to generate
-        timing(list): List of timings
+        timing(list): List of timings; [parameters['time_target'],
+                       parameters['time_cross'],
+                       parameters['time_flash']]
         is_word(bool): Whether or not this is an icon to word matching task
     Return generate_icon_match_images(arrays of tuples of paths to images to
     display, and timings)
     """
     # Get all png images in image path
-    image_array = glob.glob(image_path + '*.png')
-
-    # Remove plus image from array
-    for image in image_array:
-        if image.endswith('PLUS.png'):
-            image_array.remove(image)
+    image_array = [
+        img for img in glob.glob(image_path + "*.png")
+        if not img.endswith("PLUS.png")
+    ]
 
     if experiment_length > len(image_array) - 1:
         raise Exception(

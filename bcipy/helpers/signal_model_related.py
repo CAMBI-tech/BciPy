@@ -1,12 +1,17 @@
+"""Defines the CopyPhraseWrapper."""
+from typing import List, Tuple
+
 import numpy as np
+
+from bcipy.helpers.acquisition_related import analysis_channels
 from bcipy.helpers.bci_task_related import trial_reshaper
+from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
 from bcipy.signal.processing.sig_pro import sig_pro
-from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
-from bcipy.helpers.acquisition_related import analysis_channels
-from bcipy.helpers.lang_model_related import norm_domain
+from bcipy.tasks.main_frame import DecisionMaker, EvidenceFusion
 
-class CopyPhraseWrapper(object):
+
+class CopyPhraseWrapper:
     """Basic copy phrase task duty cycle wrapper.
 
     Given the phrases once operate() is called performs the task.
@@ -27,12 +32,12 @@ class CopyPhraseWrapper(object):
         d(binary): decision flag
         sti(list(tuple)): stimuli for the display
     """
+
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None,
                  stimuli_timing=[1, .2]):
-
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
                                             state=task_list[0][1],
@@ -40,6 +45,9 @@ class CopyPhraseWrapper(object):
                                             is_txt_sti=is_txt_sti,
                                             stimuli_timing=stimuli_timing)
         self.alp = alp
+        # non-letter target labels include the fixation cross and calibration.
+        self.nonletters = ['+', 'PLUS', 'calibration_trigger']
+        self.valid_targets = set(self.alp)
 
         self.signal_model = signal_model
         self.fs = fs
@@ -61,35 +69,11 @@ class CopyPhraseWrapper(object):
             target_info(list[str]): target information about the stimuli
             window_length(int): The length of the time between stimuli presentation
         """
+        letters, times, target_info = self.letter_info(triggers, target_info)
+
         # Send the raw data to signal processing / in demo mode do not use sig_pro
         dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
-
-        # TODO: if it is a fixation remove it don't hardcode it as if you did
-        letters = [triggers[i][0] for i in range(0, len(triggers))]
-        time = [triggers[i][1] for i in range(0, len(triggers))]
-
-        # Raise an error if the stimuli includes unexpected terms
-        if not set(letters).issubset(set(self.alp+['+']+['PLUS']+['calibration_trigger'])):
-            raise Exception('unexpected letters received in copy phrase')
-
-        # Remove information in any trigger related with the fixation
-        if '+' in letters:
-            del_letter = '+'
-        elif 'PLUS' in letters:
-            del_letter = 'PLUS'
-        else:
-            raise Exception('could not find target + sign in letters')
-
-        if 'calibration_trigger' in letters:
-            del target_info[letters.index('calibration_trigger')]
-            del time[letters.index('calibration_trigger')]
-            del letters[letters.index('calibration_trigger')]
-
-        del target_info[letters.index(del_letter)]
-        del time[letters.index(del_letter)]
-        del letters[letters.index(del_letter)]
-
-        x, _, _, _ = trial_reshaper(target_info, time, dat, fs=self.fs,
+        x, _, _, _ = trial_reshaper(target_info, times, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
@@ -104,6 +88,39 @@ class CopyPhraseWrapper(object):
             sti = None
 
         return decision, sti
+
+    def letter_info(self, triggers: List[Tuple[str, float]],
+                    target_info: List[str]
+                    ) -> Tuple[List[str], List[float], List[str]]:
+        """
+        Filters out non-letters and separates timings from letters.
+        Parameters:
+        -----------
+         triggers: triggers e.g. [['A', 0.5], ...]
+                as letter and flash time for the letter
+         target_info: target information about the stimuli;
+            ex. ['nontarget', 'nontarget', ...]
+        Returns:
+        --------
+            (letters, times, target_info)
+        """
+        letters = []
+        times = []
+        target_types = []
+
+        for i, (letter, stamp) in enumerate(triggers):
+            if not letter in self.nonletters:
+                letters.append(letter)
+                times.append(stamp)
+                target_types.append(target_info[i])
+
+        # Raise an error if the stimuli includes unexpected terms
+        if not set(letters).issubset(self.valid_targets):
+            invalid = set(letters).difference(self.valid_targets)
+            raise Exception(
+                f'unexpected letters received in copy phrase: {invalid}')
+
+        return letters, times, target_types
 
     def initialize_epoch(self):
         """If a decision is made initializes the next epoch."""
@@ -133,7 +150,7 @@ class CopyPhraseWrapper(object):
                 lm_letter_prior = norm_domain(lm_prior['letter'])
 
                 # hack: Append it with a backspace
-                if not '<' in dict(lm_letter_prior):
+                if '<' not in dict(lm_letter_prior):
                     lm_letter_prior.append(('<', 0.0))
 
                 # convert to format needed for evidence fusion;
@@ -145,17 +162,18 @@ class CopyPhraseWrapper(object):
 
             # Try fusing the lmodel evidence
             try:
-                p = self.conjugator.update_and_fuse({'LM': np.array(prior)})
-            except Exception as e:
+                prob_dist = self.conjugator.update_and_fuse(
+                    {'LM': np.array(prior)})
+            except Exception as lm_exception:
                 print("Error updating language model!")
-                raise e
+                raise lm_exception
 
             # Get decision maker to give us back some decisions and stimuli
-            d, arg = self.decision_maker.decide(p)
+            is_accepted, arg = self.decision_maker.decide(prob_dist)
             sti = arg['stimuli']
 
-        except Exception as e:
-            print("Error in initialize_epoch: %s" % (e))
-            raise e
+        except Exception as init_exception:
+            print("Error in initialize_epoch: %s" % (init_exception))
+            raise init_exception
 
-        return d, sti
+        return is_accepted, sti
