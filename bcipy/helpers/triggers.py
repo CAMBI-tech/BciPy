@@ -228,6 +228,25 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
 
     return trigger_file
 
+def write_triggers_from_sequence_icon_to_icon(
+        array,
+        trigger_file,
+        copy_text,
+        typed_text,
+        offset=None):
+    """
+    Write triggers from icon to icon task.
+
+    Helper Function to write trigger data to provided trigger_file. It assigns
+        target letter based on matching the next needed letter in typed text
+        then assigns target/nontarget label to following letters.
+
+    It writes in the following order:
+        (I) presented letter, (II) targetness, (III) timestamp
+    """
+    # TODO: implement this function
+    _write_triggers_from_sequence_copy_phrase(array, trigger_file, copy_text,
+                                              typed_text, offset)
 
 def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
     """Trigger Decoder.
