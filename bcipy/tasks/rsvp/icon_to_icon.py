@@ -185,22 +185,26 @@ class RSVPIconToIconTask(Task):
             sequence timings - list of tuples representing the letter and time
                 that it was presented.
         """
-        # TODO: is this necessary?
-        self.rsvp.sti.height = self.stimuli_height
-
-        # Sequences passed to rsvp to display should be a list of image paths.
-        self.rsvp.stim_sequence = [self.img_path(item) for item in seq]
+        # Sequences passed to rsvp to display should be a list of image paths
+        # except for a word target.
+        word_target = show_target and self.is_word
+        self.rsvp.stim_sequence = [
+            item if i == 0 and word_target else self.img_path(item)
+            for i, item in enumerate(seq)
+        ]
         self.rsvp.time_list_sti = durations
 
-        # TODO: test this code
-        # Change size of target word if we are in word matching mode
         if self.is_word:
-            # Generate list whose length is the length of the stimuli sequence, filled with the stimuli height
-            self.rsvp.size_list_sti = list(
-                repeat(self.stimuli_height,
-                       len(self.rsvp.stim_sequence) + 1))
-            # Set the target word font size to the font size defined in parameters
-            self.rsvp.size_list_sti[0] = self.word_matching_text_size
+            if show_target:
+                # Change size of target word if we are in word matching mode
+                # and the word is presented.
+                word_height = self.word_matching_text_size
+                self.rsvp.size_list_sti = [
+                    word_height if i == 0 else self.stimuli_height
+                    for i, _ in enumerate(seq)
+                ]
+            else:
+                self.rsvp.size_list_sti = []
 
         core.wait(self.buffer_val)
 
