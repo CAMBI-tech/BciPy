@@ -12,11 +12,9 @@ from psychopy import core
 
 from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.bci_task_related import (alphabet,
-                                            fake_copy_phrase_decision,
-                                            get_user_input,
-                                            process_data_for_decision,
-                                            trial_complete_message)
+from bcipy.helpers.bci_task_related import (
+    alphabet, fake_copy_phrase_decision, get_user_input,
+    process_data_for_decision, trial_complete_message)
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model_related import CopyPhraseWrapper
 from bcipy.helpers.stimuli_generation import generate_icon_match_images
@@ -50,8 +48,8 @@ class RSVPIconToIconTask(Task):
     """
     TASK_NAME = 'RSVP Icon to Icon Task'
 
-    def __init__(
-            self, win, daq, parameters, file_save, signal_model, language_model, fake, is_word, auc_filename):
+    def __init__(self, win, daq, parameters, file_save, signal_model,
+                 language_model, fake, is_word, auc_filename):
         super(RSVPIconToIconTask, self).__init__()
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
@@ -70,8 +68,8 @@ class RSVPIconToIconTask(Task):
         ]
 
         self.rsvp = _init_icon_to_icon_display_task(
-            self.parameters, self.window, self.daq,
-            self.static_clock, self.experiment_clock, is_word)
+            self.parameters, self.window, self.daq, self.static_clock,
+            self.experiment_clock, is_word)
         self.file_save = file_save
         self.is_word = is_word
 
@@ -85,13 +83,15 @@ class RSVPIconToIconTask(Task):
 
         self.num_sti = parameters['num_sti']
         self.len_sti = parameters['len_sti']
-        self.timing = [parameters['time_target'],
-                       parameters['time_cross'],
-                       parameters['time_flash']]
+        self.timing = [
+            parameters['time_target'], parameters['time_cross'],
+            parameters['time_flash']
+        ]
 
-        self.color = [parameters['target_letter_color'],
-                      parameters['fixation_color'],
-                      parameters['stimuli_color']]
+        self.color = [
+            parameters['target_letter_color'], parameters['fixation_color'],
+            parameters['stimuli_color']
+        ]
 
         self.task_info_color = parameters['task_color']
 
@@ -112,7 +112,8 @@ class RSVPIconToIconTask(Task):
 
         self.min_num_seq = parameters['min_seq_len']
         self.word_matching_text_size = parameters['word_matching_text_size']
-        self.collection_window_len = parameters['collection_window_after_trial_length']
+        self.collection_window_len = parameters[
+            'collection_window_after_trial_length']
         self.data_save_path = parameters['data_save_loc']
 
         match_type = "Word" if self.is_word else "Icon"
@@ -213,7 +214,7 @@ class RSVPIconToIconTask(Task):
         sequence_timing = self.rsvp.do_sequence()
         return sequence_timing
 
-    def display_feedback(self, selection : str, correct: bool):
+    def display_feedback(self, selection: str, correct: bool):
         """Display feedback for the given selection."""
         feedback = VisualFeedback(
             display=self.window,
@@ -221,7 +222,7 @@ class RSVPIconToIconTask(Task):
             clock=self.experiment_clock)
         feedback.message_color = 'green' if correct else 'red'
         feedback.administer(
-            self.image_path(selection),
+            self.img_path(selection),
             compare_assertion=None,
             message='Decision: ')
 
@@ -259,6 +260,13 @@ class RSVPIconToIconTask(Task):
         # Give the system time to process
         core.wait(self.buffer_val)
 
+        if self.daq.is_calibrated:
+            write_triggers_from_sequence_icon_to_icon(
+                sequence_timing=['offset', self.daq.offset],
+                trigger_file=self.trigger_file,
+                target=None,
+                target_displayed=False,
+                offset=True)
         # Close this sessions trigger file and return some data
         self.trigger_file.close()
 
@@ -283,7 +291,7 @@ class RSVPIconToIconTask(Task):
             alp=self.alp,
             task_list=task_list,
             lmodel=self.language_model,
-            is_txt_sti=False, # TODO: is this True for icon to word?
+            is_txt_sti=self.is_txt_sti,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=self.timing[1:])  # time_cross and time_flash
@@ -303,80 +311,71 @@ class RSVPIconToIconTask(Task):
             return False
         return True
 
+    def update_session_data(self, data, epoch, save = True):
+        """Update the session data and optionally save."""
+        data['total_time_spent'] = self.experiment_clock.getTime()
+        data['total_number_epochs'] = epoch.epoch_counter
+        data['epochs'] = epoch.data
+        if save:
+            _save_session_related_data(self.session_save_location, data)
 
     def execute(self):
         self.logger.debug('Starting Icon to Icon Task!')
 
         icons = [random.choice(self.alp) for _ in range(self.num_sti)]
-        selections = []
         logging.debug(f"Icon sequence: {icons}")
+
+        selections = []
         copy_phrase_task = self.init_copy_phrase_task(task_list=[(icons, [])])
-
-        new_epoch = True  # Whether to present a new epoch.
-        epoch_counter = -1  # incremented for each new target
-        epoch_index = 0  # incremented for each attempt at matching a target.
-        seq_counter = 0  # Total number of seqs that have been presented.
+        epoch = EpochManager(icons, copy_phrase_task, self.timing[0])
         correct_trials = 0
-
-        # Used for stimulus presentation
-        current_seq = []
-        current_durations = []
 
         data = self.init_session_data(save=True)
         run = self.await_start()
 
+        epoch.next()
         while run and self.user_wants_to_continue():
 
-            if new_epoch:
-                # Initialize epoch
-                epoch_counter += 1
-                epoch_index = 0
-                target = icons[epoch_counter]
-
-                # Init an epoch, generate initial stimuli seq.
-                _, sti = copy_phrase_task.initialize_epoch()
-                current_seq = sti[0][0]
-                current_durations = sti[1][0]
-
-                # Insert target for initial display
-                current_seq.insert(0, target)
-                current_durations.insert(0, self.timing[0])
-                data['epochs'][epoch_counter] = {}
-            else:
-                epoch_index += 1
-
             sequence_timing = self.present_sequence(
-                current_seq, current_durations, show_target=epoch_index == 0)
+                epoch.current_sequence,
+                epoch.current_durations,
+                show_target=epoch.first_sequence)
 
             # Write triggers to file
             write_triggers_from_sequence_icon_to_icon(
-                sequence_timing, self.trigger_file, icons, selections)
-            
+                sequence_timing, self.trigger_file, epoch.target,
+                target_displayed = epoch.first_sequence)
+
             core.wait(self.buffer_val)
 
             # Delete calibration
-            if seq_counter == 0:
+            if epoch.first_stimulus:
+                del sequence_timing[0]
+
+            # Delete the target presentation
+            if epoch.first_sequence:
                 del sequence_timing[0]
 
             # Reshape the data and triggers as needed for analysis.
             raw_data, triggers, target_info = process_data_for_decision(
                 sequence_timing, self.daq, self.window, self.parameters,
                 self.rsvp.first_stim_time)
+
             # Data Record for session.json
             entry = {
-                'stimuli': current_seq,
+                'stimuli': epoch.stimuli,
                 'eeg_len': len(raw_data),
-                'timing_sti': current_durations,
+                'timing_sti': epoch.timing_sti,
                 'triggers': triggers,
                 'target_info': target_info,
-                'target_letter': target
+                'target_letter': epoch.target
             }
 
             if self.fake:
                 new_epoch = True
                 correct_trials += 1
-                selections.append(target)
-                self.display_feedback(selection=target, correct=True)
+                selections.append(epoch.target)
+                self.display_feedback(selection=epoch.target, correct=True)
             else:
                 # Evaluate the data and make a decision.
                 decision_made, new_sti = copy_phrase_task.evaluate_sequence(
@@ -394,25 +393,22 @@ class RSVPIconToIconTask(Task):
                 if decision_made:
                     selection = copy_phrase_task.decision_maker.last_selection
                     selections.append(selection)
-                    correct = selection == target
+                    correct = selection == epoch.target
                     if correct:
                         correct_trials += 1
-                    self.display_feedback(selection, correct)                    
-                else:
-                    # Update to use a new sequence prepared by the
-                    # DecisionMaker based on the evidence.
-                    current_seq = new_sti[0][0]
-                    current_durations = new_sti[1][0]
+                    self.display_feedback(selection, correct)
 
-            seq_counter += 1
-            data['epochs'][epoch_counter][epoch_index] = entry
-            data['total_time_spent'] = self.experiment_clock.getTime()
-            data['total_number_epochs'] = epoch_counter
-            _save_session_related_data(self.session_save_location, data)
+            epoch.add_stim_data(entry)
+            self.update_session_data(data, epoch, save=True)
+            if new_epoch:
+                epoch.next()
+            else:
+                epoch.next_stimulus(new_sti)
 
-            run = self.stoppage_criteria_ok(seq_counter, data['total_time_spent'])
+            run = self.stoppage_criteria_ok(epoch.seq_counter,
+                                            data['total_time_spent'])
             # end while loop
-                
+
         self.write_data(correct_trials, len(selections))
         self.exit_display()
         return self.file_save
@@ -425,31 +421,29 @@ class RSVPIconToIconTask(Task):
         return RSVPIconToIconTask.TASK_NAME
 
 
-def _init_icon_to_icon_display_task(
-        parameters, win, daq, static_clock, experiment_clock, is_word):
+def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
+                                    experiment_clock, is_word):
     rsvp = IconToIconDisplay(
-        window=win, clock=static_clock,
+        window=win,
+        clock=static_clock,
         experiment_clock=experiment_clock,
         marker_writer=daq.marker_writer,
         text_info=parameters['text_text'],
         color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'],
-                  parameters['pos_text_y']),
+        pos_info=(parameters['pos_text_x'], parameters['pos_text_y']),
         height_info=parameters['txt_height'],
         font_info=parameters['font_text'],
         color_task=['black'],
         font_task=parameters['font_task'],
         height_task=parameters['height_task'],
         font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'],
-                 parameters['pos_sti_y']),
+        pos_sti=(parameters['pos_sti_x'], parameters['pos_sti_y']),
         sti_height=parameters['sti_height'],
-        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
+        stim_sequence=['a'] * 10,
+        color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
+        tr_pos_bg=(parameters['tr_pos_bg_x'], parameters['tr_pos_bg_y']),
+        bl_pos_bg=(parameters['bl_pos_bg_x'], parameters['bl_pos_bg_y']),
         size_domain_bg=parameters['size_domain_bg'],
         color_bg_txt=parameters['color_bg_txt'],
         font_bg_txt=parameters['font_bg_txt'],
@@ -459,3 +453,110 @@ def _init_icon_to_icon_display_task(
         is_word=is_word)
 
     return rsvp
+
+
+from bcipy.helpers.system_utils import auto_str
+
+@auto_str
+class EpochManager():
+    """Manages the state required for tracking epochs.
+    Parameters:
+    -----------
+        icons - sequence of icons to match
+        copy_phrase_task - CopyPhraseWrapper
+        time_target - time to present a target stimulus.
+    """
+    # TODO: rather than pass in copy_phrase_task, provide a function to generate
+    # stimulus for new epochs.
+    def __init__(self, icons, copy_phrase_task, time_target):
+        self.copy_phrase_task = copy_phrase_task
+        self.target = None
+        self.time_target = time_target
+        self.icons = icons
+
+        self.current_sequence = []
+        self.current_durations = []
+
+        self.epoch_counter = -1
+        self.epoch_index = 0
+        self.data = {}
+        self.seq_counter = 0
+
+    #  Public API
+    def next(self):
+        """Initialize the next epoch/target"""
+        self._increment_epoch()
+        self._new_epoch_stimulus()
+        self.seq_counter += 1
+
+    def next_stimulus(self, sti):
+        """Add another sequence for the current target.
+        Parameters:
+        -----------
+            sti - tuple of (List[alphabet], List[durations], List[colors])
+        """
+        self.epoch_index += 1
+        self.seq_counter += 1
+        self._set_stimulus(sti)
+
+    @property
+    def first_sequence(self) -> bool:
+        """Is the current sequence the first one displayed for this epoch?"""
+        return self.epoch_index == 0
+
+    @property
+    def first_stimulus(self) -> bool:
+        """Is this the first stimulus presented?"""
+        return self.epoch_index == 0 and self.first_sequence
+
+    @property
+    def stimuli(self) -> List[str]:
+        """Stimuli to write to the session.json; excludes the target
+        presentation"""
+        if self.first_sequence:
+            return self.current_sequence[1:]
+        else:
+            return self.current_sequence
+
+    @property
+    def timing_sti(self) -> List[float]:
+        """Timing Stimuli to write to the session.json; excludes the target
+        presentation"""
+        if self.first_sequence:
+            return self.current_durations[1:]
+        else:
+            return self.current_durations
+
+    def add_stim_data(self, data):
+        """Add stimulus data for the current epoch_counter/index"""
+        self.data[self.epoch_counter][self.epoch_index] = data
+
+    # Internally used methods
+    def _increment_epoch(self):
+        """Increment the counters and select a new target."""
+        self.epoch_counter += 1
+        self.epoch_index = 0
+        self.target = self.icons[self.epoch_counter]
+        self.data[self.epoch_counter] = {}
+
+    def _new_epoch_stimulus(self):
+        """Init an epoch, generate initial stimuli seq."""
+        _, sti = self.copy_phrase_task.initialize_epoch()
+        self._set_stimulus(sti)
+        self._new_sequence_mods()
+
+    def _set_stimulus(self, sti: Tuple):
+        """Sets the current sequence and current durations from the sti output
+        from copy_phrase_task.
+        Parameters:
+        -----------
+            sti - tuple of (List[alphabet], List[durations], List[colors])
+        """
+        self.current_sequence = sti[0][0]
+        self.current_durations = sti[1][0]
+
+    def _new_sequence_mods(self):
+        """Make any modifications to the current sequence"""
+        # Insert target for initial display
+        self.current_sequence.insert(0, self.target)
+        self.current_durations.insert(0, self.time_target)

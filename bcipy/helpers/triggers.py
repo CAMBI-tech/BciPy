@@ -228,25 +228,59 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
 
     return trigger_file
 
+
 def write_triggers_from_sequence_icon_to_icon(
-        array,
-        trigger_file,
-        copy_text,
-        typed_text,
-        offset=None):
+        sequence_timing: List[Tuple], trigger_file: TextIO, target: str,
+        target_displayed: bool, offset=None):
     """
     Write triggers from icon to icon task.
-
-    Helper Function to write trigger data to provided trigger_file. It assigns
-        target letter based on matching the next needed letter in typed text
-        then assigns target/nontarget label to following letters.
-
     It writes in the following order:
         (I) presented letter, (II) targetness, (III) timestamp
+
+    Parameters:
+    ----------
+        sequence_timing - list of (icon, time) output from rsvp after
+            displaying a sequence.
+        trigger_file - open file in which to write.
+        target - target for the current sequence
+        target_displayed - whether or not the target was presented during the
+            sequence.
     """
-    # TODO: implement this function
-    _write_triggers_from_sequence_copy_phrase(array, trigger_file, copy_text,
-                                              typed_text, offset)
+    if offset:
+        (letter, time) = sequence_timing
+        targetness = 'offset_correction'
+        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        return
+
+    icons, _times = zip(*sequence_timing)
+    calib_presented = 'calibration_trigger' in icons
+    calib_index = 0 if calib_presented else -1
+
+    if calib_presented:
+        target_pres_index = 1
+        fixation_index = 2
+    elif target_displayed:
+        target_pres_index = 0
+        fixation_index = 1
+    else:
+        target_pres_index = -1
+        fixation_index = 0
+
+    for i, (icon, presentation_time) in enumerate(sequence_timing):
+        targetness = 'nontarget'
+        if i == calib_index:
+            targetness = 'calib'
+        elif i == target_pres_index:
+            targetness = 'first_pres_target'
+        elif i == fixation_index:
+            targetness = 'fixation'
+        elif icon == target:
+            targetness = 'target'
+        else:
+            targetness = 'nontarget'
+        trigger_file.write('%s %s %s' % (icon, targetness, presentation_time) +
+                           "\n")
+
 
 def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
     """Trigger Decoder.
