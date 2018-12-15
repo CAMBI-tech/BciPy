@@ -221,6 +221,7 @@ class RSVPCopyPhraseTask(Task):
 
             core.wait(self.buffer_val)
 
+            # Delete calibration
             if seq_counter == 0:
                 del sequence_timing[0]
 

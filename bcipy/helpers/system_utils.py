@@ -63,3 +63,14 @@ def dot(relative_to: str, *argv) -> str:
         # uses the '/' operator in pathlib to construct a new Path.
         working_dir = working_dir / subdir
     return str(working_dir)
+
+def auto_str(cls):
+    """Autogenerate a str method to print all variable names and values.
+    https://stackoverflow.com/questions/32910096/is-there-a-way-to-auto-generate-a-str-implementation-in-python
+    """
+    def __str__(self):
+        return '%s(%s)' % (type(self).__name__, ', '.join(
+            '%s=%s' % item for item in vars(self).items()))
+
+    cls.__str__ = __str__
+    return cls

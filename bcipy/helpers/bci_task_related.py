@@ -129,6 +129,7 @@ def process_data_for_decision(
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
+    # TODO: This doesn't seem useful and is misleading
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
@@ -289,6 +290,25 @@ def trial_reshaper(trial_target_info: list,
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
 
+        reshaped_trials is a 3 dimensional np array where the first dimension
+            is the channel, second dimension the trial/letter, and third
+            dimension is time samples. So at 300hz and a presentation time of
+            0.2 seconds per letter, the third dimension would have about 60
+            samples.
+            If this were a json structure it might look like:
+                {
+                    'ch1': {
+                        'B' : [-647.123, -93.124, ...],
+                        'T' : [...],
+                        ...
+                    },
+                    'ch2': {
+                        'B' : [39.60, -224.124, ...],
+                        'T' : [...],
+                        ...
+                    }, 
+                    ...
+                }
     """
     try:
         # Remove the channels that we are not interested in
@@ -317,7 +337,7 @@ def trial_reshaper(trial_target_info: list,
                     count += 1
                 else:
                     raise Exception('Incorrectly formatted trigger file. \
-                    See trial_reshaper documentation for expected input.'                                                                         )
+                    See trial_reshaper documentation for expected input.')
 
             # The first element is garbage. Get rid of it.
             trials_per_seq = trials_per_seq[1:]
