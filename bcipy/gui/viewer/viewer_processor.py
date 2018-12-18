@@ -19,10 +19,16 @@ class ViewerProcessor(Processor):
     def __enter__(self):
         self._check_device_info()
 
-        # https://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
         cmd = f'python {self.viewer}'
-        self.subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                        shell=True, preexec_fn=os.setsid)
+        # On mac/linux, we can close the viewer in the exit method. However,
+        # this doesn't work on Windows. For now, leave it to the user to 
+        # close.
+
+        # https://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
+        # self.subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+        #                                 shell=True, preexec_fn=os.setsid)
+        self.subproc = subprocess.Popen(cmd, shell=True)
+
         # hack: wait for window to open, so it doesn't error out when the main
         # window is open fullscreen.
         time.sleep(2)
@@ -30,7 +36,8 @@ class ViewerProcessor(Processor):
         return self
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
-        os.killpg(os.getpgid(self.subproc.pid), signal.SIGTERM)
+        # On Mac this closes the viewer window; see above comment.
+        # os.killpg(os.getpgid(self.subproc.pid), signal.SIGTERM)
         self.started = False
 
     def process(self, record, timestamp=None):
