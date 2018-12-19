@@ -151,7 +151,10 @@ class CopyPhraseWrapper:
 
                 # hack: Append it with a backspace
                 if '<' not in dict(lm_letter_prior):
-                    lm_letter_prior.append(('<', 0.0))
+                    # Give the backspace character 5% probability.
+                    # Value was determined through group discussion.
+                    # TODO: find research references to support this.
+                    lm_letter_prior.append(('<', 0.05))
 
                 # convert to format needed for evidence fusion;
                 # probability value only in alphabet order.
