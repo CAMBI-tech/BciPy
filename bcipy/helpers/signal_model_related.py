@@ -8,7 +8,11 @@ from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
 from bcipy.signal.processing.sig_pro import sig_pro
-from bcipy.tasks.main_frame import DecisionMaker, EvidenceFusion
+from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
+from bcipy.helpers.acquisition_related import analysis_channels
+from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
+ equally_probable
+from bcipy.helpers.bci_task_related import BACKSPACE_CHAR
 
 
 class CopyPhraseWrapper:
@@ -37,7 +41,9 @@ class CopyPhraseWrapper:
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None,
-                 stimuli_timing=[1, .2]):
+                 stimuli_timing=[1, .2],
+                 backspace_prob=0.05):
+
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
                                             state=task_list[0][1],
@@ -57,6 +63,7 @@ class CopyPhraseWrapper:
         self.task_list = task_list
         self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
+        self.backspace_prob = backspace_prob
 
     def evaluate_sequence(self, raw_dat, triggers, target_info, window_length):
         """Once data is collected, infers meaning from the data.
@@ -134,8 +141,8 @@ class CopyPhraseWrapper:
             # the log domain; LM by default returns negative log domain.
             if not self.lmodel:
                 # mock probabilities to be equally likely for all letters.
-                n_letters = len(self.alp)
-                prior = np.full(n_letters, 1/n_letters)
+                overrides = {BACKSPACE_CHAR: self.backspace_prob}
+                prior = equally_probable(self.alp, overrides)
 
             # Else, let's query the lmodel for priors
             else:
@@ -149,15 +156,14 @@ class CopyPhraseWrapper:
                 # normalize to probability domain
                 lm_letter_prior = norm_domain(lm_prior['letter'])
 
-                # hack: Append it with a backspace
-                if '<' not in dict(lm_letter_prior):
-                    # Give the backspace character 5% probability.
-                    # Value was determined through group discussion.
-                    # TODO: find research references to support this.
-                    lm_letter_prior.append(('<', 0.05))
+                if BACKSPACE_CHAR in self.alp:
+                    # Append backspace if missing.
+                    sym = (BACKSPACE_CHAR, self.backspace_prob)
+                    lm_letter_prior = sym_appended(lm_letter_prior, sym)
 
                 # convert to format needed for evidence fusion;
                 # probability value only in alphabet order.
+                # TODO: ensure that probabilities still add to 1.0
                 prior = [prior_prob
                          for alp_letter in self.alp
                          for prior_sym, prior_prob in lm_letter_prior
