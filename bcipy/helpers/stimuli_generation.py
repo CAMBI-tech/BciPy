@@ -16,7 +16,10 @@ from psychopy import core
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
-def best_selection(selection_elements: list, val: list, len_query: int) -> list:
+def best_selection(selection_elements: list,
+                   val: list,
+                   len_query: int,
+                   always_included=None) -> list:
     """Best Selection.
 
      given set of elements and a value function over the set, picks the len_query
@@ -26,20 +29,25 @@ def best_selection(selection_elements: list, val: list, len_query: int) -> list:
             selection_elements(list[str]): the set of elements
             val(list[float]): values for the corresponding elements
             len_query(int): number of elements to be picked from the set
+            always_included(list[str]): subset of elements that should always be
+                included in the result. Defaults to None.
         Return:
             best_selection(list[str]): elements from selection_elements with the best values """
-    max_p_val = np.sort(val)[::-1]
-    max_p_val = max_p_val[0:len_query]
 
-    best_selection = []
-    for idx in range(len_query):
-        query_index = np.where(val == max_p_val[idx])[0][0]
-        query = selection_elements[query_index]
-        val = np.delete(val, query_index)
-        selection_elements.remove(query)
-        best_selection.append(query)
+    always_included = always_included or []
+    n = len_query
+    # pick the top n items sorted by value in decreasing order
+    elem_val = dict(zip(selection_elements, val))
+    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
 
-    return best_selection
+    replacements = [
+        item for item in always_included
+        if item not in best and item in selection_elements
+    ][0:n]
+
+    if replacements:
+        best[-len(replacements):] = replacements
+    return best
 
 
 def best_case_rsvp_seq_gen(alp: list,
@@ -51,7 +59,7 @@ def best_case_rsvp_seq_gen(alp: list,
                            is_txt=True) -> tuple:
     """Best Case RSVP Sequence Generation.
 
-    generates RSVPKeyboard sequence by picking n-most likeliy letters.
+    generates RSVPKeyboard sequence by picking n-most likely letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
             session_stimuli(ndarray[float]): quantifier metric for query selection
