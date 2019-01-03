@@ -67,8 +67,10 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path):
-                if stimulus_filename.endswith(".png"):
+            for stimulus_filename in os.listdir(path) :
+                # PLUS.png is reserved for the fixation symbol
+                if stimulus_filename.endswith(
+                        ".png") and not stimulus_filename.endswith('PLUS.png'):
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array
@@ -127,6 +129,7 @@ def process_data_for_decision(
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
+    # TODO: This doesn't seem useful and is misleading
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
@@ -287,6 +290,25 @@ def trial_reshaper(trial_target_info: list,
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
 
+        reshaped_trials is a 3 dimensional np array where the first dimension
+            is the channel, second dimension the trial/letter, and third
+            dimension is time samples. So at 300hz and a presentation time of
+            0.2 seconds per letter, the third dimension would have about 60
+            samples.
+            If this were a json structure it might look like:
+                {
+                    'ch1': {
+                        'B' : [-647.123, -93.124, ...],
+                        'T' : [...],
+                        ...
+                    },
+                    'ch2': {
+                        'B' : [39.60, -224.124, ...],
+                        'T' : [...],
+                        ...
+                    }, 
+                    ...
+                }
     """
     try:
         # Remove the channels that we are not interested in
