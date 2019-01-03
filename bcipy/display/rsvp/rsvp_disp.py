@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import os.path as path
 from typing import Callable
 
 from psychopy import core, visual
@@ -226,7 +227,8 @@ class RSVPDisplay(object):
                 self.sti = self.create_stimulus(mode='image', height_int=this_stimuli_size)
                 self.sti.image = self.stim_sequence[idx]
                 self.sti.size = resize_image(self.sti.image, self.sti.win.size, this_stimuli_size)
-                sti_label = self.stim_sequence[idx].split('/')[-1].split('.')[0]
+                sti_label = path.splitext(
+                    path.basename(self.stim_sequence[idx]))[0]
             else:
                 # text stimulus
                 self.sti = self.create_stimulus(mode='text', height_int=this_stimuli_size)
