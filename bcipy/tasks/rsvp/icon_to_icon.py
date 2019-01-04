@@ -121,7 +121,9 @@ class RSVPIconToIconTask(Task):
 
     def img_path(self, alphabet_item):
         """Return the full image path for the given alphabet item."""
-        if alphabet_item.startswith(self.image_path):
+        # TODO: fixation img should be a constant.
+        if alphabet_item.startswith(
+                self.image_path) or alphabet_item.endswith("PLUS.png"):
             return alphabet_item
         return self.image_path + alphabet_item + '.png'
 
