@@ -56,7 +56,8 @@ def best_case_rsvp_seq_gen(alp: list,
                            color=['red', 'white'],
                            num_sti=1,
                            len_sti=10,
-                           is_txt=True) -> tuple:
+                           is_txt=True,
+                           seq_constants=None) -> tuple:
     """Best Case RSVP Sequence Generation.
 
     generates RSVPKeyboard sequence by picking n-most likely letters.
@@ -70,6 +71,8 @@ def best_case_rsvp_seq_gen(alp: list,
                 Observe that [-1] element represents the trial information
             num_sti(int): number of random stimuli to be created
             len_sti(int): number of trials in a sequence
+            seq_constants(list[str]): list of letters that should always be
+                included in every sequence. If provided, must be alp items.
         Return:
             schedule_seq(tuple(
                 samples[list[list[str]]]: list of sequences
@@ -82,11 +85,14 @@ def best_case_rsvp_seq_gen(alp: list,
                         'len(session_stimuli):{}, should be same!'.format(
                             len(alp), len(session_stimuli)))
 
+    if seq_constants and not set(seq_constants).issubset(alp):
+        raise Exception('Sequence constants must be alphabet items.')
+
     # create a list of alphabet letters
     alphabet = [i for i in alp]
 
     # query for the best selection
-    query = best_selection(alphabet, session_stimuli, len_sti)
+    query = best_selection(alphabet, session_stimuli, len_sti, seq_constants)
 
     # shuffle the returned values
     random.shuffle(query)

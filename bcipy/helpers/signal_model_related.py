@@ -35,6 +35,10 @@ class CopyPhraseWrapper:
         mode(str): mode of thet task (should be copy phrase)
         d(binary): decision flag
         sti(list(tuple)): stimuli for the display
+        backspace_prob(float): default language model probability for the
+            backspace character.
+        backspace_always_shown(bool): whether or not the backspace should
+            always be presented.
     """
 
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
@@ -42,14 +46,20 @@ class CopyPhraseWrapper:
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_sti=True, device_name='LSL', device_channels=None,
                  stimuli_timing=[1, .2],
-                 backspace_prob=0.05):
+                 backspace_prob=0.05,
+                 backspace_always_shown=False):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
+
+        seq_constants = []
+        if backspace_always_shown and BACKSPACE_CHAR in alp:
+            seq_constants.append(BACKSPACE_CHAR)
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
                                             state=task_list[0][1],
                                             alphabet=alp,
                                             is_txt_sti=is_txt_sti,
-                                            stimuli_timing=stimuli_timing)
+                                            stimuli_timing=stimuli_timing,
+                                            seq_constants=seq_constants)
         self.alp = alp
         # non-letter target labels include the fixation cross and calibration.
         self.nonletters = ['+', 'PLUS', 'calibration_trigger']

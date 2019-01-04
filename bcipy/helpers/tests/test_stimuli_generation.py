@@ -243,6 +243,44 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 
+    def test_best_case_sequence_gen_with_seq_constants(self):
+        """Test best_case_rsvp_seq_gen with sequence constants"""
+
+        alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+        n = 5
+
+        with self.assertRaises(
+                Exception, msg="Constants should be in the alphabet"):
+            best_case_rsvp_seq_gen(
+                alp=alp,
+                session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
+                seq_constants=['<'])
+
+        alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g', '<']
+        samples, times, colors = best_case_rsvp_seq_gen(
+            alp=alp,
+            session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2, 0.0],
+            num_sti=1,
+            len_sti=n,
+            is_txt=True,
+            seq_constants=['<'])
+
+        first_seq = samples[0]
+        self.assertEqual(1, len(samples))
+        self.assertEqual(n + 1, len(first_seq),
+                         "Should include fixation cross.")
+        self.assertEqual(len(samples), len(times))
+        self.assertEqual(len(samples), len(colors))
+
+        expected = ['+', 'a', 'd', 'e', 'g', '<']
+        for letter in expected:
+            self.assertTrue(letter in first_seq)
+
+        self.assertNotEqual(expected, first_seq, "Should be in random order.")
+        self.assertEqual([1] + ([0.2] * n), times[0])
+        self.assertEqual(['red'] + (['white'] * n), colors[0])
+
+
     def tearDown(self):
         unstub()
 
