@@ -120,8 +120,9 @@ class RSVPIconToIconTask(Task):
         self.session_description = f'Icon to {match_type} Matching'
 
     def img_path(self, alphabet_item):
-        """Return the full image path for the given alphabet item."""
-        if alphabet_item.startswith(self.image_path):
+        """Return the full image path for the given alphabet item. If the item
+        ends with .png it's returned as is."""
+        if alphabet_item.endswith('.png'):
             return alphabet_item
         return self.image_path + alphabet_item + '.png'
 
