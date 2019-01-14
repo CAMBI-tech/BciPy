@@ -52,6 +52,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     return next_target_letter, text_task, run
 
 SPACE_CHAR = '_'
+BACKSPACE_CHAR = '<'
 
 def alphabet(parameters=None):
     """Alphabet.
@@ -77,7 +78,7 @@ def alphabet(parameters=None):
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '<', SPACE_CHAR]
+            BACKSPACE_CHAR, SPACE_CHAR]
 
 
 def process_data_for_decision(

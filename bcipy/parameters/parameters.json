@@ -730,5 +730,21 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
+  },
+  "lm_backspace_prob": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Backspace probability",
+    "helpTip": "Language Model probability for the backspace character.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "backspace_always_shown": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Backspace always shown",
+    "helpTip": "Should the backspace character always be shown in Copy Phrase tasks.",
+    "recommended_values": "",
+    "type": "bool"
   }
 }
