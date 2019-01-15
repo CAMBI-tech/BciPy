@@ -14,6 +14,7 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 analysis_channels_by_device = {
     'DSI': ["P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "A1", "Fp1", "Fp2",
             "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"],
+    'DSI_VR300': ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"],
     'g.USBamp-2': ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8",
                    "Ch9", "Ch10", "Ch11", "Ch12", "Ch13", "Ch14", "Ch15",
                    "Ch16"],
