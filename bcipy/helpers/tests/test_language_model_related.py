@@ -1,12 +1,10 @@
-
-
 import unittest
 
-from bcipy.helpers.lang_model_related import norm_domain
+from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
+ equally_probable
 
 
 class TestLanguageModelRelated(unittest.TestCase):
-
     def test_norm_domain(self):
         """Test conversion from negative log likelihood to prob."""
         letters = [('S', 0.25179717717251715), ('U', 1.656395297172517),
@@ -37,7 +35,117 @@ class TestLanguageModelRelated(unittest.TestCase):
             ('K', 6.984616150492476e-05), ('I', 6.454141629213861e-05),
             ('Y', 1.7682575696535268e-05), ('J', 1.2377788678084351e-05),
             ('X', 4.420644194323101e-06), ('Z', 4.420635795107107e-06),
-            ('Q', 1.7682584413941958e-06)]
+            ('Q', 1.7682584413941958e-06)
+        ]
         for i, pair in enumerate(norm_domain(letters)):
             self.assertEqual(expected[i][0], pair[0])
             self.assertAlmostEqual(expected[i][1], pair[1])
+
+    def test_insert_sym_with_zero_prob(self):
+        """Test insertion of an additional symbol (with zero probability) to a
+        normalized list of symbols."""
+
+        syms = [
+            ('S', 0.21999999999999953), ('U', 0.03), ('O', 0.03), ('M', 0.03),
+            ('W', 0.03), ('T', 0.03), ('P', 0.03), ('R', 0.03), ('L', 0.03),
+            ('N', 0.03), ('_', 0.03), ('C', 0.03), ('E', 0.03), ('B', 0.03),
+            ('A', 0.03), ('D', 0.03), ('H', 0.03), ('G', 0.03), ('F', 0.03),
+            ('V', 0.03), ('K', 0.03), ('I', 0.03), ('Y', 0.03), ('J', 0.03),
+            ('X', 0.03), ('Z', 0.03), ('Q', 0.03)
+        ]
+
+        self.assertEqual(1.0, sum([prob for _, prob in syms]))
+
+        new_list = sym_appended(syms, ('<', 0.0))
+        self.assertEqual(len(syms) + 1, len(new_list))
+        self.assertEqual(1.0, sum([prob for _, prob in new_list]))
+
+        for pair in syms:
+            self.assertTrue(pair in new_list)
+        self.assertTrue('<' in dict(new_list))
+
+    def test_insert_sym_with_non_zero_prob(self):
+        """Test insertion of an additional symbol to a normalized list of
+        symbols with a non-zero probability."""
+
+        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25)]
+
+        self.assertEqual(1.0, sum([prob for _, prob in syms]))
+
+        new_sym = ('<', 0.2)
+
+        new_list = sym_appended(syms, new_sym)
+        self.assertEqual(len(syms) + 1, len(new_list))
+        self.assertAlmostEqual(1.0, sum([prob for _, prob in new_list]))
+
+        new_list_dict = dict(new_list)
+        prev_list_dict = dict(syms)
+        for s, _ in syms:
+            self.assertTrue(s in new_list_dict)
+            self.assertTrue(new_list_dict[s] < prev_list_dict[s])
+            self.assertEqual(0.2, new_list_dict[s])
+        self.assertTrue(new_sym[0] in new_list_dict)
+        self.assertEqual(new_sym[1], new_list_dict[new_sym[0]])
+
+    def test_insert_sym_when_already_exists(self):
+        """Test insertion of an additional symbol to a normalized list of
+        symbols."""
+
+        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25)]
+        self.assertEqual(1.0, sum([prob for _, prob in syms]))
+
+        new_list = sym_appended(syms, ('D', 0.25))
+        self.assertEqual(syms, new_list, "Value already present")
+
+        new_list = sym_appended(syms, ('D', 0.2))
+        self.assertEqual(
+            syms, new_list, msg="Changing the probability does not matter")
+
+    def test_equally_probable(self):
+        """Test generation of equally probable values."""
+
+        # no overrides
+        alp = ['A', 'B', 'C', 'D']
+        probs = equally_probable(alp)
+        self.assertEqual(len(alp), len(probs))
+        for prob in probs:
+            self.assertEqual(0.25, prob)
+
+        # test with override
+        alp = ['A', 'B', 'C', 'D']
+        probs = equally_probable(alp, {'A': 0.4})
+        self.assertEqual(len(alp), len(probs))
+        self.assertAlmostEqual(1.0, sum(probs))
+        self.assertEqual(probs[0], 0.4)
+        self.assertAlmostEqual(probs[1], 0.2)
+        self.assertAlmostEqual(probs[2], 0.2)
+        self.assertAlmostEqual(probs[3], 0.2)
+
+        # test with 0.0 override
+        alp = ['A', 'B', 'C', 'D', 'E']
+        probs = equally_probable(alp, {'E': 0.0})
+        self.assertEqual(len(alp), len(probs))
+        self.assertAlmostEqual(1.0, sum(probs))
+        self.assertEqual(probs[0], 0.25)
+        self.assertAlmostEqual(probs[1], 0.25)
+        self.assertAlmostEqual(probs[2], 0.25)
+        self.assertAlmostEqual(probs[3], 0.25)
+        self.assertAlmostEqual(probs[4], 0.0)
+
+        # test with multiple overrides
+        alp = ['A', 'B', 'C', 'D']
+        probs = equally_probable(alp, {'B': 0.2, 'D': 0.3})
+        self.assertEqual(len(alp), len(probs))
+        self.assertAlmostEqual(1.0, sum(probs))
+        self.assertEqual(probs[0], 0.25)
+        self.assertAlmostEqual(probs[1], 0.2)
+        self.assertAlmostEqual(probs[2], 0.25)
+        self.assertAlmostEqual(probs[3], 0.3)
+
+        # test with override that's not in the alphabet
+        alp = ['A', 'B', 'C', 'D']
+        probs = equally_probable(alp, {'F': 0.4})
+        self.assertEqual(len(alp), len(probs))
+        self.assertAlmostEqual(1.0, sum(probs))
+        for prob in probs:
+            self.assertEqual(0.25, prob)

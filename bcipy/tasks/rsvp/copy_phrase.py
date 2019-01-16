@@ -115,6 +115,8 @@ class RSVPCopyPhraseTask(Task):
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
+
+        # already correctly spelled letters
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
         task_list = [(str(self.copy_phrase),
                       str(self.copy_phrase[0:self.spelled_letters_count]))]
@@ -125,13 +127,16 @@ class RSVPCopyPhraseTask(Task):
             self.max_seq_length,
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
-            k=2, alp=self.alp,
+            k=2,
+            alp=self.alp,
             task_list=task_list,
             lmodel=self.language_model,
             is_txt_sti=self.is_txt_sti,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
-            stimuli_timing=[self.time_cross, self.time_flash])
+            stimuli_timing=[self.time_cross, self.time_flash],
+            backspace_prob=self.parameters['lm_backspace_prob'],
+            backspace_always_shown=self.parameters['backspace_always_shown'])
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
@@ -172,8 +177,10 @@ class RSVPCopyPhraseTask(Task):
                 break
 
             if self.copy_phrase[0:len(text_task)] == text_task:
+                # if correctly spelled so far, get the next unspelled letter.
                 target_letter = self.copy_phrase[len(text_task)]
             else:
+                # otherwise target is the backspace char.
                 target_letter = '<'
 
             # Get sequence information
@@ -220,6 +227,7 @@ class RSVPCopyPhraseTask(Task):
 
             core.wait(self.buffer_val)
 
+            # Delete calibration
             if seq_counter == 0:
                 del sequence_timing[0]
 

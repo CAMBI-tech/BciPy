@@ -87,6 +87,8 @@ class DecisionMaker(object):
                       sequence
                     - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
+            seq_constants(list[str]): list of letters which should appear in
+                every sequence.
         Functions:
             decide():
                 Checks the criteria for making and epoch, using all
@@ -109,7 +111,8 @@ class DecisionMaker(object):
     def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_sti=True,
-                 stimuli_timing=[1, .2]):
+                 stimuli_timing=[1, .2],
+                 seq_constants=None):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -133,6 +136,9 @@ class DecisionMaker(object):
         self.posterior_commit_threshold = .8
 
         self.last_selection = ''
+
+        # Items shown in every sequence
+        self.seq_constants = seq_constants
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -235,8 +241,12 @@ class DecisionMaker(object):
                 stimuli(tuple[list[char],list[float],list[str]]): tuple of
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
-        stimuli = \
-            best_case_rsvp_seq_gen(self.alphabet, self.list_epoch[-1][
-                'list_distribution'][-1], num_sti=1, is_txt=self.is_txt_sti,
-                timing=self.stimuli_timing)
+
+        stimuli = best_case_rsvp_seq_gen(
+            self.alphabet,
+            self.list_epoch[-1]['list_distribution'][-1],
+            num_sti=1,
+            is_txt=self.is_txt_sti,
+            timing=self.stimuli_timing,
+            seq_constants=self.seq_constants)
         return stimuli
