@@ -1,7 +1,7 @@
 from bcipy.feedback.visual.level_feedback import LevelFeedback
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
-from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
+from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
@@ -133,9 +133,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
-                message, color, height = self._get_feedback_decision()
-                # self.visual_feedback.height_stim = height # Changes height of shape
-                timing = self.visual_feedback.administer(position=1)
+                # TODO implement feedback decision maker
+                position = self._get_feedback_decision()
+                timing = self.visual_feedback.administer(position=position)
 
                 # TODO write the visual feedback timing
 
@@ -166,14 +166,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         return self.file_save
 
     def _get_feedback_decision(self):
-
-        height = random.uniform(0, 1)
-
-        if height < .5:
-            color = 'red'
-        else:
-            color = 'green'
-        return None, color, height
+        return random.randint(1, 5)
 
     @classmethod
     def label(cls):

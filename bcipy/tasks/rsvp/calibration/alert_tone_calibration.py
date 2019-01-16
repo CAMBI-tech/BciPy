@@ -2,7 +2,7 @@
 
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
-from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
+from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 
 
 class RSVPAlertToneCalibrationTask(Task):

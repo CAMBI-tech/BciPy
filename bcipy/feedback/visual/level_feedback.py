@@ -18,6 +18,7 @@ class LevelFeedback(VisualFeedback):
         # extract needed parameters
         self.clock = clock
         self.display = display
+        self.parameters = parameters
         self.default_message_color = parameters['feedback_message_color']
         self.feedback_indicator_color = parameters['feedback_message_color']
         self.position_y = parameters['feedback_pos_y']
@@ -64,7 +65,7 @@ class LevelFeedback(VisualFeedback):
     def _construct_bar_indicator(self):
         # reset stimuli
         self.stimuli = []
-        self.position_x = parameters['feedback_pos_x']
+        self.position_x = self.parameters['feedback_pos_x']
         height, width = self._determine_height_and_width()
 
         # construct the rectangular level shapes and append to stimuli array

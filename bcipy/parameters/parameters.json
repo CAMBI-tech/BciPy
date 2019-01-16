@@ -591,7 +591,7 @@
     "type": "float"
   },
   "feedback_pos_x": {
-    "value": "0",
+    "value": "-0.72",
     "section": "feedback_config",
     "readableName": "feedback_pos_x",
     "helpTip": "feedback_pos_x",
@@ -607,7 +607,7 @@
     "type": "float"
   },
   "feedback_stim_height": {
-    "value": "0.6",
+    "value": "0.35",
     "section": "feedback_config",
     "readableName": "feedback_stim_height",
     "helpTip": "feedback_stim_height",
@@ -615,7 +615,7 @@
     "type": "float"
   },
   "feedback_stim_width": {
-    "value": "0.6",
+    "value": "0.35",
     "section": "feedback_config",
     "readableName": "feedback_stim_width",
     "helpTip": "feedback_stim_width",
@@ -623,7 +623,7 @@
     "type": "float"
   },
   "feedback_line_width": {
-    "value": "10",
+    "value": "1",
     "section": "feedback_config",
     "readableName": "feedback_line_width",
     "helpTip": "feedback_line_width",
