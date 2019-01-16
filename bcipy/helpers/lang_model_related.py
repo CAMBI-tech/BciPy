@@ -1,6 +1,7 @@
 """Helper functions for language model use."""
 import math
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+import numpy as np
 from bcipy.language_model.lm_modes import LangModel, LmType
 
 
@@ -44,3 +45,50 @@ def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
             where the highest value is the most likely.
     """
     return [(sym, math.exp(-prob)) for sym, prob in priors]
+
+
+def sym_appended(symbol_probs: List[Tuple[str, float]],
+                 sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
+    """Returns a new list of probabilities with the addition of a new symbol
+    with the given probability for that symbol. Existing values are adjusted
+    equally such that the sum of the probabilities in the resulting list sum
+    to approx. 1.0. Only adds the symbol if it is not already in the list.
+
+    Used to add the backspace symbol to the LM output.
+
+    Parameters:
+    -----------
+        normalized - list of symbol, probability pairs
+        sym_prob - (symbol, probability) pair to append
+    """
+    if sym_prob[0] in dict(symbol_probs):
+        return symbol_probs
+    delta = sym_prob[1] / len(symbol_probs)
+    return [(sym, prob - delta) for sym, prob in symbol_probs] + [sym_prob]
+
+
+def equally_probable(alphabet: List[str],
+                     specified: Dict[str, float] = None) -> List[float]:
+    """Returns a list of probabilities which correspond to the provided
+    alphabet. Unless overridden by the specified values, all items will
+    have the same probability. All probabilities sum to 1.0.
+
+    Parameters:
+    ----------
+        alphabet - list of symbols; a probability will be generated for each.
+        specified - dict of symbol => probability values for which we want to
+            override the default probability.
+    Returns:
+    --------
+        list of probabilities (floats)
+    """
+    n_letters = len(alphabet)
+    if not specified:
+        return np.full(n_letters, 1 / n_letters)
+
+    # copy specified dict ignoring non-alphabet items
+    overrides = {k: specified[k] for k in alphabet if k in specified}
+
+    prob = (1 - sum(overrides.values())) / (n_letters - len(overrides))
+    # override specified values
+    return [overrides[sym] if sym in overrides else prob for sym in alphabet]
