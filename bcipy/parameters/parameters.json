@@ -730,5 +730,16 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
+  },
+  "psd_method": {
+    "value": "welch",
+    "section": "bci_config",
+    "readableName": "Power Spectral Density Method",
+    "helpTip": "The method used to approximate power spectral density bands",
+    "recommended_values": [
+      "welch",
+      "multitaper"
+    ],
+    "type": "str"
   }
 }

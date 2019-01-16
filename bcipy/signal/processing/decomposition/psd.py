@@ -18,10 +18,9 @@ def power_spectral_density(
         band: tuple,
         fs: float=100,
         window_length: float=4,
-        plot: bool=True,
+        plot: bool=False,
         method: PSD_TYPE=PSD_TYPE.MULTITAPER,
         relative=False):
-
     """Power spectral density:
 
     Many thanks to: https://raphaelvallat.github.io/bandpower.html
@@ -74,8 +73,8 @@ def power_spectral_density(
 
 
 if __name__ == '__main__':
-    data = np.loadtxt('bcipy/signal/processing/decomposition/data.txt')
+    data = np.loadtxt('bcipy/signal/processing/decomposition/resources/data.txt')
     fs = 100
     band = (0, 100)
     np.arange(data.size) / fs
-    power_spectral_density(data, band, fs=fs, method=PSD_TYPE.WELCH)
+    power_spectral_density(data, band, fs=fs, method=PSD_TYPE.WELCH, plot=True)
