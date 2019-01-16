@@ -535,7 +535,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -686,6 +686,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "feedback_target_line_width": {
+    "value": "100",
+    "section": "feedback_config",
+    "readableName": "Feedback Target Line Width",
+    "helpTip": "The width of target feedback for the level feedback",
+    "recommended_values": "",
+    "type": "int"
+  },
   "down_sampling_rate": {
     "value": "2",
     "section": "signal_config",
@@ -778,12 +786,5 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
-  },
-  "bounding_shape": {
-    "value": "false",
-    "section": "bci_config",
-    "readableName": "Whether or not to draw a bounding shape around sequence letters in RSVP",
-    "recommended_values": "",
-    "type": "bool"
   }
 }

@@ -117,7 +117,6 @@ class FreeSpellingDisplay(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
                  trigger_type='image',
-                 bounding_shape=False,
                  space_char=SPACE_CHAR):
         """ Initializes Free Spelling Task Objects """
 

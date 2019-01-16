@@ -30,6 +30,7 @@ class LevelFeedback(VisualFeedback):
         self.line_width = parameters['feedback_line_width']
         self.font = parameters['feedback_font']
         self.presentation_time = parameters['feedback_flash_time']
+        self.target_line_width = parameters['feedback_target_line_width']
 
         # how many levels to construct. This is hardcoded at this time because arrays
         #  cannot be stored in parameters.
@@ -45,7 +46,7 @@ class LevelFeedback(VisualFeedback):
         self._construct_bar_indicator()
         self._validate_levels()
 
-        # indexing starts at zero ;)
+        # indexing starts at zero but position does not ;)
         position -= 1
 
         # loop through the levels wanted and construct the stimuli
@@ -53,7 +54,7 @@ class LevelFeedback(VisualFeedback):
             # this is the target indicator level and should stand out of the rest
             if position == index:
                 self.stimuli[index].lineColor = self.feedback_indicator_color
-                self.stimuli[index].lineWidth = 100
+                self.stimuli[index].lineWidth = self.target_line_width
             # draw other stimuli elements
             self.stimuli[index].fillColor = self.level_colors[index]
             self.stimuli[index].draw()
