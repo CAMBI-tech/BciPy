@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from typing import List
-
+from typing import Dict, List
+import numpy as np
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
@@ -130,3 +130,19 @@ def analysis_channels(channels: List[str], device_name: str) -> list:
     if channels is None:
         return relevant_channels
     return [int(ch in relevant_channels) for ch in channels]
+
+
+def analysis_channel_names_by_pos(channels: List[str],
+                                  channel_map: List[int]) -> Dict[int, str]:
+    """Generate a dict mapping the index of a channel (used in offline
+    analysis) to its name.
+
+    Parameters:
+    -----------
+        channels - list of channel names
+        channel_map - output of analysis_channels method; binary list
+            where each item is either 0 or 1.
+    """
+    selection = [bool(x) for x in channel_map]
+    selected_channels = np.array(channels)[selection]
+    return {i: ch for i, ch in enumerate(selected_channels)}

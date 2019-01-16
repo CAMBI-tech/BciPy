@@ -19,7 +19,8 @@ def generate_offline_analysis_screen(
         fs=300,
         plot_x_ticks=8,
         plot_average=False,
-        show_figure=False) -> None:
+        show_figure=False,
+        channel_names = None) -> None:
     """ Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.
@@ -41,7 +42,9 @@ def generate_offline_analysis_screen(
     plot_x_ticks: number of ticks desired on the ERP plot
     plot_average: boolean: whether or not to average over all channels
     show_figure: boolean: whether or not to show the figures generated
+    channel_names: dict of channel names keyed by their position.
     """
+    channel_names = channel_names or {}
     classes = np.unique(y)
 
     means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2)) for i in classes]
@@ -60,12 +63,15 @@ def generate_offline_analysis_screen(
         ax2.plot(target_mean)
 
     else:
-        count = 1
+        count = 0
         # Loop through all the channels and plot each on the non target/target subplots
         while count < means[0].shape[0]:
-            ax1.plot(means[0][count, :])
-            ax2.plot(means[1][count, :])
+            lbl = channel_names.get(count, count)
+            ax1.plot(means[0][count, :], label=lbl)
+            ax2.plot(means[1][count, :], label=lbl)
             count += 1
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper left')
 
     # data points
     data_length = len(means[0][1, :])
