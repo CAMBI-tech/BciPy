@@ -38,7 +38,6 @@ class CopyPhraseDisplay(RSVPDisplay):
                  time_list_sti=[1] * 10,
                  is_txt_sti=True,
                  trigger_type='image',
-                 bounding_shape=False,
                  space_char=SPACE_CHAR):
         """ Initializes Copy Phrase Task Objects """
 
@@ -81,7 +80,6 @@ class CopyPhraseDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
-            bounding_shape=bounding_shape,
             space_char=space_char)
 
     def update_task_state(self, text, color_list):
@@ -155,8 +153,7 @@ class FreeSpellingDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
-            space_char=space_char,
-            bounding_shape=bounding_shape)
+            space_char=space_char)
 
 
 class CalibrationDisplay(RSVPDisplay):
@@ -178,7 +175,6 @@ class CalibrationDisplay(RSVPDisplay):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10,
                  is_txt_sti=True, trigger_type='image',
-                 bounding_shape=False,
                  space_char=SPACE_CHAR):
         """ Initializes Calibration Task Objects """
         color_text = [color_info]
@@ -213,8 +209,7 @@ class CalibrationDisplay(RSVPDisplay):
             time_list_sti=time_list_sti,
             is_txt_sti=is_txt_sti,
             trigger_type=trigger_type,
-            space_char=space_char,
-            bounding_shape=bounding_shape)
+            space_char=space_char)
 
 
 class IconToIconDisplay(RSVPDisplay):

@@ -678,6 +678,14 @@
     "recommended_values": "",
     "type": "str"
   },
+  "feedback_padding": {
+    "value": "0.37",
+    "section": "feedback_config",
+    "readableName": "feedback_padding",
+    "helpTip": "feedback_padding",
+    "recommended_values": "",
+    "type": "float"
+  },
   "down_sampling_rate": {
     "value": "2",
     "section": "signal_config",

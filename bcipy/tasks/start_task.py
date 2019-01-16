@@ -1,10 +1,9 @@
 """Code for constructing and executing Tasks"""
-from bcipy.tasks.rsvp.alert_tone_calibration import RSVPAlertToneCalibrationTask
-from bcipy.tasks.rsvp.circular_feedback_calibration import RSVPCircularFeedbackCalibrationTask
-from bcipy.tasks.rsvp.inter_sequence_feedback_calibration import RSVPInterSequenceFeedbackCalibration
-from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
+from bcipy.tasks.rsvp.calibration.alert_tone_calibration import RSVPAlertToneCalibrationTask
+from bcipy.tasks.rsvp.calibration.inter_sequence_feedback_calibration import RSVPInterSequenceFeedbackCalibration
+from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.tasks.rsvp.calibration.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.tasks.rsvp.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 from bcipy.tasks.task import Task
@@ -62,10 +61,6 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
     # CALIBRATION FEEDBACK TASKS
     if exp_type is ExperimentType.RSVP_ALERT_TONE_CALIBRATION:
         return RSVPAlertToneCalibrationTask(
-            display_window, daq, parameters, file_save)
-
-    if exp_type is ExperimentType.RSVP_CIRCULAR_FEEDBACK_CALIBRATION:
-        return RSVPCircularFeedbackCalibrationTask(
             display_window, daq, parameters, file_save)
 
     if exp_type is ExperimentType.RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION:

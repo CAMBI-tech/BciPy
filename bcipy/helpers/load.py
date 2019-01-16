@@ -56,7 +56,7 @@ def load_json_parameters(path: str, value_cast: bool=False) -> dict:
 
     Given a path to a json of parameters, convert to a dictionary and optionally
         cast the type.
-    
+
     Expects the following format:
     "fake_data": {
         "value": "true",

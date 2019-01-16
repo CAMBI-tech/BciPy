@@ -31,7 +31,7 @@ class RSVPDisplay(object):
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
                  time_list_sti=[1] * 10, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bounding_shape=False, space_char=SPACE_CHAR):
+                 trigger_type='image', space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -58,8 +58,6 @@ class RSVPDisplay(object):
                 stim_sequence(list[string]): list of elements to flash
                 color_list_sti(list[string]): list of colors for stimuli
                 time_list_sti(list[float]): timing for each letter flash
-
-                bounding_shape(boolean): shape around main RSVP sequence letters
         """
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
@@ -134,24 +132,10 @@ class RSVPDisplay(object):
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
                                         pos=pos_sti, ori=0.0)
 
-        self.bounding_shape = bounding_shape
-
-        if self.bounding_shape:
-            self.bounding_shape_color = 'red'
-            self.bounding_shape = visual.Circle(
-                win=window,
-                radius=0.45,
-                lineColor='red',
-                pos=self.pos_sti,
-                lineWidth=10,
-                ori=0.0)
-
     def draw_static(self):
         """Draw static elements in a stimulus."""
         self.task.draw()
         for idx in range(len(self.text)):
-            if self.bounding_shape:
-                self.bounding_shape.draw()
             self.text[idx].draw()
 
     def schedule_to(self, ele_list=[], time_list=[], color_list=[]):
@@ -249,9 +233,6 @@ class RSVPDisplay(object):
                                 info['RESOLUTION'][0] / info['RESOLUTION'][1])
                     new_text_height = (text_height * new_text_width) / text_width
                     self.sti.height = new_text_height
-
-            if self.bounding_shape:
-                self.bounding_shape.lineColor = 'green'
 
             # End static period
             self.staticPeriod.complete()

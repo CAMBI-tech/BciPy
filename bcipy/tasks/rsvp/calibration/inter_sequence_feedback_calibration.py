@@ -1,3 +1,4 @@
+from bcipy.feedback.visual.level_feedback import LevelFeedback
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration import RSVPCalibrationTask
@@ -8,11 +9,13 @@ from bcipy.helpers.bci_task_related import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
 from psychopy import core
+import random
 
 
-class RSVPCircularFeedbackCalibrationTask(Task):
-    """RSVP Calibration Task that uses circular feedback to alert user
-     to their current ability.
+class RSVPInterSequenceFeedbackCalibration(Task):
+    """RSVP InterSequenceFeedbackCalibration Task uses inter sequence
+        feedback to alert user to their current state in order to increase performance
+        in a calibration task.
 
     Calibration task performs an RSVP stimulus sequence to elicit an ERP.
     Parameters will change how many stim and for how long they present.
@@ -28,11 +31,10 @@ class RSVPCircularFeedbackCalibrationTask(Task):
     Output:
         file_save (String)
     """
-    TASK_NAME = 'RSVP Circular Feedback Calibration Task'
+    TASK_NAME = 'RSVP Inter Sequence Feedback Calibration Task'
 
     def __init__(self, win, daq, parameters, file_save):
-        super(RSVPCircularFeedbackCalibrationTask, self).__init__()
-        parameters['bounding_shape'] = True
+        super(RSVPInterSequenceFeedbackCalibration, self).__init__()
         self._task = RSVPCalibrationTask(
             win,
             daq,
@@ -55,7 +57,12 @@ class RSVPCircularFeedbackCalibrationTask(Task):
         self.wait_screen_message = self._task.wait_screen_message
         self.wait_screen_message_color = self._task.wait_screen_message_color
 
-        # Other variables go here...
+        self.visual_feedback = LevelFeedback(
+            display=self.window,
+            parameters=self.parameters,
+            clock=self._task.experiment_clock)
+
+        self.feedback_line_color = self.parameters['feedback_line_color']
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -126,7 +133,11 @@ class RSVPCircularFeedbackCalibrationTask(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
-                # TODO change the color of the circular feedback
+                message, color, height = self._get_feedback_decision()
+                # self.visual_feedback.height_stim = height # Changes height of shape
+                timing = self.visual_feedback.administer(position=1)
+
+                # TODO write the visual feedback timing
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
@@ -154,9 +165,19 @@ class RSVPCircularFeedbackCalibrationTask(Task):
 
         return self.file_save
 
+    def _get_feedback_decision(self):
+
+        height = random.uniform(0, 1)
+
+        if height < .5:
+            color = 'red'
+        else:
+            color = 'green'
+        return None, color, height
+
     @classmethod
     def label(cls):
-        return RSVPCircularFeedbackCalibrationTask.TASK_NAME
+        return RSVPInterSequenceFeedbackCalibration.TASK_NAME
 
     def name(self):
-        return RSVPCircularFeedbackCalibrationTask.TASK_NAME
+        return RSVPInterSequenceFeedbackCalibration.TASK_NAME
