@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bcipy.helpers.load import load_csv_data, read_data_csv
@@ -19,7 +20,8 @@ def generate_offline_analysis_screen(
         fs=300,
         plot_x_ticks=8,
         plot_average=False,
-        show_figure=False) -> None:
+        show_figure=False,
+        channel_names = None) -> None:
     """ Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.
@@ -41,7 +43,9 @@ def generate_offline_analysis_screen(
     plot_x_ticks: number of ticks desired on the ERP plot
     plot_average: boolean: whether or not to average over all channels
     show_figure: boolean: whether or not to show the figures generated
+    channel_names: dict of channel names keyed by their position.
     """
+    channel_names = channel_names or {}
     classes = np.unique(y)
 
     means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2)) for i in classes]
@@ -60,12 +64,15 @@ def generate_offline_analysis_screen(
         ax2.plot(target_mean)
 
     else:
-        count = 1
+        count = 0
         # Loop through all the channels and plot each on the non target/target subplots
         while count < means[0].shape[0]:
-            ax1.plot(means[0][count, :])
-            ax2.plot(means[1][count, :])
+            lbl = channel_names.get(count, count)
+            ax1.plot(means[0][count, :], label=lbl)
+            ax2.plot(means[1][count, :], label=lbl)
             count += 1
+        ax1.legend(loc='upper left',  prop={'size': 8})
+        ax2.legend(loc='upper left', prop={'size': 8})
 
     # data points
     data_length = len(means[0][1, :])
@@ -96,7 +103,7 @@ def generate_offline_analysis_screen(
     ax2.set_title('Target ERP')
 
     if save_figure:
-        fig.savefig(f'{folder}\mean_erp.pdf', bbox_inches='tight', format='pdf')
+        fig.savefig(os.path.join(folder, 'mean_erp.pdf'), bbox_inches='tight', format='pdf')
 
     if plot_lik_dens:
         fig, ax = plt.subplots()
@@ -113,7 +120,7 @@ def generate_offline_analysis_screen(
         plt.xlabel('scores')
 
         if save_figure:
-            fig.savefig(f'{folder}\lik_dens.pdf', bbox_inches='tight', format='pdf')
+            fig.savefig(os.path.join(folder, 'lik_dens.pdf'), bbox_inches='tight', format='pdf')
 
     if show_figure:
         plt.show()
@@ -162,6 +169,34 @@ if __name__ == '__main__':
     x = pickle.load(open('bcipy/helpers/tests/resources/mock_x_generate_erp.pkl', 'rb'))
     y = pickle.load(open('bcipy/helpers/tests/resources/mock_y_generate_erp.pkl', 'rb'))
 
+    names = {
+        0: 'P3',
+        1: 'C3',
+        2: 'F3',
+        3: 'Fz',
+        4: 'F4',
+        5: 'C4',
+        6: 'P4',
+        7: 'Cz',
+        8: 'A1',
+        9: 'Fp1',
+        10: 'Fp2',
+        11: 'T3',
+        12: 'T5',
+        13: 'O1',
+        14: 'O2',
+        15: 'F7',
+        16: 'F8',
+        17: 'A2',
+        18: 'T6',
+        19: 'T4'
+    }
     # generate the offline analysis screen. show figure at the end
     generate_offline_analysis_screen(
-        x, y, folder='bcipy', plot_lik_dens=False, save_figure=False, show_figure=True)
+        x,
+        y,
+        folder='bcipy',
+        plot_lik_dens=False,
+        save_figure=False,
+        show_figure=True,
+        channel_names=names)
