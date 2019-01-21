@@ -1,6 +1,8 @@
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from psychopy import visual, core
 
+from typing import Tuple
+
 
 class LevelFeedback(VisualFeedback):
     """Level Feedback.
@@ -19,44 +21,42 @@ class LevelFeedback(VisualFeedback):
         self.clock = clock
         self.display = display
         self.parameters = parameters
+        self.presentation_time = parameters['feedback_flash_time']
+
+        # set stylistic elements
         self.default_message_color = parameters['feedback_message_color']
         self.feedback_indicator_color = parameters['feedback_message_color']
-        self.position_y = parameters['feedback_pos_y']
         self.position_x = parameters['feedback_pos_x']
+        self.position_y = parameters['feedback_pos_y']
         self.padding = parameters['feedback_padding']
         self.width = parameters['feedback_stim_width']
         self.height = parameters['feedback_stim_height']
         self.line_color = parameters['feedback_line_color']
         self.line_width = parameters['feedback_line_width']
         self.font = parameters['feedback_font']
-        self.presentation_time = parameters['feedback_flash_time']
         self.target_line_width = parameters['feedback_target_line_width']
 
-        # how many levels to construct. This is hardcoded at this time because arrays
-        #  cannot be stored in parameters.
-        self.level_number = 5
+        # colors needed for each level. This defines the number of levels in the bar indicator.
         self.level_colors = ['red', 'darkorange', 'yellow', 'lightgreen', 'green']
 
         # array to hold our level feedback stimuli to be presented
         self.stimuli = []
 
     def administer(self, position=1):
-        # construct the bar indicator and validate the levels / colors supplied
-        #   are accruate
+        # construct the bar indicator
         self._construct_bar_indicator()
-        self._validate_levels()
 
         # indexing starts at zero but position does not ;)
         position -= 1
 
         # loop through the levels wanted and construct the stimuli
-        for index in range(self.level_number):
+        for index, color in enumerate(self.level_colors):
             # this is the target indicator level and should stand out of the rest
             if position == index:
                 self.stimuli[index].lineColor = self.feedback_indicator_color
                 self.stimuli[index].lineWidth = self.target_line_width
             # draw other stimuli elements
-            self.stimuli[index].fillColor = self.level_colors[index]
+            self.stimuli[index].fillColor = color
             self.stimuli[index].draw()
 
         # flip the display and present for a time
@@ -64,14 +64,17 @@ class LevelFeedback(VisualFeedback):
         core.wait(self.presentation_time)
 
     def _construct_bar_indicator(self):
-        # reset stimuli
-        self.stimuli = []
-        self.position_x = self.parameters['feedback_pos_x']
+        """Construct Bar Indicator.
+
+        Helper method for constructing the bar indicator programmatically. It
+            resets the position_x and stimuli variables on first call.
+        """
+        self._reset_stimuli()
         height, width = self._determine_height_and_width()
 
         # construct the rectangular level shapes and append to stimuli array
-        for level in range(self.level_number):
-            position = self._determine_position()
+        for level in self.level_colors:
+            position = self._determine_stimuli_position()
             rect = visual.Rect(
                 win=self.display,
                 width=width,
@@ -83,19 +86,37 @@ class LevelFeedback(VisualFeedback):
                 ori=0.0)
             self.stimuli.append(rect)
 
-    def _determine_position(self):
+    def _determine_stimuli_position(self) -> Tuple[int, int]:
+        """Determine Stimuli Position.
+
+        Defines the x and y position of the feedback level stimuli,
+            incrementing by the self.padding variable after setting.
+            If a vertical bar is desired the position_y should be incremented
+            instead of position_x.
+        """
         # define the positioning of stimuli and increment the x position
         response = self.position_x, self.position_y
         self.position_x += self.padding
         return response
 
-    def _determine_height_and_width(self):
+    def _determine_height_and_width(self) -> Tuple[float, float]:
+        """Determine Height and Width.
+
+        Defines the height and width of level stimuli. Currently, a static
+            set of variables.
+        """
         return self.width, self.height
 
-    def _validate_levels(self):
-        # validate the number of levels and colors supplied are equal
-        if len(self.level_colors) != self.level_number:
-            raise ValueError('Level colors must be equal to the number of levels')
+    def _reset_stimuli(self) -> None:
+        """Reset Stimuli.
+
+        Used when redrawing stimuli. Sets the stimuli array and starting
+            x positions to their starting values. If using vertical bars
+            this should reset the y positions instead.
+        """
+        # reset stimuli
+        self.stimuli = []
+        self.position_x = self.parameters['feedback_pos_x']
 
 
 if __name__ == '__main__':
@@ -107,8 +128,8 @@ if __name__ == '__main__':
     display = init_display_window(parameters)
     clock = core.Clock()
     feedback = LevelFeedback(display, parameters, clock)
-    feedback.administer(position=2)
-    feedback.administer(position=3)
-    feedback.administer(position=4)
-    feedback.administer(position=5)
-    feedback.administer(position=1)
+
+    for index, _ in enumerate(feedback.level_colors):
+        # the position argument is based on index starting at 1
+        index += 1
+        feedback.administer(position=index)
