@@ -62,6 +62,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             parameters=self.parameters,
             clock=self._task.experiment_clock)
 
+        self.feedback_buffer_time = self.parameters['feedback_buffer_time']
         self.feedback_line_color = self.parameters['feedback_line_color']
 
     def execute(self):
@@ -133,11 +134,12 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
+                # wait some amount of time before presenting feedback
+                core.wait(self.feedback_buffer_time)
+
                 # TODO implement feedback decision maker
                 position = self._get_feedback_decision()
                 timing = self.visual_feedback.administer(position=position)
-
-                # TODO write the visual feedback timing
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)

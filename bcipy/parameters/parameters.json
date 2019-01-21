@@ -686,6 +686,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "feedback_buffer_time": {
+    "value": "1",
+    "section": "feedback_config",
+    "readableName": "Time inbetween feedback and sequences",
+    "helpTip": "Feedback Buffer Time in Seconds",
+    "recommended_values": "",
+    "type": "float"
+  },
   "feedback_target_line_width": {
     "value": "100",
     "section": "feedback_config",
