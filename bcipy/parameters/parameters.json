@@ -732,13 +732,13 @@
     "type": "float"
   },
   "psd_method": {
-    "value": "welch",
+    "value": "WELCH",
     "section": "bci_config",
     "readableName": "Power Spectral Density Method",
     "helpTip": "The method used to approximate power spectral density bands",
     "recommended_values": [
-      "welch",
-      "multitaper"
+      "WELCH",
+      "MULTITAPER"
     ],
     "type": "str"
   },
