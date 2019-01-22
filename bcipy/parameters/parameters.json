@@ -738,5 +738,32 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
+  },
+  "psd_method": {
+    "value": "Welch",
+    "section": "bci_config",
+    "readableName": "Power Spectral Density Method",
+    "helpTip": "The method used to approximate power spectral density bands",
+    "recommended_values": [
+      "Welch",
+      "MutliTaper"
+    ],
+    "type": "str"
+  },
+  "lm_backspace_prob": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Backspace probability",
+    "helpTip": "Language Model probability for the backspace character.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "backspace_always_shown": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Backspace always shown",
+    "helpTip": "Should the backspace character always be shown in Copy Phrase tasks.",
+    "recommended_values": "",
+    "type": "bool"
   }
 }
