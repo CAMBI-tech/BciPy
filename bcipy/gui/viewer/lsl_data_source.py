@@ -24,6 +24,8 @@ class LslDataSource(DataSource):
         info = inlet.info()
 
         fs = float(info.nominal_srate())
+        self.sample_rate = fs
+        print(f"Sample rate: {fs}")
         name = info.name()
         channel_names = []
         ch = info.desc().child("channels").child("channel")
@@ -39,11 +41,26 @@ class LslDataSource(DataSource):
         sample, _ts = self.inlet.pull_sample(timeout=0.0)
         return sample
 
-    def next_n(self, n: int):
+    def next_n(self, n: int, fast_forward=False):
         """Provides the next n records as a list"""
-        # Read data from the inlet. Use a timeout of 0.0 so we don't block GUI interaction.
-        samples, _ts = self.inlet.pull_chunk(timeout=0.0, max_samples=n)
+        # Read data from the inlet. May blocks GUI interaction if n samples
+        # are not yet available.
+        samples, _ts = self.inlet.pull_chunk(timeout=0.1, max_samples=n)
+        
+        if fast_forward:
+            tmp = samples
+            print(f"Fast forwarding:")
+            chomped_count = 0
+            while len(tmp) == n:
+                samples = tmp
+                # A timeout of 0.0 does not block GUI interaction and only
+                # gets samples immediately available.
+                tmp, _ts = self.inlet.pull_chunk(timeout=0.0, max_samples=n)
+                chomped_count += len(tmp)
+            print(f"Chomped {chomped_count} records.")
+            samples = samples[len(tmp):] + tmp            
 
         if len(samples) < n:
             raise StopIteration
         return samples
+        

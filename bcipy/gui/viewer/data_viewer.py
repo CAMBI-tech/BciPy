@@ -200,6 +200,8 @@ class EegFrame(wx.Frame):
 
     def start(self):
         """Start streaming data in the viewer."""
+        # update buffer with latest data on (re)start.
+        self.update_buffer(fast_forward=True)
         self.timer.Start(self.refresh_rate)
         self.started = True
         self.start_stop_btn.SetLabel("Pause")
@@ -284,10 +286,11 @@ class EegFrame(wx.Frame):
             # plot cursor
             self.axes[i].axvline(self.cursor_x(), color='r')
 
-    def update_buffer(self):
+    def update_buffer(self, fast_forward=False):
         """Update the buffer with latest data and return the data"""
         try:
-            records = self.data_source.next_n(self.records_per_refresh)
+            records = self.data_source.next_n(
+                self.records_per_refresh, fast_forward=fast_forward)
             for row in records:
                 self.buffer.append(row)
         except StopIteration:
@@ -378,7 +381,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-f', '--file', help='path to the data file', default=None)
     parser.add_argument('-s', '--seconds',
-                        help='seconds to display', default=2, type=int)
+                        help='seconds to display', default=5, type=int)
     parser.add_argument('-d', '--downsample',
                         help='downsample factor', default=2, type=int)
     parser.add_argument('-r', '--refresh',
