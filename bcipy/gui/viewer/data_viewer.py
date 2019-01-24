@@ -154,8 +154,8 @@ class EegFrame(wx.Frame):
             axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
             axes[i].xaxis.set_major_formatter(
                 ticker.FixedFormatter(tick_names))
-            axes[i].yaxis.set_major_locator(NullLocator())
-            axes[i].yaxis.set_major_formatter(NullFormatter())
+            # axes[i].yaxis.set_major_locator(NullLocator())
+            # axes[i].yaxis.set_major_formatter(NullFormatter())
             axes[i].grid()
         return axes
 
