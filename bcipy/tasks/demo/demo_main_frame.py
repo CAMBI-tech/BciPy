@@ -63,4 +63,4 @@ def _demo_decision_maker():
 
 if __name__ == '__main__':
     _demo_decision_maker()
-    # _demo_fusion()
+    _demo_fusion()

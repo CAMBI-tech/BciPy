@@ -1,9 +1,9 @@
-import os
-from psychopy import visual, event, core
-import numpy as np
-from typing import Any, List
-
 import logging
+import os
+from typing import Any
+
+import numpy as np
+from psychopy import core, event, visual
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
@@ -22,7 +22,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     -------
         (next_target_letter, text_task, run) tuple
     """
-    if text_task is '*':
+    if text_task == '*':
         length_of_spelled_letters = 0
     else:
         length_of_spelled_letters = len(text_task)
@@ -51,6 +51,8 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
     return next_target_letter, text_task, run
 
+SPACE_CHAR = '_'
+BACKSPACE_CHAR = '<'
 
 def alphabet(parameters=None):
     """Alphabet.
@@ -66,15 +68,17 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path):
-                if stimulus_filename.endswith(".png"):
+            for stimulus_filename in os.listdir(path) :
+                # PLUS.png is reserved for the fixation symbol
+                if stimulus_filename.endswith(
+                        ".png") and not stimulus_filename.endswith('PLUS.png'):
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '<', '_']
+            BACKSPACE_CHAR, SPACE_CHAR]
 
 
 def process_data_for_decision(
@@ -126,6 +130,7 @@ def process_data_for_decision(
                 for text, timing in sequence_timing]
 
     # Assign labels for triggers
+    # TODO: This doesn't seem useful and is misleading
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
@@ -166,8 +171,7 @@ def _float_val(col: Any) -> float:
     value, and would only have type str for a marker value."""
     if isinstance(col, str):
         return 1.0
-    else:
-        return float(col)
+    return float(col)
 
 
 class BarGraph(object):
@@ -323,7 +327,7 @@ def trial_complete_message(win, parameters):
     return [message_stim]
 
 
-def print_message(window: visual.Window, message: str="Initializing..."):
+def print_message(window: visual.Window, message: str = "Initializing..."):
     """Draws a message on the display window using default config.
 
     Parameters
@@ -386,14 +390,17 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
+DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
+                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
+
+
 def trial_reshaper(trial_target_info: list,
                    timing_info: list,
                    filtered_eeg: np.array,
                    fs: int, k: int, mode: str,
-                   offset: float=0,
-                   channel_map: tuple=(
-        1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
-        1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0), trial_length: float=0.5) -> tuple:
+                   offset: float = 0,
+                   channel_map: tuple = DEFAULT_CHANNEL_MAP,
+                   trial_length: float = 0.5) -> tuple:
     """Trial Reshaper.
 
     Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
@@ -407,6 +414,25 @@ def trial_reshaper(trial_target_info: list,
 
     :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
 
+        reshaped_trials is a 3 dimensional np array where the first dimension
+            is the channel, second dimension the trial/letter, and third
+            dimension is time samples. So at 300hz and a presentation time of
+            0.2 seconds per letter, the third dimension would have about 60
+            samples.
+            If this were a json structure it might look like:
+                {
+                    'ch1': {
+                        'B' : [-647.123, -93.124, ...],
+                        'T' : [...],
+                        ...
+                    },
+                    'ch2': {
+                        'B' : [39.60, -224.124, ...],
+                        'T' : [...],
+                        ...
+                    }, 
+                    ...
+                }
     """
     try:
         # Remove the channels that we are not interested in

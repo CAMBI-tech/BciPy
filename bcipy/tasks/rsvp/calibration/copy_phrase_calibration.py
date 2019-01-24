@@ -207,6 +207,7 @@ def _init_copy_phrase_display_task(
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
         is_txt_sti=parameters['is_txt_sti'],
-        trigger_type=parameters['trigger_type'])
+        trigger_type=parameters['trigger_type'],
+        space_char=parameters['sti_space_char'])
 
     return rsvp

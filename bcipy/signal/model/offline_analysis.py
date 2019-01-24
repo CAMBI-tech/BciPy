@@ -10,7 +10,8 @@ from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
-from bcipy.helpers.acquisition_related import analysis_channels
+from bcipy.helpers.acquisition_related import analysis_channels,\
+    analysis_channel_names_by_pos
 from bcipy.helpers.stimuli_generation import play_sound
 
 logging.basicConfig(level=logging.DEBUG,
@@ -84,7 +85,8 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
-        fs=fs, save_figure=True, show_figure=False)
+        fs=fs, save_figure=True, show_figure=False,
+        channel_names = analysis_channel_names_by_pos(channels, channel_map))
 
     logging.debug('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:

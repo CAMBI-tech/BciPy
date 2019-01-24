@@ -16,7 +16,10 @@ from psychopy import core
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
-def best_selection(selection_elements: list, val: list, len_query: int) -> list:
+def best_selection(selection_elements: list,
+                   val: list,
+                   len_query: int,
+                   always_included=None) -> list:
     """Best Selection.
 
      given set of elements and a value function over the set, picks the len_query
@@ -26,20 +29,25 @@ def best_selection(selection_elements: list, val: list, len_query: int) -> list:
             selection_elements(list[str]): the set of elements
             val(list[float]): values for the corresponding elements
             len_query(int): number of elements to be picked from the set
+            always_included(list[str]): subset of elements that should always be
+                included in the result. Defaults to None.
         Return:
             best_selection(list[str]): elements from selection_elements with the best values """
-    max_p_val = np.sort(val)[::-1]
-    max_p_val = max_p_val[0:len_query]
 
-    best_selection = []
-    for idx in range(len_query):
-        query_index = np.where(val == max_p_val[idx])[0][0]
-        query = selection_elements[query_index]
-        val = np.delete(val, query_index)
-        selection_elements.remove(query)
-        best_selection.append(query)
+    always_included = always_included or []
+    n = len_query
+    # pick the top n items sorted by value in decreasing order
+    elem_val = dict(zip(selection_elements, val))
+    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
 
-    return best_selection
+    replacements = [
+        item for item in always_included
+        if item not in best and item in selection_elements
+    ][0:n]
+
+    if replacements:
+        best[-len(replacements):] = replacements
+    return best
 
 
 def best_case_rsvp_seq_gen(alp: list,
@@ -48,10 +56,11 @@ def best_case_rsvp_seq_gen(alp: list,
                            color=['red', 'white'],
                            num_sti=1,
                            len_sti=10,
-                           is_txt=True) -> tuple:
+                           is_txt=True,
+                           seq_constants=None) -> tuple:
     """Best Case RSVP Sequence Generation.
 
-    generates RSVPKeyboard sequence by picking n-most likeliy letters.
+    generates RSVPKeyboard sequence by picking n-most likely letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
             session_stimuli(ndarray[float]): quantifier metric for query selection
@@ -62,6 +71,8 @@ def best_case_rsvp_seq_gen(alp: list,
                 Observe that [-1] element represents the trial information
             num_sti(int): number of random stimuli to be created
             len_sti(int): number of trials in a sequence
+            seq_constants(list[str]): list of letters that should always be
+                included in every sequence. If provided, must be alp items.
         Return:
             schedule_seq(tuple(
                 samples[list[list[str]]]: list of sequences
@@ -74,11 +85,14 @@ def best_case_rsvp_seq_gen(alp: list,
                         'len(session_stimuli):{}, should be same!'.format(
                             len(alp), len(session_stimuli)))
 
+    if seq_constants and not set(seq_constants).issubset(alp):
+        raise Exception('Sequence constants must be alphabet items.')
+
     # create a list of alphabet letters
     alphabet = [i for i in alp]
 
     # query for the best selection
-    query = best_selection(alphabet, session_stimuli, len_sti)
+    query = best_selection(alphabet, session_stimuli, len_sti, seq_constants)
 
     # shuffle the returned values
     random.shuffle(query)
@@ -104,7 +118,6 @@ def best_case_rsvp_seq_gen(alp: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * len_sti)
-
     return (samples, times, colors)
 
 
@@ -290,18 +303,18 @@ def generate_icon_match_images(experiment_length, image_path, number_of_sequence
         experiment_length(int): Number of images per sequence
         image_path(str): Path to image files
         number_of_sequences(int): Number of sequences to generate
-        timing(list): List of timings
+        timing(list): List of timings; [parameters['time_target'],
+                       parameters['time_cross'],
+                       parameters['time_flash']]
         is_word(bool): Whether or not this is an icon to word matching task
     Return generate_icon_match_images(arrays of tuples of paths to images to
     display, and timings)
     """
     # Get all png images in image path
-    image_array = glob.glob(image_path + '*.png')
-
-    # Remove plus image from array
-    for image in image_array:
-        if image.endswith('PLUS.png'):
-            image_array.remove(image)
+    image_array = [
+        img for img in glob.glob(image_path + "*.png")
+        if not img.endswith("PLUS.png")
+    ]
 
     if experiment_length > len(image_array) - 1:
         raise Exception(

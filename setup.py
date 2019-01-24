@@ -19,15 +19,13 @@ EMAIL = 'tab.memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 
 # What packages are required for this module to be executed?
 REQUIRED = [
     'wheel==0.30.0',
     'wxPython==4.0.0',
-    'pytest==3.1.3',
-    'coverage==4.5.1',
     'configobj==5.0.6',
     'docker==2.6.1',
     'json-tricks==3.8.0',
@@ -35,7 +33,6 @@ REQUIRED = [
     'Pillow==4.3.0',
     'PyOpenGL==3.1.0',
     'pyOpenSSL==17.5.0',
-    'mockito==1.1.0',
     'PsychoPy==1.90.2',
     'pytz==2017.2',
     'six==1.11.0',
@@ -44,8 +41,8 @@ REQUIRED = [
     'future==0.16.0',
     'sklearn==0.0',
     'construct==2.8.14',
-    'mock==2.0.0',
     'matplotlib==2.1.1',
+    'mne==0.17.0',
     'pylsl==1.10.5',
     'psutil==5.4.0',
     'pandas==0.21.0',
