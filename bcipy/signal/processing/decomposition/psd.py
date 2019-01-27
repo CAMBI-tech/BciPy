@@ -27,7 +27,7 @@ def power_spectral_density(
         sampling_rate: float=100.0,
         window_length: float=4.0,
         plot: bool=False,
-        method: PSD_TYPE=PSD_TYPE.MULTITAPER,
+        method: PSD_TYPE=PSD_TYPE.WELCH,
         relative=False):
     """Power spectral density:
 
@@ -89,7 +89,7 @@ def power_spectral_density(
         plt.ylabel('Power spectral density (V^2 / Hz)')
         plt.ylim([0, psd.max() * 1.1])
         plt.title(f'{method.value}')
-        plt.xlim([0, 20])
+        plt.xlim([0, sampling_rate / 2])
         sns.despine()
         plt.show()
 
