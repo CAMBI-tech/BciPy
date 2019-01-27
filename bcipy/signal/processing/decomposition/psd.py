@@ -23,7 +23,7 @@ class PSD_TYPE(Enum):
 
 def power_spectral_density(
         data: np.ndarray,
-        band: Tuple[int, int],
+        band: Tuple[float, float],
         sampling_rate: float=100.0,
         window_length: float=4.0,
         plot: bool=False,

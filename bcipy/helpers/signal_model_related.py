@@ -9,7 +9,6 @@ from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
 from bcipy.signal.processing.sig_pro import sig_pro
 from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
-from bcipy.helpers.acquisition_related import analysis_channels
 from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
  equally_probable
 from bcipy.helpers.bci_task_related import BACKSPACE_CHAR
