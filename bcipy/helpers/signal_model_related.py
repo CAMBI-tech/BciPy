@@ -125,7 +125,7 @@ class CopyPhraseWrapper:
         target_types = []
 
         for i, (letter, stamp) in enumerate(triggers):
-            if not letter in self.nonletters:
+            if letter not in self.nonletters:
                 letters.append(letter)
                 times.append(stamp)
                 target_types.append(target_info[i])

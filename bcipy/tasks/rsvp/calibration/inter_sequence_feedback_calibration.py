@@ -51,7 +51,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             file_save)
 
         self.daq = daq
-        self.fs = 300  # todo get from daq
+        self.fs = self.daq.device_info.fs
         self.alp = self._task.alp
         self.rsvp = self._task.rsvp
         self.parameters = parameters
@@ -83,8 +83,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         # get +/- 5% of the stimulation frequency
         self.psd_export_band = (
-            self.stimulation_frequency * .95,
-            self.stimulation_frequency * 1.05)
+            self.stimulation_frequency * .90,
+            self.stimulation_frequency * 1.1)
 
         self.trial_length = self.time_flash * self.len_sti
         self.k = self.parameters['down_sampling_rate']
@@ -94,9 +94,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # The channel used to calculate the SSVEP response to RSVP sequence.
         # NOTE: This task will only work for VR300
         self.psd_channel_index = 6
-        self.device_name = 'DSI_VR300'
-        self.channel_map = analysis_channels(
-            analysis_channels_by_device[self.device_name], self.device_name)
+        self.device_name = self.daq.device_info.name
+        self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -170,7 +169,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 # wait some amount of time before presenting feedback
                 core.wait(self.feedback_buffer_time)
 
-                # TODO implement feedback decision maker
                 position = self._get_feedback_decision(last_sequence_timing)
                 timing = self.visual_feedback.administer(position=position)
 
@@ -210,8 +208,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             data[self.psd_channel_index][0],
             self.psd_export_band,
             sampling_rate=self.filtered_sampling_rate,
-            # plot=True # uncomment to see the PSD plot
+            # plot=True,  # uncomment to see the PSD plot in real time
             method=self.psd_method)
+
+        # In the event the calcalated band returns nothing, throw an
+        #  error
+        if response == 0:
+            raise ValueError('PSD calcualted for feedback invalid')
 
         if response > 10:
             return 5
@@ -230,7 +233,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.parameters,
             self.rsvp.first_stim_time,
             self.static_offset,
-            buf_length=self.trial_length)
+            buf_length=self.trial_length + 1)
 
         # filter it
         filtered_data = sig_pro(raw_data, fs=self.fs, k=self.k)
@@ -242,7 +245,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             times,
             filtered_data,
             fs=self.fs,
-            k=self.k, mode='free_spell',
+            k=self.k, mode='copy_phrase',
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return data
@@ -267,7 +270,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         target_types = []
 
         for i, (letter, stamp) in enumerate(triggers):
-            if not letter in self.nonletters:
+            if letter not in self.nonletters:
                 letters.append(letter)
                 times.append(stamp)
                 target_types.append(target_info[i])
