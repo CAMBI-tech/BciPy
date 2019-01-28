@@ -41,18 +41,6 @@ class VisualFeedback(Feedback):
 
         self.message_color = self.parameters['feedback_message_color']
         self.feedback_line_width = self.parameters['feedback_line_width']
-        self.rectangle_message_box = self.parameters['rectangle_message_box']
-
-        if self.rectangle_message_box:
-            self.rect = visual.Rect(
-                win=display,
-                width=self.width_stim,
-                height=self.height_stim,
-                lineColor=self.message_color,
-                pos=(self.pos_stim),
-                lineWidth=self.feedback_line_width,
-                ori=0.0)
-            self.rect.opacity = 0
 
     def administer(
             self,
@@ -102,8 +90,6 @@ class VisualFeedback(Feedback):
         return timing
 
     def _show_stimuli(self, stimulus):
-        if self.rectangle_message_box:
-            self.rect.draw()
         stimulus.draw()
         self.display.flip()
 
@@ -116,11 +102,6 @@ class VisualFeedback(Feedback):
                 pos=pos,
                 ori=0.0)
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
-            if self.rectangle_message_box:
-                self.rect.width = image_stim.size[0]
-                self.rect.height = image_stim.size[1]
-                self.rect.opacity = 1
-                self.rect.lineColor = self.message_color
             return image_stim
         if stimuli_type == FeedbackType.TEXT:
             return visual.TextStim(

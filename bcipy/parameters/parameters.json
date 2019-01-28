@@ -535,7 +535,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -643,22 +643,6 @@
     "section": "feedback_config",
     "readableName": "show_feedback",
     "helpTip": "Show Feedback for the Task. Must be configured per task.",
-    "recommended_values": "",
-    "type": "bool"
-  },
-  "rectangle_message_box": {
-    "value": "false",
-    "section": "feedback_config",
-    "readableName": "rectangle_message_box",
-    "helpTip": "Show rectangular shape around feedback.",
-    "recommended_values": "",
-    "type": "bool"
-  },
-  "circular_message_box": {
-    "value": "false",
-    "section": "feedback_config",
-    "readableName": "circular_message_box",
-    "helpTip": "Show circular shape around feedback.",
     "recommended_values": "",
     "type": "bool"
   },
