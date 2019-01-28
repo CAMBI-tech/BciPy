@@ -1,17 +1,14 @@
 from psychopy import core
-from bcipy.tasks.task import Task
 
+from bcipy.tasks.task import Task
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
-import logging
 
 
 class RSVPCopyPhraseTask(Task):
@@ -94,7 +91,7 @@ class RSVPCopyPhraseTask(Task):
         self.spelled_letters_count = int(
             parameters['spelled_letters_count'])
         if self.spelled_letters_count > len(self.copy_phrase):
-            logging.debug("Already spelled letters exceeds phrase length.")
+            self.logger.debug("Already spelled letters exceeds phrase length.")
             self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
@@ -324,11 +321,11 @@ class RSVPCopyPhraseTask(Task):
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
-                    logging.debug("Max tries exceeded: to allow for more tries"
+                    self.logger.debug("Max tries exceeded: to allow for more tries"
                                   " adjust the Maximum Sequence Length "
                                   "(max_seq_len) parameter.")
                 if max_time_exceeded:
-                    logging.debug("Max time exceeded. To allow for more time "
+                    self.logger.debug("Max time exceeded. To allow for more time "
                                   "adjust the max_minutes parameter.")
                 run = False
 

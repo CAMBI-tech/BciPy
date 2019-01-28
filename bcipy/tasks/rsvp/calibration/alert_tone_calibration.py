@@ -1,5 +1,3 @@
-"""Calibration Task that uses alert tones to help the user retain focus."""
-
 from bcipy.helpers.stimuli_generation import play_sound, soundfiles
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask

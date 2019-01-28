@@ -4,7 +4,6 @@ from typing import List, Tuple
 from bcipy.feedback.visual.level_feedback import LevelFeedback
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
 from bcipy.signal.processing.sig_pro import sig_pro
@@ -15,9 +14,7 @@ from bcipy.helpers.bci_task_related import (
     get_user_input,
     pause_calibration,
     process_data_for_decision)
-
 from bcipy.helpers.acquisition_related import analysis_channels, analysis_channels_by_device
-
 from bcipy.signal.processing.decomposition.psd import power_spectral_density, PSD_TYPE
 
 

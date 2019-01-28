@@ -1,11 +1,10 @@
 import csv
 import datetime
 import glob
-import logging
 import random
+
 from itertools import repeat
-from os import path
-from os.path import basename, dirname
+from os.path import basename, dirname, splitext
 from typing import Dict, List, Sequence, Tuple
 
 from psychopy import core
@@ -63,7 +62,7 @@ class RSVPIconToIconTask(Task):
         self.image_path = parameters['path_to_presentation_images']
         # Alphabet is comprised of the image base names
         self.alp = [
-            path.splitext(path.basename(img))[0]
+            splitext(basename(img))[0]
             for img in glob.glob(self.image_path + "*.png")
             if not img.endswith("PLUS.png")
         ]
@@ -151,7 +150,7 @@ class RSVPIconToIconTask(Task):
 
     def await_start(self) -> bool:
         """Wait for user input to either exit or start"""
-        logging.debug("Awaiting user start.")
+        self.logger.debug("Awaiting user start.")
         should_continue = get_user_input(
             self.rsvp,
             self.wait_screen_message,
@@ -168,7 +167,7 @@ class RSVPIconToIconTask(Task):
             self.wait_screen_message_color,
             first_run=False)
         if not should_continue:
-            logging.debug("User wants to exit.")
+            self.logger.debug("User wants to exit.")
         return should_continue
 
     def present_sequence(self,
@@ -306,13 +305,13 @@ class RSVPIconToIconTask(Task):
         """Returns True if experiment is currently within params, False if 
         total sequences or total time exceeds configured values."""
         if total_sequences >= self.max_seq_length:
-            logging.debug("Max tries exceeded: to allow for more tries"
+            self.logger.debug("Max tries exceeded: to allow for more tries"
                           " adjust the Maximum Sequence Length "
                           "(max_seq_len) parameter.")
             return False
 
         if total_time >= self.max_seconds:
-            logging.debug("Max time exceeded. To allow for more time "
+            self.logger.debug("Max time exceeded. To allow for more time "
                           "adjust the max_minutes parameter.")
             return False
         return True
@@ -329,7 +328,7 @@ class RSVPIconToIconTask(Task):
         self.logger.debug('Starting Icon to Icon Task!')
 
         icons = [random.choice(self.alp) for _ in range(self.num_sti)]
-        logging.debug(f"Icon sequence: {icons}")
+        self.logger.debug(f"Icon sequence: {icons}")
 
         selections = []
         copy_phrase_task = self.init_copy_phrase_task(task_list=[(icons, [])])
