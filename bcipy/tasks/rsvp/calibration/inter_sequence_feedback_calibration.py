@@ -28,7 +28,11 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
     Calibration task performs an RSVP stimulus sequence to elicit an ERP.
     Parameters will change how many stim and for how long they present.
-    Parameters also change color and text / image inputs and alert sounds.
+    Parameters also change color and text / image inputs.
+
+    Note: The channel index, PSD method, and stimulation frequency band
+     approximation are hardcoded for piloting. In the future, these
+     may be changed to allow easier feedback for different caps.
 
 
     Input:
@@ -81,7 +85,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.time_flash = self.parameters['time_flash']
         self.stimulation_frequency = calculate_stimulation_freq(self.time_flash)
 
-        # get +/- 5% of the stimulation frequency
+        # get +/- 10% of the stimulation frequency
         self.psd_export_band = (
             self.stimulation_frequency * .90,
             self.stimulation_frequency * 1.1)
@@ -166,9 +170,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
-                # wait some amount of time before presenting feedback
-                core.wait(self.feedback_buffer_time)
-
                 position = self._get_feedback_decision(last_sequence_timing)
                 timing = self.visual_feedback.administer(position=position)
 
@@ -199,11 +200,14 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         return self.file_save
 
     def _get_feedback_decision(self, sequence_timing):
-        core.wait(self.trial_length)
+        # wait some time in order to get enough data from the daq and make the
+        #   tranisiton less abrupt to the user
+        core.wait(self.trial_length + self.feedback_buffer_time)
+
         # get data sequence
         data = self._get_data_for_psd(sequence_timing)
 
-        # we always want the same channel and the first of it
+        # we always want the same data channel in the occipital region and the first of it
         response = power_spectral_density(
             data[self.psd_channel_index][0],
             self.psd_export_band,
@@ -216,11 +220,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         if response == 0:
             raise ValueError('PSD calcualted for feedback invalid')
 
-        if response > 10:
+        # TODO: finish this approzimation of feedback position with Barry
+        if response > 20:
             return 5
-        elif response > 8:
-            return 4
-        elif response > 5:
+        elif response > 10:
             return 3
         return 1
 
@@ -233,7 +236,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.parameters,
             self.rsvp.first_stim_time,
             self.static_offset,
-            buf_length=self.trial_length + 1)
+            buf_length=self.trial_length)
 
         # filter it
         filtered_data = sig_pro(raw_data, fs=self.fs, k=self.k)
