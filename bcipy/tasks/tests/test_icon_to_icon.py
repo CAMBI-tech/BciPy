@@ -24,10 +24,10 @@ class TestIconToIcon(unittest.TestCase):
         parameters['window_height'] = 1
         parameters['window_width'] = 1
         parameters['is_txt_sti'] = False
-        img_path = "bcipy/static/images/rsvp_images/"
+        img_path = 'bcipy/static/images/rsvp_images/'
         parameters['path_to_presentation_images'] = img_path
 
-        fixation = "bcipy/static/images/bci_main_images/PLUS.png"
+        fixation = 'bcipy/static/images/bci_main_images/PLUS.png'
         # TODO: can this be mocked?
         display = init_display_window(parameters)
         daq = mock()

@@ -60,8 +60,11 @@ class LevelFeedback(VisualFeedback):
             self.stimuli[index].draw()
 
         # flip the display and present for a time
+        time = ['visual_feedback', self.clock.getTime()]
         self.display.flip()
         core.wait(self.presentation_time)
+
+        return time
 
     def _construct_bar_indicator(self):
         """Construct Bar Indicator.
