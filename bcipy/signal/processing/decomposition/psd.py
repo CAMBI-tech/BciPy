@@ -59,26 +59,22 @@ def power_spectral_density(
 
     # Compute the modified periodogram (Welch)
     if method == PSD_TYPE.WELCH:
-        if window_length is not None:
-            nperseg = window_length * sampling_rate
-        else:
-            nperseg = (2 / low) * sampling_rate
-
-        freqs, psd = welch(data, sampling_rate, nperseg=nperseg, scaling='density')
+        nperseg = window_length * sampling_rate
+        freqs, psd = welch(data, sampling_rate, nperseg=nperseg)
 
     # Compute the modified periodogram (MultiTaper)
     elif method == PSD_TYPE.MULTITAPER:
         psd, freqs = psd_array_multitaper(
-            data, sampling_rate, adaptive=True, normalization='full')
+            data, sampling_rate, adaptive=True, normalization='full', verbose=False)
 
     # Find index of band in frequency vector
-    idx_min = np.argmax(freqs > low) - 1
-    idx_max = np.argmax(freqs > high) - 1
-    idx_band = np.zeros(dtype=bool, shape=freqs.shape)
-    idx_band[idx_min:idx_max] = True
+    idx_band = np.logical_and(freqs >= low, freqs <= high)
+
+    # Frequency resolution
+    freq_res = freqs[1] - freqs[0]
 
     # Integral approximation of the spectrum using parabola (Simpson's rule)
-    bp = simps(psd[idx_band], freqs[idx_band])
+    bp = simps(psd[idx_band], dx=freq_res)
 
     # Plot the power spectrum
     if plot:
@@ -95,7 +91,7 @@ def power_spectral_density(
 
     # Whether or not to return PSD as a percentage of total power
     if relative:
-        bp /= simps(psd, freqs)
+        bp /= simps(psd, dx=freq_res)
 
     return bp
 
