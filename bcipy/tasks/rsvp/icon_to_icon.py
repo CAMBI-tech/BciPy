@@ -21,6 +21,7 @@ from bcipy.helpers.stimuli_generation import generate_icon_match_images
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.tasks.task import Task
 
+log = logging.getLogger(__name__)
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -150,7 +151,7 @@ class RSVPIconToIconTask(Task):
 
     def await_start(self) -> bool:
         """Wait for user input to either exit or start"""
-        logging.debug("Awaiting user start.")
+        log.debug("Awaiting user start.")
         should_continue = get_user_input(
             self.rsvp,
             self.wait_screen_message,
@@ -167,7 +168,7 @@ class RSVPIconToIconTask(Task):
             self.wait_screen_message_color,
             first_run=False)
         if not should_continue:
-            logging.debug("User wants to exit.")
+            log.debug("User wants to exit.")
         return should_continue
 
     def present_sequence(self,
@@ -305,13 +306,13 @@ class RSVPIconToIconTask(Task):
         """Returns True if experiment is currently within params, False if 
         total sequences or total time exceeds configured values."""
         if total_sequences >= self.max_seq_length:
-            logging.debug("Max tries exceeded: to allow for more tries"
+            log.debug("Max tries exceeded: to allow for more tries"
                           " adjust the Maximum Sequence Length "
                           "(max_seq_len) parameter.")
             return False
 
         if total_time >= self.max_seconds:
-            logging.debug("Max time exceeded. To allow for more time "
+            log.debug("Max time exceeded. To allow for more time "
                           "adjust the max_minutes parameter.")
             return False
         return True
@@ -328,7 +329,7 @@ class RSVPIconToIconTask(Task):
         self.logger.debug('Starting Icon to Icon Task!')
 
         icons = [random.choice(self.alp) for _ in range(self.num_sti)]
-        logging.debug(f"Icon sequence: {icons}")
+        log.debug(f"Icon sequence: {icons}")
 
         selections = []
         copy_phrase_task = self.init_copy_phrase_task(task_list=[(icons, [])])

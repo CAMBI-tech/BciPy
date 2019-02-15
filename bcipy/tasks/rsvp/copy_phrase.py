@@ -13,7 +13,7 @@ from bcipy.helpers.bci_task_related import (
     trial_complete_message, get_user_input)
 import logging
 
-
+log = logging.getLogger(__name__)
 class RSVPCopyPhraseTask(Task):
     """RSVP Copy Phrase Task.
 
@@ -94,7 +94,7 @@ class RSVPCopyPhraseTask(Task):
         self.spelled_letters_count = int(
             parameters['spelled_letters_count'])
         if self.spelled_letters_count > len(self.copy_phrase):
-            logging.debug("Already spelled letters exceeds phrase length.")
+            log.debug("Already spelled letters exceeds phrase length.")
             self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
@@ -324,11 +324,11 @@ class RSVPCopyPhraseTask(Task):
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
-                    logging.debug("Max tries exceeded: to allow for more tries"
+                    log.debug("Max tries exceeded: to allow for more tries"
                                   " adjust the Maximum Sequence Length "
                                   "(max_seq_len) parameter.")
                 if max_time_exceeded:
-                    logging.debug("Max time exceeded. To allow for more time "
+                    log.debug("Max time exceeded. To allow for more time "
                                   "adjust the max_minutes parameter.")
                 run = False
 

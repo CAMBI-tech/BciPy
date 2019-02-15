@@ -12,8 +12,7 @@ from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.system_utils import get_system_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 class RSVPDisplay(object):
@@ -75,7 +74,7 @@ class RSVPDisplay(object):
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
 
-        self.logger = logging
+        self.logger = log
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti

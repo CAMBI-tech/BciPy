@@ -37,6 +37,7 @@ def init_save_data_structure(data_save_path,
         os.makedirs(save_folder_name)
         os.makedirs(save_folder_run_name)
         os.makedirs(helper_folder_name)
+        os.makedirs(os.path.join(save_folder_run_name, 'logs'), exist_ok=True)
 
     except OSError as error:
         # If the error is anything other than file existing, raise an error
@@ -46,6 +47,7 @@ def init_save_data_structure(data_save_path,
         # since this is only called on init, we can make another folder run
         os.makedirs(save_folder_run_name)
         os.makedirs(helper_folder_name)
+        os.makedirs(os.path.join(save_folder_run_name, 'logs'), exist_ok=True)
 
     try:
         # Go to folder helpers and list files within it

@@ -1,7 +1,6 @@
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 class Task(object):
@@ -9,7 +8,7 @@ class Task(object):
 
     def __init__(self):
         super(Task, self).__init__()
-        self.logger = logging
+        self.logger = log
 
     def configure(self):
         pass

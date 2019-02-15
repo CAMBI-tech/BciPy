@@ -6,6 +6,7 @@ from typing import Callable, Dict, Tuple
 from collections import namedtuple
 from os import sep
 
+log = logging.getLogger(__name__)
 JSON_INDENT = 2
 
 
@@ -201,7 +202,7 @@ class Form(wx.Panel):
 
     # Callback methods:
     def onSave(self, event: wx.EVT_BUTTON) -> None:
-        logging.debug("Saving parameter data")
+        log.debug("Saving parameter data")
 
         with open(self.json_file, 'w') as outfile:
             json.dump({k: v._asdict() for k, v in self.params.items()},
@@ -220,7 +221,7 @@ class Form(wx.Panel):
         def handler(event: wx.EVT_TEXT):
             p = self.params[key]
             self.params[key] = p._replace(value=event.GetString())
-            logging.debug(f"{key}: {event.GetString()}")
+            log.debug(f"{key}: {event.GetString()}")
         return handler
 
     def selectEventHandler(self, key: str) -> Callable[[wx.EVT_COMBOBOX], None]:
@@ -230,7 +231,7 @@ class Form(wx.Panel):
         def handler(event: wx.EVT_COMBOBOX):
             p = self.params[key]
             self.params[key] = p._replace(value=event.GetString())
-            logging.debug(f"{key}: {event.GetString()}")
+            log.debug(f"{key}: {event.GetString()}")
         return handler
 
     def checkboxEventHandler(self, key: str) -> Callable[[wx.EVT_CHECKBOX], None]:
@@ -241,7 +242,7 @@ class Form(wx.Panel):
             p = self.params[key]
             value = "true" if event.IsChecked() else "false"
             self.params[key] = p._replace(value=value)
-            logging.debug(f"{key}: {bool(event.IsChecked())}")
+            log.debug(f"{key}: {bool(event.IsChecked())}")
         return handler
         
     def buttonEventHandler(self, key: str, directory: bool) -> Callable[[wx.EVT_BUTTON], None]:
@@ -262,7 +263,7 @@ class Form(wx.Panel):
                 if directory:
                     #Add operating system separator character to end of directory path
                     new_path = new_path + sep
-                logging.debug(new_path)
+                log.debug(new_path)
                     
             if new_path:
                 for item_key, field in self.controls.items():
@@ -270,7 +271,7 @@ class Form(wx.Panel):
                         field[0].SetValue(new_path)                            
                 parameter_key = self.params[key]
                 self.params[key] = parameter_key._replace(value=new_path)
-                logging.debug(f"Selected path: {new_path}")
+                log.debug(f"Selected path: {new_path}")
                 
         return handler
 
@@ -318,7 +319,7 @@ class MainPanel(scrolled.ScrolledPanel):
 
     def onLoad(self, event: wx.EVT_BUTTON) -> None:
         """Event handler to load the form data from a different json file."""
-        logging.debug("Loading parameters file")
+        log.debug("Loading parameters file")
 
         with wx.FileDialog(self, "Open parameters file",
                            wildcard="JSON files (*.json)|*.json",
@@ -350,6 +351,4 @@ def main(title='BCI Parameters', size=(650, 550),
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
-                        format='(%(threadName)-9s) %(message)s',)
     main()

@@ -9,9 +9,7 @@ import time
 
 from bcipy.acquisition.datastream.generator import random_data
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='(%(threadName)-9s) %(message)s', )
+log = logging.getLogger(__name__)
 
 
 class Producer(threading.Thread):
@@ -59,7 +57,7 @@ class Producer(threading.Thread):
         try:
             data = next(self.generator)
         except StopIteration:
-            logging.debug("End of input reached")
+            log.debug("End of input reached")
             raise Exception("End of input reached")
         return data
 
@@ -111,7 +109,7 @@ class _ConsumerThread(threading.Thread):
         while True:
             if not self._q.empty():
                 item = self._q.get()
-                logging.debug('Getting %s: %s items in queue',
+                log.debug('Getting %s: %s items in queue',
                               str(item), str(self._q.qsize()))
                 time.sleep(random.random())
 

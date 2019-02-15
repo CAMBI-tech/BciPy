@@ -1,5 +1,5 @@
 import logging
-
+import os
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 from bcipy.helpers.bci_task_related import print_message
@@ -9,8 +9,6 @@ from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
 
 
 def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
@@ -47,6 +45,13 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
         'mode': mode,
         'exp_type': exp_type
     }
+
+    logfile = os.path.join(save_folder, 'logs', 'bcipy_session.log')
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='(%(threadName)-9s) %(message)s',
+        filename=logfile)
+    print(f"Logging output to {logfile}")
 
     return execute_task(task_type, parameters, save_folder)
 

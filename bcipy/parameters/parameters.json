@@ -94,7 +94,7 @@
     "type": "float"
   },
   "text_task": {
-    "value": "HELLO_WORLD",
+    "value": "HELLO_THERE",
     "section": "bci_config",
     "readableName": "text task",
     "helpTip": "text task",

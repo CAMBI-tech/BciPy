@@ -6,9 +6,7 @@ import time
 from bcipy.helpers.bci_task_related import alphabet
 
 import logging
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 class DisplayMatrix(object):
@@ -30,7 +28,7 @@ class DisplayMatrix(object):
                  is_txt_sti=True, alp=None):
 
         self.win = window
-        self.logger = logging
+        self.logger = log
 
         # TASK TEXT
         self.font_task_text = font_task
@@ -163,7 +161,7 @@ def determine_position_on_grid(row_idx, col_idx,
         x = uniform_grid_values_col[col_idx]
         y = uniform_grid_values_row[row_idx]
     except Exception as e:
-        logging.debug(f'at index: {col_idx} Error: {e}')
+        log.debug(f'at index: {col_idx} Error: {e}')
 
     # # else:
     # x = 0
