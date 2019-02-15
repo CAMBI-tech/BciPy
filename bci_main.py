@@ -3,6 +3,7 @@ import os
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition_related import init_eeg_acquisition
 from bcipy.helpers.bci_task_related import print_message
+from bcipy.helpers.current_version import bcipy_version
 from bcipy.helpers.lang_model_related import init_language_model
 from bcipy.helpers.load import load_signal_model
 from bcipy.helpers.save import init_save_data_structure
@@ -51,6 +52,11 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
         level=logging.DEBUG,
         format='(%(threadName)-9s) %(message)s',
         filename=logfile)
+
+    msg = f"BciPy (Version { bcipy_version()})"
+    # Record version to session data for any needed debugging.
+    logging.info(msg)
+    print(msg)
     print(f"Logging output to {logfile}")
 
     return execute_task(task_type, parameters, save_folder)
