@@ -1,4 +1,4 @@
-""" Progress Bar for not to bore people """
+""" Progress Bar not to bore people """
 
 import time
 
@@ -13,9 +13,10 @@ def progress_bar(iteration, total, prefix='', suffix='', decimals=1,
         100 * (iteration / float(total)))
     fill_length = int(length * iteration // total)
     bar = fill * fill_length + ' ' * (length - fill_length)
-    print('\r{} {} %{} {}'.format(prefix, bar, percent, suffix)),
+    print('\r{} {} %{} {}'.format(prefix, bar, percent, suffix), end=''),
     if iteration == total:
         print('')
+
 
 def _test_pb():
     # A List of Items
@@ -30,6 +31,7 @@ def _test_pb():
         # Update Progress Bar
         progress_bar(i + 1, l, prefix='Progress:', suffix='Complete',
                      length=50)
+
 
 def main():
     _test_pb()
