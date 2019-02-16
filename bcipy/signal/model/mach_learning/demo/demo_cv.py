@@ -7,7 +7,7 @@ from bcipy.signal.model.mach_learning.dimensionality_reduction.function_dim_redu
 from bcipy.signal.model.mach_learning.pipeline import Pipeline
 
 
-def test_cv(x, y):
+def _test_cv(x, y):
     rda = RegularizedDiscriminantAnalysis()
     pca = DummyDimReduction()
     pipeline = Pipeline()
@@ -35,7 +35,7 @@ def _demo_cv():
     x = x[:, permutation, :]
     y = y[permutation]
 
-    arg_0 = test_cv(x, y)
+    arg_0 = _test_cv(x, y)
 
     rda = RegularizedDiscriminantAnalysis()
     pca = DummyDimReduction()

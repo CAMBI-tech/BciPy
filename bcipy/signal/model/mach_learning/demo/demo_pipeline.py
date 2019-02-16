@@ -93,7 +93,7 @@ def _demo_pipeline():
             y_min, y_max = el[:, 1].min() - 1, el[:, 1].max() + 1
             xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
                                  np.arange(y_min, y_max, 0.1))
-            z = model.pipeline[1].predict(np.c_[xx.ravel(), yy.ravel()])
+            z = model.pipeline[1].transform(np.c_[xx.ravel(), yy.ravel()])
             z = z.reshape(xx.shape)
 
             ax.clear()
