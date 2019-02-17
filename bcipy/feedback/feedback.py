@@ -1,8 +1,6 @@
-REGISTERED_FEEDBACK_TYPES = ['sound', 'visual']
-
 import logging
 
-log = logging.getLogger(__name__)
+REGISTERED_FEEDBACK_TYPES = ['sound', 'visual']
 
 
 class Feedback:
@@ -10,7 +8,7 @@ class Feedback:
     def __init__(self, feedback_type):
         super(Feedback, self).__init__()
         self.feedback_type = feedback_type
-        self.logger = log
+        self.logger = logging.getLogger(__name__)
 
     def configure(self):
         raise NotImplementedError()

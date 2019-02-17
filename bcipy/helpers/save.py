@@ -22,22 +22,21 @@ def init_save_data_structure(data_save_path,
     # make an experiment folder : note datetime is in utc
     save_folder_name = data_save_path + user_information
     if mode and experiment_type:
-        save_folder_run_name = save_folder_name + '/' + \
+        save_directory = save_folder_name + '/' + \
             user_information + '_' + str(mode) + '_' + str(experiment_type) + '_' + strftime(
                 '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
     else:
-        save_folder_run_name = save_folder_name + '/' + \
+        save_directory = save_folder_name + '/' + \
             user_information + '_' + strftime(
                 '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
-    helper_folder_name = save_folder_run_name + '/helpers/'
+    helper_folder_name = save_directory + '/helpers/'
 
-    # try making the given path
     try:
         # make a directory to save data to
         os.makedirs(save_folder_name)
-        os.makedirs(save_folder_run_name)
+        os.makedirs(save_directory)
         os.makedirs(helper_folder_name)
-        os.makedirs(os.path.join(save_folder_run_name, 'logs'), exist_ok=True)
+        os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     except OSError as error:
         # If the error is anything other than file existing, raise an error
@@ -45,9 +44,9 @@ def init_save_data_structure(data_save_path,
             raise error
 
         # since this is only called on init, we can make another folder run
-        os.makedirs(save_folder_run_name)
+        os.makedirs(save_directory)
         os.makedirs(helper_folder_name)
-        os.makedirs(os.path.join(save_folder_run_name, 'logs'), exist_ok=True)
+        os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     try:
         # Go to folder helpers and list files within it
@@ -67,18 +66,14 @@ def init_save_data_structure(data_save_path,
         # Check that parameters file given is a real file
         if (os.path.isfile(parameters_used)):
             # Copy over parameters file
-            copy2(parameters_used, save_folder_run_name)
+            copy2(parameters_used, save_directory)
         else:
             raise Exception('Parameter File Not Found!')
 
-    # catch IO exceptions
     except IOError as error:
         raise error
 
-    except Exception as error:
-        raise error
-
-    return save_folder_run_name
+    return save_directory
 
 
 def _save_session_related_data(file, session_dictionary):

@@ -1,11 +1,14 @@
-import logging
 import os
 from typing import Any
+import logging
 
 import numpy as np
 from psychopy import core, event, visual
 
 log = logging.getLogger(__name__)
+
+SPACE_CHAR = '_'
+BACKSPACE_CHAR = '<'
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -50,8 +53,6 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
     return next_target_letter, text_task, run
 
-SPACE_CHAR = '_'
-BACKSPACE_CHAR = '<'
 
 def alphabet(parameters=None):
     """Alphabet.
@@ -67,7 +68,7 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path) :
+            for stimulus_filename in os.listdir(path):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
                         ".png") and not stimulus_filename.endswith('PLUS.png'):
@@ -150,7 +151,10 @@ def process_data_for_decision(
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
-                raise Exception("Not enough data received")
+                message = f'Process Data Error: Not enough data received to process. ' \
+                          f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+                log.error(message)
+                raise Exception(message)
 
         # Take only the sensor data from raw data and transpose it;
         raw_data = np.array([np.array([_float_val(col) for col in record.data])
@@ -158,7 +162,7 @@ def process_data_for_decision(
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        log.error("Error in daq: get_data()")
+        log.error(f'Uncaught Error in Process Data for Decision: {e}')
         raise e
 
     return raw_data, triggers, target_info
@@ -306,7 +310,7 @@ def trial_reshaper(trial_target_info: list,
                         'B' : [39.60, -224.124, ...],
                         'T' : [...],
                         ...
-                    }, 
+                    },
                     ...
                 }
     """

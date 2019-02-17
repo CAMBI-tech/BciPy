@@ -10,14 +10,15 @@ log = logging.getLogger(__name__)
 JSON_INDENT = 2
 
 
-# Utility functions
-def font(size: int = 14, font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.Font:
+def font(size: int=14, font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.Font:
     """Create a Font object with the given parameters."""
     return wx.Font(size, font_family, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
 
 
-def static_text_control(parent, label: str,
-                        color: str = 'black', size: int = 14,
+def static_text_control(parent,
+                        label: str,
+                        color: str = 'black',
+                        size: int = 14,
                         font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.StaticText:
     """Creates a static text control with the given font parameters. Useful for
     creating labels and help components."""
@@ -67,9 +68,9 @@ class Form(wx.Panel):
 
         self.controls = {}
         for key, param in self.params.items():
-            if param.type == "bool":
+            if param.type == 'bool':
                 form_input = self.bool_input(param)
-            elif "path" in param.type:
+            elif 'path' in param.type:
                 form_input = self.file_input(param)
             elif type(param.recommended_values) == list:
                 form_input = self.selection_input(param)
@@ -81,15 +82,15 @@ class Form(wx.Panel):
 
             self.add_input(self.controls, key, form_input)
 
-        self.saveButton = wx.Button(self, label="Save")
+        self.saveButton = wx.Button(self, label='Save')
 
     def add_input(self, controls: Dict[str, wx.Control], key: str,
                   form_input: FormInput) -> None:
         """Adds the controls for the given input to the controls structure."""
         if form_input.label:
-            controls[f"{key}_label"] = form_input.label
+            controls[f'{key}_label'] = form_input.label
         if form_input.help:
-            controls[f"{key}_help"] = form_input.help
+            controls[f'{key}_help'] = form_input.help
         controls[key] = form_input.control
 
         # TODO: consider adding an empty space after each input:
@@ -118,20 +119,26 @@ class Form(wx.Panel):
         ctl.SetFont(font())
         label, help_tip = self.input_label(param)
         return FormInput(ctl, label, help_tip)
-        
+
     def file_input(self, param: Parameter) -> FormInput:
-        """Creates a text field or selection pulldown FormInput with a button 
-        to browse for a file."""
-        #Creates a combobox instead of text field if the parameter has recommended values
+        """File Input.
+
+        Creates a text field or selection pulldown FormInput with a button
+        to browse for a file.
+        """
+        # Creates a combobox instead of text field if the parameter has recommended values
         if type(param.recommended_values) == list:
-            ctl = wx.ComboBox(self, -1, param.value,
+            ctl = wx.ComboBox(
+                self,
+                -1,
+                param.value,
                 size=self.control_size,
                 choices=param.recommended_values,
-                style=wx.CB_DROPDOWN)   
+                style=wx.CB_DROPDOWN)
         else:
             ctl = wx.TextCtrl(self, size=self.control_size, value=param.value)
         ctl.SetFont(font())
-        btn = wx.Button(self, label="...", size=(self.control_size[1], self.control_size[1]))
+        btn = wx.Button(self, label='...', size=(self.control_size[1], self.control_size[1]))
         ctl_array = [ctl, btn]
         label, help_tip = self.input_label(param)
         return FormInput(ctl_array, label, help_tip)
@@ -156,11 +163,11 @@ class Form(wx.Panel):
             # Only bind events for control inputs, not for label and help items
             if k in self.params:
                 param = self.params[k]
-                if param.type == "bool":
+                if param.type == 'bool':
                     control.Bind(wx.EVT_CHECKBOX, self.checkboxEventHandler(k))
-                elif "path" in param.type:
+                elif 'path' in param.type:
                     is_directory = False
-                    if param.type == "directorypath":
+                    if param.type == 'directorypath':
                         is_directory = True
                     control[0].Bind(wx.EVT_TEXT, self.textEventHandler(k))
                     control[1].Bind(wx.EVT_BUTTON, self.buttonEventHandler(k, is_directory))
@@ -202,7 +209,7 @@ class Form(wx.Panel):
 
     # Callback methods:
     def onSave(self, event: wx.EVT_BUTTON) -> None:
-        log.debug("Saving parameter data")
+        log.debug('Saving parameter data')
 
         with open(self.json_file, 'w') as outfile:
             json.dump({k: v._asdict() for k, v in self.params.items()},
@@ -240,39 +247,39 @@ class Form(wx.Panel):
         """
         def handler(event: wx.EVT_CHECKBOX):
             p = self.params[key]
-            value = "true" if event.IsChecked() else "false"
+            value = 'true' if event.IsChecked() else 'false'
             self.params[key] = p._replace(value=value)
-            log.debug(f"{key}: {bool(event.IsChecked())}")
+            log.debug(f'{key}: {bool(event.IsChecked())}')
         return handler
-        
+
     def buttonEventHandler(self, key: str, directory: bool) -> Callable[[wx.EVT_BUTTON], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
         """
         def handler(event: wx.EVT_BUTTON):
-            #Change dialog type depending on whether parameter requires a directory or file
+            # Change dialog type depending on whether parameter requires a directory or file
             if directory:
-                file_dialog = wx.DirDialog(self, "Select a path", style=wx.FD_OPEN)
-            else: 
-                file_dialog = wx.FileDialog(self, "Select a file", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-                
+                file_dialog = wx.DirDialog(self, 'Select a path', style=wx.FD_OPEN)
+            else:
+                file_dialog = wx.FileDialog(
+                    self, 'Select a file', style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 new_path = None
             else:
                 new_path = str(file_dialog.GetPath())
                 if directory:
-                    #Add operating system separator character to end of directory path
+                    # Add operating system separator character to end of directory path
                     new_path = new_path + sep
                 log.debug(new_path)
-                    
+
             if new_path:
                 for item_key, field in self.controls.items():
                     if item_key == key:
-                        field[0].SetValue(new_path)                            
+                        field[0].SetValue(new_path)
                 parameter_key = self.params[key]
                 self.params[key] = parameter_key._replace(value=new_path)
-                log.debug(f"Selected path: {new_path}")
-                
+                log.debug(f'Selected path: {new_path}')
+
         return handler
 
 
@@ -280,8 +287,8 @@ class MainPanel(scrolled.ScrolledPanel):
     """Panel which contains the Form. Responsible for selecting the json data
      to load and handling scrolling."""
 
-    def __init__(self, parent, title="BCI Parameters",
-                 json_file="bcipy/parameters/parameters.json"):
+    def __init__(self, parent, title='BCI Parameters',
+                 json_file='bcipy/parameters/parameters.json'):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -293,16 +300,16 @@ class MainPanel(scrolled.ScrolledPanel):
         vbox.AddSpacer(10)
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
-        loading_box.Add(static_text_control(self, label=f"Editing: {json_file}",
+        loading_box.Add(static_text_control(self, label=f'Editing: {json_file}',
                                             size=14))
         self.loaded_from = static_text_control(
             self,
-            label=f"Loaded from: {json_file}",
+            label=f'Loaded from: {json_file}',
             size=14)
         loading_box.Add(self.loaded_from)
         loading_box.AddSpacer(10)
 
-        self.loadButton = wx.Button(self, label="Load")
+        self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
         loading_box.Add(self.loadButton)
 
@@ -319,17 +326,17 @@ class MainPanel(scrolled.ScrolledPanel):
 
     def onLoad(self, event: wx.EVT_BUTTON) -> None:
         """Event handler to load the form data from a different json file."""
-        log.debug("Loading parameters file")
+        log.debug('Loading parameters file')
 
-        with wx.FileDialog(self, "Open parameters file",
-                           wildcard="JSON files (*.json)|*.json",
+        with wx.FileDialog(self, 'Open parameters file',
+                           wildcard='JSON files (*.json)|*.json',
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
             load_file = fd.GetPath()
-            self.loaded_from.SetLabel(f"Loaded from: {load_file}")
-            self.flash_msg.SetLabel("Click the Save button to persist these "
-                                    "changes.")
+            self.loaded_from.SetLabel(f'Loaded from: {load_file}')
+            self.flash_msg.SetLabel('Click the Save button to persist these '
+                                    'changes.')
             self.vbox.Hide(self.form)
         self.form = Form(self, json_file=self.json_file, load_file=load_file)
         self.vbox.Add(self.form)
@@ -340,11 +347,11 @@ class MainPanel(scrolled.ScrolledPanel):
 
 
 def main(title='BCI Parameters', size=(650, 550),
-         json_file="bcipy/parameters/parameters.json"):
+         json_file='bcipy/parameters/parameters.json'):
     """Set up the GUI components and start the main loop."""
 
     app = wx.App(0)
-    frame = wx.Frame(None, wx.ID_ANY,  size=size, title=title)
+    frame = wx.Frame(None, wx.ID_ANY, size=size, title=title)
     fa = MainPanel(frame, title=title, json_file=json_file)
     frame.Show()
     app.MainLoop()
