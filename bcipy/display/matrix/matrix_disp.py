@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from psychopy import visual, clock
 import numpy as np
 import time
 from bcipy.helpers.bci_task_related import alphabet
 
 import logging
-log = logging.getLogger(__name__)
 
 
 class DisplayMatrix(object):
@@ -28,7 +25,7 @@ class DisplayMatrix(object):
                  is_txt_sti=True, alp=None):
 
         self.win = window
-        self.logger = log
+        self.logger = log = logging.getLogger(__name__)
 
         # TASK TEXT
         self.font_task_text = font_task
