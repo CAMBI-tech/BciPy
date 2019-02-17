@@ -100,7 +100,7 @@ def configure_logger(
         format='(%(threadName)-9s) %(message)s',
         filename=logfile)
 
-    print(f'printing logs to {logfile}')
+    print(f'Printing all BciPy logs to: {logfile}')
 
     if version:
         logging.info(f'Start of Session for BciPy Version: ({version})')
