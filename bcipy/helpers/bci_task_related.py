@@ -1,12 +1,11 @@
-import logging
 import os
 from typing import Any
+import logging
 
 import numpy as np
 from psychopy import core, event, visual
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
@@ -177,7 +176,10 @@ def process_data_for_decision(
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
-                raise Exception('Not enough data received from daq')
+                message = f'Process Data Error: Not enough data received to process. ' \
+                          f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+                log.error(message)
+                raise Exception(message)
 
         # Take only the sensor data from raw data and transpose it
         raw_data = np.array([np.array([_float_val(col) for col in record.data])
@@ -185,7 +187,7 @@ def process_data_for_decision(
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        logging.error('Unknown error in process_data_for_decision')
+        log.error(f'Uncaught Error in Process Data for Decision: {e}')
         raise e
 
     return raw_data, triggers, target_info

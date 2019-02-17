@@ -7,8 +7,7 @@ from pylsl import StreamInfo, StreamOutlet
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.util import StoppableThread
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 # pylint: disable=too-many-arguments
 
@@ -47,7 +46,7 @@ class LslDataServer(StoppableThread):
         stream_name = params.get('name', name)
         self.generator = generator
 
-        logging.debug("Starting server with params: %s", str(params))
+        log.debug("Starting server with params: %s", str(params))
         info = StreamInfo(stream_name,
                           "EEG", len(channels),
                           self.sample_hz,
@@ -72,7 +71,7 @@ class LslDataServer(StoppableThread):
             # "gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) +
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
-            logging.debug("Creating marker stream")
+            log.debug("Creating marker stream")
             markers_info = StreamInfo("TestStream Markers",
                                       "Markers", 1, 0, 'string',
                                       "uid12345_markers")
@@ -82,7 +81,7 @@ class LslDataServer(StoppableThread):
     def stop(self):
         """Stop the thread and cleanup resources."""
 
-        logging.debug("[*] Stopping data server")
+        log.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
         # Allows pylsl to cleanup; The outlet will no longer be discoverable
@@ -119,7 +118,7 @@ class LslDataServer(StoppableThread):
                     # deleted in another thread.
                     break
 
-        logging.debug("[*] No longer pushing data")
+        log.debug("[*] No longer pushing data")
 
 
 def _settings(filename):
@@ -167,9 +166,9 @@ def main():
         server = LslDataServer(params=params, generator=generator,
                                add_markers=markers, name=args.name)
 
-        logging.debug("New server created")
+        log.debug("New server created")
         server.start()
-        logging.debug("Server started")
+        log.debug("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

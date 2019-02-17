@@ -91,7 +91,7 @@ class RSVPCopyPhraseTask(Task):
         self.spelled_letters_count = int(
             parameters['spelled_letters_count'])
         if self.spelled_letters_count > len(self.copy_phrase):
-            self.logger.debug("Already spelled letters exceeds phrase length.")
+            self.logger.debug('Already spelled letters exceeds phrase length.')
             self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
@@ -321,12 +321,11 @@ class RSVPCopyPhraseTask(Task):
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
-                    self.logger.debug("Max tries exceeded: to allow for more tries"
-                                  " adjust the Maximum Sequence Length "
-                                  "(max_seq_len) parameter.")
+                    self.logger.debug('COPYPHRASE ERROR: Max tries exceeded. To allow for more tries '
+                                      'adjust the max_seq_len parameter.')
                 if max_time_exceeded:
-                    self.logger.debug("Max time exceeded. To allow for more time "
-                                  "adjust the max_minutes parameter.")
+                    self.logger.debug('COPYPHRASE ERROR: Max time exceeded. To allow for more time '
+                                      'adjust the max_minutes parameter.')
                 run = False
 
             # Increment sequence counter

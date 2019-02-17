@@ -8,8 +8,7 @@ import pickle
 
 from tkinter.filedialog import askopenfilename, askdirectory
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 def _cast_parameters(parameters: dict) -> dict:
@@ -102,7 +101,7 @@ def load_experimental_data() -> str:
     except Exception as error:
         raise error
 
-    logging.debug("Loaded Experimental Data From: %s" % filename)
+    logg.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
 

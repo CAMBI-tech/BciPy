@@ -9,6 +9,7 @@ from typing import Dict, List, Sequence, Tuple
 
 from psychopy import core
 
+from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.bci_task_related import (
@@ -62,9 +63,9 @@ class RSVPIconToIconTask(Task):
         self.image_path = parameters['path_to_presentation_images']
         # Alphabet is comprised of the image base names
         self.alp = [
-            splitext(basename(img))[0]
-            for img in glob.glob(self.image_path + "*.png")
-            if not img.endswith("PLUS.png")
+            path.splitext(path.basename(img))[0]
+            for img in glob.glob(self.image_path + '*.png')
+            if not img.endswith('PLUS.png')
         ]
 
         self.rsvp = _init_icon_to_icon_display_task(
@@ -73,9 +74,9 @@ class RSVPIconToIconTask(Task):
         self.file_save = file_save
         self.is_word = is_word
 
-        trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
+        trigger_save_location = f'{self.file_save}/{parameters["triggers_file_name"]}'
         self.trigger_file = open(trigger_save_location, 'w+')
-        self.session_save_location = f"{self.file_save}/{parameters['session_file_name']}"
+        self.session_save_location = f'{self.file_save}/{parameters["session_file_name"]}'
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
@@ -116,7 +117,7 @@ class RSVPIconToIconTask(Task):
             'collection_window_after_trial_length']
         self.data_save_path = parameters['data_save_loc']
 
-        match_type = "Word" if self.is_word else "Icon"
+        match_type = 'Word' if self.is_word else 'Icon'
         self.session_description = f'Icon to {match_type} Matching'
 
     def img_path(self, alphabet_item):
@@ -150,7 +151,7 @@ class RSVPIconToIconTask(Task):
 
     def await_start(self) -> bool:
         """Wait for user input to either exit or start"""
-        self.logger.debug("Awaiting user start.")
+        self.logger.debug('Awaiting user start.')
         should_continue = get_user_input(
             self.rsvp,
             self.wait_screen_message,
@@ -159,7 +160,7 @@ class RSVPIconToIconTask(Task):
         return should_continue
 
     def user_wants_to_continue(self) -> bool:
-        """Check if user wants to continue or terminate. 
+        """Check if user wants to continue or terminate.
         Returns True to continue."""
         should_continue = get_user_input(
             self.rsvp,
@@ -167,7 +168,7 @@ class RSVPIconToIconTask(Task):
             self.wait_screen_message_color,
             first_run=False)
         if not should_continue:
-            self.logger.debug("User wants to exit.")
+            self.logger.debug('User wants to exit.')
         return should_continue
 
     def present_sequence(self,
@@ -302,21 +303,21 @@ class RSVPIconToIconTask(Task):
             stimuli_timing=self.timing[1:])  # time_cross and time_flash
 
     def stoppage_criteria_ok(self, total_sequences, total_time) -> bool:
-        """Returns True if experiment is currently within params, False if 
+        """Returns True if experiment is currently within params, False if
         total sequences or total time exceeds configured values."""
         if total_sequences >= self.max_seq_length:
-            self.logger.debug("Max tries exceeded: to allow for more tries"
-                          " adjust the Maximum Sequence Length "
-                          "(max_seq_len) parameter.")
+            self.logger.debug('Max tries exceeded: to allow for more tries'
+                              ' adjust the Maximum Sequence Length '
+                              '(max_seq_len) parameter.')
             return False
 
         if total_time >= self.max_seconds:
-            self.logger.debug("Max time exceeded. To allow for more time "
-                          "adjust the max_minutes parameter.")
+            self.logger.debug('Max time exceeded. To allow for more time '
+                              'adjust the max_minutes parameter.')
             return False
         return True
 
-    def update_session_data(self, data, epoch, save = True):
+    def update_session_data(self, data, epoch, save=True):
         """Update the session data and optionally save."""
         data['total_time_spent'] = self.experiment_clock.getTime()
         data['total_number_epochs'] = epoch.epoch_counter
@@ -328,7 +329,7 @@ class RSVPIconToIconTask(Task):
         self.logger.debug('Starting Icon to Icon Task!')
 
         icons = [random.choice(self.alp) for _ in range(self.num_sti)]
-        self.logger.debug(f"Icon sequence: {icons}")
+        self.logger.debug(f'Icon sequence: {icons}')
 
         selections = []
         copy_phrase_task = self.init_copy_phrase_task(task_list=[(icons, [])])
@@ -349,7 +350,7 @@ class RSVPIconToIconTask(Task):
             # Write triggers to file
             write_triggers_from_sequence_icon_to_icon(
                 sequence_timing, self.trigger_file, epoch.target,
-                target_displayed = epoch.first_sequence)
+                target_displayed=epoch.first_sequence)
 
             core.wait(self.buffer_val)
 

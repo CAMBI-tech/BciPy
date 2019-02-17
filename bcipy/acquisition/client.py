@@ -12,8 +12,7 @@ from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 DEBUG = False
 DEBUG_FREQ = 500
 MSG_DEVICE_INFO = "device_info"
@@ -119,7 +118,7 @@ class DataAcquisitionClient:
         """
 
         if not self._is_streaming:
-            logging.debug("Starting Acquisition")
+            log.debug("Starting Acquisition")
 
             msg_queue = multiprocessing.Queue()
 
@@ -163,14 +162,14 @@ class DataAcquisitionClient:
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
-        logging.debug("Stopping Acquisition Process")
+        log.debug("Stopping Acquisition Process")
 
         self._is_streaming = False
 
         self._acq_process.stop()
         self._acq_process.join()
 
-        logging.debug("Stopping Processing Queue")
+        log.debug("Stopping Processing Queue")
 
         # Blocks until all data in the queue is consumed.
         self._process_queue.join()
@@ -283,10 +282,10 @@ class DataAcquisitionClient:
             return self._cached_offset
 
         if self._buf is None or self._device_info is None:
-            logging.debug("Buffer or device has not been initialized")
+            log.debug("Buffer or device has not been initialized")
             return None
 
-        logging.debug("Querying database for offset")
+        log.debug("Querying database for offset")
         # Assumes that the TRG column is present and used for calibration, and
         # that non-calibration values are all 0.
         rows = buffer_server.query(self._buf,
@@ -294,15 +293,15 @@ class DataAcquisitionClient:
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
         if not rows:
-            logging.debug("No rows have a TRG value.")
+            log.debug("No rows have a TRG value.")
             return None
 
-        logging.debug(rows[0])
+        log.debug(rows[0])
         # Calculate offset from the number of samples recorded by the time
         # of calibration.
         self._record_at_calib = rows[0]
         self._cached_offset = rows[0].rownum / self._device_info.fs
-        logging.debug("Cached offset: %s", str(self._cached_offset))
+        log.debug("Cached offset: %s", str(self._cached_offset))
         return self._cached_offset
 
     @property
@@ -350,7 +349,7 @@ class AcquisitionProcess(StoppableProcess):
         """
 
         try:
-            logging.debug("Connecting to device")
+            log.debug("Connecting to device")
             self._device.connect()
             self._device.acquisition_init()
         except Exception as error:
@@ -361,7 +360,7 @@ class AcquisitionProcess(StoppableProcess):
         # initialization is complete.
         self._msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
 
-        logging.debug("Starting Acquisition read data loop")
+        log.debug("Starting Acquisition read data loop")
         sample = 0
         data = self._device.read_data()
 
@@ -369,7 +368,7 @@ class AcquisitionProcess(StoppableProcess):
         while self.running() and data:
             sample += 1
             if DEBUG and sample % DEBUG_FREQ == 0:
-                logging.debug("Read sample: %s", str(sample))
+                log.debug("Read sample: %s", str(sample))
 
             self._data_queue.put(Record(data, self._clock.getTime(), sample))
             try:
@@ -377,10 +376,10 @@ class AcquisitionProcess(StoppableProcess):
                 data = self._device.read_data()
             # pylint: disable=broad-except
             except Exception as error:
-                logging.debug("Error reading data from device: %s", str(error))
+                log.error("Error reading data from device: %s", str(error))
                 data = None
                 break
-        logging.debug("Total samples read: %s", str(sample))
+        log.debug("Total samples read: %s", str(sample))
         self._device.disconnect()
 
 
@@ -398,7 +397,7 @@ class DataProcessor(StoppableProcess):
         """Reads from the queue of data and performs processing an item at a
         time. Also writes data to buffer."""
 
-        logging.debug("Starting Data Processing loop.")
+        log.debug("Starting Data Processing loop.")
         count = 0
         with self._processor as processor:
             while self.running():
@@ -406,13 +405,13 @@ class DataProcessor(StoppableProcess):
                     record = self._data_queue.get(True, self._wait)
                     count += 1
                     if DEBUG and count % DEBUG_FREQ == 0:
-                        logging.debug("Processed sample: %s", str(count))
+                        log.debug("Processed sample: %s", str(count))
                     buffer_server.append(self._buf, record)
                     processor.process(record.data, record.timestamp)
                     self._data_queue.task_done()
                 except Empty:
                     pass
-            logging.debug("Total samples processed: %s", str(count))
+            log.debug("Total samples processed: %s", str(count))
 
 
 def main():

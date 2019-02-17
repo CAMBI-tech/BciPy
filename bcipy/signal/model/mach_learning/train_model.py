@@ -13,8 +13,7 @@ from scipy.stats import iqr
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s', )
+log = logging.getLogger(__name__)
 
 
 def train_pca_rda_kde_model(x, y, k_folds=10):
@@ -48,7 +47,7 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     # Start Cross validation
     lam = arg_cv[0]
     gam = arg_cv[1]
-    logging.debug('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
+    log.debug('Optimized val [gam:{} \ lam:{}]'.format(lam, gam))
     model.pipeline[1].lam = lam
     model.pipeline[1].gam = gam
     tmp, sc_cv, y_cv = cost_cross_validation_auc(model, 1, x, y, arg_cv,
@@ -67,6 +66,6 @@ def train_pca_rda_kde_model(x, y, k_folds=10):
     model.pipeline[-1].fit(sc_cv, y_cv)
 
     # Report AUC
-    logging.debug('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
+    log.debug('AUC-i: {}, AUC-cv: {}'.format(auc_init, auc_cv))
 
     return model, auc_cv
