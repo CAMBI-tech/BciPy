@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 from bcipy.helpers.load import load_csv_data, read_data_csv
 
 import logging
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s', )
+log = logging.getLogger(__name__)
 
 
 def generate_offline_analysis_screen(
@@ -156,7 +154,7 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    logging.debug('Press Ctrl + C to exit!')
+    log.debug('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()

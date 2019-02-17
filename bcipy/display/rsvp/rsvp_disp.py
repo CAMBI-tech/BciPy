@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import os.path as path
 from typing import Callable
@@ -9,11 +8,7 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.bci_task_related import SPACE_CHAR
 from bcipy.display.display_main import BarGraph, MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
-from bcipy.helpers.system_utils import get_system_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
 
 
 class RSVPDisplay(object):
@@ -75,7 +70,7 @@ class RSVPDisplay(object):
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
 
-        self.logger = logging
+        self.logger = logging.getLogger(__name__)
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti
@@ -346,7 +341,7 @@ class RSVPDisplay(object):
         wait_message.draw()
         self.win.flip()
 
-    def create_stimulus(self, height_int: int, mode="text"):
+    def create_stimulus(self, height_int: int, mode='text'):
         """Returns a TextStim or ImageStim object.
             Args:
             height_int: The height of the stimulus
