@@ -9,6 +9,7 @@ from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 from bcipy.tasks.task import Task
+from bcipy.tasks.exceptions import TaskRegistryException
 from bcipy.tasks.task_registry import ExperimentType
 
 
@@ -69,7 +70,7 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         return RSVPInterSequenceFeedbackCalibration(
             display_window, daq, parameters, file_save)
 
-    raise Exception('The provided experiment type is not registered.')
+    raise TaskRegistryException('The provided experiment type is not registered.')
 
 
 def start_task(display_window, daq, exp_type, parameters, file_save,

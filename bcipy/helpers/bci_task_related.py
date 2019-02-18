@@ -5,6 +5,8 @@ import logging
 import numpy as np
 from psychopy import core, event, visual
 
+from bcipy.tasks.exceptions import InsufficientDataException
+
 log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
@@ -179,7 +181,7 @@ def process_data_for_decision(
                 message = f'Process Data Error: Not enough data received to process. ' \
                           f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
                 log.error(message)
-                raise Exception(message)
+                raise InsufficientDataException(message)
 
         # Take only the sensor data from raw data and transpose it
         raw_data = np.array([np.array([_float_val(col) for col in record.data])

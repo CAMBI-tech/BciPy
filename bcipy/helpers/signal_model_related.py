@@ -8,7 +8,7 @@ from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
 from bcipy.signal.processing.sig_pro import sig_pro
-from bcipy.tasks.main_frame import EvidenceFusion, DecisionMaker
+from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
  equally_probable
 from bcipy.helpers.bci_task_related import BACKSPACE_CHAR

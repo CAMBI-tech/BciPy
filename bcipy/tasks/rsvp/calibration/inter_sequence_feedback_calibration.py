@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from bcipy.feedback.visual.level_feedback import LevelFeedback
 from bcipy.tasks.task import Task
+from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
@@ -42,6 +43,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         file_save (String)
     """
     TASK_NAME = 'RSVP Inter Sequence Feedback Calibration Task'
+    PSD_CHANNEL_INDEX = 6
 
     def __init__(self, win, daq, parameters, file_save):
         super(RSVPInterSequenceFeedbackCalibration, self).__init__()
@@ -94,7 +96,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         # The channel used to calculate the SSVEP response to RSVP sequence.
         # NOTE: This task will only work for VR300
-        self.psd_channel_index = 6
+        self.psd_channel_index = self.PSD_CHANNEL_INDEX
         self.device_name = self.daq.device_info.name
         self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
 
@@ -167,6 +169,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self._task.trigger_file)
 
+                self.logger.info('[Feedback] Getting Decision')
                 position = self._get_feedback_decision(last_sequence_timing)
                 timing = self.visual_feedback.administer(position=position)
 
@@ -199,7 +202,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
     def _get_feedback_decision(self, sequence_timing):
         # wait some time in order to get enough data from the daq and make the
         #   tranisiton less abrupt to the user
-        core.wait(self.trial_length + self.feedback_buffer_time)
+        core.wait(self.trial_length)
 
         # get data sequence
         data = self._get_data_for_psd(sequence_timing)
@@ -210,18 +213,29 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.psd_export_band,
             sampling_rate=self.filtered_sampling_rate,
             # plot=True,  # uncomment to see the PSD plot in real time
-            method=self.psd_method)
+            method=self.psd_method,
+            relative=True)
+
+        self.logger.info(f'[Feedback] Response decision {response}')
 
         # In the event the calcalated band returns nothing, throw an
         #  error
         if response == 0:
-            raise ValueError('PSD calcualted for feedback invalid')
+            message = 'PSD calcualted for feedback invalid'
+            self.logger.error(f'[Feedback] {message}')
+            raise InsufficientDataException(message)
 
-        # TODO: finish this approzimation of feedback position with Barry
-        if response > 20:
+        # TODO: finalize these feedback levels
+        if response > .2:
             return 5
-        elif response > 10:
+        if response > .15:
+            return 4
+        if response > .1:
             return 3
+        if response > .05:
+            return 3
+        if response > .025:
+            return 2
         return 1
 
     def _get_data_for_psd(self, sequence_timing):
