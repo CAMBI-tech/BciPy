@@ -28,7 +28,7 @@ class FileStreamer(StoppableThread):
         with open(self.data_file) as csvfile:
             # read metadata
             _name_row = next(csvfile)
-            fs = float(next(csvfile).strip().split(",")[-1])
+            fs = float(next(csvfile).strip().split(",")[1])
 
             reader = csv.reader(csvfile)
             _channels = next(reader)

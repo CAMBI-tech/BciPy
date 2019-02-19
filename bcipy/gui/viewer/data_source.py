@@ -10,7 +10,7 @@ class DataSource:
         """Provide the next record."""
         raise NotImplementedError('Subclass must define the next method')
 
-    def next_n(self, n: int):
+    def next_n(self, n: int, fast_forward=False):
         """Provides the next n records as a list"""
         raise NotImplementedError('Subclass must define the next_n method')
 
@@ -29,7 +29,7 @@ class QueueDataSource(DataSource):
         except Empty:
             raise StopIteration
 
-    def next_n(self, n: int):
+    def next_n(self, n: int, fast_forward=False):
         """Provides the next n records as a list"""
         data = []
         while len(data) < n:
@@ -49,6 +49,6 @@ class GeneratorDataSource(DataSource):
         """Provide the next record."""
         return next(self.gen)
 
-    def next_n(self, n):
+    def next_n(self, n, fast_forward=False):
         """Provides the next n records as a list"""
         return list(it.islice(self.gen, n))

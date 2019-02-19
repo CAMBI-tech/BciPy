@@ -331,8 +331,10 @@ def file_data(path):
     from bcipy.gui.viewer.file_streamer import FileStreamer
     # read metadata
     with open(path) as csvfile:
-        name = next(csvfile).strip().split(",")[-1]
-        freq = float(next(csvfile).strip().split(",")[-1])
+        r1 = next(csvfile)
+        name = r1.strip().split(",")[1]
+        r2 = next(csvfile)
+        freq = float(r2.strip().split(",")[1])
 
         reader = csv.reader(csvfile)
         channels = next(reader)
