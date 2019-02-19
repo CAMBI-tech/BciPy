@@ -7,7 +7,7 @@ from bcipy.helpers.acquisition_related import analysis_channels
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
-from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.signal.process.filter import bandpass
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
  equally_probable
@@ -87,8 +87,8 @@ class CopyPhraseWrapper:
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
-        # Send the raw data to signal processing / in demo mode do not use sig_pro
-        dat = sig_pro(raw_dat, fs=self.fs, k=self.k)
+        # Send the raw data to signal processing / in demo mode do not use bandpass
+        dat = bandpass.text_filter(raw_dat, fs=self.fs, k=self.k)
         x, _, _, _ = trial_reshaper(target_info, times, dat, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map,

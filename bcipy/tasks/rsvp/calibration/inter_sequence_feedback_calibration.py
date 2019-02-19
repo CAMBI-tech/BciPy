@@ -7,7 +7,7 @@ from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
-from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.signal.process.filter import bandpass
 from bcipy.helpers.bci_task_related import (
     calculate_stimulation_freq,
     trial_complete_message,
@@ -16,7 +16,7 @@ from bcipy.helpers.bci_task_related import (
     pause_calibration,
     process_data_for_decision)
 from bcipy.helpers.acquisition_related import analysis_channels, analysis_channels_by_device
-from bcipy.signal.processing.decomposition.psd import power_spectral_density, PSD_TYPE
+from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 
 
 class RSVPInterSequenceFeedbackCalibration(Task):
@@ -226,15 +226,15 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             raise InsufficientDataException(message)
 
         # TODO: finalize these feedback levels
-        if response > .2:
-            return 5
         if response > .15:
-            return 4
+            return 5
         if response > .1:
-            return 3
+            return 4
         if response > .05:
             return 3
         if response > .025:
+            return 3
+        if response > .01:
             return 2
         return 1
 
@@ -250,7 +250,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        filtered_data = sig_pro(raw_data, fs=self.fs, k=self.k)
+        filtered_data = bandpass.text_filter(raw_data, fs=self.fs, k=self.k)
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length

@@ -97,7 +97,7 @@ def power_spectral_density(
 
 
 if __name__ == '__main__':
-    data = np.loadtxt('bcipy/signal/processing/decomposition/resources/data.txt')
+    data = np.loadtxt('bcipy/signal/process/decomposition/resources/data.txt')
     sampling_rate = 100
     band = (0, 100)
     np.arange(data.size) / sampling_rate

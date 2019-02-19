@@ -1,12 +1,27 @@
-import numpy as np
 import os
 
+from scipy.signal import butter, sosfilt
 import logging
+import numpy as np
 
 log = logging.getLogger(__name__)
 
 
-def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
+def butter_bandpass(lowcut, highcut, fs, order=5):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+        return sos
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+        sos = butter_bandpass(lowcut, highcut, fs, order=order)
+        y = sosfilt(sos, data)
+        return y
+
+
+def text_filter(input_seq, filt=None, fs=256, k=2, filter_location=None):
     """
     :param input_seq: Input sequence to be filtered. Expected dimensions are 16xT
     :param filt: Input for using a specific filter. If left empty, according to fs a pre-designed filter is going to be used. Filters are pre-designed for fs = 256,300 or 1024 Hz.
@@ -32,7 +47,7 @@ def sig_pro(input_seq, filt=None, fs=256, k=2, filter_location=None):
 
     # If filter location is not provided, assume it is next to sig_pro.py file.
     if not filter_location:
-        filter_location = os.path.dirname(os.path.abspath(__file__)) + '/filters.txt'
+        filter_location = os.path.dirname(os.path.abspath(__file__)) + '/resources/filters.txt'
 
     # Try to open the filters.txt file
     try:
