@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Dict, List
 import numpy as np
 import bcipy.acquisition.datastream.generator as generator

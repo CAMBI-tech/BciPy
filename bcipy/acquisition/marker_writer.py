@@ -3,6 +3,7 @@ import logging
 from typing import Any
 import pylsl
 
+log = logging.getLogger(__name__)
 
 class MarkerWriter():
     """Abstract base class for an object that can be used to handle stimulus
@@ -57,7 +58,7 @@ class LslMarkerWriter(MarkerWriter):
         """
         stamp = lsl_time if lsl_time is not None else self.now()
         self.markers_outlet.push_sample([str(marker)], stamp)
-        logging.debug("Pushing marker: %s; timestamp: %s", marker, stamp)
+        log.debug("Pushing marker: %s; timestamp: %s", marker, stamp)
 
     def cleanup(self):
         """Cleans up the StreamOutlet."""

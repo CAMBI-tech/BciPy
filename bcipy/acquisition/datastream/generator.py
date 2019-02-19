@@ -5,8 +5,7 @@ import logging
 from past.builtins import range
 from bcipy.signal.generator.generator import gen_random_data
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 def advance_to_row(filehandle, rownum):
