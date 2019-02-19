@@ -43,6 +43,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         file_save (String)
     """
     TASK_NAME = 'RSVP Inter Sequence Feedback Calibration Task'
+    # This defines the channel we use to calcualte the SSVEP. We want to use a
+    #   posterior channel. If Oz available, use that!
     PSD_CHANNEL_INDEX = 6
 
     def __init__(self, win, daq, parameters, file_save):
@@ -84,10 +86,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.time_flash = self.parameters['time_flash']
         self.stimulation_frequency = calculate_stimulation_freq(self.time_flash)
 
-        # get +/- 10% of the stimulation frequency
+        # get +/- 15% of the stimulation frequency
         self.psd_export_band = (
-            self.stimulation_frequency * .90,
-            self.stimulation_frequency * 1.1)
+            self.stimulation_frequency * .85,
+            self.stimulation_frequency * 1.15)
 
         self.trial_length = self.time_flash * self.len_sti
         self.k = self.parameters['down_sampling_rate']
@@ -95,10 +97,12 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.psd_method = PSD_TYPE.WELCH
 
         # The channel used to calculate the SSVEP response to RSVP sequence.
-        # NOTE: This task will only work for VR300
         self.psd_channel_index = self.PSD_CHANNEL_INDEX
         self.device_name = self.daq.device_info.name
         self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
+        self.filter_low = 2
+        self.filter_high = 45
+        self.fitler_order = 2
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -171,6 +175,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
                 self.logger.info('[Feedback] Getting Decision')
                 position = self._get_feedback_decision(last_sequence_timing)
+                self.logger.info(f'[Feedback] Administering feedback position {position}')
                 timing = self.visual_feedback.administer(position=position)
 
                 # Wait for a time
@@ -233,8 +238,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         if response > .05:
             return 3
         if response > .025:
-            return 3
-        if response > .01:
             return 2
         return 1
 
@@ -250,7 +253,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        filtered_data = bandpass.text_filter(raw_data, fs=self.fs, k=self.k)
+        # filtered_data = bandpass.text_filter(raw_data, fs=self.fs, k=self.k) # old filter method
+        filtered_data = bandpass.butter_bandpass_filter(
+            raw_data, self.filter_low, self.filter_high, self.fs, order=self.fitler_order)
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
