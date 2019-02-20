@@ -41,30 +41,6 @@ class VisualFeedback(Feedback):
 
         self.message_color = self.parameters['feedback_message_color']
         self.feedback_line_width = self.parameters['feedback_line_width']
-        self.rectangle_message_box = self.parameters['rectangle_message_box']
-        self.circular_message_box = self.parameters['circular_message_box']
-
-        if self.rectangle_message_box:
-            self.rect = visual.Rect(
-                win=display,
-                width=self.width_stim,
-                height=self.height_stim,
-                lineColor=self.message_color,
-                pos=(self.pos_stim),
-                lineWidth=self.feedback_line_width,
-                ori=0.0)
-            self.rect.opacity = 0
-
-        if self.circular_message_box:
-            self.circle = visual.Circle(
-                win=display,
-                radius=self.width_stim,
-                lineColor=self.message_color,
-                pos=(self.pos_stim),
-                lineWidth=self.feedback_line_width,
-                ori=0.0)
-
-            self.circle.opacity = 0
 
     def administer(
             self,
@@ -90,7 +66,11 @@ class VisualFeedback(Feedback):
         if compare_assertion:
             (stim,
              assert_stim) = self._construct_assertion_stimuli(
-                stimulus, compare_assertion)
+                stimulus,
+                compare_assertion,
+                line_color,
+                fill_color,
+                stimuli_type)
 
             assert_stim.draw()
         else:
@@ -110,10 +90,6 @@ class VisualFeedback(Feedback):
         return timing
 
     def _show_stimuli(self, stimulus):
-        if self.rectangle_message_box:
-            self.rect.draw()
-        if self.circular_message_box:
-            self.circle.draw()
         stimulus.draw()
         self.display.flip()
 
@@ -126,15 +102,6 @@ class VisualFeedback(Feedback):
                 pos=pos,
                 ori=0.0)
             image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
-            if self.rectangle_message_box:
-                self.rect.width = image_stim.size[0]
-                self.rect.height = image_stim.size[1]
-                self.rect.opacity = 1
-                self.rect.lineColor = self.message_color
-            if self.circular_message_box:
-                self.circle.radius = 1
-                self.circle.opacity = 1
-                self.circle.lineColor = self.message_color
             return image_stim
         if stimuli_type == FeedbackType.TEXT:
             return visual.TextStim(
@@ -143,7 +110,7 @@ class VisualFeedback(Feedback):
                 text=stimulus,
                 height=self.height_stim,
                 pos=pos,
-                color=color)
+                color=fill_color)
         if stimuli_type == FeedbackType.SHAPE:
             return visual.Rect(
                 fillColor=fill_color, win=self.display,
@@ -154,9 +121,15 @@ class VisualFeedback(Feedback):
                 lineWidth=self.feedback_line_width,
                 ori=0.0)
 
-    def _construct_assertion_stimuli(self, stimulus, assertion):
-        stimulus = self._construct_stimulus(stimulus, (-.3, 0))
-        assertion = self._construct_stimulus(assertion, (.3, 0))
+    def _construct_assertion_stimuli(
+            self,
+            stimulus,
+            assertion,
+            line_color,
+            fill_color,
+            stimuli_type):
+        stimulus = self._construct_stimulus(stimulus, (-.3, 0), line_color, fill_color, stimuli_type)
+        assertion = self._construct_stimulus(assertion, (.3, 0), line_color, fill_color, stimuli_type)
 
         return stimulus, assertion
 

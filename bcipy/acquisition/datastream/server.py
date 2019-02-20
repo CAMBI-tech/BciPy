@@ -10,8 +10,7 @@ import time
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.util import StoppableThread
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 class DataServer(StoppableThread):
@@ -57,7 +56,7 @@ class DataServer(StoppableThread):
         self.server_socket.listen(1)
 
         self.started = True
-        logging.debug("[*] Accepting connections on %s:%d", self.host,
+        log.debug("[*] Accepting connections on %s:%d", self.host,
                       self.port)
 
         while self.running():
@@ -72,7 +71,7 @@ class DataServer(StoppableThread):
 
             if readable:
                 client, addr = self.server_socket.accept()
-                logging.debug("[*] Accepted connection from: %s:%d", addr[0],
+                log.debug("[*] Accepted connection from: %s:%d", addr[0],
                               addr[1])
                 self._handle_client(client)
         try:
@@ -82,10 +81,10 @@ class DataServer(StoppableThread):
         except Exception:
             pass
         self.server_socket = None
-        logging.debug("[*] No longer accepting connections")
+        log.debug("[*] No longer accepting connections")
 
     def stop(self):
-        logging.debug("[*] Stopping data server")
+        log.debug("[*] Stopping data server")
         super(DataServer, self).stop()
 
     def _handle_client(self, client_socket):
@@ -122,7 +121,7 @@ class DataServer(StoppableThread):
                 except IOError:
                     break
         client_socket.close()
-        logging.debug("[*] Client disconnected")
+        log.debug("[*] Client disconnected")
 
 
 def start_socket_server(protocol, host, port, retries=2):
@@ -154,7 +153,7 @@ def start_socket_server(protocol, host, port, retries=2):
         if retries > 0:
             # try a different port when 'Address already in use'.
             port = port + 1
-            logging.debug("Address in use: trying port %d", port)
+            log.debug("Address in use: trying port %d", port)
             return start_socket_server(protocol, host, port, retries - 1)
         raise error
 
@@ -217,9 +216,9 @@ def main():
                             generator=generator,
                             gen_params=params,
                             host=args.host, port=args.port)
-        logging.debug("New server created")
+        log.debug("New server created")
         server.start()
-        logging.debug("Server started")
+        log.debug("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

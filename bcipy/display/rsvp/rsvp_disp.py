@@ -9,11 +9,7 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.bci_task_related import SPACE_CHAR
 from bcipy.display.display_main import MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
-from bcipy.helpers.system_utils import get_system_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
 
 
 class RSVPDisplay(object):
@@ -64,7 +60,7 @@ class RSVPDisplay(object):
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
 
-        self.logger = logging
+        self.logger = logging.getLogger(__name__)
 
         self.stim_sequence = stim_sequence
         self.color_list_sti = color_list_sti

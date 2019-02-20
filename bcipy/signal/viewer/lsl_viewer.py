@@ -17,10 +17,9 @@ from threading import Thread
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
-sns.set(style="whitegrid")
+sns.set(style='whitegrid')
 
 
 class LSLViewer():
@@ -139,7 +138,7 @@ class LSLViewer():
                 sleep(0.2)
 
     def onclick(self, event):
-        logging.debug((event.button, event.x, event.y, event.xdata, event.ydata))
+        log.debug((event.button, event.x, event.y, event.xdata, event.ydata))
 
     def OnKeypress(self, event):
         if event.key == '/':
@@ -167,18 +166,18 @@ class LSLViewer():
 if __name__ == '__main__':
     parser = OptionParser()
 
-    parser.add_option("-w", "--window",
-                      dest="window", type='float', default=5.,
-                      help="window lenght to display in seconds.")
-    parser.add_option("-s", "--scale",
-                      dest="scale", type='float', default=100,
-                      help="scale in uV")
-    parser.add_option("-r", "--refresh",
-                      dest="refresh", type='float', default=0.2,
-                      help="refresh rate in seconds.")
-    parser.add_option("-f", "--figure",
-                      dest="figure", type='string', default="15x6",
-                      help="window size.")
+    parser.add_option('-w', '--window',
+                      dest='window', type='float', default=5.,
+                      help='window lenght to display in seconds.')
+    parser.add_option('-s', '--scale',
+                      dest='scale', type='float', default=100,
+                      help='scale in uV')
+    parser.add_option('-r', '--refresh',
+                      dest='refresh', type='float', default=0.2,
+                      help='refresh rate in seconds.')
+    parser.add_option('-f', '--figure',
+                      dest='figure', type='string', default='15x6',
+                      help='window size.')
 
     filt = True
     subsample = 3
@@ -190,12 +189,12 @@ if __name__ == '__main__':
     scale = options.scale
     figsize = np.int16(options.figure.split('x'))
 
-    logging.debug("looking for an EEG stream...")
+    log.debug('looking for an EEG stream...')
     streams = resolve_byprop('type', 'EEG', timeout=2)
 
     if len(streams) == 0:
-        raise(RuntimeError("Cant find EEG stream"))
-    logging.debug("Start aquiring data")
+        raise(RuntimeError('Cant find EEG stream'))
+    log.debug('Start aquiring data')
 
     fig, axes = plt.subplots(1, 1, figsize=figsize, sharex=True)
     lslv = LSLViewer(streams[0], fig, axes, window, scale, filter_data=filt)

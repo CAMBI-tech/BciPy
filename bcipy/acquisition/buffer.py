@@ -10,8 +10,7 @@ import logging
 from builtins import range
 from bcipy.acquisition.record import Record
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s')
+log = logging.getLogger(__name__)
 
 
 class Buffer():
@@ -67,7 +66,7 @@ class Buffer():
         defs = ','.join([field + ' real' for field in fields])
         cursor.execute('DROP TABLE IF EXISTS data')
 
-        logging.debug(defs)
+        log.debug(defs)
         cursor.execute('CREATE TABLE data (%s)' % defs)
         self._conn.commit()
 
@@ -265,8 +264,8 @@ class Buffer():
         self._flush()
         conn = self._new_connection()
         result = []
-        logging.debug('sql query: %s', query)
-        logging.debug('query params: %s', query_params)
+        log.debug('sql query: %s', query)
+        log.debug('query params: %s', query_params)
         result = conn.execute(
             query, query_params) if query_params else conn.execute(query)
 

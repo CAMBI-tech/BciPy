@@ -108,7 +108,7 @@ A `Producer` is a class internal to a server that manages the generation of data
 
 ## sig_pro
 
-sig_pro module defines the sig_pro(input_seq, filt, fs, k) function. In the module is a demo folder which demonstrates the usage of the function. filters.txt is a necessary text file in which filters are stored.
+sig_pro module defines the text_filter(input_seq, filt, fs, k) function. In the module is a demo folder which demonstrates the usage of the function. filters.txt is a necessary text file in which filters are stored.
 
 #### Input parameters:
 

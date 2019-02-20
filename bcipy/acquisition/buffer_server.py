@@ -12,8 +12,7 @@ MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
 MSG_STARTED = 'started'
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 def _loop(mailbox, channels, archive_name):
@@ -55,7 +54,7 @@ def _loop(mailbox, channels, archive_name):
             sender.put(len(buf))
         elif command == MSG_QUERY_SLICE:
             row_start, row_end, field = params
-            logging.debug("Sending query: %s", (row_start, row_end, field))
+            log.debug("Sending query: %s", (row_start, row_end, field))
             sender.put(buf.query(row_start, row_end, field))
         elif command == MSG_QUERY:
             # Generic query
@@ -64,7 +63,7 @@ def _loop(mailbox, channels, archive_name):
         elif command == MSG_STARTED:
             sender.put(('started', 'ok'))
         else:
-            logging.debug("Error; message not understood: %s", msg)
+            log.debug("Error; message not understood: %s", msg)
 
 
 def start(channels, archive_name, asynchronous=False):

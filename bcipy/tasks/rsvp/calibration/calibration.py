@@ -1,4 +1,3 @@
-# Calibration Task for RSVP
 from psychopy import core
 
 from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay

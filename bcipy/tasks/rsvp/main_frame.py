@@ -61,7 +61,7 @@ class EvidenceFusion(object):
         return 0
 
 
-class DecisionMaker(object):
+class DecisionMaker:
     """ Scheduler of the entire framework
         Attr:
             state(str): state of the framework, which increases in size

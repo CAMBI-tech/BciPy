@@ -1,12 +1,18 @@
-import logging
 import os
 from typing import Any
+import logging
 
 import numpy as np
 from psychopy import core, event, visual
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+from bcipy.tasks.exceptions import InsufficientDataException
+
+log = logging.getLogger(__name__)
+
+SPACE_CHAR = '_'
+BACKSPACE_CHAR = '<'
+DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
+                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -51,8 +57,24 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
     return next_target_letter, text_task, run
 
-SPACE_CHAR = '_'
-BACKSPACE_CHAR = '<'
+
+def calculate_stimulation_freq(flash_time: float) -> float:
+    """Calculate Stimulation Frequency.
+
+    In an RSVP paradigm, the sequence itself will produce an
+        SSVEP response to the stimulation. Here we calculate
+        what that frequency should be based in the presentation
+        time.
+
+    PARAMETERS
+    ----------
+    :param: flash_time: time in seconds to present RSVP sequence letters
+    :returns: frequency: stimulation frequency of the sequence
+    """
+
+    # We want to know how many stimuli will present in a second
+    return 1 / flash_time
+
 
 def alphabet(parameters=None):
     """Alphabet.
@@ -68,7 +90,7 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path) :
+            for stimulus_filename in os.listdir(path):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
                         ".png") and not stimulus_filename.endswith('PLUS.png'):
@@ -87,7 +109,8 @@ def process_data_for_decision(
         window,
         parameters,
         first_session_stim_time,
-        static_offset=0):
+        static_offset=0,
+        buf_length=None):
     """Process Data for Decision.
 
     Processes the raw data (triggers and EEG) into a form that can be passed to
@@ -112,7 +135,11 @@ def process_data_for_decision(
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
 
-    window_length = parameters['len_data_sequence_buffer']
+    # if there is an argument supplied for buffer length use that
+    if buf_length:
+        buffer_length = buf_length
+    else:
+        buffer_length = parameters['len_data_sequence_buffer']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset
@@ -120,10 +147,10 @@ def process_data_for_decision(
     if daq_offset:
         offset = daq_offset - first_session_stim_time + static_offset
         time1 = (first_stim_time + offset) * daq.device_info.fs
-        time2 = (last_stim_time + offset + window_length) * daq.device_info.fs
+        time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
     else:
         time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset + window_length) * daq.device_info.fs
+        time2 = (last_stim_time + static_offset + buffer_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -134,7 +161,7 @@ def process_data_for_decision(
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + window_length) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time + buffer_length) * daq.device_info.fs
 
     # Query for raw data
     try:
@@ -151,15 +178,18 @@ def process_data_for_decision(
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
-                raise Exception("Not enough data received")
+                message = f'Process Data Error: Not enough data received to process. ' \
+                          f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+                log.error(message)
+                raise InsufficientDataException(message)
 
-        # Take only the sensor data from raw data and transpose it;
+        # Take only the sensor data from raw data and transpose it
         raw_data = np.array([np.array([_float_val(col) for col in record.data])
                              for record in raw_data],
                             dtype=np.float64).transpose()
 
     except Exception as e:
-        logging.error("Error in daq: get_data()")
+        log.error(f'Uncaught Error in Process Data for Decision: {e}')
         raise e
 
     return raw_data, triggers, target_info
@@ -172,129 +202,6 @@ def _float_val(col: Any) -> float:
     if isinstance(col, str):
         return 1.0
     return float(col)
-
-
-class BarGraph(object):
-    """Bar Graph object for RSVP Display.
-
-    Attr:
-        texts(list[visual_Text_Stimuli]): items to show
-        bars(list[visual_Rect_Stimuli]): corresponding density bars
-    """
-
-    def __init__(self, win, tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5),
-                 size_domain=10, color_txt='white', font_bg='Times',
-                 color_bar_bg='white', max_num_step=20):
-        """Initialize Bar Graph.
-
-        Args:
-            win(visual_window): display window
-            tr_pos_bg(tuple) - bl_pos_bg(tuple): bar graph lies in a
-            rectangular region in window tr(top right) and bl(bottom
-            left) are tuples of (x,y) coordinates of corresponding edges
-            size_domain(int): number of items to be shown
-            color_txt(string): color of the letters
-            font_bg(string): font of letters
-            color_bar_bg(string): color of density bars
-            max_num_step(int): maximum number of steps for animation
-        """
-
-        self.win = win
-        self.bl_pos = bl_pos_bg
-        self.tr_pos = tr_pos_bg
-        self.size_domain = size_domain
-
-        letters = ['a'] * size_domain
-
-        self.height_text_bg = (tr_pos_bg[1] - bl_pos_bg[1]) / self.size_domain
-        # TODO: insert aspect ratio parameter
-        self.width_text_bg = 0.8 * abs(self.height_text_bg)
-
-        self.texts, self.bars = [], []
-        for idx in range(size_domain):
-            shift = idx * self.height_text_bg
-            pos_text = tuple([self.bl_pos[0] + self.width_text_bg / 2,
-                              self.bl_pos[
-                                  1] + self.height_text_bg / 2 + shift])
-            pos_bar = tuple(
-                [(self.tr_pos[0] + self.bl_pos[0] + self.width_text_bg) / 2,
-                 self.bl_pos[1] + self.height_text_bg / 2 + shift])
-            width_bar = (pos_bar[0] - (
-                self.bl_pos[0] + self.width_text_bg)) * 2
-            self.texts.append(
-                visual.TextStim(win=win, color=color_txt,
-                                height=self.height_text_bg, text=letters[idx],
-                                font=font_bg, pos=pos_text, wrapWidth=None,
-                                colorSpace='rgb', opacity=1, depth=-6.0))
-            self.bars.append(
-                visual.Rect(win=win, width=width_bar,
-                            height=self.height_text_bg,
-                            fillColor=color_bar_bg, fillColorSpace='rgb',
-                            lineColor=None,
-                            pos=pos_bar))
-
-        self.weight_bars = [0] * self.size_domain
-        self.scheduled_arg = self.weight_bars
-        self.scheduled_weight = letters
-        self.max_num_step = max_num_step
-
-    def update(self, letters, weight):
-        """Update bar graph parameters.
-
-        Args:
-            letters(list[char]): characters to be displayed
-            weight(list[float]): densities of characters to be displayed
-        """
-        for idx in range(self.size_domain):
-            shift = idx * self.height_text_bg
-            x_bar = (self.bl_pos[0] + self.width_text_bg) + (weight[idx] * (
-                self.tr_pos[0] - (self.bl_pos[0] + self.width_text_bg))) / 2
-            pos_bar = tuple([x_bar,
-                             self.bl_pos[1] + self.height_text_bg / 2 + shift])
-            width_bar = (pos_bar[0] - (
-                self.bl_pos[0] + self.width_text_bg)) * 2
-            self.texts[idx].text = letters[idx]
-            self.bars[idx].pos = pos_bar
-            self.bars[idx].width = width_bar
-
-    def draw(self):
-        """Draw Bar Graph."""
-        for idx in range(self.size_domain):
-            self.texts[idx].draw()
-            self.bars[idx].draw()
-
-    def schedule_to(self, letters, weight):
-        """Schedule Bar Graph.
-
-        Args:
-            letters(list[char]): characters to be displayed
-            weight(list[float]): densities of characters to be displayed
-        """
-        self.scheduled_arg = letters
-        self.scheduled_weight = list(
-            np.array(weight) / np.sum(np.array(weight)))
-
-    def animate(self, step):
-        """Animate Bar Graph.
-
-        Args:
-            step(int): <max_num_step, >0, updates to given step number
-        """
-
-        weight_ani = []
-        for idx in range(self.size_domain):
-            weight_ani = list(np.asarray(self.weight_bars) + (
-                np.asarray(self.scheduled_weight) - np.asarray(
-                    self.weight_bars)) / self.max_num_step * step)
-            self.update(self.scheduled_arg, weight_ani)
-            self.draw()
-
-        self.weight_bars = weight_ani
-
-    def reset_weights(self):
-        """Reset Bar Graph Weights."""
-        self.weight_bars = list(np.ones(self.size_domain) / self.size_domain)
-
 
 
 def trial_complete_message(win, parameters):
@@ -390,13 +297,9 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
-DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
-
-
 def trial_reshaper(trial_target_info: list,
                    timing_info: list,
-                   filtered_eeg: np.array,
+                   eeg_data: np.array,
                    fs: int, k: int, mode: str,
                    offset: float = 0,
                    channel_map: tuple = DEFAULT_CHANNEL_MAP,
@@ -404,7 +307,7 @@ def trial_reshaper(trial_target_info: list,
     """Trial Reshaper.
 
     Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
-        timing information (sec), filtered_eeg, sampling rate (fs), down-sampling rate (k),
+        timing information (sec), eeg_data, sampling rate (fs), down-sampling rate (k),
         mode of operation (ex. 'calibration'),
         offset (any calculated or hypothesized offsets in timings),
         channel map (which channels to include in reshaping) and
@@ -430,20 +333,20 @@ def trial_reshaper(trial_target_info: list,
                         'B' : [39.60, -224.124, ...],
                         'T' : [...],
                         ...
-                    }, 
+                    },
                     ...
                 }
     """
     try:
         # Remove the channels that we are not interested in
         channel_indexes_to_remove = []
-        for channel_index in range(len(filtered_eeg)):
+        for channel_index in range(len(eeg_data)):
             if channel_map[channel_index] == 0:
                 channel_indexes_to_remove.append(channel_index)
 
-        # define our filtered eeg and frequency
-        filtered_eeg = np.delete(filtered_eeg,
-                                 channel_indexes_to_remove, axis=0)
+        eeg_data = np.delete(eeg_data,
+                             channel_indexes_to_remove,
+                             axis=0)
         after_filter_frequency = fs / k
         # Number of samples we are interested per trial
         num_samples = int(trial_length * after_filter_frequency)
@@ -487,7 +390,7 @@ def trial_reshaper(trial_target_info: list,
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             # Label for every trial
             labels = np.zeros(len(triggers))
@@ -498,9 +401,9 @@ def trial_reshaper(trial_target_info: list,
                     labels[trial] = 1
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                        eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 
@@ -513,7 +416,7 @@ def trial_reshaper(trial_target_info: list,
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             # Label for every trial
             labels = np.zeros(len(triggers))
@@ -524,9 +427,9 @@ def trial_reshaper(trial_target_info: list,
                     labels[trial] = 1
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
+                        eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
             # In copy phrase, num of sequence is assumed to be 1.
@@ -538,21 +441,21 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'free_spell':
 
             # triggers in sample are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x + offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             labels = None
 
             for trial in range(len(triggers)):
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
+                        eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
             # In copy phrase, num of sequence is assumed to be 1.
