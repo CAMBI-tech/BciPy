@@ -7,7 +7,7 @@ from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
-from bcipy.signal.process.filter import bandpass
+from bcipy.signal.process.filter import bandpass, notch
 from bcipy.helpers.bci_task_related import (
     calculate_stimulation_freq,
     trial_complete_message,
@@ -84,14 +84,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.feedback_buffer_time = self.parameters['feedback_buffer_time']
         self.feedback_line_color = self.parameters['feedback_line_color']
         self.time_flash = self.parameters['time_flash']
+
+        # SSVEP response to letter flash estimate
         self.stimulation_frequency = calculate_stimulation_freq(self.time_flash)
 
-        # get +/- 15% of the stimulation frequency
-        self.psd_export_band = (
-            self.stimulation_frequency * .85,
-            self.stimulation_frequency * 1.15)
-
-        self.trial_length = self.time_flash * self.len_sti
         self.k = self.parameters['down_sampling_rate']
         self.filtered_sampling_rate = self.fs / self.k
         self.psd_method = PSD_TYPE.WELCH
@@ -100,9 +96,22 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.psd_channel_index = self.PSD_CHANNEL_INDEX
         self.device_name = self.daq.device_info.name
         self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
+
+        # EDIT ME FOR FEEDBACK CONFIGURATION
+        # filter parameters
         self.filter_low = 2
         self.filter_high = 45
         self.fitler_order = 2
+        self.notch_filter_frequency = 60
+
+        # psd band of interest to use for feeback (low, high)
+        self.psd_export_band = (
+            self.stimulation_frequency * .85,
+            self.stimulation_frequency * 1.15)
+
+        # length of time to use for PSD calculation
+        self.trial_length = self.time_flash * self.len_sti
+
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -174,6 +183,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                     last_sequence_timing, self._task.trigger_file)
 
                 self.logger.info('[Feedback] Getting Decision')
+
                 position = self._get_feedback_decision(last_sequence_timing)
                 self.logger.info(f'[Feedback] Administering feedback position {position}')
                 timing = self.visual_feedback.administer(position=position)
@@ -207,10 +217,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
     def _get_feedback_decision(self, sequence_timing):
         # wait some time in order to get enough data from the daq and make the
         #   tranisiton less abrupt to the user
-        core.wait(self.trial_length)
+        core.wait(self.feedback_buffer_time)
 
-        # get data sequence
-        data = self._get_data_for_psd(sequence_timing)
+        # get last len_sti stimuli
+        sequence_of_interest = sequence_timing[-self.len_sti:]
+
+        # get data sequence and only use the first 2 stimuli
+        data = self._get_data_for_psd(sequence_of_interest[:2])
 
         # we always want the same data channel in the occipital region and the first of it
         response = power_spectral_density(
@@ -253,9 +266,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        # filtered_data = bandpass.text_filter(raw_data, fs=self.fs, k=self.k) # old filter method
+        notch_filterted_data = notch.notch_filter(raw_data, self.fs, self.notch_filter_frequency)
         filtered_data = bandpass.butter_bandpass_filter(
-            raw_data, self.filter_low, self.filter_high, self.fs, order=self.fitler_order)
+            notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.fitler_order)
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
@@ -264,7 +277,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             times,
             filtered_data,
             fs=self.fs,
-            k=self.k, mode='copy_phrase',
+            k=self.k, mode='calibration',
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return data
