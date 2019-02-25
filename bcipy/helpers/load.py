@@ -101,7 +101,7 @@ def load_experimental_data() -> str:
     except Exception as error:
         raise error
 
-    logg.debug("Loaded Experimental Data From: %s" % filename)
+    log.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
