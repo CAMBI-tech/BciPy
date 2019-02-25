@@ -716,7 +716,7 @@
     "type": "int"
   },
   "down_sampling_rate": {
-    "value": "2",
+    "value": "1",
     "section": "signal_config",
     "readableName": "down_sampling_rate",
     "helpTip": "down_sampling_rate",
