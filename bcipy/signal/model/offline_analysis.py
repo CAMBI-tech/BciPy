@@ -5,7 +5,7 @@ from bcipy.helpers.load import (
     read_data_csv,
     load_experimental_data,
     load_json_parameters)
-from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.signal.process.filter import bandpass
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
@@ -52,7 +52,7 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     log.debug(f'Device type: {type_amp}')
 
     downsample_rate = parameters.get('down_sampling_rate', 2)
-    filtered_data = sig_pro(raw_dat, fs=fs, k=downsample_rate)
+    filtered_data = bandpass.text_filter(raw_dat, fs=fs, k=downsample_rate)
 
     # Process triggers.txt
     triggers_file = parameters.get('triggers_file_name', 'triggers.txt')

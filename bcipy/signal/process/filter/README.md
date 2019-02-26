@@ -1,4 +1,4 @@
-## How to use sig_pro() function
+## How to use text_filter() function
 ### Input parameters:
 
 This function processes the raw EEG input through a bandpass filter. Three default filters are hard-coded and can be chosen by specifying the sampling freqeuency of the hardware. Three filters are designed for 256Hz, 300Hz and 1024Hz sampling rates. If another filter is required to be used, it can be passed to the function. Input parameters are:

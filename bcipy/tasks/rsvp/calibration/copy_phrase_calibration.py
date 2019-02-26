@@ -1,14 +1,9 @@
-# Calibration Task for RSVP
-
 from psychopy import core
 
 from bcipy.tasks.task import Task
-
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.stimuli_generation import target_rsvp_sequence_generator, get_task_info
-
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, get_user_input,
     trial_complete_message, pause_calibration)
@@ -206,14 +201,6 @@ def _init_copy_phrase_display_task(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['sti_space_char'])

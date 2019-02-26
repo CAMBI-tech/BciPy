@@ -1,13 +1,11 @@
 from psychopy import core
-from bcipy.tasks.task import Task
 
+from bcipy.tasks.task import Task
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-
 from bcipy.helpers.bci_task_related import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
@@ -109,7 +107,8 @@ class RSVPCopyPhraseTask(Task):
         self.show_feedback = parameters['show_feedback']
 
         if self.show_feedback:
-            self.feedback = VisualFeedback(self.window, self.parameters, self.experiment_clock)
+            self.feedback = VisualFeedback(
+                self.window, self.parameters, self.experiment_clock)
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
@@ -139,7 +138,8 @@ class RSVPCopyPhraseTask(Task):
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
         #   sequence counter (how many seq have occured).
-        #   epoch counter and index (what epoch, and how many sequences within it)
+        #   epoch counter and index
+        #   (what epoch, and how many sequences within it)
         new_epoch = True
         run = True
         seq_counter = 0
@@ -213,8 +213,6 @@ class RSVPCopyPhraseTask(Task):
             # Do the self.RSVP sequence!
             sequence_timing = self.rsvp.do_sequence()
 
-            self.first_stim_time = self.rsvp.first_stim_time
-
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
@@ -235,7 +233,7 @@ class RSVPCopyPhraseTask(Task):
                     self.daq,
                     self.window,
                     self.parameters,
-                    self.first_stim_time,
+                    self.rsvp.first_stim_time,
                     self.static_offset)
 
             # Uncomment this to turn off fake decisions, but use fake data.
@@ -384,14 +382,6 @@ def _init_copy_phrase_display(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['sti_space_char'])

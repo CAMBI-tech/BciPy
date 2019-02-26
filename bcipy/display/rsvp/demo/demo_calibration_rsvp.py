@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from psychopy import visual, core
 
 from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
@@ -25,13 +23,6 @@ txt_height = 0.1
 font_sti = 'Times'
 pos_sti = (0, 0)
 sti_height = 0.6
-
-tr_pos_bg = (0, .5)
-bl_pos_bg = (-1, -.5)
-size_domain_bg = 7
-color_bg_txt = 'red'
-font_bg_txt = 'Arial'
-color_bar_bg = 'green'
 
 # Initialize Stimulus
 is_txt_sti = True
@@ -74,11 +65,6 @@ else:
                 './display/RSVP_presentation_by_images/put_out_fire_3.png'
                 ]]
 
-    '''
-    Complete list of images:
-    ['./display/RSVP_presentation_by_images/blow_bubbles.png', './display/RSVP_presentation_by_images/bounce_on_ball.png', './display/RSVP_presentation_by_images/carve_pumpkin.png', './display/RSVP_presentation_by_images/destroy_smash.png', './display/RSVP_presentation_by_images/digest_swallow.png', './display/RSVP_presentation_by_images/escape.png', './display/RSVP_presentation_by_images/escapesmall.png', './display/RSVP_presentation_by_images/escapesmall2.png', './display/RSVP_presentation_by_images/fight.png', './display/RSVP_presentation_by_images/fightsmall.png', './display/RSVP_presentation_by_images/fishing.png', './display/RSVP_presentation_by_images/fishingsmall.png', './display/RSVP_presentation_by_images/food_fight.png', './display/RSVP_presentation_by_images/forvandle_poff.png', './display/RSVP_presentation_by_images/hike.png', './display/RSVP_presentation_by_images/hikesmall150.png', './display/RSVP_presentation_by_images/hot_air_balloon_launch.png', './display/RSVP_presentation_by_images/hunt.png', './display/RSVP_presentation_by_images/hunt150.png', './display/RSVP_presentation_by_images/hunt175.png', './display/RSVP_presentation_by_images/iditarod_race_verb.png', './display/RSVP_presentation_by_images/juggle.png', './display/RSVP_presentation_by_images/kayaking.png', './display/RSVP_presentation_by_images/kick.png', './display/RSVP_presentation_by_images/kidnap.png', './display/RSVP_presentation_by_images/pass_out.png', './display/RSVP_presentation_by_images/Penguins.png', './display/RSVP_presentation_by_images/pull_hair.png', './display/RSVP_presentation_by_images/put_out_fire_3.png', './display/RSVP_presentation_by_images/rescue_dolphin.png', './display/RSVP_presentation_by_images/row_gondola.png', './display/RSVP_presentation_by_images/spaceSymbol.png', './display/RSVP_presentation_by_images/steal_wallet.png', './display/RSVP_presentation_by_images/Thumbs-up-icon.png', './display/RSVP_presentation_by_images/toast_glasses.png', './display/RSVP_presentation_by_images/whine.png', './display/RSVP_presentation_by_images/wink.png']
-
-    '''
 
 time_flash = .25
 time_target = 2
@@ -97,7 +83,8 @@ ele_list_dec = [['[<]'], ['[R]']]
 win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
-                    waitBlanking=True)
+                    waitBlanking=True,
+                    winType='pyglet')
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
@@ -122,10 +109,6 @@ rsvp = CalibrationDisplay(
     sti_height=sti_height,
     stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
     time_list_sti=[3] * 10,
-    tr_pos_bg=tr_pos_bg, bl_pos_bg=bl_pos_bg,
-    size_domain_bg=size_domain_bg,
-    color_bg_txt=color_bg_txt, font_bg_txt=font_bg_txt,
-    color_bar_bg=color_bar_bg,
     is_txt_sti=is_txt_sti)
 
 # uncomment trigger_file lines for demo with triggers!

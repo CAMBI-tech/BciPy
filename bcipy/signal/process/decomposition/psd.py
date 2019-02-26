@@ -23,11 +23,11 @@ class PSD_TYPE(Enum):
 
 def power_spectral_density(
         data: np.ndarray,
-        band: Tuple[int, int],
+        band: Tuple[float, float],
         sampling_rate: float=100.0,
         window_length: float=4.0,
         plot: bool=False,
-        method: PSD_TYPE=PSD_TYPE.MULTITAPER,
+        method: PSD_TYPE=PSD_TYPE.WELCH,
         relative=False):
     """Power spectral density:
 
@@ -59,26 +59,22 @@ def power_spectral_density(
 
     # Compute the modified periodogram (Welch)
     if method == PSD_TYPE.WELCH:
-        if window_length is not None:
-            nperseg = window_length * sampling_rate
-        else:
-            nperseg = (2 / low) * sampling_rate
-
-        freqs, psd = welch(data, sampling_rate, nperseg=nperseg, scaling='density')
+        nperseg = window_length * sampling_rate
+        freqs, psd = welch(data, sampling_rate, nperseg=nperseg)
 
     # Compute the modified periodogram (MultiTaper)
     elif method == PSD_TYPE.MULTITAPER:
         psd, freqs = psd_array_multitaper(
-            data, sampling_rate, adaptive=True, normalization='full')
+            data, sampling_rate, adaptive=True, normalization='full', verbose=False)
 
     # Find index of band in frequency vector
-    idx_min = np.argmax(freqs > low) - 1
-    idx_max = np.argmax(freqs > high) - 1
-    idx_band = np.zeros(dtype=bool, shape=freqs.shape)
-    idx_band[idx_min:idx_max] = True
+    idx_band = np.logical_and(freqs >= low, freqs <= high)
+
+    # Frequency resolution
+    freq_res = freqs[1] - freqs[0]
 
     # Integral approximation of the spectrum using parabola (Simpson's rule)
-    bp = simps(psd[idx_band], freqs[idx_band])
+    bp = simps(psd[idx_band], dx=freq_res)
 
     # Plot the power spectrum
     if plot:
@@ -89,19 +85,19 @@ def power_spectral_density(
         plt.ylabel('Power spectral density (V^2 / Hz)')
         plt.ylim([0, psd.max() * 1.1])
         plt.title(f'{method.value}')
-        plt.xlim([0, 20])
+        plt.xlim([0, sampling_rate / 2])
         sns.despine()
         plt.show()
 
     # Whether or not to return PSD as a percentage of total power
     if relative:
-        bp /= simps(psd, freqs)
+        bp /= simps(psd, dx=freq_res)
 
     return bp
 
 
 if __name__ == '__main__':
-    data = np.loadtxt('bcipy/signal/processing/decomposition/resources/data.txt')
+    data = np.loadtxt('bcipy/signal/process/decomposition/resources/data.txt')
     sampling_rate = 100
     band = (0, 100)
     np.arange(data.size) / sampling_rate

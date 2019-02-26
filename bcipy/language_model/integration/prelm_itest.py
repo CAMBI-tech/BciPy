@@ -1,9 +1,8 @@
-import os
-import sys
-sys.path.append('.')
 import unittest
+
 from bcipy.language_model.prelm_language_model import LangModel
 from bcipy.language_model.errors import StatusCodeError
+
 
 class TestPreLM(unittest.TestCase):
 
@@ -27,18 +26,19 @@ class TestPreLM(unittest.TestCase):
         priors = lmodel.state_update(list('THE'))
         assert priors['letter'][0][0] == '_'
 
-#    def test_incorrect_input(self):
-#        """
-#        confirm the process provides
-#        an error given an incorrect
-#        input
-#        """
-#        # init LMWrapper
-#        lmodel = LangModel(logfile="lmwrap.log")
-#        lmodel.init()
-#        # try to get priors
-#        with self.assertRaises(StatusCodeError) as er:
-#            lmodel.state_update(['3'])
+    def test_incorrect_input(self):
+        """
+        confirm the process provides
+        an error given an incorrect
+        input
+        """
+        # init LMWrapper
+        lmodel = LangModel(logfile="lmwrap.log")
+        lmodel.init()
+        # try to get priors
+        with self.assertRaises(StatusCodeError):
+            lmodel.state_update(['3'])
+
 
 if __name__ == '__main__':
     unittest.main()
