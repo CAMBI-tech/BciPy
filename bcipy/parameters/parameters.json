@@ -628,7 +628,7 @@
     "type": "float"
   },
   "feedback_pos_x": {
-    "value": "0",
+    "value": "-0.72",
     "section": "feedback_config",
     "readableName": "feedback_pos_x",
     "helpTip": "feedback_pos_x",
@@ -644,10 +644,26 @@
     "type": "float"
   },
   "feedback_stim_height": {
-    "value": "0.6",
+    "value": "0.35",
     "section": "feedback_config",
     "readableName": "feedback_stim_height",
     "helpTip": "feedback_stim_height",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_stim_width": {
+    "value": "0.35",
+    "section": "feedback_config",
+    "readableName": "feedback_stim_width",
+    "helpTip": "feedback_stim_width",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_line_width": {
+    "value": "1",
+    "section": "feedback_config",
+    "readableName": "feedback_line_width",
+    "helpTip": "feedback_line_width",
     "recommended_values": "",
     "type": "float"
   },
@@ -668,15 +684,47 @@
     "type": "bool"
   },
   "feedback_message_color": {
-    "value": "green",
+    "value": "white",
     "section": "feedback_config",
     "readableName": "feedback_message_color",
     "helpTip": "feedback_message_color",
     "recommended_values": "",
     "type": "str"
   },
+  "feedback_line_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "feedback_line_color",
+    "helpTip": "feedback_line_color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_padding": {
+    "value": "0.37",
+    "section": "feedback_config",
+    "readableName": "feedback_padding",
+    "helpTip": "feedback_padding",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_buffer_time": {
+    "value": "1",
+    "section": "feedback_config",
+    "readableName": "Time inbetween feedback and sequences",
+    "helpTip": "Feedback Buffer Time in Seconds",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_target_line_width": {
+    "value": "100",
+    "section": "feedback_config",
+    "readableName": "Feedback Target Line Width",
+    "helpTip": "The width of target feedback for the level feedback",
+    "recommended_values": "",
+    "type": "int"
+  },
   "down_sampling_rate": {
-    "value": "2",
+    "value": "1",
     "section": "signal_config",
     "readableName": "down_sampling_rate",
     "helpTip": "down_sampling_rate",

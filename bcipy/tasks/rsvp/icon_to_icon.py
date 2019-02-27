@@ -2,9 +2,10 @@ import csv
 import datetime
 import glob
 import random
+
 from itertools import repeat
 from os import path
-from os.path import basename, dirname
+from os.path import basename, dirname, splitext
 from typing import Dict, List, Sequence, Tuple
 
 from psychopy import core
@@ -20,6 +21,7 @@ from bcipy.helpers.signal_model_related import CopyPhraseWrapper
 from bcipy.helpers.stimuli_generation import generate_icon_match_images
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.tasks.task import Task
+from bcipy.helpers.system_utils import auto_str
 
 
 class RSVPIconToIconTask(Task):
@@ -447,12 +449,6 @@ def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
         stim_sequence=['a'] * 10,
         color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'], parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'], parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=False,
         trigger_type=parameters['trigger_type'],
         is_word=is_word)

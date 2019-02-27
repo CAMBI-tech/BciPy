@@ -5,10 +5,14 @@ import logging
 import numpy as np
 from psychopy import core, event, visual
 
+from bcipy.tasks.exceptions import InsufficientDataException
+
 log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
+DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
+                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -54,6 +58,24 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
     return next_target_letter, text_task, run
 
 
+def calculate_stimulation_freq(flash_time: float) -> float:
+    """Calculate Stimulation Frequency.
+
+    In an RSVP paradigm, the sequence itself will produce an
+        SSVEP response to the stimulation. Here we calculate
+        what that frequency should be based in the presentation
+        time.
+
+    PARAMETERS
+    ----------
+    :param: flash_time: time in seconds to present RSVP sequence letters
+    :returns: frequency: stimulation frequency of the sequence
+    """
+
+    # We want to know how many stimuli will present in a second
+    return 1 / flash_time
+
+
 def alphabet(parameters=None):
     """Alphabet.
 
@@ -87,7 +109,8 @@ def process_data_for_decision(
         window,
         parameters,
         first_session_stim_time,
-        static_offset=0):
+        static_offset=0,
+        buf_length=None):
     """Process Data for Decision.
 
     Processes the raw data (triggers and EEG) into a form that can be passed to
@@ -112,7 +135,11 @@ def process_data_for_decision(
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
 
-    window_length = parameters['len_data_sequence_buffer']
+    # if there is an argument supplied for buffer length use that
+    if buf_length:
+        buffer_length = buf_length
+    else:
+        buffer_length = parameters['len_data_sequence_buffer']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset
@@ -120,10 +147,10 @@ def process_data_for_decision(
     if daq_offset:
         offset = daq_offset - first_session_stim_time + static_offset
         time1 = (first_stim_time + offset) * daq.device_info.fs
-        time2 = (last_stim_time + offset + window_length) * daq.device_info.fs
+        time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
     else:
         time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset + window_length) * daq.device_info.fs
+        time2 = (last_stim_time + static_offset + buffer_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -134,7 +161,7 @@ def process_data_for_decision(
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + window_length) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time + buffer_length) * daq.device_info.fs
 
     # Query for raw data
     try:
@@ -154,9 +181,9 @@ def process_data_for_decision(
                 message = f'Process Data Error: Not enough data received to process. ' \
                           f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
                 log.error(message)
-                raise Exception(message)
+                raise InsufficientDataException(message)
 
-        # Take only the sensor data from raw data and transpose it;
+        # Take only the sensor data from raw data and transpose it
         raw_data = np.array([np.array([_float_val(col) for col in record.data])
                              for record in raw_data],
                             dtype=np.float64).transpose()
@@ -270,13 +297,9 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
-DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
-
-
 def trial_reshaper(trial_target_info: list,
                    timing_info: list,
-                   filtered_eeg: np.array,
+                   eeg_data: np.array,
                    fs: int, k: int, mode: str,
                    offset: float = 0,
                    channel_map: tuple = DEFAULT_CHANNEL_MAP,
@@ -284,7 +307,7 @@ def trial_reshaper(trial_target_info: list,
     """Trial Reshaper.
 
     Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
-        timing information (sec), filtered_eeg, sampling rate (fs), down-sampling rate (k),
+        timing information (sec), eeg_data, sampling rate (fs), down-sampling rate (k),
         mode of operation (ex. 'calibration'),
         offset (any calculated or hypothesized offsets in timings),
         channel map (which channels to include in reshaping) and
@@ -317,13 +340,13 @@ def trial_reshaper(trial_target_info: list,
     try:
         # Remove the channels that we are not interested in
         channel_indexes_to_remove = []
-        for channel_index in range(len(filtered_eeg)):
+        for channel_index in range(len(eeg_data)):
             if channel_map[channel_index] == 0:
                 channel_indexes_to_remove.append(channel_index)
 
-        # define our filtered eeg and frequency
-        filtered_eeg = np.delete(filtered_eeg,
-                                 channel_indexes_to_remove, axis=0)
+        eeg_data = np.delete(eeg_data,
+                             channel_indexes_to_remove,
+                             axis=0)
         after_filter_frequency = fs / k
         # Number of samples we are interested per trial
         num_samples = int(trial_length * after_filter_frequency)
@@ -367,7 +390,7 @@ def trial_reshaper(trial_target_info: list,
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             # Label for every trial
             labels = np.zeros(len(triggers))
@@ -378,9 +401,9 @@ def trial_reshaper(trial_target_info: list,
                     labels[trial] = 1
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][triggers[trial]:triggers[trial] + num_samples]
+                        eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 
@@ -393,7 +416,7 @@ def trial_reshaper(trial_target_info: list,
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             # Label for every trial
             labels = np.zeros(len(triggers))
@@ -404,9 +427,9 @@ def trial_reshaper(trial_target_info: list,
                     labels[trial] = 1
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
+                        eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
             # In copy phrase, num of sequence is assumed to be 1.
@@ -418,21 +441,21 @@ def trial_reshaper(trial_target_info: list,
         elif mode == 'free_spell':
 
             # triggers in sample are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x + offset) / k), timing_info))
+            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
             reshaped_trials = np.zeros(
-                (len(filtered_eeg), len(triggers), num_samples))
+                (len(eeg_data), len(triggers), num_samples))
 
             labels = None
 
             for trial in range(len(triggers)):
 
                 # For every channel append filtered channel data to trials
-                for channel in range(len(filtered_eeg)):
+                for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        filtered_eeg[channel][
+                        eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
             # In copy phrase, num of sequence is assumed to be 1.

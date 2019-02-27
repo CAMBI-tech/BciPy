@@ -1,7 +1,5 @@
-import os
-import sys
-sys.path.append('.')
 import unittest
+
 from bcipy.language_model.oclm_language_model import LangModel
 from bcipy.language_model.errors import NBestError, EvidenceDataStructError
 

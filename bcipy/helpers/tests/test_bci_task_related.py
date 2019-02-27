@@ -62,7 +62,7 @@ class TestTrialReshaper(unittest.TestCase):
         (reshaped_trials, labels,
          num_of_seq, trials_per_sequence) = trial_reshaper(
             trial_target_info=self.target_info,
-            timing_info=self.timing_info, filtered_eeg=self.eeg,
+            timing_info=self.timing_info, eeg_data=self.eeg,
             fs=256, k=2, mode='calibration', channel_map=self.channel_map)
 
         self.assertTrue(

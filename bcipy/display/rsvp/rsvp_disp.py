@@ -1,12 +1,13 @@
 import logging
 import os.path as path
 from typing import Callable
+from typing import List
 
 from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.bci_task_related import SPACE_CHAR
-from bcipy.display.display_main import BarGraph, MultiColorText
+from bcipy.display.display_main import MultiColorText
 from bcipy.helpers.stimuli_generation import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
@@ -26,12 +27,9 @@ class RSVPDisplay(object):
                  font_text=['Times'], pos_text=[(.8, .9)], height_text=[0.2],
                  font_sti='Times', pos_sti=(-.8, .9), sti_height=0.2,
                  stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-                 time_list_sti=[1] * 10,
-                 tr_pos_bg=(.5, .5), bl_pos_bg=(-.5, -.5), size_domain_bg=7,
-                 color_bg_txt='red', font_bg_txt='Times', color_bar_bg='green',
-                 bg_step_num=20, is_txt_sti=True,
+                 time_list_sti=[1] * 10, is_txt_sti=True,
                  static_period_time=.05,
-                 trigger_type='image', bg=False, space_char=SPACE_CHAR):
+                 trigger_type='image', space_char=SPACE_CHAR):
         """Initialize RSVP window parameters and objects.
 
         Args:
@@ -58,14 +56,6 @@ class RSVPDisplay(object):
                 stim_sequence(list[string]): list of elements to flash
                 color_list_sti(list[string]): list of colors for stimuli
                 time_list_sti(list[float]): timing for each letter flash
-
-                tr_pos_bg(tuple): top right corner location of bar graph
-                bl_pos_bg(tuple): bottom left corner location of bar graph
-                size_domain_bg(int): number of elements in bar graph
-                color_bg_txt(string): color of bar graph text
-                font_bg_txt(string): font of bar graph text
-                color_bar_bg(string): color of bar graph bars
-                bg_step_num(int): number of animation iterations for bars
         """
         self.win = window
         self.refresh_rate = window.getActualFrameRate()
@@ -139,14 +129,6 @@ class RSVPDisplay(object):
         else:
             self.sti = visual.ImageStim(win=window, image=None, mask=None,
                                         pos=pos_sti, ori=0.0)
-
-        if bg:
-            # Create Bar Graph
-            self.bg = BarGraph(win=window, tr_pos_bg=tr_pos_bg,
-                               bl_pos_bg=bl_pos_bg,
-                               size_domain=size_domain_bg,
-                               color_txt=color_bg_txt, font_bg=font_bg_txt,
-                               color_bar_bg=color_bar_bg, max_num_step=bg_step_num)
 
     def draw_static(self):
         """Draw static elements in a stimulus."""
@@ -281,15 +263,7 @@ class RSVPDisplay(object):
 
         return timing
 
-    def show_bar_graph(self):
-        """Show Bar Graph."""
-
-        for idx in range(self.bg.max_num_step):
-            self.draw_static()
-            self.bg.animate(idx)
-            self.win.flip()
-
-    def update_task_state(self, text, color_list):
+    def update_task_state(self, text: str, color_list: List[str]) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
@@ -341,8 +315,10 @@ class RSVPDisplay(object):
         wait_message.draw()
         self.win.flip()
 
-    def create_stimulus(self, height_int: int, mode='text'):
-        """Returns a TextStim or ImageStim object.
+    def create_stimulus(self, height_int: int, mode: str="text"):
+        """Create Stimulus.
+
+        Returns a TextStim or ImageStim object.
             Args:
             height_int: The height of the stimulus
             mode: "text" or "image", determines which to return

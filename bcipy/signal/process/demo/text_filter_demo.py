@@ -1,4 +1,4 @@
-from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.signal.process.filter import bandpass
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -42,7 +42,7 @@ x = np.zeros((2,xpassband.size))
 x[0][:] = xpassband + xstopband
 x[1][:] = xpassband + xstopband
 
-y = sig_pro(x, fs = fs, k = 1)
+y = bandpass.text_filter(x, fs = fs, k = 1)
 
 MSE_perSample = np.sum((xpassband - y[0][:xpassband.size])**2.)/xpassband.size
 MSE_perSample_norm = MSE_perSample/np.sum(x[0][:]**2)

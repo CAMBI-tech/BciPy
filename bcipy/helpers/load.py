@@ -55,7 +55,7 @@ def load_json_parameters(path: str, value_cast: bool=False) -> dict:
 
     Given a path to a json of parameters, convert to a dictionary and optionally
         cast the type.
-    
+
     Expects the following format:
     "fake_data": {
         "value": "true",
@@ -101,7 +101,7 @@ def load_experimental_data() -> str:
     except Exception as error:
         raise error
 
-    logg.debug("Loaded Experimental Data From: %s" % filename)
+    log.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
