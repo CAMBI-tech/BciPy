@@ -1,6 +1,6 @@
 """Defines filter functions that can be applied to a viewer stream."""
 import numpy as np
-from bcipy.signal.processing.sig_pro import sig_pro
+# from bcipy.signal.processing.sig_pro import sig_pro
 
 
 def downsample_filter(factor: int, fs: int):
@@ -33,10 +33,9 @@ def sig_pro_filter(factor, fs):
     --------
         a function that filters the provided data using sig_pro.
     """
+    # TODO:
     def fn(data):
         """Data should be an np array with a row (np array: float) for each
         channel."""
-        expected_len = len(data[0, ::factor])
-        filtered = sig_pro(data, k=factor)
-        return filtered[:, 0:expected_len]
+        return data[:, ::factor]
     return fn
