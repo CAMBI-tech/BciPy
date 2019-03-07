@@ -1,6 +1,7 @@
 """GUI tool to visualize offset analysis when analyzing system latency."""
 import csv
 import os
+import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 from bcipy.acquisition.device_info import DeviceInfo
@@ -22,7 +23,7 @@ def channel_data(raw_data, device_info, channel_name, n_records=None):
     return arr[:, channel_index]
 
 
-def plot_triggers(raw_data, device_info, triggers):
+def plot_triggers(raw_data, device_info, triggers, title=""):
     """Plot raw_data triggers, including the TRG_device_stream data 
     (channel streamed from the device; usually populated from a trigger box),
     as well as TRG data populated from the LSL Marker Stream. Also plots data
@@ -41,6 +42,8 @@ def plot_triggers(raw_data, device_info, triggers):
     ax = fig.add_subplot(1, 1, 1)
     plt.xlabel('acquisition clock (secs)')
     plt.ylabel('TRG value')
+    if title:
+        plt.title(title)
 
     # Plot TRG_device_stream column; this is a continuous line.
     trg_box_channel = channel_data(raw_data, device_info, 'TRG_device_stream')
@@ -142,8 +145,8 @@ def main(path: str):
     trg_file = os.path.join(path, 'triggers.txt')
     data, device_info = file_data(data_file)
     triggers = read_triggers(trg_file)
-
-    plot_triggers(data, device_info, triggers)
+    
+    plot_triggers(data, device_info, triggers, title=pathlib.Path(path).name)
 
 
 if __name__ == "__main__":
