@@ -155,10 +155,9 @@ class MomentumQuerying(object):
 
             for k in idx_prev_query:
                 # momentum = current_mass * mass_displacement
-                self.momentum[k] += self.prob_history[-1][k] * np.power(10,
-                                                                        5) * (
-                                            self.prob_history[-1][k] -
-                                            self.prob_history[-2][k])
+                self.momentum[k] += \
+                    self.prob_history[-1][k] * np.power(10, 5) * (
+                            self.prob_history[-1][k] - self.prob_history[-2][k])
 
     def update_lam(self):
         """ Handles the handshaking between two objectives. currently just a

@@ -105,9 +105,6 @@ class DecisionMaker(object):
                 If committed to an epoch update the state using a decision
                 metric.
                 (e.g. pick the letter with highest likelihood)
-            prepare_stimuli():
-                prepares the query set for the next sequence
-                (e.g pick n-highest likely letters and randomly shuffle)
         """
 
     def __init__(self, min_num_seq, max_num_seq, state='',
@@ -249,8 +246,8 @@ class DecisionMaker(object):
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
 
-        tmp = self.list_epoch[-1]['list_distribution'][-1][:]
-        stimuli_pos = self.query_method.update_query(tmp[:])
+        last_prob_dist = self.list_epoch[-1]['list_distribution'][-1][:]
+        stimuli_pos = self.query_method.update_query(last_prob_dist[:])
 
         samples, times, colors = [], [], []
         for idx_num in range(num_sti):
