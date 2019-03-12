@@ -28,7 +28,7 @@ class RandomQuery(object):
 
     def reset(self):
         """ This object does not require history. Reset is a void function. """
-        tmp = None
+        pass
 
     def update_query(self, p):
         """ with the final belief over the system, updates the querying method
@@ -64,7 +64,7 @@ class NBestQuery(object):
 
     def reset(self):
         """ This object does not require history. Reset is a void function. """
-        tmp = None
+        pass
 
     def update_query(self, p):
         """ with the final belief over the system, updates the querying method and
