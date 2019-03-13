@@ -17,7 +17,7 @@ class LslDataSource(DataSource):
     def __init__(self, stream_type: str = 'EEG'):
         super(LslDataSource, self).__init__()
 
-        print("Waiting for LSL EEG data stream...")
+        print('Waiting for LSL EEG data stream...')
         self.stream_type = stream_type
         streams = pylsl.resolve_stream('type', self.stream_type)
         inlet = pylsl.StreamInlet(streams[0])
@@ -25,7 +25,7 @@ class LslDataSource(DataSource):
 
         fs = float(info.nominal_srate())
         self.sample_rate = fs
-        print(f"Sample rate: {fs}")
+        print(f'Sample rate: {fs}')
         name = info.name()
         channel_names = []
         ch = info.desc().child("channels").child("channel")
@@ -49,7 +49,7 @@ class LslDataSource(DataSource):
         
         if fast_forward:
             tmp = samples
-            print(f"Fast forwarding:")
+            print(f'Fast forwarding:')
             chomped_count = 0
             while len(tmp) == n:
                 samples = tmp
@@ -57,7 +57,7 @@ class LslDataSource(DataSource):
                 # gets samples immediately available.
                 tmp, _ts = self.inlet.pull_chunk(timeout=0.0, max_samples=n)
                 chomped_count += len(tmp)
-            print(f"Chomped {chomped_count} records.")
+            print(f'Chomped {chomped_count} records.')
             samples = samples[len(tmp):] + tmp            
 
         if len(samples) < n:
