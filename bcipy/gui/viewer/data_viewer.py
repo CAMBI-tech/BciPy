@@ -19,10 +19,10 @@ from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.gui.viewer.data_source.filter import downsample_filter, sig_pro_filter
+from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 
 
-class EegFrame(wx.Frame):
+class EEGFrame(wx.Frame):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on a Timer to retrieve data at a specified interval. Data to be
     displayed is retrieved from a Queue.
@@ -225,7 +225,7 @@ class EegFrame(wx.Frame):
     def toggle_filtering(self):
         """Toggles data filtering."""
         if self.sigpro_checkbox.GetValue():
-            self.filter = sig_pro_filter(
+            self.filter = stream_filter(
                 self.downsample_factor, self.samples_per_second)
         else:
             self.filter = downsample_filter(
@@ -360,7 +360,7 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int, ysc
         data_file) if data_file else lsl_data()
 
     app = wx.App(False)
-    frame = EegFrame(data_source, device_info,
+    frame = EEGFrame(data_source, device_info,
                      seconds, downsample_factor, refresh, yscale)
 
     if wx.Display.GetCount() > 1:

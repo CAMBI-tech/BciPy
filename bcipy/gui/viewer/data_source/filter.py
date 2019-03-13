@@ -1,6 +1,6 @@
 """Defines filter functions that can be applied to a viewer stream."""
 import numpy as np
-from bcipy.signal.process.filter import bandpass, notch
+from bcipy.signal.process.filter import bandpass, notch, downsample
 
 
 def downsample_filter(factor: int, fs: int):
@@ -18,12 +18,11 @@ def downsample_filter(factor: int, fs: int):
         """Data should be an np array with a row (np array: float) for each
         channel."""
         # take every nth element of each row
-        return data[:, ::factor]
-        # return np.array(data)[::factor]
+        return downsample.downsample(data, factor)
     return fn
 
 
-def sig_pro_filter(factor,
+def stream_filter(factor,
                    fs,
                    notch_filter_frequency=60,
                    filter_low=2,
@@ -38,7 +37,6 @@ def sig_pro_filter(factor,
     --------
         a function that filters the provided data using sig_pro.
     """
-    # TODO:
     def fn(data):
         """Data should be an np array with a row (np array: float) for each
         channel."""
@@ -46,5 +44,5 @@ def sig_pro_filter(factor,
         filtered_data = bandpass.butter_bandpass_filter(
             notch_filtered_data, filter_low, filter_high, fs, order=filter_order)
         # return downsampled, filtered data
-        return filtered_data[:, ::factor]
+        return downsample.downsample(filtered_data, factor)
     return fn
