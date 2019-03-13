@@ -50,7 +50,7 @@ class TestFilewriter(unittest.TestCase):
                 pass
 
 
-class TestMultiProcessor(unittest.TestCase):
+class TestDispatchProcessor(unittest.TestCase):
     """Tests for the MultiProcessor."""
 
     def test_set_device_info(self):
