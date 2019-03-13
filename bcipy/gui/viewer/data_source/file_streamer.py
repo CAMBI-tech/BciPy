@@ -1,6 +1,7 @@
 import csv
+import logging
 from bcipy.acquisition.util import StoppableThread
-
+log = logging.getLogger(__name__)
 
 class FileStreamer(StoppableThread):
     """Process that continuously reads data from the data source and publishes
@@ -23,7 +24,7 @@ class FileStreamer(StoppableThread):
         self.data_queue = data_queue
 
     def run(self):
-        print("Starting streamer")
+        log.debug("Starting streamer")
         import time
         with open(self.data_file) as csvfile:
             # read metadata
@@ -33,11 +34,11 @@ class FileStreamer(StoppableThread):
             reader = csv.reader(csvfile)
             _channels = next(reader)
 
-            print("Publishing data")
+            log.debug("Publishing data")
             # publish data
             for data in reader:
                 if not self.running():
                     break
                 self.data_queue.put(data)
                 time.sleep(1/fs)
-            print("Stopping file streamer")
+            log.debug("Stopping file streamer")

@@ -4,9 +4,9 @@ import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
-from bcipy.acquisition.processor import FileWriter, MultiProcessor
+from bcipy.acquisition.processor import FileWriter, DispatchProcessor
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.gui.viewer.viewer_processor import ViewerProcessor
+from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
 # Channels relevant for analysis, for each currently supported device.
 #  Note this leaves out triggers or other non-eeg channels. If desired,
@@ -95,7 +95,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
     filewriter = FileWriter(filename=filename)
     proc = filewriter
     if parameters['acq_show_viewer']:
-        proc = MultiProcessor(filewriter, ViewerProcessor())
+        proc = DispatchProcessor(filewriter, ViewerProcessor())
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!

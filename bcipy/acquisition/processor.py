@@ -138,20 +138,20 @@ class LslProcessor(Processor):
             self._outlet.push_sample(record, timestamp)
 
 
-class MultiProcessor(Processor):
+class DispatchProcessor(Processor):
     """Processor that delegates to one or more other processors. Processors
     may be passed in through the constructor or after creating an instance and
     calling it's add method."""
 
     def __init__(self, *args):
-        super(MultiProcessor, self).__init__()
+        super(DispatchProcessor, self).__init__()
         self.processors = []
         for proc in args:
             self.add(proc)
 
     # @override
     def set_device_info(self, device_info):
-        super(MultiProcessor, self).set_device_info(device_info)
+        super(DispatchProcessor, self).set_device_info(device_info)
         for proc in self.processors:
             proc.set_device_info(device_info)
 

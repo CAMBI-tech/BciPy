@@ -5,7 +5,7 @@ import pytest
 from mock import mock_open, patch
 from mockito import any, mock, unstub, verify, when
 from bcipy.acquisition.device_info import DeviceInfo
-from bcipy.acquisition.processor import FileWriter, MultiProcessor, Processor
+from bcipy.acquisition.processor import FileWriter, DispatchProcessor, Processor
 
 
 class TestFilewriter(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestMultiProcessor(unittest.TestCase):
         when(proc2).set_device_info(any()).thenReturn(None)
         when(proc3).set_device_info(any()).thenReturn(None)
 
-        multi = MultiProcessor(proc1, proc2)
+        multi = DispatchProcessor(proc1, proc2)
 
         device_info = DeviceInfo(name='foo-device', fs=100,
                                  channels=['c1', 'c2', 'c3'])
@@ -88,7 +88,7 @@ class TestMultiProcessor(unittest.TestCase):
         when(proc1).process(any(), None).thenReturn(None)
         when(proc2).process(any(), None).thenReturn(None)
 
-        multi = MultiProcessor(proc1)
+        multi = DispatchProcessor(proc1)
         multi.process(data1)
 
         multi.add(proc2)

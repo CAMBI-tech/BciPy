@@ -17,10 +17,9 @@ import matplotlib.ticker as ticker
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.util import StoppableProcess
-from bcipy.gui.viewer.data_source import QueueDataSource
-from bcipy.gui.viewer.launcher import Launcher
+from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.gui.viewer.filter import downsample_filter, sig_pro_filter
+from bcipy.gui.viewer.data_source.filter import downsample_filter, sig_pro_filter
 
 
 class EegFrame(wx.Frame):
@@ -321,14 +320,14 @@ class EegFrame(wx.Frame):
 
 def lsl_data():
     """Constructs an LslDataSource"""
-    from bcipy.gui.viewer.lsl_data_source import LslDataSource
+    from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
     data_source = LslDataSource(stream_type='EEG')
     return (data_source, data_source.device_info, None)
 
 
 def file_data(path):
     """Constructs a FileStream DataSource"""
-    from bcipy.gui.viewer.file_streamer import FileStreamer
+    from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
     with open(path) as csvfile:
         r1 = next(csvfile)

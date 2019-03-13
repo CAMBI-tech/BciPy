@@ -2,7 +2,7 @@
 import pylsl
 from bcipy.acquisition.util import StoppableThread
 from bcipy.acquisition.device_info import DeviceInfo
-from bcipy.gui.viewer.data_source import DataSource
+from bcipy.gui.viewer.data_source.data_source import DataSource
 
 
 class LslDataSource(DataSource):

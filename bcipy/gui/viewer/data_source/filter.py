@@ -1,7 +1,6 @@
 """Defines filter functions that can be applied to a viewer stream."""
 import numpy as np
 from bcipy.signal.process.filter import bandpass, notch
-# from bcipy.signal.processing.sig_pro import sig_pro
 
 
 def downsample_filter(factor: int, fs: int):

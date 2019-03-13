@@ -1,10 +1,7 @@
-from bcipy.acquisition.processor import Processor
-
 import subprocess
-import os
-import signal
-
 import time
+
+from bcipy.acquisition.processor import Processor
 
 
 class ViewerProcessor(Processor):
