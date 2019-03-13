@@ -519,6 +519,14 @@
     "recommended_values": "",
     "type": "int"
   },
+  "acq_show_viewer": {
+    "value": "false",
+    "section": "acq_config",
+    "readableName": "Show EEG Viewer",
+    "helpTip": "Display the EEG data in a separate window.",
+    "recommended_values": "",
+    "type": "bool"
+  },
   "eeg_buffer_len": {
     "value": "2",
     "section": "bci_config",
