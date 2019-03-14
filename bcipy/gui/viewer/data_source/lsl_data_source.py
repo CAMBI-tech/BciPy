@@ -6,7 +6,7 @@ from bcipy.gui.viewer.data_source.data_source import DataSource
 
 
 class LslDataSource(DataSource):
-    """DataSource that rads from a pylsl StreamInlet.
+    """DataSource that provides data from an underlying pylsl StreamInlet.
 
     Parameters
     ----------

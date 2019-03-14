@@ -1,14 +1,17 @@
-"""Defines filter functions that can be applied to a viewer stream."""
+"""Defines filter functions that can be applied to a viewer stream.
+Functions in this file are wrappers around filter functions defined in the 
+bcipy.signal.process module."""
 import numpy as np
 from bcipy.signal.process.filter import bandpass, notch, downsample
 
 
 def downsample_filter(factor: int, fs: int):
-    """Returns a downsample filter with the given factor.
+    """Returns a function that downsamples data by the given factor.
     Parameters:
     -----------
         factor - downsample factor
-        fs - samples per second
+        fs - samples per second; not used here, but provided for a consistent
+            interface.
     Returns:
     --------
         a function that downsamples the provided data.

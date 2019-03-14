@@ -8,7 +8,15 @@ https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s19.html
 
 class RingBuffer:
     """Data structure with a fixed size; when full additional elements
-    overwrite the oldest items in the data structure."""
+    overwrite the oldest items in the data structure.
+    
+    Parameters
+    ----------
+        size_max - max size of the buffer
+        pre_allocated - whether to create all values on initialization
+        empty_value - if pre_allocated, empty_value is used to set the
+            values with no data.
+    """
 
     def __init__(self, size_max: int, pre_allocated: bool = False, empty_value=None):
         assert size_max > 0

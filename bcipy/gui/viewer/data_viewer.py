@@ -25,11 +25,11 @@ from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 class EEGFrame(wx.Frame):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on a Timer to retrieve data at a specified interval. Data to be
-    displayed is retrieved from a Queue.
+    displayed is retrieved from a provided DataSource.
 
     Parameters:
     -----------
-        data_source - data source
+        data_source - object that implements the viewer DataSource interface.
         device_info - metadata about the data.
         seconds - how many seconds worth of data to display.
         downsample_factor - how much to compress the data. A factor of 1
@@ -128,19 +128,28 @@ class EEGFrame(wx.Frame):
         self.start()
 
     def init_data_indices(self):
+        """List of indices of all channels which will be displayed. By default
+        filters out TRG channels and any channels marked as 
+        removed_channels."""
+
         return [i for i in range(len(self.channels))
                 if self.channels[i] not in self.removed_channels
                 and 'TRG' not in self.channels[i]]
 
     def init_buffer(self):
-        """Initialize the buffer"""
+        """Initialize the underlying RingBuffer by pre-allocating empty
+        values. Buffer size is determined by the sample frequency and the
+        number of seconds to display."""
+
         buf_size = int(self.samples_per_second * self.seconds)
         empty_val = [0.0 for _x in self.channels]
         buf = RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
         return buf
 
     def init_axes(self):
-        """Sets configuration for axes"""
+        """Sets configuration for axes. Creates a subplot for every data
+        channel and configures the appropriate labels and tick marks."""
+
         axes = self.figure.subplots(len(self.data_indices), 1, sharex=True)
         for i, channel in enumerate(self.data_indices):
             ch_name = self.channels[channel]
@@ -159,7 +168,7 @@ class EEGFrame(wx.Frame):
         return axes
 
     def reset_axes(self):
-        """Clear the data in the gui."""
+        """Clear the data in the GUI."""
         self.figure.clear()
         self.axes = self.init_axes()
 
@@ -286,7 +295,9 @@ class EEGFrame(wx.Frame):
             self.axes[i].axvline(self.cursor_x(), color='r')
 
     def update_buffer(self, fast_forward=False):
-        """Update the buffer with latest data and return the data"""
+        """Update the buffer with latest data from the datasource and return
+        the data. If the datasource does not have the requested number of
+        samples, viewer streaming is stopped."""
         try:
             records = self.data_source.next_n(
                 self.records_per_refresh, fast_forward=fast_forward)
@@ -297,7 +308,8 @@ class EEGFrame(wx.Frame):
         return self.buffer.get()
 
     def update_view(self, _evt):
-        """Called by the timer on refresh."""
+        """Called by the timer on refresh. Updates the buffer with the latest
+        data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
         channel_data = self.filter(self.current_data())
 
@@ -319,14 +331,30 @@ class EEGFrame(wx.Frame):
 
 
 def lsl_data():
-    """Constructs an LslDataSource"""
+    """Constructs an LslDataSource, which provides data written to an LSL EEG
+    stream."""
     from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
     data_source = LslDataSource(stream_type='EEG')
     return (data_source, data_source.device_info, None)
 
 
-def file_data(path):
-    """Constructs a FileStream DataSource"""
+def file_data(path: str):
+    """Constructs a QueueDataSource from the contents of the file at the given
+    path. Data is written to the datasource at the rate specified in the
+    raw_data.csv metadata, so it acts as a live stream.
+    
+    Parameters
+    ----------
+        path - path to the raw_data.csv file
+    Returns
+    -------
+        (QueueDataSource, DeviceInfo, FileStreamer)
+            - QueueDataSource can be provided to the EEGFrame
+            - DeviceInfo provides the metadata read from the raw_data.csv
+            - data is not written to the QueueDataSource until the 
+                FileStreamer (StoppableProcess) is started.
+    """
+
     from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
     with open(path) as csvfile:
@@ -346,12 +374,15 @@ def file_data(path):
     return (data_source, device_info, streamer)
 
 
-def main(data_file: str, seconds: int, downsample_factor: int, refresh: int, yscale: int):
-    """Run the viewer gui
+def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
+         yscale: int):
+    """Run the viewer GUI. If a raw_data.csv data_file is provided, data is
+    streamed from that, otherwise it will read from an LSLDataStream by
+    default. 
 
     Parameters:
     -----------
-        data_file - raw_data.csv file to stream.
+        data_file - optional, raw_data.csv file to stream.
         seconds - how many seconds worth of data to display.
         downsample_factor - how much the data is downsampled. A factor of 1
             displays the raw data.

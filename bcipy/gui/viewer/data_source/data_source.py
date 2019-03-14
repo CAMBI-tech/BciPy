@@ -4,7 +4,8 @@ import time
 
 
 class DataSource:
-    """Abstract base class for an object with data."""
+    """Abstract base class for an object with data. Provided to the EEGFrame
+    for streaming data."""
 
     def next(self):
         """Provide the next record."""
@@ -42,6 +43,7 @@ class QueueDataSource(DataSource):
 
 
 class GeneratorDataSource(DataSource):
+    """DataSource that uses a provided python generator."""
     def __init__(self, gen):
         self.gen = gen
 

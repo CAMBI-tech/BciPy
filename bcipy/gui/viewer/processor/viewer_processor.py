@@ -1,3 +1,6 @@
+"""Displays the data_viewer GUI on initialization. ViewerProcessor subclasses
+the data acquisition Processor so it can be passed in to the 
+DataAcquisitionClient constructor."""
 import subprocess
 import time
 

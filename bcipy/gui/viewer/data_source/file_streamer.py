@@ -4,9 +4,8 @@ from bcipy.acquisition.util import StoppableThread
 log = logging.getLogger(__name__)
 
 class FileStreamer(StoppableThread):
-    """Process that continuously reads data from the data source and publishes
-    it at the frequency specified in the raw_data.
-
+    """Process that continuously reads data from a raw_data.csv file and
+    publishes it to a Queue at the frequency specified in the metadata.
 
     Parameters
     ----------
@@ -14,8 +13,6 @@ class FileStreamer(StoppableThread):
             raw data file from which to read
         data_queue : Queue
             Data will be written to the queue as it is acquired.
-        msg_queue : Queue
-            Used to communicate messages to the main thread.
     """
 
     def __init__(self, data_file, data_queue):
@@ -24,7 +21,7 @@ class FileStreamer(StoppableThread):
         self.data_queue = data_queue
 
     def run(self):
-        log.debug("Starting streamer")
+        log.debug("Starting raw_data file streamer")
         import time
         with open(self.data_file) as csvfile:
             # read metadata
@@ -41,4 +38,4 @@ class FileStreamer(StoppableThread):
                     break
                 self.data_queue.put(data)
                 time.sleep(1/fs)
-            log.debug("Stopping file streamer")
+            log.debug("Stopping raw_data file streamer")
