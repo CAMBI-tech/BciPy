@@ -13,13 +13,13 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'bcipy'
-DESCRIPTION = 'Python Framework for Brain-Computer Interface.'
+DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/BciPy/BciPy'
-EMAIL = 'tab.memmott@ohsu.com'
+EMAIL = 'memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
 
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 
 
 # What packages are required for this module to be executed?
@@ -30,9 +30,12 @@ REQUIRED = [
     'docker==2.6.1',
     'json-tricks==3.8.0',
     'olefile==0.44',
-    'Pillow==4.3.0',
     'PyOpenGL==3.1.0',
     'pyOpenSSL==17.5.0',
+    'mockito==1.1.0',
+    'moviepy==0.2.3.2',
+    'mne==0.17.0',
+    'lxml==4.1.1',
     'PsychoPy==1.90.2',
     'pytz==2017.2',
     'six==1.11.0',
@@ -40,9 +43,9 @@ REQUIRED = [
     'scipy==1.1.0',
     'future==0.16.0',
     'sklearn==0.0',
+    'seaborn==0.9.0',
     'construct==2.8.14',
     'matplotlib==2.1.1',
-    'mne==0.17.0',
     'pylsl==1.10.5',
     'psutil==5.4.0',
     'pandas==0.21.0',
@@ -50,6 +53,7 @@ REQUIRED = [
     'SoundFile==0.10.1',
     'PySoundCard==0.5.2',
     'PySoundFile==0.9.0',
+    'Pillow==4.3.0',
 ]
 
 # The rest you shouldn't have to touch too much :)
@@ -64,7 +68,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 # with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 #     long_description = '\n' + f.read()
 
-long_description = 'Python Brain-Computer Interface Framework'
+long_description = 'Python Brain-Computer Interface Software'
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
