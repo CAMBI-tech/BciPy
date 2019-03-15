@@ -7,7 +7,7 @@ from bcipy.helpers.acquisition_related import analysis_channels
 from bcipy.helpers.bci_task_related import trial_reshaper
 from bcipy.helpers.lang_model_related import norm_domain
 from bcipy.signal.model.inference import inference
-from bcipy.signal.process.filter import bandpass
+from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
  equally_probable
@@ -74,11 +74,11 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_dat, triggers, target_info, window_length):
+    def evaluate_sequence(self, raw_data, triggers, target_info, window_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
-            raw_dat(ndarray[float]): C x L eeg data where C is number of
+            raw_data(ndarray[float]): C x L eeg data where C is number of
                 channels and L is the signal length
             triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
                 as letter and flash time for the letter
@@ -87,9 +87,15 @@ class CopyPhraseWrapper:
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
-        # Send the raw data to signal processing / in demo mode do not use bandpass
-        dat = bandpass.text_filter(raw_dat, fs=self.fs, k=self.k)
-        x, _, _, _ = trial_reshaper(target_info, times, dat, fs=self.fs,
+        # Remove 60hz noise with a notch filter
+        notch_filter_data = notch.notch_filter(raw_data, self.fs, frequency_to_remove=60)
+
+        # bandpass filter from 2-45hz
+        filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, self.fs)
+
+        # downsample
+        data = downsample.downsample(filtered_data, factor=self.k)
+        x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.fs,
                                     k=self.k, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)

@@ -12,7 +12,9 @@ import logging
 
 
 def git_dir() -> str:
-    """Returns the root directory with the .git folder. If this source code
+    """Git Directory.
+
+    Returns the root directory with the .git folder. If this source code
     was not checked out from scm, answers None."""
 
     # Relative to current file; may need to be modified if method is moved.
@@ -22,7 +24,9 @@ def git_dir() -> str:
 
 
 def git_hash() -> Optional[str]:
-    """Returns an abbreviated git sha hash if this code is being run from a
+    """Git Hash.
+    
+    Returns an abbreviated git sha hash if this code is being run from a
     git cloned version of bcipy; otherwise returns an empty string.
 
     Could also consider making a system call to:
@@ -31,7 +35,7 @@ def git_hash() -> Optional[str]:
 
     git_path = git_dir()
     if not git_path:
-        log.debug('.git path not found')
+        print('.git path not found')
         return None
 
     try:
@@ -50,12 +54,14 @@ def git_hash() -> Optional[str]:
         # is displayed in github.
         return sha[0:7]
     except Exception as e:
-        log.error(f'Error reading git version: {e}')
+        print(f'Error reading git version: {e}')
         return None
 
 
 def bcipy_version() -> str:
-    """Gets the current bcipy version. If the current instance of bcipy is a
+    """BciPy Version.
+
+    Gets the current bcipy version. If the current instance of bcipy is a
     git repository, appends the current abbreviated sha hash.
     """
     version = pkg_resources.get_distribution('bcipy').version
@@ -64,7 +70,9 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_system_info():
+def get_system_info() -> dict:
+    """Get System Information.
+    """
 
     # Three lines for getting screen resolution
     platform = pyglet.window.get_platform()
@@ -107,7 +115,9 @@ def configure_logger(
 
 
 def import_submodules(package, recursive=True):
-    """ Import all submodules of a module, recursively, including subpackages.
+    """Import Submodules.
+
+    Import all submodules of a module, recursively, including subpackages.
     https://stackoverflow.com/questions/3365740/how-to-import-all-submodules
 
     Parameters
