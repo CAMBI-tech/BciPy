@@ -4,7 +4,7 @@
 
 import argparse
 import logging
-
+log = logging.getLogger(__name__)
 # To use, cd into helpers directory, run >> python demo/sound_card_demo.py "filename"
 # Example: python demo/sound_card_demo.py "../static/sounds/chime.wav"
 
@@ -22,7 +22,7 @@ try:
     sd.play(data, fs, device=args.device, blocking=True)
     status = sd.get_status()
     if status:
-        logging.warning(str(status))
+        log.warning(str(status))
 except BaseException as e:
     # This avoids printing the traceback, especially if Ctrl-C is used.
     raise SystemExit(str(e))

@@ -37,6 +37,7 @@ class ExperimentType(Enum):
     RSVP_ICON_TO_ICON = 'Icon to Icon'
     RSVP_ICON_TO_WORD = 'Icon to Word'
     RSVP_ALERT_TONE_CALIBRATION = 'Alert Tone'
+    RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION = 'Feed. Calib.'
 
     # pylint: disable=unused-argument,protected-access
     def __new__(cls, *args, **kwds):
@@ -64,5 +65,6 @@ class ExperimentType(Enum):
 
     @classmethod
     def calibration_tasks(cls) -> List['ExperimentType']:
-        return [task for task in cls if task.name.endswith('CALIBRATION')
-                and 'COPY_PHRASE' not in task.name]
+        return [task for task in cls
+                if task.name.endswith('CALIBRATION') and 'COPY_PHRASE'
+                not in task.name]

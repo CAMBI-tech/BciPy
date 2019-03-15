@@ -2,7 +2,7 @@ import shutil
 import time
 import unittest
 
-from bcipy.helpers.acquisition_related import init_eeg_acquisition
+from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
 

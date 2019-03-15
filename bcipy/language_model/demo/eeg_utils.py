@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 from random import shuffle, randint
 import math
-from bcipy.helpers.bci_task_related import alphabet
+from bcipy.helpers.task import alphabet
 
 class simulate_eeg:
     """

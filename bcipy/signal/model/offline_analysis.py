@@ -5,16 +5,16 @@ from bcipy.helpers.load import (
     read_data_csv,
     load_experimental_data,
     load_json_parameters)
-from bcipy.signal.processing.sig_pro import sig_pro
+from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
-from bcipy.helpers.bci_task_related import trial_reshaper
-from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
+from bcipy.helpers.task import trial_reshaper
+from bcipy.helpers.vizualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
-from bcipy.helpers.acquisition_related import analysis_channels
-from bcipy.helpers.stimuli_generation import play_sound
+from bcipy.helpers.acquisition import analysis_channels,\
+    analysis_channel_names_by_pos
+from bcipy.helpers.stimuli import play_sound
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished: bool=True):
@@ -45,14 +45,22 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     mode = 'calibration'
     trial_length = parameters.get('collection_window_after_trial_length')
 
-    raw_dat, stamp_time, channels, type_amp, fs = read_data_csv(
+    raw_dat, _, channels, type_amp, fs = read_data_csv(
         data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
 
-    logging.debug(f'Channels read from csv: {channels}')
-    logging.debug(f'Device type: {type_amp}')
+    log.info(f'Channels read from csv: {channels}')
+    log.info(f'Device type: {type_amp}')
 
     downsample_rate = parameters.get('down_sampling_rate', 2)
-    filtered_data = sig_pro(raw_dat, fs=fs, k=downsample_rate)
+
+    # Remove 60hz noise with a notch filter
+    notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=60)
+
+    # bandpass filter from 2-45hz
+    filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, fs, order=2)
+
+    # downsample
+    data = downsample.downsample(filtered_data, factor=downsample_rate)
 
     # Process triggers.txt
     triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
@@ -68,7 +76,7 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     # read_data_csv already removes the timespamp column.
     channel_map = analysis_channels(channels, type_amp)
 
-    x, y, num_seq, _ = trial_reshaper(t_t_i, t_i, filtered_data,
+    x, y, _, _ = trial_reshaper(t_t_i, t_i, data,
                                       mode=mode, fs=fs, k=downsample_rate,
                                       offset=offset,
                                       channel_map=channel_map,
@@ -77,16 +85,17 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     k_folds = parameters.get('k_folds', 10)
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
-    logging.debug('Saving offline analysis plots!')
+    log.info('Saving offline analysis plots!')
 
     # After obtaining the model get the transformed data for plotting purposes
     model.transform(x)
     generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
-        fs=fs, save_figure=True, show_figure=False)
+        fs=fs, save_figure=True, show_figure=False,
+        channel_names = analysis_channel_names_by_pos(channels, channel_map))
 
-    logging.debug('Saving the model!')
+    log.info('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
         pickle.dump(model, output)
 

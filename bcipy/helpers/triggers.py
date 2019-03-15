@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli_generation import resize_image, play_sound
+from bcipy.helpers.stimuli import resize_image, play_sound
 import csv
 from typing import TextIO, List, Tuple
 
@@ -227,6 +226,59 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
         trigger_file.write('%s %s' % (letter, time) + "\n")
 
     return trigger_file
+
+
+def write_triggers_from_sequence_icon_to_icon(
+        sequence_timing: List[Tuple], trigger_file: TextIO, target: str,
+        target_displayed: bool, offset=None):
+    """
+    Write triggers from icon to icon task.
+    It writes in the following order:
+        (I) presented letter, (II) targetness, (III) timestamp
+
+    Parameters:
+    ----------
+        sequence_timing - list of (icon, time) output from rsvp after
+            displaying a sequence.
+        trigger_file - open file in which to write.
+        target - target for the current sequence
+        target_displayed - whether or not the target was presented during the
+            sequence.
+    """
+    if offset:
+        (letter, time) = sequence_timing
+        targetness = 'offset_correction'
+        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        return
+
+    icons, _times = zip(*sequence_timing)
+    calib_presented = 'calibration_trigger' in icons
+    calib_index = 0 if calib_presented else -1
+
+    if calib_presented:
+        target_pres_index = 1
+        fixation_index = 2
+    elif target_displayed:
+        target_pres_index = 0
+        fixation_index = 1
+    else:
+        target_pres_index = -1
+        fixation_index = 0
+
+    for i, (icon, presentation_time) in enumerate(sequence_timing):
+        targetness = 'nontarget'
+        if i == calib_index:
+            targetness = 'calib'
+        elif i == target_pres_index:
+            targetness = 'first_pres_target'
+        elif i == fixation_index:
+            targetness = 'fixation'
+        elif icon == target:
+            targetness = 'target'
+        else:
+            targetness = 'nontarget'
+        trigger_file.write('%s %s %s' % (icon, targetness, presentation_time) +
+                           "\n")
 
 
 def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:

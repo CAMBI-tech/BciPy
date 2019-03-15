@@ -1,6 +1,13 @@
 from bcipy.feedback.feedback import Feedback
 from psychopy import visual, core
-from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.stimuli import resize_image
+from enum import Enum
+
+
+class FeedbackType(Enum):
+    TEXT = 'TEXT'
+    IMAGE = 'IMAGE'
+    SHAPE = 'SHAPE'
 
 
 class VisualFeedback(Feedback):
@@ -16,10 +23,11 @@ class VisualFeedback(Feedback):
         # Display Window
         self.display = display
 
-        # Parameters Dictionary
+        # Parameters
         self.parameters = parameters
         self.font_stim = self.parameters['feedback_font']
         self.height_stim = self.parameters['feedback_stim_height']
+        self.width_stim = self.parameters['feedback_stim_width']
 
         pos_x = self.parameters['feedback_pos_x']
         pos_y = self.parameters['feedback_pos_y']
@@ -32,10 +40,17 @@ class VisualFeedback(Feedback):
         self.clock = clock
 
         self.message_color = self.parameters['feedback_message_color']
-        self.rect = visual.Rect(win=display, width=self.height_stim, height=self.height_stim, lineColor=self.message_color, pos=(self.pos_stim), lineWidth=10, ori=0.0)
-        self.rect.opacity = 0
+        self.feedback_line_width = self.parameters['feedback_line_width']
 
-    def administer(self, stimulus, message=None, compare_assertion=None):
+    def administer(
+            self,
+            stimulus,
+            pos=None,
+            line_color='blue',
+            fill_color='blue',
+            message=None,
+            compare_assertion=None,
+            stimuli_type=FeedbackType.TEXT):
         """Administer.
 
         Administer visual feedback. Timing information from parameters,
@@ -51,50 +66,70 @@ class VisualFeedback(Feedback):
         if compare_assertion:
             (stim,
              assert_stim) = self._construct_assertion_stimuli(
-                stimulus, compare_assertion)
+                stimulus,
+                compare_assertion,
+                line_color,
+                fill_color,
+                stimuli_type)
 
             assert_stim.draw()
-            self.rect.draw()
-            stim.draw()
-
-            self.display.flip()
-            time = ['assertion_visual_feedback', self.clock.getTime()]
         else:
-            stim = self._construct_stimulus(stimulus, self.pos_stim)
+            stim = self._construct_stimulus(
+                stimulus,
+                self.pos_stim,
+                line_color,
+                fill_color,
+                stimuli_type)
 
-            stim.draw()
-            self.rect.draw()
-            self.display.flip()
-
-            time = ['visual_feedback', self.clock.getTime()]
+        self._show_stimuli(stim)
+        time = ['visual_feedback', self.clock.getTime()]
 
         core.wait(self.feedback_length)
         timing.append(time)
 
         return timing
 
-    def _construct_stimulus(self, stimulus, pos):
-        if '.png' in stimulus:
-            image_stim = visual.ImageStim(win=self.display,
-                                    image=stimulus,
-                                    mask=None,
-                                    pos=pos,
-                                    ori=0.0)
-            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
-            self.rect.width = image_stim.size[0]
-            self.rect.height = image_stim.size[1]
-            self.rect.opacity = 1
-            self.rect.lineColor = self.message_color
-            return image_stim
-        else:
-            return visual.TextStim(win=self.display, font=self.font_stim,
-                                   text=stimulus,
-                                   height=self.height_stim,
-                                   pos=pos)
+    def _show_stimuli(self, stimulus):
+        stimulus.draw()
+        self.display.flip()
 
-    def _construct_assertion_stimuli(self, stimulus, assertion):
-        stimulus = self._construct_stimulus(stimulus, (-.3, 0))
-        assertion = self._construct_stimulus(assertion, (.3, 0))
+    def _construct_stimulus(self, stimulus, pos, line_color, fill_color, stimuli_type):
+        if stimuli_type == FeedbackType.IMAGE:
+            image_stim = visual.ImageStim(
+                win=self.display,
+                image=stimulus,
+                mask=None,
+                pos=pos,
+                ori=0.0)
+            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
+            return image_stim
+        if stimuli_type == FeedbackType.TEXT:
+            return visual.TextStim(
+                win=self.display,
+                font=self.font_stim,
+                text=stimulus,
+                height=self.height_stim,
+                pos=pos,
+                color=fill_color)
+        if stimuli_type == FeedbackType.SHAPE:
+            return visual.Rect(
+                fillColor=fill_color, win=self.display,
+                width=self.width_stim,
+                height=self.height_stim,
+                lineColor=line_color,
+                pos=(self.pos_stim),
+                lineWidth=self.feedback_line_width,
+                ori=0.0)
+
+    def _construct_assertion_stimuli(
+            self,
+            stimulus,
+            assertion,
+            line_color,
+            fill_color,
+            stimuli_type):
+        stimulus = self._construct_stimulus(stimulus, (-.3, 0), line_color, fill_color, stimuli_type)
+        assertion = self._construct_stimulus(assertion, (.3, 0), line_color, fill_color, stimuli_type)
 
         return stimulus, assertion
 
@@ -104,27 +139,29 @@ class VisualFeedback(Feedback):
                                height=0.3,
                                pos=(-.3, .5), color=self.message_color)
 
+
 if __name__ == "__main__":
     import argparse
-    from helpers.load import load_json_parameters
-    from display.display_main import init_display_window
+    from bcipy.helpers.load import load_json_parameters
+    from bcipy.display.display_main import init_display_window
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',
                         default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. \
-                          Pass as parameters/parameters.json')
+                          Pass as bcipy/parameters/parameters.json')
 
     args = parser.parse_args()
 
     # Load a parameters file
-    parameters = load_json_parameters(args.parameters)
+    parameters = load_json_parameters(args.parameters, value_cast=True)
     display = init_display_window(parameters)
     clock = core.Clock()
     # Start Visual Feedback
     visual_feedback = VisualFeedback(
         display=display, parameters=parameters, clock=clock)
-    stimulus = 'Visual'
-    timing = visual_feedback.administer(stimulus)
+    stimulus = 'null'
+    timing = visual_feedback.administer(
+        stimulus, line_color='blue', fill_color='blue', stimuli_type=FeedbackType.SHAPE)
     print(timing)
     print(visual_feedback._type())

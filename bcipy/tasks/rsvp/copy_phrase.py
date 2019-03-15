@@ -1,17 +1,14 @@
 from psychopy import core
-from bcipy.tasks.task import Task
 
+from bcipy.tasks.task import Task
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.task import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
-import logging
 
 
 class RSVPCopyPhraseTask(Task):
@@ -94,7 +91,7 @@ class RSVPCopyPhraseTask(Task):
         self.spelled_letters_count = int(
             parameters['spelled_letters_count'])
         if self.spelled_letters_count > len(self.copy_phrase):
-            logging.debug("Already spelled letters exceeds phrase length.")
+            self.logger.debug('Already spelled letters exceeds phrase length.')
             self.spelled_letters_count = 0
 
         self.max_seq_length = parameters['max_seq_len']
@@ -103,6 +100,12 @@ class RSVPCopyPhraseTask(Task):
         self.language_model = language_model
         self.signal_model = signal_model
         self.down_sample_rate = parameters['down_sampling_rate']
+
+        self.filter_low = self.parameters['filter_low_pass']
+        self.filter_high = self.parameters['filter_high_pass']
+        self.fitler_order = self.parameters['filter_order']
+        self.notch_filter_frequency = self.parameters['notch_filter_frequency']
+
         self.min_num_seq = parameters['min_seq_len']
         self.collection_window_len = parameters['collection_window_after_trial_length']
 
@@ -110,31 +113,43 @@ class RSVPCopyPhraseTask(Task):
         self.show_feedback = parameters['show_feedback']
 
         if self.show_feedback:
-            self.feedback = VisualFeedback(self.window, self.parameters, self.experiment_clock)
+            self.feedback = VisualFeedback(
+                self.window, self.parameters, self.experiment_clock)
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
+
+        # already correctly spelled letters
         text_task = str(self.copy_phrase[0:self.spelled_letters_count])
         task_list = [(str(self.copy_phrase),
                       str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
-        copy_phrase_task = CopyPhraseWrapper(self.min_num_seq,
-                                             self.max_seq_length,
-                                             signal_model=self.signal_model,
-                                             fs=self.daq.device_info.fs,
-                                             k=2, alp=self.alp,
-                                             task_list=task_list,
-                                             lmodel=self.language_model,
-                                             is_txt_sti=self.is_txt_sti,
-                                             device_name=self.daq.device_info.name,
-                                             device_channels=self.daq.device_info.channels,
-                                             stimuli_timing=[self.time_cross, self.time_flash])
+        copy_phrase_task = CopyPhraseWrapper(
+            self.min_num_seq,
+            self.max_seq_length,
+            signal_model=self.signal_model,
+            fs=self.daq.device_info.fs,
+            k=2,
+            alp=self.alp,
+            task_list=task_list,
+            lmodel=self.language_model,
+            is_txt_sti=self.is_txt_sti,
+            device_name=self.daq.device_info.name,
+            device_channels=self.daq.device_info.channels,
+            stimuli_timing=[self.time_cross, self.time_flash],
+            backspace_prob=self.parameters['lm_backspace_prob'],
+            backspace_always_shown=self.parameters['backspace_always_shown'],
+            filter_high=self.filter_high,
+            filter_low=self.filter_low,
+            filter_order=self.fitler_order,
+            notch_filter_frequency=self.notch_filter_frequency)
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
         #   sequence counter (how many seq have occured).
-        #   epoch counter and index (what epoch, and how many sequences within it)
+        #   epoch counter and index
+        #   (what epoch, and how many sequences within it)
         new_epoch = True
         run = True
         seq_counter = 0
@@ -169,8 +184,10 @@ class RSVPCopyPhraseTask(Task):
                 break
 
             if self.copy_phrase[0:len(text_task)] == text_task:
+                # if correctly spelled so far, get the next unspelled letter.
                 target_letter = self.copy_phrase[len(text_task)]
             else:
+                # otherwise target is the backspace char.
                 target_letter = '<'
 
             # Get sequence information
@@ -206,8 +223,6 @@ class RSVPCopyPhraseTask(Task):
             # Do the self.RSVP sequence!
             sequence_timing = self.rsvp.do_sequence()
 
-            self.first_stim_time = self.rsvp.first_stim_time
-
             # Write triggers to file
             _write_triggers_from_sequence_copy_phrase(
                 sequence_timing,
@@ -217,6 +232,7 @@ class RSVPCopyPhraseTask(Task):
 
             core.wait(self.buffer_val)
 
+            # Delete calibration
             if seq_counter == 0:
                 del sequence_timing[0]
 
@@ -227,7 +243,7 @@ class RSVPCopyPhraseTask(Task):
                     self.daq,
                     self.window,
                     self.parameters,
-                    self.first_stim_time,
+                    self.rsvp.first_stim_time,
                     self.static_offset)
 
             # Uncomment this to turn off fake decisions, but use fake data.
@@ -315,12 +331,11 @@ class RSVPCopyPhraseTask(Task):
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
-                    logging.debug("Max tries exceeded: to allow for more tries"
-                                  " adjust the Maximum Sequence Length "
-                                  "(max_seq_len) parameter.")
+                    self.logger.debug('COPYPHRASE ERROR: Max tries exceeded. To allow for more tries '
+                                      'adjust the max_seq_len parameter.')
                 if max_time_exceeded:
-                    logging.debug("Max time exceeded. To allow for more time "
-                                  "adjust the max_minutes parameter.")
+                    self.logger.debug('COPYPHRASE ERROR: Max time exceeded. To allow for more time '
+                                      'adjust the max_minutes parameter.')
                 run = False
 
             # Increment sequence counter
@@ -377,14 +392,6 @@ def _init_copy_phrase_display(
         sti_height=parameters['sti_height'],
         stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
         time_list_sti=[3] * 10,
-        tr_pos_bg=(parameters['tr_pos_bg_x'],
-                   parameters['tr_pos_bg_y']),
-        bl_pos_bg=(parameters['bl_pos_bg_x'],
-                   parameters['bl_pos_bg_y']),
-        size_domain_bg=parameters['size_domain_bg'],
-        color_bg_txt=parameters['color_bg_txt'],
-        font_bg_txt=parameters['font_bg_txt'],
-        color_bar_bg=parameters['color_bar_bg'],
         is_txt_sti=parameters['is_txt_sti'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['sti_space_char'])

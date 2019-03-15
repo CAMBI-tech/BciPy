@@ -1,16 +1,12 @@
-import logging
-
 from bcipy.display.display_main import init_display_window
-from bcipy.helpers.acquisition_related import init_eeg_acquisition
-from bcipy.helpers.bci_task_related import print_message
-from bcipy.helpers.lang_model_related import init_language_model
+from bcipy.helpers.acquisition import init_eeg_acquisition
+from bcipy.helpers.task import print_message
+from bcipy.helpers.system_utils import get_system_info, configure_logger
+from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_signal_model
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
 
 
 def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
@@ -48,6 +44,15 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
         'exp_type': exp_type
     }
 
+    # update our parameters file with system related information
+    parameters.update(get_system_info())
+
+    # configure bcipy session logging
+    configure_logger(
+        save_folder,
+        log_name=parameters['log_name'],
+        version=parameters['bcipy_version'])
+
     return execute_task(task_type, parameters, save_folder)
 
 
@@ -63,14 +68,12 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         task_type (dict): type and mode of experiment
         save_folder (str): path to save folder
     """
-
-    exp_type = ExperimentType(task_type['exp_type'])
-
-    fake = parameters['fake_data']
-
     signal_model = None
     language_model = None
     filename = None
+
+    exp_type = ExperimentType(task_type['exp_type'])
+    fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
@@ -86,15 +89,15 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         if parameters['languagemodelenabled']:
             language_model = init_language_model(parameters)
 
+    # Initialize DAQ
+    daq, server = init_eeg_acquisition(
+        parameters, save_folder, server=fake)
+
     # Initialize Display Window
     # We have to wait until after the prompt to load the signal model before
     # displaying the window, otherwise in fullscreen mode this throws an error
     display = init_display_window(parameters)
     print_message(display, "Initializing...")
-
-    # Initialize DAQ
-    daq, server = init_eeg_acquisition(
-        parameters, save_folder, server=fake)
 
     # Start Task
     try:

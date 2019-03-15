@@ -1,3 +1,30 @@
+# 1.3.0
+
+This release focused on the addition of a Signal Viewer, Inter-sequence Feedback Task, Signal Processing / Decomposition Methods, and miscellaneous cleanup. 
+
+## Added
+
+    - PSD: Power spectral density methods
+    - DSI VR-300 integration
+    - Logging session configuration and setup
+    - Version and git commit extraction
+    - Inter-sequence feedback task
+    - Backspace frequency parameterization and implementation
+    - Bandpass and Notch Filter implementation
+    - Custom Exceptions
+   
+
+## Updated
+    - Refactor RSVP Task: Icon-to-Icon (WIP)
+    - Refactored Signal Module
+    - Dependencies (PsychoPy, pylsl, numpy, pandas, WxPython)
+    - Tests
+    - Documentation
+
+## Removed
+    - Bar Graph implementation
+
+
 # 1.2.0
 
 This release focused on the addition of a new Alert Tone Task, integration of the Language Model, and other fixes to make Copy Phrase work better.
@@ -27,7 +54,7 @@ This is a working version for use with LSL on Calibration and Copy phrase tasks.
 - Structure of Signal Module
 - Signal Model and Trial Reshaper Refactored
 - Documentation
-- Data acquistion client naming
+- Data acquisition client naming
 
 ## Added:
 - Image scaling
@@ -39,7 +66,7 @@ This is a working version for use with LSL on Calibration and Copy phrase tasks.
 - logging
 - Initial signal viewer
 - Initial average ERP generation plots
-- GUI enchancements
+- GUI enhancements
 
 ## Removed
-- Duplicate dependacies
+- Duplicate dependencies

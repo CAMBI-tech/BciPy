@@ -6,8 +6,7 @@ import logging
 import pylsl
 from bcipy.acquisition.protocols.device import Device
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 LSL_TIMESTAMP = 'LSL_timestamp'
 
@@ -119,9 +118,9 @@ class LslDevice(Device):
         """
         assert self._inlet is not None, "Connect call is required."
         metadata = self._inlet.info()
-        logging.debug(metadata.as_xml())
+        log.debug(metadata.as_xml())
         for marker_inlet in self._marker_inlets:
-            logging.debug("Streaming from marker inlet: %s",
+            log.debug("Streaming from marker inlet: %s",
                           inlet_name(marker_inlet))
 
         info_channels = self._read_channels(metadata)
@@ -224,14 +223,14 @@ class LslDevice(Device):
                 self.current_markers[name] = marker
 
                 if not marker.is_empty:
-                    logging.debug(
+                    log.debug(
                         "Read marker %s from %s; current sample time: %s",
                         marker, name, timestamp)
 
             trg = "0"
             if not marker.is_empty and timestamp >= marker.timestamp:
                 trg = marker.trg
-                logging.debug(("Appending %s marker %s to sample at time %s; ",
+                log.debug(("Appending %s marker %s to sample at time %s; ",
                                "time diff: %s"),
                               name, marker, timestamp,
                               timestamp - marker.timestamp)

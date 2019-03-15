@@ -6,8 +6,7 @@ from bcipy.acquisition.protocols.dsi import dsi
 from bcipy.acquisition.protocols import util
 from bcipy.acquisition.protocols.device import Device
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s', )
+log = logging.getLogger(__name__)
 
 
 class DsiDevice(Device):
@@ -78,7 +77,7 @@ class DsiDevice(Device):
             if response.type == 'EEG_DATA':
                 raise Exception('EEG Data was encountered; expected '
                                 'initialization headers.')
-            logging.debug(response.type)
+            log.debug(response.type)
 
             # Here we get information from the device about version etc.
             #  If interested, print the response type and message!
@@ -87,7 +86,7 @@ class DsiDevice(Device):
             response = self._read_packet()
 
         channels = response.message.split(',')
-        logging.debug("Channels: %s", ','.join(channels))
+        log.debug("Channels: %s", ','.join(channels))
         if self._channels_provided and len(channels) != len(self.channels):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
@@ -99,7 +98,7 @@ class DsiDevice(Device):
             raise Exception("Unexpected packet; expected DATA RATE Event")
 
         sample_freq = int(response.message.split(',')[1])
-        logging.debug("Sample frequency: %s", str(sample_freq))
+        log.debug("Sample frequency: %s", str(sample_freq))
 
         if sample_freq != self.fs:
             raise Exception("Sample frequency read from DSI device does not "

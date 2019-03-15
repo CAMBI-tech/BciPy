@@ -2,11 +2,10 @@
 
 import logging
 
-from past.builtins import map, range
+from past.builtins import range
 from bcipy.signal.generator.generator import gen_random_data
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
+log = logging.getLogger(__name__)
 
 
 def advance_to_row(filehandle, rownum):
@@ -66,5 +65,17 @@ def file_data(filename, header_row=3, encoder=_DefaultEncoder()):
             line = infile.readline()
             if not line:
                 break
-            sensor_data = map(float, line.split(","))
+            sensor_data = list(map(data_value, line.split(",")))            
             yield encoder.encode(sensor_data)
+
+def data_value(value: str) -> float:
+    """Convert to a float; some trigger values are strings, rather than 
+    numbers (ex. indicating the letter); convert these to 1.0."""
+    if value:
+        try:
+            return float(value)
+        except ValueError:
+            return 1.0
+    else:
+        # empty string
+        return 0.0

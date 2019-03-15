@@ -1,15 +1,15 @@
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='(%(threadName)-9s) %(message)s',)
-
 
 class Task(object):
-    """Task."""
+    """Task.
+
+    Base class for BciPy tasks.
+    """
 
     def __init__(self):
         super(Task, self).__init__()
-        self.logger = logging
+        self.logger = logging.getLogger(__name__)
 
     def configure(self):
         pass

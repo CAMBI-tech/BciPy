@@ -3,9 +3,9 @@
 
 ### What is it?
 
-It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
+It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
 
-It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (10) and Mac OSx (High Sierra) at this time.
+It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
@@ -48,7 +48,7 @@ This project requires Psychopy, Python v 3.6.5, and other packages. See requirem
 
 In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/)
 
-You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). If not using or rolling your own, set fake_lm to true in the parameters.json file.
+You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). You'll also need to download and load the language model [images](https://drive.google.com/drive/folders/1OYpUYASAceb60b2c5obyYytEZ0AZrajY?usp=sharing). If not using or rolling your own, set fake_lm to true in the parameters.json file.
 
 To use all the goodies locally (including the GUI and demo scripts)
 1. Git clone https://github.com/BciPy/BciPy.git

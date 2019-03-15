@@ -3,13 +3,13 @@ import sys
 import math
 from typing import List
 from collections import defaultdict
-from bcipy.helpers.bci_task_related import alphabet, SPACE_CHAR
+from bcipy.helpers.task import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
 from bcipy.language_model.errors import (EvidenceDataStructError,
                                          NBestError,
                                          NBestHighValue)
 from bcipy.language_model.lm_server import LmServerConfig
-
+log = logging.getLogger(__name__)
 sys.path.append('.')
 ALPHABET = alphabet()
 LM_SPACE = '#'
@@ -33,7 +33,10 @@ class LangModel:
         """
         self.server_config = server_config
         self.priors = defaultdict(list)
-        logging.basicConfig(filename=logfile, level=logging.INFO)
+        
+        log.setLevel(logging.INFO)
+        log.addHandler(logging.FileHandler(logfile))
+
         lm_server.start(server_config)
 
     def init(self, nbest: int = 1):
@@ -59,7 +62,7 @@ class LangModel:
         """
         lm_server.post_json_request(self.server_config, 'reset')
         self.priors = defaultdict(list)
-        logging.info("\ncleaning history\n")
+        log.info("\ncleaning history\n")
 
     def state_update(self, evidence: List, return_mode: str = 'letter'):
         """
@@ -106,12 +109,12 @@ class LangModel:
         Log the priors given the recent decision
         """
         # print a json dict of the priors
-        logging.info('\nThe priors are:\n')
+        log.info('\nThe priors are:\n')
         for k in self.priors.keys():
             priors = self.priors[k]
-            logging.info('\nThe priors for {0} type are:\n'.format(k))
+            log.info('\nThe priors for {0} type are:\n'.format(k))
             for (symbol, pr) in priors:
-                logging.info('{0} {1:.4f}'.format(symbol, pr))
+                log.info('{0} {1:.4f}'.format(symbol, pr))
 
     def recent_priors(self, return_mode='letter'):
         """
