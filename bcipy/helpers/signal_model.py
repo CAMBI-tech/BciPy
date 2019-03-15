@@ -102,8 +102,8 @@ class CopyPhraseWrapper:
             notch_filter_data,
             self.filter_low,
             self.filter_high,
-            order=self.filter_order,
-            self.sampling_rate)
+            self.sampling_rate,
+            order=self.filter_order)
 
         # downsample
         data = downsample.downsample(filtered_data, factor=self.downsample_rate)

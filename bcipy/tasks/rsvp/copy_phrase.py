@@ -139,7 +139,7 @@ class RSVPCopyPhraseTask(Task):
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[self.time_cross, self.time_flash],
             backspace_prob=self.parameters['lm_backspace_prob'],
-            backspace_always_shown=self.parameters['backspace_always_shown'].
+            backspace_always_shown=self.parameters['backspace_always_shown'],
             filter_high=self.filter_high,
             filter_low=self.filter_low,
             filter_order=self.fitler_order,
