@@ -1,4 +1,3 @@
-"""Tests for stimuli_generation helpers."""
 import glob
 import unittest
 from os import path
@@ -15,7 +14,10 @@ MOCK_FS = 44100
 
 
 class TestStimuliGeneration(unittest.TestCase):
-    """This is Test Case for Stimuli Generation BCI data."""
+    """This is Test Case for Stimuli Generated via BciPy."""
+
+    def tearDown(self):
+        unstub()
 
     def test_play_sound_returns_timing(self):
         # fake sound file path
@@ -88,11 +90,11 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_soundfiles_generator(self):
         """Test that soundfiles function returns an cyclic generator."""
 
-        directory = ".\sounds"
+        directory = r'.\sounds'
         soundfile_paths = [
-            ".\sounds\0.wav", ".\sounds\1.wav", ".\sounds\2.wav"
+            r'.\sounds\0.wav', r'.\sounds\1.wav', r'.\sounds\2.wav'
         ]
-        when(glob).glob(".\sounds\*.wav").thenReturn(soundfile_paths)
+        when(glob).glob(r'.\sounds\*.wav').thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
 
         gen = soundfiles(directory)
@@ -106,11 +108,11 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_soundfiles_generator_path_arg(self):
         """Test that soundfiles function constructs the correct path."""
-        directory = ".\sounds"
+        directory = r'.\sounds'
         soundfile_paths = [
-            ".\sounds\0.wav", ".\sounds\1.wav", ".\sounds\2.wav"
+            r'.\sounds\0.wav', r'.\sounds\1.wav', r'.\sounds\2.wav'
         ]
-        when(glob).glob(".\sounds\*.wav").thenReturn(soundfile_paths)
+        when(glob).glob(r'.\sounds\*.wav').thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
         gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
@@ -134,7 +136,7 @@ class TestStimuliGeneration(unittest.TestCase):
 
         self.assertEqual(
             len(seqs), num_sti,
-            "Should have produced the correct number of sequences")
+            'Should have produced the correct number of sequences')
         self.assertEqual(len(seq_timings), num_sti)
         self.assertEqual(len(seq_colors), num_sti)
 
@@ -142,18 +144,18 @@ class TestStimuliGeneration(unittest.TestCase):
         for seq in seqs:
             self.assertEqual(
                 len(seq), len_sti + 2,
-                ("Sequence should include the correct number of choices as ",
-                 "well as the target and cross."))
+                ('Sequence should include the correct number of choices as ',
+                 'well as the target and cross.'))
             choices = seq[2:]
             self.assertEqual(len_sti, len(set(choices)),
-                             "All choices should be unique")
+                             'All choices should be unique')
 
             # create a string of the options
             seq_strings.append(''.join(choices))
 
         self.assertEqual(
             len(seqs), len(set(seq_strings)),
-            "All sequences should be different")
+            'All sequences should be different')
 
 
     def test_best_selection(self):
@@ -180,7 +182,7 @@ class TestStimuliGeneration(unittest.TestCase):
                 val=[0.3, 0.1, 0.3, 0.1, 0.2],
                 len_query=3,
                 always_included=['d']),
-            "Included item should bump out the best item with the lowest val.")
+            'Included item should bump out the best item with the lowest val.')
 
         self.assertEqual(
             ['a', 'b', 'c'],
@@ -189,7 +191,7 @@ class TestStimuliGeneration(unittest.TestCase):
                 val=[0.5, 0.4, 0.1, 0.0, 0.0],
                 len_query=3,
                 always_included=['b']),
-            "Included item should retain its position if it's already present")
+            'Included item should retain its position if already present')
 
         self.assertEqual(['a', 'b', 'e'],
                          best_selection(
@@ -197,7 +199,7 @@ class TestStimuliGeneration(unittest.TestCase):
                              val=[0.5, 0.0, 0.1, 0.3, 0.0],
                              len_query=3,
                              always_included=['b', 'e']),
-                         "multiple included items should be supported.")
+                         'multiple included items should be supported.')
 
         self.assertEqual(['d'],
                          best_selection(
@@ -205,7 +207,7 @@ class TestStimuliGeneration(unittest.TestCase):
                              val=[0.5, 0.4, 0.1, 0.0, 0.0],
                              len_query=1,
                              always_included=['d', 'e']),
-                         "len_query should be respected.")
+                         'len_query should be respected.')
 
         self.assertEqual(['a', 'b', 'c'],
                     best_selection(
@@ -213,7 +215,7 @@ class TestStimuliGeneration(unittest.TestCase):
                         val=[0.5, 0.4, 0.1, 0.0, 0.0],
                         len_query=3,
                         always_included=['<']),
-                    "should ignore items not in the set.")
+                    'should ignore items not in the set.')
 
     def test_best_case_sequence_gen(self):
         """Test best_case_rsvp_seq_gen"""
@@ -231,7 +233,7 @@ class TestStimuliGeneration(unittest.TestCase):
         first_seq = samples[0]
         self.assertEqual(1, len(samples))
         self.assertEqual(n + 1, len(first_seq),
-                         "Should include fixation cross.")
+                         'Should include fixation cross.')
         self.assertEqual(len(samples), len(times))
         self.assertEqual(len(samples), len(colors))
 
@@ -239,7 +241,7 @@ class TestStimuliGeneration(unittest.TestCase):
         for letter in expected:
             self.assertTrue(letter in first_seq)
 
-        self.assertNotEqual(expected, first_seq, "Should be in random order.")
+        self.assertNotEqual(expected, first_seq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 
@@ -250,7 +252,7 @@ class TestStimuliGeneration(unittest.TestCase):
         n = 5
 
         with self.assertRaises(
-                Exception, msg="Constants should be in the alphabet"):
+                Exception, msg='Constants should be in the alphabet'):
             best_case_rsvp_seq_gen(
                 alp=alp,
                 session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
@@ -268,7 +270,7 @@ class TestStimuliGeneration(unittest.TestCase):
         first_seq = samples[0]
         self.assertEqual(1, len(samples))
         self.assertEqual(n + 1, len(first_seq),
-                         "Should include fixation cross.")
+                         'Should include fixation cross.')
         self.assertEqual(len(samples), len(times))
         self.assertEqual(len(samples), len(colors))
 
@@ -276,13 +278,9 @@ class TestStimuliGeneration(unittest.TestCase):
         for letter in expected:
             self.assertTrue(letter in first_seq)
 
-        self.assertNotEqual(expected, first_seq, "Should be in random order.")
+        self.assertNotEqual(expected, first_seq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
-
-
-    def tearDown(self):
-        unstub()
 
 
 if __name__ == '__main__':
