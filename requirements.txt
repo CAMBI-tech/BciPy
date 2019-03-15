@@ -18,7 +18,7 @@ sklearn==0.0
 seaborn==0.9.0
 construct==2.8.14
 matplotlib==2.1.1
-pylsl==1.13.1
+pylsl==1.12.2
 psutil==5.4.0
 pandas==0.24.1
 sounddevice==0.3.10
