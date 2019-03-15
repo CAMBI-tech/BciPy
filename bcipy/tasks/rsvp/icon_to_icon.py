@@ -13,12 +13,12 @@ from psychopy import core
 from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.task import (
     alphabet, fake_copy_phrase_decision, get_user_input,
     process_data_for_decision, trial_complete_message)
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-from bcipy.helpers.stimuli_generation import generate_icon_match_images
+from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.stimuli import generate_icon_match_images
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.tasks.task import Task
 from bcipy.helpers.system_utils import auto_str

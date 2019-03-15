@@ -6,16 +6,16 @@ from bcipy.tasks.task import Task
 from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
+from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
 from bcipy.signal.process.filter import bandpass, notch
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.task import (
     calculate_stimulation_freq,
     trial_complete_message,
     trial_reshaper,
     get_user_input,
     pause_calibration,
     process_data_for_decision)
-from bcipy.helpers.acquisition_related import analysis_channels, analysis_channels_by_device
+from bcipy.helpers.acquisition import analysis_channels, analysis_channels_by_device
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 
 

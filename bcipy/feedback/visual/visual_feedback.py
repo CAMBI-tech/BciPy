@@ -1,6 +1,6 @@
 from bcipy.feedback.feedback import Feedback
 from psychopy import visual, core
-from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.stimuli import resize_image
 from enum import Enum
 
 

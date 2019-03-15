@@ -1,5 +1,5 @@
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli_generation import resize_image, play_sound
+from bcipy.helpers.stimuli import resize_image, play_sound
 import csv
 from typing import TextIO, List, Tuple
 

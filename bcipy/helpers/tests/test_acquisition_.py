@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.helpers.acquisition_related import analysis_channel_names_by_pos
+from bcipy.helpers.acquisition import analysis_channel_names_by_pos
 
 
 class TestAcquisitionRelated(unittest.TestCase):

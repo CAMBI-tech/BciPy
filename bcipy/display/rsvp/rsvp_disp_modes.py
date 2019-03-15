@@ -3,8 +3,8 @@
 
 from psychopy import visual
 from bcipy.display.rsvp.rsvp_disp import RSVPDisplay
-from bcipy.helpers.stimuli_generation import resize_image
-from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.task import SPACE_CHAR
 
 """ RSVP Tasks are RSVPDisplay objects with different structure. They share
     the tasks and the essential elements and stimuli. However layout, length of

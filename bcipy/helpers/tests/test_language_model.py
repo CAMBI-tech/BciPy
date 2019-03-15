@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
+from bcipy.helpers.language_model import norm_domain, sym_appended, \
  equally_probable
 
 

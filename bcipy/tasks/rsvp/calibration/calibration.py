@@ -5,8 +5,8 @@ from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
 from bcipy.tasks.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli_generation import random_rsvp_calibration_seq_gen, get_task_info
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
+from bcipy.helpers.task import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
 

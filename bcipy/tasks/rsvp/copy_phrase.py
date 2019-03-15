@@ -5,8 +5,8 @@ from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.signal_model_related import CopyPhraseWrapper
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.task import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
 

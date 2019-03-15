@@ -3,7 +3,7 @@ import numpy as np
 
 from mockito import any, mock, when, unstub
 
-from bcipy.helpers.bci_task_related import alphabet, trial_reshaper
+from bcipy.helpers.task import alphabet, trial_reshaper
 from bcipy.helpers.load import load_json_parameters
 
 

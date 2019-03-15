@@ -1,4 +1,4 @@
-from bcipy.helpers.stimuli_generation import play_sound, soundfiles
+from bcipy.helpers.stimuli import play_sound, soundfiles
 from bcipy.tasks.task import Task
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 

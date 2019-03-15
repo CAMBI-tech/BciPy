@@ -3,15 +3,13 @@ from typing import List, Tuple
 
 import numpy as np
 
-from bcipy.helpers.acquisition_related import analysis_channels
-from bcipy.helpers.bci_task_related import trial_reshaper
-from bcipy.helpers.lang_model_related import norm_domain
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
 from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
-from bcipy.helpers.lang_model_related import norm_domain, sym_appended, \
+from bcipy.helpers.language_model import norm_domain, sym_appended, \
  equally_probable
-from bcipy.helpers.bci_task_related import BACKSPACE_CHAR
 
 
 class CopyPhraseWrapper:
@@ -91,7 +89,7 @@ class CopyPhraseWrapper:
         notch_filter_data = notch.notch_filter(raw_data, self.fs, frequency_to_remove=60)
 
         # bandpass filter from 2-45hz
-        filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, self.fs)
+        filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, order=2, self.fs)
 
         # downsample
         data = downsample.downsample(filtered_data, factor=self.k)

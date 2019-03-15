@@ -6,9 +6,9 @@ from typing import List
 from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
-from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.helpers.task import SPACE_CHAR
 from bcipy.display.display_main import MultiColorText
-from bcipy.helpers.stimuli_generation import resize_image
+from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 

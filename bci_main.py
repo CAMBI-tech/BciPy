@@ -1,8 +1,8 @@
 from bcipy.display.display_main import init_display_window
-from bcipy.helpers.acquisition_related import init_eeg_acquisition
-from bcipy.helpers.bci_task_related import print_message
+from bcipy.helpers.acquisition import init_eeg_acquisition
+from bcipy.helpers.task import print_message
 from bcipy.helpers.system_utils import get_system_info, configure_logger
-from bcipy.helpers.lang_model_related import init_language_model
+from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_signal_model
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task

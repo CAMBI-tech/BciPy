@@ -7,7 +7,7 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
-from bcipy.helpers.stimuli_generation import play_sound, soundfiles,\
+from bcipy.helpers.stimuli import play_sound, soundfiles,\
  random_rsvp_calibration_seq_gen, generate_icon_match_images, best_selection,\
  best_case_rsvp_seq_gen
 

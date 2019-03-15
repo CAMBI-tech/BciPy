@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from bcipy.helpers.stimuli_generation import best_case_rsvp_seq_gen
-from bcipy.helpers.bci_task_related import SPACE_CHAR
+from bcipy.helpers.stimuli import best_case_rsvp_seq_gen
+from bcipy.helpers.task import SPACE_CHAR
 import numpy as np
 import string
 

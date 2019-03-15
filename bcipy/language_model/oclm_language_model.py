@@ -3,7 +3,7 @@ import sys
 import math
 from typing import List
 from collections import defaultdict
-from bcipy.helpers.bci_task_related import alphabet, SPACE_CHAR
+from bcipy.helpers.task import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
 from bcipy.language_model.errors import (EvidenceDataStructError,
                                          NBestError,

@@ -7,12 +7,12 @@ from bcipy.helpers.load import (
     load_json_parameters)
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
-from bcipy.helpers.bci_task_related import trial_reshaper
-from bcipy.helpers.data_vizualization import generate_offline_analysis_screen
+from bcipy.helpers.task import trial_reshaper
+from bcipy.helpers.vizualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
-from bcipy.helpers.acquisition_related import analysis_channels,\
+from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
-from bcipy.helpers.stimuli_generation import play_sound
+from bcipy.helpers.stimuli import play_sound
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=60)
 
     # bandpass filter from 2-45hz
-    filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, fs)
+    filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, fs, order=2)
 
     # downsample
     data = downsample.downsample(filtered_data, factor=downsample_rate)

@@ -1,7 +1,7 @@
 from psychopy import visual, clock
 import numpy as np
 import time
-from bcipy.helpers.bci_task_related import alphabet
+from bcipy.helpers.task import alphabet
 
 import logging
 

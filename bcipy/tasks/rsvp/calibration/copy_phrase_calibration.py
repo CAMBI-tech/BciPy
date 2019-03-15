@@ -3,8 +3,8 @@ from psychopy import core
 from bcipy.tasks.task import Task
 from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
-from bcipy.helpers.stimuli_generation import target_rsvp_sequence_generator, get_task_info
-from bcipy.helpers.bci_task_related import (
+from bcipy.helpers.stimuli import target_rsvp_sequence_generator, get_task_info
+from bcipy.helpers.task import (
     fake_copy_phrase_decision, alphabet, get_user_input,
     trial_complete_message, pause_calibration)
 
