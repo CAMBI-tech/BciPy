@@ -25,7 +25,7 @@ VERSION = '1.3.0'
 # What packages are required for this module to be executed?
 REQUIRED = [
     'wheel==0.30.0',
-    'wxPython==4.0.0',
+    'wxPython==4.0.1',
     'configobj==5.0.6',
     'docker==2.6.1',
     'json-tricks==3.8.0',
@@ -44,7 +44,7 @@ REQUIRED = [
     'seaborn==0.9.0',
     'construct==2.8.14',
     'matplotlib==2.1.1',
-    'pylsl==1.12.2',
+    'pylsl==1.13.1',
     'psutil==5.4.0',
     'pandas==0.24.1',
     'sounddevice==0.3.10',
