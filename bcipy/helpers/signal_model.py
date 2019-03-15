@@ -44,7 +44,11 @@ class CopyPhraseWrapper:
                  is_txt_sti=True, device_name='LSL', device_channels=None,
                  stimuli_timing=[1, .2],
                  backspace_prob=0.05,
-                 backspace_always_shown=False):
+                 backspace_always_shown=False,
+                 filter_high=45,
+                 filter_low=2,
+                 filter_order=2,
+                 notch_filter_frequency=60):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -63,8 +67,12 @@ class CopyPhraseWrapper:
         self.valid_targets = set(self.alp)
 
         self.signal_model = signal_model
-        self.fs = fs
-        self.k = k
+        self.sampling_rate = fs
+        self.downsample_rate = k
+        self.filter_high = filter_high
+        self.filter_low = filter_low
+        self.filter_order = filter_order
+        self.notch_filter_frequency = notch_filter_frequency
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
@@ -86,15 +94,21 @@ class CopyPhraseWrapper:
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # Remove 60hz noise with a notch filter
-        notch_filter_data = notch.notch_filter(raw_data, self.fs, frequency_to_remove=60)
+        notch_filter_data = notch.notch_filter(
+            raw_data, self.sampling_rate, frequency_to_remove=self.notch_filter_frequency)
 
         # bandpass filter from 2-45hz
-        filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, order=2, self.fs)
+        filtered_data = bandpass.butter_bandpass_filter(
+            notch_filter_data,
+            self.filter_low,
+            self.filter_high,
+            order=self.filter_order,
+            self.sampling_rate)
 
         # downsample
-        data = downsample.downsample(filtered_data, factor=self.k)
-        x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.fs,
-                                    k=self.k, mode=self.mode,
+        data = downsample.downsample(filtered_data, factor=self.downsample_rate)
+        x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.sampling_rate,
+                                    k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
 

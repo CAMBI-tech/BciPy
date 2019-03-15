@@ -7,7 +7,7 @@ from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
-from bcipy.signal.process.filter import bandpass, notch
+from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
     calculate_stimulation_freq,
     trial_complete_message,
@@ -88,8 +88,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # SSVEP response to letter flash estimate
         self.stimulation_frequency = calculate_stimulation_freq(self.time_flash)
 
-        self.k = self.parameters['down_sampling_rate']
-        self.filtered_sampling_rate = self.fs / self.k
+        self.downsample_rate = self.parameters['down_sampling_rate']
+        self.filtered_sampling_rate = self.fs / self.downsample_rate
         self.psd_method = PSD_TYPE.WELCH
 
         # The channel used to calculate the SSVEP response to RSVP sequence.
@@ -99,10 +99,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         # EDIT ME FOR FEEDBACK CONFIGURATION
         # filter parameters
-        self.filter_low = 2
-        self.filter_high = 45
-        self.fitler_order = 2
-        self.notch_filter_frequency = 60
+        self.filter_low = self.parameters['filter_low_pass']
+        self.filter_high = self.parameters['filter_high_pass']
+        self.fitler_order = self.parameters['filter_order']
+        self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
         # psd band of interest to use for feeback (low, high)
         self.psd_export_band = (
@@ -269,18 +269,19 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         notch_filterted_data = notch.notch_filter(raw_data, self.fs, self.notch_filter_frequency)
         filtered_data = bandpass.butter_bandpass_filter(
             notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.fitler_order)
+        data = downsample.downsample(filtered_data, factor=self.downsample_rate)
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
-        data, _, _, _ = trial_reshaper(
+        reshaped_data, _, _, _ = trial_reshaper(
             target_info,
             times,
-            filtered_data,
+            data,
             fs=self.fs,
-            k=self.k, mode='calibration',
+            k=self.downsample_rate, mode='calibration',
             channel_map=self.channel_map,
             trial_length=self.trial_length)
-        return data
+        return reshaped_data
 
     def letter_info(self, triggers: List[Tuple[str, float]],
                     target_info: List[str]

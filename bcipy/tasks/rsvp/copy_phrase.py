@@ -100,6 +100,12 @@ class RSVPCopyPhraseTask(Task):
         self.language_model = language_model
         self.signal_model = signal_model
         self.down_sample_rate = parameters['down_sampling_rate']
+
+        self.filter_low = self.parameters['filter_low_pass']
+        self.filter_high = self.parameters['filter_high_pass']
+        self.fitler_order = self.parameters['filter_order']
+        self.notch_filter_frequency = self.parameters['notch_filter_frequency']
+
         self.min_num_seq = parameters['min_seq_len']
         self.collection_window_len = parameters['collection_window_after_trial_length']
 
@@ -133,7 +139,11 @@ class RSVPCopyPhraseTask(Task):
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[self.time_cross, self.time_flash],
             backspace_prob=self.parameters['lm_backspace_prob'],
-            backspace_always_shown=self.parameters['backspace_always_shown'])
+            backspace_always_shown=self.parameters['backspace_always_shown'].
+            filter_high=self.filter_high,
+            filter_low=self.filter_low,
+            filter_order=self.fitler_order,
+            notch_filter_frequency=self.notch_filter_frequency)
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),

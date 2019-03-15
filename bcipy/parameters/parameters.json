@@ -74,6 +74,50 @@
     ],
     "type": "int"
   },
+  "filter_high_pass": {
+    "value": "45",
+    "section": "signal_config",
+    "readableName": "High Pass Filter Cutoff",
+    "helpTip": "High Pass Filter Cutoff (Hz)",
+    "recommended_values": [
+      "45",
+      "50"
+    ],
+    "type": "float"
+  },
+  "filter_low_pass": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "Low Pass Filter Cutoff",
+    "helpTip": "Low Pass Filter Cutoff (Hz)",
+    "recommended_values": [
+      "1",
+      "2"
+    ],
+    "type": "float"
+  },
+  "filter_order": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "Filter Order",
+    "helpTip": "Filter Order",
+    "recommended_values": [
+      "2",
+      "3"
+    ],
+    "type": "float"
+  },
+  "notch_filter_frequency": {
+    "value": "60",
+    "section": "signal_config",
+    "readableName": "Notch Filter Frequency",
+    "helpTip": "Notch Filter Frequency. Used to remove noise from surronding environment.",
+    "recommended_values": [
+      "59",
+      "60"
+    ],
+    "type": "float"
+  },
   "min_seq_len": {
     "value": "1",
     "section": "bci_config",
@@ -724,7 +768,7 @@
     "type": "int"
   },
   "down_sampling_rate": {
-    "value": "1",
+    "value": "2",
     "section": "signal_config",
     "readableName": "down_sampling_rate",
     "helpTip": "down_sampling_rate",
