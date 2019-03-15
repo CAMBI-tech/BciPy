@@ -38,7 +38,7 @@ REQUIRED = [
     'pytz==2017.2',
     'six==1.11.0',
     'numpy==1.16.2',
-    'scipy==1.1.0',
+    'scipy==1.2.1',
     'future==0.16.0',
     'sklearn==0.0',
     'seaborn==0.9.0',
