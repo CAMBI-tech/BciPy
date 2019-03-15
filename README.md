@@ -3,9 +3,9 @@
 
 ### What is it?
 
-It is a Brain-computer interface framework written in Python. It can function as a standalone or you can take the tools you need and start coding your own / additional comonpents.
+It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
 
-It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (10) and Mac OSx (High Sierra) at this time.
+It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
