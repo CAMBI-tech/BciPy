@@ -1,6 +1,6 @@
 from psychopy import core
 
-from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
+from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 
 from bcipy.tasks.task import Task
 
@@ -178,26 +178,27 @@ class RSVPCalibrationTask(Task):
 
 def init_calibration_display_task(
         parameters, window, daq, static_clock, experiment_clock):
-    rsvp = CalibrationDisplay(
-        window=window, clock=static_clock,
+    return CalibrationDisplay(
+        window=window,
+        clock=static_clock,
         experiment_clock=experiment_clock,
         marker_writer=daq.marker_writer,
-        text_info=parameters['text_text'],
-        color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'],
+        info_text=parameters['info_text'],
+        info_color=parameters['info_color'],
+        info_pos=(parameters['pos_text_x'],
                   parameters['pos_text_y']),
-        height_info=parameters['txt_height'],
-        font_info=parameters['font_text'],
-        color_task=['white'],
-        font_task=parameters['font_task'],
-        height_task=parameters['height_task'],
-        font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'],
+        info_height=parameters['txt_height'],
+        info_font=parameters['font_text'],
+        task_color=[parameters['task_color']],
+        task_font=parameters['font_task'],
+        task_height=parameters['height_task'],
+        stim_font=parameters['stim_font'],
+        stim_pos=(parameters['pos_sti_x'],
                  parameters['pos_sti_y']),
-        sti_height=parameters['sti_height'],
-        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        is_txt_sti=parameters['is_txt_sti'],
+        stim_height=parameters['sti_height'],
+        stim_sequence=['a'] * 10,
+        stim_colors=[parameters['stim_color']] * 10,
+        stim_timing=[3] * 10,
+        is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['sti_space_char'])
-    return rsvp
+        space_char=parameters['stim_space_char'])

@@ -14,7 +14,6 @@ Currently, these are the modes and experiment types implemented:
 
 > Calibration
 > Copy Phrase
-> Copy Phrase Calibration
 > Icon to Icon
 > Icon to Word
 > Alert Tone

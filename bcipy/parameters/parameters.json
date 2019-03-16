@@ -292,7 +292,7 @@
     ],
     "type": "float"
   },
-  "text_text": {
+  "info_text": {
     "value": "",
     "section": "bci_config",
     "readableName": "Text below main presentation",
@@ -314,7 +314,7 @@
     ],
     "type": "float"
   },
-  "font_sti": {
+  "stim_font": {
     "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Stimuli",
@@ -328,7 +328,7 @@
     ],
     "type": "str"
   },
-  "sti_space_char": {
+  "stim_space_char": {
     "value": "\u2013",
     "section": "bci_config",
     "readableName": "Space Character",
@@ -357,7 +357,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "sti_height": {
+  "stim_height": {
     "value": "0.6",
     "section": "bci_config",
     "readableName": "Stimuli Height (px)",
@@ -365,59 +365,27 @@
     "recommended_values": "",
     "type": "float"
   },
-  "tr_pos_bg_x": {
-    "value": "0",
+  "task_color": {
+    "value": "white",
     "section": "bci_config",
-    "readableName": "tr_pos_bg_x",
-    "helpTip": "tr_pos_bg_x",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "tr_pos_bg_y": {
-    "value": "0.5",
-    "section": "bci_config",
-    "readableName": "tr_pos_bg_y",
-    "helpTip": "tr_pos_bg_y",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "bl_pos_bg_x": {
-    "value": "-1",
-    "section": "bci_config",
-    "readableName": "bl_pos_bg_x",
-    "helpTip": "bl_pos_bg_x",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "bl_pos_bg_y": {
-    "value": "-0.5",
-    "section": "bci_config",
-    "readableName": "bl_pos_bg_y",
-    "helpTip": "bl_pos_bg_y",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "size_domain_bg": {
-    "value": "7",
-    "section": "bci_config",
-    "readableName": "Size Bar Graph",
-    "helpTip": "Size Bar Graph",
-    "recommended_values": "",
-    "type": "int"
-  },
-  "font_bg_txt": {
-    "value": "Arial",
-    "section": "bci_config",
-    "readableName": "Font Bar Graph",
-    "helpTip": "Font Bar Graph",
+    "readableName": "Task Color",
+    "helpTip": "Color of Task Text: Ex. 1/100",
     "recommended_values": "",
     "type": "str"
   },
-  "color_bg_txt": {
+  "stim_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Target Letter Color",
+    "helpTip": "Target Letter Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "fixation_color": {
     "value": "red",
     "section": "bci_config",
-    "readableName": "Bar Graph Text Color",
-    "helpTip": "Bar Graph Text Color",
+    "readableName": "Fixation Color",
+    "helpTip": "Fixation Color",
     "recommended_values": "",
     "type": "str"
   },
@@ -455,38 +423,6 @@
     "helpTip": "Delay in seconds between playing an alert tone and presenting the target",
     "recommended_values": "",
     "type": "float"
-  },
-  "task_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Task Color",
-    "helpTip": "Color of Task Text: Ex. 1/100",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "target_letter_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Target Letter Color",
-    "helpTip": "Target Letter Color",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "fixation_color": {
-    "value": "red",
-    "section": "bci_config",
-    "readableName": "Fixation Color",
-    "helpTip": "Fixation Color",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "stimuli_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Stimuli Color",
-    "helpTip": "Stimuli Color",
-    "recommended_values": "",
-    "type": "str"
   },
   "time_target": {
     "value": "2",
