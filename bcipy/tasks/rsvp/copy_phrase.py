@@ -1,7 +1,7 @@
 from psychopy import core
 
 from bcipy.tasks.task import Task
-from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
+from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
@@ -371,29 +371,29 @@ class RSVPCopyPhraseTask(Task):
 
 def _init_copy_phrase_display(
         parameters, win, daq, static_clock, experiment_clock):
-    rsvp = CopyPhraseDisplay(
-        window=win, clock=static_clock,
-        experiment_clock=experiment_clock,
-        marker_writer=daq.marker_writer,
-        text_info=parameters['text_text'],
+    return CopyPhraseDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        daq.marker_writer,
+        info_text=parameters['info_text'],
         static_text_task=parameters['text_task'],
-        text_task='****',
-        color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'],
+        task_text='****',
+        info_color=parameters['info_color'],
+        info_pos=(parameters['pos_text_x'],
                   parameters['pos_text_y']),
-        height_info=parameters['txt_height'],
-        font_info=parameters['font_text'],
-        color_task=['white'],
-        font_task=parameters['font_task'],
-        height_task=parameters['height_task'],
-        font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'],
-                 parameters['pos_sti_y']),
-        sti_height=parameters['sti_height'],
-        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        is_txt_sti=parameters['is_txt_sti'],
+        info_height=parameters['info_height'],
+        info_font=parameters['info_font'],
+        task_color=[parameters['task_color']],
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        stim_font=parameters['stim_font'],
+        stim_pos=(parameters['stim_pos_x'],
+                 parameters['stim_pos_y']),
+        stim_height=parameters['stim_height'],
+        stim_sequence=['a'] * 10,
+        stim_colors=[parameters['stim_color']] * 10,
+        stim_timing=[3] * 10,
+        is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['sti_space_char'])
-
-    return rsvp
+        space_char=parameters['stim_space_char'])

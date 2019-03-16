@@ -246,7 +246,7 @@
     "recommended_values": "",
     "type": "int"
   },
-  "color_text": {
+  "info_color": {
     "value": "white",
     "section": "bci_config",
     "readableName": "Color Text",
@@ -258,7 +258,7 @@
     ],
     "type": "str"
   },
-  "font_text": {
+  "info_font": {
     "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Text",
@@ -272,7 +272,7 @@
     ],
     "type": "str"
   },
-  "pos_text_x": {
+  "text_pos_x": {
     "value": "0",
     "section": "bci_config",
     "readableName": "Position Text (X)",
@@ -282,7 +282,7 @@
     ],
     "type": "float"
   },
-  "pos_text_y": {
+  "text_pos_y": {
     "value": "-0.75",
     "section": "bci_config",
     "readableName": "Position Text (Y)",
@@ -304,7 +304,7 @@
     ],
     "type": "str"
   },
-  "txt_height": {
+  "info_height": {
     "value": "0.1",
     "section": "bci_config",
     "readableName": "Text Height",
@@ -341,7 +341,7 @@
     ],
     "type": "str"
   },
-  "pos_sti_x": {
+  "stim_pos_x": {
     "value": "0",
     "section": "bci_config",
     "readableName": "Pos Stimuli X",
@@ -349,7 +349,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "pos_sti_y": {
+  "stim_pos_y": {
     "value": "0",
     "section": "bci_config",
     "readableName": "Pos Stimuli Y",

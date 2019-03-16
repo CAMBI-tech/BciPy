@@ -11,7 +11,7 @@ from typing import Dict, List, Sequence, Tuple
 from psychopy import core
 
 from bcipy.helpers.system_utils import auto_str
-from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
+from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.task import (
     alphabet, fake_copy_phrase_decision, get_user_input,
@@ -430,30 +430,32 @@ class RSVPIconToIconTask(Task):
 
 def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
                                     experiment_clock, is_word):
-    rsvp = IconToIconDisplay(
-        window=win,
-        clock=static_clock,
-        experiment_clock=experiment_clock,
-        marker_writer=daq.marker_writer,
+    return IconToIconDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        daq.marker_writer,
         text_info=parameters['text_text'],
         color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'], parameters['pos_text_y']),
-        height_info=parameters['txt_height'],
-        font_info=parameters['font_text'],
-        color_task=['black'],
-        font_task=parameters['font_task'],
-        height_task=parameters['height_task'],
-        font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'], parameters['pos_sti_y']),
-        sti_height=parameters['sti_height'],
+        info_pos=(
+            parameters['text_pos_x'],
+            parameters['text_pos_y']),
+        info_height=parameters['info_height'],
+        info_font=parameters['info_font'],
+        task_color=['black'],
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        stim_font=parameters['stim_font'],
+        stim_pos=(
+            parameters['stim_pos_x'],
+            parameters['stim_pos_y']),
+        stim_height=parameters['stim_height'],
         stim_sequence=['a'] * 10,
-        color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        is_txt_sti=False,
+        stim_colors=[parameters['stim_color']] * 10,
+        stim_timing=[3] * 10,
+        is_txt_stim=False,
         trigger_type=parameters['trigger_type'],
         is_word=is_word)
-
-    return rsvp
 
 
 @auto_str
