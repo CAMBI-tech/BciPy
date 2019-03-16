@@ -7,7 +7,6 @@ from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.helpers.task import SPACE_CHAR
-from bcipy.display.display_main import MultiColorText
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
@@ -93,20 +92,13 @@ class RSVPDisplay(object):
 
         self.space_char = space_char
 
-        # Check if task text is multicolored
-        if len(color_task) == 1:
-            self.task = visual.TextStim(win=window, color=color_task[0],
-                                        height=task_height,
-                                        text=text_task,
-                                        font=font_task, pos=pos_task,
-                                        wrapWidth=None, colorSpace='rgb',
-                                        opacity=1, depth=-6.0)
-        else:
-            self.task = MultiColorText(win=window, list_color=color_task,
-                                       height=task_height,
-                                       text=text_task,
-                                       font=font_task, pos=pos_task,
-                                       opacity=1, depth=-6.0)
+        self.task = visual.TextStim(win=window, color=color_task[0],
+                                    height=task_height,
+                                    text=text_task,
+                                    font=font_task, pos=pos_task,
+                                    wrapWidth=None, colorSpace='rgb',
+                                    opacity=1, depth=-6.0)
+        
 
         # Create multiple text objects based on input
         self.text = []
