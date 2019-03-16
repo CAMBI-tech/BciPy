@@ -465,8 +465,8 @@ def soundfiles(directory: str) -> Iterator[str]:
         iterator that infinitely cycles through the filenames.
     """
     if not path.isdir(directory):
-        raise Exception(("Invalid directory for sound files. Please check "
-                         "your configuration."))
+        raise Exception(('Invalid directory for sound files. Please check '
+                         'your configuration.'))
     if not directory.endswith(sep):
         directory += sep
     return itertools.cycle(glob.glob(directory + '*.wav'))

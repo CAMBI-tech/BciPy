@@ -90,11 +90,13 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_soundfiles_generator(self):
         """Test that soundfiles function returns an cyclic generator."""
 
-        directory = r'.\sounds'
+        directory = path.join('.', 'sounds')
         soundfile_paths = [
-            r'.\sounds\0.wav', r'.\sounds\1.wav', r'.\sounds\2.wav'
+            path.join(directory, '0.wav'),
+            path.join(directory, '1.wav'),
+            path.join(directory, '2.wav')
         ]
-        when(glob).glob(r'.\sounds\*.wav').thenReturn(soundfile_paths)
+        when(glob).glob(path.join(directory, '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
 
         gen = soundfiles(directory)
@@ -108,11 +110,13 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_soundfiles_generator_path_arg(self):
         """Test that soundfiles function constructs the correct path."""
-        directory = r'.\sounds'
+        directory = path.join('.', 'sounds')
         soundfile_paths = [
-            r'.\sounds\0.wav', r'.\sounds\1.wav', r'.\sounds\2.wav'
+            path.join(directory, '0.wav'),
+            path.join(directory, '1.wav'),
+            path.join(directory, '2.wav')
         ]
-        when(glob).glob(r'.\sounds\*.wav').thenReturn(soundfile_paths)
+        when(glob).glob(path.join(directory, '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
         gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
