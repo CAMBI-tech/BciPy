@@ -124,10 +124,11 @@ class RSVPDisplay(object):
                                     font=task_font, pos=task_pos,
                                     wrapWidth=None, colorSpace='rgb',
                                     opacity=1, depth=-6.0)
-        
 
         # Create multiple text objects based on input
         self.text = []
+        import pdb
+        pdb.set_trace()
         for idx in range(len(self.info_text)):
             self.text.append(visual.TextStim(
                 win=self.window,
@@ -178,7 +179,7 @@ class RSVPDisplay(object):
 
     def update_task(self, text: str, color_list: List[str], pos: Tuple[float]):
         """Update Task Object.
-        
+
         PARAMETERS:
         -----------
         text: text for task
@@ -203,14 +204,14 @@ class RSVPDisplay(object):
 
         if self.first_run:
             # play a sequence start sound to help orient triggers
-            stim_timing = _calibration_trigger(
+            first_stim_timing = _calibration_trigger(
                 self.experiment_clock,
                 trigger_type=self.trigger_type, display=self.window,
                 on_trigger=self.marker_writer.push_marker)
 
-            timing.append(stim_timing)
+            timing.append(first_stim_timing)
 
-            self.first_stim_time = stim_timing[-1]
+            self.first_stim_time = first_stim_timing[-1]
             self.first_run = False
 
         # do the sequence

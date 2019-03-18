@@ -125,13 +125,13 @@ class RSVPCalibrationTask(Task):
                 self.rsvp.sti.height = self.stimuli_height
 
                 # Schedule a sequence
-                self.rsvp.stim_sequence = ele_sti[idx_o]
+                self.rsvp.stimuli_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_stim:
-                    self.rsvp.color_list_sti = color_sti[idx_o]
+                    self.rsvp.stimuli_colors = color_sti[idx_o]
 
-                self.rsvp.time_list_sti = timing_sti[idx_o]
+                self.rsvp.stimuli_timing = timing_sti[idx_o]
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -150,7 +150,8 @@ class RSVPCalibrationTask(Task):
             run = False
 
         # Say Goodbye!
-        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.text = trial_complete_message(
+            self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -193,9 +194,7 @@ def init_calibration_display_task(
         stim_pos=(parameters['stim_pos_x'],
                  parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
-        stim_sequence=['a'] * 10,
-        stim_colors=[parameters['stim_color']] * 10,
-        stim_timing=[3] * 10,
+        stim_colors=[parameters['stim_color']* 10],
         is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'])

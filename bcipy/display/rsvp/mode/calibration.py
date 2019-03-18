@@ -34,7 +34,7 @@ class CalibrationDisplay(RSVPDisplay):
         info_font = [info_font]
         info_text = [info_text]
         info_pos = [info_pos]
-        info_text = [info_height]
+        info_height = [info_height]
 
         tmp = visual.TextStim(win=window, font=task_font, text=task_text)
         x_task_pos = tmp.boundingBox[0] / window.size[0] - 1
