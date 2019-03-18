@@ -182,14 +182,6 @@
     "recommended_values": "",
     "type": "float"
   },
-  "color_task": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Color Task",
-    "helpTip": "Color Task",
-    "recommended_values": "",
-    "type": "str"
-  },
   "trial_complete_message_color": {
     "value": "white",
     "section": "bci_config",
@@ -198,7 +190,7 @@
     "recommended_values": "",
     "type": "str"
   },
-  "font_task": {
+  "task_font": {
     "value": "Arial",
     "section": "bci_config",
     "readableName": "Font Task",
@@ -212,7 +204,7 @@
     ],
     "type": "str"
   },
-  "height_task": {
+  "task_height": {
     "value": "0.1",
     "section": "bci_config",
     "readableName": "Height Task",
@@ -222,7 +214,7 @@
     ],
     "type": "float"
   },
-  "text_task": {
+  "task_text": {
     "value": "HELLO_THERE",
     "section": "bci_config",
     "readableName": "text task",

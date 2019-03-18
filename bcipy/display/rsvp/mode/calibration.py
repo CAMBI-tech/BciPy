@@ -5,12 +5,7 @@ from bcipy.helpers.task import SPACE_CHAR
 
 
 class CalibrationDisplay(RSVPDisplay):
-    """ Calibration object of RSVP
-        Attr:
-            information(visual_Text_Stimuli): information text.
-            task(visual_Text_Stimuli): task visualization.
-            sti(visual_Text_Stimuli): stimuli text
-    """
+    """Calibration Display."""
     def __init__(self,
                  window,
                  static_clock,
@@ -34,7 +29,7 @@ class CalibrationDisplay(RSVPDisplay):
                  is_txt_stim=True,
                  trigger_type='image',
                  space_char=SPACE_CHAR):
-        """ Initializes Calibration Task Objects """
+
         info_color = [info_color]
         info_font = [info_font]
         info_text = [info_text]

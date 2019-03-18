@@ -14,7 +14,7 @@ class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
     Calibration task performs an RSVP stimulus sequence
-        to elicit an ERP. Parameters will change how many stim
+        to elicit an ERP. Parameters will change how many stimuli
         and for how long they present. Parameters also change
         color and text / image inputs.
 
@@ -23,15 +23,12 @@ class RSVPCalibrationTask(Task):
         setting up stimuli --> presenting sequences -->
         saving data
 
-    Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
-        parameters (Dictionary)
-        file_save (String)
-
-    Output:
-        file_save (String)
-
+    PARAMETERS:
+    ----------
+    win (PsychoPy Display Object)
+    daq (Data Acquisition Object)
+    parameters (Dictionary)
+    file_save (String)
     """
 
     def __init__(self, win, daq, parameters, file_save):
@@ -96,7 +93,7 @@ class RSVPCalibrationTask(Task):
                  num_sti=self.num_sti,
                  len_sti=self.len_sti,
                  timing=self.timing,
-                 is_txt=self.rsvp.is_txt_sti,
+                 is_txt=self.rsvp.is_txt_stim,
                  color=self.color)
 
             (task_text, task_color) = get_task_info(self.num_sti,
@@ -131,7 +128,7 @@ class RSVPCalibrationTask(Task):
                 self.rsvp.stim_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
-                if self.is_txt_sti:
+                if self.is_txt_stim:
                     self.rsvp.color_list_sti = color_sti[idx_o]
 
                 self.rsvp.time_list_sti = timing_sti[idx_o]
@@ -179,23 +176,23 @@ class RSVPCalibrationTask(Task):
 def init_calibration_display_task(
         parameters, window, daq, static_clock, experiment_clock):
     return CalibrationDisplay(
-        window=window,
-        clock=static_clock,
-        experiment_clock=experiment_clock,
-        marker_writer=daq.marker_writer,
+        window,
+        static_clock,
+        experiment_clock,
+        daq.marker_writer,
         info_text=parameters['info_text'],
         info_color=parameters['info_color'],
-        info_pos=(parameters['pos_text_x'],
-                  parameters['pos_text_y']),
-        info_height=parameters['txt_height'],
-        info_font=parameters['font_text'],
+        info_pos=(parameters['text_pos_x'],
+                  parameters['text_pos_y']),
+        info_height=parameters['info_height'],
+        info_font=parameters['info_font'],
         task_color=[parameters['task_color']],
-        task_font=parameters['font_task'],
-        task_height=parameters['height_task'],
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
         stim_font=parameters['stim_font'],
-        stim_pos=(parameters['pos_sti_x'],
-                 parameters['pos_sti_y']),
-        stim_height=parameters['sti_height'],
+        stim_pos=(parameters['stim_pos_x'],
+                 parameters['stim_pos_y']),
+        stim_height=parameters['stim_height'],
         stim_sequence=['a'] * 10,
         stim_colors=[parameters['stim_color']] * 10,
         stim_timing=[3] * 10,
