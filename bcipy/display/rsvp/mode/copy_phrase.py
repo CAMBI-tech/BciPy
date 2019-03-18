@@ -1,6 +1,5 @@
 from psychopy import visual
 from bcipy.display.rsvp.display import RSVPDisplay
-from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.task import SPACE_CHAR
 
 """ RSVP Tasks are RSVPDisplay objects with different structure. They share
@@ -23,7 +22,7 @@ class CopyPhraseDisplay(RSVPDisplay):
     """
 
     def __init__(
-            self, 
+            self,
             window,
             clock,
             experiment_clock,
@@ -59,7 +58,7 @@ class CopyPhraseDisplay(RSVPDisplay):
         info_font = [task_font, info_font]
         info_text = [static_task_text, info_text]
         info_pos = [static_task_pos, info_pos]
-        info_text = [task_height, info_height]
+        info_height = [task_height, info_height]
 
         # Adjust task position wrt. static task position. Definition of
         # dummy texts are required. Place the task on bottom
@@ -79,6 +78,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             info_color=info_color,
             info_font=info_font,
             info_pos=info_pos,
+            info_height=info_height,
             info_text=info_text,
             stim_font=stim_font,
             stim_pos=stim_pos,

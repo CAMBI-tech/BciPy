@@ -79,15 +79,15 @@ class RSVPCopyPhraseTask(Task):
 
         self.color = [parameters['target_letter_color'],
                       parameters['fixation_color'],
-                      parameters['stimuli_color']]
+                      parameters['stim_color']]
 
         self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = parameters['sti_height']
+        self.stimuli_height = parameters['stim_height']
 
         self.is_txt_stim = parameters['is_txt_stim']
         self.eeg_buffer = parameters['eeg_buffer_len']
-        self.copy_phrase = parameters['text_task']
+        self.copy_phrase = parameters['task_text']
         self.spelled_letters_count = int(
             parameters['spelled_letters_count'])
         if self.spelled_letters_count > len(self.copy_phrase):
@@ -212,10 +212,10 @@ class RSVPCopyPhraseTask(Task):
             self.window.flip()
 
             # Setup the new Stimuli
-            self.rsvp.stim_sequence = ele_sti[0]
+            self.rsvp.stimuli_sequence = ele_sti[0]
             if self.is_txt_stim:
-                self.rsvp.color_list_sti = color_sti[0]
-            self.rsvp.time_list_sti = timing_sti[0]
+                self.rsvp.stimuli_colors = color_sti[0]
+            self.rsvp.stimuli_timing = timing_sti[0]
 
             # Pause for a time
             core.wait(self.buffer_val)
@@ -377,11 +377,11 @@ def _init_copy_phrase_display(
         experiment_clock,
         daq.marker_writer,
         info_text=parameters['info_text'],
-        static_text_task=parameters['text_task'],
+        static_task_text=parameters['task_text'],
         task_text='****',
         info_color=parameters['info_color'],
-        info_pos=(parameters['pos_text_x'],
-                  parameters['pos_text_y']),
+        info_pos=(parameters['text_pos_x'],
+                  parameters['text_pos_y']),
         info_height=parameters['info_height'],
         info_font=parameters['info_font'],
         task_color=[parameters['task_color']],

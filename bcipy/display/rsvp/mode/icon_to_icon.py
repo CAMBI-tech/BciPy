@@ -34,7 +34,7 @@ class IconToIconDisplay(RSVPDisplay):
         info_font = [info_font]
         info_text = [info_text]
         info_pos = [info_pos]
-        info_text = [info_height]
+        info_height = [info_height]
 
         if is_word:
             task_height *= 2

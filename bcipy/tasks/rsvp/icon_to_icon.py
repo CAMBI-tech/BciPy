@@ -92,12 +92,12 @@ class RSVPIconToIconTask(Task):
 
         self.color = [
             parameters['target_letter_color'], parameters['fixation_color'],
-            parameters['stimuli_color']
+            parameters['stim_color']
         ]
 
         self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = parameters['sti_height']
+        self.stimuli_height = parameters['stim_height']
 
         self.eeg_buffer = parameters['eeg_buffer_len']
 
@@ -108,7 +108,7 @@ class RSVPIconToIconTask(Task):
         self.signal_model = signal_model
         self.auc_filename = auc_filename
 
-        self.task_height = parameters['height_task']
+        self.task_height = parameters['task_height']
 
         self.is_txt_stim = False
 
@@ -191,11 +191,11 @@ class RSVPIconToIconTask(Task):
         # Sequences passed to rsvp to display should be a list of image paths
         # except for a word target.
         word_target = show_target and self.is_word
-        self.rsvp.stim_sequence = [
+        self.rsvp.stimuli_sequence = [
             item if i == 0 and word_target else self.img_path(item)
             for i, item in enumerate(seq)
         ]
-        self.rsvp.time_list_sti = durations
+        self.rsvp.stim_timing = durations
 
         if self.is_word:
             if show_target:
@@ -213,7 +213,7 @@ class RSVPIconToIconTask(Task):
 
         # Present the Target and place it in the header
         if show_target:
-            self.rsvp.update_task_state(self.rsvp.stim_sequence[0],
+            self.rsvp.update_task_state(self.rsvp.stimuli_sequence[0],
                                         self.task_height, 'yellow',
                                         self.rsvp.win.size, self.is_word)
 
@@ -435,8 +435,8 @@ def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
         static_clock,
         experiment_clock,
         daq.marker_writer,
-        text_info=parameters['text_text'],
-        color_info=parameters['color_text'],
+        info_text=parameters['info_text'],
+        info_color=parameters['info_color'],
         info_pos=(
             parameters['text_pos_x'],
             parameters['text_pos_y']),

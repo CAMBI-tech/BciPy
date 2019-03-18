@@ -127,8 +127,6 @@ class RSVPDisplay(object):
 
         # Create multiple text objects based on input
         self.text = []
-        import pdb
-        pdb.set_trace()
         for idx in range(len(self.info_text)):
             self.text.append(visual.TextStim(
                 win=self.window,
@@ -186,12 +184,9 @@ class RSVPDisplay(object):
         color_list: list of the colors for each char
         pos: position of task
         """
-        if len(color_list) == 1:
-            self.task.text = text
-            self.task.color = color_list[0]
-            self.task.pos = pos
-        else:
-            self.task.update(text=text, color_list=color_list, pos=pos)
+        self.task.text = text
+        self.task.color = color_list[0]
+        self.task.pos = pos
 
     def do_sequence(self):
         """Do Sequence.

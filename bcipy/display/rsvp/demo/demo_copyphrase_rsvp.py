@@ -1,6 +1,6 @@
 from psychopy import visual, core
 
-from bcipy.display.rsvp.rsvp_disp_modes import CopyPhraseDisplay
+from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
@@ -36,19 +36,6 @@ if is_txt_stim:
         ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'R']]
     color_sti = [['red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white', 'white']] * 4
-else:
-    ele_sti = [['static/images/RSVP_images/A.jpg',
-                'static/images/RSVP_images/Red_Cross.png',
-                'static/images/RSVP_images/C.jpg',
-                'static/images/RSVP_images/D.jpg',
-                'static/images/RSVP_images/E.jpg',
-                'static/images/RSVP_images/P.jpg'],
-               ['static/images/RSVP_images/T.jpg',
-                'static/images/RSVP_images/Red_Cross.png',
-                'static/images/RSVP_images/B.jpg',
-                'static/images/RSVP_images/C.jpg',
-                'static/images/RSVP_images/D.jpg',
-                'static/images/RSVP_images/E.jpg']]
 
 time_flash = .25
 time_target = 2
@@ -80,22 +67,24 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 
 rsvp = CopyPhraseDisplay(
-    window=win, clock=clock,
-    experiment_clock=experiment_clock,
+    win,
+    clock,
+    experiment_clock,
     marker_writer=NullMarkerWriter(),
-    static_text_task=text_task,
-    static_color_task=color_task,
-    text_info=text_text,
-    color_info=color_text, pos_info=pos_text,
-    height_info=txt_height,
-    font_info=font_text,
-    color_task=['white'] * 4 + ['green'] * 2 + ['red'],
-    font_task=font_task, text_task='COPY_PH',
-    height_task=height_task,
-    font_sti=font_sti, pos_sti=pos_sti,
-    sti_height=sti_height,
-    stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-    time_list_sti=[3] * 10,
+    static_task_text=text_task,
+    static_task_color=color_task,
+    info_text=text_text,
+    info_color=color_text,
+    info_pos=pos_text,
+    info_height=txt_height,
+    info_font=font_text,
+    task_color=['white'],
+    task_font=font_task, task_text='COPY_PH',
+    task_height=height_task,
+    stim_font=font_sti, stim_pos=pos_sti,
+    stim_height=sti_height,
+    stim_sequence=['a'] * 10, stim_colors=['white'] * 10,
+    stim_timing=[3] * 10,
     is_txt_stim=is_txt_stim)
 
 counter = 0
@@ -111,11 +100,11 @@ for idx_o in range(len(task_text)):
 
     for idx in range(int(len(ele_sti) / 2)):
         # Schedule a sequence
-        rsvp.stim_sequence = ele_sti[counter]
+        rsvp.stimuli_sequence = ele_sti[counter]
         if is_txt_stim:
-            rsvp.color_list_sti = color_sti[counter]
+            rsvp.stimuli_colors = color_sti[counter]
 
-        rsvp.time_list_sti = timing_sti[counter]
+        rsvp.stimuli_timing = timing_sti[counter]
 
         #
         core.wait(.4)

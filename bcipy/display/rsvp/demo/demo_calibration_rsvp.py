@@ -1,6 +1,6 @@
 from psychopy import visual, core
 
-from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
+from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
@@ -26,7 +26,6 @@ sti_height = 0.6
 
 # Initialize Stimulus
 is_txt_stim = True
-is_presentation_by_images = False
 
 if is_txt_stim:
     ele_sti = [
@@ -36,34 +35,6 @@ if is_txt_stim:
         ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
     color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white', 'white']] * 4
-elif not is_presentation_by_images:
-    ele_sti = [['static/images/RSVP_images/A.jpg',
-                'static/images/RSVP_images/Red_Cross.png',
-                'static/images/RSVP_images/C.jpg',
-                'static/images/RSVP_images/D.jpg',
-                'static/images/RSVP_images/E.jpg',
-                'static/images/RSVP_images/P.jpg'],
-               ['static/images/RSVP_images/T.jpg',
-                'static/images/RSVP_images/Red_Cross.png',
-                'static/images/RSVP_images/B.jpg',
-                'static/images/RSVP_images/C.jpg',
-                'static/images/RSVP_images/D.jpg',
-                'static/images/RSVP_images/E.jpg']]
-else:
-    ele_sti = [['./display/RSVP_presentation_by_images/blow_bubbles.png',
-                'static/images/RSVP_images/Red_Cross.png',
-                './display/RSVP_presentation_by_images/hike.png',
-                './display/RSVP_presentation_by_images/hunt.png',
-                './display/RSVP_presentation_by_images/hunt150.png',
-                './display/RSVP_presentation_by_images/hunt175.png',
-                ],
-               ['./display/RSVP_presentation_by_images/kick.png',
-                'static/images/RSVP_images/Red_Cross.png',
-                './display/RSVP_presentation_by_images/pass_out.png',
-                './display/RSVP_presentation_by_images/Penguins.png',
-                './display/RSVP_presentation_by_images/kick.png',
-                './display/RSVP_presentation_by_images/put_out_fire_3.png'
-                ]]
 
 
 time_flash = .25
@@ -95,20 +66,25 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 
 rsvp = CalibrationDisplay(
-    window=win, clock=clock,
-    experiment_clock=experiment_clock,
+    win,
+    clock,
+    experiment_clock,
     marker_writer=NullMarkerWriter(),
-    text_info=text_text,
-    color_info=color_text, pos_info=pos_text,
-    height_info=txt_height,
-    font_info=font_text,
-    color_task=['white'],
-    font_task=font_task, text_task=task_text[0],
-    height_task=height_task,
-    font_sti=font_sti, pos_sti=pos_sti,
-    sti_height=sti_height,
-    stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-    time_list_sti=[3] * 10,
+    info_text=text_text,
+    info_color=color_text,
+    info_pos=pos_text,
+    info_height=txt_height,
+    info_font=font_text,
+    task_color=['white'],
+    task_font=font_task,
+    task_text=task_text[0],
+    task_height=height_task,
+    stim_font=font_sti,
+    stim_pos=pos_sti,
+    stim_height=sti_height,
+    stim_sequence=['a'] * 10,
+    stim_colors=['white'] * 10,
+    stim_timing=[3] * 10,
     is_txt_stim=is_txt_stim)
 
 # uncomment trigger_file lines for demo with triggers!
@@ -121,12 +97,12 @@ for idx_o in range(len(task_text)):
     rsvp.sti.height = sti_height
 
     # Schedule a sequence
-    rsvp.stim_sequence = ele_sti[idx_o]
+    rsvp.stimuli_sequence = ele_sti[idx_o]
 
     if is_txt_stim:
-        rsvp.color_list_sti = color_sti[idx_o]
+        rsvp.stimuli_colors = color_sti[idx_o]
 
-    rsvp.time_list_sti = timing_sti[idx_o]
+    rsvp.stimuli_timing = timing_sti[idx_o]
 
     core.wait(.4)
     sequence_timing = rsvp.do_sequence()
