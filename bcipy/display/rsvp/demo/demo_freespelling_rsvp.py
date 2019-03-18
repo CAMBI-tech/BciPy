@@ -25,9 +25,9 @@ pos_sti = (0, 0)
 sti_height = 0.6
 
 # Initialize Stimulus
-is_txt_sti = True
+is_txt_stim = True
 
-if is_txt_sti:
+if is_txt_stim:
     ele_sti = [
         ['+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
         ['+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
@@ -93,7 +93,7 @@ rsvp = FreeSpellingDisplay(
     sti_height=sti_height,
     stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
     time_list_sti=[3] * 10,
-    is_txt_sti=is_txt_sti)
+    is_txt_stim=is_txt_stim)
 
 counter = 0
 decision_made = 0
@@ -111,7 +111,7 @@ for idx_o in range(len(task_text)):
 
     # Schedule a sequence
     rsvp.stim_sequence = ele_sti[counter]
-    if is_txt_sti:
+    if is_txt_stim:
         rsvp.color_list_sti = color_sti[counter]
 
     rsvp.time_list_sti = timing_sti[counter]

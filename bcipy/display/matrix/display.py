@@ -22,7 +22,7 @@ class DisplayMatrix(object):
                  text_task='1/100', color_text=['white'],
                  font_text='Times', height_text=0.25,
                  font_sti='Times', pos_sti=(0, .0), sti_height=0.25,
-                 is_txt_sti=True, alp=None):
+                 is_txt_stim=True, alp=None):
 
         self.win = window
         self.logger = log = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class DisplayMatrix(object):
         self.color_task = color_task
 
         # STIM / GRID
-        self.is_txt_sti = is_txt_sti
+        self.is_txt_stim = is_txt_stim
         self.stimuli = []
         self.rows = grid_rows
         self.font = font_sti
@@ -70,7 +70,7 @@ class DisplayMatrix(object):
         self.expClock = experiment_clock
 
         # Length of the stimuli (number of stimuli on screen)
-        self.len_sti = len(self.stimuli)
+        self.stim_length = len(self.stimuli)
 
     def draw_static(self):
         """ Draws static elements in a stimulus. """
@@ -100,7 +100,7 @@ class DisplayMatrix(object):
 
         # Loop through each row
         for idx in range(self.rows):
-            if self.is_txt_sti:
+            if self.is_txt_stim:
 
                 # loop through each column
                 for x in range(self.columns):

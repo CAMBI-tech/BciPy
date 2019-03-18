@@ -110,7 +110,7 @@ class DecisionMaker:
 
     def __init__(self, min_num_seq, max_num_seq, state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
-                 is_txt_sti=True,
+                 is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None):
         self.state = state
@@ -119,7 +119,7 @@ class DecisionMaker:
 
         # TODO: read from parameters file
         self.alphabet = alphabet
-        self.is_txt_sti = is_txt_sti
+        self.is_txt_stim = is_txt_stim
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
                             'list_sti': [], 'list_distribution': [], 'decision': None}]
@@ -245,8 +245,8 @@ class DecisionMaker:
         stimuli = best_case_rsvp_seq_gen(
             self.alphabet,
             self.list_epoch[-1]['list_distribution'][-1],
-            num_sti=1,
-            is_txt=self.is_txt_sti,
+            stim_number=1,
+            is_txt=self.is_txt_stim,
             timing=self.stimuli_timing,
             seq_constants=self.seq_constants)
         return stimuli

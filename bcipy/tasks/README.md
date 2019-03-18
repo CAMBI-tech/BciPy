@@ -49,4 +49,4 @@ It will throw an error that the task isn't implemented if given a mode or experi
 
 1. You make a folder in the `static/images` dir with your .pngs
 2. Point to that folder in the parameters.json file
-3. Set is_txt_sti to false
+3. Set is_txt_stim to false

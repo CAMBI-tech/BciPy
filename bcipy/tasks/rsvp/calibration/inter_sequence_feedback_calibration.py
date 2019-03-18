@@ -63,9 +63,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.file_save = file_save
         self.enable_breaks = self._task.enable_breaks
         self.window = self._task.window
-        self.num_sti = self._task.num_sti
-        self.len_sti = self._task.len_sti
-        self.is_txt_sti = self.rsvp.is_txt_sti
+        self.stim_number = self._task.stim_number
+        self.stim_length = self._task.stim_length
+        self.is_txt_stim = self.rsvp.is_txt_stim
         self.stimuli_height = self._task.stimuli_height
         self.color = self._task.color
         self.timing = self._task.timing
@@ -110,7 +110,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.stimulation_frequency * 1.15)
 
         # length of time to use for PSD calculation
-        self.trial_length = self.time_flash * self.len_sti
+        self.trial_length = self.time_flash * self.stim_length
 
 
     def execute(self):
@@ -130,13 +130,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             (stimuli_elements, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
                  self.alp,
-                 num_sti=self.num_sti,
-                 len_sti=self.len_sti,
+                 stim_number=self.stim_number,
+                 stim_length=self.stim_length,
                  timing=self.timing,
-                 is_txt=self.is_txt_sti,
+                 is_txt=self.is_txt_stim,
                  color=self.color)
 
-            (task_text, task_color) = get_task_info(self.num_sti,
+            (task_text, task_color) = get_task_info(self.stim_number,
                                                     self._task.task_info_color)
 
             # Execute the RSVP sequences
@@ -167,7 +167,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 self.rsvp.stim_sequence = stimuli_elements[sequence_idx]
 
                 # check if text stimuli or not for color information
-                if self.is_txt_sti:
+                if self.is_txt_stim:
                     self.rsvp.color_list_sti = color_sti[sequence_idx]
 
                 self.rsvp.time_list_sti = timing_sti[sequence_idx]
@@ -219,8 +219,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         #   tranisiton less abrupt to the user
         core.wait(self.feedback_buffer_time)
 
-        # get last len_sti stimuli
-        sequence_of_interest = sequence_timing[-self.len_sti:]
+        # get last stim_length stimuli
+        sequence_of_interest = sequence_timing[-self.stim_length:]
 
         # get data sequence and only use the first 2 stimuli
         data = self._get_data_for_psd(sequence_of_interest[:2])

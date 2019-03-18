@@ -26,7 +26,7 @@ class CopyPhraseWrapper:
         alp(list[str]): symbol set of the task
         task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
             the copy phrase task
-        is_txt_sti: Whether or not the stimuli are text objects
+        is_txt_stim: Whether or not the stimuli are text objects
         conjugator(EvidenceFusion): fuses evidences in the task
         decision_maker(DecisionMaker): mastermind of the task
         mode(str): mode of thet task (should be copy phrase)
@@ -41,7 +41,7 @@ class CopyPhraseWrapper:
     def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
-                 is_txt_sti=True, device_name='LSL', device_channels=None,
+                 is_txt_stim=True, device_name='LSL', device_channels=None,
                  stimuli_timing=[1, .2],
                  backspace_prob=0.05,
                  backspace_always_shown=False,
@@ -58,7 +58,7 @@ class CopyPhraseWrapper:
         self.decision_maker = DecisionMaker(min_num_seq, max_num_seq,
                                             state=task_list[0][1],
                                             alphabet=alp,
-                                            is_txt_sti=is_txt_sti,
+                                            is_txt_stim=is_txt_stim,
                                             stimuli_timing=stimuli_timing,
                                             seq_constants=seq_constants)
         self.alp = alp

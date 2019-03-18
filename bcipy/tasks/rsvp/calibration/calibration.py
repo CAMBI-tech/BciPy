@@ -46,28 +46,28 @@ class RSVPCalibrationTask(Task):
             self.parameters, self.window, self.daq,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
-        trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
+        trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
         self.trigger_file = open(trigger_save_location, 'w')
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
             'wait_screen_message_color']
 
-        self.num_sti = parameters['num_sti']
-        self.len_sti = parameters['len_sti']
+        self.stim_number = parameters['stim_number']
+        self.stim_length = parameters['stim_length']
         self.timing = [parameters['time_target'],
                        parameters['time_cross'],
                        parameters['time_flash']]
 
         self.color = [parameters['target_letter_color'],
                       parameters['fixation_color'],
-                      parameters['stimuli_color']]
+                      parameters['stim_color']]
 
         self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = parameters['sti_height']
+        self.stimuli_height = parameters['stim_height']
 
-        self.is_txt_sti = parameters['is_txt_sti']
+        self.is_txt_stim = parameters['is_txt_stim']
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.enable_breaks = parameters['enable_breaks']
@@ -90,13 +90,13 @@ class RSVPCalibrationTask(Task):
             (ele_sti, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
                  self.alp,
-                 num_sti=self.num_sti,
-                 len_sti=self.len_sti,
+                 stim_number=self.stim_number,
+                 stim_length=self.stim_length,
                  timing=self.timing,
                  is_txt=self.rsvp.is_txt_stim,
                  color=self.color)
 
-            (task_text, task_color) = get_task_info(self.num_sti,
+            (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
             # Execute the RSVP sequences

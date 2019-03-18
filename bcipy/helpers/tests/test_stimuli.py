@@ -128,30 +128,30 @@ class TestStimuliGeneration(unittest.TestCase):
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_'
         ]
-        num_sti = 10
-        len_sti = 10
+        stim_number = 10
+        stim_length = 10
         seqs, seq_timings, seq_colors = random_rsvp_calibration_seq_gen(
             alp,
             timing=[0.5, 1, 0.2],
             color=['green', 'red', 'white'],
-            num_sti=num_sti,
-            len_sti=len_sti,
+            stim_number=stim_number,
+            stim_length=stim_length,
             is_txt=True)
 
         self.assertEqual(
-            len(seqs), num_sti,
+            len(seqs), stim_number,
             'Should have produced the correct number of sequences')
-        self.assertEqual(len(seq_timings), num_sti)
-        self.assertEqual(len(seq_colors), num_sti)
+        self.assertEqual(len(seq_timings), stim_number)
+        self.assertEqual(len(seq_colors), stim_number)
 
         seq_strings = []
         for seq in seqs:
             self.assertEqual(
-                len(seq), len_sti + 2,
+                len(seq), stim_length + 2,
                 ('Sequence should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = seq[2:]
-            self.assertEqual(len_sti, len(set(choices)),
+            self.assertEqual(stim_length, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -230,8 +230,8 @@ class TestStimuliGeneration(unittest.TestCase):
             session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
             timing=[1, 0.2],
             color=['red', 'white'],
-            num_sti=1,
-            len_sti=n,
+            stim_number=1,
+            stim_length=n,
             is_txt=True)
 
         first_seq = samples[0]
@@ -266,8 +266,8 @@ class TestStimuliGeneration(unittest.TestCase):
         samples, times, colors = best_case_rsvp_seq_gen(
             alp=alp,
             session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2, 0.0],
-            num_sti=1,
-            len_sti=n,
+            stim_number=1,
+            stim_length=n,
             is_txt=True,
             seq_constants=['<'])
 

@@ -25,10 +25,10 @@ pos_sti = (0, 0)
 sti_height = 0.6
 
 # Initialize Stimulus
-is_txt_sti = True
+is_txt_stim = True
 is_presentation_by_images = False
 
-if is_txt_sti:
+if is_txt_stim:
     ele_sti = [
         ['B', '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
         ['E', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
@@ -109,7 +109,7 @@ rsvp = CalibrationDisplay(
     sti_height=sti_height,
     stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
     time_list_sti=[3] * 10,
-    is_txt_sti=is_txt_sti)
+    is_txt_stim=is_txt_stim)
 
 # uncomment trigger_file lines for demo with triggers!
 # trigger_file = open('calibration_triggers.txt','w')
@@ -123,7 +123,7 @@ for idx_o in range(len(task_text)):
     # Schedule a sequence
     rsvp.stim_sequence = ele_sti[idx_o]
 
-    if is_txt_sti:
+    if is_txt_stim:
         rsvp.color_list_sti = color_sti[idx_o]
 
     rsvp.time_list_sti = timing_sti[idx_o]

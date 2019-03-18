@@ -75,7 +75,7 @@ class RSVPIconToIconTask(Task):
         self.file_save = file_save
         self.is_word = is_word
 
-        trigger_save_location = f'{self.file_save}/{parameters["triggers_file_name"]}'
+        trigger_save_location = f'{self.file_save}/{parameters["trigger_file_name"]}'
         self.trigger_file = open(trigger_save_location, 'w+')
         self.session_save_location = f'{self.file_save}/{parameters["session_file_name"]}'
 
@@ -83,8 +83,8 @@ class RSVPIconToIconTask(Task):
         self.wait_screen_message_color = parameters[
             'wait_screen_message_color']
 
-        self.num_sti = parameters['num_sti']
-        self.len_sti = parameters['len_sti']
+        self.stim_number = parameters['stim_number']
+        self.stim_length = parameters['stim_length']
         self.timing = [
             parameters['time_target'], parameters['time_cross'],
             parameters['time_flash']
@@ -110,7 +110,7 @@ class RSVPIconToIconTask(Task):
 
         self.task_height = parameters['height_task']
 
-        self.is_txt_sti = False
+        self.is_txt_stim = False
 
         self.min_num_seq = parameters['min_seq_len']
         self.word_matching_text_size = parameters['word_matching_text_size']
@@ -298,7 +298,7 @@ class RSVPIconToIconTask(Task):
             alp=self.alp,
             task_list=task_list,
             lmodel=self.language_model,
-            is_txt_sti=self.is_txt_sti,
+            is_txt_stim=self.is_txt_stim,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=self.timing[1:])  # time_cross and time_flash
@@ -329,7 +329,7 @@ class RSVPIconToIconTask(Task):
     def execute(self):
         self.logger.debug('Starting Icon to Icon Task!')
 
-        icons = [random.choice(self.alp) for _ in range(self.num_sti)]
+        icons = [random.choice(self.alp) for _ in range(self.stim_number)]
         self.logger.debug(f'Icon sequence: {icons}')
 
         selections = []

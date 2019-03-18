@@ -97,7 +97,7 @@ class RSVPDisplay(object):
         self.marker_writer = marker_writer or NullMarkerWriter()
 
         # Length of the stimuli (number of flashes)
-        self.len_sti = len(stim_sequence)
+        self.stim_length = len(stim_sequence)
 
         # Informational Parameters
         self.info_text = info_text

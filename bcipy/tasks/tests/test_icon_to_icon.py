@@ -23,7 +23,7 @@ class TestIconToIcon(unittest.TestCase):
         parameters = self.parameters
         parameters['window_height'] = 1
         parameters['window_width'] = 1
-        parameters['is_txt_sti'] = False
+        parameters['is_txt_stim'] = False
         img_path = 'bcipy/static/images/rsvp_images/'
         parameters['path_to_presentation_images'] = img_path
 

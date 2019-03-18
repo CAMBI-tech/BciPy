@@ -60,7 +60,7 @@ class RSVPCopyPhraseTask(Task):
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
 
-        trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
+        trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
         self.trigger_file = open(trigger_save_location, 'w')
         self.session_save_location = f"{self.file_save}/{parameters['session_file_name']}"
 
@@ -68,8 +68,8 @@ class RSVPCopyPhraseTask(Task):
         self.wait_screen_message_color = parameters[
             'wait_screen_message_color']
 
-        self.num_sti = parameters['num_sti']
-        self.len_sti = parameters['len_sti']
+        self.stim_number = parameters['stim_number']
+        self.stim_length = parameters['stim_length']
         self.time_cross = parameters['time_cross']
         self.time_target = parameters['time_target']
         self.time_flash = parameters['time_flash']
@@ -85,7 +85,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.stimuli_height = parameters['sti_height']
 
-        self.is_txt_sti = parameters['is_txt_sti']
+        self.is_txt_stim = parameters['is_txt_stim']
         self.eeg_buffer = parameters['eeg_buffer_len']
         self.copy_phrase = parameters['text_task']
         self.spelled_letters_count = int(
@@ -134,7 +134,7 @@ class RSVPCopyPhraseTask(Task):
             alp=self.alp,
             task_list=task_list,
             lmodel=self.language_model,
-            is_txt_sti=self.is_txt_sti,
+            is_txt_stim=self.is_txt_stim,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[self.time_cross, self.time_flash],
@@ -213,7 +213,7 @@ class RSVPCopyPhraseTask(Task):
 
             # Setup the new Stimuli
             self.rsvp.stim_sequence = ele_sti[0]
-            if self.is_txt_sti:
+            if self.is_txt_stim:
                 self.rsvp.color_list_sti = color_sti[0]
             self.rsvp.time_list_sti = timing_sti[0]
 

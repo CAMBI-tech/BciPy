@@ -18,7 +18,7 @@ class TestSignalModelRelated(unittest.TestCase):
             k=2,
             alp=alp,
             task_list=[('HELLO_WORLD', 'HE')],
-            is_txt_sti=True,
+            is_txt_stim=True,
             device_name='LSL',
             evidence_names=['LM', 'ERP'],
             device_channels=[

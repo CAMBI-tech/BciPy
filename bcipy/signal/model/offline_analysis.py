@@ -63,7 +63,7 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     data = downsample.downsample(filtered_data, factor=downsample_rate)
 
     # Process triggers.txt
-    triggers_file = parameters.get('triggers_file_name', 'triggers.txt')
+    triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
     _, t_t_i, t_i, offset = trigger_decoder(
         mode=mode,
         trigger_path=f'{data_folder}/{triggers_file}')

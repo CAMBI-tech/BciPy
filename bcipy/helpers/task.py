@@ -86,14 +86,14 @@ def alphabet(parameters=None):
         array of letters.
     """
     if parameters:
-        if not parameters['is_txt_sti']:
+        if not parameters['is_txt_stim']:
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
             for stimulus_filename in os.listdir(path):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
-                        ".png") and not stimulus_filename.endswith('PLUS.png'):
+                        '.png') and not stimulus_filename.endswith('PLUS.png'):
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array
