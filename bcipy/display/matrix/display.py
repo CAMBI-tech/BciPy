@@ -6,7 +6,7 @@ from bcipy.helpers.task import alphabet
 import logging
 
 
-class DisplayMatrix(object):
+class MatrixDisplay:
     """ Matrix Display Object for Sequence Presentation. Animates a sequence
         in Matrix. Mode should be determined outside.
         Attr:
@@ -16,36 +16,37 @@ class DisplayMatrix(object):
             sti(visual_Text_Stimuli): stimuli text
             trialClock(core_clock): timer for presentation """
 
-    def __init__(self, window, clock, experiment_clock, color_task='white',
-                 font_task='Times', pos_task=(-.75, .75), task_height=0.1,
+    def __init__(self, window, clock, experiment_clock, task_color='white',
+                 task_font='Times', task_pos=(-.75, .75), task_height=0.1,
                  grid_rows=6, grid_columns=6, time_flash=.25,
-                 text_task='1/100', color_text=['white'],
-                 font_text='Times', height_text=0.25,
-                 font_sti='Times', pos_sti=(0, .0), sti_height=0.25,
+                 task_text='1/100',
+                 stim_font='Times',
+                 stim_pos=(0, .0),
+                 stim_height=0.25,
                  is_txt_stim=True, alp=None):
 
         self.win = window
         self.logger = log = logging.getLogger(__name__)
 
         # TASK TEXT
-        self.font_task_text = font_task
+        self.task_font_text = task_font
         self.task_height = task_height
-        self.pos_task_text = pos_task
-        self.text_task = text_task
-        self.color_task = color_task
+        self.task_pos = task_pos
+        self.task_text = task_text
+        self.task_color = task_color
 
         # STIM / GRID
         self.is_txt_stim = is_txt_stim
         self.stimuli = []
         self.rows = grid_rows
-        self.font = font_sti
+        self.stimuli_font = stim_font
         self.columns = grid_columns
-        self.sti_height = sti_height
+        self.stim_height = stim_height
 
         self.stim_number = grid_rows + grid_columns
 
-        self.max_height_grid = -1 + sti_height
-        self.max_width_grid = 1 - sti_height
+        self.max_height_grid = -1 + stim_height
+        self.max_width_grid = 1 - stim_height
         self.uniform_grid_values_row = sorted(
             np.linspace(
                 start=self.max_height_grid,
@@ -83,11 +84,11 @@ class DisplayMatrix(object):
             stim.draw()
 
         # Next, Draw the task text
-        task_text = visual.TextStim(win=self.win, color=self.color_task,
+        task_text = visual.TextStim(win=self.win, color=self.task_color,
                                     height=self.task_height,
-                                    text=self.text_task,
-                                    font=self.font_task_text,
-                                    pos=self.pos_task_text,
+                                    text=self.task_text,
+                                    font=self.task_font_text,
+                                    pos=self.task_pos,
                                     wrapWidth=None, colorSpace='rgb',
                                     opacity=1, depth=-6.0)
         task_text.draw()
@@ -113,9 +114,9 @@ class DisplayMatrix(object):
                         self.uniform_grid_values_row)
 
                     stim = visual.TextStim(win=self.win,
-                                           height=self.sti_height,
+                                           height=self.stim_height,
                                            text=self.alp[alp_idx],
-                                           font=self.font, pos=pos,
+                                           font=self.stimuli_font, pos=pos,
                                            wrapWidth=None, colorSpace='rgb',
                                            opacity=1, depth=-6.0)
                     alp_idx += 1
@@ -183,11 +184,11 @@ if __name__ == "__main__":
         color='black')
 
     # Create a Display Matrix Object
-    matrix = DisplayMatrix(
+    matrix = MatrixDisplay(
         display_window,
         clock.MonotonicClock(),
         clock.MonotonicClock(),
-        text_task='')
+        task_text='')
 
     # draw matrix grid and other static
     matrix.draw_static()
@@ -196,7 +197,7 @@ if __name__ == "__main__":
     for i in range(task_length):
         task_index += 1
 
-        matrix.text_task = '%s/5' % task_index
+        matrix.task_text = '%s/5' % task_index
         matrix.draw_static()
 
         # animate!
