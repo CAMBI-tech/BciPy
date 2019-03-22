@@ -86,14 +86,14 @@ def alphabet(parameters=None):
         array of letters.
     """
     if parameters:
-        if not parameters['is_txt_sti']:
+        if not parameters['is_txt_stim']:
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
             for stimulus_filename in os.listdir(path):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
-                        ".png") and not stimulus_filename.endswith('PLUS.png'):
+                        '.png') and not stimulus_filename.endswith('PLUS.png'):
                     stimulus_array.append(os.path.join(path, stimulus_filename))
 
             return stimulus_array
@@ -222,11 +222,11 @@ def trial_complete_message(win, parameters):
     """
     message_stim = visual.TextStim(
         win=win,
-        height=float(parameters['txt_height']),
+        height=parameters['task_height'],
         text=parameters['trial_complete_message'],
-        font=parameters['font_text'],
-        pos=(float(parameters['pos_text_x']),
-             float(parameters['pos_text_y'])),
+        font=parameters['task_font'],
+        pos=(float(parameters['text_pos_x']),
+             float(parameters['text_pos_y'])),
         wrapWidth=None,
         color=parameters['trial_complete_message_color'],
         colorSpace='rgb',

@@ -1,6 +1,6 @@
 from psychopy import core
 
-from bcipy.display.rsvp.rsvp_disp_modes import CalibrationDisplay
+from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 
 from bcipy.tasks.task import Task
 
@@ -14,7 +14,7 @@ class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
     Calibration task performs an RSVP stimulus sequence
-        to elicit an ERP. Parameters will change how many stim
+        to elicit an ERP. Parameters will change how many stimuli
         and for how long they present. Parameters also change
         color and text / image inputs.
 
@@ -23,15 +23,12 @@ class RSVPCalibrationTask(Task):
         setting up stimuli --> presenting sequences -->
         saving data
 
-    Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
-        parameters (Dictionary)
-        file_save (String)
-
-    Output:
-        file_save (String)
-
+    PARAMETERS:
+    ----------
+    win (PsychoPy Display Object)
+    daq (Data Acquisition Object)
+    parameters (Dictionary)
+    file_save (String)
     """
 
     def __init__(self, win, daq, parameters, file_save):
@@ -49,28 +46,28 @@ class RSVPCalibrationTask(Task):
             self.parameters, self.window, self.daq,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
-        trigger_save_location = f"{self.file_save}/{parameters['triggers_file_name']}"
+        trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
         self.trigger_file = open(trigger_save_location, 'w')
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
             'wait_screen_message_color']
 
-        self.num_sti = parameters['num_sti']
-        self.len_sti = parameters['len_sti']
+        self.stim_number = parameters['stim_number']
+        self.stim_length = parameters['stim_length']
         self.timing = [parameters['time_target'],
                        parameters['time_cross'],
                        parameters['time_flash']]
 
         self.color = [parameters['target_letter_color'],
                       parameters['fixation_color'],
-                      parameters['stimuli_color']]
+                      parameters['stim_color']]
 
         self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = parameters['sti_height']
+        self.stimuli_height = parameters['stim_height']
 
-        self.is_txt_sti = parameters['is_txt_sti']
+        self.is_txt_stim = parameters['is_txt_stim']
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.enable_breaks = parameters['enable_breaks']
@@ -93,13 +90,13 @@ class RSVPCalibrationTask(Task):
             (ele_sti, timing_sti,
              color_sti) = random_rsvp_calibration_seq_gen(
                  self.alp,
-                 num_sti=self.num_sti,
-                 len_sti=self.len_sti,
+                 stim_number=self.stim_number,
+                 stim_length=self.stim_length,
                  timing=self.timing,
-                 is_txt=self.rsvp.is_txt_sti,
+                 is_txt=self.rsvp.is_txt_stim,
                  color=self.color)
 
-            (task_text, task_color) = get_task_info(self.num_sti,
+            (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
             # Execute the RSVP sequences
@@ -128,13 +125,13 @@ class RSVPCalibrationTask(Task):
                 self.rsvp.sti.height = self.stimuli_height
 
                 # Schedule a sequence
-                self.rsvp.stim_sequence = ele_sti[idx_o]
+                self.rsvp.stimuli_sequence = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
-                if self.is_txt_sti:
-                    self.rsvp.color_list_sti = color_sti[idx_o]
+                if self.is_txt_stim:
+                    self.rsvp.stimuli_colors = color_sti[idx_o]
 
-                self.rsvp.time_list_sti = timing_sti[idx_o]
+                self.rsvp.stimuli_timing = timing_sti[idx_o]
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -153,7 +150,8 @@ class RSVPCalibrationTask(Task):
             run = False
 
         # Say Goodbye!
-        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.text = trial_complete_message(
+            self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -178,26 +176,25 @@ class RSVPCalibrationTask(Task):
 
 def init_calibration_display_task(
         parameters, window, daq, static_clock, experiment_clock):
-    rsvp = CalibrationDisplay(
-        window=window, clock=static_clock,
-        experiment_clock=experiment_clock,
-        marker_writer=daq.marker_writer,
-        text_info=parameters['text_text'],
-        color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'],
-                  parameters['pos_text_y']),
-        height_info=parameters['txt_height'],
-        font_info=parameters['font_text'],
-        color_task=['white'],
-        font_task=parameters['font_task'],
-        height_task=parameters['height_task'],
-        font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'],
-                 parameters['pos_sti_y']),
-        sti_height=parameters['sti_height'],
-        stim_sequence=['a'] * 10, color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        is_txt_sti=parameters['is_txt_sti'],
+    return CalibrationDisplay(
+        window,
+        static_clock,
+        experiment_clock,
+        daq.marker_writer,
+        info_text=parameters['info_text'],
+        info_color=parameters['info_color'],
+        info_pos=(parameters['text_pos_x'],
+                  parameters['text_pos_y']),
+        info_height=parameters['info_height'],
+        info_font=parameters['info_font'],
+        task_color=[parameters['task_color']],
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        stim_font=parameters['stim_font'],
+        stim_pos=(parameters['stim_pos_x'],
+                 parameters['stim_pos_y']),
+        stim_height=parameters['stim_height'],
+        stim_colors=[parameters['stim_color']* 10],
+        is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['sti_space_char'])
-    return rsvp
+        space_char=parameters['stim_space_char'])

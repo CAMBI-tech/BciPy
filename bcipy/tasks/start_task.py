@@ -4,7 +4,6 @@ from bcipy.tasks.rsvp.calibration.inter_sequence_feedback_calibration import (
     RSVPInterSequenceFeedbackCalibration
 )
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.tasks.rsvp.calibration.copy_phrase_calibration import RSVPCopyPhraseCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
@@ -43,10 +42,6 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         return RSVPCopyPhraseTask(
             display_window, daq, parameters, file_save, signal_model,
             language_model, fake=fake)
-
-    if exp_type is ExperimentType.RSVP_COPY_PHRASE_CALIBRATION:
-        return RSVPCopyPhraseCalibrationTask(
-            display_window, daq, parameters, file_save, fake)
 
     # ICON TASKS
     if exp_type is ExperimentType.RSVP_ICON_TO_ICON:
