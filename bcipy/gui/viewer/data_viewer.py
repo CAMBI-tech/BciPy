@@ -68,6 +68,8 @@ class EEGFrame(wx.Frame):
         # figure size is in inches.
         self.figure = Figure(figsize=(12, 9), dpi=80,
                              tight_layout={'pad': 0.0})
+        # space between axis label and tick labels
+        self.yaxis_label_space = 60
         self.axes = self.init_axes()
 
         self.canvas = FigureCanvas(self, -1, self.figure)
@@ -157,7 +159,11 @@ class EEGFrame(wx.Frame):
 
             # For ylabels to be aligned consistently, labelpad is re-calculated
             # on every draw.
-            axes[i].set_ylabel(ch_name, rotation=0, labelpad=60, fontsize=14)
+            axes[i].set_ylabel(
+                ch_name,
+                rotation=0,
+                labelpad=self.yaxis_label_space,
+                fontsize=14)
             # x-axis shows seconds in 0.5 sec increments
             tick_names = np.arange(0, self.seconds, 0.5)
             ticks = [(self.samples_per_second * sec) / self.downsample_factor
@@ -329,13 +335,14 @@ class EEGFrame(wx.Frame):
                 data_max = max(data)
                 self.axes[i].set_ybound(lower=data_min, upper=data_max)
 
-                # May need to change the ylabel padding to keep the spacing consistent
+                # For ylabels to be aligned consistently, labelpad is re-calculated on every draw.
                 ch_name = self.channels[_channel]
-                
                 tick_labels = self.axes[i].get_yticks()
-                # min tick value does not display
-                pad = adjust_padding(int(tick_labels[1]), int(tick_labels[-1]), ch_name)
-                self.axes[i].set_ylabel(ch_name, rotation=0, labelpad=pad, fontsize=14)
+                # Min tick value does not display so index is 1, not 0.
+                pad = self.adjust_padding(
+                    int(tick_labels[1]), int(tick_labels[-1]))
+                self.axes[i].set_ylabel(
+                    ch_name, rotation=0, labelpad=pad, fontsize=14)
             else:
                 # lower=min(data), upper=max(data))
                 self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
@@ -343,21 +350,20 @@ class EEGFrame(wx.Frame):
 
         self.canvas.draw()
 
-def adjust_padding(data_min: int, data_max:int, chname:str = None) -> int:
-    """Attempts to keep the channel labels in the same position by adjusting
-    the padding between the yaxis label and the yticks."""
-    digits_min = len(str(data_min))
-    digits_max = len(str(data_max))
+    def adjust_padding(self, data_min: int, data_max: int) -> int:
+        """Attempts to keep the channel labels in the same position by adjusting
+        the padding between the yaxis label and the yticks."""
+        digits_min = len(str(data_min))
+        digits_max = len(str(data_max))
+        chars = max(digits_min, digits_max)
 
-    chars = max(digits_min, digits_max)
+        # assume at least 2 digits to start.
+        baseline_chars = 2
+        # Value determined by trial and error; this may change if the tick font
+        # or font size is adjusted.
+        ytick_digit_width = 7
+        return self.yaxis_label_space - ((chars - baseline_chars) * ytick_digit_width)
 
-    # assume at least 2 digits to start.
-    baseline_chars = 2
-    initial_padding = 60
-    # Value determined by trial and error; this may change if the tick font
-    # or font size is adjusted.
-    ytick_digit_width = 7
-    return initial_padding - ((chars - baseline_chars) * ytick_digit_width)
 
 def lsl_data():
     """Constructs an LslDataSource, which provides data written to an LSL EEG
