@@ -156,9 +156,6 @@ class EEGFrame(wx.Frame):
         for i, channel in enumerate(self.data_indices):
             ch_name = self.channels[channel]
             axes[i].set_frame_on(False)
-
-            # For ylabels to be aligned consistently, labelpad is re-calculated
-            # on every draw.
             axes[i].set_ylabel(
                 ch_name,
                 rotation=0,
