@@ -111,6 +111,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.static_offset = parameters['static_trigger_offset']
         self.show_feedback = parameters['show_feedback']
+        self.feedback_color = parameters['feedback_message_color']
 
         if self.show_feedback:
             self.feedback = VisualFeedback(
@@ -318,7 +319,11 @@ class RSVPCopyPhraseTask(Task):
 
             # if a letter was selected and feedback enabled, show the chosen letter
             if new_epoch and self.show_feedback:
-                self.feedback.administer(last_selection, message='Selected:')
+                self.feedback.administer(
+                    last_selection,
+                    message='Selected:',
+                    line_color=self.feedback_color,
+                    fill_color=self.feedback_color)
 
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()
