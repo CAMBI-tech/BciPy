@@ -116,8 +116,6 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
 def _clean_up_session(display, daq, server):
     """Clean up session."""
-    # Close the display window
-    display.close()
 
     # Stop Acquisition
     daq.stop_acquisition()
@@ -125,6 +123,12 @@ def _clean_up_session(display, daq, server):
 
     if server:
         server.stop()
+
+    # Close the display window
+    # NOTE: There is currently a bug in psychopy when attempting to shutdown
+    # windows when using a USB-C monitor. Putting the display close last in
+    # the sequence allows acquisition to properly shutdown.
+    display.close()
 
     return True
 
