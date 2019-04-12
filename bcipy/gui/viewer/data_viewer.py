@@ -70,6 +70,11 @@ class EEGFrame(wx.Frame):
                              tight_layout={'pad': 0.0})
         # space between axis label and tick labels
         self.yaxis_label_space = 60
+        self.yaxis_label_fontsize = 14
+        # fixed width font so we can adjust spacing predictably
+        self.yaxis_tick_font = 'DejaVu Sans Mono'
+        self.yaxis_tick_fontsize=10
+
         self.axes = self.init_axes()
 
         self.canvas = FigureCanvas(self, -1, self.figure)
@@ -160,7 +165,7 @@ class EEGFrame(wx.Frame):
                 ch_name,
                 rotation=0,
                 labelpad=self.yaxis_label_space,
-                fontsize=14)
+                fontsize=self.yaxis_label_fontsize)
             # x-axis shows seconds in 0.5 sec increments
             tick_names = np.arange(0, self.seconds, 0.5)
             ticks = [(self.samples_per_second * sec) / self.downsample_factor
@@ -168,10 +173,10 @@ class EEGFrame(wx.Frame):
             axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
             axes[i].xaxis.set_major_formatter(
                 ticker.FixedFormatter(tick_names))
-            axes[i].tick_params(axis='y', which='major', labelsize=10)
+            axes[i].tick_params(
+                axis='y', which='major', labelsize=self.yaxis_tick_fontsize)
             for tick in axes[i].get_yticklabels():
-                # fixed width font so we can adjust spacing predictably
-                tick.set_fontname('DejaVu Sans Mono')
+                tick.set_fontname(self.yaxis_tick_font)
             axes[i].grid()
         return axes
 
