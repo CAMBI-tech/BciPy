@@ -58,6 +58,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
 
     parameters = {
         'acq_show_viewer': parameters['acq_show_viewer'],
+        'viewer_screen': 1 if int(parameters['stim_screen']) == 0 else 0,
         'buffer_name': save_folder + '/' + parameters['buffer_name'],
         'device': parameters['acq_device'],
         'filename': save_folder + '/' + parameters['raw_data_name'],
@@ -95,7 +96,9 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
     filewriter = FileWriter(filename=filename)
     proc = filewriter
     if parameters['acq_show_viewer']:
-        proc = DispatchProcessor(filewriter, ViewerProcessor())
+        proc = DispatchProcessor(
+            filewriter,
+            ViewerProcessor(display_screen=parameters['viewer_screen']))
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
