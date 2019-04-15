@@ -412,7 +412,7 @@ def file_data(path: str):
 
 
 def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
-         yscale: int):
+         yscale: int, display_screen:int = 1):
     """Run the viewer GUI. If a raw_data.csv data_file is provided, data is
     streamed from that, otherwise it will read from an LSLDataStream by
     default. 
@@ -423,6 +423,8 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
         seconds - how many seconds worth of data to display.
         downsample_factor - how much the data is downsampled. A factor of 1
             displays the raw data.
+        display_screen - monitor in which to display the viewer 
+            (0 for primary, 1 for secondary)
     """
     data_source, device_info, proc = file_data(
         data_file) if data_file else lsl_data()
@@ -431,7 +433,7 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
     frame = EEGFrame(data_source, device_info,
                      seconds, downsample_factor, refresh, yscale)
 
-    if wx.Display.GetCount() > 1:
+    if wx.Display.GetCount() > 1 and display_screen == 1:
         # place frame in the second monitor if one exists.
         s2_x, s2_y, _width, _height = wx.Display(1).GetGeometry()
         offset = 30
@@ -457,6 +459,9 @@ if __name__ == "__main__":
                         help='refresh rate in ms', default=500, type=int)
     parser.add_argument('-y', '--yscale',
                         help='yscale', default=150, type=int)
+    parser.add_argument('-m', '--monitor',
+                        help='display screen (0: primary, 1: secondary)', default=0, type=int)
+
 
     args = parser.parse_args()
-    main(args.file, args.seconds, args.downsample, args.refresh, args.yscale)
+    main(args.file, args.seconds, args.downsample, args.refresh, args.yscale, args.monitor)

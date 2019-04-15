@@ -23,6 +23,14 @@
     "recommended_values": "",
     "type": "bool"
   },
+  "stim_screen": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Stimuli Screen",
+    "helpTip": "For dual display, the screen in which the stimuli should be diplayed. Value should be 0 (primary) or 1 (secondary).",
+    "recommended_values": "",
+    "type": "int"
+  },
   "stim_number": {
     "value": "100",
     "section": "bci_config",

@@ -40,7 +40,7 @@ def init_display_window(parameters):
     display_window = visual.Window(
         size=[window_width,
               window_height],
-        screen=0,
+        screen=int(parameters['stim_screen']),
         allowGUI=False,
         useFBO=False,
         fullscr=full_screen,
