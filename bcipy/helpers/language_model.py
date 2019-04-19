@@ -63,9 +63,15 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
     """
     if sym_prob[0] in dict(symbol_probs):
         return symbol_probs
-    delta = sym_prob[1] / len(symbol_probs)
-    return [(sym, prob - delta) for sym, prob in symbol_probs] + [sym_prob]
 
+    symbols = [prob[0] for prob in symbol_probs]
+    probabilities = np.array([prob[1] for prob in symbol_probs])
+
+    all_probs = np.append(probabilities, sym_prob[1] / (1 - sym_prob[1]))
+    all_probs = all_probs / sum(all_probs)
+
+    all_symbols = symbols + [sym_prob[0]]
+    return list(zip(all_symbols, all_probs))
 
 def equally_probable(alphabet: List[str],
                      specified: Dict[str, float] = None) -> List[float]:
