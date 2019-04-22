@@ -58,20 +58,23 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
 
     Parameters:
     -----------
-        normalized - list of symbol, probability pairs
+        symbol_probs - list of symbol, probability pairs
         sym_prob - (symbol, probability) pair to append
     """
     if sym_prob[0] in dict(symbol_probs):
         return symbol_probs
 
+    # Slit out symbols and probabilities into separate lists
     symbols = [prob[0] for prob in symbol_probs]
     probabilities = np.array([prob[1] for prob in symbol_probs])
 
+    # Add new symbol and its probability
     all_probs = np.append(probabilities, sym_prob[1] / (1 - sym_prob[1]))
-    all_probs = all_probs / sum(all_probs)
-
     all_symbols = symbols + [sym_prob[0]]
-    return list(zip(all_symbols, all_probs))
+
+    normalized = all_probs / sum(all_probs)
+
+    return list(zip(all_symbols, normalized))
 
 def equally_probable(alphabet: List[str],
                      specified: Dict[str, float] = None) -> List[float]:
