@@ -246,6 +246,14 @@
     "recommended_values": "",
     "type": "int"
   },
+  "decision_threshold": {
+    "value": "0.8",
+    "section": "bci_config",
+    "readableName": "Decision Threshold",
+    "helpTip": "Minimum combined likelihood required for a decision in a Copy Phrase task",
+    "recommended_values": "",
+    "type": "float"
+  },
   "info_color": {
     "value": "white",
     "section": "bci_config",

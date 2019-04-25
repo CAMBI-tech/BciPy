@@ -301,6 +301,7 @@ class RSVPIconToIconTask(Task):
             is_txt_stim=self.is_txt_stim,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
+            decision_threshold=self.parameters['decision_threshold'],
             stimuli_timing=self.timing[1:])  # time_cross and time_flash
 
     def stoppage_criteria_ok(self, total_sequences, total_time) -> bool:
