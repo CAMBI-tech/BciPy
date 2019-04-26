@@ -103,6 +103,7 @@ class RSVPIconToIconTask(Task):
 
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.max_seq_length = parameters['max_seq_len']
+        self.max_seq_per_trial = parameters['max_seq_per_trial']
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
@@ -291,7 +292,7 @@ class RSVPIconToIconTask(Task):
         """
         return CopyPhraseWrapper(
             self.min_num_seq,
-            self.max_seq_length,
+            self.max_seq_per_trial,
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
             k=2,

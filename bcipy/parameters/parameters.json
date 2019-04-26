@@ -75,10 +75,21 @@
     "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
-    "helpTip": "Maximum number of sequences to present in spelling tasks",
+    "helpTip": "Maximum number of sequences to present in spelling tasks. Task will end if this is exceeded.",
     "recommended_values": [
       "20",
       "25"
+    ],
+    "type": "int"
+  },
+  "max_seq_per_trial": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Maximum Sequences Per Trial",
+    "helpTip": "Maximum number of sequences to present for a single trial before making a decision",
+    "recommended_values": [
+      "10",
+      "15"
     ],
     "type": "int"
   },

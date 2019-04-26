@@ -194,7 +194,7 @@ class DecisionMaker:
 
         # Check stopping criteria
         if self.sequence_counter < self.min_num_seq or \
-                not (self.sequence_counter > self.max_num_seq or
+                not (self.sequence_counter >= self.max_num_seq or
                      np.max(p) > self.posterior_commit_threshold):
 
             stimuli = self.schedule_sequence()
