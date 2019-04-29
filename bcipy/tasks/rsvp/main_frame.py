@@ -64,6 +64,8 @@ class EvidenceFusion(object):
 class DecisionMaker:
     """ Scheduler of the entire framework
         Attr:
+            decision_threshold: Minimum combined likelihood required for a
+                decision
             state(str): state of the framework, which increases in size
                 by 1 after each sequence. Elements are alphabet, ".,_,<"
                 where ".": null_sequence(no decision made)
@@ -108,7 +110,11 @@ class DecisionMaker:
                 (e.g pick n-highest likely letters and randomly shuffle)
         """
 
-    def __init__(self, min_num_seq, max_num_seq, state='',
+    def __init__(self,
+                 min_num_seq,
+                 max_num_seq,
+                 decision_threshold=0.8,
+                 state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
@@ -130,10 +136,7 @@ class DecisionMaker:
         self.min_num_seq = min_num_seq
         self.max_num_seq = max_num_seq
 
-        # TODO: where did this number come from? ERP is in the log domain with
-        # values initialized to 1. by default; LM is in probability or
-        # negative log domain.
-        self.posterior_commit_threshold = .8
+        self.posterior_commit_threshold = decision_threshold
 
         self.last_selection = ''
 
@@ -191,7 +194,7 @@ class DecisionMaker:
 
         # Check stopping criteria
         if self.sequence_counter < self.min_num_seq or \
-                not (self.sequence_counter > self.max_num_seq or
+                not (self.sequence_counter >= self.max_num_seq or
                      np.max(p) > self.posterior_commit_threshold):
 
             stimuli = self.schedule_sequence()

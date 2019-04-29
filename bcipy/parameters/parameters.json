@@ -75,10 +75,21 @@
     "value": "50",
     "section": "bci_config",
     "readableName": "Maximum Sequence Length",
-    "helpTip": "Maximum number of sequences to present in spelling tasks",
+    "helpTip": "Maximum number of sequences to present in spelling tasks. Task will end if this is exceeded.",
     "recommended_values": [
       "20",
       "25"
+    ],
+    "type": "int"
+  },
+  "max_seq_per_trial": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Maximum Sequences Per Trial",
+    "helpTip": "Maximum number of sequences to present for a single trial before making a decision",
+    "recommended_values": [
+      "10",
+      "15"
     ],
     "type": "int"
   },
@@ -245,6 +256,14 @@
     "helpTip": "The maximum time (in minutes) allowed to attempt to spell a Copy Phrase before stopping.",
     "recommended_values": "",
     "type": "int"
+  },
+  "decision_threshold": {
+    "value": "0.8",
+    "section": "bci_config",
+    "readableName": "Decision Threshold",
+    "helpTip": "Minimum combined likelihood required for a decision in a Copy Phrase task",
+    "recommended_values": "",
+    "type": "float"
   },
   "info_color": {
     "value": "white",

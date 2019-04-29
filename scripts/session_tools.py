@@ -27,7 +27,7 @@ def session_data(data_dir: str):
     session_path = os.path.join(data_dir, "session.json")
     with open(session_path, 'r') as json_file:
         data = json.load(json_file)
-        data['copy_phrase'] = parameters['text_task']
+        data['copy_phrase'] = parameters['task_text']
         for epoch in data['epochs'].keys():
             for trial in data['epochs'][epoch].keys():
                 likelihood = dict(

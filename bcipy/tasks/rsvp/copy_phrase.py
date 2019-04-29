@@ -96,6 +96,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.max_seq_length = parameters['max_seq_len']
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
+        self.max_seq_per_trial = parameters['max_seq_per_trial']
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
@@ -128,7 +129,7 @@ class RSVPCopyPhraseTask(Task):
         # Try Initializing Copy Phrase Wrapper:
         copy_phrase_task = CopyPhraseWrapper(
             self.min_num_seq,
-            self.max_seq_length,
+            self.max_seq_per_trial,
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
             k=2,
@@ -139,6 +140,7 @@ class RSVPCopyPhraseTask(Task):
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[self.time_cross, self.time_flash],
+            decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
             backspace_always_shown=self.parameters['backspace_always_shown'],
             filter_high=self.filter_high,
