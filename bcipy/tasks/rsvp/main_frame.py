@@ -30,10 +30,7 @@ class EvidenceFusion(object):
             tmp = dict_evidence[key][:][:]
             self.evidence_history[key].append(tmp)
 
-        # TODO: Current rule is to multiply
-        # TODO: ERP is in log domain; LM is in probability domain or neg log
-        # domain; can they be combined this way? Are both evidence sources
-        # valued the same?
+        # Current rule is to multiply
         for value in dict_evidence.values():
             self.likelihood *= value[:]
 
@@ -193,8 +190,8 @@ class DecisionMaker:
         self.list_epoch[-1]['list_distribution'].append(p[:])
 
         # Check stopping criteria
-        if self.sequence_counter < self.min_num_seq or \
-                not (self.sequence_counter >= self.max_num_seq or
+        if (self.sequence_counter + 1) < self.min_num_seq or \
+                not ((self.sequence_counter + 1) >= self.max_num_seq or
                      np.max(p) > self.posterior_commit_threshold):
 
             stimuli = self.schedule_sequence()
