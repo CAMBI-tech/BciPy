@@ -9,7 +9,6 @@ import string
 
 log = logging.getLogger(__name__)
 
-
 class EvidenceFusion(object):
     """ Fuses likelihood evidences provided by the inference
         Attr:
@@ -60,6 +59,128 @@ class EvidenceFusion(object):
     def save_history(self):
         """ Saves the current likelihood history """
         return 0
+
+
+# Criteria
+class DecisionCriteria():
+    """Abstract class for Criteria which can be applied to evaluate a sequence
+    """
+
+    def apply(self, epoch, commit_params):
+        """
+        Apply the given criteria.
+        Parameters:
+        -----------
+            epoch - Epoch data
+                - target(str): target of the epoch
+                - time_spent(ndarray[float]): |num_trials|x1
+                      time spent on the sequence
+                - list_sti(list[list[str]]): presented symbols in each
+                      sequence
+                - list_distribution(list[ndarray[float]]): list of |alp|x1
+                        arrays with prob. dist. over alp
+            commit_params - params relevant to stoppage criteria
+                min_num_seq: int - minimum number of sequences required
+                max_num_seq: int - max number of sequences allowed
+                threshold: float - minimum likelihood required
+        """
+        raise NotImplementedError()
+
+
+class MinIterationsCriteria(DecisionCriteria):
+    """Returns true if the minimum number of iterations have not yet been reached."""
+
+    def apply(self, epoch, commit_params):
+        current_seq = len(epoch['list_distribution'])
+        return current_seq < commit_params['min_num_seq']
+
+
+class DecreasedProbabilityCriteria(DecisionCriteria):
+    """Returns true if the letter with the max probability decreased from the
+        last sequence."""
+
+    def apply(self, epoch, commit_params):
+        if len(epoch['list_distribution']) < 2:
+            return False
+        prev_dist = epoch['list_distribution'][-2]
+        cur_dist = epoch['list_distribution'][-1]
+        return np.argmax(cur_dist) == np.argmax(
+            prev_dist) and np.max(cur_dist) < np.max(prev_dist)
+
+
+class MaxIterationsCriteria(DecisionCriteria):
+    """Returns true if the max iterations have been reached."""
+
+    def apply(self, epoch, commit_params):
+        current_seq = len(epoch['list_distribution'])
+        if current_seq >= commit_params['max_num_seq']:
+            log.debug(
+                "Committing to decision: max iterations have been reached.")
+            return True
+        return False
+
+
+class CommitThresholdCriteria(DecisionCriteria):
+    """Returns true if the commit threshold has been met."""
+
+    def apply(self, epoch, commit_params):
+        current_distribution = epoch['list_distribution'][-1]
+        if np.max(current_distribution) > commit_params['threshold']:
+            log.debug("Committing to decision: Likelihood exceeded threshold.")
+            return True
+        return False
+
+
+class CriteriaEvaluator():
+    """Evaluates whether an epoch should commit to a decision based on the
+    provided criteria.
+
+    Parameters:
+    -----------
+        continue_criteria: list of criteria; if any of these evaluate to true the
+            decision maker continues.
+        commit_criteria: list of criteria; if any of these return true and
+            continue_criteria are all false, decision maker commits to a decision.
+    """
+
+    def __init__(self, continue_criteria: List[DecisionCriteria],
+                 commit_criteria: List[DecisionCriteria]):
+        self.continue_criteria = continue_criteria or []
+        self.commit_criteria = commit_criteria or []
+
+    @classmethod
+    def default(cls):
+        return cls(continue_criteria=[MinIterationsCriteria()],
+                   commit_criteria=[
+                       MaxIterationsCriteria(),
+                       CommitThresholdCriteria()
+                   ])
+
+    def should_commit(self, epoch: Dict, params: Dict):
+        """Evaluates the given epoch; returns true if stoppage criteria has
+        been met, otherwise false.
+
+        Parameters:
+        -----------
+            epoch - Epoch data
+                - target(str): target of the epoch
+                - time_spent(ndarray[float]): |num_trials|x1
+                      time spent on the sequence
+                - list_sti(list[list[str]]): presented symbols in each
+                      sequence
+                - list_distribution(list[ndarray[float]]): list of |alp|x1
+                        arrays with prob. dist. over alp
+            params - params relevant to stoppage criteria
+                min_num_seq: int - minimum number of sequences required
+                max_num_seq: int - max number of sequences allowed
+                threshold: float - minimum likelihood required
+        """
+        if any(
+                criteria.apply(epoch, params)
+                for criteria in self.continue_criteria):
+            return False
+        return any(
+            criteria.apply(epoch, params) for criteria in self.commit_criteria)
 
 
 class DecisionMaker:
@@ -123,7 +244,7 @@ class DecisionMaker:
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None,
-                 criteria_evaluator=None):
+                 criteria_evaluator=CriteriaEvaluator.default()):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -148,7 +269,7 @@ class DecisionMaker:
         # Items shown in every sequence
         self.seq_constants = seq_constants
 
-        self.criteria_evaluator = criteria_evaluator or CriteriaEvaluator.default()
+        self.criteria_evaluator = criteria_evaluator
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -261,77 +382,3 @@ class DecisionMaker:
             timing=self.stimuli_timing,
             seq_constants=self.seq_constants)
         return stimuli
-
-
-class CriteriaEvaluator():
-    """Evaluates whether an epoch should commit to a decision based on the
-    provided criteria.
-    
-    Parameters:
-    -----------
-        continue_criteria: list of functions; if any of these evaluate to true the
-            decision maker continues.
-        commit_criteria: list of functions; if any of these return true and
-            continue_criteria are all false, decision maker commits to a decision.
-    """
-
-    def __init__(self, continue_criteria: list, commit_criteria: list):
-        self.continue_criteria = continue_criteria or []
-        self.commit_criteria = commit_criteria or []
-
-    @classmethod
-    def default(cls):
-        return cls(
-            continue_criteria=[less_than_min_iterations],
-            commit_criteria=[exceeds_max_iterations, meets_commit_threshold])
-
-    def should_commit(self, epoch: Dict, params: Dict):
-        """Evaluates the given epoch; returns true if stoppage criteria has
-        been met, otherwise false.
-
-        Parameters:
-        -----------
-            epoch - Epoch data
-            params - params relevant to stoppage criteria
-                min_num_seq: int - minimum number of sequences required
-                max_num_seq: int - max number of sequences allowed
-                threshold: float - minimum likelihood required
-        """
-        if any(criteria(epoch, params) for criteria in self.continue_criteria):
-            return False
-        return any(
-            criteria(epoch, params) for criteria in self.commit_criteria)
-
-
-# Criteria
-
-def less_than_min_iterations(epoch, commit_params):
-    """Returns true if the minimum number of iterations have not yet been reached."""
-    current_seq = len(epoch['list_distribution'])
-    return current_seq < commit_params['min_num_seq']
-
-def decreased_probability(epoch, commit_params):
-    """Returns true if the letter with the max probability decreased from the
-    last sequence."""
-    if len(epoch['list_distribution']) < 2:
-        return False
-    prev_dist = epoch['list_distribution'][-2]
-    cur_dist = epoch['list_distribution'][-1]
-    return np.argmax(cur_dist) == np.argmax(
-        prev_dist) and np.max(cur_dist) < np.max(prev_dist)
-
-def exceeds_max_iterations(epoch, commit_params):
-    """Returns true if the max iterations have been reached."""
-    current_seq = len(epoch['list_distribution'])
-    if current_seq >= commit_params['max_num_seq']:
-        log.debug("Committing to decision: max iterations have been reached.")
-        return True
-    return False
-
-def meets_commit_threshold(epoch, commit_params):
-    """Returns true if the commit threshold has been met."""
-    current_distribution = epoch['list_distribution'][-1]
-    if np.max(current_distribution) > commit_params['threshold']:
-        log.debug("Committing to decision: Likelihood exceeded threshold.")
-        return True
-    return False

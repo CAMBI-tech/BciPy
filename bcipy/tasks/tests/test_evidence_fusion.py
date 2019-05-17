@@ -9,10 +9,6 @@ from bcipy.helpers.load import load_json_parameters
 class TestEvidenceFusion(unittest.TestCase):
     """Tests for EvidenceFusion"""
 
-    def setUp(self):
-        """set up the needed path for load functions."""
-        pass
-
     def test_fusion(self):
         len_alp = 4
         evidence_names = ['LM', 'ERP', 'FRP']
@@ -74,6 +70,3 @@ class TestEvidenceFusion(unittest.TestCase):
 
         for i, val in enumerate(conjugator.likelihood):
             self.assertAlmostEqual(expected_posterior[i], val)
-
-        # Reset the conjugator before starting a new epoch for clear history
-        conjugator.reset_history()
