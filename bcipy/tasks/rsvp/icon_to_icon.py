@@ -196,7 +196,7 @@ class RSVPIconToIconTask(Task):
             item if i == 0 and word_target else self.img_path(item)
             for i, item in enumerate(seq)
         ]
-        self.rsvp.stim_timing = durations
+        self.rsvp.stimuli_timing = durations
 
         if self.is_word:
             if show_target:
@@ -216,7 +216,7 @@ class RSVPIconToIconTask(Task):
         if show_target:
             self.rsvp.update_task_state(self.rsvp.stimuli_sequence[0],
                                         self.task_height, 'yellow',
-                                        self.rsvp.win.size, self.is_word)
+                                        self.rsvp.window.size, self.is_word)
 
         # Note that returned triggers use image basenames only.
         sequence_timing = self.rsvp.do_sequence()
