@@ -90,7 +90,7 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path):
+            for stimulus_filename in sorted(os.listdir(path)):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
                         '.png') and not stimulus_filename.endswith('PLUS.png'):
