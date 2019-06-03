@@ -26,11 +26,11 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
     Calibration task performs an RSVP stimulus sequence to elicit an ERP.
     Parameters will change how many stim and for how long they present.
-    Parameters also change color and text / image inputs.
+    Parameters also change color and text / image inputs. This task assumes 5 levels
+    of feedback. The parameters for this task are in the feedback_config section.
 
-    Note: The channel index, PSD method, and stimulation frequency band
-     approximation are hardcoded for piloting. In the future, these
-     may be changed to allow easier feedback for different caps.
+    Note: The channel and are PSD method used for feedback are hardcoded for piloting.
+        In the future, these may be changed to allow easier feedback for different caps.
 
 
     Input:
@@ -43,7 +43,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         file_save (String)
     """
     TASK_NAME = 'RSVP Inter Sequence Feedback Calibration Task'
-    # This defines the channel we use to calcualte the SSVEP. We want to use a
+    # This defines the channel we use to calculate the PSD for feedback. We want to use a
     #   posterior channel. If Oz available, use that!
     PSD_CHANNEL_INDEX = 6
 
@@ -81,36 +81,44 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.nonletters = ['+', 'PLUS', 'calibration_trigger']
         self.valid_targets = set(self.alp)
 
-        self.feedback_buffer_time = self.parameters['feedback_buffer_time']
-        self.feedback_line_color = self.parameters['feedback_line_color']
         self.time_flash = self.parameters['time_flash']
-
-        # SSVEP response to letter flash estimate
-        self.stimulation_frequency = calculate_stimulation_freq(self.time_flash)
 
         self.downsample_rate = self.parameters['down_sampling_rate']
         self.filtered_sampling_rate = self.fs / self.downsample_rate
-        self.psd_method = PSD_TYPE.WELCH
-
-        # The channel used to calculate the SSVEP response to RSVP sequence.
-        self.psd_channel_index = self.PSD_CHANNEL_INDEX
+    
         self.device_name = self.daq.device_info.name
         self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
 
         # EDIT ME FOR FEEDBACK CONFIGURATION
+
+        self.feedback_buffer_time = self.parameters['feedback_buffer_time']
+        self.feedback_line_color = self.parameters['feedback_line_color']
+
+        self.psd_method = PSD_TYPE.WELCH
+
+        # The channel used to calculate the PSD from RSVP sequence.
+        self.psd_channel_index = self.PSD_CHANNEL_INDEX
+
         # filter parameters
         self.filter_low = self.parameters['filter_low_pass']
         self.filter_high = self.parameters['filter_high_pass']
-        self.fitler_order = self.parameters['filter_order']
+        self.filter_order = self.parameters['filter_order']
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
+        # get the feedback band of interest
+        self.psd_lower_limit = self.parameters['feedback_band_lower_limit']
+        self.psd_upper_limit = self.parameters['feedback_band_upper_limit']
+
         # psd band of interest to use for feeback (low, high)
-        self.psd_export_band = (
-            self.stimulation_frequency * .85,
-            self.stimulation_frequency * 1.15)
+        self.psd_export_band = (self.psd_lower_limit, self.psd_upper_limit)
 
         # length of time to use for PSD calculation
         self.trial_length = self.time_flash * self.stim_length
+
+        self.lvl_5_threshold = self.parameters['feedback_level_5_threshold']
+        self.lvl_4_threshold = self.parameters['feedback_level_4_threshold']
+        self.lvl_3_threshold = self.parameters['feedback_level_3_threshold']
+        self.lvl_2_threshold = self.parameters['feedback_level_2_threshold']
 
 
     def execute(self):
@@ -135,6 +143,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                  timing=self.timing,
                  is_txt=self.is_txt_stim,
                  color=self.color)
+
+            import pdb; pdb.set_trace()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self._task.task_info_color)
@@ -164,13 +174,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 self.rsvp.sti.height = self.stimuli_height
 
                 # Schedule a sequence
-                self.rsvp.stim_sequence = stimuli_elements[sequence_idx]
+                self.rsvp.stimuli_sequence = stimuli_elements[sequence_idx]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_stim:
-                    self.rsvp.color_list_sti = color_sti[sequence_idx]
+                    self.rsvp.stimuli_colors = color_sti[sequence_idx]
 
-                self.rsvp.time_list_sti = timing_sti[sequence_idx]
+                self.rsvp.stimuli_timing = timing_sti[sequence_idx]
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
@@ -216,7 +226,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
     def _get_feedback_decision(self, sequence_timing):
         # wait some time in order to get enough data from the daq and make the
-        #   tranisiton less abrupt to the user
+        #   transition less abrupt to the user
         core.wait(self.feedback_buffer_time)
 
         # get last stim_length stimuli
@@ -239,18 +249,17 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # In the event the calcalated band returns nothing, throw an
         #  error
         if response == 0:
-            message = 'PSD calcualted for feedback invalid'
+            message = 'PSD calculated for feedback invalid'
             self.logger.error(f'[Feedback] {message}')
             raise InsufficientDataException(message)
 
-        # TODO: finalize these feedback levels
-        if response > .15:
+        if response > self.lvl_5_threshold:
             return 5
-        if response > .1:
+        if response > self.lvl_4_threshold:
             return 4
-        if response > .05:
+        if response > self.lvl_3_threshold:
             return 3
-        if response > .025:
+        if response > self.lvl_2_threshold:
             return 2
         return 1
 
@@ -268,7 +277,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # filter it
         notch_filterted_data = notch.notch_filter(raw_data, self.fs, self.notch_filter_frequency)
         filtered_data = bandpass.butter_bandpass_filter(
-            notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.fitler_order)
+            notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.filter_order)
         data = downsample.downsample(filtered_data, factor=self.downsample_rate)
         letters, times, target_info = self.letter_info(triggers, target_info)
 

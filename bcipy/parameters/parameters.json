@@ -717,7 +717,7 @@
   "feedback_buffer_time": {
     "value": "1",
     "section": "feedback_config",
-    "readableName": "Time inbetween feedback and sequences",
+    "readableName": "Time in between feedback and sequences",
     "helpTip": "Feedback Buffer Time in Seconds",
     "recommended_values": "",
     "type": "float"
@@ -729,6 +729,54 @@
     "helpTip": "The width of target feedback for the level feedback",
     "recommended_values": "",
     "type": "int"
+  },
+  "feedback_band_lower_limit": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Band Lower Limit",
+    "helpTip": "Lower Band for PSD Feedback Tasks",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_band_upper_limit": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Band Upper Limit",
+    "helpTip": "Upper Band for PSD Feedback Tasks",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_5_threshold": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 5 Threshold",
+    "helpTip": "Threshold above which level five (highest) feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_4_threshold": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 4 Threshold",
+    "helpTip": "Threshold above which level four feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_3_threshold": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 3 Threshold",
+    "helpTip": "Threshold above which level three feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_2_threshold": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 2 Threshold",
+    "helpTip": "Threshold above which level two feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
   },
   "down_sampling_rate": {
     "value": "2",
