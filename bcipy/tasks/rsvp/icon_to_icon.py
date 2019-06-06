@@ -63,10 +63,7 @@ class RSVPIconToIconTask(Task):
 
         self.image_path = parameters['path_to_presentation_images']
         # Alphabet is comprised of the image base names
-        self.alp = [
-            path.splitext(path.basename(img))[0]
-            for img in alphabet(parameters)
-        ]
+        self.alp = alphabet(parameters, include_path=False)
 
         self.rsvp = _init_icon_to_icon_display_task(
             self.parameters, self.window, self.daq, self.static_clock,
@@ -116,6 +113,7 @@ class RSVPIconToIconTask(Task):
         self.word_matching_text_size = parameters['word_matching_text_size']
         self.collection_window_len = parameters[
             'collection_window_after_trial_length']
+
         self.data_save_path = parameters['data_save_loc']
 
         match_type = 'Word' if self.is_word else 'Icon'
