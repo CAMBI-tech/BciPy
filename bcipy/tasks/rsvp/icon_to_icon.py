@@ -12,7 +12,7 @@ from psychopy import core
 
 from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
 from bcipy.helpers.task import (
     alphabet, fake_copy_phrase_decision, get_user_input,
     process_data_for_decision, trial_complete_message)
@@ -63,11 +63,7 @@ class RSVPIconToIconTask(Task):
 
         self.image_path = parameters['path_to_presentation_images']
         # Alphabet is comprised of the image base names
-        self.alp = [
-            path.splitext(path.basename(img))[0]
-            for img in glob.glob(self.image_path + '*.png')
-            if not img.endswith('PLUS.png')
-        ]
+        self.alp = alphabet(parameters, include_path=False)
 
         self.rsvp = _init_icon_to_icon_display_task(
             self.parameters, self.window, self.daq, self.static_clock,
@@ -117,6 +113,7 @@ class RSVPIconToIconTask(Task):
         self.word_matching_text_size = parameters['word_matching_text_size']
         self.collection_window_len = parameters[
             'collection_window_after_trial_length']
+
         self.data_save_path = parameters['data_save_loc']
 
         match_type = 'Word' if self.is_word else 'Icon'
@@ -232,7 +229,8 @@ class RSVPIconToIconTask(Task):
         feedback.administer(
             self.img_path(selection),
             compare_assertion=None,
-            message='Decision: ')
+            message='Decision: ',
+            stimuli_type=FeedbackType.IMAGE)
 
     def write_data(self, correct_trials: int, selections: int):
         """Write trial data to icon_data.csv in file save location."""
@@ -396,7 +394,7 @@ class RSVPIconToIconTask(Task):
                 ev_hist = copy_phrase_task.conjugator.evidence_history
                 likelihood = copy_phrase_task.conjugator.likelihood
                 entry['lm_evidence'] = ev_hist['LM'][0].tolist()
-                entry['eeg_evidence'] = ev_hist['ERP'][0].tolist()
+                entry['eeg_evidence'] = ev_hist['ERP'][-1].tolist()
                 entry['likelihood'] = likelihood.tolist()
 
                 if decision_made:

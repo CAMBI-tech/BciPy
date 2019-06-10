@@ -76,7 +76,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
     return 1 / flash_time
 
 
-def alphabet(parameters=None):
+def alphabet(parameters=None, include_path=True):
     """Alphabet.
 
     Function used to standardize the symbols we use as alphabet.
@@ -90,12 +90,15 @@ def alphabet(parameters=None):
             # construct an array of paths to images
             path = parameters['path_to_presentation_images']
             stimulus_array = []
-            for stimulus_filename in os.listdir(path):
+            for stimulus_filename in sorted(os.listdir(path)):
                 # PLUS.png is reserved for the fixation symbol
                 if stimulus_filename.endswith(
                         '.png') and not stimulus_filename.endswith('PLUS.png'):
-                    stimulus_array.append(os.path.join(path, stimulus_filename))
-
+                    if include_path:
+                        img = os.path.join(path, stimulus_filename)
+                    else:
+                        img = os.path.splitext(stimulus_filename)[0]
+                    stimulus_array.append(img)
             return stimulus_array
 
     return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -109,7 +112,7 @@ def process_data_for_decision(
         window,
         parameters,
         first_session_stim_time,
-        static_offset=0,
+        static_offset=None,
         buf_length=None):
     """Process Data for Decision.
 
@@ -135,6 +138,7 @@ def process_data_for_decision(
     _, first_stim_time = sequence_timing[0]
     _, last_stim_time = sequence_timing[-1]
 
+    static_offset = static_offset or parameters['static_trigger_offset']
     # if there is an argument supplied for buffer length use that
     if buf_length:
         buffer_length = buf_length
