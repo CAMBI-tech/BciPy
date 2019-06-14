@@ -3,7 +3,7 @@ import numpy as np
 
 from mockito import any, mock, when, unstub
 
-from bcipy.helpers.task import alphabet, trial_reshaper
+from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper
 from bcipy.helpers.load import load_json_parameters
 
 
@@ -74,6 +74,21 @@ class TestTrialReshaper(unittest.TestCase):
 
     def test_trial_reshaper_copy_phrase(self):
         pass
+
+
+class TestCalculateStimulationFreq(unittest.TestCase):
+
+    def test_calculate_stimulate_frequency_returns_number_less_one(self):
+        flash_time = 5
+        stimulation_frequency = calculate_stimulation_freq(flash_time)
+        expected = 1 / flash_time
+        self.assertEqual(stimulation_frequency, expected)
+
+    def test_calculate_stimulate_frequency_handles_zero(self):
+        flash_time = 0
+        with self.assertRaises(ZeroDivisionError):
+            calculate_stimulation_freq(flash_time)
+
 
 
 if __name__ == '__main__':
