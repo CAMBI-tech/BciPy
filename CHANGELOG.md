@@ -1,3 +1,27 @@
+# 1.4.0
+
+This release focused on bug fixes, exposing parameters, and refactoring. Further dual screen configuration and testing was done to allow for simultaneous signal viewing and task operation. 
+
+## Added
+
+    - Dual screen configuration / updated support
+    - Parameters:
+            - Copy phrase decision thresholds
+            - Inter-sequence Feedback level thresholds
+   
+
+## Updated
+    - RSVP Display: refactor 
+    - Decision Maker / Evidence Fusion: refactor
+    - Signal Viewer: more distinct channel names
+    - bci_main: shutdown handling and bug fix
+    - Language Model Helper: bug fix for negative probabilities
+
+## Removed
+    - Multicolor Text
+    - Old LSL viewer
+
+
 # 1.3.0
 
 This release focused on the addition of a Signal Viewer, Inter-sequence Feedback Task, Signal Processing / Decomposition Methods, and miscellaneous cleanup. 
