@@ -149,3 +149,26 @@ class TestLanguageModelRelated(unittest.TestCase):
         self.assertAlmostEqual(1.0, sum(probs))
         for prob in probs:
             self.assertEqual(0.25, prob)
+
+    def test_small_probs(self):
+        """When very small values are returned from the LM, inserting a letter
+        should still result in all positive values"""
+        probs = [('_', 0.8137718053286306), ('R', 0.04917114015944412),
+                 ('Y', 0.04375449276342169), ('I', 0.03125895356629575),
+                 ('M', 0.023673042636520744), ('S', 0.018415576386909806),
+                 ('N', 0.014673750822550981), ('O', 0.003311888694636908),
+                 ('A', 0.0015325727808248953), ('E', 0.00020663161460758318),
+                 ('F', 0.0001271103705188304), ('L', 7.17785373200501e-05),
+                 ('T', 1.9445808941289728e-05), ('V', 8.947029414950125e-06),
+                 ('D', 1.3287314209822164e-06), ('W', 5.781802939202195e-07),
+                 ('C', 4.956713702874677e-07), ('U', 1.3950738615826266e-07),
+                 ('J', 6.925441151532328e-08), ('H', 6.067034614011934e-08),
+                 ('B', 4.83364892878174e-08), ('K', 4.424005264637171e-08),
+                 ('P', 3.319195566216423e-08), ('Z', 2.9048107858874575e-08),
+                 ('X', 1.904356496190087e-08), ('Q', 1.0477572781302604e-08),
+                 ('G', 7.146978265955833e-09)]
+
+        syms = sym_appended(probs, ('<', 0.05))
+        self.assertAlmostEqual(1.0, sum([sym[1] for sym in syms]))
+        for sym in syms:
+            self.assertTrue(sym[1] >= 0)

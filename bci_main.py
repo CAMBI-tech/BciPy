@@ -57,10 +57,10 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
 
 
 def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
-    """Excecute Task.
+    """Execute Task.
 
     Executes the desired task by setting up the display window and
-        data acquisition, then passing on to the start_task funtion
+        data acquisition, then passing on to the start_task function
         which will initialize experiment.
 
     Input:
@@ -82,7 +82,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
         try:
             signal_model, filename = load_signal_model()
         except Exception as e:
-            logging.debug('Cannot load signal model. Exiting')
+            print(f'Cannot load signal model. Exiting. {e}')
             raise e
 
         # if Language Model enabled init lm
@@ -116,8 +116,6 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
 
 def _clean_up_session(display, daq, server):
     """Clean up session."""
-    # Close the display window
-    display.close()
 
     # Stop Acquisition
     daq.stop_acquisition()
@@ -125,6 +123,12 @@ def _clean_up_session(display, daq, server):
 
     if server:
         server.stop()
+
+    # Close the display window
+    # NOTE: There is currently a bug in psychopy when attempting to shutdown
+    # windows when using a USB-C monitor. Putting the display close last in
+    # the sequence allows acquisition to properly shutdown.
+    display.close()
 
     return True
 
@@ -141,6 +145,7 @@ if __name__ == "__main__":
                                f" {task.value}")
                               for task in ExperimentType])
     parser = argparse.ArgumentParser()
+
     # Command line utility for adding arguments/ paths via command line
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
@@ -151,7 +156,7 @@ if __name__ == "__main__":
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
     args = parser.parse_args()
 
-    # Load a parameters file
+    # Load parameters
     parameters = load_json_parameters(args.parameters, value_cast=True)
 
     # Start BCI Main

@@ -13,7 +13,7 @@ class TestAlphabet(unittest.TestCase):
         parameters_used = 'bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
-        parameters['is_txt_sti'] = True
+        parameters['is_txt_stim'] = True
 
         alp = alphabet(parameters)
 
@@ -28,7 +28,7 @@ class TestAlphabet(unittest.TestCase):
         parameters_used = 'bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
-        parameters['is_txt_sti'] = False
+        parameters['is_txt_stim'] = False
         parameters['path_to_presentation_images'] = ('bcipy/static/images/'
                                                      'rsvp_images/')
 

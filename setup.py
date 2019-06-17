@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Modified from https://github.com/kennethreitz/setup.py
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pip install twine
-
-import io
 import os
 import sys
 from shutil import rmtree
@@ -19,40 +15,12 @@ EMAIL = 'memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
 
-VERSION = '1.3.0'
+VERSION = '1.4.0'
 
 
 # What packages are required for this module to be executed?
-REQUIRED = [
-    'wheel==0.30.0',
-    'wxPython==4.0.1',
-    'configobj==5.0.6',
-    'docker==2.6.1',
-    'json-tricks==3.8.0',
-    'olefile==0.44',
-    'PyOpenGL==3.1.0',
-    'pyOpenSSL==17.5.0',
-    'mne==0.17.0',
-    'lxml==4.1.1',
-    'PsychoPy==3.0.4',
-    'pytz==2017.2',
-    'six==1.11.0',
-    'numpy==1.16.2',
-    'scipy==1.2.1',
-    'future==0.16.0',
-    'sklearn==0.0',
-    'seaborn==0.9.0',
-    'construct==2.8.14',
-    'matplotlib==2.1.1',
-    'pylsl==1.13.1',
-    'psutil==5.4.0',
-    'pandas==0.24.1',
-    'sounddevice==0.3.10',
-    'SoundFile==0.10.1',
-    'PySoundCard==0.5.2',
-    'PySoundFile==0.9.0',
-    'Pillow==4.3.0',
-]
+with open('requirements.txt') as f:
+    REQUIRED = f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -61,20 +29,9 @@ REQUIRED = [
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Import the README and use it as the long-description.
-# Note: this will only work if 'README.md' is present in your MANIFEST.in file!
-# with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-#     long_description = '\n' + f.read()
-
 long_description = 'Python Brain-Computer Interface Software'
 
-# Load the package's __version__.py module as a dictionary.
-about = {}
-if not VERSION:
-    with open(os.path.join(here, NAME, '__version__.py')) as f:
-        exec(f.read(), about)
-else:
-    about['__version__'] = VERSION
+about = {'__version__': VERSION}
 
 
 class UploadCommand(Command):

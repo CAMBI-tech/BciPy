@@ -364,7 +364,7 @@ class LslCalibrationLabeller(Labeller):
 
     Parameters:
     -----------
-        seq_len: len_sti parameter value for the experiment; used to calculate
+        seq_len: stim_length parameter value for the experiment; used to calculate
             targetness for first_pres_target.
     """
 
@@ -520,7 +520,7 @@ def extract_from_calibration(csvfile: TextIO,
     Parameters:
     -----------
         csvfile: open csv file containing data.
-        seq_len: len_sti parameter value for the experiment; used to calculate
+        seq_len: stim_length parameter value for the experiment; used to calculate
                  targetness for first_pres_target.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'

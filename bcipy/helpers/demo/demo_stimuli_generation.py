@@ -14,8 +14,8 @@ def _demo_random_rsvp_sequence_generator():
 
     print('Alphabet:{}'.format(alp))
     schedule = random_rsvp_calibration_seq_gen(alp=alp,
-                                               num_sti=num_samples,
-                                               len_sti=len_samples)
+                                               stim_number=num_samples,
+                                               stim_length=len_samples)
     sequences = schedule[0]
     timing = schedule[1]
     color = schedule[2]
@@ -42,8 +42,8 @@ def _demo_best_case_sequence_generator():
     for i in range(num_samples):
         p = np.random.randint(0, 10, len(alp))
         print('Probabilities:{}'.format(p))
-        schedule = best_case_rsvp_seq_gen(alp=alp, session_stimuli=p, num_sti=1,
-                                          len_sti=len_samples)
+        schedule = best_case_rsvp_seq_gen(alp=alp, session_stimuli=p, stim_number=1,
+                                          stim_length=len_samples)
         sequence = schedule[0]
         timing = schedule[1]
         color = schedule[2]

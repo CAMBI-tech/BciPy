@@ -11,8 +11,8 @@ from typing import Dict, List, Sequence, Tuple
 from psychopy import core
 
 from bcipy.helpers.system_utils import auto_str
-from bcipy.display.rsvp.rsvp_disp_modes import IconToIconDisplay
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
+from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
 from bcipy.helpers.task import (
     alphabet, fake_copy_phrase_decision, get_user_input,
     process_data_for_decision, trial_complete_message)
@@ -63,11 +63,7 @@ class RSVPIconToIconTask(Task):
 
         self.image_path = parameters['path_to_presentation_images']
         # Alphabet is comprised of the image base names
-        self.alp = [
-            path.splitext(path.basename(img))[0]
-            for img in glob.glob(self.image_path + '*.png')
-            if not img.endswith('PLUS.png')
-        ]
+        self.alp = alphabet(parameters, include_path=False)
 
         self.rsvp = _init_icon_to_icon_display_task(
             self.parameters, self.window, self.daq, self.static_clock,
@@ -75,7 +71,7 @@ class RSVPIconToIconTask(Task):
         self.file_save = file_save
         self.is_word = is_word
 
-        trigger_save_location = f'{self.file_save}/{parameters["triggers_file_name"]}'
+        trigger_save_location = f'{self.file_save}/{parameters["trigger_file_name"]}'
         self.trigger_file = open(trigger_save_location, 'w+')
         self.session_save_location = f'{self.file_save}/{parameters["session_file_name"]}'
 
@@ -83,8 +79,8 @@ class RSVPIconToIconTask(Task):
         self.wait_screen_message_color = parameters[
             'wait_screen_message_color']
 
-        self.num_sti = parameters['num_sti']
-        self.len_sti = parameters['len_sti']
+        self.stim_number = parameters['stim_number']
+        self.stim_length = parameters['stim_length']
         self.timing = [
             parameters['time_target'], parameters['time_cross'],
             parameters['time_flash']
@@ -92,30 +88,32 @@ class RSVPIconToIconTask(Task):
 
         self.color = [
             parameters['target_letter_color'], parameters['fixation_color'],
-            parameters['stimuli_color']
+            parameters['stim_color']
         ]
 
         self.task_info_color = parameters['task_color']
 
-        self.stimuli_height = parameters['sti_height']
+        self.stimuli_height = parameters['stim_height']
 
         self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
         self.max_seq_length = parameters['max_seq_len']
+        self.max_seq_per_trial = parameters['max_seq_per_trial']
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
         self.auc_filename = auc_filename
 
-        self.task_height = parameters['height_task']
+        self.task_height = parameters['task_height']
 
-        self.is_txt_sti = False
+        self.is_txt_stim = False
 
         self.min_num_seq = parameters['min_seq_len']
         self.word_matching_text_size = parameters['word_matching_text_size']
         self.collection_window_len = parameters[
             'collection_window_after_trial_length']
+
         self.data_save_path = parameters['data_save_loc']
 
         match_type = 'Word' if self.is_word else 'Icon'
@@ -191,11 +189,11 @@ class RSVPIconToIconTask(Task):
         # Sequences passed to rsvp to display should be a list of image paths
         # except for a word target.
         word_target = show_target and self.is_word
-        self.rsvp.stim_sequence = [
+        self.rsvp.stimuli_sequence = [
             item if i == 0 and word_target else self.img_path(item)
             for i, item in enumerate(seq)
         ]
-        self.rsvp.time_list_sti = durations
+        self.rsvp.stimuli_timing = durations
 
         if self.is_word:
             if show_target:
@@ -213,9 +211,9 @@ class RSVPIconToIconTask(Task):
 
         # Present the Target and place it in the header
         if show_target:
-            self.rsvp.update_task_state(self.rsvp.stim_sequence[0],
+            self.rsvp.update_task_state(self.rsvp.stimuli_sequence[0],
                                         self.task_height, 'yellow',
-                                        self.rsvp.win.size, self.is_word)
+                                        self.rsvp.window.size, self.is_word)
 
         # Note that returned triggers use image basenames only.
         sequence_timing = self.rsvp.do_sequence()
@@ -231,7 +229,8 @@ class RSVPIconToIconTask(Task):
         feedback.administer(
             self.img_path(selection),
             compare_assertion=None,
-            message='Decision: ')
+            message='Decision: ',
+            stimuli_type=FeedbackType.IMAGE)
 
     def write_data(self, correct_trials: int, selections: int):
         """Write trial data to icon_data.csv in file save location."""
@@ -291,16 +290,17 @@ class RSVPIconToIconTask(Task):
         """
         return CopyPhraseWrapper(
             self.min_num_seq,
-            self.max_seq_length,
+            self.max_seq_per_trial,
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
             k=2,
             alp=self.alp,
             task_list=task_list,
             lmodel=self.language_model,
-            is_txt_sti=self.is_txt_sti,
+            is_txt_stim=self.is_txt_stim,
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
+            decision_threshold=self.parameters['decision_threshold'],
             stimuli_timing=self.timing[1:])  # time_cross and time_flash
 
     def stoppage_criteria_ok(self, total_sequences, total_time) -> bool:
@@ -329,7 +329,7 @@ class RSVPIconToIconTask(Task):
     def execute(self):
         self.logger.debug('Starting Icon to Icon Task!')
 
-        icons = [random.choice(self.alp) for _ in range(self.num_sti)]
+        icons = [random.choice(self.alp) for _ in range(self.stim_number)]
         self.logger.debug(f'Icon sequence: {icons}')
 
         selections = []
@@ -394,7 +394,7 @@ class RSVPIconToIconTask(Task):
                 ev_hist = copy_phrase_task.conjugator.evidence_history
                 likelihood = copy_phrase_task.conjugator.likelihood
                 entry['lm_evidence'] = ev_hist['LM'][0].tolist()
-                entry['eeg_evidence'] = ev_hist['ERP'][0].tolist()
+                entry['eeg_evidence'] = ev_hist['ERP'][-1].tolist()
                 entry['likelihood'] = likelihood.tolist()
 
                 if decision_made:
@@ -430,30 +430,32 @@ class RSVPIconToIconTask(Task):
 
 def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
                                     experiment_clock, is_word):
-    rsvp = IconToIconDisplay(
-        window=win,
-        clock=static_clock,
-        experiment_clock=experiment_clock,
-        marker_writer=daq.marker_writer,
-        text_info=parameters['text_text'],
-        color_info=parameters['color_text'],
-        pos_info=(parameters['pos_text_x'], parameters['pos_text_y']),
-        height_info=parameters['txt_height'],
-        font_info=parameters['font_text'],
-        color_task=['black'],
-        font_task=parameters['font_task'],
-        height_task=parameters['height_task'],
-        font_sti=parameters['font_sti'],
-        pos_sti=(parameters['pos_sti_x'], parameters['pos_sti_y']),
-        sti_height=parameters['sti_height'],
+    return IconToIconDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        daq.marker_writer,
+        info_text=parameters['info_text'],
+        info_color=parameters['info_color'],
+        info_pos=(
+            parameters['text_pos_x'],
+            parameters['text_pos_y']),
+        info_height=parameters['info_height'],
+        info_font=parameters['info_font'],
+        task_color=['black'],
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        stim_font=parameters['stim_font'],
+        stim_pos=(
+            parameters['stim_pos_x'],
+            parameters['stim_pos_y']),
+        stim_height=parameters['stim_height'],
         stim_sequence=['a'] * 10,
-        color_list_sti=['white'] * 10,
-        time_list_sti=[3] * 10,
-        is_txt_sti=False,
+        stim_colors=[parameters['stim_color']] * 10,
+        stim_timing=[3] * 10,
+        is_txt_stim=False,
         trigger_type=parameters['trigger_type'],
         is_word=is_word)
-
-    return rsvp
 
 
 @auto_str

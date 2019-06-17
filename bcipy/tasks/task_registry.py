@@ -33,7 +33,6 @@ class ExperimentType(Enum):
 
     RSVP_CALIBRATION = 'Calibration'
     RSVP_COPY_PHRASE = 'Copy Phrase'
-    RSVP_COPY_PHRASE_CALIBRATION = 'Copy Phrase C.'
     RSVP_ICON_TO_ICON = 'Icon to Icon'
     RSVP_ICON_TO_WORD = 'Icon to Word'
     RSVP_ALERT_TONE_CALIBRATION = 'Alert Tone'
