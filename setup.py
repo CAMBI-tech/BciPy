@@ -15,7 +15,7 @@ EMAIL = 'memmott@ohsu.com'
 AUTHOR = 'Tab Memmott'
 REQUIRES_PYTHON = '>=3.6.5'
 
-VERSION = '1.4.01'
+VERSION = '1.4.1'
 
 
 # What packages are required for this module to be executed?

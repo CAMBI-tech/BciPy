@@ -1,3 +1,7 @@
+# 1.4.1
+
+Patch for gui.viewer module. Missing init file.
+
 # 1.4.0
 
 This release focused on bug fixes, exposing parameters, and refactoring. Further dual screen configuration and testing was done to allow for simultaneous signal viewing and task operation. 
