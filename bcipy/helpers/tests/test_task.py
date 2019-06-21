@@ -3,14 +3,14 @@ import numpy as np
 
 from mockito import any, mock, when, unstub
 
-from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper
+from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper,_float_val
 from bcipy.helpers.load import load_json_parameters
 
 
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):
-        parameters_used = 'bcipy/parameters/parameters.json'
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_sti'] = True
@@ -25,7 +25,7 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
     def test_alphabet_images(self):
-        parameters_used = 'bcipy/parameters/parameters.json'
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_sti'] = False
@@ -89,7 +89,19 @@ class TestCalculateStimulationFreq(unittest.TestCase):
         with self.assertRaises(ZeroDivisionError):
             calculate_stimulation_freq(flash_time)
 
+class TestFloatVal(unittest.TestCase):
 
+    def test_float_val_as_str(self):
+            col = 'Apple'
+            result = _float_val(col)
+            expected = 1.0
+            self.assertEqual(result,expected)
+
+    def test_float_val_as_int(self):
+            col = 3
+            result = _float_val(col)
+            expected = 3.0
+            self.assertEqual(result,expected)
 
 if __name__ == '__main__':
     unittest.main()
