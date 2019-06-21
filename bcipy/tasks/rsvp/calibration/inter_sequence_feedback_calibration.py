@@ -144,8 +144,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                  is_txt=self.is_txt_stim,
                  color=self.color)
 
-            import pdb; pdb.set_trace()
-
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self._task.task_info_color)
 
