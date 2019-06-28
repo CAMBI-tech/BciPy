@@ -318,6 +318,9 @@ class EEGFrame(wx.Frame):
                 self.buffer.append(row)
         except StopIteration:
             self.stop()
+            self.Close()
+        except:
+            self.stop()
         return self.buffer.get()
 
     def update_view(self, _evt):
