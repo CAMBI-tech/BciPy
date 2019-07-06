@@ -30,10 +30,15 @@ class TestDecisionMaker(unittest.TestCase):
         #print(self.decision_maker.list_epoch[-1]['list_distribution'][-1])
         #print(probability_distribution)
         self.assertFalse(decision)
+        """Test do_epoch method"""
+        self.decision_maker.do_epoch()
+        self.assertEqual(self.decision_maker.sequence_counter,0)
+        print(self.decision_maker.state)
 
     def test_decide_with_commit(self):
         """Test decide method with case of commit"""
         probability_distribution = np.ones(len(self.decision_maker.alphabet))
+        self.decision_maker.sequence_counter = self.decision_maker.min_num_seq
         decision, chosen_stimuli = self.decision_maker.decide(probability_distribution)
         #self.assertTrue(np.all(self.decision_maker.list_epoch[-1]['list_distribution'][-1] == probability_distribution))
         #print(self.decision_maker.list_epoch[-1]['list_distribution'][-1])
@@ -77,12 +82,6 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker.form_display_state(self.decision_maker.state)
         self.assertEqual(self.decision_maker.displayed_state,'ABE')
         self.decision_maker.reset()
-
-    def test_do_epoch(self):
-        """Test do_epoch method"""
-        self.decision_maker.do_epoch()
-        self.assertEqual(self.decision_maker.sequence_counter,0)
-        print(self.decision_maker.state)
 '''
     def test_schedule_sequence(self):
         old_count = self.decision_maker.sequence_counter

@@ -39,3 +39,5 @@ class TestInitializeDisplayWindow(unittest.TestCase):
 
         self.assertIsInstance(display_window, type(self.window))
         self.assertEqual(display_window, self.window)
+        
+        display_window.close()

@@ -71,6 +71,7 @@ class TestVisualFeedback(unittest.TestCase):
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
+        self.display.close()
         unstub()
 
     def test_feedback_type(self):

@@ -75,7 +75,10 @@ class TestDataAcquistionClient(unittest.TestCase):
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
-
+        
+        #Make sure we are able to stop the buffer process
+        buf_temp = daq._buf
+        
         daq._buf = None
 
         #test get_data
@@ -87,9 +90,10 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.assertEqual(data_length,0)
 
         #test offset
-        offset = daq.offset()
+        offset = daq.offset
         self.assertEqual(offset,None)
-
+        
+        daq._buf = buf_temp
         daq.cleanup()
 
     def test_get_data(self):

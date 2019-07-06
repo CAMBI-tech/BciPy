@@ -20,3 +20,4 @@ timing = visual_feedback.administer(
     stimulus, compare_assertion=assertion, message=message)
 print(timing)
 print(visual_feedback._type())
+display.close()
