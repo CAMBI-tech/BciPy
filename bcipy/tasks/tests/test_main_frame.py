@@ -33,7 +33,6 @@ class TestDecisionMaker(unittest.TestCase):
         """Test do_epoch method"""
         self.decision_maker.do_epoch()
         self.assertEqual(self.decision_maker.sequence_counter,0)
-        print(self.decision_maker.state)
 
     def test_decide_with_commit(self):
         """Test decide method with case of commit"""
@@ -82,6 +81,13 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker.form_display_state(self.decision_maker.state)
         self.assertEqual(self.decision_maker.displayed_state,'ABE')
         self.decision_maker.reset()
+        
+    def test_do_epoch(self):
+        """Test do_epoch method"""
+        probability_distribution = np.ones(len(self.decision_maker.alphabet)) / 8
+        decision, chosen_stimuli = self.decision_maker.decide(probability_distribution)
+        self.decision_maker.do_epoch()
+        self.assertEqual(self.decision_maker.sequence_counter,0)
 '''
     def test_schedule_sequence(self):
         old_count = self.decision_maker.sequence_counter
