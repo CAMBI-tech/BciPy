@@ -5,9 +5,10 @@ Generators are used by a Producer to stream the data at a given frequency.
 import time
 import unittest
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.processor import Processor, NullProcessor
+from bcipy.acquisition.processor import Processor, NullProcessor,FileWriter
 from bcipy.acquisition.protocols.device import Device
 from bcipy.acquisition.util import mock_data, mock_record
+import os
 
 
 class _MockDevice(Device):
@@ -54,7 +55,8 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
         self.mock_data = list(mock_data(num_records, num_channels))
 
-    def test_acquisition_exceptions(self):
+
+    def test_acquisition_null_device_exception(self):
         """Exception should be thrown if unable to connect to device or message not understood """
         daq = DataAcquisitionClient(device=None,
                                     processor=NullProcessor())
@@ -70,8 +72,7 @@ class TestDataAcquistionClient(unittest.TestCase):
          """
         
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor())
+        daq = DataAcquisitionClient(device=device)
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
@@ -87,8 +88,24 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.assertEqual(data_length,0)
 
         #test offset
-        offset = daq.offset()
-        self.assertEqual(offset,None)
+        channels = ['ch1', 'ch2', 'TRG']
+        sample_hz = 100
+        trigger_at = 10
+        num_records = 500
+        n_channels = len(channels) - 1
+
+        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+                for i in range(num_records)]
+
+        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
+        daq = DataAcquisitionClient(device=device,
+                                    processor=NullProcessor(),
+                                    buffer_name='buffer_client_test_offset.db',
+                                    clock=CountClock())
+
+        
+        self.assertEqual(daq.offset,None)
+
 
         daq.cleanup()
 
