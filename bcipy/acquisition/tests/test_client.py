@@ -72,11 +72,15 @@ class TestDataAcquistionClient(unittest.TestCase):
          """
         
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        daq = DataAcquisitionClient(device=device)
+        daq = DataAcquisitionClient(device=device,
+                                    processor=NullProcessor())
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
-
+        
+        #Make sure we are able to stop the buffer process
+        buf_temp = daq._buf
+        
         daq._buf = None
 
         #test get_data
@@ -88,25 +92,10 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.assertEqual(data_length,0)
 
         #test offset
-        channels = ['ch1', 'ch2', 'TRG']
-        sample_hz = 100
-        trigger_at = 10
-        num_records = 500
-        n_channels = len(channels) - 1
-
-        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
-                for i in range(num_records)]
-
-        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
-        daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
-                                    buffer_name='buffer_client_test_offset.db',
-                                    clock=CountClock())
-
+        offset = daq.offset
+        self.assertEqual(offset,None)
         
-        self.assertEqual(daq.offset,None)
-
-
+        daq._buf = buf_temp
         daq.cleanup()
 
     def test_get_data(self):
