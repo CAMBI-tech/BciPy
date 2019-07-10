@@ -5,9 +5,10 @@ Generators are used by a Producer to stream the data at a given frequency.
 import time
 import unittest
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.processor import Processor, NullProcessor
+from bcipy.acquisition.processor import Processor, NullProcessor,FileWriter
 from bcipy.acquisition.protocols.device import Device
 from bcipy.acquisition.util import mock_data, mock_record
+import os
 
 
 class _MockDevice(Device):
@@ -54,7 +55,8 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
         self.mock_data = list(mock_data(num_records, num_channels))
 
-    def test_acquisition_exceptions(self):
+
+    def test_acquisition_null_device_exception(self):
         """Exception should be thrown if unable to connect to device or message not understood """
         daq = DataAcquisitionClient(device=None,
                                     processor=NullProcessor())
