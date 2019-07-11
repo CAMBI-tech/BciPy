@@ -45,6 +45,7 @@ class TestDecisionMaker(unittest.TestCase):
         """Test decide method with case of commit"""
         probability_distribution = np.ones(len(
                             self.decision_maker.alphabet))
+        self.decision_maker.sequence_counter = self.decision_maker.min_num_seq
         decision, chosen_stimuli = self.decision_maker.decide(
                             probability_distribution)
         self.assertTrue(decision)
