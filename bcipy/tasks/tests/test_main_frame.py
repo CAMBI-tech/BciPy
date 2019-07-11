@@ -37,9 +37,6 @@ class TestDecisionMaker(unittest.TestCase):
                         self.decision_maker.list_epoch[-1]['list_distribution'][-1]
                         == probability_distribution))
         self.assertFalse(decision)
-        """Test do_epoch method"""
-        self.decision_maker.do_epoch()
-        self.assertEqual(self.decision_maker.sequence_counter,0)
 
     def test_decide_with_commit(self):
         """Test decide method with case of commit"""
