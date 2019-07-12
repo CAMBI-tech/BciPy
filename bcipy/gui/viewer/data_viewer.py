@@ -7,10 +7,8 @@ wx Timer.
 from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
-from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.device_info import DeviceInfo
 import matplotlib.ticker as ticker
-from matplotlib.pyplot import NullFormatter, NullLocator
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import csv
@@ -104,7 +102,7 @@ class EEGFrame(wx.Frame):
 
         # Number of seconds text box
         self.seconds_choices = [2, 5, 10]
-        if not self.seconds in self.seconds_choices:
+        if self.seconds not in self.seconds_choices:
             self.seconds_choices.append(self.seconds)
             self.seconds_choices.sort()
         opts = [str(x) + " seconds" for x in self.seconds_choices]

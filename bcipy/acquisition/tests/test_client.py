@@ -5,10 +5,9 @@ Generators are used by a Producer to stream the data at a given frequency.
 import time
 import unittest
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.processor import Processor, NullProcessor, FileWriter
+from bcipy.acquisition.processor import Processor, NullProcessor
 from bcipy.acquisition.protocols.device import Device
 from bcipy.acquisition.util import mock_data, mock_record
-import os
 
 
 class _MockDevice(Device):

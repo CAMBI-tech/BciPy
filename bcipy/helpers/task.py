@@ -35,7 +35,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
     length_of_phrase = len(copy_phrase)
 
-    if length_of_spelled_letters is 0:
+    if length_of_spelled_letters == 0:
         text_task = copy_phrase[length_of_spelled_letters]
     else:
         text_task += copy_phrase[length_of_spelled_letters]
@@ -409,7 +409,7 @@ def trial_reshaper(trial_target_info: list,
                 # For every channel append filtered channel data to trials
                 for channel in range(len(eeg_data)):
                     reshaped_trials[channel][trial] = \
-                        eeg_data[channel][triggers[trial]                                          :triggers[trial] + num_samples]
+                        eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
 
             num_of_sequences = int(sum(labels))
 

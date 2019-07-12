@@ -53,9 +53,6 @@ def _calibration_trigger(experiment_clock: core.Clock,
 
     # If sound trigger is selected, output calibration tones
     if trigger_type == SOUND_TYPE:
-        import sounddevice as sd
-        import soundfile as sf
-
         play_sound(
             sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
             dtype='float32',

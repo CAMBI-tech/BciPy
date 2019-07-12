@@ -77,7 +77,7 @@ class MatrixDisplay:
         """ Draws static elements in a stimulus. """
 
         # Draw the grid
-        if len(self.stimuli) is 0:
+        if len(self.stimuli) == 0:
             self.make_spelling_grid()
 
         for stim in self.stimuli:

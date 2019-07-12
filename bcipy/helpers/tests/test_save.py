@@ -1,7 +1,6 @@
 import errno
 import os
 import shutil
-import time
 import unittest
 
 from bcipy.helpers.save import init_save_data_structure

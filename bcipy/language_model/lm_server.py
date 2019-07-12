@@ -118,7 +118,7 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
     # assert a new container was generated
     running_container_ids = [
         c.short_id for c in running_containers(client, server_config)]
-    if not container.short_id in running_container_ids:
+    if container.short_id not in running_container_ids:
         raise Exception("Container did not correctly start.")
 
 

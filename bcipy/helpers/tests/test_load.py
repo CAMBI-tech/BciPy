@@ -6,9 +6,7 @@ import pickle
 
 from bcipy.helpers.load import (
     load_json_parameters,
-    load_experimental_data,
-    load_signal_model,
-    load_txt_data)
+    load_signal_model)
 
 
 class TestLoad(unittest.TestCase):

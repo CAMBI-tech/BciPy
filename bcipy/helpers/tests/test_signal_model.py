@@ -1,5 +1,4 @@
 import unittest
-import numpy as np
 
 from bcipy.helpers.signal_model import CopyPhraseWrapper
 from bcipy.helpers.task import alphabet

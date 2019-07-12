@@ -25,7 +25,9 @@ class DockerDownError(Exception):
 class EvidenceDataStructError(Exception):
     def __init__(self):
         Exception.__init__(
-            self, "The evidence data structure is incorrect. It should be of [[(s,p),(s,p)]] or [[(s,p),(s,p)],[(s,p),(s,p)]]{s - a valid string, p - float}")
+            self, """The evidence data structure is incorrect. It should be of
+             [[(s,p),(s,p)]] or [[(s,p),(s,p)],[(s,p),(s,p)]]{s - a valid string,
+              p - float}""")
 
 
 class NBestError(Exception):

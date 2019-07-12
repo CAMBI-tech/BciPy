@@ -146,16 +146,27 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         if op_type == 'cost_auc':
             k_folds, split = arg_op_type
 
-            def cost_fun_param(b): return cost_cross_validation_auc(
-                model, opt_el, x, y, [b[0], b[1]], k_folds=k_folds,
-                split=split)[0]
+            def cost_fun_param(b):
+                return cost_cross_validation_auc(model, opt_el, x, y, [b[0],
+                                                                       b[1]], k_folds=k_folds, split=split)[0]
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
-        def cst_1(v): return v[0] - np.power(0.1, 15)
-        def cst_2(v): return v[1] - np.power(0.1, 15)
-        def cst_3(v): return 1 - v[0]
-        def cst_4(v): return 1 - v[1]
+        def cst_1(v):
+
+            return v[0] - np.power(0.1, 15)
+
+        def cst_2(v):
+
+            return v[1] - np.power(0.1, 15)
+
+        def cst_3(v):
+
+            return 1 - v[0]
+
+        def cst_4(v):
+
+            return 1 - v[1]
 
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
                                              disp=False,

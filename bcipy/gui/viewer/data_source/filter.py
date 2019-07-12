@@ -1,7 +1,6 @@
 """Defines filter functions that can be applied to a viewer stream.
 Functions in this file are wrappers around filter functions defined in the
 bcipy.signal.process module."""
-import numpy as np
 from bcipy.signal.process.filter import bandpass, notch, downsample
 
 

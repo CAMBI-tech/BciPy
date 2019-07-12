@@ -3,7 +3,7 @@
 import unittest
 import pytest
 from mock import mock_open, patch
-from mockito import any, mock, unstub, verify, when
+from mockito import any, mock, verify, when
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.processor import FileWriter, DispatchProcessor, Processor
 

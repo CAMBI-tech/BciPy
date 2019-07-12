@@ -9,13 +9,12 @@ from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
 from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
-    calculate_stimulation_freq,
     trial_complete_message,
     trial_reshaper,
     get_user_input,
     pause_calibration,
     process_data_for_decision)
-from bcipy.helpers.acquisition import analysis_channels, analysis_channels_by_device
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 
 

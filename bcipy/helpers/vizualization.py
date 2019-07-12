@@ -96,7 +96,7 @@ def generate_offline_analysis_screen(
 
     # Set common labels
     fig.text(0.5, 0.04, 'Time (Seconds)', ha='center', va='center')
-    fig.text(0.06, 0.5, '$\mu V$', ha='center', va='center',
+    fig.text(0.06, 0.5, r'$\mu V$', ha='center', va='center',
              rotation='vertical')
 
     ax1.set_title('Non-target ERP')

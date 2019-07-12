@@ -1,6 +1,5 @@
 from psychopy import visual
 from bcipy.display.rsvp.display import RSVPDisplay
-from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.task import SPACE_CHAR
 
 

@@ -7,8 +7,7 @@ from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
 from bcipy.helpers.stimuli import play_sound, soundfiles,\
-    random_rsvp_calibration_seq_gen, generate_icon_match_images, best_selection,\
-    best_case_rsvp_seq_gen
+    random_rsvp_calibration_seq_gen, best_selection, best_case_rsvp_seq_gen
 
 MOCK_FS = 44100
 

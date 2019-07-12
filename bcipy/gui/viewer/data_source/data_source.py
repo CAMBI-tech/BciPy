@@ -1,6 +1,5 @@
 from queue import Queue, Empty
 import itertools as it
-import time
 
 
 class DataSource:

@@ -2,10 +2,8 @@
 
 import unittest
 import numpy as np
-from mockito import any, mock, unstub, when
 
 import bcipy.tasks.rsvp.main_frame as mf
-from bcipy.helpers.load import load_json_parameters
 
 
 class TestDecisionMaker(unittest.TestCase):

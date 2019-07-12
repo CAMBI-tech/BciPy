@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from enum import Enum
-from scipy import signal
 from scipy.signal import welch
 from scipy.integrate import simps
 from mne.time_frequency import psd_array_multitaper

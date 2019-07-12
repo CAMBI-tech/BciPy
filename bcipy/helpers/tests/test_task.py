@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from mockito import any, mock, when, unstub
+from mockito import unstub
 
 from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val
 from bcipy.helpers.load import load_json_parameters

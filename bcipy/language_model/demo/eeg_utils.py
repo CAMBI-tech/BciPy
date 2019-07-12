@@ -63,6 +63,6 @@ def generate_eeg(eeg, ch, syms):
     dist.append((ch, sample[0]))
     for i in range(len(symsC)):
         dist.append((symsC[i], sample[i + 1]))
-    #dist = sorted(dist, key=lambda symbol: symbol[1])
+    # dist = sorted(dist, key=lambda symbol: symbol[1])
     dist = [dist[0]] + sorted(dist[1:], key=lambda symbol: symbol[1])
     return dist

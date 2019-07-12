@@ -1,6 +1,5 @@
 import logging
 import sys
-import math
 from typing import List
 from collections import defaultdict
 from bcipy.helpers.task import alphabet, SPACE_CHAR

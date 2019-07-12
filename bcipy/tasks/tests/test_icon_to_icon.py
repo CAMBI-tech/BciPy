@@ -1,8 +1,7 @@
 import unittest
 
 from mock import mock_open, patch
-from mockito import any, mock, unstub, when
-from psychopy.visual import Window
+from mockito import mock
 
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.load import load_json_parameters
