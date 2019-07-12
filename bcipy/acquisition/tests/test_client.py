@@ -5,9 +5,10 @@ Generators are used by a Producer to stream the data at a given frequency.
 import time
 import unittest
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.processor import Processor, NullProcessor
+from bcipy.acquisition.processor import Processor, NullProcessor,FileWriter
 from bcipy.acquisition.protocols.device import Device
 from bcipy.acquisition.util import mock_data, mock_record
+import os
 
 
 class _MockDevice(Device):
@@ -54,6 +55,49 @@ class TestDataAcquistionClient(unittest.TestCase):
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
         self.mock_data = list(mock_data(num_records, num_channels))
 
+
+    def test_acquisition_null_device_exception(self):
+        """Exception should be thrown if unable to connect to device or message not understood """
+        daq = DataAcquisitionClient(device=None,
+                                    processor=NullProcessor())
+        daq._is_streaming = False
+        with self.assertRaises(Exception):
+            daq.start_acquisition()
+
+        daq.cleanup()
+
+    def test_daq_with_no_buffer(self):
+        """get_data should return an empty list if daq._buf is None
+        data length should return 0
+         """
+        
+        device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
+        daq = DataAcquisitionClient(device=device,
+                                    processor=NullProcessor())
+        daq.start_acquisition()
+        time.sleep(0.1)
+        daq.stop_acquisition()
+        
+        #Make sure we are able to stop the buffer process
+        buf_temp = daq._buf
+        
+        daq._buf = None
+
+        #test get_data
+        data = daq.get_data()
+        self.assertEqual(data,[])
+
+        #test get_data_len
+        data_length = daq.get_data_len()
+        self.assertEqual(data_length,0)
+
+        #test offset
+        offset = daq.offset
+        self.assertEqual(offset,None)
+        
+        daq._buf = buf_temp
+        daq.cleanup()
+
     def test_get_data(self):
         """Data should be queryable."""
 
@@ -73,11 +117,19 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         daq.cleanup()
 
+    def test_count_clock_get_time(self):
+        """getTime should increment count clock """
+        clock = CountClock()
+        old_counter = clock.counter
+        result = clock.getTime()
+        self.assertEqual(result,old_counter+1)
+
     def test_clock(self):
         """Test clock integration."""
 
         clock = CountClock()
         clock.counter = 10  # ensures that clock gets reset.
+
         daq = DataAcquisitionClient(
             device=_MockDevice(data=self.mock_data,
                                channels=self.mock_channels),
