@@ -13,7 +13,7 @@ class TestDecisionMaker(unittest.TestCase):
                                     1, 3, state='',
                                     alphabet=list(string.ascii_uppercase)
                                     + ['<'] + [SPACE_CHAR],
-                                    is_txt_sti=True,
+                                    is_txt_stim=True,
                                     stimuli_timing=[1, .2],
                                     seq_constants=None)
 
@@ -84,7 +84,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker.form_display_state(self.decision_maker.state)
         self.assertEqual(self.decision_maker.displayed_state, 'ABE')
         self.decision_maker.reset()
-        
+
     def test_do_epoch(self):
         """Test do_epoch method"""
         probability_distribution = np.ones(len(self.decision_maker.alphabet)) / 8
