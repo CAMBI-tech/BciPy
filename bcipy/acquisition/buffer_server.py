@@ -15,7 +15,7 @@ MSG_STARTED = 'started'
 log = logging.getLogger(__name__)
 
 
-def _loop(mailbox, channels, archive_name):
+def _loop(msg_queue, response_queue, channels, archive_name):
     """Main server loop. Intended to be a Process target (and private to this
     module). Accepts messages through its mailbox queue, and takes the
     appropriate action based on the command and parameters contained within the
@@ -23,8 +23,10 @@ def _loop(mailbox, channels, archive_name):
 
     Parameters
     ----------
-        mailbox : Queue
-            Used for inter-process communication.
+        msq_queue : Queue
+            Used for receiving inter-process communication.
+        response_queue : Queue
+            Used for pushing responses
         channels : list of str
             list of channel names in the underlying data table. Any records
             written to the buffer are expected to have an entry for each
@@ -36,32 +38,30 @@ def _loop(mailbox, channels, archive_name):
 
     while True:
         # Messages should be tuples with the structure:
-        # (sender, (command, params))
-        # where sender is either None or a Queue.
-        msg = mailbox.get()
-        sender, body = msg
-        command, params = body
+        # (command, params)
+        msg = msg_queue.get()
+        command, params = msg
         if command == MSG_EXIT:
             buf.cleanup(delete_archive=params)
-            sender.put(('exit', 'ok'))
+            response_queue.put(('exit', 'ok'))
             break
         elif command == MSG_PUT:
             # params is the record to put
             buf.append(params)
         elif command == MSG_GET_ALL:
-            sender.put(buf.all())
+            response_queue.put(buf.all())
         elif command == MSG_COUNT:
-            sender.put(len(buf))
+            response_queue.put(len(buf))
         elif command == MSG_QUERY_SLICE:
             row_start, row_end, field = params
             log.debug("Sending query: %s", (row_start, row_end, field))
-            sender.put(buf.query(row_start, row_end, field))
+            response_queue.put(buf.query(row_start, row_end, field))
         elif command == MSG_QUERY:
             # Generic query
             filters, ordering, max_results = params
-            sender.put(buf.query_data(filters, ordering, max_results))
+            response_queue.put(buf.query_data(filters, ordering, max_results))
         elif command == MSG_STARTED:
-            sender.put(('started', 'ok'))
+            response_queue.put(('started', 'ok'))
         else:
             log.debug("Error; message not understood: %s", msg)
 
@@ -81,19 +81,19 @@ def start(channels, archive_name, asynchronous=False):
             from the newly started server.
     Returns
     -------
-        Queue used to communicate with this server instance.
+        Tuple of Queues used to communicate with this server instance.
     """
-
     msg_queue = mp.Queue()
+    response_queue = mp.Queue()
+    mailbox = (msg_queue, response_queue)
     server_process = mp.Process(target=_loop, args=(
-        msg_queue, channels, archive_name))
+        msg_queue, response_queue, channels, archive_name))
     server_process.start()
     if not asynchronous:
         request = (MSG_STARTED, None)
-        _rpc(msg_queue, request, wait_reply=True)
+        _rpc(mailbox, request, wait_reply=True)
 
-    return msg_queue
-
+    return mailbox
 
 def stop(mailbox, delete_archive=True):
     """Stops the process associated with the provided mailbox.
@@ -127,20 +127,14 @@ def _rpc(mailbox, request, win=None, wait_reply=True):
     -------
         Response from the server or None.
     """
+    msg_queue, response_queue = mailbox
     if wait_reply:
-        manager = mp.Manager()
-        # Refocus on the window in case Windows changes focus
-        if win:
-            win.winHandle.activate()
-
-        queue = manager.Queue()
-
-        mailbox.put((queue, request))
+        msg_queue.put(request)
         # block until we receive something
-        result = queue.get()
+        result = response_queue.get()
         return result
 
-    mailbox.put((None, request))
+    msg_queue.put(request)
     return None
 
 
