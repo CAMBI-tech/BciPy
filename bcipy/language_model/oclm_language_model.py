@@ -14,6 +14,7 @@ sys.path.append('.')
 ALPHABET = alphabet()
 LM_SPACE = '#'
 
+
 class LangModel:
 
     DEFAULT_CONFIG = LmServerConfig(
@@ -21,7 +22,7 @@ class LangModel:
         port=6000,
         docker_port=5000)
 
-    def __init__(self, server_config: LmServerConfig=DEFAULT_CONFIG,
+    def __init__(self, server_config: LmServerConfig = DEFAULT_CONFIG,
                  logfile: str = "log"):
         """
         Initiate the langModel class and starts the corresponding docker
@@ -33,7 +34,7 @@ class LangModel:
         """
         self.server_config = server_config
         self.priors = defaultdict(list)
-        
+
         log.setLevel(logging.INFO)
         log.addHandler(logging.FileHandler(logfile))
 
@@ -95,7 +96,7 @@ class LangModel:
                     else:
                         tmp.append((symbol.lower(), pr))
                 clean_evidence.append(tmp)
-        except:
+        except BaseException:
             raise EvidenceDataStructError
 
         output = lm_server.post_json_request(self.server_config,

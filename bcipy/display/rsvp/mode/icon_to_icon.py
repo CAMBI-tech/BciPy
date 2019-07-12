@@ -124,7 +124,8 @@ class IconToIconDisplay(RSVPDisplay):
         if is_word:
             # Display text at top of screen if we are matching icons to words
             txt = image_path if len(image_path) > 0 else ' '
-            tmp2 = visual.TextStim(win=self.window, font=self.task.font, text=txt)
+            tmp2 = visual.TextStim(
+                win=self.window, font=self.task.font, text=txt)
             x_task_pos = (tmp2.boundingBox[0] * 2.2) / self.window.size[0] - 1
             self.task_pos = (x_task_pos, self.task_pos[1])
             self.update_task(text=txt, color_list=['white'], pos=self.task_pos)

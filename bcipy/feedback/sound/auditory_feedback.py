@@ -5,6 +5,7 @@ import sounddevice as sd
 
 class AuditoryFeedback(Feedback):
     """Auditory Feedback."""
+
     def __init__(self, parameters, clock):
 
         # Register Feedback Type

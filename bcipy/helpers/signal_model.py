@@ -9,7 +9,7 @@ from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
- equally_probable
+    equally_probable
 
 
 class CopyPhraseWrapper:
@@ -85,7 +85,8 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers, target_info, window_length):
+    def evaluate_sequence(self, raw_data, triggers,
+                          target_info, window_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -111,7 +112,8 @@ class CopyPhraseWrapper:
             order=self.filter_order)
 
         # downsample
-        data = downsample.downsample(filtered_data, factor=self.downsample_rate)
+        data = downsample.downsample(
+            filtered_data, factor=self.downsample_rate)
         x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.sampling_rate,
                                     k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,

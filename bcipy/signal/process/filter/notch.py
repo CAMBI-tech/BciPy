@@ -2,7 +2,8 @@ import numpy as np
 from scipy.signal import filtfilt, iirnotch
 
 
-def notch_filter(data: np.ndarray, fs: int, frequency_to_remove: int, quality_factor: int=30) -> np.ndarray:
+def notch_filter(data: np.ndarray, fs: int, frequency_to_remove: int,
+                 quality_factor: int = 30) -> np.ndarray:
     """Notch Filter.
 
     A notch filter is a bandstop filter with a narrow bandwidth. It removes

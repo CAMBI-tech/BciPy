@@ -4,6 +4,7 @@ from random import shuffle, randint
 import math
 from bcipy.helpers.task import alphabet
 
+
 class simulate_eeg:
     """
     Simulating EEG given target symbols

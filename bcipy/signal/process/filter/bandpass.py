@@ -8,17 +8,17 @@ log = logging.getLogger(__name__)
 
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        sos = butter(order, [low, high], analog=False, btype='band', output='sos')
-        return sos
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    return sos
 
 
 def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-        sos = butter_bandpass(lowcut, highcut, fs, order=order)
-        y = sosfilt(sos, data)
-        return y
+    sos = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = sosfilt(sos, data)
+    return y
 
 
 def text_filter(input_seq, filt=None, fs=256, k=2, filter_location=None):
@@ -47,21 +47,25 @@ def text_filter(input_seq, filt=None, fs=256, k=2, filter_location=None):
 
     # If filter location is not provided, assume it is next to sig_pro.py file.
     if not filter_location:
-        filter_location = os.path.dirname(os.path.abspath(__file__)) + '/resources/filters.txt'
+        filter_location = os.path.dirname(
+            os.path.abspath(__file__)) + '/resources/filters.txt'
 
     # Try to open the filters.txt file
     try:
         with open(filter_location, 'r') as text_file:
             dict_of_filters = eval(text_file.readline())
     except Exception as e:
-        log.error('filters.txt cannot be found in path that is passed:', filter_location)
+        log.error(
+            'filters.txt cannot be found in path that is passed:',
+            filter_location)
         raise e
 
     # Try to get the required filter from the text file.
     try:
         filt = dict_of_filters[fs]
     except Exception as e:
-        log.error('filters.txt does not have a filter with sampling frequency provided.')
+        log.error(
+            'filters.txt does not have a filter with sampling frequency provided.')
         raise e
 
     # Precision correction

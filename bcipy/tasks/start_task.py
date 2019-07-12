@@ -65,7 +65,8 @@ def make_task(display_window, daq, exp_type, parameters, file_save,
         return RSVPInterSequenceFeedbackCalibration(
             display_window, daq, parameters, file_save)
 
-    raise TaskRegistryException('The provided experiment type is not registered.')
+    raise TaskRegistryException(
+        'The provided experiment type is not registered.')
 
 
 def start_task(display_window, daq, exp_type, parameters, file_save,

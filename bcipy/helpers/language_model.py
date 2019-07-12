@@ -76,6 +76,7 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
 
     return list(zip(all_symbols, normalized))
 
+
 def equally_probable(alphabet: List[str],
                      specified: Dict[str, float] = None) -> List[float]:
     """Returns a list of probabilities which correspond to the provided

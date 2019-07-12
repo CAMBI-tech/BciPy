@@ -13,7 +13,8 @@ class TextFilterTest(unittest.TestCase):
         """Parameters entered for test here: """
         dc_level = .1
 
-        # passband freq should be chosen w.r.t. filter specification, changes for filter to filter, defined in eegProcessor.py
+        # passband freq should be chosen w.r.t. filter specification, changes
+        # for filter to filter, defined in eegProcessor.py
         fcos0 = 2
         fcos1 = 10
         fcos2 = 20
@@ -51,7 +52,8 @@ class TextFilterTest(unittest.TestCase):
 
         y = bandpass.text_filter(x, fs=fs, k=1)
 
-        MSE_perSample = np.sum((xpassband - y[0][:xpassband.size]) ** 2.) / xpassband.size
+        MSE_perSample = np.sum(
+            (xpassband - y[0][:xpassband.size]) ** 2.) / xpassband.size
         MSE_perSample_norm = MSE_perSample / np.sum(x[0][:] ** 2)
 
         self.assertTrue(MSE_perSample_norm * 100 < 10)

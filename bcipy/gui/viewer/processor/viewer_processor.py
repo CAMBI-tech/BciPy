@@ -1,5 +1,5 @@
 """Displays the data_viewer GUI on initialization. ViewerProcessor subclasses
-the data acquisition Processor so it can be passed in to the 
+the data acquisition Processor so it can be passed in to the
 DataAcquisitionClient constructor."""
 import subprocess
 import time
@@ -9,7 +9,7 @@ from bcipy.acquisition.processor import Processor
 
 class ViewerProcessor(Processor):
     """Processor that displays the streaming data in a GUI.
-    
+
     Parameters:
     ----------
         display_screen - monitor on which to display the viewer. The default

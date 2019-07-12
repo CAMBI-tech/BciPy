@@ -57,7 +57,7 @@ class DataServer(StoppableThread):
 
         self.started = True
         log.debug("[*] Accepting connections on %s:%d", self.host,
-                      self.port)
+                  self.port)
 
         while self.running():
 
@@ -72,7 +72,7 @@ class DataServer(StoppableThread):
             if readable:
                 client, addr = self.server_socket.accept()
                 log.debug("[*] Accepted connection from: %s:%d", addr[0],
-                              addr[1])
+                          addr[1])
                 self._handle_client(client)
         try:
             self.server_socket.shutdown(2)

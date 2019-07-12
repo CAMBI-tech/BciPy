@@ -113,7 +113,7 @@ def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
                 if auc > best_auc:
                     best_auc = auc
                     arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
-                                                     param_cand['gam'][j]
+                        param_cand['gam'][j]
 
                 tmp_counter += 1
     else:
@@ -145,16 +145,17 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
         # TODO: maybe we should not have such an option and set it by ourselves
         if op_type == 'cost_auc':
             k_folds, split = arg_op_type
-            cost_fun_param = lambda b: cost_cross_validation_auc(
+
+            def cost_fun_param(b): return cost_cross_validation_auc(
                 model, opt_el, x, y, [b[0], b[1]], k_folds=k_folds,
                 split=split)[0]
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
-        cst_1 = lambda v: v[0] - np.power(0.1, 15)
-        cst_2 = lambda v: v[1] - np.power(0.1, 15)
-        cst_3 = lambda v: 1 - v[0]
-        cst_4 = lambda v: 1 - v[1]
+        def cst_1(v): return v[0] - np.power(0.1, 15)
+        def cst_2(v): return v[1] - np.power(0.1, 15)
+        def cst_3(v): return 1 - v[0]
+        def cst_4(v): return 1 - v[1]
 
         arg_opt = scipy.optimize.fmin_cobyla(cost_fun_param, x0=init,
                                              disp=False,

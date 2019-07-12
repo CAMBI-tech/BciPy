@@ -24,10 +24,10 @@ class PSD_TYPE(Enum):
 def power_spectral_density(
         data: np.ndarray,
         band: Tuple[float, float],
-        sampling_rate: float=100.0,
-        window_length: float=4.0,
-        plot: bool=False,
-        method: PSD_TYPE=PSD_TYPE.WELCH,
+        sampling_rate: float = 100.0,
+        window_length: float = 4.0,
+        plot: bool = False,
+        method: PSD_TYPE = PSD_TYPE.WELCH,
         relative=False):
     """Power spectral density:
 
@@ -101,4 +101,9 @@ if __name__ == '__main__':
     sampling_rate = 100
     band = (0, 100)
     np.arange(data.size) / sampling_rate
-    power_spectral_density(data, band, sampling_rate=sampling_rate, method=PSD_TYPE.WELCH, plot=True)
+    power_spectral_density(
+        data,
+        band,
+        sampling_rate=sampling_rate,
+        method=PSD_TYPE.WELCH,
+        plot=True)

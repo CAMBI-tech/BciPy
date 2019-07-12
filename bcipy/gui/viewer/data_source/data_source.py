@@ -44,6 +44,7 @@ class QueueDataSource(DataSource):
 
 class GeneratorDataSource(DataSource):
     """DataSource that uses a provided python generator."""
+
     def __init__(self, gen):
         self.gen = gen
 

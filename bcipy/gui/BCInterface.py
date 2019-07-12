@@ -14,7 +14,9 @@ class BCInterface(BCIGui):
     def launch_mode(self, event) -> None:
         mode_label = event.GetEventObject().GetLabel()
         if mode_label == 'RSVP':
-            subprocess.Popen('python bcipy/gui/mode/RSVPKeyboard.py', shell=True)
+            subprocess.Popen(
+                'python bcipy/gui/mode/RSVPKeyboard.py',
+                shell=True)
 
 
 app = wx.App(False)

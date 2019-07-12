@@ -469,6 +469,7 @@ class EpochManager():
     """
     # TODO: rather than pass in copy_phrase_task, provide a function to generate
     # stimulus for new epochs.
+
     def __init__(self, icons, copy_phrase_task, time_target):
         self.copy_phrase_task = copy_phrase_task
         self.target = None

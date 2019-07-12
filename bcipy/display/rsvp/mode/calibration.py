@@ -6,6 +6,7 @@ from bcipy.helpers.task import SPACE_CHAR
 
 class CalibrationDisplay(RSVPDisplay):
     """Calibration Display."""
+
     def __init__(self,
                  window,
                  static_clock,

@@ -66,7 +66,7 @@ def stop(server_config: LmServerConfig):
             con.stop()
             # Remove may throw an exception
             con.remove()
-        except:
+        except BaseException:
             pass
 
 
@@ -122,7 +122,8 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
         raise Exception("Container did not correctly start.")
 
 
-def post_json_request(server_config: LmServerConfig, path: str, data: Dict = None):
+def post_json_request(server_config: LmServerConfig,
+                      path: str, data: Dict = None):
     """Posts a JSON request to the given url.
     Returns:
     --------

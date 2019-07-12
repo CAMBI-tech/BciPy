@@ -122,7 +122,7 @@ class LangModel:
 
     def __return_priors(self, output, return_mode):
         """
-        A helper function to provide the desired output 
+        A helper function to provide the desired output
         depending on the return_mode.
         """
 

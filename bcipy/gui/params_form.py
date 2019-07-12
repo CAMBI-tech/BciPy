@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 JSON_INDENT = 2
 
 
-def font(size: int=14, font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.Font:
+def font(size: int = 14, font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.Font:
     """Create a Font object with the given parameters."""
     return wx.Font(size, font_family, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
 
@@ -19,7 +19,7 @@ def static_text_control(parent,
                         label: str,
                         color: str = 'black',
                         size: int = 14,
-                        font_family: wx.Font=wx.FONTFAMILY_SWISS) -> wx.StaticText:
+                        font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.StaticText:
     """Creates a static text control with the given font parameters. Useful for
     creating labels and help components."""
 
@@ -40,9 +40,9 @@ class Form(wx.Panel):
     parameter in the provided json file."""
 
     def __init__(self, parent,
-                 json_file: str='bcipy/parameters/parameters.json',
-                 load_file: str=None,
-                 control_width: int=300, control_height: int=25, **kwargs):
+                 json_file: str = 'bcipy/parameters/parameters.json',
+                 load_file: str = None,
+                 control_width: int = 300, control_height: int = 25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
 
         self.json_file = json_file
@@ -72,7 +72,7 @@ class Form(wx.Panel):
                 form_input = self.bool_input(param)
             elif 'path' in param.type:
                 form_input = self.file_input(param)
-            elif type(param.recommended_values) == list:
+            elif isinstance(param.recommended_values, list):
                 form_input = self.selection_input(param)
             # TODO: NumCtrl for numeric input types.
             # from wx.lib.masked import NumCtrl
@@ -126,8 +126,9 @@ class Form(wx.Panel):
         Creates a text field or selection pulldown FormInput with a button
         to browse for a file.
         """
-        # Creates a combobox instead of text field if the parameter has recommended values
-        if type(param.recommended_values) == list:
+        # Creates a combobox instead of text field if the parameter has
+        # recommended values
+        if isinstance(param.recommended_values, list):
             ctl = wx.ComboBox(
                 self,
                 -1,
@@ -138,7 +139,12 @@ class Form(wx.Panel):
         else:
             ctl = wx.TextCtrl(self, size=self.control_size, value=param.value)
         ctl.SetFont(font())
-        btn = wx.Button(self, label='...', size=(self.control_size[1], self.control_size[1]))
+        btn = wx.Button(
+            self,
+            label='...',
+            size=(
+                self.control_size[1],
+                self.control_size[1]))
         ctl_array = [ctl, btn]
         label, help_tip = self.input_label(param)
         return FormInput(ctl_array, label, help_tip)
@@ -170,8 +176,10 @@ class Form(wx.Panel):
                     if param.type == 'directorypath':
                         is_directory = True
                     control[0].Bind(wx.EVT_TEXT, self.textEventHandler(k))
-                    control[1].Bind(wx.EVT_BUTTON, self.buttonEventHandler(k, is_directory))
-                elif type(param.recommended_values) == list:
+                    control[1].Bind(
+                        wx.EVT_BUTTON, self.buttonEventHandler(
+                            k, is_directory))
+                elif isinstance(param.recommended_values, list):
                     control.Bind(wx.EVT_COMBOBOX, self.selectEventHandler(k))
                     # allow user to input a value not in the select list.
                     control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
@@ -231,7 +239,8 @@ class Form(wx.Panel):
             log.debug(f"{key}: {event.GetString()}")
         return handler
 
-    def selectEventHandler(self, key: str) -> Callable[[wx.EVT_COMBOBOX], None]:
+    def selectEventHandler(
+            self, key: str) -> Callable[[wx.EVT_COMBOBOX], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
         """
@@ -241,7 +250,8 @@ class Form(wx.Panel):
             log.debug(f"{key}: {event.GetString()}")
         return handler
 
-    def checkboxEventHandler(self, key: str) -> Callable[[wx.EVT_CHECKBOX], None]:
+    def checkboxEventHandler(
+            self, key: str) -> Callable[[wx.EVT_CHECKBOX], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
         """
@@ -252,14 +262,17 @@ class Form(wx.Panel):
             log.debug(f'{key}: {bool(event.IsChecked())}')
         return handler
 
-    def buttonEventHandler(self, key: str, directory: bool) -> Callable[[wx.EVT_BUTTON], None]:
+    def buttonEventHandler(
+            self, key: str, directory: bool) -> Callable[[wx.EVT_BUTTON], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
         """
         def handler(event: wx.EVT_BUTTON):
-            # Change dialog type depending on whether parameter requires a directory or file
+            # Change dialog type depending on whether parameter requires a
+            # directory or file
             if directory:
-                file_dialog = wx.DirDialog(self, 'Select a path', style=wx.FD_OPEN)
+                file_dialog = wx.DirDialog(
+                    self, 'Select a path', style=wx.FD_OPEN)
             else:
                 file_dialog = wx.FileDialog(
                     self, 'Select a file', style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -268,7 +281,8 @@ class Form(wx.Panel):
             else:
                 new_path = str(file_dialog.GetPath())
                 if directory:
-                    # Add operating system separator character to end of directory path
+                    # Add operating system separator character to end of
+                    # directory path
                     new_path = new_path + sep
                 log.debug(new_path)
 

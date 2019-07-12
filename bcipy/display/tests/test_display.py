@@ -28,7 +28,7 @@ class TestInitializeDisplayWindow(unittest.TestCase):
 
         self.parameters = load_json_parameters(parameters_used,
                                                value_cast=True)
-                                               
+
         self.display_window = init_display_window(self.parameters)
 
     def tearDown(self):

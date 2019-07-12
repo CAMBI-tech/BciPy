@@ -166,6 +166,7 @@ def determine_position_on_grid(row_idx, col_idx,
 
     return (x, y)
 
+
 if __name__ == "__main__":
     # How many stimulations?
     task_length = 5
