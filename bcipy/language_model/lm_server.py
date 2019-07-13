@@ -66,7 +66,7 @@ def stop(server_config: LmServerConfig):
             con.stop()
             # Remove may throw an exception
             con.remove()
-        except:
+        except BaseException:
             pass
 
 
@@ -118,11 +118,12 @@ def start(server_config: LmServerConfig, max_wait: int = 16,
     # assert a new container was generated
     running_container_ids = [
         c.short_id for c in running_containers(client, server_config)]
-    if not container.short_id in running_container_ids:
+    if container.short_id not in running_container_ids:
         raise Exception("Container did not correctly start.")
 
 
-def post_json_request(server_config: LmServerConfig, path: str, data: Dict = None):
+def post_json_request(server_config: LmServerConfig,
+                      path: str, data: Dict = None):
     """Posts a JSON request to the given url.
     Returns:
     --------

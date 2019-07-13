@@ -269,7 +269,8 @@ class RSVPCopyPhraseTask(Task):
                                               target_letter,
                                               text_task)
 
-                # here we assume, in fake mode, all sequences result in a selection.
+                # here we assume, in fake mode, all sequences result in a
+                # selection.
                 last_selection = text_task[-1]
                 new_epoch = True
                 # Update next state for this record
@@ -319,7 +320,8 @@ class RSVPCopyPhraseTask(Task):
                 text_task = copy_phrase_task.decision_maker.displayed_state
                 last_selection = copy_phrase_task.decision_maker.last_selection
 
-            # if a letter was selected and feedback enabled, show the chosen letter
+            # if a letter was selected and feedback enabled, show the chosen
+            # letter
             if new_epoch and self.show_feedback:
                 self.feedback.administer(
                     last_selection,
@@ -396,7 +398,7 @@ def _init_copy_phrase_display(
         task_height=parameters['task_height'],
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
-                 parameters['stim_pos_y']),
+                  parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
         stim_sequence=['a'] * 10,
         stim_colors=[parameters['stim_color']] * 10,

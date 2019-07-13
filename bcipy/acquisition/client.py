@@ -155,7 +155,7 @@ class DataAcquisitionClient:
 
             self._data_processor = DataProcessor(
                 data_queue=self._process_queue,
-                msg_queue = msg_queue,
+                msg_queue=msg_queue,
                 processor=self._processor,
                 buf=self._buf,
                 wait=self._max_wait)

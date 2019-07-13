@@ -1,5 +1,4 @@
 import unittest
-import numpy as np
 
 from bcipy.helpers.signal_model import CopyPhraseWrapper
 from bcipy.helpers.task import alphabet
@@ -69,4 +68,5 @@ class TestSignalModelRelated(unittest.TestCase):
 
         # Test it throws an exception when letter is outside alphabet
         with self.assertRaises(Exception):
-            cp.letter_info([('A', 0.0), ('*', 1.0)], ['nontarget', 'nontarget'])
+            cp.letter_info([('A', 0.0), ('*', 1.0)],
+                           ['nontarget', 'nontarget'])

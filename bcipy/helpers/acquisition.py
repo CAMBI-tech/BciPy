@@ -24,7 +24,7 @@ analysis_channels_by_device = {
 
 
 def init_eeg_acquisition(parameters: dict, save_folder: str,
-                         clock=CountClock(), server: bool=False):
+                         clock=CountClock(), server: bool = False):
     """Initialize EEG Acquisition.
 
     Initializes a client that connects with the EEG data source and begins

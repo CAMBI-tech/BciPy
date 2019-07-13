@@ -1,6 +1,7 @@
 import numpy as np
 
-def downsample(data: np.array, factor: int=2):
+
+def downsample(data: np.array, factor: int = 2):
     """Downsamples the data to the given factor
 
     Parameters:

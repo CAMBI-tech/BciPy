@@ -7,9 +7,9 @@ from bcipy.helpers.triggers import NONE_VALUE, LslCopyPhraseLabeller, \
     write_trigger_file_from_lsl_calibration
 
 
-def sample_raw_data(trigger_seq: List[Tuple[str, str]] =[],
-                    first_trg_time: int=100,
-                    trigger_interval: int=10) -> Tuple[str, List[float]]:
+def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
+                    first_trg_time: int = 100,
+                    trigger_interval: int = 10) -> Tuple[str, List[float]]:
     """Helper function for creating mock data that looks like the raw_data.csv
     output. Adds trigger data to the TRG column at the specified interval.
 

@@ -3,13 +3,14 @@ import logging
 from bcipy.acquisition.util import StoppableThread
 log = logging.getLogger(__name__)
 
+
 class FileStreamer(StoppableThread):
     """Process that continuously reads data from a raw_data.csv file and
     publishes it to a Queue at the frequency specified in the metadata.
 
     Parameters
     ----------
-        data_file: str 
+        data_file: str
             raw data file from which to read
         data_queue : Queue
             Data will be written to the queue as it is acquired.
@@ -37,5 +38,5 @@ class FileStreamer(StoppableThread):
                 if not self.running():
                     break
                 self.data_queue.put(data)
-                time.sleep(1/fs)
+                time.sleep(1 / fs)
             log.debug("Stopping raw_data file streamer")

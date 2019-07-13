@@ -42,7 +42,9 @@ class TestAcquisition(unittest.TestCase):
         server.join()
 
         self.assertTrue('raw_data.csv' in client._processor._filename)
-        self.assertEqual(client.device_info.name, self.parameters['acq_device'])
+        self.assertEqual(
+            client.device_info.name,
+            self.parameters['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
     def test_allows_customization(self):

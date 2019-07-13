@@ -1,12 +1,9 @@
 import csv
 import datetime
-import glob
 import random
 
-from itertools import repeat
-from os import path
-from os.path import basename, dirname, splitext
-from typing import Dict, List, Sequence, Tuple
+from os.path import basename, dirname
+from typing import List, Tuple
 
 from psychopy import core
 
@@ -14,14 +11,11 @@ from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
 from bcipy.helpers.task import (
-    alphabet, fake_copy_phrase_decision, get_user_input,
-    process_data_for_decision, trial_complete_message)
+    alphabet, get_user_input, process_data_for_decision, trial_complete_message)
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model import CopyPhraseWrapper
-from bcipy.helpers.stimuli import generate_icon_match_images
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.tasks.task import Task
-from bcipy.helpers.system_utils import auto_str
 
 
 class RSVPIconToIconTask(Task):
@@ -469,6 +463,7 @@ class EpochManager():
     """
     # TODO: rather than pass in copy_phrase_task, provide a function to generate
     # stimulus for new epochs.
+
     def __init__(self, icons, copy_phrase_task, time_target):
         self.copy_phrase_task = copy_phrase_task
         self.target = None

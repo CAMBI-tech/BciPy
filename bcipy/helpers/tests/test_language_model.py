@@ -1,7 +1,7 @@
 import unittest
 
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
- equally_probable
+    equally_probable
 
 
 class TestLanguageModelRelated(unittest.TestCase):

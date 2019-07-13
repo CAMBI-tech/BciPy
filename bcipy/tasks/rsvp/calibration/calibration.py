@@ -192,9 +192,9 @@ def init_calibration_display_task(
         task_height=parameters['task_height'],
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
-                 parameters['stim_pos_y']),
+                  parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
-        stim_colors=[parameters['stim_color']* 10],
+        stim_colors=[parameters['stim_color'] * 10],
         is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'])

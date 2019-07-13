@@ -7,8 +7,7 @@ from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
 from bcipy.helpers.stimuli import play_sound, soundfiles,\
- random_rsvp_calibration_seq_gen, generate_icon_match_images, best_selection,\
- best_case_rsvp_seq_gen
+    random_rsvp_calibration_seq_gen, best_selection, best_case_rsvp_seq_gen
 
 MOCK_FS = 44100
 
@@ -35,7 +34,8 @@ class TestStimuliGeneration(unittest.TestCase):
         # assert the response is as expected
         self.assertIsInstance(timing, list)
 
-        # verify all the expected calls happended and the expected number of times
+        # verify all the expected calls happended and the expected number of
+        # times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
         verify(sd, times=1).play('data', MOCK_FS)
         verify(core, times=2).wait(any())
@@ -52,7 +52,8 @@ class TestStimuliGeneration(unittest.TestCase):
         with self.assertRaises(Exception):
             play_sound(sound_file_path)
 
-        # verify all the expected calls happended and the expected number of times
+        # verify all the expected calls happended and the expected number of
+        # times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
 
     def test_play_sound_sound_callback_evokes_with_timing(self):
@@ -82,7 +83,8 @@ class TestStimuliGeneration(unittest.TestCase):
             experiment_clock=experiment_clock,
         )
 
-        # verify all the expected calls happended and the expected number of times
+        # verify all the expected calls happended and the expected number of
+        # times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
         verify(sd, times=1).play('data', MOCK_FS)
         verify(core, times=2).wait(any())
@@ -96,7 +98,10 @@ class TestStimuliGeneration(unittest.TestCase):
             path.join(directory, '1.wav'),
             path.join(directory, '2.wav')
         ]
-        when(glob).glob(path.join(directory, '*.wav')).thenReturn(soundfile_paths)
+        when(glob).glob(
+            path.join(
+                directory,
+                '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
 
         gen = soundfiles(directory)
@@ -116,7 +121,10 @@ class TestStimuliGeneration(unittest.TestCase):
             path.join(directory, '1.wav'),
             path.join(directory, '2.wav')
         ]
-        when(glob).glob(path.join(directory, '*.wav')).thenReturn(soundfile_paths)
+        when(glob).glob(
+            path.join(
+                directory,
+                '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
         gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
@@ -160,7 +168,6 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual(
             len(seqs), len(set(seq_strings)),
             'All sequences should be different')
-
 
     def test_best_selection(self):
         """Test best_selection"""
@@ -214,12 +221,12 @@ class TestStimuliGeneration(unittest.TestCase):
                          'len_query should be respected.')
 
         self.assertEqual(['a', 'b', 'c'],
-                    best_selection(
-                        selection_elements=['a', 'b', 'c', 'd', 'e'],
-                        val=[0.5, 0.4, 0.1, 0.0, 0.0],
-                        len_query=3,
-                        always_included=['<']),
-                    'should ignore items not in the set.')
+                         best_selection(
+            selection_elements=['a', 'b', 'c', 'd', 'e'],
+            val=[0.5, 0.4, 0.1, 0.0, 0.0],
+            len_query=3,
+            always_included=['<']),
+            'should ignore items not in the set.')
 
     def test_best_case_sequence_gen(self):
         """Test best_case_rsvp_seq_gen"""

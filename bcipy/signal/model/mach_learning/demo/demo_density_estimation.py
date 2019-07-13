@@ -2,8 +2,7 @@
 
 import numpy as np
 from scipy.stats import norm, iqr
-from bcipy.signal.model.mach_learning.generative_mods.function_density_estimation \
-    import KernelDensityEstimate
+from bcipy.signal.model.mach_learning.generative_mods.function_density_estimation import KernelDensityEstimate
 import matplotlib.pyplot as plt
 
 

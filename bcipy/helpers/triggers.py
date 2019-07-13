@@ -25,8 +25,8 @@ class TriggerCallback:
 
 
 def _calibration_trigger(experiment_clock: core.Clock,
-                         trigger_type: str='sound',
-                         trigger_name: str='calibration_trigger',
+                         trigger_type: str = 'sound',
+                         trigger_name: str = 'calibration_trigger',
                          display=None,
                          on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
@@ -53,9 +53,6 @@ def _calibration_trigger(experiment_clock: core.Clock,
 
     # If sound trigger is selected, output calibration tones
     if trigger_type == SOUND_TYPE:
-        import sounddevice as sd
-        import soundfile as sf
-
         play_sound(
             sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
             dtype='float32',
@@ -77,7 +74,10 @@ def _calibration_trigger(experiment_clock: core.Clock,
                 'bcipy/static/images/testing_images/white.png',
                 display.size, 0.75)
 
-            display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
+            display.callOnFlip(
+                trigger_callback.callback,
+                experiment_clock,
+                trigger_name)
             if on_trigger is not None:
                 display.callOnFlip(on_trigger, trigger_name)
 
@@ -99,7 +99,7 @@ def _calibration_trigger(experiment_clock: core.Clock,
 def _write_triggers_from_sequence_calibration(
         array: list,
         trigger_file: TextIO,
-        offset: bool=False):
+        offset: bool = False):
     """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
@@ -281,7 +281,7 @@ def write_triggers_from_sequence_icon_to_icon(
                            "\n")
 
 
-def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
+def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
     """Trigger Decoder.
 
     Given a mode of operation (calibration, copy phrase, etc) and
@@ -331,7 +331,8 @@ def trigger_decoder(mode: str, trigger_path: str=None) -> tuple:
     calib_trigger_array = [line[2] for line in trigger_txt
                            if line[0] == 'calibration_trigger']
 
-    # If present, calculate the offset between the DAQ and Triggers from display
+    # If present, calculate the offset between the DAQ and Triggers from
+    # display
     if len(offset_array) == 1 and len(calib_trigger_array) == 1:
 
         # Extract the offset and calibration trigger time
@@ -484,7 +485,7 @@ def _extract_triggers(csvfile: TextIO,
 
 def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
                                             trigger_file: TextIO,
-                                            seq_len: int, trg_field: str='TRG'):
+                                            seq_len: int, trg_field: str = 'TRG'):
     """Creates a triggers.txt file from TRG data recorded in the raw_data
     output from a calibration."""
     extracted = extract_from_calibration(csvfile, seq_len, trg_field)
@@ -494,7 +495,7 @@ def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
 def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
                                             trigger_file: TextIO,
                                             copy_text: str, typed_text: str,
-                                            trg_field: str='TRG'):
+                                            trg_field: str = 'TRG'):
     """Creates a triggers.txt file from TRG data recorded in the raw_data
     output from a copy phrase."""
     extracted = extract_from_copy_phrase(csvfile, copy_text, typed_text,
@@ -515,7 +516,7 @@ def _write_trigger_file_from_extraction(trigger_file: TextIO,
 
 def extract_from_calibration(csvfile: TextIO,
                              seq_len: int,
-                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+                             trg_field: str = 'TRG') -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a calibration output csv file.
     Parameters:
     -----------
@@ -537,7 +538,7 @@ def extract_from_calibration(csvfile: TextIO,
 def extract_from_copy_phrase(csvfile: TextIO,
                              copy_text: str,
                              typed_text: str,
-                             trg_field: str='TRG') -> List[Tuple[str, str, str]]:
+                             trg_field: str = 'TRG') -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a copy phrase output csv file.
     Parameters:
     -----------

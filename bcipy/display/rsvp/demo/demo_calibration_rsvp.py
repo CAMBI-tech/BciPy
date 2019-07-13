@@ -1,7 +1,6 @@
 from psychopy import visual, core
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
 # Initialize Stimulus Parameters

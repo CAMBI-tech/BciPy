@@ -92,7 +92,11 @@ def best_case_rsvp_seq_gen(alp: list,
     alphabet = [i for i in alp]
 
     # query for the best selection
-    query = best_selection(alphabet, session_stimuli, stim_length, seq_constants)
+    query = best_selection(
+        alphabet,
+        session_stimuli,
+        stim_length,
+        seq_constants)
 
     # shuffle the returned values
     random.shuffle(query)
@@ -295,7 +299,8 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     return schedule_seq
 
 
-def generate_icon_match_images(experiment_length, image_path, number_of_sequences, timing, is_word):
+def generate_icon_match_images(
+        experiment_length, image_path, number_of_sequences, timing, is_word):
     """Generate Image Icon Matches.
 
     Generates an array of images to use for the icon matching task.
@@ -374,7 +379,8 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
     with Image.open(image_path) as pillow_image:
         image_width, image_height = pillow_image.size
 
-    # Resize image so that its largest dimension is the stimuli size defined in the parameters file
+    # Resize image so that its largest dimension is the stimuli size defined
+    # in the parameters file
     if image_width >= image_height:
         proportions = (1, (image_height / image_width))
     else:
@@ -384,7 +390,7 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
     screen_width, screen_height = screen_size
     if screen_width >= screen_height:
         sti_size = ((screen_height / screen_width) * sti_height *
-                    proportions[0],  sti_height * proportions[1])
+                    proportions[0], sti_height * proportions[1])
     else:
         sti_size = (
             sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
@@ -393,14 +399,14 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
 
 
 def play_sound(sound_file_path: str,
-               dtype: str='float32',
-               track_timing: bool=False,
+               dtype: str = 'float32',
+               track_timing: bool = False,
                sound_callback=None,
-               sound_load_buffer_time: float=0.5,
-               sound_post_buffer_time: float=1,
+               sound_load_buffer_time: float = 0.5,
+               sound_post_buffer_time: float = 1,
                experiment_clock=None,
-               trigger_name: str=None,
-               timing: list=[]) -> list:
+               trigger_name: str = None,
+               timing: list = []) -> list:
     """Play Sound.
 
     Using soundevice and soundfile, play a sound giving options to buffer times between
@@ -437,7 +443,8 @@ def play_sound(sound_file_path: str,
         timing.append(trigger_name)
         timing.append(experiment_clock.getTime())
 
-        # if there is a timing callback for sound, evoke it with the timing list
+        # if there is a timing callback for sound, evoke it with the timing
+        # list
         if sound_callback is not None:
             sound_callback(timing)
 
@@ -454,7 +461,7 @@ def play_sound(sound_file_path: str,
 
 
 def soundfiles(directory: str) -> Iterator[str]:
-    """Creates a generator that cycles through sound files (.wav) in a 
+    """Creates a generator that cycles through sound files (.wav) in a
     directory and returns the path to next sound file on each iteration.
 
     Parameters:

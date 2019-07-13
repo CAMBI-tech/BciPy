@@ -77,7 +77,7 @@ class MatrixDisplay:
         """ Draws static elements in a stimulus. """
 
         # Draw the grid
-        if len(self.stimuli) is 0:
+        if len(self.stimuli) == 0:
             self.make_spelling_grid()
 
         for stim in self.stimuli:
@@ -159,12 +159,13 @@ def determine_position_on_grid(row_idx, col_idx,
         x = uniform_grid_values_col[col_idx]
         y = uniform_grid_values_row[row_idx]
     except Exception as e:
-        log.debug(f'at index: {col_idx} Error: {e}')
+        print(f'at index: {col_idx} Error: {e}')
 
     # # else:
     # x = 0
 
     return (x, y)
+
 
 if __name__ == "__main__":
     # How many stimulations?

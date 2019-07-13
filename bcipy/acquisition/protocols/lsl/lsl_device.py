@@ -121,7 +121,7 @@ class LslDevice(Device):
         log.debug(metadata.as_xml())
         for marker_inlet in self._marker_inlets:
             log.debug("Streaming from marker inlet: %s",
-                          inlet_name(marker_inlet))
+                      inlet_name(marker_inlet))
 
         info_channels = self._read_channels(metadata)
         info_fs = metadata.nominal_srate()
@@ -231,9 +231,9 @@ class LslDevice(Device):
             if not marker.is_empty and timestamp >= marker.timestamp:
                 trg = marker.trg
                 log.debug(("Appending %s marker %s to sample at time %s; ",
-                               "time diff: %s"),
-                              name, marker, timestamp,
-                              timestamp - marker.timestamp)
+                           "time diff: %s"),
+                          name, marker, timestamp,
+                          timestamp - marker.timestamp)
                 self.current_markers[name] = Marker.empty()  # clear current
 
             # Add marker field to sample

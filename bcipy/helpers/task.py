@@ -35,7 +35,7 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 
     length_of_phrase = len(copy_phrase)
 
-    if length_of_spelled_letters is 0:
+    if length_of_spelled_letters == 0:
         text_task = copy_phrase[length_of_spelled_letters]
     else:
         text_task += copy_phrase[length_of_spelled_letters]
@@ -154,7 +154,8 @@ def process_data_for_decision(
         time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
     else:
         time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset + buffer_length) * daq.device_info.fs
+        time2 = (last_stim_time + static_offset +
+                 buffer_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -165,7 +166,8 @@ def process_data_for_decision(
     target_info = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time + buffer_length) * daq.device_info.fs
+    data_limit = (last_stim_time - first_stim_time +
+                  buffer_length) * daq.device_info.fs
 
     # Query for raw data
     try:
@@ -414,8 +416,10 @@ def trial_reshaper(trial_target_info: list,
         # MODE COPY PHRASE
         elif mode == 'copy_phrase':
 
-            # triggers in samples are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
+            # triggers in samples are mapped to triggers in number of filtered
+            # samples.
+            triggers = list(
+                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -444,8 +448,10 @@ def trial_reshaper(trial_target_info: list,
         # MODE FREE SPELL
         elif mode == 'free_spell':
 
-            # triggers in sample are mapped to triggers in number of filtered samples.
-            triggers = list(map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
+            # triggers in sample are mapped to triggers in number of filtered
+            # samples.
+            triggers = list(
+                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
 
             # 3 dimensional np array first dimension is channels
             # second dimension is trials and third dimension is time samples.
@@ -470,7 +476,8 @@ def trial_reshaper(trial_target_info: list,
             raise Exception(
                 'Trial_reshaper does not work in this operating mode.')
 
-        # Return our trials, labels and some useful information about the arrays
+        # Return our trials, labels and some useful information about the
+        # arrays
         return reshaped_trials, labels, num_of_sequences, trials_per_seq
 
     except Exception as e:

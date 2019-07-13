@@ -36,8 +36,14 @@ class LevelFeedback(VisualFeedback):
         self.font = parameters['feedback_font']
         self.target_line_width = parameters['feedback_target_line_width']
 
-        # colors needed for each level. This defines the number of levels in the bar indicator.
-        self.level_colors = ['red', 'darkorange', 'yellow', 'lightgreen', 'green']
+        # colors needed for each level. This defines the number of levels in
+        # the bar indicator.
+        self.level_colors = [
+            'red',
+            'darkorange',
+            'yellow',
+            'lightgreen',
+            'green']
 
         # array to hold our level feedback stimuli to be presented
         self.stimuli = []
@@ -51,7 +57,8 @@ class LevelFeedback(VisualFeedback):
 
         # loop through the levels wanted and construct the stimuli
         for index, color in enumerate(self.level_colors):
-            # this is the target indicator level and should stand out of the rest
+            # this is the target indicator level and should stand out of the
+            # rest
             if position == index:
                 self.stimuli[index].lineColor = self.feedback_indicator_color
                 self.stimuli[index].lineWidth = self.target_line_width
@@ -127,7 +134,9 @@ if __name__ == '__main__':
     from bcipy.display.display_main import init_display_window
 
     # Load a parameters file
-    parameters = load_json_parameters('bcipy/parameters/parameters.json', value_cast=True)
+    parameters = load_json_parameters(
+        'bcipy/parameters/parameters.json',
+        value_cast=True)
     display = init_display_window(parameters)
     clock = core.Clock()
     feedback = LevelFeedback(display, parameters, clock)

@@ -17,7 +17,8 @@ from bcipy.helpers.stimuli import play_sound
 log = logging.getLogger(__name__)
 
 
-def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished: bool=True):
+def offline_analysis(data_folder: str = None,
+                     parameters: dict = {}, alert_finished: bool = True):
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -57,7 +58,8 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=60)
 
     # bandpass filter from 2-45hz
-    filtered_data = bandpass.butter_bandpass_filter(notch_filter_data, 2, 45, fs, order=2)
+    filtered_data = bandpass.butter_bandpass_filter(
+        notch_filter_data, 2, 45, fs, order=2)
 
     # downsample
     data = downsample.downsample(filtered_data, factor=downsample_rate)
@@ -77,10 +79,10 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
     channel_map = analysis_channels(channels, type_amp)
 
     x, y, _, _ = trial_reshaper(t_t_i, t_i, data,
-                                      mode=mode, fs=fs, k=downsample_rate,
-                                      offset=offset,
-                                      channel_map=channel_map,
-                                      trial_length=trial_length)
+                                mode=mode, fs=fs, k=downsample_rate,
+                                offset=offset,
+                                channel_map=channel_map,
+                                trial_length=trial_length)
 
     k_folds = parameters.get('k_folds', 10)
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
@@ -93,7 +95,7 @@ def offline_analysis(data_folder: str=None, parameters: dict={}, alert_finished:
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs, save_figure=True, show_figure=False,
-        channel_names = analysis_channel_names_by_pos(channels, channel_map))
+        channel_names=analysis_channel_names_by_pos(channels, channel_map))
 
     log.info('Saving the model!')
     with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:

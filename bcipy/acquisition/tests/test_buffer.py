@@ -83,7 +83,7 @@ class TestBuffer(unittest.TestCase):
         for i, data in enumerate(mock_data(n_records, channel_count)):
             timestamp = float(i)
             if i >= n_records - latest_n:
-                latest.append((data, timestamp, i+1))
+                latest.append((data, timestamp, i + 1))
             buf.append(Record(data, timestamp, None))
 
         rows = buf.latest(latest_n)

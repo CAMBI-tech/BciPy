@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 
-from mockito import any, mock, when, unstub
+from mockito import unstub
 
-from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper,_float_val
+from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val
 from bcipy.helpers.load import load_json_parameters
 
 
@@ -89,19 +89,21 @@ class TestCalculateStimulationFreq(unittest.TestCase):
         with self.assertRaises(ZeroDivisionError):
             calculate_stimulation_freq(flash_time)
 
+
 class TestFloatVal(unittest.TestCase):
 
     def test_float_val_as_str(self):
-            col = 'Apple'
-            result = _float_val(col)
-            expected = 1.0
-            self.assertEqual(result,expected)
+        col = 'Apple'
+        result = _float_val(col)
+        expected = 1.0
+        self.assertEqual(result, expected)
 
     def test_float_val_as_int(self):
-            col = 3
-            result = _float_val(col)
-            expected = 3.0
-            self.assertEqual(result,expected)
+        col = 3
+        result = _float_val(col)
+        expected = 3.0
+        self.assertEqual(result, expected)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -110,7 +110,7 @@ class _ConsumerThread(threading.Thread):
             if not self._q.empty():
                 item = self._q.get()
                 log.debug('Getting %s: %s items in queue',
-                              str(item), str(self._q.qsize()))
+                          str(item), str(self._q.qsize()))
                 time.sleep(random.random())
 
 
