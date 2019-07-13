@@ -67,7 +67,7 @@ class TestDataAcquistionClient(unittest.TestCase):
     def test_daq_with_no_buffer(self):
         """get_data should return an empty list if daq._buf is None
         data length should return 0
-         """
+        """
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,

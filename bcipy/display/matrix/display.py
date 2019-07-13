@@ -159,7 +159,7 @@ def determine_position_on_grid(row_idx, col_idx,
         x = uniform_grid_values_col[col_idx]
         y = uniform_grid_values_row[row_idx]
     except Exception as e:
-        log.debug(f'at index: {col_idx} Error: {e}')
+        print(f'at index: {col_idx} Error: {e}')
 
     # # else:
     # x = 0
