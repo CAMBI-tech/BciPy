@@ -1,8 +1,9 @@
 import unittest
 from bcipy.helpers.task import SPACE_CHAR
 import numpy as np
+import math
 import string
-from bcipy.tasks.rsvp.main_frame import DecisionMaker
+from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 
 
 class TestDecisionMaker(unittest.TestCase):
@@ -18,7 +19,20 @@ class TestDecisionMaker(unittest.TestCase):
             stimuli_timing=[1, .2],
             seq_constants=None)
 
-    def test_init(self):
+        self.evidence_fusion = EvidenceFusion(list_name_evidence = ['A','B'], len_dist = 2)
+
+    def tearDown(self):
+
+        self.decision_maker.reset()
+        self.evidence_fusion.reset_history()
+
+    def test_evidence_fusion_init(self):
+        #print(self.evidence_fusion.likelihood)
+        #print(self.evidence_fusion.evidence_history)
+        #self.assertItemsEqual(self.evidence_fusion.likelihood,[0.5,0.5])
+        self.assertEqual(self.evidence_fusion.evidence_history,{'A': [], 'B': []})
+
+    def test_decision_maker_init(self):
         """Test initialisation"""
         self.assertEqual(self.decision_maker.min_num_seq, 1)
         self.assertEqual(self.decision_maker.max_num_seq, 3)
@@ -38,6 +52,8 @@ class TestDecisionMaker(unittest.TestCase):
                         self.decision_maker.list_epoch[-1]['list_distribution'][-1]
                         == probability_distribution))
         self.assertFalse(decision)
+        self.decision_maker.do_epoch()
+        self.assertEqual(self.decision_maker.sequence_counter,0)
 
     def test_decide_with_commit(self):
         """Test decide method with case of commit"""
@@ -94,3 +110,32 @@ class TestDecisionMaker(unittest.TestCase):
             probability_distribution)
         self.decision_maker.do_epoch()
         self.assertEqual(self.decision_maker.sequence_counter, 0)
+
+
+    def test_decide_state_update(self):
+        """Tests decide state update method"""
+        probability_distribution = np.ones(len(self.decision_maker.alphabet))
+        self.decision_maker.list_epoch[-1]['list_distribution'].append(probability_distribution)
+        decision = self.decision_maker.decide_state_update()
+        expected = 'A' #expect to commit to first letter in sequence, due to uniform probability
+        self.assertEqual(decision,'A')
+
+    def test_schedule_sequence(self):
+        """Test sequence scheduling. Should return new stimuli list, at random."""
+        probability_distribution = np.ones(len(self.decision_maker.alphabet))
+        old_counter = self.decision_maker.sequence_counter
+        self.decision_maker.list_epoch[-1]['list_distribution'].append(probability_distribution)
+        stimuli = self.decision_maker.schedule_sequence()
+        self.assertEqual(self.decision_maker.state,'.')
+        self.assertEqual(stimuli[0],self.decision_maker.list_epoch[-1]['list_sti'][-1])
+        self.assertLess(old_counter,self.decision_maker.sequence_counter)
+
+    def test_prepare_stimuli(self):
+        """Test that stimuli are prepared as expected"""
+        probability_distribution = np.ones(len(self.decision_maker.alphabet))
+        self.decision_maker.list_epoch[-1]['list_distribution'].append(probability_distribution)
+        stimuli = self.decision_maker.prepare_stimuli()
+        self.assertEqual(11,len(stimuli[0][0]))
+        for i in range(1,len(stimuli[0][0])):
+            self.assertIn(stimuli[0][0][i],self.decision_maker.alphabet)
+        self.assertEqual(stimuli[1][0][0:2],self.decision_maker.stimuli_timing)
