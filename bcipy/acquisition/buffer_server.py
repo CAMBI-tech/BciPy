@@ -109,7 +109,7 @@ def stop(mailbox, delete_archive=True):
     return _rpc(mailbox, request)
 
 
-def _rpc(mailbox, request, win=None, wait_reply=True):
+def _rpc(mailbox, request, wait_reply=True):
     """Makes a process call and optionally awaits its reply.
 
     Parameters
@@ -118,8 +118,6 @@ def _rpc(mailbox, request, win=None, wait_reply=True):
             process queue
         request : tuple
             (command, params), where command is a str and params is a tuple.
-        win : Window
-            window to reload in case Windows changes focus
         wait_reply : boolean, optional
             waits (blocks) until a response is provided from the server process
 
@@ -170,7 +168,7 @@ def count(mailbox):
 # pylint: disable=redefined-outer-name
 
 
-def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
+def get_data(mailbox, start=None, end=None, field='_rowid_'):
     """Query the buffer for a slice of data records.
 
     Parameters
@@ -181,8 +179,6 @@ def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
             timestamp of data lower bound; if missing, gets all data
         end : float, optional
             timestamp of data upper bound
-        win : Window
-            window to pass to _rpc for reloading
     Returns
     -------
         list of data rows within the given range.
@@ -191,8 +187,6 @@ def get_data(mailbox, start=None, end=None, field='_rowid_', win=None):
         request = (MSG_GET_ALL, None)
     else:
         request = (MSG_QUERY_SLICE, (start, end, field))
-    if win:
-        return _rpc(mailbox, request, win)
 
     return _rpc(mailbox, request)
 
