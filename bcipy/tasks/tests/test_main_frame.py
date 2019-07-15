@@ -27,9 +27,6 @@ class TestDecisionMaker(unittest.TestCase):
         self.evidence_fusion.reset_history()
 
     def test_evidence_fusion_init(self):
-        #print(self.evidence_fusion.likelihood)
-        #print(self.evidence_fusion.evidence_history)
-        #self.assertItemsEqual(self.evidence_fusion.likelihood,[0.5,0.5])
         self.assertEqual(self.evidence_fusion.evidence_history,{'A': [], 'B': []})
 
     def test_decision_maker_init(self):
