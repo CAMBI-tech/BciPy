@@ -172,7 +172,7 @@ def process_data_for_decision(
     # Query for raw data
     try:
         # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2, win=window)
+        raw_data = daq.get_data(start=time1, end=time2)
 
         # If not enough raw_data returned in the first query, let's try again
         #  using only the start param. This is known issue on Windows.
@@ -180,7 +180,7 @@ def process_data_for_decision(
         if len(raw_data) < data_limit:
 
             # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1, win=window)
+            raw_data = daq.get_data(start=time1)
 
             # If there is still insufficient data returned, throw an error
             if len(raw_data) < data_limit:
