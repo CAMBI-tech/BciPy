@@ -118,6 +118,8 @@ class RSVPCopyPhraseTask(Task):
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
 
+        self.artifact_rejection = parameters['Artifact Rejection']
+
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
 
@@ -282,10 +284,11 @@ class RSVPCopyPhraseTask(Task):
 
             else:
                 # Evaluate this sequence, returning whether to gen a new
-                #  epoch (seq) or stimuli to present
+                #  epoch (seq), new stimuli to present, or to repeat the same stimuli
+                #due to an artifact found in the raw data
                 new_epoch, sti = \
                     copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info, self.collection_window_len)
+                                                       target_info, self.collection_window_len,self.artifact_rejection)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {
@@ -311,10 +314,16 @@ class RSVPCopyPhraseTask(Task):
                 }
 
                 # If new_epoch is False, get the stimuli info returned
-                if not new_epoch:
+                if not new_epoch and 'stimuli' in sti:
                     ele_sti = sti[0]
                     timing_sti = sti[1]
                     color_sti = sti[2]
+
+                #if artifact found, repeat using the same stimuli and log
+                #that a sequence was rejected.
+                elif not new_epoch:
+                    artifacts = sti
+                    self.logger.debug("Sequence rejected due to found artifacts. Rules broken: " + str(artifacts))
 
                 # Get the current task text from the decision maker
                 text_task = copy_phrase_task.decision_maker.displayed_state

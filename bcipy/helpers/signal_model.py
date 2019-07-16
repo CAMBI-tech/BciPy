@@ -11,6 +11,9 @@ from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
     equally_probable
 
+from bcipy.signal.evaluate.evaluate import Evaluator
+
+
 
 class CopyPhraseWrapper:
     """Basic copy phrase task duty cycle wrapper.
@@ -85,8 +88,9 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers,
-                          target_info, window_length):
+        self.signal_evaluator = Evaluator()
+
+    def evaluate_sequence(self, raw_data, triggers, target_info, window_length,artifact_rejection):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -118,6 +122,17 @@ class CopyPhraseWrapper:
                                     k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
+
+        if artifact_rejection:
+
+            #check filtered data for artifacts
+            self.signal_evaluator.evaluate_signal(data)
+
+            #if any artifacts found, return broken rules
+            if True in self.signal_evaluator.broken_rules.getValues():
+
+                return False,self.signal_evaluator.broken_rules
+
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
