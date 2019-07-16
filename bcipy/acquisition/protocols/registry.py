@@ -3,10 +3,12 @@
 
 from bcipy.helpers.system_utils import import_submodules
 from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
+from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 
 # # import all submodules so we can introspect on subclasses.
-import_submodules('protocols')
+# import_submodules('protocols')
 
 
 def _key(pyclass):
@@ -18,9 +20,9 @@ def _key(pyclass):
     return pyclass.__module__.split(".")[-1].split('_')[0].upper()
 
 
-supported_devices = dict((_key(device), device)
-                         for device in Device.__subclasses__())
-
+# supported_devices = dict((_key(device), device)
+#                          for device in Device.__subclasses__())
+supported_devices = {'DSI': DsiDevice, 'LSL': LslDevice}
 
 # TODO: Refactor protocols to use a base class so we can introspect on them.
 # Otherwise, consider using a naming convention.
