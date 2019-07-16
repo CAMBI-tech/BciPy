@@ -865,5 +865,45 @@
     "helpTip": "What should the name of the main log file be for each BciPy session",
     "recommended_values": "",
     "type": "str"
+  },
+  "Artifact Rejection": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Artifact Rejection",
+    "helpTip": "Check data sequences for unwanted artifacts and rejects such sequences.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "HighVoltage Threshold": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "HighVoltage Threshold",
+    "helpTip": "Toggle high voltage check for artifact rejection.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "HighVoltage Value": {
+    "value": "50",
+    "section": "bci_config",
+    "readableName": "HighVoltage Threshold Value",
+    "helpTip": "Set high voltage threshold value for artifact rejection.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "LowVoltage Threshold": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "LowVoltage Threshold",
+    "helpTip": "Toggle low voltage check for artifact rejection.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "LowVoltage Value": {
+    "value": "-30",
+    "section": "bci_config",
+    "readableName": "LowVoltage Threshold Value",
+    "helpTip": "Set low voltage threshold for artifact rejection.",
+    "recommended_values": "",
+    "type": "int"
   }
 }
