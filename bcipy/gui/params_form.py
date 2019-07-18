@@ -296,9 +296,9 @@ class MainPanel(scrolled.ScrolledPanel):
             size=14)
         loading_box.Add(self.loaded_from)
         loading_box.AddSpacer(10)
-        
+
         self.get_parameters_from_file(self.json_file)
-        
+
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
                  0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)

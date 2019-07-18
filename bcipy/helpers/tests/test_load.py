@@ -1,12 +1,15 @@
 import unittest
 
+import json
 import tempfile
 import shutil
 import pickle
+from os import remove
 
 from bcipy.helpers.load import (
     load_json_parameters,
-    load_signal_model)
+    load_signal_model,
+    check_if_parameters_contains_all_keys)
 
 
 class TestLoad(unittest.TestCase):
@@ -49,7 +52,18 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
-
+        
+    def test_check_if_parameters_contains_all_keys(self):
+        """Test the function that adds default values from parameters.json to 
+        the parameters if they are not present in the loaded file"""
+        parameters = load_json_parameters(self.parameters, True)
+        parameters.pop('fake_data', None)
+        with open('temp_parameter_file.json', 'w') as outfile:
+            outfile.write('test')
+        parameters, missing_key_list = check_if_parameters_contains_all_keys(parameters, 'temp_parameter_file.json')
+        assert missing_key_list == ['fake_data']
+        assert 'fake_data' in parameters
+        remove('temp_parameter_file.json')
 
 if __name__ == '__main__':
     unittest.main()
