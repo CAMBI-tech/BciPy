@@ -15,7 +15,10 @@ from bcipy.tasks.task_registry import ExperimentType
 class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
-    PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
+    
+    def __init__(self, title, size, background_color):
+        super(RSVPKeyboard, self).__init__(title, size, background_color)
+        self.PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -31,22 +34,30 @@ class RSVPKeyboard(BCIGui):
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
+    def update_parameter_location(self):
+        if os.path.isfile('parameters_location.txt'):
+            with open('parameters_location.txt', 'r') as readfile:
+                self.PARAMETER_LOCATION = readfile.read()
+                
     def edit_parameters(self, _event) -> None:
         """Edit Parameters.
 
         Function for executing the edit parameter window
         """
-        subprocess.call('python bcipy/gui/params_form.py', shell=True)
+        self.update_parameter_location()
+        subprocess.call('python bcipy/gui/params_form.py -p {}'.format(self.PARAMETER_LOCATION), shell=True)
 
     def launch_bci_main(self, event: wx.Event) -> None:
+        self.update_parameter_location()
+                
         """Launch BCI MAIN"""
         if self.check_input():
             self.event_started = True
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
-                mode, experiment_type, username)
+            cmd = 'python bci_main.py -m {} -t {} -u {} -p {}'.format(
+                mode, experiment_type, username, self.PARAMETER_LOCATION)
 
             subprocess.Popen(cmd, shell=True)
 

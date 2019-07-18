@@ -50,11 +50,7 @@ class Form(wx.Panel):
         self.control_size = (control_width, control_height)
         self.help_font_size = 12
         self.help_color = 'DARK SLATE GREY'
-        with open(self.load_file) as f:
-            data = f.read()
-
-        config = json.loads(data)
-        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+        self.params = parent.params
 
         # TODO: group inputs by section
 
@@ -81,8 +77,6 @@ class Form(wx.Panel):
                 form_input = self.text_input(param)
 
             self.add_input(self.controls, key, form_input)
-
-        self.saveButton = wx.Button(self, label='Save')
 
     def add_input(self, controls: Dict[str, wx.Control], key: str,
                   form_input: FormInput) -> None:
@@ -186,8 +180,6 @@ class Form(wx.Panel):
                 else:
                     control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
 
-        self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
-
     def doLayout(self):
         """Layout the controls using Sizers."""
 
@@ -209,26 +201,10 @@ class Form(wx.Panel):
             else:
                 gridSizer.Add(control, **noOptions)
 
-        # Add the save button
-        gridSizer.Add(self.saveButton, flag=wx.ALIGN_CENTER)
-
         sizer.Add(gridSizer, border=10, flag=wx.ALL | wx.ALIGN_CENTER)
         self.SetSizerAndFit(sizer)
 
     # Callback methods:
-    def onSave(self, event: wx.EVT_BUTTON) -> None:
-        log.debug('Saving parameter data')
-
-        with open(self.json_file, 'w') as outfile:
-            json.dump({k: v._asdict() for k, v in self.params.items()},
-                      outfile, indent=JSON_INDENT)
-
-        dialog = wx.MessageDialog(
-            self, "Parameters Successfully Updated!", 'Info',
-            wx.OK | wx.ICON_INFORMATION)
-        dialog.ShowModal()
-        dialog.Destroy()
-
     def textEventHandler(self, key: str) -> Callable[[wx.EVT_TEXT], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
@@ -307,15 +283,20 @@ class MainPanel(scrolled.ScrolledPanel):
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
+        
+        with open(self.json_file) as f:
+            data = f.read()
 
+        config = json.loads(data)
+        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+                
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
                  0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
         vbox.AddSpacer(10)
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
-        loading_box.Add(static_text_control(self, label=f'Editing: {json_file}',
-                                            size=14))
+
         self.loaded_from = static_text_control(
             self,
             label=f'Loaded from: {json_file}',
@@ -326,6 +307,10 @@ class MainPanel(scrolled.ScrolledPanel):
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
         loading_box.Add(self.loadButton)
+        
+        self.saveButton = wx.Button(self, label='Save')
+        self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
+        loading_box.Add(self.saveButton)
 
         # Used for displaying help messages to the user.
         self.flash_msg = static_text_control(self, label='', size=14,
@@ -349,13 +334,55 @@ class MainPanel(scrolled.ScrolledPanel):
                 return     # the user changed their mind
             load_file = fd.GetPath()
             self.loaded_from.SetLabel(f'Loaded from: {load_file}')
-            self.flash_msg.SetLabel('Click the Save button to persist these '
-                                    'changes.')
-            self.vbox.Hide(self.form)
+                                    
+            with open(load_file) as f:
+                data = f.read()
+
+            config = json.loads(data)
+            self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+    
+        self.write_parameters_location_txt(load_file)
+        
+        self.refresh_form(load_file)
+
+    def onSave(self, event: wx.EVT_BUTTON) -> None:
+        with wx.FileDialog(self, 'Save parameters file',
+                           wildcard='JSON files (*.json)|*.json',
+                           style=wx.FD_SAVE) as fd:
+            if fd.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+            save_file = fd.GetPath()
+            
+        self.loaded_from.SetLabel(f'Loaded from: {save_file}')
+        self.json_file = save_file
+        self.params['parameter_location'] = self.params['parameter_location']._replace(value=save_file)
+            
+        log.debug('Saving parameter data')
+
+        with open(save_file, 'w') as outfile:
+            json.dump({k: v._asdict() for k, v in self.params.items()},
+                      outfile, indent=JSON_INDENT) 
+                      
+        self.write_parameters_location_txt(save_file)
+                      
+        self.refresh_form()
+        
+        dialog = wx.MessageDialog(
+            self, "Parameters Successfully Updated!", 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        dialog.ShowModal()
+        dialog.Destroy()
+        
+    def refresh_form(self, load_file=None):
+        self.vbox.Hide(self.form)
         self.form = Form(self, json_file=self.json_file, load_file=load_file)
         self.vbox.Add(self.form)
         self.SetupScrolling()
-
+        
+    def write_parameters_location_txt(self, location):
+        with open('parameters_location.txt', 'w') as outfile:
+            outfile.write(location)
+        
     def OnChildFocus(self, event):
         event.Skip()
 
@@ -371,5 +398,11 @@ def main(title='BCI Parameters', size=(650, 550),
     app.MainLoop()
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    # Command line utility for adding arguments/ paths via command line
+    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
+                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    args = parser.parse_args()
+    main(json_file=args.parameters)
