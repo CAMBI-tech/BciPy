@@ -1,0 +1,880 @@
+{
+  "is_txt_stim": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Is Text Stimuli",
+    "helpTip": "Is this Text -true- or Image -false-",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "fake_data": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake Data Sessions",
+    "helpTip": "If true, fake data server used",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "full_screen": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Full Screen",
+    "helpTip": "Full Screen Mode",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "stim_screen": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Stimuli Screen",
+    "helpTip": "For dual display, the screen in which the stimuli should be diplayed. Value should be 0 (primary) or 1 (secondary).",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "stim_number": {
+    "value": "100",
+    "section": "bci_config",
+    "readableName": "Number of sequences to present over the experiment",
+    "helpTip": "Number of sequences to present over the experiment",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "stim_length": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Number of trials to present in a sequence",
+    "helpTip": "Number of trials to present in a sequence",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "background_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Main Window Background Color",
+    "helpTip": "Main Window Background Color.",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "offline_analysis_tone": {
+    "value": "bcipy/static/sounds/beep.wav",
+    "section": "bci_config",
+    "readableName": "Path to offline analysis tone sound files",
+    "helpTip": "Where is the tone you want to play after offline analysis completes.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "time_flash": {
+    "value": "0.25",
+    "section": "bci_config",
+    "readableName": "Flash Length for Letters (sec)",
+    "helpTip": "Flash Length for Letters",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "max_seq_len": {
+    "value": "50",
+    "section": "bci_config",
+    "readableName": "Maximum Sequence Length",
+    "helpTip": "Maximum number of sequences to present in spelling tasks. Task will end if this is exceeded.",
+    "recommended_values": [
+      "20",
+      "25"
+    ],
+    "type": "int"
+  },
+  "max_seq_per_trial": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Maximum Sequences Per Trial",
+    "helpTip": "Maximum number of sequences to present for a single trial before making a decision",
+    "recommended_values": [
+      "10",
+      "15"
+    ],
+    "type": "int"
+  },
+  "filter_high_pass": {
+    "value": "45",
+    "section": "signal_config",
+    "readableName": "High Pass Filter Cutoff",
+    "helpTip": "High Pass Filter Cutoff (Hz)",
+    "recommended_values": [
+      "45",
+      "50"
+    ],
+    "type": "float"
+  },
+  "filter_low_pass": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "Low Pass Filter Cutoff",
+    "helpTip": "Low Pass Filter Cutoff (Hz)",
+    "recommended_values": [
+      "1",
+      "2"
+    ],
+    "type": "float"
+  },
+  "filter_order": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "Filter Order",
+    "helpTip": "Filter Order",
+    "recommended_values": [
+      "2",
+      "3"
+    ],
+    "type": "float"
+  },
+  "notch_filter_frequency": {
+    "value": "60",
+    "section": "signal_config",
+    "readableName": "Notch Filter Frequency",
+    "helpTip": "Notch Filter Frequency. Used to remove noise from surronding environment.",
+    "recommended_values": [
+      "59",
+      "60"
+    ],
+    "type": "float"
+  },
+  "min_seq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Sequence Length",
+    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
+  "path_to_fst": {
+    "value": "language_model/fst/brown_closure.n5.kn.fst",
+    "section": "lang_model_config",
+    "readableName": "Language Model",
+    "helpTip": "FST file for language model",
+    "recommended_values": "",
+    "type": "filepath"
+  },
+  "lang_model_type": {
+    "value": "PRELM",
+    "section": "lang_model_config",
+    "readableName": "Language Model Type",
+    "helpTip": "Language Model to be used.",
+    "recommended_values": [
+      "PRELM",
+      "OCLM"
+    ],
+    "type": "str"
+  },
+  "languagemodelenabled": {
+    "value": "false",
+    "section": "lang_model_config",
+    "readableName": "Language Model Enabled",
+    "helpTip": "This is the language model.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "lang_model_server_host": {
+    "value": "127.0.0.1",
+    "section": "lang_model_config",
+    "readableName": "Language Model Host",
+    "helpTip": "Language Model Host",
+    "recommended_values": [
+      "127.0.0.1",
+      "0.0.0.0"
+    ],
+    "type": "str"
+  },
+  "lang_model_server_port": {
+    "value": "5000",
+    "section": "lang_model_config",
+    "readableName": "Language Model Port",
+    "helpTip": "Language Model Port",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "lm_backspace_prob": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Backspace probability",
+    "helpTip": "Language Model probability for the backspace character.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "trial_complete_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Trail Complete Message Color",
+    "helpTip": "Trail Complete Message Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "task_font": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "Font Task",
+    "helpTip": "Font Task",
+    "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
+      "Times"
+    ],
+    "type": "str"
+  },
+  "task_height": {
+    "value": "0.1",
+    "section": "bci_config",
+    "readableName": "Height Task",
+    "helpTip": "Height Task",
+    "recommended_values": [
+      "0.1"
+    ],
+    "type": "float"
+  },
+  "task_text": {
+    "value": "HELLO_THERE",
+    "section": "bci_config",
+    "readableName": "text task",
+    "helpTip": "text task",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "spelled_letters_count": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Spelled Letters Count",
+    "helpTip": "The number of letters in the Copy Phrase that should already be spelled.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "max_minutes": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Max Time to Spell",
+    "helpTip": "The maximum time (in minutes) allowed to attempt to spell a Copy Phrase before stopping.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "decision_threshold": {
+    "value": "0.8",
+    "section": "bci_config",
+    "readableName": "Decision Threshold",
+    "helpTip": "Minimum combined likelihood required for a decision in a Copy Phrase task",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "info_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Color Text",
+    "helpTip": "Color Text",
+    "recommended_values": [
+      "white",
+      "black",
+      "blue"
+    ],
+    "type": "str"
+  },
+  "info_font": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "Font Text",
+    "helpTip": "Font Text",
+    "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
+      "Times"
+    ],
+    "type": "str"
+  },
+  "text_pos_x": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Position Text (X)",
+    "helpTip": "Position Text (X)",
+    "recommended_values": [
+      "0"
+    ],
+    "type": "float"
+  },
+  "text_pos_y": {
+    "value": "-0.75",
+    "section": "bci_config",
+    "readableName": "Position Text (Y)",
+    "helpTip": "Position Text (Y)",
+    "recommended_values": [
+      "-0.75"
+    ],
+    "type": "float"
+  },
+  "info_text": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Text below main presentation",
+    "helpTip": "Text below main presentation",
+    "recommended_values": [
+      "",
+      "Demo Text",
+      "DEMO"
+    ],
+    "type": "str"
+  },
+  "info_height": {
+    "value": "0.1",
+    "section": "bci_config",
+    "readableName": "Text Height",
+    "helpTip": "Text Height",
+    "recommended_values": [
+      "0.1"
+    ],
+    "type": "float"
+  },
+  "stim_font": {
+    "value": "Arial",
+    "section": "bci_config",
+    "readableName": "Font Stimuli",
+    "helpTip": "Font Stimuli",
+    "recommended_values": [
+      "Verdana",
+      "Arial",
+      "Courier New",
+      "Georgia",
+      "Times"
+    ],
+    "type": "str"
+  },
+  "stim_space_char": {
+    "value": "\u2013",
+    "section": "bci_config",
+    "readableName": "Space Character",
+    "helpTip": "Character displayed to the participant which represents a space",
+    "recommended_values": [
+      "_",
+      "\u2013",
+      "\u2012",
+      "\u25a1"
+    ],
+    "type": "str"
+  },
+  "stim_pos_x": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Pos Stimuli X",
+    "helpTip": "Pos Stimuli X",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_pos_y": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Pos Stimuli Y",
+    "helpTip": "Pos Stimuli Y",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_height": {
+    "value": "0.6",
+    "section": "bci_config",
+    "readableName": "Stimuli Height (px)",
+    "helpTip": "Stimuli Height",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "task_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Task Color",
+    "helpTip": "Color of Task Text: Ex. 1/100",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "stim_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Stimuli Color",
+    "helpTip": "Stimuli Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "target_letter_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Target Letter Color",
+    "helpTip": "Target Letter Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "fixation_color": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Fixation Color",
+    "helpTip": "Fixation Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "trigger_type": {
+    "value": "image",
+    "section": "bci_config",
+    "readableName": "What type of Calibration Trigger should be used",
+    "helpTip": "Select a calibration trigger type to be used",
+    "recommended_values": [
+      "image",
+      "sound"
+    ],
+    "type": "str"
+  },
+  "path_to_presentation_images": {
+    "value": "bcipy/static/images/bci_main_images/",
+    "section": "bci_config",
+    "readableName": "Path to images and/or sound files",
+    "helpTip": "Is this Text -True- or Image -False-",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "alert_sounds_path": {
+    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "section": "bci_config",
+    "readableName": "Alert sounds directory",
+    "helpTip": "Path to the sound files used in the Alert Tone Calibration Task",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "alert_sound_delay": {
+    "value": "0.4",
+    "section": "bci_config",
+    "readableName": "Alert sound delay",
+    "helpTip": "Delay in seconds between playing an alert tone and presenting the target",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "time_target": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "Target Letter Presentation Length (sec)",
+    "helpTip": "Target Letter Presentation Length",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "time_cross": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Time Fixation Cross (sec)",
+    "helpTip": "Time Fixation Cross",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "color_bar_bg": {
+    "value": "green",
+    "section": "bci_config",
+    "readableName": "Color Bar Graph Bars",
+    "helpTip": "Color Bar Graph Bars",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "window_width": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Stimuli Presentation Window Width (px)",
+    "helpTip": "Stimuli Presentation Window Width",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "window_height": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Stimuli Presentation Window Height (px)",
+    "helpTip": "Stimuli Presentation Window Height",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "buffer_name": {
+    "value": "buffer.db",
+    "section": "bci_config",
+    "readableName": "Path to the buffer database for data acquistion",
+    "helpTip": "Path to the buffer database for data acquistion",
+    "recommended_values": "",
+    "type": "filepath"
+  },
+  "acq_device": {
+    "value": "LSL",
+    "section": "acq_config",
+    "readableName": "Acquisition Device",
+    "helpTip": "Acquisition Device",
+    "recommended_values": [
+      "DSI",
+      "LSL"
+    ],
+    "type": "str"
+  },
+  "acq_host": {
+    "value": "127.0.0.1",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Host",
+    "helpTip": "Acquisition Device Host",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "acq_port": {
+    "value": "9000",
+    "section": "acq_config",
+    "readableName": "Acquisition Device Port",
+    "helpTip": "Acquisition Device Port",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "acq_show_viewer": {
+    "value": "false",
+    "section": "acq_config",
+    "readableName": "Show EEG Viewer",
+    "helpTip": "Display the EEG data in a separate window.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "eeg_buffer_len": {
+    "value": "2",
+    "section": "bci_config",
+    "readableName": "End of file eeg buffer length (sec)",
+    "helpTip": "End of file eeg buffer length",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "task_buffer_len": {
+    "value": "0.75",
+    "section": "bci_config",
+    "readableName": "Task Buffer Length (sec)",
+    "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "raw_data_name": {
+    "value": "raw_data.csv",
+    "section": "bci_config",
+    "readableName": "Raw Data Filename",
+    "helpTip": "Raw Data Filename",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "static_trigger_offset": {
+    "value": ".1",
+    "section": "bci_config",
+    "readableName": "Static Trigger Offset",
+    "helpTip": "Known offset of the system being used in seconds. Do not edit this unless you know what you are doing!",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "trigger_file_name": {
+    "value": "triggers.txt",
+    "section": "bci_config",
+    "readableName": "Triggers File Name",
+    "helpTip": "Triggers File Name",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "session_file_name": {
+    "value": "session.json",
+    "section": "bci_config",
+    "readableName": "Session Data File Name",
+    "helpTip": "Session Data File Name",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "data_save_loc": {
+    "value": "data/",
+    "section": "bci_config",
+    "readableName": "Data Save Location",
+    "helpTip": "Data Save Location",
+    "recommended_values": [
+      "data/"
+    ],
+    "type": "directorypath"
+  },
+  "parameter_location": {
+    "value": "bcipy/parameters/parameters.json",
+    "section": "bci_config",
+    "readableName": "Parameter Location",
+    "helpTip": "Parameter Location",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "type": "filepath"
+  },
+  "trial_complete_message": {
+    "value": "Complete! Saving data...",
+    "section": "bci_config",
+    "readableName": "Trial Complete Message",
+    "helpTip": "Message that displays at the end of trial",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "wait_screen_message": {
+    "value": "Press Space or Esc to Exit",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message",
+    "helpTip": "Message that displays at the beginning of trial and when user pauses",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "wait_screen_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message Color",
+    "helpTip": "Wait Screen Message Color, when background_color is white this should be black",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_flash_time": {
+    "value": "2",
+    "section": "feedback_config",
+    "readableName": "feedback_flash_time",
+    "helpTip": "feedback_flash_time",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_pos_x": {
+    "value": "-0.72",
+    "section": "feedback_config",
+    "readableName": "feedback_pos_x",
+    "helpTip": "feedback_pos_x",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_pos_y": {
+    "value": "0",
+    "section": "feedback_config",
+    "readableName": "feedback_pos_y",
+    "helpTip": "feedback_pos_y",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_stim_height": {
+    "value": "0.35",
+    "section": "feedback_config",
+    "readableName": "feedback_stim_height",
+    "helpTip": "feedback_stim_height",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_stim_width": {
+    "value": "0.35",
+    "section": "feedback_config",
+    "readableName": "feedback_stim_width",
+    "helpTip": "feedback_stim_width",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_line_width": {
+    "value": "1",
+    "section": "feedback_config",
+    "readableName": "feedback_line_width",
+    "helpTip": "feedback_line_width",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_font": {
+    "value": "Arial",
+    "section": "feedback_config",
+    "readableName": "feedback_font",
+    "helpTip": "feedback_font",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "show_feedback": {
+    "value": "true",
+    "section": "feedback_config",
+    "readableName": "show_feedback",
+    "helpTip": "Show Feedback for the Task. Must be configured per task.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "feedback_message_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "feedback_message_color",
+    "helpTip": "feedback_message_color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_line_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "feedback_line_color",
+    "helpTip": "feedback_line_color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_padding": {
+    "value": "0.37",
+    "section": "feedback_config",
+    "readableName": "feedback_padding",
+    "helpTip": "feedback_padding",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_buffer_time": {
+    "value": "1",
+    "section": "feedback_config",
+    "readableName": "Time in between feedback and sequences",
+    "helpTip": "Feedback Buffer Time in Seconds",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_target_line_width": {
+    "value": "100",
+    "section": "feedback_config",
+    "readableName": "Feedback Target Line Width",
+    "helpTip": "The width of target feedback for the level feedback",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "feedback_band_lower_limit": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Band Lower Limit",
+    "helpTip": "Lower Band for PSD Feedback Tasks",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_band_upper_limit": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Band Upper Limit",
+    "helpTip": "Upper Band for PSD Feedback Tasks",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_5_threshold": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 5 Threshold",
+    "helpTip": "Threshold above which level five (highest) feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_4_threshold": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 4 Threshold",
+    "helpTip": "Threshold above which level four feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_3_threshold": {
+    "value": "4",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 3 Threshold",
+    "helpTip": "Threshold above which level three feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_level_2_threshold": {
+    "value": "7",
+    "section": "feedback_config",
+    "readableName": "Feedback Level 2 Threshold",
+    "helpTip": "Threshold above which level two feedback is given (InterSequenceFeedback)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "down_sampling_rate": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "down_sampling_rate",
+    "helpTip": "down_sampling_rate",
+    "recommended_values": "[2]",
+    "type": "int"
+  },
+  "k_folds": {
+    "value": "10",
+    "section": "signal_config",
+    "readableName": "Number of K folds in CV",
+    "helpTip": "Number of K folds in CV",
+    "recommended_values": "[10]",
+    "type": "int"
+  },
+  "enable_breaks": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Enable calibration breaks",
+    "helpTip": "Enable breaks in RSVP calibration",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "break_len": {
+    "value": "30",
+    "section": "bci_config",
+    "readableName": "Break length (seconds)",
+    "helpTip": "break_len",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trials_before_break": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Number of calibration trials before break",
+    "helpTip": "The number of trials that will take place before a break",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "break_message": {
+    "value": "Take a break!",
+    "section": "bci_config",
+    "readableName": "Break Message",
+    "helpTip": "The message that displays during a break in calibration",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "word_matching_text_size": {
+    "value": "0.2",
+    "section": "bci_config",
+    "readableName": "Word to icon matching text height",
+    "helpTip": "Default height to use for words that match icons",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "collection_window_after_trial_length": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data collection window after each stimuli (seconds)",
+    "helpTip": "Length of the data collection window after each stimuli (seconds)",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "len_data_sequence_buffer": {
+    "value": "0.5",
+    "section": "bci_config",
+    "readableName": "Length of the data sequence buffer",
+    "helpTip": "Length of the data sequence buffer",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "psd_method": {
+    "value": "Welch",
+    "section": "bci_config",
+    "readableName": "Power Spectral Density Method",
+    "helpTip": "The method used to approximate power spectral density bands",
+    "recommended_values": [
+      "Welch",
+      "MutliTaper"
+    ],
+    "type": "str"
+  },
+  "backspace_always_shown": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Backspace always shown",
+    "helpTip": "Should the backspace character always be shown in Copy Phrase tasks.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "log_name": {
+    "value": "bcipy_session.txt",
+    "section": "bci_config",
+    "readableName": "Name of BciPy log file",
+    "helpTip": "What should the name of the main log file be for each BciPy session",
+    "recommended_values": "",
+    "type": "str"
+  }
+}

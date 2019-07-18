@@ -85,6 +85,25 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
                     "Parameters file is formatted incorrectly!")
 
         f.close()
+        
+        # check if any new parameters exist in default-parameters, and,
+        # if so, add them to the dictionary
+        with codecsopen('bcipy/parameters/default-parameters.json', 'r', encoding='utf-8') as f:
+            parameters_duplicate = []
+            try:
+                parameters_default = jsonload(f)
+                if value_cast:
+                    parameters_default = _cast_parameters(parameters_default)
+                
+                for key in parameters_default:
+                    if key not in parameters:
+                        parameters[key] = parameters_default[key]
+                   
+            except ValueError:
+                raise ValueError(
+                    "Default parameters file is formatted incorrectly!")
+                    
+        f.close()
 
     except IOError:
         raise IOError("Incorrect path to parameters given! Please try again.")
