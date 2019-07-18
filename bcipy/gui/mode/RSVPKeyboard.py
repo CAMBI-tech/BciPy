@@ -108,8 +108,9 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-def run_rsvp_gui():
+def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json'):
     """Create the GUI and run"""
+    self.PARAMETER_LOCATION = default_param_location
     tasks = ExperimentType.by_mode()['RSVP']
 
     task_colors = itertools.cycle(
@@ -186,4 +187,10 @@ def run_rsvp_gui():
 
 
 if __name__ == "__main__":
-    run_rsvp_gui()
+    import argparse
+    parser = argparse.ArgumentParser()
+    # Command line utility for adding arguments/ paths via command line
+    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
+                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    args = parser.parse_args()
+    run_rsvp_gui(default_param_location=args.parameters)
