@@ -1,5 +1,6 @@
 from tkinter import Tk
 import numpy as np
+import os
 import pandas as pd
 import logging
 from codecs import open as codecsopen
@@ -53,8 +54,8 @@ def cast_value(value):
 def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """Load JSON Parameters.
 
-    Given a path to a json of parameters, convert to a dictionary and optionally
-        cast the type.
+    Given a path to a json of parameters, load the json file as a dict, and
+        check if it contains all necessary values.
 
     Expects the following format:
     "fake_data": {
@@ -72,6 +73,20 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     :param: value_case: True/False cast values to specified type.
     """
     # loads in json parameters and turns it into a dictionary
+    parameters = open_parameters(path, value_cast)
+    if not os.path.samefile('bcipy/parameters/parameters.json', path):
+        # if parameters are loaded from a non-default file, check if any new
+        # parameters exist in default parameters, and,if so, add them to the
+        # dictionary
+        parameters_default = open_parameters('bcipy/parameters/parameters.json', value_cast)
+        for key in parameters_default:
+            if key not in parameters:
+                parameters[key] = parameters_default[key]
+    return parameters
+
+
+def open_parameters(path: str, value_cast: bool) -> dict:
+    """Convert a parameters file to a dict, and optionally cast the type"""
     try:
         with codecsopen(path, 'r', encoding='utf-8') as f:
             parameters = []
@@ -83,28 +98,7 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
             except ValueError:
                 raise ValueError(
                     "Parameters file is formatted incorrectly!")
-
         f.close()
-        
-        # check if any new parameters exist in default-parameters, and,
-        # if so, add them to the dictionary
-        with codecsopen('bcipy/parameters/default-parameters.json', 'r', encoding='utf-8') as f:
-            parameters_duplicate = []
-            try:
-                parameters_default = jsonload(f)
-                if value_cast:
-                    parameters_default = _cast_parameters(parameters_default)
-                
-                for key in parameters_default:
-                    if key not in parameters:
-                        parameters[key] = parameters_default[key]
-                   
-            except ValueError:
-                raise ValueError(
-                    "Default parameters file is formatted incorrectly!")
-                    
-        f.close()
-
     except IOError:
         raise IOError("Incorrect path to parameters given! Please try again.")
 
