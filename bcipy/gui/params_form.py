@@ -4,7 +4,8 @@ import json
 import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple
-from os import sep
+from os import sep, path
+from bcipy.helpers.load import check_if_parameters_contains_all_keys
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
@@ -340,6 +341,19 @@ class MainPanel(scrolled.ScrolledPanel):
 
             config = json.loads(data)
             self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+            
+            self.params, missing_keys = check_if_parameters_contains_all_keys(self.params, load_file)
+            
+            if missing_keys:
+                for each_key in missing_keys:
+                        self.params[each_key] = Parameter(*self.params[each_key].values())
+                        
+                dialog = wx.MessageDialog(
+                    self, "Parameters file {} is missing keys {}. The default values for these keys will be loaded.".format(load_file, str(missing_keys)), 'Warning',
+                    wx.OK | wx.ICON_EXCLAMATION)
+                dialog.ShowModal()
+                dialog.Destroy()
+                
     
         self.write_parameters_location_txt(load_file)
         

@@ -74,15 +74,25 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """
     # loads in json parameters and turns it into a dictionary
     parameters = open_parameters(path, value_cast)
-    if not os.path.samefile('bcipy/parameters/parameters.json', path):
+    parameters, _ = check_if_parameters_contains_all_keys(parameters, path, value_cast)
+    return parameters
+    
+def check_if_parameters_contains_all_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
+    """Checks if the parameters dict being loaded contains all of the same keys 
+    as the default parameters file. If not, it adds the default values to the 
+    dict, and returns a tuple of the updated dict, and a list of the missing keys."""
+    missing_key_list = []
+    if not os.path.samefile('bcipy/parameters/parameters.json', new_param_path):
         # if parameters are loaded from a non-default file, check if any new
         # parameters exist in default parameters, and,if so, add them to the
         # dictionary
         parameters_default = open_parameters('bcipy/parameters/parameters.json', value_cast)
         for key in parameters_default:
             if key not in parameters:
+                missing_key_list.append(key)
                 parameters[key] = parameters_default[key]
-    return parameters
+                
+    return (parameters, missing_key_list)
 
 
 def open_parameters(path: str, value_cast: bool) -> dict:
