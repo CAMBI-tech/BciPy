@@ -6,6 +6,7 @@ from typing import Callable, Dict, Tuple
 from collections import namedtuple
 from os import sep, path
 from bcipy.helpers.load import check_if_parameters_contains_all_keys
+from bcipy.helpers.system_utils import bcipy_version
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
@@ -318,6 +319,8 @@ class MainPanel(scrolled.ScrolledPanel):
         save_box.Add(self.restoreDefaultsButton)
 
         loading_box.Add(save_box)
+        loading_box.AddSpacer(10)
+        loading_box.Add(static_text_control(self, label='BciPy version {}'.format(bcipy_version()), size=14))
 
         # Used for displaying help messages to the user.
         self.flash_msg = static_text_control(self, label='', size=14,

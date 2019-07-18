@@ -16,9 +16,9 @@ class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
 
-    def __init__(self, title, size, background_color):
+    def __init__(self, title, size, background_color, default_param_location='bcipy/parameters/parameters.json'):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
-        self.PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
+        self.PARAMETER_LOCATION = default_param_location
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -110,7 +110,6 @@ class RSVPKeyboard(BCIGui):
 
 def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json'):
     """Create the GUI and run"""
-    self.PARAMETER_LOCATION = default_param_location
     tasks = ExperimentType.by_mode()['RSVP']
 
     task_colors = itertools.cycle(
@@ -127,7 +126,8 @@ def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json'):
     # Start the app and init the main GUI
     app = wx.App(False)
     gui = RSVPKeyboard(
-        title="RSVPKeyboard", size=(window_width, 550), background_color='black')
+        title="RSVPKeyboard", size=(window_width, 550), background_color='black',
+        default_param_location=default_param_location)
 
     # STATIC TEXT!
     gui.add_static_text(
