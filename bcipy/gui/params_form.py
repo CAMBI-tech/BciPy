@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple
-from os import sep, path
+from os import sep
 from bcipy.helpers.load import check_if_parameters_contains_all_keys
 
 log = logging.getLogger(__name__)
@@ -284,13 +284,13 @@ class MainPanel(scrolled.ScrolledPanel):
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
-        
+
         with open(self.json_file) as f:
             data = f.read()
 
         config = json.loads(data)
         self.params = {k: Parameter(*v.values()) for k, v in config.items()}
-                
+
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
                  0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
@@ -308,7 +308,7 @@ class MainPanel(scrolled.ScrolledPanel):
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
         loading_box.Add(self.loadButton)
-        
+
         self.saveButton = wx.Button(self, label='Save')
         self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
         loading_box.Add(self.saveButton)
@@ -335,28 +335,29 @@ class MainPanel(scrolled.ScrolledPanel):
                 return     # the user changed their mind
             load_file = fd.GetPath()
             self.loaded_from.SetLabel(f'Loaded from: {load_file}')
-                                    
+
             with open(load_file) as f:
                 data = f.read()
 
             config = json.loads(data)
             self.params = {k: Parameter(*v.values()) for k, v in config.items()}
-            
+
             self.params, missing_keys = check_if_parameters_contains_all_keys(self.params, load_file)
-            
+
             if missing_keys:
                 for each_key in missing_keys:
-                        self.params[each_key] = Parameter(*self.params[each_key].values())
-                        
+                    self.params[each_key] = Parameter(*self.params[each_key].values())
+
                 dialog = wx.MessageDialog(
-                    self, "Parameters file {} is missing keys {}. The default values for these keys will be loaded.".format(load_file, str(missing_keys)), 'Warning',
-                    wx.OK | wx.ICON_EXCLAMATION)
+                    self, "Parameters file {} is missing keys {}. The default "
+                    "values for these keys will be loaded.".format(
+                        load_file, str(missing_keys)), 'Warning', wx.OK |
+                    wx.ICON_EXCLAMATION)
                 dialog.ShowModal()
                 dialog.Destroy()
-                
-    
+
         self.write_parameters_location_txt(load_file)
-        
+
         self.refresh_form(load_file)
 
     def onSave(self, event: wx.EVT_BUTTON) -> None:
@@ -366,37 +367,37 @@ class MainPanel(scrolled.ScrolledPanel):
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
             save_file = fd.GetPath()
-            
+
         self.loaded_from.SetLabel(f'Loaded from: {save_file}')
         self.json_file = save_file
         self.params['parameter_location'] = self.params['parameter_location']._replace(value=save_file)
-            
+
         log.debug('Saving parameter data')
 
         with open(save_file, 'w') as outfile:
             json.dump({k: v._asdict() for k, v in self.params.items()},
-                      outfile, indent=JSON_INDENT) 
-                      
+                      outfile, indent=JSON_INDENT)
+
         self.write_parameters_location_txt(save_file)
-                      
+
         self.refresh_form()
-        
+
         dialog = wx.MessageDialog(
             self, "Parameters Successfully Updated!", 'Info',
             wx.OK | wx.ICON_INFORMATION)
         dialog.ShowModal()
         dialog.Destroy()
-        
+
     def refresh_form(self, load_file=None):
         self.vbox.Hide(self.form)
         self.form = Form(self, json_file=self.json_file, load_file=load_file)
         self.vbox.Add(self.form)
         self.SetupScrolling()
-        
+
     def write_parameters_location_txt(self, location):
         with open('parameters_location.txt', 'w') as outfile:
             outfile.write(location)
-        
+
     def OnChildFocus(self, event):
         event.Skip()
 

@@ -76,10 +76,11 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     parameters = open_parameters(path, value_cast)
     parameters, _ = check_if_parameters_contains_all_keys(parameters, path, value_cast)
     return parameters
-    
+
+
 def check_if_parameters_contains_all_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
-    """Checks if the parameters dict being loaded contains all of the same keys 
-    as the default parameters file. If not, it adds the default values to the 
+    """Checks if the parameters dict being loaded contains all of the same keys
+    as the default parameters file. If not, it adds the default values to the
     dict, and returns a tuple of the updated dict, and a list of the missing keys."""
     missing_key_list = []
     if not os.path.samefile('bcipy/parameters/parameters.json', new_param_path):
@@ -91,7 +92,7 @@ def check_if_parameters_contains_all_keys(parameters: dict, new_param_path: str,
             if key not in parameters:
                 missing_key_list.append(key)
                 parameters[key] = parameters_default[key]
-                
+
     return (parameters, missing_key_list)
 
 

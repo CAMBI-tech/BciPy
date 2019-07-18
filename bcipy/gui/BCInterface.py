@@ -18,7 +18,8 @@ class BCInterface(BCIGui):
             subprocess.Popen(
                 'python bcipy/gui/mode/RSVPKeyboard.py',
                 shell=True)
-                
+
+
 try:
     remove('parameters_location.txt')
 except OSError:

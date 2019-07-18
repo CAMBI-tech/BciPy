@@ -95,6 +95,7 @@ def start(channels, archive_name, asynchronous=False):
 
     return mailbox
 
+
 def stop(mailbox, delete_archive=True):
     """Stops the process associated with the provided mailbox.
 

@@ -22,3 +22,4 @@ htmlcov/
 bcipy.egg-info/
 build/
 dist/
+parameters_location.txt

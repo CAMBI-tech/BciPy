@@ -15,7 +15,7 @@ from bcipy.tasks.task_registry import ExperimentType
 class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
-    
+
     def __init__(self, title, size, background_color):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
         self.PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
@@ -38,7 +38,7 @@ class RSVPKeyboard(BCIGui):
         if os.path.isfile('parameters_location.txt'):
             with open('parameters_location.txt', 'r') as readfile:
                 self.PARAMETER_LOCATION = readfile.read()
-                
+
     def edit_parameters(self, _event) -> None:
         """Edit Parameters.
 
@@ -49,7 +49,7 @@ class RSVPKeyboard(BCIGui):
 
     def launch_bci_main(self, event: wx.Event) -> None:
         self.update_parameter_location()
-                
+
         """Launch BCI MAIN"""
         if self.check_input():
             self.event_started = True
