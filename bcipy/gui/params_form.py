@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple
-from os import sep
+from os import sep, path
 from bcipy.helpers.load import check_if_parameters_contains_all_keys
 
 log = logging.getLogger(__name__)
@@ -367,6 +367,15 @@ class MainPanel(scrolled.ScrolledPanel):
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
             save_file = fd.GetPath()
+
+        if path.samefile('bcipy/parameters/parameters.json', save_file):
+            dialog = wx.MessageDialog(
+                self, "This will overwrite the default parameters.json. Your changes "
+                "will be overwritten when BciPy is upgraded.", 'Warning', 
+                wx.CANCEL | wx.OK | wx.ICON_EXCLAMATION)
+            if dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            dialog.Destroy()
 
         self.loaded_from.SetLabel(f'Loaded from: {save_file}')
         self.json_file = save_file
