@@ -9,6 +9,7 @@ from bcipy.helpers.load import check_if_parameters_contains_all_keys
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
+DEFAULT_PARAMETERS_LOCATION = 'bcipy/parameters/parameters.json'
 
 
 def font(size: int = 14, font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.Font:
@@ -284,17 +285,7 @@ class MainPanel(scrolled.ScrolledPanel):
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
-
-        with open(self.json_file) as f:
-            data = f.read()
-
-        config = json.loads(data)
-        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
-
-        self.form = Form(self, json_file)
-        vbox.Add(static_text_control(self, label=title, size=20),
-                 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
-        vbox.AddSpacer(10)
+        self.params = {}
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
 
@@ -304,14 +295,29 @@ class MainPanel(scrolled.ScrolledPanel):
             size=14)
         loading_box.Add(self.loaded_from)
         loading_box.AddSpacer(10)
+        
+        self.get_parameters_from_file(self.json_file)
+        
+        self.form = Form(self, json_file)
+        vbox.Add(static_text_control(self, label=title, size=20),
+                 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
+        vbox.AddSpacer(10)
+
+        save_box = wx.BoxSizer(wx.HORIZONTAL)
 
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
-        loading_box.Add(self.loadButton)
-
+        save_box.Add(self.loadButton)
+        save_box.AddSpacer(10)
         self.saveButton = wx.Button(self, label='Save')
         self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
-        loading_box.Add(self.saveButton)
+        save_box.Add(self.saveButton)
+        save_box.AddSpacer(10)
+        self.restoreDefaultsButton = wx.Button(self, label='Restore Defaults')
+        self.restoreDefaultsButton.Bind(wx.EVT_BUTTON, self.restoreDefaults)
+        save_box.Add(self.restoreDefaultsButton)
+
+        loading_box.Add(save_box)
 
         # Used for displaying help messages to the user.
         self.flash_msg = static_text_control(self, label='', size=14,
@@ -324,6 +330,15 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetSizer(vbox)
         self.SetupScrolling()
 
+    def get_parameters_from_file(self, file_name: str):
+        self.loaded_from.SetLabel(f'Loaded from: {file_name}')
+
+        with open(file_name) as f:
+            data = f.read()
+
+        config = json.loads(data)
+        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+
     def onLoad(self, event: wx.EVT_BUTTON) -> None:
         """Event handler to load the form data from a different json file."""
         log.debug('Loading parameters file')
@@ -334,13 +349,8 @@ class MainPanel(scrolled.ScrolledPanel):
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
             load_file = fd.GetPath()
-            self.loaded_from.SetLabel(f'Loaded from: {load_file}')
 
-            with open(load_file) as f:
-                data = f.read()
-
-            config = json.loads(data)
-            self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+            self.get_parameters_from_file(load_file)
 
             self.params, missing_keys = check_if_parameters_contains_all_keys(self.params, load_file)
 
@@ -360,6 +370,11 @@ class MainPanel(scrolled.ScrolledPanel):
 
         self.refresh_form(load_file)
 
+    def restoreDefaults(self, event: wx.EVT_BUTTON) -> None:
+        self.get_parameters_from_file(DEFAULT_PARAMETERS_LOCATION)
+        self.write_parameters_location_txt(DEFAULT_PARAMETERS_LOCATION)
+        self.refresh_form(DEFAULT_PARAMETERS_LOCATION)
+
     def onSave(self, event: wx.EVT_BUTTON) -> None:
         with wx.FileDialog(self, 'Save parameters file',
                            wildcard='JSON files (*.json)|*.json',
@@ -371,7 +386,7 @@ class MainPanel(scrolled.ScrolledPanel):
         if path.samefile('bcipy/parameters/parameters.json', save_file):
             dialog = wx.MessageDialog(
                 self, "This will overwrite the default parameters.json. Your changes "
-                "will be overwritten when BciPy is upgraded.", 'Warning', 
+                "will be overwritten when BciPy is upgraded.", 'Warning',
                 wx.CANCEL | wx.OK | wx.ICON_EXCLAMATION)
             if dialog.ShowModal() == wx.ID_CANCEL:
                 return
