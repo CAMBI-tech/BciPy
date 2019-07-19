@@ -150,11 +150,13 @@ class Form(wx.Panel):
         """Returns a label control and maybe a help Control if the help
         text is different than the label text."""
         label = static_text_control(self, label=param.readableName)
+        label.Wrap(self.control_size[0])
         help_tip = None
         if param.readableName != param.helpTip:
             help_tip = static_text_control(self, label=param.helpTip,
                                            size=self.help_font_size,
                                            color=self.help_color)
+            help_tip.Wrap(self.control_size[0])
         return (label, help_tip)
 
     def bindEvents(self):
