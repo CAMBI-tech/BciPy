@@ -1,3 +1,4 @@
+import ast
 import wx
 import wx.lib.scrolledpanel as scrolled
 import json
@@ -55,8 +56,6 @@ class Form(wx.Panel):
         self.help_color = 'DARK SLATE GREY'
         self.params = parent.params
 
-        # TODO: group inputs by section
-
         self.createControls()
         self.bindEvents()
         self.doLayout()
@@ -66,20 +65,34 @@ class Form(wx.Panel):
         parameters file."""
 
         self.controls = {}
-        for key, param in self.params.items():
-            if param.type == 'bool':
-                form_input = self.bool_input(param)
-            elif 'path' in param.type:
-                form_input = self.file_input(param)
-            elif isinstance(param.recommended_values, list):
-                form_input = self.selection_input(param)
-            # TODO: NumCtrl for numeric input types.
-            # from wx.lib.masked import NumCtrl
-            # elif param['type'] in ['float', 'int']:
-            else:
-                form_input = self.text_input(param)
+        # Retrieve and alphebatize list of unique parameter sections
+        param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
+        # Sort parameters by section
+        key_dict = {}
+        for each_section in param_sections:
+            # Get readable names for sections
+            name_dict = ast.literal_eval(self.params['section_names'].value)
+            new_key = name_dict[each_section] if each_section in name_dict else each_section
+            key_dict[new_key] = sorted([key for key, param in self.params.items() if param.section == each_section])
 
-            self.add_input(self.controls, key, form_input)
+        for each_key, param_list in key_dict.items():
+            self.controls[each_key] = static_text_control(self, label=each_key,
+                                                          size=20)
+            for each_param in param_list:
+                param = self.params[each_param]
+                if param.type == 'bool':
+                    form_input = self.bool_input(param)
+                elif 'path' in param.type:
+                    form_input = self.file_input(param)
+                elif isinstance(param.recommended_values, list):
+                    form_input = self.selection_input(param)
+                # TODO: NumCtrl for numeric input types.
+                # from wx.lib.masked import NumCtrl
+                # elif param['type'] in ['float', 'int']:
+                else:
+                    form_input = self.text_input(param)
+
+                self.add_input(self.controls, each_param, form_input)
 
     def add_input(self, controls: Dict[str, wx.Control], key: str,
                   form_input: FormInput) -> None:
@@ -88,7 +101,8 @@ class Form(wx.Panel):
             controls[f'{key}_label'] = form_input.label
         if form_input.help:
             controls[f'{key}_help'] = form_input.help
-        controls[key] = form_input.control
+        if form_input.control:
+            controls[key] = form_input.control
 
         # TODO: consider adding an empty space after each input:
         # controls[f"{key}_empty"] = (0,0)
@@ -200,7 +214,8 @@ class Form(wx.Panel):
         for control in self.controls.values():
             if isinstance(control, list):
                 hbox = wx.BoxSizer(wx.HORIZONTAL)
-                hbox.Add(control[0], flag=wx.RIGHT, border=5)
+                if control[0]:
+                    hbox.Add(control[0], flag=wx.RIGHT, border=5)
                 hbox.Add(control[1], **noOptions)
                 gridSizer.Add(hbox, **noOptions)
             else:

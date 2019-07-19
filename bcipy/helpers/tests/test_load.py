@@ -52,9 +52,9 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
-        
+
     def test_check_if_parameters_contains_all_keys(self):
-        """Test the function that adds default values from parameters.json to 
+        """Test the function that adds default values from parameters.json to
         the parameters if they are not present in the loaded file"""
         parameters = load_json_parameters(self.parameters, True)
         parameters.pop('fake_data', None)
@@ -64,6 +64,7 @@ class TestLoad(unittest.TestCase):
         assert missing_key_list == ['fake_data']
         assert 'fake_data' in parameters
         remove('temp_parameter_file.json')
+
 
 if __name__ == '__main__':
     unittest.main()
