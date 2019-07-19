@@ -208,27 +208,28 @@ class RSVPDisplay(object):
 
             self.first_stim_time = first_stim_timing[-1]
             self.first_run = False
-            
-        #Generate timing and size information
+
+        # Generate timing and size information
         timing_and_size_info = []
         self.is_first_stim = False
         for idx in range(len(self.stimuli_sequence)):
             this_item = {}
-            
+
             # turn ms timing into frames! Much more accurate!
             this_item['time_to_present'] = int(self.stimuli_timing[idx] * self.refresh_rate)
-            
+
             # check if stimulus needs to use a non-default size
             if self.size_list_sti:
                 this_stimuli_size = self.size_list_sti[idx]
             else:
                 this_stimuli_size = self.stimuli_height
-                
+
             # Set the Stimuli attrs
             if self.stimuli_sequence[idx].endswith('.png'):
                 this_item['sti'] = self.create_stimulus(mode='image', height_int=this_stimuli_size)
                 this_item['sti'].image = self.stimuli_sequence[idx]
-                this_item['sti'].size = resize_image(this_item['sti'].image, this_item['sti'].win.size, this_stimuli_size)
+                this_item['sti'].size = resize_image(
+                    this_item['sti'].image, this_item['sti'].win.size, this_stimuli_size)
                 this_item['sti_label'] = path.splitext(
                     path.basename(self.stimuli_sequence[idx]))[0]
             else:
@@ -258,35 +259,38 @@ class RSVPDisplay(object):
                                 info['RESOLUTION'][0] / info['RESOLUTION'][1])
                     new_text_height = (text_height * new_text_width) / text_width
                     this_item['sti'].height = new_text_height
-                    
+
             timing_and_size_info.append(this_item)
-            
+
         # do the sequence
         for idx in range(len(timing_and_size_info)):
-            
+
             self.is_first_stim = (idx == 0)
-            
+
             # set a static period to do all our stim setting.
             #   will warn if ISI value is violated.
             self.staticPeriod.name = 'Stimulus Draw Period'
             self.staticPeriod.start(self.stimuli_timing[idx])
 
             # Reset the timing clock to start presenting
-            self.window.callOnFlip(self.trigger_callback.callback, self.experiment_clock, timing_and_size_info[idx]['sti_label'])
+            self.window.callOnFlip(
+                self.trigger_callback.callback,
+                self.experiment_clock,
+                timing_and_size_info[idx]['sti_label'])
             self.window.callOnFlip(self.marker_writer.push_marker, timing_and_size_info[idx]['sti_label'])
 
             if idx == 0 and callable(self.first_stim_callback):
                 self.first_stim_callback(timing_and_size_info[idx]['sti'])
 
             # Draw stimulus for n frames
-            #for _n_frames in range(timing_and_size_info[idx]['time_to_present']):
+            # for _n_frames in range(timing_and_size_info[idx]['time_to_present']):
             timing_and_size_info[idx]['sti'].draw()
             self.draw_static()
             self.window.flip()
             core.wait((timing_and_size_info[idx]['time_to_present'] - 1) / self.refresh_rate)
-                
+
             # End static period
-            #print(self.staticPeriod.countdown.getTime())
+            # print(self.staticPeriod.countdown.getTime())
             self.staticPeriod.complete()
 
             # append timing information
