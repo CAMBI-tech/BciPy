@@ -211,6 +211,7 @@ class RSVPDisplay(object):
             
         #Generate timing and size information
         timing_and_size_info = []
+        self.is_first_stim = False
         for idx in range(len(self.stimuli_sequence)):
             this_item = {}
             
@@ -262,6 +263,8 @@ class RSVPDisplay(object):
             
         # do the sequence
         for idx in range(len(timing_and_size_info)):
+            
+            self.is_first_stim = (idx == 0)
             
             # set a static period to do all our stim setting.
             #   will warn if ISI value is violated.
