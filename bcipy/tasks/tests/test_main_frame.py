@@ -22,12 +22,41 @@ class TestDecisionMaker(unittest.TestCase):
         self.evidence_fusion = EvidenceFusion(list_name_evidence = ['A','B'], len_dist = 2)
 
     def tearDown(self):
-
+        """Reset decision maker and evidence fusion at the
+        end of each test. """
         self.decision_maker.reset()
         self.evidence_fusion.reset_history()
 
     def test_evidence_fusion_init(self):
         self.assertEqual(self.evidence_fusion.evidence_history,{'A': [], 'B': []})
+        self.assertEqual(self.evidence_fusion.likelihood[0],[0.5])
+        self.assertEqual(self.evidence_fusion.likelihood[1],[0.5])
+
+    def test_reset_history(self):
+        self.evidence_fusion.reset_history()
+        self.assertEqual(self.evidence_fusion.evidence_history,{'A': [], 'B': []})
+        self.assertEqual(self.evidence_fusion.likelihood[0],[0.5])
+        self.assertEqual(self.evidence_fusion.likelihood[1],[0.5])
+
+    def test_update_and_fuse_with_float_evidence(self):
+        dict_evidence = {'A': [0.5], 'B': [0.5]}
+        self.evidence_fusion.update_and_fuse(dict_evidence)
+        self.assertEqual(self.evidence_fusion.evidence_history['A'][0],dict_evidence['A'])
+        self.assertEqual(self.evidence_fusion.evidence_history['B'][0],dict_evidence['B'])        
+        self.assertEqual(self.evidence_fusion.likelihood[0],[[0.5]])
+        self.assertEqual(self.evidence_fusion.likelihood[1],[[0.5]])
+    
+    def test_update_and_fuse_with_inf_evidence(self):
+        dict_evidence = {'A': [0.5], 'B': [math.inf]}
+        self.evidence_fusion.update_and_fuse(dict_evidence)
+        self.assertEqual(self.evidence_fusion.evidence_history['A'][0],dict_evidence['A'])
+        self.assertEqual(self.evidence_fusion.evidence_history['B'][0],dict_evidence['B']) 
+        self.assertEqual(self.evidence_fusion.likelihood[0],[1.0])
+        self.assertEqual(self.evidence_fusion.likelihood[1],[0.0])
+        
+    def test_save_history(self):
+        history = self.evidence_fusion.save_history()
+        self.assertEqual(0,history)
 
     def test_decision_maker_init(self):
         """Test initialisation"""
