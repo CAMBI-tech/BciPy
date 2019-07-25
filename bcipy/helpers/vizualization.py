@@ -43,6 +43,7 @@ def generate_offline_analysis_screen(
     show_figure: boolean: whether or not to show the figures generated
     channel_names: dict of channel names keyed by their position.
     """
+
     channel_names = channel_names or {}
     classes = np.unique(y)
 
@@ -139,7 +140,6 @@ def generate_offline_analysis_screen(
 
     if show_figure:
         plt.show()
-
 
 def visualize_csv_eeg_triggers(trigger_col=None):
     """Visualize CSV EEG Triggers.
