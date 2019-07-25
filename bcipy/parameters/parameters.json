@@ -866,7 +866,7 @@
     "recommended_values": "",
     "type": "str"
   },
-  "Artifact Rejection": {
+  "artifact_rejection": {
     "value": "true",
     "section": "bci_config",
     "readableName": "Artifact Rejection",
@@ -874,7 +874,7 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "HighVoltage Threshold": {
+  "highvoltage_threshold": {
     "value": "true",
     "section": "bci_config",
     "readableName": "HighVoltage Threshold",
@@ -882,15 +882,15 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "HighVoltage Value": {
-    "value": "50",
+  "highvoltage_value": {
+    "value": "1000",
     "section": "bci_config",
     "readableName": "HighVoltage Threshold Value",
     "helpTip": "Set high voltage threshold value for artifact rejection.",
     "recommended_values": "",
     "type": "int"
   },
-  "LowVoltage Threshold": {
+  "lowvoltage_threshold": {
     "value": "true",
     "section": "bci_config",
     "readableName": "LowVoltage Threshold",
@@ -898,8 +898,8 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "LowVoltage Value": {
-    "value": "-30",
+  "lowvoltage_value": {
+    "value": "-1000",
     "section": "bci_config",
     "readableName": "LowVoltage Threshold Value",
     "helpTip": "Set low voltage threshold for artifact rejection.",
