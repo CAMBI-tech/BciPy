@@ -298,12 +298,13 @@ class MainPanel(scrolled.ScrolledPanel):
      to load and handling scrolling."""
 
     def __init__(self, parent, title='BCI Parameters',
-                 json_file='bcipy/parameters/parameters.json'):
+                 json_file='bcipy/parameters/parameters.json', params_queue=None):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
         self.params = {}
+        self.params_queue = params_queue
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
 
@@ -439,20 +440,20 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetupScrolling()
 
     def write_parameters_location_txt(self, location):
-        with open('parameters_location.txt', 'w') as outfile:
-            outfile.write(location)
+        if self.params_queue:
+            self.params_queue.put(location)
 
     def OnChildFocus(self, event):
         event.Skip()
 
 
 def main(title='BCI Parameters', size=(650, 550),
-         json_file='bcipy/parameters/parameters.json'):
+         json_file='bcipy/parameters/parameters.json', queue=None):
     """Set up the GUI components and start the main loop."""
 
     app = wx.App(0)
     frame = wx.Frame(None, wx.ID_ANY, size=size, title=title)
-    fa = MainPanel(frame, title=title, json_file=json_file)
+    fa = MainPanel(frame, title=title, json_file=json_file, params_queue=queue)
     frame.Show()
     app.MainLoop()
 
