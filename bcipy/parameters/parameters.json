@@ -894,7 +894,7 @@
     "type": "bool"
   },
   "highvoltage_value": {
-    "value": "1000",
+    "value": "75*10^-6",
     "section": "bci_config",
     "readableName": "HighVoltage Threshold Value",
     "helpTip": "Set high voltage threshold value for artifact rejection.",
@@ -910,7 +910,7 @@
     "type": "bool"
   },
   "lowvoltage_value": {
-    "value": "-1000",
+    "value": "-75*10^-6",
     "section": "bci_config",
     "readableName": "LowVoltage Threshold Value",
     "helpTip": "Set low voltage threshold for artifact rejection.",

@@ -86,46 +86,10 @@ def offline_analysis(data_folder: str = None,
                                 channel_map=channel_map,
                                 trial_length=trial_length)
 
-
-    #here is where we want to chop up the data into sequences
-    #and feed them one by one into the evaluator for either inclusion
-    #or exclusion
-    evaluator = Evaluator(parameters,parameters.get('highvoltage_threshold',True),
-                            parameters.get('lowvoltage_threshold',True))
-
-    #artifact_threshold = 2
-
-    stimuli_between_trials = 10
-
-    index = 0
-
-    #set up output of artifact rejection to be array of same size as x
-    #empty_like does not initialize values so can place them in the array
-    #as sequences are evaluated
-    evaluated_x = np.copy(x)
-    evaluated_y = np.copy(y)
-
-    #split into sequences and evaluate each
-    for i in range(0,num_seq):
-
-        sequence_slice = x[:,index]
-
-        evaluator.evaluate_offline(sequence_slice)
-
-        #if we've reached the threshold of broken rules, consider this sequence rejected
-        if True in evaluator.broken_rules.values():
-
-            evaluated_x = np.delete(evaluated_x,[index],1)
-            evaluated_y = np.delete(evaluated_y,[index])
-
-        #reset evaluator for next sequence
-        evaluator.reset()
-        index += stimuli_between_trials
-
     #train model
     k_folds = parameters.get('k_folds', 10)
 
-    model, auc = train_pca_rda_kde_model(evaluated_x, evaluated_y, k_folds=k_folds)
+    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     log.info('Saving offline analysis plots!')
 
