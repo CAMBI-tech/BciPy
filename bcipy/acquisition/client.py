@@ -11,6 +11,7 @@ from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
+from bcipy.helpers.load import dump_raw_data
 
 log = logging.getLogger(__name__)
 DEBUG = False
@@ -55,6 +56,8 @@ class DataAcquisitionClient:
             writes to a file.)
         buffer_name : str, optional
             Name of the sql database archive; default is buffer.db.
+        raw_data_file_name: str,
+            Name of the raw data csv file to output
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
         delete_archive: boolean, optional
@@ -65,13 +68,15 @@ class DataAcquisitionClient:
     def __init__(self,
                  device,
                  processor=NullProcessor(),
-                 buffer_name='rawdata.db',
+                 buffer_name='raw_data.db',
+                 raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
                  delete_archive=False):
 
         self._device = device
         self._processor = processor
         self._buffer_name = buffer_name
+        self._raw_data_file_name = raw_data_file_name
         self._clock = clock
 
         # boolean; set to false to retain the sqlite db.
@@ -316,6 +321,8 @@ class DataAcquisitionClient:
         """Performs cleanup tasks, such as deleting the buffer archive. Note
         that data will be unavailable after calling this method."""
         if self._buf:
+            dump_raw_data(self._buffer_name, self._raw_data_file_name,
+                          self.device_info.name, self.device_info.fs)
             buffer_server.stop(self._buf, delete_archive=self.delete_archive)
             self._buf = None
 

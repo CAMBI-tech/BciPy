@@ -1,6 +1,4 @@
 from typing import Dict, List
-import os
-import subprocess
 import numpy as np
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
@@ -68,7 +66,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
                               'port': port}}
 
     # Set configuration parameters (with default values if not provided).
-    buffer_name = parameters.get('buffer_name', 'rawdata.db')
+    buffer_name = parameters.get('buffer_name', 'raw_data.db')
     connection_params = parameters.get('connection_params', {})
     device_name = parameters.get('device', 'DSI')
 
@@ -104,6 +102,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
         device=Device(connection_params=connection_params),
         processor=proc,
         buffer_name=buffer_name,
+        raw_data_file_name=parameters.get('filename', 'raw_data.csv'),
         clock=clock)
 
     client.start_acquisition()
@@ -154,33 +153,3 @@ def analysis_channel_names_by_pos(channels: List[str],
     selection = [bool(x) for x in channel_map]
     selected_channels = np.array(channels)[selection]
     return {i: ch for i, ch in enumerate(selected_channels)}
-
-
-def dump_raw_data(data_dir: str, db_name: str, file_name: str, daq_type: str,
-                  sample_rate: float):
-    """Writes a raw_data csv file from a sqlite database
-
-    Parameters:
-    -----------
-        data_dir - data directory with the database; the file is written here.
-        db_name - name of the database; ex. raw_data.db
-        file_name - name of the file to be written; ex. raw_data.csv
-        daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'
-        sample_rate - metadata for the sample rate; ex. 300.0
-    """
-
-    buffer_name = os.path.join(data_dir, db_name)
-    raw_data_name = os.path.join(data_dir, file_name)
-
-    with open(raw_data_name, "w") as raw_data_file:
-        # write metadata
-        raw_data_file.write(f"daq_type,{daq_type}\n")
-        raw_data_file.write(f"sample_rate,{sample_rate}\n")
-
-        # if flush is missing the previous content is appended at the end
-        raw_data_file.flush()
-
-        # dump data from sqlite
-        subprocess.call(
-            ["sqlite3", "-header", "-csv", buffer_name, 'select * from data;'],
-            stdout=raw_data_file)
