@@ -492,7 +492,7 @@
     "type": "int"
   },
   "buffer_name": {
-    "value": "buffer.db",
+    "value": "rawdata.db",
     "section": "bci_config",
     "readableName": "Path to the buffer database for data acquistion",
     "helpTip": "Path to the buffer database for data acquistion",

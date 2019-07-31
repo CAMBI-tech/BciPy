@@ -7,7 +7,7 @@ import time
 from queue import Empty
 
 from bcipy.acquisition import buffer_server
-from bcipy.acquisition.processor import FileWriter
+from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
@@ -59,15 +59,15 @@ class DataAcquisitionClient:
             Clock instance used to timestamp each acquisition record
         delete_archive: boolean, optional
             Flag indicating whether to delete the database archive on exit.
-            Default is True.
+            Default is False.
     """
 
     def __init__(self,
                  device,
-                 processor=FileWriter(filename='rawdata.csv'),
-                 buffer_name='buffer.db',
+                 processor=NullProcessor(),
+                 buffer_name='rawdata.db',
                  clock=CountClock(),
-                 delete_archive=True):
+                 delete_archive=False):
 
         self._device = device
         self._processor = processor
