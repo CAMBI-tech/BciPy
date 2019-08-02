@@ -39,6 +39,6 @@ class Evaluator:
 
         for rule in self.rules:
 
-            if rule.isBroken:
+            if rule.is_broken(data):
 
                 return False

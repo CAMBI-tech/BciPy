@@ -1,51 +1,72 @@
 import unittest
 import numpy as np
-from bcipy.signal.evaluate import Evaluator
-from bcipy.signal.evaluate import HighVoltage,LowVoltage
+import math
+from bcipy.signal.evaluate.evaluator import Evaluator
+from bcipy.helpers.load import load_json_parameters
+from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
+
 
 class TestEvaluator(unittest.TestCase):
 
-	"""Test Evaluator init and class methods """
+    """Test Evaluator init and class methods """
 
-	def setUp(self):
+    def setUp(self):
 
-		params_file = 'bcipy/parameters/parameters.json'
+        params_file = 'bcipy/parameters/parameters.json'
 
         self.parameters = load_json_parameters(params_file,
                                                value_cast=True)
 
-		self.evaluator = Evaluator(parameters)
+        """Set thresholds for testing """
+        self.parameters['highvoltage_value'] = 1
+        self.parameters['lowvoltage_value'] = -1
 
+        self.expected_high_voltage = self.parameters['highvoltage_threshold']
+        self.expected_low_voltage = self.parameters['lowvoltage_threshold']
 
-		self. expected_high_voltage = self.parameters['highvoltage_threshold']
-		self. expected_low_voltage = self.parameters['lowvoltage_threshold']
+        self.evaluator = Evaluator(self.parameters, self.expected_high_voltage,
+                                   self.expected_low_voltage)
 
-	def test_init(self):
+    def test_init_rules(self):
 
-		"""Test init of ruleset, broken rules """
+        """Test init of ruleset. We expect that rules enabled in the
+        params are initialised as part of the ruleset """
 
-		if expected_high_voltage:
-			assertIn(self.evaluator.rules,HighVoltage())
+        if self.expected_high_voltage:
+            self.assertIsInstance(self.evaluator.rules[0], HighVoltage)
 
-		if expected_low_voltage:
-			assertIn(self.evaluator.rules,LowVoltage())
+        if self.expected_low_voltage:
+            self.assertIsInstance(self.evaluator.rules[1], LowVoltage)
 
-		for element in self.evaluator.broken_rules.values():
-			assertFalse(element)
+    def test_evaluate_with_single_data_point(self):
 
+        """Test evaluate signal with a single data point"""
 
-	def test_evaluate_with_single_data_point(sample):
+        """First test rule breakage """
+        high_sample = [math.inf]
+        low_sample = [-math.inf]
+        self.assertFalse(self.evaluator.evaluate(high_sample))
+        self.assertFalse(self.evaluator.evaluate(low_sample))
 
-		"""Test evaluate signal with a single data point"""
+        """Then test rule pass """
+        passing_sample = [0]
+        self.assertIsNone(self.evaluator.evaluate(passing_sample))
 
-		sample = [50]
+    def test_evaluate_with_array(self):
 
-	def test_evaluate_with_array(array):
+        """Test evaluate signal with a numpy array """
 
-		"""Test evaluate signal with a numpy array """
+        """First test rule breakage """
+        high_sample_array = np.ones(5) * 5
+        low_sample_array = np.ones(5) * -5
+        self.assertFalse(self.evaluator.evaluate(high_sample_array))
+        self.assertFalse(self.evaluator.evaluate(low_sample_array))
 
-		pass
+        """Then test rule pass """
+        passing_sample_array = np.ones(5) * 0
+        self.assertIsNone(self.evaluator.evaluate(passing_sample_array))
+
 
 if __name__ == "__main__":
 
-	pass
+    unittest.main()
