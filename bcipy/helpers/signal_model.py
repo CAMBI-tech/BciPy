@@ -85,8 +85,7 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-
-    def evaluate_sequence(self, raw_data, triggers, target_info, window_length,artifact_rejection):
+    def evaluate_sequence(self, raw_data, triggers, target_info, window_length, artifact_rejection):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -121,8 +120,7 @@ class CopyPhraseWrapper:
 
         if artifact_rejection:
 
-            #go over behaviour with Tab
-
+            # go over behaviour with Tab
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})

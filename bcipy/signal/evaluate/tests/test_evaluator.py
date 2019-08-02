@@ -28,7 +28,6 @@ class TestEvaluator(unittest.TestCase):
                                    self.expected_low_voltage)
 
     def test_init_rules(self):
-
         """Test init of ruleset. We expect that rules enabled in the
         params are initialised as part of the ruleset """
 
@@ -39,7 +38,6 @@ class TestEvaluator(unittest.TestCase):
             self.assertIsInstance(self.evaluator.rules[1], LowVoltage)
 
     def test_evaluate_with_single_data_point(self):
-
         """Test evaluate signal with a single data point"""
 
         """First test rule breakage """
@@ -53,7 +51,6 @@ class TestEvaluator(unittest.TestCase):
         self.assertIsNone(self.evaluator.evaluate(passing_sample))
 
     def test_evaluate_with_array(self):
-
         """Test evaluate signal with a numpy array """
 
         """First test rule breakage """

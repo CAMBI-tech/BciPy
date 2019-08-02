@@ -33,7 +33,6 @@ class Evaluator:
                                          params["lowvoltage_value"]))
 
     def evaluate(self, data):
-
         """Evaluates sequence data using selected rules
         from parameters file."""
 

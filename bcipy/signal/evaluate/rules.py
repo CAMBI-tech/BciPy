@@ -34,7 +34,6 @@ class HighVoltage(Rule):
     are singularly defined. Names must be equal to value in parameters.json"""
 
     def is_broken(self, data):
-
         """
             Test data against threshold value. Return broken
             if threshold exceeded.
@@ -60,7 +59,6 @@ class LowVoltage(Rule):
     """Low Voltage Rule. Set low threshold for permitted voltage. """
 
     def is_broken(self, data):
-
         """
             Test data against threshold value. Return false
             if threshold exceeded.

@@ -141,6 +141,7 @@ def generate_offline_analysis_screen(
     if show_figure:
         plt.show()
 
+
 def visualize_csv_eeg_triggers(trigger_col=None):
     """Visualize CSV EEG Triggers.
 
