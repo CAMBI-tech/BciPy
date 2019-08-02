@@ -885,7 +885,7 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "highvoltage_threshold": {
+  "high_voltage_threshold": {
     "value": "true",
     "section": "artifact_rejection",
     "readableName": "HighVoltage Threshold",
@@ -893,7 +893,7 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "highvoltage_value": {
+  "high_voltage_value": {
     "value": "75E+6",
     "section": "artifact_rejection",
     "readableName": "HighVoltage Threshold Value",
@@ -901,7 +901,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "lowvoltage_threshold": {
+  "low_voltage_threshold": {
     "value": "true",
     "section": "artifact_rejection",
     "readableName": "LowVoltage Threshold",
@@ -909,7 +909,7 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "lowvoltage_value": {
+  "low_voltage_value": {
     "value": "-75E-6",
     "section": "artifact_rejection",
     "readableName": "LowVoltage Threshold Value",

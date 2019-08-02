@@ -5,38 +5,31 @@ from bcipy.signal.evaluate.rules import Rule, HighVoltage, LowVoltage
 
 
 class TestRules(unittest.TestCase):
-
     """Test Rules init and class methods """
 
     def setUp(self):
         """Create rule objects to test """
 
-        params_file = 'bcipy/parameters/parameters.json'
+        # Set thresholds for testing
+        self.highvoltage_value = 1
+        self.lowvoltage_value = -1
 
-        self.parameters = load_json_parameters(params_file)
+        self.highvoltage_rule = HighVoltage(self.highvoltage_value)
+        self.lowvoltage_rule = LowVoltage(self.lowvoltage_value)
 
-        """Set thresholds for testing """
-        self.parameters['highvoltage_value'] = 1
-        self.parameters['lowhvoltage_value'] = -1
-
-        self.highvoltage_rule = HighVoltage('highvoltage_threshold',
-                                            self.parameters['highvoltage_value'])
-        self.lowvoltage_rule = LowVoltage('lowvoltage_threshold',
-                                          self.parameters['lowhvoltage_value'])
-
-    def test_rule_init(self):
-        """Test that names and thresholds init correctly """
-
-        self.assertEqual(self.highvoltage_rule.name, 'highvoltage_threshold')
+    def test_high_voltage_rule_init(self):
+        """Test that high voltage inits correctly"""
         self.assertEqual(self.highvoltage_rule.threshold,
-                         self.parameters['highvoltage_value'])
+                         self.highvoltage_value)
 
-        self.assertEqual(self.lowvoltage_rule.name, 'lowvoltage_threshold')
+        self.assertIsInstance(self.highvoltage_rule, Rule)
+
+    def test_low_voltage_rule_init(self):
+        """Test that low voltage inits correctly"""
         self.assertEqual(self.lowvoltage_rule.threshold,
-                         self.parameters['lowhvoltage_value'])
+                         self.lowvoltage_value)
 
         self.assertIsInstance(self.lowvoltage_rule, Rule)
-        self.assertIsInstance(self.highvoltage_rule, Rule)
 
     def test_lowvoltage_on_single_datapoint(self):
         """Test passing and failing samples for lowvoltage """
@@ -72,5 +65,4 @@ class TestRules(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

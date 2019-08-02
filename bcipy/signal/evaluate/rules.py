@@ -1,21 +1,15 @@
-"""rules.py"""
-
 import numpy as np
 from abc import ABC, abstractmethod
 
 
 class Rule(ABC):
-
     """Python Abstract Base Class for a Rule.
     (https://docs.python.org/3/library/abc.html)
-    Each rule has a 'isBroken' method which acts as instructions for
+    Each rule has a 'is_broken' method which acts as instructions for
     the evaluator to use when evaluating data. Returns True upon
     rule breakage, otherwise defaults to False."""
 
-    def __init__(self, name, threshold):
-
-        self.name = name
-
+    def __init__(self, threshold):
         self.threshold = threshold
 
     # a method required for all subclasses
@@ -25,7 +19,6 @@ class Rule(ABC):
 
 
 class HighVoltage(Rule):
-
     """High Voltage Rule. Set high threshold for permitted voltage.
     Separated from LowVoltage for rule specification. Allows
     different types of rules to be fed to artifact rejector
@@ -45,17 +38,19 @@ class HighVoltage(Rule):
                 array even of length 1:
                 (https://docs.scipy.org/doc/numpy/
                 reference/generated/numpy.amax.html)
-         """
+        """
 
         if np.amax(data) >= self.threshold:
 
             return True
 
         return False
+    
+    def __str__(self):
+        return f'High Voltage with threshold {self.threshold}'
 
 
 class LowVoltage(Rule):
-
     """Low Voltage Rule. Set low threshold for permitted voltage. """
 
     def is_broken(self, data):
@@ -76,3 +71,6 @@ class LowVoltage(Rule):
             return True
 
         return False
+
+    def __str__(self):
+        return f'Low Voltage with threshold {self.threshold}'

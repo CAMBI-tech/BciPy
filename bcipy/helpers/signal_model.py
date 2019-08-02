@@ -118,10 +118,6 @@ class CopyPhraseWrapper:
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
 
-        if artifact_rejection:
-
-            # go over behaviour with Tab
-
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
         decision, arg = self.decision_maker.decide(prob)

@@ -1,6 +1,10 @@
 # Signal
 
-The BciPy Signal module contains all code needed to process, model, and generate signals for Brain Computer Interface control using EEG. 
+The BciPy Signal module contains all code needed to process, model, and generate signals for Brain Computer Interface control using EEG. Further documentation provided in module READMEs.
+
+## Evaluate
+
+Evaluates signal based on configured rules.
 
 ## Process
 
