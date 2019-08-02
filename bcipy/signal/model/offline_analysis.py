@@ -1,6 +1,5 @@
 import pickle
 import logging
-import numpy as np
 
 from bcipy.helpers.load import (
     read_data_csv,
@@ -14,7 +13,6 @@ from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
 from bcipy.helpers.stimuli import play_sound
-from bcipy.signal.evaluate.evaluator import Evaluator
 
 log = logging.getLogger(__name__)
 
