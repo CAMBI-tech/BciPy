@@ -102,6 +102,7 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
         device=Device(connection_params=connection_params),
         processor=proc,
         buffer_name=buffer_name,
+        delete_archive=False,
         raw_data_file_name=parameters.get('filename', 'raw_data.csv'),
         clock=clock)
 

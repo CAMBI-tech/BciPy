@@ -57,7 +57,8 @@ class DataAcquisitionClient:
         buffer_name : str, optional
             Name of the sql database archive; default is buffer.db.
         raw_data_file_name: str,
-            Name of the raw data csv file to output
+            Name of the raw data csv file to output; if not present raw data
+                is not written.
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
         delete_archive: boolean, optional
@@ -71,7 +72,7 @@ class DataAcquisitionClient:
                  buffer_name='raw_data.db',
                  raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
-                 delete_archive=False):
+                 delete_archive=True):
 
         self._device = device
         self._processor = processor
@@ -186,6 +187,10 @@ class DataAcquisitionClient:
         self._data_processor.stop()
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
+
+        if self._raw_data_file_name:
+            dump_raw_data(self._buffer_name, self._raw_data_file_name,
+                            self.device_info.name, self.device_info.fs)
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.
@@ -321,8 +326,6 @@ class DataAcquisitionClient:
         """Performs cleanup tasks, such as deleting the buffer archive. Note
         that data will be unavailable after calling this method."""
         if self._buf:
-            dump_raw_data(self._buffer_name, self._raw_data_file_name,
-                          self.device_info.name, self.device_info.fs)
             buffer_server.stop(self._buf, delete_archive=self.delete_archive)
             self._buf = None
 
@@ -460,7 +463,6 @@ def main():
     if args.channels:
         dev.channels = args.channels.split(',')
     daq = DataAcquisitionClient(device=dev,
-                                processor=FileWriter(filename=args.filename),
                                 buffer_name=args.buffer,
                                 delete_archive=True)
 
