@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from bcipy.helpers.load import load_json_parameters
 from bcipy.signal.evaluate.rules import Rule, HighVoltage, LowVoltage
+from bcipy.signal.generator.generator import gen_random_data
 
 
 class TestRules(unittest.TestCase):
@@ -17,6 +17,8 @@ class TestRules(unittest.TestCase):
         self.highvoltage_rule = HighVoltage(self.highvoltage_value)
         self.lowvoltage_rule = LowVoltage(self.lowvoltage_value)
 
+        self.channels = 32
+
     def test_high_voltage_rule_init(self):
         """Test that high voltage inits correctly"""
         self.assertEqual(self.highvoltage_rule.threshold,
@@ -31,38 +33,29 @@ class TestRules(unittest.TestCase):
 
         self.assertIsInstance(self.lowvoltage_rule, Rule)
 
-    def test_lowvoltage_on_single_datapoint(self):
-        """Test passing and failing samples for lowvoltage """
+    def test_low_voltage_failing_signal(self):
+        """Test generated sub threshold signal against low voltage"""
+        data = gen_random_data(1,5,self.channels)
+        #ascertain that at least one random datapoint is below threshold to test np.amin edgecase
+        data[np.random.randint(self.channels)] = -1.5
+        self.assertTrue(self.lowvoltage_rule.is_broken(data))
 
-        failing_sample = -2
-        passing_sample = 0.2
-        self.assertTrue(self.lowvoltage_rule.is_broken(failing_sample))
-        self.assertFalse(self.lowvoltage_rule.is_broken(passing_sample))
+    def test_low_voltage_passing_signal(self):
+        """Test generated signal that is consistently above threshold"""
+        data = gen_random_data(-0.5,0.5,self.channels)
+        self.assertFalse(self.lowvoltage_rule.is_broken(data))
 
-    def test_lowvoltage_on_array(self):
-        """Test passing and failing arrays for lowvoltage """
+    def test_high_voltage_failing_signal(self):
+        """Test generated signal with one data point above threshold """
+        data = gen_random_data(-5,0,self.channels)
+        #ascertain that at least one random datapoint is above threshold to test np.amax edgecase
+        data[np.random.randint(self.channels)] = 1.5
+        self.assertTrue(self.highvoltage_rule.is_broken(data))
 
-        failing_array = np.ones(5) * -1.5
-        passing_array = np.ones(5) / 2
-        self.assertTrue(self.lowvoltage_rule.is_broken(failing_array))
-        self.assertFalse(self.lowvoltage_rule.is_broken(passing_array))
-
-    def test_highvoltage_on_single_datapoint(self):
-        """Test passing and failing samples for highvoltage """
-
-        failing_sample = 2
-        passing_sample = 0.2
-        self.assertTrue(self.highvoltage_rule.is_broken(failing_sample))
-        self.assertFalse(self.highvoltage_rule.is_broken(passing_sample))
-
-    def test_highvoltage_on_array(self):
-        """Test passing and failing arrays for highvoltage """
-
-        failing_array = np.ones(5) * 1.5
-        passing_array = np.ones(5) / 2
-        self.assertTrue(self.highvoltage_rule.is_broken(failing_array))
-        self.assertFalse(self.highvoltage_rule.is_broken(passing_array))
-
+    def test_high_voltage_passing_signal(self):
+        """Test generated signal that is consistently below threshold"""
+        data = gen_random_data(-0.5,0.5,self.channels)
+        self.assertFalse(self.highvoltage_rule.is_broken(data))
 
 if __name__ == "__main__":
     unittest.main()

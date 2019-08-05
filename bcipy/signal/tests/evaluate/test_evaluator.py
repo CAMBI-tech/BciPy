@@ -2,8 +2,9 @@ import unittest
 import numpy as np
 import math
 from bcipy.signal.evaluate.evaluator import Evaluator
-from bcipy.helpers.load import load_json_parameters
 from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
+from mockito import any, unstub, when
+from bcipy.signal.generator.generator import gen_random_data
 
 
 class TestEvaluator(unittest.TestCase):
@@ -21,9 +22,14 @@ class TestEvaluator(unittest.TestCase):
                                    self.expected_high_voltage,
                                    self.expected_low_voltage)
 
+        self.channels = 32
+
+    def tearDown(self):
+        unstub()
+
     def test_init_rules(self):
         """Test init of ruleset. We expect that rules enabled in the
-        params are initialized as part of the ruleset """
+        params are initialized as part of the ruleset"""
 
         if self.expected_high_voltage:
             self.assertIsInstance(self.evaluator.rules[0], HighVoltage)
@@ -31,31 +37,19 @@ class TestEvaluator(unittest.TestCase):
         if self.expected_low_voltage:
             self.assertIsInstance(self.evaluator.rules[1], LowVoltage)
 
-    def test_evaluate_with_single_data_point(self):
-        """Test evaluate signal with a single data point"""
+    def test_evaluate_true(self):
+        """Test evaluate with is_broken returning True"""
+        when(self.evaluator.rules[0]).is_broken(any()).thenReturn(True)
+        when(self.evaluator.rules[1]).is_broken(any()).thenReturn(True)
+        data = gen_random_data(-1,2,self.channels)
+        self.assertFalse(self.evaluator.evaluate(data))
 
-        # First test rule breakage 
-        high_sample = [math.inf]
-        low_sample = [-math.inf]
-        self.assertFalse(self.evaluator.evaluate(high_sample))
-        self.assertFalse(self.evaluator.evaluate(low_sample))
-
-        # Then test rule pass 
-        passing_sample = [0]
-        self.assertIsNone(self.evaluator.evaluate(passing_sample))
-
-    def test_evaluate_with_array(self):
-        """Test evaluate signal with a numpy array """
-
-        # First test rule breakage 
-        high_sample_array = np.ones(5) * 5
-        low_sample_array = np.ones(5) * -5
-        self.assertFalse(self.evaluator.evaluate(high_sample_array))
-        self.assertFalse(self.evaluator.evaluate(low_sample_array))
-
-        # Then test rule pass 
-        passing_sample_array = np.ones(5) * 0
-        self.assertIsNone(self.evaluator.evaluate(passing_sample_array))
+    def test_evaluate_false(self):
+        """Test evaluate with is_broken returning False """
+        when(self.evaluator.rules[0]).is_broken(any()).thenReturn(False)
+        when(self.evaluator.rules[1]).is_broken(any()).thenReturn(False)
+        data = gen_random_data(-1,2,self.channels)
+        self.assertIsNone(self.evaluator.evaluate(data))
 
 
 if __name__ == "__main__":

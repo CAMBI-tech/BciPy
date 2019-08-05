@@ -31,8 +31,8 @@ class HighVoltage(Rule):
             Test data against threshold value. Return broken
             if threshold exceeded.
 
-            data(ndarray[float]): 1 x N length array where
-            N is the number of samples
+            data(ndarray[float]): C x N length array where
+            C is the number of channels and N is the number of samples
 
                 np.amax takes the maximum value in an
                 array even of length 1:
@@ -58,8 +58,9 @@ class LowVoltage(Rule):
             Test data against threshold value. Return false
             if threshold exceeded.
 
-            data(ndarray[float]): C x L eeg data where C is number of
-                channels and L is the signal length, after filtering
+
+            data(ndarray[float]): C x N length array where
+            C is the number of channels and N is the number of samples
 
 
                 np.amin takes the minimum value in an array even of length 1:
