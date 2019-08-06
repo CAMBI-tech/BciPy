@@ -1,7 +1,7 @@
 import os
 from typing import Any
 import logging
-
+import random
 import numpy as np
 from psychopy import core, event, visual
 
@@ -523,3 +523,20 @@ def pause_calibration(window, display, current_index: int, parameters: dict):
         return True
 
     return False
+
+
+def generate_targets(alp, stim_number):
+    """Generate a list of targets for each trial, minimizing duplication."""
+    if (stim_number <= len(alp)):
+        return random.sample(alp, stim_number)
+
+    # minimize duplicates
+    times, remainder = divmod(stim_number, len(alp))
+
+    lists = [random.sample(alp, len(alp)) for _ in range(times)]
+    lists.append(random.sample(alp, remainder))
+    
+    # flatten list of lists
+    targets = [target for sublist in lists for target in sublist]
+    
+    return targets
