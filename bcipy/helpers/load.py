@@ -6,6 +6,8 @@ import logging
 from codecs import open as codecsopen
 from json import load as jsonload
 import pickle
+import sqlite3
+import csv
 
 from tkinter.filedialog import askopenfilename, askdirectory
 
@@ -194,27 +196,31 @@ def load_txt_data() -> str:
     return filename
 
 
-def dump_raw_data(buffer_name: str, raw_data_file_name: str, daq_type: str,
+def dump_raw_data(db_name: str, raw_data_file_name: str, daq_type: str,
                   sample_rate: float):
     """Writes a raw_data csv file from a sqlite database
 
     Parameters:
     -----------        
-        buffer_name - path to the database
+        db_name - path to the database
         file_name - name of the file to be written; ex. raw_data.csv
         daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'
         sample_rate - metadata for the sample rate; ex. 300.0
     """
-
     with open(raw_data_file_name, "w") as raw_data_file:
         # write metadata
         raw_data_file.write(f"daq_type,{daq_type}\n")
         raw_data_file.write(f"sample_rate,{sample_rate}\n")
 
-        # if flush is missing the previous content is appended at the end
+        # if flush is missing the previous content may be appended at the end
         raw_data_file.flush()
 
-        # dump data from sqlite
-        subprocess.call(
-            ["sqlite3", "-header", "-csv", buffer_name, 'select * from data;'],
-            stdout=raw_data_file)
+        with sqlite3.connect(db_name) as db:
+            cursor = db.cursor()
+            cursor.execute("select * from data;")
+            columns = [description[0] for description in cursor.description]
+
+            csv_writer = csv.writer(raw_data_file, delimiter=',')
+            csv_writer.writerow(columns)
+            for row in cursor:
+                csv_writer.writerow(row)
