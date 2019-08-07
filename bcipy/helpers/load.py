@@ -207,7 +207,7 @@ def dump_raw_data(db_name: str, raw_data_file_name: str, daq_type: str,
         daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'
         sample_rate - metadata for the sample rate; ex. 300.0
     """
-    with open(raw_data_file_name, "w") as raw_data_file:
+    with open(raw_data_file_name, "w", newline='') as raw_data_file:
         # write metadata
         raw_data_file.write(f"daq_type,{daq_type}\n")
         raw_data_file.write(f"sample_rate,{sample_rate}\n")
