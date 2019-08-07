@@ -202,7 +202,7 @@ def dump_raw_data(db_name: str, raw_data_file_name: str, daq_type: str,
     Parameters:
     -----------        
         db_name - path to the database
-        file_name - name of the file to be written; ex. raw_data.csv
+        raw_data_file_name - name of the file to be written; ex. raw_data.csv
         daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'
         sample_rate - metadata for the sample rate; ex. 300.0
     """
