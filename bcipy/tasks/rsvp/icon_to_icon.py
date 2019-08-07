@@ -10,8 +10,9 @@ from psychopy import core
 from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
-from bcipy.helpers.task import (
-    alphabet, get_user_input, process_data_for_decision, trial_complete_message)
+from bcipy.helpers.task import (alphabet, get_user_input,
+                                process_data_for_decision,
+                                trial_complete_message, generate_targets)
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model import CopyPhraseWrapper
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
@@ -323,7 +324,7 @@ class RSVPIconToIconTask(Task):
     def execute(self):
         self.logger.debug('Starting Icon to Icon Task!')
 
-        icons = [random.choice(self.alp) for _ in range(self.stim_number)]
+        icons = generate_targets(self.alp, self.stim_number)
         self.logger.debug(f'Icon sequence: {icons}')
 
         selections = []
