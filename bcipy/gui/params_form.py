@@ -414,14 +414,15 @@ class MainPanel(scrolled.ScrolledPanel):
                 return     # the user changed their mind
             save_file = fd.GetPath()
 
-        if path.samefile('bcipy/parameters/parameters.json', save_file):
-            dialog = wx.MessageDialog(
-                self, "This will overwrite the default parameters.json. Your changes "
-                "will be overwritten when BciPy is upgraded.", 'Warning',
-                wx.CANCEL | wx.OK | wx.ICON_EXCLAMATION)
-            if dialog.ShowModal() == wx.ID_CANCEL:
-                return
-            dialog.Destroy()
+        if path.isfile(save_file):
+            if path.samefile('bcipy/parameters/parameters.json', save_file):
+                dialog = wx.MessageDialog(
+                    self, "This will overwrite the default parameters.json. Your changes "
+                    "will be overwritten when BciPy is upgraded.", 'Warning',
+                    wx.CANCEL | wx.OK | wx.ICON_EXCLAMATION)
+                if dialog.ShowModal() == wx.ID_CANCEL:
+                    return
+                dialog.Destroy()
 
         self.loaded_from.SetLabel(f'Loaded from: {save_file}')
         self.json_file = save_file
