@@ -40,6 +40,8 @@ class Evaluator:
 
                 return False
 
+        return True
+
     def __str__(self):
         rules = [str(rule) for rule in self.rules]
         return f'Evaluator with {rules}'

@@ -1,6 +1,4 @@
 import unittest
-import numpy as np
-import math
 from bcipy.signal.evaluate.evaluator import Evaluator
 from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
 from mockito import any, unstub, when
@@ -27,29 +25,31 @@ class TestEvaluator(unittest.TestCase):
     def tearDown(self):
         unstub()
 
-    def test_init_rules(self):
-        """Test init of ruleset. We expect that rules enabled in the
-        params are initialized as part of the ruleset"""
-
+    def test_init_high_voltage_rule(self):
+        """Test that high voltage rule initialised correctly into ruleset"""
         if self.expected_high_voltage:
             self.assertIsInstance(self.evaluator.rules[0], HighVoltage)
 
+    def test_init_low_voltage_rule(self):
+        """Test that high voltage rule initialised correctly into ruleset"""
         if self.expected_low_voltage:
             self.assertIsInstance(self.evaluator.rules[1], LowVoltage)
 
-    def test_evaluate_true(self):
-        """Test evaluate with is_broken returning True"""
+    def test_evaluate_with_broken_rules(self):
+        """Test evaluate with is_broken returning True,
+        thus resulting in evaluate returning False"""
         when(self.evaluator.rules[0]).is_broken(any()).thenReturn(True)
         when(self.evaluator.rules[1]).is_broken(any()).thenReturn(True)
-        data = gen_random_data(-1,2,self.channels)
+        data = gen_random_data(-1, 2, self.channels)
         self.assertFalse(self.evaluator.evaluate(data))
 
-    def test_evaluate_false(self):
-        """Test evaluate with is_broken returning False """
+    def test_evaluate_with_no_broken_rules(self):
+        """Test evaluate with is_broken returning False,
+        thus resulting in evaluate returning True"""
         when(self.evaluator.rules[0]).is_broken(any()).thenReturn(False)
         when(self.evaluator.rules[1]).is_broken(any()).thenReturn(False)
-        data = gen_random_data(-1,2,self.channels)
-        self.assertIsNone(self.evaluator.evaluate(data))
+        data = gen_random_data(-1, 2, self.channels)
+        self.assertTrue(self.evaluator.evaluate(data))
 
 
 if __name__ == "__main__":
