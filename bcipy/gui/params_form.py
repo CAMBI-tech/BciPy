@@ -4,7 +4,7 @@ import wx.lib.scrolledpanel as scrolled
 import json
 import logging
 from typing import Callable, Dict, Tuple
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from os import sep, path
 from bcipy.helpers.load import check_if_parameters_contains_all_keys
 from bcipy.helpers.system_utils import bcipy_version
@@ -60,28 +60,30 @@ class Form(wx.Panel):
         self.bindEvents()
         self.doLayout()
 
+    def alphabetizeParameters(self):
+        """Alphabetize parameters by readable section name. Returns alphabetized
+            OrderedDict of parameter sections and parameters."""
+        # Retrieve and alphabetize list of unique parameter sections
+        param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
+        name_dict = ast.literal_eval(self.params['section_names'].value)
+        # Sort parameters by section
+        key_dict = OrderedDict([])
+        for each_section in param_sections:
+            # Get readable names for sections
+            new_key = name_dict[each_section] if each_section in name_dict else each_section
+            key_dict[new_key] = sorted(
+                [key for key, param in self.params.items() if param.section == each_section])
+        # Move most important variables to top
+        key_dict.move_to_end(name_dict['top_level_config'], last=False)
+        return key_dict
+
     def createControls(self):
         """Create controls (inputs, labels, etc) for each item in the
         parameters file."""
 
         self.controls = {}
-        # Retrieve and alphebatize list of unique parameter sections
-        param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
-        # Sort parameters by section
-        key_dict = []
-        for each_section in param_sections:
-            # Get readable names for sections
-            name_dict = ast.literal_eval(self.params['section_names'].value)
-            new_key = name_dict[each_section] if each_section in name_dict else each_section
-            item_to_insert = [new_key, sorted(
-                [key for key, param in self.params.items() if param.section == each_section])]
-            if each_section == 'top_level_config':
-                # Move most important variables to top
-                key_dict.insert(0, item_to_insert)
-            else:
-                key_dict.append(item_to_insert)
-
-        for each_key, param_list in key_dict:
+        key_dict = self.alphabetizeParameters()
+        for each_key, param_list in key_dict.items():
             self.controls[each_key] = static_text_control(self, label=each_key,
                                                           size=20)
             for each_param in param_list:
