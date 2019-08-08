@@ -66,6 +66,39 @@ def _loop(msg_queue, response_queue, channels, archive_name):
             log.debug("Error; message not understood: %s", msg)
 
 
+def new_mailbox():
+    """Creates a new mailbox used to communicate with a buffer process, but 
+    does not create or start the process.
+
+    Returns
+    -------
+        Tuple of Queues used to communicate with this server instance.
+    """
+    msg_queue = mp.Queue()
+    response_queue = mp.Queue()
+    return (msg_queue, response_queue)
+
+
+def start_server(mailbox, channels, archive_name):
+    """Starts a server process using the provided mailbox for communication.
+    
+    Parameters
+    ----------
+        mailbox: tuple of Queues used to communicate with this server instance.
+        channels : list of str
+            list of channel names. Data records are expected to have an entry
+            for each channel.
+        archive_name : str
+            underlying database name
+    """
+    log.debug("Starting the database server")
+    msg_queue, response_queue = mailbox
+    server_process = mp.Process(target=_loop,
+                                args=(msg_queue, response_queue, channels,
+                                      archive_name))
+    server_process.start()
+
+
 def start(channels, archive_name, asynchronous=False):
     """Starts a server Process.
 

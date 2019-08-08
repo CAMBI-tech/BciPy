@@ -2,6 +2,7 @@
 """Data Acquisition Client"""
 import logging
 import multiprocessing
+from multiprocessing import Queue
 import time
 
 from queue import Empty
@@ -68,14 +69,12 @@ class DataAcquisitionClient:
 
     def __init__(self,
                  device,
-                 processor=NullProcessor(),
                  buffer_name='raw_data.db',
                  raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
                  delete_archive=True):
 
         self._device = device
-        self._processor = processor
         self._buffer_name = buffer_name
         self._raw_data_file_name = raw_data_file_name
         self._clock = clock
@@ -92,13 +91,8 @@ class DataAcquisitionClient:
         self._record_at_calib = None
         self._max_wait = 0.1  # for process loop
 
-        # Max number of records in queue before it blocks for processing.
-        maxsize = 500
-
-        self._process_queue = multiprocessing.JoinableQueue(maxsize=maxsize)
         self.marker_writer = NullMarkerWriter()
         self._acq_process = None
-        self._data_processor = None
         self._buf = None
 
     # @override ; context manager
@@ -127,7 +121,7 @@ class DataAcquisitionClient:
         if not self._is_streaming:
             log.debug("Starting Acquisition")
 
-            msg_queue = multiprocessing.Queue()
+            msg_queue = Queue()
 
             # Initialize the marker streams before the device connection so the
             # device can start listening.
@@ -137,10 +131,13 @@ class DataAcquisitionClient:
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
+            self._buf = buffer_server.new_mailbox()
 
-            self._acq_process = AcquisitionProcess(self._device, self._clock,
-                                                   self._process_queue,
-                                                   msg_queue)
+            self._acq_process = AcquisitionProcess(device=self._device,
+                                                   clock=self._clock,
+                                                   buf=self._buf,
+                                                   buf_name=self._buffer_name,
+                                                   msg_queue=msg_queue)
             self._acq_process.start()
 
             # Block thread until device connects and returns device_info.
@@ -152,23 +149,6 @@ class DataAcquisitionClient:
             else:
                 raise Exception("Message not understood: " + str(msg))
 
-            # Initialize the buffer and processor; this occurs after the
-            # device initialization to ensure that any device parameters have
-            # been updated as needed.
-            self._processor.set_device_info(self._device_info)
-            self._buf = buffer_server.start(self._device_info.channels,
-                                            self._buffer_name)
-
-            self._data_processor = DataProcessor(
-                data_queue=self._process_queue,
-                msg_queue=msg_queue,
-                processor=self._processor,
-                buf=self._buf,
-                wait=self._max_wait)
-            self._data_processor.start()
-
-            # Block until processor has initialized.
-            msg_type, msg = msg_queue.get()
             self._is_streaming = True
 
     def stop_acquisition(self):
@@ -183,8 +163,7 @@ class DataAcquisitionClient:
         log.debug("Stopping Processing Queue")
 
         # Blocks until all data in the queue is consumed.
-        self._process_queue.join()
-        self._data_processor.stop()
+
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
@@ -332,7 +311,7 @@ class DataAcquisitionClient:
 
 class AcquisitionProcess(StoppableProcess):
     """Process that continuously reads data from the data source and sends it
-    to the data_queue for processing.
+    to the buffer for persistence.
 
 
     Parameters
@@ -342,18 +321,17 @@ class AcquisitionProcess(StoppableProcess):
             initializing, and reading a packet.
         clock : Clock
             Used to timestamp each record as it is read.
-        data_queue : Queue
-            Data will be written to the queue as it is acquired.
-        msg_queue : Queue
-            Used to communicate messages to the main thread.
+        :param messages: message queue
+        :type param: Queue
     """
 
-    def __init__(self, device, clock, data_queue, msg_queue):
+    def __init__(self, device, clock, buf, buf_name, msg_queue):
         super(AcquisitionProcess, self).__init__()
         self._device = device
         self._clock = clock
-        self._data_queue = data_queue
-        self._msg_queue = msg_queue
+        self.msg_queue = msg_queue
+        self._buf = buf
+        self._buf_name = buf_name
 
     def run(self):
         """Process startup. Connects to the device and start reading data.
@@ -366,12 +344,14 @@ class AcquisitionProcess(StoppableProcess):
             self._device.connect()
             self._device.acquisition_init()
         except Exception as error:
-            self._msg_queue.put((MSG_ERROR, str(error)))
+            self.msg_queue.put((MSG_ERROR, str(error)))
             raise error
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self._msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
+        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
+
+        buffer_server.start_server(self._buf, self._device.device_info.channels, self._buf_name)
 
         log.debug("Starting Acquisition read data loop")
         sample = 0
@@ -383,7 +363,7 @@ class AcquisitionProcess(StoppableProcess):
             if DEBUG and sample % DEBUG_FREQ == 0:
                 log.debug("Read sample: %s", str(sample))
 
-            self._data_queue.put(Record(data, self._clock.getTime(), sample))
+            buffer_server.append(self._buf, Record(data, self._clock.getTime(), sample))
             try:
                 # Read data again
                 data = self._device.read_data()
@@ -394,42 +374,6 @@ class AcquisitionProcess(StoppableProcess):
                 break
         log.debug("Total samples read: %s", str(sample))
         self._device.disconnect()
-
-
-class DataProcessor(StoppableProcess):
-    """Process that gets data from a queue and persists it to the buffer."""
-
-    def __init__(self, data_queue, msg_queue, processor, buf, wait=0.1):
-        super(DataProcessor, self).__init__()
-        self._data_queue = data_queue
-        self._msg_queue = msg_queue
-        self._processor = processor
-        self._buf = buf
-        self._wait = wait
-
-    def run(self):
-        """Reads from the queue of data and performs processing an item at a
-        time. Also writes data to buffer."""
-
-        log.debug("Starting Data Processing loop.")
-        count = 0
-        with self._processor as processor:
-            # Signal that initialization is complete.
-            self._msg_queue.put((MSG_PROCESSOR_INITIALIZED, True))
-
-            while self.running():
-                try:
-                    record = self._data_queue.get(True, self._wait)
-                    count += 1
-                    if DEBUG and count % DEBUG_FREQ == 0:
-                        log.debug("Processed sample: %s", str(count))
-                    buffer_server.append(self._buf, record)
-                    processor.process(record.data, record.timestamp)
-                    self._data_queue.task_done()
-                except Empty:
-                    pass
-            log.debug("Total samples processed: %s", str(count))
-
 
 def main():
     """Test script."""
