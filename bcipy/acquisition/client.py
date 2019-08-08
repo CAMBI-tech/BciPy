@@ -144,11 +144,15 @@ class DataAcquisitionClient:
             msg_type, msg = msg_queue.get()
             if msg_type == MSG_DEVICE_INFO:
                 self._device_info = msg
+                log.info("Connected to device")
+                log.info(msg)
             elif msg_type == MSG_ERROR:
                 raise Exception("Error connecting to device")
             else:
                 raise Exception("Message not understood: " + str(msg))
 
+            buffer_server.start_server(self._buf, self._device_info.channels, self._buffer_name)
+            msg_queue.put(True)
             self._is_streaming = True
 
     def stop_acquisition(self):
@@ -157,19 +161,17 @@ class DataAcquisitionClient:
 
         self._is_streaming = False
 
-        self._acq_process.stop()
+        self._acq_process.stop()        
         self._acq_process.join()
-
-        log.debug("Stopping Processing Queue")
-
-        # Blocks until all data in the queue is consumed.
 
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
         if self._raw_data_file_name:
+            log.debug(f"Dumping {self._raw_data_file_name}")
             dump_raw_data(self._buffer_name, self._raw_data_file_name,
                             self.device_info.name, self.device_info.fs)
+
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.
@@ -351,7 +353,9 @@ class AcquisitionProcess(StoppableProcess):
         # initialization is complete.
         self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
 
-        buffer_server.start_server(self._buf, self._device.device_info.channels, self._buf_name)
+        # buffer_server.start_server(self._buf, self._device.device_info.channels, self._buf_name)
+        # TODO: wait for db server start
+        self.msg_queue.get()
 
         log.debug("Starting Acquisition read data loop")
         sample = 0

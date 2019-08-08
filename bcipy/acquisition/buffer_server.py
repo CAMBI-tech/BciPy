@@ -98,6 +98,9 @@ def start_server(mailbox, channels, archive_name):
                                       archive_name))
     server_process.start()
 
+    request = (MSG_STARTED, None)
+    return _rpc(mailbox, request, wait_reply=True)
+
 
 def start(channels, archive_name, asynchronous=False):
     """Starts a server Process.
