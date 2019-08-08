@@ -73,13 +73,14 @@ class Form(wx.Panel):
             # Get readable names for sections
             name_dict = ast.literal_eval(self.params['section_names'].value)
             new_key = name_dict[each_section] if each_section in name_dict else each_section
-            item_to_insert = [new_key, sorted([key for key, param in self.params.items() if param.section == each_section])]
+            item_to_insert = [new_key, sorted(
+                [key for key, param in self.params.items() if param.section == each_section])]
             if each_section == 'top_level_config':
                 # Move most important variables to top
                 key_dict.insert(0, item_to_insert)
             else:
                 key_dict.append(item_to_insert)
-            
+
         for each_key, param_list in key_dict:
             self.controls[each_key] = static_text_control(self, label=each_key,
                                                           size=20)
@@ -300,13 +301,13 @@ class MainPanel(scrolled.ScrolledPanel):
      to load and handling scrolling."""
 
     def __init__(self, parent, title='BCI Parameters',
-                 json_file='bcipy/parameters/parameters.json', params_queue=None):
+                 json_file='bcipy/parameters/parameters.json', parent_frame=None):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
         self.params = {}
-        self.params_queue = params_queue
+        self.parent = parent_frame
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
 
@@ -449,29 +450,14 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetupScrolling()
 
     def write_parameters_location_txt(self, location):
-        if self.params_queue:
-            self.params_queue.put(location)
+        self.parent.PARAMETER_LOCATION = location
 
     def OnChildFocus(self, event):
         event.Skip()
 
 
-def main(title='BCI Parameters', size=(650, 550),
-         json_file='bcipy/parameters/parameters.json', queue=None):
-    """Set up the GUI components and start the main loop."""
-
-    app = wx.App(0)
-    frame = wx.Frame(None, wx.ID_ANY, size=size, title=title)
-    fa = MainPanel(frame, title=title, json_file=json_file, params_queue=queue)
-    frame.Show()
-    app.MainLoop()
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    # Command line utility for adding arguments/ paths via command line
-    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
-                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
-    args = parser.parse_args()
-    main(json_file=args.parameters)
+class params_form(wx.Frame):
+    def __init__(self, title='BCI Parameters', size=(650, 550),
+                 json_file='bcipy/parameters/parameters.json', parent_frame=None):
+        wx.Frame.__init__(self, None, title=title, size=size)
+        self.main_panel = MainPanel(self, title=title, json_file=json_file, parent_frame=parent_frame)

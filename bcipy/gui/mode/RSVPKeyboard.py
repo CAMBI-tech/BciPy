@@ -6,10 +6,8 @@ import subprocess
 
 import wx
 
-from multiprocessing import Process, Queue
-
 from bcipy.gui.gui_main import BCIGui
-from bcipy.gui.params_form import main as run_params_form
+from bcipy.gui.params_form import params_form
 from bcipy.helpers.load import load_json_parameters
 
 from bcipy.tasks.task_registry import ExperimentType
@@ -19,11 +17,9 @@ class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
 
-    def __init__(self, title, size, background_color, default_param_location='bcipy/parameters/parameters.json',
-                 params_queue=None):
+    def __init__(self, title, size, background_color, default_param_location='bcipy/parameters/parameters.json'):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
         self.PARAMETER_LOCATION = default_param_location
-        self.params_queue = params_queue
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -44,15 +40,8 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        params_form_process = Process(
-            target=run_params_form,
-            kwargs={
-                'json_file': self.PARAMETER_LOCATION,
-                'queue': self.params_queue})
-        params_form_process.start()
-        while params_form_process.is_alive():
-            if(not self.params_queue.empty()):
-                self.PARAMETER_LOCATION = self.params_queue.get()
+        edit_params_form = params_form(json_file=self.PARAMETER_LOCATION, parent_frame=self)
+        edit_params_form.Show()
 
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
@@ -113,7 +102,7 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json', params_queue=None):
+def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json'):
     """Create the GUI and run"""
     tasks = ExperimentType.by_mode()['RSVP']
 
@@ -132,7 +121,7 @@ def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json', para
     app = wx.App(False)
     gui = RSVPKeyboard(
         title="RSVPKeyboard", size=(window_width, 550), background_color='black',
-        default_param_location=default_param_location, params_queue=params_queue)
+        default_param_location=default_param_location)
 
     # STATIC TEXT!
     gui.add_static_text(
@@ -194,9 +183,8 @@ def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json', para
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parameters_queue = Queue()
     # Command line utility for adding arguments/ paths via command line
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     args = parser.parse_args()
-    run_rsvp_gui(default_param_location=args.parameters, params_queue=parameters_queue)
+    run_rsvp_gui(default_param_location=args.parameters)
