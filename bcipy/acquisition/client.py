@@ -7,10 +7,11 @@ import time
 from queue import Empty
 
 from bcipy.acquisition import buffer_server
-from bcipy.acquisition.processor import FileWriter
+from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
+from bcipy.helpers.load import dump_raw_data
 
 log = logging.getLogger(__name__)
 DEBUG = False
@@ -55,23 +56,28 @@ class DataAcquisitionClient:
             writes to a file.)
         buffer_name : str, optional
             Name of the sql database archive; default is buffer.db.
+        raw_data_file_name: str,
+            Name of the raw data csv file to output; if not present raw data
+                is not written.
         clock : Clock, optional
             Clock instance used to timestamp each acquisition record
         delete_archive: boolean, optional
             Flag indicating whether to delete the database archive on exit.
-            Default is True.
+            Default is False.
     """
 
     def __init__(self,
                  device,
-                 processor=FileWriter(filename='rawdata.csv'),
-                 buffer_name='buffer.db',
+                 processor=NullProcessor(),
+                 buffer_name='raw_data.db',
+                 raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
                  delete_archive=True):
 
         self._device = device
         self._processor = processor
         self._buffer_name = buffer_name
+        self._raw_data_file_name = raw_data_file_name
         self._clock = clock
 
         # boolean; set to false to retain the sqlite db.
@@ -181,6 +187,10 @@ class DataAcquisitionClient:
         self._data_processor.stop()
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
+
+        if self._raw_data_file_name:
+            dump_raw_data(self._buffer_name, self._raw_data_file_name,
+                            self.device_info.name, self.device_info.fs)
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.
@@ -453,7 +463,6 @@ def main():
     if args.channels:
         dev.channels = args.channels.split(',')
     daq = DataAcquisitionClient(device=dev,
-                                processor=FileWriter(filename=args.filename),
                                 buffer_name=args.buffer,
                                 delete_archive=True)
 
