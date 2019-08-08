@@ -68,14 +68,19 @@ class Form(wx.Panel):
         # Retrieve and alphebatize list of unique parameter sections
         param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
         # Sort parameters by section
-        key_dict = {}
+        key_dict = []
         for each_section in param_sections:
             # Get readable names for sections
             name_dict = ast.literal_eval(self.params['section_names'].value)
             new_key = name_dict[each_section] if each_section in name_dict else each_section
-            key_dict[new_key] = sorted([key for key, param in self.params.items() if param.section == each_section])
-
-        for each_key, param_list in key_dict.items():
+            item_to_insert = [new_key, sorted([key for key, param in self.params.items() if param.section == each_section])]
+            if each_section == 'top_level_config':
+                # Move most important variables to top
+                key_dict.insert(0, item_to_insert)
+            else:
+                key_dict.append(item_to_insert)
+            
+        for each_key, param_list in key_dict:
             self.controls[each_key] = static_text_control(self, label=each_key,
                                                           size=20)
             for each_param in param_list:
@@ -86,9 +91,6 @@ class Form(wx.Panel):
                     form_input = self.file_input(param)
                 elif isinstance(param.recommended_values, list):
                     form_input = self.selection_input(param)
-                # TODO: NumCtrl for numeric input types.
-                # from wx.lib.masked import NumCtrl
-                # elif param['type'] in ['float', 'int']:
                 else:
                     form_input = self.text_input(param)
 
@@ -379,10 +381,17 @@ class MainPanel(scrolled.ScrolledPanel):
                 for each_key in missing_keys:
                     self.params[each_key] = Parameter(*self.params[each_key].values())
 
+                """ Prevent dialog box text from getting too long if lots of
+                    parameters are missing """
+                if len(missing_keys) <= 5:
+                    missing_key_string = str(missing_keys)
+                else:
+                    missing_key_string = str(missing_keys[:5]) + ' and others'
+
                 dialog = wx.MessageDialog(
-                    self, "Parameters file {} is missing keys {}. The default "
-                    "values for these keys will be loaded.".format(
-                        load_file, str(missing_keys)), 'Warning', wx.OK |
+                    self, 'Parameters file {} is missing keys {}. The default '
+                    'values for these keys will be loaded.'.format(
+                        load_file, missing_key_string), 'Warning', wx.OK |
                     wx.ICON_EXCLAMATION)
                 dialog.ShowModal()
                 dialog.Destroy()

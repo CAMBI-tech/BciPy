@@ -1,7 +1,6 @@
 import subprocess
 import wx
 from bcipy.gui.gui_main import BCIGui
-from os import remove
 
 
 # Make a custom GUI class with the events we want
@@ -19,11 +18,6 @@ class BCInterface(BCIGui):
                 'python bcipy/gui/mode/RSVPKeyboard.py',
                 shell=True)
 
-
-try:
-    remove('parameters_location.txt')
-except OSError:
-    pass
 
 app = wx.App(False)
 gui = BCInterface(

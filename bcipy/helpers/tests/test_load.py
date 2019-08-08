@@ -1,6 +1,5 @@
 import unittest
 
-import json
 import tempfile
 import shutil
 import pickle

@@ -1,3 +1,4 @@
+import ast
 from tkinter import Tk
 import numpy as np
 import os
@@ -42,6 +43,8 @@ def cast_value(value):
             new_value = True if actual_value == 'true' else False
         elif actual_type == 'str' or 'path' in actual_type:
             new_value = str(actual_value)
+        elif actual_type == 'object':
+            new_value = ast.literal_eval(actual_value)
         else:
             raise ValueError('Unrecognized value type')
 
