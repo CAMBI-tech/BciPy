@@ -83,21 +83,21 @@ class Form(wx.Panel):
 
         self.controls = {}
         key_dict = self.alphabetizeParameters()
-        for each_key, param_list in key_dict.items():
-            self.controls[each_key] = static_text_control(self, label=each_key,
-                                                          size=20)
-            for each_param in param_list:
-                param = self.params[each_param]
-                if param.type == 'bool':
-                    form_input = self.bool_input(param)
-                elif 'path' in param.type:
-                    form_input = self.file_input(param)
-                elif isinstance(param.recommended_values, list):
-                    form_input = self.selection_input(param)
+        for key, param_list in key_dict.items():
+            self.controls[key] = static_text_control(self, label=key,
+                                                            size=20)
+            for param in param_list:
+                param_values = self.params[param]
+                if param_values.type == 'bool':
+                    form_input = self.bool_input(param_values)
+                elif 'path' in param_values.type:
+                    form_input = self.file_input(param_values)
+                elif isinstance(param_values.recommended_values, list):
+                    form_input = self.selection_input(param_values)
                 else:
-                    form_input = self.text_input(param)
+                    form_input = self.text_input(param_values)
 
-                self.add_input(self.controls, each_param, form_input)
+                self.add_input(self.controls, param, form_input)
 
     def add_input(self, controls: Dict[str, wx.Control], key: str,
                   form_input: FormInput) -> None:

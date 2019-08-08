@@ -19,7 +19,7 @@ class RSVPKeyboard(BCIGui):
 
     def __init__(self, title, size, background_color, default_param_location='bcipy/parameters/parameters.json'):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
-        self.PARAMETER_LOCATION = default_param_location
+        self.parameter_location = default_param_location
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -40,7 +40,7 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        edit_params_form = params_form(json_file=self.PARAMETER_LOCATION, parent_frame=self)
+        edit_params_form = params_form(json_file=self.parameter_location, parent_frame=self)
         edit_params_form.Show()
 
     def launch_bci_main(self, event: wx.Event) -> None:
@@ -50,8 +50,8 @@ class RSVPKeyboard(BCIGui):
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            cmd = 'python bci_main.py -m {} -t {} -u {} -p {}'.format(
-                mode, experiment_type, username, self.PARAMETER_LOCATION)
+            cmd = f"""python bci_main.py -m {mode} -t {experiment_type} -u
+                {username} -p {self.parameter_location}"""
 
             subprocess.Popen(cmd, shell=True)
 
@@ -78,7 +78,7 @@ class RSVPKeyboard(BCIGui):
 
     def offline_analysis(self, _event: wx.Event) -> None:
         """Run the offline analysis in a new Process."""
-        cmd = 'python bcipy/signal/model/offline_analysis.py -p {}'.format(self.PARAMETER_LOCATION)
+        cmd = 'python bcipy/signal/model/offline_analysis.py -p {}'.format(self.parameter_location)
         subprocess.Popen(cmd, shell=True)
         self.event_started = True
 
@@ -90,7 +90,7 @@ class RSVPKeyboard(BCIGui):
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
         parameters = load_json_parameters(
-            self.PARAMETER_LOCATION, value_cast=True)
+            self.parameter_location, value_cast=True)
         data_save_loc = parameters['data_save_loc']
         if os.path.isdir(data_save_loc):
             saved_users = os.listdir(data_save_loc)
