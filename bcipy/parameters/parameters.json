@@ -876,5 +876,45 @@
     "helpTip": "What should the name of the main log file be for each BciPy session",
     "recommended_values": "",
     "type": "str"
+  },
+  "artifact_rejection": {
+    "value": "true",
+    "section": "artifact_rejection",
+    "readableName": "Artifact Rejection",
+    "helpTip": "Check data sequences for unwanted artifacts and rejects such sequences.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "high_voltage_threshold": {
+    "value": "true",
+    "section": "artifact_rejection",
+    "readableName": "HighVoltage Threshold",
+    "helpTip": "Toggle high voltage check for artifact rejection.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "high_voltage_value": {
+    "value": "75E+6",
+    "section": "artifact_rejection",
+    "readableName": "HighVoltage Threshold Value",
+    "helpTip": "Set high voltage threshold value for artifact rejection.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "low_voltage_threshold": {
+    "value": "true",
+    "section": "artifact_rejection",
+    "readableName": "LowVoltage Threshold",
+    "helpTip": "Toggle low voltage check for artifact rejection.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "low_voltage_value": {
+    "value": "-75E-6",
+    "section": "artifact_rejection",
+    "readableName": "LowVoltage Threshold Value",
+    "helpTip": "Set low voltage threshold for artifact rejection.",
+    "recommended_values": "",
+    "type": "float"
   }
 }

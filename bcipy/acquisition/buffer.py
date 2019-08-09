@@ -6,6 +6,7 @@ import os
 import sqlite3
 from collections import deque
 import logging
+import csv
 
 from builtins import range
 from bcipy.acquisition.record import Record
@@ -90,7 +91,7 @@ class Buffer():
     def cleanup(self, delete_archive=True):
         """Close connection and optionally deletes the archive database.
         Data may not be queryable after this method is called."""
-
+        self._flush()
         self._conn.close()
         try:
             if delete_archive:
@@ -271,6 +272,36 @@ class Buffer():
 
         # Return the data in the format it was provided
         return [_convert_row(r) for r in result]
+
+    def dump_raw_data(self, raw_data_file_name: str, daq_type: str,
+                      sample_rate: float):
+        """Writes a raw_data csv file from the current database.
+
+        Parameters:
+        -----------        
+            db_name - path to the database
+            raw_data_file_name - name of the file to be written; ex. raw_data.csv
+            daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'
+            sample_rate - metadata for the sample rate; ex. 300.0
+        """
+
+        with open(raw_data_file_name, "w", newline='') as raw_data_file:
+            # write metadata
+            raw_data_file.write(f"daq_type,{daq_type}\n")
+            raw_data_file.write(f"sample_rate,{sample_rate}\n")
+
+            # if flush is missing the previous content may be appended at the end
+            raw_data_file.flush()
+
+            self._flush()
+            cursor = self._new_connection().cursor()
+            cursor.execute("select * from data;")
+            columns = [description[0] for description in cursor.description]
+
+            csv_writer = csv.writer(raw_data_file, delimiter=',')
+            csv_writer.writerow(columns)
+            for row in cursor:
+                csv_writer.writerow(row)
 
 
 def _adapt_record(record):
