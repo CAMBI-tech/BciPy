@@ -11,7 +11,6 @@ from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
-from bcipy.helpers.load import dump_raw_data
 
 log = logging.getLogger(__name__)
 DEBUG = False
