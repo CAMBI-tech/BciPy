@@ -37,6 +37,9 @@ def static_text_control(parent,
 FormInput = namedtuple('FormInput', ['control', 'label', 'help'])
 Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
                                      'helpTip', 'recommended_values', 'type'])
+                                     
+def convert_keys_to_parameters(json_object: dict):
+    return {k: Parameter(*v.values()) for k, v in json_object.items()}
 
 
 class Form(wx.Panel):
@@ -82,6 +85,7 @@ class Form(wx.Panel):
         parameters file."""
 
         self.controls = {}
+        self.params = {**self.params, **convert_keys_to_parameters(get_missing_parameter_keys(self.params, self.json_file))} 
         key_dict = self.alphabetizeParameters()
         for key, param_list in key_dict.items():
             self.controls[key] = static_text_control(self, label=key,
@@ -321,7 +325,7 @@ class MainPanel(scrolled.ScrolledPanel):
         loading_box.AddSpacer(10)
 
         self.loaded_from.SetLabel(f'Loaded from: {self.json_file}')
-        self.params = self.convert_keys_to_parameters(open_parameters(self.json_file))
+        self.params = convert_keys_to_parameters(open_parameters(self.json_file))
 
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
@@ -357,9 +361,6 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetSizer(vbox)
         self.SetupScrolling()
 
-    def convert_keys_to_parameters(self, json_object: dict):
-        return {k: Parameter(*v.values()) for k, v in json_object.items()}
-
     def onLoad(self, event: wx.EVT_BUTTON) -> None:
         """Event handler to load the form data from a different json file."""
         log.debug('Loading parameters file')
@@ -372,22 +373,18 @@ class MainPanel(scrolled.ScrolledPanel):
             load_file = fd.GetPath()
 
             self.loaded_from.SetLabel(f'Loaded from: {load_file}')
-            self.params = self.convert_keys_to_parameters(open_parameters(load_file))
+            self.params = convert_keys_to_parameters(open_parameters(load_file))
 
-            missing_keys = get_missing_parameter_keys(self.params, load_file)
+            missing_keys = convert_keys_to_parameters(get_missing_parameter_keys(self.params, load_file))
             self.params = {**self.params, **missing_keys}
-            missing_keys = missing_keys
 
             if missing_keys:
-                for each_key in missing_keys:
-                    self.params[each_key] = Parameter(*self.params[each_key].values())
-
                 """ Prevent dialog box text from getting too long if lots of
                     parameters are missing """
                 if len(missing_keys) <= 5:
-                    missing_key_string = str(missing_keys.keys())
+                    missing_key_string = str(missing_keys)
                 else:
-                    missing_key_string = str(list(missing_keys.keys())[:5]) + ' and others'
+                    missing_key_string = str(list(missing_keys)[:5]) + ' and others'
 
                 dialog = wx.MessageDialog(
                     self, 'Parameters file {} is missing keys {}. The default '
@@ -403,7 +400,7 @@ class MainPanel(scrolled.ScrolledPanel):
 
     def restoreDefaults(self, event: wx.EVT_BUTTON) -> None:
         self.loaded_from.SetLabel(f'Loaded from: {DEFAULT_PARAMETERS_LOCATION}')
-        self.params = self.convert_keys_to_parameters(open_parameters(DEFAULT_PARAMETERS_LOCATION))
+        self.params = convert_keys_to_parameters(open_parameters(DEFAULT_PARAMETERS_LOCATION))
         self.write_parameters_location_txt(DEFAULT_PARAMETERS_LOCATION)
         self.refresh_form(DEFAULT_PARAMETERS_LOCATION)
 
