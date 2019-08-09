@@ -11,7 +11,6 @@ from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
-from bcipy.helpers.load import dump_raw_data
 
 log = logging.getLogger(__name__)
 DEBUG = False
@@ -188,9 +187,10 @@ class DataAcquisitionClient:
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
-        if self._raw_data_file_name:
-            dump_raw_data(self._buffer_name, self._raw_data_file_name,
-                            self.device_info.name, self.device_info.fs)
+        if self._raw_data_file_name and self._buf:
+            buffer_server.dump_data(self._buf, self._raw_data_file_name,
+                                    self.device_info.name, self.device_info.fs)
+
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.
