@@ -1,12 +1,10 @@
-
-"""evaluator.py """
-
 from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
 
 
 class Evaluator:
+    """Evaluator. 
 
-    """Evaluator. Takes in raw data and tests them against given
+    Takes in raw data and tests them against given
     rules, which elicit the rejection of a sequence when broken.
     Feeds warnings to artifact rejector as suggestions.
 
@@ -15,11 +13,9 @@ class Evaluator:
 
     parameters (dict): dictionary of parameters from json file, given by caller
     rules (list of rule objects, defined in rules.py)
-
     """
 
     def __init__(self, parameters, high_voltage, low_voltage):
-
         self.rules = []
 
         # if high_voltage threshold is enabled, add to rules
@@ -31,8 +27,10 @@ class Evaluator:
             self.rules.append(LowVoltage(parameters['low_voltage_value']))
 
     def evaluate(self, data):
-        """Evaluates sequence data using selected rules
-        from parameters file."""
+        """Evaluate.
+
+        Evaluates sequence data using selected rules from parameters file.
+        """
 
         for rule in self.rules:
 

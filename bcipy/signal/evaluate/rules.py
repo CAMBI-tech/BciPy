@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 
 
 class Rule(ABC):
-    """Python Abstract Base Class for a Rule.
+    """Rule.
+
+    Python Abstract Base Class for a Rule.
     (https://docs.python.org/3/library/abc.html)
     Each rule has a 'is_broken' method which acts as instructions for
     the evaluator to use when evaluating data. Returns True upon
@@ -19,15 +21,17 @@ class Rule(ABC):
 
 
 class HighVoltage(Rule):
-    """High Voltage Rule. Set high threshold for permitted voltage.
-    Separated from LowVoltage for rule specification. Allows
-    different types of rules to be fed to artifact rejector
-    so that experimenter can differentiate between
-    high and low warnings easily. Makes it so that rules
-    are singularly defined. Names must be equal to value in parameters.json"""
+    """High Voltage Rule.
+
+    Set high threshold for permitted voltage.
+
+    Allows different types of rules to be fed to artifact rejector so that experimenter can differentiate between
+    high and low warnings easily. Makes it so that rules are singularly defined. Names must be equal to value in parameters.json
+    """
 
     def is_broken(self, data):
-        """
+        """Is Broken.
+
             Test data against threshold value. Return broken
             if threshold exceeded.
 
@@ -39,9 +43,7 @@ class HighVoltage(Rule):
                 (https://docs.scipy.org/doc/numpy/
                 reference/generated/numpy.amax.html)
         """
-
         if np.amax(data) >= self.threshold:
-
             return True
 
         return False
@@ -51,10 +53,14 @@ class HighVoltage(Rule):
 
 
 class LowVoltage(Rule):
-    """Low Voltage Rule. Set low threshold for permitted voltage. """
+    """Low Voltage Rule.
+    
+    Set low threshold for permitted voltage.
+    """
 
     def is_broken(self, data):
-        """
+        """Is Broken.
+
             Test data against threshold value. Return false
             if threshold exceeded.
 
@@ -66,9 +72,7 @@ class LowVoltage(Rule):
                 np.amin takes the minimum value in an array even of length 1:
                   (https://docs.scipy.org/doc/numpy/reference/generated/numpy.amin.html)
          """
-
         if np.amin(data) <= self.threshold:
-
             return True
 
         return False
