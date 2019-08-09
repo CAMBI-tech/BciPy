@@ -85,6 +85,7 @@ def offline_analysis(data_folder: str = None,
                                 trial_length=trial_length)
 
     k_folds = parameters.get('k_folds', 10)
+
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     log.info('Saving offline analysis plots!')

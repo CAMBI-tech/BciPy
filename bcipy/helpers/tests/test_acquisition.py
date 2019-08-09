@@ -45,8 +45,6 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-
-        
         self.assertTrue('raw_data.csv' in client._processor._filename)
         self.assertEqual(
             client.device_info.name,
