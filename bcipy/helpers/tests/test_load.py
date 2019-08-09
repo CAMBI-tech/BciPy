@@ -8,7 +8,7 @@ from os import remove
 from bcipy.helpers.load import (
     load_json_parameters,
     load_signal_model,
-    check_if_parameters_contains_all_keys)
+    get_missing_parameter_keys)
 
 
 class TestLoad(unittest.TestCase):
@@ -52,16 +52,15 @@ class TestLoad(unittest.TestCase):
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
 
-    def test_check_if_parameters_contains_all_keys(self):
+    def test_get_parameter_keys(self):
         """Test the function that adds default values from parameters.json to
         the parameters if they are not present in the loaded file"""
         parameters = load_json_parameters(self.parameters, True)
         parameters.pop('fake_data', None)
         with open('temp_parameter_file.json', 'w') as outfile:
             outfile.write('test')
-        parameters, missing_key_list = check_if_parameters_contains_all_keys(parameters, 'temp_parameter_file.json')
-        assert missing_key_list == ['fake_data']
-        assert 'fake_data' in parameters
+        missing_key_list = get_missing_parameter_keys(parameters, 'temp_parameter_file.json')
+        assert list(missing_key_list.keys()) == ['fake_data']
         remove('temp_parameter_file.json')
 
 

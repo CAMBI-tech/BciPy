@@ -77,29 +77,24 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """
     # loads in json parameters and turns it into a dictionary
     parameters = open_parameters(path, value_cast)
-    parameters, _ = check_if_parameters_contains_all_keys(parameters, path, value_cast)
+    parameters = {**parameters, **get_missing_parameter_keys(parameters, path, value_cast)}
     return parameters
 
 
-def check_if_parameters_contains_all_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
+def get_missing_parameter_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
     """Checks if the parameters dict being loaded contains all of the same keys
-    as the default parameters file. If not, it adds the default values to the
-    dict, and returns a tuple of the updated dict, and a list of the missing keys."""
-    missing_key_list = []
+    as the default parameters file. Returns a dict of msising parameter keys and values."""
     if not os.path.samefile('bcipy/parameters/parameters.json', new_param_path):
         # if parameters are loaded from a non-default file, check if any new
         # parameters exist in default parameters, and,if so, add them to the
         # dictionary
         parameters_default = open_parameters('bcipy/parameters/parameters.json', value_cast)
-        for key in parameters_default:
-            if key not in parameters:
-                missing_key_list.append(key)
-                parameters[key] = parameters_default[key]
-
-    return (parameters, missing_key_list)
+        return {k: parameters_default[k] for k in (set(parameters_default) - set(parameters))}
+    else:
+        return {}
 
 
-def open_parameters(path: str, value_cast: bool) -> dict:
+def open_parameters(path: str, value_cast: bool = False) -> dict:
     """Convert a parameters file to a dict, and optionally cast the type"""
     try:
         with codecsopen(path, 'r', encoding='utf-8') as f:

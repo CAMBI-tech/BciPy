@@ -50,8 +50,7 @@ class RSVPKeyboard(BCIGui):
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            cmd = f"""python bci_main.py -m {mode} -t {experiment_type} -u
-                {username} -p {self.parameter_location}"""
+            cmd = f'''python bci_main.py -m {mode} -t {experiment_type} -u {username} -p "{self.parameter_location}"'''
 
             subprocess.Popen(cmd, shell=True)
 

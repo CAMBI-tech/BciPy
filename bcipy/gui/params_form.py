@@ -6,7 +6,7 @@ import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple, OrderedDict
 from os import sep, path
-from bcipy.helpers.load import check_if_parameters_contains_all_keys
+from bcipy.helpers.load import get_missing_parameter_keys, open_parameters
 from bcipy.helpers.system_utils import bcipy_version
 
 log = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ class Form(wx.Panel):
         key_dict = self.alphabetizeParameters()
         for key, param_list in key_dict.items():
             self.controls[key] = static_text_control(self, label=key,
-                                                            size=20)
+                                                     size=20)
             for param in param_list:
                 param_values = self.params[param]
                 if param_values.type == 'bool':
@@ -320,7 +320,8 @@ class MainPanel(scrolled.ScrolledPanel):
         loading_box.Add(self.loaded_from)
         loading_box.AddSpacer(10)
 
-        self.get_parameters_from_file(self.json_file)
+        self.loaded_from.SetLabel(f'Loaded from: {self.json_file}')
+        self.params = self.convert_keys_to_parameters(open_parameters(self.json_file))
 
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
@@ -356,14 +357,8 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetSizer(vbox)
         self.SetupScrolling()
 
-    def get_parameters_from_file(self, file_name: str):
-        self.loaded_from.SetLabel(f'Loaded from: {file_name}')
-
-        with open(file_name) as f:
-            data = f.read()
-
-        config = json.loads(data)
-        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+    def convert_keys_to_parameters(self, json_object: dict):
+        return {k: Parameter(*v.values()) for k, v in json_object.items()}
 
     def onLoad(self, event: wx.EVT_BUTTON) -> None:
         """Event handler to load the form data from a different json file."""
@@ -376,9 +371,12 @@ class MainPanel(scrolled.ScrolledPanel):
                 return     # the user changed their mind
             load_file = fd.GetPath()
 
-            self.get_parameters_from_file(load_file)
+            self.loaded_from.SetLabel(f'Loaded from: {load_file}')
+            self.params = self.convert_keys_to_parameters(open_parameters(load_file))
 
-            self.params, missing_keys = check_if_parameters_contains_all_keys(self.params, load_file)
+            missing_keys = get_missing_parameter_keys(self.params, load_file)
+            self.params = {**self.params, **missing_keys}
+            missing_keys = missing_keys
 
             if missing_keys:
                 for each_key in missing_keys:
@@ -387,9 +385,9 @@ class MainPanel(scrolled.ScrolledPanel):
                 """ Prevent dialog box text from getting too long if lots of
                     parameters are missing """
                 if len(missing_keys) <= 5:
-                    missing_key_string = str(missing_keys)
+                    missing_key_string = str(missing_keys.keys())
                 else:
-                    missing_key_string = str(missing_keys[:5]) + ' and others'
+                    missing_key_string = str(list(missing_keys.keys())[:5]) + ' and others'
 
                 dialog = wx.MessageDialog(
                     self, 'Parameters file {} is missing keys {}. The default '
@@ -404,7 +402,8 @@ class MainPanel(scrolled.ScrolledPanel):
         self.refresh_form(load_file)
 
     def restoreDefaults(self, event: wx.EVT_BUTTON) -> None:
-        self.get_parameters_from_file(DEFAULT_PARAMETERS_LOCATION)
+        self.loaded_from.SetLabel(f'Loaded from: {DEFAULT_PARAMETERS_LOCATION}')
+        self.params = self.convert_keys_to_parameters(open_parameters(DEFAULT_PARAMETERS_LOCATION))
         self.write_parameters_location_txt(DEFAULT_PARAMETERS_LOCATION)
         self.refresh_form(DEFAULT_PARAMETERS_LOCATION)
 
@@ -453,7 +452,7 @@ class MainPanel(scrolled.ScrolledPanel):
         self.SetupScrolling()
 
     def write_parameters_location_txt(self, location):
-        self.parent.PARAMETER_LOCATION = location
+        self.parent.parameter_location = location
 
     def OnChildFocus(self, event):
         event.Skip()
