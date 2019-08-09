@@ -12,6 +12,8 @@ from tkinter.filedialog import askopenfilename, askdirectory
 
 log = logging.getLogger(__name__)
 
+PARAM_LOCATION_DEFAULT = 'bcipy/parameters/parameters.json'
+
 
 def _cast_parameters(parameters: dict) -> dict:
     """Cast to Value.
