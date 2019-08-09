@@ -26,12 +26,12 @@ class TestEvaluator(unittest.TestCase):
         unstub()
 
     def test_init_high_voltage_rule(self):
-        """Test that high voltage rule initialised correctly into ruleset"""
+        """Test that high voltage rule initialized correctly into ruleset"""
         if self.expected_high_voltage:
             self.assertIsInstance(self.evaluator.rules[0], HighVoltage)
 
     def test_init_low_voltage_rule(self):
-        """Test that high voltage rule initialised correctly into ruleset"""
+        """Test that high voltage rule initialized correctly into ruleset"""
         if self.expected_low_voltage:
             self.assertIsInstance(self.evaluator.rules[1], LowVoltage)
 

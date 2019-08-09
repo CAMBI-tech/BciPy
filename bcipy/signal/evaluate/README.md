@@ -1,6 +1,6 @@
 # Evaluate Module
 
-Class definitions for handling signal evaluation, and rules by which the signal is to be
+Class definitions for handling signal evaluation and rules by which the signal is to be
 evaluated.
 
 ## Evaluator
@@ -8,44 +8,55 @@ evaluated.
 Handles signal evaluation by maintaining a set of enabled rules and testing sequences against
 each rule. Is boolean in nature, informing whether a rule was broken.
 
-__Example usage:__
+### Example usage
 
-	`evaluator = Evaluator('bcipy/parameters/parameters.json',True,False)` 
-	Evaluator is initialised with parameters file, and whether a rule is enabled
+Evaluator is initialized with parameters file and whether a rule is enabled. In this case, high and low voltage rules are configured.
 
-	`evaluator.evaluate(sequence) -> True`, True meaning that no rules were broken and
+```python
+# configuration
+parameter_location = 'bcipy/parameters/parameters.json'
+high_voltage_rule = True
+low_voltage_rule = False
 
-	`evaluator.evaluate(sequence) -> False`, False meaning that at least one rule was broken.
+# init evaluator
+evaluator = Evaluator(parameter_location, high_voltage_rule, low_voltage_rule)
 
-__Importing:__
+# Evaluate if sequence is good (returns True / False)
+evaluator.evaluate(sequence)
+```
 
-	The `__init__.py` file already contains instructions for importing Evaluator:
+### Importing
 
-		`from bcipy.signal.evaluate.evaluator import Evaluator
+The `__init__.py` file already contains instructions for importing Evaluator:
 
-		__all__ = [
-		    'Evaluator'
-		]`
+```python
+from bcipy.signal.evaluate.evaluator import Evaluator
 
-	With this, any future script that imports Evaluator can do the following:
-		
-		`from bcipy.signal.evaluate import Evaluator`
+__all__ = [
+	'Evaluator'
+]
+```
 
-### Rules
+With this, any future script that imports Evaluator can do the following:
+	
+`from bcipy.signal.evaluate import Evaluator`
 
-A Python abstract base class (ABC) that utilises the abstract method, is_broken, which tests an
+## Rules
+
+A Python abstract base class (ABC) that utilizes the abstract method, is_broken, which tests an
 array of data based on some criteria unique to the rule (threshold, etc.).
 
-__Example usage:__
+### Example usage
 
-	`high_rule = HighVoltage(75E-6)` Voltage rules, for example, are initialised with threshold values
+Voltage rules, for example, are initialized with threshold values
 
-	`high_rule.is_broken(data) -> True`, True meaning that a rule was broken
+`high_rule = HighVoltage(75E-6)`
 
-	`high_rule.is_broken(data) -> False`, False meaning that the rule was not broken
 
-__Importing:__
+Determine if rule is broken (returns True / False)
 
-	Rules are imported individually.
+`high_rule.is_broken(data)`
 
-	Example: `from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage`
+### Importing
+
+`from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage`
