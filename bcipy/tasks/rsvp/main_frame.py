@@ -329,10 +329,10 @@ class DecisionMaker:
         # Check stopping criteria
         if self.criteria_evaluator.should_commit(self.list_epoch[-1], params):
             self.do_epoch()
-            return True, []
+            return True, None
         else:
             stimuli = self.schedule_sequence()
-            return False, {'stimuli': stimuli}
+            return False, stimuli
 
     def do_epoch(self):
         """ Epoch refers to a commitment to a decision.
