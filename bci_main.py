@@ -150,7 +150,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
-    parser.add_argument('-t', '--type', default=2,
+    parser.add_argument('-t', '--type', default=1,
                         help=f'Task type. Options: ({task_options})')
     parser.add_argument('-m', '--mode', default='RSVP',
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
