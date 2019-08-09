@@ -37,7 +37,8 @@ def static_text_control(parent,
 FormInput = namedtuple('FormInput', ['control', 'label', 'help'])
 Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
                                      'helpTip', 'recommended_values', 'type'])
-                                     
+
+
 def convert_keys_to_parameters(json_object: dict):
     return {k: Parameter(*v.values()) for k, v in json_object.items()}
 
@@ -85,7 +86,8 @@ class Form(wx.Panel):
         parameters file."""
 
         self.controls = {}
-        self.params = {**self.params, **convert_keys_to_parameters(get_missing_parameter_keys(self.params, self.json_file))} 
+        self.params = {**self.params, **
+                       convert_keys_to_parameters(get_missing_parameter_keys(self.params, self.json_file))}
         key_dict = self.alphabetizeParameters()
         for key, param_list in key_dict.items():
             self.controls[key] = static_text_control(self, label=key,
@@ -387,9 +389,8 @@ class MainPanel(scrolled.ScrolledPanel):
                     missing_key_string = str(list(missing_keys)[:5]) + ' and others'
 
                 dialog = wx.MessageDialog(
-                    self, 'Parameters file {} is missing keys {}. The default '
-                    'values for these keys will be loaded.'.format(
-                        load_file, missing_key_string), 'Warning', wx.OK |
+                    self, f'Parameters file {load_file} is missing keys {missing_key_string}. The default '
+                    'values for these keys will be loaded.', 'Warning', wx.OK |
                     wx.ICON_EXCLAMATION)
                 dialog.ShowModal()
                 dialog.Destroy()
