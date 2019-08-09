@@ -188,9 +188,10 @@ class DataAcquisitionClient:
         self.marker_writer.cleanup()
         self.marker_writer = NullMarkerWriter()
 
-        if self._raw_data_file_name:
-            dump_raw_data(self._buffer_name, self._raw_data_file_name,
-                            self.device_info.name, self.device_info.fs)
+        if self._raw_data_file_name and self._buf:
+            buffer_server.dump_data(self._buf, self._raw_data_file_name,
+                                    self.device_info.name, self.device_info.fs)
+
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.

@@ -11,6 +11,7 @@ MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
 MSG_STARTED = 'started'
+MSG_DUMP_RAW_DATA='dump_data'
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +63,9 @@ def _loop(msg_queue, response_queue, channels, archive_name):
             response_queue.put(buf.query_data(filters, ordering, max_results))
         elif command == MSG_STARTED:
             response_queue.put(('started', 'ok'))
+        elif command == MSG_DUMP_RAW_DATA:
+            buf.dump_raw_data(*params)
+            response_queue.put(('raw_data', 'ok'))
         else:
             log.debug("Error; message not understood: %s", msg)
 
@@ -208,6 +212,21 @@ def query(mailbox, filters=None, ordering=None, max_results=None):
     """
     filters = filters or []
     request = (MSG_QUERY, (filters, ordering, max_results))
+    return _rpc(mailbox, request)
+
+
+def dump_data(mailbox, raw_data_file_name: str, daq_type: str,
+              sample_rate: float):
+    """Dump the buffer data into a raw data csv file.
+    
+    Parameters:
+    -----------        
+        mailbox  - queues used to message the database server.
+        raw_data_file_name - name of the file to be written; ex. raw_data.csv
+        daq_type - acquisition type; ex. 'DSI' or 'LSL'
+        sample_rate - sample rate; ex. 300.0
+    """
+    request = (MSG_DUMP_RAW_DATA, (raw_data_file_name, daq_type, sample_rate))
     return _rpc(mailbox, request)
 
 
