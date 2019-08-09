@@ -130,12 +130,14 @@ class DataAcquisitionClient:
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
+            
+            # Used to communicate with the database from both the main thread
+            # as well as the acquisition thread.
             self._buf = buffer_server.new_mailbox()
 
             self._acq_process = AcquisitionProcess(device=self._device,
                                                    clock=self._clock,
                                                    buf=self._buf,
-                                                   buf_name=self._buffer_name,
                                                    msg_queue=msg_queue)
             self._acq_process.start()
 
@@ -150,8 +152,12 @@ class DataAcquisitionClient:
             else:
                 raise Exception("Message not understood: " + str(msg))
 
-            buffer_server.start_server(self._buf, self._device_info.channels, self._buffer_name)
+            # Start up the database server
+            buffer_server.start_server(self._buf, self._device_info.channels,
+                                       self._buffer_name)
+            # Inform acquisition process that database server is ready
             msg_queue.put(True)
+            msg_queue = None
             self._is_streaming = True
 
     def stop_acquisition(self):
@@ -160,7 +166,7 @@ class DataAcquisitionClient:
 
         self._is_streaming = False
 
-        self._acq_process.stop()        
+        self._acq_process.stop()
         self._acq_process.join()
 
         self.marker_writer.cleanup()
@@ -169,8 +175,6 @@ class DataAcquisitionClient:
         if self._raw_data_file_name and self._buf:
             buffer_server.dump_data(self._buf, self._raw_data_file_name,
                                     self.device_info.name, self.device_info.fs)
-
-
 
     def get_data(self, start=None, end=None, field='_rowid_'):
         """Queries the buffer by field.
@@ -322,17 +326,16 @@ class AcquisitionProcess(StoppableProcess):
             initializing, and reading a packet.
         clock : Clock
             Used to timestamp each record as it is read.
-        :param messages: message queue
-        :type param: Queue
+        buf : Queue(s) used to send data to the database server
+        msg_queue : Queue used to communicate with the main thread.
     """
 
-    def __init__(self, device, clock, buf, buf_name, msg_queue):
+    def __init__(self, device, clock, buf, msg_queue):
         super(AcquisitionProcess, self).__init__()
         self._device = device
         self._clock = clock
-        self.msg_queue = msg_queue
         self._buf = buf
-        self._buf_name = buf_name
+        self.msg_queue = msg_queue
 
     def run(self):
         """Process startup. Connects to the device and start reading data.
@@ -350,11 +353,11 @@ class AcquisitionProcess(StoppableProcess):
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
+        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))       
 
-        # buffer_server.start_server(self._buf, self._device.device_info.channels, self._buf_name)
-        # TODO: wait for db server start
+        # Wait for db server start
         self.msg_queue.get()
+        self.msg_queue = None
 
         log.debug("Starting Acquisition read data loop")
         sample = 0
