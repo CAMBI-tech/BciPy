@@ -15,6 +15,7 @@ from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
 from bcipy.helpers.stimuli import play_sound
 
+# Configure logging correctly
 log = logging.getLogger(__name__)
 
 
@@ -79,35 +80,59 @@ def offline_analysis(data_folder: str = None,
     # read_data_csv already removes the timespamp column.
     channel_map = analysis_channels(channels, type_amp)
 
+    # trial data is 
     x, y, _, _ = trial_reshaper(t_t_i, t_i, data,
                                 mode=mode, fs=fs, k=downsample_rate,
                                 offset=offset,
                                 channel_map=channel_map,
                                 trial_length=trial_length)
 
-    k_folds = parameters.get('k_folds', 10)
+    x, y = _remove_bad_data(x, y, parameters)
 
-    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
+    # k_folds = parameters.get('k_folds', 10)
 
-    log.info('Saving offline analysis plots!')
+    # model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
-    # After obtaining the model get the transformed data for plotting purposes
-    model.transform(x)
-    generate_offline_analysis_screen(
-        x, y, model=model, folder=data_folder,
-        down_sample_rate=downsample_rate,
-        fs=fs, save_figure=True, show_figure=False,
-        channel_names=analysis_channel_names_by_pos(channels, channel_map))
+    # log.info('Saving offline analysis plots!')
 
-    log.info('Saving the model!')
-    with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
-        pickle.dump(model, output)
+    # # After obtaining the model get the transformed data for plotting purposes
+    # model.transform(x)
+    # generate_offline_analysis_screen(
+    #     x, y, model=model, folder=data_folder,
+    #     down_sample_rate=downsample_rate,
+    #     fs=fs, save_figure=True, show_figure=False,
+    #     channel_names=analysis_channel_names_by_pos(channels, channel_map))
 
-    if alert_finished:
-        offline_analysis_tone = parameters.get('offline_analysis_tone')
-        play_sound(offline_analysis_tone)
+    # log.info('Saving the model!')
+    # with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
+    #     pickle.dump(model, output)
 
-    return model
+    # if alert_finished:
+    #     offline_analysis_tone = parameters.get('offline_analysis_tone')
+    #     play_sound(offline_analysis_tone)
+
+    # return model
+
+def _remove_bad_data(trial_data, trial_labels, parameters):
+    # invoke evaluator / rules
+    evaluator = Evaluator(parameters, True, False)
+
+
+    # iterate over trial data, evaluate the trials, remove if needed and modify the trial labels to reflect
+    channel_number = trial_data.shape[0]
+    trial_number = trial_data[0].shape[0]
+    for ch in range(channel_number):
+        channel_data = trial_data[ch]
+
+        for trial in range(trial_number):
+            data = channel_data[trial]
+            response = evaluator.evaluate(data)
+            print(response)
+        
+        break
+
+
+    return trial_data, trial_labels 
 
 
 if __name__ == "__main__":
