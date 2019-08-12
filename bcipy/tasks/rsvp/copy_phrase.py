@@ -274,7 +274,7 @@ class RSVPCopyPhraseTask(Task):
                 # here we assume, in fake mode, all sequences result in a
                 # selection.
                 last_selection = text_task[-1]
-                new_epoch = True
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
                 # Update next state for this record
                 data['epochs'][
                     epoch_counter][
