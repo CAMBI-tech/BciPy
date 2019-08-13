@@ -72,6 +72,22 @@ class RSVPCalibrationTask(Task):
 
         self.enable_breaks = parameters['enable_breaks']
 
+    def generate_stimuli(self):
+        """Generates the sequences to be presented.
+        Returns:
+        --------
+            tuple(
+                samples[list[list[str]]]: list of sequences
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)
+        """
+        return random_rsvp_calibration_seq_gen(self.alp,
+                                               stim_number=self.stim_number,
+                                               stim_length=self.stim_length,
+                                               timing=self.timing,
+                                               is_txt=self.rsvp.is_txt_stim,
+                                               color=self.color)
+
     def execute(self):
 
         self.logger.debug(f'Starting {self.name()}!')
@@ -86,15 +102,8 @@ class RSVPCalibrationTask(Task):
         # Begin the Experiment
         while run:
 
-            # Get random sequence information given stimuli parameters
-            (ele_sti, timing_sti,
-             color_sti) = random_rsvp_calibration_seq_gen(
-                 self.alp,
-                 stim_number=self.stim_number,
-                 stim_length=self.stim_length,
-                 timing=self.timing,
-                 is_txt=self.rsvp.is_txt_stim,
-                 color=self.color)
+            # Get sequence information given stimuli parameters
+            (ele_sti, timing_sti, color_sti) = self.generate_stimuli()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
