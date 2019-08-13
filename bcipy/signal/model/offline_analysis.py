@@ -111,7 +111,6 @@ def offline_analysis(data_folder: str = None,
 
 if __name__ == "__main__":
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', default=None)
