@@ -19,8 +19,10 @@ class RSVPTimingVerificationCalibration(Task):
 
     def __init__(self, win, daq, parameters, file_save):
         super(RSVPTimingVerificationCalibration, self).__init__()
+        parameters['stim_height'] = 0.8
+        parameters['stim_pos_y'] = 0.2
         self._task = RSVPCalibrationTask(win, daq, parameters, file_save)
-        self._task.alp = ["_", "\u2013", "\u2012", "\u25a1"]
+        self._task.generate_stimuli = self.generate_stimuli
 
     def generate_stimuli(self):
         """Generates the sequences to be presented.
@@ -31,27 +33,32 @@ class RSVPTimingVerificationCalibration(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        # return self.alp, stim_number=self.stim_number, stim_length=self.stim_length, timing=self.timing
-
         samples, times, colors = [], [], []
-        target = ''
-        # alternate between empty box and solid box
-        letters = cycle(["\u2013", "\u2012"])
 
-        choices = [next(letters) for _ in range(self.stim_number)]
+        solid_box = '\u25A0'
+        empty_box = '\u25A1'
         
-        items = [target, '+', *choices]
-            rand_smp = np.random.permutation(rand_smp)
-            sample += [alp[i] for i in rand_smp]
-            samples.append(sample)
-            times.append([timing[i] for i in range(len(timing) - 1)] +
-                         [timing[-1]] * stim_length)
-            colors.append([color[i] for i in range(len(color) - 1)] +
-                          [color[-1]] * stim_length)
-    
+        target = 'x' # solid_box  # 'X'
+        fixation = '\u25CB' # circle
+
+
+        # alternate between solid and empty boxes
+        letters = cycle([solid_box, empty_box])
+        time_target, time_fixation, time_stim = self._task.timing
+        color_target, color_fixation, color_stim = self._task.color
+
+        seq_len = self._task.stim_length
+        seq_stim = [target, fixation, *[next(letters) for _ in range(seq_len)]]
+        seq_times = [time_target, time_fixation, *[time_stim for _ in range(seq_len)]]
+        seq_colors = [color_target, color_fixation, *[color_stim for _ in range(seq_len)]]
+
+        for _ in range(self._task.stim_number):
+            samples.append(seq_stim)
+            times.append(seq_times)
+            colors.append(seq_colors)
+
         return (samples, times, colors)
 
-                                               
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
         self._task.execute()
