@@ -10,13 +10,14 @@ from bcipy.helpers.system_utils import bcipy_version
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
+TOP_LEVEL_CONFIG_NAME = 'top_level_config'
 PARAMETER_SECTION_NAMES = {
     'top_level_config': 'Important BciPy Parameters',
-    'acq_config': 'ACQ Configuration',
-    'bci_config': 'BCI Configuration',
-    'feedback_config': 'Feedback Configuration',
-    'lang_model_config': 'Language Model Configuration',
-    'signal_config': 'Signal Configuration'}
+    'acq_config': 'Acquisition',
+    'bci_config': 'General',
+    'feedback_config': 'Feedback',
+    'lang_model_config': 'Language Model',
+    'signal_config': 'Signal'}
 
 
 def font(size: int = 14, font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.Font:
@@ -83,7 +84,7 @@ class Form(wx.Panel):
             key_dict[new_key] = sorted(
                 [key for key, param in self.params.items() if param.section == each_section])
         # Move most important variables to top
-        key_dict.move_to_end(name_dict['top_level_config'], last=False)
+        key_dict.move_to_end(name_dict[TOP_LEVEL_CONFIG_NAME], last=False)
         return key_dict
 
     def createControls(self):

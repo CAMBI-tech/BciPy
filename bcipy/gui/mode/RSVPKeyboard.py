@@ -17,9 +17,9 @@ class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
 
-    def __init__(self, title, size, background_color, default_param_location=PARAM_LOCATION_DEFAULT):
+    def __init__(self, title, size, background_color, param_location=PARAM_LOCATION_DEFAULT):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
-        self.parameter_location = default_param_location
+        self.parameter_location = param_location
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -100,7 +100,7 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-def run_rsvp_gui(default_param_location=PARAM_LOCATION_DEFAULT):
+def run_rsvp_gui(param_location=PARAM_LOCATION_DEFAULT):
     """Create the GUI and run"""
     tasks = ExperimentType.by_mode()['RSVP']
 
@@ -119,7 +119,7 @@ def run_rsvp_gui(default_param_location=PARAM_LOCATION_DEFAULT):
     app = wx.App(False)
     gui = RSVPKeyboard(
         title="RSVPKeyboard", size=(window_width, 550), background_color='black',
-        default_param_location=default_param_location)
+        param_location=param_location)
 
     # STATIC TEXT!
     gui.add_static_text(
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--parameters', default=PARAM_LOCATION_DEFAULT,
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     args = parser.parse_args()
-    run_rsvp_gui(default_param_location=args.parameters)
+    run_rsvp_gui(param_location=args.parameters)
