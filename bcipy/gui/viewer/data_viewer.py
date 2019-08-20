@@ -8,16 +8,16 @@ from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.acquisition.device_info import DeviceInfo
+import matplotlib
+import wx
+matplotlib.use('WXAgg')
 import matplotlib.ticker as ticker
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import csv
 from queue import Queue
 
-import matplotlib
 import numpy as np
-import wx
-matplotlib.use('WXAgg')
 
 
 class EEGFrame(wx.Frame):

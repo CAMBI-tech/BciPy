@@ -118,6 +118,8 @@ class RSVPCopyPhraseTask(Task):
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
 
+        self.artifact_rejection = parameters['artifact_rejection']
+
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
 
@@ -272,7 +274,7 @@ class RSVPCopyPhraseTask(Task):
                 # here we assume, in fake mode, all sequences result in a
                 # selection.
                 last_selection = text_task[-1]
-                new_epoch = True
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
                 # Update next state for this record
                 data['epochs'][
                     epoch_counter][
@@ -285,7 +287,7 @@ class RSVPCopyPhraseTask(Task):
                 #  epoch (seq) or stimuli to present
                 new_epoch, sti = \
                     copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info, self.collection_window_len)
+                                                       target_info, self.collection_window_len, self.artifact_rejection)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {

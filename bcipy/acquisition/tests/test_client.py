@@ -71,7 +71,9 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor())
+                                    processor=NullProcessor(),
+                                    delete_archive=True,
+                                    raw_data_file_name=None)
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
@@ -101,7 +103,9 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor())
+                                    processor=NullProcessor(),
+                                    delete_archive=True,
+                                    raw_data_file_name=None)
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
@@ -133,6 +137,8 @@ class TestDataAcquistionClient(unittest.TestCase):
                                channels=self.mock_channels),
             processor=NullProcessor(),
             buffer_name='buffer_client_test_clock.db',
+            raw_data_file_name=None,
+            delete_archive=True,
             clock=clock)
         with daq:
             time.sleep(0.1)
@@ -164,6 +170,8 @@ class TestDataAcquistionClient(unittest.TestCase):
         daq = DataAcquisitionClient(device=device,
                                     processor=NullProcessor(),
                                     buffer_name='buffer_client_test_offset.db',
+                                    raw_data_file_name=None,
+                                    delete_archive=True,
                                     clock=CountClock())
 
         daq.start_acquisition()
@@ -193,7 +201,9 @@ class TestDataAcquistionClient(unittest.TestCase):
             device=device,
             processor=NullProcessor(),
             clock=CountClock(),
-            buffer_name='buffer_client_test_missing_offset.db')
+            buffer_name='buffer_client_test_missing_offset.db',
+            raw_data_file_name=None,
+            delete_archive=True)
 
         with daq:
             time.sleep(0.1)
@@ -218,6 +228,8 @@ class TestDataAcquistionClient(unittest.TestCase):
         daq = DataAcquisitionClient(device=device,
                                     processor=NullProcessor(),
                                     buffer_name='buffer_client_test_offset.db',
+                                    raw_data_file_name=None,
+                                    delete_archive=True,
                                     clock=CountClock())
 
         daq.is_calibrated = True  # force the override.
@@ -247,6 +259,8 @@ class TestDataAcquistionClient(unittest.TestCase):
             device=device,
             processor=NullProcessor(),
             buffer_name='buffer_client_test_get_data_for_clock.db',
+            raw_data_file_name=None,
+            delete_archive=True,
             clock=CountClock())
 
         daq.start_acquisition()

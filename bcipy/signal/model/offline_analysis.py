@@ -86,6 +86,7 @@ def offline_analysis(data_folder: str = None,
                                 trial_length=trial_length)
 
     k_folds = parameters.get('k_folds', 10)
+
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 
     log.info('Saving offline analysis plots!')
@@ -118,7 +119,13 @@ if __name__ == "__main__":
                         default=PARAM_LOCATION_DEFAULT)
     args = parser.parse_args()
 
-    print(f'Loading params from {args.parameters_file}')
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='(%(threadName)-9s) %(message)s')
+
+    log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
+
+    log.info("Offline Analysis complete.")

@@ -4,7 +4,7 @@ import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
-from bcipy.acquisition.processor import FileWriter, DispatchProcessor
+from bcipy.acquisition.processor import NullProcessor, DispatchProcessor
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
@@ -66,10 +66,9 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
                               'port': port}}
 
     # Set configuration parameters (with default values if not provided).
-    buffer_name = parameters.get('buffer_name', 'buffer.db')
+    buffer_name = parameters.get('buffer_name', 'raw_data.db')
     connection_params = parameters.get('connection_params', {})
     device_name = parameters.get('device', 'DSI')
-    filename = parameters.get('filename', 'rawdata.csv')
 
     dataserver = False
     if server:
@@ -93,12 +92,9 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
 
     Device = registry.find_device(device_name)
 
-    filewriter = FileWriter(filename=filename)
-    proc = filewriter
+    proc = NullProcessor()
     if parameters['acq_show_viewer']:
-        proc = DispatchProcessor(
-            filewriter,
-            ViewerProcessor(display_screen=parameters['viewer_screen']))
+        proc = ViewerProcessor(display_screen=parameters['viewer_screen'])
 
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
@@ -106,6 +102,8 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
         device=Device(connection_params=connection_params),
         processor=proc,
         buffer_name=buffer_name,
+        delete_archive=False,
+        raw_data_file_name=parameters.get('filename', 'raw_data.csv'),
         clock=clock)
 
     client.start_acquisition()

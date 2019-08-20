@@ -85,8 +85,7 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers,
-                          target_info, window_length):
+    def evaluate_sequence(self, raw_data, triggers, target_info, window_length, artifact_rejection):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -121,12 +120,7 @@ class CopyPhraseWrapper:
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
-        decision, arg = self.decision_maker.decide(prob)
-
-        if 'stimuli' in arg:
-            sti = arg['stimuli']
-        else:
-            sti = None
+        decision, sti = self.decision_maker.decide(prob)
 
         return decision, sti
 
@@ -212,8 +206,8 @@ class CopyPhraseWrapper:
                 raise lm_exception
 
             # Get decision maker to give us back some decisions and stimuli
-            is_accepted, arg = self.decision_maker.decide(prob_dist)
-            sti = arg['stimuli']
+            is_accepted, sti = self.decision_maker.decide(prob_dist)
+
 
         except Exception as init_exception:
             print("Error in initialize_epoch: %s" % (init_exception))

@@ -1,11 +1,11 @@
 import unittest
 import numpy as np
-
+from collections import Counter
 from mockito import unstub
 
-from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val
-from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 
+from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val, generate_targets
+from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 
 class TestAlphabet(unittest.TestCase):
 
@@ -103,6 +103,42 @@ class TestFloatVal(unittest.TestCase):
         result = _float_val(col)
         expected = 3.0
         self.assertEqual(result, expected)
+
+
+class TestTargetGeneration(unittest.TestCase):
+    """Tests for generation of target sequences"""
+
+    def test_target_number_less_than_alp(self):
+        """Test when requested number of targets is less than the length of
+        the alphabet."""
+        alp = list(range(10))
+        targets = generate_targets(alp, 5)
+        self.assertEqual(len(targets), 5)
+        self.assertEqual(len(targets), len(set(targets)))
+
+    def test_target_greater_than_alp(self):
+        """Test behavior when number of targets is greater than the length
+        of the alphabet"""
+        alp = list(range(5))
+        targets = generate_targets(alp, 10)
+        self.assertEqual(len(targets), 10)
+
+        counts = Counter(targets)
+
+        for item in alp:
+            self.assertEqual(counts[item], 2)
+
+    def test_remainder(self):
+        """Test behavior when number of targets is greater than the length of
+        the alphabet by a value other than a multiple of the alphabet length.
+        """
+        alp = list(range(5))
+        targets = generate_targets(alp, 12)
+
+        counts = Counter(targets)
+        for item in alp:
+            self.assertGreaterEqual(counts[item], 2)
+            self.assertLessEqual(counts[item], 3)
 
 
 if __name__ == '__main__':
