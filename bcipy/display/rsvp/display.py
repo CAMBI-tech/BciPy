@@ -283,7 +283,6 @@ class RSVPDisplay(object):
                 self.first_stim_callback(timing_and_size_info[idx]['sti'])
 
             # Draw stimulus for n frames
-            # for _n_frames in range(timing_and_size_info[idx]['time_to_present']):
             timing_and_size_info[idx]['sti'].draw()
             self.draw_static()
             self.window.flip()
