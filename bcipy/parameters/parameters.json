@@ -876,13 +876,5 @@
     "helpTip": "What should the name of the main log file be for each BciPy session",
     "recommended_values": "",
     "type": "str"
-  }, 
-  "section_names": {
-    "value": "{'top_level_config': 'Important BciPy Parameters', 'acq_config': 'ACQ Configuration', 'bci_config': 'BCI Configuration', 'feedback_config': 'Feedback Configuration', 'lang_model_config': 'Language Model Configuration', 'signal_config': 'Signal Configuration'}",
-    "section": "bci_config",
-    "readableName": "Names of parameter sections",
-    "helpTip": "Names of parameter sections",
-    "recommended_values": "",
-    "type": "object"
   }
 }

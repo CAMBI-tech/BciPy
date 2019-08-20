@@ -1,4 +1,3 @@
-import ast
 import wx
 import wx.lib.scrolledpanel as scrolled
 import json
@@ -12,6 +11,13 @@ from bcipy.helpers.system_utils import bcipy_version
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
 DEFAULT_PARAMETERS_LOCATION = 'bcipy/parameters/parameters.json'
+PARAMETER_SECTION_NAMES = {
+    'top_level_config': 'Important BciPy Parameters',
+    'acq_config': 'ACQ Configuration',
+    'bci_config': 'BCI Configuration',
+    'feedback_config': 'Feedback Configuration',
+    'lang_model_config': 'Language Model Configuration',
+    'signal_config': 'Signal Configuration'}
 
 
 def font(size: int = 14, font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.Font:
@@ -69,7 +75,7 @@ class Form(wx.Panel):
             OrderedDict of parameter sections and parameters."""
         # Retrieve and alphabetize list of unique parameter sections
         param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
-        name_dict = ast.literal_eval(self.params['section_names'].value)
+        name_dict = PARAMETER_SECTION_NAMES
         # Sort parameters by section
         key_dict = OrderedDict([])
         for each_section in param_sections:
