@@ -5,12 +5,11 @@ import logging
 from typing import Callable, Dict, Tuple
 from collections import namedtuple, OrderedDict
 from os import sep, path
-from bcipy.helpers.load import get_missing_parameter_keys, open_parameters
+from bcipy.helpers.load import get_missing_parameter_keys, open_parameters, PARAM_LOCATION_DEFAULT
 from bcipy.helpers.system_utils import bcipy_version
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
-DEFAULT_PARAMETERS_LOCATION = 'bcipy/parameters/parameters.json'
 PARAMETER_SECTION_NAMES = {
     'top_level_config': 'Important BciPy Parameters',
     'acq_config': 'ACQ Configuration',
@@ -54,7 +53,7 @@ class Form(wx.Panel):
     parameter in the provided json file."""
 
     def __init__(self, parent,
-                 json_file: str = 'bcipy/parameters/parameters.json',
+                 json_file: str = PARAM_LOCATION_DEFAULT,
                  load_file: str = None,
                  control_width: int = 300, control_height: int = 25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
@@ -315,7 +314,7 @@ class MainPanel(scrolled.ScrolledPanel):
      to load and handling scrolling."""
 
     def __init__(self, parent, title='BCI Parameters',
-                 json_file='bcipy/parameters/parameters.json', parent_frame=None):
+                 json_file=PARAM_LOCATION_DEFAULT, parent_frame=None):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -390,7 +389,7 @@ class MainPanel(scrolled.ScrolledPanel):
                 """ Prevent dialog box text from getting too long if lots of
                     parameters are missing """
                 if len(missing_keys) <= 5:
-                    missing_key_string = str(missing_keys)
+                    missing_key_string = str(list(missing_keys))
                 else:
                     missing_key_string = str(list(missing_keys)[:5]) + ' and others'
 
@@ -406,10 +405,10 @@ class MainPanel(scrolled.ScrolledPanel):
         self.refresh_form(load_file)
 
     def restoreDefaults(self, event: wx.EVT_BUTTON) -> None:
-        self.loaded_from.SetLabel(f'Loaded from: {DEFAULT_PARAMETERS_LOCATION}')
-        self.params = convert_keys_to_parameters(open_parameters(DEFAULT_PARAMETERS_LOCATION))
-        self.write_parameters_location_txt(DEFAULT_PARAMETERS_LOCATION)
-        self.refresh_form(DEFAULT_PARAMETERS_LOCATION)
+        self.loaded_from.SetLabel(f'Loaded from: {PARAM_LOCATION_DEFAULT}')
+        self.params = convert_keys_to_parameters(open_parameters(PARAM_LOCATION_DEFAULT))
+        self.write_parameters_location_txt(PARAM_LOCATION_DEFAULT)
+        self.refresh_form(PARAM_LOCATION_DEFAULT)
 
     def onSave(self, event: wx.EVT_BUTTON) -> None:
         with wx.FileDialog(self, 'Save parameters file',
@@ -420,7 +419,7 @@ class MainPanel(scrolled.ScrolledPanel):
             save_file = fd.GetPath()
 
         if path.isfile(save_file):
-            if path.samefile('bcipy/parameters/parameters.json', save_file):
+            if path.samefile(PARAM_LOCATION_DEFAULT, save_file):
                 dialog = wx.MessageDialog(
                     self, "This will overwrite the default parameters.json. Your changes "
                     "will be overwritten when BciPy is upgraded.", 'Warning',
@@ -464,6 +463,6 @@ class MainPanel(scrolled.ScrolledPanel):
 
 class params_form(wx.Frame):
     def __init__(self, title='BCI Parameters', size=(650, 550),
-                 json_file='bcipy/parameters/parameters.json', parent_frame=None):
+                 json_file=PARAM_LOCATION_DEFAULT, parent_frame=None):
         wx.Frame.__init__(self, None, title=title, size=size)
         self.main_panel = MainPanel(self, title=title, json_file=json_file, parent_frame=parent_frame)

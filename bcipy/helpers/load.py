@@ -1,4 +1,3 @@
-import ast
 from tkinter import Tk
 import numpy as np
 import os
@@ -84,11 +83,11 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
 def get_missing_parameter_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
     """Checks if the parameters dict being loaded contains all of the same keys
     as the default parameters file. Returns a dict of msising parameter keys and values."""
-    if not os.path.samefile('bcipy/parameters/parameters.json', new_param_path):
+    if not os.path.samefile(PARAM_LOCATION_DEFAULT, new_param_path):
         # if parameters are loaded from a non-default file, check if any new
         # parameters exist in default parameters, and,if so, add them to the
         # dictionary
-        parameters_default = open_parameters('bcipy/parameters/parameters.json', value_cast)
+        parameters_default = open_parameters(PARAM_LOCATION_DEFAULT, value_cast)
         return {k: parameters_default[k] for k in (set(parameters_default) - set(parameters))}
     else:
         return {}

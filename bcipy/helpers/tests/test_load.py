@@ -8,7 +8,8 @@ from os import remove
 from bcipy.helpers.load import (
     load_json_parameters,
     load_signal_model,
-    get_missing_parameter_keys)
+    get_missing_parameter_keys,
+    PARAM_LOCATION_DEFAULT)
 
 
 class TestLoad(unittest.TestCase):
@@ -17,7 +18,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters = 'bcipy/parameters/parameters.json'
+        self.parameters = PARAM_LOCATION_DEFAULT
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):

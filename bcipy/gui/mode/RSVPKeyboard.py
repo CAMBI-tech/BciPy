@@ -8,7 +8,7 @@ import wx
 
 from bcipy.gui.gui_main import BCIGui
 from bcipy.gui.params_form import params_form
-from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 
 from bcipy.tasks.task_registry import ExperimentType
 
@@ -17,7 +17,7 @@ class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
 
-    def __init__(self, title, size, background_color, default_param_location='bcipy/parameters/parameters.json'):
+    def __init__(self, title, size, background_color, default_param_location=PARAM_LOCATION_DEFAULT):
         super(RSVPKeyboard, self).__init__(title, size, background_color)
         self.parameter_location = default_param_location
 
@@ -100,7 +100,7 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-def run_rsvp_gui(default_param_location='bcipy/parameters/parameters.json'):
+def run_rsvp_gui(default_param_location=PARAM_LOCATION_DEFAULT):
     """Create the GUI and run"""
     tasks = ExperimentType.by_mode()['RSVP']
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     # Command line utility for adding arguments/ paths via command line
-    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
+    parser.add_argument('-p', '--parameters', default=PARAM_LOCATION_DEFAULT,
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     args = parser.parse_args()
     run_rsvp_gui(default_param_location=args.parameters)
