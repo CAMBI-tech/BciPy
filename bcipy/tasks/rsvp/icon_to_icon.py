@@ -1,10 +1,11 @@
 import csv
 import datetime
 import random
+import numpy as np
+import logging
 
 from os.path import basename, dirname
 from typing import List, Tuple
-
 from psychopy import core
 
 from bcipy.helpers.system_utils import auto_str
@@ -18,6 +19,7 @@ from bcipy.helpers.signal_model import CopyPhraseWrapper
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.tasks.task import Task
 
+log = logging.getLogger(__name__)
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -96,7 +98,8 @@ class RSVPIconToIconTask(Task):
         self.max_seq_length = parameters['max_seq_len']
         self.max_seq_per_trial = parameters['max_seq_per_trial']
         self.fake = fake
-        self.language_model = language_model
+
+        self.language_model = language_model or RandomLm(alphabet=self.alp)
         self.signal_model = signal_model
         self.auc_filename = auc_filename
 
@@ -451,6 +454,35 @@ def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
         is_txt_stim=False,
         trigger_type=parameters['trigger_type'],
         is_word=is_word)
+
+
+class RandomLm():
+    """Language Model that produces random likelihoods."""
+
+    def __init__(self, alphabet):
+        log.debug("Using Random Language Model")
+        self.normalized = True  # normalized to the probability domain.
+        self.alp = alphabet
+
+    def state_update(self, evidence: List, return_mode: str = 'letter'):
+        """
+        Provide a prior distribution of the language model.
+
+        Input:
+            evidence - list of current evidence
+            return_mode - desired return mode
+        Output:
+            priors - a json dictionary with Normalized priors
+                     in the Negative Log probability domain.
+        """
+        # https://stackoverflow.com/questions/18659858/generating-a-list-of-random-numbers-summing-to-1
+        sample = np.random.dirichlet(np.ones(len(self.alp)), size=1)[0]
+        priors = {return_mode: list(zip(self.alp, sample.tolist()))}
+        log.debug("Language Model Random probabilities:")
+        log.debug(priors)
+        print("LM probabilities")
+        print(sorted(priors[return_mode], key=lambda x: x[1], reverse=True))
+        return priors
 
 
 @auto_str

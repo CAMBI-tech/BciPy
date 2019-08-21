@@ -85,7 +85,7 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers, target_info, window_length, artifact_rejection):
+    def evaluate_sequence(self, raw_data, triggers, target_info, window_length, artifact_rejection=False):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -95,6 +95,8 @@ class CopyPhraseWrapper:
                 as letter and flash time for the letter
             target_info(list[str]): target information about the stimuli
             window_length(int): The length of the time between stimuli presentation
+            artifact_rejection(bool): boolean indicating whether or not 
+                artifact rejection should be applied.
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
@@ -181,8 +183,11 @@ class CopyPhraseWrapper:
                 # update the lmodel and get back the priors
                 lm_prior = self.lmodel.state_update(update)
 
-                # normalize to probability domain
-                lm_letter_prior = norm_domain(lm_prior['letter'])
+                # normalize to probability domain if needed
+                if getattr(self.lmodel, 'normalized', False):
+                    lm_letter_prior = lm_prior['letter']
+                else:
+                    lm_letter_prior = norm_domain(lm_prior['letter'])
 
                 if BACKSPACE_CHAR in self.alp:
                     # Append backspace if missing.
