@@ -118,7 +118,13 @@ if __name__ == "__main__":
                         default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
-    print(f'Loading params from {args.parameters_file}')
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='(%(threadName)-9s) %(message)s')
+
+    log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
+
+    log.info("Offline Analysis complete.")
