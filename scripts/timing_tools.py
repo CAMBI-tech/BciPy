@@ -2,58 +2,89 @@
 task."""
 
 import sqlite3
+import pandas as pd
+from collections import namedtuple
 
-
-def raw_data_trg(rawdata_db: str):
-    """Extract the TRG column from the raw_data buffer where there are
-    non-zero values.
+def extract_column(data_dir, column):
+    """Extract the timestamp and column from the raw_data buffer where 
+    there are non-zero values.
 
     Parameters:
     -----------
-        rawdata_db - path to sqlite database
+    data_dir - path to sqlite database
+    
     Returns:
     --------
-        list of (float, str), where float is the sample number
+    list of (float, str), where float is the sample number
     """
-    cursor = sqlite3.connect(rawdata_db, check_same_thread=False).cursor()
-    cursor.execute('select timestamp, TRG from data where TRG <> 0;')
+    db = f"{data_dir}/raw_data.db"
+    conn = sqlite3.connect(db, check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute(f'select timestamp, {column} from data where {column} <> 0;')
     return cursor.fetchall()
 
 
-def normalized_raw_data_trg(raw_data_db: str, sample_rate_hz: float = 300.0):
-    """Extract the TRG values from the raw_data buffer and and convert
-    sample number to seconds.
+def normalized_data(data_dir: str, column: str, sample_rate_hz: float):
+    """Extract the timestamp and column from the raw_data buffer and and
+    convert sample number to seconds elapsed since acquisition start.
 
     Parameters:
     -----------
         rawdata_db - path to sqlite database
+        column - column of data to extract
+        sample_rate_hz - frequency of data collection in hz.
     
     Returns:
     --------
         list of (float, str), where float is the seconds elapsed since
             start of acquisition.
     """
-    data = raw_data_trg(raw_data_db)
-    return [((trg[0] / sample_rate_hz), trg[1]) for trg in data]
+    data = extract_column(data_dir, column=column)
+    return [((row[0] / sample_rate_hz), row[1]) for row in data]
 
+def lsl_trg_data(data_dir: str, sample_rate_hz: float):
+    """TRG data (LSL Marker stream written to in display module) normalized
+    to acquisition seconds."""
+    return normalized_data(data_dir, 'TRG', sample_rate_hz)
 
-def raw_data_sensor(raw_data_db: str, sample_rate_hz: float):
-    """Extract TRG_device_stream column from the raw_data buffer if present.
+def all_sensor_data(data_dir, sample_rate_hz, column: str="TRG_device_stream"):
+    """Optical sensor data connected to trigger box normalized to seconds
+    since the start of acquisition."""
+    return normalized_data(data_dir, sample_rate_hz, column)
 
-    Parameters:
-    ----------
-        rawdata_db - path to sqlite database
-    """
-    pass
+def sensor_data(data_dir, sample_rate_hz, column: str="TRG_device_stream"):
+    """Optical sensor data connected to trigger box normalized to seconds
+    since the start of acquisition. Compresses samples with consecutive
+    triggers."""
 
+    data = extract_column(data_dir, column)
 
-def read_triggers(triggers_file: str, include_trg_type: bool = False):
+    # The sensor channel will emit a value ('1') for as long as the stimulus
+    # is displayed. For measuring latency, we are only concerned with the
+    # time at which the stimulus initially appeared.
+
+    # Collapse consecutive samples, only taking the first. Assumes that there
+    # is a gap between stimuli.
+    compressed = []
+    last_sample = None
+    for row in data:
+        sample, value = row
+        if last_sample and int(last_sample) == int(sample) - 1:
+            # skip this one
+            last_sample = sample
+            continue
+        compressed.append((sample/sample_rate_hz, value))
+        last_sample = sample
+
+    return compressed
+
+def triggers(data_dir: str, include_trg_type: bool = False):
     """Read in the triggers.txt file. Convert the timestamps to be in
     aqcuisition clock units using the offset listed in the file (last entry).
 
     Parameters:
     -----------
-        triggers_file - triggers.txt path
+        data_dir - data directory with the triggers.txt file
         include_trg_type - if True adds the trg type (calib, first-pres-target, 
             target, non-target, etc.)
     Returns:
@@ -66,7 +97,7 @@ def read_triggers(triggers_file: str, include_trg_type: bool = False):
         list of (float, str, targetness)
         """
 
-    with open(triggers_file) as trgfile:
+    with open(f"{data_dir}/triggers.txt") as trgfile:
         records = [line.split(' ') for line in trgfile.readlines()]
         (_cname, _ctype, cstamp) = records[0]
         (_acq_name, _acq_type, acq_stamp) = records[-1]
@@ -82,3 +113,39 @@ def read_triggers(triggers_file: str, include_trg_type: bool = False):
                     record = (seconds, name, trg_type)
                 corrected.append(record)
         return corrected
+
+def read_sample_rate(data_dir: str):
+    """Read the sample rate from the raw_data.csv file"""
+    with open(f"{data_dir}/raw_data.csv") as csvfile:
+        _name_row = next(csvfile)
+        fs = float(next(csvfile).strip().split(",")[1])
+        return fs
+
+
+class LatencyData():
+    def __init__(self, data_dir: str):
+        self.sample_rate = read_sample_rate(data_dir)
+        self.triggers = triggers(data_dir)
+        self.lsl_trg = lsl_trg_data(data_dir, self.sample_rate)
+        self.sensor = sensor_data(data_dir, self.sample_rate)
+
+    def combined(self):
+        """Combined values for triggers.txt and raw_data.csv TRG column"""
+        output = []
+        for i in range(len(self.triggers)):
+            trg_time, stim = self.triggers[i]
+            lsl_time, _stim = self.lsl_trg[i]
+
+            # TODO: assert stims are equal?
+            output.append((stim, trg_time, lsl_time))
+        frame = pd.DataFrame.from_records(
+            data=output, columns=["stimulus", "triggers.txt", "raw_data_TRG"])
+
+        # Since raw_data is written after the trigger is pushed to the LSL
+        # marker stream, we assume that there is some latency between the push
+        # and the write operation. However, due to converting into acquisition
+        # seconds, this is not always the case.
+        frame['LSL_diff'] = frame['raw_data_TRG'] - frame['triggers.txt']
+
+        # use .describe() on the resulting dataframe to see statistics.
+        return frame
