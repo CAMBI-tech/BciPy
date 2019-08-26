@@ -475,14 +475,44 @@ class RandomLm():
             priors - a json dictionary with Normalized priors
                      in the Negative Log probability domain.
         """
-        # https://stackoverflow.com/questions/18659858/generating-a-list-of-random-numbers-summing-to-1
-        sample = np.random.dirichlet(np.ones(len(self.alp)), size=1)[0]
-        priors = {return_mode: list(zip(self.alp, sample.tolist()))}
+        sample = mostly_equal_probs(len(self.alp))
+        random.shuffle(sample)
+
+        pairs = list(zip(self.alp, sample.tolist()))
+        priors = {return_mode: pairs}
+
         log.debug("Language Model Random probabilities:")
         log.debug(priors)
         print("LM probabilities")
         print(sorted(priors[return_mode], key=lambda x: x[1], reverse=True))
         return priors
+
+
+def mostly_equal_probs(n_letters, delta=0.0001):
+    """Generate a list of probabilities that are almost equally probable, but
+    differ by delta amount. The values will have the following properties:
+    1. Sum to 1.0
+    2. Have length n_letters and will all be different values
+    3. Be equally spaced apart by amount delta (the difference between the
+        highest and lowest values of approximately (n_letters * delta)).
+
+    The resulting list is used to create a sort order while only minimally
+    affecting the default probability value.
+    """
+
+    equal_prob = np.full(n_letters, 1 / n_letters)
+
+    # Creates a list of differences to add to a list of equal probabilities.
+    # The diffs range from plus to minus. Ex. If there are 10 letters,
+    # => [ 0.005,  0.004,  0.003,  0.002,  0.001,  0.   , -0.001, -0.002,
+    #     -0.003, -0.004]
+    diff_from = (n_letters/2) * delta
+    diff_to = (n_letters/2) * -delta
+    diffs = np.arange(diff_from, diff_to, -delta)[0:n_letters]
+
+    result = equal_prob + diffs
+    # return normalized values
+    return result / np.sum(result)
 
 
 @auto_str
