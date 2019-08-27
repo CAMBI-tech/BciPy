@@ -12,7 +12,7 @@ from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
 
 
-def session_data(data_dir: str):
+def session_data(data_dir: str, alp=None):
     """Returns a dict of session data transformed to map the alphabet letter
     to the likelihood when presenting the evidence. Also removes attributes
     not useful for debugging."""
@@ -22,7 +22,9 @@ def session_data(data_dir: str):
         os.path.join(data_dir, "parameters.json"), value_cast=True)
     if parameters.get('is_txt_sti', False):
         parameters['is_txt_stim'] = parameters['is_txt_sti']
-    alp = alphabet(parameters=parameters)
+    
+    if not alp:
+        alp = alphabet(parameters=parameters)
 
     session_path = os.path.join(data_dir, "session.json")
     with open(session_path, 'r') as json_file:
@@ -34,11 +36,9 @@ def session_data(data_dir: str):
                     zip(alp, data['epochs'][epoch][trial]['likelihood']))
 
                 # Remove unused properties
-                data['epochs'][epoch][trial].pop('eeg_len')
-                data['epochs'][epoch][trial].pop('timing_sti')
-                data['epochs'][epoch][trial].pop('triggers')
-                data['epochs'][epoch][trial].pop('target_info')
-                data['epochs'][epoch][trial].pop('copy_phrase')
+                unused = ['eeg_len', 'timing_sti', 'triggers', 'target_info', 'copy_phrase']
+                removeProps(data['epochs'][epoch][trial], unused)
+                
                 data['epochs'][epoch][trial]['stimuli'] = data['epochs'][
                     epoch][trial]['stimuli'][0]
 
@@ -55,11 +55,15 @@ def session_data(data_dir: str):
 
         return data
 
+def removeProps(data, proplist):
+    for prop in proplist:
+        if prop in data:
+            data.pop(prop)
 
-def main(data_dir: str):
+def main(data_dir: str, alphabet: str):
     """Transforms the session.json file in the given directory and prints the
     resulting json."""
-    print(json.dumps(session_data(data_dir), indent=4))
+    print(json.dumps(session_data(data_dir, alphabet), indent=4))
 
 
 if __name__ == "__main__":
@@ -70,6 +74,9 @@ if __name__ == "__main__":
 
     parser.add_argument(
         '-p', '--path', help='path to the data directory', default=None)
+    parser.add_argument(
+        '-a', '--alphabet', help='alphabet (comma-delimited string of items)', default=None)
+
     args = parser.parse_args()
     path = args.path
     if not path:
@@ -81,4 +88,7 @@ if __name__ == "__main__":
         path = filedialog.askdirectory(
             parent=root, initialdir="/", title='Please select a directory')
 
-    main(path)
+    alp = None
+    if args.alphabet:
+        alp = args.alphabet.split(",")
+    main(path, alp)
