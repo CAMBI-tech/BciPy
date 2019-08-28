@@ -475,9 +475,7 @@ class RandomLm():
             priors - a json dictionary with Normalized priors
                      in the Negative Log probability domain.
         """
-        sample = mostly_equal_probs(len(self.alp))
-        random.shuffle(sample)
-
+        sample = uniform(len(self.alp))
         pairs = list(zip(self.alp, sample.tolist()))
         priors = {return_mode: pairs}
 
@@ -488,29 +486,27 @@ class RandomLm():
         return priors
 
 
-def mostly_equal_probs(n_letters, delta=0.0001):
-    """Generate a list of probabilities that are almost equally probable, but
-    differ by delta amount. The values will have the following properties:
+def uniform(n_letters, delta=0.0001):
+    """Generate a uniform distribution.
+
     1. Sum to 1.0
     2. Have length n_letters and will all be different values
-    3. Be equally spaced apart by amount delta (the difference between the
-        highest and lowest values of approximately (n_letters * delta)).
+    3. Values will be close to equally probable within +- delta.
 
     The resulting list is used to create a sort order while only minimally
     affecting the default probability value.
     """
+    equal_prob = 1/n_letters
+    result = np.random.uniform(low=equal_prob - delta,
+                               high=equal_prob + delta,
+                               size=n_letters)
 
-    equal_prob = np.full(n_letters, 1 / n_letters)
-
-    # Creates a list of differences to add to a list of equal probabilities.
-    # The diffs range from plus to minus. Ex. If there are 10 letters,
-    # => [ 0.005,  0.004,  0.003,  0.002,  0.001,  0.   , -0.001, -0.002,
-    #     -0.003, -0.004]
-    diff_from = (n_letters/2) * delta
-    diff_to = (n_letters/2) * -delta
-    diffs = np.arange(diff_from, diff_to, -delta)[0:n_letters]
-
-    result = equal_prob + diffs
+    # Ensure that all values are different; it's not clear whether numpy
+    # guarantees this property.
+    while len(set(result)) != len(result):
+        result = np.random.uniform(low=equal_prob - delta,
+                            high=equal_prob + delta,
+                            size=n_letters)
     # return normalized values
     return result / np.sum(result)
 
