@@ -481,8 +481,6 @@ class RandomLm():
 
         log.debug("Language Model Random probabilities:")
         log.debug(priors)
-        print("LM probabilities")
-        print(sorted(priors[return_mode], key=lambda x: x[1], reverse=True))
         return priors
 
 
