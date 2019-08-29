@@ -47,7 +47,7 @@ class RSVPCalibrationTask(Task):
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
         trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
-        self.trigger_file = open(trigger_save_location, 'w')
+        self.trigger_file = open(trigger_save_location, 'w', encoding='utf-8')
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
