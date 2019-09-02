@@ -95,10 +95,9 @@ class IconToIconDisplay(RSVPDisplay):
     def draw_static(self):
         if not self.is_word:
             """Draw static elements in a stimulus."""
-            if(self.rect_drawn_frames < self.time_to_present):
+            if(self.is_first_stim):
                 self.rect.draw()
                 self.target_text.draw()
-                self.rect_drawn_frames += 1
 
         super(IconToIconDisplay, self).draw_static()
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Defines the DeviceInfo namedtuple."""
 from collections import namedtuple
 

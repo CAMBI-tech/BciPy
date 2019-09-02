@@ -1,14 +1,10 @@
-# pylint: disable=fixme,too-many-instance-attributes,too-many-arguments
 """Data Acquisition Client"""
 import logging
 import multiprocessing
 from multiprocessing import Queue
 import time
 
-from queue import Empty
-
 from bcipy.acquisition import buffer_server
-from bcipy.acquisition.processor import NullProcessor
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
@@ -130,7 +126,7 @@ class DataAcquisitionClient:
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
-            
+
             # Used to communicate with the database from both the main thread
             # as well as the acquisition thread.
             self._buf = buffer_server.new_mailbox()
@@ -353,7 +349,7 @@ class AcquisitionProcess(StoppableProcess):
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))       
+        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
 
         # Wait for db server start
         self.msg_queue.get()
@@ -380,6 +376,7 @@ class AcquisitionProcess(StoppableProcess):
                 break
         log.debug("Total samples read: %s", str(sample))
         self._device.disconnect()
+
 
 def main():
     """Test script."""

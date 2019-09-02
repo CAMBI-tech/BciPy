@@ -7,6 +7,7 @@ from mockito import unstub
 from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val, generate_targets
 from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 
+
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):

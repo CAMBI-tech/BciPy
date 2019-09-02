@@ -11,7 +11,7 @@ MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
 MSG_STARTED = 'started'
-MSG_DUMP_RAW_DATA='dump_data'
+MSG_DUMP_RAW_DATA = 'dump_data'
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def _loop(msg_queue, response_queue, channels, archive_name):
 
 
 def new_mailbox():
-    """Creates a new mailbox used to communicate with a buffer process, but 
+    """Creates a new mailbox used to communicate with a buffer process, but
     does not create or start the process.
 
     Returns
@@ -85,7 +85,7 @@ def new_mailbox():
 
 def start_server(mailbox, channels, archive_name):
     """Starts a server process using the provided mailbox for communication.
-    
+
     Parameters
     ----------
         mailbox: tuple of Queues used to communicate with this server instance.
@@ -255,9 +255,9 @@ def query(mailbox, filters=None, ordering=None, max_results=None):
 def dump_data(mailbox, raw_data_file_name: str, daq_type: str,
               sample_rate: float):
     """Dump the buffer data into a raw data csv file.
-    
+
     Parameters:
-    -----------        
+    -----------
         mailbox  - queues used to message the database server.
         raw_data_file_name - name of the file to be written; ex. raw_data.csv
         daq_type - acquisition type; ex. 'DSI' or 'LSL'
