@@ -128,4 +128,4 @@ if __name__ == "__main__":
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
 
-    log.info("Offline Analysis complete.")
+    log.info('Offline Analysis complete.')

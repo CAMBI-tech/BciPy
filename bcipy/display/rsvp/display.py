@@ -208,7 +208,7 @@ class RSVPDisplay(object):
 
             self.first_stim_time = first_stim_timing[-1]
             self.first_run = False
-        
+
         # generate a sequence (list of stimuli with meta information)
         sequence = self._generate_sequence()
 
@@ -258,7 +258,7 @@ class RSVPDisplay(object):
 
     def _generate_sequence(self):
         """Generate Sequence.
-        
+
         Generate stimuli for next RSVP sequence.
         """
         stim_info = []

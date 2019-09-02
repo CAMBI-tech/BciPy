@@ -1,6 +1,5 @@
 import csv
 import datetime
-import random
 
 from os.path import basename, dirname
 from typing import List, Tuple

@@ -6,9 +6,7 @@ import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
-from bcipy.acquisition.processor import NullProcessor, DispatchProcessor
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
 # Channels relevant for analysis, for each currently supported device.
 #  Note this leaves out triggers or other non-eeg channels. If desired,
@@ -153,6 +151,7 @@ def analysis_channel_names_by_pos(channels: List[str],
     selection = [bool(x) for x in channel_map]
     selected_channels = np.array(channels)[selection]
     return {i: ch for i, ch in enumerate(selected_channels)}
+
 
 def start_viewer(display_screen):
     viewer = 'bcipy/gui/viewer/data_viewer.py'

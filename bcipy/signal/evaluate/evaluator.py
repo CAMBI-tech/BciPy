@@ -2,7 +2,7 @@ from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
 
 
 class Evaluator:
-    """Evaluator. 
+    """Evaluator.
 
     Takes in raw data and tests them against given
     rules, which elicit the rejection of a sequence when broken.
