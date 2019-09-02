@@ -208,62 +208,12 @@ class RSVPDisplay(object):
 
             self.first_stim_time = first_stim_timing[-1]
             self.first_run = False
-
-        # Generate timing and size information
-        timing_and_size_info = []
-        self.is_first_stim = False
-        for idx in range(len(self.stimuli_sequence)):
-            this_item = {}
-
-            # turn ms timing into frames! Much more accurate!
-            this_item['time_to_present'] = int(self.stimuli_timing[idx] * self.refresh_rate)
-
-            # check if stimulus needs to use a non-default size
-            if self.size_list_sti:
-                this_stimuli_size = self.size_list_sti[idx]
-            else:
-                this_stimuli_size = self.stimuli_height
-
-            # Set the Stimuli attrs
-            if self.stimuli_sequence[idx].endswith('.png'):
-                this_item['sti'] = self.create_stimulus(mode='image', height_int=this_stimuli_size)
-                this_item['sti'].image = self.stimuli_sequence[idx]
-                this_item['sti'].size = resize_image(
-                    this_item['sti'].image, this_item['sti'].win.size, this_stimuli_size)
-                this_item['sti_label'] = path.splitext(
-                    path.basename(self.stimuli_sequence[idx]))[0]
-            else:
-                # text stimulus
-                this_item['sti'] = self.create_stimulus(mode='text', height_int=this_stimuli_size)
-                txt = self.stimuli_sequence[idx]
-                # customize presentation of space char.
-                this_item['sti'].text = txt if txt != SPACE_CHAR else self.space_char
-                this_item['sti'].color = self.stimuli_colors[idx]
-                this_item['sti_label'] = txt
-
-                # test whether the word will be too big for the screen
-                text_width = this_item['sti'].boundingBox[0]
-                if text_width > self.window.size[0]:
-                    info = get_system_info()
-                    text_height = this_item['sti'].boundingBox[1]
-                    # If we are in full-screen, text size in Psychopy norm units
-                    # is monitor width/monitor height
-                    if self.window.size[0] == info['RESOLUTION'][0]:
-                        new_text_width = info['RESOLUTION'][0] / \
-                            info['RESOLUTION'][1]
-                    else:
-                        # If not, text width is calculated relative to both
-                        # monitor size and window size
-                        new_text_width = (
-                            self.window.size[1] / info['RESOLUTION'][1]) * (
-                                info['RESOLUTION'][0] / info['RESOLUTION'][1])
-                    new_text_height = (text_height * new_text_width) / text_width
-                    this_item['sti'].height = new_text_height
-
-            timing_and_size_info.append(this_item)
+        
+        # generate a sequence (list of stimuli with meta information)
+        sequence = self._generate_sequence()
 
         # do the sequence
-        for idx in range(len(timing_and_size_info)):
+        for idx in range(len(sequence)):
 
             self.is_first_stim = (idx == 0)
 
@@ -276,17 +226,17 @@ class RSVPDisplay(object):
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
-                timing_and_size_info[idx]['sti_label'])
-            self.window.callOnFlip(self.marker_writer.push_marker, timing_and_size_info[idx]['sti_label'])
+                sequence[idx]['sti_label'])
+            self.window.callOnFlip(self.marker_writer.push_marker, sequence[idx]['sti_label'])
 
             if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(timing_and_size_info[idx]['sti'])
+                self.first_stim_callback(sequence[idx]['sti'])
 
             # Draw stimulus for n frames
-            timing_and_size_info[idx]['sti'].draw()
+            sequence[idx]['sti'].draw()
             self.draw_static()
             self.window.flip()
-            core.wait((timing_and_size_info[idx]['time_to_present'] - 1) / self.refresh_rate)
+            core.wait((sequence[idx]['time_to_present'] - 1) / self.refresh_rate)
 
             # End static period
             # print(self.staticPeriod.countdown.getTime())
@@ -305,6 +255,62 @@ class RSVPDisplay(object):
         self.window.flip()
 
         return timing
+
+    def _generate_sequence(self):
+        """Generate Sequence.
+        
+        Generate stimuli for next RSVP sequence.
+        """
+        stim_info = []
+        for idx in range(len(self.stimuli_sequence)):
+            current_stim = {}
+
+            # turn ms timing into frames! Much more accurate!
+            current_stim['time_to_present'] = int(self.stimuli_timing[idx] * self.refresh_rate)
+
+            # check if stimulus needs to use a non-default size
+            if self.size_list_sti:
+                this_stimuli_size = self.size_list_sti[idx]
+            else:
+                this_stimuli_size = self.stimuli_height
+
+            # Set the Stimuli attrs
+            if self.stimuli_sequence[idx].endswith('.png'):
+                current_stim['sti'] = self.create_stimulus(mode='image', height_int=this_stimuli_size)
+                current_stim['sti'].image = self.stimuli_sequence[idx]
+                current_stim['sti'].size = resize_image(
+                    current_stim['sti'].image, current_stim['sti'].win.size, this_stimuli_size)
+                current_stim['sti_label'] = path.splitext(
+                    path.basename(self.stimuli_sequence[idx]))[0]
+            else:
+                # text stimulus
+                current_stim['sti'] = self.create_stimulus(mode='text', height_int=this_stimuli_size)
+                txt = self.stimuli_sequence[idx]
+                # customize presentation of space char.
+                current_stim['sti'].text = txt if txt != SPACE_CHAR else self.space_char
+                current_stim['sti'].color = self.stimuli_colors[idx]
+                current_stim['sti_label'] = txt
+
+                # test whether the word will be too big for the screen
+                text_width = current_stim['sti'].boundingBox[0]
+                if text_width > self.window.size[0]:
+                    info = get_system_info()
+                    text_height = current_stim['sti'].boundingBox[1]
+                    # If we are in full-screen, text size in Psychopy norm units
+                    # is monitor width/monitor height
+                    if self.window.size[0] == info['RESOLUTION'][0]:
+                        new_text_width = info['RESOLUTION'][0] / \
+                            info['RESOLUTION'][1]
+                    else:
+                        # If not, text width is calculated relative to both
+                        # monitor size and window size
+                        new_text_width = (
+                            self.window.size[1] / info['RESOLUTION'][1]) * (
+                                info['RESOLUTION'][0] / info['RESOLUTION'][1])
+                    new_text_height = (text_height * new_text_width) / text_width
+                    current_stim['sti'].height = new_text_height
+            stim_info.append(current_stim)
+        return stim_info
 
     def update_task_state(self, text: str, color_list: List[str]) -> None:
         """Update task state.
