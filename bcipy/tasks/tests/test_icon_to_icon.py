@@ -4,7 +4,7 @@ from mock import mock_open, patch
 from mockito import mock
 
 from bcipy.display.display_main import init_display_window
-from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 
 
@@ -13,7 +13,7 @@ class TestIconToIcon(unittest.TestCase):
 
     def setUp(self):
         """set up the needed path for load functions."""
-        params_path = 'bcipy/parameters/parameters.json'
+        params_path = PARAM_LOCATION_DEFAULT
         self.parameters = load_json_parameters(params_path, value_cast=True)
 
     def test_img_path(self):
