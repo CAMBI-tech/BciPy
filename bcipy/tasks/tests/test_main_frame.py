@@ -59,7 +59,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.assertEqual(0,history)
 
     def test_decision_maker_init(self):
-        """Test initialisation"""
+        """Test initialization"""
         self.assertEqual(self.decision_maker.min_num_seq, 1)
         self.assertEqual(self.decision_maker.max_num_seq, 3)
         self.assertEqual(self.decision_maker.state, '')
@@ -89,7 +89,7 @@ class TestDecisionMaker(unittest.TestCase):
         decision, chosen_stimuli = self.decision_maker.decide(
             probability_distribution)
         self.assertTrue(decision)
-        self.assertEqual(chosen_stimuli, [])
+        self.assertEqual(chosen_stimuli, None)
 
     def test_update_with_letter(self):
         """Test update method with letter being the new state"""
@@ -143,7 +143,7 @@ class TestDecisionMaker(unittest.TestCase):
         probability_distribution = np.ones(len(self.decision_maker.alphabet))
         self.decision_maker.list_epoch[-1]['list_distribution'].append(probability_distribution)
         decision = self.decision_maker.decide_state_update()
-        expected = 'A' #expect to commit to first letter in sequence, due to uniform probability
+        expected = 'A' # expect to commit to first letter in sequence, due to uniform probability
         self.assertEqual(decision,'A')
 
     def test_schedule_sequence(self):
