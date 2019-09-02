@@ -44,11 +44,11 @@ class _AccumulatingProcessor(Processor):
         self.data.put(record)
 
 
-class TestDataAcquistionClient(unittest.TestCase):
+class TestDataAcquisitionClient(unittest.TestCase):
     """Main Test class for DataAcquisitionClient code."""
 
     def __init__(self, *args, **kwargs):
-        super(TestDataAcquistionClient, self).__init__(*args, **kwargs)
+        super(TestDataAcquisitionClient, self).__init__(*args, **kwargs)
         num_channels = 25
         num_records = 500
         self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
@@ -56,8 +56,7 @@ class TestDataAcquistionClient(unittest.TestCase):
 
     def test_acquisition_null_device_exception(self):
         """Exception should be thrown if unable to connect to device or message not understood """
-        daq = DataAcquisitionClient(device=None,
-                                    processor=NullProcessor())
+        daq = DataAcquisitionClient(device=None)
         daq._is_streaming = False
         with self.assertRaises(Exception):
             daq.start_acquisition()
@@ -71,7 +70,6 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -103,7 +101,6 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -135,7 +132,6 @@ class TestDataAcquistionClient(unittest.TestCase):
         daq = DataAcquisitionClient(
             device=_MockDevice(data=self.mock_data,
                                channels=self.mock_channels),
-            processor=NullProcessor(),
             buffer_name='buffer_client_test_clock.db',
             raw_data_file_name=None,
             delete_archive=True,
@@ -168,7 +164,6 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -199,7 +194,6 @@ class TestDataAcquistionClient(unittest.TestCase):
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(
             device=device,
-            processor=NullProcessor(),
             clock=CountClock(),
             buffer_name='buffer_client_test_missing_offset.db',
             raw_data_file_name=None,
@@ -226,7 +220,6 @@ class TestDataAcquistionClient(unittest.TestCase):
 
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(device=device,
-                                    processor=NullProcessor(),
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -257,7 +250,6 @@ class TestDataAcquistionClient(unittest.TestCase):
         device = _MockDevice(data=data, channels=channels, fs=sample_hz)
         daq = DataAcquisitionClient(
             device=device,
-            processor=NullProcessor(),
             buffer_name='buffer_client_test_get_data_for_clock.db',
             raw_data_file_name=None,
             delete_archive=True,

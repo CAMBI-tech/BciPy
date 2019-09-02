@@ -32,8 +32,6 @@ class TestAcquisition(unittest.TestCase):
         shutil.rmtree(self.save)
 
     def test_default_values(self):
-        print("Testing init_eeg_acquisition with default values.")
-
         self.parameters['acq_device'] = 'DSI'
 
         client, server = init_eeg_acquisition(
@@ -45,7 +43,6 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertTrue('raw_data.csv' in client._processor._filename)
         self.assertEqual(
             client.device_info.name,
             self.parameters['acq_device'])
@@ -67,7 +64,6 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertTrue(f in client._processor._filename)
         self.assertEqual(client.device_info.name, params['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 

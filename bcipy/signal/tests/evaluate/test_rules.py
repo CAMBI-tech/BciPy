@@ -35,27 +35,28 @@ class TestRules(unittest.TestCase):
 
     def test_low_voltage_failing_signal(self):
         """Test generated sub threshold signal against low voltage"""
-        data = gen_random_data(1,5,self.channels)
-        #ascertain that at least one random datapoint is below threshold to test np.amin edgecase
+        data = gen_random_data(1, 5, self.channels)
+        # ascertain that at least one random datapoint is below threshold to test np.amin edgecase
         data[np.random.randint(self.channels)] = -1.5
         self.assertTrue(self.lowvoltage_rule.is_broken(data))
 
     def test_low_voltage_passing_signal(self):
         """Test generated signal that is consistently above threshold"""
-        data = gen_random_data(-0.5,0.5,self.channels)
+        data = gen_random_data(-0.5, 0.5, self.channels)
         self.assertFalse(self.lowvoltage_rule.is_broken(data))
 
     def test_high_voltage_failing_signal(self):
         """Test generated signal with one data point above threshold """
-        data = gen_random_data(-5,0,self.channels)
-        #ascertain that at least one random datapoint is above threshold to test np.amax edgecase
+        data = gen_random_data(-5, 0, self.channels)
+        # ascertain that at least one random datapoint is above threshold to test np.amax edgecase
         data[np.random.randint(self.channels)] = 1.5
         self.assertTrue(self.highvoltage_rule.is_broken(data))
 
     def test_high_voltage_passing_signal(self):
         """Test generated signal that is consistently below threshold"""
-        data = gen_random_data(-0.5,0.5,self.channels)
+        data = gen_random_data(-0.5, 0.5, self.channels)
         self.assertFalse(self.highvoltage_rule.is_broken(data))
+
 
 if __name__ == "__main__":
     unittest.main()

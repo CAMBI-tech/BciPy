@@ -129,7 +129,9 @@ Use this resource for examples: http://docs.python-guide.org/en/latest/writing/s
 ## Testing
 ----------
 
-Please have all requirements installed. When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module's tests for examples!
+When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module's tests for examples!
+
+Test requirements must be installed before running: `pip install test_requirements.txt`
 
 To run all tests, in the command line:
 
@@ -147,14 +149,13 @@ py.test acquisition
 To generate test coverage metrics, in the command line:
 
 ```python
-coverage run -m py.test
+coverage run --branch --source=bcipy -m pytest
 
 #Generate a command line report
 coverage report
 
 # Generate html doc in the bci folder. Navigate to index.html and click.
 coverage html
-
 ```
 
 ## Authorship
