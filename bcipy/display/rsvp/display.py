@@ -239,7 +239,6 @@ class RSVPDisplay(object):
             core.wait((sequence[idx]['time_to_present'] - 1) / self.refresh_rate)
 
             # End static period
-            # print(self.staticPeriod.countdown.getTime())
             self.staticPeriod.complete()
 
             # append timing information
