@@ -1,25 +1,24 @@
+"""RSVP Icon to Icon Matching Task."""
 import csv
 import datetime
-import random
-import numpy as np
-import logging
-
 from os.path import basename, dirname
 from typing import List, Tuple
+
 from psychopy import core
 
-from bcipy.helpers.system_utils import auto_str
 from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
-from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
-from bcipy.helpers.task import (alphabet, get_user_input,
-                                process_data_for_decision,
-                                trial_complete_message, generate_targets)
+from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.system_utils import auto_str
+from bcipy.helpers.task import (alphabet, generate_targets, get_user_input,
+                                process_data_for_decision,
+                                trial_complete_message)
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
+from bcipy.language_model.random_language_model import RandomLm
 from bcipy.tasks.task import Task
+# pylint: disable=too-few-public-methods,too-many-arguments,too-many-instance-attributes
 
-log = logging.getLogger(__name__)
 
 class RSVPIconToIconTask(Task):
     """RSVP Icon to Icon Matching Task.
@@ -62,9 +61,11 @@ class RSVPIconToIconTask(Task):
         # Alphabet is comprised of the image base names
         self.alp = alphabet(parameters, include_path=False)
 
-        self.rsvp = _init_icon_to_icon_display_task(
-            self.parameters, self.window, self.daq, self.static_clock,
-            self.experiment_clock, is_word)
+        self.rsvp = _init_icon_to_icon_display_task(self.parameters,
+                                                    self.window, self.daq,
+                                                    self.static_clock,
+                                                    self.experiment_clock,
+                                                    is_word)
         self.file_save = file_save
         self.is_word = is_word
 
@@ -149,21 +150,19 @@ class RSVPIconToIconTask(Task):
     def await_start(self) -> bool:
         """Wait for user input to either exit or start"""
         self.logger.debug('Awaiting user start.')
-        should_continue = get_user_input(
-            self.rsvp,
-            self.wait_screen_message,
-            self.wait_screen_message_color,
-            first_run=True)
+        should_continue = get_user_input(self.rsvp,
+                                         self.wait_screen_message,
+                                         self.wait_screen_message_color,
+                                         first_run=True)
         return should_continue
 
     def user_wants_to_continue(self) -> bool:
         """Check if user wants to continue or terminate.
         Returns True to continue."""
-        should_continue = get_user_input(
-            self.rsvp,
-            self.wait_screen_message,
-            self.wait_screen_message_color,
-            first_run=False)
+        should_continue = get_user_input(self.rsvp,
+                                         self.wait_screen_message,
+                                         self.wait_screen_message_color,
+                                         first_run=False)
         if not should_continue:
             self.logger.debug('User wants to exit.')
         return should_continue
@@ -219,16 +218,14 @@ class RSVPIconToIconTask(Task):
 
     def display_feedback(self, selection: str, correct: bool):
         """Display feedback for the given selection."""
-        feedback = VisualFeedback(
-            display=self.window,
-            parameters=self.parameters,
-            clock=self.experiment_clock)
+        feedback = VisualFeedback(display=self.window,
+                                  parameters=self.parameters,
+                                  clock=self.experiment_clock)
         feedback.message_color = 'green' if correct else 'red'
-        feedback.administer(
-            self.img_path(selection),
-            compare_assertion=None,
-            message='Decision: ',
-            stimuli_type=FeedbackType.IMAGE)
+        feedback.administer(self.img_path(selection),
+                            compare_assertion=None,
+                            message='Decision: ',
+                            stimuli_type=FeedbackType.IMAGE)
 
     def write_data(self, correct_trials: int, selections: int):
         """Write trial data to icon_data.csv in file save location."""
@@ -325,10 +322,11 @@ class RSVPIconToIconTask(Task):
             _save_session_related_data(self.session_save_location, data)
 
     def execute(self):
+        """Execute the task"""
         self.logger.debug('Starting Icon to Icon Task!')
 
         icons = generate_targets(self.alp, self.stim_number)
-        self.logger.debug(f'Icon sequence: {icons}')
+        self.logger.debug('Icon sequence: %s', icons)
 
         selections = []
         copy_phrase_task = self.init_copy_phrase_task(task_list=[(icons, [])])
@@ -348,7 +346,9 @@ class RSVPIconToIconTask(Task):
 
             # Write triggers to file
             write_triggers_from_sequence_icon_to_icon(
-                sequence_timing, self.trigger_file, epoch.target,
+                sequence_timing,
+                self.trigger_file,
+                epoch.target,
                 target_displayed=epoch.first_sequence)
 
             core.wait(self.buffer_val)
@@ -428,88 +428,31 @@ class RSVPIconToIconTask(Task):
 
 def _init_icon_to_icon_display_task(parameters, win, daq, static_clock,
                                     experiment_clock, is_word):
-    return IconToIconDisplay(
-        win,
-        static_clock,
-        experiment_clock,
-        daq.marker_writer,
-        info_text=parameters['info_text'],
-        info_color=parameters['info_color'],
-        info_pos=(
-            parameters['text_pos_x'],
-            parameters['text_pos_y']),
-        info_height=parameters['info_height'],
-        info_font=parameters['info_font'],
-        task_color=['black'],
-        task_font=parameters['task_font'],
-        task_height=parameters['task_height'],
-        stim_font=parameters['stim_font'],
-        stim_pos=(
-            parameters['stim_pos_x'],
-            parameters['stim_pos_y']),
-        stim_height=parameters['stim_height'],
-        stim_sequence=['a'] * 10,
-        stim_colors=[parameters['stim_color']] * 10,
-        stim_timing=[3] * 10,
-        is_txt_stim=False,
-        trigger_type=parameters['trigger_type'],
-        is_word=is_word)
+    return IconToIconDisplay(win,
+                             static_clock,
+                             experiment_clock,
+                             daq.marker_writer,
+                             info_text=parameters['info_text'],
+                             info_color=parameters['info_color'],
+                             info_pos=(parameters['text_pos_x'],
+                                       parameters['text_pos_y']),
+                             info_height=parameters['info_height'],
+                             info_font=parameters['info_font'],
+                             task_color=['black'],
+                             task_font=parameters['task_font'],
+                             task_height=parameters['task_height'],
+                             stim_font=parameters['stim_font'],
+                             stim_pos=(parameters['stim_pos_x'],
+                                       parameters['stim_pos_y']),
+                             stim_height=parameters['stim_height'],
+                             stim_sequence=['a'] * 10,
+                             stim_colors=[parameters['stim_color']] * 10,
+                             stim_timing=[3] * 10,
+                             is_txt_stim=False,
+                             trigger_type=parameters['trigger_type'],
+                             is_word=is_word)
 
 
-class RandomLm():
-    """Language Model that produces random likelihoods."""
-
-    def __init__(self, alphabet):
-        log.debug("Using Random Language Model")
-        self.normalized = True  # normalized to the probability domain.
-        self.alp = alphabet
-
-    def state_update(self, evidence: List, return_mode: str = 'letter'):
-        """
-        Provide a prior distribution of the language model.
-
-        Input:
-            evidence - list of current evidence
-            return_mode - desired return mode
-        Output:
-            priors - a json dictionary with Normalized priors
-                     in the Negative Log probability domain.
-        """
-        sample = uniform(len(self.alp))
-        pairs = list(zip(self.alp, sample.tolist()))
-        priors = {return_mode: pairs}
-
-        log.debug("Language Model Random probabilities:")
-        log.debug(priors)
-        return priors
-
-
-def uniform(n_letters, delta=0.0001):
-    """Generate a uniform distribution.
-
-    1. Sum to 1.0
-    2. Have length n_letters and will all be different values
-    3. Values will be close to equally probable within +- delta.
-
-    The resulting list is used to create a sort order while only minimally
-    affecting the default probability value.
-    """
-    equal_prob = 1/n_letters
-    result = np.random.uniform(low=equal_prob - delta,
-                               high=equal_prob + delta,
-                               size=n_letters)
-
-    # Ensure that all values are different; it's not clear whether numpy
-    # guarantees this property.
-    while len(set(result)) != len(result):
-        result = np.random.uniform(low=equal_prob - delta,
-                            high=equal_prob + delta,
-                            size=n_letters)
-    # return normalized values
-    return result / np.sum(result)
-
-
-@auto_str
 class EpochManager():
     """Manages the state required for tracking epochs.
     Parameters:
@@ -518,8 +461,6 @@ class EpochManager():
         copy_phrase_task - CopyPhraseWrapper
         time_target - time to present a target stimulus.
     """
-    # TODO: rather than pass in copy_phrase_task, provide a function to generate
-    # stimulus for new epochs.
 
     def __init__(self, icons, copy_phrase_task, time_target):
         self.copy_phrase_task = copy_phrase_task
