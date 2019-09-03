@@ -1,3 +1,38 @@
+# 1.4.2
+
+## Contributions
+
+### Added
+
+- Artifact Rejection
+    - `signal.evaluate.Evaluator`
+        - Evaluates sequences and flags sequences that break rules
+    - `signal.evaluate.Rule`
+        - Defines rules that sequences should follow
+- Re-added progress indicator for offline analysis
+- Ability to load parameters from a file that is not the default parameters.json, without overwriting the default parameters.json
+    - Loaded parameters are checked against default parameters file, and any missing parameters are filled with default values
+- Tests
+- Linting
+- Documentation improvements
+
+### Updated
+
+- DAQ file writing. Instead of writing to `raw_data.csv` during task executions, optionally write `raw_data.csv` on call to `stop_acquisition`, and only write to SQLite database during task.
+- `get_data` queries in `buffer_server` to increase speed on Windows machines. 
+- RSVP sequence stimuli presentation. Reduces reported timing slips on Windows and Linux machines. 
+    - List of stimuli to be presented is now generated before each sequence is presented, rather than generating stimuli during the sequence.
+    - The screen is now only drawn once per stimulus, rather than redrawing the screen every frame.
+- Signal viewer to shut down when data is no longer streaming
+- `main_frame` and `copy_phrase` to fix bug that prevents copy phrase tasks from completing in fake data mode
+- Target generation for icon-matching tasks has been changed to minimize instances of duplicate target stimuli over the course of an experiment
+- Fixed issue with icon-matching tasks flashing to desktop on Windows machines
+- `params_form.py` is now launched by creating another wxPython frame, rather than launching a subprocess
+
+## Removed
+
+- Module additions via `__init__`
+
 # 1.4.1
 
 Patch for gui.viewer module. Missing init file.

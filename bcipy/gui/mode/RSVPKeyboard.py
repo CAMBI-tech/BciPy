@@ -7,7 +7,8 @@ import subprocess
 import wx
 
 from bcipy.gui.gui_main import BCIGui
-from bcipy.helpers.load import load_json_parameters
+from bcipy.gui.params_form import params_form
+from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
 
 from bcipy.tasks.task_registry import ExperimentType
 
@@ -15,7 +16,10 @@ from bcipy.tasks.task_registry import ExperimentType
 class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
     event_started = False
-    PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
+
+    def __init__(self, title, size, background_color, param_location=PARAM_LOCATION_DEFAULT):
+        super(RSVPKeyboard, self).__init__(title, size, background_color)
+        self.parameter_location = param_location
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -36,7 +40,8 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        subprocess.call('python bcipy/gui/params_form.py', shell=True)
+        edit_params_form = params_form(json_file=self.parameter_location, parent_frame=self)
+        edit_params_form.Show()
 
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
@@ -45,8 +50,7 @@ class RSVPKeyboard(BCIGui):
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
-                mode, experiment_type, username)
+            cmd = f'''python bci_main.py -m {mode} -t {experiment_type} -u {username} -p "{self.parameter_location}"'''
 
             subprocess.Popen(cmd, shell=True)
 
@@ -73,8 +77,7 @@ class RSVPKeyboard(BCIGui):
 
     def offline_analysis(self, _event: wx.Event) -> None:
         """Run the offline analysis in a new Process."""
-        cmd = 'python bcipy/signal/model/offline_analysis.py'
-        subprocess.Popen(cmd, shell=True)
+        cmd = f'python bcipy/signal/model/offline_analysis.py -p {self.parameter_location}'
         self.event_started = True
 
     def refresh(self, _event: wx.Event) -> None:
@@ -85,7 +88,7 @@ class RSVPKeyboard(BCIGui):
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
         parameters = load_json_parameters(
-            self.PARAMETER_LOCATION, value_cast=True)
+            self.parameter_location, value_cast=True)
         data_save_loc = parameters['data_save_loc']
         if os.path.isdir(data_save_loc):
             saved_users = os.listdir(data_save_loc)
@@ -97,7 +100,7 @@ class RSVPKeyboard(BCIGui):
         self.comboboxes[0].AppendItems(saved_users)
 
 
-def run_rsvp_gui():
+def run_rsvp_gui(param_location=PARAM_LOCATION_DEFAULT):
     """Create the GUI and run"""
     tasks = ExperimentType.by_mode()['RSVP']
 
@@ -115,7 +118,8 @@ def run_rsvp_gui():
     # Start the app and init the main GUI
     app = wx.App(False)
     gui = RSVPKeyboard(
-        title="RSVPKeyboard", size=(window_width, 550), background_color='black')
+        title="RSVPKeyboard", size=(window_width, 550), background_color='black',
+        param_location=param_location)
 
     # STATIC TEXT!
     gui.add_static_text(
@@ -175,4 +179,10 @@ def run_rsvp_gui():
 
 
 if __name__ == "__main__":
-    run_rsvp_gui()
+    import argparse
+    parser = argparse.ArgumentParser()
+    # Command line utility for adding arguments/ paths via command line
+    parser.add_argument('-p', '--parameters', default=PARAM_LOCATION_DEFAULT,
+                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    args = parser.parse_args()
+    run_rsvp_gui(param_location=args.parameters)

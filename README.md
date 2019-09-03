@@ -104,7 +104,7 @@ For example, you may run the bci_main demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils. Run them as a python script!
 
 This repository uses pytest for execution of tests. You may execute them by:
 
@@ -129,7 +129,9 @@ Use this resource for examples: http://docs.python-guide.org/en/latest/writing/s
 ## Testing
 ----------
 
-Please have all requirements installed. When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module's tests for examples!
+When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module tests for examples!
+
+Test requirements must be installed before running: `pip install test_requirements.txt`
 
 To run all tests, in the command line:
 
@@ -146,15 +148,14 @@ py.test acquisition
 
 To generate test coverage metrics, in the command line:
 
-```python
-coverage run -m py.test
+```bash
+coverage run --branch --source=bcipy -m pytest
 
 #Generate a command line report
 coverage report
 
 # Generate html doc in the bci folder. Navigate to index.html and click.
 coverage html
-
 ```
 
 ## Authorship
@@ -165,6 +166,7 @@ coverage html
 - Matthew Lawhead (OHSU- OCTRI)
 - Berkan Kadioglu (NEU)
 - Dani Smektala (OHSU)
+- Ian Jackson (OHSU/ Reed)
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
 - Shiran Dudy (OHSU)

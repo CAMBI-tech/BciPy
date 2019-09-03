@@ -3,6 +3,7 @@ import os
 import shutil
 import unittest
 
+from bcipy.helpers.load import PARAM_LOCATION_DEFAULT
 from bcipy.helpers.save import init_save_data_structure
 
 
@@ -14,7 +15,7 @@ class TestSave(unittest.TestCase):
 
         self.data_save_path = 'data/'
         self.user_information = 'test_user_002'
-        self.parameters_used = 'bcipy/parameters/parameters.json'
+        self.parameters_used = PARAM_LOCATION_DEFAULT
 
         self.save_folder_name = init_save_data_structure(
             self.data_save_path,

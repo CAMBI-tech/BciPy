@@ -11,7 +11,7 @@ MSG_QUERY = 'query_data'
 MSG_COUNT = 'get_count'
 MSG_EXIT = 'exit'
 MSG_STARTED = 'started'
-MSG_DUMP_RAW_DATA='dump_data'
+MSG_DUMP_RAW_DATA = 'dump_data'
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +68,42 @@ def _loop(msg_queue, response_queue, channels, archive_name):
             response_queue.put(('raw_data', 'ok'))
         else:
             log.debug("Error; message not understood: %s", msg)
+
+
+def new_mailbox():
+    """Creates a new mailbox used to communicate with a buffer process, but
+    does not create or start the process.
+
+    Returns
+    -------
+        Tuple of Queues used to communicate with this server instance.
+    """
+    msg_queue = mp.Queue()
+    response_queue = mp.Queue()
+    return (msg_queue, response_queue)
+
+
+def start_server(mailbox, channels, archive_name):
+    """Starts a server process using the provided mailbox for communication.
+
+    Parameters
+    ----------
+        mailbox: tuple of Queues used to communicate with this server instance.
+        channels : list of str
+            list of channel names. Data records are expected to have an entry
+            for each channel.
+        archive_name : str
+            underlying database name
+    """
+    log.debug("Starting the database server")
+    msg_queue, response_queue = mailbox
+    server_process = mp.Process(target=_loop,
+                                args=(msg_queue, response_queue, channels,
+                                      archive_name))
+    server_process.start()
+
+    request = (MSG_STARTED, None)
+    return _rpc(mailbox, request, wait_reply=True)
 
 
 def start(channels, archive_name, asynchronous=False):
@@ -219,9 +255,9 @@ def query(mailbox, filters=None, ordering=None, max_results=None):
 def dump_data(mailbox, raw_data_file_name: str, daq_type: str,
               sample_rate: float):
     """Dump the buffer data into a raw data csv file.
-    
+
     Parameters:
-    -----------        
+    -----------
         mailbox  - queues used to message the database server.
         raw_data_file_name - name of the file to be written; ex. raw_data.csv
         daq_type - acquisition type; ex. 'DSI' or 'LSL'

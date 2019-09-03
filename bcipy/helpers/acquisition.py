@@ -1,12 +1,12 @@
 from typing import Dict, List
 import numpy as np
+import subprocess
+import time
 import bcipy.acquisition.datastream.generator as generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
 from bcipy.acquisition.datastream.server import start_socket_server, await_start
-from bcipy.acquisition.processor import NullProcessor, DispatchProcessor
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
 # Channels relevant for analysis, for each currently supported device.
 #  Note this leaves out triggers or other non-eeg channels. If desired,
@@ -92,21 +92,18 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
 
     Device = registry.find_device(device_name)
 
-    proc = NullProcessor()
-    if parameters['acq_show_viewer']:
-        proc = ViewerProcessor(display_screen=parameters['viewer_screen'])
-
     # Start a client. We assume that the channels and fs will be set on the
     # device; add a channel parameter to Device to override!
     client = DataAcquisitionClient(
         device=Device(connection_params=connection_params),
-        processor=proc,
         buffer_name=buffer_name,
         delete_archive=False,
         raw_data_file_name=parameters.get('filename', 'raw_data.csv'),
         clock=clock)
 
     client.start_acquisition()
+    if parameters['acq_show_viewer']:
+        start_viewer(display_screen=parameters['viewer_screen'])
 
     # If we're using a server or data generator, there is no reason to
     # calibrate data.
@@ -154,3 +151,13 @@ def analysis_channel_names_by_pos(channels: List[str],
     selection = [bool(x) for x in channel_map]
     selected_channels = np.array(channels)[selection]
     return {i: ch for i, ch in enumerate(selected_channels)}
+
+
+def start_viewer(display_screen):
+    viewer = 'bcipy/gui/viewer/data_viewer.py'
+    cmd = f'python {viewer} -m {display_screen}'
+    subprocess.Popen(cmd, shell=True)
+
+    # hack: wait for window to open, so it doesn't error out when the main
+    # window is open fullscreen.
+    time.sleep(2)
