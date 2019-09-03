@@ -213,7 +213,6 @@ class CopyPhraseWrapper:
             # Get decision maker to give us back some decisions and stimuli
             is_accepted, sti = self.decision_maker.decide(prob_dist)
 
-
         except Exception as init_exception:
             print("Error in initialize_epoch: %s" % (init_exception))
             raise init_exception

@@ -278,7 +278,7 @@ class Buffer():
         """Writes a raw_data csv file from the current database.
 
         Parameters:
-        -----------        
+        -----------
             db_name - path to the database
             raw_data_file_name - name of the file to be written; ex. raw_data.csv
             daq_type - metadata regarding the acquisition type; ex. 'DSI' or 'LSL'

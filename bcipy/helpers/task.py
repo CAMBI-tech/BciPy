@@ -535,8 +535,8 @@ def generate_targets(alp, stim_number):
 
     lists = [random.sample(alp, len(alp)) for _ in range(times)]
     lists.append(random.sample(alp, remainder))
-    
+
     # flatten list of lists
     targets = [target for sublist in lists for target in sublist]
-    
+
     return targets

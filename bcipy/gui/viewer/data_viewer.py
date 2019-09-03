@@ -1,5 +1,3 @@
-# pylint:
-# disable=no-name-in-module,no-member,wrong-import-position,ungrouped-imports
 """
 EEG viewer that uses a queue as a data source. Records are retrieved by a
 wx Timer.

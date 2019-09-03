@@ -26,7 +26,8 @@ class HighVoltage(Rule):
     Set high threshold for permitted voltage.
 
     Allows different types of rules to be fed to artifact rejector so that experimenter can differentiate between
-    high and low warnings easily. Makes it so that rules are singularly defined. Names must be equal to value in parameters.json
+    high and low warnings easily. Makes it so that rules are singularly defined. Names must be equal to value in
+    parameters.json
     """
 
     def is_broken(self, data):
@@ -47,14 +48,14 @@ class HighVoltage(Rule):
             return True
 
         return False
-    
+
     def __str__(self):
         return f'High Voltage with threshold {self.threshold}'
 
 
 class LowVoltage(Rule):
     """Low Voltage Rule.
-    
+
     Set low threshold for permitted voltage.
     """
 

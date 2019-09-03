@@ -1,16 +1,17 @@
 from tkinter import Tk
 import numpy as np
+import os
 import pandas as pd
 import logging
 from codecs import open as codecsopen
 from json import load as jsonload
 import pickle
-import sqlite3
-import csv
 
 from tkinter.filedialog import askopenfilename, askdirectory
 
 log = logging.getLogger(__name__)
+
+PARAM_LOCATION_DEFAULT = 'bcipy/parameters/parameters.json'
 
 
 def _cast_parameters(parameters: dict) -> dict:
@@ -55,8 +56,8 @@ def cast_value(value):
 def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """Load JSON Parameters.
 
-    Given a path to a json of parameters, convert to a dictionary and optionally
-        cast the type.
+    Given a path to a json of parameters, load the json file as a dict, and
+        check if it contains all necessary values.
 
     Expects the following format:
     "fake_data": {
@@ -74,6 +75,26 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     :param: value_case: True/False cast values to specified type.
     """
     # loads in json parameters and turns it into a dictionary
+    parameters = open_parameters(path, value_cast)
+    parameters = {**parameters, **get_missing_parameter_keys(parameters, path, value_cast)}
+    return parameters
+
+
+def get_missing_parameter_keys(parameters: dict, new_param_path: str, value_cast=False) -> tuple:
+    """Checks if the parameters dict being loaded contains all of the same keys
+    as the default parameters file. Returns a dict of msising parameter keys and values."""
+    if not os.path.samefile(PARAM_LOCATION_DEFAULT, new_param_path):
+        # if parameters are loaded from a non-default file, check if any new
+        # parameters exist in default parameters, and,if so, add them to the
+        # dictionary
+        parameters_default = open_parameters(PARAM_LOCATION_DEFAULT, value_cast)
+        return {k: parameters_default[k] for k in (set(parameters_default) - set(parameters))}
+    else:
+        return {}
+
+
+def open_parameters(path: str, value_cast: bool = False) -> dict:
+    """Convert a parameters file to a dict, and optionally cast the type"""
     try:
         with codecsopen(path, 'r', encoding='utf-8') as f:
             parameters = []
@@ -85,9 +106,7 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
             except ValueError:
                 raise ValueError(
                     "Parameters file is formatted incorrectly!")
-
         f.close()
-
     except IOError:
         raise IOError("Incorrect path to parameters given! Please try again.")
 

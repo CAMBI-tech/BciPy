@@ -1,7 +1,7 @@
 {
   "is_txt_stim": {
     "value": "true",
-    "section": "bci_config",
+    "section": "top_level_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -true- or Image -false-",
     "recommended_values": "",
@@ -9,7 +9,7 @@
   },
   "fake_data": {
     "value": "true",
-    "section": "bci_config",
+    "section": "top_level_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
     "recommended_values": "",
@@ -17,7 +17,7 @@
   },
   "full_screen": {
     "value": "false",
-    "section": "bci_config",
+    "section": "top_level_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
     "recommended_values": "",
@@ -168,7 +168,7 @@
   },
   "languagemodelenabled": {
     "value": "false",
-    "section": "lang_model_config",
+    "section": "top_level_config",
     "readableName": "Language Model Enabled",
     "helpTip": "This is the language model.",
     "recommended_values": "",
@@ -528,7 +528,7 @@
   },
   "acq_show_viewer": {
     "value": "false",
-    "section": "acq_config",
+    "section": "top_level_config",
     "readableName": "Show EEG Viewer",
     "helpTip": "Display the EEG data in a separate window.",
     "recommended_values": "",
@@ -684,7 +684,7 @@
   },
   "show_feedback": {
     "value": "true",
-    "section": "feedback_config",
+    "section": "top_level_config",
     "readableName": "show_feedback",
     "helpTip": "Show Feedback for the Task. Must be configured per task.",
     "recommended_values": "",
@@ -796,7 +796,7 @@
   },
   "enable_breaks": {
     "value": "false",
-    "section": "bci_config",
+    "section": "top_level_config",
     "readableName": "Enable calibration breaks",
     "helpTip": "Enable breaks in RSVP calibration",
     "recommended_values": "",
@@ -863,7 +863,7 @@
   },
   "backspace_always_shown": {
     "value": "false",
-    "section": "bci_config",
+    "section": "top_level_config",
     "readableName": "Backspace always shown",
     "helpTip": "Should the backspace character always be shown in Copy Phrase tasks.",
     "recommended_values": "",
