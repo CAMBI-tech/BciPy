@@ -5,6 +5,7 @@ import sqlite3
 import pandas as pd
 from collections import namedtuple
 
+
 def extract_column(data_dir, column):
     """Extract the timestamp and column from the raw_data buffer where 
     there are non-zero values.
@@ -20,7 +21,8 @@ def extract_column(data_dir, column):
     db = f"{data_dir}/raw_data.db"
     conn = sqlite3.connect(db, check_same_thread=False)
     cursor = conn.cursor()
-    cursor.execute(f'select timestamp, {column} from data where {column} <> 0;')
+    cursor.execute(
+        f'select timestamp, {column} from data where {column} <> 0;')
     return cursor.fetchall()
 
 
@@ -42,17 +44,22 @@ def normalized_data(data_dir: str, column: str, sample_rate_hz: float):
     data = extract_column(data_dir, column=column)
     return [((row[0] / sample_rate_hz), row[1]) for row in data]
 
+
 def lsl_trg_data(data_dir: str, sample_rate_hz: float):
     """TRG data (LSL Marker stream written to in display module) normalized
     to acquisition seconds."""
     return normalized_data(data_dir, 'TRG', sample_rate_hz)
 
-def all_sensor_data(data_dir, sample_rate_hz, column: str="TRG_device_stream"):
+
+def all_sensor_data(data_dir,
+                    sample_rate_hz,
+                    column: str = "TRG_device_stream"):
     """Optical sensor data connected to trigger box normalized to seconds
     since the start of acquisition."""
-    return normalized_data(data_dir, sample_rate_hz, column)
+    return normalized_data(data_dir, column, sample_rate_hz)
 
-def sensor_data(data_dir, sample_rate_hz, column: str="TRG_device_stream"):
+
+def sensor_data(data_dir, sample_rate_hz, column: str = "TRG_device_stream"):
     """Optical sensor data connected to trigger box normalized to seconds
     since the start of acquisition. Compresses samples with consecutive
     triggers."""
@@ -73,10 +80,55 @@ def sensor_data(data_dir, sample_rate_hz, column: str="TRG_device_stream"):
             # skip this one
             last_sample = sample
             continue
-        compressed.append((sample/sample_rate_hz, value))
+        # append normalized value
+        compressed.append((sample / sample_rate_hz, value))
         last_sample = sample
 
     return compressed
+
+
+def filled_sensor_data(sensor_data, stimuli, includes_calibration=False):
+    """
+    Correlates the sensor data to the stimulus.
+
+    Parameters:
+    ----------
+        sensor_data - list of sensor data where each value is a 
+            (timestamp, value) tuple which represents the starting
+            time (in acquisition clock) at which the sensor was activated.
+        stimuli - complete list of stimulus presented.
+    Returns:
+    --------
+        expanded list of tuples (timestamp, stim) values, with a timestamp
+            for each stim. Assumes that the sensor was in place during the
+            entire experiment.
+    """
+    detectable_items = ['x', '■']
+    undetectable = ['○', '□']
+
+    if includes_calibration:
+        detectable_items.append('calibration_trigger')
+    else:
+        undetectable.append('calibration_trigger')
+
+    expanded = []
+    sensor_iter = iter(sensor_data)
+    for stim in stimuli:
+        if stim in undetectable:
+            expanded.append((None, stim))
+        elif stim in detectable_items:
+            expanded.append((next(sensor_iter)[0], stim))
+        else:
+            raise f"Unknown stimulus: {stim}"
+
+    try:
+        next(sensor_iter)
+    except StopIteration:
+        return expanded
+
+    print("Not all sensor records were consumed.")
+    return expanded
+
 
 def triggers(data_dir: str, include_trg_type: bool = False):
     """Read in the triggers.txt file. Convert the timestamps to be in
@@ -114,6 +166,7 @@ def triggers(data_dir: str, include_trg_type: bool = False):
                 corrected.append(record)
         return corrected
 
+
 def read_sample_rate(data_dir: str):
     """Read the sample rate from the raw_data.csv file"""
     with open(f"{data_dir}/raw_data.csv") as csvfile:
@@ -127,7 +180,12 @@ class LatencyData():
         self.sample_rate = read_sample_rate(data_dir)
         self.triggers = triggers(data_dir)
         self.lsl_trg = lsl_trg_data(data_dir, self.sample_rate)
-        self.sensor = sensor_data(data_dir, self.sample_rate)
+
+        self.all_sensor_data = all_sensor_data(data_dir, self.sample_rate)
+        self.sensor_data = sensor_data(data_dir, self.sample_rate)
+
+        stim = [trg[1] for trg in self.triggers]
+        self.filled_sensors = filled_sensor_data(self.sensor_data, stim)
 
     def combined(self):
         """Combined values for triggers.txt and raw_data.csv TRG column"""
@@ -135,17 +193,19 @@ class LatencyData():
         for i in range(len(self.triggers)):
             trg_time, stim = self.triggers[i]
             lsl_time, _stim = self.lsl_trg[i]
+            sensor_time, _stim = self.filled_sensors[i]
 
             # TODO: assert stims are equal?
-            output.append((stim, trg_time, lsl_time))
+            output.append((stim, trg_time, lsl_time, sensor_time))
         frame = pd.DataFrame.from_records(
-            data=output, columns=["stimulus", "triggers.txt", "raw_data_TRG"])
+            data=output,
+            columns=["stimulus", "triggers.txt", "raw_data_TRG", "sensor"])
 
         # Since raw_data is written after the trigger is pushed to the LSL
         # marker stream, we assume that there is some latency between the push
         # and the write operation. However, due to converting into acquisition
         # seconds, this is not always the case.
-        frame['LSL_diff'] = frame['raw_data_TRG'] - frame['triggers.txt']
+        # frame['LSL_diff'] = abs(frame['raw_data_TRG'] - frame['triggers.txt'])
 
         # use .describe() on the resulting dataframe to see statistics.
         return frame
