@@ -5,19 +5,16 @@ from typing import List
 
 import numpy as np
 
-# pylint: disable=invalid-name
-log = logging.getLogger(__name__)
-
-# pylint: disable=too-few-public-methods
-class RandomLm():
+class RandomLm:
     """Language Model that produces random likelihoods."""
 
     def __init__(self, alphabet):
-        log.debug("Using Random Language Model")
+
+        self.log = logging.getLogger(__name__)
+        self.log.debug("Using Random Language Model")
         self.normalized = True  # normalized to the probability domain.
         self.alp = alphabet
 
-    # pylint: disable=unused-argument
     def state_update(self, evidence: List, return_mode: str = 'letter'):
         """
         Provide a prior distribution of the language model.
@@ -33,8 +30,8 @@ class RandomLm():
         pairs = list(zip(self.alp, sample.tolist()))
         priors = {return_mode: pairs}
 
-        log.debug("Language Model Random probabilities:")
-        log.debug(priors)
+        self.log.debug("Language Model Random probabilities:")
+        self.log.debug(priors)
         return priors
 
 

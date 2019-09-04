@@ -17,7 +17,6 @@ from bcipy.helpers.task import (alphabet, generate_targets, get_user_input,
 from bcipy.helpers.triggers import write_triggers_from_sequence_icon_to_icon
 from bcipy.language_model.random_language_model import RandomLm
 from bcipy.tasks.task import Task
-# pylint: disable=too-few-public-methods,too-many-arguments,too-many-instance-attributes
 
 
 class RSVPIconToIconTask(Task):
