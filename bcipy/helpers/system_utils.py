@@ -103,10 +103,11 @@ def configure_logger(
     logfile = os.path.join(save_folder, 'logs', log_name)
 
     # configure it
-    logging.basicConfig(
-        level=log_level,
-        format='(%(threadName)-9s) %(message)s',
-        filename=logfile)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
+    handler.setFormatter(logging.Formatter('(%(threadName)-9s) %(message)s'))
+    root_logger.addHandler(handler)
 
     print(f'Printing all BciPy logs to: {logfile}')
 

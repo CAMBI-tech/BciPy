@@ -16,6 +16,9 @@ def channel_data(raw_data, device_info, channel_name, n_records=None):
         channel_name - channel for which to get data
         n_records - if present, limits the number of records returned.
     """
+    if not channel_name in device_info.channels:
+        print(f"{channel_name} column not found; no data will be returned")
+        return []
     channel_index = device_info.channels.index(channel_name)
     arr = np.array(raw_data)
     if n_records:
