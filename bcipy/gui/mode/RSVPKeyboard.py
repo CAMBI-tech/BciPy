@@ -79,6 +79,7 @@ class RSVPKeyboard(BCIGui):
         """Run the offline analysis in a new Process."""
         cmd = f'python bcipy/signal/model/offline_analysis.py -p {self.parameter_location}'
         self.event_started = True
+        subprocess.Popen(cmd, shell=True)
 
     def refresh(self, _event: wx.Event) -> None:
         self.event_started = False
