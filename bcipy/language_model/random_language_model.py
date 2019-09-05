@@ -5,6 +5,7 @@ from typing import List
 
 import numpy as np
 
+
 class RandomLm:
     """Language Model that produces random likelihoods."""
 

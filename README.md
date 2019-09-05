@@ -5,11 +5,11 @@
 
 It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
 
-It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
+It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
-This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
+This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquisition. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
 
 *Please cite us when using!*
 
@@ -66,7 +66,6 @@ Start by running `python bcipy/gui/BCInterface.py` in your command prompt or ter
 
 Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
 
-
 You can pass it attributes with flags, if desired.
 
 Ex. `python bci_main.py --user "bci_user" --mode "RSVP"`
@@ -88,7 +87,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `signal`: eeg signal models, filters, processing and viewers. 
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py and mode/RSVPKeyboard.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
-- `language_model`: gives probalities of next letters during typing.
+- `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `tasks`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVPCalibration.
@@ -122,7 +121,7 @@ We follow and will enforce the contributor's covenant to foster a safe and inclu
 5. Use informative names for functions and classes.
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
-8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
+8. All new modules or major functionality should be documented outside of the code with a README.md. See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
 
 Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
@@ -157,6 +156,22 @@ coverage report
 # Generate html doc in the bci folder. Navigate to index.html and click.
 coverage html
 ```
+
+## Linting
+
+This project enforces `PEP` style guidelines using [flake8](http://flake8.pycqa.org/en/latest/).
+
+To avoid spending unnecessary time on formatting, we recommend using `autopep8`. You can specify a file or directory to auto format. When ready to push your code, you may run the following commands to format your code:
+
+```sh
+# autoformat all files in bcipy
+autopep8 --in-place --aggressive -r bcipy
+
+# autoformat only the processor file
+autopep8 --in-place --aggressive bcipy/acquisition/processor.py
+```
+
+Finally, run the lint check: `flake8 bcipy`.
 
 ## Authorship
 --------------

@@ -118,8 +118,6 @@ class RSVPCopyPhraseTask(Task):
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
 
-        self.artifact_rejection = parameters['artifact_rejection']
-
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
 
@@ -286,8 +284,11 @@ class RSVPCopyPhraseTask(Task):
                 # Evaluate this sequence, returning whether to gen a new
                 #  epoch (seq) or stimuli to present
                 new_epoch, sti = \
-                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info, self.collection_window_len, self.artifact_rejection)
+                    copy_phrase_task.evaluate_sequence(
+                        raw_data,
+                        triggers,
+                        target_info,
+                        self.collection_window_len)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {

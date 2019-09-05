@@ -95,8 +95,6 @@ class CopyPhraseWrapper:
                 as letter and flash time for the letter
             target_info(list[str]): target information about the stimuli
             window_length(int): The length of the time between stimuli presentation
-            artifact_rejection(bool): boolean indicating whether or not 
-                artifact rejection should be applied.
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 

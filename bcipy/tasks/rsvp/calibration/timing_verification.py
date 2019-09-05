@@ -37,10 +37,9 @@ class RSVPTimingVerificationCalibration(Task):
 
         solid_box = '\u25A0'
         empty_box = '\u25A1'
-        
-        target = 'x' # solid_box  # 'X'
-        fixation = '\u25CB' # circle
 
+        target = 'x'  # solid_box  # 'X'
+        fixation = '\u25CB'  # circle
 
         # alternate between solid and empty boxes
         letters = cycle([solid_box, empty_box])

@@ -119,7 +119,9 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
         cursor.execute('CREATE TABLE trial (id integer, target text)')
         cursor.execute(
-            'CREATE TABLE evidence (trial integer, sequence integer, letter text, lm real, eeg real, cumulative real, seq_position integer, is_target integer, presented integer, above_threshold)'
+            'CREATE TABLE evidence (trial integer, sequence integer, '
+            'letter text, lm real, eeg real, cumulative real, seq_position '
+            'integer, is_target integer, presented integer, above_threshold)'
         )
         conn.commit()
 

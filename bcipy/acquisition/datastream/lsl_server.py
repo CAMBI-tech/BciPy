@@ -1,7 +1,6 @@
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
-import random
 from queue import Queue, Empty
 from pylsl import StreamInfo, StreamOutlet
 from bcipy.acquisition.datastream.producer import Producer

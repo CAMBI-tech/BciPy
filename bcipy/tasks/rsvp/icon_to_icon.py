@@ -10,7 +10,6 @@ from bcipy.display.rsvp.mode.icon_to_icon import IconToIconDisplay
 from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.signal_model import CopyPhraseWrapper
-from bcipy.helpers.system_utils import auto_str
 from bcipy.helpers.task import (alphabet, generate_targets, get_user_input,
                                 process_data_for_decision,
                                 trial_complete_message)
