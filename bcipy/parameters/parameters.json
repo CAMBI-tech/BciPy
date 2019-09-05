@@ -8,7 +8,7 @@
     "type": "bool"
   },
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "top_level_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
@@ -16,7 +16,7 @@
     "type": "bool"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "top_level_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
@@ -527,7 +527,7 @@
     "type": "int"
   },
   "acq_show_viewer": {
-    "value": "false",
+    "value": "true",
     "section": "top_level_config",
     "readableName": "Show EEG Viewer",
     "helpTip": "Display the EEG data in a separate window.",
@@ -878,7 +878,7 @@
     "type": "str"
   },
   "artifact_rejection": {
-    "value": "true",
+    "value": "false",
     "section": "artifact_rejection",
     "readableName": "Artifact Rejection",
     "helpTip": "Check data sequences for unwanted artifacts and rejects such sequences.",
@@ -886,7 +886,7 @@
     "type": "bool"
   },
   "high_voltage_threshold": {
-    "value": "true",
+    "value": "false",
     "section": "artifact_rejection",
     "readableName": "HighVoltage Threshold",
     "helpTip": "Toggle high voltage check for artifact rejection.",
@@ -902,7 +902,7 @@
     "type": "float"
   },
   "low_voltage_threshold": {
-    "value": "true",
+    "value": "false",
     "section": "artifact_rejection",
     "readableName": "LowVoltage Threshold",
     "helpTip": "Toggle low voltage check for artifact rejection.",
