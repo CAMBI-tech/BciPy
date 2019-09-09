@@ -3,13 +3,10 @@ import unittest
 import tempfile
 import shutil
 import pickle
-from os import remove
 
 from bcipy.helpers.load import (
     load_json_parameters,
-    load_signal_model,
-    get_missing_parameter_keys,
-    PARAM_LOCATION_DEFAULT)
+    load_signal_model)
 
 
 class TestLoad(unittest.TestCase):
@@ -18,7 +15,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters = PARAM_LOCATION_DEFAULT
+        self.parameters = 'bcipy/parameters/parameters.json'
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -52,17 +49,6 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
-
-    def test_get_parameter_keys(self):
-        """Test the function that adds default values from parameters.json to
-        the parameters if they are not present in the loaded file"""
-        parameters = load_json_parameters(self.parameters, True)
-        parameters.pop('fake_data', None)
-        with open('temp_parameter_file.json', 'w') as outfile:
-            outfile.write('test')
-        missing_key_list = get_missing_parameter_keys(parameters, 'temp_parameter_file.json')
-        assert list(missing_key_list.keys()) == ['fake_data']
-        remove('temp_parameter_file.json')
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ import unittest
 from mockito import any, mock, when, unstub
 
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
+from bcipy.helpers.load import load_json_parameters
 
 
 class TestVisualFeedback(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestVisualFeedback(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters_used = PARAM_LOCATION_DEFAULT
+        self.parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(
             self.parameters_used,
             value_cast=True)

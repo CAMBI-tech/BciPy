@@ -3,21 +3,11 @@ import wx.lib.scrolledpanel as scrolled
 import json
 import logging
 from typing import Callable, Dict, Tuple
-from collections import namedtuple, OrderedDict
-from os import sep, path
-from bcipy.helpers.load import get_missing_parameter_keys, open_parameters, PARAM_LOCATION_DEFAULT
-from bcipy.helpers.system_utils import bcipy_version
+from collections import namedtuple
+from os import sep
 
 log = logging.getLogger(__name__)
 JSON_INDENT = 2
-TOP_LEVEL_CONFIG_NAME = 'top_level_config'
-PARAMETER_SECTION_NAMES = {
-    'top_level_config': 'Important BciPy Parameters',
-    'acq_config': 'Acquisition',
-    'bci_config': 'General',
-    'feedback_config': 'Feedback',
-    'lang_model_config': 'Language Model',
-    'signal_config': 'Signal'}
 
 
 def font(size: int = 14, font_family: wx.Font = wx.FONTFAMILY_SWISS) -> wx.Font:
@@ -45,16 +35,12 @@ Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
                                      'helpTip', 'recommended_values', 'type'])
 
 
-def convert_keys_to_parameters(json_object: dict):
-    return {k: Parameter(*v.values()) for k, v in json_object.items()}
-
-
 class Form(wx.Panel):
     """The Form class is a wx.Panel that creates controls/inputs for each
     parameter in the provided json file."""
 
     def __init__(self, parent,
-                 json_file: str = PARAM_LOCATION_DEFAULT,
+                 json_file: str = 'bcipy/parameters/parameters.json',
                  load_file: str = None,
                  control_width: int = 300, control_height: int = 25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
@@ -64,52 +50,39 @@ class Form(wx.Panel):
         self.control_size = (control_width, control_height)
         self.help_font_size = 12
         self.help_color = 'DARK SLATE GREY'
-        self.params = parent.params
+        with open(self.load_file) as f:
+            data = f.read()
+
+        config = json.loads(data)
+        self.params = {k: Parameter(*v.values()) for k, v in config.items()}
+
+        # TODO: group inputs by section
 
         self.createControls()
         self.bindEvents()
         self.doLayout()
-
-    def alphabetizeParameters(self):
-        """Alphabetize parameters by readable section name. Returns alphabetized
-            OrderedDict of parameter sections and parameters."""
-        # Retrieve and alphabetize list of unique parameter sections
-        param_sections = sorted(list(set([param[1].section for param in self.params.items()])))
-        name_dict = PARAMETER_SECTION_NAMES
-        # Sort parameters by section
-        key_dict = OrderedDict([])
-        for each_section in param_sections:
-            # Get readable names for sections
-            new_key = name_dict[each_section] if each_section in name_dict else each_section
-            key_dict[new_key] = sorted(
-                [key for key, param in self.params.items() if param.section == each_section])
-        # Move most important variables to top
-        key_dict.move_to_end(name_dict[TOP_LEVEL_CONFIG_NAME], last=False)
-        return key_dict
 
     def createControls(self):
         """Create controls (inputs, labels, etc) for each item in the
         parameters file."""
 
         self.controls = {}
-        self.params = {**self.params, **
-                       convert_keys_to_parameters(get_missing_parameter_keys(self.params, self.json_file))}
-        key_dict = self.alphabetizeParameters()
-        for key, param_list in key_dict.items():
-            self.controls[key] = static_text_control(self, label=key,
-                                                     size=20)
-            for param in param_list:
-                param_values = self.params[param]
-                if param_values.type == 'bool':
-                    form_input = self.bool_input(param_values)
-                elif 'path' in param_values.type:
-                    form_input = self.file_input(param_values)
-                elif isinstance(param_values.recommended_values, list):
-                    form_input = self.selection_input(param_values)
-                else:
-                    form_input = self.text_input(param_values)
+        for key, param in self.params.items():
+            if param.type == 'bool':
+                form_input = self.bool_input(param)
+            elif 'path' in param.type:
+                form_input = self.file_input(param)
+            elif isinstance(param.recommended_values, list):
+                form_input = self.selection_input(param)
+            # TODO: NumCtrl for numeric input types.
+            # from wx.lib.masked import NumCtrl
+            # elif param['type'] in ['float', 'int']:
+            else:
+                form_input = self.text_input(param)
 
-                self.add_input(self.controls, param, form_input)
+            self.add_input(self.controls, key, form_input)
+
+        self.saveButton = wx.Button(self, label='Save')
 
     def add_input(self, controls: Dict[str, wx.Control], key: str,
                   form_input: FormInput) -> None:
@@ -118,8 +91,7 @@ class Form(wx.Panel):
             controls[f'{key}_label'] = form_input.label
         if form_input.help:
             controls[f'{key}_help'] = form_input.help
-        if form_input.control:
-            controls[key] = form_input.control
+        controls[key] = form_input.control
 
         # TODO: consider adding an empty space after each input:
         # controls[f"{key}_empty"] = (0,0)
@@ -181,13 +153,11 @@ class Form(wx.Panel):
         """Returns a label control and maybe a help Control if the help
         text is different than the label text."""
         label = static_text_control(self, label=param.readableName)
-        label.Wrap(self.control_size[0])
         help_tip = None
         if param.readableName != param.helpTip:
             help_tip = static_text_control(self, label=param.helpTip,
                                            size=self.help_font_size,
                                            color=self.help_color)
-            help_tip.Wrap(self.control_size[0])
         return (label, help_tip)
 
     def bindEvents(self):
@@ -216,6 +186,8 @@ class Form(wx.Panel):
                 else:
                     control.Bind(wx.EVT_TEXT, self.textEventHandler(k))
 
+        self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
+
     def doLayout(self):
         """Layout the controls using Sizers."""
 
@@ -231,17 +203,32 @@ class Form(wx.Panel):
         for control in self.controls.values():
             if isinstance(control, list):
                 hbox = wx.BoxSizer(wx.HORIZONTAL)
-                if control[0]:
-                    hbox.Add(control[0], flag=wx.RIGHT, border=5)
+                hbox.Add(control[0], flag=wx.RIGHT, border=5)
                 hbox.Add(control[1], **noOptions)
                 gridSizer.Add(hbox, **noOptions)
             else:
                 gridSizer.Add(control, **noOptions)
 
+        # Add the save button
+        gridSizer.Add(self.saveButton, flag=wx.ALIGN_CENTER)
+
         sizer.Add(gridSizer, border=10, flag=wx.ALL | wx.ALIGN_CENTER)
         self.SetSizerAndFit(sizer)
 
     # Callback methods:
+    def onSave(self, event: wx.EVT_BUTTON) -> None:
+        log.debug('Saving parameter data')
+
+        with open(self.json_file, 'w') as outfile:
+            json.dump({k: v._asdict() for k, v in self.params.items()},
+                      outfile, indent=JSON_INDENT)
+
+        dialog = wx.MessageDialog(
+            self, "Parameters Successfully Updated!", 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        dialog.ShowModal()
+        dialog.Destroy()
+
     def textEventHandler(self, key: str) -> Callable[[wx.EVT_TEXT], None]:
         """Returns a handler function that updates the parameter for the
         provided key.
@@ -315,16 +302,20 @@ class MainPanel(scrolled.ScrolledPanel):
      to load and handling scrolling."""
 
     def __init__(self, parent, title='BCI Parameters',
-                 json_file=PARAM_LOCATION_DEFAULT, parent_frame=None):
+                 json_file='bcipy/parameters/parameters.json'):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = vbox
-        self.params = {}
-        self.parent = parent_frame
+
+        self.form = Form(self, json_file)
+        vbox.Add(static_text_control(self, label=title, size=20),
+                 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
+        vbox.AddSpacer(10)
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
-
+        loading_box.Add(static_text_control(self, label=f'Editing: {json_file}',
+                                            size=14))
         self.loaded_from = static_text_control(
             self,
             label=f'Loaded from: {json_file}',
@@ -332,31 +323,9 @@ class MainPanel(scrolled.ScrolledPanel):
         loading_box.Add(self.loaded_from)
         loading_box.AddSpacer(10)
 
-        self.loaded_from.SetLabel(f'Loaded from: {self.json_file}')
-        self.params = convert_keys_to_parameters(open_parameters(self.json_file))
-
-        self.form = Form(self, json_file)
-        vbox.Add(static_text_control(self, label=title, size=20),
-                 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
-        vbox.AddSpacer(10)
-
-        save_box = wx.BoxSizer(wx.HORIZONTAL)
-
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
-        save_box.Add(self.loadButton)
-        save_box.AddSpacer(10)
-        self.saveButton = wx.Button(self, label='Save')
-        self.saveButton.Bind(wx.EVT_BUTTON, self.onSave)
-        save_box.Add(self.saveButton)
-        save_box.AddSpacer(10)
-        self.restoreDefaultsButton = wx.Button(self, label='Restore Defaults')
-        self.restoreDefaultsButton.Bind(wx.EVT_BUTTON, self.restoreDefaults)
-        save_box.Add(self.restoreDefaultsButton)
-
-        loading_box.Add(save_box)
-        loading_box.AddSpacer(10)
-        loading_box.Add(static_text_control(self, label='BciPy version {}'.format(bcipy_version()), size=14))
+        loading_box.Add(self.loadButton)
 
         # Used for displaying help messages to the user.
         self.flash_msg = static_text_control(self, label='', size=14,
@@ -379,91 +348,28 @@ class MainPanel(scrolled.ScrolledPanel):
             if fd.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
             load_file = fd.GetPath()
-
             self.loaded_from.SetLabel(f'Loaded from: {load_file}')
-            self.params = convert_keys_to_parameters(open_parameters(load_file))
-
-            missing_keys = convert_keys_to_parameters(get_missing_parameter_keys(self.params, load_file))
-            self.params = {**self.params, **missing_keys}
-
-            if missing_keys:
-                """ Prevent dialog box text from getting too long if lots of
-                    parameters are missing """
-                if len(missing_keys) <= 5:
-                    missing_key_string = str(list(missing_keys))
-                else:
-                    missing_key_string = str(list(missing_keys)[:5]) + ' and others'
-
-                dialog = wx.MessageDialog(
-                    self, f'Parameters file {load_file} is missing keys {missing_key_string}. The default '
-                    'values for these keys will be loaded.', 'Warning', wx.OK |
-                    wx.ICON_EXCLAMATION)
-                dialog.ShowModal()
-                dialog.Destroy()
-
-        self.write_parameters_location_txt(load_file)
-
-        self.refresh_form(load_file)
-
-    def restoreDefaults(self, event: wx.EVT_BUTTON) -> None:
-        self.loaded_from.SetLabel(f'Loaded from: {PARAM_LOCATION_DEFAULT}')
-        self.params = convert_keys_to_parameters(open_parameters(PARAM_LOCATION_DEFAULT))
-        self.write_parameters_location_txt(PARAM_LOCATION_DEFAULT)
-        self.refresh_form(PARAM_LOCATION_DEFAULT)
-
-    def onSave(self, event: wx.EVT_BUTTON) -> None:
-        with wx.FileDialog(self, 'Save parameters file',
-                           wildcard='JSON files (*.json)|*.json',
-                           style=wx.FD_SAVE) as fd:
-            if fd.ShowModal() == wx.ID_CANCEL:
-                return     # the user changed their mind
-            save_file = fd.GetPath()
-
-        if path.isfile(save_file):
-            if path.samefile(PARAM_LOCATION_DEFAULT, save_file):
-                dialog = wx.MessageDialog(
-                    self, "This will overwrite the default parameters.json. Your changes "
-                    "will be overwritten when BciPy is upgraded.", 'Warning',
-                    wx.CANCEL | wx.OK | wx.ICON_EXCLAMATION)
-                if dialog.ShowModal() == wx.ID_CANCEL:
-                    return
-                dialog.Destroy()
-
-        self.loaded_from.SetLabel(f'Loaded from: {save_file}')
-        self.json_file = save_file
-        self.params['parameter_location'] = self.params['parameter_location']._replace(value=save_file)
-
-        log.debug('Saving parameter data')
-
-        with open(save_file, 'w') as outfile:
-            json.dump({k: v._asdict() for k, v in self.params.items()},
-                      outfile, indent=JSON_INDENT)
-
-        self.write_parameters_location_txt(save_file)
-
-        self.refresh_form()
-
-        dialog = wx.MessageDialog(
-            self, "Parameters Successfully Updated!", 'Info',
-            wx.OK | wx.ICON_INFORMATION)
-        dialog.ShowModal()
-        dialog.Destroy()
-
-    def refresh_form(self, load_file=None):
-        self.vbox.Hide(self.form)
+            self.flash_msg.SetLabel('Click the Save button to persist these '
+                                    'changes.')
+            self.vbox.Hide(self.form)
         self.form = Form(self, json_file=self.json_file, load_file=load_file)
         self.vbox.Add(self.form)
         self.SetupScrolling()
-
-    def write_parameters_location_txt(self, location):
-        self.parent.parameter_location = location
 
     def OnChildFocus(self, event):
         event.Skip()
 
 
-class params_form(wx.Frame):
-    def __init__(self, title='BCI Parameters', size=(650, 550),
-                 json_file=PARAM_LOCATION_DEFAULT, parent_frame=None):
-        wx.Frame.__init__(self, None, title=title, size=size)
-        self.main_panel = MainPanel(self, title=title, json_file=json_file, parent_frame=parent_frame)
+def main(title='BCI Parameters', size=(650, 550),
+         json_file='bcipy/parameters/parameters.json'):
+    """Set up the GUI components and start the main loop."""
+
+    app = wx.App(0)
+    frame = wx.Frame(None, wx.ID_ANY, size=size, title=title)
+    fa = MainPanel(frame, title=title, json_file=json_file)
+    frame.Show()
+    app.MainLoop()
+
+
+if __name__ == '__main__':
+    main()
