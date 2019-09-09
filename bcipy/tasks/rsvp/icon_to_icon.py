@@ -210,6 +210,7 @@ class RSVPIconToIconTask(Task):
                                         self.task_height, 'yellow',
                                         self.rsvp.window.size, self.is_word)
 
+        self.rsvp.highlight_first_stim = show_target
         # Note that returned triggers use image basenames only.
         sequence_timing = self.rsvp.do_sequence()
         return sequence_timing
