@@ -201,11 +201,50 @@ class LatencyData():
             data=output,
             columns=["stimulus", "triggers.txt", "raw_data_TRG", "sensor"])
 
-        # Since raw_data is written after the trigger is pushed to the LSL
-        # marker stream, we assume that there is some latency between the push
-        # and the write operation. However, due to converting into acquisition
-        # seconds, this is not always the case.
-        # frame['LSL_diff'] = abs(frame['raw_data_TRG'] - frame['triggers.txt'])
+        frame['diff'] = abs(frame['raw_data_TRG'] - frame['triggers.txt'])
+
+        frame['triggers_offset'] = frame['sensor'] - frame['triggers.txt']
+        frame['rawdata_offset'] = frame['sensor'] - frame['raw_data_TRG']
 
         # use .describe() on the resulting dataframe to see statistics.
         return frame
+
+
+def main(path: str, outpath:str):
+    """Run the viewer gui
+
+    Parameters:
+    -----------
+        data_file - raw_data.csv file to stream.
+        seconds - how many seconds worth of data to display.
+        downsample_factor - how much the data is downsampled. A factor of 1
+            displays the raw data.
+    """
+    data = LatencyData(path)
+    frame = data.combined()
+    if outpath:
+        frame.to_csv(path_or_buf=outpath, index=False)
+        print(f"Data written to: {outpath}")
+    
+    print(frame.describe())
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description=
+        "Generates latency data from a bcipy session"
+    )
+    parser.add_argument(
+        '-p', '--path', help='path to the data directory', default=None)
+    parser.add_argument('-o', '--out', help='path to output file; if not provided, only summary data is output', default=None)
+    args = parser.parse_args()
+    path = args.path
+    if not path:
+        from tkinter import filedialog
+        from tkinter import *
+        root = Tk()
+        path = filedialog.askdirectory(
+            parent=root, initialdir="/", title='Please select a directory')
+
+    main(path, args.out)
