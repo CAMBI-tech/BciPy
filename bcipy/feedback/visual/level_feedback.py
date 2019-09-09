@@ -1,6 +1,5 @@
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from psychopy import visual, core
-from bcipy.helpers.load import PARAM_LOCATION_DEFAULT
 
 from typing import Tuple
 
@@ -136,7 +135,7 @@ if __name__ == '__main__':
 
     # Load a parameters file
     parameters = load_json_parameters(
-        PARAM_LOCATION_DEFAULT,
+        'bcipy/parameters/parameters.json',
         value_cast=True)
     display = init_display_window(parameters)
     clock = core.Clock()

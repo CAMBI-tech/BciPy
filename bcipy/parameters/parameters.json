@@ -1,23 +1,23 @@
 {
   "is_txt_stim": {
     "value": "true",
-    "section": "top_level_config",
+    "section": "bci_config",
     "readableName": "Is Text Stimuli",
     "helpTip": "Is this Text -true- or Image -false-",
     "recommended_values": "",
     "type": "bool"
   },
   "fake_data": {
-    "value": "false",
-    "section": "top_level_config",
+    "value": "true",
+    "section": "bci_config",
     "readableName": "Fake Data Sessions",
     "helpTip": "If true, fake data server used",
     "recommended_values": "",
     "type": "bool"
   },
   "full_screen": {
-    "value": "true",
-    "section": "top_level_config",
+    "value": "false",
+    "section": "bci_config",
     "readableName": "Full Screen",
     "helpTip": "Full Screen Mode",
     "recommended_values": "",
@@ -168,7 +168,7 @@
   },
   "languagemodelenabled": {
     "value": "false",
-    "section": "top_level_config",
+    "section": "lang_model_config",
     "readableName": "Language Model Enabled",
     "helpTip": "This is the language model.",
     "recommended_values": "",
@@ -527,8 +527,8 @@
     "type": "int"
   },
   "acq_show_viewer": {
-    "value": "true",
-    "section": "top_level_config",
+    "value": "false",
+    "section": "acq_config",
     "readableName": "Show EEG Viewer",
     "helpTip": "Display the EEG data in a separate window.",
     "recommended_values": "",
@@ -684,7 +684,7 @@
   },
   "show_feedback": {
     "value": "true",
-    "section": "top_level_config",
+    "section": "feedback_config",
     "readableName": "show_feedback",
     "helpTip": "Show Feedback for the Task. Must be configured per task.",
     "recommended_values": "",
@@ -796,7 +796,7 @@
   },
   "enable_breaks": {
     "value": "false",
-    "section": "top_level_config",
+    "section": "bci_config",
     "readableName": "Enable calibration breaks",
     "helpTip": "Enable breaks in RSVP calibration",
     "recommended_values": "",
@@ -863,7 +863,7 @@
   },
   "backspace_always_shown": {
     "value": "false",
-    "section": "top_level_config",
+    "section": "bci_config",
     "readableName": "Backspace always shown",
     "helpTip": "Should the backspace character always be shown in Copy Phrase tasks.",
     "recommended_values": "",

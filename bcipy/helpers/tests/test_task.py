@@ -3,15 +3,15 @@ import numpy as np
 from collections import Counter
 from mockito import unstub
 
-
 from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val, generate_targets
-from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
+from bcipy.helpers.load import load_json_parameters
+
 
 
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):
-        parameters_used = PARAM_LOCATION_DEFAULT
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_stim'] = True
@@ -26,7 +26,7 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
     def test_alphabet_images(self):
-        parameters_used = PARAM_LOCATION_DEFAULT
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_stim'] = False

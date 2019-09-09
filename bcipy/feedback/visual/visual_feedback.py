@@ -2,7 +2,6 @@ from bcipy.feedback.feedback import Feedback
 from psychopy import visual, core
 from bcipy.helpers.stimuli import resize_image
 from enum import Enum
-from bcipy.helpers.load import PARAM_LOCATION_DEFAULT
 
 
 class FeedbackType(Enum):
@@ -152,7 +151,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',
-                        default=PARAM_LOCATION_DEFAULT,
+                        default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. \
                           Pass as bcipy/parameters/parameters.json')
 

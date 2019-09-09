@@ -4,8 +4,7 @@ import logging
 from bcipy.helpers.load import (
     read_data_csv,
     load_experimental_data,
-    load_json_parameters,
-    PARAM_LOCATION_DEFAULT)
+    load_json_parameters)
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import trial_reshaper
@@ -116,7 +115,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', default=None)
     parser.add_argument('-p', '--parameters_file',
-                        default=PARAM_LOCATION_DEFAULT)
+                        default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
     logging.basicConfig(

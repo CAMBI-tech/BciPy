@@ -2,7 +2,7 @@ import unittest
 
 from mockito import any, mock, when, unstub
 import psychopy
-from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
+from bcipy.helpers.load import load_json_parameters
 from bcipy.display.display_main import init_display_window
 
 
@@ -12,7 +12,7 @@ class TestInitializeDisplayWindow(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
 
-        parameters_used = PARAM_LOCATION_DEFAULT
+        parameters_used = 'bcipy/parameters/parameters.json'
         self.window = mock()
         when(psychopy.visual).Window(
             size=any(), screen=any(),

@@ -1,4 +1,4 @@
-from bcipy.helpers.load import load_json_parameters, PARAM_LOCATION_DEFAULT
+from bcipy.helpers.load import load_json_parameters
 from psychopy import core
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
 import soundfile as sf
@@ -6,7 +6,7 @@ import soundfile as sf
 
 # Load a parameters file
 parameters = load_json_parameters(
-    PARAM_LOCATION_DEFAULT, value_cast=True)
+    'bcipy/parameters/parameters.json', value_cast=True)
 clock = core.Clock()
 
 # Init the sound object and give it some time to buffer

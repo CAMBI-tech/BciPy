@@ -67,7 +67,7 @@ class IconToIconDisplay(RSVPDisplay):
             trigger_type=trigger_type)
 
         self.is_word = is_word
-
+        self.highlight_first_stim = False
         if not is_word:
             self.rect = visual.Rect(
                 win=window,
@@ -93,11 +93,10 @@ class IconToIconDisplay(RSVPDisplay):
                 height=task_height)
 
     def draw_static(self):
-        if not self.is_word:
-            """Draw static elements in a stimulus."""
-            if(self.is_first_stim):
-                self.rect.draw()
-                self.target_text.draw()
+        """Draw static elements in a stimulus."""
+        if not self.is_word and self.is_first_stim and self.highlight_first_stim:
+            self.rect.draw()
+            self.target_text.draw()
 
         super(IconToIconDisplay, self).draw_static()
 
