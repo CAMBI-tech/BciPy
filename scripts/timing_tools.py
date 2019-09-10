@@ -86,8 +86,31 @@ def sensor_data(data_dir, sample_rate_hz, column: str = "TRG_device_stream"):
 
     return compressed
 
+def skipped_iter(data, skip_criteria):
+    """Utility function that returns an iterator where data items are skipped
+    according to some provided criteria.
 
-def filled_sensor_data(sensor_data, stimuli, includes_calibration=False):
+    Parameters:
+    -----------
+        data - list of data items
+        skip_criteria - lambda or function that takes an item and determines
+            whether or not to skip.
+    Returns:
+    --------
+        a data item iter starting at the first unskipped item.
+    """
+    iterator = iter(data)
+
+    # Skip past any sensor data that was recorded prior to min time.
+    # if min_time:
+    item = next(iterator)
+    i = 0
+    while skip_criteria(item):
+        item = next(iterator)
+        i = i + 1
+    return iter(data[i:])
+
+def filled_sensor_data(sensor_data, stimuli, min_time=None, includes_calibration=False):
     """
     Correlates the sensor data to the stimulus.
 
@@ -97,6 +120,8 @@ def filled_sensor_data(sensor_data, stimuli, includes_calibration=False):
             (timestamp, value) tuple which represents the starting
             time (in acquisition clock) at which the sensor was activated.
         stimuli - complete list of stimulus presented.
+        min_time - if provided, discards any sensor data recorded before this time. 
+            Should be in given in the normalized acquisition clock time.
     Returns:
     --------
         expanded list of tuples (timestamp, stim) values, with a timestamp
@@ -113,11 +138,19 @@ def filled_sensor_data(sensor_data, stimuli, includes_calibration=False):
 
     expanded = []
     sensor_iter = iter(sensor_data)
+
+    # Skip past any sensor data that was recorded prior to min time.
+    if min_time:
+        sensor_iter = skipped_iter(
+            sensor_data,
+            skip_criteria=lambda sensor_item: sensor_item[0] < min_time)
+
     for stim in stimuli:
         if stim in undetectable:
             expanded.append((None, stim))
         elif stim in detectable_items:
-            expanded.append((next(sensor_iter)[0], stim))
+            sensor_time = next(sensor_iter)[0]
+            expanded.append((sensor_time, stim))
         else:
             raise f"Unknown stimulus: {stim}"
 
@@ -174,6 +207,14 @@ def read_sample_rate(data_dir: str):
         fs = float(next(csvfile).strip().split(",")[1])
         return fs
 
+def calib_time(normalized_triggers):
+    """Given a list of normalized triggers, return the time (acquisition) clock
+    when the calibration trigger was displayed."""
+    for acq_time, stim in normalized_triggers:        
+        if stim == 'calibration_trigger':
+            return acq_time
+    return None
+
 
 class LatencyData():
     def __init__(self, data_dir: str):
@@ -185,7 +226,8 @@ class LatencyData():
         self.sensor_data = sensor_data(data_dir, self.sample_rate)
 
         stim = [trg[1] for trg in self.triggers]
-        self.filled_sensors = filled_sensor_data(self.sensor_data, stim)
+        min_time = calib_time(self.triggers)
+        self.filled_sensors = filled_sensor_data(self.sensor_data, stim, min_time=min_time)
 
     def combined(self):
         """Combined values for triggers.txt and raw_data.csv TRG column"""
@@ -225,7 +267,7 @@ def main(path: str, outpath:str):
     if outpath:
         frame.to_csv(path_or_buf=outpath, index=False)
         print(f"Data written to: {outpath}")
-    
+
     print(frame.describe())
 
 if __name__ == "__main__":
