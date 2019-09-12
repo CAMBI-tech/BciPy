@@ -58,6 +58,12 @@ def session_data(data_dir: str, alp=None):
 
         return data
 
+def get_stimuli(task_type, sequence):
+    """There is some variation in how tasks record session information.
+    Returns the list of stimuli for the given trial/sequence"""
+    if task_type == 'Copy Phrase':
+        return sequence['stimuli'][0]
+    return sequence['stimuli']
 
 def session_db(data_dir: str, db_name='session.db', alp=None):
     """Writes a relational database (sqlite3) of session data that can
@@ -126,32 +132,34 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         conn.commit()
 
         for epoch in data['epochs'].keys():
-            for i, trial in enumerate(data['epochs'][epoch].keys()):
+            for i, seq_index in enumerate(data['epochs'][epoch].keys()):
+                sequence = data['epochs'][epoch][seq_index]
+                # TODO: compute target letter for copy phrase
+                target_letter = sequence.get('target_letter', None)
+                stimuli = get_stimuli(data['session_type'], sequence)
+
                 if i == 0:
                     # create record for the trial
                     conn.executemany(
                         'INSERT INTO trial VALUES (?,?)',
-                        [(int(epoch),
-                          data['epochs'][epoch][trial]['target_letter'])])
+                        [(int(epoch), target_letter)])
 
-                lm_ev = dict(
-                    zip(alp, data['epochs'][epoch][trial]['lm_evidence']))
-                cumulative_likelihoods = dict(
-                    zip(alp, data['epochs'][epoch][trial]['likelihood']))
+                lm_ev = dict(zip(alp, sequence['lm_evidence']))
+                cumulative_likelihoods = dict(zip(alp, sequence['likelihood']))
 
                 ev_rows = []
-                for letter, prob in zip(
-                        alp, data['epochs'][epoch][trial]['eeg_evidence']):
+                for letter, prob in zip(alp, sequence['eeg_evidence']):
                     seq_position = None
-                    if letter in data['epochs'][epoch][trial]['stimuli']:
-                        seq_position = data['epochs'][epoch][trial][
-                            'stimuli'].index(letter)
-                    is_target = 1 if data['epochs'][epoch][trial][
-                        'target_letter'] == letter else 0
+                    if letter in stimuli:
+                        seq_position = stimuli.index(letter)
+                    if target_letter:
+                        is_target = 1 if target_letter == letter else 0
+                    else:
+                        is_target = None
                     cumulative = cumulative_likelihoods[letter]
                     above_threshold = cumulative >= parameters[
                         'decision_threshold']
-                    ev_row = (int(epoch), int(trial), letter, lm_ev[letter],
+                    ev_row = (int(epoch), int(seq_index), letter, lm_ev[letter],
                               prob, cumulative, seq_position, is_target,
                               seq_position is not None, above_threshold)
                     ev_rows.append(ev_row)

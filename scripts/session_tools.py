@@ -20,7 +20,7 @@ if __name__ == "__main__":
                         '--path',
                         help='path to the data directory',
                         default=None)
-    parser.add_argument('--db', help='create sqlite database', default=False)
+    parser.add_argument('--db', help='create sqlite database', action='store_true')
     parser.add_argument('-a',
                         '--alphabet',
                         help='alphabet (comma-delimited string of items)',
