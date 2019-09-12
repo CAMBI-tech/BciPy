@@ -120,6 +120,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.lvl_3_threshold = self.parameters['feedback_level_3_threshold']
         self.lvl_2_threshold = self.parameters['feedback_level_2_threshold']
 
+        # true/false order is desceding from 5 -> 1 for level
+        self.feedback_descending = self.parameters['feedback_level_descending']
+
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
         run = True
@@ -194,7 +197,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 position = self._get_feedback_decision(last_sequence_timing)
                 self.logger.info(
                     f'[Feedback] Administering feedback position {position}')
-                timing = self.visual_feedback.administer(position=position)
+                self.visual_feedback.administer(position=position)
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
@@ -252,15 +255,38 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.logger.error(f'[Feedback] {message}')
             raise InsufficientDataException(message)
 
-        if response > self.lvl_5_threshold:
-            return 5
-        if response > self.lvl_4_threshold:
-            return 4
-        if response > self.lvl_3_threshold:
-            return 3
-        if response > self.lvl_2_threshold:
-            return 2
-        return 1
+        return self._determine_feedback_response(response)
+
+    def _determine_feedback_response(self, response):
+        """Determine feedback response.
+        
+        Depending on the band chosen to give feedback off, we may need to invert the
+            levels. By default, it's in descending order. Set feedback_level_descending
+            to false for ascending
+        """
+        # default condition; for use with SSVEP or PSD that increases with focus to task
+        if self.feedback_descending:
+            if response > self.lvl_5_threshold:
+                return 5
+            if response > self.lvl_4_threshold:
+                return 4
+            if response > self.lvl_3_threshold:
+                return 3
+            if response > self.lvl_2_threshold:
+                return 2
+            return 1
+
+        # ascending condition; use with PSD that decrease with focus to task
+        else:
+            if response < self.lvl_5_threshold:
+                return 5
+            if response < self.lvl_4_threshold:
+                return 4
+            if response < self.lvl_3_threshold:
+                return 3
+            if response < self.lvl_2_threshold:
+                return 2
+            return 1
 
     def _get_data_for_psd(self, sequence_timing):
         # get data from the DAQ
@@ -322,7 +348,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         if not set(letters).issubset(self.valid_targets):
             invalid = set(letters).difference(self.valid_targets)
             raise Exception(
-                f'unexpected letters received in copy phrase: {invalid}')
+                f'unexpected letters received: {invalid}')
 
         return letters, times, target_types
 

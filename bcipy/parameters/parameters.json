@@ -730,6 +730,17 @@
     "recommended_values": "",
     "type": "int"
   },
+  "psd_method": {
+    "value": "Welch",
+    "section": "bci_config",
+    "readableName": "Power Spectral Density Method",
+    "helpTip": "The method used to approximate power spectral density bands",
+    "recommended_values": [
+      "Welch",
+      "MutliTaper"
+    ],
+    "type": "str"
+  },
   "feedback_band_lower_limit": {
     "value": "4",
     "section": "feedback_config",
@@ -746,11 +757,19 @@
     "recommended_values": "",
     "type": "float"
   },
+  "feedback_level_descending": {
+    "value": "true",
+    "section": "feedback_config",
+    "readableName": "Feedback Level Ordering",
+    "helpTip": "Ordering of feedback; Descending (true) for PSD that increase with focus or Ascending (false) for PSD that decrease with focus",
+    "recommended_values": "",
+    "type": "bool"
+  },
   "feedback_level_5_threshold": {
     "value": "4",
     "section": "feedback_config",
     "readableName": "Feedback Level 5 Threshold",
-    "helpTip": "Threshold above which level five (highest) feedback is given (InterSequenceFeedback)",
+    "helpTip": "Threshold for level five (highest) feedback (InterSequenceFeedback)",
     "recommended_values": "",
     "type": "float"
   },
@@ -758,7 +777,7 @@
     "value": "7",
     "section": "feedback_config",
     "readableName": "Feedback Level 4 Threshold",
-    "helpTip": "Threshold above which level four feedback is given (InterSequenceFeedback)",
+    "helpTip": "Threshold for level four feedback (InterSequenceFeedback)",
     "recommended_values": "",
     "type": "float"
   },
@@ -766,7 +785,7 @@
     "value": "4",
     "section": "feedback_config",
     "readableName": "Feedback Level 3 Threshold",
-    "helpTip": "Threshold above which level three feedback is given (InterSequenceFeedback)",
+    "helpTip": "Threshold for level three feedback (InterSequenceFeedback)",
     "recommended_values": "",
     "type": "float"
   },
@@ -774,7 +793,7 @@
     "value": "7",
     "section": "feedback_config",
     "readableName": "Feedback Level 2 Threshold",
-    "helpTip": "Threshold above which level two feedback is given (InterSequenceFeedback)",
+    "helpTip": "Threshold for level two feedback (InterSequenceFeedback)",
     "recommended_values": "",
     "type": "float"
   },
@@ -849,17 +868,6 @@
     "helpTip": "Length of the data sequence buffer",
     "recommended_values": "",
     "type": "float"
-  },
-  "psd_method": {
-    "value": "Welch",
-    "section": "bci_config",
-    "readableName": "Power Spectral Density Method",
-    "helpTip": "The method used to approximate power spectral density bands",
-    "recommended_values": [
-      "Welch",
-      "MutliTaper"
-    ],
-    "type": "str"
   },
   "backspace_always_shown": {
     "value": "false",
