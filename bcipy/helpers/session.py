@@ -1,4 +1,5 @@
 """Helper functions for managing and parsing session.json data."""
+import csv
 import json
 import os
 import sqlite3
@@ -65,6 +66,13 @@ def get_stimuli(task_type, sequence):
         return sequence['stimuli'][0]
     return sequence['stimuli']
 
+def get_target(task_type, sequence, above_threshold):
+    """Returns the target for the given sequence. For icon tasks this information
+    is in the sequence, but for Copy Phrase it must be computed."""
+    if task_type == 'Copy Phrase':
+        return copy_phrase_target(sequence['copy_phrase'], sequence['current_text'])
+    return sequence.get('target_letter', None)
+
 def session_db(data_dir: str, db_name='session.db', alp=None):
     """Writes a relational database (sqlite3) of session data that can
     be used for exploratory analysis.
@@ -125,24 +133,28 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
         cursor.execute('CREATE TABLE trial (id integer, target text)')
         cursor.execute(
-            'CREATE TABLE evidence (trial integer, sequence integer, '
-            'letter text, lm real, eeg real, cumulative real, seq_position '
+            'CREATE TABLE evidence (series integer, sequence integer, '
+            'stim text, lm real, eeg real, cumulative real, seq_position '
             'integer, is_target integer, presented integer, above_threshold)'
         )
         conn.commit()
 
-        for epoch in data['epochs'].keys():
-            for i, seq_index in enumerate(data['epochs'][epoch].keys()):
-                sequence = data['epochs'][epoch][seq_index]
-                # TODO: compute target letter for copy phrase
-                target_letter = sequence.get('target_letter', None)
-                stimuli = get_stimuli(data['session_type'], sequence)
+        for series in data['epochs'].keys():
+            for i, seq_index in enumerate(data['epochs'][series].keys()):
+                sequence = data['epochs'][series][seq_index]
+                session_type = data['session_type']
+
+                target_letter = get_target(
+                    session_type, sequence,
+                    max(sequence['likelihood']) >
+                    parameters['decision_threshold'])
+                stimuli = get_stimuli(session_type, sequence)
 
                 if i == 0:
                     # create record for the trial
                     conn.executemany(
                         'INSERT INTO trial VALUES (?,?)',
-                        [(int(epoch), target_letter)])
+                        [(int(series), target_letter)])
 
                 lm_ev = dict(zip(alp, sequence['lm_evidence']))
                 cumulative_likelihoods = dict(zip(alp, sequence['likelihood']))
@@ -159,7 +171,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
                     cumulative = cumulative_likelihoods[letter]
                     above_threshold = cumulative >= parameters[
                         'decision_threshold']
-                    ev_row = (int(epoch), int(seq_index), letter, lm_ev[letter],
+                    ev_row = (int(series), int(seq_index), letter, lm_ev[letter],
                               prob, cumulative, seq_position, is_target,
                               seq_position is not None, above_threshold)
                     ev_rows.append(ev_row)
@@ -173,8 +185,51 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         return dataframe
 
 
+def session_csv(db_name='session.db', csv_name='session.csv'):
+    """Converts the sqlite3 db generated from session_db to a csv file,
+    outputing the evidence table.
+    """
+
+    with open(csv_name, "w", encoding='utf-8', newline='') as output:
+        cursor = sqlite3.connect(db_name).cursor()
+        cursor.execute("select * from evidence;")
+        columns = [description[0] for description in cursor.description]
+
+        csv_writer = csv.writer(output, delimiter=',')
+        csv_writer.writerow(columns)
+        for row in cursor:
+            csv_writer.writerow(row)
+
+
+def copy_phrase_target(phrase:str, current_text: str, backspace='<'):
+    """Determine the target for the current CopyPhrase sequence. 
+    
+    >>> copy_phrase_target("HELLO_WORLD", "")
+    'H'
+    >>> copy_phrase_target("HELLO_WORLD", "HE")
+    'L'
+    >>> copy_phrase_target("HELLO_WORLD", "HELLO_WORL")
+    'D'
+    >>> copy_phrase_target("HELLO_WORLD", "HEA")
+    '<'
+    >>> copy_phrase_target("HELLO_WORLD", "HEAL")
+    '<'
+    """
+    try:
+        # if the current_display is not a substring of phrase, there is a mistake
+        # and the backspace should be the next target.
+        phrase.index(current_text)
+        return phrase[len(current_text)]
+    except ValueError:
+        return backspace
+
+
 def remove_props(data, proplist):
     """Given a dict, remove the provided keys"""
     for prop in proplist:
         if prop in data:
             data.pop(prop)
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
