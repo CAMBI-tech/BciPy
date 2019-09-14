@@ -186,7 +186,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
 
 def session_csv(db_name='session.db', csv_name='session.csv'):
-    """Converts the sqlite3 db generated from session_db to a csv file,
+    """Converts the sqlite3 db generated from session.json to a csv file,
     outputing the evidence table.
     """
 
@@ -199,6 +199,111 @@ def session_csv(db_name='session.db', csv_name='session.csv'):
         csv_writer.writerow(columns)
         for row in cursor:
             csv_writer.writerow(row)
+
+
+def write_row(excel_sheet, rownum, data, background=None, border=None):
+    """Helper method to write a row to an Excel spreadsheet"""
+    for col, val in enumerate(data, start=1):
+        cell = excel_sheet.cell(row=rownum, column=col)
+        cell.value = val
+        if background:
+            cell.fill = background
+        if border:
+            cell.border = border
+
+
+def session_excel(db_name='session.db',
+                  excel_name='session.xlsx',
+                  chart_sequences=True):
+    """Converts the sqlite3 db generated from session.json to an
+    Excel spreadsheet"""
+    import itertools
+    import openpyxl
+    from openpyxl.styles import PatternFill
+    from openpyxl.styles.colors import YELLOW, WHITE, BLACK
+    from openpyxl.styles.borders import Border, Side, BORDER_THIN, BORDER_MEDIUM
+    from openpyxl.chart import BarChart, Series, Reference
+
+    gray_background = PatternFill(start_color='ededed', fill_type='solid')
+    white_background = PatternFill(start_color=WHITE, fill_type=None)
+    highlighted_background = PatternFill(start_color=YELLOW, fill_type='solid')
+
+    backgrounds_iter = itertools.cycle([gray_background, white_background])
+
+    thin_gray = Side(border_style=BORDER_THIN, color='d3d3d3')
+    default_border = Border(left=thin_gray,
+                            top=thin_gray,
+                            right=thin_gray,
+                            bottom=thin_gray)
+
+    thick_black = Side(border_style=BORDER_THIN, color=BLACK)
+    new_series_border = Border(left=thin_gray,
+                               top=thick_black,
+                               right=thin_gray,
+                               bottom=thin_gray)
+
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = 'session'
+
+    cursor = sqlite3.connect(db_name).cursor()
+    cursor.execute("select * from evidence;")
+    columns = [description[0] for description in cursor.description]
+
+    series_column = columns.index('series')
+    sequence_column = columns.index('sequence')
+    is_target_column = columns.index('is_target')
+    series, sequence, is_target = None, None, None
+
+    # Write header
+    write_row(sheet, 1, columns)
+
+    chart_data = {}
+    seq_background = next(backgrounds_iter)
+    for i, row in enumerate(cursor):
+        rownum = i + 2  # Excel is 1-indexed; also account for column
+        is_target = int(row[is_target_column]) == 1
+        border = default_border
+
+        if row[series_column] != series:
+            series = row[series_column]
+            border = new_series_border
+
+        if row[sequence_column] != sequence:
+            sequence = row[sequence_column]
+            chart_data[f"Series {series} Sequence {sequence}"] = rownum
+            seq_background = next(backgrounds_iter)
+
+        # write to spreadsheet
+        write_row(
+            sheet,
+            rownum,
+            row,
+            background=highlighted_background if is_target else seq_background,
+            border=border)
+
+    # Add chart for each sequence
+    if chart_sequences:
+        for title, min_row in chart_data.items():
+            max_row = min_row + 27  # TODO: compute this
+            chart = BarChart()
+            chart.type = "col"
+            chart.title = title
+            chart.y_axis.title = 'likelihood'
+            chart.x_axis.title = 'stimulus'
+
+            # TODO: parameterize these numbers
+            data = Reference(sheet, min_col=4, min_row=min_row, max_row=max_row, max_col=6)
+            cats = Reference(sheet, min_col=3, min_row=min_row, max_row=max_row)
+            chart.add_data(data)
+
+            chart.set_categories(cats)
+            # chart.shape = 4
+            sheet.add_chart(chart, f'M{min_row + 1}')
+
+    # Freeze header row
+    sheet.freeze_panes = 'A2'
+    wb.save(excel_name)
 
 
 def copy_phrase_target(phrase:str, current_text: str, backspace='<'):
