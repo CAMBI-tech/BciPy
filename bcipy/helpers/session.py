@@ -214,7 +214,7 @@ def write_row(excel_sheet, rownum, data, background=None, border=None):
 
 def session_excel(db_name='session.db',
                   excel_name='session.xlsx',
-                  chart_sequences=True):
+                  include_charts=True):
     """Converts the sqlite3 db generated from session.json to an
     Excel spreadsheet"""
     import itertools
@@ -222,8 +222,9 @@ def session_excel(db_name='session.db',
     from openpyxl.styles import PatternFill
     from openpyxl.styles.colors import YELLOW, WHITE, BLACK
     from openpyxl.styles.borders import Border, Side, BORDER_THIN, BORDER_MEDIUM
-    from openpyxl.chart import BarChart, Series, Reference
+    from openpyxl.chart import BarChart, Series, Reference, label
 
+    # Define styles and borders to use within the spreadsheet.
     gray_background = PatternFill(start_color='ededed', fill_type='solid')
     white_background = PatternFill(start_color=WHITE, fill_type=None)
     highlighted_background = PatternFill(start_color=YELLOW, fill_type='solid')
@@ -242,10 +243,12 @@ def session_excel(db_name='session.db',
                                right=thin_gray,
                                bottom=thin_gray)
 
+    # Create the workbook
     wb = openpyxl.Workbook()
     sheet = wb.active
     sheet.title = 'session'
 
+    # Get the data from the generated sqlite3 database.
     cursor = sqlite3.connect(db_name).cursor()
     cursor.execute("select * from evidence;")
     columns = [description[0] for description in cursor.description]
@@ -258,20 +261,32 @@ def session_excel(db_name='session.db',
     # Write header
     write_row(sheet, 1, columns)
 
+    # Maps the chart title to the starting row for the data.
     chart_data = {}
+
+    # Write rows
     seq_background = next(backgrounds_iter)
+    alp_len = None
     for i, row in enumerate(cursor):
-        rownum = i + 2  # Excel is 1-indexed; also account for column
+        rownum = i + 2  # Excel is 1-indexed; also account for column row.
         is_target = int(row[is_target_column]) == 1
         border = default_border
 
         if row[series_column] != series:
+            # Place a thick top border before each new series to make it
+            # easier to visually scan the spreadsheet.
             series = row[series_column]
             border = new_series_border
 
         if row[sequence_column] != sequence:
             sequence = row[sequence_column]
+
+            # Set the alphabet length used for chart data ranges.
+            if not alp_len and i > 0:
+                alp_len = i
             chart_data[f"Series {series} Sequence {sequence}"] = rownum
+
+            # Toggle the background for each sequence for easier viewing.
             seq_background = next(backgrounds_iter)
 
         # write to spreadsheet
@@ -283,28 +298,41 @@ def session_excel(db_name='session.db',
             border=border)
 
     # Add chart for each sequence
-    if chart_sequences:
+    if include_charts:
+        stim_col = columns.index('stim') + 1
+        lm_col = columns.index('lm') + 1
+        likelihood_col = columns.index('cumulative') + 1
+
         for title, min_row in chart_data.items():
-            max_row = min_row + 27  # TODO: compute this
+            max_row = min_row + (alp_len - 1)
             chart = BarChart()
             chart.type = "col"
             chart.title = title
             chart.y_axis.title = 'likelihood'
             chart.x_axis.title = 'stimulus'
 
-            # TODO: parameterize these numbers
-            data = Reference(sheet, min_col=4, min_row=min_row, max_row=max_row, max_col=6)
-            cats = Reference(sheet, min_col=3, min_row=min_row, max_row=max_row)
-            chart.add_data(data)
+            data = Reference(sheet,
+                             min_col=lm_col,
+                             min_row=min_row,
+                             max_row=max_row,
+                             max_col=likelihood_col)
+            categories = Reference(sheet,
+                                   min_col=stim_col,
+                                   min_row=min_row,
+                                   max_row=max_row)
+            chart.add_data(data, titles_from_data=False)
+            chart.series[0].title = openpyxl.chart.series.SeriesLabel(v="lm")
+            chart.series[1].title = openpyxl.chart.series.SeriesLabel(v="eeg")
+            chart.series[2].title = openpyxl.chart.series.SeriesLabel(
+                v="combined")
 
-            chart.set_categories(cats)
-            # chart.shape = 4
+            chart.set_categories(categories)
             sheet.add_chart(chart, f'M{min_row + 1}')
 
     # Freeze header row
     sheet.freeze_panes = 'A2'
     wb.save(excel_name)
-
+    print("Wrote output to " + excel_name)
 
 def copy_phrase_target(phrase:str, current_text: str, backspace='<'):
     """Determine the target for the current CopyPhrase sequence. 
