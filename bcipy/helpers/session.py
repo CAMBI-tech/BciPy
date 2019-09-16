@@ -1,11 +1,17 @@
 """Helper functions for managing and parsing session.json data."""
 import csv
+import itertools
 import json
 import os
 import sqlite3
 from collections import Counter
 
+import openpyxl
 import pandas as pd
+from openpyxl.chart import BarChart, Reference, Series, label
+from openpyxl.styles import PatternFill
+from openpyxl.styles.borders import BORDER_MEDIUM, BORDER_THIN, Border, Side
+from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
@@ -217,12 +223,6 @@ def session_excel(db_name='session.db',
                   include_charts=True):
     """Converts the sqlite3 db generated from session.json to an
     Excel spreadsheet"""
-    import itertools
-    import openpyxl
-    from openpyxl.styles import PatternFill
-    from openpyxl.styles.colors import YELLOW, WHITE, BLACK
-    from openpyxl.styles.borders import Border, Side, BORDER_THIN, BORDER_MEDIUM
-    from openpyxl.chart import BarChart, Series, Reference, label
 
     # Define styles and borders to use within the spreadsheet.
     gray_background = PatternFill(start_color='ededed', fill_type='solid')
