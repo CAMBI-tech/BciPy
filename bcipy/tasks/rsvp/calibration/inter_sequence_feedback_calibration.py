@@ -259,7 +259,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
     def _determine_feedback_response(self, response):
         """Determine feedback response.
-        
+
         Depending on the band chosen to give feedback off, we may need to invert the
             levels. By default, it's in descending order. Set feedback_level_descending
             to false for ascending

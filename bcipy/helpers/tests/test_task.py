@@ -7,7 +7,6 @@ from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_resha
 from bcipy.helpers.load import load_json_parameters
 
 
-
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):

@@ -8,9 +8,9 @@ from collections import Counter
 
 import openpyxl
 import pandas as pd
-from openpyxl.chart import BarChart, Reference, Series, label
+from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
-from openpyxl.styles.borders import BORDER_MEDIUM, BORDER_THIN, Border, Side
+from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
 from bcipy.helpers.load import load_json_parameters
@@ -65,6 +65,7 @@ def session_data(data_dir: str, alp=None):
 
         return data
 
+
 def get_stimuli(task_type, sequence):
     """There is some variation in how tasks record session information.
     Returns the list of stimuli for the given trial/sequence"""
@@ -72,12 +73,14 @@ def get_stimuli(task_type, sequence):
         return sequence['stimuli'][0]
     return sequence['stimuli']
 
+
 def get_target(task_type, sequence, above_threshold):
     """Returns the target for the given sequence. For icon tasks this information
     is in the sequence, but for Copy Phrase it must be computed."""
     if task_type == 'Copy Phrase':
         return copy_phrase_target(sequence['copy_phrase'], sequence['current_text'])
     return sequence.get('target_letter', None)
+
 
 def session_db(data_dir: str, db_name='session.db', alp=None):
     """Writes a relational database (sqlite3) of session data that can
@@ -334,9 +337,10 @@ def session_excel(db_name='session.db',
     wb.save(excel_name)
     print("Wrote output to " + excel_name)
 
-def copy_phrase_target(phrase:str, current_text: str, backspace='<'):
-    """Determine the target for the current CopyPhrase sequence. 
-    
+
+def copy_phrase_target(phrase: str, current_text: str, backspace='<'):
+    """Determine the target for the current CopyPhrase sequence.
+
     >>> copy_phrase_target("HELLO_WORLD", "")
     'H'
     >>> copy_phrase_target("HELLO_WORLD", "HE")
@@ -362,6 +366,7 @@ def remove_props(data, proplist):
     for prop in proplist:
         if prop in data:
             data.pop(prop)
+
 
 if __name__ == "__main__":
     import doctest

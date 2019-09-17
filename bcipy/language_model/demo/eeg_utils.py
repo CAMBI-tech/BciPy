@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 from random import shuffle, randint
 import math

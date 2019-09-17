@@ -1,13 +1,13 @@
 # pylint: disable=fixme,invalid-name
 """Used to find a protocol or device by name."""
 
-from bcipy.helpers.system_utils import import_submodules
 from bcipy.acquisition.protocols.device import Device
 from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
 from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 
 # # import all submodules so we can introspect on subclasses.
+# from bcipy.helpers.system_utils import import_submodules
 # import_submodules('protocols')
 
 
@@ -31,7 +31,7 @@ supported_protocols = {
 }
 
 
-def find_device(name):
+def find_device(name) -> Device:
     """Find device by name.
 
     Parameters
