@@ -3,7 +3,9 @@ import unittest
 from bcipy.language_model.oclm_language_model import LangModel
 from bcipy.language_model.errors import NBestError, EvidenceDataStructError
 
-# a docker mockup could have been a great idea is I had further processed the output. In the current case it's more reliable to test directly docker's output to ensure a valid output.
+# a docker mockup could have been a great idea is I had further processed
+# the output. In the current case it's more reliable to test directly
+# docker's output to ensure a valid output.
 
 
 class TestOCLM(unittest.TestCase):

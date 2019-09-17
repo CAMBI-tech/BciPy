@@ -9,7 +9,7 @@ https://www.oreilly.com/library/view/python-cookbook/0596001673/ch05s19.html
 class RingBuffer:
     """Data structure with a fixed size; when full additional elements
     overwrite the oldest items in the data structure.
-    
+
     Parameters
     ----------
         size_max - max size of the buffer
@@ -18,7 +18,8 @@ class RingBuffer:
             values with no data.
     """
 
-    def __init__(self, size_max: int, pre_allocated: bool = False, empty_value=None):
+    def __init__(self, size_max: int, pre_allocated: bool = False,
+                 empty_value=None):
         assert size_max > 0
         self.empty_value = empty_value
         self.max = size_max
@@ -35,13 +36,13 @@ class RingBuffer:
         else:
             self.data.append(item)
         if not self.full:
-            self.full = self.cur == self.max-1
-        self.cur = (self.cur+1) % self.max
+            self.full = self.cur == self.max - 1
+        self.cur = (self.cur + 1) % self.max
 
     def get(self):
         """Return a list of elements from the oldest to the newest."""
         if self.full:
-            return self.data[self.cur:]+self.data[:self.cur]
+            return self.data[self.cur:] + self.data[:self.cur]
         return self.data
 
     def is_empty(self):

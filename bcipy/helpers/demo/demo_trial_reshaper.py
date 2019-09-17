@@ -143,7 +143,7 @@ def demo2():
     plt.show()
 
     # Assume all trials are target.
-    trial_target_info = ['target']*len(triggers)
+    trial_target_info = ['target'] * len(triggers)
 
     reshaped, _, _, _ = trial_reshaper(
         trial_target_info=trial_target_info,

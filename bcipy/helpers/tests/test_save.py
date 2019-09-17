@@ -1,7 +1,6 @@
 import errno
 import os
 import shutil
-import time
 import unittest
 
 from bcipy.helpers.save import init_save_data_structure
@@ -60,6 +59,7 @@ class TestSave(unittest.TestCase):
         except OSError as error:
             # assert the error returned, is that the dir exists.
             self.assertEqual(error.errno, errno.EEXIST)
+
 
 if __name__ == '__main__':
     unittest.main()

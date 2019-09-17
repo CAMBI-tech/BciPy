@@ -269,9 +269,10 @@ class RSVPCopyPhraseTask(Task):
                                               target_letter,
                                               text_task)
 
-                # here we assume, in fake mode, all sequences result in a selection.
+                # here we assume, in fake mode, all sequences result in a
+                # selection.
                 last_selection = text_task[-1]
-                new_epoch = True
+                new_epoch, sti = copy_phrase_task.initialize_epoch()
                 # Update next state for this record
                 data['epochs'][
                     epoch_counter][
@@ -283,8 +284,11 @@ class RSVPCopyPhraseTask(Task):
                 # Evaluate this sequence, returning whether to gen a new
                 #  epoch (seq) or stimuli to present
                 new_epoch, sti = \
-                    copy_phrase_task.evaluate_sequence(raw_data, triggers,
-                                                       target_info, self.collection_window_len)
+                    copy_phrase_task.evaluate_sequence(
+                        raw_data,
+                        triggers,
+                        target_info,
+                        self.collection_window_len)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {
@@ -319,7 +323,8 @@ class RSVPCopyPhraseTask(Task):
                 text_task = copy_phrase_task.decision_maker.displayed_state
                 last_selection = copy_phrase_task.decision_maker.last_selection
 
-            # if a letter was selected and feedback enabled, show the chosen letter
+            # if a letter was selected and feedback enabled, show the chosen
+            # letter
             if new_epoch and self.show_feedback:
                 self.feedback.administer(
                     last_selection,
@@ -396,7 +401,7 @@ def _init_copy_phrase_display(
         task_height=parameters['task_height'],
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
-                 parameters['stim_pos_y']),
+                  parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
         stim_sequence=['a'] * 10,
         stim_colors=[parameters['stim_color']] * 10,

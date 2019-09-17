@@ -5,6 +5,7 @@ import pylsl
 
 log = logging.getLogger(__name__)
 
+
 class MarkerWriter():
     """Abstract base class for an object that can be used to handle stimulus
     markers.

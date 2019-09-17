@@ -1,11 +1,11 @@
 from psychopy import visual
 from bcipy.display.rsvp.display import RSVPDisplay
-from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.task import SPACE_CHAR
 
 
 class CalibrationDisplay(RSVPDisplay):
     """Calibration Display."""
+
     def __init__(self,
                  window,
                  static_clock,

@@ -9,7 +9,7 @@ from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
- equally_probable
+    equally_probable
 
 
 class CopyPhraseWrapper:
@@ -111,7 +111,8 @@ class CopyPhraseWrapper:
             order=self.filter_order)
 
         # downsample
-        data = downsample.downsample(filtered_data, factor=self.downsample_rate)
+        data = downsample.downsample(
+            filtered_data, factor=self.downsample_rate)
         x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.sampling_rate,
                                     k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,
@@ -119,12 +120,7 @@ class CopyPhraseWrapper:
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
-        decision, arg = self.decision_maker.decide(prob)
-
-        if 'stimuli' in arg:
-            sti = arg['stimuli']
-        else:
-            sti = None
+        decision, sti = self.decision_maker.decide(prob)
 
         return decision, sti
 
@@ -185,8 +181,11 @@ class CopyPhraseWrapper:
                 # update the lmodel and get back the priors
                 lm_prior = self.lmodel.state_update(update)
 
-                # normalize to probability domain
-                lm_letter_prior = norm_domain(lm_prior['letter'])
+                # normalize to probability domain if needed
+                if getattr(self.lmodel, 'normalized', False):
+                    lm_letter_prior = lm_prior['letter']
+                else:
+                    lm_letter_prior = norm_domain(lm_prior['letter'])
 
                 if BACKSPACE_CHAR in self.alp:
                     # Append backspace if missing.
@@ -210,8 +209,7 @@ class CopyPhraseWrapper:
                 raise lm_exception
 
             # Get decision maker to give us back some decisions and stimuli
-            is_accepted, arg = self.decision_maker.decide(prob_dist)
-            sti = arg['stimuli']
+            is_accepted, sti = self.decision_maker.decide(prob_dist)
 
         except Exception as init_exception:
             print("Error in initialize_epoch: %s" % (init_exception))

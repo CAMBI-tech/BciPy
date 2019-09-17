@@ -116,7 +116,7 @@ def _save_session_related_data(file, session_dictionary):
     # Try opening as json, if not able to use open() to create first
     try:
         file = json.load(file, 'wt')
-    except:
+    except BaseException:
         file = open(file, 'wt')
 
     # Use the file to dump data to

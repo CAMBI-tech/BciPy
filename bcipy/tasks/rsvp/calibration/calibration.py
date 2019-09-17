@@ -47,7 +47,7 @@ class RSVPCalibrationTask(Task):
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
         trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
-        self.trigger_file = open(trigger_save_location, 'w')
+        self.trigger_file = open(trigger_save_location, 'w', encoding='utf-8')
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
@@ -72,6 +72,22 @@ class RSVPCalibrationTask(Task):
 
         self.enable_breaks = parameters['enable_breaks']
 
+    def generate_stimuli(self):
+        """Generates the sequences to be presented.
+        Returns:
+        --------
+            tuple(
+                samples[list[list[str]]]: list of sequences
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)
+        """
+        return random_rsvp_calibration_seq_gen(self.alp,
+                                               stim_number=self.stim_number,
+                                               stim_length=self.stim_length,
+                                               timing=self.timing,
+                                               is_txt=self.rsvp.is_txt_stim,
+                                               color=self.color)
+
     def execute(self):
 
         self.logger.debug(f'Starting {self.name()}!')
@@ -86,15 +102,8 @@ class RSVPCalibrationTask(Task):
         # Begin the Experiment
         while run:
 
-            # Get random sequence information given stimuli parameters
-            (ele_sti, timing_sti,
-             color_sti) = random_rsvp_calibration_seq_gen(
-                 self.alp,
-                 stim_number=self.stim_number,
-                 stim_length=self.stim_length,
-                 timing=self.timing,
-                 is_txt=self.rsvp.is_txt_stim,
-                 color=self.color)
+            # Get sequence information given stimuli parameters
+            (ele_sti, timing_sti, color_sti) = self.generate_stimuli()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
@@ -192,9 +201,9 @@ def init_calibration_display_task(
         task_height=parameters['task_height'],
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
-                 parameters['stim_pos_y']),
+                  parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
-        stim_colors=[parameters['stim_color']* 10],
+        stim_colors=[parameters['stim_color'] * 10],
         is_txt_stim=parameters['is_txt_stim'],
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'])

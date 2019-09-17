@@ -19,7 +19,7 @@ def generate_offline_analysis_screen(
         plot_x_ticks=8,
         plot_average=False,
         show_figure=False,
-        channel_names = None) -> None:
+        channel_names=None) -> None:
     """ Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.
@@ -43,10 +43,12 @@ def generate_offline_analysis_screen(
     show_figure: boolean: whether or not to show the figures generated
     channel_names: dict of channel names keyed by their position.
     """
+
     channel_names = channel_names or {}
     classes = np.unique(y)
 
-    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2)) for i in classes]
+    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2))
+             for i in classes]
 
     fig = plt.figure(figsize=(20, 10))
     ax1 = fig.add_subplot(211)
@@ -63,13 +65,14 @@ def generate_offline_analysis_screen(
 
     else:
         count = 0
-        # Loop through all the channels and plot each on the non target/target subplots
+        # Loop through all the channels and plot each on the non target/target
+        # subplots
         while count < means[0].shape[0]:
             lbl = channel_names.get(count, count)
             ax1.plot(means[0][count, :], label=lbl)
             ax2.plot(means[1][count, :], label=lbl)
             count += 1
-        ax1.legend(loc='upper left',  prop={'size': 8})
+        ax1.legend(loc='upper left', prop={'size': 8})
         ax2.legend(loc='upper left', prop={'size': 8})
 
     # data points
@@ -94,23 +97,33 @@ def generate_offline_analysis_screen(
 
     # Set common labels
     fig.text(0.5, 0.04, 'Time (Seconds)', ha='center', va='center')
-    fig.text(0.06, 0.5, '$\mu V$', ha='center', va='center',
+    fig.text(0.06, 0.5, r'$\mu V$', ha='center', va='center',
              rotation='vertical')
 
     ax1.set_title('Non-target ERP')
     ax2.set_title('Target ERP')
 
     if save_figure:
-        fig.savefig(os.path.join(folder, 'mean_erp.pdf'), bbox_inches='tight', format='pdf')
+        fig.savefig(
+            os.path.join(
+                folder,
+                'mean_erp.pdf'),
+            bbox_inches='tight',
+            format='pdf')
 
     if plot_lik_dens:
         fig, ax = plt.subplots()
-        x_plot = np.linspace(np.min(model.line_el[-2]), np.max(model.line_el[-2]), 1000)[:, np.newaxis]
-        ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
-        ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
+        x_plot = np.linspace(
+            np.min(model.line_el[-2]), np.max(model.line_el[-2]), 1000)[:, np.newaxis]
+        ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(
+            model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
+        ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(
+            model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
         for idx in range(len(model.pipeline[2].list_den_est)):
-            log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
-            ax.plot(x_plot[:, 0], np.exp(log_dens),'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
+            log_dens = model.pipeline[2].list_den_est[idx].score_samples(
+                x_plot)
+            ax.plot(x_plot[:, 0], np.exp(log_dens), 'r-' *
+                    (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
 
         ax.legend(loc='upper right')
         plt.title('Likelihoods Given the Labels')
@@ -118,7 +131,12 @@ def generate_offline_analysis_screen(
         plt.xlabel('scores')
 
         if save_figure:
-            fig.savefig(os.path.join(folder, 'lik_dens.pdf'), bbox_inches='tight', format='pdf')
+            fig.savefig(
+                os.path.join(
+                    folder,
+                    'lik_dens.pdf'),
+                bbox_inches='tight',
+                format='pdf')
 
     if show_figure:
         plt.show()
@@ -164,8 +182,14 @@ if __name__ == '__main__':
     import pickle
 
     # load some x, y data from test files
-    x = pickle.load(open('bcipy/helpers/tests/resources/mock_x_generate_erp.pkl', 'rb'))
-    y = pickle.load(open('bcipy/helpers/tests/resources/mock_y_generate_erp.pkl', 'rb'))
+    x = pickle.load(
+        open(
+            'bcipy/helpers/tests/resources/mock_x_generate_erp.pkl',
+            'rb'))
+    y = pickle.load(
+        open(
+            'bcipy/helpers/tests/resources/mock_y_generate_erp.pkl',
+            'rb'))
 
     names = {
         0: 'P3',

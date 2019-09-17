@@ -5,11 +5,11 @@
 
 It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
 
-It should, based on our dependancies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
+It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
-This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquistion. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
+This is our first release. It is verified using LSL with DSI and gtec for the Calibration modes only at this time with both image and text stimuli. It comes with a fake data server to help you develop while mocking real time EEG acquisition. We are taking all suggestions at this time for additions, eventually we'll make a contributions wishlist. If you want to be added to the development team, reach out to us and we'll add you to the team slack.
 
 *Please cite us when using!*
 
@@ -66,7 +66,6 @@ Start by running `python bcipy/gui/BCInterface.py` in your command prompt or ter
 
 Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
 
-
 You can pass it attributes with flags, if desired.
 
 Ex. `python bci_main.py --user "bci_user" --mode "RSVP"`
@@ -85,10 +84,10 @@ This a list of the major modules and their functionality. Each module will conta
 
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
-- `signal`: eeg signal models, filters, processing and viewers. 
+- `signal`: eeg signal models, filters, processing, evaluators and viewers. 
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py and mode/RSVPKeyboard.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
-- `language_model`: gives probalities of next letters during typing.
+- `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `tasks`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVPCalibration.
@@ -104,7 +103,7 @@ For example, you may run the bci_main demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils.
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils. Run them as a python script!
 
 This repository uses pytest for execution of tests. You may execute them by:
 
@@ -122,14 +121,16 @@ We follow and will enforce the contributor's covenant to foster a safe and inclu
 5. Use informative names for functions and classes.
 6. Document the input and output of your functions / classes in the code. eg in-line commenting
 7. Do not push IDE or other local configuration files.
-8. All new modules or major functionality should be documented outside of the code with a README.md. See REAME.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
+8. All new modules or major functionality should be documented outside of the code with a README.md. See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
 
 Use this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
 ## Testing
 ----------
 
-Please have all requirements installed. When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module's tests for examples!
+When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module tests for examples!
+
+Test requirements must be installed before running: `pip install test_requirements.txt`
 
 To run all tests, in the command line:
 
@@ -146,16 +147,31 @@ py.test acquisition
 
 To generate test coverage metrics, in the command line:
 
-```python
-coverage run -m py.test
+```bash
+coverage run --branch --source=bcipy -m pytest
 
 #Generate a command line report
 coverage report
 
 # Generate html doc in the bci folder. Navigate to index.html and click.
 coverage html
-
 ```
+
+## Linting
+
+This project enforces `PEP` style guidelines using [flake8](http://flake8.pycqa.org/en/latest/).
+
+To avoid spending unnecessary time on formatting, we recommend using `autopep8`. You can specify a file or directory to auto format. When ready to push your code, you may run the following commands to format your code:
+
+```sh
+# autoformat all files in bcipy
+autopep8 --in-place --aggressive -r bcipy
+
+# autoformat only the processor file
+autopep8 --in-place --aggressive bcipy/acquisition/processor.py
+```
+
+Finally, run the lint check: `flake8 bcipy`.
 
 ## Authorship
 --------------
@@ -165,6 +181,7 @@ coverage html
 - Matthew Lawhead (OHSU- OCTRI)
 - Berkan Kadioglu (NEU)
 - Dani Smektala (OHSU)
+- Ian Jackson (OHSU/ Reed)
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
 - Shiran Dudy (OHSU)

@@ -1,7 +1,6 @@
 from psychopy import visual
 from bcipy.display.rsvp.display import RSVPDisplay
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.task import SPACE_CHAR
 
 
 class IconToIconDisplay(RSVPDisplay):
@@ -68,7 +67,7 @@ class IconToIconDisplay(RSVPDisplay):
             trigger_type=trigger_type)
 
         self.is_word = is_word
-
+        self.highlight_first_stim = False
         if not is_word:
             self.rect = visual.Rect(
                 win=window,
@@ -94,12 +93,10 @@ class IconToIconDisplay(RSVPDisplay):
                 height=task_height)
 
     def draw_static(self):
-        if not self.is_word:
-            """Draw static elements in a stimulus."""
-            if(self.rect_drawn_frames < self.time_to_present):
-                self.rect.draw()
-                self.target_text.draw()
-                self.rect_drawn_frames += 1
+        """Draw static elements in a stimulus."""
+        if not self.is_word and self.is_first_stim and self.highlight_first_stim:
+            self.rect.draw()
+            self.target_text.draw()
 
         super(IconToIconDisplay, self).draw_static()
 
@@ -124,7 +121,8 @@ class IconToIconDisplay(RSVPDisplay):
         if is_word:
             # Display text at top of screen if we are matching icons to words
             txt = image_path if len(image_path) > 0 else ' '
-            tmp2 = visual.TextStim(win=self.window, font=self.task.font, text=txt)
+            tmp2 = visual.TextStim(
+                win=self.window, font=self.task.font, text=txt)
             x_task_pos = (tmp2.boundingBox[0] * 2.2) / self.window.size[0] - 1
             self.task_pos = (x_task_pos, self.task_pos[1])
             self.update_task(text=txt, color_list=['white'], pos=self.task_pos)

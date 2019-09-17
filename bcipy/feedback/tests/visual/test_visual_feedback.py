@@ -57,7 +57,7 @@ class TestVisualFeedback(unittest.TestCase):
             mask=None,
             pos=any(),
             ori=any()
-            ).thenReturn(self.image_mock)
+        ).thenReturn(self.image_mock)
 
         when(psychopy.visual).Rect(
             win=self.display,
@@ -67,10 +67,11 @@ class TestVisualFeedback(unittest.TestCase):
             pos=any(),
             lineWidth=any(),
             ori=any()
-            ).thenReturn(self.rect_mock)
+        ).thenReturn(self.rect_mock)
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
+        self.display.close()
         unstub()
 
     def test_feedback_type(self):

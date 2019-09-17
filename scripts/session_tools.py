@@ -1,75 +1,34 @@
 """Tools for viewing and debugging session.json data"""
-
-import contextlib
-# prevents pygame from outputting to the console on import.
-with contextlib.redirect_stdout(None):
-    import pygame
+# pylint: disable=invalid-name
 import json
-import os
-from collections import Counter
-
-from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.task import alphabet
+from bcipy.helpers.session import session_data, session_db, session_csv, session_excel
 
 
-def session_data(data_dir: str):
-    """Returns a dict of session data transformed to map the alphabet letter
-    to the likelihood when presenting the evidence. Also removes attributes
-    not useful for debugging."""
-
-    # Get the alphabet based on the provided parameters (txt or icon).
-    parameters = load_json_parameters(
-        os.path.join(data_dir, "parameters.json"), value_cast=True)
-    if parameters.get('is_txt_sti', False):
-        parameters['is_txt_stim'] = parameters['is_txt_sti']
-    alp = alphabet(parameters=parameters)
-
-    session_path = os.path.join(data_dir, "session.json")
-    with open(session_path, 'r') as json_file:
-        data = json.load(json_file)
-        data['copy_phrase'] = parameters['task_text']
-        for epoch in data['epochs'].keys():
-            for trial in data['epochs'][epoch].keys():
-                likelihood = dict(
-                    zip(alp, data['epochs'][epoch][trial]['likelihood']))
-
-                # Remove unused properties
-                data['epochs'][epoch][trial].pop('eeg_len')
-                data['epochs'][epoch][trial].pop('timing_sti')
-                data['epochs'][epoch][trial].pop('triggers')
-                data['epochs'][epoch][trial].pop('target_info')
-                data['epochs'][epoch][trial].pop('copy_phrase')
-                data['epochs'][epoch][trial]['stimuli'] = data['epochs'][
-                    epoch][trial]['stimuli'][0]
-
-                # Associate letters to values
-                data['epochs'][epoch][trial]['lm_evidence'] = dict(
-                    zip(alp, data['epochs'][epoch][trial]['lm_evidence']))
-                data['epochs'][epoch][trial]['eeg_evidence'] = dict(
-                    zip(alp, data['epochs'][epoch][trial]['eeg_evidence']))
-                data['epochs'][epoch][trial]['likelihood'] = likelihood
-
-                # Display the 5 most likely values.
-                data['epochs'][epoch][trial]['most_likely'] = dict(
-                    Counter(likelihood).most_common(5))
-
-        return data
-
-
-def main(data_dir: str):
+def main(data_dir: str, alphabet: str):
     """Transforms the session.json file in the given directory and prints the
     resulting json."""
-    print(json.dumps(session_data(data_dir), indent=4))
+    print(json.dumps(session_data(data_dir, alphabet), indent=4))
 
 
 if __name__ == "__main__":
     import argparse
+    import os
 
     parser = argparse.ArgumentParser(
-        description="Opens session.json file for analysis.")
+        description="Opens session.json file for analysis. Optionally creates a sqlite database summarizing the data.")
 
-    parser.add_argument(
-        '-p', '--path', help='path to the data directory', default=None)
+    parser.add_argument('-p',
+                        '--path',
+                        help='path to the data directory',
+                        default=None)
+    parser.add_argument('--db', help='create sqlite database', action='store_true')
+    parser.add_argument('--csv', help='create a csv file from the database', action='store_true')
+    parser.add_argument('--charts', help='create an Excel spreadsheet with charts', action='store_true')
+    parser.add_argument('-a',
+                        '--alphabet',
+                        help='alphabet (comma-delimited string of items)',
+                        default=None)
+
     args = parser.parse_args()
     path = args.path
     if not path:
@@ -78,7 +37,21 @@ if __name__ == "__main__":
 
         root = Tk()
         root.withdraw()
-        path = filedialog.askdirectory(
-            parent=root, initialdir="/", title='Please select a directory')
+        path = filedialog.askdirectory(parent=root,
+                                       initialdir="/",
+                                       title='Please select a directory')
 
-    main(path)
+    alp = None
+    if args.alphabet:
+        alp = args.alphabet.split(",")
+
+    if args.db or args.csv or args.charts:
+        session_db(path, alp=alp)
+        if args.csv:
+            session_csv()
+        if args.charts:
+            session_excel()
+        if not args.db:
+            os.remove('session.db')
+    else:
+        main(path, alp)

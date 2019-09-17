@@ -1,6 +1,5 @@
 """Streams data from pylsl and puts it into a Queue."""
 import pylsl
-from bcipy.acquisition.util import StoppableThread
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.viewer.data_source.data_source import DataSource
 
@@ -10,7 +9,7 @@ class LslDataSource(DataSource):
 
     Parameters
     ----------
-        stream_type: str 
+        stream_type: str
             StreamInlet stream type; default is 'EEG'
     """
 
@@ -42,11 +41,20 @@ class LslDataSource(DataSource):
         return sample
 
     def next_n(self, n: int, fast_forward=False):
-        """Provides the next n records as a list"""
+        """Provides the next n records as a list
+
+        Parameters:
+        -----------
+            n - number of records to retrieve from LSL
+            fast_forward - if true, fast forwards to the latest data. This
+                flag should be used when first connecting to LSL or resuming
+                from a paused state. Otherwise the data returned will be the
+                next n records from the last point consumed.
+        """
         # Read data from the inlet. May blocks GUI interaction if n samples
         # are not yet available.
         samples, _ts = self.inlet.pull_chunk(timeout=0.1, max_samples=n)
-        
+
         if fast_forward:
             tmp = samples
             print(f'Fast forwarding:')
@@ -58,9 +66,13 @@ class LslDataSource(DataSource):
                 tmp, _ts = self.inlet.pull_chunk(timeout=0.0, max_samples=n)
                 chomped_count += len(tmp)
             print(f'Chomped {chomped_count} records.')
-            samples = samples[len(tmp):] + tmp            
+            samples = samples[len(tmp):] + tmp
 
-        if len(samples) < n:
+        if len(samples) < n and not fast_forward:
+            # Fast forwarding generally occurs when the stream is first started
+            # or when resuming after a pause, so there may not be a full n
+            # samples available. However, if we are streaming normally and
+            # less than n samples are returned, we assume the stream has
+            # terminated.
             raise StopIteration
         return samples
-        

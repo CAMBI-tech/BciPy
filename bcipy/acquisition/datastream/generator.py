@@ -65,11 +65,12 @@ def file_data(filename, header_row=3, encoder=_DefaultEncoder()):
             line = infile.readline()
             if not line:
                 break
-            sensor_data = list(map(data_value, line.split(",")))            
+            sensor_data = list(map(data_value, line.split(",")))
             yield encoder.encode(sensor_data)
 
+
 def data_value(value: str) -> float:
-    """Convert to a float; some trigger values are strings, rather than 
+    """Convert to a float; some trigger values are strings, rather than
     numbers (ex. indicating the letter); convert these to 1.0."""
     if value:
         try:

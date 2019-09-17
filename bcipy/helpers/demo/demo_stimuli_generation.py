@@ -54,6 +54,7 @@ def _demo_best_case_sequence_generator():
 
     return 0
 
+
 if __name__ == '__main__':
     _demo_best_case_sequence_generator()
     _demo_random_rsvp_sequence_generator()

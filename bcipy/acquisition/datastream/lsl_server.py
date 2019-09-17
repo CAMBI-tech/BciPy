@@ -1,7 +1,6 @@
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
-import random
 from queue import Queue, Empty
 from pylsl import StreamInfo, StreamOutlet
 from bcipy.acquisition.datastream.producer import Producer
@@ -72,7 +71,7 @@ class LslDataServer(StoppableThread):
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
             log.debug("Creating marker stream")
-            markers_info = StreamInfo("TestStream Markers",
+            markers_info = StreamInfo("TRG_device_stream",
                                       "Markers", 1, 0, 'string',
                                       "uid12345_markers")
             self.markers_outlet = StreamOutlet(markers_info)
@@ -110,8 +109,7 @@ class LslDataServer(StoppableThread):
                     sample = data_queue.get(True, 2)
                     self.outlet.push_sample(sample)
                     if self.add_markers and sample_counter % 1000 == 0:
-                        self.markers_outlet.push_sample(
-                            [str(random.randint(1, 100))])
+                        self.markers_outlet.push_sample(["1"])
                 except (Empty, AttributeError):
                     # outlet.push_sample(sample) may cause an error after
                     # the server has been stopped since the attribute is

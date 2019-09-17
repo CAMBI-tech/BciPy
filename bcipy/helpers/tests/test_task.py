@@ -1,16 +1,16 @@
 import unittest
 import numpy as np
+from collections import Counter
+from mockito import unstub
 
-from mockito import any, mock, when, unstub
-
-from bcipy.helpers.task import alphabet, trial_reshaper
+from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val, generate_targets
 from bcipy.helpers.load import load_json_parameters
 
 
 class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_text(self):
-        parameters_used = 'bcipy/parameters/parameters.json'
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_stim'] = True
@@ -25,7 +25,7 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
     def test_alphabet_images(self):
-        parameters_used = 'bcipy/parameters/parameters.json'
+        parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
 
         parameters['is_txt_stim'] = False
@@ -74,6 +74,71 @@ class TestTrialReshaper(unittest.TestCase):
 
     def test_trial_reshaper_copy_phrase(self):
         pass
+
+
+class TestCalculateStimulationFreq(unittest.TestCase):
+
+    def test_calculate_stimulate_frequency_returns_number_less_one(self):
+        flash_time = 5
+        stimulation_frequency = calculate_stimulation_freq(flash_time)
+        expected = 1 / flash_time
+        self.assertEqual(stimulation_frequency, expected)
+
+    def test_calculate_stimulate_frequency_handles_zero(self):
+        flash_time = 0
+        with self.assertRaises(ZeroDivisionError):
+            calculate_stimulation_freq(flash_time)
+
+
+class TestFloatVal(unittest.TestCase):
+
+    def test_float_val_as_str(self):
+        col = 'Apple'
+        result = _float_val(col)
+        expected = 1.0
+        self.assertEqual(result, expected)
+
+    def test_float_val_as_int(self):
+        col = 3
+        result = _float_val(col)
+        expected = 3.0
+        self.assertEqual(result, expected)
+
+
+class TestTargetGeneration(unittest.TestCase):
+    """Tests for generation of target sequences"""
+
+    def test_target_number_less_than_alp(self):
+        """Test when requested number of targets is less than the length of
+        the alphabet."""
+        alp = list(range(10))
+        targets = generate_targets(alp, 5)
+        self.assertEqual(len(targets), 5)
+        self.assertEqual(len(targets), len(set(targets)))
+
+    def test_target_greater_than_alp(self):
+        """Test behavior when number of targets is greater than the length
+        of the alphabet"""
+        alp = list(range(5))
+        targets = generate_targets(alp, 10)
+        self.assertEqual(len(targets), 10)
+
+        counts = Counter(targets)
+
+        for item in alp:
+            self.assertEqual(counts[item], 2)
+
+    def test_remainder(self):
+        """Test behavior when number of targets is greater than the length of
+        the alphabet by a value other than a multiple of the alphabet length.
+        """
+        alp = list(range(5))
+        targets = generate_targets(alp, 12)
+
+        counts = Counter(targets)
+        for item in alp:
+            self.assertGreaterEqual(counts[item], 2)
+            self.assertLessEqual(counts[item], 3)
 
 
 if __name__ == '__main__':

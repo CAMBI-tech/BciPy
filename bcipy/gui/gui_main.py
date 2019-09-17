@@ -9,7 +9,7 @@ class BCIGui(wx.Frame):
     """BCIGui."""
 
     def __init__(self, title: str, size: tuple,
-                 background_color: str='blue', parent: wx.Frame=None):
+                 background_color: str = 'blue', parent: wx.Frame = None):
         """Init."""
         super(BCIGui, self).__init__(
             parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
@@ -31,8 +31,8 @@ class BCIGui(wx.Frame):
         pass
 
     def add_button(self, message: str, position: tuple, size: tuple,
-                   button_type: str=None, color: str=None,
-                   action: str='default', id=-1) -> None:
+                   button_type: str = None, color: str = None,
+                   action: str = 'default', id=-1) -> None:
         """Add Button."""
         # Button Type
         if button_type == 'gradient_button':
@@ -71,19 +71,24 @@ class BCIGui(wx.Frame):
 
     def add_static_text(self, text: str, position: str,
                         color: str, size: int,
-                        font_family: wx.Font=wx.FONTFAMILY_SWISS) -> None:
+                        font_family: wx.Font = wx.FONTFAMILY_SWISS) -> None:
         """Add Text."""
 
         static_text = wx.StaticText(
             self.panel, pos=position,
             label=text)
         static_text.SetForegroundColour(color)
-        font = wx.Font(size, font_family, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
+        font = wx.Font(
+            size,
+            font_family,
+            wx.FONTSTYLE_NORMAL,
+            wx.FONTWEIGHT_LIGHT)
         static_text.SetFont(font)
 
         self.static_text.append(static_text)
 
-    def add_combobox(self, position: tuple, size: tuple, action: str='default') -> None:
+    def add_combobox(self, position: tuple, size: tuple,
+                     action: str = 'default') -> None:
         """Add combobox."""
         combobox = wx.ComboBox(self.panel, pos=position, size=size)
         self.comboboxes.append(combobox)

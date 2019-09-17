@@ -16,6 +16,9 @@ def channel_data(raw_data, device_info, channel_name, n_records=None):
         channel_name - channel for which to get data
         n_records - if present, limits the number of records returned.
     """
+    if not channel_name in device_info.channels:
+        print(f"{channel_name} column not found; no data will be returned")
+        return []
     channel_index = device_info.channels.index(channel_name)
     arr = np.array(raw_data)
     if n_records:
@@ -82,14 +85,14 @@ def plot_triggers(raw_data, device_info, triggers, title=""):
     # Plot TRG column, vertical line for each one.
     trg_channel = channel_data(raw_data, device_info, 'TRG')
     trg_stamps = [clock_seconds(device_info, i + 1)
-                  for i, trg in enumerate(trg_channel) if trg != '0']
+                  for i, trg in enumerate(trg_channel) if trg != '0' and trg != '0.0']
     plt.vlines(trg_stamps, ymin=-1.0, ymax=trg_ymax, label='TRG (LSL)',
         linewidth=0.5, color='red')
 
     # Add labels for TRGs
     first_trg = None
     for i, trg in enumerate(trg_channel):
-        if trg != '0':
+        if trg != '0' and trg != '0.0':
             secs = clock_seconds(device_info, i + 1)
             secs_lbl = str(round(secs, 2))
             ax.annotate(s=f"{trg} ({secs_lbl}s)", xy=(secs, trg_ymax),

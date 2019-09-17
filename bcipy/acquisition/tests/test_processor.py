@@ -3,7 +3,7 @@
 import unittest
 import pytest
 from mock import mock_open, patch
-from mockito import any, mock, unstub, verify, when
+from mockito import any, mock, verify, when
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.processor import FileWriter, DispatchProcessor, Processor
 
@@ -79,8 +79,8 @@ class TestDispatchProcessor(unittest.TestCase):
     def test_process(self):
         """Test MultiProcessor functionality"""
 
-        data1 = [1,2,3]
-        data2 = [4,5,6]
+        data1 = [1, 2, 3]
+        data2 = [4, 5, 6]
 
         proc1 = mock(Processor)
         proc2 = mock(Processor)
@@ -98,4 +98,3 @@ class TestDispatchProcessor(unittest.TestCase):
         verify(proc1, times=1).process(data2, None)
         verify(proc2, times=0).process(data1, None)
         verify(proc2, times=1).process(data2, None)
-

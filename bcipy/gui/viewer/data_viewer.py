@@ -1,25 +1,21 @@
-# pylint: disable=no-name-in-module,no-member,wrong-import-position,ungrouped-imports
 """
 EEG viewer that uses a queue as a data source. Records are retrieved by a
 wx Timer.
 """
+from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
+from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.gui.viewer.data_source.data_source import QueueDataSource
+from bcipy.acquisition.device_info import DeviceInfo
+import matplotlib
+import wx
+matplotlib.use('WXAgg')
+import matplotlib.ticker as ticker
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import csv
 from queue import Queue
 
-import matplotlib
 import numpy as np
-import wx
-matplotlib.use('WXAgg')
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.pyplot import NullFormatter, NullLocator
-import matplotlib.ticker as ticker
-
-from bcipy.acquisition.device_info import DeviceInfo
-from bcipy.acquisition.util import StoppableProcess
-from bcipy.gui.viewer.data_source.data_source import QueueDataSource
-from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 
 
 class EEGFrame(wx.Frame):
@@ -73,7 +69,7 @@ class EEGFrame(wx.Frame):
         self.yaxis_label_fontsize = 14
         # fixed width font so we can adjust spacing predictably
         self.yaxis_tick_font = 'DejaVu Sans Mono'
-        self.yaxis_tick_fontsize=10
+        self.yaxis_tick_fontsize = 10
 
         self.axes = self.init_axes()
 
@@ -104,7 +100,7 @@ class EEGFrame(wx.Frame):
 
         # Number of seconds text box
         self.seconds_choices = [2, 5, 10]
-        if not self.seconds in self.seconds_choices:
+        if self.seconds not in self.seconds_choices:
             self.seconds_choices.append(self.seconds)
             self.seconds_choices.sort()
         opts = [str(x) + " seconds" for x in self.seconds_choices]
@@ -136,7 +132,7 @@ class EEGFrame(wx.Frame):
 
     def init_data_indices(self):
         """List of indices of all channels which will be displayed. By default
-        filters out TRG channels and any channels marked as 
+        filters out TRG channels and any channels marked as
         removed_channels."""
 
         return [i for i in range(len(self.channels))
@@ -291,7 +287,8 @@ class EEGFrame(wx.Frame):
         data = np.array(self.buffer.data)
 
         # select only data columns and convert to float
-        return np.array(data[:, self.data_indices], dtype='float64').transpose()
+        return np.array(data[:, self.data_indices],
+                        dtype='float64').transpose()
 
     def cursor_x(self):
         """Current cursor position (x-axis), accounting for downsampling."""
@@ -318,6 +315,10 @@ class EEGFrame(wx.Frame):
                 self.buffer.append(row)
         except StopIteration:
             self.stop()
+            # close the Wx.Frame to shutdown the viewer application
+            self.Close()
+        except BaseException:
+            self.stop()
         return self.buffer.get()
 
     def update_view(self, _evt):
@@ -337,7 +338,8 @@ class EEGFrame(wx.Frame):
                 data_max = max(data)
                 self.axes[i].set_ybound(lower=data_min, upper=data_max)
 
-                # For ylabels to be aligned consistently, labelpad is re-calculated on every draw.
+                # For ylabels to be aligned consistently, labelpad is
+                # re-calculated on every draw.
                 ch_name = self.channels[_channel]
                 tick_labels = self.axes[i].get_yticks()
                 # Min tick value does not display so index is 1, not 0.
@@ -348,7 +350,6 @@ class EEGFrame(wx.Frame):
             else:
                 # lower=min(data), upper=max(data))
                 self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
-
 
         self.canvas.draw()
 
@@ -364,7 +365,8 @@ class EEGFrame(wx.Frame):
         # Value determined by trial and error; this may change if the tick font
         # or font size is adjusted.
         ytick_digit_width = 7
-        return self.yaxis_label_space - ((chars - baseline_chars) * ytick_digit_width)
+        return self.yaxis_label_space - \
+            ((chars - baseline_chars) * ytick_digit_width)
 
 
 def lsl_data():
@@ -379,7 +381,7 @@ def file_data(path: str):
     """Constructs a QueueDataSource from the contents of the file at the given
     path. Data is written to the datasource at the rate specified in the
     raw_data.csv metadata, so it acts as a live stream.
-    
+
     Parameters
     ----------
         path - path to the raw_data.csv file
@@ -388,7 +390,7 @@ def file_data(path: str):
         (QueueDataSource, DeviceInfo, FileStreamer)
             - QueueDataSource can be provided to the EEGFrame
             - DeviceInfo provides the metadata read from the raw_data.csv
-            - data is not written to the QueueDataSource until the 
+            - data is not written to the QueueDataSource until the
                 FileStreamer (StoppableProcess) is started.
     """
 
@@ -412,10 +414,10 @@ def file_data(path: str):
 
 
 def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
-         yscale: int, display_screen:int = 1):
+         yscale: int, display_screen: int = 1):
     """Run the viewer GUI. If a raw_data.csv data_file is provided, data is
     streamed from that, otherwise it will read from an LSLDataStream by
-    default. 
+    default.
 
     Parameters:
     -----------
@@ -423,7 +425,7 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
         seconds - how many seconds worth of data to display.
         downsample_factor - how much the data is downsampled. A factor of 1
             displays the raw data.
-        display_screen - monitor in which to display the viewer 
+        display_screen - monitor in which to display the viewer
             (0 for primary, 1 for secondary)
     """
     data_source, device_info, proc = file_data(
@@ -462,6 +464,11 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--monitor',
                         help='display screen (0: primary, 1: secondary)', default=0, type=int)
 
-
     args = parser.parse_args()
-    main(args.file, args.seconds, args.downsample, args.refresh, args.yscale, args.monitor)
+    main(
+        args.file,
+        args.seconds,
+        args.downsample,
+        args.refresh,
+        args.yscale,
+        args.monitor)

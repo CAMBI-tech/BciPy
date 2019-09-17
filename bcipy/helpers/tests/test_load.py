@@ -6,9 +6,7 @@ import pickle
 
 from bcipy.helpers.load import (
     load_json_parameters,
-    load_experimental_data,
-    load_signal_model,
-    load_txt_data)
+    load_signal_model)
 
 
 class TestLoad(unittest.TestCase):
@@ -51,6 +49,7 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
+
 
 if __name__ == '__main__':
     unittest.main()

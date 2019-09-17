@@ -1,3 +1,4 @@
+import copy
 import shutil
 import time
 import unittest
@@ -9,7 +10,8 @@ from bcipy.helpers.save import init_save_data_structure
 
 class TestAcquisition(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setup_class(self):
         """set up the needed path for load functions."""
         self.parameters_used = 'bcipy/parameters/parameters.json'
         self.parameters = load_json_parameters(self.parameters_used,
@@ -22,13 +24,14 @@ class TestAcquisition(unittest.TestCase):
             self.user_information,
             self.parameters_used)
 
-    def tearDown(self):
+    @classmethod
+    def teardown_class(self):
         # clean up by removing the data folder we used for testing
+        # wait to make sure server shuts down
+        time.sleep(2)
         shutil.rmtree(self.save)
 
     def test_default_values(self):
-        print("Testing init_eeg_acquisition with default values.")
-
         self.parameters['acq_device'] = 'DSI'
 
         client, server = init_eeg_acquisition(
@@ -39,17 +42,17 @@ class TestAcquisition(unittest.TestCase):
         client.stop_acquisition()
         client.cleanup()
         server.stop()
-        server.join()
 
-        self.assertTrue('raw_data.csv' in client._processor._filename)
-        self.assertEqual(client.device_info.name, self.parameters['acq_device'])
+        self.assertEqual(
+            client.device_info.name,
+            self.parameters['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
     def test_allows_customization(self):
         print("Testing init_eeg_acquisition with custom values.")
 
         f = 'foo.csv'
-        params = self.parameters
+        params = copy.deepcopy(self.parameters)
         params['raw_data_name'] = f
         params['acq_port'] = 9000
         params['acq_device'] = 'DSI'
@@ -60,9 +63,7 @@ class TestAcquisition(unittest.TestCase):
             time.sleep(0.1)
         client.cleanup()
         server.stop()
-        server.join()
 
-        self.assertTrue(f in client._processor._filename)
         self.assertEqual(client.device_info.name, params['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
@@ -78,7 +79,6 @@ class TestAcquisition(unittest.TestCase):
             time.sleep(0.1)
         client.cleanup()
         server.stop()
-        server.join()
 
         self.assertEqual(client.device_info.name, 'LSL')
         self.assertEqual(client.device_info.fs, 256)

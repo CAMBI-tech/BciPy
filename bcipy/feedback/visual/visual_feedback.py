@@ -93,7 +93,8 @@ class VisualFeedback(Feedback):
         stimulus.draw()
         self.display.flip()
 
-    def _construct_stimulus(self, stimulus, pos, line_color, fill_color, stimuli_type):
+    def _construct_stimulus(self, stimulus, pos,
+                            line_color, fill_color, stimuli_type):
         if stimuli_type == FeedbackType.IMAGE:
             image_stim = visual.ImageStim(
                 win=self.display,
@@ -101,7 +102,8 @@ class VisualFeedback(Feedback):
                 mask=None,
                 pos=pos,
                 ori=0.0)
-            image_stim.size = resize_image(stimulus, self.display.size, self.height_stim)
+            image_stim.size = resize_image(
+                stimulus, self.display.size, self.height_stim)
             return image_stim
         if stimuli_type == FeedbackType.TEXT:
             return visual.TextStim(
@@ -128,8 +130,10 @@ class VisualFeedback(Feedback):
             line_color,
             fill_color,
             stimuli_type):
-        stimulus = self._construct_stimulus(stimulus, (-.3, 0), line_color, fill_color, stimuli_type)
-        assertion = self._construct_stimulus(assertion, (.3, 0), line_color, fill_color, stimuli_type)
+        stimulus = self._construct_stimulus(
+            stimulus, (-.3, 0), line_color, fill_color, stimuli_type)
+        assertion = self._construct_stimulus(
+            assertion, (.3, 0), line_color, fill_color, stimuli_type)
 
         return stimulus, assertion
 

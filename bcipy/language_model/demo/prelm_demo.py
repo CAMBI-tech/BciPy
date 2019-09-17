@@ -1,7 +1,7 @@
+from bcipy.helpers.language_model import norm_domain
+from bcipy.language_model.prelm_language_model import LangModel
 import sys
 sys.path.append('.')
-from bcipy.language_model.prelm_language_model import LangModel
-from bcipy.helpers.language_model import norm_domain
 
 
 def main():

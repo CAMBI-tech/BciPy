@@ -29,13 +29,13 @@ class TestInitializeDisplayWindow(unittest.TestCase):
         self.parameters = load_json_parameters(parameters_used,
                                                value_cast=True)
 
+        self.display_window = init_display_window(self.parameters)
+
     def tearDown(self):
+        self.display_window.close()
         unstub()
 
     def test_init_display_window_returns_psychopy_window(self):
         """Test display window is created."""
-
-        display_window = init_display_window(self.parameters)
-
-        self.assertIsInstance(display_window, type(self.window))
-        self.assertEqual(display_window, self.window)
+        self.assertIsInstance(self.display_window, type(self.window))
+        self.assertEqual(self.display_window, self.window)

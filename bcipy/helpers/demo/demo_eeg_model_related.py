@@ -45,5 +45,6 @@ def demo_copy_phrase_wrapper():
 
     print(task)
 
+
 if __name__ == '__main__':
     demo_copy_phrase_wrapper()

@@ -25,7 +25,7 @@ def git_dir() -> str:
 
 def git_hash() -> Optional[str]:
     """Git Hash.
-    
+
     Returns an abbreviated git sha hash if this code is being run from a
     git cloned version of bcipy; otherwise returns an empty string.
 
@@ -103,10 +103,11 @@ def configure_logger(
     logfile = os.path.join(save_folder, 'logs', log_name)
 
     # configure it
-    logging.basicConfig(
-        level=log_level,
-        format='(%(threadName)-9s) %(message)s',
-        filename=logfile)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
+    handler.setFormatter(logging.Formatter('(%(threadName)-9s) %(message)s'))
+    root_logger.addHandler(handler)
 
     print(f'Printing all BciPy logs to: {logfile}')
 
@@ -130,7 +131,7 @@ def import_submodules(package, recursive=True):
     -------
         dict[str, types.ModuleType]
     """
-    if type(package) == str or type(package) == unicode:
+    if isinstance(package, str) or isinstance(package, unicode):
         package = importlib.import_module(package)
     results = {}
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
@@ -161,6 +162,7 @@ def auto_str(cls):
     """Autogenerate a str method to print all variable names and values.
     https://stackoverflow.com/questions/32910096/is-there-a-way-to-auto-generate-a-str-implementation-in-python
     """
+
     def __str__(self):
         return '%s(%s)' % (type(self).__name__, ', '.join(
             '%s=%s' % item for item in vars(self).items()))

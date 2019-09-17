@@ -165,7 +165,7 @@ class DispatchProcessor(Processor):
         """Remove a processor."""
         self.processors.remove(proc)
 
-   # @override
+    # @override
     def process(self, record, timestamp=None):
         for proc in self.processors:
             proc.process(record, timestamp)

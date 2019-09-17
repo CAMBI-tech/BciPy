@@ -1,14 +1,12 @@
-import shutil
 from psychopy import core
 import unittest
 
-from mockito import any, mock, when, unstub
+from mockito import mock, when, unstub
 
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
 from bcipy.helpers.load import load_json_parameters
 
 import sounddevice as sd
-import soundfile as sf
 
 
 class TestSoundFeedback(unittest.TestCase):

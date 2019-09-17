@@ -50,7 +50,7 @@ def cast_value(value):
     return new_value
 
 
-def load_json_parameters(path: str, value_cast: bool=False) -> dict:
+def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """Load JSON Parameters.
 
     Given a path to a json of parameters, convert to a dictionary and optionally
@@ -105,7 +105,7 @@ def load_experimental_data() -> str:
     return filename
 
 
-def load_signal_model(filename: str=None):
+def load_signal_model(filename: str = None):
     # use python's internal gui to call file explorers and get the filename
 
     if not filename:
@@ -123,7 +123,7 @@ def load_signal_model(filename: str=None):
     return (signal_model, filename)
 
 
-def load_csv_data(filename: str=None) -> str:
+def load_csv_data(filename: str = None) -> str:
     if not filename:
         try:
             Tk().withdraw()  # we don't want a full GUI
@@ -142,7 +142,8 @@ def load_csv_data(filename: str=None) -> str:
     return filename
 
 
-def read_data_csv(folder: str, dat_first_row: int=2, info_end_row: int=1) -> tuple:
+def read_data_csv(folder: str, dat_first_row: int = 2,
+                  info_end_row: int = 1) -> tuple:
     """ Reads the data (.csv) provided by the data acquisition
         Arg:
             folder(str): file location for the data
@@ -163,7 +164,7 @@ def read_data_csv(folder: str, dat_first_row: int=2, info_end_row: int=1) -> tup
     # TODO: might be better in use:
     # dat_file.select_dtypes(include=['float64'])
     numeric_dat_file = dat_file.select_dtypes(exclude=['object'])
-    channels = list(numeric_dat_file.columns[1:]) # without timestamp column
+    channels = list(numeric_dat_file.columns[1:])  # without timestamp column
 
     temp = pd.DataFrame.as_matrix(numeric_dat_file)
     stamp_time = temp[:, 0]

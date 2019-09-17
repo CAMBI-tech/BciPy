@@ -9,13 +9,12 @@ from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
 from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
-    calculate_stimulation_freq,
     trial_complete_message,
     trial_reshaper,
     get_user_input,
     pause_calibration,
     process_data_for_decision)
-from bcipy.helpers.acquisition import analysis_channels, analysis_channels_by_device
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 
 
@@ -85,9 +84,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         self.downsample_rate = self.parameters['down_sampling_rate']
         self.filtered_sampling_rate = self.fs / self.downsample_rate
-    
+
         self.device_name = self.daq.device_info.name
-        self.channel_map = analysis_channels(self.daq.device_info.channels, self.device_name)
+        self.channel_map = analysis_channels(
+            self.daq.device_info.channels, self.device_name)
 
         # EDIT ME FOR FEEDBACK CONFIGURATION
 
@@ -120,6 +120,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.lvl_3_threshold = self.parameters['feedback_level_3_threshold']
         self.lvl_2_threshold = self.parameters['feedback_level_2_threshold']
 
+        # true/false order is desceding from 5 -> 1 for level
+        self.feedback_descending = self.parameters['feedback_level_descending']
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -143,8 +145,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                  timing=self.timing,
                  is_txt=self.is_txt_stim,
                  color=self.color)
-
-            import pdb; pdb.set_trace()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self._task.task_info_color)
@@ -195,8 +195,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 self.logger.info('[Feedback] Getting Decision')
 
                 position = self._get_feedback_decision(last_sequence_timing)
-                self.logger.info(f'[Feedback] Administering feedback position {position}')
-                timing = self.visual_feedback.administer(position=position)
+                self.logger.info(
+                    f'[Feedback] Administering feedback position {position}')
+                self.visual_feedback.administer(position=position)
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
@@ -235,7 +236,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # get data sequence and only use the first 2 stimuli
         data = self._get_data_for_psd(sequence_of_interest[:2])
 
-        # we always want the same data channel in the occipital region and the first of it
+        # we always want the same data channel in the occipital region and the
+        # first of it
         response = power_spectral_density(
             data[self.psd_channel_index][0],
             self.psd_export_band,
@@ -253,15 +255,38 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.logger.error(f'[Feedback] {message}')
             raise InsufficientDataException(message)
 
-        if response > self.lvl_5_threshold:
-            return 5
-        if response > self.lvl_4_threshold:
-            return 4
-        if response > self.lvl_3_threshold:
-            return 3
-        if response > self.lvl_2_threshold:
-            return 2
-        return 1
+        return self._determine_feedback_response(response)
+
+    def _determine_feedback_response(self, response):
+        """Determine feedback response.
+
+        Depending on the band chosen to give feedback off, we may need to invert the
+            levels. By default, it's in descending order. Set feedback_level_descending
+            to false for ascending
+        """
+        # default condition; for use with SSVEP or PSD that increases with focus to task
+        if self.feedback_descending:
+            if response > self.lvl_5_threshold:
+                return 5
+            if response > self.lvl_4_threshold:
+                return 4
+            if response > self.lvl_3_threshold:
+                return 3
+            if response > self.lvl_2_threshold:
+                return 2
+            return 1
+
+        # ascending condition; use with PSD that decrease with focus to task
+        else:
+            if response < self.lvl_5_threshold:
+                return 5
+            if response < self.lvl_4_threshold:
+                return 4
+            if response < self.lvl_3_threshold:
+                return 3
+            if response < self.lvl_2_threshold:
+                return 2
+            return 1
 
     def _get_data_for_psd(self, sequence_timing):
         # get data from the DAQ
@@ -275,10 +300,12 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        notch_filterted_data = notch.notch_filter(raw_data, self.fs, self.notch_filter_frequency)
+        notch_filterted_data = notch.notch_filter(
+            raw_data, self.fs, self.notch_filter_frequency)
         filtered_data = bandpass.butter_bandpass_filter(
             notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.filter_order)
-        data = downsample.downsample(filtered_data, factor=self.downsample_rate)
+        data = downsample.downsample(
+            filtered_data, factor=self.downsample_rate)
         letters, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
@@ -321,7 +348,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         if not set(letters).issubset(self.valid_targets):
             invalid = set(letters).difference(self.valid_targets)
             raise Exception(
-                f'unexpected letters received in copy phrase: {invalid}')
+                f'unexpected letters received: {invalid}')
 
         return letters, times, target_types
 

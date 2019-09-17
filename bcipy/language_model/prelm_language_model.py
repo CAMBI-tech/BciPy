@@ -1,6 +1,5 @@
 import logging
 import sys
-import math
 from typing import List
 from collections import defaultdict
 from bcipy.helpers.task import alphabet, SPACE_CHAR
@@ -122,7 +121,7 @@ class LangModel:
 
     def __return_priors(self, output, return_mode):
         """
-        A helper function to provide the desired output 
+        A helper function to provide the desired output
         depending on the return_mode.
         """
 

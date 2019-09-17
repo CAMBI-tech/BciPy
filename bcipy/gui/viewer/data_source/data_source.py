@@ -1,6 +1,5 @@
 from queue import Queue, Empty
 import itertools as it
-import time
 
 
 class DataSource:
@@ -44,6 +43,7 @@ class QueueDataSource(DataSource):
 
 class GeneratorDataSource(DataSource):
     """DataSource that uses a provided python generator."""
+
     def __init__(self, gen):
         self.gen = gen
 

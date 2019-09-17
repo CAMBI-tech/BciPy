@@ -5,6 +5,7 @@ REGISTERED_FEEDBACK_TYPES = ['sound', 'visual']
 
 class Feedback:
     """Feedback."""
+
     def __init__(self, feedback_type):
         super(Feedback, self).__init__()
         self.feedback_type = feedback_type

@@ -30,13 +30,16 @@ def main():
     # pylint: disable=invalid-name
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': host, 'port': port})
-    client = DataAcquisitionClient(device=dsi_device, processor=ViewerProcessor())
+    client = DataAcquisitionClient(
+        device=dsi_device,
+        processor=ViewerProcessor())
 
     try:
         server.start()
         client.start_acquisition()
         seconds = 10
-        print(f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n")
+        print(
+            f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n")
 
         t0 = time.time()
         elapsed = 0
