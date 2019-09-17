@@ -12,8 +12,6 @@
 - Re-added progress indicator for offline analysis
 - Scripts
     - `timing_tools.py` to help test display timing before experiments
-- Ability to load parameters from a file that is not the default parameters.json, without overwriting the default parameters.json
-    - Loaded parameters are checked against default parameters file, and any missing parameters are filled with default values
 - Tests
 - Linting
 - Documentation improvements
