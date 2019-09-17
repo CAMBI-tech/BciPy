@@ -1,7 +1,7 @@
 """Tools for viewing and debugging session.json data"""
 # pylint: disable=invalid-name
 import json
-from bcipy.helpers.session import session_data, session_db
+from bcipy.helpers.session import session_data, session_db, session_csv, session_excel
 
 
 def main(data_dir: str, alphabet: str):
@@ -12,6 +12,7 @@ def main(data_dir: str, alphabet: str):
 
 if __name__ == "__main__":
     import argparse
+    import os
 
     parser = argparse.ArgumentParser(
         description="Opens session.json file for analysis. Optionally creates a sqlite database summarizing the data.")
@@ -21,6 +22,8 @@ if __name__ == "__main__":
                         help='path to the data directory',
                         default=None)
     parser.add_argument('--db', help='create sqlite database', action='store_true')
+    parser.add_argument('--csv', help='create a csv file from the database', action='store_true')
+    parser.add_argument('--charts', help='create an Excel spreadsheet with charts', action='store_true')
     parser.add_argument('-a',
                         '--alphabet',
                         help='alphabet (comma-delimited string of items)',
@@ -42,7 +45,13 @@ if __name__ == "__main__":
     if args.alphabet:
         alp = args.alphabet.split(",")
 
-    if args.db:
+    if args.db or args.csv or args.charts:
         session_db(path, alp=alp)
+        if args.csv:
+            session_csv()
+        if args.charts:
+            session_excel()
+        if not args.db:
+            os.remove('session.db')
     else:
         main(path, alp)
