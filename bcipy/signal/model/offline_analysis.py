@@ -44,7 +44,7 @@ def offline_analysis(data_folder: str = None,
         data_folder = load_experimental_data()
 
     mode = 'calibration'
-    trial_length = parameters.get('collection_window_after_trial_length')
+    trial_length = parameters.get('trial_length')
 
     raw_dat, _, channels, type_amp, fs = read_data_csv(
         data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))

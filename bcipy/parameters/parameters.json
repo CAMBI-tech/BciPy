@@ -494,8 +494,8 @@
   "buffer_name": {
     "value": "raw_data.db",
     "section": "bci_config",
-    "readableName": "Path to the buffer database for data acquistion",
-    "helpTip": "Path to the buffer database for data acquistion",
+    "readableName": "Path to the buffer database for data acquisition",
+    "helpTip": "Path to the buffer database for data acquisition",
     "recommended_values": "",
     "type": "filepath"
   },
@@ -543,10 +543,10 @@
     "type": "float"
   },
   "task_buffer_len": {
-    "value": "0.75",
+    "value": "1.5",
     "section": "bci_config",
     "readableName": "Task Buffer Length (sec)",
-    "helpTip": "In between RSVP sequences buffer. This is needed or tasks goes too quickly!",
+    "helpTip": "Time in between presentation sequences.",
     "recommended_values": "",
     "type": "float"
   },
@@ -853,19 +853,11 @@
     "recommended_values": "",
     "type": "float"
   },
-  "collection_window_after_trial_length": {
+  "trial_length": {
     "value": "0.5",
     "section": "bci_config",
-    "readableName": "Length of the data collection window after each stimuli (seconds)",
-    "helpTip": "Length of the data collection window after each stimuli (seconds)",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "len_data_sequence_buffer": {
-    "value": "0.5",
-    "section": "bci_config",
-    "readableName": "Length of the data sequence buffer",
-    "helpTip": "Length of the data sequence buffer",
+    "readableName": "Length of data to collect after each stimuli presentation (seconds)",
+    "helpTip": "Length of data to collect after each stimuli presentation (seconds)",
     "recommended_values": "",
     "type": "float"
   },

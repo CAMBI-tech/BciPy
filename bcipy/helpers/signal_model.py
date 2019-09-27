@@ -85,7 +85,7 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers, target_info, window_length):
+    def evaluate_sequence(self, raw_data, triggers, target_info, trial_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -94,7 +94,7 @@ class CopyPhraseWrapper:
             triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
                 as letter and flash time for the letter
             target_info(list[str]): target information about the stimuli
-            window_length(int): The length of the time between stimuli presentation
+            trial_length(int): The length of the time after stimuli presentation
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
@@ -116,7 +116,7 @@ class CopyPhraseWrapper:
         x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.sampling_rate,
                                     k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,
-                                    trial_length=window_length)
+                                    trial_length=trial_length)
 
         lik_r = inference(x, letters, self.signal_model, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})

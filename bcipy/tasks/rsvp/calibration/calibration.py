@@ -152,9 +152,6 @@ class RSVPCalibrationTask(Task):
                 _write_triggers_from_sequence_calibration(
                     last_sequence_timing, self.trigger_file)
 
-                # Wait for a time
-                core.wait(self.buffer_val)
-
             # Set run to False to stop looping
             run = False
 

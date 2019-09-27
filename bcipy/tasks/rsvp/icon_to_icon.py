@@ -109,8 +109,7 @@ class RSVPIconToIconTask(Task):
 
         self.min_num_seq = parameters['min_seq_len']
         self.word_matching_text_size = parameters['word_matching_text_size']
-        self.collection_window_len = parameters[
-            'collection_window_after_trial_length']
+        self.trial_length = parameters['trial_length']
 
         self.data_save_path = parameters['data_save_loc']
 
@@ -385,7 +384,7 @@ class RSVPIconToIconTask(Task):
                 # Evaluate the data and make a decision.
                 decision_made, new_sti = copy_phrase_task.evaluate_sequence(
                     raw_data, triggers, target_info,
-                    self.collection_window_len)
+                    self.trial_length)
                 new_epoch = decision_made
 
                 # Add the evidence to the data record.

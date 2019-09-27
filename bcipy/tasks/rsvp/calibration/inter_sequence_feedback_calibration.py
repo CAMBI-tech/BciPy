@@ -113,7 +113,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.psd_export_band = (self.psd_lower_limit, self.psd_upper_limit)
 
         # length of time to use for PSD calculation
-        self.trial_length = self.time_flash * self.stim_length
+        self.sequence_length = self.time_flash * self.stim_length
 
         self.lvl_5_threshold = self.parameters['feedback_level_5_threshold']
         self.lvl_4_threshold = self.parameters['feedback_level_4_threshold']
@@ -198,9 +198,6 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 self.logger.info(
                     f'[Feedback] Administering feedback position {position}')
                 self.visual_feedback.administer(position=position)
-
-                # Wait for a time
-                core.wait(self._task.buffer_val)
 
             # Set run to False to stop looping
             run = False
@@ -297,7 +294,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             self.parameters,
             self.rsvp.first_stim_time,
             self.static_offset,
-            buf_length=self.trial_length)
+            buf_length=self.sequence_length)
 
         # filter it
         notch_filterted_data = notch.notch_filter(
@@ -316,7 +313,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             fs=self.fs,
             k=self.downsample_rate, mode='calibration',
             channel_map=self.channel_map,
-            trial_length=self.trial_length)
+            trial_length=self.sequence_length)
         return reshaped_data
 
     def letter_info(self, triggers: List[Tuple[str, float]],

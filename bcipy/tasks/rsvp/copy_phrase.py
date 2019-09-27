@@ -108,7 +108,7 @@ class RSVPCopyPhraseTask(Task):
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
         self.min_num_seq = parameters['min_seq_len']
-        self.collection_window_len = parameters['collection_window_after_trial_length']
+        self.trial_length = parameters['trial_length']
 
         self.static_offset = parameters['static_trigger_offset']
         self.show_feedback = parameters['show_feedback']
@@ -233,8 +233,6 @@ class RSVPCopyPhraseTask(Task):
                 self.copy_phrase,
                 text_task)
 
-            core.wait(self.buffer_val)
-
             # Delete calibration
             if seq_counter == 0:
                 del sequence_timing[0]
@@ -288,7 +286,7 @@ class RSVPCopyPhraseTask(Task):
                         raw_data,
                         triggers,
                         target_info,
-                        self.collection_window_len)
+                        self.trial_length)
 
                 # Construct Data Record
                 data['epochs'][epoch_counter][epoch_index] = {
