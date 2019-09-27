@@ -150,7 +150,7 @@ class RSVPCopyPhraseTask(Task):
 
         # Set new epoch (whether to present a new epoch),
         #   run (whether to cont. session),
-        #   sequence counter (how many seq have occured).
+        #   sequence counter (how many seq have occurred).
         #   epoch counter and index
         #   (what epoch, and how many sequences within it)
         new_epoch = True
@@ -245,7 +245,8 @@ class RSVPCopyPhraseTask(Task):
                     self.window,
                     self.parameters,
                     self.rsvp.first_stim_time,
-                    self.static_offset)
+                    static_offset=self.static_offset,
+                    buf_length=self.trial_length)
 
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
