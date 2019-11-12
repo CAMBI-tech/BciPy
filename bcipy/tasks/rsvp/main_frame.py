@@ -92,7 +92,12 @@ class MinIterationsCriteria(DecisionCriteria):
     """Returns true if the minimum number of iterations have not yet been reached."""
 
     def apply(self, epoch, commit_params):
-        current_seq = len(epoch['list_distribution'])
+        # Note: we use 'list_sti' parameter since this is the number of
+        # sequences displayed. The length of 'list_distribution' is 1 greater
+        # than this, since the language model distribution is added before
+        # the first sequence is displayed.
+        current_seq = len(epoch['list_sti'])
+        log.debug(f"Checking min iterations; current iteration is {current_seq}")
         return current_seq < commit_params['min_num_seq']
 
 
@@ -113,7 +118,9 @@ class MaxIterationsCriteria(DecisionCriteria):
     """Returns true if the max iterations have been reached."""
 
     def apply(self, epoch, commit_params):
-        current_seq = len(epoch['list_distribution'])
+        # Note: len(epoch['list_sti']) != len(epoch['list_distribution'])
+        # see MinIterationsCriteria comment
+        current_seq = len(epoch['list_sti'])
         if current_seq >= commit_params['max_num_seq']:
             log.debug(
                 "Committing to decision: max iterations have been reached.")
