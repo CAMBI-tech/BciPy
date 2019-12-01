@@ -102,8 +102,8 @@ class RSVPCopyPhraseTask(Task):
         self.signal_model = signal_model
         self.down_sample_rate = parameters['down_sampling_rate']
 
-        self.filter_low = self.parameters['filter_low_pass']
-        self.filter_high = self.parameters['filter_high_pass']
+        self.filter_low = self.parameters['filter_low']
+        self.filter_high = self.parameters['filter_high']
         self.fitler_order = self.parameters['filter_order']
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
