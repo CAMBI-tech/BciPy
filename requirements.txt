@@ -18,7 +18,7 @@ seaborn==0.9.0
 construct==2.8.14
 matplotlib==2.1.1
 pylsl==1.13.1
-psutil==5.4.0
+psutil==5.6.6
 pandas==0.24.1
 sounddevice==0.3.10
 SoundFile==0.10.1
