@@ -1,9 +1,11 @@
 import sys
 import os
 
-from typing import Optional
+from cpuinfo import get_cpu_info
+from typing import Optional, Tuple
 from pathlib import Path
 import pkg_resources
+import platform
 import psutil
 import pyglet
 import importlib
@@ -70,23 +72,42 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
+def get_screen_resolution() -> Tuple[int, int]:
+    """Gets the screen resolution
+
+    Returns
+    -------
+        (width, height)
+     """
+    screen = pyglet.canvas.get_display().get_default_screen()
+    return (screen.width, screen.height)
+
+
 def get_system_info() -> dict:
     """Get System Information.
+    See: https://stackoverflow.com/questions/3103178/how-to-get-the-system-info-with-python
+
+    Returns
+    -------
+        dict of system-related properties, including ['os', 'py_version', 'resolution', 
+          'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version', 
+          'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
-
-    # Three lines for getting screen resolution
-    platform = pyglet.window.get_platform()
-    display = platform.get_default_display()
-    screen = display.get_default_screen()
-
-    mem = psutil.virtual_memory()
-
+    screen_width, screen_height = get_screen_resolution()
     return {
         'os': sys.platform,
         'py_version': sys.version,
-        'resolution': [screen.width, screen.height],
-        'memory': mem.available / 1024 / 1024,
-        'bcipy_version': bcipy_version()
+        'resolution': [screen_width, screen_height],
+        'memory': psutil.virtual_memory().available / 1024 / 1024,
+        'bcipy_version': bcipy_version(),
+        'platform': platform.system(),
+        'platform-release': platform.release(),
+        'platform-version': platform.version(),
+        'architecture': platform.machine(),
+        'processor': platform.processor(),
+        'cpu_count': os.cpu_count(),
+        'hz': get_cpu_info()['hz_actual_friendly'],
+        'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
 
 
