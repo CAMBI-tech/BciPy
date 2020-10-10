@@ -93,22 +93,22 @@
     ],
     "type": "int"
   },
-  "filter_high_pass": {
+  "filter_high": {
     "value": "45",
     "section": "signal_config",
-    "readableName": "High Pass Filter Cutoff",
-    "helpTip": "High Pass Filter Cutoff (Hz)",
+    "readableName": "High Frequency Filter Cutoff",
+    "helpTip": "High Frequency Filter Cutoff (Hz)",
     "recommended_values": [
       "45",
       "50"
     ],
     "type": "float"
   },
-  "filter_low_pass": {
+  "filter_low": {
     "value": "2",
     "section": "signal_config",
-    "readableName": "Low Pass Filter Cutoff",
-    "helpTip": "Low Pass Filter Cutoff (Hz)",
+    "readableName": "Low Frequency Filter Cutoff",
+    "helpTip": "Low Frequency Filter Cutoff (Hz)",
     "recommended_values": [
       "1",
       "2"
