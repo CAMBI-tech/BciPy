@@ -75,8 +75,7 @@ def get_system_info() -> dict:
     """
 
     # Three lines for getting screen resolution
-    platform = pyglet.window.get_platform()
-    display = platform.get_default_display()
+    display = pyglet.canvas.get_display()
     screen = display.get_default_screen()
 
     mem = psutil.virtual_memory()
