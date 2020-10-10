@@ -3,7 +3,7 @@ docker==2.6.1
 construct==2.8.14
 mne==0.17.0
 PsychoPy==2020.2.4.post1
-numpy==1.19.2
+numpy==1.16.2
 scipy==1.5.2
 sklearn==0.0
 seaborn==0.9.0
