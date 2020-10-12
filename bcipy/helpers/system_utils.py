@@ -73,7 +73,10 @@ def bcipy_version() -> str:
 
 
 def get_screen_resolution() -> Tuple[int, int]:
-    """Gets the screen resolution
+    """Gets the screen resolution.
+
+    Note: Use this method if only the screen resolution is needed; it is much more efficient
+    than extracting that information from the dict returned by the get_system_info method.
 
     Returns
     -------
