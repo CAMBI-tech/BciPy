@@ -45,6 +45,10 @@ class TestDecisionMaker(unittest.TestCase):
             alphabet=['a', 'b', 'c', 'd'],
             decision_threshold=0.8)
 
+        # Initialize with initial (language model) probabilities for each letter.
+        lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
+        decision_maker.decide(lm_prior)
+
         likelihood = np.array([0.05, 0.05, 0.09, 0.81])
         decision, _arg = decision_maker.decide(likelihood)
         self.assertFalse(decision, "Not enough sequences presented")
@@ -52,7 +56,7 @@ class TestDecisionMaker(unittest.TestCase):
         likelihood = np.array([0.05, 0.05, 0.09, 0.81])
         decision, _arg = decision_maker.decide(likelihood)
         self.assertTrue(decision)
-        self.assertEqual('.d', decision_maker.state)
+        self.assertEqual('d', decision_maker.displayed_state)
 
     def test_max_sequences(self):
         """Test max sequences criteria."""
@@ -63,6 +67,10 @@ class TestDecisionMaker(unittest.TestCase):
             state='',
             alphabet=['a', 'b', 'c', 'd'],
             decision_threshold=0.8)
+
+        # Initialize with initial (language model) probabilities for each letter.
+        lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
+        decision_maker.decide(lm_prior)
 
         likelihood = np.array([0.2, 0.2, 0.4, 0.2])
         decision, _arg = decision_maker.decide(likelihood)
@@ -90,6 +98,10 @@ class TestDecisionMaker(unittest.TestCase):
             alphabet=['a', 'b', 'c', 'd'],
             decision_threshold=0.8)
 
+        # Initialize with initial (language model) probabilities for each letter.
+        lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
+        decision_maker.decide(lm_prior)
+
         likelihood = np.array([0.025, 0.025, 0.9, 0.05])
         _decision, _arg = decision_maker.decide(likelihood)
         self.assertEqual('abc', decision_maker.displayed_state)
@@ -102,6 +114,9 @@ class TestDecisionMaker(unittest.TestCase):
             state='',
             alphabet=['a', 'b', 'c', 'd'],
             decision_threshold=0.5)
+        # Initialize with initial (language model) probabilities for each letter.
+        lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
+        decision_maker.decide(lm_prior)
 
         likelihood = np.array([0.2, 0.6, 0.1, 0.1])
         decision, _arg = decision_maker.decide(likelihood)
