@@ -37,14 +37,23 @@ Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
 
 class Form(wx.Panel):
     """The Form class is a wx.Panel that creates controls/inputs for each
-    parameter in the provided json file."""
+    parameter in the provided json file.
+    
+    Parameters:
+    -----------
+      json_file - path of parameters file to be edited.
+      load_file - optional path of parameters file to load; 
+          parameters from this file will be copied over to the json_file.
+      control_width - optional; used to set the size of the form controls.
+      control_height - optional; used to set the size of the form controls.
+    """
 
     def __init__(self, parent,
-                 json_file: str = 'bcipy/parameters/parameters.json',
+                 json_file: str,
                  load_file: str = None,
                  control_width: int = 300, control_height: int = 25, **kwargs):
         super(Form, self).__init__(parent, **kwargs)
-
+        self.parent = parent
         self.json_file = json_file
         self.load_file = json_file if not load_file else load_file
         self.control_size = (control_width, control_height)
@@ -64,7 +73,10 @@ class Form(wx.Panel):
 
     def createControls(self):
         """Create controls (inputs, labels, etc) for each item in the
-        parameters file."""
+        parameters file.
+        
+        TODO: include a search box for finding an input
+        """
 
         self.controls = {}
         for key, param in self.params.items():
@@ -227,7 +239,6 @@ class Form(wx.Panel):
             self, "Parameters Successfully Updated!", 'Info',
             wx.OK | wx.ICON_INFORMATION)
         dialog.ShowModal()
-        dialog.Destroy()
 
     def textEventHandler(self, key: str) -> Callable[[wx.EVT_TEXT], None]:
         """Returns a handler function that updates the parameter for the
@@ -301,8 +312,7 @@ class MainPanel(scrolled.ScrolledPanel):
     """Panel which contains the Form. Responsible for selecting the json data
      to load and handling scrolling."""
 
-    def __init__(self, parent, title='BCI Parameters',
-                 json_file='bcipy/parameters/parameters.json'):
+    def __init__(self, parent, json_file, title):
         super(MainPanel, self).__init__(parent, -1)
         self.json_file = json_file
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -360,16 +370,24 @@ class MainPanel(scrolled.ScrolledPanel):
         event.Skip()
 
 
-def main(title='BCI Parameters', size=(650, 550),
-         json_file='bcipy/parameters/parameters.json'):
+def main(json_file, title='BCI Parameters', size=(650, 550)):
     """Set up the GUI components and start the main loop."""
 
     app = wx.App(0)
     frame = wx.Frame(None, wx.ID_ANY, size=size, title=title)
-    fa = MainPanel(frame, title=title, json_file=json_file)
+    fa = MainPanel(frame, json_file=json_file, title=title)
     frame.Show()
     app.MainLoop()
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
+
+    parser = argparse.ArgumentParser()
+
+    # Command line utility for adding arguments/ paths via command line
+    parser.add_argument('-p', '--parameters', default=DEFAULT_PARAMETERS_PATH,
+                        help='Path to parameters.json configuration file.')
+    args = parser.parse_args()
+    main(args.parameters)
