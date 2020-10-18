@@ -59,7 +59,7 @@ class RSVPCalibrationTask(Task):
                        parameters['time_cross'],
                        parameters['time_flash']]
 
-        self.color = [parameters['target_letter_color'],
+        self.color = [parameters['target_color'],
                       parameters['fixation_color'],
                       parameters['stim_color']]
 
