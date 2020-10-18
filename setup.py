@@ -12,10 +12,10 @@ NAME = 'bcipy'
 DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/BciPy/BciPy'
 EMAIL = 'memmott@ohsu.com'
-AUTHOR = 'Tab Memmott'
+AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '~=3.6'
 
-VERSION = '1.4.2'
+VERSION = '1.4.3'
 
 
 # What packages are required for this module to be executed?

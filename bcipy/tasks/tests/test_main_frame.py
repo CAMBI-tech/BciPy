@@ -65,32 +65,6 @@ class TestDecisionMaker(unittest.TestCase):
         self.assertEqual(self.decision_maker.state, '')
         self.assertEqual(self.decision_maker.displayed_state, '')
 
-    def test_decide_without_commit(self):
-        """
-        Test decide method with case of no commit
-        using a fake probability distribution
-        """
-        probability_distribution = np.ones(len(
-            self.decision_maker.alphabet)) / 8
-        decision, chosen_stimuli = self.decision_maker.decide(
-            probability_distribution)
-        self.assertTrue(np.all(
-                        self.decision_maker.list_epoch[-1]['list_distribution'][-1]
-                        == probability_distribution))
-        self.assertFalse(decision)
-        self.decision_maker.do_epoch()
-        self.assertEqual(self.decision_maker.sequence_counter, 0)
-
-    def test_decide_with_commit(self):
-        """Test decide method with case of commit"""
-        probability_distribution = np.ones(len(
-            self.decision_maker.alphabet))
-        self.decision_maker.sequence_counter = self.decision_maker.min_num_seq
-        decision, chosen_stimuli = self.decision_maker.decide(
-            probability_distribution)
-        self.assertTrue(decision)
-        self.assertEqual(chosen_stimuli, None)
-
     def test_update_with_letter(self):
         """Test update method with letter being the new state"""
         old_displayed_state = self.decision_maker.displayed_state
