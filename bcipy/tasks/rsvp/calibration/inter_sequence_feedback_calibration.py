@@ -100,8 +100,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         self.psd_channel_index = self.PSD_CHANNEL_INDEX
 
         # filter parameters
-        self.filter_low = self.parameters['filter_low_pass']
-        self.filter_high = self.parameters['filter_high_pass']
+        self.filter_low = self.parameters['filter_low']
+        self.filter_high = self.parameters['filter_high']
         self.filter_order = self.parameters['filter_order']
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
