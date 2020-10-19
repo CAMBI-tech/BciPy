@@ -8,14 +8,17 @@ import wx
 
 from bcipy.gui.gui_main import BCIGui
 from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
 
 from bcipy.tasks.task_registry import ExperimentType
 
-
 class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
-    event_started = False
-    PARAMETER_LOCATION = 'bcipy/parameters/parameters.json'
+
+    def __init__(self, *args, **kwargs):
+        super(RSVPKeyboard, self).__init__(*args, **kwargs)
+        self.event_started = False
+        self.parameter_location = DEFAULT_PARAMETERS_PATH
 
     def bind_action(self, action: str, btn) -> None:
         if action == 'launch_bci':
@@ -36,7 +39,7 @@ class RSVPKeyboard(BCIGui):
 
         Function for executing the edit parameter window
         """
-        subprocess.call('python bcipy/gui/params_form.py', shell=True)
+        subprocess.call(f'python bcipy/gui/params_form.py -p {self.parameter_location}', shell=True)
 
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
@@ -45,8 +48,9 @@ class RSVPKeyboard(BCIGui):
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            cmd = 'python bci_main.py -m {} -t {} -u {}'.format(
-                mode, experiment_type, username)
+            # TODO: add -p flag and use configured parameter_location
+            cmd = 'python bci_main.py -m {} -t {} -u {} -p {}'.format(
+                mode, experiment_type, username, self.parameter_location)
 
             subprocess.Popen(cmd, shell=True)
 
@@ -85,7 +89,7 @@ class RSVPKeyboard(BCIGui):
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
         parameters = load_json_parameters(
-            self.PARAMETER_LOCATION, value_cast=True)
+            self.parameter_location, value_cast=True)
         data_save_loc = parameters['data_save_loc']
         if os.path.isdir(data_save_loc):
             saved_users = os.listdir(data_save_loc)
