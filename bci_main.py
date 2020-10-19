@@ -5,12 +5,12 @@ from bcipy.helpers.task import print_message
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_signal_model
-from bcipy.helpers.save import init_save_data_structure
+from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
 
 
-def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
+def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -28,6 +28,8 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
         user (str): name of the user
         exp_type (int): type of experiment. Ex. 1 = calibration
         mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
+        experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
+
 
     """
 
@@ -37,7 +39,12 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
-        data_save_location, user, parameter_location, mode, exp_type)
+        data_save_location,
+        user,
+        parameter_location,
+        mode=mode,
+        experiment_type=exp_type,
+        experiment=experiment)
 
     # Register Task Type
     task_type = {
