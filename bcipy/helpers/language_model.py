@@ -102,3 +102,23 @@ def equally_probable(alphabet: List[str],
     prob = (1 - sum(overrides.values())) / (n_letters - len(overrides))
     # override specified values
     return [overrides[sym] if sym in overrides else prob for sym in alphabet]
+
+
+def histogram(letter_prior: List[Tuple[str, float]]) -> str:
+    """Given a list of letter, prob tuples, generate a histogram that can be
+    output to the console.
+
+    Parameters:
+    -----------
+        letter_prior - list of letter, probability pairs
+    Returns:
+    --------
+        printable string which contains a histogram with the letter and probability as the label.
+    """
+    margin = "\t"
+    star = '*'
+    lines = []
+    for letter, prob in sorted(letter_prior):
+        units = int(round(prob * 100))
+        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin + (units * star))
+    return '\n'.join(lines)

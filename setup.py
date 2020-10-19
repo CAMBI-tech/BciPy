@@ -1,6 +1,4 @@
 # Modified from https://github.com/kennethreitz/setup.py
-# Note: To use the 'upload' functionality of this file, you must:
-#   $ pip install twine
 import os
 import sys
 from shutil import rmtree
@@ -12,10 +10,10 @@ NAME = 'bcipy'
 DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/BciPy/BciPy'
 EMAIL = 'memmott@ohsu.com'
-AUTHOR = 'Tab Memmott'
+AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '~=3.6'
 
-VERSION = '1.4.2'
+VERSION = '1.4.3'
 
 
 # What packages are required for this module to be executed?

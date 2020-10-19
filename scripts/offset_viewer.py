@@ -16,7 +16,7 @@ def channel_data(raw_data, device_info, channel_name, n_records=None):
         channel_name - channel for which to get data
         n_records - if present, limits the number of records returned.
     """
-    if not channel_name in device_info.channels:
+    if channel_name not in device_info.channels:
         print(f"{channel_name} column not found; no data will be returned")
         return []
     channel_index = device_info.channels.index(channel_name)
@@ -25,26 +25,27 @@ def channel_data(raw_data, device_info, channel_name, n_records=None):
         return arr[:n_records, channel_index]
     return arr[:, channel_index]
 
-def clock_seconds(device_info:DeviceInfo, sample:int) -> float:
-    """Convert the given raw_data sample number to acquisition clock 
+
+def clock_seconds(device_info: DeviceInfo, sample: int) -> float:
+    """Convert the given raw_data sample number to acquisition clock
     seconds."""
     assert sample > 0
     return sample / device_info.fs
 
 
 def plot_triggers(raw_data, device_info, triggers, title=""):
-    """Plot raw_data triggers, including the TRG_device_stream data 
+    """Plot raw_data triggers, including the TRG_device_stream data
     (channel streamed from the device; usually populated from a trigger box),
     as well as TRG data populated from the LSL Marker Stream. Also plots data
     from the triggers.txt file if available.
-    
+
     Parameters:
     -----------
         raw_data - complete list of samples read in from the raw_data.csv file.
         device_info - metadata about the device including the sample rate.
         triggers - list of (trg, trg_type, stamp) values from the triggers.txt
             file. Stamps have been converted to the acquisition clock using
-            the offset recorded in the triggers.txt.    
+            the offset recorded in the triggers.txt.
     """
 
     fig = plt.figure()
@@ -72,22 +73,21 @@ def plot_triggers(raw_data, device_info, triggers, title=""):
     ax.plot(trg_box_x, trg_box_y, label='TRG_device_stream (trigger box)')
     if first_trg_box_time:
         ax.annotate(s=f"{round(first_trg_box_time, 2)}s", xy=(first_trg_box_time, 1.25),
-                fontsize='small', color='#1f77b4', horizontalalignment='right',
-                rotation=270)
-
+                    fontsize='small', color='#1f77b4', horizontalalignment='right',
+                    rotation=270)
 
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
         plt.vlines([stamp for (_name, _trgtype, stamp) in triggers],
-            ymin=-1.0, ymax=trg_ymax, label='triggers.txt (adjusted)',
-            linewidth=0.5, color='cyan')
+                   ymin=-1.0, ymax=trg_ymax, label='triggers.txt (adjusted)',
+                   linewidth=0.5, color='cyan')
 
     # Plot TRG column, vertical line for each one.
     trg_channel = channel_data(raw_data, device_info, 'TRG')
     trg_stamps = [clock_seconds(device_info, i + 1)
                   for i, trg in enumerate(trg_channel) if trg != '0' and trg != '0.0']
     plt.vlines(trg_stamps, ymin=-1.0, ymax=trg_ymax, label='TRG (LSL)',
-        linewidth=0.5, color='red')
+               linewidth=0.5, color='red')
 
     # Add labels for TRGs
     first_trg = None
@@ -96,8 +96,8 @@ def plot_triggers(raw_data, device_info, triggers, title=""):
             secs = clock_seconds(device_info, i + 1)
             secs_lbl = str(round(secs, 2))
             ax.annotate(s=f"{trg} ({secs_lbl}s)", xy=(secs, trg_ymax),
-                fontsize='small', color='red', horizontalalignment='right',
-                rotation=270)
+                        fontsize='small', color='red', horizontalalignment='right',
+                        rotation=270)
             if not first_trg:
                 first_trg = secs
 
@@ -167,7 +167,7 @@ def main(path: str):
     trg_file = os.path.join(path, 'triggers.txt')
     data, device_info = file_data(data_file)
     triggers = read_triggers(trg_file)
-    
+
     plot_triggers(data, device_info, triggers, title=pathlib.Path(path).name)
 
 
@@ -175,8 +175,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=
-        "Graphs trigger data from a bcipy session to visualize system latency"
+        description="Graphs trigger data from a bcipy session to visualize system latency"
     )
     parser.add_argument(
         '-p', '--path', help='path to the data directory', default=None)
@@ -184,7 +183,7 @@ if __name__ == "__main__":
     path = args.path
     if not path:
         from tkinter import filedialog
-        from tkinter import *
+        from tkinter import Tk
         root = Tk()
         path = filedialog.askdirectory(
             parent=root, initialdir="/", title='Please select a directory')

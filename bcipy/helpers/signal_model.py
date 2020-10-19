@@ -9,7 +9,7 @@ from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
-    equally_probable
+    equally_probable, histogram
 
 
 class CopyPhraseWrapper:
@@ -199,6 +199,10 @@ class CopyPhraseWrapper:
                          for alp_letter in self.alp
                          for prior_sym, prior_prob in lm_letter_prior
                          if alp_letter == prior_sym]
+
+                # display histogram of LM probabilities
+                print(f"Printed letters: '{self.decision_maker.displayed_state}'")
+                print(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
