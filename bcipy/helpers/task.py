@@ -128,6 +128,9 @@ def process_data_for_decision(
         parameters: parameters dictionary
         first_session_stim_time (float): time that the first stimuli was presented
             for the session. Used to calculate offsets.
+        static_offset (float): offset present in the system which should be accounted for when
+            creating data for classification
+        buf_length: length of data needed after the last sample in order to reshape correctly
 
     Returns
     -------
@@ -143,7 +146,7 @@ def process_data_for_decision(
     if buf_length:
         buffer_length = buf_length
     else:
-        buffer_length = parameters['len_data_sequence_buffer']
+        buffer_length = parameters['trial_length']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset

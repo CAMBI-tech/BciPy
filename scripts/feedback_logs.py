@@ -25,6 +25,7 @@ def main(logfile: str, outfile: str):
                     feedback_value = None
     print(f"CSV written to {outfile}")
 
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()

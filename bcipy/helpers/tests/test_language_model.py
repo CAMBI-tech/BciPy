@@ -4,6 +4,7 @@ from collections import Counter
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
     equally_probable, histogram
 
+
 class TestLanguageModelRelated(unittest.TestCase):
     def test_norm_domain(self):
         """Test conversion from negative log likelihood to prob."""
