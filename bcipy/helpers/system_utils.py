@@ -97,6 +97,7 @@ def get_system_info() -> dict:
           'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
     screen_width, screen_height = get_screen_resolution()
+    info = get_cpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -109,7 +110,8 @@ def get_system_info() -> dict:
         'architecture': platform.machine(),
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
-        'hz': get_cpu_info()['hz_actual_friendly'],
+        'cpu_brand': info['brand_raw'],
+        'hz': info['hz_actual_friendly'],
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
 
