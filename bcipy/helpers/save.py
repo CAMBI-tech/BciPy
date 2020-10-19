@@ -5,37 +5,41 @@ from shutil import copy2
 import json
 
 
-def init_save_data_structure(data_save_path,
-                             user_information,
-                             parameters_used,
-                             mode=None,
-                             experiment_type=None):
+DEFAULT_EXPERIMENT_ID = 'default'
+
+
+def init_save_data_structure(data_save_path: str,
+                             user_id: str,
+                             parameters_path: str,
+                             experiment_id: str = DEFAULT_EXPERIMENT_ID,
+                             mode: str = None,
+                             experiment_type: int = None):
     """
     Initialize Save Data Strucutre.
 
         data_save_path[str]: string of path to save our data in
-        user_information[str]: string of user name / related information
-        parameters_used[str]: a path to parameters file for the experiment
+        user_id[str]: string of user name / related information
+        parameters_path[str]: a path to parameters file for the experiment
+        experiment_id[str]: Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
+        mode[str]: BCI mode. Ex. RSVP, SHUFFLE, MATRIX
+        experiment_type[int]: type of experiment. Ex. 1 = calibration
 
     """
 
     # make an experiment folder : note datetime is in utc
-    save_folder_name = data_save_path + user_information
+    save_folder_name = f'{data_save_path}{experiment_id}/{user_id}'
+    dt = strftime('%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
+
+    # If there is a mode or experiment type registered add it to the folder structure
     if mode and experiment_type:
-        save_directory = save_folder_name + '/' + \
-            user_information + '_' + str(mode) + '_' + str(experiment_type) + '_' + strftime(
-                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
+        save_directory = f'{save_folder_name}/{user_id}_{mode}_{experiment_type}_{dt}'
     else:
-        save_directory = save_folder_name + '/' + \
-            user_information + '_' + strftime(
-                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
-    helper_folder_name = save_directory + '/helpers/'
+        save_directory = f'{save_folder_name}/{user_id}_{dt}'
 
     try:
         # make a directory to save data to
         os.makedirs(save_folder_name)
         os.makedirs(save_directory)
-        os.makedirs(helper_folder_name)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     except OSError as error:
@@ -45,28 +49,13 @@ def init_save_data_structure(data_save_path,
 
         # since this is only called on init, we can make another folder run
         os.makedirs(save_directory)
-        os.makedirs(helper_folder_name)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     try:
-        # Go to folder helpers and list files within it
-        src_files = os.listdir('bcipy/helpers/')
-
-        # Loop through files in helpers and copy important ones over
-        for file_name in src_files:
-
-            # get the full name
-            full_file_name = os.path.join('bcipy/helpers/', file_name)
-
-            # Check that constructed file is a real file and ends in .py
-            if (os.path.isfile(full_file_name)) and '.py' in file_name:
-                # Copy over!
-                copy2(full_file_name, helper_folder_name)
-
         # Check that parameters file given is a real file
-        if (os.path.isfile(parameters_used)):
+        if (os.path.isfile(parameters_path)):
             # Copy over parameters file
-            copy2(parameters_used, save_directory)
+            copy2(parameters_path, save_directory)
         else:
             raise Exception('Parameter File Not Found!')
 

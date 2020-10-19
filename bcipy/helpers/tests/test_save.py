@@ -1,9 +1,9 @@
-import errno
 import os
 import shutil
 import unittest
-
-from bcipy.helpers.save import init_save_data_structure
+from bcipy.helpers import save
+from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
+from mockito import any, unstub, when
 
 
 class TestSave(unittest.TestCase):
@@ -21,9 +21,13 @@ class TestSave(unittest.TestCase):
             self.user_information,
             self.parameters_used)
 
+        # mock save modules use of strftime to return an empty string
+        when(save).strftime(any(), any()).thenReturn('')
+
     def tearDown(self):
         # clean up by removing the data folder we used for testing
         shutil.rmtree(self.data_save_path)
+        unstub()
 
     def test_init_save_data_structure_creates_correct_save_folder(self):
 
@@ -38,6 +42,20 @@ class TestSave(unittest.TestCase):
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))
 
+    def test_save_structure_adds_default_experiment(self):
+        self.assertIn(DEFAULT_EXPERIMENT_ID, self.save_folder_name)
+
+    def test_save_structure_adds_experiment_id_when_provided_as_argument(self):
+        experiment_id = 'test'
+        response = init_save_data_structure(
+            self.data_save_path,
+            self.user_information,
+            self.parameters_used,
+            experiment_id=experiment_id)
+        expected = f'{self.data_save_path}{experiment_id}/{self.user_information}/{self.user_information}_'
+
+        self.assertEqual(response, expected)
+
     def test_throws_useful_error_if_given_incorrect_params_path(self):
 
         # try passing a parameters file that does not exist
@@ -46,19 +64,6 @@ class TestSave(unittest.TestCase):
                 self.data_save_path,
                 'new_user',
                 'does_not_exist.json')
-
-    def test_init_save_data_structure_makes_helpers_folder(self):
-
-        # contruct the path of the helper folder
-        helper_folder_name = self.save_folder_name + '/helpers/'
-
-        # attempt to make that folder
-        try:
-            os.makedirs(helper_folder_name)
-
-        except OSError as error:
-            # assert the error returned, is that the dir exists.
-            self.assertEqual(error.errno, errno.EEXIST)
 
 
 if __name__ == '__main__':
