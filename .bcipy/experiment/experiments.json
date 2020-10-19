@@ -1,0 +1,12 @@
+{
+  "default": {
+    "fields": [
+      {
+        "age": {
+          "required": "false"
+        }
+      }
+    ],
+    "summary": "Default experiment to test various BciPy features without registering a full experiment."
+  }
+}
