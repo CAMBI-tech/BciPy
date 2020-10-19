@@ -44,7 +44,7 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: 
         parameter_location,
         mode=mode,
         experiment_type=exp_type,
-        experiment=experiment)
+        experiment_id=experiment)
 
     # Register Task Type
     task_type = {
