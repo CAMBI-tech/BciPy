@@ -3,17 +3,16 @@ task."""
 
 import sqlite3
 import pandas as pd
-from collections import namedtuple
 
 
 def extract_column(data_dir, column):
-    """Extract the timestamp and column from the raw_data buffer where 
+    """Extract the timestamp and column from the raw_data buffer where
     there are non-zero values.
 
     Parameters:
     -----------
     data_dir - path to sqlite database
-    
+
     Returns:
     --------
     list of (float, str), where float is the sample number
@@ -35,7 +34,7 @@ def normalized_data(data_dir: str, column: str, sample_rate_hz: float):
         rawdata_db - path to sqlite database
         column - column of data to extract
         sample_rate_hz - frequency of data collection in hz.
-    
+
     Returns:
     --------
         list of (float, str), where float is the seconds elapsed since
@@ -86,6 +85,7 @@ def sensor_data(data_dir, sample_rate_hz, column: str = "TRG_device_stream"):
 
     return compressed
 
+
 def skipped_iter(data, skip_criteria):
     """Utility function that returns an iterator where data items are skipped
     according to some provided criteria.
@@ -110,17 +110,18 @@ def skipped_iter(data, skip_criteria):
         i = i + 1
     return iter(data[i:])
 
+
 def filled_sensor_data(sensor_data, stimuli, min_time=None, includes_calibration=False):
     """
     Correlates the sensor data to the stimulus.
 
     Parameters:
     ----------
-        sensor_data - list of sensor data where each value is a 
+        sensor_data - list of sensor data where each value is a
             (timestamp, value) tuple which represents the starting
             time (in acquisition clock) at which the sensor was activated.
         stimuli - complete list of stimulus presented.
-        min_time - if provided, discards any sensor data recorded before this time. 
+        min_time - if provided, discards any sensor data recorded before this time.
             Should be in given in the normalized acquisition clock time.
     Returns:
     --------
@@ -170,14 +171,14 @@ def triggers(data_dir: str, include_trg_type: bool = False):
     Parameters:
     -----------
         data_dir - data directory with the triggers.txt file
-        include_trg_type - if True adds the trg type (calib, first-pres-target, 
+        include_trg_type - if True adds the trg type (calib, first-pres-target,
             target, non-target, etc.)
     Returns:
     --------
         list of (float, str), where float is the seconds elapsed since
             start of acquisition.
-        
-        or 
+
+        or
 
         list of (float, str, targetness)
         """
@@ -207,10 +208,11 @@ def read_sample_rate(data_dir: str):
         fs = float(next(csvfile).strip().split(",")[1])
         return fs
 
+
 def calib_time(normalized_triggers):
     """Given a list of normalized triggers, return the time (acquisition) clock
     when the calibration trigger was displayed."""
-    for acq_time, stim in normalized_triggers:        
+    for acq_time, stim in normalized_triggers:
         if stim == 'calibration_trigger':
             return acq_time
     return None
@@ -252,7 +254,7 @@ class LatencyData():
         return frame
 
 
-def main(path: str, outpath:str):
+def main(path: str, outpath: str):
     """Run the viewer gui
 
     Parameters:
@@ -270,21 +272,25 @@ def main(path: str, outpath:str):
 
     print(frame.describe())
 
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=
-        "Generates latency data from a bcipy session"
+        description="Generates latency data from a bcipy session"
     )
     parser.add_argument(
         '-p', '--path', help='path to the data directory', default=None)
-    parser.add_argument('-o', '--out', help='path to output file; if not provided, only summary data is output', default=None)
+    parser.add_argument(
+        '-o',
+        '--out',
+        help='path to output file; if not provided, only summary data is output',
+        default=None)
     args = parser.parse_args()
     path = args.path
     if not path:
         from tkinter import filedialog
-        from tkinter import *
+        from tkinter import Tk
         root = Tk()
         path = filedialog.askdirectory(
             parent=root, initialdir="/", title='Please select a directory')

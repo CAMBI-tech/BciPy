@@ -7,7 +7,7 @@ from psychopy import core, visual
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.system_utils import get_system_info
+from bcipy.helpers.system_utils import get_screen_resolution
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -293,19 +293,18 @@ class RSVPDisplay(object):
                 # test whether the word will be too big for the screen
                 text_width = current_stim['sti'].boundingBox[0]
                 if text_width > self.window.size[0]:
-                    info = get_system_info()
+                    monitor_width, monitor_height = get_screen_resolution()
                     text_height = current_stim['sti'].boundingBox[1]
                     # If we are in full-screen, text size in Psychopy norm units
                     # is monitor width/monitor height
-                    if self.window.size[0] == info['RESOLUTION'][0]:
-                        new_text_width = info['RESOLUTION'][0] / \
-                            info['RESOLUTION'][1]
+                    if self.window.size[0] == monitor_width:
+                        new_text_width = monitor_width / monitor_height
                     else:
                         # If not, text width is calculated relative to both
                         # monitor size and window size
                         new_text_width = (
-                            self.window.size[1] / info['RESOLUTION'][1]) * (
-                                info['RESOLUTION'][0] / info['RESOLUTION'][1])
+                            self.window.size[1] / monitor_height) * (
+                                monitor_width / monitor_height)
                     new_text_height = (text_height * new_text_width) / text_width
                     current_stim['sti'].height = new_text_height
             stim_info.append(current_stim)

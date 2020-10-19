@@ -46,7 +46,7 @@ def offline_analysis(data_folder: str = None,
     mode = 'calibration'
 
     # extract relevant session information from parameters file
-    trial_length = parameters.get('collection_window_after_trial_length')
+    trial_length = parameters.get('trial_length')
     triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
     raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
 

@@ -107,7 +107,7 @@ def equally_probable(alphabet: List[str],
 def histogram(letter_prior: List[Tuple[str, float]]) -> str:
     """Given a list of letter, prob tuples, generate a histogram that can be
     output to the console.
-    
+
     Parameters:
     -----------
         letter_prior - list of letter, probability pairs
@@ -120,5 +120,5 @@ def histogram(letter_prior: List[Tuple[str, float]]) -> str:
     lines = []
     for letter, prob in sorted(letter_prior):
         units = int(round(prob * 100))
-        lines.append(letter + ' (' + "%03.2f"%(prob) + ") :" + margin + (units * star))
+        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin + (units * star))
     return '\n'.join(lines)

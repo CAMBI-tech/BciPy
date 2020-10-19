@@ -84,7 +84,7 @@ class RSVPIconToIconTask(Task):
         ]
 
         self.color = [
-            parameters['target_letter_color'], parameters['fixation_color'],
+            parameters['target_color'], parameters['fixation_color'],
             parameters['stim_color']
         ]
 
@@ -110,7 +110,7 @@ class RSVPIconToIconTask(Task):
         self.min_num_seq = parameters['min_seq_len']
         self.word_matching_text_size = parameters['word_matching_text_size']
         self.collection_window_len = parameters[
-            'collection_window_after_trial_length']
+            'trial_length']
 
         self.data_save_path = parameters['data_save_loc']
 

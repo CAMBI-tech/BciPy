@@ -1,3 +1,4 @@
+import logging
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
@@ -44,14 +45,17 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str) -> bool:
         'exp_type': exp_type
     }
 
+    # TODO: Update parameters before init_save_data_structure so sys info gets written to the file
     # update our parameters file with system related information
-    parameters.update(get_system_info())
+    sys_info = get_system_info()
+    parameters.update(sys_info)
 
     # configure bcipy session logging
-    configure_logger(
-        save_folder,
-        log_name=parameters['log_name'],
-        version=parameters['bcipy_version'])
+    configure_logger(save_folder,
+                     log_name=parameters['log_name'],
+                     version=parameters['bcipy_version'])
+
+    logging.getLogger(__name__).info(sys_info)
 
     return execute_task(task_type, parameters, save_folder)
 

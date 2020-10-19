@@ -77,7 +77,7 @@ class RSVPCopyPhraseTask(Task):
                        self.time_cross,
                        self.time_flash]
 
-        self.color = [parameters['target_letter_color'],
+        self.color = [parameters['target_color'],
                       parameters['fixation_color'],
                       parameters['stim_color']]
 
@@ -108,7 +108,7 @@ class RSVPCopyPhraseTask(Task):
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
         self.min_num_seq = parameters['min_seq_len']
-        self.collection_window_len = parameters['collection_window_after_trial_length']
+        self.collection_window_len = parameters['trial_length']
 
         self.static_offset = parameters['static_trigger_offset']
         self.show_feedback = parameters['show_feedback']

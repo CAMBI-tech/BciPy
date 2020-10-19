@@ -167,7 +167,7 @@ def read_data_csv(folder: str, dat_first_row: int = 2,
     numeric_dat_file = dat_file.select_dtypes(exclude=['object'])
     channels = list(numeric_dat_file.columns[1:])  # without timestamp column
 
-    temp = pd.DataFrame.as_matrix(numeric_dat_file)
+    temp = numeric_dat_file.values
     stamp_time = temp[:, 0]
     raw_dat = temp[:, 1:temp.shape[1]].transpose()
 
