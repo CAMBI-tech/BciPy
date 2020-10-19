@@ -130,7 +130,7 @@ Use this resource for examples: http://docs.python-guide.org/en/latest/writing/s
 
 When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module tests for examples!
 
-Test requirements must be installed before running: `pip install test_requirements.txt`
+Development requirements must be installed before running: `pip install dev_requirements.txt`
 
 To run all tests, in the command line:
 
