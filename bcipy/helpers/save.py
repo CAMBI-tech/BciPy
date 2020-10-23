@@ -27,7 +27,7 @@ def save_json_data(data: dict, location: str, name: str) -> str:
 
 def init_save_data_structure(data_save_path: str,
                              user_id: str,
-                             parameters: dict,
+                             parameters: str,
                              experiment_id: str = DEFAULT_EXPERIMENT_ID,
                              mode: str = None,
                              experiment_type: int = None):
@@ -36,7 +36,7 @@ def init_save_data_structure(data_save_path: str,
 
         data_save_path[str]: string of path to save our data in
         user_id[str]: string of user name / related information
-        parameters[dict]: parameters for the experiment
+        parameters[str]: parameter location for the experiment
         experiment_id[str]: Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
         mode[str]: BCI mode. Ex. RSVP, SHUFFLE, MATRIX
         experiment_type[int]: type of experiment. Ex. 1 = calibration
@@ -69,7 +69,8 @@ def init_save_data_structure(data_save_path: str,
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     try:
-        save_json_data(parameters, location=save_directory, name='parameters.json')
+        copyfile(parameters, Path(save_directory, 'parameters.json'))
+        # save_json_data(parameters, location=save_directory, name='parameters.json')
     except IOError as error:
         raise error
 
