@@ -1,5 +1,6 @@
 # pylint: disable=no-member
 """GUI for running RSVP tasks"""
+import datetime
 import itertools
 import os
 import subprocess
@@ -7,7 +8,7 @@ import subprocess
 import wx
 
 from bcipy.gui.gui_main import BCIGui
-from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import load_json_parameters, copy_default_parameters
 from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
 
 from bcipy.tasks.task_registry import ExperimentType
@@ -25,6 +26,8 @@ class RSVPKeyboard(BCIGui):
             self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
         elif action == 'edit_parameters':
             self.Bind(wx.EVT_BUTTON, self.edit_parameters, btn)
+        elif action == 'select_parameters':
+            self.Bind(wx.EVT_BUTTON, self.select_parameters, btn)
         elif action == 'refresh':
             self.Bind(wx.EVT_BUTTON, self.refresh, btn)
         elif action == 'offline_analysis':
@@ -34,12 +37,34 @@ class RSVPKeyboard(BCIGui):
         else:
             self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
 
-    def edit_parameters(self, _event) -> None:
-        """Edit Parameters.
+    def select_parameters(self, _event) -> None:
+        """Dialog to select the parameters.json configuration to use."""
+        with wx.FileDialog(self,
+                           'Select parameters file',
+                           wildcard='JSON files (*.json)|*.json',
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
+            if fd.ShowModal() != wx.ID_CANCEL:
+                self.parameter_location = fd.GetPath()
 
-        Function for executing the edit parameter window
+    def edit_parameters(self, _event) -> None:
+        """Edit Parameters. Prompts for a parameters.json file to use. If the default parameters
+        are selected a copy is used.
         """
-        subprocess.call(f'python bcipy/gui/params_form.py -p {self.parameter_location}', shell=True)
+        if self.parameter_location == DEFAULT_PARAMETERS_PATH:
+            # Don't allow the user to overwrite the defaults
+            with wx.MessageDialog(
+                    self,
+                    "The default parameters.json can't be overridden. A copy will be used.",
+                    'Info', wx.OK | wx.CANCEL) as confirm_dialog:
+                response = confirm_dialog.ShowModal()
+                if response == wx.ID_OK:
+                    self.parameter_location = copy_default_parameters()
+                else:
+                    return
+
+        subprocess.call(
+            f'python bcipy/gui/params_form.py -p {self.parameter_location}',
+            shell=True)
 
     def launch_bci_main(self, event: wx.Event) -> None:
         """Launch BCI MAIN"""
@@ -144,23 +169,28 @@ def run_rsvp_gui():
             id=task.value)
         btn_pos_x += btn_width_apart
 
+    command_btn_height = 40
     gui.add_button(
-        message='Edit Parameters', position=(side_padding, 450),
-        size=(100, 50), color='white',
+        message='Load Parameters', position=(side_padding, 450),
+        size=(105, command_btn_height), color='white',
+        action='select_parameters')
+    gui.add_button(
+        message='Edit', position=(side_padding + 110, 450),
+        size=(50, command_btn_height), color='white',
         action='edit_parameters')
 
     btn_auc_width = 100
     btn_auc_x = window_width - (2 * side_padding + btn_auc_width)
     gui.add_button(
         message='Calculate AUC', position=(btn_auc_x, 450),
-        size=(btn_auc_width, 50), color='white',
+        size=(btn_auc_width, command_btn_height), color='white',
         action='offline_analysis')
 
     btn_refresh_width = 50
     btn_refresh_x = window_width - (2 * side_padding + btn_refresh_width)
     gui.add_button(
         message='Refresh', position=(btn_refresh_x, 230),
-        size=(btn_refresh_width, 50), color='white',
+        size=(btn_refresh_width, command_btn_height), color='white',
         action='refresh')
 
     # TEXT INPUT

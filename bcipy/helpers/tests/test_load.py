@@ -4,9 +4,8 @@ import tempfile
 import shutil
 import pickle
 
-from bcipy.helpers.load import (
-    load_json_parameters,
-    load_signal_model)
+from bcipy.helpers.load import (load_json_parameters, load_signal_model,
+                                copy_default_parameters)
 
 
 class TestLoad(unittest.TestCase):
@@ -49,6 +48,18 @@ class TestLoad(unittest.TestCase):
 
         # assert the same data was returned
         self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
+
+    def test_copy_default_parameters(self):
+        """Test that default parameters can be copied."""
+        path = copy_default_parameters(self.temp_dir)
+
+        self.assertTrue(path != self.parameters)
+
+        copy = load_json_parameters(path)
+        self.assertTrue(type(copy), 'dict')
+
+        parameters = load_json_parameters(self.parameters)
+        self.assertEqual(copy, parameters)
 
 
 if __name__ == '__main__':

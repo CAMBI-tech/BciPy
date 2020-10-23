@@ -222,7 +222,7 @@ class Form(wx.Panel):
                 gridSizer.Add(control, **noOptions)
 
         # Add the save button
-        gridSizer.Add(self.saveButton, flag=wx.ALIGN_CENTER)
+        gridSizer.Add(self.saveButton, flag=wx.ALIGN_LEFT)
 
         sizer.Add(gridSizer, border=10, flag=wx.ALL | wx.ALIGN_CENTER)
         self.SetSizerAndFit(sizer)
@@ -321,17 +321,17 @@ class MainPanel(scrolled.ScrolledPanel):
         self.form = Form(self, json_file)
         vbox.Add(static_text_control(self, label=title, size=20),
                  0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, border=5)
-        vbox.AddSpacer(10)
 
         loading_box = wx.BoxSizer(wx.VERTICAL)
         loading_box.Add(static_text_control(self, label=f'Editing: {json_file}',
                                             size=14))
+        loading_box.AddSpacer(7)
         self.loaded_from = static_text_control(
             self,
-            label=f'Loaded from: {json_file}',
+            label='Set values from another file',
             size=14)
         loading_box.Add(self.loaded_from)
-        loading_box.AddSpacer(10)
+        # loading_box.AddSpacer(5)
 
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)

@@ -1,9 +1,12 @@
+from datetime import datetime
 from tkinter import Tk
 import numpy as np
 import pandas as pd
 import logging
 from codecs import open as codecsopen
 from json import load as jsonload
+from shutil import copyfile
+from pathlib import Path
 import pickle
 
 from tkinter.filedialog import askopenfilename, askdirectory
@@ -50,6 +53,29 @@ def cast_value(value):
 
     return new_value
 
+def copy_default_parameters(destination: str = 'bcipy/parameters/') -> str:
+    """Creates a copy of the default configuration (parameters.json) to the
+    given directory and returns the path
+
+    Parameters:
+    -----------
+        destination: str - optional destination directory; default is the same
+          directory as the default parameters.
+    Returns:
+    --------
+        path to the new file.
+    """
+    now = datetime.now()
+    month = str(now.month).rjust(2, "0")
+    day = str(now.day).rjust(2, "0")
+    hour = str(now.hour).rjust(2, "0")
+    minute = str(now.minute).rjust(2, "0")
+    second = str(now.second).rjust(2, "0")
+    filename =  f'parameters_{now.year}-{month}-{day}_{hour}h{minute}m{second}s.json'
+
+    path = str(Path(destination, filename))
+    copyfile(DEFAULT_PARAMETERS_PATH, path)
+    return path
 
 def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     """Load JSON Parameters.

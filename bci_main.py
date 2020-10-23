@@ -10,7 +10,7 @@ from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
 
 
-def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
+def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -24,7 +24,7 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: 
             Ex. `python bci_main.py --user "bci_user" --mode "SHUFFLE"`
 
     Input:
-        parameters (dict): parameter dictionary
+        parameter_location (str): location of parameters file to use
         user (str): name of the user
         exp_type (int): type of experiment. Ex. 1 = calibration
         mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
@@ -32,19 +32,23 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: 
 
 
     """
+    # Load parameters
+    parameters = load_json_parameters(parameter_location, value_cast=True)
 
-    # Define the parameter and data save location
-    parameter_location = parameters['parameter_location']
-    data_save_location = parameters['data_save_loc']
+    # Update property to reflect the parameter source
+    parameters['parameter_location'] = parameter_location
+
+    # update our parameters file with system related information
+    sys_info = get_system_info()
 
     # Initialize Save Folder
     save_folder = init_save_data_structure(
-        data_save_location,
+        parameters['data_save_loc'],
         user,
         parameter_location,
         mode=mode,
         experiment_type=exp_type,
-        experiment=experiment)
+        experiment_id=experiment)
 
     # Register Task Type
     task_type = {
@@ -52,15 +56,10 @@ def bci_main(parameters: dict, user: str, exp_type: int, mode: str, experiment: 
         'exp_type': exp_type
     }
 
-    # TODO: Update parameters before init_save_data_structure so sys info gets written to the file
-    # update our parameters file with system related information
-    sys_info = get_system_info()
-    parameters.update(sys_info)
-
     # configure bcipy session logging
     configure_logger(save_folder,
                      log_name=parameters['log_name'],
-                     version=parameters['bcipy_version'])
+                     version=sys_info['bcipy_version'])
 
     logging.getLogger(__name__).info(sys_info)
 
@@ -167,8 +166,5 @@ if __name__ == "__main__":
                         help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
     args = parser.parse_args()
 
-    # Load parameters
-    parameters = load_json_parameters(args.parameters, value_cast=True)
-
     # Start BCI Main
-    bci_main(parameters, str(args.user), int(args.type), str(args.mode))
+    bci_main(args.parameters, str(args.user), int(args.type), str(args.mode))
