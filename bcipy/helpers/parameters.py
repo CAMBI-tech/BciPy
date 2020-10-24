@@ -1,0 +1,180 @@
+"""Module for functionality related to system configuration"""
+
+from codecs import open as codecsopen
+from collections import abc
+from json import dump, load
+from pathlib import Path
+
+DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
+
+
+class Parameters(dict):
+    """Configuration parameters for BciPy.
+
+        source: str - optional path to a JSON file. If file exists, data will be
+            loaded from here. Raises an exception unless the entries are dicts with
+            the required_keys.
+
+        cast_values: bool - if True cast values to specified type; default is False.
+        """
+
+    def __init__(self, source: str = None, cast_values: bool = False):
+        super().__init__()
+        self.source = source
+        self.cast_values = cast_values
+
+        self.required_keys = set([
+            'value', 'section', 'readableName', 'helpTip',
+            'recommended_values', 'type'
+        ])
+        self.conversions = {
+            'int': int,
+            'float': float,
+            'bool': lambda val: val == 'true',
+            'str': str,
+            'directorypath': str,
+            'filepath': str
+        }
+        self.load_from_source()
+
+    @property
+    def supported_types(self):
+        """Supported types for casting values"""
+        return self.conversions.keys()
+
+    def cast_value(self, entry: dict):
+        """Takes an entry with a desired type and attempts to cast it to that type."""
+        cast = self.conversions[entry['type']]
+        return cast(entry['value'])
+
+    def serialized_value(self, value, entry_type):
+        """Convert a value back into its serialized form"""
+        serialized = str(value)
+        return serialized.lower() if entry_type == 'bool' else serialized
+
+    def __getitem__(self, key):
+        """Override to handle cast values"""
+        entry = self.get_entry(key)
+        if self.cast_values:
+            return self.cast_value(entry)
+        return entry
+
+    def __setitem__(self, key, value):
+        """Override to handle cast values"""
+        if self.cast_values:
+            # Can only set values for existing entries when cast.
+            entry = self.get_entry(key)
+            entry['value'] = self.serialized_value(value, entry['type'])
+        else:
+            self.add_entry(key, value)
+
+    def add_entry(self, key, value):
+        """Adds a configuration parameter."""
+        self.check_valid_entry(key, value)
+        super().__setitem__(key, value)
+
+    def get_entry(self, key):
+        """Get the non-cast entry associated with the given key."""
+        return super().__getitem__(key)
+
+    def get(self, key, d=None):
+        """Override to handle cast values"""
+        entry = super().get(key, d)
+        if self.cast_values and entry != d:
+            return self.cast_value(entry)
+        return entry
+
+    def entries(self):
+        """Uncast items"""
+        return super().items()
+
+    def items(self):
+        """Override to handle cast values"""
+        if self.cast_values:
+            return [(key, self.cast_value(entry))
+                    for key, entry in self.entries()]
+        return self.entries()
+
+    def values(self):
+        """Override to handle cast values"""
+        vals = super().values()
+        if self.cast_values:
+            return [self.cast_value(entry) for entry in vals]
+        return vals
+
+    def update(self, *args, **kwargs):
+        """Override to ensure update uses __setitem___"""
+        for key, value in dict(*args, **kwargs).items():
+            self[key] = value
+
+    def copy(self):
+        """Override
+        """
+        params = Parameters(source=None, cast_values=self.cast_values)
+        params.load(super().copy())
+        return params
+
+    def load(self, data: dict):
+        """Load values from a dict, validating entries (see check_valid_entry) and raising
+        an exception for invalid values.
+
+        data: dict of configuration parameters.
+        """
+        for name, entry in data.items():
+            self.add_entry(name, entry)
+
+    def load_from_source(self):
+        """Load data from the configured JSON file."""
+        if self.source:
+            with codecsopen(self.source, 'r', encoding='utf-8') as json_file:
+                data = load(json_file)
+                self.load(data)
+
+    def check_valid_entry(self, entry_name: str, entry: dict):
+        """Checks if the given entry is valid. Raises an exception unless the entry is formatted:
+
+        "fake_data": {
+            "value": "true",
+            "section": "bci_config",
+            "readableName": "Fake Data Sessions",
+            "helpTip": "If true, fake data server used",
+            "recommended_values": "",
+            "type": "bool"
+        }
+
+        entry_name : str - name of the configuration parameter
+        entry : dict - parameter properties
+        """
+        if not isinstance(entry, abc.Mapping):
+            raise AttributeError(f"'{entry_name}' value must be a dict")
+        if set(entry.keys()) != self.required_keys:
+            raise Exception(
+                f"Incorrect format for key: {entry_name}; value must contain required keys"
+            )
+        if entry['type'] not in self.supported_types:
+            raise Exception(
+                f"Type not supported for key: {entry_name}, type: {entry['type']}"
+            )
+
+    def source_directory(self):
+        """Location of the source json data if source was provided."""
+        if self.source:
+            path = Path(self.source)
+            return Path(*path.parts[0:-1])
+        return None
+
+    def save(self, directory: str = None, name: str = 'parameters.json'):
+        """Save parameters to the given location
+
+        directory: str - optional location to save; default is the source_directory.
+        name: str - optional name of new parameters file
+
+        Returns the path of the saved file.
+        """
+        if not directory and not self.source:
+            raise AttributeError('directory is required')
+        location = directory if directory else self.source_directory()
+        path = Path(location, name)
+        with open(path, 'w', encoding='utf-8') as json_file:
+            dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)
+        return str(path)
