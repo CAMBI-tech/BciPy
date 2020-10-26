@@ -4,7 +4,7 @@ from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_signal_model
+from bcipy.helpers.load import load_signal_model, DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
@@ -37,6 +37,8 @@ def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, exper
 
     # Update property to reflect the parameter source
     parameters['parameter_location'] = parameter_location
+    if parameter_location != DEFAULT_PARAMETERS_PATH:
+        parameters.save()
 
     # update our parameters file with system related information
     sys_info = get_system_info()
