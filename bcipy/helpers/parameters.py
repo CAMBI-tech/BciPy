@@ -1,5 +1,5 @@
 """Module for functionality related to system configuration"""
-
+from typing import Tuple
 from codecs import open as codecsopen
 from collections import abc
 from json import dump, load
@@ -156,25 +156,31 @@ class Parameters(dict):
                 f"Type not supported for key: {entry_name}, type: {entry['type']}"
             )
 
-    def source_directory(self):
-        """Location of the source json data if source was provided."""
+    def source_location(self) -> Tuple[Path, str]:
+        """Location of the source json data if source was provided.
+
+        Returns Tuple(Path, filename: str)
+        """
         if self.source:
             path = Path(self.source)
-            return Path(*path.parts[0:-1])
-        return None
+            return (Path(*path.parts[0:-1]), path.parts[-1])
+        return (None, None)
 
-    def save(self, directory: str = None, name: str = 'parameters.json'):
+    def save(self, directory: str = None, name: str = None):
         """Save parameters to the given location
 
         directory: str - optional location to save; default is the source_directory.
-        name: str - optional name of new parameters file
+        name: str - optional name of new parameters file; default is the source filename.
 
         Returns the path of the saved file.
         """
-        if not directory and not self.source:
-            raise AttributeError('directory is required')
-        location = directory if directory else self.source_directory()
-        path = Path(location, name)
+        if (not directory or not name) and not self.source:
+            raise AttributeError('name and directory parameters are required')
+
+        source_directory, source_name = self.source_location()
+        location = directory if directory else source_directory
+        filename = name if name else source_name
+        path = Path(location, filename)
         with open(path, 'w', encoding='utf-8') as json_file:
             dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)
         return str(path)

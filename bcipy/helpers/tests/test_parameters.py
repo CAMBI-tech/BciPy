@@ -319,8 +319,12 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(list(parameters.keys()), ['acq_port', 'acq_device'])
         self.assertEqual(list(parameters.values()), [8000, 'LSL'])
 
-    def test_save(self):
-        """Test saving data to a json file"""
+        parameters.cast_values = False
+        for value in parameters.values():
+            self.assertEqual(type(value), dict)
+
+    def test_save_as(self):
+        """Test saving data to a new json file"""
 
         parameters = Parameters(source=self.parameters_location)
         name = 'parameters_copy.json'
@@ -330,6 +334,98 @@ class TestParameters(unittest.TestCase):
         params2 = Parameters(source=source, cast_values=False)
 
         self.assertEqual(parameters, params2)
+
+    def test_save(self):
+        """Test saving to overwrite source file."""
+
+        # Save a copy to the temp directory
+        parameters = Parameters(source=self.parameters_location,
+                                cast_values=True)
+        name = 'parameters_copy.json'
+        parameters.save(directory=self.temp_dir, name=name)
+
+        source = str(Path(self.temp_dir, name))
+        params2 = Parameters(source=source, cast_values=True)
+        self.assertEqual(parameters, params2)
+
+        # Change a parameter and overwrite
+        self.assertTrue(parameters['parameter_location'] != source)
+        params2['parameter_location'] = source
+        params2.save()
+
+        # Load from the save file and confirm that saved values persisted
+        params3 = Parameters(source=source, cast_values=True)
+        self.assertEqual(params3['parameter_location'], source)
+        self.assertEqual(params3, params2)
+        self.assertNotEqual(params3, parameters)
+
+    def test_save_new(self):
+        """Test saving a new params file."""
+        parameters = Parameters(source=None, cast_values=False)
+        parameters['mystr'] = {
+            "value": "hello",
+            "section": "",
+            "readableName": "",
+            "helpTip": "",
+            "recommended_values": "",
+            "type": "str"
+        }
+        with self.assertRaises(Exception):
+            # Missing directory and file name
+            parameters.save()
+
+        with self.assertRaises(Exception):
+            parameters.save(directory=self.temp_dir)
+        with self.assertRaises(Exception):
+            parameters.save(name='my_params.json')
+
+        parameters.save(directory=self.temp_dir, name='my_params.json')
+
+    def test_items(self):
+        """Test items"""
+        parameters = Parameters(source=None, cast_values=False)
+        parameters['mystr'] = {
+            "value": "hello",
+            "section": "",
+            "readableName": "",
+            "helpTip": "",
+            "recommended_values": "",
+            "type": "str"
+        }
+        self.assertEqual(len(parameters.items()), 1)
+        for key, val in parameters.items():
+            self.assertEqual(key, 'mystr')
+            self.assertEqual(type(val), dict)
+
+        parameters.cast_values = True
+        self.assertEqual(len(parameters.items()), 1)
+        for key, val in parameters.items():
+            self.assertEqual(key, 'mystr')
+            self.assertEqual(val, 'hello')
+
+    def test_copy(self):
+        """Test copy"""
+        parameters = Parameters(source=self.parameters_location,
+                                cast_values=True)
+        params_copy = parameters.copy()
+
+        self.assertEqual(params_copy.source, None)
+        self.assertEqual(params_copy.cast_values, parameters.cast_values)
+        self.assertEqual(params_copy.values(), parameters.values())
+
+    def test_check_entry(self):
+        parameters = Parameters(source=None, cast_values=False)
+        parameters.check_valid_entry(
+            "fake_data", {
+                "value": "true",
+                "section": "bci_config",
+                "readableName": "Fake Data Sessions",
+                "helpTip": "If true, fake data server used",
+                "recommended_values": "",
+                "type": "bool"
+            })
+        with self.assertRaises(Exception):
+            parameters.check_valid_entry("fake_data", True)
 
 
 if __name__ == '__main__':
