@@ -68,11 +68,7 @@ def init_save_data_structure(data_save_path: str,
         os.makedirs(save_directory)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
-    try:
-        copyfile(parameters, Path(save_directory, 'parameters.json'))
-        # save_json_data(parameters, location=save_directory, name='parameters.json')
-    except IOError as error:
-        raise error
+    copyfile(parameters, Path(save_directory, 'parameters.json'))
 
     return save_directory
 
