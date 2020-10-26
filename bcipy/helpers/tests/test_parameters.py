@@ -12,12 +12,13 @@ class TestParameters(unittest.TestCase):
     """Tests for loading and saving Parameters."""
 
     def setUp(self):
-        """set up the needed path for load functions."""
+        """Override; set up the needed path for load functions."""
 
         self.parameters_location = 'bcipy/parameters/parameters.json'
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
+        """Override"""
         shutil.rmtree(self.temp_dir)
 
     def test_load_json_parameters_returns_dict(self):
@@ -33,19 +34,19 @@ class TestParameters(unittest.TestCase):
             Parameters(source='/garbage/dir/wont/work')
 
     def test_load_initializes_parameters(self):
-        """Test load parameters initializes data"""
+        """Test load parameters initializes data."""
         parameters = Parameters(source=self.parameters_location)
         self.assertTrue(len(parameters) > 0)
 
     def test_initialization_without_source(self):
-        """Test parameter initialization without a JSON source file"""
+        """Test parameter initialization without a JSON source file."""
 
         parameters = Parameters(source=None)
         self.assertTrue(isinstance(parameters, abc.MutableMapping))
         self.assertEqual(len(parameters), 0)
 
     def test_load_data(self):
-        """Test load data"""
+        """Test load data."""
         sample_config = {
             "fake_data": {
                 "value": "true",
@@ -102,7 +103,7 @@ class TestParameters(unittest.TestCase):
             parameters.load(data_with_unsupported_type)
 
     def test_cast_values(self):
-        """Test cast_values"""
+        """Test cast_values."""
 
         sample_config = {
             "myint": {
@@ -142,12 +143,18 @@ class TestParameters(unittest.TestCase):
         parameters.load(sample_config)
 
         self.assertEqual(parameters['myint'], 1)
-        self.assertEqual(parameters.get('myint', 0), 1)
+        self.assertEqual(parameters.get('myint', 0), 1,
+                         'Should support `get` method with a default value')
+        self.assertEqual(
+            parameters.get('myint'), 1,
+            'Should support `get` method without a default value')
+
         self.assertEqual(parameters['mybool'], True)
         self.assertEqual(parameters.get('mybool', False), True)
         self.assertEqual(parameters['mypath'],
                          'bcipy/parameters/parameters.json')
         self.assertEqual(parameters['mystr'], 'hello')
+        self.assertEqual(parameters.get('mystr'), 'hello')
         self.assertFalse(parameters.get('missing_param', False))
 
         parameters.cast_values = False
