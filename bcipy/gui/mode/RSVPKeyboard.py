@@ -8,7 +8,7 @@ import subprocess
 import wx
 
 from bcipy.gui.gui_main import BCIGui
-from bcipy.helpers.load import load_json_parameters, copy_default_parameters
+from bcipy.helpers.load import load_json_parameters, copy_parameters
 from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
 
 from bcipy.tasks.task_registry import ExperimentType
@@ -58,7 +58,7 @@ class RSVPKeyboard(BCIGui):
                     'Info', wx.OK | wx.CANCEL) as confirm_dialog:
                 response = confirm_dialog.ShowModal()
                 if response == wx.ID_OK:
-                    self.parameter_location = copy_default_parameters()
+                    self.parameter_location = copy_parameters()
                 else:
                     return
 

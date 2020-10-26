@@ -1,12 +1,13 @@
 import unittest
 
+from collections import abc
 import tempfile
 import shutil
 import pickle
 
 from bcipy.helpers.load import (load_json_parameters, load_signal_model,
-                                copy_default_parameters)
-
+                                copy_parameters)
+from bcipy.helpers.parameters import Parameters
 
 class TestLoad(unittest.TestCase):
     """This is Test Case for Loading BCI data."""
@@ -26,8 +27,9 @@ class TestLoad(unittest.TestCase):
         # call the load parameters function
         parameters = load_json_parameters(self.parameters)
 
-        # assert that load function turned json parameters into a dict
-        self.assertTrue(type(parameters), 'dict')
+        # assert that load function turned json parameters into a dict-like obj
+        self.assertEqual(type(parameters), Parameters)
+        self.assertTrue(isinstance(parameters, abc.MutableMapping))
 
     def test_load_json_parameters_throws_error_on_wrong_path(self):
         """Test load parameters returns error on entering wrong path."""
@@ -51,7 +53,7 @@ class TestLoad(unittest.TestCase):
 
     def test_copy_default_parameters(self):
         """Test that default parameters can be copied."""
-        path = copy_default_parameters(self.temp_dir)
+        path = copy_parameters(destination=self.temp_dir)
 
         self.assertTrue(path != self.parameters)
 

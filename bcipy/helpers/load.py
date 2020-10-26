@@ -8,6 +8,7 @@ from json import load as jsonload
 from shutil import copyfile
 from pathlib import Path
 import pickle
+from bcipy.helpers.parameters import Parameters, DEFAULT_PARAMETERS_PATH
 
 from tkinter.filedialog import askopenfilename, askdirectory
 
@@ -15,45 +16,9 @@ log = logging.getLogger(__name__)
 
 DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
 
-def _cast_parameters(parameters: dict) -> dict:
-    """Cast to Value.
 
-    Take in a parameters dictionary and coverts to a dictionary with type converted
-        and extranous information removed.
-    """
-    new_parameters = {}
-    for key, value in parameters.items():
-        new_parameters[key] = cast_value(value)
-
-    return new_parameters
-
-
-def cast_value(value):
-    """Cast Value.
-
-    Takes in a value with a desired type and attempts to cast it to that type.
-    """
-    actual_value = str(value['value'])
-    actual_type = value['type']
-
-    try:
-        if actual_type == 'int':
-            new_value = int(actual_value)
-        elif actual_type == 'float':
-            new_value = float(actual_value)
-        elif actual_type == 'bool':
-            new_value = True if actual_value == 'true' else False
-        elif actual_type == 'str' or 'path' in actual_type:
-            new_value = str(actual_value)
-        else:
-            raise ValueError('Unrecognized value type')
-
-    except Exception:
-        raise ValueError(f'Could not cast {actual_value} to {actual_type}')
-
-    return new_value
-
-def copy_default_parameters(destination: str = 'bcipy/parameters/') -> str:
+def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
+                    destination: str = 'bcipy/parameters/') -> str:
     """Creates a copy of the default configuration (parameters.json) to the
     given directory and returns the path
 
@@ -71,13 +36,14 @@ def copy_default_parameters(destination: str = 'bcipy/parameters/') -> str:
     hour = str(now.hour).rjust(2, "0")
     minute = str(now.minute).rjust(2, "0")
     second = str(now.second).rjust(2, "0")
-    filename =  f'parameters_{now.year}-{month}-{day}_{hour}h{minute}m{second}s.json'
+    filename = f'parameters_{now.year}-{month}-{day}_{hour}h{minute}m{second}s.json'
 
     path = str(Path(destination, filename))
     copyfile(DEFAULT_PARAMETERS_PATH, path)
     return path
 
-def load_json_parameters(path: str, value_cast: bool = False) -> dict:
+
+def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     """Load JSON Parameters.
 
     Given a path to a json of parameters, convert to a dictionary and optionally
@@ -97,26 +63,12 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     ----------
     :param: path: string path to the parameters file.
     :param: value_case: True/False cast values to specified type.
+
+    Returns
+    -------
+        a Parameters object that behaves like a dict.
     """
-    # loads in json parameters and turns it into a dictionary
-    try:
-        with codecsopen(path, 'r', encoding='utf-8') as f:
-            parameters = []
-            try:
-                parameters = jsonload(f)
-
-                if value_cast:
-                    parameters = _cast_parameters(parameters)
-            except ValueError:
-                raise ValueError(
-                    "Parameters file is formatted incorrectly!")
-
-        f.close()
-
-    except IOError:
-        raise IOError("Incorrect path to parameters given! Please try again.")
-
-    return parameters
+    return Parameters(source=path, cast_values=value_cast)
 
 
 def load_experimental_data() -> str:
