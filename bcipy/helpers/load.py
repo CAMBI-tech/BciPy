@@ -1,56 +1,46 @@
-from tkinter import Tk
-import numpy as np
-import pandas as pd
 import logging
+import pickle
 from codecs import open as codecsopen
 from json import load as jsonload
-import pickle
+from pathlib import Path
+from shutil import copyfile
+from time import localtime, strftime
+from tkinter import Tk
+from tkinter.filedialog import askdirectory, askopenfilename
 
-from tkinter.filedialog import askopenfilename, askdirectory
+import numpy as np
+import pandas as pd
+
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 
 log = logging.getLogger(__name__)
 
 
-def _cast_parameters(parameters: dict) -> dict:
-    """Cast to Value.
+def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
+                    destination: str = None) -> str:
+    """Creates a copy of the given configuration (parameters.json) to the
+    given directory and returns the path.
 
-    Take in a parameters dictionary and coverts to a dictionary with type converted
-        and extranous information removed.
+    Parameters:
+    -----------
+        path: str - optional path of parameters file to copy; used default if not provided.
+        destination: str - optional destination directory; default is the same
+          directory as the default parameters.
+    Returns:
+    --------
+        path to the new file.
     """
-    new_parameters = {}
-    for key, value in parameters.items():
-        new_parameters[key] = cast_value(value)
+    default_dir = str(Path(DEFAULT_PARAMETERS_PATH).parent)
 
-    return new_parameters
+    destination = default_dir if destination is None else destination
+    filename = strftime('parameters_%Y-%m-%d_%Hh%Mm%Ss.json', localtime())
 
-
-def cast_value(value):
-    """Cast Value.
-
-    Takes in a value with a desired type and attempts to cast it to that type.
-    """
-    actual_value = str(value['value'])
-    actual_type = value['type']
-
-    try:
-        if actual_type == 'int':
-            new_value = int(actual_value)
-        elif actual_type == 'float':
-            new_value = float(actual_value)
-        elif actual_type == 'bool':
-            new_value = True if actual_value == 'true' else False
-        elif actual_type == 'str' or 'path' in actual_type:
-            new_value = str(actual_value)
-        else:
-            raise ValueError('Unrecognized value type')
-
-    except Exception:
-        raise ValueError(f'Could not cast {actual_value} to {actual_type}')
-
-    return new_value
+    path = str(Path(destination, filename))
+    copyfile(DEFAULT_PARAMETERS_PATH, path)
+    return path
 
 
-def load_json_parameters(path: str, value_cast: bool = False) -> dict:
+def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     """Load JSON Parameters.
 
     Given a path to a json of parameters, convert to a dictionary and optionally
@@ -70,26 +60,12 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     ----------
     :param: path: string path to the parameters file.
     :param: value_case: True/False cast values to specified type.
+
+    Returns
+    -------
+        a Parameters object that behaves like a dict.
     """
-    # loads in json parameters and turns it into a dictionary
-    try:
-        with codecsopen(path, 'r', encoding='utf-8') as f:
-            parameters = []
-            try:
-                parameters = jsonload(f)
-
-                if value_cast:
-                    parameters = _cast_parameters(parameters)
-            except ValueError:
-                raise ValueError(
-                    "Parameters file is formatted incorrectly!")
-
-        f.close()
-
-    except IOError:
-        raise IOError("Incorrect path to parameters given! Please try again.")
-
-    return parameters
+    return Parameters(source=path, cast_values=value_cast)
 
 
 def load_experimental_data() -> str:

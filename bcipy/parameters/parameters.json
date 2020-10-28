@@ -82,6 +82,7 @@
     "section": "bci_config",
     "readableName": "Offline Analysis Alert Tone",
     "helpTip": "Specifies the path to an audio file to be played as an alert tone when offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
+    "recommended_values": "",
     "type": "directorypath"
   },
   "filter_high": {
