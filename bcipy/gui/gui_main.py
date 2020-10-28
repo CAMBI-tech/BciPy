@@ -1,77 +1,125 @@
 import os
-import wx
-import wx.lib.agw.gradientbutton as GB
-import wx.lib.agw.aquabutton as AB
-import wx.lib.buttons as buttons
+import sys
+import json
+from time import localtime, strftime
+import logging
+
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import (
+    QApplication,
+    QWidget,
+    QPushButton,
+    QAction,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QGridLayout,
+    QSpinBox,
+    QDoubleSpinBox,
+    QMessageBox)
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import pyqtSlot
 
 
-class BCIGui(wx.Frame):
-    """BCIGui."""
+class BCIGui(QtWidgets.QMainWindow):
+    """GUI for BCIGui."""
 
-    def __init__(self, title: str, size: tuple,
-                 background_color: str = 'blue', parent: wx.Frame = None):
-        """Init."""
-        super(BCIGui, self).__init__(
-            parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+    title = 'BciPy Main GUI'
 
-        self.panel = wx.Panel(self)
-        self.SetBackgroundColour(background_color)
+    def __init__(self, title: str, width: int, height: int, background_color: str):
+        super(BCIGui, self).__init__()
 
+        
+        self.window = QWidget()
         self.buttons = []
         self.input_text = []
         self.static_text = []
         self.images = []
         self.comboboxes = []
 
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(name)s - %(levelname)s - %(message)s')
+        self.logger = logging
+
+        # determines where on the screen the gui first appears
+        self.x = 500
+        self.y = 250
+
+        self.title = title
+
+        # determines height/width of window
+        self.width = width
+        self.height = height
+
     def show_gui(self):
         """Show GUI."""
-        self.Show(True)
+        self.init_ui()
 
     def close_gui(self):
         pass
 
-    def add_button(self, message: str, position: tuple, size: tuple,
+    def init_ui(self):
+        """Init UI."""
+        # create a grid system to keep everythin aligned
+        self.grid = QGridLayout()
+        self.grid.setSpacing(2)
+
+        # main window setup
+        self.window.setWindowTitle(self.title)
+        self.window.setGeometry(self.x, self.y, self.width, self.height)
+
+        # inputs and buttons
+        # self.create_inputs((100, 50), 'button')
+        self.window.setLayout(self.grid)
+
+        # show the window
+        self.window.show()
+
+    @pyqtSlot()
+    def default_on_clicked(self):
+        print('clicked!')
+    
+    def add_button(self, message: str, position: list, size: list,
                    button_type: str = None, color: str = None,
-                   action: str = 'default', id=-1) -> None:
-        """Add Button."""
-        # Button Type
-        if button_type == 'gradient_button':
-            btn = GB.GradientButton(
-                self.panel, label=message, pos=position, size=size)
-        elif button_type == 'aqua_button':
-            btn = AB.AquaButton(
-                self.panel, label=message, pos=position, size=size)
-        else:
-            btn = buttons.GenButton(
-                self.panel, label=message, pos=position, size=size, id=id)
-
-            # You can really only set colors with GenButtons as the others
-            #  use native widgets!
-            if color:
-                btn.SetBackgroundColour(color)
-
-        # Attach Custom Actions
-        self.bind_action(action, btn)
+                   action = default_on_clicked, id=-1) -> None:
+        """Add Button.
+        
+        Size : width and height in pixels
+        """
+        btn = QPushButton(message, self.window)
+        btn.move(position[0], position[1])
+        btn.resize(size[0], size[1])
+        btn.clicked.connect(action)
 
         self.buttons.append(btn)
 
-    def bind_action(self, action: str, btn) -> None:
-        """Default action for buttons or comboboxes that do not have an action
-        assigned"""
-        if action == 'default':
-            if isinstance(btn, wx.Button):
-                self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
-            elif isinstance(btn, wx.ComboBox):
-                self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.on_dropdown, btn)
+    def add_image(self, path: str, position: list, size: int) -> None:
+        """Add Image."""
+        if os.path.isfile(path):
+            labelImage = QLabel(self.window)
+            pixmap = QPixmap(path)
+            labelImage.setPixmap(pixmap)
+            width = pixmap.width()
+            height = pixmap.height()
 
-    def add_text_input(self, position: tuple, size: tuple) -> None:
-        """Add Text Input."""
-        input_text = wx.TextCtrl(self.panel, pos=position, size=size)
-        self.input_text.append(input_text)
+            if width > height:
+                new_width = size
+                new_height = size * height / width
+            else:
+                new_height = size
+                new_width = size * width / height
+
+            labelImage.resize(new_width, new_height)
+            labelImage.move(position[0], position[1])
+
+            self.images.append(labelImage)
+        else:
+            raise Exception('Invalid path to image provided')
 
     def add_static_text(self, text: str, position: str,
                         color: str, size: int,
-                        font_family: wx.Font = wx.FONTFAMILY_SWISS) -> None:
+                        font_family=None) -> None:
         """Add Text."""
 
         static_text = wx.StaticText(
@@ -87,55 +135,24 @@ class BCIGui(wx.Frame):
 
         self.static_text.append(static_text)
 
-    def add_combobox(self, position: tuple, size: tuple,
-                     action: str = 'default') -> None:
-        """Add combobox."""
-        combobox = wx.ComboBox(self.panel, pos=position, size=size)
-        self.comboboxes.append(combobox)
-        self.bind_action(action, combobox)
+def app(args):
+    """Main app registry.
 
-    def add_image(self, path: str, position: tuple, size: int) -> None:
-        """Add Image."""
-        if os.path.isfile(path):
-            img = wx.Image(path, wx.BITMAP_TYPE_ANY)
-            # scale the image, preserving the aspect ratio
-            width = img.GetWidth()
-            height = img.GetHeight()
+    Passes args from main and initializes the app
+    """
+    return QApplication(args)
 
-            if width > height:
-                new_width = size
-                new_height = size * height / width
-            else:
-                new_height = size
-                new_width = size * width / height
 
-            img = img.Scale(new_width, new_height)
-            img = img.ConvertToBitmap()
-            bmp = wx.StaticBitmap(self.panel, pos=position, bitmap=img)
+def start_app():
+    """Start BCIGui."""
+    bcipy_gui = app(sys.argv)
+    ex = BCIGui('title', 400, 400, 'blue')
 
-            self.images.append(bmp)
+    ex.add_button(message='test', position=[200, 300], size=[100, 100], id=1)
+    ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
+    ex.show_gui()
 
-        else:
-            print('INVALID PATH')
-
-    def on_clicked(self, event):
-        """on_clicked.
-
-        Default event to bind to buttons
-        """
-        btn = event.GetEventObject().GetLabel()
-        print(f'pressed {btn}')
-
-    def on_dropdown(self, event):
-        """on_dropdown.
-
-        Default event to bind to comboboxes
-        """
-        print('dropdown selected')
-
+    sys.exit(bcipy_gui.exec_())
 
 if __name__ == '__main__':
-    app = wx.App(False)
-    gui = BCIGui(title="BCIGui", size=(650, 650), background_color='black')
-    gui.show_gui()
-    app.MainLoop()
+    start_app()
