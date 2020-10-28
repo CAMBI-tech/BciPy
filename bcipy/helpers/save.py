@@ -1,25 +1,42 @@
 import errno
 import os
 from time import localtime, strftime
-from shutil import copy2
+from shutil import copyfile
+from pathlib import Path
 import json
 
 
 DEFAULT_EXPERIMENT_ID = 'default'
 
 
+def save_json_data(data: dict, location: str, name: str) -> str:
+    """
+    Writes Parameters as a json file.
+
+        parameters[dict]: dict of configuration
+        location[str]: directory in which to save
+        name[str]: optional name of file; default is parameters.json
+
+    Returns path of saved file
+    """
+    path = Path(location, name)
+    with open(Path(location, name), 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=2)
+    return str(path)
+
+
 def init_save_data_structure(data_save_path: str,
                              user_id: str,
-                             parameters_path: str,
+                             parameters: str,
                              experiment_id: str = DEFAULT_EXPERIMENT_ID,
                              mode: str = None,
                              experiment_type: int = None):
     """
-    Initialize Save Data Strucutre.
+    Initialize Save Data Structure.
 
         data_save_path[str]: string of path to save our data in
         user_id[str]: string of user name / related information
-        parameters_path[str]: a path to parameters file for the experiment
+        parameters[str]: parameter location for the experiment
         experiment_id[str]: Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
         mode[str]: BCI mode. Ex. RSVP, SHUFFLE, MATRIX
         experiment_type[int]: type of experiment. Ex. 1 = calibration
@@ -51,16 +68,7 @@ def init_save_data_structure(data_save_path: str,
         os.makedirs(save_directory)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
-    try:
-        # Check that parameters file given is a real file
-        if (os.path.isfile(parameters_path)):
-            # Copy over parameters file
-            copy2(parameters_path, save_directory)
-        else:
-            raise Exception('Parameter File Not Found!')
-
-    except IOError as error:
-        raise error
+    copyfile(parameters, Path(save_directory, 'parameters.json'))
 
     return save_directory
 

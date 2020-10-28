@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+import tempfile
 from bcipy.helpers import save
 from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
 from mockito import any, unstub, when
@@ -12,7 +13,7 @@ class TestSave(unittest.TestCase):
     def setUp(self):
         # set up the needed paths and initial data save structure
 
-        self.data_save_path = 'data/'
+        self.data_save_path = tempfile.mkdtemp()
         self.user_information = 'test_user_002'
         self.parameters_used = 'bcipy/parameters/parameters.json'
 
