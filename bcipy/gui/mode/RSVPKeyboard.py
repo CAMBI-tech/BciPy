@@ -9,7 +9,7 @@ import wx
 
 from bcipy.gui.gui_main import BCIGui
 from bcipy.helpers.load import load_json_parameters, copy_parameters
-from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
 from bcipy.tasks.task_registry import ExperimentType
 
@@ -73,7 +73,6 @@ class RSVPKeyboard(BCIGui):
             username = self.comboboxes[0].GetValue().replace(" ", "_")
             experiment_type = event.GetEventObject().GetId()
             mode = 'RSVP'
-            # TODO: add -p flag and use configured parameter_location
             cmd = 'python bci_main.py -m {} -t {} -u {} -p {}'.format(
                 mode, experiment_type, username, self.parameter_location)
 

@@ -1,42 +1,39 @@
-from datetime import datetime
-from tkinter import Tk
-import numpy as np
-import pandas as pd
 import logging
+import pickle
 from codecs import open as codecsopen
 from json import load as jsonload
-from shutil import copyfile
 from pathlib import Path
-import pickle
-from bcipy.helpers.parameters import Parameters, DEFAULT_PARAMETERS_PATH
+from shutil import copyfile
+from time import localtime, strftime
+from tkinter import Tk
+from tkinter.filedialog import askdirectory, askopenfilename
 
-from tkinter.filedialog import askopenfilename, askdirectory
+import numpy as np
+import pandas as pd
+
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 
 log = logging.getLogger(__name__)
 
-DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
-
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
-                    destination: str = 'bcipy/parameters/') -> str:
-    """Creates a copy of the default configuration (parameters.json) to the
-    given directory and returns the path
+                    destination: str = None) -> str:
+    """Creates a copy of the given configuration (parameters.json) to the
+    given directory and returns the path.
 
     Parameters:
     -----------
+        path: str - optional path of parameters file to copy; used default if not provided.
         destination: str - optional destination directory; default is the same
           directory as the default parameters.
     Returns:
     --------
         path to the new file.
     """
-    now = datetime.now()
-    month = str(now.month).rjust(2, "0")
-    day = str(now.day).rjust(2, "0")
-    hour = str(now.hour).rjust(2, "0")
-    minute = str(now.minute).rjust(2, "0")
-    second = str(now.second).rjust(2, "0")
-    filename = f'parameters_{now.year}-{month}-{day}_{hour}h{minute}m{second}s.json'
+    default_dir = str(Path(DEFAULT_PARAMETERS_PATH).parent)
+
+    destination = default_dir if destination is None else destination
+    filename = strftime('parameters_%Y-%m-%d_%Hh%Mm%Ss.json', localtime())
 
     path = str(Path(destination, filename))
     copyfile(DEFAULT_PARAMETERS_PATH, path)

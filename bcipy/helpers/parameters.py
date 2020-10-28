@@ -163,7 +163,7 @@ class Parameters(dict):
         """
         if self.source:
             path = Path(self.source)
-            return (Path(*path.parts[0:-1]), path.parts[-1])
+            return (path.parent, path.name)
         return (None, None)
 
     def save(self, directory: str = None, name: str = None):

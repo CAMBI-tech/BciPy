@@ -331,7 +331,6 @@ class MainPanel(scrolled.ScrolledPanel):
             label='Set values from another file',
             size=14)
         loading_box.Add(self.loaded_from)
-        # loading_box.AddSpacer(5)
 
         self.loadButton = wx.Button(self, label='Load')
         self.loadButton.Bind(wx.EVT_BUTTON, self.onLoad)
@@ -382,7 +381,7 @@ def main(json_file, title='BCI Parameters', size=(650, 550)):
 
 if __name__ == '__main__':
     import argparse
-    from bcipy.helpers.load import DEFAULT_PARAMETERS_PATH
+    from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
     parser = argparse.ArgumentParser()
 
