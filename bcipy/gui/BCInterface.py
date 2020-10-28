@@ -37,6 +37,11 @@ class BCInterface(BCIGui):
     def build_text(self):
         self.add_static_text(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
 
+    def build_assets(self):
+        self.build_buttons()
+        self.build_images()
+        self.build_text()
+
 
 def start_app():
     """Start BCIGui."""
@@ -46,11 +51,6 @@ def start_app():
         height=500,
         width=700,
         background_color='black')
-
-    ex.build_buttons()
-    ex.build_images()
-    ex.build_text()
-
 
     ex.show_gui()
 

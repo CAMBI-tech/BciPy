@@ -71,9 +71,13 @@ class BCIGui(QtWidgets.QMainWindow):
 
     def show_gui(self):
         """Show GUI."""
+        self.build_assets()
         self.init_ui()
 
     def close_gui(self):
+        pass
+
+    def build_assets(self):
         pass
     
     def init_ui(self):

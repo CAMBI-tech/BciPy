@@ -4,14 +4,20 @@ import datetime
 import itertools
 import os
 import subprocess
-
+import sys
 import wx
 
-from bcipy.gui.gui_main import BCIGui
+from bcipy.gui.gui_main import BCIGui, app, PushButton
 from bcipy.helpers.load import load_json_parameters, copy_parameters
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
 from bcipy.tasks.task_registry import ExperimentType
+
+tasks = ExperimentType.by_mode()['RSVP']
+# TODO load from config?
+side_padding = 15
+btn_width_apart = 105
+btn_padding = 20
 
 class RSVPKeyboard(BCIGui):
     """GUI for launching the RSVP tasks."""
@@ -21,23 +27,10 @@ class RSVPKeyboard(BCIGui):
         self.event_started = False
         self.parameter_location = DEFAULT_PARAMETERS_PATH
 
-    def bind_action(self, action: str, btn) -> None:
-        if action == 'launch_bci':
-            self.Bind(wx.EVT_BUTTON, self.launch_bci_main, btn)
-        elif action == 'edit_parameters':
-            self.Bind(wx.EVT_BUTTON, self.edit_parameters, btn)
-        elif action == 'select_parameters':
-            self.Bind(wx.EVT_BUTTON, self.select_parameters, btn)
-        elif action == 'refresh':
-            self.Bind(wx.EVT_BUTTON, self.refresh, btn)
-        elif action == 'offline_analysis':
-            self.Bind(wx.EVT_BUTTON, self.offline_analysis, btn)
-        elif action == 'load_items_from_txt':
-            self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.load_items_from_txt, btn)
-        else:
-            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
+        self.task_colors = itertools.cycle(
+            ['blue', 'green', 'yellow', 'red', 'limegreen', 'gray', 'pink'])
 
-    def select_parameters(self, _event) -> None:
+    def select_parameters(self) -> None:
         """Dialog to select the parameters.json configuration to use."""
         with wx.FileDialog(self,
                            'Select parameters file',
@@ -46,7 +39,7 @@ class RSVPKeyboard(BCIGui):
             if fd.ShowModal() != wx.ID_CANCEL:
                 self.parameter_location = fd.GetPath()
 
-    def edit_parameters(self, _event) -> None:
+    def edit_parameters(self) -> None:
         """Edit Parameters. Prompts for a parameters.json file to use. If the default parameters
         are selected a copy is used.
         """
@@ -66,7 +59,7 @@ class RSVPKeyboard(BCIGui):
             f'python bcipy/gui/params_form.py -p {self.parameter_location}',
             shell=True)
 
-    def launch_bci_main(self, event: wx.Event) -> None:
+    def launch_bci_main(self) -> None:
         """Launch BCI MAIN"""
         if self.check_input():
             self.event_started = True
@@ -99,19 +92,20 @@ class RSVPKeyboard(BCIGui):
             return False
         return True
 
-    def offline_analysis(self, _event: wx.Event) -> None:
+    def offline_analysis(self) -> None:
         """Run the offline analysis in a new Process."""
         cmd = 'python bcipy/signal/model/offline_analysis.py'
         self.event_started = True
         subprocess.Popen(cmd, shell=True)
 
-    def refresh(self, _event: wx.Event) -> None:
+    def refresh(self) -> None:
         self.event_started = False
 
-    def load_items_from_txt(self, _event):
+    def load_items_from_txt(self):
         """Loads user directory names from the data path defined in
         parameters.json, and adds those directory names as items to the user id
         selection combobox."""
+        saved_users = None
         parameters = load_json_parameters(
             self.parameter_location, value_cast=True)
         data_save_loc = parameters['data_save_loc']
@@ -121,90 +115,88 @@ class RSVPKeyboard(BCIGui):
             saved_users = os.listdir('bcipy/' + data_save_loc)
         else:
             raise IOError('User data save location not found')
-        self.comboboxes[0].Clear()
-        self.comboboxes[0].AppendItems(saved_users)
+        return saved_users
+
+    def build_buttons(self):
+        btn_size = [85, 80]
+        btn_pos_x = side_padding
+        btn_pos_y = 300
+        for task in tasks:
+            self.add_button(
+                message=task.label,
+                position=[btn_pos_x, btn_pos_y],
+                size=btn_size,
+                background_color=next(self.task_colors),
+                action=self.launch_bci_main,
+                id=task.value)
+            btn_pos_x += btn_width_apart
+
+        command_btn_height = 40
+        self.add_button(
+            message='Load Parameters', position=[side_padding, 450],
+            size=[105, command_btn_height], background_color='white',
+            action=self.select_parameters)
+        self.add_button(
+            message='Edit', position=[side_padding + 110, 450],
+            size=[50, command_btn_height], background_color='white',
+            action=self.edit_parameters)
+
+        btn_auc_width = 100
+        btn_auc_x = self.width - (2 * side_padding + btn_auc_width)
+        self.add_button(
+            message='Calculate AUC', position=(btn_auc_x, 450),
+            size=(btn_auc_width, command_btn_height), background_color='white',
+            action=self.offline_analysis)
+
+        btn_refresh_width = 50
+        btn_refresh_x = self.width - (2 * side_padding + btn_refresh_width)
+        self.add_button(
+            message='Refresh', position=[btn_refresh_x, 230],
+            size=[btn_refresh_width, command_btn_height], background_color='white',
+            action=self.refresh)
+
+    def build_inputs(self):
+        items = self.load_items_from_txt()
+        self.add_combobox(position=[75, 150], size=[250, 25], items=items)
+
+    def build_images(self):
+        self.add_image(
+            path='bcipy/static/images/gui_images/ohsu.png', position=[side_padding, 0], size=100)
+        self.add_image(
+            path='bcipy/static/images/gui_images/neu.png', position=[530, 0], size=100)
+
+    def build_text(self):
+        self.add_static_text(
+            text='RSVPKeyboard', position=[185, 0], size=[25, 25], text_color='white')
+        self.add_static_text(
+            text='1.) Enter a User ID:', position=[75, 110], size=[15, 15], text_color='white')
+        self.add_static_text(
+            text='2.) Choose your experiment type:',
+            position=[75, 250], size=[15, 15], text_color='white')
+
+    def build_assets(self):
+
+        self.build_buttons()
+        self.build_images()
+        self.build_text()
 
 
 def run_rsvp_gui():
     """Create the GUI and run"""
-    tasks = ExperimentType.by_mode()['RSVP']
-
-    task_colors = itertools.cycle(
-        [wx.Colour(221, 37, 56), wx.Colour(239, 146, 40),
-         wx.Colour(239, 212, 105), wx.Colour(117, 173, 48),
-         wx.Colour(62, 161, 232), wx.Colour(192, 122, 224),
-         wx.Colour(5, 62, 221)])
-
-    side_padding = 15
-    btn_width_apart = 105
-    btn_padding = 20
-
+    bcipy_gui = app(sys.argv)
     window_width = (len(tasks) * btn_width_apart) + btn_padding
     # Start the app and init the main GUI
-    app = wx.App(False)
     gui = RSVPKeyboard(
-        title="RSVPKeyboard", size=(window_width, 550), background_color='black')
+        title="RSVPKeyboard",
+        width=window_width,
+        height=550,
+        background_color='black')
 
-    # STATIC TEXT!
-    gui.add_static_text(
-        text='RSVPKeyboard', position=(185, 0), size=25, color='white')
-    gui.add_static_text(
-        text='1.) Enter a User ID:', position=(75, 110), size=15, color='white')
-    gui.add_static_text(
-        text='2.) Choose your experiment type:',
-        position=(75, 250), size=15, color='white')
-
-    # BUTTONS!
-    btn_size = (85, 80)
-    btn_pos_x = side_padding
-    btn_pos_y = 300
-    for task in tasks:
-        gui.add_button(
-            message=task.label,
-            position=(btn_pos_x, btn_pos_y),
-            size=btn_size,
-            color=next(task_colors),
-            action='launch_bci',
-            id=task.value)
-        btn_pos_x += btn_width_apart
-
-    command_btn_height = 40
-    gui.add_button(
-        message='Load Parameters', position=(side_padding, 450),
-        size=(105, command_btn_height), color='white',
-        action='select_parameters')
-    gui.add_button(
-        message='Edit', position=(side_padding + 110, 450),
-        size=(50, command_btn_height), color='white',
-        action='edit_parameters')
-
-    btn_auc_width = 100
-    btn_auc_x = window_width - (2 * side_padding + btn_auc_width)
-    gui.add_button(
-        message='Calculate AUC', position=(btn_auc_x, 450),
-        size=(btn_auc_width, command_btn_height), color='white',
-        action='offline_analysis')
-
-    btn_refresh_width = 50
-    btn_refresh_x = window_width - (2 * side_padding + btn_refresh_width)
-    gui.add_button(
-        message='Refresh', position=(btn_refresh_x, 230),
-        size=(btn_refresh_width, command_btn_height), color='white',
-        action='refresh')
-
-    # TEXT INPUT
-    gui.add_combobox(position=(75, 150), size=(
-        250, 25), action='load_items_from_txt')
-
-    # IMAGES
-    gui.add_image(
-        path='bcipy/static/images/gui_images/ohsu.png', position=(side_padding, 0), size=100)
-    gui.add_image(
-        path='bcipy/static/images/gui_images/neu.png', position=(530, 0), size=100)
 
     # Make the GUI Show now
     gui.show_gui()
-    app.MainLoop()
+
+    sys.exit(bcipy_gui.exec_())
 
 
 if __name__ == "__main__":
