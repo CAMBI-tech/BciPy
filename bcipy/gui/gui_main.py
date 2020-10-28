@@ -155,6 +155,8 @@ class BCIGui(QtWidgets.QMainWindow):
         if os.path.isfile(path):
             labelImage = QLabel(self.window)
             pixmap = QPixmap(path)
+            # ensures the new label size will scale the image itself
+            labelImage.setScaledContents(True)
             labelImage.setPixmap(pixmap)
             width = pixmap.width()
             height = pixmap.height()

@@ -30,12 +30,12 @@ class BCInterface(BCIGui):
 
     def build_images(self):
         self.add_image(
-            path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=125)
+            path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=200)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[550, 0], size=125)
+            path='bcipy/static/images/gui_images/neu.png', position=[550, 0], size=200)
 
     def build_text(self):
-        self.add_static_text(text='Brain Computer Interface', position=[150, 0], size=[25, 25], background_color='white')
+        self.add_static_text(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
 
 
 def start_app():
@@ -43,7 +43,7 @@ def start_app():
     bcipy_gui = app(sys.argv)
     ex = BCInterface(
         title="Brain Computer Interface",
-        height=700,
+        height=500,
         width=700,
         background_color='black')
 
