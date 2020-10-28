@@ -125,7 +125,9 @@ class BCIGui(QtWidgets.QMainWindow):
         btn.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
 
 
-        if not action:
+        if action:
+            btn.clicked.connect(action)
+        else:
             btn.clicked.connect(self.buttonClicked)
 
         self.buttons.append(btn)
