@@ -4,6 +4,8 @@ import json
 from time import localtime, strftime
 import logging
 
+from enum import Enum
+
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
     QApplication,
@@ -18,8 +20,21 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
     QMessageBox)
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QFont
 from PyQt5.QtCore import pyqtSlot
+
+class AlertMessageType(Enum):
+    WARN = QMessageBox.Warning
+    QUESTION = QMessageBox.Question
+    INFO = QMessageBox.Information
+    CRIT = QMessageBox.Critical
+
+
+class AlertResponse(Enum):
+    OK = QMessageBox.Ok
+    CANCEL = QMessageBox.Cancel
+    YES = QMessageBox.Yes
+    NO = QMessageBox.No
 
 
 class PushButton(QPushButton):
@@ -137,19 +152,25 @@ class BCIGui(QtWidgets.QMainWindow):
         self.buttons.append(btn)
         return btn
 
-    def add_combobox(self, position: list, size: list, items: list,
-                     action=default_on_dropdown) -> QComboBox:
+    def add_combobox(self, position: list, size: list, items: list, background_color='default',
+                     text_color='default',
+                     action=None, editable=False) -> QComboBox:
         """Add combobox."""
 
         combobox = QComboBox(self.window)
         combobox.move(position[0], position[1])
         combobox.resize(size[0], size[1])
 
-        combobox.currentTextChanged.connect(action)
+        if action:
+            combobox.currentTextChanged.connect(action)
+        else:
+            combobox.currentTextChanged.connect(self.default_on_dropdown)
 
-        # add all the items to appear in the dropdown
-        for item in items:
-            combobox.addItem(item)
+        combobox.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+
+        if editable:
+            combobox.setEditable(True)
+        combobox.addItems(items)
 
         self.comboboxes.append(combobox)
         return combobox
@@ -179,11 +200,13 @@ class BCIGui(QtWidgets.QMainWindow):
             return labelImage
         raise Exception('Invalid path to image provided')
 
-    def add_static_text(self, text: str, position: list,
+    def add_static_textbox(self, text: str, position: list,
                         background_color: str = 'white',
                         text_color: str = 'default',
-                        size: list = [50, 50],
-                        font_family=None, wrap_text=False) -> QLabel:
+                        size: list = None,
+                        font_family="Times",
+                        font_size=12,
+                        wrap_text=False) -> QLabel:
         """Add Static Text."""
 
         static_text = QLabel(self.window)
@@ -192,7 +215,11 @@ class BCIGui(QtWidgets.QMainWindow):
             static_text.setWordWrap(True)
         static_text.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
         static_text.move(position[0], position[1])
-        static_text.resize(size[0], size[1])
+
+        text_settings = QFont(font_family, font_size)
+        static_text.setFont(text_settings)
+        if size:
+            static_text.resize(size[0], size[1])
 
         self.static_text.append(static_text)
         return static_text
@@ -205,6 +232,25 @@ class BCIGui(QtWidgets.QMainWindow):
 
         self.input_text.append(textbox)
         return textbox
+
+    def throw_alert_message(self,
+            title:str,
+            message:str,
+            message_type:AlertMessageType = AlertMessageType.INFO,
+            okay_to_exit: bool=False,
+            okay_or_cancel: bool=False) -> QMessageBox:
+
+        msg = QMessageBox()
+        msg.setWindowTitle(title)
+        msg.setText(message)
+        msg.setIcon(message_type.value)
+
+        if okay_to_exit:
+            msg.setStandardButtons(AlertResponse.OK.value)
+        elif okay_or_cancel:
+            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
+
+        return msg.exec_()
 
 def app(args):
     """Main app registry.
@@ -219,10 +265,11 @@ def start_app():
     bcipy_gui = app(sys.argv)
     ex = BCIGui(title='BCI GUI', height=650, width=650, background_color='white')
 
+    ex.throw_alert_message('title', 'test', okay_to_exit=True)
     ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
     # ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
-    # ex.add_static_text(text='Test static text', background_color='black', text_color='white', position=[100, 20], wrap_text=True)
-    # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'])
+    # ex.add_static_textbox(text='Test static text', background_color='black', text_color='white', position=[100, 20], wrap_text=True)
+    # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
     # ex.add_text_input(position=[100, 100], size=[100, 100])
     ex.show_gui()
 

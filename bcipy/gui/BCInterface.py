@@ -35,7 +35,7 @@ class BCInterface(BCIGui):
             path='bcipy/static/images/gui_images/neu.png', position=[550, 0], size=200)
 
     def build_text(self):
-        self.add_static_text(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
+        self.add_static_textbox(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
 
     def build_assets(self):
         self.build_buttons()
