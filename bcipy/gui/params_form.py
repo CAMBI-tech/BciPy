@@ -38,11 +38,11 @@ Parameter = namedtuple('Parameter', ['value', 'section', 'readableName',
 class Form(wx.Panel):
     """The Form class is a wx.Panel that creates controls/inputs for each
     parameter in the provided json file.
-    
+
     Parameters:
     -----------
       json_file - path of parameters file to be edited.
-      load_file - optional path of parameters file to load; 
+      load_file - optional path of parameters file to load;
           parameters from this file will be copied over to the json_file.
       control_width - optional; used to set the size of the form controls.
       control_height - optional; used to set the size of the form controls.
@@ -74,7 +74,7 @@ class Form(wx.Panel):
     def createControls(self):
         """Create controls (inputs, labels, etc) for each item in the
         parameters file.
-        
+
         TODO: include a search box for finding an input
         """
 

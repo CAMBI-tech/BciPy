@@ -13,15 +13,15 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QComboBox,
-    QMessageBox,
     QGridLayout,
     QMessageBox)
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import pyqtSlot
 
+
 class AlertMessageType(Enum):
     """Alert Message Type.
-    
+
     Custom enum used to abstract PyQT message types from downstream users.
     """
     WARN = QMessageBox.Warning
@@ -32,7 +32,7 @@ class AlertMessageType(Enum):
 
 class AlertResponse(Enum):
     """Alert Response.
-    
+
     Custom enum used to abstract PyQT alert responses from downstream users.
     """
     OK = QMessageBox.Ok
@@ -43,11 +43,11 @@ class AlertResponse(Enum):
 
 class PushButton(QPushButton):
     """PushButton.
-    
+
     Custom Button to store unique identifiers which are required for coordinating
     events across multiple buttons."""
     id = None
-    
+
     def get_id(self):
         if not self.id:
             raise Exception('No ID set on PushButton')
@@ -72,7 +72,7 @@ class BCIGui(QMainWindow):
         self.static_text = []
         self.images = []
         self.comboboxes = []
-        
+
         # set window properties
         self.window.setStyleSheet(f'background-color: {background_color};')
 
@@ -88,7 +88,7 @@ class BCIGui(QMainWindow):
 
     def show_gui(self) -> None:
         """Show GUI.
-        
+
         Build all registered assets and initialize the interface.
         """
         self.build_assets()
@@ -97,7 +97,7 @@ class BCIGui(QMainWindow):
     def build_buttons(self) -> None:
         """Build Buttons."""
         ...
-    
+
     def build_images(self) -> None:
         """Build Images."""
         ...
@@ -112,17 +112,17 @@ class BCIGui(QMainWindow):
 
     def build_assets(self) -> None:
         """Build Assets.
-        
+
         Build add registered asset types.
         """
         self.build_text()
         self.build_inputs()
         self.build_buttons()
         self.build_images()
-    
+
     def init_ui(self) -> None:
         """Initalize UI.
-        
+
         This method sets up the grid and window. Finally, it calls the show method to make
             the window visible.
         """
@@ -149,18 +149,18 @@ class BCIGui(QMainWindow):
     @pyqtSlot()
     def default_button_clicked(self) -> None:
         """Default button clikced.
-        
+
         The default action for buttons if none are registed.
         """
         sender = self.sender()
         self.logger.debug(sender.text() + ' was pressed')
         self.logger.debug(sender.get_id())
-    
+
     def add_button(self, message: str, position: list, size: list, id=-1,
                    background_color: str = 'white',
                    text_color: str = 'default',
                    button_type: str = None,
-                   action = None) -> PushButton:
+                   action=None) -> PushButton:
         """Add Button."""
         btn = PushButton(message, self.window)
         btn.id = id
@@ -168,7 +168,6 @@ class BCIGui(QMainWindow):
         btn.resize(size[0], size[1])
 
         btn.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
-
 
         if action:
             btn.clicked.connect(action)
@@ -227,12 +226,12 @@ class BCIGui(QMainWindow):
         raise Exception('Invalid path to image provided')
 
     def add_static_textbox(self, text: str, position: list,
-                        background_color: str = 'white',
-                        text_color: str = 'default',
-                        size: list = None,
-                        font_family="Times",
-                        font_size=12,
-                        wrap_text=False) -> QLabel:
+                           background_color: str = 'white',
+                           text_color: str = 'default',
+                           size: list = None,
+                           font_family="Times",
+                           font_size=12,
+                           wrap_text=False) -> QLabel:
         """Add Static Text."""
 
         static_text = QLabel(self.window)
@@ -250,7 +249,6 @@ class BCIGui(QMainWindow):
         self.static_text.append(static_text)
         return static_text
 
-
     def add_text_input(self, position: list, size: list) -> QLineEdit:
         """Add Text Input."""
         textbox = QLineEdit(self.window)
@@ -261,11 +259,11 @@ class BCIGui(QMainWindow):
         return textbox
 
     def throw_alert_message(self,
-            title:str,
-            message:str,
-            message_type:AlertMessageType = AlertMessageType.INFO,
-            okay_to_exit: bool=False,
-            okay_or_cancel: bool=False) -> QMessageBox:
+                            title: str,
+                            message: str,
+                            message_type: AlertMessageType = AlertMessageType.INFO,
+                            okay_to_exit: bool = False,
+                            okay_or_cancel: bool = False) -> QMessageBox:
         """Throw Alert Message."""
 
         msg = QMessageBox()
@@ -282,9 +280,9 @@ class BCIGui(QMainWindow):
 
     def get_filename_dialog(
             self,
-            message:str='Open File',
+            message: str = 'Open File',
             file_type: str = 'All Files (*)',
-            location:str= "") -> str:
+            location: str = "") -> str:
         """Get Filename Dialog."""
         file_name, _ = QFileDialog.getOpenFileName(self.window, message, location, file_type)
         return file_name
@@ -307,12 +305,18 @@ def start_app() -> None:
     ex.get_filename_dialog()
     ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
     # ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
-    # ex.add_static_textbox(text='Test static text', background_color='black', text_color='white', position=[100, 20], wrap_text=True)
+    # ex.add_static_textbox(
+    #   text='Test static text',
+    #   background_color='black',
+    #   text_color='white',
+    #   position=[100, 20],
+    #   wrap_text=True)
     # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
     # ex.add_text_input(position=[100, 100], size=[100, 100])
     ex.show_gui()
 
     sys.exit(bcipy_gui.exec_())
+
 
 if __name__ == '__main__':
     start_app()

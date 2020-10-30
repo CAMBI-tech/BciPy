@@ -92,8 +92,8 @@ def get_system_info() -> dict:
 
     Returns
     -------
-        dict of system-related properties, including ['os', 'py_version', 'resolution', 
-          'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version', 
+        dict of system-related properties, including ['os', 'py_version', 'resolution',
+          'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version',
           'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
     screen_width, screen_height = get_screen_resolution()

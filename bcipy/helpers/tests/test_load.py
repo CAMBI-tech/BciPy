@@ -9,6 +9,7 @@ from bcipy.helpers.load import (load_json_parameters, load_signal_model,
                                 copy_parameters)
 from bcipy.helpers.parameters import Parameters
 
+
 class TestLoad(unittest.TestCase):
     """This is Test Case for Loading BCI data."""
 

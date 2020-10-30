@@ -36,7 +36,7 @@ class RSVPKeyboard(BCIGui):
 
     def select_parameters(self) -> None:
         """Select Parameters.
-        
+
         Opens a dialog to select the parameters.json configuration to use.
         """
 
@@ -45,8 +45,8 @@ class RSVPKeyboard(BCIGui):
             self.parameter_location = response
 
     def edit_parameters(self) -> None:
-        """Edit Parameters. 
-        
+        """Edit Parameters.
+
         Prompts for a parameters.json file to use. If the default parameters are selected, a copy is used.
         """
         if self.parameter_location == DEFAULT_PARAMETERS_PATH:
@@ -58,7 +58,7 @@ class RSVPKeyboard(BCIGui):
                 okay_or_cancel=True)
 
             if response == AlertResponse.OK.value:
-                    self.parameter_location = copy_parameters()
+                self.parameter_location = copy_parameters()
             else:
                 return None
 
@@ -68,9 +68,9 @@ class RSVPKeyboard(BCIGui):
 
     def launch_bci_main(self) -> None:
         """Launch BCI main.
-        
+
         If a user id has been selected, get the id set on the task button and execute
-            the task in a new shell. 
+            the task in a new shell.
         """
         if self.check_input():
             self.event_started = True
@@ -84,7 +84,7 @@ class RSVPKeyboard(BCIGui):
 
     def check_input(self) -> bool:
         """Check Input.
-        
+
         Checks to make sure user has input all required fields. Currently, only user id is required.
         """
         try:
@@ -99,10 +99,10 @@ class RSVPKeyboard(BCIGui):
                 return False
         except Exception as e:
             self.throw_alert_message(
-                    title='BciPy Alert',
-                    message=f'Error, {e}',
-                    message_type=AlertMessageType.CRIT,
-                    okay_to_exit=True)
+                title='BciPy Alert',
+                message=f'Error, {e}',
+                message_type=AlertMessageType.CRIT,
+                okay_to_exit=True)
             return False
         return True
 
@@ -114,14 +114,14 @@ class RSVPKeyboard(BCIGui):
 
     def refresh(self) -> None:
         """Refresh.
-        
+
         Reset event_started to False to allow a new task to be selected.
         """
         self.event_started = False
 
     def load_items_from_txt(self) -> List[str]:
         """Load Items From Text.
-        
+
         Loads user directory names below experiments from the data path defined in parameters.json
         and returns them as a list.
         """
@@ -148,21 +148,21 @@ class RSVPKeyboard(BCIGui):
 
         return saved_users
 
-    def fast_scandir(self, directory_name: str, return_path: bool=True) -> List[str]:
+    def fast_scandir(self, directory_name: str, return_path: bool = True) -> List[str]:
         """Fast Scan Directory.
-        
+
         directory_name: name of the directory to be scanned
         return_path: whether or not to return the scanned directories as a relative path or name.
             False will return the directory name only.
         """
         if return_path:
-            return [ f.path for f in os.scandir(directory_name) if f.is_dir() ]
+            return [f.path for f in os.scandir(directory_name) if f.is_dir()]
 
-        return [ f.name for f in os.scandir(directory_name) if f.is_dir()]
+        return [f.name for f in os.scandir(directory_name) if f.is_dir()]
 
     def build_buttons(self) -> None:
         """Build buttons.
-        
+
         Construct all buttons needed for RSVPKeyboard.
         """
         btn_size = [85, 80]
@@ -206,7 +206,7 @@ class RSVPKeyboard(BCIGui):
 
     def build_inputs(self) -> None:
         """Build Inputs.
-        
+
         Build all inputs needed for RSVPKeyboard.
         """
         items = self.load_items_from_txt()
@@ -215,36 +215,50 @@ class RSVPKeyboard(BCIGui):
         items.insert(0, RSVPKeyboard.default_text)
 
         self.user_input = self.add_combobox(
-                position=[75, 150],
-                size=[280, 40],
-                items=items,
-                editable=True,
-                background_color='white',
-                text_color='black')
+            position=[75, 150],
+            size=[280, 40],
+            items=items,
+            editable=True,
+            background_color='white',
+            text_color='black')
 
     def build_images(self) -> None:
         """Build Images.
-        
+
         Add all images needed for the RSVPKeyboard GUI.
         """
         self.add_image(
             path='bcipy/static/images/gui_images/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[530, 0], size=100)
+            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 100, 0], size=100)
 
     def build_text(self) -> None:
         """Build Text.
-        
-        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you 
+
+        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you
             shape the size of the box as well as the text size.
         """
         self.add_static_textbox(
-            text='RSVPKeyboard', position=[185, 0], size=[100, 50], background_color='black', text_color='white')
+            text='RSVPKeyboard',
+            position=[275, 0],
+            size=[200, 50],
+            background_color='black',
+            text_color='white',
+            font_size=30)
         self.add_static_textbox(
-            text='1.) Enter a User ID:', position=[75, 110], size=[200, 50], background_color='black', text_color='white')
+            text='1.) Enter a User ID:',
+            position=[75, 110],
+            size=[200, 50],
+            background_color='black',
+            text_color='white',
+            font_size=14)
         self.add_static_textbox(
             text='2.) Choose your experiment type:',
-            position=[75, 250], size=[300, 50], background_color='black', text_color='white')
+            position=[75, 250],
+            size=[300, 50],
+            background_color='black',
+            text_color='white',
+            font_size=14)
 
 
 def run_rsvp_gui() -> None:

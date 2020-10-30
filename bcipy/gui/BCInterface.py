@@ -1,7 +1,6 @@
 import subprocess
-import wx
 import sys
-from bcipy.gui.gui_main import BCIGui, app, PushButton
+from bcipy.gui.gui_main import BCIGui, app
 
 
 class BCInterface(BCIGui):
@@ -15,7 +14,7 @@ class BCInterface(BCIGui):
 
     def build_buttons(self) -> None:
         """Build buttons.
-        
+
         Construct all buttons needed for BCInterface.
         """
         self.add_button(
@@ -34,21 +33,27 @@ class BCInterface(BCIGui):
 
     def build_images(self) -> None:
         """Build Images.
-        
+
         Add all images needed for the BCInterface.
         """
         self.add_image(
-            path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=200)
+            path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[550, 0], size=200)
+            path='bcipy/static/images/gui_images/neu.png', position=[self.width - 100, 0], size=100)
 
     def build_text(self) -> None:
         """Build Text.
-        
-        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you 
+
+        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you
             shape the size of the box as well as the text size.
         """
-        self.add_static_textbox(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
+        self.add_static_textbox(
+            text='Brain Computer Interface',
+            position=[175, 0],
+            size=[325, 100],
+            background_color='black',
+            text_color='white',
+            font_size=30)
 
     def build_assets(self) -> None:
         self.build_buttons()
@@ -61,13 +66,14 @@ def start_app():
     bcipy_gui = app(sys.argv)
     ex = BCInterface(
         title="Brain Computer Interface",
-        height=500,
+        height=400,
         width=700,
         background_color='black')
 
     ex.show_gui()
 
     sys.exit(bcipy_gui.exec_())
+
 
 if __name__ == '__main__':
     start_app()
