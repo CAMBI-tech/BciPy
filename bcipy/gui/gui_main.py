@@ -1,29 +1,29 @@
 import os
 import sys
-import json
-from time import localtime, strftime
 import logging
 
 from enum import Enum
 
-from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
+    QMainWindow,
     QApplication,
+    QFileDialog,
     QWidget,
     QPushButton,
-    QAction,
     QLabel,
     QLineEdit,
     QComboBox,
     QMessageBox,
     QGridLayout,
-    QSpinBox,
-    QDoubleSpinBox,
     QMessageBox)
-from PyQt5.QtGui import QIcon, QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import pyqtSlot
 
 class AlertMessageType(Enum):
+    """Alert Message Type.
+    
+    Custom enum used to abstract PyQT message types from downstream users.
+    """
     WARN = QMessageBox.Warning
     QUESTION = QMessageBox.Question
     INFO = QMessageBox.Information
@@ -31,6 +31,10 @@ class AlertMessageType(Enum):
 
 
 class AlertResponse(Enum):
+    """Alert Response.
+    
+    Custom enum used to abstract PyQT alert responses from downstream users.
+    """
     OK = QMessageBox.Ok
     CANCEL = QMessageBox.Cancel
     YES = QMessageBox.Yes
@@ -51,10 +55,8 @@ class PushButton(QPushButton):
         return self.id
 
 
-class BCIGui(QtWidgets.QMainWindow):
+class BCIGui(QMainWindow):
     """GUI for BCIGui."""
-
-    title = 'BciPy Main GUI'
 
     def __init__(self, title: str, width: int, height: int, background_color: str):
         super(BCIGui, self).__init__()
@@ -84,19 +86,46 @@ class BCIGui(QtWidgets.QMainWindow):
         self.width = width
         self.height = height
 
-    def show_gui(self):
-        """Show GUI."""
+    def show_gui(self) -> None:
+        """Show GUI.
+        
+        Build all registered assets and initialize the interface.
+        """
         self.build_assets()
         self.init_ui()
 
-    def close_gui(self):
-        pass
-
-    def build_assets(self):
-        pass
+    def build_buttons(self) -> None:
+        """Build Buttons."""
+        ...
     
-    def init_ui(self):
-        """Init UI."""
+    def build_images(self) -> None:
+        """Build Images."""
+        ...
+
+    def build_text(self) -> None:
+        """Build Text."""
+        ...
+
+    def build_inputs(self) -> None:
+        """Build Inputs."""
+        ...
+
+    def build_assets(self) -> None:
+        """Build Assets.
+        
+        Build add registered asset types.
+        """
+        self.build_text()
+        self.build_inputs()
+        self.build_buttons()
+        self.build_images()
+    
+    def init_ui(self) -> None:
+        """Initalize UI.
+        
+        This method sets up the grid and window. Finally, it calls the show method to make
+            the window visible.
+        """
         # create a grid system to keep everythin aligned
         self.grid = QGridLayout()
         self.grid.setSpacing(2)
@@ -110,19 +139,19 @@ class BCIGui(QtWidgets.QMainWindow):
         self.window.show()
 
     @pyqtSlot()
-    def default_on_clicked(self):
-        self.logger.debug('Button clicked!')
-
-    @pyqtSlot()
-    def default_on_dropdown(self):
-        """on_dropdown.
+    def default_on_dropdown(self) -> None:
+        """Default on dropdown.
 
         Default event to bind to comboboxes
         """
         self.logger.debug('Dropdown selected!')
 
     @pyqtSlot()
-    def buttonClicked(self):
+    def default_button_clicked(self) -> None:
+        """Default button clikced.
+        
+        The default action for buttons if none are registed.
+        """
         sender = self.sender()
         self.logger.debug(sender.text() + ' was pressed')
         self.logger.debug(sender.get_id())
@@ -132,10 +161,7 @@ class BCIGui(QtWidgets.QMainWindow):
                    text_color: str = 'default',
                    button_type: str = None,
                    action = None) -> PushButton:
-        """Add Button.
-        
-        Size : width and height in pixels
-        """
+        """Add Button."""
         btn = PushButton(message, self.window)
         btn.id = id
         btn.move(position[0], position[1])
@@ -147,7 +173,7 @@ class BCIGui(QtWidgets.QMainWindow):
         if action:
             btn.clicked.connect(action)
         else:
-            btn.clicked.connect(self.buttonClicked)
+            btn.clicked.connect(self.default_button_clicked)
 
         self.buttons.append(btn)
         return btn
@@ -226,6 +252,7 @@ class BCIGui(QtWidgets.QMainWindow):
 
 
     def add_text_input(self, position: list, size: list) -> QLineEdit:
+        """Add Text Input."""
         textbox = QLineEdit(self.window)
         textbox.move(position[0], position[1])
         textbox.resize(size[0], size[1])
@@ -239,6 +266,7 @@ class BCIGui(QtWidgets.QMainWindow):
             message_type:AlertMessageType = AlertMessageType.INFO,
             okay_to_exit: bool=False,
             okay_or_cancel: bool=False) -> QMessageBox:
+        """Throw Alert Message."""
 
         msg = QMessageBox()
         msg.setWindowTitle(title)
@@ -252,7 +280,17 @@ class BCIGui(QtWidgets.QMainWindow):
 
         return msg.exec_()
 
-def app(args):
+    def get_filename_dialog(
+            self,
+            message:str='Open File',
+            file_type: str = 'All Files (*)',
+            location:str= "") -> str:
+        """Get Filename Dialog."""
+        file_name, _ = QFileDialog.getOpenFileName(self.window, message, location, file_type)
+        return file_name
+
+
+def app(args) -> QApplication:
     """Main app registry.
 
     Passes args from main and initializes the app
@@ -260,12 +298,13 @@ def app(args):
     return QApplication(args)
 
 
-def start_app():
+def start_app() -> None:
     """Start BCIGui."""
     bcipy_gui = app(sys.argv)
     ex = BCIGui(title='BCI GUI', height=650, width=650, background_color='white')
 
-    ex.throw_alert_message('title', 'test', okay_to_exit=True)
+    # ex.throw_alert_message(title='title', message='test', okay_to_exit=True)
+    ex.get_filename_dialog()
     ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
     # ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
     # ex.add_static_textbox(text='Test static text', background_color='black', text_color='white', position=[100, 20], wrap_text=True)

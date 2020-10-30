@@ -4,8 +4,8 @@ import sys
 from bcipy.gui.gui_main import BCIGui, app, PushButton
 
 
-# Make a custom GUI class with the events we want
 class BCInterface(BCIGui):
+    """BCInterface. Main GUI to select different modes."""
 
     def launch_rsvp(self) -> None:
         print('launching')
@@ -13,7 +13,11 @@ class BCInterface(BCIGui):
             'python bcipy/gui/mode/RSVPKeyboard.py',
             shell=True)
 
-    def build_buttons(self):
+    def build_buttons(self) -> None:
+        """Build buttons.
+        
+        Construct all buttons needed for BCInterface.
+        """
         self.add_button(
             message="RSVP",
             position=[155, 200], size=[100, 100],
@@ -28,16 +32,25 @@ class BCInterface(BCIGui):
             size=[100, 100],
             background_color='green')
 
-    def build_images(self):
+    def build_images(self) -> None:
+        """Build Images.
+        
+        Add all images needed for the BCInterface.
+        """
         self.add_image(
             path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=200)
         self.add_image(
             path='bcipy/static/images/gui_images/neu.png', position=[550, 0], size=200)
 
-    def build_text(self):
+    def build_text(self) -> None:
+        """Build Text.
+        
+        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you 
+            shape the size of the box as well as the text size.
+        """
         self.add_static_textbox(text='Brain Computer Interface', position=[250, 0], size=[250, 100], background_color='black', text_color='white')
 
-    def build_assets(self):
+    def build_assets(self) -> None:
         self.build_buttons()
         self.build_images()
         self.build_text()
