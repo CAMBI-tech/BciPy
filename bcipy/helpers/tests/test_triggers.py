@@ -2,14 +2,16 @@ import unittest
 from io import StringIO
 from typing import List, Tuple
 import random
-from bcipy.helpers.triggers import NONE_VALUE, LslCopyPhraseLabeller, \
+from bcipy.helpers.triggers import NONE_VALUES, LslCopyPhraseLabeller, \
     extract_from_copy_phrase, extract_from_calibration, \
     write_trigger_file_from_lsl_calibration
 
 
 def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
                     first_trg_time: int = 100,
-                    trigger_interval: int = 10) -> Tuple[str, List[float]]:
+                    trigger_interval: int = 10,
+                    daq_type: str = 'TestStream',
+                    sample_rate: int = 300) -> Tuple[str, List[float]]:
     """Helper function for creating mock data that looks like the raw_data.csv
     output. Adds trigger data to the TRG column at the specified interval.
 
@@ -19,6 +21,9 @@ def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
         first_trg_time: first time in the data where a trigger should appear.
         trigger_interval: set interval at which subsequent triggers should be
                     displayed
+        daq_type - metadata written to the raw_data file.
+        sample_rate - metadata written to the raw_data file for sample rate
+            in hz.
     Returns:
     --------
         content: str, trigger_times: list(float)
@@ -34,14 +39,14 @@ def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
 
     # Mock the raw_data file
     sep = '\r\n'
-    meta = sep.join(['daq_type,TestStream', 'sample_rate,300'])
+    meta = sep.join([f'daq_type,{daq_type}', 'sample_rate,{sample_rate}'])
     header = 'timestamp,c1,c2,c3,TRG'
 
     data = []
     for i in range(1000):
         timestamp = i + 10.0
         channel_data = [str(random.uniform(-1000, 1000)) for _ in range(3)]
-        trg = triggers_by_time.get(timestamp, NONE_VALUE)
+        trg = triggers_by_time.get(timestamp, NONE_VALUES[0])
         data.append(','.join([str(timestamp), *channel_data, trg]))
 
     content = sep.join([meta, header, *data])
@@ -239,6 +244,14 @@ class TestTriggers(unittest.TestCase):
             self.assertEqual(targetness, written_targetness)
             self.assertEqual(trigger_times[i], float(written_stamp))
 
+
+    def test_trigger_durations(self):
+        """Test trigger durations"""
+        pass # TODO:
+
+    def test_read_triggers(self):
+        """Test reading in triggers from a file."""
+        pass # TODO:
 
 if __name__ == '__main__':
     unittest.main()
