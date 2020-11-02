@@ -2,7 +2,8 @@ wxPython==4.0.1
 docker==2.6.1
 construct==2.8.14
 mne==0.17.0
-PsychoPy==2020.2.4.post1
+opencv_python==4.1.0.25
+PsychoPy==2020.2.5
 pyglet==1.5.8
 numpy==1.19.2
 sounddevice==0.4.1
