@@ -30,9 +30,11 @@ class RSVPKeyboard(BCIGui):
 
         self.parameters = load_json_parameters(
             self.parameter_location, value_cast=True)
-
         self.task_colors = itertools.cycle(
-            ['blue', 'green', 'yellow', 'red', 'limegreen', 'gray', 'pink'])
+            ['Tomato', 'orange', 'MediumTurquoise', 'MediumSeaGreen', 'MediumPurple', 'Moccasin'])
+
+        # This is set in the build_inputs method that is called automatically when using show_gui
+        self.user_input = None
 
     def select_parameters(self) -> None:
         """Select Parameters.

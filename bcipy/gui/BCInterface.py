@@ -7,7 +7,7 @@ class BCInterface(BCIGui):
     """BCInterface. Main GUI to select different modes."""
 
     def launch_rsvp(self) -> None:
-        print('launching')
+        self.logger.debug('Launching RSVPKeyboard')
         subprocess.Popen(
             'python bcipy/gui/mode/RSVPKeyboard.py',
             shell=True)
