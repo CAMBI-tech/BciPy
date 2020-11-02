@@ -1,57 +1,79 @@
 import subprocess
-import wx
-from bcipy.gui.gui_main import BCIGui
+import sys
+from bcipy.gui.gui_main import BCIGui, app
 
 
-# Make a custom GUI class with the events we want
 class BCInterface(BCIGui):
-    def bind_action(self, action: str, btn: wx.Button) -> None:
-        if action == 'launch_mode':
-            self.Bind(wx.EVT_BUTTON, self.launch_mode, btn)
-        else:
-            self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
+    """BCInterface. Main GUI to select different modes."""
 
-    def launch_mode(self, event) -> None:
-        mode_label = event.GetEventObject().GetLabel()
-        if mode_label == 'RSVP':
-            subprocess.Popen(
-                'python bcipy/gui/mode/RSVPKeyboard.py',
-                shell=True)
+    def launch_rsvp(self) -> None:
+        self.logger.debug('Launching RSVPKeyboard')
+        subprocess.Popen(
+            'python bcipy/gui/mode/RSVPKeyboard.py',
+            shell=True)
+
+    def build_buttons(self) -> None:
+        """Build buttons.
+
+        Construct all buttons needed for BCInterface.
+        """
+        self.add_button(
+            message="RSVP",
+            position=[155, 200], size=[100, 100],
+            background_color='red',
+            action=self.launch_rsvp)
+        self.add_button(
+            message="Matrix", position=[280, 200],
+            size=[100, 100],
+            background_color='blue')
+        self.add_button(
+            message="Shuffle", position=[405, 200],
+            size=[100, 100],
+            background_color='green')
+
+    def build_images(self) -> None:
+        """Build Images.
+
+        Add all images needed for the BCInterface.
+        """
+        self.add_image(
+            path='bcipy/static/images/gui_images/ohsu.png', position=[5, 0], size=100)
+        self.add_image(
+            path='bcipy/static/images/gui_images/neu.png', position=[self.width - 100, 0], size=100)
+
+    def build_text(self) -> None:
+        """Build Text.
+
+        Add all static text needed for RSVPKeyboard. Note: these are textboxes and require that you
+            shape the size of the box as well as the text size.
+        """
+        self.add_static_textbox(
+            text='Brain Computer Interface',
+            position=[175, 0],
+            size=[325, 100],
+            background_color='black',
+            text_color='white',
+            font_size=30)
+
+    def build_assets(self) -> None:
+        self.build_buttons()
+        self.build_images()
+        self.build_text()
 
 
-app = wx.App(False)
-gui = BCInterface(
-    title="Brain Computer Interface",
-    size=(700, 400), background_color='black')
+def start_app():
+    """Start BCIGui."""
+    bcipy_gui = app(sys.argv)
+    ex = BCInterface(
+        title="Brain Computer Interface",
+        height=400,
+        width=700,
+        background_color='black')
 
-# STATIC TEXT!
-gui.add_static_text(
-    text='Brain Computer Interface', position=(150, 0), size=25, color='white')
+    ex.show_gui()
 
-# BUTTONS!
-gui.add_button(
-    message="RSVP",
-    position=(155, 200), size=(100, 100),
-    color=wx.Colour(221, 37, 56),
-    action='launch_mode')
-gui.add_button(
-    message="Matrix", position=(280, 200),
-    size=(100, 100),
-    color=wx.Colour(62, 161, 232),
-    action='launch_mode')
-gui.add_button(
-    message="Shuffle", position=(405, 200),
-    size=(100, 100),
-    color=wx.Colour(117, 173, 48),
-    action='launch_mode')
-
-# Images
-gui.add_image(
-    path='bcipy/static/images/gui_images/ohsu.png', position=(5, 0), size=125)
-gui.add_image(
-    path='bcipy/static/images/gui_images/neu.png', position=(550, 0), size=125)
+    sys.exit(bcipy_gui.exec_())
 
 
-# Make the GUI Show now
-gui.show_gui()
-app.MainLoop()
+if __name__ == '__main__':
+    start_app()

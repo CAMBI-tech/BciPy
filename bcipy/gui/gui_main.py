@@ -1,21 +1,71 @@
 import os
-import wx
-import wx.lib.agw.gradientbutton as GB
-import wx.lib.agw.aquabutton as AB
-import wx.lib.buttons as buttons
+import sys
+import logging
+
+from enum import Enum
+
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QFileDialog,
+    QWidget,
+    QPushButton,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QGridLayout,
+    QMessageBox)
+from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtCore import pyqtSlot
 
 
-class BCIGui(wx.Frame):
-    """BCIGui."""
+class AlertMessageType(Enum):
+    """Alert Message Type.
 
-    def __init__(self, title: str, size: tuple,
-                 background_color: str = 'blue', parent: wx.Frame = None):
-        """Init."""
-        super(BCIGui, self).__init__(
-            parent, title=title, size=size, style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+    Custom enum used to abstract PyQT message types from downstream users.
+    """
+    WARN = QMessageBox.Warning
+    QUESTION = QMessageBox.Question
+    INFO = QMessageBox.Information
+    CRIT = QMessageBox.Critical
 
-        self.panel = wx.Panel(self)
-        self.SetBackgroundColour(background_color)
+
+class AlertResponse(Enum):
+    """Alert Response.
+
+    Custom enum used to abstract PyQT alert responses from downstream users.
+    """
+    OK = QMessageBox.Ok
+    CANCEL = QMessageBox.Cancel
+    YES = QMessageBox.Yes
+    NO = QMessageBox.No
+
+
+class PushButton(QPushButton):
+    """PushButton.
+
+    Custom Button to store unique identifiers which are required for coordinating
+    events across multiple buttons."""
+    id = None
+
+    def get_id(self):
+        if not self.id:
+            raise Exception('No ID set on PushButton')
+
+        return self.id
+
+
+class BCIGui(QMainWindow):
+    """GUI for BCIGui."""
+
+    def __init__(self, title: str, width: int, height: int, background_color: str):
+        super(BCIGui, self).__init__()
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(name)s - %(levelname)s - %(message)s')
+        self.logger = logging
+
+        self.window = QWidget()
 
         self.buttons = []
         self.input_text = []
@@ -23,84 +73,143 @@ class BCIGui(wx.Frame):
         self.images = []
         self.comboboxes = []
 
-    def show_gui(self):
-        """Show GUI."""
-        self.Show(True)
+        # set window properties
+        self.window.setStyleSheet(f'background-color: {background_color};')
 
-    def close_gui(self):
-        pass
+        # determines where on the screen the gui first appears
+        self.x = 500
+        self.y = 250
 
-    def add_button(self, message: str, position: tuple, size: tuple,
-                   button_type: str = None, color: str = None,
-                   action: str = 'default', id=-1) -> None:
+        self.title = title
+
+        # determines height/width of window
+        self.width = width
+        self.height = height
+
+    def show_gui(self) -> None:
+        """Show GUI.
+
+        Build all registered assets and initialize the interface.
+        """
+        self.build_assets()
+        self.init_ui()
+
+    def build_buttons(self) -> None:
+        """Build Buttons."""
+        ...
+
+    def build_images(self) -> None:
+        """Build Images."""
+        ...
+
+    def build_text(self) -> None:
+        """Build Text."""
+        ...
+
+    def build_inputs(self) -> None:
+        """Build Inputs."""
+        ...
+
+    def build_assets(self) -> None:
+        """Build Assets.
+
+        Build add registered asset types.
+        """
+        self.build_text()
+        self.build_inputs()
+        self.build_buttons()
+        self.build_images()
+
+    def init_ui(self) -> None:
+        """Initalize UI.
+
+        This method sets up the grid and window. Finally, it calls the show method to make
+            the window visible.
+        """
+        # create a grid system to keep everythin aligned
+        self.grid = QGridLayout()
+        self.grid.setSpacing(2)
+        self.window.setLayout(self.grid)
+
+        # main window setup
+        self.window.setWindowTitle(self.title)
+        self.window.setGeometry(self.x, self.y, self.width, self.height)
+
+        # show the window
+        self.window.show()
+
+    @pyqtSlot()
+    def default_on_dropdown(self) -> None:
+        """Default on dropdown.
+
+        Default event to bind to comboboxes
+        """
+        self.logger.debug('Dropdown selected!')
+
+    @pyqtSlot()
+    def default_button_clicked(self) -> None:
+        """Default button clikced.
+
+        The default action for buttons if none are registed.
+        """
+        sender = self.sender()
+        self.logger.debug(sender.text() + ' was pressed')
+        self.logger.debug(sender.get_id())
+
+    def add_button(self, message: str, position: list, size: list, id=-1,
+                   background_color: str = 'white',
+                   text_color: str = 'default',
+                   button_type: str = None,
+                   action=None) -> PushButton:
         """Add Button."""
-        # Button Type
-        if button_type == 'gradient_button':
-            btn = GB.GradientButton(
-                self.panel, label=message, pos=position, size=size)
-        elif button_type == 'aqua_button':
-            btn = AB.AquaButton(
-                self.panel, label=message, pos=position, size=size)
+        btn = PushButton(message, self.window)
+        btn.id = id
+        btn.move(position[0], position[1])
+        btn.resize(size[0], size[1])
+
+        btn.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+
+        if action:
+            btn.clicked.connect(action)
         else:
-            btn = buttons.GenButton(
-                self.panel, label=message, pos=position, size=size, id=id)
-
-            # You can really only set colors with GenButtons as the others
-            #  use native widgets!
-            if color:
-                btn.SetBackgroundColour(color)
-
-        # Attach Custom Actions
-        self.bind_action(action, btn)
+            btn.clicked.connect(self.default_button_clicked)
 
         self.buttons.append(btn)
+        return btn
 
-    def bind_action(self, action: str, btn) -> None:
-        """Default action for buttons or comboboxes that do not have an action
-        assigned"""
-        if action == 'default':
-            if isinstance(btn, wx.Button):
-                self.Bind(wx.EVT_BUTTON, self.on_clicked, btn)
-            elif isinstance(btn, wx.ComboBox):
-                self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.on_dropdown, btn)
-
-    def add_text_input(self, position: tuple, size: tuple) -> None:
-        """Add Text Input."""
-        input_text = wx.TextCtrl(self.panel, pos=position, size=size)
-        self.input_text.append(input_text)
-
-    def add_static_text(self, text: str, position: str,
-                        color: str, size: int,
-                        font_family: wx.Font = wx.FONTFAMILY_SWISS) -> None:
-        """Add Text."""
-
-        static_text = wx.StaticText(
-            self.panel, pos=position,
-            label=text)
-        static_text.SetForegroundColour(color)
-        font = wx.Font(
-            size,
-            font_family,
-            wx.FONTSTYLE_NORMAL,
-            wx.FONTWEIGHT_LIGHT)
-        static_text.SetFont(font)
-
-        self.static_text.append(static_text)
-
-    def add_combobox(self, position: tuple, size: tuple,
-                     action: str = 'default') -> None:
+    def add_combobox(self, position: list, size: list, items: list, background_color='default',
+                     text_color='default',
+                     action=None, editable=False) -> QComboBox:
         """Add combobox."""
-        combobox = wx.ComboBox(self.panel, pos=position, size=size)
-        self.comboboxes.append(combobox)
-        self.bind_action(action, combobox)
 
-    def add_image(self, path: str, position: tuple, size: int) -> None:
+        combobox = QComboBox(self.window)
+        combobox.move(position[0], position[1])
+        combobox.resize(size[0], size[1])
+
+        if action:
+            combobox.currentTextChanged.connect(action)
+        else:
+            combobox.currentTextChanged.connect(self.default_on_dropdown)
+
+        combobox.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+
+        if editable:
+            combobox.setEditable(True)
+        combobox.addItems(items)
+
+        self.comboboxes.append(combobox)
+        return combobox
+
+    def add_image(self, path: str, position: list, size: int) -> QLabel:
         """Add Image."""
         if os.path.isfile(path):
-            img = wx.Image(path, wx.BITMAP_TYPE_ANY)
-            # scale the image, preserving the aspect ratio
-            width = img.GetWidth()
-            height = img.GetHeight()
+            labelImage = QLabel(self.window)
+            pixmap = QPixmap(path)
+            # ensures the new label size will scale the image itself
+            labelImage.setScaledContents(True)
+            labelImage.setPixmap(pixmap)
+            width = pixmap.width()
+            height = pixmap.height()
 
             if width > height:
                 new_width = size
@@ -109,33 +218,105 @@ class BCIGui(wx.Frame):
                 new_height = size
                 new_width = size * width / height
 
-            img = img.Scale(new_width, new_height)
-            img = img.ConvertToBitmap()
-            bmp = wx.StaticBitmap(self.panel, pos=position, bitmap=img)
+            labelImage.resize(new_width, new_height)
+            labelImage.move(position[0], position[1])
 
-            self.images.append(bmp)
+            self.images.append(labelImage)
+            return labelImage
+        raise Exception('Invalid path to image provided')
 
-        else:
-            print('INVALID PATH')
+    def add_static_textbox(self, text: str, position: list,
+                           background_color: str = 'white',
+                           text_color: str = 'default',
+                           size: list = None,
+                           font_family="Times",
+                           font_size=12,
+                           wrap_text=False) -> QLabel:
+        """Add Static Text."""
 
-    def on_clicked(self, event):
-        """on_clicked.
+        static_text = QLabel(self.window)
+        static_text.setText(text)
+        if wrap_text:
+            static_text.setWordWrap(True)
+        static_text.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+        static_text.move(position[0], position[1])
 
-        Default event to bind to buttons
-        """
-        btn = event.GetEventObject().GetLabel()
-        print(f'pressed {btn}')
+        text_settings = QFont(font_family, font_size)
+        static_text.setFont(text_settings)
+        if size:
+            static_text.resize(size[0], size[1])
 
-    def on_dropdown(self, event):
-        """on_dropdown.
+        self.static_text.append(static_text)
+        return static_text
 
-        Default event to bind to comboboxes
-        """
-        print('dropdown selected')
+    def add_text_input(self, position: list, size: list) -> QLineEdit:
+        """Add Text Input."""
+        textbox = QLineEdit(self.window)
+        textbox.move(position[0], position[1])
+        textbox.resize(size[0], size[1])
+
+        self.input_text.append(textbox)
+        return textbox
+
+    def throw_alert_message(self,
+                            title: str,
+                            message: str,
+                            message_type: AlertMessageType = AlertMessageType.INFO,
+                            okay_to_exit: bool = False,
+                            okay_or_cancel: bool = False) -> QMessageBox:
+        """Throw Alert Message."""
+
+        msg = QMessageBox()
+        msg.setWindowTitle(title)
+        msg.setText(message)
+        msg.setIcon(message_type.value)
+
+        if okay_to_exit:
+            msg.setStandardButtons(AlertResponse.OK.value)
+        elif okay_or_cancel:
+            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
+
+        return msg.exec_()
+
+    def get_filename_dialog(
+            self,
+            message: str = 'Open File',
+            file_type: str = 'All Files (*)',
+            location: str = "") -> str:
+        """Get Filename Dialog."""
+        file_name, _ = QFileDialog.getOpenFileName(self.window, message, location, file_type)
+        return file_name
+
+
+def app(args) -> QApplication:
+    """Main app registry.
+
+    Passes args from main and initializes the app
+    """
+    return QApplication(args)
+
+
+def start_app() -> None:
+    """Start BCIGui."""
+    bcipy_gui = app(sys.argv)
+    ex = BCIGui(title='BCI GUI', height=650, width=650, background_color='white')
+
+    # ex.throw_alert_message(title='title', message='test', okay_to_exit=True)
+    ex.get_filename_dialog()
+    ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
+    # ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
+    # ex.add_static_textbox(
+    #   text='Test static text',
+    #   background_color='black',
+    #   text_color='white',
+    #   position=[100, 20],
+    #   wrap_text=True)
+    # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
+    # ex.add_text_input(position=[100, 100], size=[100, 100])
+    ex.show_gui()
+
+    sys.exit(bcipy_gui.exec_())
 
 
 if __name__ == '__main__':
-    app = wx.App(False)
-    gui = BCIGui(title="BCIGui", size=(650, 650), background_color='black')
-    gui.show_gui()
-    app.MainLoop()
+    start_app()
