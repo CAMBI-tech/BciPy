@@ -1,7 +1,5 @@
 import logging
 import pickle
-from codecs import open as codecsopen
-from json import load as jsonload
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
