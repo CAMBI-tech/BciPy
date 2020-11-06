@@ -586,68 +586,25 @@ def trigger_durations(params: Parameters) -> Dict[str, float]:
     }
 
 
-def read_triggers(triggers_file: str) -> List[Tuple[str, str, float]]:
+def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     """Read in the triggers.txt file. Convert the timestamps to be in
-    aqcuisition clock units using the offset listed in the file (last entry).
+    acquisition clock units using the offset listed in the file (last entry).
 
-    triggers_file - path to triggers.txt
+    triggers_file - open triggers.txt
 
     Returns
     -------
         list of (symbol, targetness, stamp) tuples.
     """
 
-    with open(triggers_file) as trgfile:
-        records = [line.split(' ') for line in trgfile.readlines()]
-        # calibration
-        (_cname, _ctype, calibration_stamp) = records[0]
-        (_acq_name, _acq_type, acq_stamp) = records.pop()
-        offset = float(acq_stamp) - float(calibration_stamp)
 
-        corrected = []
-        for i, (name, trg_type, stamp) in enumerate(records):
-            corrected.append((name, trg_type, float(stamp) + offset))
-        return corrected
+    records = [line.split(' ') for line in triggers_file.readlines()]
+    # calibration
+    (_cname, _ctype, calibration_stamp) = records[0]
+    (_acq_name, _acq_type, acq_stamp) = records.pop()
+    offset = float(acq_stamp) - float(calibration_stamp)
 
-
-def read_triggers_from_rawdata(raw_data_directory: str,
-                               params: Parameters = None,
-                               mode: str = None
-                               ) -> List[Tuple[str, str, float]]:
-    """Trigger data extracted from the bcipy raw_data.csv file, using the TRG channel.
-
-    raw_data_directory - path to the folder with the raw_data.json
-    params - parameters used in the experiment; TODO: optional? could read from the same directory
-    mode - 'calibration' or 'copy_phrase'; if not provided, will use the presence of session.json
-        to determine.
-    Returns
-    -------
-        List[Tuple(label, trigger_type, timestamp in seconds)]
-    """
-
-    if not params:
-        params = Parameters(source=Path(raw_data_directory, 'parameters.json'),
-                            cast_values=True)
-    if not mode:
-        mode = 'copy_phrase' if Path(
-            raw_data_directory, 'session.json').exists() else 'calibration'
-
-    if mode == 'copy_phrase':
-        # TODO: use params['task_text'] and session
-        raise Exception("Not yet implemented.")
-
-    path = Path(raw_data_directory, params['raw_data_name'])
-
-    with open(path, 'r') as csvfile:
-        # Skip daq_type
-        next(csvfile)
-        sample_freq = float(next(csvfile).strip().split(',')[-1])
-
-        triggers = extract_from_calibration(csvfile,
-                                            seq_len=params['stim_length'],
-                                            trg_field='TRG',
-                                            skip_meta=False)
-        # convert timestamp to float seconds
-        return [(label, trg_type, float(timestamp) / sample_freq)
-                for (label, trg_type, timestamp) in triggers
-                if float(timestamp) > 0]
+    corrected = []
+    for i, (name, trg_type, stamp) in enumerate(records):
+        corrected.append((name, trg_type, float(stamp) + offset))
+    return corrected

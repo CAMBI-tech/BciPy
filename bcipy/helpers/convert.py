@@ -3,21 +3,58 @@
 import logging
 import os
 from datetime import datetime
-from typing import List, Tuple
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 import numpy as np
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
-from bcipy.helpers.triggers import read_triggers, trigger_durations, read_triggers_from_rawdata
-from bcipy.helpers.load import load_json_parameters
+
+from bcipy.helpers.load import load_json_parameters, read_data_csv
+from bcipy.helpers.triggers import read_triggers, trigger_durations
 
 
-def bcipy_write_edf(raw_data: np.array,
-                    ch_names: List[str],
-                    sfreq: float,
-                    fname: str,
-                    events: List[Tuple[float, float, str]] = None,
-                    overwrite=False):
+def convert_to_edf(data_dir: str,
+                   edf_path: str = None,
+                   overwrite=False,
+                   use_event_durations=False) -> Path:
+    """ Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
+
+    Parameters
+    ----------
+    raw_data_dir - directory which contains the data to be converted. This
+        location must also contain a parameters.json configuration file.
+    output_path - optional path to write converted data; defaults to writing
+        a file named raw.edf in the data_dir.
+    overwrite - If True, the destination file (if it exists) will be overwritten.
+        If False (default), an error will be raised if the file exists.
+    use_event_durations - optional; if True assigns a duration to each event.
+
+    Returns
+    -------
+        Path to new edf file
+    """
+    if not edf_path:
+        edf_path = Path(data_dir, 'raw.edf')
+
+    params = load_json_parameters(Path(data_dir, 'parameters.json'),
+                                  value_cast=True)
+    raw_data, _, ch_names, _, sfreq = read_data_csv(
+        Path(data_dir, params['raw_data_name']))
+    durations = trigger_durations(params) if use_event_durations else {}
+
+    with open(Path(data_dir, params['trigger_file_name']), 'r') as trg_file:
+        triggers = read_triggers(trg_file)
+    events = edf_annotations(triggers, durations)
+
+    return write_edf(edf_path, raw_data, ch_names, sfreq, events, overwrite)
+
+
+def write_edf(output_path: str,
+              raw_data: np.array,
+              ch_names: List[str],
+              sfreq: float,
+              events: List[Tuple[float, float, str]],
+              overwrite=False) -> Path:
     """
     Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
 
@@ -25,19 +62,19 @@ def bcipy_write_edf(raw_data: np.array,
 
     Parameters
     ----------
-    raw data - np array with a row for each channel
-    ch_names - names of the channels
-    sfreq - sample frequency
-    fname - File name of the new dataset. Filenames should end with .edf
-    events : List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
-    overwrite : bool
-        If True, the destination file (if it exists) will be overwritten.
+    raw_data_dir - directory which contains the data to be converted. This
+        location must also contain a parameters.json configuration file.
+    output_path - optional path to write converted data; defaults to writing
+        a file named raw.edf in the raw_data_dir.
+    overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
+    
+    Returns
+    -------
+        Path to new edf file
     """
-    if not overwrite and os.path.exists(fname):
-        raise OSError('File already exists. No overwrite.')
-
-    date = datetime.now().strftime('%d %b %Y %H:%M:%S')
+    if not overwrite and os.path.exists(output_path):
+        raise OSError('EDF file already exists.')
 
     # set conversion parameters
     dmin, dmax = [-32768, 32767]
@@ -45,7 +82,7 @@ def bcipy_write_edf(raw_data: np.array,
     n_channels = len(raw_data)
 
     try:
-        writer = EdfWriter(fname,
+        writer = EdfWriter(str(output_path),
                            n_channels=n_channels,
                            file_type=FILETYPE_EDFPLUS)
         channel_info = []
@@ -67,9 +104,7 @@ def bcipy_write_edf(raw_data: np.array,
             channel_info.append(ch_dict)
             data_list.append(raw_data[i])
 
-        writer.setTechnician('bcipy.helpers.convert')
         writer.setSignalHeaders(channel_info)
-        writer.setStartdatetime(date)
         writer.writeSamples(data_list)
 
         if events:
@@ -77,33 +112,26 @@ def bcipy_write_edf(raw_data: np.array,
                 writer.writeAnnotation(onset, duration, label)
     except Exception as error:
         logging.getLogger(__name__).info(error)
-        return False
+        return None
     finally:
         writer.close()
-    return True
+    return output_path
 
 
-def edf_annotations(raw_data_directory: str) -> List[Tuple[float, float, str]]:
+def edf_annotations(triggers: List[Tuple[str, str, float]],
+                    durations: Dict[str, float] = {}
+                    ) -> List[Tuple[float, float, str]]:
     """Convert bcipy triggers to the format expected by pyedflib for writing annotations.
 
+    Parameters
+    ----------
+        triggers - trigger data in the format (symbol, targetness, stamp), 
+          where stamp has been converted to acquisition clock units.
+        durations - optional map defining the duration (seconds) of each
+            trigger type. The default is to assign 0.0 seconds.
     Returns
     -------
         List[Tuple(onset_in_seconds, duration_in_seconds, description)]
     """
-
-    params = load_json_parameters(Path(raw_data_directory, 'parameters.json'),
-                                  value_cast=True)
-    mode = 'copy_phrase' if Path(raw_data_directory,
-                                 'session.json').exists() else 'calibration'
-    duration = trigger_durations(params)
-
-    if params['acq_device'] == 'LSL' and mode == 'calibration':
-        # TRG channel is more accurate when it is available.
-        triggers = read_triggers_from_rawdata(raw_data_directory, params, mode)
-    else:
-        triggers = read_triggers(
-            Path(raw_data_directory, params['trigger_file_name']))
-
-    # Convert to format expected by EDF.
-    return [(timestamp, duration[targetness], label)
+    return [(timestamp, durations.get(targetness, 0.0), label)
             for (label, targetness, timestamp) in triggers]

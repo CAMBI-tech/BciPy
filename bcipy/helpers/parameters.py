@@ -37,6 +37,28 @@ class Parameters(dict):
         }
         self.load_from_source()
 
+    @classmethod
+    def from_cast_values(cls, **kwargs):
+        """Create a new Parameters object from cast values. This is useful
+        primarily for testing
+        
+        >>> Parameters.from_cast_values(time_target=1.0, fake_data=True)
+        """
+        params = Parameters(source=None, cast_values=True)
+        for key, val in kwargs.items():
+            value_type = type(val).__name__
+            value_str = str(val).lower() if value_type == 'bool' else str(val)
+            params.add_entry(
+                key, {
+                    'value': value_str,
+                    'section': '',
+                    'readableName': '',
+                    'helpTip': '',
+                    'recommended_values': '',
+                    'type': value_type
+                })
+        return params
+
     @property
     def supported_types(self):
         """Supported types for casting values"""
