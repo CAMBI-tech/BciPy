@@ -40,6 +40,9 @@ def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, exper
     parameters['parameter_location'] = parameter_location
     if parameter_location != DEFAULT_PARAMETERS_PATH:
         parameters.save()
+        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+        if parameters.add_missing_items(default_params):
+            raise Exception("Parameters file out of date.")
 
     # update our parameters file with system related information
     sys_info = get_system_info()
