@@ -36,7 +36,7 @@ class RSVPKeyboard(BCIGui):
         # This is set in the build_inputs method that is called automatically when using show_gui
         self.user_input = None
 
-    def set_parameter_location(self, path: str):
+    def set_parameter_location(self, path: str) -> None:
         """Sets the parameter_location to the given path. Reloads the parameters
         and updates any GUI widgets that are populated based on these params."""
         self.parameter_location = path
@@ -224,8 +224,7 @@ class RSVPKeyboard(BCIGui):
 
         self.user_input.clear()
         self.user_input.addItem(RSVPKeyboard.default_text)
-        for user_id in self.load_items_from_txt():
-            self.user_input.addItem(str(user_id))
+        self.user_input.addItems(self.load_items_from_txt())
 
     def build_inputs(self) -> None:
         """Build Inputs.
