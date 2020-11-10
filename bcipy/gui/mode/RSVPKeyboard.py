@@ -28,13 +28,23 @@ class RSVPKeyboard(BCIGui):
         self.event_started = False
         self.parameter_location = DEFAULT_PARAMETERS_PATH
 
-        self.parameters = load_json_parameters(
-            self.parameter_location, value_cast=True)
+        self.parameters = load_json_parameters(self.parameter_location,
+                                               value_cast=True)
         self.task_colors = itertools.cycle(
             ['Tomato', 'orange', 'MediumTurquoise', 'MediumSeaGreen', 'MediumPurple', 'Moccasin'])
 
         # This is set in the build_inputs method that is called automatically when using show_gui
         self.user_input = None
+
+    def set_parameter_location(self, path: str) -> None:
+        """Sets the parameter_location to the given path. Reloads the parameters
+        and updates any GUI widgets that are populated based on these params."""
+        self.parameter_location = path
+        self.parameters = load_json_parameters(self.parameter_location,
+                                               value_cast=True)
+        # update GUI options
+        if self.user_input:
+            self.update_user_list()
 
     def select_parameters(self) -> None:
         """Select Parameters.
@@ -44,12 +54,14 @@ class RSVPKeyboard(BCIGui):
 
         response = self.get_filename_dialog(message='Select parameters file', file_type='JSON files (*.json)')
         if response:
-            self.parameter_location = response
+            self.set_parameter_location(response)
 
     def edit_parameters(self) -> None:
         """Edit Parameters.
 
         Prompts for a parameters.json file to use. If the default parameters are selected, a copy is used.
+        Note that any edits to the paramters file will not be applied to this GUI until the parameters
+        are reloaded.
         """
         if self.parameter_location == DEFAULT_PARAMETERS_PATH:
             # Don't allow the user to overwrite the defaults
@@ -206,23 +218,28 @@ class RSVPKeyboard(BCIGui):
             size=[btn_refresh_width, command_btn_height], background_color='white',
             action=self.refresh)
 
+    def update_user_list(self) -> None:
+        """Updates the user_input combo box with a list of user ids based on the
+        data directory configured in the current parameters."""
+
+        self.user_input.clear()
+        self.user_input.addItem(RSVPKeyboard.default_text)
+        self.user_input.addItems(self.load_items_from_txt())
+
     def build_inputs(self) -> None:
         """Build Inputs.
 
         Build all inputs needed for RSVPKeyboard.
         """
-        items = self.load_items_from_txt()
-
-        # add default text for editting at the beginning
-        items.insert(0, RSVPKeyboard.default_text)
-
         self.user_input = self.add_combobox(
             position=[75, 150],
             size=[280, 40],
-            items=items,
+            items=[],
             editable=True,
             background_color='white',
             text_color='black')
+
+        self.update_user_list()
 
     def build_images(self) -> None:
         """Build Images.
