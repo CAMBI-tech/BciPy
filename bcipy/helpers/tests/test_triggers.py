@@ -1,14 +1,14 @@
 import unittest
 from io import StringIO
-from pathlib import Path
 from typing import List, Tuple
-import random
-from bcipy.helpers.triggers import NONE_VALUES, LslCopyPhraseLabeller, \
-    extract_from_copy_phrase, extract_from_calibration, \
-    write_trigger_file_from_lsl_calibration, trigger_durations, read_triggers
+
 from bcipy.helpers.parameters import Parameters
-import shutil
-import tempfile
+from bcipy.helpers.triggers import (NONE_VALUES, LslCopyPhraseLabeller,
+                                    extract_from_calibration,
+                                    extract_from_copy_phrase, read_triggers,
+                                    trigger_durations,
+                                    write_trigger_file_from_lsl_calibration)
+from bcipy.signal.generator.generator import gen_random_data
 
 
 def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
@@ -49,11 +49,10 @@ def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
     header = 'timestamp,' + ','.join(ch_names) + ',TRG'
 
     data = []
+    n_channels = len(ch_names)
     for i in range(1000):
         timestamp = i + 10.0
-        channel_data = [
-            str(random.uniform(-1000, 1000)) for _ in range(len(ch_names))
-        ]
+        channel_data = list(map(str, gen_random_data(-1000, 1000, n_channels)))
         trg = triggers_by_time.get(timestamp, NONE_VALUES[0])
         data.append(','.join([str(timestamp), *channel_data, trg]))
 

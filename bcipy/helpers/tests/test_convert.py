@@ -1,6 +1,5 @@
 """Tests for data conversion related functionality."""
 import os
-import random
 import shutil
 import tempfile
 import unittest
@@ -9,20 +8,21 @@ from itertools import chain
 from pathlib import Path
 from typing import List
 
-import numpy as np
 from mne.io import read_raw_edf
 
 from bcipy.helpers.convert import convert_to_edf
 from bcipy.helpers.parameters import Parameters
+from bcipy.signal.generator.generator import gen_random_data
 
 
-def sample_data(rows: int = 1000, ch_names: List[str] = ['c1', 'c2',
-                                                         'c3']) -> str:
+def sample_data(rows: int = 1000, ch_names: List[str] = None) -> str:
     """Creates sample data to be written as a raw_data.csv file
-    
+
     rows - number of sample rows to generate
     ch_names - channel names
     """
+    if not ch_names:
+        ch_names = ['c1', 'c2', 'c3']
     # Mock the raw_data file
     sep = '\r\n'
     meta = sep.join([f'daq_type,LSL', 'sample_rate,256.0'])
@@ -30,7 +30,9 @@ def sample_data(rows: int = 1000, ch_names: List[str] = ['c1', 'c2',
 
     data = []
     for i in range(rows):
-        channel_data = np.random.uniform(low=-1000.0, high=1000.0, size=3)
+        channel_data = gen_random_data(low=-1000,
+                                       high=1000,
+                                       channel_count=len(ch_names))
         columns = chain([str(i)], map(str, channel_data), ['0.0'])
         data.append(','.join(columns))
 
@@ -58,7 +60,7 @@ R nontarget 11.00485198898241
 _ nontarget 11.306160968990298
 offset offset_correction 1.23828125
 '''
-        cls.sample_data = sample_data(rows=3000)
+        cls.sample_data = sample_data(rows=3000, ch_names=['c1', 'c2', 'c3'])
 
     def setUp(self):
         """Override; set up the needed path for load functions."""
@@ -96,18 +98,19 @@ offset offset_correction 1.23828125
     def test_overwrite_false(self):
         """Test overwriting fails"""
 
-        path = convert_to_edf(self.temp_dir)
+        convert_to_edf(self.temp_dir)
         with self.assertRaises(OSError):
-            path = convert_to_edf(self.temp_dir, overwrite=False)
+            convert_to_edf(self.temp_dir, overwrite=False)
 
     def test_overwrite_true(self):
         """Test that overwriting can be configured"""
 
-        path = convert_to_edf(self.temp_dir)
-        path = convert_to_edf(self.temp_dir, overwrite=True)
+        convert_to_edf(self.temp_dir)
+        convert_to_edf(self.temp_dir, overwrite=True)
 
     def test_with_custom_path(self):
         """Test creating the EDF without event annotations"""
-        path = convert_to_edf(self.temp_dir, edf_path = Path(self.temp_dir, 'mydata.edf'))
+        path = convert_to_edf(self.temp_dir,
+                              edf_path=Path(self.temp_dir, 'mydata.edf'))
 
         self.assertEqual(Path(path).name, 'mydata.edf')

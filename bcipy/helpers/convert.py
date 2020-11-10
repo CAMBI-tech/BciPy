@@ -21,9 +21,9 @@ def convert_to_edf(data_dir: str,
 
     Parameters
     ----------
-    raw_data_dir - directory which contains the data to be converted. This
+    data_dir - directory which contains the data to be converted. This
         location must also contain a parameters.json configuration file.
-    output_path - optional path to write converted data; defaults to writing
+    edf_path - optional path to write converted data; defaults to writing
         a file named raw.edf in the data_dir.
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
@@ -62,10 +62,12 @@ def write_edf(output_path: str,
 
     Parameters
     ----------
-    raw_data_dir - directory which contains the data to be converted. This
-        location must also contain a parameters.json configuration file.
     output_path - optional path to write converted data; defaults to writing
         a file named raw.edf in the raw_data_dir.
+    raw_data - raw data with a row for each channel
+    ch_names - names of the channels
+    sfreq - sample frequency
+    events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
     
