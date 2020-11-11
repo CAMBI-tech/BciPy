@@ -68,7 +68,6 @@ class RSVPKeyboard(BCIGui):
                     okay_or_cancel=True)
 
                 if save_response == AlertResponse.OK.value:
-                    self.parameter_location = copy_parameters()
                     self.parameters.save()
 
     def edit_parameters(self) -> None:
