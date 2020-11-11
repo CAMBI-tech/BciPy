@@ -184,3 +184,19 @@ class Parameters(dict):
         with open(path, 'w', encoding='utf-8') as json_file:
             dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)
         return str(path)
+
+    def add_missing_items(self, parameters) -> bool:
+        """Given another Parameters instance, add any items that are not already
+        present. Existing items will not be updated.
+
+        parameters: Parameters - object from which to add parameters.
+
+        Returns bool indicating whether or not any new items were added.
+        """
+        updated = False
+        existing_keys = self.keys()
+        for key, val in parameters.entries():
+            if key not in existing_keys:
+                self.add_entry(key, val)
+                updated = True
+        return updated

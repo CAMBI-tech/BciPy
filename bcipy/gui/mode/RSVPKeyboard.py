@@ -52,15 +52,29 @@ class RSVPKeyboard(BCIGui):
         Opens a dialog to select the parameters.json configuration to use.
         """
 
-        response = self.get_filename_dialog(message='Select parameters file', file_type='JSON files (*.json)')
+        response = self.get_filename_dialog(message='Select parameters file',
+                                            file_type='JSON files (*.json)')
         if response:
             self.set_parameter_location(response)
+            # If outdated, prompt to merge with the current defaults
+            default_parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH,
+                                                      value_cast=True)
+            if self.parameters.add_missing_items(default_parameters):
+                save_response = self.throw_alert_message(
+                    title='BciPy Alert',
+                    message=
+                    'The selected parameters file is out of date. Would you like to update it with the latest options?',
+                    message_type=AlertMessageType.INFO,
+                    okay_or_cancel=True)
+
+                if save_response == AlertResponse.OK.value:
+                    self.parameters.save()
 
     def edit_parameters(self) -> None:
         """Edit Parameters.
 
         Prompts for a parameters.json file to use. If the default parameters are selected, a copy is used.
-        Note that any edits to the paramters file will not be applied to this GUI until the parameters
+        Note that any edits to the parameters file will not be applied to this GUI until the parameters
         are reloaded.
         """
         if self.parameter_location == DEFAULT_PARAMETERS_PATH:
