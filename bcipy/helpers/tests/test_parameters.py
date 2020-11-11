@@ -429,7 +429,9 @@ class TestParameters(unittest.TestCase):
 
     def test_alternate_constructor(self):
         """Test alternate constructor from cast values"""
-        parameters = Parameters.from_cast_values(myint=1, mybool=True, mystr="Testing")
+        parameters = Parameters.from_cast_values(myint=1,
+                                                 mybool=True,
+                                                 mystr="Testing")
         self.assertTrue(parameters.cast_values)
         self.assertEqual(parameters['myint'], 1)
         self.assertEqual(parameters['mybool'], True)
@@ -439,6 +441,39 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(parameters['myint']['value'], '1')
         self.assertEqual(parameters['mybool']['value'], 'true')
         self.assertEqual(parameters['mystr']['value'], 'Testing')
+
+    def test_add_missing(self):
+        """Test add_missing_items"""
+        entry1 = {
+            "value": "8000",
+            "section": "acquisition",
+            "readableName": "Acquisition Port",
+            "helpTip": "",
+            "recommended_values": "",
+            "type": "int"
+        }
+        entry2 = {
+            "value": "LSL",
+            "section": "acquisition",
+            "readableName": "Acquisition Device",
+            "helpTip": "",
+            "recommended_values": ["LSL", "DSI"],
+            "type": "str"
+        }
+        {"acq_port": entry1, "acq_device": entry2}
+        parameters = Parameters(source=None)
+        parameters.load({"acq_port": entry1})
+
+        new_params = Parameters(source=None)
+        new_params.load({"acq_port": entry1, "acq_device": entry2})
+
+        self.assertFalse('acq_device' in parameters.keys())
+        self.assertTrue(parameters.add_missing_items(new_params))
+        self.assertTrue('acq_device' in parameters.keys())
+
+        self.assertFalse(parameters.add_missing_items(new_params),
+                         "Only new parameters should be added.")
+
 
 if __name__ == '__main__':
     unittest.main()
