@@ -427,6 +427,21 @@ class TestParameters(unittest.TestCase):
         with self.assertRaises(Exception):
             parameters.check_valid_entry("fake_data", True)
 
+    def test_alternate_constructor(self):
+        """Test alternate constructor from cast values"""
+        parameters = Parameters.from_cast_values(myint=1,
+                                                 mybool=True,
+                                                 mystr="Testing")
+        self.assertTrue(parameters.cast_values)
+        self.assertEqual(parameters['myint'], 1)
+        self.assertEqual(parameters['mybool'], True)
+        self.assertEqual(parameters['mystr'], 'Testing')
+
+        parameters.cast_values = False
+        self.assertEqual(parameters['myint']['value'], '1')
+        self.assertEqual(parameters['mybool']['value'], 'true')
+        self.assertEqual(parameters['mystr']['value'], 'Testing')
+
     def test_add_missing(self):
         """Test add_missing_items"""
         entry1 = {

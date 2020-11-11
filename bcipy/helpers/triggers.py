@@ -1,11 +1,13 @@
 from bcipy.helpers.load import load_txt_data
 from bcipy.helpers.stimuli import resize_image, play_sound
+from bcipy.helpers.parameters import Parameters
 import csv
-from typing import TextIO, List, Tuple
+from typing import Dict, TextIO, List, Tuple
 
 from psychopy import visual, core
+from pathlib import Path
 
-NONE_VALUE = '0'
+NONE_VALUES = ['0', '0.0']
 SOUND_TYPE = 'sound'
 IMAGE_TYPE = 'image'
 
@@ -71,13 +73,11 @@ def _calibration_trigger(experiment_clock: core.Clock,
                 mask=None,
                 ori=0.0)
             calibration_box.size = resize_image(
-                'bcipy/static/images/testing_images/white.png',
-                display.size, 0.75)
+                'bcipy/static/images/testing_images/white.png', display.size,
+                0.75)
 
-            display.callOnFlip(
-                trigger_callback.callback,
-                experiment_clock,
-                trigger_name)
+            display.callOnFlip(trigger_callback.callback, experiment_clock,
+                               trigger_name)
             if on_trigger is not None:
                 display.callOnFlip(on_trigger, trigger_name)
 
@@ -96,10 +96,9 @@ def _calibration_trigger(experiment_clock: core.Clock,
     return trigger_callback.timing
 
 
-def _write_triggers_from_sequence_calibration(
-        array: list,
-        trigger_file: TextIO,
-        offset: bool = False):
+def _write_triggers_from_sequence_calibration(array: list,
+                                              trigger_file: TextIO,
+                                              offset: bool = False):
     """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
@@ -147,12 +146,11 @@ def _write_triggers_from_sequence_calibration(
     return trigger_file
 
 
-def _write_triggers_from_sequence_copy_phrase(
-        array,
-        trigger_file,
-        copy_text,
-        typed_text,
-        offset=None):
+def _write_triggers_from_sequence_copy_phrase(array,
+                                              trigger_file,
+                                              copy_text,
+                                              typed_text,
+                                              offset=None):
     """
     Write triggers from copy phrase.
 
@@ -228,9 +226,11 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
     return trigger_file
 
 
-def write_triggers_from_sequence_icon_to_icon(
-        sequence_timing: List[Tuple], trigger_file: TextIO, target: str,
-        target_displayed: bool, offset=None):
+def write_triggers_from_sequence_icon_to_icon(sequence_timing: List[Tuple],
+                                              trigger_file: TextIO,
+                                              target: str,
+                                              target_displayed: bool,
+                                              offset=None):
     """
     Write triggers from icon to icon task.
     It writes in the following order:
@@ -309,9 +309,10 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
         trigger_txt = [line.split() for line in text_file]
 
     # extract stimuli from the text
-    stimuli_triggers = [line for line in trigger_txt
-                        if line[1] == 'target' or
-                        line[1] == 'nontarget']
+    stimuli_triggers = [
+        line for line in trigger_txt
+        if line[1] == 'target' or line[1] == 'nontarget'
+    ]
 
     # from the stimuli array, pull our the symbol information
     symbol_info = list(map(lambda x: x[0], stimuli_triggers))
@@ -326,10 +327,10 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
         timing_info = list(map(lambda x: eval(x[1]), stimuli_triggers))
 
     # Get any offset or calibration triggers
-    offset_array = [line[2] for line in trigger_txt
-                    if line[0] == 'offset']
-    calib_trigger_array = [line[2] for line in trigger_txt
-                           if line[0] == 'calibration_trigger']
+    offset_array = [line[2] for line in trigger_txt if line[0] == 'offset']
+    calib_trigger_array = [
+        line[2] for line in trigger_txt if line[0] == 'calibration_trigger'
+    ]
 
     # If present, calculate the offset between the DAQ and Triggers from
     # display
@@ -451,7 +452,8 @@ class LslCopyPhraseLabeller(Labeller):
 
 def _extract_triggers(csvfile: TextIO,
                       trg_field,
-                      labeller: Labeller) -> List[Tuple[str, str, str]]:
+                      labeller: Labeller,
+                      skip_meta: bool = True) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from an experiment output csv file.
     Parameters:
     -----------
@@ -460,6 +462,7 @@ def _extract_triggers(csvfile: TextIO,
                    defaults to 'TRG'
         labeller: Labeller used to calculate the targetness value for a
             given trigger.
+        skip_meta: skips the metadata rows
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp)
@@ -467,14 +470,15 @@ def _extract_triggers(csvfile: TextIO,
     data = []
 
     # Skip metadata rows
-    _daq_type = next(csvfile)
-    _sample_rate = next(csvfile)
+    if skip_meta:
+        _daq_type = next(csvfile)
+        _sample_rate = next(csvfile)
 
     reader = csv.DictReader(csvfile)
 
     for row in reader:
         trg = row[trg_field]
-        if trg != NONE_VALUE:
+        if trg not in NONE_VALUES:
             if 'calibration' in trg:
                 trg = 'calibration_trigger'
             targetness = labeller.label(trg)
@@ -485,7 +489,8 @@ def _extract_triggers(csvfile: TextIO,
 
 def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
                                             trigger_file: TextIO,
-                                            seq_len: int, trg_field: str = 'TRG'):
+                                            seq_len: int,
+                                            trg_field: str = 'TRG'):
     """Creates a triggers.txt file from TRG data recorded in the raw_data
     output from a calibration."""
     extracted = extract_from_calibration(csvfile, seq_len, trg_field)
@@ -494,7 +499,8 @@ def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
 
 def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
                                             trigger_file: TextIO,
-                                            copy_text: str, typed_text: str,
+                                            copy_text: str,
+                                            typed_text: str,
                                             trg_field: str = 'TRG'):
     """Creates a triggers.txt file from TRG data recorded in the raw_data
     output from a copy phrase."""
@@ -503,8 +509,8 @@ def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
     _write_trigger_file_from_extraction(trigger_file, extracted)
 
 
-def _write_trigger_file_from_extraction(trigger_file: TextIO,
-                                        extraction: List[Tuple[str, str, str]]):
+def _write_trigger_file_from_extraction(
+        trigger_file: TextIO, extraction: List[Tuple[str, str, str]]):
     """Writes triggers that have been extracted from a raw_data file to a
     file."""
     for trigger, targetness, timestamp in extraction:
@@ -516,7 +522,9 @@ def _write_trigger_file_from_extraction(trigger_file: TextIO,
 
 def extract_from_calibration(csvfile: TextIO,
                              seq_len: int,
-                             trg_field: str = 'TRG') -> List[Tuple[str, str, str]]:
+                             trg_field: str = 'TRG',
+                             skip_meta: bool = True
+                             ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a calibration output csv file.
     Parameters:
     -----------
@@ -525,20 +533,26 @@ def extract_from_calibration(csvfile: TextIO,
                  targetness for first_pres_target.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
+        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
+            the start of the file.
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
 
-    return _extract_triggers(csvfile, trg_field,
-                             labeller=LslCalibrationLabeller(seq_len))
+    return _extract_triggers(csvfile,
+                             trg_field,
+                             labeller=LslCalibrationLabeller(seq_len),
+                             skip_meta=skip_meta)
 
 
 def extract_from_copy_phrase(csvfile: TextIO,
                              copy_text: str,
                              typed_text: str,
-                             trg_field: str = 'TRG') -> List[Tuple[str, str, str]]:
+                             trg_field: str = 'TRG',
+                             skip_meta: bool = True
+                             ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a copy phrase output csv file.
     Parameters:
     -----------
@@ -546,11 +560,51 @@ def extract_from_copy_phrase(csvfile: TextIO,
         copy_text: phrase to copy
         typed_text: participant typed response
         trg_field: optional; name of the data column with the trigger data;
-                   defaults to 'TRG'
+                   defaults to 'TRG',
+        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
+            the start of the file.
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
     labeller = LslCopyPhraseLabeller(copy_text, typed_text)
-    return _extract_triggers(csvfile, trg_field, labeller=labeller)
+    return _extract_triggers(csvfile,
+                             trg_field,
+                             labeller=labeller,
+                             skip_meta=skip_meta)
+
+
+def trigger_durations(params: Parameters) -> Dict[str, float]:
+    """Duration for each type of trigger given in seconds."""
+    return {
+        'calib': 0.0,
+        'first_pres_target': params['time_target'],
+        'fixation': params['time_cross'],
+        'nontarget': params['time_flash'],
+        'target': params['time_flash']
+    }
+
+
+def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
+    """Read in the triggers.txt file. Convert the timestamps to be in
+    acquisition clock units using the offset listed in the file (last entry).
+
+    triggers_file - open triggers.txt
+
+    Returns
+    -------
+        list of (symbol, targetness, stamp) tuples.
+    """
+
+
+    records = [line.split(' ') for line in triggers_file.readlines()]
+    # calibration
+    (_cname, _ctype, calibration_stamp) = records[0]
+    (_acq_name, _acq_type, acq_stamp) = records.pop()
+    offset = float(acq_stamp) - float(calibration_stamp)
+
+    corrected = []
+    for i, (name, trg_type, stamp) in enumerate(records):
+        corrected.append((name, trg_type, float(stamp) + offset))
+    return corrected
