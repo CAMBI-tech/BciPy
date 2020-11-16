@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from bcipy.tasks.rsvp.query_mechanisms import RandomAgent
-from bcipy.helpers.stimuli import best_case_rsvp_seq_gen
+from bcipy.helpers.stimuli import rsvp_seq_generator
 from bcipy.helpers.task import SPACE_CHAR
 from typing import Dict, List
 import logging
@@ -392,16 +392,13 @@ class DecisionMaker:
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
 
+        # querying agent decides on possible letters to be shown on the screen
         query_els = self.query_agent.update_and_query(
             self.list_epoch[-1]['list_distribution'][-1])
-
-        # TODO: the query selection is held by query agent.
-        # TODO: Stimulus generation should be stupid and only prepares the colored txt.
-
-        stimuli = best_case_rsvp_seq_gen(
-            self.alphabet,
-            stim_number=1,
-            is_txt=self.is_txt_stim,
-            timing=self.stimuli_timing,
-            seq_constants=self.seq_constants)
+        # once querying is determined, append with timing and color info
+        stimuli = rsvp_seq_generator(query=query_els,
+                                     stim_number=1,
+                                     is_txt=self.is_txt_stim,
+                                     timing=self.stimuli_timing,
+                                     seq_constants=self.seq_constants)
         return stimuli

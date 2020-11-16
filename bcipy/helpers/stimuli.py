@@ -16,6 +16,58 @@ from psychopy import core
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
+# TODO: since we have a querying this should replace the other generators
+def rsvp_seq_generator(query: list,
+                       timing=[1, 0.2],
+                       color=['red', 'white'],
+                       stim_number=1,
+                       is_txt=True,
+                       seq_constants=None) -> tuple:
+    """ Given the query set, prepares the stimuli, color and timing
+        Args:
+            query(list[str]): list of queries to be shown
+            timing(list[float]): Task specific timing for generator
+            color(list[str]): Task specific color for generator
+                First element is the target, second element is the fixation
+                Observe that [-1] element represents the trial information
+            seq_constants(list[str]): list of letters that should always be
+                included in every sequence. If provided, must be alp items.
+        Return:
+            schedule_seq(tuple(
+                samples[list[list[str]]]: list of sequences
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)): scheduled sequences
+            """
+
+    # shuffle the returned values
+    random.shuffle(query)
+
+    stim_length = len(query)
+
+    # Init some lists to construct our stimuli with
+    samples, times, colors = [], [], []
+    for idx_num in range(stim_number):
+
+        # append a fixation cross. if not text, append path to image fixation
+        if is_txt:
+            sample = ['+']
+        else:
+            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+
+        # construct the sample from the query
+        sample += [i for i in query]
+        samples.append(sample)
+
+        # append timing
+        times.append([timing[i] for i in range(len(timing) - 1)] +
+                     [timing[-1]] * stim_length)
+
+        # append colors
+        colors.append([color[i] for i in range(len(color) - 1)] +
+                      [color[-1]] * stim_length)
+    return (samples, times, colors)
+
+
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
@@ -41,9 +93,9 @@ def best_selection(selection_elements: list,
     best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
 
     replacements = [
-        item for item in always_included
-        if item not in best and item in selection_elements
-    ][0:n]
+                       item for item in always_included
+                       if item not in best and item in selection_elements
+                   ][0:n]
 
     if replacements:
         best[-len(replacements):] = replacements
@@ -83,7 +135,7 @@ def best_case_rsvp_seq_gen(alp: list,
     if len(alp) != len(session_stimuli):
         raise Exception('Missing information about alphabet. len(alp):{}, '
                         'len(session_stimuli):{}, should be same!'.format(
-                            len(alp), len(session_stimuli)))
+            len(alp), len(session_stimuli)))
 
     if seq_constants and not set(seq_constants).issubset(alp):
         raise Exception('Sequence constants must be alphabet items.')
@@ -172,7 +224,8 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
     return schedule_seq
 
 
-def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 1, 0.2],
+def target_rsvp_sequence_generator(alp, target_letter, parameters,
+                                   timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
                                    stim_length=10, is_txt=True):
     """Target RSVP Sequence Generator.
@@ -204,7 +257,7 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
     else:
         sample = ['bcipy/static/images/bci_main_images/PLUS.png']
         target_letter = parameters['path_to_presentation_images'] + \
-            target_letter + '.png'
+                        target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
@@ -357,7 +410,8 @@ def generate_icon_match_images(
             'bcipy/static/images/bci_main_images/PLUS.png')
 
         # Add target image to sequence, if it is not already there
-        if not target_image_numbers[sequence] in random_number_array[2:experiment_length]:
+        if not target_image_numbers[sequence] in random_number_array[
+                                                 2:experiment_length]:
             random_number_array[np.random.randint(
                 2, experiment_length)] = target_image_numbers[sequence]
 
@@ -393,7 +447,8 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
                     proportions[0], sti_height * proportions[1])
     else:
         sti_size = (
-            sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
+            sti_height * proportions[0],
+            (screen_width / screen_height) * sti_height * proportions[1])
 
     return sti_size
 
