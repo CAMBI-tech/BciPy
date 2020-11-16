@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bcipy.tasks.rsvp.query_mechanisms import RandomAgent
 from bcipy.helpers.stimuli import best_case_rsvp_seq_gen
 from bcipy.helpers.task import SPACE_CHAR
 from typing import Dict, List
@@ -97,7 +98,8 @@ class MinIterationsCriteria(DecisionCriteria):
         # than this, since the language model distribution is added before
         # the first sequence is displayed.
         current_seq = len(epoch['list_sti'])
-        log.debug(f"Checking min iterations; current iteration is {current_seq}")
+        log.debug(
+            f"Checking min iterations; current iteration is {current_seq}")
         return current_seq < commit_params['min_num_seq']
 
 
@@ -162,7 +164,7 @@ class CriteriaEvaluator():
                    commit_criteria=[
                        MaxIterationsCriteria(),
                        CommitThresholdCriteria()
-        ])
+                   ])
 
     def should_commit(self, epoch: Dict, params: Dict):
         """Evaluates the given epoch; returns true if stoppage criteria has
@@ -223,6 +225,7 @@ class DecisionMaker:
                 every sequence.
             criteria_evaluator: CriteriaEvaluator - optional parameter to
                 provide alternative rules for committing to a decision.
+            query_agent(QueryAgent): the query selection mechanism of the system
 
         Functions:
             decide():
@@ -252,7 +255,8 @@ class DecisionMaker:
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None,
-                 criteria_evaluator=CriteriaEvaluator.default()):
+                 criteria_evaluator=CriteriaEvaluator.default(),
+                 query_agent=RandomAgent()):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -262,7 +266,8 @@ class DecisionMaker:
         self.is_txt_stim = is_txt_stim
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': [], 'decision': None}]
+                            'list_sti': [], 'list_distribution': [],
+                            'decision': None}]
         self.time = 0
         self.sequence_counter = 0
 
@@ -279,6 +284,8 @@ class DecisionMaker:
 
         self.criteria_evaluator = criteria_evaluator
 
+        self.query_agent = query_agent
+
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
             Args:
@@ -290,6 +297,8 @@ class DecisionMaker:
                             'list_sti': [], 'list_distribution': []}]
         self.time = 0
         self.sequence_counter = 0
+
+        self.query_agent.reset()
 
     def form_display_state(self, state):
         """ Forms the state information or the user that fits to the
@@ -355,6 +364,8 @@ class DecisionMaker:
         self.list_epoch.append({'target': None, 'time_spent': 0,
                                 'list_sti': [], 'list_distribution': []})
 
+        self.query_agent.do_epoch()
+
     def schedule_sequence(self):
         """ Schedules next sequence """
         self.state += '.'
@@ -381,9 +392,14 @@ class DecisionMaker:
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
 
+        query_els = self.query_agent.update_and_query(
+            self.list_epoch[-1]['list_distribution'][-1])
+
+        # TODO: the query selection is held by query agent.
+        # TODO: Stimulus generation should be stupid and only prepares the colored txt.
+
         stimuli = best_case_rsvp_seq_gen(
             self.alphabet,
-            self.list_epoch[-1]['list_distribution'][-1],
             stim_number=1,
             is_txt=self.is_txt_stim,
             timing=self.stimuli_timing,

@@ -33,6 +33,7 @@ class QueryAgent:
         return
 
     def do_epoch(self):
+        """ If the system decides on a class let the agent know about it """
         return
 
 
@@ -51,6 +52,9 @@ class RandomAgent(QueryAgent):
         query = random.sample(tmp, self.alphabet)
 
         return query
+
+    def do_epoch(self):
+        pass
 
 
 class NBestAgent(QueryAgent):
@@ -72,6 +76,9 @@ class NBestAgent(QueryAgent):
         query = best_selection(tmp, p, self.len_query)
 
         return query
+
+    def do_epoch(self):
+        pass
 
 
 class MomentumQueryAgent(QueryAgent):
@@ -97,7 +104,8 @@ class MomentumQueryAgent(QueryAgent):
             update_lam_flag(bool): if True updates lambda at each sequence
         """
         self.alphabet = alphabet
-        self.lam = np.float(lam)
+        self.lam = lam
+        self.lam_ = copy(self.lam)
         self.dif_lam = dif_lam
         self.gam = np.float(gam)
         self.len_query = len_query
@@ -106,12 +114,10 @@ class MomentumQueryAgent(QueryAgent):
         self.prob_history = []
         self.last_query = []
 
-    def reset(self, lam=1):
-        """ resets the history related items in the query method
-            Args:
-                lam(float): in [0,1] convex combination parameter """
+    def reset(self):
+        """ resets the history related items in the query agent """
         if self.update_lam_flag:
-            self.lam = np.float(lam)
+            self.lam_ = copy(self.lam)
 
         self.momentum = np.zeros(len(self.alphabet))
         self.prob_history = []
@@ -140,8 +146,8 @@ class MomentumQueryAgent(QueryAgent):
 
         # if there are no sequences shown yet, the momentum cannot be computed
         if num_passed_sequences > 1:
-            reward = (self.lam - 1) * entropy_term + (
-                    self.lam / num_passed_sequences) * self.momentum
+            reward = (self.lam_ - 1) * entropy_term + (
+                    self.lam_ / num_passed_sequences) * self.momentum
         else:
             reward = -entropy_term
 
@@ -182,12 +188,14 @@ class MomentumQueryAgent(QueryAgent):
         thr = 1
         if len_history < 10:
             # if less then 10 sequences so far, do the hand shaking
-            self.lam = np.max(
-                [self.lam - self.dif_lam * (len_history / thr), 0])
+            self.lam_ = np.max(
+                [self.lam_ - self.dif_lam * (len_history / thr), 0])
         else:
             # do not explore if already passed 10 sequences
-            self.lam = 0
+            self.lam_ = 0
 
+    def do_epoch(self):
+        self.reset()
 
 # A generic best selection from set function using values
 def best_selection(list_el, val, len_query):
