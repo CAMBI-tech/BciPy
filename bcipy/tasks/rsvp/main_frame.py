@@ -256,7 +256,9 @@ class DecisionMaker:
                  stimuli_timing=[1, .2],
                  seq_constants=None,
                  criteria_evaluator=CriteriaEvaluator.default(),
-                 query_agent=RandomAgent()):
+                 query_agent=RandomAgent(
+                     alphabet=list(string.ascii_uppercase) +
+                              ['<'] + [SPACE_CHAR])):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing

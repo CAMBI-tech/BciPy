@@ -49,7 +49,7 @@ class RandomAgent(QueryAgent):
     def update_and_query(self, p):
         """ return random elements from the alphabet """
         tmp = [i for i in self.alphabet]
-        query = random.sample(tmp, self.alphabet)
+        query = random.sample(tmp, self.len_query)
 
         return query
 
@@ -196,6 +196,7 @@ class MomentumQueryAgent(QueryAgent):
 
     def do_epoch(self):
         self.reset()
+
 
 # A generic best selection from set function using values
 def best_selection(list_el, val, len_query):
