@@ -1,7 +1,4 @@
 """ This script simulates a copy phrase task. """
-
-import os
-
 import string
 import numpy as np
 import scipy.io as sio
@@ -24,7 +21,7 @@ path = "./"
 filename = "sample_user_1.mat"
 
 delta = 5  # Manually shift the samples to increase AUC (caveman solution)
-max_num_iter = 10000  # number of typing iterations with the system
+max_num_iter = 1000  # number of typing iterations with the system
 lm_flag = False  # language model is active if True
 len_query = 8  # number of trials in a sequence
 
@@ -44,7 +41,6 @@ if lm_flag:
     raise NotImplementedError("Language model option is not implemented!")
 
 conjugator = EvidenceFusion(evidence_names, len_dist=len_alphabet)
-
 
 # load data (x) and labels (y)
 tmp = sio.loadmat(path + filename)
@@ -91,7 +87,6 @@ for idx_phrase in range(len(list_phrase)):
 
     for idx in tqdm(range(max_num_iter)):
 
-        # THe
         decision_maker.reset(state=pre_phrase)
         oracle.reset()
         oracle.update_state(decision_maker.displayed_state)

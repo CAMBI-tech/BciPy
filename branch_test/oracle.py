@@ -3,6 +3,7 @@ from scipy.stats import norm, iqr
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import auc, roc_curve
 
+
 # TODO: define the root object to allow new design
 
 class BinaryGaussianOracle(object):
