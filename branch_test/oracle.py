@@ -4,9 +4,51 @@ from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import auc, roc_curve
 
 
-# TODO: define the root object to allow new design
+class Oracle(object):
+    """ Oracle base class. Synthetic user that is designed to simulate a typing
+        task utilizing either dummy data or real user data.
+            Attr:
+                phrase(str): user's intended state to write
+                    (can be anything / sentence,word etc.)
+                state(char): the letter of intention (the current letter to be
+                    typed to progress towards the phrase)
+                alp(list[char]): alphabet.
+                erase_command(str): backspace character for the system """
 
-class BinaryGaussianOracle(object):
+    def __init__(self, alp, erase_command, phrase, **kwargs):
+        """ Args:
+                alp(list[str]): alphabet
+                erase_command(str): backspace character, used if oracle wants
+                    to erase a previously committed decision.
+                phrase(str): phrase in users mind (e.g.: I_love_cookies) """
+        self.alp = alp
+        self.erase_command = erase_command
+        self.phrase = phrase
+
+    def update_state(self, delta):
+        """ update the oracle state based on the displayed state(delta)
+            and the phrase the oracle is initiated with.
+            Args:
+                delta(str): what is typed on the screen
+         """
+        if self.phrase == delta:
+            # TODO: include a termination response here!
+            pass
+        else:
+            if self.phrase[0:len(delta)] == delta:
+
+                self.state = self.phrase[len(delta)]
+            else:
+                self.state = self.erase_command
+
+    def answer(self, q, **kwargs):
+        """ binary oracle responds based on the query/state match
+            Args:
+                q(list[char]): stimuli flashed on screen """
+        pass
+
+
+class BinaryGaussianOracle(Oracle):
     """ RSVPKeyboard oracle implementation (interpreted as user)
             Attr:
                 phrase(str): user's intention to write (can be anything / sentence,word etc.)
@@ -17,11 +59,11 @@ class BinaryGaussianOracle(object):
                 erase_command(str): backspace character for the system
             """
 
-    def __init__(self, a_mean, a_std, phrase, alp, erase_command):
+    def __init__(self, alp, erase_command, phrase, a_mean, a_std):
         """ Args:
                 a_mean(ndarray[float]): 2x1 float array denoting the means
                 a_std(ndarray[int]): 2x1 float array denoting the std
-                phrase(str): phrase in users ming (e.g.: I_love_cookies)
+                phrase(str): phrase in users mind (e.g.: I_love_cookies)
             """
         self.alp = alp
         self.erase_command = erase_command
@@ -41,7 +83,7 @@ class BinaryGaussianOracle(object):
                 delta(str): what is typed on the screen
          """
         if self.phrase == delta:
-            None
+            pass
         else:
             if self.phrase[0:len(delta)] == delta:
 
@@ -70,7 +112,7 @@ class BinaryGaussianOracle(object):
         return np.asarray(sc)
 
 
-class BinaryRSVPOracle(object):
+class BinaryRSVPOracle(Oracle):
     """ RSVPKeyboard oracle implementation (interpreted as user)
         Attr:
             phrase(str): user's intention to write (can be anything / sentence,word etc.)
@@ -81,11 +123,11 @@ class BinaryRSVPOracle(object):
             erase_command(str): backspace character for the system
         """
 
-    def __init__(self, x, y, phrase, alp, erase_command):
+    def __init__(self, alp, erase_command, phrase, x, y):
         """ Args:
                 x(ndarray[float]): scores of trial samples
                 y(ndarray[int]): label values of trial samples (1 is for positive)
-                phrase(str): phrase in users ming (e.g.: I_love_cookies)
+                phrase(str): phrase in users mind (e.g.: I_love_cookies)
             """
         self.alp = alp
         self.phrase = phrase

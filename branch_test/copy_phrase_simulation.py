@@ -9,7 +9,8 @@ from copy import copy
 
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.tasks.rsvp.query_mechanisms import RandomAgent, NBestAgent
+from bcipy.tasks.rsvp.query_mechanisms import RandomAgent, NBestAgent, \
+    MomentumQueryAgent
 
 from branch_test.oracle import BinaryRSVPOracle
 
@@ -62,14 +63,15 @@ for idx_phrase in range(len(list_phrase)):
     # Initialize the synthetic user
     pre_phrase = list_phrase[idx_phrase]
     phrase = target_phrase[idx_phrase]
-    oracle = BinaryRSVPOracle(x, y, phrase=phrase, alp=alphabet,
+    oracle = BinaryRSVPOracle(x=x, y=y, phrase=phrase, alp=alphabet,
                               erase_command=BACKSPACE_CHAR)
 
     # Initialize the decision maker
     decision_maker = DecisionMaker(state='', alphabet=alphabet,
                                    min_num_seq=2, max_num_seq=10,
-                                   query_agent=NBestAgent(alphabet=alphabet,
-                                                          len_query=len_query))
+                                   query_agent=MomentumQueryAgent(
+                                       alphabet=alphabet,
+                                       len_query=len_query))
 
     # this is the dummy eeg_modelling part
     # currently it assumes the generative model and user EEG match perfectly
