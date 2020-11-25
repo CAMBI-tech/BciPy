@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
-from bcipy.tasks.rsvp.query_mechanisms import RandomAgent
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
 from bcipy.helpers.stimuli import rsvp_seq_generator
 from bcipy.helpers.task import SPACE_CHAR
 import logging
@@ -125,7 +125,7 @@ class DecisionMaker:
                  stimuli_timing=[1, .2],
                  seq_constants=None,
                  criteria_evaluator=CriteriaEvaluator.default(),
-                 query_agent=RandomAgent(
+                 query_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
                               ['<'] + [SPACE_CHAR])):
         self.state = state

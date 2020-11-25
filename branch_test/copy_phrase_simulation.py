@@ -9,10 +9,10 @@ from copy import copy
 
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.tasks.rsvp.query_mechanisms import RandomAgent, NBestAgent, \
-    MomentumQueryAgent
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent, NBestStimuliAgent, \
+    MomentumStimuliAgent
 
-from branch_test.oracle import BinaryRSVPOracle
+from branch_test.synthesized_user import BinaryRSVPSynth
 
 eps = np.power(.1, 6)
 
@@ -63,13 +63,13 @@ for idx_phrase in range(len(list_phrase)):
     # Initialize the synthetic user
     pre_phrase = list_phrase[idx_phrase]
     phrase = target_phrase[idx_phrase]
-    oracle = BinaryRSVPOracle(x=x, y=y, phrase=phrase, alp=alphabet,
-                              erase_command=BACKSPACE_CHAR)
+    synth = BinaryRSVPSynth(x=x, y=y, phrase=phrase, alp=alphabet,
+                            erase_command=BACKSPACE_CHAR)
 
     # Initialize the decision maker
     decision_maker = DecisionMaker(state='', alphabet=alphabet,
                                    min_num_seq=2, max_num_seq=10,
-                                   query_agent=MomentumQueryAgent(
+                                   query_agent=MomentumStimuliAgent(
                                        alphabet=alphabet,
                                        len_query=len_query))
 
@@ -90,8 +90,8 @@ for idx_phrase in range(len(list_phrase)):
     for idx in tqdm(range(max_num_iter)):
 
         decision_maker.reset(state=pre_phrase)
-        oracle.reset()
-        oracle.update_state(decision_maker.displayed_state)
+        synth.reset()
+        synth.update_state(decision_maker.displayed_state)
 
         seq_till_correct = [0] * len(phrase)
         d_counter = 0
@@ -126,7 +126,7 @@ for idx_phrase in range(len(list_phrase)):
 
                 # TODO: check if there are stimulus letters present
                 # get answers from the user
-                score = oracle.answer(stimuli_letters)
+                score = synth.answer(stimuli_letters)
 
                 # get the likelihoods for the scores
                 log_likelihood = []
@@ -165,7 +165,7 @@ for idx_phrase in range(len(list_phrase)):
                     # If a decision is made reset the evidence fusion and
                     # update the oracle using the system output
                     conjugator.reset_history()
-                    oracle.update_state(decision_maker.displayed_state)
+                    synth.update_state(decision_maker.displayed_state)
                     break
 
                 else:

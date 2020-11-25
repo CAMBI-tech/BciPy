@@ -6,7 +6,7 @@ import random
 eps = np.power(.1, 6)
 
 
-class QueryAgent:
+class StimuliAgent:
     """ Query mechanism base class.
         Attr:
             alphabet(list[str]): Query space(possible queries).
@@ -37,7 +37,7 @@ class QueryAgent:
         return
 
 
-class RandomAgent(QueryAgent):
+class RandomStimuliAgent(StimuliAgent):
     def __init__(self, alphabet, len_query=4):
         self.alphabet = alphabet
         self.len_query = len_query
@@ -57,7 +57,7 @@ class RandomAgent(QueryAgent):
         pass
 
 
-class NBestAgent(QueryAgent):
+class NBestStimuliAgent(StimuliAgent):
     def __init__(self, alphabet, len_query=4):
         self.alphabet = alphabet
         self.len_query = len_query
@@ -81,7 +81,7 @@ class NBestAgent(QueryAgent):
         pass
 
 
-class MomentumQueryAgent(QueryAgent):
+class MomentumStimuliAgent(StimuliAgent):
     """ A query agent that utilizes the observed evidence so far at each step.
         This agent is specifically designed to overcome the adversary effect of
         the prior information to the system. 
@@ -136,7 +136,7 @@ class MomentumQueryAgent(QueryAgent):
         self.prob_history.append(tmp)
 
         # update the momentum term using likelihoods
-        self.update_momentum()
+        self._update_momentum()
         num_passed_sequences = len(self.prob_history)
 
         # conditional entropy as a surrogate for mutual information
@@ -153,7 +153,7 @@ class MomentumQueryAgent(QueryAgent):
 
         # if lambda update flag is True, update the lambda
         if self.update_lam_flag:
-            self.update_lam(len(self.prob_history))
+            self._update_lam(len(self.prob_history))
 
         tmp_alp = copy(self.alphabet)
         tmp_query = best_selection(tmp_alp, reward, self.len_query)
@@ -162,7 +162,7 @@ class MomentumQueryAgent(QueryAgent):
 
         return self.last_query
 
-    def update_momentum(self):
+    def _update_momentum(self):
         """ momentum is updated with the particular probability history.
             WARNING!: if called twice without a probability update, will update
             momentum using the same information twice """
@@ -181,7 +181,7 @@ class MomentumQueryAgent(QueryAgent):
                     self.prob_history[-2][k] + eps))
                 self.momentum[k] += momentum_
 
-    def update_lam(self, len_history):
+    def _update_lam(self, len_history):
         """ Handles the handshaking between two objectives.
             currently just a constant shift with number of queries,
              should be updated logically """
