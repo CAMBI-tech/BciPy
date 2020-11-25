@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.task import alphabet
 
 

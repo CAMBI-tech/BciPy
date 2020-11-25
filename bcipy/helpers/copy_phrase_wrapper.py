@@ -8,6 +8,9 @@ from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
 from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
+from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
+    MinIterationsCriteria, MaxIterationsCriteria, ProbThresholdCriteria
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
     equally_probable, histogram
 
@@ -57,15 +60,26 @@ class CopyPhraseWrapper:
         seq_constants = []
         if backspace_always_shown and BACKSPACE_CHAR in alp:
             seq_constants.append(BACKSPACE_CHAR)
+
+        # Stimuli Selection Module
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq),
+                             ProbThresholdCriteria(decision_threshold)])
+
+        # TODO: Change this hard number 8!
+        stimuli_agent = NBestStimuliAgent(alphabet=alp,
+                                          len_query=8)
+
         self.decision_maker = DecisionMaker(
-            min_num_seq,
-            max_num_seq,
-            decision_threshold=decision_threshold,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state=task_list[0][1],
             alphabet=alp,
             is_txt_stim=is_txt_stim,
             stimuli_timing=stimuli_timing,
             seq_constants=seq_constants)
+
         self.alp = alp
         # non-letter target labels include the fixation cross and calibration.
         self.nonletters = ['+', 'PLUS', 'calibration_trigger']
@@ -100,7 +114,8 @@ class CopyPhraseWrapper:
 
         # Remove 60hz noise with a notch filter
         notch_filter_data = notch.notch_filter(
-            raw_data, self.sampling_rate, frequency_to_remove=self.notch_filter_frequency)
+            raw_data, self.sampling_rate,
+            frequency_to_remove=self.notch_filter_frequency)
 
         # bandpass filter from 2-45hz
         filtered_data = bandpass.butter_bandpass_filter(
@@ -113,7 +128,8 @@ class CopyPhraseWrapper:
         # downsample
         data = downsample.downsample(
             filtered_data, factor=self.downsample_rate)
-        x, _, _, _ = trial_reshaper(target_info, times, data, fs=self.sampling_rate,
+        x, _, _, _ = trial_reshaper(target_info, times, data,
+                                    fs=self.sampling_rate,
                                     k=self.downsample_rate, mode=self.mode,
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
@@ -201,7 +217,8 @@ class CopyPhraseWrapper:
                          if alp_letter == prior_sym]
 
                 # display histogram of LM probabilities
-                print(f"Printed letters: '{self.decision_maker.displayed_state}'")
+                print(
+                    f"Printed letters: '{self.decision_maker.displayed_state}'")
                 print(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
