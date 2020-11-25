@@ -1,11 +1,12 @@
 import numpy as np
-from scipy.stats import norm, iqr
+from scipy.stats import iqr
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import auc, roc_curve
 
 
-class Oracle(object):
-    """ Oracle base class. Synthetic user that is designed to simulate a typing
+class Synth:
+    """ Synthesized user base class. For the analogy please check Fallout 4!
+        Synthetic user that is designed to simulate a typing
         task utilizing either dummy data or real user data.
             Attr:
                 phrase(str): user's intended state to write
@@ -18,7 +19,7 @@ class Oracle(object):
     def __init__(self, alp, erase_command, phrase, **kwargs):
         """ Args:
                 alp(list[str]): alphabet
-                erase_command(str): backspace character, used if oracle wants
+                erase_command(str): backspace character, used if synth wants
                     to erase a previously committed decision.
                 phrase(str): phrase in users mind (e.g.: I_love_cookies) """
         self.alp = alp
@@ -26,8 +27,8 @@ class Oracle(object):
         self.phrase = phrase
 
     def update_state(self, delta):
-        """ update the oracle state based on the displayed state(delta)
-            and the phrase the oracle is initiated with.
+        """ update the synth state based on the displayed state(delta)
+            and the phrase the synth is initiated with.
             Args:
                 delta(str): what is typed on the screen
          """
@@ -42,20 +43,22 @@ class Oracle(object):
                 self.state = self.erase_command
 
     def answer(self, q, **kwargs):
-        """ binary oracle responds based on the query/state match
+        """ binary synth responds based on the query/state match
             Args:
                 q(list[char]): stimuli flashed on screen """
         pass
 
 
-class BinaryGaussianOracle(Oracle):
-    """ RSVPKeyboard oracle implementation (interpreted as user)
+class BinaryGaussianSynth(Synth):
+    """ A synthesized user implementation which utilizes Gaussian feature models
             Attr:
-                phrase(str): user's intention to write (can be anything / sentence,word etc.)
-                state(char): at a particular time, what letter user wants to type
-                dist(list[kernel_density]): distribution estimates for different classes.
-                alp(list[char]): alphabet. final symbol should be the erase symbol
-                auc(float): area under the ROC curve of the user ()
+                phrase(str): user's intention to write (can be anything /
+                    sentence,word etc.)
+                state(char): current letter of intent by the user
+                dist(list[kernel_density]): distribution estimates
+                alp(list[char]): alphabet
+                a_mean(ndarray[float]): 2x1 float array denoting the means
+                a_std(ndarray[int]): 2x1 float array denoting the std
                 erase_command(str): backspace character for the system
             """
 
@@ -77,22 +80,8 @@ class BinaryGaussianOracle(Oracle):
     def reset(self):
         self.state = self.phrase[0]
 
-    def update_state(self, delta):
-        """ update the oracle state based on the displayed state(delta) and the phrase.
-            Args:
-                delta(str): what is typed on the screen
-         """
-        if self.phrase == delta:
-            pass
-        else:
-            if self.phrase[0:len(delta)] == delta:
-
-                self.state = self.phrase[len(delta)]
-            else:
-                self.state = self.erase_command
-
     def answer(self, q, type_q):
-        """ binary oracle responds based on the query/state match
+        """ binary synth responds based on the query/state match
             Args:
                 q(list[char]): stimuli flashed on screen
             Return:
@@ -112,12 +101,14 @@ class BinaryGaussianOracle(Oracle):
         return np.asarray(sc)
 
 
-class BinaryRSVPOracle(Oracle):
-    """ RSVPKeyboard oracle implementation (interpreted as user)
+class BinaryRSVPSynth(Synth):
+    """ RSVPKeyboard synthesized user implementation (interpreted as user)
         Attr:
-            phrase(str): user's intention to write (can be anything / sentence,word etc.)
+            phrase(str): user's intention to write (can be anything / sentence,
+                word etc.)
             state(char): at a particular time, what letter user wants to type
-            dist(list[kernel_density]): distribution estimates for different classes.
+            dist(list[kernel_density]): distribution estimates for different c
+                lasses.
             alp(list[char]): alphabet. final symbol should be the erase symbol
             auc(float): area under the ROC curve of the user ()
             erase_command(str): backspace character for the system
@@ -126,7 +117,8 @@ class BinaryRSVPOracle(Oracle):
     def __init__(self, alp, erase_command, phrase, x, y):
         """ Args:
                 x(ndarray[float]): scores of trial samples
-                y(ndarray[int]): label values of trial samples (1 is for positive)
+                y(ndarray[int]): label values of trial samples (1 is
+                    for positive)
                 phrase(str): phrase in users mind (e.g.: I_love_cookies)
             """
         self.alp = alp
@@ -142,22 +134,8 @@ class BinaryRSVPOracle(Oracle):
     def reset(self):
         self.state = self.phrase[0]
 
-    def update_state(self, delta):
-        """ update the oracle state based on the displayed state(delta) and the phrase.
-            Args:
-                delta(str): what is typed on the screen
-         """
-        if self.phrase == delta:
-            pass
-        else:
-            if self.phrase[0:len(delta)] == delta:
-
-                self.state = self.phrase[len(delta)]
-            else:
-                self.state = self.erase_command
-
     def answer(self, q):
-        """ binary oracle responds based on the query/state match
+        """ binary synth responds based on the query/state match
             Args:
                 q(list[char]): stimuli flashed on screen
             Return:
@@ -180,9 +158,8 @@ def form_kde_densities(x, y):
             x(ndarray[float]): samples
             y(ndarray[labels]): labels
         Return:
-            dist(list[kernel_density]): distributions. number of distributions is
-                equal to the number of unique elements in y vector.
-            """
+            dist(list[kernel_density]): distributions. number of distributions
+                is equal to the number of unique elements in y vector. """
     bandwidth = 1.06 * min(np.std(x),
                            iqr(x) / 1.34) * np.power(x.shape[0], -0.2)
     classes = np.unique(y)
