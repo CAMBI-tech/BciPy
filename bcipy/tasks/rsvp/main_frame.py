@@ -92,9 +92,10 @@ class DecisionMaker:
                         arrays with prob. dist. over alp
             seq_constants(list[str]): list of letters which should appear in
                 every sequence.
-            criteria_evaluator: CriteriaEvaluator - optional parameter to
+            stopping_evaluator: CriteriaEvaluator - optional parameter to
                 provide alternative rules for committing to a decision.
-            query_agent(QueryAgent): the query selection mechanism of the system
+            stimuli_agent(StimuliAgent): the query selection mechanism of the
+                system
 
         Functions:
             decide():
@@ -124,8 +125,8 @@ class DecisionMaker:
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None,
-                 criteria_evaluator=CriteriaEvaluator.default(),
-                 query_agent=RandomStimuliAgent(
+                 stopping_evaluator=None,
+                 stimuli_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
                               ['<'] + [SPACE_CHAR])):
         self.state = state
@@ -142,11 +143,15 @@ class DecisionMaker:
         self.time = 0
         self.sequence_counter = 0
 
+        # TODO: There should be a better way to do this!
         # Stopping Criteria
-        self.min_num_seq = min_num_seq
-        self.max_num_seq = max_num_seq
-
-        self.posterior_commit_threshold = decision_threshold
+        if stopping_evaluator:
+            self.stopping_evaluator = stopping_evaluator
+        else:
+            self.stopping_evaluator = \
+                CriteriaEvaluator.default(min_num_seq=min_num_seq,
+                                          max_num_seq=max_num_seq,
+                                          threshold=decision_threshold)
 
         self.last_selection = ''
 
@@ -154,9 +159,8 @@ class DecisionMaker:
         self.seq_constants = seq_constants
 
         # TODO: change this criteria evaluator with
-        self.criteria_evaluator = criteria_evaluator
 
-        self.query_agent = query_agent
+        self.stimuli_agent = stimuli_agent
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -170,7 +174,7 @@ class DecisionMaker:
         self.time = 0
         self.sequence_counter = 0
 
-        self.query_agent.reset()
+        self.stimuli_agent.reset()
 
     def form_display_state(self, state):
         """ Forms the state information or the user that fits to the
@@ -209,13 +213,8 @@ class DecisionMaker:
 
         self.list_epoch[-1]['list_distribution'].append(p[:])
 
-        params = dict(
-            min_num_seq=self.min_num_seq,
-            max_num_seq=self.max_num_seq,
-            threshold=self.posterior_commit_threshold)
-
         # Check stopping criteria
-        if self.criteria_evaluator.should_commit(self.list_epoch[-1], params):
+        if self.stopping_evaluator.should_commit(self.list_epoch[-1]):
             self.do_epoch()
             return True, None
         else:
@@ -236,7 +235,8 @@ class DecisionMaker:
         self.list_epoch.append({'target': None, 'time_spent': 0,
                                 'list_sti': [], 'list_distribution': []})
 
-        self.query_agent.do_epoch()
+        self.stimuli_agent.do_epoch()
+        self.stopping_evaluator.do_epoch()
 
     def schedule_sequence(self):
         """ Schedules next sequence """
@@ -265,7 +265,7 @@ class DecisionMaker:
                 """
 
         # querying agent decides on possible letters to be shown on the screen
-        query_els = self.query_agent.update_and_query(
+        query_els = self.stimuli_agent.update_and_query(
             self.list_epoch[-1]['list_distribution'][-1])
         # once querying is determined, append with timing and color info
         stimuli = rsvp_seq_generator(query=query_els,

@@ -1,16 +1,23 @@
 import numpy as np
 import logging
 from typing import Dict, List
+from copy import copy
 
 log = logging.getLogger(__name__)
 
 
 # Criteria
-class DecisionCriteria():
+class DecisionCriteria:
     """Abstract class for Criteria which can be applied to evaluate a sequence
     """
 
-    def apply(self, epoch, commit_params):
+    def __init__(self, **kwargs):
+        pass
+
+    def reset(self):
+        pass
+
+    def decide(self, epoch):
         """
         Apply the given criteria.
         Parameters:
@@ -23,18 +30,22 @@ class DecisionCriteria():
                       sequence
                 - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
-            commit_params - params relevant to stoppage criteria
-                min_num_seq: int - minimum number of sequences required
-                max_num_seq: int - max number of sequences allowed
-                threshold: float - minimum likelihood required
+
         """
         raise NotImplementedError()
 
 
 class MinIterationsCriteria(DecisionCriteria):
-    """Returns true if the minimum number of iterations have not yet been reached."""
+    """ Returns true if the minimum number of iterations have not yet
+        been reached. """
 
-    def apply(self, epoch, commit_params):
+    def __init__(self, min_num_seq):
+        """ Args:
+                min_num_seq(int): minimum number of sequence number before any
+                 termination objective is allowed to be triggered """
+        self.min_num_seq = min_num_seq
+
+    def decide(self, epoch):
         # Note: we use 'list_sti' parameter since this is the number of
         # sequences displayed. The length of 'list_distribution' is 1 greater
         # than this, since the language model distribution is added before
@@ -42,14 +53,14 @@ class MinIterationsCriteria(DecisionCriteria):
         current_seq = len(epoch['list_sti'])
         log.debug(
             f"Checking min iterations; current iteration is {current_seq}")
-        return current_seq < commit_params['min_num_seq']
+        return current_seq < self.min_num_seq
 
 
 class DecreasedProbabilityCriteria(DecisionCriteria):
     """Returns true if the letter with the max probability decreased from the
         last sequence."""
 
-    def apply(self, epoch, commit_params):
+    def decide(self, epoch):
         if len(epoch['list_distribution']) < 2:
             return False
         prev_dist = epoch['list_distribution'][-2]
@@ -61,26 +72,111 @@ class DecreasedProbabilityCriteria(DecisionCriteria):
 class MaxIterationsCriteria(DecisionCriteria):
     """Returns true if the max iterations have been reached."""
 
-    def apply(self, epoch, commit_params):
+    def __init__(self, max_num_seq):
+        """ Args:
+                max_num_seq(int): maximum number of sequences allowed before
+                    mandatory termination """
+        self.max_num_seq = max_num_seq
+
+    def decide(self, epoch):
         # Note: len(epoch['list_sti']) != len(epoch['list_distribution'])
         # see MinIterationsCriteria comment
         current_seq = len(epoch['list_sti'])
-        if current_seq >= commit_params['max_num_seq']:
+        if current_seq >= self.max_num_seq:
             log.debug(
                 "Committing to decision: max iterations have been reached.")
             return True
         return False
 
 
-class CommitThresholdCriteria(DecisionCriteria):
+class ProbThresholdCriteria(DecisionCriteria):
     """Returns true if the commit threshold has been met."""
 
-    def apply(self, epoch, commit_params):
+    def __init__(self, threshold):
+        """ Args:
+                threshold(float \in [0,1]): A threshold on most likely
+                    candidate posterior. If a candidate exceeds a posterior
+                    the system terminates.
+                 """
+        assert 1 >= threshold >= 0, "stopping threshold should be in [0,1]"
+        self.tau = threshold
+
+    def decide(self, epoch):
         current_distribution = epoch['list_distribution'][-1]
-        if np.max(current_distribution) > commit_params['threshold']:
-            log.debug("Committing to decision: Likelihood exceeded threshold.")
+        if np.max(current_distribution) > self.tau:
+            log.debug("Committing to decision: posterior exceeded threshold.")
             return True
         return False
+
+
+class MarginCriteria(DecisionCriteria):
+    """ Stopping criteria based on the difference of two most likely candidates.
+        This condition
+    """
+
+    def __init__(self, margin):
+        """ Args:
+                margin(float \in [0,1]): Minimum distance required between
+                    two most likely competing candidates to trigger termination.
+                    """
+        assert 1 >= margin >= 0, "difference margin should be in [0,1]"
+        self.margin = margin
+
+    def decide(self, epoch):
+        # Get the current posterior probability values
+        p = copy(epoch['list_distribution'][-1])
+        # This criteria compares most likely candidates (best competitors)
+        candidates = [p[idx] for idx in list(np.argsort(p)[-2:])]
+        stopping_rule = np.abs(candidates[0] - candidates[1])
+        d = stopping_rule > self.margin
+        if d:
+            log.debug("Committing to decision: margin is high enough.")
+
+        return d
+
+
+class MomentumCommitCriteria(DecisionCriteria):
+    """ Stopping criteria based on Renyi entropy on the simplex
+        Renyi entropy for infinity and 1 norms are special forms.
+        Attr:
+            alpha(float): a non-negative order for the entropy
+            tau(float): decision threshold
+            """
+
+    def __init__(self, tau, lam):
+        self.lam = lam
+        self.tau = tau
+        self.prob_history = []
+
+    def reset(self):
+        """ resets the history related items in stopping method
+        """
+        self.prob_history = []
+
+    def decide(self, epoch):
+        eps = np.power(.1, 6)
+
+        p = copy(epoch['list_distribution'][-1])
+        self.prob_history.append(p)
+        tmp_p = np.ones(len(p)) * (1 - self.tau) / (len(p) - 1)
+        tmp_p[0] = self.tau
+
+        tmp = -np.sum(p * np.log2(p + eps))
+        tau_ = -np.sum(tmp_p * np.log2(tmp_p + eps))
+
+        tmp_ = np.array(self.prob_history)
+        mom_ = tmp_[1:] * (
+                np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
+        momentum = np.linalg.norm(mom_) / len(self.prob_history)
+
+        if len(self.prob_history) > 1:
+            stopping_rule = tmp - self.lam * momentum
+        else:
+            stopping_rule = tmp
+
+        d = stopping_rule < tau_
+
+        return d
 
 
 class CriteriaEvaluator():
@@ -101,14 +197,20 @@ class CriteriaEvaluator():
         self.commit_criteria = commit_criteria or []
 
     @classmethod
-    def default(cls):
-        return cls(continue_criteria=[MinIterationsCriteria()],
+    def default(cls, min_num_seq, max_num_seq, threshold):
+        return cls(continue_criteria=[MinIterationsCriteria(min_num_seq)],
                    commit_criteria=[
-                       MaxIterationsCriteria(),
-                       CommitThresholdCriteria()
+                       MaxIterationsCriteria(max_num_seq),
+                       ProbThresholdCriteria(threshold)
                    ])
 
-    def should_commit(self, epoch: Dict, params: Dict):
+    def do_epoch(self):
+        for el_ in self.continue_criteria:
+            el_.reset()
+        for el in self.commit_criteria:
+            el.reset()
+
+    def should_commit(self, epoch: Dict):
         """Evaluates the given epoch; returns true if stoppage criteria has
         been met, otherwise false.
 
@@ -122,14 +224,10 @@ class CriteriaEvaluator():
                       sequence
                 - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
-            params - params relevant to stoppage criteria
-                min_num_seq: int - minimum number of sequences required
-                max_num_seq: int - max number of sequences allowed
-                threshold: float - minimum likelihood required
         """
         if any(
-                criteria.apply(epoch, params)
+                criteria.decide(epoch)
                 for criteria in self.continue_criteria):
             return False
         return any(
-            criteria.apply(epoch, params) for criteria in self.commit_criteria)
+            criteria.decide(epoch) for criteria in self.commit_criteria)

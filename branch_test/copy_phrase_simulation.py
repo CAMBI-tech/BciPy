@@ -9,8 +9,10 @@ from copy import copy
 
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent, NBestStimuliAgent, \
-    MomentumStimuliAgent
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent, \
+    NBestStimuliAgent, MomentumStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
+    MinIterationsCriteria, MaxIterationsCriteria, MomentumCommitCriteria
 
 from branch_test.synthesized_user import BinaryRSVPSynth
 
@@ -29,6 +31,21 @@ len_query = 8  # number of trials in a sequence
 # define the alphabet
 alphabet = list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR]
 len_alphabet = len(alphabet)
+
+# Stopping Decision Parameters
+min_num_seq = 2
+max_num_seq = 10
+param_tau_momentum = 0.9
+param_lam_momentum = 0.1
+
+stopping_criteria = CriteriaEvaluator(
+    continue_criteria=[MinIterationsCriteria(min_num_seq)],
+    commit_criteria=[MaxIterationsCriteria(max_num_seq),
+                     MomentumCommitCriteria(tau=param_tau_momentum,
+                                            lam=param_lam_momentum)])
+
+stimuli_agent = MomentumStimuliAgent(alphabet=alphabet,
+                                     len_query=len_query)
 
 # evidence names for the system
 evidence_names = ['LM', 'ERP']
@@ -68,10 +85,10 @@ for idx_phrase in range(len(list_phrase)):
 
     # Initialize the decision maker
     decision_maker = DecisionMaker(state='', alphabet=alphabet,
-                                   min_num_seq=2, max_num_seq=10,
-                                   query_agent=MomentumStimuliAgent(
-                                       alphabet=alphabet,
-                                       len_query=len_query))
+                                   min_num_seq=min_num_seq,
+                                   max_num_seq=max_num_seq,
+                                   stimuli_agent=stimuli_agent,
+                                   stopping_evaluator=stopping_criteria)
 
     # this is the dummy eeg_modelling part
     # currently it assumes the generative model and user EEG match perfectly
@@ -93,8 +110,7 @@ for idx_phrase in range(len(list_phrase)):
         synth.reset()
         synth.update_state(decision_maker.displayed_state)
 
-        seq_till_correct = [0] * len(phrase)
-        d_counter = 0
+        # Continue till the user successfully completes the task
         while decision_maker.displayed_state != phrase:
 
             # get prior information from language model
@@ -123,7 +139,6 @@ for idx_phrase in range(len(list_phrase)):
             stimuli_letters = sti[0][0][1:]
 
             while True:
-
                 # TODO: check if there are stimulus letters present
                 # get answers from the user
                 score = synth.answer(stimuli_letters)
