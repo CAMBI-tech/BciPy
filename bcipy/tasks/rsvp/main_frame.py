@@ -117,15 +117,14 @@ class DecisionMaker:
         """
 
     def __init__(self,
-                 min_num_seq,
-                 max_num_seq,
-                 decision_threshold=0.8,
                  state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None,
-                 stopping_evaluator=None,
+                 stopping_evaluator=CriteriaEvaluator.default(min_num_seq=2,
+                                                              max_num_seq=10,
+                                                              threshold=0.8),
                  stimuli_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
                               ['<'] + [SPACE_CHAR])):
@@ -143,24 +142,16 @@ class DecisionMaker:
         self.time = 0
         self.sequence_counter = 0
 
-        # TODO: There should be a better way to do this!
         # Stopping Criteria
-        if stopping_evaluator:
-            self.stopping_evaluator = stopping_evaluator
-        else:
-            self.stopping_evaluator = \
-                CriteriaEvaluator.default(min_num_seq=min_num_seq,
-                                          max_num_seq=max_num_seq,
-                                          threshold=decision_threshold)
+        self.stopping_evaluator = stopping_evaluator
+
+        # Stimuli Agent
+        self.stimuli_agent = stimuli_agent
 
         self.last_selection = ''
 
         # Items shown in every sequence
         self.seq_constants = seq_constants
-
-        # TODO: change this criteria evaluator with
-
-        self.stimuli_agent = stimuli_agent
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
