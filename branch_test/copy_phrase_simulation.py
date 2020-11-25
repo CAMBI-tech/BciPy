@@ -85,8 +85,6 @@ for idx_phrase in range(len(list_phrase)):
 
     # Initialize the decision maker
     decision_maker = DecisionMaker(state='', alphabet=alphabet,
-                                   min_num_seq=min_num_seq,
-                                   max_num_seq=max_num_seq,
                                    stimuli_agent=stimuli_agent,
                                    stopping_evaluator=stopping_criteria)
 
