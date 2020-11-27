@@ -83,7 +83,7 @@ class TestDecisionMaker(unittest.TestCase):
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
             continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=3),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
