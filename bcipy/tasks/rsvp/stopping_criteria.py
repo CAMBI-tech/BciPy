@@ -146,30 +146,28 @@ class MomentumCommitCriteria(DecisionCriteria):
     def __init__(self, tau, lam):
         self.lam = lam
         self.tau = tau
-        self.prob_history = []
 
     def reset(self):
-        """ resets the history related items in stopping method
-        """
-        self.prob_history = []
+        pass
 
     def decide(self, epoch):
         eps = np.power(.1, 6)
 
-        p = copy(epoch['list_distribution'][-1])
-        self.prob_history.append(p)
+        prob_history = copy(epoch['list_distribution'])
+        p = prob_history[-1]
+
         tmp_p = np.ones(len(p)) * (1 - self.tau) / (len(p) - 1)
         tmp_p[0] = self.tau
 
         tmp = -np.sum(p * np.log2(p + eps))
         tau_ = -np.sum(tmp_p * np.log2(tmp_p + eps))
 
-        tmp_ = np.array(self.prob_history)
+        tmp_ = np.array(prob_history)
         mom_ = tmp_[1:] * (
                 np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
-        momentum = np.linalg.norm(mom_) / len(self.prob_history)
+        momentum = np.linalg.norm(mom_) / len(prob_history)
 
-        if len(self.prob_history) > 1:
+        if len(prob_history) > 1:
             stopping_rule = tmp - self.lam * momentum
         else:
             stopping_rule = tmp
