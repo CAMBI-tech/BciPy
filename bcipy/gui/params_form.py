@@ -1,6 +1,5 @@
 """GUI form for editing a Parameters file."""
 # pylint: disable=E0611
-import logging
 import sys
 from collections import namedtuple
 from datetime import datetime
@@ -19,7 +18,7 @@ Parameter = namedtuple('Parameter', [
     'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
 ])
 
-## Utility functions
+#--- Utility functions
 
 
 def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
@@ -42,16 +41,57 @@ def static_text_control(parent,
     return static_text
 
 
-# Input types
+class ComboBox(QComboBox):
+    """ComboBox with the same interface as a QLineEdit for getting and setting values.
+
+    Parameters:
+    -----------
+      options - list of items to appear in the lookup
+      selected_value - selected item; if this is not one of the options and new option will be
+        created for this value.
+    """
+
+    def __init__(self, options: List[str], selected_value: str, **kwargs):
+        super(ComboBox, self).__init__(**kwargs)
+        self.options = options
+        self.addItems(self.options)
+        self.setText(selected_value)
+        self.setEditable(True)
+
+    def setText(self, value: str):
+        """Sets the current index to the given value. If the value is not in the list of
+        options it will be added."""
+        if value not in self.options:
+            self.options = [value] + self.options
+            self.clear()
+            self.addItems(self.options)
+        self.setCurrentIndex(self.options.index(value))
+
+    def text(self):
+        """Gets the currentText."""
+        return self.currentText()
+
+
+#--- Input widgets
 
 
 class FormInput(QWidget):
-    """A form input control with properties ['control', 'label', 'help']"""
+    """A form element with a label, help tip, and input control. The default control is a text
+    input. This object may be subclassed to specialize the input control or the arrangement of
+    widgets. FormInputs have the ability to show and hide themselves.
+
+    Parameters:
+    ----------
+      parameter - the option which will be configured using this input. Used to populate the label,
+        help text, and relevant options.
+      help_font_size - font size for the help text.
+      help_color - color of the help text.
+    """
 
     def __init__(self,
                  parameter: Parameter,
-                 help_font_size=12,
-                 help_color='darkgray'):
+                 help_font_size: int = 12,
+                 help_color: str = 'darkgray'):
         super(FormInput, self).__init__()
         self.parameter = parameter
 
@@ -120,7 +160,8 @@ class FormInput(QWidget):
 
 
 class BoolInput(FormInput):
-    """Checkbox form input"""
+    """Checkbox form input used for boolean configuration parameters. Overrides FormInput to provide
+    a CheckBox control. Help text is not displayed for checkbox items."""
 
     def __init__(self, parameter: Parameter, **kwargs):
         super(BoolInput, self).__init__(parameter, **kwargs)
@@ -129,7 +170,7 @@ class BoolInput(FormInput):
         """Override. Checkboxes do not have a separate label."""
         return None
 
-    def init_help(self, help_font_size, help_color) -> QWidget:
+    def init_help(self, font_size: int, color: str) -> QWidget:
         """Override. Checkboxes do not display help."""
         return None
 
@@ -142,30 +183,6 @@ class BoolInput(FormInput):
 
     def value(self) -> str:
         return 'true' if self.control.isChecked() else 'false'
-
-
-class ComboBox(QComboBox):
-    """ComboBox with the same interface as a QLineEdit for getting and setting values."""
-
-    def __init__(self, options: List[str], selected_value: str, **kwargs):
-        super(ComboBox, self).__init__(**kwargs)
-        self.options = options
-        self.addItems(self.options)
-        self.setText(selected_value)
-        self.setEditable(True)
-
-    def setText(self, value: str):
-        """Sets the current index to the given value. If the value is not in the list of
-        options it will be added."""
-        if value not in self.options:
-            self.options = [value] + self.options
-            self.clear()
-            self.addItems(self.options)
-        self.setCurrentIndex(self.options.index(value))
-
-    def text(self):
-        """Gets the currentText."""
-        return self.currentText()
 
 
 class SelectionInput(FormInput):
@@ -199,8 +216,7 @@ class FileInput(FormInput):
         param = self.parameter
         if isinstance(self.parameter.recommended_values, list):
             return ComboBox(param.recommended_values, param.value)
-        else:
-            return QLineEdit(param.value)
+        return QLineEdit(param.value)
 
     def init_button(self) -> QWidget:
         """Creates a Button to initiate the file/directory dialog."""
@@ -241,16 +257,15 @@ class FileInput(FormInput):
 
 
 class ParamsForm(QWidget):
-    """The Form class is a wx.Panel that creates controls/inputs for each
-  parameter in the provided json file.
+    """The ParamsForm class is a QWidget that creates controls/inputs for each parameter in the
+    provided json file.
 
   Parameters:
   -----------
     json_file - path of parameters file to be edited.
     load_file - optional path of parameters file to load;
         parameters from this file will be copied over to the json_file.
-    control_width - optional; used to set the size of the form controls.
-    control_height - optional; used to set the size of the form controls.
+    width - optional; used to set the width of the form controls.
   """
 
     def __init__(self, json_file: str, load_file: str = None,
@@ -324,7 +339,6 @@ class ParamsForm(QWidget):
             param = self.params[param_name]
             value = form_input.value()
             if value != param['value']:
-                print(param_name, ": ", value)
                 self.params[param_name]['value'] = value
 
 
