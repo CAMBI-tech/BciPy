@@ -13,7 +13,7 @@ class StimuliAgent:
             len_query(int): number of elements in a query
         Functions:
             reset(): reset the agent
-            update_and_query(): update the agent and return a query set
+            return_stimuli(): update the agent and return a stimuli set
             do_epoch(): one a commitment is made update agent
             """
 
@@ -24,10 +24,11 @@ class StimuliAgent:
     def reset(self):
         return
 
-    def update_and_query(self, p, **kwargs):
+    def return_stimuli(self, list_distribution, **kwargs):
         """ updates the agent with most likely posterior and selects queries
             Args:
-                p(list[float]): latest_posterior
+                list_distribution(list[ndarray]): posterior distributions as
+                    stored in the decision maker
             Return:
                 query(list[str]): queries """
         return
@@ -46,7 +47,7 @@ class RandomStimuliAgent(StimuliAgent):
         """ This querying method is memoryless no reset needed """
         pass
 
-    def update_and_query(self, p):
+    def return_stimuli(self, list_distribution):
         """ return random elements from the alphabet """
         tmp = [i for i in self.alphabet]
         query = random.sample(tmp, self.len_query)
@@ -65,13 +66,8 @@ class NBestStimuliAgent(StimuliAgent):
     def reset(self):
         pass
 
-    def update_and_query(self, p):
-        """ With the final belief over the system, updates the querying method
-            and generates len_query most likely queries.
-            Args:
-                p(list[float]): list of probability distribution
-            Return:
-                query(list[str]): queries """
+    def return_stimuli(self, list_distribution):
+        p = list_distribution[-1]
         tmp = [i for i in self.alphabet]
         query = best_selection(tmp, p, self.len_query)
 
@@ -110,76 +106,56 @@ class MomentumStimuliAgent(StimuliAgent):
         self.gam = np.float(gam)
         self.len_query = len_query
         self.update_lam_flag = update_lam_flag
-        self.momentum = np.zeros(len(self.alphabet))
-        self.prob_history = []
-        self.last_query = []
 
     def reset(self):
         """ resets the history related items in the query agent """
         if self.update_lam_flag:
             self.lam_ = copy(self.lam)
 
-        self.momentum = np.zeros(len(self.alphabet))
-        self.prob_history = []
+    def return_stimuli(self, list_distribution):
+        """ Return the speed enhanced momentum stimuli """
 
-    def update_and_query(self, p):
-        """ Update the agent with the final belief over the system
-            Observe that the agent has a memory of the past.
-            Args:
-                p(list[float]): list of probability distribution
-                len_query(int): number of queries in the scheduled query
-            Return:
-                query(list[str]): queries """
-
-        # The agent keeps a copy of the previous probabilities in the epoch
-        tmp = p[:]
-        self.prob_history.append(tmp)
-
-        # update the momentum term using likelihoods
-        self._update_momentum()
-        num_passed_sequences = len(self.prob_history)
+        # To compute the MI term, use the most recent distribution
+        tmp = list_distribution[-1]
 
         # conditional entropy as a surrogate for mutual information
         entropy_term = np.array(tmp) * np.log(tmp + eps) + (
                 1.01 - np.array(tmp)) * (np.log(1.01 - np.array(tmp)))
         entropy_term[np.isnan(entropy_term)] = 0
 
+        # update the momentum term using likelihoods
+        momentum = self._compute_momentum(list_distribution)
+        num_passed_sequences = len(list_distribution)
+
         # if there are no sequences shown yet, the momentum cannot be computed
         if num_passed_sequences > 1:
             reward = (self.lam_ - 1) * entropy_term + (
-                    self.lam_ / num_passed_sequences) * self.momentum
+                    self.lam_ / num_passed_sequences) * momentum
         else:
             reward = -entropy_term
 
         # if lambda update flag is True, update the lambda
         if self.update_lam_flag:
-            self._update_lam(len(self.prob_history))
+            self._update_lam(len(list_distribution))
 
         tmp_alp = copy(self.alphabet)
-        tmp_query = best_selection(tmp_alp, reward, self.len_query)
+        stimuli = best_selection(tmp_alp, reward, self.len_query)
 
-        self.last_query = copy(tmp_query)
+        return stimuli
 
-        return self.last_query
+    def _compute_momentum(self, list_distribution):
+        len_history = len(list_distribution)
+        if len_history >= 2:
+            tmp_ = len_history - np.arange(1, len_history)
+            decay_scale = np.power(self.gam, tmp_)
 
-    def _update_momentum(self):
-        """ momentum is updated with the particular probability history.
-            WARNING!: if called twice without a probability update, will update
-            momentum using the same information twice """
-        if len(self.prob_history) >= 2:
-            # only update momentum for previous terms
-            idx_prev_query = [self.alphabet.index(self.last_query[i]) for i
-                              in range(len(self.last_query))]
+            momentum_ = np.sum([decay_scale[k] * (list_distribution[k + 1] -
+                                                  list_distribution[k])
+                                for k in range(len_history - 1)], axis=0)
+        else:
+            momentum_ = 0
 
-            # scale the momentum value
-            self.momentum *= self.gam
-
-            for k in idx_prev_query:
-                # momentum = current_mass * mass_displacement
-                momentum_ = self.prob_history[-1][k] * (
-                        np.log(self.prob_history[-1][k] + eps) - np.log(
-                    self.prob_history[-2][k] + eps))
-                self.momentum[k] += momentum_
+        return momentum_
 
     def _update_lam(self, len_history):
         """ Handles the handshaking between two objectives.
@@ -213,11 +189,7 @@ def best_selection(list_el, val, len_query):
 
     query = []
     for idx in range(len_query):
-        try:
-            idx_q = np.where(val == max_p_val[idx])[0][0]
-        except:
-            import pdb
-            pdb.set_trace()
+        idx_q = np.where(val == max_p_val[idx])[0][0]
 
         q = list_el[idx_q]
         val = np.delete(val, idx_q)

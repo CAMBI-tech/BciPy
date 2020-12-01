@@ -256,8 +256,8 @@ class DecisionMaker:
                 """
 
         # querying agent decides on possible letters to be shown on the screen
-        query_els = self.stimuli_agent.update_and_query(
-            self.list_epoch[-1]['list_distribution'][-1])
+        query_els = self.stimuli_agent.return_stimuli(
+            self.list_epoch[-1]['list_distribution'])
         # once querying is determined, append with timing and color info
         stimuli = rsvp_seq_generator(query=query_els,
                                      stim_number=1,
