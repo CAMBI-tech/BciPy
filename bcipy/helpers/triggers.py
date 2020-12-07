@@ -597,7 +597,6 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
         list of (symbol, targetness, stamp) tuples.
     """
 
-
     records = [line.split(' ') for line in triggers_file.readlines()]
     # calibration
     (_cname, _ctype, calibration_stamp) = records[0]

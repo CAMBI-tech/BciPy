@@ -4,14 +4,14 @@ from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_signal_model
+from bcipy.helpers.load import load_json_parameters, load_signal_model
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import ExperimentType
 
 
-def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
+def bci_main(parameter_location: str, user: str, task: int, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -22,13 +22,12 @@ def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, exper
         Ex. `python bci_main.py` this will default parameters, mode, user, and type.
 
         You can pass it those attributes with flags, if desired.
-            Ex. `python bci_main.py --user "bci_user" --mode "SHUFFLE"`
+            Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration"
 
     Input:
         parameter_location (str): location of parameters file to use
         user (str): name of the user
-        exp_type (int): type of experiment. Ex. 1 = calibration
-        mode (str): BCI mode. Ex. RSVP, SHUFFLE, MATRIX
+        task (str): type of experiment.
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
 
 
@@ -52,15 +51,8 @@ def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, exper
         parameters['data_save_loc'],
         user,
         parameter_location,
-        mode=mode,
-        experiment_type=exp_type,
+        task=task,
         experiment_id=experiment)
-
-    # Register Task Type
-    task_type = {
-        'mode': mode,
-        'exp_type': exp_type
-    }
 
     # configure bcipy session logging
     configure_logger(save_folder,
@@ -69,10 +61,10 @@ def bci_main(parameter_location: str, user: str, exp_type: int, mode: str, exper
 
     logging.getLogger(__name__).info(sys_info)
 
-    return execute_task(task_type, parameters, save_folder)
+    return execute_task(task, parameters, save_folder)
 
 
-def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
+def execute_task(task: str, parameters: dict, save_folder: str) -> bool:
     """Execute Task.
 
     Executes the desired task by setting up the display window and
@@ -88,12 +80,12 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     language_model = None
     filename = None
 
-    exp_type = ExperimentType(task_type['exp_type'])
+    task = ExperimentType.by_value(task)
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if not fake and exp_type not in ExperimentType.calibration_tasks():
+    if not fake and task not in ExperimentType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
             signal_model, filename = load_signal_model()
@@ -118,7 +110,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
     # Start Task
     try:
         start_task(
-            display, daq, exp_type, parameters, save_folder,
+            display, daq, task, parameters, save_folder,
             language_model=language_model,
             signal_model=signal_model, fake=fake, auc_filename=filename)
 
@@ -166,11 +158,11 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
                         help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
     parser.add_argument('-u', '--user', default='test_user')
-    parser.add_argument('-t', '--type', default=1,
+    parser.add_argument('-t', '--task', default='RSVP Calibration',
                         help=f'Task type. Options: ({task_options})')
-    parser.add_argument('-m', '--mode', default='RSVP',
-                        help='BCI mode. Ex. RSVP, MATRIX, SHUFFLE')
+    parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID, 
+                        help='Select a valid experiment to run the task for this user')
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), int(args.type), str(args.mode))
+    bci_main(args.parameters, str(args.user), str(args.task), str(args.experiment))

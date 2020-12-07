@@ -1,5 +1,6 @@
 import logging
 import pickle
+import json
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
@@ -10,6 +11,8 @@ import numpy as np
 import pandas as pd
 
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +39,44 @@ def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
     path = str(Path(destination, filename))
     copyfile(DEFAULT_PARAMETERS_PATH, path)
     return path
+
+
+def load_experiments(path: str=f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
+    """Load Experiments.
+
+    PARAMETERS
+    ----------
+    :param: path: string path to the experiments file.
+
+    Returns
+    -------
+        A dictionary of experiments, with the following format:
+            { name: { fields : {name: '', required: bool}, summary: '' } }
+    
+    """
+    with open(path, 'r') as json_file:
+        return json.load(json_file)
+
+
+def load_fields(path: str=f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
+    """Load Fields.
+    
+    PARAMETERS
+    ----------
+    :param: path: string path to the fields file.
+
+    Returns
+    -------
+        A dictionary of fields, with the following format:
+            {
+                "field_name": {
+                    "help_text": "",
+                    "type": ""
+            }
+    
+    """
+    with open(path, 'r') as json_file:
+        return json.load(json_file)
 
 
 def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:

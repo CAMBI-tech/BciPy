@@ -70,7 +70,7 @@ def write_edf(output_path: str,
     events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
-    
+
     Returns
     -------
         Path to new edf file
@@ -127,7 +127,7 @@ def edf_annotations(triggers: List[Tuple[str, str, float]],
 
     Parameters
     ----------
-        triggers - trigger data in the format (symbol, targetness, stamp), 
+        triggers - trigger data in the format (symbol, targetness, stamp),
           where stamp has been converted to acquisition clock units.
         durations - optional map defining the duration (seconds) of each
             trigger type. The default is to assign 0.0 seconds.
