@@ -102,7 +102,7 @@ def execute_task(task_type: dict, parameters: dict, save_folder: str) -> bool:
             raise e
 
         # if Language Model enabled init lm
-        if parameters['languagemodelenabled']:
+        if parameters['lang_model_enabled']:
             language_model = init_language_model(parameters)
 
     # Initialize DAQ
