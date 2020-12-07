@@ -18,10 +18,12 @@ class TestAcquisition(unittest.TestCase):
                                                value_cast=True)
         self.data_save_path = 'data/'
         self.user_information = 'test_user_001'
+        self.task = 'RSVP Calibration'
 
         self.save = init_save_data_structure(self.data_save_path,
                                              self.user_information,
-                                             self.parameters_used)
+                                             self.parameters_used,
+                                             self.task)
 
     def tearDown(self):
         """Override; teardown test"""

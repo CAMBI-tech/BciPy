@@ -16,14 +16,19 @@ class TestSave(unittest.TestCase):
         self.data_save_path = tempfile.mkdtemp()
         self.user_information = 'test_user_002'
         self.parameters_used = 'bcipy/parameters/parameters.json'
+        self.task = 'RSVP Calibration'
+        self.experiment = DEFAULT_EXPERIMENT_ID
 
         self.save_folder_name = init_save_data_structure(
             self.data_save_path,
             self.user_information,
-            self.parameters_used)
+            self.parameters_used,
+            self.task)
+
+        self.dt = '10'
 
         # mock save modules use of strftime to return an empty string
-        when(save).strftime(any(), any()).thenReturn('')
+        when(save).strftime(any(), any()).thenReturn(self.dt)
 
     def tearDown(self):
         # clean up by removing the data folder we used for testing
@@ -38,7 +43,7 @@ class TestSave(unittest.TestCase):
     def test_parameter_file_copies(self):
 
         # construct the path of the parameters
-        param_path = self.save_folder_name + "/parameters.json"
+        param_path = self.save_folder_name + '/parameters.json'
 
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))
@@ -52,19 +57,23 @@ class TestSave(unittest.TestCase):
             self.data_save_path,
             self.user_information,
             self.parameters_used,
+            self.task,
             experiment_id=experiment_id)
-        expected = f'{self.data_save_path}{experiment_id}/{self.user_information}/{self.user_information}_'
+        task = self.task.replace(' ', '_')
+        expected = f'{self.data_save_path}{experiment_id}/{self.user_information}/{self.user_information}_{task}_{self.dt}'
 
         self.assertEqual(response, expected)
 
-    def test_throws_useful_error_if_given_incorrect_params_path(self):
+    def test_throws_error_if_given_incorrect_params_path(self):
 
         # try passing a parameters file that does not exist
         with self.assertRaises(Exception):
             init_save_data_structure(
                 self.data_save_path,
-                'new_user',
-                'does_not_exist.json')
+                self.user_information,
+                'does_not_exist.json',
+                self.task,
+                self.experiment)
 
 
 if __name__ == '__main__':

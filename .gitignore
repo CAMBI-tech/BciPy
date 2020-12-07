@@ -10,17 +10,19 @@ data/
 venv/
 __pycache__/
 .cache/
+
+# BciPy files and directories 
 calibration.csv
 rawdata.csv
 buffer.db
 lmwrap.log
 env.txt
 .idea
-users.txt
 .coverage
 htmlcov/
 bcipy.egg-info/
 build/
 dist/
+.bcipy/*
 
 bcipy/parameters/parameters_*

@@ -13,6 +13,13 @@ import pkgutil
 import logging
 
 
+DEFAULT_EXPERIMENT_ID = 'default'
+EXPERIMENT_FILENAME = 'experiments.json'
+FIELD_FILENAME = 'fields.json'
+DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
+DEFAULT_FIELD_PATH = '.bcipy/field/'
+
+
 def git_dir() -> str:
     """Git Directory.
 
