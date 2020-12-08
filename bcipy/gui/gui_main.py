@@ -1,22 +1,38 @@
+# pylint: disable=E0611
+import logging
 import os
 import sys
-import logging
-
 from enum import Enum
+from typing import List
 
-from PyQt5.QtWidgets import (
-    QMainWindow,
-    QApplication,
-    QFileDialog,
-    QWidget,
-    QPushButton,
-    QLabel,
-    QLineEdit,
-    QComboBox,
-    QGridLayout,
-    QMessageBox)
-from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
+                             QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+                             QMainWindow, QMessageBox, QPushButton,
+                             QVBoxLayout, QWidget)
+
+from bcipy.helpers.parameters import Parameter
+
+
+def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
+    """Create a Font object with the given parameters."""
+    return QFont(font_family, size, QFont.Normal)
+
+
+def static_text_control(parent,
+                        label: str,
+                        color: str = 'black',
+                        size: int = 14,
+                        font_family: str = 'Helvetica') -> QLabel:
+    """Creates a static text control with the given font parameters. Useful for
+    creating labels and help components."""
+    static_text = QLabel(parent)
+    static_text.setWordWrap(True)
+    static_text.setText(label)
+    static_text.setStyleSheet(f'color: {color};')
+    static_text.setFont(font(size, font_family))
+    return static_text
 
 
 class AlertMessageType(Enum):
@@ -53,6 +69,268 @@ class PushButton(QPushButton):
             raise Exception('No ID set on PushButton')
 
         return self.id
+
+class ComboBox(QComboBox):
+    """ComboBox with the same interface as a QLineEdit for getting and setting values.
+
+    Parameters:
+    -----------
+      options - list of items to appear in the lookup
+      selected_value - selected item; if this is not one of the options and new option will be
+        created for this value.
+    """
+
+    def __init__(self, options: List[str], selected_value: str, **kwargs):
+        super(ComboBox, self).__init__(**kwargs)
+        self.options = options
+        self.addItems(self.options)
+        self.setText(selected_value)
+        self.setEditable(True)
+
+    def setText(self, value: str):
+        """Sets the current index to the given value. If the value is not in the list of
+        options it will be added."""
+        if value not in self.options:
+            self.options = [value] + self.options
+            self.clear()
+            self.addItems(self.options)
+        self.setCurrentIndex(self.options.index(value))
+
+    def text(self):
+        """Gets the currentText."""
+        return self.currentText()
+
+
+class FormInput(QWidget):
+    """A form element with a label, help tip, and input control. The default control is a text
+    input. This object may be subclassed to specialize the input control or the arrangement of
+    widgets. FormInputs have the ability to show and hide themselves.
+
+    Parameters:
+    ----------
+      parameter - the option which will be configured using this input. Used to populate the label,
+        help text, and relevant options.
+      help_font_size - font size for the help text.
+      help_color - color of the help text.
+    """
+
+    def __init__(self,
+                 parameter: Parameter,
+                 help_font_size: int = 12,
+                 help_color: str = 'darkgray'):
+        super(FormInput, self).__init__()
+        self.parameter = parameter
+
+        self.label = self.init_label()
+        self.help_tip = self.init_help(help_font_size, help_color)
+        self.control = self.init_control()
+
+        self.init_layout()
+
+    def init_label(self) -> QWidget:
+        """Initize the label widget."""
+        return static_text_control(None, label=self.parameter.readableName)
+
+    def init_help(self, font_size: int, color: str) -> QWidget:
+        """Initialize the help text widget."""
+        if self.parameter.readableName == self.parameter.helpTip:
+            return None
+        return static_text_control(None,
+                                   label=self.parameter.helpTip,
+                                   size=font_size,
+                                   color=color)
+
+    def init_control(self) -> QWidget:
+        """Initialize the form control widget."""
+        # Default is a text input
+        return QLineEdit(self.parameter.value)
+
+    def init_layout(self):
+        """Initialize the layout by adding the label, help, and control widgets."""
+        self.vbox = QVBoxLayout()
+        if self.label:
+            self.vbox.addWidget(self.label)
+        if self.help_tip:
+            self.vbox.addWidget(self.help_tip)
+        self.vbox.addWidget(self.control)
+        self.setLayout(self.vbox)
+
+    def value(self) -> str:
+        """Returns the value associated with the form input."""
+        if self.control:
+            return self.control.text()
+        return None
+
+    def matches(self, term: str) -> bool:
+        """Returns True if the input matches the given text, otherwise False."""
+        text = term.lower()
+        return (text in self.parameter.readableName.lower()) or (
+            self.parameter.helpTip and text in self.parameter.helpTip.lower()
+        ) or text in self.value().lower()
+
+    def show(self):
+        """Show this widget, and all child widgets."""
+        for widget in self.widgets():
+            if widget:
+                widget.setVisible(True)
+
+    def hide(self):
+        """Hide this widget, and all child widgets."""
+        for widget in self.widgets():
+            if widget:
+                widget.setVisible(False)
+
+    def widgets(self) -> List[QWidget]:
+        """Returns a list of self and child widgets. List may contain None values."""
+        return [self.label, self.help_tip, self.control, self]
+
+
+class BoolInput(FormInput):
+    """Checkbox form input used for boolean configuration parameters. Overrides FormInput to provide
+    a CheckBox control. Help text is not displayed for checkbox items."""
+
+    def __init__(self, parameter: Parameter, **kwargs):
+        super(BoolInput, self).__init__(parameter, **kwargs)
+
+    def init_label(self) -> QWidget:
+        """Override. Checkboxes do not have a separate label."""
+        return None
+
+    def init_help(self, font_size: int, color: str) -> QWidget:
+        """Override. Checkboxes do not display help."""
+        return None
+
+    def init_control(self):
+        """Override to create a checkbox."""
+        ctl = QCheckBox(self.parameter.readableName)
+        ctl.setChecked(self.parameter.value == 'true')
+        ctl.setFont(font())
+        return ctl
+
+    def value(self) -> str:
+        return 'true' if self.control.isChecked() else 'false'
+
+
+class SelectionInput(FormInput):
+    """Input to select from a list of options."""
+
+    def __init__(self, parameter: Parameter, **kwargs):
+        super(SelectionInput, self).__init__(parameter, **kwargs)
+
+    def init_control(self) -> QWidget:
+        """Override to create a Combobox."""
+        return ComboBox(self.parameter.recommended_values,
+                        self.parameter.value)
+
+
+class TextInput(FormInput):
+    """Text field input."""
+
+    def __init__(self, parameter: Parameter, **kwargs):
+        super(TextInput, self).__init__(parameter, **kwargs)
+
+
+class FileInput(FormInput):
+    """Input for selecting a file or directory."""
+
+    def __init__(self, parameter: Parameter, **kwargs):
+        super(FileInput, self).__init__(parameter, **kwargs)
+
+    def init_control(self) -> QWidget:
+        """Override to create either a selection list or text field depending
+        on whether there are recommended values."""
+        param = self.parameter
+        if isinstance(self.parameter.recommended_values, list):
+            return ComboBox(param.recommended_values, param.value)
+        return QLineEdit(param.value)
+
+    def init_button(self) -> QWidget:
+        """Creates a Button to initiate the file/directory dialog."""
+        btn = QPushButton('...')
+        btn.setFixedWidth(40)
+        btn.clicked.connect(self.prompt_path)
+        return btn
+
+    def prompt_path(self):
+        """Prompts the user with a FileDialog. Updates the control's value with the file or
+        directory if one was selected."""
+        if self.parameter.type == 'directorypath':
+            name = QFileDialog.getExistingDirectory(caption='Select a path')
+        else:
+            name, _ = QFileDialog.getOpenFileName(caption='Select a file',
+                                                  filter='All Files (*)')
+
+        if name:
+            self.control.setText(name)
+
+    def init_layout(self):
+        """Overrides the layout to add the file dialog button."""
+        self.button = self.init_button()
+        self.vbox = QVBoxLayout()
+        if self.label:
+            self.vbox.addWidget(self.label)
+        if self.help_tip:
+            self.vbox.addWidget(self.help_tip)
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.control)
+        hbox.addWidget(self.button)
+        self.vbox.addLayout(hbox)
+        self.setLayout(self.vbox)
+
+    def widgets(self) -> List[QWidget]:
+        """Override to include button."""
+        return super().widgets() + [self.button]
+
+def parameter_input(param: Parameter) -> FormInput:
+    """Construct a FormInput for the given parameter based on its python type and other
+    attributes."""
+
+    if param.type == 'bool':
+        return BoolInput(param)
+    if 'path' in param.type:
+        return FileInput(param)
+    if isinstance(param.recommended_values, list):
+        return SelectionInput(param)
+    return TextInput(param)
+
+class SearchInput(QWidget):
+    """Search input widget. Consists of a text input field and a Clear button.
+    Text changes to the input are passed to the on_search action.
+    The cancel button clears the input.
+
+    Parameters:
+    -----------
+        on_search - search function to call. Takes a single str parameter, the
+            contents of the text box.
+    """
+
+    def __init__(self, on_search, font_size: int = 10):
+        super(SearchInput, self).__init__()
+
+        self.on_search = on_search
+
+        self.hbox = QHBoxLayout()
+        self.hbox.addWidget(static_text_control(None, label='Search: '))
+
+        self.input = QLineEdit()
+        self.input.setStyleSheet(
+            f"font-size: {font_size}px; line-height: {font_size}px")
+        self.input.textChanged.connect(self._search)
+        self.hbox.addWidget(self.input)
+
+        cancel_btn = QPushButton('Clear')
+        cancel_btn.setStyleSheet(f"font-size: {font_size}px;")
+        cancel_btn.clicked.connect(self._cancel)
+        self.hbox.addWidget(cancel_btn)
+
+        self.setLayout(self.hbox)
+
+    def _search(self):
+        self.on_search(self.input.text())
+
+    def _cancel(self):
+        self.input.clear()
+        self.input.repaint()
 
 
 class BCIGui(QMainWindow):
