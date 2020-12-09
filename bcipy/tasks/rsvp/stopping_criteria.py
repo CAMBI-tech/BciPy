@@ -17,7 +17,7 @@ class DecisionCriteria:
     def reset(self):
         pass
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         """
         Apply the given criteria.
         Parameters:
@@ -39,13 +39,13 @@ class MinIterationsCriteria(DecisionCriteria):
     """ Returns true if the minimum number of iterations have not yet
         been reached. """
 
-    def __init__(self, min_num_seq):
+    def __init__(self, min_num_seq: int):
         """ Args:
                 min_num_seq(int): minimum number of sequence number before any
                  termination objective is allowed to be triggered """
         self.min_num_seq = min_num_seq
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         # Note: we use 'list_sti' parameter since this is the number of
         # sequences displayed. The length of 'list_distribution' is 1 greater
         # than this, since the language model distribution is added before
@@ -60,7 +60,7 @@ class DecreasedProbabilityCriteria(DecisionCriteria):
     """Returns true if the letter with the max probability decreased from the
         last sequence."""
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         if len(epoch['list_distribution']) < 2:
             return False
         prev_dist = epoch['list_distribution'][-2]
@@ -72,13 +72,13 @@ class DecreasedProbabilityCriteria(DecisionCriteria):
 class MaxIterationsCriteria(DecisionCriteria):
     """Returns true if the max iterations have been reached."""
 
-    def __init__(self, max_num_seq):
+    def __init__(self, max_num_seq: int):
         """ Args:
                 max_num_seq(int): maximum number of sequences allowed before
                     mandatory termination """
         self.max_num_seq = max_num_seq
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         # Note: len(epoch['list_sti']) != len(epoch['list_distribution'])
         # see MinIterationsCriteria comment
         current_seq = len(epoch['list_sti'])
@@ -92,7 +92,7 @@ class MaxIterationsCriteria(DecisionCriteria):
 class ProbThresholdCriteria(DecisionCriteria):
     """Returns true if the commit threshold has been met."""
 
-    def __init__(self, threshold):
+    def __init__(self, threshold: float):
         """ Args:
                 threshold(float in [0,1]): A threshold on most likely
                     candidate posterior. If a candidate exceeds a posterior
@@ -101,7 +101,7 @@ class ProbThresholdCriteria(DecisionCriteria):
         assert 1 >= threshold >= 0, "stopping threshold should be in [0,1]"
         self.tau = threshold
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         current_distribution = epoch['list_distribution'][-1]
         if np.max(current_distribution) > self.tau:
             log.debug("Committing to decision: posterior exceeded threshold.")
@@ -117,7 +117,7 @@ class MarginCriteria(DecisionCriteria):
         satisfy the condition.
     """
 
-    def __init__(self, margin):
+    def __init__(self, margin: float):
         """ Args:
                 margin(float in [0,1]): Minimum distance required between
                     two most likely competing candidates to trigger termination.
@@ -125,7 +125,7 @@ class MarginCriteria(DecisionCriteria):
         assert 1 >= margin >= 0, "difference margin should be in [0,1]"
         self.margin = margin
 
-    def decide(self, epoch):
+    def decide(self, epoch: Dict):
         # Get the current posterior probability values
         p = copy(epoch['list_distribution'][-1])
         # This criteria compares most likely candidates (best competitors)
@@ -146,7 +146,7 @@ class MomentumCommitCriteria(DecisionCriteria):
             tau(float): decision threshold
             """
 
-    def __init__(self, tau, lam):
+    def __init__(self, tau: float, lam: float):
         self.lam = lam
         self.tau = tau
 
@@ -198,7 +198,7 @@ class CriteriaEvaluator():
         self.commit_criteria = commit_criteria or []
 
     @classmethod
-    def default(cls, min_num_seq, max_num_seq, threshold):
+    def default(cls, min_num_seq: int, max_num_seq: int, threshold: float):
         return cls(continue_criteria=[MinIterationsCriteria(min_num_seq)],
                    commit_criteria=[
                        MaxIterationsCriteria(max_num_seq),
