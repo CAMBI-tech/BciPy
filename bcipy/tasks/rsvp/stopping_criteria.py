@@ -94,7 +94,7 @@ class ProbThresholdCriteria(DecisionCriteria):
 
     def __init__(self, threshold):
         """ Args:
-                threshold(float \in [0,1]): A threshold on most likely
+                threshold(float in [0,1]): A threshold on most likely
                     candidate posterior. If a candidate exceeds a posterior
                     the system terminates.
                  """
@@ -116,7 +116,7 @@ class MarginCriteria(DecisionCriteria):
 
     def __init__(self, margin):
         """ Args:
-                margin(float \in [0,1]): Minimum distance required between
+                margin(float in [0,1]): Minimum distance required between
                     two most likely competing candidates to trigger termination.
                     """
         assert 1 >= margin >= 0, "difference margin should be in [0,1]"
