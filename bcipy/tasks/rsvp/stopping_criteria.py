@@ -111,7 +111,10 @@ class ProbThresholdCriteria(DecisionCriteria):
 
 class MarginCriteria(DecisionCriteria):
     """ Stopping criteria based on the difference of two most likely candidates.
-        This condition
+        This condition enforces the likelihood difference between two top
+        candidates to be at least a value. E.g. in 4 category case with
+        a margin 0.2, the edge cases [0.6,0.4,0.,0.] and [0.4,0.2,0.2,0.2]
+        satisfy the condition.
     """
 
     def __init__(self, margin):
