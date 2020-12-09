@@ -136,10 +136,10 @@ class MarginCriteria(DecisionCriteria):
 
 
 class MomentumCommitCriteria(DecisionCriteria):
-    """ Stopping criteria based on Renyi entropy on the simplex
-        Renyi entropy for infinity and 1 norms are special forms.
+    """ Stopping criteria based on Shannon entropy on the simplex
         Attr:
-            alpha(float): a non-negative order for the entropy
+            lam(float): linear combination parameter between entropy and the
+                speed term
             tau(float): decision threshold
             """
 
