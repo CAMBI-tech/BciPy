@@ -1,5 +1,5 @@
 wheel==0.30.0
-wxPython==4.1.1
+wxPython==4.0.4
 docker==2.6.1
 construct==2.8.14
 mne==0.17.0
