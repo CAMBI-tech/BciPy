@@ -5,12 +5,14 @@
 def main():
     import bci_main
     from bcipy.helpers.load import load_json_parameters
+    from bcipy.tasks.task_registry import TaskType
+    from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
     # Load a parameters file
-    parameters = 'bcipy/parameters/parameters.json'
+    parameters = DEFAULT_PARAMETERS_PATH
 
     # Task. Ex. `RSVP Calibration`
-    task = 'RSVP Calibration'
+    task = TaskType.by_value('RSVP Calibration')
 
     # Experiment. Use the default registered experiment!
     experiment = 'default'

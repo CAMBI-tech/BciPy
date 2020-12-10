@@ -18,17 +18,17 @@ from itertools import groupby
 from typing import Dict, List
 
 
-class ExperimentType(Enum):
+class TaskType(Enum):
     """Enum of the registered experiment types (Tasks), along with the label
     used for display in the GUI and command line tools. Values are looked up
     by their (1-based) index.
 
     Examples:
-    >>> ExperimentType(1)
-    <ExperimentType.RSVP_CALIBRATION: 1>
+    >>> TaskType(1)
+    <TaskType.RSVP_CALIBRATION: 1>
 
-    >>> ExperimentType(1).label
-    'Calibration'
+    >>> TaskType(1).label
+    'RSVP Calibration'
     """
 
     RSVP_CALIBRATION = 'RSVP Calibration'
@@ -58,7 +58,7 @@ class ExperimentType(Enum):
             return cls(tasks.index(item) + 1)
 
     @classmethod
-    def calibration_tasks(cls) -> List['ExperimentType']:
+    def calibration_tasks(cls) -> List['TaskType']:
         return [task for task in cls
                 if task.name.endswith('CALIBRATION') and 'COPY_PHRASE'
                 not in task.name]

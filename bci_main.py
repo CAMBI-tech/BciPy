@@ -8,10 +8,10 @@ from bcipy.helpers.load import load_json_parameters, load_signal_model
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
 from bcipy.tasks.start_task import start_task
-from bcipy.tasks.task_registry import ExperimentType
+from bcipy.tasks.task_registry import TaskType
 
 
-def bci_main(parameter_location: str, user: str, task: int, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
+def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -27,7 +27,7 @@ def bci_main(parameter_location: str, user: str, task: int, experiment: str = DE
     Input:
         parameter_location (str): location of parameters file to use
         user (str): name of the user
-        task (str): type of experiment.
+        task (TaskType): registered bcipy TaskType
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
 
 
@@ -41,7 +41,7 @@ def bci_main(parameter_location: str, user: str, task: int, experiment: str = DE
         parameters.save()
         default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
         if parameters.add_missing_items(default_params):
-            raise Exception("Parameters file out of date.")
+            raise Exception('Parameters file out of date.')
 
     # update our parameters file with system related information
     sys_info = get_system_info()
@@ -51,7 +51,7 @@ def bci_main(parameter_location: str, user: str, task: int, experiment: str = DE
         parameters['data_save_loc'],
         user,
         parameter_location,
-        task=task,
+        task=task.label,
         experiment_id=experiment)
 
     # configure bcipy session logging
@@ -64,7 +64,7 @@ def bci_main(parameter_location: str, user: str, task: int, experiment: str = DE
     return execute_task(task, parameters, save_folder)
 
 
-def execute_task(task: str, parameters: dict, save_folder: str) -> bool:
+def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     """Execute Task.
 
     Executes the desired task by setting up the display window and
@@ -72,20 +72,19 @@ def execute_task(task: str, parameters: dict, save_folder: str) -> bool:
         which will initialize experiment.
 
     Input:
+        task(str): registered bcipy TaskType
         parameters (dict): parameter dictionary
-        task_type (dict): type and mode of experiment
         save_folder (str): path to save folder
     """
     signal_model = None
     language_model = None
     filename = None
 
-    task = ExperimentType.by_value(task)
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if not fake and task not in ExperimentType.calibration_tasks():
+    if not fake and task not in TaskType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
             signal_model, filename = load_signal_model()
@@ -105,7 +104,7 @@ def execute_task(task: str, parameters: dict, save_folder: str) -> bool:
     # We have to wait until after the prompt to load the signal model before
     # displaying the window, otherwise in fullscreen mode this throws an error
     display = init_display_window(parameters)
-    print_message(display, "Initializing...")
+    print_message(display, 'Initializing...')
 
     # Start Task
     try:
@@ -149,20 +148,18 @@ if __name__ == "__main__":
     # Needed for windows machines
     multiprocessing.freeze_support()
 
-    task_options = '; '.join([(f"{task.name.title().replace('_',' ')}:"
-                               f" {task.value}")
-                              for task in ExperimentType])
+    task_options = TaskType.list()
     parser = argparse.ArgumentParser()
 
     # Command line utility for adding arguments/ paths via command line
-    parser.add_argument('-p', '--parameters', default='bcipy/parameters/parameters.json',
-                        help='Parameter location. Must be in parameters directory. Pass as parameters/parameters.json')
+    parser.add_argument('-p', '--parameters', default=DEFAULT_PARAMETERS_PATH,
+                        help='Parameter location. Pass as *.json')
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--task', default='RSVP Calibration',
-                        help=f'Task type. Options: ({task_options})')
+                        help=f'Task type to execute. Registered options: {task_options}')
     parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID, 
                         help='Select a valid experiment to run the task for this user')
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), str(args.task), str(args.experiment))
+    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)), str(args.experiment))
