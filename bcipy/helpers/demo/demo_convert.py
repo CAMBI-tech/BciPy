@@ -6,7 +6,7 @@ from mne.io import read_raw_edf
 def plot_edf(edf_path: str, auto_scale: bool = False):
     """Plot data from the raw edf file. Note: this works from an iPython
     session but seems to throw errors when provided in a script.
-    
+
     Parameters
     ----------
         edf_path - full path to the generated edf file

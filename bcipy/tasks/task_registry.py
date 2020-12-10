@@ -18,26 +18,26 @@ from itertools import groupby
 from typing import Dict, List
 
 
-class ExperimentType(Enum):
+class TaskType(Enum):
     """Enum of the registered experiment types (Tasks), along with the label
     used for display in the GUI and command line tools. Values are looked up
     by their (1-based) index.
 
     Examples:
-    >>> ExperimentType(1)
-    <ExperimentType.RSVP_CALIBRATION: 1>
+    >>> TaskType(1)
+    <TaskType.RSVP_CALIBRATION: 1>
 
-    >>> ExperimentType(1).label
-    'Calibration'
+    >>> TaskType(1).label
+    'RSVP Calibration'
     """
 
-    RSVP_CALIBRATION = 'Calibration'
-    RSVP_COPY_PHRASE = 'Copy Phrase'
-    RSVP_ICON_TO_ICON = 'Icon to Icon'
-    RSVP_ICON_TO_WORD = 'Icon to Word'
-    RSVP_ALERT_TONE_CALIBRATION = 'Alert Tone'
-    RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION = 'Feed. Calib.'
-    RSVP_TIMING_VERIFICATION_CALIBRATION = 'Time Test'
+    RSVP_CALIBRATION = 'RSVP Calibration'
+    RSVP_COPY_PHRASE = 'RSVP Copy Phrase'
+    RSVP_ICON_TO_ICON = 'RSVP Icon to Icon'
+    RSVP_ICON_TO_WORD = 'RSVP Icon to Word'
+    RSVP_ALERT_TONE_CALIBRATION = 'RSVP Alert Tone'
+    RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION = 'RSVP Feedback Calibration'
+    RSVP_TIMING_VERIFICATION_CALIBRATION = 'RSVP Time Test'
 
     def __new__(cls, *args, **kwds):
         """Autoincrements the value of each item added to the enum."""
@@ -50,20 +50,19 @@ class ExperimentType(Enum):
         self.label = label
 
     @classmethod
-    def by_mode(cls) -> Dict[str, List['ExperimentType']]:
-        """ExperimentTypes by mode (ex. 'RSVP')"""
-
-        def prefix(item, sep='_') -> str:
-            name = item.name
-            return name[0:name.index(sep)] if sep in name else ''
-
-        mode_map = {}
-        for key, group in groupby(cls, prefix):
-            mode_map[key] = [task for task in group]
-        return mode_map
+    def by_value(cls, item):
+        tasks = cls.list()
+        # The cls.list method returns a sorted list of enum tasks
+        # check if item present and return the index + 1 (which is the ENUM value for the task)
+        if item in tasks:
+            return cls(tasks.index(item) + 1)
 
     @classmethod
-    def calibration_tasks(cls) -> List['ExperimentType']:
+    def calibration_tasks(cls) -> List['TaskType']:
         return [task for task in cls
                 if task.name.endswith('CALIBRATION') and 'COPY_PHRASE'
                 not in task.name]
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return list(map(lambda c: c.label, cls))

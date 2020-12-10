@@ -5,7 +5,7 @@
 
 It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
 
-It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
+It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10 Pro) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
@@ -55,20 +55,22 @@ To use all the goodies locally (including the GUI and demo scripts)
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
 4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
-5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we are in this repository!)
+5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we use in this repository!)
 
-To just use the built-in functions:
+If wanting the latest version from PyPi:
 1. `pip install bcipy`
 
 ## Usage Locally
 
 Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
 
-Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
+Ex.`python bci_main.py` *this will use default parameters, user, experiment and task*
 
 You can pass it attributes with flags, if desired.
 
-Ex. `python bci_main.py --user "bci_user" --mode "RSVP"`
+Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration"`
+
+Use the help flag to see other available input options: `python bci_main.py --help`
 
 ## Example usage as a package
 
@@ -85,7 +87,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
 - `signal`: eeg signal models, filters, processing, evaluators and viewers. 
-- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py and mode/RSVPKeyboard.py.
+- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
 - `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
@@ -185,3 +187,4 @@ Finally, run the lint check: `flake8 bcipy`.
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
 - Shiran Dudy (OHSU)
+- Basak Celik (NEU)

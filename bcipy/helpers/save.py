@@ -5,8 +5,7 @@ from shutil import copyfile
 from pathlib import Path
 import json
 
-
-DEFAULT_EXPERIMENT_ID = 'default'
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID, DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH
 
 
 def save_json_data(data: dict, location: str, name: str) -> str:
@@ -25,12 +24,20 @@ def save_json_data(data: dict, location: str, name: str) -> str:
     return str(path)
 
 
+def save_experiment_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
+def save_field_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
 def init_save_data_structure(data_save_path: str,
                              user_id: str,
                              parameters: str,
-                             experiment_id: str = DEFAULT_EXPERIMENT_ID,
-                             mode: str = None,
-                             experiment_type: int = None):
+                             task: str,
+                             experiment_id: str = DEFAULT_EXPERIMENT_ID
+                             ) -> str:
     """
     Initialize Save Data Structure.
 
@@ -38,20 +45,15 @@ def init_save_data_structure(data_save_path: str,
         user_id[str]: string of user name / related information
         parameters[str]: parameter location for the experiment
         experiment_id[str]: Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
-        mode[str]: BCI mode. Ex. RSVP, SHUFFLE, MATRIX
-        experiment_type[int]: type of experiment. Ex. 1 = calibration
+        task[str]: name of task type. Ex. RSVP Calibration
 
     """
 
     # make an experiment folder : note datetime is in utc
     save_folder_name = f'{data_save_path}{experiment_id}/{user_id}'
     dt = strftime('%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
-
-    # If there is a mode or experiment type registered add it to the folder structure
-    if mode and experiment_type:
-        save_directory = f'{save_folder_name}/{user_id}_{mode}_{experiment_type}_{dt}'
-    else:
-        save_directory = f'{save_folder_name}/{user_id}_{dt}'
+    task = task.replace(' ', '_')
+    save_directory = f"{save_folder_name}/{user_id}_{task}_{dt}"
 
     try:
         # make a directory to save data to
