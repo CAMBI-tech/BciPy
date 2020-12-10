@@ -4,9 +4,13 @@ from codecs import open as codecsopen
 from collections import abc
 from json import dump, load
 from pathlib import Path
+from collections import namedtuple
 
 DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
 
+Parameter = namedtuple('Parameter', [
+    'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
+])
 
 class Parameters(dict):
     """Configuration parameters for BciPy.

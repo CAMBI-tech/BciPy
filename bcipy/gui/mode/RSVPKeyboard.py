@@ -91,7 +91,7 @@ class RSVPKeyboard(BCIGui):
                 return None
 
         subprocess.call(
-            f'python bcipy/gui/params_form.py -p {self.parameter_location}',
+            f'python bcipy/gui/parameters/params_form.py -p {self.parameter_location}',
             shell=True)
 
     def launch_bci_main(self) -> None:
