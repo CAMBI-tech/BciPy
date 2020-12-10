@@ -3,14 +3,16 @@
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from bcipy.gui.gui_main import (SearchInput, parameter_input, static_text_control)
-from bcipy.helpers.parameters import Parameter, Parameters
+from bcipy.gui.gui_main import (SearchInput, FormInput, BoolInput, FileInput,
+                                DirectoryInput, SelectionInput, TextInput,
+                                static_text_control)
+from bcipy.helpers.parameters import Parameters
 
 
 class ParamsForm(QWidget):
@@ -31,7 +33,7 @@ class ParamsForm(QWidget):
         self.json_file = json_file
         self.load_file = json_file if not load_file else load_file
         self.width = width
-        self.help_font_size = 12
+        self.help_size = 12
         self.help_color = 'darkgray'
 
         self.params = Parameters(source=self.load_file, cast_values=False)
@@ -45,8 +47,26 @@ class ParamsForm(QWidget):
     parameters file.
     """
         for key, param in self.params.entries():
-            param = Parameter(**param)
-            self.controls[key] = parameter_input(param)
+            self.controls[key] = self.parameter_input(param)
+
+    def parameter_input(self, param: Dict[str, str]) -> FormInput:
+        """Construct a FormInput for the given parameter based on its python type and other
+        attributes."""
+
+        type_inputs = {
+            'bool': BoolInput,
+            'filepath': FileInput,
+            'directorypath': DirectoryInput
+        }
+        has_options = isinstance(param['recommended_values'], list)
+        form_input = type_inputs.get(param['type'],
+                                     SelectionInput if has_options else TextInput)
+        return form_input(label=param['readableName'],
+                          value=param['value'],
+                          help_tip=param['helpTip'],
+                          options=param['recommended_values'],
+                          help_size=self.help_size,
+                          help_color=self.help_color)
 
     def do_layout(self) -> None:
         """Layout the form controls."""
