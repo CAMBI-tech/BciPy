@@ -8,7 +8,7 @@ from typing import List
 from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertResponse
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
-from bcipy.tasks.task_registry import ExperimentType
+from bcipy.tasks.task_registry import TaskType
 
 
 class BCInterface(BCIGui):
@@ -18,7 +18,7 @@ class BCInterface(BCIGui):
         editing and loading, and offline analysis execution.
     """
 
-    tasks = ExperimentType.list()
+    tasks = TaskType.list()
 
     default_text = '...'
     padding = 15
@@ -370,7 +370,7 @@ class BCInterface(BCIGui):
         """
         if self.check_input():
             self.event_started = True
-            cmd = f"python bci_main.py -e '{self.experiment}' -u '{self.user}' -t '{self.task}' -p '{self.parameter_location}'"
+            cmd = f'python bci_main.py -e "{self.experiment}" -u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             subprocess.Popen(cmd, shell=True)
 
     def offline_analysis(self) -> None:
