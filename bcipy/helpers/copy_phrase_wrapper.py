@@ -67,9 +67,9 @@ class CopyPhraseWrapper:
             commit_criteria=[MaxIterationsCriteria(max_num_seq),
                              ProbThresholdCriteria(decision_threshold)])
 
-        # TODO: Change this hard number 8!
+        # TODO: Parametrize len_query in the future releases!
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
-                                          len_query=8)
+                                          len_query=10)
 
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
