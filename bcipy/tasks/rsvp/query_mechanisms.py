@@ -1,7 +1,7 @@
 import numpy as np
 from copy import copy
 import random
-from typing import List, Any
+from typing import List
 
 # the small epsilon value. Prevents numerical issues with log
 eps = np.power(.1, 6)
@@ -28,7 +28,7 @@ class StimuliAgent:
     def reset(self):
         return
 
-    def return_stimuli(self, list_distribution: Any, **kwargs):
+    def return_stimuli(self, list_distribution: np.ndarray, **kwargs):
         """ updates the agent with most likely posterior and selects queries
             Args:
                 list_distribution(list[ndarray]): posterior distributions as
@@ -51,7 +51,7 @@ class RandomStimuliAgent(StimuliAgent):
         """ This querying method is memoryless no reset needed """
         pass
 
-    def return_stimuli(self, list_distribution: Any):
+    def return_stimuli(self, list_distribution: np.ndarray):
         """ return random elements from the alphabet """
         tmp = [i for i in self.alphabet]
         query = random.sample(tmp, self.len_query)
@@ -70,7 +70,7 @@ class NBestStimuliAgent(StimuliAgent):
     def reset(self):
         pass
 
-    def return_stimuli(self, list_distribution: Any):
+    def return_stimuli(self, list_distribution: np.ndarray):
         p = list_distribution[-1]
         tmp = [i for i in self.alphabet]
         query = best_selection(tmp, p, self.len_query)
@@ -120,7 +120,7 @@ class MomentumStimuliAgent(StimuliAgent):
         if self.update_lam_flag:
             self.lam_ = copy(self.lam)
 
-    def return_stimuli(self, list_distribution: Any):
+    def return_stimuli(self, list_distribution: np.ndarray):
         """ Return the speed enhanced momentum stimuli """
 
         # To compute the MI term, use the most recent distribution
