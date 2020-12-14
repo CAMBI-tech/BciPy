@@ -8,8 +8,8 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'bcipy'
 DESCRIPTION = 'Python Software for Brain-Computer Interface.'
-URL = 'https://github.com/BciPy/BciPy'
-EMAIL = 'memmott@ohsu.com'
+URL = 'https://github.com/CAMBI-tech/BciPy'
+EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '~=3.6'
 
