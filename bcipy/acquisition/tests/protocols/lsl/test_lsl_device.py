@@ -4,8 +4,8 @@
 import unittest
 import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.server import await_start
-from bcipy.acquisition.datastream import generator
+from bcipy.acquisition.datastream.tcp_server import await_start
+from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
 
 
@@ -29,7 +29,7 @@ class TestLslDevice(unittest.TestCase):
         self.server = LslDataServer(params={'name': 'LSL',
                                             'channels': self.channels,
                                             'hz': self.hz},
-                                    generator=generator.random_data(
+                                    generator=random_data_generator(
                                         channel_count=self.channel_count),
                                     include_meta=self.include_meta,
                                     add_markers=True)

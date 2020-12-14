@@ -13,7 +13,7 @@ from bcipy.acquisition.util import StoppableThread
 log = logging.getLogger(__name__)
 
 
-class DataServer(StoppableThread):
+class TcpDataServer(StoppableThread):
     """Streams sample EEG-like data via TCP.
 
     Parameters
@@ -23,20 +23,15 @@ class DataServer(StoppableThread):
         generator : function
             generator function; used to generate the data to be served. A new
             generator will be created for every client connection.
-        gen_params : dict, optional
-            parameters for the generator function
         host : str, optional
         port : int, optional
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, protocol, generator, gen_params=None, host='127.0.0.1',
-                 port=9999):
-        super(DataServer, self).__init__(name="DataServer")
+    def __init__(self, protocol, generator, host='127.0.0.1', port=9999):
+        super(TcpDataServer, self).__init__(name="TcpDataServer")
         self.protocol = protocol
         self.generator = generator
-        self.gen_params = gen_params or {}
-        self.gen_params['encoder'] = protocol.encoder
 
         self.host = host
         self.port = port
@@ -85,7 +80,7 @@ class DataServer(StoppableThread):
 
     def stop(self):
         log.debug("[*] Stopping data server")
-        super(DataServer, self).stop()
+        super(TcpDataServer, self).stop()
 
     def _handle_client(self, client_socket):
         """This currently only handles a single client and blocks on that call.
@@ -106,8 +101,7 @@ class DataServer(StoppableThread):
         data_queue = Queue()
 
         # Construct a new generator each time to get consistent results.
-        generator = self.generator(**self.gen_params)
-        with Producer(data_queue, generator=generator,
+        with Producer(data_queue, generator=self.generator(),
                       freq=1 / self.protocol.fs):
             while self.running():
                 try:
@@ -125,7 +119,7 @@ class DataServer(StoppableThread):
 
 
 def start_socket_server(protocol, host, port, retries=2):
-    """Starts a DataServer given the provided port and host information. If
+    """Starts a TcpDataServer given the provided port and host information. If
     the port is not available, will automatically try a different port up to
     the given number of times. Returns the server along with the port.
 
@@ -140,14 +134,14 @@ def start_socket_server(protocol, host, port, retries=2):
     -------
         (server, port)
     """
-    from bcipy.acquisition.datastream.generator import random_data
+    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     try:
-        dataserver = DataServer(protocol=protocol,
-                                generator=random_data,
-                                gen_params={'channel_count': len(
-                                    protocol.channels)},
-                                host=host,
-                                port=port)
+        dataserver = TcpDataServer(protocol=protocol,
+                                   generator=generator_factory(
+                                       random_data_generator,
+                                       channel_count=len(protocol.channels)),
+                                   host=host,
+                                   port=port)
 
     except IOError as error:
         if retries > 0:
@@ -190,7 +184,7 @@ def main():
     """Initialize and run the server."""
     import argparse
 
-    from bcipy.acquisition.datastream.generator import file_data, random_data
+    from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_factory
     from bcipy.acquisition.protocols.registry import protocol_with, \
         default_protocol
 
@@ -205,17 +199,18 @@ def main():
     if args.filename:
         daq_type, sample_hz, channels = _settings(args.filename)
         protocol = protocol_with(daq_type, sample_hz, channels)
-        generator, params = (file_data, {'filename': args.filename})
+        generator = generator_factory(file_data_generator,
+                                      filename=args.filename)
     else:
         protocol = default_protocol('DSI')
-        channel_count = len(protocol.channels)
-        generator, params = (random_data, {'channel_count': channel_count})
+        generator = generator_factory(random_data_generator,
+                                      channel_count=len(protocol.channels))
 
     try:
-        server = DataServer(protocol=protocol,
-                            generator=generator,
-                            gen_params=params,
-                            host=args.host, port=args.port)
+        server = TcpDataServer(protocol=protocol,
+                               generator=generator,
+                               host=args.host,
+                               port=args.port)
         log.debug("New server created")
         server.start()
         log.debug("Server started")

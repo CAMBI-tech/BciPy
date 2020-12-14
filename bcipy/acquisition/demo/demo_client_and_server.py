@@ -19,25 +19,27 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.datastream import generator
+    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.datastream.server import DataServer
+    from bcipy.acquisition.datastream.tcp_server import TcpDataServer
 
     host = '127.0.0.1'
     port = 9000
     # The Protocol is for mocking data.
     protocol = registry.default_protocol('DSI')
-    server = DataServer(protocol=protocol,
-                        generator=generator.random_data,
-                        gen_params={'channel_count': len(protocol.channels)},
-                        host=host, port=port)
+    server = TcpDataServer(
+        protocol=protocol,
+        generator=generator_factory(random_data_generator, channel_count=len(protocol.channels)),
+        host=host,
+        port=port)
 
     # Device is for reading data.
     # pylint: disable=invalid-name
     Device = registry.find_device('DSI')
     dsi_device = Device(connection_params={'host': host, 'port': port})
-    client = DataAcquisitionClient(device=dsi_device)
+    raw_data_name = 'demo_raw_data.csv'
+    client = DataAcquisitionClient(device=dsi_device, raw_data_file_name=raw_data_name)
 
     try:
         server.start()
@@ -51,7 +53,7 @@ def main():
             client.cleanup()
             print("Number of samples: {0}".format(client.get_data_len()))
             server.stop()
-            print("The collected data has been written to rawdata.csv")
+            print(f"The collected data has been written to {raw_data_name}")
             break
 
     except KeyboardInterrupt:
@@ -60,7 +62,7 @@ def main():
         client.cleanup()
         print("Number of samples: {0}".format(client.get_data_len()))
         server.stop()
-        print("The collected data has been written to rawdata.csv")
+        print(f"The collected data has been written to {raw_data_name}")
 
 
 if __name__ == '__main__':

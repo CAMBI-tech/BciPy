@@ -1,7 +1,7 @@
 """Functions for generating mock data to be used for testing/development."""
 
 import logging
-
+from typing import Generator, List, Callable
 from past.builtins import range
 from bcipy.signal.generator.generator import gen_random_data
 
@@ -12,6 +12,7 @@ def advance_to_row(filehandle, rownum):
     """Utility function to advance a file cursor to the given row."""
     for _ in range(rownum - 1):
         filehandle.readline()
+
 
 # pylint: disable=too-few-public-methods
 
@@ -25,14 +26,34 @@ class _DefaultEncoder():
         return data
 
 
-def random_data(encoder=_DefaultEncoder(), low=-1000, high=1000,
-                channel_count=25):
-    """Generates random EEG-like data encoded according to the provided encoder.
+def generator_factory(generator_fn, **generator_args) -> Callable[[], Generator]:
+    """Constructs a generator with the given arguments.
+    Parameters
+    ----------
+        gen : Function
+            a generator function
 
     Returns
     -------
-        packet of data, which decodes into a list of floats in the range low
-            to high with channel_count number of items.
+        Function which creates a generator using the given args.
+    """
+
+    def factory():
+        return generator_fn(**generator_args)
+
+    return factory
+
+
+def random_data_generator(encoder=_DefaultEncoder(),
+                          low=-1000,
+                          high=1000,
+                          channel_count=25):
+    """Generator that outputs random EEG-like data encoded according to the provided encoder.
+
+    Returns
+    -------
+        A generator that produces packet of data, which decodes into a list of
+        floats in the range low to high with channel_count number of items.
     """
 
     while True:
@@ -40,7 +61,7 @@ def random_data(encoder=_DefaultEncoder(), low=-1000, high=1000,
         yield encoder.encode(sensor_data)
 
 
-def file_data(filename, header_row=3, encoder=_DefaultEncoder()):
+def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder()):
     """Generates data from a source file and encodes it according to the
     provided encoder.
 

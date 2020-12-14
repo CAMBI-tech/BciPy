@@ -2,29 +2,39 @@ from typing import Dict, List
 import numpy as np
 import subprocess
 import time
-import bcipy.acquisition.datastream.generator as generator
+from bcipy.acquisition.datastream.generator import random_data_generator
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.datastream.server import start_socket_server, await_start
+from bcipy.acquisition.datastream.tcp_server import start_socket_server, await_start
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 
 # Channels relevant for analysis, for each currently supported device.
 #  Note this leaves out triggers or other non-eeg channels. If desired,
 #   they should be added to this list.
 analysis_channels_by_device = {
-    'DSI': ["P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "A1", "Fp1", "Fp2",
-            "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"],
-    'DSI_VR300': ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"],
-    'g.USBamp-1': ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8",
-                   "Ch9", "Ch10", "Ch11", "Ch12", "Ch13", "Ch14", "Ch15",
-                   "Ch16"],
-    'LSL': ["ch1", "ch2", "ch3", "ch4", "ch5", "ch6", "ch7", "ch8",
-            "ch9", "ch10", "ch11", "ch12", "ch13", "ch14", "ch15", "ch16"]
+    'DSI-24': [
+        "P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "A1", "Fp1", "Fp2",
+        "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"
+    ],
+    'DSI-VR300': ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"],
+    'g.USBamp-1': [
+        "Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8", "Ch9", "Ch10",
+        "Ch11", "Ch12", "Ch13", "Ch14", "Ch15", "Ch16"
+    ],
+    'LSL': [
+        "ch1", "ch2", "ch3", "ch4", "ch5", "ch6", "ch7", "ch8", "ch9", "ch10",
+        "ch11", "ch12", "ch13", "ch14", "ch15", "ch16"
+    ]
 }
 
+# add aliases for backwards compatibility
+analysis_channels_by_device['DSI'] = analysis_channels_by_device['DSI-24']
+analysis_channels_by_device['DSI_VR300'] = analysis_channels_by_device['DSI-VR300']
 
-def init_eeg_acquisition(parameters: dict, save_folder: str,
-                         clock=CountClock(), server: bool = False):
+def init_eeg_acquisition(parameters: dict,
+                         save_folder: str,
+                         clock=CountClock(),
+                         server: bool = False):
     """Initialize EEG Acquisition.
 
     Initializes a client that connects with the EEG data source and begins
@@ -62,8 +72,11 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
         'buffer_name': save_folder + '/' + parameters['buffer_name'],
         'device': parameters['acq_device'],
         'filename': save_folder + '/' + parameters['raw_data_name'],
-        'connection_params': {'host': host,
-                              'port': port}}
+        'connection_params': {
+            'host': host,
+            'port': port
+        }
+    }
 
     # Set configuration parameters (with default values if not provided).
     buffer_name = parameters.get('buffer_name', 'raw_data.db')
@@ -80,11 +93,13 @@ def init_eeg_acquisition(parameters: dict, save_folder: str,
             channel_count = 16
             sample_rate = 256
             channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
-            dataserver = LslDataServer(params={'name': 'LSL',
-                                               'channels': channels,
-                                               'hz': sample_rate},
-                                       generator=generator.random_data(
-                                           channel_count=channel_count))
+            dataserver = LslDataServer(
+                params={
+                    'name': 'LSL',
+                    'channels': channels,
+                    'hz': sample_rate
+                },
+                generator=random_data_generator(channel_count=channel_count))
             await_start(dataserver)
         else:
             raise ValueError(

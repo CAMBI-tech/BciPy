@@ -73,18 +73,17 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
 
     import time
 
-    import acquisition.datastream.generator as generator
     import acquisition.protocols.registry as registry
-    from acquisition.datastream.server import DataServer
+    from import acquisition.datastream.generator import random_data_generator, generator_factory
+    from acquisition.datastream.tcp_server import TcpDataServer
 
     protocol = registry.default_protocol('DSI')
     n = len(protocol.channels)
 
     try:
-        server = DataServer(protocol=protocol,
-                            generator=generator.random_data,
-                            gen_params={'channel_count': n},
-                            host='127.0.0.1', port=8844)
+        server = TcpDataServer(protocol=protocol,
+                               generator=generator_factory(random_data_generator, channel_count=n),
+                               host='127.0.0.1', port=8844)
         server.start()
         while True:
             time.sleep(1)
@@ -95,7 +94,7 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
 #### Generator
 
 Generators are Python functions that yield encoded data. They have a parameter for an 
-`Encoder`, and may include other parameters. Currently there is a `random_generator`, which generates random data, and a `file_generator`, which reads through a provided file (ex. a calibration file), and yields one row at a time. The `file_generator` is useful for repeatable tests with known data.
+`Encoder`, and may include other parameters. Currently there is a `random_data_generator`, which generates random data, and a `file_data_generator`, which reads through a provided file (ex. a calibration file), and yields one row at a time. The `file_data_generator` is useful for repeatable tests with known data.
 
 #### Protocol
 

@@ -134,7 +134,7 @@ def main():
     import time
     import argparse
 
-    from bcipy.acquisition.datastream.generator import file_data, random_data
+    from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator
 
     default_channels = ['ch' + str(i + 1) for i in range(16)]
 
@@ -156,8 +156,8 @@ def main():
               'hz': int(args.sample_rate)}
 
     # Generate data from the file if provided, otherwise random data.
-    generator = file_data(filename=args.filename) if args.filename \
-        else random_data(channel_count=len(params['channels']))
+    generator = file_data_generator(filename=args.filename) if args.filename \
+        else random_data_generator(channel_count=len(params['channels']))
 
     markers = True if args.markers else False
     try:

@@ -11,20 +11,21 @@ def main():
 
     import time
 
-    from bcipy.acquisition.datastream import generator
+    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.datastream.server import DataServer
+    from bcipy.acquisition.datastream.tcp_server import TcpDataServer
     from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
     host = '127.0.0.1'
     port = 9000
     # The Protocol is for mocking data.
     protocol = registry.default_protocol('DSI')
-    server = DataServer(protocol=protocol,
-                        generator=generator.random_data,
-                        gen_params={'channel_count': len(protocol.channels)},
-                        host=host, port=port)
+    server = TcpDataServer(
+        protocol=protocol,
+        generator=generator_factory(random_data_generator, channel_count=len(protocol.channels)),
+        host=host,
+        port=port)
 
     # Device is for reading data.
     # pylint: disable=invalid-name

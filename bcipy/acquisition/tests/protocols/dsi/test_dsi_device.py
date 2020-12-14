@@ -1,7 +1,7 @@
 """Tests for DSI headset device driver."""
 import unittest
 import pytest
-from bcipy.acquisition.datastream import server
+from bcipy.acquisition.datastream import tcp_server
 from bcipy.acquisition.protocols.dsi.dsi_device import dsi
 from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
@@ -24,7 +24,7 @@ class TestDsiDevice(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.server, cls.port = server.start_socket_server(
+        cls.server, cls.port = tcp_server.start_socket_server(
             DsiProtocol(), HOST, DEFAULT_PORT)
 
     @classmethod
