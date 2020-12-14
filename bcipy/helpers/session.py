@@ -6,6 +6,8 @@ import os
 import sqlite3
 from collections import Counter
 
+import subprocess
+
 import openpyxl
 import pandas as pd
 from openpyxl.chart import BarChart, Reference
@@ -13,8 +15,9 @@ from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
-from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
 from bcipy.helpers.task import alphabet
+from bcipy.helpers.validate import validate_field_data_written
 
 
 def session_data(data_dir: str, alp=None):
@@ -64,6 +67,18 @@ def session_data(data_dir: str, alp=None):
                     Counter(likelihood).most_common(5))
 
         return data
+
+
+def collect_experiment_field_data(experiment_name, save_path, file_name='experiment_data.json') -> None:
+    experiment = load_experiments()[experiment_name]
+    experiment_fields = load_experiment_fields(experiment)
+
+    if experiment_fields:
+        cmd = f'python bcipy/gui/experiments/ExperimentField.py -e {experiment_name} -p {save_path} -f {file_name}'
+        subprocess.check_call(cmd, shell=True)
+        # verify data was written before moving on
+        if not validate_field_data_written(save_path, file_name):
+            raise Exception('Field data not collected!')
 
 
 def get_stimuli(task_type, sequence):

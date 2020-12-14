@@ -5,6 +5,7 @@ construct==2.8.14
 mne==0.17.0
 opencv_python==4.1.0.25
 PsychoPy==2020.2.10
+openpyxl==2.6.3
 pyglet==1.4.10
 numpy==1.19.2
 sounddevice==0.4.1

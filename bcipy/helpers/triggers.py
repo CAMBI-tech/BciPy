@@ -5,7 +5,6 @@ import csv
 from typing import Dict, TextIO, List, Tuple
 
 from psychopy import visual, core
-from pathlib import Path
 
 NONE_VALUES = ['0', '0.0']
 SOUND_TYPE = 'sound'

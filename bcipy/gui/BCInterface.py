@@ -1,4 +1,3 @@
-import itertools
 import os
 import subprocess
 import sys
@@ -13,8 +12,8 @@ from bcipy.tasks.task_registry import TaskType
 
 class BCInterface(BCIGui):
     """BCI Interface.
-    
-    Main interface for execution of BciPy experiments and tasks. Additionally, quick access to parameter 
+
+    Main interface for execution of BciPy experiments and tasks. Additionally, quick access to parameter
         editing and loading, and offline analysis execution.
     """
 
@@ -43,7 +42,7 @@ class BCInterface(BCIGui):
 
     def build_buttons(self) -> None:
         """Build Buttons.
-        
+
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
         self.add_button(
@@ -170,8 +169,9 @@ class BCInterface(BCIGui):
 
     def build_text(self) -> None:
         """Build Text.
-        
-        Build all static text needed for the UI. Positions are relative to the height / width of the UI defined in start_app.
+
+        Build all static text needed for the UI.
+        Positions are relative to the height / width of the UI defined in start_app.
         """
         self.add_static_textbox(
             text='BCInterface',
@@ -206,7 +206,7 @@ class BCInterface(BCIGui):
 
     def build_images(self) -> None:
         """Build Images.
-        
+
         Build add images needed for the UI. In this case, the OHSU and NEU logos.
         """
         self.add_image(
@@ -216,7 +216,7 @@ class BCInterface(BCIGui):
 
     def build_assets(self) -> None:
         """Build Assets.
-        
+
         Define the assets to build in the UI.
         """
         self.build_buttons()
@@ -250,7 +250,8 @@ class BCInterface(BCIGui):
             if self.parameters.add_missing_items(default_parameters):
                 save_response = self.throw_alert_message(
                     title='BciPy Alert',
-                    message='The selected parameters file is out of date. Would you like to update it with the latest options?',
+                    message='The selected parameters file is out of date.'
+                            'Would you like to update it with the latest options?',
                     message_type=AlertMessageType.INFO,
                     okay_or_cancel=True)
 
@@ -370,12 +371,15 @@ class BCInterface(BCIGui):
         """
         if self.check_input():
             self.event_started = True
-            cmd = f'python bci_main.py -e "{self.experiment}" -u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
+            cmd = (
+                f'python bci_main.py -e "{self.experiment}" '
+                f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
+            )
             subprocess.Popen(cmd, shell=True)
 
     def offline_analysis(self) -> None:
         """Offline Analysis.
-        
+
         Run offline analysis as a script in a new process.
         """
         cmd = 'python bcipy/signal/model/offline_analysis.py'

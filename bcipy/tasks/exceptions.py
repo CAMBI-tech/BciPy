@@ -2,7 +2,7 @@
 class InsufficientDataException(Exception):
     """Insufficient Data Exception.
 
-    Thrown when data requirments to execute task are violated.
+    Thrown when data requirements to execute task are violated.
     """
 
     def __init__(self, message, errors=None):
