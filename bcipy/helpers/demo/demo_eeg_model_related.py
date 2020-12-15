@@ -1,5 +1,5 @@
 import numpy as np
-from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import alphabet
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
-from bcipy.helpers.stimuli import best_case_rsvp_seq_gen
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
+from bcipy.helpers.stimuli import rsvp_seq_generator
 from bcipy.helpers.task import SPACE_CHAR
-from typing import Dict, List
 import logging
 import numpy as np
 import string
@@ -62,135 +62,6 @@ class EvidenceFusion(object):
         return 0
 
 
-# Criteria
-class DecisionCriteria():
-    """Abstract class for Criteria which can be applied to evaluate a sequence
-    """
-
-    def apply(self, epoch, commit_params):
-        """
-        Apply the given criteria.
-        Parameters:
-        -----------
-            epoch - Epoch data
-                - target(str): target of the epoch
-                - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the sequence
-                - list_sti(list[list[str]]): presented symbols in each
-                      sequence
-                - list_distribution(list[ndarray[float]]): list of |alp|x1
-                        arrays with prob. dist. over alp
-            commit_params - params relevant to stoppage criteria
-                min_num_seq: int - minimum number of sequences required
-                max_num_seq: int - max number of sequences allowed
-                threshold: float - minimum likelihood required
-        """
-        raise NotImplementedError()
-
-
-class MinIterationsCriteria(DecisionCriteria):
-    """Returns true if the minimum number of iterations have not yet been reached."""
-
-    def apply(self, epoch, commit_params):
-        # Note: we use 'list_sti' parameter since this is the number of
-        # sequences displayed. The length of 'list_distribution' is 1 greater
-        # than this, since the language model distribution is added before
-        # the first sequence is displayed.
-        current_seq = len(epoch['list_sti'])
-        log.debug(f"Checking min iterations; current iteration is {current_seq}")
-        return current_seq < commit_params['min_num_seq']
-
-
-class DecreasedProbabilityCriteria(DecisionCriteria):
-    """Returns true if the letter with the max probability decreased from the
-        last sequence."""
-
-    def apply(self, epoch, commit_params):
-        if len(epoch['list_distribution']) < 2:
-            return False
-        prev_dist = epoch['list_distribution'][-2]
-        cur_dist = epoch['list_distribution'][-1]
-        return np.argmax(cur_dist) == np.argmax(
-            prev_dist) and np.max(cur_dist) < np.max(prev_dist)
-
-
-class MaxIterationsCriteria(DecisionCriteria):
-    """Returns true if the max iterations have been reached."""
-
-    def apply(self, epoch, commit_params):
-        # Note: len(epoch['list_sti']) != len(epoch['list_distribution'])
-        # see MinIterationsCriteria comment
-        current_seq = len(epoch['list_sti'])
-        if current_seq >= commit_params['max_num_seq']:
-            log.debug(
-                "Committing to decision: max iterations have been reached.")
-            return True
-        return False
-
-
-class CommitThresholdCriteria(DecisionCriteria):
-    """Returns true if the commit threshold has been met."""
-
-    def apply(self, epoch, commit_params):
-        current_distribution = epoch['list_distribution'][-1]
-        if np.max(current_distribution) > commit_params['threshold']:
-            log.debug("Committing to decision: Likelihood exceeded threshold.")
-            return True
-        return False
-
-
-class CriteriaEvaluator():
-    """Evaluates whether an epoch should commit to a decision based on the
-    provided criteria.
-
-    Parameters:
-    -----------
-        continue_criteria: list of criteria; if any of these evaluate to true the
-            decision maker continues.
-        commit_criteria: list of criteria; if any of these return true and
-            continue_criteria are all false, decision maker commits to a decision.
-    """
-
-    def __init__(self, continue_criteria: List[DecisionCriteria],
-                 commit_criteria: List[DecisionCriteria]):
-        self.continue_criteria = continue_criteria or []
-        self.commit_criteria = commit_criteria or []
-
-    @classmethod
-    def default(cls):
-        return cls(continue_criteria=[MinIterationsCriteria()],
-                   commit_criteria=[
-                       MaxIterationsCriteria(),
-                       CommitThresholdCriteria()
-        ])
-
-    def should_commit(self, epoch: Dict, params: Dict):
-        """Evaluates the given epoch; returns true if stoppage criteria has
-        been met, otherwise false.
-
-        Parameters:
-        -----------
-            epoch - Epoch data
-                - target(str): target of the epoch
-                - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the sequence
-                - list_sti(list[list[str]]): presented symbols in each
-                      sequence
-                - list_distribution(list[ndarray[float]]): list of |alp|x1
-                        arrays with prob. dist. over alp
-            params - params relevant to stoppage criteria
-                min_num_seq: int - minimum number of sequences required
-                max_num_seq: int - max number of sequences allowed
-                threshold: float - minimum likelihood required
-        """
-        if any(
-                criteria.apply(epoch, params)
-                for criteria in self.continue_criteria):
-            return False
-        return any(
-            criteria.apply(epoch, params) for criteria in self.commit_criteria)
-
-
 class DecisionMaker:
     """ Scheduler of the entire framework
         Attr:
@@ -221,8 +92,10 @@ class DecisionMaker:
                         arrays with prob. dist. over alp
             seq_constants(list[str]): list of letters which should appear in
                 every sequence.
-            criteria_evaluator: CriteriaEvaluator - optional parameter to
+            stopping_evaluator: CriteriaEvaluator - optional parameter to
                 provide alternative rules for committing to a decision.
+            stimuli_agent(StimuliAgent): the query selection mechanism of the
+                system
 
         Functions:
             decide():
@@ -244,15 +117,17 @@ class DecisionMaker:
         """
 
     def __init__(self,
-                 min_num_seq,
-                 max_num_seq,
-                 decision_threshold=0.8,
                  state='',
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
                  seq_constants=None,
-                 criteria_evaluator=CriteriaEvaluator.default()):
+                 stopping_evaluator=CriteriaEvaluator.default(min_num_seq=2,
+                                                              max_num_seq=10,
+                                                              threshold=0.8),
+                 stimuli_agent=RandomStimuliAgent(
+                     alphabet=list(string.ascii_uppercase) +
+                              ['<'] + [SPACE_CHAR])):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -262,22 +137,21 @@ class DecisionMaker:
         self.is_txt_stim = is_txt_stim
 
         self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': [], 'decision': None}]
+                            'list_sti': [], 'list_distribution': [],
+                            'decision': None}]
         self.time = 0
         self.sequence_counter = 0
 
         # Stopping Criteria
-        self.min_num_seq = min_num_seq
-        self.max_num_seq = max_num_seq
+        self.stopping_evaluator = stopping_evaluator
 
-        self.posterior_commit_threshold = decision_threshold
+        # Stimuli Agent
+        self.stimuli_agent = stimuli_agent
 
         self.last_selection = ''
 
         # Items shown in every sequence
         self.seq_constants = seq_constants
-
-        self.criteria_evaluator = criteria_evaluator
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -290,6 +164,8 @@ class DecisionMaker:
                             'list_sti': [], 'list_distribution': []}]
         self.time = 0
         self.sequence_counter = 0
+
+        self.stimuli_agent.reset()
 
     def form_display_state(self, state):
         """ Forms the state information or the user that fits to the
@@ -328,13 +204,8 @@ class DecisionMaker:
 
         self.list_epoch[-1]['list_distribution'].append(p[:])
 
-        params = dict(
-            min_num_seq=self.min_num_seq,
-            max_num_seq=self.max_num_seq,
-            threshold=self.posterior_commit_threshold)
-
         # Check stopping criteria
-        if self.criteria_evaluator.should_commit(self.list_epoch[-1], params):
+        if self.stopping_evaluator.should_commit(self.list_epoch[-1]):
             self.do_epoch()
             return True, None
         else:
@@ -354,6 +225,9 @@ class DecisionMaker:
         # Initialize next epoch
         self.list_epoch.append({'target': None, 'time_spent': 0,
                                 'list_sti': [], 'list_distribution': []})
+
+        self.stimuli_agent.do_epoch()
+        self.stopping_evaluator.do_epoch()
 
     def schedule_sequence(self):
         """ Schedules next sequence """
@@ -381,11 +255,13 @@ class DecisionMaker:
                     stimuli information. [0]: letter, [1]: timing, [2]: color
                 """
 
-        stimuli = best_case_rsvp_seq_gen(
-            self.alphabet,
-            self.list_epoch[-1]['list_distribution'][-1],
-            stim_number=1,
-            is_txt=self.is_txt_stim,
-            timing=self.stimuli_timing,
-            seq_constants=self.seq_constants)
+        # querying agent decides on possible letters to be shown on the screen
+        query_els = self.stimuli_agent.return_stimuli(
+            self.list_epoch[-1]['list_distribution'])
+        # once querying is determined, append with timing and color info
+        stimuli = rsvp_seq_generator(query=query_els,
+                                     stim_number=1,
+                                     is_txt=self.is_txt_stim,
+                                     timing=self.stimuli_timing,
+                                     seq_constants=self.seq_constants)
         return stimuli
