@@ -12,6 +12,7 @@ Parameter = namedtuple('Parameter', [
     'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
 ])
 
+
 class Parameters(dict):
     """Configuration parameters for BciPy.
 

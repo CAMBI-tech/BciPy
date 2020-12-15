@@ -1,14 +1,14 @@
 import sys
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertResponse
+from bcipy.gui.gui_main import BCIGui, app, AlertMessageType
 
 from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.save import save_experiment_data, save_field_data
+from bcipy.helpers.save import save_experiment_data
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, FIELD_FILENAME, EXPERIMENT_FILENAME
 
 
 class ExperimentRegistry(BCIGui):
     """Experiment Registry.
-    
+
     User interface for creating new experiments for use in BCInterface.py.
     """
 
@@ -37,8 +37,9 @@ class ExperimentRegistry(BCIGui):
 
     def build_text(self) -> None:
         """Build Text.
-        
-        Build all static text needed for the UI. Positions are relative to the height / width of the UI defined in start_app.
+
+        Build all static text needed for the UI.
+        Positions are relative to the height / width of the UI defined in start_app.
         """
         text_x = 25
         text_y = 70
@@ -85,7 +86,7 @@ class ExperimentRegistry(BCIGui):
 
     def build_inputs(self) -> None:
         """Build Inputs.
-        
+
         Build all text entry inputs for the UI.
         """
         input_x = 50
@@ -119,7 +120,7 @@ class ExperimentRegistry(BCIGui):
 
     def build_buttons(self):
         """Build Buttons.
-        
+
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
         btn_create_x = self.width - self.padding
@@ -158,7 +159,7 @@ class ExperimentRegistry(BCIGui):
 
     def create_experiment(self) -> None:
         """Create Experiment.
-        
+
         After inputing all required fields, verified by check_input, add it to the experiment list and save it.
         """
         if self.check_input():
@@ -167,7 +168,7 @@ class ExperimentRegistry(BCIGui):
 
     def add_experiment(self) -> None:
         """Add Experiment:
-        
+
         Add a new experiment to the dict of experiments. It follows the format:
              { name: { fields : {name: '', required: bool}, summary: '' } }
         """
@@ -178,7 +179,7 @@ class ExperimentRegistry(BCIGui):
 
     def save_experiments(self) -> None:
         """Save Experiment.
-        
+
         Save the experiments registered to the correct path as pulled from system_utils.
         """
         # add fields to the experiment
@@ -186,18 +187,20 @@ class ExperimentRegistry(BCIGui):
 
     def create_field(self) -> None:
         """Create Field.
-        
+
         Not implemented.
         """
         self.throw_alert_message(
             title=self.alert_title,
-            message=f'Create Field UI not available yet! Please add fields manually to {DEFAULT_FIELD_PATH}{FIELD_FILENAME}',
+            message=(
+                f'Create Field UI not available yet! Please add fields manually to '
+                f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'),
             message_type=AlertMessageType.INFO,
             okay_to_exit=True)
 
     def add_field(self) -> None:
         """Add Field.
-        
+
         Functionality to add fields to the newly created experiment. It will ensure no duplicates are addded.
         """
         # get the current field value and compute a list of field names already added
@@ -232,7 +235,7 @@ class ExperimentRegistry(BCIGui):
 
     def build_assets(self) -> None:
         """Build Assets.
-        
+
         Define the assets to build in the UI.
         """
         self.build_inputs()
@@ -257,7 +260,11 @@ class ExperimentRegistry(BCIGui):
             if self.name in self.experiment_names:
                 self.throw_alert_message(
                     title=self.alert_title,
-                    message=f'Experiment name already registered. Please use a unique Experiment name! Registed names: {self.experiment_names}',
+                    message=(
+                        'Experiment name already registered. '
+                        'Please use a unique Experiment name! '
+                        f'Registed names: {self.experiment_names}'
+                    ),
                     message_type=AlertMessageType.INFO,
                     okay_to_exit=True)
                 return False

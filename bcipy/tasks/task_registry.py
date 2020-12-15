@@ -14,8 +14,7 @@ tools. User defined tasks can be added to the Registry."""
 # which seems to prevent our other GUI code from working.
 
 from enum import Enum
-from itertools import groupby
-from typing import Dict, List
+from typing import List
 
 
 class TaskType(Enum):

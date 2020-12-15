@@ -2,11 +2,13 @@ import logging
 from bcipy.display.display_main import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
-from bcipy.helpers.system_utils import get_system_info, configure_logger
+from bcipy.helpers.session import collect_experiment_field_data
+from bcipy.helpers.system_utils import get_system_info, configure_logger, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_json_parameters, load_signal_model
+from bcipy.helpers.load import load_json_parameters, load_signal_model, load_experiments
+from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
+from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import TaskType
 
@@ -22,7 +24,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
         Ex. `python bci_main.py` this will default parameters, mode, user, and type.
 
         You can pass it those attributes with flags, if desired.
-            Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration"
+            Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration" --experiment "default"
 
     Input:
         parameter_location (str): location of parameters file to use
@@ -32,6 +34,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
 
 
     """
+    validate_experiment(experiment)
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
 
@@ -60,6 +63,9 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
                      version=sys_info['bcipy_version'])
 
     logging.getLogger(__name__).info(sys_info)
+
+    # Collect experiment field data
+    collect_experiment_field_data(experiment, save_folder)
 
     return execute_task(task, parameters, save_folder)
 
@@ -148,6 +154,7 @@ if __name__ == "__main__":
     # Needed for windows machines
     multiprocessing.freeze_support()
 
+    experiment_options = list(load_experiments().keys())
     task_options = TaskType.list()
     parser = argparse.ArgumentParser()
 
@@ -157,8 +164,8 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--task', default='RSVP Calibration',
                         help=f'Task type to execute. Registered options: {task_options}')
-    parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID, 
-                        help='Select a valid experiment to run the task for this user')
+    parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID,
+                        help=f'Select a valid experiment to run the task for this user. Available options: {experiment_options}')
     args = parser.parse_args()
 
     # Start BCI Main

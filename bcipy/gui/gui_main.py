@@ -142,7 +142,7 @@ class FormInput(QWidget):
         """Initialize the help text widget."""
         if self.help_tip and self.label != self.help_tip:
             return static_text_control(None,
-                                       label=self.label,
+                                       label=self.help_tip,
                                        size=font_size,
                                        color=color)
         return None

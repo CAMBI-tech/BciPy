@@ -60,6 +60,13 @@ To use all the goodies locally (including the GUI and demo scripts)
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
 
+Alternatley, if [Make](http://www.mingw.org/) is installed, you may run the follow command to run install:
+
+```sh
+# install in development mode
+make dev-install
+```
+
 ## Usage Locally
 
 Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
@@ -159,6 +166,12 @@ coverage report
 coverage html
 ```
 
+Alternatley, if Make is installed, you may run the follow command to run coverage and generate the html:
+
+```sh
+make coverage-html
+```
+
 ## Linting
 
 This project enforces `PEP` style guidelines using [flake8](http://flake8.pycqa.org/en/latest/).
@@ -174,6 +187,12 @@ autopep8 --in-place --aggressive bcipy/acquisition/processor.py
 ```
 
 Finally, run the lint check: `flake8 bcipy`.
+
+Alternatley, if Make is installed, you may run the follow command to run autopep8 and flake8:
+
+```sh
+make lint
+```
 
 ## Authorship
 --------------

@@ -5,7 +5,7 @@ from shutil import copyfile
 from pathlib import Path
 import json
 
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID, DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
 
 
 def save_json_data(data: dict, location: str, name: str) -> str:
@@ -29,6 +29,10 @@ def save_experiment_data(data, location, name) -> str:
 
 
 def save_field_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
+def save_experiment_field_data(data, location, name) -> str:
     return save_json_data(data, location, name)
 
 

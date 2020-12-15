@@ -12,6 +12,7 @@ import pandas as pd
 
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+from bcipy.helpers.exceptions import InvalidExperimentException
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
     return path
 
 
-def load_experiments(path: str=f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
+def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
     """Load Experiments.
 
     PARAMETERS
@@ -52,15 +53,15 @@ def load_experiments(path: str=f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}'
     -------
         A dictionary of experiments, with the following format:
             { name: { fields : {name: '', required: bool}, summary: '' } }
-    
+
     """
     with open(path, 'r') as json_file:
         return json.load(json_file)
 
 
-def load_fields(path: str=f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
+def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
     """Load Fields.
-    
+
     PARAMETERS
     ----------
     :param: path: string path to the fields file.
@@ -73,10 +74,30 @@ def load_fields(path: str=f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
                     "help_text": "",
                     "type": ""
             }
-    
+
     """
     with open(path, 'r') as json_file:
         return json.load(json_file)
+
+
+def load_experiment_fields(experiment: dict) -> list:
+    """Load Experiment Fields.
+
+    {
+        'fields': [{}, {}],
+        'summary': ''
+    }
+
+    Using the experiment dictionary, loop over the field keys and put them in a list.
+    """
+    if isinstance(experiment, dict):
+        try:
+            return [name for field in experiment['fields'] for name in field.keys()]
+        except KeyError:
+            raise InvalidExperimentException(
+                'Experiment is not formatted correctly. It should be passed as a dictionary with the fields and'
+                f' summary keys. Fields is a list of dictionaries. Summary is a string. \n experiment=[{experiment}]')
+    raise TypeError('Unsupported experiment type. It should be passed as a dictionary with the fields and summary keys')
 
 
 def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
