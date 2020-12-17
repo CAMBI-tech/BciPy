@@ -2,7 +2,6 @@
 """Tests for datastream generator module"""
 from builtins import next
 import unittest
-import pytest
 from past.builtins import map, range
 from mock import mock_open, patch
 from bcipy.acquisition.datastream.generator import random_data, file_data
@@ -96,7 +95,8 @@ class TestGenerator(unittest.TestCase):
             for _ in range(row_count):
                 next(gen)
 
-            with pytest.raises(StopIteration):
+            with self.assertRaises(RuntimeError):
+                # a runtime error catches the StopIteration?
                 data.append(next(gen))
 
     def test_file_with_custom_encoder(self):

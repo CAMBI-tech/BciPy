@@ -1,4 +1,6 @@
 import sys
+import subprocess
+
 from bcipy.gui.gui_main import BCIGui, app, AlertMessageType
 
 from bcipy.helpers.load import load_experiments, load_fields
@@ -25,15 +27,19 @@ class ExperimentRegistry(BCIGui):
         #   { name: { fields : {name: '', required: bool}, summary: '' } }
         self.experiments = load_experiments()
         self.experiment_names = self.experiments.keys()
-        self.fields = [item for item in load_fields()]
 
         # These are set in the build_inputs and represent text inputs from the user
         self.name_input = None
         self.summary_input = None
         self.field_input = None
 
+        self.fields = []
         self.name = None
         self.summary = None
+
+        self.show_gui()
+        self.update_field_list()
+
 
     def build_text(self) -> None:
         """Build Text.
@@ -165,6 +171,12 @@ class ExperimentRegistry(BCIGui):
         if self.check_input():
             self.add_experiment()
             self.save_experiments()
+            self.throw_alert_message(
+                title=self.alert_title,
+                message='Experiment saved successfully! Please exit window or create another experiment!',
+                message_type=AlertMessageType.INFO,
+                okay_to_exit=True
+            )
 
     def add_experiment(self) -> None:
         """Add Experiment:
@@ -188,15 +200,14 @@ class ExperimentRegistry(BCIGui):
     def create_field(self) -> None:
         """Create Field.
 
-        Not implemented.
+        Launch to FieldRegistry to create a new field for experiments.
         """
-        self.throw_alert_message(
-            title=self.alert_title,
-            message=(
-                f'Create Field UI not available yet! Please add fields manually to '
-                f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'),
-            message_type=AlertMessageType.INFO,
-            okay_to_exit=True)
+        subprocess.call(
+            f'python bcipy/gui/experiments/FieldRegistry.py',
+            shell=True)
+
+        self.update_field_list()
+        
 
     def add_field(self) -> None:
         """Add Field.
@@ -232,6 +243,14 @@ class ExperimentRegistry(BCIGui):
     def update_registered_fields(self) -> None:
         # TODO
         pass
+
+    def update_field_list(self) -> None:
+        """Updates the field_input combo box with a list of fields. """
+
+        self.field_input.clear()
+        self.field_input.addItem(ExperimentRegistry.default_text)
+        self.fields = [item for item in load_fields()]
+        self.field_input.addItems(self.fields)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -293,8 +312,6 @@ def start_app() -> None:
         height=600,
         width=550,
         background_color='black')
-
-    ex.show_gui()
 
     sys.exit(bcipy_gui.exec_())
 

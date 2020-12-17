@@ -77,7 +77,7 @@ class ExperimentFieldCollection(QWidget):
 
     def build_form(self) -> None:
         """Build Form.
-        
+
         Loop over the field data and create UI field inputs for data collection.
         """
         for field_name, field_type, required, help_text in self.field_data:
@@ -85,7 +85,7 @@ class ExperimentFieldCollection(QWidget):
 
     def field_input(self, field_name: str, field_type: str, help_tip: str, required: bool) -> FormInput:
         """Field Input.
-        
+
         Construct a FormInput for the given field based on its python type and other
         attributes.
         """
@@ -102,7 +102,7 @@ class ExperimentFieldCollection(QWidget):
 
     def build_assets(self) -> None:
         """Build Assets.
-        
+
         Build any needed assests for the Experiment Field Widget. Currently, only a form is needed.
         """
         self.build_form()

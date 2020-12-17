@@ -84,12 +84,12 @@ class NBestStimuliAgent(StimuliAgent):
 class MomentumStimuliAgent(StimuliAgent):
     """ A query agent that utilizes the observed evidence so far at each step.
         This agent is specifically designed to overcome the adversary effect of
-        the prior information to the system. 
+        the prior information to the system.
         There are two competing terms;
             I: mutual information, this utilizes the current posterior
             M: momentum, this utilizes all likelihoods so far
         and the queries are selected by linearly combining these two.
-        This agent, in the beginning of the epoch, explores utilizing M and 
+        This agent, in the beginning of the epoch, explores utilizing M and
         eventually exploits the knowledge using I  """
 
     def __init__(self, alphabet: List[str],
@@ -128,7 +128,7 @@ class MomentumStimuliAgent(StimuliAgent):
 
         # conditional entropy as a surrogate for mutual information
         entropy_term = np.array(tmp) * np.log(tmp + eps) + (
-                1.01 - np.array(tmp)) * (np.log(1.01 - np.array(tmp)))
+            1.01 - np.array(tmp)) * (np.log(1.01 - np.array(tmp)))
         entropy_term[np.isnan(entropy_term)] = 0
 
         # update the momentum term using likelihoods
@@ -138,7 +138,7 @@ class MomentumStimuliAgent(StimuliAgent):
         # if there are no sequences shown yet, the momentum cannot be computed
         if num_passed_sequences > 1:
             reward = (self.lam_ - 1) * entropy_term + (
-                    self.lam_ / num_passed_sequences) * momentum
+                self.lam_ / num_passed_sequences) * momentum
         else:
             reward = -entropy_term
 
