@@ -5,7 +5,7 @@ from bcipy.gui.gui_main import BCIGui, app, AlertMessageType
 
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, FIELD_FILENAME, EXPERIMENT_FILENAME
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 
 
 class ExperimentRegistry(BCIGui):
@@ -25,8 +25,7 @@ class ExperimentRegistry(BCIGui):
 
         # Structure of an experiment:
         #   { name: { fields : {name: '', required: bool}, summary: '' } }
-        self.experiments = load_experiments()
-        self.experiment_names = self.experiments.keys()
+        self.update_experiment_data()
 
         # These are set in the build_inputs and represent text inputs from the user
         self.name_input = None
@@ -39,7 +38,6 @@ class ExperimentRegistry(BCIGui):
 
         self.show_gui()
         self.update_field_list()
-
 
     def build_text(self) -> None:
         """Build Text.
@@ -177,6 +175,15 @@ class ExperimentRegistry(BCIGui):
                 message_type=AlertMessageType.INFO,
                 okay_to_exit=True
             )
+            self.update_experiment_data()
+
+    def update_experiment_data(self):
+        """Update Experiment Data.
+
+        Fetches the experiments and extracts the registered names.
+        """
+        self.experiments = load_experiments()
+        self.experiment_names = self.experiments.keys()
 
     def add_experiment(self) -> None:
         """Add Experiment:
@@ -207,7 +214,6 @@ class ExperimentRegistry(BCIGui):
             shell=True)
 
         self.update_field_list()
-        
 
     def add_field(self) -> None:
         """Add Field.
@@ -272,26 +278,26 @@ class ExperimentRegistry(BCIGui):
             if self.name == ExperimentRegistry.default_text:
                 self.throw_alert_message(
                     title=self.alert_title,
-                    message='Please add an Experiment Name',
-                    message_type=AlertMessageType.INFO,
+                    message='Please add an Experiment Name!',
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
             if self.name in self.experiment_names:
                 self.throw_alert_message(
                     title=self.alert_title,
                     message=(
-                        'Experiment name already registered. '
-                        'Please use a unique Experiment name! '
+                        'Experiment name already registered. \n'
+                        'Please use a unique Experiment name! \n'
                         f'Registed names: {self.experiment_names}'
                     ),
-                    message_type=AlertMessageType.INFO,
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
             if self.summary == ExperimentRegistry.default_text:
                 self.throw_alert_message(
                     title=self.alert_title,
-                    message='Please add an Experiment Summary',
-                    message_type=AlertMessageType.INFO,
+                    message='Please add an Experiment Summary!',
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
         except Exception as e:

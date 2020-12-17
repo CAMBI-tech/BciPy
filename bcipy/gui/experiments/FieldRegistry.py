@@ -31,8 +31,7 @@ class FieldRegistry(BCIGui):
 
         # Structure of an field:
         #   { name: { help_text: '', type: int} }
-        self.fields = load_fields()
-        self.field_names = list(self.fields.keys())
+        self.update_field_data()
 
         # These are set in the build_inputs and represent text inputs from the user
         self.name_input = None
@@ -113,10 +112,12 @@ class FieldRegistry(BCIGui):
         self.type_input = self.add_combobox(
             position=[input_x, input_y],
             size=input_size,
-            items=list(self.field_types.keys()),
+            items=[],
             editable=False,
             background_color=self.input_color,
             text_color=self.input_text_color)
+
+        self.update_type_list()
 
     def build_buttons(self):
         """Build Buttons.
@@ -147,6 +148,36 @@ class FieldRegistry(BCIGui):
                 message_type=AlertMessageType.INFO,
                 okay_to_exit=True
             )
+            self.refresh_inputs()
+
+    def refresh_inputs(self):
+        """Refresh Inputs.
+
+        Clear and resets all inputs and related data.
+        """
+        self.name_input.clear()
+        self.name_input.addItem(FieldRegistry.default_text)
+        self.update_field_data()
+        self.helptext_input.clear()
+        self.helptext_input.addItem(FieldRegistry.default_text)
+        self.update_type_list()
+
+    def update_field_data(self):
+        """Update Field Data.
+
+        Fetches the fields and extracts the registered names.
+        """
+        self.fields = load_fields()
+        self.field_names = list(self.fields.keys())
+
+    def update_type_list(self):
+        """Update Type List.
+
+        Update the supported type list, reseting to default_text.
+        """
+        self.type_input.clear()
+        self.type_input.addItem(FieldRegistry.default_text)
+        self.type_input.addItems(list(self.field_types.keys()))
 
     def add_field(self) -> None:
         """Add field:
@@ -190,8 +221,8 @@ class FieldRegistry(BCIGui):
                     self.name == '':
                 self.throw_alert_message(
                     title=self.alert_title,
-                    message='Please add a Field name!',
-                    message_type=AlertMessageType.INFO,
+                    message='Please add a field name!',
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
             if self.name in self.field_names:
@@ -202,15 +233,22 @@ class FieldRegistry(BCIGui):
                         'Please use a unique field name! \n'
                         f'Registed names: {self.field_names}'
                     ),
-                    message_type=AlertMessageType.INFO,
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
             if self.helptext == FieldRegistry.default_text or \
                     self.helptext == '':
                 self.throw_alert_message(
                     title=self.alert_title,
-                    message='Please add help text to field. \n This will present when collecting experiment data!',
-                    message_type=AlertMessageType.INFO,
+                    message='Please add help text to field. \nThis will present when collecting experiment data!',
+                    message_type=AlertMessageType.WARN,
+                    okay_to_exit=True)
+                return False
+            if self.type == FieldRegistry.default_text:
+                self.throw_alert_message(
+                    title=self.alert_title,
+                    message='Please select a valid field type!',
+                    message_type=AlertMessageType.WARN,
                     okay_to_exit=True)
                 return False
         except Exception as e:
