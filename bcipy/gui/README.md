@@ -1,17 +1,11 @@
 # RSVP Keyboard GUI
 ======================================
 
-This is the GUI for BciPy. The base window class, BCIGui, is contained in gui_main.py, and contains methods for easily adding widgets to a given window. BCInterface.py launches the main GUI window. 
-
-## Features
------------
-
--Buttons, text boxes, drop-down menus, and other GUI elements are easy to add  
--Read/write framework for JSON files  
+This module contains all GUI code used in BciPy. The base window class, BCIGui, is contained in gui_main.py, and contains methods for easily adding widgets to a given window. BCInterface.py launches the main GUI window. There are also interfaces for collecting and editing data (parameters and field data for experiments.)
 
 ## Dependencies
 -------------
-This project was written in wxPython version 4.0.0 and PyQt5. We are deprecating the wxPython UIs in future releases.
+This project was written in wxPython version 4.0.4 and PyQt5 5.15.1. We are deprecating the wxPython UIs in future releases.
 
 ## Project structure
 ---------------
@@ -19,8 +13,10 @@ Name | Description
 ------------- | -------------
 BCInterface.py | Defines main GUI window. Selection of user, experiment and task.
 gui_main.py | BCIGui containing methods for adding buttons, images, etc. to GUI window
-params_form.py | Defines window for setting BCInterface parameters
+parameters/params_form.py | Defines window for setting BCInterface parameters
 experiments/ExperimentRegistry.py | GUI for creating new experiments to select in BCInterface.
+experiments/FieldRegistry.py | GUI for creating new fields for experiment data collection.
+experiments/ExperimentField.py | GUI for collecting a registered experiment's field data.
 
 
 The folder 'bcipy/static/images/gui_images' contains images for the GUI.
