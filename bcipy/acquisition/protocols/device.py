@@ -1,8 +1,10 @@
 """Interface for creating new device drivers."""
 from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.connection_method import ConnectionMethod
 
 
-class Device():
+class Device:
     """Base class for device-specific behavior.
 
     Parameters
@@ -14,12 +16,24 @@ class Device():
         channels : list
             List of channel names.
     """
+    subclasses = []
+
+    def __init_subclass__(cls, **kwargs):
+        """Any subclasses will be automatically registered."""
+        super().__init_subclass__(**kwargs)
+        cls.subclasses.append(cls)
 
     # pylint: disable=invalid-name
-    def __init__(self, connection_params, fs, channels):
-        self._connection_params = connection_params
-        self.fs = fs
-        self.channels = channels
+    def __init__(self, connection_params: dict, device_spec: DeviceSpec):
+        self.connection_params = connection_params
+        self.device_spec = device_spec
+        self.fs = device_spec.sample_rate
+        self.channels = device_spec.channels.copy()
+
+    @classmethod
+    def supports(cls, device_spec: DeviceSpec,
+                 connection_method: ConnectionMethod) -> bool:
+        return False
 
     @property
     def name(self):

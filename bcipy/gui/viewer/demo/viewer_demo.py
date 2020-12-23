@@ -11,36 +11,37 @@ def main():
 
     import time
 
-    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.tcp_server import TcpDataServer
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
 
     host = '127.0.0.1'
     port = 9000
     # The Protocol is for mocking data.
-    protocol = registry.default_protocol('DSI')
-    server = TcpDataServer(
-        protocol=protocol,
-        generator=generator_factory(random_data_generator, channel_count=len(protocol.channels)),
-        host=host,
-        port=port)
+    device_spec = supported_device('DSI')
+    protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
+    server = TcpDataServer(protocol=protocol, host=host, port=port)
 
     # Device is for reading data.
     # pylint: disable=invalid-name
     Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': host, 'port': port})
-    client = DataAcquisitionClient(
-        device=dsi_device,
-        processor=ViewerProcessor())
+    params = {'host': host, 'port': port}
+    dsi_device = Device(connection_params=params, device_spec=device_spec)
+    client = DataAcquisitionClient(device=dsi_device,
+                                   processor=ViewerProcessor())
 
     try:
         server.start()
         client.start_acquisition()
         seconds = 10
         print(
-            f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n")
+            f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n"
+        )
 
         t0 = time.time()
         elapsed = 0
@@ -49,14 +50,14 @@ def main():
             elapsed = (time.time()) - t0
         client.stop_acquisition()
         client.cleanup()
-        print("Number of samples: {0}".format(client.get_data_len()))
+        print(f"Number of samples: {client.get_data_len()}")
         server.stop()
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt; stopping.")
         client.stop_acquisition()
         client.cleanup()
-        print("Number of samples: {0}".format(client.get_data_len()))
+        print(f"Number of samples: {client.get_data_len()}")
         server.stop()
 
 

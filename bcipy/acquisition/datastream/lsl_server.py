@@ -1,15 +1,21 @@
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
-from queue import Queue, Empty
+from queue import Empty, Queue
+from typing import Generator
+
 from pylsl import StreamInfo, StreamOutlet
+
+from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
 
 log = logging.getLogger(__name__)
 
 # pylint: disable=too-many-arguments
 
+MARKER_STREAM_NAME='TRG_device_stream'
 
 class LslDataServer(StoppableThread):
     """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
@@ -22,39 +28,39 @@ class LslDataServer(StoppableThread):
 
     Parameters
     ----------
-        params : dict(channels: list(str), hz(int))
+        device_spec : DeviceSpec
             parameters used to configure the server. Should have at least
             a list of channels and the sample frequency.
-        generator : Object (see generator.py for options)
-            used to generate the data to be served. Ex. random_data.
+        generator : optional Generator (see generator.py for options)
+            used to generate the data to be served. Uses random_data_generator
+            by default.
         include_meta: bool, optional
             if True, writes metadata to the outlet stream.
         add_markers: bool, optional
             if True, creates a the marker channel and streams data to this
             channel at a fixed frequency.
+        marker_stream_name: str, optional
+            name of the sample marker stream
     """
 
-    def __init__(self, params, generator, include_meta=True,
-                 add_markers=False, name='TestStream'):
+    def __init__(self, device_spec: DeviceSpec, generator: Generator = None, include_meta: bool = True,
+                 add_markers: bool =False, marker_stream_name: str = MARKER_STREAM_NAME):
         super(LslDataServer, self).__init__()
 
-        channels = params['channels']
-        self.sample_hz = int(params['hz'])
-        assert channels, "Channels must be provided as a parameter"
+        self.device_spec = device_spec
+        self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
 
-        stream_name = params.get('name', name)
-        self.generator = generator
-
-        log.debug("Starting server with params: %s", str(params))
-        info = StreamInfo(stream_name,
-                          "EEG", len(channels),
-                          self.sample_hz,
+        log.debug("Starting LSL server for: %s", device_spec.name)
+        print(f"Serving: {device_spec}")
+        info = StreamInfo(device_spec.name,
+                          device_spec.content_type, device_spec.channel_count,
+                          device_spec.sample_rate,
                           'float32',
                           "uid12345")
 
         if include_meta:
             meta_channels = info.desc().append_child('channels')
-            for channel in channels:
+            for channel in device_spec.channels:
                 meta_channels.append_child('channel') \
                     .append_child_value('label', channel) \
                     .append_child_value('unit', 'microvolts') \
@@ -71,7 +77,8 @@ class LslDataServer(StoppableThread):
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
             log.debug("Creating marker stream")
-            markers_info = StreamInfo("TRG_device_stream",
+            print(f"Marker channel name: {marker_stream_name}")
+            markers_info = StreamInfo(marker_stream_name,
                                       "Markers", 1, 0, 'string',
                                       "uid12345_markers")
             self.markers_outlet = StreamOutlet(markers_info)
@@ -102,7 +109,7 @@ class LslDataServer(StoppableThread):
 
         data_queue = Queue()
         with Producer(data_queue, generator=self.generator,
-                      freq=1 / self.sample_hz):
+                      freq=1 / self.device_spec.sample_rate):
             while self.running():
                 sample_counter += 1
                 try:
@@ -135,34 +142,29 @@ def main():
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator
-
-    default_channels = ['ch' + str(i + 1) for i in range(16)]
+    from bcipy.acquisition.devices import supported_device
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--filename', default=None,
                         help="file containing data to be streamed; "
                         "if missing, random data will be served.")
-    parser.add_argument('-c', '--channels',
-                        default=','.join(default_channels),
-                        help='comma-delimited list')
-    parser.add_argument('-s', '--sample_rate', default='256',
-                        help='sample rate in hz')
-
     parser.add_argument('-m', '--markers', action="store_true", default=False)
-    parser.add_argument('-n', '--name', default='LSL')
+    parser.add_argument('-n', '--name', default='LSL', help='Name of the device spec to mock.')
     args = parser.parse_args()
 
-    params = {'channels': args.channels.split(','),
-              'hz': int(args.sample_rate)}
-
-    # Generate data from the file if provided, otherwise random data.
-    generator = file_data_generator(filename=args.filename) if args.filename \
-        else random_data_generator(channel_count=len(params['channels']))
+    if args.filename:
+        daq_type, sample_rate, channels = _settings(args.filename)
+        device_spec = supported_device(daq_type)
+        device_spec.sample_rate = sample_rate
+        device_spec.channels = channels
+        generator = file_data_generator(filename=args.filename)
+    else:
+        device_spec = supported_device(args.name)
+        generator = None
 
     markers = True if args.markers else False
     try:
-        server = LslDataServer(params=params, generator=generator,
-                               add_markers=markers, name=args.name)
+        server = LslDataServer(device_spec=device_spec, generator=generator, add_markers=markers)
 
         log.debug("New server created")
         server.start()

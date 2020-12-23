@@ -21,32 +21,30 @@ def main():
 
     from bcipy.acquisition.datastream.generator import random_data_generator
     from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import DeviceSpec
+    from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
+    from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.datastream.tcp_server import await_start
 
-    host = '127.0.0.1'
-    port = 9000
-
-    channel_count = 16
-    sample_rate = 256
-    channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
-    # The Protocol is for mocking data.
-    server = LslDataServer(
-        params={
-            'name': 'LSL',
-            'channels': channels,
-            'hz': sample_rate
-        },
-        generator=random_data_generator(channel_count=channel_count))
+    # Generic LSL device with 16 channels.
+    device_spec = DeviceSpec(name="LSL_demo",
+                             channels=[
+                                 "Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6",
+                                 "Ch7", "Ch8", "Ch9", "Ch10", "Ch11", "Ch12",
+                                 "Ch13", "Ch14", "Ch15", "Ch16"
+                             ],
+                             sample_rate=256.0)
+    server = LslDataServer(device_spec=device_spec)
     await_start(server)
 
     # Device is for reading data.
-    # pylint: disable=invalid-name
-    Device = registry.find_device('LSL')
-    device = Device(connection_params={'host': host, 'port': port})
+    device = LslDevice(connection_params={}, device_spec=device_spec)
+
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(device=device, raw_data_file_name=raw_data_name)
+    client = DataAcquisitionClient(device=device,
+                                   raw_data_file_name=raw_data_name)
 
     try:
         client.start_acquisition()

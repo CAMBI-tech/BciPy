@@ -6,8 +6,8 @@ import select
 import socket
 import time
 
-
 from bcipy.acquisition.datastream.producer import Producer
+from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.util import StoppableThread
 
 log = logging.getLogger(__name__)
@@ -18,20 +18,20 @@ class TcpDataServer(StoppableThread):
 
     Parameters
     ----------
-        protocol : Protocol
+        protocol : DeviceProtocol
             protocol-specific behavior including fs, init_messages, and encoder
-        generator : function
-            generator function; used to generate the data to be served. A new
-            generator will be created for every client connection.
+        generator : function, optional
+            generator function; used to generate the data to be served. Default
+            behavior is to use a random_data_generator.
         host : str, optional
         port : int, optional
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, protocol, generator, host='127.0.0.1', port=9999):
+    def __init__(self, protocol=None, generator=None, host='127.0.0.1', port=9999):
         super(TcpDataServer, self).__init__(name="TcpDataServer")
         self.protocol = protocol
-        self.generator = generator
+        self.generator = generator or random_data_generator
 
         self.host = host
         self.port = port
@@ -41,8 +41,8 @@ class TcpDataServer(StoppableThread):
         # Putting socket.bind in constructor allows us to handle any errors
         # (such as Address already in use) in the calling context.
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(
-            socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
+                                      1)
         self.server_socket.bind((self.host, self.port))
 
     def run(self):
@@ -51,8 +51,7 @@ class TcpDataServer(StoppableThread):
         self.server_socket.listen(1)
 
         self.started = True
-        log.debug("[*] Accepting connections on %s:%d", self.host,
-                  self.port)
+        log.debug("[*] Accepting connections on %s:%d", self.host, self.port)
 
         while self.running():
 
@@ -82,6 +81,23 @@ class TcpDataServer(StoppableThread):
         log.debug("[*] Stopping data server")
         super(TcpDataServer, self).stop()
 
+    def init_messages(self):
+        """Messages sent to a client_socket on initialization before sending data."""
+        if self.protocol:
+            return self.protocol.init_messages
+        return []
+
+    def make_generator(self):
+        """Constructs a new data generator given the configured generator function."""
+        assert self.protocol, "Device-specific information must be set."
+        return self.generator(channel_count=len(self.protocol.channels),
+                              encoder=self.protocol.encoder)
+
+    def sample_rate(self) -> float:
+        """Frequency at which data is generated, in hz"""
+        assert self.protocol, "Device-specific information must be set."
+        return self.protocol.fs
+
     def _handle_client(self, client_socket):
         """This currently only handles a single client and blocks on that call.
 
@@ -92,7 +108,7 @@ class TcpDataServer(StoppableThread):
         wfile = client_socket.makefile(mode='wb')
 
         # Send initialization data according to the protocol
-        for msg in self.protocol.init_messages:
+        for msg in self.init_messages():
             wfile.write(msg)
 
         # This needs to be handled differently if we decide to allow
@@ -101,8 +117,9 @@ class TcpDataServer(StoppableThread):
         data_queue = Queue()
 
         # Construct a new generator each time to get consistent results.
-        with Producer(data_queue, generator=self.generator(),
-                      freq=1 / self.protocol.fs):
+        with Producer(data_queue,
+                      generator=self.make_generator(),
+                      freq=1 / self.sample_rate()):
             while self.running():
                 try:
                     # block if necessary, for up to 5 seconds
@@ -134,14 +151,8 @@ def start_socket_server(protocol, host, port, retries=2):
     -------
         (server, port)
     """
-    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     try:
-        dataserver = TcpDataServer(protocol=protocol,
-                                   generator=generator_factory(
-                                       random_data_generator,
-                                       channel_count=len(protocol.channels)),
-                                   host=host,
-                                   port=port)
+        dataserver = TcpDataServer(protocol=protocol, host=host, port=port)
 
     except IOError as error:
         if retries > 0:
@@ -169,7 +180,7 @@ def await_start(dataserver, max_wait=2):
             dataserver.stop()
             raise Exception("Server couldn't start up in time.")
 
-
+# TODO: refactor this into a raw_data module
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
@@ -177,35 +188,42 @@ def _settings(filename):
         daq_type = infile.readline().strip().split(',')[1]
         sample_hz = int(infile.readline().strip().split(',')[1])
         channels = infile.readline().strip().split(',')
-        return (daq_type, sample_hz, channels)
+        return daq_type, sample_hz, channels
 
 
 def main():
     """Initialize and run the server."""
     import argparse
 
-    from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_factory
-    from bcipy.acquisition.protocols.registry import protocol_with, \
-        default_protocol
+    from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_with_args
+    from bcipy.acquisition.protocols.registry import find_protocol, find_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
+    from bcipy.acquisition.devices import supported_device
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='127.0.0.1')
     parser.add_argument('-p', '--port', type=int, default=8844)
-    parser.add_argument('-f', '--filename', default=None,
+    parser.add_argument('-f',
+                        '--filename',
+                        default=None,
                         help="file containing data to be streamed; "
                         "if missing, random data will be served.")
+    parser.add_argument('-n', '--name', default='DSI', help='Name of the device spec to mock.')
     args = parser.parse_args()
 
     if args.filename:
-        daq_type, sample_hz, channels = _settings(args.filename)
-        protocol = protocol_with(daq_type, sample_hz, channels)
-        generator = generator_factory(file_data_generator,
-                                      filename=args.filename)
-    else:
-        protocol = default_protocol('DSI')
-        generator = generator_factory(random_data_generator,
-                                      channel_count=len(protocol.channels))
+        daq_type, sample_rate, channels = _settings(args.filename)
+        device_spec = supported_device(daq_type)
+        device_spec.sample_rate = sample_rate
+        device_spec.channels = channels
 
+        generator = generator_with_args(file_data_generator,
+                                        filename=args.filename)
+    else:
+        device_spec = supported_device(args.name)
+        generator = random_data_generator
+
+    protocol = find_protocol(device_spec, ConnectionMethod.TCP)
     try:
         server = TcpDataServer(protocol=protocol,
                                generator=generator,

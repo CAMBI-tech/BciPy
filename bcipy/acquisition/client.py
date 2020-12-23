@@ -8,6 +8,7 @@ from bcipy.acquisition import buffer_server
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
+from bcipy.acquisition.connection_method import ConnectionMethod
 
 log = logging.getLogger(__name__)
 DEBUG = False
@@ -120,8 +121,8 @@ class DataAcquisitionClient:
 
             # Initialize the marker streams before the device connection so the
             # device can start listening.
-            # TODO: Should this be a property of the device?
-            if self._device.name == 'LSL':
+            # TODO: ensure that connector is including marker streams
+            if self._device.__class__.supports(self._device.device_spec, ConnectionMethod.LSL):
                 self.marker_writer = LslMarkerWriter()
 
             # Clock is copied, so reset should happen in the main thread.
@@ -389,21 +390,24 @@ def main():
     import argparse
     import json
     from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import SUPPORTED_DEVICES
+    from bcipy.acquisition.connection_method import ConnectionMethod
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',
                         help='buffer db name')
     parser.add_argument('-f', '--filename', default='rawdata.csv')
     parser.add_argument('-d', '--device', default='DSI',
-                        choices=registry.supported_devices.keys())
-    parser.add_argument('-c', '--channels', default='',
-                        help='comma-delimited list')
+                        choices=SUPPORTED_DEVICES.keys())
+    parser.add_argument('-c', '--connection_method', default='LSL',
+                        choices=ConnectionMethod.list())
     parser.add_argument('-p', '--params', type=json.loads,
                         default={'host': '127.0.0.1', 'port': 9000},
                         help="device connection params; json")
     args = parser.parse_args()
 
-    device_builder = registry.find_device(args.device)
+    device_builder = registry.find_device(
+        args.device, ConnectionMethod.by_name(args.connection_method))
 
     # Instantiate and start collecting data
     dev = device_builder(connection_params=args.params)

@@ -19,27 +19,26 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.tcp_server import TcpDataServer
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
 
     host = '127.0.0.1'
     port = 9000
     # The Protocol is for mocking data.
-    protocol = registry.default_protocol('DSI')
-    server = TcpDataServer(
-        protocol=protocol,
-        generator=generator_factory(random_data_generator, channel_count=len(protocol.channels)),
-        host=host,
-        port=port)
+    device_spec = supported_device('DSI')
+    protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
+    server = TcpDataServer(protocol=protocol, host=host, port=port)
 
     # Device is for reading data.
     # pylint: disable=invalid-name
-    Device = registry.find_device('DSI')
+    Device = registry.find_device(device_spec, ConnectionMethod.TCP)
     dsi_device = Device(connection_params={'host': host, 'port': port})
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(device=dsi_device, raw_data_file_name=raw_data_name)
+    client = DataAcquisitionClient(device=dsi_device,
+                                   raw_data_file_name=raw_data_name)
 
     try:
         server.start()

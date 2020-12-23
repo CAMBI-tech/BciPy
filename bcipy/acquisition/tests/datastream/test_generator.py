@@ -5,7 +5,7 @@ import unittest
 import pytest
 from past.builtins import map, range
 from mock import mock_open, patch
-from bcipy.acquisition.datastream.generator import random_data_generator, file_data_generator, generator_factory
+from bcipy.acquisition.datastream.generator import random_data_generator, file_data_generator, generator_with_args
 from bcipy.acquisition.util import mock_data
 
 
@@ -80,6 +80,23 @@ class TestGenerator(unittest.TestCase):
             for i, row in enumerate(generated_data):
                 self.assertEqual(row, data[i])
 
+    def test_file_generator_channel_count(self):
+        """Should truncate data to the given channel_count."""
+        row_count = 100
+        header = ['col1,col2,col3']
+        data = list(mock_data(row_count, len(header)))
+        rows = map(lambda x: ','.join(map(str, x)), data)
+        test_data = '\n'.join(header + rows)
+
+        with patch('bcipy.acquisition.datastream.generator.open',
+                   mock_open(read_data=test_data), create=True):
+
+            gen = file_data_generator(filename='foo', header_row=1, channel_count=2)
+            generated_data = [next(gen) for _ in range(row_count)]
+
+            for i, row in enumerate(generated_data):
+                self.assertEqual(row, data[i][0:2])
+
     def test_file_generator_end(self):
         """Should throw an exception when all data has been consumed"""
         row_count = 10
@@ -127,13 +144,13 @@ class TestGenerator(unittest.TestCase):
     def test_generator_factory(self):
         """Test that a factory can construct independent generators with the same parameters"""
 
-        def count_generator(low=0, high=10):
+        def count_generator(low=0, high=10, step=1):
             count = low
             while count < high:
                 yield count
-                count = count + 1
+                count = count + step
 
-        new_generator = generator_factory(count_generator, low=1, high=4)   
+        new_generator = generator_with_args(count_generator, low=1, high=4)
 
         gen1 = new_generator()
         self.assertEqual(1, next(gen1))
@@ -143,9 +160,14 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(1, next(gen2))
         self.assertEqual(3, next(gen1))
 
-        new_rand_gen = generator_factory(random_data_generator, channel_count=10)
+        new_rand_gen = generator_with_args(random_data_generator, channel_count=10)
         gen3 = new_rand_gen()
         data = next(gen3)
         self.assertEqual(10, len(data))
+
+        new_generator = generator_with_args(count_generator, low=1, high=4)
+        gen4 = new_generator(step=2)
+        self.assertEqual(1, next(gen4))
+        self.assertEqual(3, next(gen4))
 
         

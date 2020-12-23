@@ -3,10 +3,11 @@
 
 import unittest
 import pytest
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
+from bcipy.acquisition.datastream.lsl_server import LslDataServer, MARKER_STREAM_NAME
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.datastream.generator import random_data_generator
-from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
+from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice, LSL_TIMESTAMP
+from bcipy.acquisition.devices import DeviceSpec
 
 
 class TestLslDevice(unittest.TestCase):
@@ -14,87 +15,106 @@ class TestLslDevice(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestLslDevice, self).__init__(*args, **kwargs)
-        self.channels = ['C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2']
-        self.channel_count = len(self.channels)
-        # pylint: disable=invalid-name
-        self.hz = 100
+        self.server = None
+        self.device_spec = DeviceSpec(
+            name='LSL',
+            channels=['C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2'],
+            sample_rate=100)
 
     @property
-    def include_meta(self):
-        """Whether or not to include metadata"""
-        raise Exception("Must be implemented in subclass")
+    def channel_count(self):
+        return self.device_spec.channel_count
+
+    @property
+    def channels(self):
+        return self.device_spec.channels.copy()
+
+    @property
+    def sample_rate(self):
+        return self.device_spec.sample_rate
+
+    def default_data_server(self):
+        return LslDataServer(device_spec=self.device_spec)
+
+    def start_server(self, data_server: LslDataServer):
+        self.server = data_server
+        if self.server:
+            await_start(self.server)
+
+    def stop_server(self):
+        if self.server:
+            self.server.stop()
+            self.server = None
+
+
+class TestLslDeviceSpec(TestLslDevice):
+    """LSL Device tests."""
 
     def setUp(self):
         """Run before each test."""
-        self.server = LslDataServer(params={'name': 'LSL',
-                                            'channels': self.channels,
-                                            'hz': self.hz},
-                                    generator=random_data_generator(
-                                        channel_count=self.channel_count),
-                                    include_meta=self.include_meta,
-                                    add_markers=True)
-        await_start(self.server)
+        self.start_server(self.default_data_server())
 
     def tearDown(self):
         """Run after each test."""
-        self.server.stop()
-        self.server = None
-
-
-class TestLslWithoutMetadata(TestLslDevice):
-    """LSL Device tests in which the server does not provide metadata."""
-
-    @property
-    def include_meta(self):
-        return False
+        self.stop_server()
 
     def test_incorrect_number_of_channels(self):
         """A list of channels with len that does not match channel_count should
         raise an exception."""
 
-        device = LslDevice(connection_params={}, fs=self.hz,
-                           channels=['ch1', 'ch2'])
-        self.assertEqual(len(device.channels), 2)
+        spec = DeviceSpec(name='LSL',
+                          channels=['ch1', 'ch2'],
+                          sample_rate=self.sample_rate)
+        device = LslDevice(connection_params={}, device_spec=spec)
+        self.assertEqual(spec.channel_count, 2)
         self.assertNotEqual(len(device.channels), self.channel_count)
         device.connect()
 
         with pytest.raises(Exception):
             device.acquisition_init()
 
+    def test_device_info_channels(self):
+        """Device should list the correct channels"""
+        spec = DeviceSpec(name='LSL',
+                          channels=self.channels,
+                          sample_rate=self.sample_rate)
+        device = LslDevice(connection_params={}, device_spec=spec)
+        device.connect()
+        device.acquisition_init()
+
+        self.assertEqual(self.channels, device.channels)
+
     def test_incorrect_frequency(self):
-        """Provided fs should match sample rate read from device"""
+        """Provided sample_rate should match sample rate read from device"""
         device = LslDevice(connection_params={},
-                           channels=self.channels, fs=300)
-        self.assertEqual(device.fs, 300)
+                           device_spec=DeviceSpec(name='LSL',
+                                                  channels=self.channels,
+                                                  sample_rate=300))
+
         device.connect()
 
         with pytest.raises(Exception):
             device.acquisition_init()
 
-    def test_frequency_init(self):
-        """fs should be initialized from device metadata if not provided"""
-
-        device = LslDevice(connection_params={},
-                           channels=self.channels + ["TRG"], fs=None)
-        device.connect()
-        device.acquisition_init()
-
-        self.assertEqual(device.fs, self.hz)
-
     def test_connect(self):
         """Should require a connect call before initialization."""
         device = LslDevice(connection_params={},
-                           channels=[], fs=None)
+                           device_spec=DeviceSpec(
+                               name='LSL',
+                               channels=self.channels,
+                               sample_rate=self.sample_rate))
 
         with pytest.raises(Exception):
             device.acquisition_init()
 
     def test_read_data(self):
         """Should produce a valid data record."""
-
+        print(self.device_spec.channels)
         device = LslDevice(connection_params={},
-                           channels=self.channels + ["TRG"], fs=self.hz)
-
+                           device_spec=DeviceSpec(
+                               name='LSL',
+                               channels=self.channels,
+                               sample_rate=self.sample_rate))
         device.connect()
         device.acquisition_init()
         data = device.read_data()
@@ -106,66 +126,88 @@ class TestLslWithoutMetadata(TestLslDevice):
             self.assertTrue(isinstance(channel, float))
 
 
-class TestLslWithMetadata(TestLslDevice):
-    """LSL Device tests in which the server provides metadata."""
+class TestLslChannelConfig(TestLslDevice):
+    """Test configuration options for LslDevice channels."""
 
-    @property
-    def include_meta(self):
-        return True
+    def __init__(self, *args, **kwargs):
+        super(TestLslChannelConfig, self).__init__(*args, **kwargs)
+        self.device_spec = DeviceSpec(name='DSI',
+                                      channels=[
+                                          'C3', 'C4', 'Cz', 'FPz', 'POz',
+                                          'CPz', 'O1', 'O2', 'TRG'
+                                      ],
+                                      sample_rate=300)
 
-    def test_mismatched_channel_names(self):
-        """Provided channel names should match device information."""
-        channels = ['ch' + str(i) for i in range(self.channel_count)]
-        device = LslDevice(connection_params={}, fs=self.hz, channels=channels)
+    def tearDown(self):
+        """Run after each test."""
+        self.stop_server()
 
-        self.assertEqual(len(device.channels), self.channel_count)
-        device.connect()
+    def test_with_trigger_channel(self):
+        """A device with a TRG channel should work as expected."""
 
-        with pytest.raises(Exception):
-            device.acquisition_init()
+        self.start_server(self.default_data_server())
+        device = LslDevice(connection_params={}, device_spec=self.device_spec)
 
-    def test_channel_init(self):
-        """Channels should be initialized from device metadata if not
-         provided."""
-        device = LslDevice(connection_params={}, fs=self.hz,
-                           channels=[])
-        self.assertEqual(len(device.channels), 0)
         device.connect()
         device.acquisition_init()
-        self.assertEqual(len(device.channels), self.channel_count + 1,
-                         "Should have added a TRG channel")
-        self.assertEqual(device.channels[0:-1], self.channels)
+        self.assertEquals(self.channels, device.channels)
 
-    def test_frequency_init(self):
-        """fs should be initialized from device metadata if not provided"""
+    def test_with_marker_stream(self):
+        server = LslDataServer(device_spec=self.device_spec, add_markers=True)
+        self.start_server(server)
+        device = LslDevice(connection_params={}, device_spec=self.device_spec)
 
-        device = LslDevice(connection_params={}, fs=None)
         device.connect()
         device.acquisition_init()
+        self.assertEquals(self.channels, device.channels)
+        self.assertEquals(len(self.channels), len(device.read_data()))
 
-        self.assertEqual(device.fs, self.hz)
-
-    def test_connect(self):
-        """Should require a connect call before initialization."""
+    def test_with_marker_stream_included(self):
+        server = LslDataServer(device_spec=self.device_spec, add_markers=True)
+        self.start_server(server)
         device = LslDevice(connection_params={},
-                           channels=[], fs=None)
-
-        with pytest.raises(Exception):
-            device.acquisition_init()
-
-    def test_read_data(self):
-        """Should produce a valid data record."""
-
-        device = LslDevice(connection_params={}, fs=self.hz)
+                           device_spec=self.device_spec,
+                           include_marker_streams=True)
 
         device.connect()
         device.acquisition_init()
-        data = device.read_data()
+        self.assertEquals(self.channels + [MARKER_STREAM_NAME],
+                          device.channels)
+        self.assertEquals(len(self.channels) + 1, len(device.read_data()))
 
-        self.assertTrue(len(data) > 0)
-        self.assertEqual(len(data), len(device.channels))
-        for channel in data[0:-1]:
-            self.assertTrue(isinstance(channel, float))
+    def test_with_marker_stream_and_timestamp(self):
+        server = LslDataServer(device_spec=self.device_spec, add_markers=True)
+        self.start_server(server)
+        device = LslDevice(connection_params={},
+                           device_spec=self.device_spec,
+                           include_lsl_timestamp=True,
+                           include_marker_streams=True)
+
+        device.connect()
+        device.acquisition_init()
+        self.assertEquals(self.channels + [LSL_TIMESTAMP, MARKER_STREAM_NAME],
+                          device.channels)
+        self.assertEquals(len(self.channels) + 2, len(device.read_data()))
+
+    def test_renaming_columns(self):
+        server = LslDataServer(device_spec=self.device_spec,
+                               add_markers=True,
+                               marker_stream_name='TRG')
+        self.start_server(server)
+        device = LslDevice(connection_params={},
+                           device_spec=self.device_spec,
+                           include_marker_streams=True,
+                           rename_rules={'TRG': 'TRG_device_stream'})
+
+        device.connect()
+        device.acquisition_init()
+
+        expected = [
+            'C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2',
+            'TRG_device_stream', 'TRG'
+        ]
+        self.assertEquals(expected, device.channels)
+        self.assertEquals(expected, device.device_info.channels)
 
 
 if __name__ == '__main__':

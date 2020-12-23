@@ -21,10 +21,13 @@ def main():
 
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
 
     # pylint: disable=invalid-name
-    Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
+    device_spec = supported_device('DSI')
+    Device = registry.find_device(device_spec, ConnectionMethod.TCP)
+    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000}, device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
     client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())

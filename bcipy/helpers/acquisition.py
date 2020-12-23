@@ -1,35 +1,19 @@
-from typing import Dict, List
-import numpy as np
 import subprocess
 import time
-from bcipy.acquisition.datastream.generator import random_data_generator
+from pathlib import Path
+from typing import Dict, List
+
+import numpy as np
+
 import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import DataAcquisitionClient, CountClock
-from bcipy.acquisition.datastream.tcp_server import start_socket_server, await_start
+from bcipy.acquisition.client import CountClock, DataAcquisitionClient
+from bcipy.acquisition.connection_method import ConnectionMethod
+from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
+from bcipy.acquisition.datastream.tcp_server import TcpDataServer, await_start
+from bcipy.acquisition.devices import DeviceSpec, supported_device
+from bcipy.acquisition.util import StoppableThread
 
-# Channels relevant for analysis, for each currently supported device.
-#  Note this leaves out triggers or other non-eeg channels. If desired,
-#   they should be added to this list.
-analysis_channels_by_device = {
-    'DSI-24': [
-        "P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "A1", "Fp1", "Fp2",
-        "T3", "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4"
-    ],
-    'DSI-VR300': ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"],
-    'g.USBamp-1': [
-        "Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8", "Ch9", "Ch10",
-        "Ch11", "Ch12", "Ch13", "Ch14", "Ch15", "Ch16"
-    ],
-    'LSL': [
-        "ch1", "ch2", "ch3", "ch4", "ch5", "ch6", "ch7", "ch8", "ch9", "ch10",
-        "ch11", "ch12", "ch13", "ch14", "ch15", "ch16"
-    ]
-}
-
-# add aliases for backwards compatibility
-analysis_channels_by_device['DSI'] = analysis_channels_by_device['DSI-24']
-analysis_channels_by_device['DSI_VR300'] = analysis_channels_by_device['DSI-VR300']
 
 def init_eeg_acquisition(parameters: dict,
                          save_folder: str,
@@ -62,70 +46,74 @@ def init_eeg_acquisition(parameters: dict,
         (client, server) tuple
     """
 
-    # Initialize the needed DAQ Parameters
+    # Set configuration parameters with default values if not provided.
     host = parameters['acq_host']
     port = parameters['acq_port']
+    buffer_name = Path(save_folder, parameters.get('buffer_name',
+                                                   'raw_data.db'))
+    raw_data_file = Path(save_folder,
+                         parameters.get('raw_data_name', 'raw_data.csv'))
 
-    parameters = {
-        'acq_show_viewer': parameters['acq_show_viewer'],
-        'viewer_screen': 1 if int(parameters['stim_screen']) == 0 else 0,
-        'buffer_name': save_folder + '/' + parameters['buffer_name'],
-        'device': parameters['acq_device'],
-        'filename': save_folder + '/' + parameters['raw_data_name'],
-        'connection_params': {
-            'host': host,
-            'port': port
-        }
-    }
-
-    # Set configuration parameters (with default values if not provided).
-    buffer_name = parameters.get('buffer_name', 'raw_data.db')
-    connection_params = parameters.get('connection_params', {})
-    device_name = parameters.get('device', 'DSI')
+    connection_method = ConnectionMethod.by_name(
+        parameters['acq_connection_method'])
+    # TODO: parameter for loading devices; path to devices.json?
+    # devices.load(devices_path)
+    device_spec = supported_device(parameters['acq_device'])
 
     dataserver = False
     if server:
-        if device_name == 'DSI':
-            protocol = registry.default_protocol(device_name)
-            dataserver, port = start_socket_server(protocol, host, port)
-            connection_params['port'] = port
-        elif device_name == 'LSL':
-            channel_count = 16
-            sample_rate = 256
-            channels = ['ch{}'.format(c + 1) for c in range(channel_count)]
-            dataserver = LslDataServer(
-                params={
-                    'name': 'LSL',
-                    'channels': channels,
-                    'hz': sample_rate
-                },
-                generator=random_data_generator(channel_count=channel_count))
-            await_start(dataserver)
-        else:
-            raise ValueError(
-                'Server (fake data mode) for this device type not supported')
+        dataserver = start_server(connection_method, device_spec, host, port)
 
-    Device = registry.find_device(device_name)
+    Device = registry.find_device(device_spec, connection_method)
+    connection_params = {'host': host, 'port': port}
+    device = Device(connection_params=connection_params,
+                    device_spec=device_spec)
 
-    # Start a client. We assume that the channels and fs will be set on the
-    # device; add a channel parameter to Device to override!
-    client = DataAcquisitionClient(
-        device=Device(connection_params=connection_params),
-        buffer_name=buffer_name,
-        delete_archive=False,
-        raw_data_file_name=parameters.get('filename', 'raw_data.csv'),
-        clock=clock)
+    client = DataAcquisitionClient(device=device,
+                                   buffer_name=buffer_name,
+                                   delete_archive=False,
+                                   raw_data_file_name=raw_data_file,
+                                   clock=clock)
 
     client.start_acquisition()
+
     if parameters['acq_show_viewer']:
-        start_viewer(display_screen=parameters['viewer_screen'])
+        viewer_screen = 1 if int(parameters['stim_screen']) == 0 else 0
+        start_viewer(display_screen=viewer_screen)
 
     # If we're using a server or data generator, there is no reason to
     # calibrate data.
-    if server and device_name != 'LSL':
+    if server and connection_method != ConnectionMethod.LSL:
         client.is_calibrated = True
 
     return (client, dataserver)
+
+
+def start_server(connection_method: ConnectionMethod,
+                 device_spec: DeviceSpec,
+                 host: str = None,
+                 port: int = None) -> StoppableThread:
+    """Create a server that will generate mock data for the given DeviceSpec
+    using the appropriate connection method.
+    
+    Parameters
+    ----------
+        connection_method - method used to serve data.
+        device_spec - specifies what kind of data to serve (channels, sample_rate, etc).
+        host - if using TCP, serves on this host.
+        port - if using TCP, serves on this port.
+    """
+    if connection_method == ConnectionMethod.TCP:
+        protocol = registry.find_protocol(device_spec, connection_method)
+        dataserver = TcpDataServer(protocol=protocol, host=host, port=port)
+    elif connection_method == ConnectionMethod.LSL:
+        dataserver = LslDataServer(device_spec=device_spec)
+    else:
+        raise ValueError(
+            f'{connection_method} server (fake data mode) for device type {device_spec.name} not supported'
+        )
+    await_start(dataserver)
+    return dataserver
 
 
 def analysis_channels(channels: List[str], device_name: str) -> list:
@@ -143,7 +131,8 @@ def analysis_channels(channels: List[str], device_name: str) -> list:
         A binary list indicating which channels should be used for analysis.
         If i'th element is 0, i'th channel in filtered_eeg is removed.
     """
-    relevant_channels = analysis_channels_by_device.get(device_name)
+    device = supported_device(device_name)
+    relevant_channels = device.analysis_channels()
     if not relevant_channels:
         raise Exception("Analysis channels for the given device not found: "
                         f"{device_name}.")

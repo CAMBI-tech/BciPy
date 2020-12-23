@@ -14,19 +14,16 @@ def main():
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.datastream.generator import random_data_generator, generator_factory
     from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.datastream.tcp_server import TcpDataServer
 
     # Find the DSI protocol by name.
-    protocol = registry.default_protocol('DSI')
+    protocol = registry.find_protocol(supported_device('DSI'), ConnectionMethod.TCP)
 
     try:
-        server = TcpDataServer(
-            protocol=protocol,
-            generator=generator_factory(random_data_generator, channel_count=len(protocol.channels)),
-            host='127.0.0.1',
-            port=9000)
+        server = TcpDataServer(protocol=protocol, host='127.0.0.1', port=9000)
         server.start()
         while True:
             time.sleep(1)

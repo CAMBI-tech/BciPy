@@ -5,6 +5,8 @@ import socket
 from bcipy.acquisition.protocols.dsi import dsi
 from bcipy.acquisition.protocols import util
 from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.connection_method import ConnectionMethod
 
 log = logging.getLogger(__name__)
 
@@ -22,15 +24,19 @@ class DsiDevice(Device):
             sample frequency in (Hz)
     """
 
-    def __init__(self, connection_params, fs=dsi.DEFAULT_FS, channels=None):
+    def __init__(self, connection_params, device_spec: DeviceSpec):
         """Init DsiDevice."""
-        channels = channels if channels is not None else dsi.DEFAULT_CHANNELS
-        super(DsiDevice, self).__init__(connection_params, fs, channels)
+        super(DsiDevice, self).__init__(connection_params, device_spec)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
-        self._channels_provided = len(channels) > 0
+        self._channels_provided = len(self.channels) > 0
         self._socket = None
-        self.channels = channels
+
+    @classmethod
+    def supports(cls, device_spec: DeviceSpec,
+                 connection_method: ConnectionMethod) -> bool:
+        return device_spec.name.startswith(
+            'DSI') and connection_method == ConnectionMethod.TCP
 
     @property
     def name(self):
@@ -39,7 +45,7 @@ class DsiDevice(Device):
 
     def connect(self):
         """Connect to the data source."""
-        params = self._connection_params
+        params = self.connection_params
         address = (params['host'], params['port'])
         self._socket = socket.create_connection(address)
         self._socket.settimeout(None)
@@ -87,11 +93,9 @@ class DsiDevice(Device):
 
         channels = response.message.split(',')
         log.debug("Channels: %s", ','.join(channels))
-        if self._channels_provided and len(channels) != len(self.channels):
+        if len(channels) != len(self.channels):
             raise Exception("Channels read from DSI device do not match "
                             "the provided parameters")
-        else:
-            self.channels = dsi.DEFAULT_CHANNELS
         response = self._read_packet()
 
         if response.type != 'EVENT' or response.event_code != 'DATA_RATE':
@@ -110,7 +114,7 @@ class DsiDevice(Device):
     def read_data(self):
         """Read Data.
 
-        Reads he next packet from DSI device and returns the sensor data.
+        Reads the next packet from DSI device and returns the sensor data.
 
         Returns
         -------

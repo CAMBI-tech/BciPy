@@ -1,7 +1,7 @@
 """Functions for generating mock data to be used for testing/development."""
 
 import logging
-from typing import Generator, List, Callable
+from typing import Generator, Callable
 from past.builtins import range
 from bcipy.signal.generator.generator import gen_random_data
 
@@ -17,7 +17,7 @@ def advance_to_row(filehandle, rownum):
 # pylint: disable=too-few-public-methods
 
 
-class _DefaultEncoder():
+class _DefaultEncoder:
     """Encodes data by returning the raw data."""
 
     # pylint: disable=no-self-use
@@ -26,11 +26,11 @@ class _DefaultEncoder():
         return data
 
 
-def generator_factory(generator_fn, **generator_args) -> Callable[[], Generator]:
+def generator_with_args(generator_fn, **generator_args) -> Callable[[], Generator]:
     """Constructs a generator with the given arguments.
     Parameters
     ----------
-        gen : Function
+        generator_fn : Function
             a generator function
 
     Returns
@@ -38,8 +38,8 @@ def generator_factory(generator_fn, **generator_args) -> Callable[[], Generator]
         Function which creates a generator using the given args.
     """
 
-    def factory():
-        return generator_fn(**generator_args)
+    def factory(**args):
+        return generator_fn(**{**generator_args, **args})
 
     return factory
 
@@ -61,7 +61,7 @@ def random_data_generator(encoder=_DefaultEncoder(),
         yield encoder.encode(sensor_data)
 
 
-def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder()):
+def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), channel_count: int=None):
     """Generates data from a source file and encodes it according to the
     provided encoder.
 
@@ -75,7 +75,9 @@ def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder()):
             assuming the first 2 rows are for metadata.
         encoder : Encoder, optional
             Used to encode the output data.
-
+        channel_count : int, optional
+            If provided this is used to truncate the data to the given number
+            of channels.
     """
 
     with open(filename, 'r') as infile:
@@ -87,6 +89,8 @@ def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder()):
             if not line:
                 break
             sensor_data = list(map(data_value, line.split(",")))
+            if channel_count:
+                sensor_data = sensor_data[0:channel_count]
             yield encoder.encode(sensor_data)
 
 
