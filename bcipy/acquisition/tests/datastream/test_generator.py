@@ -95,8 +95,7 @@ class TestGenerator(unittest.TestCase):
             for _ in range(row_count):
                 next(gen)
 
-            with self.assertRaises(RuntimeError):
-                # a runtime error catches the StopIteration?
+            with self.assertRaises(StopIteration):
                 data.append(next(gen))
 
     def test_file_with_custom_encoder(self):
