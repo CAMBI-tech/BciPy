@@ -404,7 +404,8 @@ class BCIGui(QMainWindow):
         self.comboboxes = []
 
         # set window properties
-        self.window.setStyleSheet(f'background-color: {background_color};')
+        self.background_color = background_color
+        self.window.setStyleSheet(f'background-color: {self.background_color};')
 
         # determines where on the screen the gui first appears
         self.x = 500
@@ -474,7 +475,7 @@ class BCIGui(QMainWindow):
 
         Default event to bind to comboboxes
         """
-        self.logger.debug('Dropdown selected!')
+        pass
 
     @pyqtSlot()
     def default_button_clicked(self) -> None:

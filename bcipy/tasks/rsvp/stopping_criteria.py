@@ -167,7 +167,7 @@ class MomentumCommitCriteria(DecisionCriteria):
 
         tmp_ = np.array(prob_history)
         mom_ = tmp_[1:] * (
-                np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
+            np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
         momentum = np.linalg.norm(mom_) / len(prob_history)
 
         if len(prob_history) > 1:
@@ -203,7 +203,7 @@ class CriteriaEvaluator():
                    commit_criteria=[
                        MaxIterationsCriteria(max_num_seq),
                        ProbThresholdCriteria(threshold)
-                   ])
+        ])
 
     def do_epoch(self):
         for el_ in self.continue_criteria:

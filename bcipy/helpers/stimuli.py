@@ -93,9 +93,9 @@ def best_selection(selection_elements: list,
     best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
 
     replacements = [
-                       item for item in always_included
-                       if item not in best and item in selection_elements
-                   ][0:n]
+        item for item in always_included
+        if item not in best and item in selection_elements
+    ][0:n]
 
     if replacements:
         best[-len(replacements):] = replacements
@@ -135,7 +135,7 @@ def best_case_rsvp_seq_gen(alp: list,
     if len(alp) != len(session_stimuli):
         raise Exception('Missing information about alphabet. len(alp):{}, '
                         'len(session_stimuli):{}, should be same!'.format(
-            len(alp), len(session_stimuli)))
+                            len(alp), len(session_stimuli)))
 
     if seq_constants and not set(seq_constants).issubset(alp):
         raise Exception('Sequence constants must be alphabet items.')
@@ -257,7 +257,7 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters,
     else:
         sample = ['bcipy/static/images/bci_main_images/PLUS.png']
         target_letter = parameters['path_to_presentation_images'] + \
-                        target_letter + '.png'
+            target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
@@ -411,7 +411,7 @@ def generate_icon_match_images(
 
         # Add target image to sequence, if it is not already there
         if not target_image_numbers[sequence] in random_number_array[
-                                                 2:experiment_length]:
+                2:experiment_length]:
             random_number_array[np.random.randint(
                 2, experiment_length)] = target_image_numbers[sequence]
 

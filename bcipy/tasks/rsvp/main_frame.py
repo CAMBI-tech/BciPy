@@ -127,7 +127,7 @@ class DecisionMaker:
                                                               threshold=0.8),
                  stimuli_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
-                              ['<'] + [SPACE_CHAR])):
+                     ['<'] + [SPACE_CHAR])):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
