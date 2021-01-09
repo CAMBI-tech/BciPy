@@ -17,6 +17,7 @@ MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
 MSG_PROCESSOR_INITIALIZED = "processor_initialized"
 
+OFFSET_COLUMN_NAME = 'TRG'
 
 class CountClock():
     """Clock that provides timestamp values starting at 1.0; the next value
@@ -88,6 +89,9 @@ class DataAcquisitionClient:
         self._max_wait = 0.1  # for process loop
 
         self.marker_writer = NullMarkerWriter()
+
+        # column in the acquisition data used to calculate offset.
+        self.offset_column = OFFSET_COLUMN_NAME
         self._acq_process = None
         self._buf = None
 
@@ -119,11 +123,7 @@ class DataAcquisitionClient:
 
             msg_queue = Queue()
 
-            # Initialize the marker streams before the device connection so the
-            # device can start listening.
-            # TODO: ensure that connector is including marker streams
-            if self._device.__class__.supports(self._device.device_spec, ConnectionMethod.LSL):
-                self.marker_writer = LslMarkerWriter()
+            self.configure_connector()
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
@@ -156,6 +156,20 @@ class DataAcquisitionClient:
             msg_queue.put(True)
             msg_queue = None
             self._is_streaming = True
+
+    def configure_connector(self) -> None:
+        """Steps to configure the device connector before starting acquisition."""
+
+        if self._device.__class__.supports(self._device.device_spec,
+                                           ConnectionMethod.LSL) and self._device.device_spec.content_type == 'EEG':
+            log.debug("Initializing LSL Marker Writer.")
+            self._device.include_marker_streams = True
+            # If there are any device channels with the same name as the offset_column ('TRG'),
+            # rename these to avoid conflicts.
+            self._device.rename_rules[self.offset_column] = f"{self.offset_column}_device_stream"
+            # Initialize the marker streams before the device connection (name it 'TRG').
+            self.marker_writer = LslMarkerWriter(
+                stream_name=self.offset_column)
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
@@ -267,8 +281,7 @@ class DataAcquisitionClient:
 
         Returns
         -------
-            float or None if TRG channel is all 0.
-        TODO: Consider setting the trigger channel name in the device_info.
+            float or None if values in offset_column are all 0.
         """
 
         # cached value if previously queried; only needs to be computed once.
@@ -280,14 +293,14 @@ class DataAcquisitionClient:
             return None
 
         log.debug("Querying database for offset")
-        # Assumes that the TRG column is present and used for calibration, and
+        # Assumes that the offset_column is present and used for calibration, and
         # that non-calibration values are all 0.
         rows = buffer_server.query(self._buf,
-                                   filters=[("TRG", ">", 0)],
+                                   filters=[(self.offset_column, ">", 0)],
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
         if not rows:
-            log.debug("No rows have a TRG value.")
+            log.debug(f"No rows have a {self.offset_column} value.")
             return None
 
         log.debug(rows[0])

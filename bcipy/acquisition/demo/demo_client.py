@@ -27,18 +27,21 @@ def main():
     # pylint: disable=invalid-name
     device_spec = supported_device('DSI')
     Device = registry.find_device(device_spec, ConnectionMethod.TCP)
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000}, device_spec=device_spec)
+    dsi_device = Device(connection_params={
+        'host': '127.0.0.1',
+        'port': 9000
+    },
+                        device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
     client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())
 
     try:
         client.start_acquisition()
-        print("\nCollecting data... (Interrupt [Ctl-C] to stop)\n")
+        print("\nCollecting data for 3s... (Interrupt [Ctl-C] to stop)\n")
         while True:
-            time.sleep(10)
-            print("Ten Second Passed")
-            print("Number of samples: {0}".format(client.get_data_len()))
+            time.sleep(3)
+            print(f"Number of samples: {client.get_data_len()}")
             client.stop_acquisition()
             client.cleanup()
             break
@@ -46,7 +49,6 @@ def main():
         print(f'{e.strerror}; make sure you started the server.')
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
-        print("Number of samples: {0}".format(client.get_data_len()))
         client.stop_acquisition()
         client.cleanup()
 

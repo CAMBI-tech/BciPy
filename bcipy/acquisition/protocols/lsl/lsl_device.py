@@ -72,8 +72,8 @@ def rename_items(items: List[str], rules: Dict[str, str]) -> None:
         rules - change key -> value
     """
     for key, val in rules.items():
-        index = items.index(key)
-        items[index] = val
+        if key in items:
+            items[items.index(key)] = val
 
 
 class LslDevice(Device):

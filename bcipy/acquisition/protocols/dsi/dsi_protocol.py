@@ -34,7 +34,7 @@ class DsiProtocol(DeviceProtocol):
 
         # Comma-delimited list; the frequency is the second param, which is the
         # only one we use; not sure what else is in this list.
-        f_msg = (',' + str(int(self.device_info.sample_rate))).encode(
+        f_msg = (',' + str(int(self.device_spec.sample_rate))).encode(
             'ascii', 'ignore')
         freq_msg = event_packet('DATA_RATE', f_msg)
 

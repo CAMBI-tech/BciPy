@@ -1,7 +1,7 @@
 """Sample script to demonstrate usage of LSL client and server."""
 
 
-def main():
+def main(debug: bool = False):
     # pylint: disable=too-many-locals
     """Creates a sample lsl client that reads data from a sample TCP server
     (see demo/server.py). Data is written to a rawdata.csv file, as well as a
@@ -28,6 +28,11 @@ def main():
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.datastream.tcp_server import await_start
 
+    from bcipy.helpers.system_utils import log_to_stdout
+
+    if debug:
+        log_to_stdout()
+
     # Generic LSL device with 16 channels.
     device_spec = DeviceSpec(name="LSL_demo",
                              channels=[
@@ -49,14 +54,19 @@ def main():
     try:
         client.start_acquisition()
 
-        print("\nCollecting data for 10s... (Interrupt [Ctl-C] to stop)\n")
+        print("\nCollecting data for 3s... (Interrupt [Ctl-C] to stop)\n")
 
         while True:
-            time.sleep(10)
+            time.sleep(1)
+            client.marker_writer.push_marker('calibration_trigger')
+            time.sleep(2)
+            print(
+                f"Offset: {client.offset}; since calibration trigger was pushed after 1 second of sleep this value should be close to 1."
+            )
             client.stop_acquisition()
             client.cleanup()
             server.stop()
-            print(f"The collected data has been written to {raw_data_name}")
+            print(f"\nThe collected data has been written to {raw_data_name}")
             break
 
     except KeyboardInterrupt:
@@ -64,8 +74,13 @@ def main():
         client.stop_acquisition()
         client.cleanup()
         server.stop()
-        print(f"The collected data has been written to {raw_data_name}")
+        print(f"\nThe collected data has been written to {raw_data_name}")
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
+    main(args.debug)

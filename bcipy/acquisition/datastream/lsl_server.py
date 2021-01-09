@@ -50,7 +50,7 @@ class LslDataServer(StoppableThread):
         self.device_spec = device_spec
         self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
 
-        log.debug("Starting LSL server for: %s", device_spec.name)
+        log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
         info = StreamInfo(device_spec.name,
                           device_spec.content_type, device_spec.channel_count,

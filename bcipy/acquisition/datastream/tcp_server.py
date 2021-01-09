@@ -84,19 +84,19 @@ class TcpDataServer(StoppableThread):
     def init_messages(self):
         """Messages sent to a client_socket on initialization before sending data."""
         if self.protocol:
-            return self.protocol.init_messages
+            return self.protocol.init_messages()
         return []
 
     def make_generator(self):
         """Constructs a new data generator given the configured generator function."""
         assert self.protocol, "Device-specific information must be set."
         return self.generator(channel_count=len(self.protocol.channels),
-                              encoder=self.protocol.encoder)
+                              encoder=self.protocol)
 
     def sample_rate(self) -> float:
         """Frequency at which data is generated, in hz"""
         assert self.protocol, "Device-specific information must be set."
-        return self.protocol.fs
+        return self.protocol.sample_rate
 
     def _handle_client(self, client_socket):
         """This currently only handles a single client and blocks on that call.

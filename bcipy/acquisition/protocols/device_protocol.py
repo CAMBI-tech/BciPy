@@ -19,7 +19,8 @@ class DeviceProtocol:
 
     def __init__(self, device_spec: DeviceSpec):
         super().__init__()
-        if not self.__class__.supports(device_spec, self.__class__.connection_method()):
+        if not self.__class__.supports(device_spec,
+                                       self.__class__.connection_method()):
             raise ValueError(f"Device not supported: {device_spec.name}")
         self.device_spec = device_spec
 
@@ -27,15 +28,17 @@ class DeviceProtocol:
     def supports(cls, device_spec: DeviceSpec,
                  connection_method: ConnectionMethod) -> bool:
         return False
-    
+
     @classmethod
     def connection_method(cls):
         return None
 
+    @property
     def sample_rate(self) -> float:
         """Sample frequency in Hz."""
         return self.device_spec.sample_rate
 
+    @property
     def channels(self) -> List[str]:
         """List of channel names."""
         return self.device_spec.channels

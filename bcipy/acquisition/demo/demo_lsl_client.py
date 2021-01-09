@@ -43,10 +43,11 @@ def main():
 
     try:
         client.start_acquisition()
-        print("\nCollecting data for 10s... (Interrupt [Ctl-C] to stop)\n")
+        print("\nCollecting data for 3s... (Interrupt [Ctl-C] to stop)\n")
 
         while True:
-            time.sleep(10)
+            time.sleep(3)
+            print(f"Number of samples: {client.get_data_len()}")
             client.stop_acquisition()
             client.cleanup()
             print(f"The collected data has been written to {raw_data_name}")
@@ -55,7 +56,6 @@ def main():
         print(f'{e.strerror}; make sure you started the server.')
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
-        print("Number of samples: {0}".format(client.get_data_len()))
         client.stop_acquisition()
         client.cleanup()
 

@@ -65,6 +65,8 @@ def init_eeg_acquisition(parameters: dict,
         dataserver = start_server(connection_method, device_spec, host, port)
 
     Device = registry.find_device(device_spec, connection_method)
+    # TODO: only use these connection_params if this is ConnectionMethod.TCP
+    # Refactor to extract only the needed connection params from parameters.
     connection_params = {'host': host, 'port': port}
     device = Device(connection_params=connection_params,
                     device_spec=device_spec)

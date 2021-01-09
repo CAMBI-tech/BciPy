@@ -12,7 +12,8 @@ from bcipy.acquisition.devices import DeviceSpec
 # TODO: rename find_connector?
 def find_device(device_spec: DeviceSpec,
                 connection_method: ConnectionMethod) -> Device:
-    """Find device by name.
+    """Find the first matching connector for the given device and
+    connection method.
 
     Parameters
     ----------
