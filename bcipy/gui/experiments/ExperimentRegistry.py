@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType
+from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, ScrollableFrame, LineItems
 
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
@@ -31,13 +31,117 @@ class ExperimentRegistry(BCIGui):
         self.name_input = None
         self.summary_input = None
         self.field_input = None
+        self.panel = None
+        self.line_items = None
 
         self.fields = []
         self.name = None
         self.summary = None
 
+        # for registered fields
+        self.build_scroll_area()
+
         self.show_gui()
         self.update_field_list()
+
+    def build_scroll_area(self) -> None:
+        """Build Scroll Area.
+
+        Appends a scrollable area at the bottom of the UI for management of registered fields via LineItems.
+        """
+        line_widget = LineItems([], self.width)
+        self.panel = ScrollableFrame(200, self.width, background_color='white', widget=line_widget)
+        self.add_widget(self.panel)
+
+    def refresh_field_panel(self) -> None:
+        """Refresh Field Panel.
+
+        Reconstruct the line items from the registered fields and refresh the scrollable panel of registered fields.
+        """
+        self.build_line_items_from_fields()
+        self.panel.refresh(self.line_items)
+
+    def toggle_required_field(self) -> None:
+        """Toggle Required Field.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and toggle
+            the required field ('true' or 'false').
+        """
+        field_name = self.window.sender().get_id()
+        for field in self.experiment_fields:
+            if field_name in field:
+                required = field[field_name]['required']
+                if required == 'false':
+                    field[field_name]['required'] = 'true'
+                else:
+                    field[field_name]['required'] = 'false'
+        self.refresh_field_panel()
+
+    def remove_field(self) -> None:
+        """Remove Field.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        field_name = self.window.sender().get_id()
+
+        idx = 0
+        remove = None
+        for field in self.experiment_fields:
+            if field_name in field:
+                remove = idx
+                break
+            idx += 1
+
+        self.experiment_fields.pop(remove)
+        self.refresh_field_panel()
+
+    def build_line_items_from_fields(self) -> None:
+        """Build Line Items From Fields.
+
+        Loop over the registered experiment fields and create LineItems, which can by used to toggle the required
+            field or remove as a registered experiment field.
+        """
+        items = []
+        for field in self.experiment_fields:
+            # experiment fields is a list of dicts, here we loop over the dict to get the field_name and requirement
+            for field_name, required in field.items():
+
+                # Set the button text and colors, based on the requirement
+                if required['required'] == 'false':
+                    required_button_label = 'Not Required'
+                    required_button_color = 'black'
+                    required_button_text_color = 'white'
+                else:
+                    required_button_label = 'Required'
+                    required_button_color = 'green'
+                    required_button_text_color = 'white'
+
+                # Construct the item to turn into a LineItem, we set the id as field_name to use later via the action
+                item = {
+                    field_name: {
+                        required_button_label: {
+                            'action': self.toggle_required_field,
+                            'color': required_button_color,
+                            'textColor': required_button_text_color,
+                            'id': field_name
+                        },
+                        'Remove': {
+                            'action': self.remove_field,
+                            'color': 'red',
+                            'textColor': 'white',
+                            'id': field_name
+                        }
+                    }
+                }
+                items.append(item)
+
+        # finally, set the new line items for rendering
+        self.line_items = LineItems(items, self.width)
 
     def build_text(self) -> None:
         """Build Text.
@@ -50,7 +154,7 @@ class ExperimentRegistry(BCIGui):
         font_size = 18
         self.add_static_textbox(
             text='Create BciPy Experiment',
-            position=[self.width / 2 - self.padding, 0],
+            position=[self.width / 2 - self.padding - 50, 0],
             size=[300, 100],
             background_color='black',
             text_color='white',
@@ -79,14 +183,14 @@ class ExperimentRegistry(BCIGui):
             background_color='black',
             text_color='white',
             font_size=font_size)
-        text_y += self.padding
+        text_y += self.padding + 45
         self.add_static_textbox(
-            text='Registered fields',
+            text='Registered fields *click to toggle required field*',
             position=[text_x, text_y],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=font_size)
+            font_size=14)
 
     def build_inputs(self) -> None:
         """Build Inputs.
@@ -127,8 +231,8 @@ class ExperimentRegistry(BCIGui):
 
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
-        btn_create_x = self.width - self.padding
-        btn_create_y = self.height - 75
+        btn_create_x = self.width - self.padding - 10
+        btn_create_y = self.height - self.padding - 200
         size = 150
         self.add_button(
             message='Create Experiment', position=[btn_create_x - (size / 2), btn_create_y],
@@ -244,11 +348,7 @@ class ExperimentRegistry(BCIGui):
             }
         )
 
-        self.update_registered_fields()
-
-    def update_registered_fields(self) -> None:
-        # TODO
-        pass
+        self.refresh_field_panel()
 
     def update_field_list(self) -> None:
         """Updates the field_input combo box with a list of fields. """
@@ -315,8 +415,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = ExperimentRegistry(
         title='Experiment Registry',
-        height=600,
-        width=550,
+        height=700,
+        width=600,
         background_color='black')
 
     sys.exit(bcipy_gui.exec_())

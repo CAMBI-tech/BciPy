@@ -20,7 +20,7 @@ class BCInterface(BCIGui):
     tasks = TaskType.list()
 
     default_text = '...'
-    padding = 15
+    padding = 30
     btn_height = 40
 
     def __init__(self, *args, **kwargs):
@@ -212,7 +212,7 @@ class BCInterface(BCIGui):
         self.add_image(
             path='bcipy/static/images/gui_images/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 100, 0], size=100)
+            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -392,8 +392,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = BCInterface(
         title='Brain Computer Interface',
-        height=500,
-        width=700,
+        height=550,
+        width=750,
         background_color='black')
 
     ex.show_gui()
