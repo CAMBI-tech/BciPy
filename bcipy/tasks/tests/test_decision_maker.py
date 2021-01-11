@@ -4,6 +4,9 @@ import unittest
 import numpy as np
 
 import bcipy.tasks.rsvp.main_frame as mf
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
+    MaxIterationsCriteria, MinIterationsCriteria, ProbThresholdCriteria
+from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
 
 
 class TestDecisionMaker(unittest.TestCase):
@@ -11,12 +14,20 @@ class TestDecisionMaker(unittest.TestCase):
 
     def test_decision_maker(self):
         """Test default behavior"""
+        alphabet = ['a', 'b', 'c', 'd']
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+                             ProbThresholdCriteria(threshold=0.8)])
+
+        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+                                          len_query=2)
+
         decision_maker = mf.DecisionMaker(
-            min_num_seq=1,
-            max_num_seq=10,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state='',
-            alphabet=['a', 'b', 'c', 'd'],
-            decision_threshold=0.8)
+            alphabet=['a', 'b', 'c', 'd'])
 
         likelihood = np.array([0.2, 0.2, 0.2, 0.4])
         decision, _arg = decision_maker.decide(likelihood)
@@ -38,12 +49,20 @@ class TestDecisionMaker(unittest.TestCase):
     def test_min_sequences(self):
         """Test min sequences criteria."""
 
+        alphabet = ['a', 'b', 'c', 'd']
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq=2)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+                             ProbThresholdCriteria(threshold=0.8)])
+
+        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+                                          len_query=2)
+
         decision_maker = mf.DecisionMaker(
-            min_num_seq=2,
-            max_num_seq=10,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state='',
-            alphabet=['a', 'b', 'c', 'd'],
-            decision_threshold=0.8)
+            alphabet=['a', 'b', 'c', 'd'])
 
         # Initialize with initial (language model) probabilities for each letter.
         lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
@@ -61,12 +80,20 @@ class TestDecisionMaker(unittest.TestCase):
     def test_max_sequences(self):
         """Test max sequences criteria."""
 
+        alphabet = ['a', 'b', 'c', 'd']
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=3),
+                             ProbThresholdCriteria(threshold=0.8)])
+
+        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+                                          len_query=2)
+
         decision_maker = mf.DecisionMaker(
-            min_num_seq=1,
-            max_num_seq=3,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state='',
-            alphabet=['a', 'b', 'c', 'd'],
-            decision_threshold=0.8)
+            alphabet=['a', 'b', 'c', 'd'])
 
         # Initialize with initial (language model) probabilities for each letter.
         lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
@@ -91,12 +118,20 @@ class TestDecisionMaker(unittest.TestCase):
     def test_displayed_state(self):
         """Test displayed state"""
 
+        alphabet = ['a', 'b', 'c', 'd']
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+                             ProbThresholdCriteria(threshold=0.8)])
+
+        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+                                          len_query=2)
+
         decision_maker = mf.DecisionMaker(
-            min_num_seq=1,
-            max_num_seq=10,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state='ab',
-            alphabet=['a', 'b', 'c', 'd'],
-            decision_threshold=0.8)
+            alphabet=['a', 'b', 'c', 'd'])
 
         # Initialize with initial (language model) probabilities for each letter.
         lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
@@ -108,12 +143,20 @@ class TestDecisionMaker(unittest.TestCase):
 
     def test_decision_maker_threshold(self):
         """Threshold should be configurable"""
+        alphabet = ['a', 'b', 'c', 'd']
+        stopping_criteria = CriteriaEvaluator(
+            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+                             ProbThresholdCriteria(threshold=0.5)])
+
+        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+                                          len_query=2)
+
         decision_maker = mf.DecisionMaker(
-            min_num_seq=1,
-            max_num_seq=10,
+            stimuli_agent=stimuli_agent,
+            stopping_evaluator=stopping_criteria,
             state='',
-            alphabet=['a', 'b', 'c', 'd'],
-            decision_threshold=0.5)
+            alphabet=['a', 'b', 'c', 'd'])
         # Initialize with initial (language model) probabilities for each letter.
         lm_prior = np.array([0.1, 0.1, 0.1, 0.1])
         decision_maker.decide(lm_prior)

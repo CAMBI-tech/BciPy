@@ -2,7 +2,6 @@
 
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -42,7 +41,7 @@ def convert_to_edf(data_dir: str,
         Path(data_dir, params['raw_data_name']))
     durations = trigger_durations(params) if use_event_durations else {}
 
-    with open(Path(data_dir, params['trigger_file_name']), 'r') as trg_file:
+    with open(Path(data_dir, params.get('trigger_file_name', 'triggers.txt')), 'r') as trg_file:
         triggers = read_triggers(trg_file)
     events = edf_annotations(triggers, durations)
 

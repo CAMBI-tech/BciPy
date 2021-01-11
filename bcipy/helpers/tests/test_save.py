@@ -60,7 +60,10 @@ class TestSave(unittest.TestCase):
             self.task,
             experiment_id=experiment_id)
         task = self.task.replace(' ', '_')
-        expected = f'{self.data_save_path}{experiment_id}/{self.user_information}/{self.user_information}_{task}_{self.dt}'
+        expected = (
+            f'{self.data_save_path}{experiment_id}'
+            f'/{self.user_information}/{self.user_information}_{task}_{self.dt}'
+        )
 
         self.assertEqual(response, expected)
 

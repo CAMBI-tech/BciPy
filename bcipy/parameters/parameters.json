@@ -205,6 +205,14 @@
     "recommended_values": "",
     "type": "str"
   },
+  "experiment_data_name": {
+    "value": "experiment_data.json",
+    "section": "bci_config",
+    "readableName": "Experiment Data Filename",
+    "helpTip": "Specifies the filename for field data collected for your experiment",
+    "recommended_values": "",
+    "type": "str"
+  },
   "trigger_file_name": {
     "value": "triggers.txt",
     "section": "bci_config",
