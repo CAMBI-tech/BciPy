@@ -74,7 +74,10 @@ def collect_experiment_field_data(experiment_name, save_path, file_name='experim
     experiment_fields = load_experiment_fields(experiment)
 
     if experiment_fields:
-        cmd = f'python bcipy/gui/experiments/ExperimentField.py -e {experiment_name} -p {save_path} -f {file_name}'
+        cmd = (
+            'python bcipy/gui/experiments/ExperimentField.py -e'
+            f' "{experiment_name}" -p "{save_path}" -f "{file_name}"'
+        )
         subprocess.check_call(cmd, shell=True)
         # verify data was written before moving on
         if not validate_field_data_written(save_path, file_name):

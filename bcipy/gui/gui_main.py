@@ -5,11 +5,11 @@ import sys
 from enum import Enum
 from typing import List
 
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
-                             QGridLayout, QHBoxLayout, QLabel, QLineEdit,
-                             QMainWindow, QMessageBox, QPushButton,
+                             QHBoxLayout, QLabel, QLineEdit,
+                             QMessageBox, QPushButton, QScrollArea,
                              QVBoxLayout, QWidget)
 
 
@@ -377,16 +377,19 @@ class SearchInput(QWidget):
 
         self.setLayout(self.hbox)
 
-    def _search(self):
+    def _search(self) -> None:
         self.on_search(self.input.text())
 
-    def _cancel(self):
+    def _cancel(self) -> None:
         self.input.clear()
         self.input.repaint()
 
 
-class BCIGui(QMainWindow):
-    """GUI for BCIGui."""
+class BCIGui(QWidget):
+    """BCIGui.
+
+    Primary GUI for downstream abstraction. Convenient handling of widgets and asset creation.
+    """
 
     def __init__(self, title: str, width: int, height: int, background_color: str):
         super(BCIGui, self).__init__()
@@ -395,27 +398,52 @@ class BCIGui(QMainWindow):
             format='%(name)s - %(levelname)s - %(message)s')
         self.logger = logging
 
-        self.window = QWidget()
-
         self.buttons = []
         self.input_text = []
         self.static_text = []
         self.images = []
         self.comboboxes = []
+        self.widgets = []
 
-        # set window properties
+        # set main window properties
         self.background_color = background_color
-        self.window.setStyleSheet(f'background-color: {self.background_color};')
-
-        # determines where on the screen the gui first appears
-        self.x = 500
-        self.y = 250
+        self.window = QWidget()
+        self.vbox = QVBoxLayout()
+        self.setStyleSheet(f'background-color: {self.background_color};')
 
         self.title = title
 
         # determines height/width of window
         self.width = width
         self.height = height
+
+        self.setWindowTitle(self.title)
+        self.setFixedWidth(self.width)
+        self.setFixedHeight(self.height)
+        self.setLayout(self.vbox)
+
+        self.create_main_window()
+
+    def create_main_window(self) -> None:
+        """Create Main Window.
+        
+        Construct the main window for display of assets.
+        """
+        self.window_layout = QHBoxLayout()
+        self.window.setStyleSheet(f'background-color: {self.background_color};')
+        self.window_layout.addWidget(self.window)
+        self.vbox.addLayout(self.window_layout)
+
+    def add_widget(self, widget: QWidget) -> None:
+        """Add Widget.
+        
+        Add a Widget to the main GUI, alongside the main window.
+        """
+        widget_layout = QHBoxLayout()
+        widget_layout.addWidget(widget)
+        widget_layout.addStretch()
+        self.vbox.addLayout(widget_layout)
+        self.widgets.append(widget)
 
     def show_gui(self) -> None:
         """Show GUI.
@@ -452,22 +480,12 @@ class BCIGui(QMainWindow):
         self.build_images()
 
     def init_ui(self) -> None:
-        """Initalize UI.
+        """Initialize UI.
 
         This method sets up the grid and window. Finally, it calls the show method to make
             the window visible.
         """
-        # create a grid system to keep everythin aligned
-        self.grid = QGridLayout()
-        self.grid.setSpacing(2)
-        self.window.setLayout(self.grid)
-
-        # main window setup
-        self.window.setWindowTitle(self.title)
-        self.window.setGeometry(self.x, self.y, self.width, self.height)
-
-        # show the window
-        self.window.show()
+        self.show()
 
     @pyqtSlot()
     def default_on_dropdown(self) -> None:
@@ -618,6 +636,117 @@ class BCIGui(QMainWindow):
         """Get Filename Dialog."""
         file_name, _ = QFileDialog.getOpenFileName(self.window, message, location, file_type)
         return file_name
+
+
+class ScrollableFrame(QWidget):
+    """Scrollable Frame.
+
+    A QWidget that constructs a scrollable frame and accepts another widget to display within the scrollable area.
+    """
+
+    def __init__(self, height: int, width: int, background_color: str = 'black', widget: QWidget = None):
+        super().__init__()
+
+        self.height = height
+        self.width = width
+        self.background_color = background_color
+        self.setStyleSheet(f'background-color: {self.background_color}')
+
+        # create a vertical box to wrap all other widgets / layouts
+        self.vbox = QVBoxLayout()
+
+        # create the scrollable are
+        self.frame = QScrollArea()
+        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.frame.setWidgetResizable(True)
+        self.frame.setFixedWidth(self.width)
+        self.setFixedHeight(self.height)
+
+        # if a widget is provided, add it to the scrollable frame
+        if widget:
+            self.widget = widget
+            self.frame.setWidget(widget)
+
+        # add the frame and set the layout
+        self.vbox.addWidget(self.frame)
+        self.setLayout(self.vbox)
+
+        self.show()
+
+    def refresh(self, new_widget: QWidget) -> None:
+        """Refresh.
+
+        Updates the scrollable area with a new or update widget.
+        """
+        self.vbox.removeWidget(self.frame)
+        self.widget = new_widget
+        self.frame.setWidget(self.widget)
+        self.vbox.addWidget(self.frame)
+
+
+class LineItems(QWidget):
+    """Line Items.
+
+    A QWidget that accepts a list of labels + button pairs. These items must have the following structure:
+        {
+            'item label': {
+                'button1 label': {
+                    'color': 'color of the button',
+                    'textColor': 'color of the button text',
+                    'action': action of button (a python method)
+                },
+                'button2 label': {
+                    'color': 'color of the button',
+                    'textColor': 'color of the button text',
+                    'action': action of button (a python method)
+                },
+            }
+        }
+    """
+
+    def __init__(self, items: List[dict], width: str):
+        super().__init__()
+        self.width = width
+        self.items = items
+
+        self.vbox = QVBoxLayout()
+        self.setFixedWidth(self.width)
+
+        # construct the line items as widgets added to the layout
+        self.construct_line_items()
+
+        # after constructing the line items, set the main layout and show the widget
+        self.setLayout(self.vbox)
+        self.show()
+
+    def construct_line_items(self) -> None:
+        """Construct Line Items.
+
+        Loop through provided list and construct a layout with a label and buttons. Add to the main layout vbox.
+        """
+        for item in self.items:
+            layout = QHBoxLayout()
+
+            # item
+            item_label = next(iter(item))
+            label = QLabel(item_label)
+            layout.addWidget(label)
+
+            # buttons
+            for key in item[item_label]:
+                text_color = item[item_label][key]['textColor']
+                color = item[item_label][key]['color']
+                action = item[item_label][key]['action']
+                button = PushButton(key)
+                button.setStyleSheet(f'background-color: {color}; color: {text_color};')
+                button.clicked.connect(action)
+
+                if item[item_label][key].get('id'):
+                    button.id = item[item_label][key]['id']
+                layout.addWidget(button)
+
+            self.vbox.addLayout(layout)
 
 
 def app(args) -> QApplication:

@@ -124,8 +124,8 @@ class FieldRegistry(BCIGui):
 
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
-        btn_create_x = self.width - self.padding
-        btn_create_y = self.height - 75
+        btn_create_x = self.width - self.padding - 10
+        btn_create_y = self.height - 100
         size = 150
         self.add_button(
             message='Create Field', position=[btn_create_x - (size / 2), btn_create_y],
