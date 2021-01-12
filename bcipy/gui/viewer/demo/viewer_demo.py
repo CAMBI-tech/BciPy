@@ -13,51 +13,29 @@ def main():
 
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.datastream.tcp_server import TcpDataServer
+    from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.devices import supported_device
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.devices import supported_device
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
+    from bcipy.gui.viewer import data_viewer
 
-    host = '127.0.0.1'
-    port = 9000
-    # The Protocol is for mocking data.
-    device_spec = supported_device('DSI')
-    protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
-    server = TcpDataServer(protocol=protocol, host=host, port=port)
-
-    # Device is for reading data.
-    # pylint: disable=invalid-name
-    Device = registry.find_connector('DSI')
-    params = {'host': host, 'port': port}
-    dsi_device = Device(connection_params=params, device_spec=device_spec)
-    client = DataAcquisitionClient(connector=dsi_device,
-                                   processor=ViewerProcessor())
+    device_spec = supported_device('LSL')
+    server = LslDataServer(device_spec=device_spec)
 
     try:
         server.start()
-        client.start_acquisition()
-        seconds = 10
-        print(
-            f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n"
-        )
-
-        t0 = time.time()
-        elapsed = 0
-        while elapsed < seconds:
-            time.sleep(0.1)
-            elapsed = (time.time()) - t0
-        client.stop_acquisition()
-        client.cleanup()
-        print(f"Number of samples: {client.get_data_len()}")
+        data_viewer.main(data_file=None,
+                         seconds=5,
+                         downsample_factor=2,
+                         refresh=500,
+                         yscale=150,
+                         display_screen=0)
+        # Stop the server after the data_viewer GUI is closed
         server.stop()
-
     except KeyboardInterrupt:
         print("Keyboard Interrupt; stopping.")
-        client.stop_acquisition()
-        client.cleanup()
-        print(f"Number of samples: {client.get_data_len()}")
         server.stop()
 
 

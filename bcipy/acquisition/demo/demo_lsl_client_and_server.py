@@ -45,10 +45,10 @@ def main(debug: bool = False):
     await_start(server)
 
     # Device is for reading data.
-    device = LslConnector(connection_params={}, device_spec=device_spec)
+    connector = LslConnector(connection_params={}, device_spec=device_spec)
 
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(connector=device,
+    client = DataAcquisitionClient(connector=connector,
                                    raw_data_file_name=raw_data_name)
 
     try:

@@ -36,16 +36,12 @@ def main(debug: bool = False):
     protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
     server = TcpDataServer(protocol=protocol, host=host, port=port)
 
-    # Device is for reading data.
-    # pylint: disable=invalid-name
-    Device = registry.find_connector(device_spec, ConnectionMethod.TCP)
-    dsi_device = Device(connection_params={
-        'host': host,
-        'port': port
-    },
-                        device_spec=device_spec)
+    connection_params = {'host': host, 'port': port}
+    connector = registry.make_connector(device_spec, ConnectionMethod.TCP,
+                                        connection_params)
+
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(connector=dsi_device,
+    client = DataAcquisitionClient(connector=connector,
                                    raw_data_file_name=raw_data_name)
 
     try:

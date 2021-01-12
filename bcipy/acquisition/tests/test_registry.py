@@ -6,7 +6,7 @@ from bcipy.acquisition.devices import supported_device
 from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector
-from bcipy.acquisition.protocols.registry import find_connector, find_protocol
+from bcipy.acquisition.protocols.registry import find_connector, find_protocol, make_connector
 
 
 class TestAcquisitionRegistry(unittest.TestCase):
@@ -29,3 +29,17 @@ class TestAcquisitionRegistry(unittest.TestCase):
         self.assertEqual(
             find_connector(supported_device('LSL'), ConnectionMethod.LSL),
             LslConnector)
+
+    def test_connector(self):
+        """Registry should construct the correct connector given the DeviceSpec and ConnectionMethod."""
+        connector = make_connector(supported_device('DSI'),
+                                   ConnectionMethod.TCP, {
+                                       'host': '127.0.0.1',
+                                       'port': 9000
+                                   })
+        self.assertTrue(isinstance(connector, DsiConnector))
+        self.assertEqual(9000, connector.connection_params['port'])
+
+        connector = make_connector(supported_device('LSL'),
+                                   ConnectionMethod.LSL, {})
+        self.assertTrue(isinstance(connector, LslConnector))

@@ -31,6 +31,7 @@ def init_eeg_acquisition(parameters: dict,
             connection information.
              {
                "acq_device": str,
+               "acq_connection_method": str,
                "acq_host": str,
                "acq_port": int,
                "buffer_name": str,
@@ -39,8 +40,7 @@ def init_eeg_acquisition(parameters: dict,
         clock : Clock, optional
             optional clock used in the client; see client for details.
         server : bool, optional
-            optionally start a server that streams random DSI data; defaults
-            to true; if this is True, the client will also be a DSI client.
+            optionally start a mock data server that streams random data.
     Returns
     -------
         (client, server) tuple
@@ -64,14 +64,13 @@ def init_eeg_acquisition(parameters: dict,
     if server:
         dataserver = start_server(connection_method, device_spec, host, port)
 
-    Device = registry.find_connector(device_spec, connection_method)
     # TODO: only use these connection_params if this is ConnectionMethod.TCP
     # Refactor to extract only the needed connection params from parameters.
     connection_params = {'host': host, 'port': port}
-    device = Device(connection_params=connection_params,
-                    device_spec=device_spec)
+    connector = registry.make_connector(device_spec, connection_method,
+                                        connection_params)
 
-    client = DataAcquisitionClient(connector=device,
+    client = DataAcquisitionClient(connector=connector,
                                    buffer_name=buffer_name,
                                    delete_archive=False,
                                    raw_data_file_name=raw_data_file,

@@ -20,21 +20,21 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.devices import supported_device
     from bcipy.acquisition.connection_method import ConnectionMethod
+    from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 
-    # pylint: disable=invalid-name
+    # Start the server with the command:
+    # python bcipy/acquisition/datastream/tcp_server.py --name DSI --port 9000
     device_spec = supported_device('DSI')
-    Device = registry.find_connector(device_spec, ConnectionMethod.TCP)
-    dsi_device = Device(connection_params={
+    connector = DsiConnector(connection_params={
         'host': '127.0.0.1',
         'port': 9000
     },
-                        device_spec=device_spec)
+                             device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = DataAcquisitionClient(connector=dsi_device, clock=clock.Clock())
+    client = DataAcquisitionClient(connector=connector, clock=clock.Clock())
 
     try:
         client.start_acquisition()
