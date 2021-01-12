@@ -196,7 +196,7 @@ def main():
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_with_args
-    from bcipy.acquisition.protocols.registry import find_protocol, find_device
+    from bcipy.acquisition.protocols.registry import find_protocol, find_connector
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.devices import supported_device
 

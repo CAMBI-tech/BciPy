@@ -31,7 +31,7 @@ def main():
     device_spec = supported_device('LSL')
     print(f"\nAcquiring data from device {device_spec}")
 
-    Connector = registry.find_device(device_spec, ConnectionMethod.LSL)
+    Connector = registry.find_connector(device_spec, ConnectionMethod.LSL)
     lsl_connector = Connector(connection_params={}, device_spec=device_spec)
     lsl_connector.include_marker_streams = True
     if Connector:
@@ -39,7 +39,7 @@ def main():
 
     # Use default processor (FileWriter), buffer, and clock.
     raw_data_name = 'lsl_client_raw_data.csv'
-    client = DataAcquisitionClient(device=lsl_connector, raw_data_file_name=raw_data_name)
+    client = DataAcquisitionClient(connector=lsl_connector, raw_data_file_name=raw_data_name)
 
     try:
         client.start_acquisition()

@@ -1,17 +1,16 @@
 # pylint: disable=fixme,invalid-name
 """Used to find a protocol or device."""
 
-from bcipy.acquisition.protocols.device import Device
-from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
-from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
+from bcipy.acquisition.protocols.connector import Connector
+from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
+from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 from bcipy.acquisition.protocols.device_protocol import DeviceProtocol
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import DeviceSpec
 
-# TODO: rename find_connector?
-def find_device(device_spec: DeviceSpec,
-                connection_method: ConnectionMethod) -> Device:
+def find_connector(device_spec: DeviceSpec,
+                   connection_method: ConnectionMethod) -> Connector:
     """Find the first matching connector for the given device and
     connection method.
 
@@ -21,10 +20,10 @@ def find_device(device_spec: DeviceSpec,
         connection_method - method used to connect to the device
     Returns
     -------
-        Device constructor
+        Connector constructor
     """
 
-    connector = next(conn for conn in Device.subclasses
+    connector = next(conn for conn in Connector.subclasses
                      if conn.supports(device_spec, connection_method))
     if not connector:
         raise ValueError(

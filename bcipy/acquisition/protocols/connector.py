@@ -4,17 +4,15 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.connection_method import ConnectionMethod
 
 
-class Device:
+class Connector:
     """Base class for device-specific behavior.
 
     Parameters
     ----------
         connection_params : dict
             Parameters needed to connect with the given device
-        fs : int
-            Sample frequency in Hz.
-        channels : list
-            List of channel names.
+        device_spec: DeviceSpec
+            spec with information about the device to which to connect.
     """
     subclasses = []
 
@@ -41,9 +39,11 @@ class Device:
         raise NotImplementedError('Subclass must define a name property')
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Information about the acquisition parameters. Should be called after
-        acquisition_init for those devices which set this information."""
+        acquisition_init for those devices which set this information. Note that
+        DeviceInfo may differ from the DeviceSpec if additional information is
+        added by the Connector."""
         device_name = self.name if not callable(self.name) else self.name()
         return DeviceInfo(fs=self.fs, channels=self.channels, name=device_name)
 

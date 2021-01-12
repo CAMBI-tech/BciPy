@@ -26,7 +26,7 @@ def main():
 
     # pylint: disable=invalid-name
     device_spec = supported_device('DSI')
-    Device = registry.find_device(device_spec, ConnectionMethod.TCP)
+    Device = registry.find_connector(device_spec, ConnectionMethod.TCP)
     dsi_device = Device(connection_params={
         'host': '127.0.0.1',
         'port': 9000
@@ -34,7 +34,7 @@ def main():
                         device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())
+    client = DataAcquisitionClient(connector=dsi_device, clock=clock.Clock())
 
     try:
         client.start_acquisition()

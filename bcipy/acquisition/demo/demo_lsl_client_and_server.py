@@ -22,7 +22,7 @@ def main(debug: bool = False):
     from bcipy.acquisition.datastream.generator import random_data_generator
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.devices import DeviceSpec
-    from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
+    from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
@@ -45,10 +45,10 @@ def main(debug: bool = False):
     await_start(server)
 
     # Device is for reading data.
-    device = LslDevice(connection_params={}, device_spec=device_spec)
+    device = LslConnector(connection_params={}, device_spec=device_spec)
 
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(device=device,
+    client = DataAcquisitionClient(connector=device,
                                    raw_data_file_name=raw_data_name)
 
     try:

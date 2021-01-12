@@ -5,7 +5,7 @@ import logging
 
 from typing import List, Dict, Any
 import pylsl
-from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.connector import Connector
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import DeviceSpec
 
@@ -76,8 +76,8 @@ def rename_items(items: List[str], rules: Dict[str, str]) -> None:
             items[items.index(key)] = val
 
 
-class LslDevice(Device):
-    """Driver for any device streaming data through the LabStreamingLayer lib.
+class LslConnector(Connector):
+    """Connects to any device streaming data through the LabStreamingLayer lib.
 
     Parameters
     ----------
@@ -102,7 +102,7 @@ class LslDevice(Device):
                  include_lsl_timestamp: bool = False,
                  include_marker_streams: bool = False,
                  rename_rules: Dict[str, str] = None):
-        super(LslDevice, self).__init__(connection_params, device_spec)
+        super(LslConnector, self).__init__(connection_params, device_spec)
         assert device_spec, "DeviceSpec is required"
         self._appended_channels = []
 

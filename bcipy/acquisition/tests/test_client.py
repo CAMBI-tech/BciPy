@@ -9,11 +9,11 @@ from typing import List
 from bcipy.acquisition.client import CountClock, DataAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.processor import Processor
-from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.connector import Connector
 from bcipy.acquisition.util import mock_data, mock_record
 
 
-class _MockDevice(Device):
+class _MockConnector(Connector):
     """Device that mocks reading data. Does not need a server. Continues as
     long as there is mock data."""
 
@@ -21,8 +21,8 @@ class _MockDevice(Device):
                  data: List[float] = None,
                  device_spec: DeviceSpec = None):
         data = data or []
-        super(_MockDevice, self).__init__(connection_params={},
-                                          device_spec=device_spec)
+        super(_MockConnector, self).__init__(connection_params={},
+                                             device_spec=device_spec)
         self.data = data
         self.i = 0
 
@@ -63,7 +63,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_acquisition_null_device_exception(self):
         """Exception should be thrown if unable to connect to device or message not understood """
-        daq = DataAcquisitionClient(device=None)
+        daq = DataAcquisitionClient(connector=None)
         daq._is_streaming = False
         with self.assertRaises(Exception):
             daq.start_acquisition()
@@ -75,8 +75,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
         data length should return 0
         """
 
-        device = _MockDevice(data=self.mock_data, device_spec=self.device_spec)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -106,8 +106,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_get_data(self):
         """Data should be queryable."""
 
-        device = _MockDevice(data=self.mock_data, device_spec=self.device_spec)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -136,8 +136,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
         clock = CountClock()
         clock.counter = 10  # ensures that clock gets reset.
 
-        device = _MockDevice(data=self.mock_data, device_spec=self.device_spec)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_clock.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -170,11 +170,11 @@ class TestDataAcquisitionClient(unittest.TestCase):
             for i in range(num_records)
         ]
 
-        device = _MockDevice(data=data,
-                             device_spec=DeviceSpec(name="Mock_device",
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
                                                     channels=channels,
                                                     sample_rate=sample_hz))
-        daq = DataAcquisitionClient(device=device,
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -207,11 +207,11 @@ class TestDataAcquisitionClient(unittest.TestCase):
             for i in range(num_records)
         ]
 
-        device = _MockDevice(data=data,
-                             device_spec=DeviceSpec(name="Mock_device",
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
                                                     channels=channels,
                                                     sample_rate=sample_hz))
-        daq = DataAcquisitionClient(device=device,
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -239,12 +239,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
         n_channels = len(channels) - 1
         data = [mock_record(n_channels) + [0] for i in range(num_records)]
 
-        device = _MockDevice(data=data,
-                             device_spec=DeviceSpec(name="Mock_device",
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
                                                     channels=channels,
                                                     sample_rate=sample_hz))
         daq = DataAcquisitionClient(
-            device=device,
+            connector=device,
             clock=CountClock(),
             buffer_name='buffer_client_test_missing_offset.db',
             raw_data_file_name=None,
@@ -271,11 +271,11 @@ class TestDataAcquisitionClient(unittest.TestCase):
             for i in range(num_records)
         ]
 
-        device = _MockDevice(data=data,
-                             device_spec=DeviceSpec(name="Mock_device",
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
                                                     channels=channels,
                                                     sample_rate=sample_hz))
-        daq = DataAcquisitionClient(device=device,
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -306,12 +306,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
             for i in range(num_records)
         ]
 
-        device = _MockDevice(data=data,
-                             device_spec=DeviceSpec(name="Mock_device",
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
                                                     channels=channels,
                                                     sample_rate=sample_hz))
         daq = DataAcquisitionClient(
-            device=device,
+            connector=device,
             buffer_name='buffer_client_test_get_data_for_clock.db',
             raw_data_file_name=None,
             delete_archive=True,

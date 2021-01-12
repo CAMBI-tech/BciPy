@@ -38,14 +38,14 @@ def main(debug: bool = False):
 
     # Device is for reading data.
     # pylint: disable=invalid-name
-    Device = registry.find_device(device_spec, ConnectionMethod.TCP)
+    Device = registry.find_connector(device_spec, ConnectionMethod.TCP)
     dsi_device = Device(connection_params={
         'host': host,
         'port': port
     },
                         device_spec=device_spec)
     raw_data_name = 'demo_raw_data.csv'
-    client = DataAcquisitionClient(device=dsi_device,
+    client = DataAcquisitionClient(connector=dsi_device,
                                    raw_data_file_name=raw_data_name)
 
     try:

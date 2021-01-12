@@ -2,8 +2,8 @@
 import unittest
 import pytest
 from bcipy.acquisition.datastream import tcp_server
-from bcipy.acquisition.protocols.dsi.dsi_device import dsi
-from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
+from bcipy.acquisition.protocols.dsi.dsi_connector import dsi
+from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.connection_method import ConnectionMethod
@@ -58,8 +58,8 @@ class TestDsiDevice(unittest.TestCase):
         """An exception should be thrown if parameters do not match data read
         from the device."""
         print("Running test_mismatched_channels")
-        device = DsiDevice(connection_params=self.connection_params(),
-                           device_spec=spec(channels=['ch1', 'ch2']))
+        device = DsiConnector(connection_params=self.connection_params(),
+                              device_spec=spec(channels=['ch1', 'ch2']))
         self.assertEqual(len(device.channels), 2)
         device.connect()
 
@@ -70,8 +70,8 @@ class TestDsiDevice(unittest.TestCase):
         """An exception should be thrown if parameters do not match data read
         from the device."""
         print("Running test_mismatched_frequency")
-        device = DsiDevice(connection_params=self.connection_params(),
-                           device_spec=spec(sample_rate=100.0))
+        device = DsiConnector(connection_params=self.connection_params(),
+                              device_spec=spec(sample_rate=100.0))
         self.assertEqual(device.fs, 100)
         device.connect()
 
@@ -82,8 +82,8 @@ class TestDsiDevice(unittest.TestCase):
         """Should produce a valid sensor_data record."""
 
         print("Running test_read_data")
-        device = DsiDevice(connection_params=self.connection_params(),
-                           device_spec=spec())
+        device = DsiConnector(connection_params=self.connection_params(),
+                              device_spec=spec())
 
         device.connect()
         device.acquisition_init()

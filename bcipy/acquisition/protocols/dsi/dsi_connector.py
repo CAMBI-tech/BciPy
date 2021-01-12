@@ -4,29 +4,27 @@ import socket
 
 from bcipy.acquisition.protocols.dsi import dsi
 from bcipy.acquisition.protocols import util
-from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.connector import Connector
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.connection_method import ConnectionMethod
 
 log = logging.getLogger(__name__)
 
 
-class DsiDevice(Device):
-    """Driver for the DSI device.
+class DsiConnector(Connector):
+    """Connects to a DSI device over TCP.
 
     Parameters
     ----------
         connection_params : dict
             parameters used to connect with the server. keys: [host, port]
-        channels: list, optional
-            list of channel names
-        fs: float, optional
-            sample frequency in (Hz)
+        device_spec: DeviceSpec
+            spec with information about the device to which to connect.
     """
 
     def __init__(self, connection_params, device_spec: DeviceSpec):
         """Init DsiDevice."""
-        super(DsiDevice, self).__init__(connection_params, device_spec)
+        super(DsiConnector, self).__init__(connection_params, device_spec)
         assert 'host' in connection_params, "Please specify host to Device!"
         assert 'port' in connection_params, "Please specify port to Device!"
         self._channels_provided = len(self.channels) > 0

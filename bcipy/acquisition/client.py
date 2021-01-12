@@ -46,7 +46,7 @@ class DataAcquisitionClient:
 
     Parameters
     ----------
-        device: Device instance
+        connector: Connector instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
         processor : Processor; optional
@@ -65,13 +65,13 @@ class DataAcquisitionClient:
     """
 
     def __init__(self,
-                 device,
+                 connector,
                  buffer_name='raw_data.db',
                  raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
                  delete_archive=True):
 
-        self._device = device
+        self._connector = connector
         self._buffer_name = buffer_name
         self._raw_data_file_name = raw_data_file_name
         self._clock = clock
@@ -132,7 +132,7 @@ class DataAcquisitionClient:
             # as well as the acquisition thread.
             self._buf = buffer_server.new_mailbox()
 
-            self._acq_process = AcquisitionProcess(device=self._device,
+            self._acq_process = AcquisitionProcess(connector=self._connector,
                                                    clock=self._clock,
                                                    buf=self._buf,
                                                    msg_queue=msg_queue)
@@ -160,13 +160,13 @@ class DataAcquisitionClient:
     def configure_connector(self) -> None:
         """Steps to configure the device connector before starting acquisition."""
 
-        if self._device.__class__.supports(self._device.device_spec,
-                                           ConnectionMethod.LSL) and self._device.device_spec.content_type == 'EEG':
+        if self._connector.__class__.supports(self._connector.device_spec,
+                                              ConnectionMethod.LSL) and self._connector.device_spec.content_type == 'EEG':
             log.debug("Initializing LSL Marker Writer.")
-            self._device.include_marker_streams = True
+            self._connector.include_marker_streams = True
             # If there are any device channels with the same name as the offset_column ('TRG'),
             # rename these to avoid conflicts.
-            self._device.rename_rules[self.offset_column] = f"{self.offset_column}_device_stream"
+            self._connector.rename_rules[self.offset_column] = f"{self.offset_column}_device_stream"
             # Initialize the marker streams before the device connection (name it 'TRG').
             self.marker_writer = LslMarkerWriter(
                 stream_name=self.offset_column)
@@ -331,7 +331,7 @@ class AcquisitionProcess(StoppableProcess):
 
     Parameters
     ----------
-        device: Device instance
+        connector: Connector instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
         clock : Clock
@@ -340,9 +340,9 @@ class AcquisitionProcess(StoppableProcess):
         msg_queue : Queue used to communicate with the main thread.
     """
 
-    def __init__(self, device, clock, buf, msg_queue):
+    def __init__(self, connector, clock, buf, msg_queue):
         super(AcquisitionProcess, self).__init__()
-        self._device = device
+        self._connector = connector
         self._clock = clock
         self._buf = buf
         self.msg_queue = msg_queue
@@ -355,15 +355,15 @@ class AcquisitionProcess(StoppableProcess):
 
         try:
             log.debug("Connecting to device")
-            self._device.connect()
-            self._device.acquisition_init()
+            self._connector.connect()
+            self._connector.acquisition_init()
         except Exception as error:
             self.msg_queue.put((MSG_ERROR, str(error)))
             raise error
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
+        self.msg_queue.put((MSG_DEVICE_INFO, self._connector.device_info))
 
         # Wait for db server start
         self.msg_queue.get()
@@ -371,7 +371,7 @@ class AcquisitionProcess(StoppableProcess):
 
         log.debug("Starting Acquisition read data loop")
         sample = 0
-        data = self._device.read_data()
+        data = self._connector.read_data()
 
         # begin continuous acquisition process as long as data received
         while self.running() and data:
@@ -382,14 +382,14 @@ class AcquisitionProcess(StoppableProcess):
             buffer_server.append(self._buf, Record(data, self._clock.getTime(), sample))
             try:
                 # Read data again
-                data = self._device.read_data()
+                data = self._connector.read_data()
             # pylint: disable=broad-except
             except Exception as error:
                 log.error("Error reading data from device: %s", str(error))
                 data = None
                 break
         log.debug("Total samples read: %s", str(sample))
-        self._device.disconnect()
+        self._connector.disconnect()
 
 
 def main():
@@ -419,14 +419,14 @@ def main():
                         help="device connection params; json")
     args = parser.parse_args()
 
-    device_builder = registry.find_device(
+    device_builder = registry.find_connector(
         args.device, ConnectionMethod.by_name(args.connection_method))
 
     # Instantiate and start collecting data
     dev = device_builder(connection_params=args.params)
     if args.channels:
         dev.channels = args.channels.split(',')
-    daq = DataAcquisitionClient(device=dev,
+    daq = DataAcquisitionClient(connector=dev,
                                 buffer_name=args.buffer,
                                 delete_archive=True)
 

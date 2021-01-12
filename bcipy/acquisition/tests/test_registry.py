@@ -3,10 +3,10 @@ import unittest
 
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import supported_device
-from bcipy.acquisition.protocols.dsi.dsi_device import DsiDevice
+from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
-from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice
-from bcipy.acquisition.protocols.registry import find_device, find_protocol
+from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector
+from bcipy.acquisition.protocols.registry import find_connector, find_protocol
 
 
 class TestAcquisitionRegistry(unittest.TestCase):
@@ -21,11 +21,11 @@ class TestAcquisitionRegistry(unittest.TestCase):
     def test_find_connector(self):
         """Registry should find the correct connector given the DeviceSpec and ConnectionMethod"""
         self.assertEqual(
-            find_device(supported_device('DSI'), ConnectionMethod.TCP),
-            DsiDevice)
+            find_connector(supported_device('DSI'), ConnectionMethod.TCP),
+            DsiConnector)
         self.assertEqual(
-            find_device(supported_device('DSI'), ConnectionMethod.LSL),
-            LslDevice)
+            find_connector(supported_device('DSI'), ConnectionMethod.LSL),
+            LslConnector)
         self.assertEqual(
-            find_device(supported_device('LSL'), ConnectionMethod.LSL),
-            LslDevice)
+            find_connector(supported_device('LSL'), ConnectionMethod.LSL),
+            LslConnector)

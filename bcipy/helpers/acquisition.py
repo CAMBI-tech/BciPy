@@ -49,8 +49,8 @@ def init_eeg_acquisition(parameters: dict,
     # Set configuration parameters with default values if not provided.
     host = parameters['acq_host']
     port = parameters['acq_port']
-    buffer_name = Path(save_folder, parameters.get('buffer_name',
-                                                   'raw_data.db'))
+    buffer_name = str(
+        Path(save_folder, parameters.get('buffer_name', 'raw_data.db')))
     raw_data_file = Path(save_folder,
                          parameters.get('raw_data_name', 'raw_data.csv'))
 
@@ -64,14 +64,14 @@ def init_eeg_acquisition(parameters: dict,
     if server:
         dataserver = start_server(connection_method, device_spec, host, port)
 
-    Device = registry.find_device(device_spec, connection_method)
+    Device = registry.find_connector(device_spec, connection_method)
     # TODO: only use these connection_params if this is ConnectionMethod.TCP
     # Refactor to extract only the needed connection params from parameters.
     connection_params = {'host': host, 'port': port}
     device = Device(connection_params=connection_params,
                     device_spec=device_spec)
 
-    client = DataAcquisitionClient(device=device,
+    client = DataAcquisitionClient(connector=device,
                                    buffer_name=buffer_name,
                                    delete_archive=False,
                                    raw_data_file_name=raw_data_file,

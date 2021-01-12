@@ -6,7 +6,7 @@ import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer, MARKER_STREAM_NAME
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.datastream.generator import random_data_generator
-from bcipy.acquisition.protocols.lsl.lsl_device import LslDevice, LSL_TIMESTAMP
+from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector, LSL_TIMESTAMP
 from bcipy.acquisition.devices import DeviceSpec
 
 
@@ -65,7 +65,7 @@ class TestLslDeviceSpec(TestLslDevice):
         spec = DeviceSpec(name='LSL',
                           channels=['ch1', 'ch2'],
                           sample_rate=self.sample_rate)
-        device = LslDevice(connection_params={}, device_spec=spec)
+        device = LslConnector(connection_params={}, device_spec=spec)
         self.assertEqual(spec.channel_count, 2)
         self.assertNotEqual(len(device.channels), self.channel_count)
         device.connect()
@@ -78,7 +78,7 @@ class TestLslDeviceSpec(TestLslDevice):
         spec = DeviceSpec(name='LSL',
                           channels=self.channels,
                           sample_rate=self.sample_rate)
-        device = LslDevice(connection_params={}, device_spec=spec)
+        device = LslConnector(connection_params={}, device_spec=spec)
         device.connect()
         device.acquisition_init()
 
@@ -86,8 +86,8 @@ class TestLslDeviceSpec(TestLslDevice):
 
     def test_incorrect_frequency(self):
         """Provided sample_rate should match sample rate read from device"""
-        device = LslDevice(connection_params={},
-                           device_spec=DeviceSpec(name='LSL',
+        device = LslConnector(connection_params={},
+                              device_spec=DeviceSpec(name='LSL',
                                                   channels=self.channels,
                                                   sample_rate=300))
 
@@ -98,8 +98,8 @@ class TestLslDeviceSpec(TestLslDevice):
 
     def test_connect(self):
         """Should require a connect call before initialization."""
-        device = LslDevice(connection_params={},
-                           device_spec=DeviceSpec(
+        device = LslConnector(connection_params={},
+                              device_spec=DeviceSpec(
                                name='LSL',
                                channels=self.channels,
                                sample_rate=self.sample_rate))
@@ -110,8 +110,8 @@ class TestLslDeviceSpec(TestLslDevice):
     def test_read_data(self):
         """Should produce a valid data record."""
         print(self.device_spec.channels)
-        device = LslDevice(connection_params={},
-                           device_spec=DeviceSpec(
+        device = LslConnector(connection_params={},
+                              device_spec=DeviceSpec(
                                name='LSL',
                                channels=self.channels,
                                sample_rate=self.sample_rate))
@@ -146,7 +146,7 @@ class TestLslChannelConfig(TestLslDevice):
         """A device with a TRG channel should work as expected."""
 
         self.start_server(self.default_data_server())
-        device = LslDevice(connection_params={}, device_spec=self.device_spec)
+        device = LslConnector(connection_params={}, device_spec=self.device_spec)
 
         device.connect()
         device.acquisition_init()
@@ -155,7 +155,7 @@ class TestLslChannelConfig(TestLslDevice):
     def test_with_marker_stream(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
         self.start_server(server)
-        device = LslDevice(connection_params={}, device_spec=self.device_spec)
+        device = LslConnector(connection_params={}, device_spec=self.device_spec)
 
         device.connect()
         device.acquisition_init()
@@ -165,9 +165,9 @@ class TestLslChannelConfig(TestLslDevice):
     def test_with_marker_stream_included(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
         self.start_server(server)
-        device = LslDevice(connection_params={},
-                           device_spec=self.device_spec,
-                           include_marker_streams=True)
+        device = LslConnector(connection_params={},
+                              device_spec=self.device_spec,
+                              include_marker_streams=True)
 
         device.connect()
         device.acquisition_init()
@@ -178,10 +178,10 @@ class TestLslChannelConfig(TestLslDevice):
     def test_with_marker_stream_and_timestamp(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
         self.start_server(server)
-        device = LslDevice(connection_params={},
-                           device_spec=self.device_spec,
-                           include_lsl_timestamp=True,
-                           include_marker_streams=True)
+        device = LslConnector(connection_params={},
+                              device_spec=self.device_spec,
+                              include_lsl_timestamp=True,
+                              include_marker_streams=True)
 
         device.connect()
         device.acquisition_init()
@@ -194,10 +194,10 @@ class TestLslChannelConfig(TestLslDevice):
                                add_markers=True,
                                marker_stream_name='TRG')
         self.start_server(server)
-        device = LslDevice(connection_params={},
-                           device_spec=self.device_spec,
-                           include_marker_streams=True,
-                           rename_rules={'TRG': 'TRG_device_stream'})
+        device = LslConnector(connection_params={},
+                              device_spec=self.device_spec,
+                              include_marker_streams=True,
+                              rename_rules={'TRG': 'TRG_device_stream'})
 
         device.connect()
         device.acquisition_init()

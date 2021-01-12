@@ -29,10 +29,10 @@ def main():
 
     # Device is for reading data.
     # pylint: disable=invalid-name
-    Device = registry.find_device('DSI')
+    Device = registry.find_connector('DSI')
     params = {'host': host, 'port': port}
     dsi_device = Device(connection_params=params, device_spec=device_spec)
-    client = DataAcquisitionClient(device=dsi_device,
+    client = DataAcquisitionClient(connector=dsi_device,
                                    processor=ViewerProcessor())
 
     try:
