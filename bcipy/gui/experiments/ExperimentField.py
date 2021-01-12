@@ -163,7 +163,7 @@ class ExperimentFieldCollection(QWidget):
         """Build Save Data."""
         try:
             for field in self.field_inputs:
-                _input = field.value()
+                _input = field.cast_value()
                 name = field.label.strip(self.require_mark)
                 self.save_data[name] = _input
         except ValueError as e:

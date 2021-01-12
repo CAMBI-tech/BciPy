@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from enum import Enum
-from typing import List
+from typing import Any, List
 
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QFont, QPixmap
@@ -172,6 +172,13 @@ class FormInput(QWidget):
             return self.control.text()
         return None
 
+    def cast_value(self) -> Any:
+        """Returns the value associated with the form input, cast to the correct type.
+        
+        *If not defined by downstream classes, it will return the value.*
+        """
+        self.value()
+
     def matches(self, term: str) -> bool:
         """Returns True if the input matches the given text, otherwise False."""
         text = term.lower()
@@ -215,7 +222,7 @@ class IntegerInput(FormInput):
         spin_box.setMaximum(100000)
         return spin_box
 
-    def value(self) -> str:
+    def cast_value(self) -> str:
         """Override FormInput to return an integer value."""
         if self.control:
             return int(self.control.text())
@@ -241,7 +248,7 @@ class FloatInput(FormInput):
         spin_box.setMaximum(100000)
         return spin_box
 
-    def value(self) -> float:
+    def cast_value(self) -> float:
         """Override FormInput to return as a float."""
         if self.control:
             return float(self.control.text())
