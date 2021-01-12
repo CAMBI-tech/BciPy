@@ -25,7 +25,6 @@ class BCInterface(BCIGui):
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
-        self.event_started = False
         self.parameter_location = DEFAULT_PARAMETERS_PATH
 
         self.parameters = load_json_parameters(self.parameter_location,
@@ -316,8 +315,6 @@ class BCInterface(BCIGui):
                     message_type=AlertMessageType.INFO,
                     okay_to_exit=True)
                 return False
-            if self.event_started:
-                return False
         except Exception as e:
             self.throw_alert_message(
                 title='BciPy Alert',
@@ -370,12 +367,17 @@ class BCInterface(BCIGui):
             command to bci_main.py and subprocess.
         """
         if self.check_input():
-            self.event_started = True
+            self.throw_alert_message(
+                    title='BciPy Alert',
+                    message='Task Starting ...',
+                    message_type=AlertMessageType.INFO,
+                    okay_to_exit=False)
             cmd = (
                 f'python bci_main.py -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
             subprocess.Popen(cmd, shell=True)
+            self.close()
 
     def offline_analysis(self) -> None:
         """Offline Analysis.
@@ -383,7 +385,6 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         cmd = 'python bcipy/signal/model/offline_analysis.py'
-        self.event_started = True
         subprocess.Popen(cmd, shell=True)
 
 
