@@ -9,9 +9,18 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from bcipy.gui.gui_main import (SearchInput, FormInput, BoolInput, FileInput,
-                                DirectoryInput, SelectionInput, TextInput,
-                                static_text_control)
+from bcipy.gui.gui_main import (
+    BoolInput,
+    DirectoryInput,
+    FileInput,
+    FloatInput,
+    FormInput,
+    IntegerInput,
+    SearchInput,
+    SelectionInput,
+    static_text_control,
+    TextInput,
+)
 from bcipy.helpers.parameters import Parameters
 
 
@@ -54,6 +63,8 @@ class ParamsForm(QWidget):
         attributes."""
 
         type_inputs = {
+            'int': IntegerInput,
+            'float': FloatInput,
             'bool': BoolInput,
             'filepath': FileInput,
             'directorypath': DirectoryInput
