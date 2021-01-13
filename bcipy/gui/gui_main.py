@@ -3,12 +3,12 @@ import logging
 import os
 import sys
 from enum import Enum
-from typing import List
+from typing import Any, List
 
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QFont, QPixmap
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
-                             QHBoxLayout, QLabel, QLineEdit,
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
+                             QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
                              QMessageBox, QPushButton, QScrollArea,
                              QVBoxLayout, QWidget)
 
@@ -172,6 +172,13 @@ class FormInput(QWidget):
             return self.control.text()
         return None
 
+    def cast_value(self) -> Any:
+        """Returns the value associated with the form input, cast to the correct type.
+        
+        *If not defined by downstream classes, it will return the value.*
+        """
+        self.value()
+
     def matches(self, term: str) -> bool:
         """Returns True if the input matches the given text, otherwise False."""
         text = term.lower()
@@ -194,6 +201,58 @@ class FormInput(QWidget):
     def widgets(self) -> List[QWidget]:
         """Returns a list of self and child widgets. List may contain None values."""
         return [self.label_widget, self.help_tip_widget, self.control, self]
+
+
+class IntegerInput(FormInput):
+    """FormInput to select a integer value using a spinbox for selection. Help text is not
+    displayed for spinbox items.
+
+    Parameters:
+    ----------
+        label - form label.
+        value - initial value.
+    """
+
+    def __init__(self, **kwargs):
+        super(IntegerInput, self).__init__(**kwargs)
+
+    def init_control(self, value):
+        """Override FormInput to create a spinbox."""
+        spin_box = QSpinBox()
+        spin_box.setMaximum(100000)
+        return spin_box
+
+    def cast_value(self) -> str:
+        """Override FormInput to return an integer value."""
+        if self.control:
+            return int(self.control.text())
+        return None
+
+
+class FloatInput(FormInput):
+    """FormInput to select a float value using a spinbox for selection. Help text is not
+    displayed for spinbox items.
+
+    Parameters:
+    ----------
+        label - form label.
+        value - initial value.
+    """
+
+    def __init__(self, **kwargs):
+        super(FloatInput, self).__init__(**kwargs)
+
+    def init_control(self, value):
+        """Override FormInput to create a spinbox."""
+        spin_box = QDoubleSpinBox()
+        spin_box.setMaximum(100000)
+        return spin_box
+
+    def cast_value(self) -> float:
+        """Override FormInput to return as a float."""
+        if self.control:
+            return float(self.control.text())
+        return None
 
 
 class BoolInput(FormInput):
@@ -426,7 +485,7 @@ class BCIGui(QWidget):
 
     def create_main_window(self) -> None:
         """Create Main Window.
-        
+
         Construct the main window for display of assets.
         """
         self.window_layout = QHBoxLayout()
@@ -436,7 +495,7 @@ class BCIGui(QWidget):
 
     def add_widget(self, widget: QWidget) -> None:
         """Add Widget.
-        
+
         Add a Widget to the main GUI, alongside the main window.
         """
         widget_layout = QHBoxLayout()
