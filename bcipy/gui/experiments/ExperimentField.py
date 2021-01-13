@@ -257,6 +257,7 @@ class MainPanel(QWidget):
 
     def save(self):
         self.form.save()
+        self.close()
 
 
 def start_app() -> None:
