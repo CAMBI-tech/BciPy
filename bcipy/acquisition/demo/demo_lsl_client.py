@@ -8,7 +8,7 @@ def main():
     the script was run.
 
     The client can be stopped with a Keyboard Interrupt (Ctl-C).
-    
+
     Note: This demo assumes that you already have a running lsl_server.
     """
 
@@ -25,7 +25,6 @@ def main():
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.devices import supported_device
     from bcipy.acquisition.connection_method import ConnectionMethod
-    from bcipy.acquisition.datastream.lsl_server import MARKER_STREAM_NAME
 
     # pylint: disable=invalid-name
     device_spec = supported_device('LSL')

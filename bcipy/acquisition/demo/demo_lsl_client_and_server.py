@@ -19,11 +19,8 @@ def main(debug: bool = False):
     sys.path.append('..')
     sys.path.append('../..')
 
-    from bcipy.acquisition.datastream.generator import random_data_generator
-    from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.devices import DeviceSpec
     from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector
-    from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.datastream.tcp_server import await_start
@@ -60,9 +57,8 @@ def main(debug: bool = False):
             time.sleep(1)
             client.marker_writer.push_marker('calibration_trigger')
             time.sleep(2)
-            print(
-                f"Offset: {client.offset}; since calibration trigger was pushed after 1 second of sleep this value should be close to 1."
-            )
+            # since calibration trigger was pushed after 1 second of sleep
+            print(f"Offset: {client.offset}; this value should be close to 1.")
             client.stop_acquisition()
             client.cleanup()
             server.stop()

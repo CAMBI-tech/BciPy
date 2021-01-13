@@ -1,4 +1,5 @@
-# pylint: disable=fixme,invalid-name
+# pylint: disable=fixme,invalid-name,unused-import
+# flake8: noqa=F401
 """Used to find a protocol or device."""
 
 from typing import Dict, Callable

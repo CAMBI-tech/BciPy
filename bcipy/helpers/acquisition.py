@@ -8,7 +8,6 @@ import numpy as np
 import bcipy.acquisition.protocols.registry as registry
 from bcipy.acquisition.client import CountClock, DataAcquisitionClient
 from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import TcpDataServer, await_start
 from bcipy.acquisition.devices import DeviceSpec, supported_device
@@ -96,7 +95,7 @@ def start_server(connection_method: ConnectionMethod,
                  port: int = None) -> StoppableThread:
     """Create a server that will generate mock data for the given DeviceSpec
     using the appropriate connection method.
-    
+
     Parameters
     ----------
         connection_method - method used to serve data.

@@ -168,5 +168,3 @@ class TestGenerator(unittest.TestCase):
         gen4 = new_generator(step=2)
         self.assertEqual(1, next(gen4))
         self.assertEqual(3, next(gen4))
-
-        

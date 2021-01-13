@@ -21,7 +21,6 @@ def main():
 
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.devices import supported_device
-    from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 
     # Start the server with the command:

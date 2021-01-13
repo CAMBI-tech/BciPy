@@ -61,7 +61,7 @@ def random_data_generator(encoder=_DefaultEncoder(),
         yield encoder.encode(sensor_data)
 
 
-def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), channel_count: int=None):
+def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), channel_count: int = None):
     """Generates data from a source file and encodes it according to the
     provided encoder.
 

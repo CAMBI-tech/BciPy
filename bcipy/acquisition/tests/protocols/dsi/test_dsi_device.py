@@ -2,7 +2,6 @@
 import unittest
 import pytest
 from bcipy.acquisition.datastream import tcp_server
-from bcipy.acquisition.protocols.dsi.dsi_connector import dsi
 from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 from bcipy.acquisition.protocols.dsi.dsi_protocol import DsiProtocol
 from bcipy.acquisition.devices import DeviceSpec

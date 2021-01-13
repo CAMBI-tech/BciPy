@@ -5,7 +5,6 @@ import unittest
 import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer, MARKER_STREAM_NAME
 from bcipy.acquisition.datastream.tcp_server import await_start
-from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.protocols.lsl.lsl_connector import LslConnector, LSL_TIMESTAMP
 from bcipy.acquisition.devices import DeviceSpec
 
@@ -88,8 +87,8 @@ class TestLslDeviceSpec(TestLslDevice):
         """Provided sample_rate should match sample rate read from device"""
         device = LslConnector(connection_params={},
                               device_spec=DeviceSpec(name='LSL',
-                                                  channels=self.channels,
-                                                  sample_rate=300))
+                                                     channels=self.channels,
+                                                     sample_rate=300))
 
         device.connect()
 
@@ -100,9 +99,9 @@ class TestLslDeviceSpec(TestLslDevice):
         """Should require a connect call before initialization."""
         device = LslConnector(connection_params={},
                               device_spec=DeviceSpec(
-                               name='LSL',
-                               channels=self.channels,
-                               sample_rate=self.sample_rate))
+            name='LSL',
+            channels=self.channels,
+            sample_rate=self.sample_rate))
 
         with pytest.raises(Exception):
             device.acquisition_init()
@@ -112,9 +111,9 @@ class TestLslDeviceSpec(TestLslDevice):
         print(self.device_spec.channels)
         device = LslConnector(connection_params={},
                               device_spec=DeviceSpec(
-                               name='LSL',
-                               channels=self.channels,
-                               sample_rate=self.sample_rate))
+            name='LSL',
+            channels=self.channels,
+            sample_rate=self.sample_rate))
         device.connect()
         device.acquisition_init()
         data = device.read_data()
@@ -144,8 +143,8 @@ class TestLslChannelConfig(TestLslDevice):
 
     def test_with_trigger_channel(self):
         """A device with a TRG channel should work as expected."""
-
-        self.start_server(self.default_data_server())
+        server = LslDataServer(device_spec=self.device_spec)
+        self.start_server(server)
         device = LslConnector(connection_params={}, device_spec=self.device_spec)
 
         device.connect()

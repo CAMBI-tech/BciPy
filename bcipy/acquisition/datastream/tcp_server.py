@@ -181,6 +181,8 @@ def await_start(dataserver, max_wait=2):
             raise Exception("Server couldn't start up in time.")
 
 # TODO: refactor this into a raw_data module
+
+
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
@@ -196,7 +198,7 @@ def main():
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_with_args
-    from bcipy.acquisition.protocols.registry import find_protocol, find_connector
+    from bcipy.acquisition.protocols.registry import find_protocol
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.devices import supported_device
 

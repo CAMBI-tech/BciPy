@@ -19,6 +19,7 @@ MSG_PROCESSOR_INITIALIZED = "processor_initialized"
 
 OFFSET_COLUMN_NAME = 'TRG'
 
+
 class CountClock():
     """Clock that provides timestamp values starting at 1.0; the next value
     is the increment of the previous. Implements the monotonic clock interface.
@@ -160,8 +161,9 @@ class DataAcquisitionClient:
     def configure_connector(self) -> None:
         """Steps to configure the device connector before starting acquisition."""
 
-        if self._connector.__class__.supports(self._connector.device_spec,
-                                              ConnectionMethod.LSL) and self._connector.device_spec.content_type == 'EEG':
+        if self._connector.__class__.supports(
+                self._connector.device_spec, ConnectionMethod.LSL
+        ) and self._connector.device_spec.content_type == 'EEG':
             log.debug("Initializing LSL Marker Writer.")
             self._connector.include_marker_streams = True
             # If there are any device channels with the same name as the offset_column ('TRG'),

@@ -14,11 +14,11 @@ class DeviceSpec:
     """Specification for a hardware device used in data acquisition.
 
     Parameters
-    ----------    
+    ----------
         name - device short name; ex. DSI-24
         channels - list of data collection channels; devices must have at least
             one channel.
-        sample_rate - sample frequency in Hz. 
+        sample_rate - sample frequency in Hz.
         content_type - type of device; likely one of ['EEG', 'MoCap', 'Gaze',
             'Audio', 'Markers']; see https://github.com/sccn/xdf/wiki/Meta-Data.
         connection_methods - list of methods for connecting to the device

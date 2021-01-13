@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 
 # pylint: disable=too-many-arguments
 
-MARKER_STREAM_NAME='TRG_device_stream'
+MARKER_STREAM_NAME = 'TRG_device_stream'
+
 
 class LslDataServer(StoppableThread):
     """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
@@ -44,7 +45,7 @@ class LslDataServer(StoppableThread):
     """
 
     def __init__(self, device_spec: DeviceSpec, generator: Generator = None, include_meta: bool = True,
-                 add_markers: bool =False, marker_stream_name: str = MARKER_STREAM_NAME):
+                 add_markers: bool = False, marker_stream_name: str = MARKER_STREAM_NAME):
         super(LslDataServer, self).__init__()
 
         self.device_spec = device_spec
@@ -141,7 +142,7 @@ def main():
     import time
     import argparse
 
-    from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator
+    from bcipy.acquisition.datastream.generator import file_data_generator
     from bcipy.acquisition.devices import supported_device
 
     parser = argparse.ArgumentParser()

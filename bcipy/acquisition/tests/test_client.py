@@ -172,8 +172,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         device = _MockConnector(data=data,
                                 device_spec=DeviceSpec(name="Mock_device",
-                                                    channels=channels,
-                                                    sample_rate=sample_hz))
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
@@ -209,8 +209,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         device = _MockConnector(data=data,
                                 device_spec=DeviceSpec(name="Mock_device",
-                                                    channels=channels,
-                                                    sample_rate=sample_hz))
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
@@ -241,8 +241,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         device = _MockConnector(data=data,
                                 device_spec=DeviceSpec(name="Mock_device",
-                                                    channels=channels,
-                                                    sample_rate=sample_hz))
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(
             connector=device,
             clock=CountClock(),
@@ -273,8 +273,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         device = _MockConnector(data=data,
                                 device_spec=DeviceSpec(name="Mock_device",
-                                                    channels=channels,
-                                                    sample_rate=sample_hz))
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
@@ -308,8 +308,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         device = _MockConnector(data=data,
                                 device_spec=DeviceSpec(name="Mock_device",
-                                                    channels=channels,
-                                                    sample_rate=sample_hz))
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(
             connector=device,
             buffer_name='buffer_client_test_get_data_for_clock.db',

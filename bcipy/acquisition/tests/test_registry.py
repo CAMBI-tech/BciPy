@@ -36,7 +36,7 @@ class TestAcquisitionRegistry(unittest.TestCase):
                                    ConnectionMethod.TCP, {
                                        'host': '127.0.0.1',
                                        'port': 9000
-                                   })
+        })
         self.assertTrue(isinstance(connector, DsiConnector))
         self.assertEqual(9000, connector.connection_params['port'])
 

@@ -9,16 +9,8 @@ def main():
 
     The client/server can be stopped with a Keyboard Interrupt (Ctl-C)."""
 
-    import time
-
-    from bcipy.acquisition.protocols import registry
-    from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
     from bcipy.acquisition.devices import supported_device
-    from bcipy.acquisition.connection_method import ConnectionMethod
-    from bcipy.acquisition.devices import supported_device
-    from bcipy.acquisition.connection_method import ConnectionMethod
-    from bcipy.gui.viewer.processor.viewer_processor import ViewerProcessor
     from bcipy.gui.viewer import data_viewer
 
     device_spec = supported_device('LSL')
