@@ -8,7 +8,7 @@ class ConnectionMethod(Enum):
     """Supported methods for connecting to an acquisition device. Each device_spec
     must specify which connection methods are appropriate."""
     TCP = auto()
-    LSL = auto()
+    LSL = auto() # LabStreamingLayer
     # Other options may include USB, etc.
 
     @classmethod

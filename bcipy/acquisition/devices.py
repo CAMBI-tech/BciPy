@@ -1,3 +1,5 @@
+"""Functionality for loading and querying configuration for supported hardware
+devices."""
 from typing import Dict, List
 import json
 from pathlib import Path

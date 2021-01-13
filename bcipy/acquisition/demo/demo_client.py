@@ -27,10 +27,8 @@ def main():
     # Start the server with the command:
     # python bcipy/acquisition/datastream/tcp_server.py --name DSI --port 9000
     device_spec = supported_device('DSI')
-    connector = DsiConnector(connection_params={
-        'host': '127.0.0.1',
-        'port': 9000
-    },
+    connection_params = {'host': '127.0.0.1', 'port': 9000}
+    connector = DsiConnector(connection_params=connection_params,
                              device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.

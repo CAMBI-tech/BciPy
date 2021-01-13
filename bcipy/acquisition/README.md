@@ -10,12 +10,12 @@ The `client` is the primary module for receiving data from the EEG hardware, per
 
     import time
     from acquisition.client import DataAcquisitionClient
-    import acquisition.protocols.registry as registry
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 
-    Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 8844})
-    # Use default processor (FileWriter), buffer, and clock.
-    client = DataAcquisitionClient(device=dsi_device)
+    connector= DsiConnector(connection_params={'host': '127.0.0.1', 'port': 8844},
+                            device_spec=supported_device('DSI'))
+    client = DataAcquisitionClient(connector=connector)
 
     try:
         client.start_acquisition()
@@ -30,23 +30,32 @@ The daq/tests/client_test.py file also demonstrates how the various components i
 
 ### Client Architecture
 
-A `DataAcquisitionClient` is initialized with a `Device`  and optionally a `Processor`, `Buffer`, and `Clock`. A device is a driver that knows how to connect to and communicate with specific EEG hardware/software, as well as decode the sensor data. Supported devices can be queried through the `registry`.
+A `DataAcquisitionClient` is initialized with a `Connector`  and optionally a `Processor`, `Buffer`, and `Clock`. A connector is a driver that knows how to connect to and communicate with specific EEG hardware/software, as well as decode the sensor data. Supported connectors can be queried through the `registry`.
 
 A `DataAcquisitionClient` manages two threads, one for acquisition and one for processing. The acquisition thread continually receives data and writes it to a process queue with an associated timestamp from the `clock`. The process thread watches the queue and sends data to the processor, as well as storing it in the `Buffer` to be queried and archived.
 
 #### Registry
 
-The registry has a list of supported devices. Devices can be queried by name. The device constructor is returned.
+The registry has a list of supported connectors, which can be queried by device and connection method.
 
     import daq.protocols.registry as registry
-    Device = registry.find_device('DSI')
+    registry.find_connector(device_spec=supported_device('DSI'), 
+                            connection_method=ConnectionMethod.TCP)
 
 
-#### Device
+#### Connector
 
-Devices are drivers that knows how to connect to and communicate with specific EEG hardware/software. New devices can be written by extending the daq.protocols.device `Device` class.
+Connectors are are drivers that knows how to communicate with specific EEG hardware/software. A Connector supports one or more devices over a given `ConnectionMethod`. New connectors can be written by extending the daq.protocols.connector `Connector` class.
 
-A device can be initialized with a dict of connection params that are relevant to that specific hardware (ex. host and port for socket devices), as well as the sample frequency and list of channels. If provided the device will usually validate the provided parameters against initialization messages received from the device.
+A connector can be initialized with a dict of connection params that are relevant to that specific hardware (ex. host and port for socket devices), as well as the specification for the device with which to communicate. If provided, the connector will usually validate the provided parameters against initialization messages received from the device.
+
+#### Connection Methods
+
+`ConnectionMethod` is an enumeration of the currently supported connection methods. The currently supported methods are TCP and LabStreamingLayer (LSL).
+
+#### Devices
+
+The `devices` module contains functionality for loading and querying the list of supported hardware devices. A `DeviceSpec` provides the specification for a hardware device used in data acquisition, including the device name, list of channels, sample rate, content_type, and supported connection methods.
 
 #### Processor
 
