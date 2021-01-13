@@ -20,12 +20,11 @@ class BCInterface(BCIGui):
     tasks = TaskType.list()
 
     default_text = '...'
-    padding = 15
+    padding = 30
     btn_height = 40
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
-        self.event_started = False
         self.parameter_location = DEFAULT_PARAMETERS_PATH
 
         self.parameters = load_json_parameters(self.parameter_location,
@@ -212,7 +211,7 @@ class BCInterface(BCIGui):
         self.add_image(
             path='bcipy/static/images/gui_images/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 100, 0], size=100)
+            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -316,8 +315,6 @@ class BCInterface(BCIGui):
                     message_type=AlertMessageType.INFO,
                     okay_to_exit=True)
                 return False
-            if self.event_started:
-                return False
         except Exception as e:
             self.throw_alert_message(
                 title='BciPy Alert',
@@ -370,12 +367,17 @@ class BCInterface(BCIGui):
             command to bci_main.py and subprocess.
         """
         if self.check_input():
-            self.event_started = True
+            self.throw_alert_message(
+                    title='BciPy Alert',
+                    message='Task Starting ...',
+                    message_type=AlertMessageType.INFO,
+                    okay_to_exit=False)
             cmd = (
                 f'python bci_main.py -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
             subprocess.Popen(cmd, shell=True)
+            self.close()
 
     def offline_analysis(self) -> None:
         """Offline Analysis.
@@ -383,7 +385,6 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         cmd = 'python bcipy/signal/model/offline_analysis.py'
-        self.event_started = True
         subprocess.Popen(cmd, shell=True)
 
 
@@ -392,8 +393,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = BCInterface(
         title='Brain Computer Interface',
-        height=500,
-        width=700,
+        height=550,
+        width=750,
         background_color='black')
 
     ex.show_gui()

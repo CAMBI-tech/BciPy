@@ -22,7 +22,9 @@ from bcipy.gui.gui_main import (
     BoolInput,
     DirectoryInput,
     FileInput,
+    FloatInput,
     FormInput,
+    IntegerInput,
     TextInput
 )
 from bcipy.helpers.load import load_experiments, load_fields
@@ -38,6 +40,8 @@ class ExperimentFieldCollection(QWidget):
     field_data: List[tuple] = []
     field_inputs: List[FormInput] = []
     type_inputs = {
+        'int': IntegerInput,
+        'float': FloatInput,
         'bool': BoolInput,
         'filepath': FileInput,
         'directorypath': DirectoryInput
@@ -157,16 +161,26 @@ class ExperimentFieldCollection(QWidget):
 
     def build_save_data(self) -> None:
         """Build Save Data."""
-        for field in self.field_inputs:
-            _input = field.value()
-            name = field.label.strip(self.require_mark)
-            self.save_data[name] = _input
+        try:
+            for field in self.field_inputs:
+                _input = field.cast_value()
+                name = field.label.strip(self.require_mark)
+                self.save_data[name] = _input
+        except ValueError as e:
+            self.throw_alert_message(
+                title='Error',
+                message=f'Error saving data. Invalid value provided. \n {e}',
+                message_type=AlertMessageType.WARN,
+                okay_or_cancel=True
+            )
 
     def write_save_data(self) -> None:
         save_experiment_field_data(self.save_data, self.save_path, self.file_name)
         self.throw_alert_message(
             title='Success',
-            message=f'Data written to {self.save_path}/{self.file_name}',
+            message=(
+                f'Data sucessfully written to: \n\n{self.save_path}/{self.file_name} \n\n\n'
+                'Please close this window to start the task!'),
             message_type=AlertMessageType.INFO,
             okay_or_cancel=True
         )
@@ -243,6 +257,7 @@ class MainPanel(QWidget):
 
     def save(self):
         self.form.save()
+        self.close()
 
 
 def start_app() -> None:
