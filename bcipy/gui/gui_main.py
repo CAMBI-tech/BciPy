@@ -2,6 +2,7 @@
 import logging
 import os
 import sys
+import re
 from enum import Enum
 from typing import Any, List
 
@@ -16,6 +17,31 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
 def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
     """Create a Font object with the given parameters."""
     return QFont(font_family, size, QFont.Normal)
+
+
+def invalid_length(min=1, max=25) -> bool:
+    """Invalid Length.
+
+    Returns a function, which when passed a string will assert whether a string meets min/max conditions.
+    """
+    return lambda string: len(string) < min or len(string) > max
+
+
+def contains_whitespaces(string: str) -> bool:
+    """Contains Whitespace.
+
+    Checks for the presence of whitespace in a string.
+    """
+    return re.match(r'^(?=.*[\s])', string)
+
+
+def contains_special_characters(string: str, regex: str = '[^0-9a-zA-Z_]+') -> bool:
+    """Contains Special Characters.
+
+    Checks for the presence of special chracters in a string. By default it will allow underscores.
+    """
+    disallowed_chars = re.compile(regex)
+    return bool(disallowed_chars.search(string))
 
 
 def static_text_control(parent,
@@ -174,7 +200,7 @@ class FormInput(QWidget):
 
     def cast_value(self) -> Any:
         """Returns the value associated with the form input, cast to the correct type.
-        
+
         *If not defined by downstream classes, it will return the value.*
         """
         self.value()
