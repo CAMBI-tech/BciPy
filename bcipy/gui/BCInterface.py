@@ -4,7 +4,15 @@ import sys
 
 from typing import List
 
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertResponse
+from bcipy.gui.gui_main import (
+    AlertMessageType,
+    AlertResponse,
+    app,
+    BCIGui,
+    contains_special_characters,
+    contains_whitespaces,
+    invalid_length,
+)
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.tasks.task_registry import TaskType
@@ -22,6 +30,8 @@ class BCInterface(BCIGui):
     default_text = '...'
     padding = 30
     btn_height = 40
+    max_length = 25
+    min_length = 1
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -38,6 +48,13 @@ class BCInterface(BCIGui):
         self.user = None
         self.experiment = None
         self.task = None
+
+        self.user_id_validations = [
+            (invalid_length(min=self.min_length, max=self.max_length),
+                f'User ID must contain between {self.min_length} and {self.max_length} alphanumeric characters.'),
+            (contains_whitespaces, 'User ID cannot contain white spaces'),
+            (contains_special_characters, 'User ID cannot contain special characters')
+        ]
 
     def build_buttons(self) -> None:
         """Build Buttons.
@@ -284,7 +301,7 @@ class BCInterface(BCIGui):
     def check_input(self) -> bool:
         """Check Input.
 
-        Checks to make sure user has input all required fields. Currently, only user id is required.
+        Checks to make sure user has input all required fields.
         """
 
         # Update based on current inputs
@@ -294,12 +311,7 @@ class BCInterface(BCIGui):
 
         # Check the set values are different than defaults
         try:
-            if self.user == BCInterface.default_text:
-                self.throw_alert_message(
-                    title='BciPy Alert',
-                    message='Please input a User ID',
-                    message_type=AlertMessageType.INFO,
-                    okay_to_exit=True)
+            if not self.check_user_id():
                 return False
             if self.experiment == BCInterface.default_text:
                 self.throw_alert_message(
@@ -322,6 +334,37 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.CRIT,
                 okay_to_exit=True)
             return False
+        return True
+
+    def check_user_id(self) -> bool:
+        """Check User ID
+
+        User ID must meet the following requirements:
+
+        1. Maximum length of self.max_length alphanumeric characters
+        2. Minimum length of at least self.min_length alphanumeric character
+        3. No special characters
+        4. No spaces
+        """
+        # Check the user id set is different than the default text
+        if self.user == BCInterface.default_text:
+            self.throw_alert_message(
+                title='BciPy Alert',
+                message='Please input a User ID',
+                message_type=AlertMessageType.INFO,
+                okay_to_exit=True)
+            return False
+        # Loop over defined user validations and check for error conditions
+        for validator in self.user_id_validations:
+            (invalid, error_message) = validator
+            if invalid(self.user):
+                self.throw_alert_message(
+                    title='BciPy Alert',
+                    message=error_message,
+                    message_type=AlertMessageType.INFO,
+                    okay_to_exit=True
+                )
+                return False
         return True
 
     def load_users(self) -> List[str]:
@@ -368,10 +411,10 @@ class BCInterface(BCIGui):
         """
         if self.check_input():
             self.throw_alert_message(
-                    title='BciPy Alert',
-                    message='Task Starting ...',
-                    message_type=AlertMessageType.INFO,
-                    okay_to_exit=False)
+                title='BciPy Alert',
+                message='Task Starting ...',
+                message_type=AlertMessageType.INFO,
+                okay_to_exit=False)
             cmd = (
                 f'python bci_main.py -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
