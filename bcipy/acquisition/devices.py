@@ -7,6 +7,7 @@ from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
 DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
+_SUPPORTED_DEVICES = {}
 
 
 @auto_str
@@ -69,29 +70,27 @@ def make_device_spec(config: dict) -> DeviceSpec:
                       description=config['description'])
 
 
-SUPPORTED_DEVICES = {}
-
-
 def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
     """Load the list of supported hardware for data acquisition from the given
     configuration file."""
-    global SUPPORTED_DEVICES
+    global _SUPPORTED_DEVICES
     with open(config_path, 'r', encoding='utf-8') as json_file:
         specs = [make_device_spec(entry) for entry in json.load(json_file)]
-        SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
+        _SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
 
 
 def supported_devices() -> Dict[str, DeviceSpec]:
     """Returns the currently supported devices keyed by name."""
-    global SUPPORTED_DEVICES
-    return SUPPORTED_DEVICES
+    global _SUPPORTED_DEVICES
+    if not _SUPPORTED_DEVICES:
+        load()
+    return _SUPPORTED_DEVICES
 
 
 def supported_device(name: str) -> DeviceSpec:
     """Retrieve the DeviceSpec with the given name. An exception is raised
     if the device is not supported."""
-    global SUPPORTED_DEVICES
-    device = SUPPORTED_DEVICES.get(name, None)
+    device = supported_devices().get(name, None)
     if not device:
         raise ValueError(f"Device not supported: {name}")
     return device
@@ -99,9 +98,5 @@ def supported_device(name: str) -> DeviceSpec:
 
 def register(device_spec: DeviceSpec):
     """Register the given DeviceSpec."""
-    global SUPPORTED_DEVICES
-    SUPPORTED_DEVICES[device_spec.name] = device_spec
-
-
-# Initialize the SUPPORTED_DEVICES
-load()
+    config = supported_devices()
+    config[device_spec.name] = device_spec

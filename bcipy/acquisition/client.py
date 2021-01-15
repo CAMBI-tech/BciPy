@@ -17,7 +17,7 @@ MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
 MSG_PROCESSOR_INITIALIZED = "processor_initialized"
 
-OFFSET_COLUMN_NAME = 'TRG'
+TRIGGER_COLUMN_NAME = 'TRG'
 
 
 class CountClock():
@@ -92,7 +92,7 @@ class DataAcquisitionClient:
         self.marker_writer = NullMarkerWriter()
 
         # column in the acquisition data used to calculate offset.
-        self.offset_column = OFFSET_COLUMN_NAME
+        self.trigger_column = TRIGGER_COLUMN_NAME
         self._acq_process = None
         self._buf = None
 
@@ -168,10 +168,10 @@ class DataAcquisitionClient:
             self._connector.include_marker_streams = True
             # If there are any device channels with the same name as the offset_column ('TRG'),
             # rename these to avoid conflicts.
-            self._connector.rename_rules[self.offset_column] = f"{self.offset_column}_device_stream"
+            self._connector.rename_rules[self.trigger_column] = f"{self.trigger_column}_device_stream"
             # Initialize the marker streams before the device connection (name it 'TRG').
             self.marker_writer = LslMarkerWriter(
-                stream_name=self.offset_column)
+                stream_name=self.trigger_column)
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
@@ -298,11 +298,11 @@ class DataAcquisitionClient:
         # Assumes that the offset_column is present and used for calibration, and
         # that non-calibration values are all 0.
         rows = buffer_server.query(self._buf,
-                                   filters=[(self.offset_column, ">", 0)],
+                                   filters=[(self.trigger_column, ">", 0)],
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
         if not rows:
-            log.debug(f"No rows have a {self.offset_column} value.")
+            log.debug(f"No rows have a {self.trigger_column} value.")
             return None
 
         log.debug(rows[0])
@@ -405,7 +405,7 @@ def main():
     import argparse
     import json
     from bcipy.acquisition.protocols import registry
-    from bcipy.acquisition.devices import SUPPORTED_DEVICES
+    from bcipy.acquisition.devices import supported_devices
     from bcipy.acquisition.connection_method import ConnectionMethod
 
     parser = argparse.ArgumentParser()
@@ -413,7 +413,7 @@ def main():
                         help='buffer db name')
     parser.add_argument('-f', '--filename', default='rawdata.csv')
     parser.add_argument('-d', '--device', default='DSI',
-                        choices=SUPPORTED_DEVICES.keys())
+                        choices=supported_devices().keys())
     parser.add_argument('-c', '--connection_method', default='LSL',
                         choices=ConnectionMethod.list())
     parser.add_argument('-p', '--params', type=json.loads,

@@ -216,7 +216,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
                                     raw_data_file_name=None,
                                     delete_archive=True,
                                     clock=CountClock())
-        daq.offset_column = col_name
+        daq.trigger_column = col_name
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
