@@ -37,11 +37,12 @@ class LslMarkerWriter(MarkerWriter):
     pylsl.StreamInlet. See https://github.com/sccn/labstreaminglayer/wiki.
     """
 
-    def __init__(self):
+    def __init__(self, stream_name: str = "BCI_Stimulus_Markers", stream_id: str = "bci_stim_markers"):
         super(LslMarkerWriter, self).__init__()
-        markers_info = pylsl.StreamInfo("BCI Stimulus Markers",
+        self.stream_name = stream_name
+        markers_info = pylsl.StreamInfo(stream_name,
                                         "Markers", 1, 0, 'string',
-                                        "bci_stim_markers")
+                                        stream_id)
         self.markers_outlet = pylsl.StreamOutlet(markers_info)
         self._stamp = None
 

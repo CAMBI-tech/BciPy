@@ -3,8 +3,11 @@
 LabStreamingLayer (LSL)."""
 import logging
 
+from typing import List, Dict, Any
 import pylsl
-from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.connector import Connector
+from bcipy.acquisition.connection_method import ConnectionMethod
+from bcipy.acquisition.devices import DeviceSpec
 
 log = logging.getLogger(__name__)
 
@@ -46,49 +49,87 @@ def inlet_name(inlet) -> str:
     return name.replace('-', '_')
 
 
-class LslDevice(Device):
-    """Driver for any device streaming data through the LabStreamingLayer lib.
+def channel_names(stream_info: pylsl.StreamInfo) -> List[str]:
+    """Extracts the channel names from the LSL Stream metadata."""
+    channels = []
+    if stream_info.desc().child("channels").empty():
+        return channels
+
+    channel = stream_info.desc().child("channels").child("channel")
+    for _ in range(stream_info.channel_count()):
+        channel_name = channel.child_value("label")
+        channels.append(channel_name)
+        channel = channel.next_sibling()
+
+    return channels
+
+
+def rename_items(items: List[str], rules: Dict[str, str]) -> None:
+    """Renames items based on the provided rules.
+    Parameters
+    ----------
+        items - list of items ; values will be mutated
+        rules - change key -> value
+    """
+    for key, val in rules.items():
+        if key in items:
+            items[items.index(key)] = val
+
+
+class LslConnector(Connector):
+    """Connects to any device streaming data through the LabStreamingLayer lib.
 
     Parameters
     ----------
         connection_params : dict
             parameters used to connect with the server.
-        channels: list, optional
-            list of channel names
-        fs: float, optional
-            sample frequency in (Hz)
+        device_spec : DeviceSpec
+            details about the device data that is being streamed over LSL.
         include_lsl_timestamp: bool, optional
             if True, appends the LSL_timestamp to each sample.
-        trg_channel_name: str, optional
-            if present, the marker channel with this name is used as the TRG
-            channel in the output and queried for offset; otherwise the last
-            marker_channel added is used.
+        include_marker_streams : bool, optional
+            if True, listens for marker streams and merges them with the data
+            stream based on its LSL timestamp. The additional columns use the
+            stream names.
+        rename_rules : dict, optional
+            rules for renaming channels
     """
 
     # pylint: disable=too-many-instance-attributes,too-many-arguments
-    def __init__(self, connection_params, fs=None, channels=None,
-                 include_lsl_timestamp=False,
-                 trg_channel_name='BCI_Stimulus_Markers'):
-        super(LslDevice, self).__init__(connection_params, fs, channels)
-
+    def __init__(self,
+                 connection_params: Dict[str, Any] = {},
+                 device_spec: DeviceSpec = None,
+                 include_lsl_timestamp: bool = False,
+                 include_marker_streams: bool = False,
+                 rename_rules: Dict[str, str] = None):
+        super(LslConnector, self).__init__(connection_params, device_spec)
+        assert device_spec, "DeviceSpec is required"
         self._appended_channels = []
-        self.trg_channel_name = trg_channel_name
 
         if include_lsl_timestamp:
             self._appended_channels.append(LSL_TIMESTAMP)
 
         self._inlet = None
-        self._marker_inlets = None
+        self._marker_inlets = []
+        self.include_marker_streams = include_marker_streams
+        self.rename_rules = rename_rules or {}
         # There can be 1 current marker for each marker channel.
         self.current_markers = {}
 
+    @classmethod
+    def supports(cls, device_spec: DeviceSpec,
+                 connection_method: ConnectionMethod) -> bool:
+        # The content_type requirement can be relaxed if the `connect` method is refactored
+        # to resolve the LSL stream based on the device_spec.
+        return connection_method == ConnectionMethod.LSL
+
     @property
     def name(self):
-        if 'stream_name' in self._connection_params:
-            return self._connection_params['stream_name']
+        if 'stream_name' in self.connection_params:
+            return self.connection_params['stream_name']
         if self._inlet and self._inlet.info().name():
             return self._inlet.info().name()
-        return 'LSL'
+        return self.device_spec.name
 
     def connect(self):
         """Connect to the data source."""
@@ -98,15 +139,17 @@ class LslDevice(Device):
         # NOTE: According to the documentation this is a blocking call that can
         # only be performed on the main thread in Linux systems. So far testing
         # seems fine when done in a separate multiprocessing.Process.
-        eeg_streams = pylsl.resolve_stream('type', 'EEG')
-        marker_streams = pylsl.resolve_stream('type', 'Markers')
+        eeg_streams = pylsl.resolve_stream('type',
+                                           self.device_spec.content_type)
+        marker_streams = pylsl.resolve_stream(
+            'type', 'Markers') if self.include_marker_streams else []
 
-        assert eeg_streams, "One or more EEG streams must be present"
-        assert marker_streams, "One or more Marker streams must be present"
+        assert eeg_streams, f"One or more {self.device_spec.content_type} streams must be present"
+
         self._inlet = pylsl.StreamInlet(eeg_streams[0])
-
-        self._marker_inlets = [pylsl.StreamInlet(inlet)
-                               for inlet in marker_streams]
+        self._marker_inlets = [
+            pylsl.StreamInlet(inlet) for inlet in marker_streams
+        ]
 
         # initialize the current_markers for each marker stream.
         for inlet in self._marker_inlets:
@@ -118,83 +161,39 @@ class LslDevice(Device):
         """
         assert self._inlet is not None, "Connect call is required."
         metadata = self._inlet.info()
+        self.log_info(metadata)
+
+        channels = channel_names(metadata)
+        # Confirm that provided channels match metadata, or meta is empty.
+        if channels and self.device_spec.channels != channels:
+            print(f"device channels: {channels}")
+            print(self.device_spec.channels)
+            raise Exception(f"Channels read from the device do not match "
+                            "the provided parameters.")
+        assert len(self.device_spec.channels) == metadata.channel_count(
+        ), "Channel count error"
+
+        if self.device_spec.sample_rate != metadata.nominal_srate():
+            raise Exception("Sample frequency read from device does not match "
+                            "the provided parameter")
+
+        rename_items(self.channels, self.rename_rules)
+
+        self.channels.extend(self._appended_channels)
+        self.channels.extend(self.marker_stream_names())
+
+        assert len(self.channels) == len(set(
+            self.channels)), "Duplicate channel names are not allowed"
+
+    def log_info(self, metadata: pylsl.StreamInfo) -> None:
+        """Log information about the current connections."""
         log.debug(metadata.as_xml())
         for marker_inlet in self._marker_inlets:
             log.debug("Streaming from marker inlet: %s",
                       inlet_name(marker_inlet))
 
-        info_channels = self._read_channels(metadata)
-        info_fs = metadata.nominal_srate()
-
-        # If channels are not initially provided, set them from the metadata.
-        # Otherwise, confirm that provided channels match metadata, or meta is
-        # empty.
-        if not self.channels:
-            self.channels = info_channels
-            assert self.channels, "Channels must be provided"
-        else:
-            if info_channels and self.channels != info_channels:
-                raise Exception("Channels read from the device do not match "
-                                "the provided parameters")
-        assert len(self.channels) == (metadata.channel_count() +
-                                      len(self._appended_channels) +
-                                      len(self._marker_inlets)),\
-            "Channel count error"
-
-        if not self.fs:
-            self.fs = info_fs
-        elif self.fs != info_fs:
-            raise Exception("Sample frequency read from device does not match "
-                            "the provided parameter")
-
-    def _trigger_inlet_index(self):
-        """Index of the marker inlet that should be used for the TRG column.
-        If the trg_channel_name parameter is provided, and there is a marker
-        inlet with this name, that is used, otherwise the last marker inlet
-        is used. Returns -1 if there are no marker inlets."""
-
-        inlet_names = [inlet_name(inlet) for inlet in self._marker_inlets]
-
-        if self.trg_channel_name in inlet_names:
-            return inlet_names.index(self.trg_channel_name)
-        return len(inlet_names) - 1
-
-    def _read_channels(self, info):
-        """Read channels from the stream metadata if provided and return them
-        as a list. If channels were not specified, returns an empty list.
-
-        Parameters
-        ----------
-            info : pylsl.XMLElement
-        Returns
-        -------
-            list of str
-        """
-        channels = []
-        if info.desc().child("channels").empty():
-            return channels
-
-        channel = info.desc().child("channels").child("channel")
-        for _ in range(info.channel_count()):
-            channel_name = channel.child_value("label")
-            # If the data stream has a TRG channel, rename it so it doesn't
-            # conflict with the marker channel.
-            if channel_name == 'TRG' and self._marker_inlets:
-                channel_name = "TRG_device_stream"
-            channels.append(channel_name)
-            channel = channel.next_sibling()
-
-        for appended_channel in self._appended_channels:
-            channels.append(appended_channel)
-
-        trg_marker_index = self._trigger_inlet_index()
-        for i, inlet in enumerate(self._marker_inlets):
-            col = inlet_name(inlet)
-            if i == trg_marker_index:
-                col = 'TRG'
-            channels.append(col)
-
-        return channels
+    def marker_stream_names(self) -> List[str]:
+        return list(map(inlet_name, self._marker_inlets))
 
     def read_data(self):
         """Reads the next packet and returns the sensor data.
@@ -231,8 +230,7 @@ class LslDevice(Device):
             if not marker.is_empty and timestamp >= marker.timestamp:
                 trg = marker.trg
                 log.debug(("Appending %s marker %s to sample at time %s; ",
-                           "time diff: %s"),
-                          name, marker, timestamp,
+                           "time diff: %s"), name, marker, timestamp,
                           timestamp - marker.timestamp)
                 self.current_markers[name] = Marker.empty()  # clear current
 

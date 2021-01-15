@@ -1,0 +1,106 @@
+"""Tests for hardware device specification."""
+import json
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+from bcipy.acquisition import devices
+from bcipy.acquisition.connection_method import ConnectionMethod
+
+
+class TestDeviceSpecs(unittest.TestCase):
+    """Tests for device specification."""
+
+    def setUp(self):
+        """Reload default devices"""
+        devices.load()
+
+    def test_default_supported_devices(self):
+        """List of supported devices should include generic values for
+        backwards compatibility."""
+        supported = devices.supported_devices()
+        self.assertTrue(len(supported.keys()) > 0)
+        self.assertTrue('LSL' in supported.keys())
+        self.assertTrue('DSI' in supported.keys())
+
+        dsi = supported['DSI']
+        self.assertEqual('EEG', dsi.content_type)
+
+    def test_load_from_config(self):
+        """Should be able to load a list of supported devices from a
+        configuration file."""
+
+        # create a config file in a temp location.
+        temp_dir = tempfile.mkdtemp()
+        channels = ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG"]
+        my_devices = [
+            dict(name="DSI-VR300",
+                 content_type="EEG",
+                 channels=channels,
+                 sample_rate=300.0,
+                 connection_methods=["TCP", "LSL"],
+                 description="Wearable Sensing DSI-VR300")
+        ]
+        config_path = Path(temp_dir, 'my_devices.json')
+        with open(config_path, 'w') as config_file:
+            json.dump(my_devices, config_file)
+
+        devices.load(config_path)
+        supported = devices.supported_devices()
+        self.assertEqual(1, len(supported.keys()))
+        self.assertTrue('DSI-VR300' in supported.keys())
+
+        spec = supported['DSI-VR300']
+        self.assertEqual('EEG', spec.content_type)
+        self.assertEqual(300.0, spec.sample_rate)
+        self.assertEqual(channels, spec.channels)
+
+        self.assertEqual(spec, devices.supported_device('DSI-VR300'))
+        shutil.rmtree(temp_dir)
+
+    def test_device_registration(self):
+        """Should be able to register a new device spec"""
+
+        data = dict(
+            name="my-device",
+            content_type="EEG",
+            channels=["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG"],
+            sample_rate=300.0,
+            connection_methods=["TCP", "LSL"],
+            description="Custom built device")
+        supported = devices.supported_devices()
+        device_count = len(supported.keys())
+        self.assertTrue(device_count > 0)
+        self.assertTrue('my-device' not in supported.keys())
+
+        spec = devices.make_device_spec(data)
+        devices.register(spec)
+
+        supported = devices.supported_devices()
+        self.assertEqual(device_count + 1, len(supported.keys()))
+        self.assertTrue('my-device' in supported.keys())
+
+    def test_search_by_name(self):
+        """Should be able to find a supported device by name."""
+        dsi_device = devices.supported_device('DSI')
+        self.assertEqual('DSI', dsi_device.name)
+
+    def test_device_spec_defaults(self):
+        """DeviceSpec should require minimal information with default values."""
+        spec = devices.DeviceSpec(name='TestDevice',
+                                  channels=['C1', 'C2', 'C3'],
+                                  sample_rate=256.0)
+        self.assertTrue(ConnectionMethod.LSL in spec.connection_methods)
+        self.assertEqual(3, spec.channel_count)
+        self.assertEqual('EEG', spec.content_type)
+
+    def test_device_spec_analysis_channels(self):
+        """DeviceSpec should have a list of channels used for analysis."""
+        spec = devices.DeviceSpec(name='TestDevice',
+                                  channels=['C1', 'C2', 'C3', 'TRG'],
+                                  sample_rate=256.0)
+
+        self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels())
+        self.assertEqual(['C1', 'C2', 'C3', 'TRG'],
+                         spec.analysis_channels(exclude_trg=False))

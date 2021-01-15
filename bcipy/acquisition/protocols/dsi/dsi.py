@@ -7,11 +7,7 @@ rsvpkeyboard app.
 from construct import (Array, Bytes, Const, Embedded, Enum, Float32b, Int8ub,
                        Int16ub, Int32ub, Optional, PascalString, Struct,
                        Switch, this)
-DEFAULT_FS = 300
-DEFAULT_CHANNELS = ['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz',
-                    'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2',
-                    'X3', 'X2', 'F7', 'F8', 'X1',
-                    'A2', 'T6', 'T4', 'TRG']
+
 header = Struct(
     'magic' / Const(b'@ABCD'),                           # bytes 0-5
     'type' / Enum(Int8ub, NULL=0, EEG_DATA=1, EVENT=5),  # byte 5

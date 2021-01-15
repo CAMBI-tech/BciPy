@@ -7,7 +7,7 @@ import random
 import threading
 import time
 
-from bcipy.acquisition.datastream.generator import random_data
+from bcipy.acquisition.datastream.generator import random_data_generator
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class Producer(threading.Thread):
     def __init__(self,
                  queue,
                  freq=1 / 100,
-                 generator=random_data(),
+                 generator=random_data_generator(),
                  maxiters=None):
 
         super(Producer, self).__init__()
