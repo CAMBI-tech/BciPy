@@ -3,7 +3,7 @@
 
 ### What is it?
 
-It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
+It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system. See our official BciPy documentation including affliations and more context information here: https://bcipy.github.io/  (in progress).
 
 It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10 Pro) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
@@ -60,7 +60,7 @@ To use all the goodies locally (including the GUI and demo scripts)
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
 
-Alternatley, if [Make](http://www.mingw.org/) is installed, you may run the follow command to run install:
+Alternatley, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
 
 ```sh
 # install in development mode
@@ -71,7 +71,7 @@ make dev-install
 
 Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
 
-Ex.`python bci_main.py` *this will use default parameters, user, experiment and task*
+Ex. `python bci_main.py` *this will use default parameters, user, experiment and task*
 
 You can pass it attributes with flags, if desired.
 
@@ -94,7 +94,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
 - `signal`: eeg signal models, filters, processing, evaluators and viewers. 
-- `gui`: end-user interfaces which allow running of registered bci experiments, field collection and parameter editing.
+- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
 - `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
@@ -166,7 +166,7 @@ coverage report
 coverage html
 ```
 
-Alternatley, if Make is installed, you may run the follow command to run coverage and generate the html:
+Alternatley, if Make is installed, you may run the follow command to run coverage/pytest and generate the html:
 
 ```sh
 make coverage-html
@@ -194,16 +194,29 @@ Alternatley, if Make is installed, you may run the follow command to run autopep
 make lint
 ```
 
+## Glossary
+-----------
+
+***Stimuli***: A single letter, tone or image shown (generally in an inquiry). Singular = stimulus, plural = stimuli.
+
+***Trial***: A collection of data after a stimuli is shown. A----
+
+***Inquiry***: The set of stimuli after a fixation cross in a spelling task to gather user intent. A ---- B --- C ----
+
+***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
+
+
 ## Authorship
 --------------
 
 - Tab Memmott (OHSU)
+- Matthew Lawhead (OHSU)
 - Aziz Kocanaogullari (NEU)
-- Matthew Lawhead (OHSU- OCTRI)
-- Berkan Kadioglu (NEU)
+- Shiran Dudy (OHSU)
 - Dani Smektala (OHSU)
-- Ian Jackson (OHSU/ Reed)
+- Ian Jackson (Reed)
+- Alister Cedeño (OHSU)
+- Berkan Kadioglu (NEU)
+- Basak Celik (NEU)
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
-- Shiran Dudy (OHSU)
-- Basak Celik (NEU)

@@ -10,8 +10,8 @@ class TestSignalModelRelated(unittest.TestCase):
     def test_valid_letters(self):
         alp = alphabet()
         cp = CopyPhraseWrapper(
-            min_num_seq=1,
-            max_num_seq=50,
+            min_num_inq=1,
+            max_num_inq=50,
             signal_model=None,
             fs=25,
             k=2,

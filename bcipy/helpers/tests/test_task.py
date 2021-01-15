@@ -60,7 +60,7 @@ class TestTrialReshaper(unittest.TestCase):
 
     def test_trial_reshaper_calibration(self):
         (reshaped_trials, labels,
-         num_of_seq, trials_per_sequence) = trial_reshaper(
+         num_of_inq, trials_per_inquiry) = trial_reshaper(
             trial_target_info=self.target_info,
             timing_info=self.timing_info, eeg_data=self.eeg,
             fs=256, k=2, mode='calibration', channel_map=self.channel_map)
@@ -69,8 +69,8 @@ class TestTrialReshaper(unittest.TestCase):
             len(reshaped_trials) == self.channel_number,
             f'len is {len(reshaped_trials)} not {self.channel_number}')
         self.assertEqual(len(reshaped_trials[0]), 3)
-        self.assertEqual(num_of_seq, 1)
-        self.assertEqual(trials_per_sequence, 3)
+        self.assertEqual(num_of_inq, 1)
+        self.assertEqual(trials_per_inquiry, 3)
 
     def test_trial_reshaper_copy_phrase(self):
         pass
@@ -106,7 +106,7 @@ class TestFloatVal(unittest.TestCase):
 
 
 class TestTargetGeneration(unittest.TestCase):
-    """Tests for generation of target sequences"""
+    """Tests for generation of target inquiries"""
 
     def test_target_number_less_than_alp(self):
         """Test when requested number of targets is less than the length of

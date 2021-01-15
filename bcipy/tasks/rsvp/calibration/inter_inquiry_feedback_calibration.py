@@ -5,8 +5,8 @@ from bcipy.feedback.visual.level_feedback import LevelFeedback
 from bcipy.tasks.task import Task
 from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
+from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
+from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
 from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
     trial_complete_message,
@@ -18,12 +18,12 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 
 
-class RSVPInterSequenceFeedbackCalibration(Task):
-    """RSVP InterSequenceFeedbackCalibration Task uses inter sequence
+class RSVPInterInquiryFeedbackCalibration(Task):
+    """RSVP InterInquiryFeedbackCalibration Task uses inter inquiry
         feedback to alert user to their current state in order to increase performance
         in a calibration task.
 
-    Calibration task performs an RSVP stimulus sequence to elicit an ERP.
+    Calibration task performs an RSVP stimulus inquiry to elicit an ERP.
     Parameters will change how many stim and for how long they present.
     Parameters also change color and text / image inputs. This task assumes 5 levels
     of feedback. The parameters for this task are in the feedback_config section.
@@ -41,13 +41,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
     Output:
         file_save (String)
     """
-    TASK_NAME = 'RSVP Inter Sequence Feedback Calibration Task'
+    TASK_NAME = 'RSVP Inter inquiry Feedback Calibration Task'
     # This defines the channel we use to calculate the PSD for feedback. We want to use a
     #   posterior channel. If Oz available, use that!
     PSD_CHANNEL_INDEX = 6
 
     def __init__(self, win, daq, parameters, file_save):
-        super(RSVPInterSequenceFeedbackCalibration, self).__init__()
+        super(RSVPInterInquiryFeedbackCalibration, self).__init__()
         self._task = RSVPCalibrationTask(
             win,
             daq,
@@ -96,7 +96,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         self.psd_method = PSD_TYPE.WELCH
 
-        # The channel used to calculate the PSD from RSVP sequence.
+        # The channel used to calculate the PSD from RSVP inquiry.
         self.psd_channel_index = self.PSD_CHANNEL_INDEX
 
         # filter parameters
@@ -136,9 +136,9 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         # Begin the Experiment
         while run:
 
-            # Get random sequence information given stimuli parameters
+            # Get random inquiry information given stimuli parameters
             (stimuli_elements, timing_sti,
-             color_sti) = random_rsvp_calibration_seq_gen(
+             color_sti) = random_rsvp_calibration_inq_gen(
                  self.alp,
                  stim_number=self.stim_number,
                  stim_length=self.stim_length,
@@ -149,8 +149,8 @@ class RSVPInterSequenceFeedbackCalibration(Task):
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self._task.task_info_color)
 
-            # Execute the RSVP sequences
-            for sequence_idx in range(len(task_text)):
+            # Execute the RSVP inquiries
+            for inquiry_idx in range(len(task_text)):
 
                 # check user input to make sure we should be going
                 if not get_user_input(self.rsvp, self.wait_screen_message,
@@ -158,13 +158,13 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                     break
 
                 if self.enable_breaks:
-                    pause_calibration(self.window, self.rsvp, sequence_idx,
+                    pause_calibration(self.window, self.rsvp, inquiry_idx,
                                       self.parameters)
 
                 # update task state
                 self.rsvp.update_task_state(
-                    text=task_text[sequence_idx],
-                    color_list=task_color[sequence_idx])
+                    text=task_text[inquiry_idx],
+                    color_list=task_color[inquiry_idx])
 
                 # Draw and flip screen
                 self.rsvp.draw_static()
@@ -173,28 +173,28 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 # Get height
                 self.rsvp.sti.height = self.stimuli_height
 
-                # Schedule a sequence
-                self.rsvp.stimuli_sequence = stimuli_elements[sequence_idx]
+                # Schedule a inquiry
+                self.rsvp.stimuli_inquiry = stimuli_elements[inquiry_idx]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_stim:
-                    self.rsvp.stimuli_colors = color_sti[sequence_idx]
+                    self.rsvp.stimuli_colors = color_sti[inquiry_idx]
 
-                self.rsvp.stimuli_timing = timing_sti[sequence_idx]
+                self.rsvp.stimuli_timing = timing_sti[inquiry_idx]
 
                 # Wait for a time
                 core.wait(self._task.buffer_val)
 
-                # Do the sequence
-                last_sequence_timing = self.rsvp.do_sequence()
+                # Do the inquiry
+                last_inquiry_timing = self.rsvp.do_inquiry()
 
-                # Write triggers for the sequence
-                _write_triggers_from_sequence_calibration(
-                    last_sequence_timing, self._task.trigger_file)
+                # Write triggers for the inquiry
+                _write_triggers_from_inquiry_calibration(
+                    last_inquiry_timing, self._task.trigger_file)
 
                 self.logger.info('[Feedback] Getting Decision')
 
-                position = self._get_feedback_decision(last_sequence_timing)
+                position = self._get_feedback_decision(last_inquiry_timing)
                 self.logger.info(
                     f'[Feedback] Administering feedback position {position}')
                 self.visual_feedback.administer(position=position)
@@ -214,7 +214,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
         core.wait(self._task.buffer_val)
 
         if self.daq.is_calibrated:
-            _write_triggers_from_sequence_calibration(
+            _write_triggers_from_inquiry_calibration(
                 ['offset', self.daq.offset], self._task.trigger_file, offset=True)
 
         # Close this sessions trigger file and return some data
@@ -225,16 +225,16 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
         return self.file_save
 
-    def _get_feedback_decision(self, sequence_timing):
+    def _get_feedback_decision(self, inquiry_timing):
         # wait some time in order to get enough data from the daq and make the
         #   transition less abrupt to the user
         core.wait(self.feedback_buffer_time)
 
         # get last stim_length stimuli
-        sequence_of_interest = sequence_timing[-self.stim_length:]
+        inquiry_of_interest = inquiry_timing[-self.stim_length:]
 
-        # get data sequence and only use the first 2 stimuli
-        data = self._get_data_for_psd(sequence_of_interest[:2])
+        # get data inquiry and only use the first 2 stimuli
+        data = self._get_data_for_psd(inquiry_of_interest[:2])
 
         # we always want the same data channel in the occipital region and the
         # first of it
@@ -288,10 +288,10 @@ class RSVPInterSequenceFeedbackCalibration(Task):
                 return 2
             return 1
 
-    def _get_data_for_psd(self, sequence_timing):
+    def _get_data_for_psd(self, inquiry_timing):
         # get data from the DAQ
         raw_data, triggers, target_info = process_data_for_decision(
-            sequence_timing,
+            inquiry_timing,
             self.daq,
             self.window,
             self.parameters,
@@ -354,7 +354,7 @@ class RSVPInterSequenceFeedbackCalibration(Task):
 
     @classmethod
     def label(cls):
-        return RSVPInterSequenceFeedbackCalibration.TASK_NAME
+        return RSVPInterInquiryFeedbackCalibration.TASK_NAME
 
     def name(self):
-        return RSVPInterSequenceFeedbackCalibration.TASK_NAME
+        return RSVPInterInquiryFeedbackCalibration.TASK_NAME

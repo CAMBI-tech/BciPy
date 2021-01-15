@@ -35,7 +35,7 @@ class TaskType(Enum):
     RSVP_ICON_TO_ICON = 'RSVP Icon to Icon'
     RSVP_ICON_TO_WORD = 'RSVP Icon to Word'
     RSVP_ALERT_TONE_CALIBRATION = 'RSVP Alert Tone'
-    RSVP_INTER_SEQUENCE_FEEDBACK_CALIBRATION = 'RSVP Feedback Calibration'
+    RSVP_INTER_INQUIRY_FEEDBACK_CALIBRATION = 'RSVP Inter-Inquiry Feedback Calibration'
     RSVP_TIMING_VERIFICATION_CALIBRATION = 'RSVP Time Test'
 
     def __new__(cls, *args, **kwds):

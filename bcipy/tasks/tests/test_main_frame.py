@@ -16,8 +16,8 @@ class TestDecisionMaker(unittest.TestCase):
         """Set up decision maker object for testing """
         alphabet = list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR]
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
@@ -29,7 +29,7 @@ class TestDecisionMaker(unittest.TestCase):
             alphabet=alphabet,
             is_txt_stim=True,
             stimuli_timing=[1, .2],
-            seq_constants=None)
+            inq_constants=None)
 
         self.evidence_fusion = EvidenceFusion(list_name_evidence=['A', 'B'],
                                               len_dist=2)
@@ -80,8 +80,8 @@ class TestDecisionMaker(unittest.TestCase):
     def test_decision_maker_init(self):
         """Test initialization"""
         # TODO: Update that test part
-        # self.assertEqual(self.decision_maker.min_num_seq, 1)
-        # self.assertEqual(self.decision_maker.max_num_seq, 3)
+        # self.assertEqual(self.decision_maker.min_num_inq, 1)
+        # self.assertEqual(self.decision_maker.max_num_inq, 3)
         self.assertEqual(self.decision_maker.state, '')
         self.assertEqual(self.decision_maker.displayed_state, '')
 
@@ -113,7 +113,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.assertEqual(self.decision_maker.state, '')
         self.assertEqual(self.decision_maker.displayed_state, '')
         self.assertEqual(self.decision_maker.time, 0)
-        self.assertEqual(self.decision_maker.sequence_counter, 0)
+        self.assertEqual(self.decision_maker.inquiry_counter, 0)
 
     def test_form_display_state(self):
         """Test form display state method with a dummy state"""
@@ -122,40 +122,40 @@ class TestDecisionMaker(unittest.TestCase):
         self.assertEqual(self.decision_maker.displayed_state, 'ABE')
         self.decision_maker.reset()
 
-    def test_do_epoch(self):
-        """Test do_epoch method"""
+    def test_do_series(self):
+        """Test do_series method"""
         probability_distribution = np.ones(
             len(self.decision_maker.alphabet)) / 8
         decision, chosen_stimuli = self.decision_maker.decide(
             probability_distribution)
-        self.decision_maker.do_epoch()
-        self.assertEqual(self.decision_maker.sequence_counter, 0)
+        self.decision_maker.do_series()
+        self.assertEqual(self.decision_maker.inquiry_counter, 0)
 
     def test_decide_state_update(self):
         """Tests decide state update method"""
         probability_distribution = np.ones(len(self.decision_maker.alphabet))
-        self.decision_maker.list_epoch[-1]['list_distribution'].append(
+        self.decision_maker.list_series[-1]['list_distribution'].append(
             probability_distribution)
         decision = self.decision_maker.decide_state_update()
-        expected = 'A'  # expect to commit to first letter in sequence, due to uniform probability
+        expected = 'A'  # expect to commit to first letter in inquiry, due to uniform probability
         self.assertEqual(decision, 'A')
 
-    def test_schedule_sequence(self):
-        """Test sequence scheduling. Should return new stimuli list, at random."""
+    def test_schedule_inquiry(self):
+        """Test inquiry scheduling. Should return new stimuli list, at random."""
         probability_distribution = np.ones(len(self.decision_maker.alphabet))
-        old_counter = self.decision_maker.sequence_counter
-        self.decision_maker.list_epoch[-1]['list_distribution'].append(
+        old_counter = self.decision_maker.inquiry_counter
+        self.decision_maker.list_series[-1]['list_distribution'].append(
             probability_distribution)
-        stimuli = self.decision_maker.schedule_sequence()
+        stimuli = self.decision_maker.schedule_inquiry()
         self.assertEqual(self.decision_maker.state, '.')
         self.assertEqual(stimuli[0],
-                         self.decision_maker.list_epoch[-1]['list_sti'][-1])
-        self.assertLess(old_counter, self.decision_maker.sequence_counter)
+                         self.decision_maker.list_series[-1]['list_sti'][-1])
+        self.assertLess(old_counter, self.decision_maker.inquiry_counter)
 
     def test_prepare_stimuli(self):
         """Test that stimuli are prepared as expected"""
         probability_distribution = np.ones(len(self.decision_maker.alphabet))
-        self.decision_maker.list_epoch[-1]['list_distribution'].append(
+        self.decision_maker.list_series[-1]['list_distribution'].append(
             probability_distribution)
         stimuli = self.decision_maker.prepare_stimuli()
         self.assertEqual(self.decision_maker.stimuli_agent.len_query + 1,

@@ -15,7 +15,7 @@ class StimuliAgent:
         Functions:
             reset(): reset the agent
             return_stimuli(): update the agent and return a stimuli set
-            do_epoch(): one a commitment is made update agent
+            do_series(): one a commitment is made update agent
             """
 
     def __init__(self,
@@ -37,7 +37,7 @@ class StimuliAgent:
                 query(list[str]): queries """
         return
 
-    def do_epoch(self):
+    def do_series(self):
         """ If the system decides on a class let the agent know about it """
         return
 
@@ -58,7 +58,7 @@ class RandomStimuliAgent(StimuliAgent):
 
         return query
 
-    def do_epoch(self):
+    def do_series(self):
         pass
 
 
@@ -77,7 +77,7 @@ class NBestStimuliAgent(StimuliAgent):
 
         return query
 
-    def do_epoch(self):
+    def do_series(self):
         pass
 
 
@@ -89,7 +89,7 @@ class MomentumStimuliAgent(StimuliAgent):
             I: mutual information, this utilizes the current posterior
             M: momentum, this utilizes all likelihoods so far
         and the queries are selected by linearly combining these two.
-        This agent, in the beginning of the epoch, explores utilizing M and
+        This agent, in the beginning of the series, explores utilizing M and
         eventually exploits the knowledge using I  """
 
     def __init__(self, alphabet: List[str],
@@ -103,9 +103,9 @@ class MomentumStimuliAgent(StimuliAgent):
             gam(float): the scaling factor, likelihoods are in log domain,
                 whereas the mutual information term is not
             # TODO: mathematically this gam term is not required anymore.
-            dif_lam(float): at each sequence, you prefer to decrease the effect
+            dif_lam(float): at each inquiry, you prefer to decrease the effect
                 of M, otherwise you are only prune to noise
-            update_lam_flag(bool): if True updates lambda at each sequence
+            update_lam_flag(bool): if True updates lambda at each inquiry
         """
         self.alphabet = alphabet
         self.lam = lam
@@ -133,12 +133,12 @@ class MomentumStimuliAgent(StimuliAgent):
 
         # update the momentum term using likelihoods
         momentum = self._compute_momentum(list_distribution)
-        num_passed_sequences = len(list_distribution)
+        num_passed_inquiries = len(list_distribution)
 
-        # if there are no sequences shown yet, the momentum cannot be computed
-        if num_passed_sequences > 1:
+        # if there are no inquiries shown yet, the momentum cannot be computed
+        if num_passed_inquiries > 1:
             reward = (self.lam_ - 1) * entropy_term + (
-                self.lam_ / num_passed_sequences) * momentum
+                self.lam_ / num_passed_inquiries) * momentum
         else:
             reward = -entropy_term
 
@@ -171,14 +171,14 @@ class MomentumStimuliAgent(StimuliAgent):
              should be updated logically """
         thr = 1
         if len_history < 10:
-            # if less then 10 sequences so far, do the hand shaking
+            # if less then 10 inquiries so far, do the hand shaking
             self.lam_ = np.max(
                 [self.lam_ - self.dif_lam * (len_history / thr), 0])
         else:
-            # do not explore if already passed 10 sequences
+            # do not explore if already passed 10 inquiries
             self.lam_ = 0
 
-    def do_epoch(self):
+    def do_series(self):
         self.reset()
 
 

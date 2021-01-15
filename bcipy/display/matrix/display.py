@@ -7,7 +7,7 @@ import logging
 
 
 class MatrixDisplay:
-    """ Matrix Display Object for Sequence Presentation. Animates a sequence
+    """ Matrix Display Object for inquiry Presentation. Animates a inquiry
         in Matrix. Mode should be determined outside.
         Attr:
             task(visual_Text_Stimuli): task bar
@@ -124,8 +124,8 @@ class MatrixDisplay:
                     stim.draw()
                     self.stimuli.append(stim)
 
-    def do_sequence(self):
-        """ implements grid sequence """
+    def do_inquiry(self):
+        """ implements grid inquiry """
 
         # Stimulate rows
         for x in self.uniform_grid_values_row:
@@ -202,6 +202,6 @@ if __name__ == "__main__":
         matrix.draw_static()
 
         # animate!
-        matrix.do_sequence()
+        matrix.do_inquiry()
 
         time.sleep(2)

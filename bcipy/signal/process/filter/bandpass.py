@@ -21,16 +21,16 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 
-def text_filter(input_seq, filt=None, fs=256, k=2, filter_location=None):
+def text_filter(input_inquiry, filt=None, fs=256, k=2, filter_location=None):
     """
-    :param input_seq: Input sequence to be filtered. Expected dimensions are 16xT
+    :param input_inquiry: Input inquiry to be filtered. Expected dimensions are 16xT
     :param filt: Input for using a specific filter. If left empty, according to
     :fs a pre-designed filter is going to be used. Filters are pre-designed for fs = 256,300 or 1024 Hz.
     :param fs: Sampling frequency of the hardware.
     :param k: downsampling order
     :param filter_location: Path to filters.txt, If left empty, filters.txt is assumed to be next to this sig_pro.py
 
-    :return: output sequence that is filtered and downsampled input. Filter delay is compensated. Dimensions are 16xT/k
+    :return: output inquiry that is filtered and downsampled input. Filter delay is compensated. Dimensions are 16xT/k
 
     256Hz
         - 1.75Hz to 45Hz
@@ -73,15 +73,15 @@ def text_filter(input_seq, filt=None, fs=256, k=2, filter_location=None):
     filt = np.array(filt)
     filt = filt - np.sum(filt) / filt.size
 
-    # Initialize output sequence
-    output_seq = [[]]
+    # Initialize output inquiry
+    output_inq = [[]]
 
     # Convolution per channel
-    for z in range(len(input_seq)):
-        temp = np.convolve(input_seq[z][:], filt)
+    for z in range(len(input_inquiry)):
+        temp = np.convolve(input_inquiry[z][:], filt)
         # Filter off-set compensation
         temp = temp[int(np.ceil(len(filt) / 2.)) - 1:]
         # Downsampling
-        output_seq.append(temp[::k])
+        output_inq.append(temp[::k])
 
-    return np.array(output_seq[1:])
+    return np.array(output_inq[1:])

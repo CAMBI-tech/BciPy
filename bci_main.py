@@ -140,7 +140,7 @@ def _clean_up_session(display, daq, server):
     # Close the display window
     # NOTE: There is currently a bug in psychopy when attempting to shutdown
     # windows when using a USB-C monitor. Putting the display close last in
-    # the sequence allows acquisition to properly shutdown.
+    # the inquiry allows acquisition to properly shutdown.
     display.close()
 
     return True

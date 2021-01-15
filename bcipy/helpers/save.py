@@ -88,7 +88,7 @@ def _save_session_related_data(file, session_dictionary):
         file[str]: string of path to save our data in
         session_dictionary[dict]: dictionary of session data. It will appear
             as follows:
-                {{ "epochs": {
+                {{ "series": {
                         "1": {
                           "0": {
                             "copy_phrase": "COPY_PHRASE",

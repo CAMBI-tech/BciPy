@@ -131,7 +131,7 @@ Sampling frequency of the hardware in Hz. Default value = 256
 Downsampling order. Default value = 2
 #### Usage:
 
-Pass an input eeg np.array that is a matrix where every row is a channels data. For example a two channel EEG sequence could be:
+Pass an input eeg np.array that is a matrix where every row is a channels data. For example a two channel EEG inquiry could be:
 
 ```python
 input_seq = np.array([[1, 4, ...],

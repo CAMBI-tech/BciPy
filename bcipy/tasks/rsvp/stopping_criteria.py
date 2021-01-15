@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 # Criteria
 class DecisionCriteria:
-    """Abstract class for Criteria which can be applied to evaluate a sequence
+    """Abstract class for Criteria which can be applied to evaluate a inquiry
     """
 
     def __init__(self, **kwargs):
@@ -17,17 +17,17 @@ class DecisionCriteria:
     def reset(self):
         pass
 
-    def decide(self, epoch: Dict):
+    def decide(self, series: Dict):
         """
         Apply the given criteria.
         Parameters:
         -----------
-            epoch - Epoch data
-                - target(str): target of the epoch
+            series - series data
+                - target(str): target of the series
                 - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the sequence
+                      time spent on the inquiry
                 - list_sti(list[list[str]]): presented symbols in each
-                      sequence
+                      inquiry
                 - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
 
@@ -39,32 +39,32 @@ class MinIterationsCriteria(DecisionCriteria):
     """ Returns true if the minimum number of iterations have not yet
         been reached. """
 
-    def __init__(self, min_num_seq: int):
+    def __init__(self, min_num_inq: int):
         """ Args:
-                min_num_seq(int): minimum number of sequence number before any
+                min_num_inq(int): minimum number of inquiry number before any
                  termination objective is allowed to be triggered """
-        self.min_num_seq = min_num_seq
+        self.min_num_inq = min_num_inq
 
-    def decide(self, epoch: Dict):
+    def decide(self, series: Dict):
         # Note: we use 'list_sti' parameter since this is the number of
-        # sequences displayed. The length of 'list_distribution' is 1 greater
+        # inquiries displayed. The length of 'list_distribution' is 1 greater
         # than this, since the language model distribution is added before
-        # the first sequence is displayed.
-        current_seq = len(epoch['list_sti'])
+        # the first inquiry is displayed.
+        current_inq = len(series['list_sti'])
         log.debug(
-            f"Checking min iterations; current iteration is {current_seq}")
-        return current_seq < self.min_num_seq
+            f"Checking min iterations; current iteration is {current_inq}")
+        return current_inq < self.min_num_inq
 
 
 class DecreasedProbabilityCriteria(DecisionCriteria):
     """Returns true if the letter with the max probability decreased from the
-        last sequence."""
+        last inquiry."""
 
-    def decide(self, epoch: Dict):
-        if len(epoch['list_distribution']) < 2:
+    def decide(self, series: Dict):
+        if len(series['list_distribution']) < 2:
             return False
-        prev_dist = epoch['list_distribution'][-2]
-        cur_dist = epoch['list_distribution'][-1]
+        prev_dist = series['list_distribution'][-2]
+        cur_dist = series['list_distribution'][-1]
         return np.argmax(cur_dist) == np.argmax(
             prev_dist) and np.max(cur_dist) < np.max(prev_dist)
 
@@ -72,17 +72,17 @@ class DecreasedProbabilityCriteria(DecisionCriteria):
 class MaxIterationsCriteria(DecisionCriteria):
     """Returns true if the max iterations have been reached."""
 
-    def __init__(self, max_num_seq: int):
+    def __init__(self, max_num_inq: int):
         """ Args:
-                max_num_seq(int): maximum number of sequences allowed before
+                max_num_inq(int): maximum number of inquiries allowed before
                     mandatory termination """
-        self.max_num_seq = max_num_seq
+        self.max_num_inq = max_num_inq
 
-    def decide(self, epoch: Dict):
-        # Note: len(epoch['list_sti']) != len(epoch['list_distribution'])
+    def decide(self, series: Dict):
+        # Note: len(series['list_sti']) != len(series['list_distribution'])
         # see MinIterationsCriteria comment
-        current_seq = len(epoch['list_sti'])
-        if current_seq >= self.max_num_seq:
+        current_inq = len(series['list_sti'])
+        if current_inq >= self.max_num_inq:
             log.debug(
                 "Committing to decision: max iterations have been reached.")
             return True
@@ -101,8 +101,8 @@ class ProbThresholdCriteria(DecisionCriteria):
         assert 1 >= threshold >= 0, "stopping threshold should be in [0,1]"
         self.tau = threshold
 
-    def decide(self, epoch: Dict):
-        current_distribution = epoch['list_distribution'][-1]
+    def decide(self, series: Dict):
+        current_distribution = series['list_distribution'][-1]
         if np.max(current_distribution) > self.tau:
             log.debug("Committing to decision: posterior exceeded threshold.")
             return True
@@ -125,9 +125,9 @@ class MarginCriteria(DecisionCriteria):
         assert 1 >= margin >= 0, "difference margin should be in [0,1]"
         self.margin = margin
 
-    def decide(self, epoch: Dict):
+    def decide(self, series: Dict):
         # Get the current posterior probability values
-        p = copy(epoch['list_distribution'][-1])
+        p = copy(series['list_distribution'][-1])
         # This criteria compares most likely candidates (best competitors)
         candidates = [p[idx] for idx in list(np.argsort(p)[-2:])]
         stopping_rule = np.abs(candidates[0] - candidates[1])
@@ -153,10 +153,10 @@ class MomentumCommitCriteria(DecisionCriteria):
     def reset(self):
         pass
 
-    def decide(self, epoch):
+    def decide(self, series):
         eps = np.power(.1, 6)
 
-        prob_history = copy(epoch['list_distribution'])
+        prob_history = copy(series['list_distribution'])
         p = prob_history[-1]
 
         tmp_p = np.ones(len(p)) * (1 - self.tau) / (len(p) - 1)
@@ -181,7 +181,7 @@ class MomentumCommitCriteria(DecisionCriteria):
 
 
 class CriteriaEvaluator():
-    """Evaluates whether an epoch should commit to a decision based on the
+    """Evaluates whether an series should commit to a decision based on the
     provided criteria.
 
     Parameters:
@@ -198,37 +198,37 @@ class CriteriaEvaluator():
         self.commit_criteria = commit_criteria or []
 
     @classmethod
-    def default(cls, min_num_seq: int, max_num_seq: int, threshold: float):
-        return cls(continue_criteria=[MinIterationsCriteria(min_num_seq)],
+    def default(cls, min_num_inq: int, max_num_inq: int, threshold: float):
+        return cls(continue_criteria=[MinIterationsCriteria(min_num_inq)],
                    commit_criteria=[
-                       MaxIterationsCriteria(max_num_seq),
+                       MaxIterationsCriteria(max_num_inq),
                        ProbThresholdCriteria(threshold)
         ])
 
-    def do_epoch(self):
+    def do_series(self):
         for el_ in self.continue_criteria:
             el_.reset()
         for el in self.commit_criteria:
             el.reset()
 
-    def should_commit(self, epoch: Dict):
-        """Evaluates the given epoch; returns true if stoppage criteria has
+    def should_commit(self, series: Dict):
+        """Evaluates the given series; returns true if stoppage criteria has
         been met, otherwise false.
 
         Parameters:
         -----------
-            epoch - Epoch data
-                - target(str): target of the epoch
+            series - series data
+                - target(str): target of the series
                 - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the sequence
+                      time spent on the inquiry
                 - list_sti(list[list[str]]): presented symbols in each
-                      sequence
+                      inquiry
                 - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
         """
         if any(
-                criteria.decide(epoch)
+                criteria.decide(series)
                 for criteria in self.continue_criteria):
             return False
         return any(
-            criteria.decide(epoch) for criteria in self.commit_criteria)
+            criteria.decide(series) for criteria in self.commit_criteria)
