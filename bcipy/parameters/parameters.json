@@ -631,7 +631,7 @@
   "min_inq_len": {
     "value": "1",
     "section": "bci_config",
-    "readableName": "Minimum inquiry Length",
+    "readableName": "Minimum Inquiry Length",
     "helpTip": "The minimum number of inquiries to present in spelling tasks",
     "recommended_values": [
       "1"
@@ -641,7 +641,7 @@
   "max_inq_len": {
     "value": "50",
     "section": "bci_config",
-    "readableName": "Maximum Task Length (inquiries)",
+    "readableName": "Maximum Inquiry Length",
     "helpTip": "Specifies the maximum number of inquiries to present in copy/spelling tasks. The task will end if this number is reached.",
     "recommended_values": [
       "20",
