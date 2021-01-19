@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -274,7 +274,7 @@
     "type": "directorypath"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen Mode On/Off",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
@@ -359,7 +359,7 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "1",
+    "value": "0.25",
     "section": "bci_config",
     "readableName": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in the RSVP stream.",
@@ -367,7 +367,7 @@
     "type": "float"
   },
   "time_target": {
-    "value": "2",
+    "value": "1",
     "section": "bci_config",
     "readableName": "Target Letter Presentation Length (sec)",
     "helpTip": "Target Letter Presentation Length",
@@ -742,7 +742,7 @@
     "type": "float"
   },
   "lang_model_enabled": {
-    "value": "true",
+    "value": "false",
     "section": "lang_model_config",
     "readableName": "Language Model On/Off",
     "helpTip": "If ‘true’, the language model will be enabled, and language model evidence will be incorporated into calculation of posterior probabilities. If ‘false’, posterior probabilities will be calculated based on EEG evidence only.",
