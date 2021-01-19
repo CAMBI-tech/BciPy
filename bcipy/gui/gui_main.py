@@ -246,6 +246,7 @@ class IntegerInput(FormInput):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
         spin_box.setMaximum(100000)
+        spin_box.setValue(int(value))
         return spin_box
 
     def cast_value(self) -> str:
@@ -272,6 +273,7 @@ class FloatInput(FormInput):
         """Override FormInput to create a spinbox."""
         spin_box = QDoubleSpinBox()
         spin_box.setMaximum(100000)
+        spin_box.setValue(float(value))
         return spin_box
 
     def cast_value(self) -> float:
