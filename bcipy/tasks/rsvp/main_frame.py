@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
 from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
-from bcipy.helpers.stimuli import rsvp_seq_generator
+from bcipy.helpers.stimuli import rsvp_inq_generator
 from bcipy.helpers.task import SPACE_CHAR
 import logging
 import numpy as np
@@ -68,8 +68,8 @@ class DecisionMaker:
             decision_threshold: Minimum combined likelihood required for a
                 decision
             state(str): state of the framework, which increases in size
-                by 1 after each sequence. Elements are alphabet, ".,_,<"
-                where ".": null_sequence(no decision made)
+                by 1 after each inquiry. Elements are alphabet, ".,_,<"
+                where ".": null_inquiry(no decision made)
                       "_": space bar
                       "<": back space
             displayed_state(str): visualization of the state to the user
@@ -79,19 +79,19 @@ class DecisionMaker:
             time(float): system time
             evidence(list[str]): list of evidences used in the framework
             list_priority_evidence(list[]): priority list for the evidences
-            sequence_counter(dict[str(val=float)]): number of sequences
+            inquiry_counter(dict[str(val=float)]): number of inquiries
                 passed for each particular evidence
-            list_epoch(list[epoch]): List of stimuli in each sequence
-                epoch(dict{items}):
-                    - target(str): target of the epoch
+            list_series(list[series]): List of stimuli in each inquiry
+                series(dict{items}):
+                    - target(str): target of the series
                     - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the sequence
+                      time spent on the inquiry
                     - list_sti(list[list[str]]): presented symbols in each
-                      sequence
+                      inquiry
                     - list_distribution(list[ndarray[float]]): list of |alp|x1
                         arrays with prob. dist. over alp
-            seq_constants(list[str]): list of letters which should appear in
-                every sequence.
+            inq_constants(list[str]): list of letters which should appear in
+                every inquiry.
             stopping_evaluator: CriteriaEvaluator - optional parameter to
                 provide alternative rules for committing to a decision.
             stimuli_agent(StimuliAgent): the query selection mechanism of the
@@ -99,20 +99,20 @@ class DecisionMaker:
 
         Functions:
             decide():
-                Checks the criteria for making and epoch, using all
-                evidences and decides to do an epoch or to collect more
+                Checks the criteria for making and series, using all
+                evidences and decides to do an series or to collect more
                 evidence
-            do_epoch():
-                Once committed an epoch perform updates to condition the
+            do_series():
+                Once committed an series perform updates to condition the
                 distribution on the previous letter.
-            schedule_sequence():
-                schedule the next sequence using the current information
+            schedule_inquiry():
+                schedule the next inquiry using the current information
             decide_state_update():
-                If committed to an epoch update the state using a decision
+                If committed to an series update the state using a decision
                 metric.
                 (e.g. pick the letter with highest likelihood)
             prepare_stimuli():
-                prepares the query set for the next sequence
+                prepares the query set for the next inquiry
                 (e.g pick n-highest likely letters and randomly shuffle)
         """
 
@@ -121,9 +121,9 @@ class DecisionMaker:
                  alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
-                 seq_constants=None,
-                 stopping_evaluator=CriteriaEvaluator.default(min_num_seq=2,
-                                                              max_num_seq=10,
+                 inq_constants=None,
+                 stopping_evaluator=CriteriaEvaluator.default(min_num_inq=2,
+                                                              max_num_inq=10,
                                                               threshold=0.8),
                  stimuli_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
@@ -136,11 +136,11 @@ class DecisionMaker:
         self.alphabet = alphabet
         self.is_txt_stim = is_txt_stim
 
-        self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': [],
-                            'decision': None}]
+        self.list_series = [{'target': None, 'time_spent': 0,
+                             'list_sti': [], 'list_distribution': [],
+                             'decision': None}]
         self.time = 0
-        self.sequence_counter = 0
+        self.inquiry_counter = 0
 
         # Stopping Criteria
         self.stopping_evaluator = stopping_evaluator
@@ -150,8 +150,8 @@ class DecisionMaker:
 
         self.last_selection = ''
 
-        # Items shown in every sequence
-        self.seq_constants = seq_constants
+        # Items shown in every inquiry
+        self.inq_constants = inq_constants
 
     def reset(self, state=''):
         """ Resets the decision maker with the initial state
@@ -160,10 +160,10 @@ class DecisionMaker:
         self.state = state
         self.displayed_state = self.form_display_state(self.state)
 
-        self.list_epoch = [{'target': None, 'time_spent': 0,
-                            'list_sti': [], 'list_distribution': []}]
+        self.list_series = [{'target': None, 'time_spent': 0,
+                             'list_sti': [], 'list_distribution': []}]
         self.time = 0
-        self.sequence_counter = 0
+        self.inquiry_counter = 0
 
         self.stimuli_agent.reset()
 
@@ -192,7 +192,7 @@ class DecisionMaker:
     def decide(self, p):
         """ Once evidence is collected, decision_maker makes a decision to
             stop or not by leveraging the information of the stopping
-            criteria. Can decide to do an epoch or schedule another sequence.
+            criteria. Can decide to do an series or schedule another inquiry.
             Args:
                 p(ndarray[float]): |A| x 1 distribution array
                     |A|: cardinality of the alphabet
@@ -202,54 +202,54 @@ class DecisionMaker:
                 args(dict[]): Extra arguments depending on the decision
                 """
 
-        self.list_epoch[-1]['list_distribution'].append(p[:])
+        self.list_series[-1]['list_distribution'].append(p[:])
 
         # Check stopping criteria
-        if self.stopping_evaluator.should_commit(self.list_epoch[-1]):
-            self.do_epoch()
+        if self.stopping_evaluator.should_commit(self.list_series[-1]):
+            self.do_series()
             return True, None
         else:
-            stimuli = self.schedule_sequence()
+            stimuli = self.schedule_inquiry()
             return False, stimuli
 
-    def do_epoch(self):
-        """ Epoch refers to a commitment to a decision.
+    def do_series(self):
+        """ series refers to a commitment to a decision.
             If made, state is updated, displayed state is updated
-            a new epoch is appended. """
-        self.sequence_counter = 0
+            a new series is appended. """
+        self.inquiry_counter = 0
         decision = self.decide_state_update()
         self.last_selection = decision
         self.state += decision
         self.displayed_state = self.form_display_state(self.state)
 
-        # Initialize next epoch
-        self.list_epoch.append({'target': None, 'time_spent': 0,
-                                'list_sti': [], 'list_distribution': []})
+        # Initialize next series
+        self.list_series.append({'target': None, 'time_spent': 0,
+                                 'list_sti': [], 'list_distribution': []})
 
-        self.stimuli_agent.do_epoch()
-        self.stopping_evaluator.do_epoch()
+        self.stimuli_agent.do_series()
+        self.stopping_evaluator.do_series()
 
-    def schedule_sequence(self):
-        """ Schedules next sequence """
+    def schedule_inquiry(self):
+        """ Schedules next inquiry """
         self.state += '.'
         stimuli = self.prepare_stimuli()
-        self.list_epoch[-1]['list_sti'].append(stimuli[0])
-        self.sequence_counter += 1
+        self.list_series[-1]['list_sti'].append(stimuli[0])
+        self.inquiry_counter += 1
 
         return stimuli
 
     def decide_state_update(self):
-        """ Checks stopping criteria to commit to an epoch """
+        """ Checks stopping criteria to commit to an series """
         idx = np.where(
-            self.list_epoch[-1]['list_distribution'][-1] ==
-            np.max(self.list_epoch[-1]['list_distribution'][-1]))[0][0]
+            self.list_series[-1]['list_distribution'][-1] ==
+            np.max(self.list_series[-1]['list_distribution'][-1]))[0][0]
         decision = self.alphabet[idx]
-        self.list_epoch[-1]['decision'] = decision
+        self.list_series[-1]['decision'] = decision
         return decision
 
     def prepare_stimuli(self):
         """ Given the alphabet, under a rule, prepares a stimuli for
-            the next sequence
+            the next inquiry
             Return:
                 stimuli(tuple[list[char],list[float],list[str]]): tuple of
                     stimuli information. [0]: letter, [1]: timing, [2]: color
@@ -257,11 +257,11 @@ class DecisionMaker:
 
         # querying agent decides on possible letters to be shown on the screen
         query_els = self.stimuli_agent.return_stimuli(
-            self.list_epoch[-1]['list_distribution'])
+            self.list_series[-1]['list_distribution'])
         # once querying is determined, append with timing and color info
-        stimuli = rsvp_seq_generator(query=query_els,
+        stimuli = rsvp_inq_generator(query=query_els,
                                      stim_number=1,
                                      is_txt=self.is_txt_stim,
                                      timing=self.stimuli_timing,
-                                     seq_constants=self.seq_constants)
+                                     inq_constants=self.inq_constants)
         return stimuli

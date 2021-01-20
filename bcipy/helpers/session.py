@@ -40,30 +40,30 @@ def session_data(data_dir: str, alp=None):
     with open(session_path, 'r') as json_file:
         data = json.load(json_file)
         data['copy_phrase'] = parameters['task_text']
-        for epoch in data['epochs'].keys():
-            for trial in data['epochs'][epoch].keys():
+        for series in data['series'].keys():
+            for trial in data['series'][series].keys():
                 likelihood = dict(
-                    zip(alp, data['epochs'][epoch][trial]['likelihood']))
+                    zip(alp, data['series'][series][trial]['likelihood']))
 
                 # Remove unused properties
                 unused = [
                     'eeg_len', 'timing_sti', 'triggers', 'target_info',
                     'copy_phrase'
                 ]
-                remove_props(data['epochs'][epoch][trial], unused)
+                remove_props(data['series'][series][trial], unused)
 
-                data['epochs'][epoch][trial]['stimuli'] = data['epochs'][
-                    epoch][trial]['stimuli'][0]
+                data['series'][series][trial]['stimuli'] = data['series'][
+                    series][trial]['stimuli'][0]
 
                 # Associate letters to values
-                data['epochs'][epoch][trial]['lm_evidence'] = dict(
-                    zip(alp, data['epochs'][epoch][trial]['lm_evidence']))
-                data['epochs'][epoch][trial]['eeg_evidence'] = dict(
-                    zip(alp, data['epochs'][epoch][trial]['eeg_evidence']))
-                data['epochs'][epoch][trial]['likelihood'] = likelihood
+                data['series'][series][trial]['lm_evidence'] = dict(
+                    zip(alp, data['series'][series][trial]['lm_evidence']))
+                data['series'][series][trial]['eeg_evidence'] = dict(
+                    zip(alp, data['series'][series][trial]['eeg_evidence']))
+                data['series'][series][trial]['likelihood'] = likelihood
 
                 # Display the 5 most likely values.
-                data['epochs'][epoch][trial]['most_likely'] = dict(
+                data['series'][series][trial]['most_likely'] = dict(
                     Counter(likelihood).most_common(5))
 
         return data
@@ -84,20 +84,20 @@ def collect_experiment_field_data(experiment_name, save_path, file_name='experim
             raise Exception('Field data not collected!')
 
 
-def get_stimuli(task_type, sequence):
+def get_stimuli(task_type, inquiry):
     """There is some variation in how tasks record session information.
-    Returns the list of stimuli for the given trial/sequence"""
+    Returns the list of stimuli for the given trial/inquiry"""
     if task_type == 'Copy Phrase':
-        return sequence['stimuli'][0]
-    return sequence['stimuli']
+        return inquiry['stimuli'][0]
+    return inquiry['stimuli']
 
 
-def get_target(task_type, sequence, above_threshold):
-    """Returns the target for the given sequence. For icon tasks this information
-    is in the sequence, but for Copy Phrase it must be computed."""
+def get_target(task_type, inquiry, above_threshold):
+    """Returns the target for the given inquiry. For icon tasks this information
+    is in the inquiry, but for Copy Phrase it must be computed."""
     if task_type == 'Copy Phrase':
-        return copy_phrase_target(sequence['copy_phrase'], sequence['current_text'])
-    return sequence.get('target_letter', None)
+        return copy_phrase_target(inquiry['copy_phrase'], inquiry['current_text'])
+    return inquiry.get('target_letter', None)
 
 
 def session_db(data_dir: str, db_name='session.db', alp=None):
@@ -124,18 +124,18 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
     evidence:
         - trial integer (0-based)
-        - sequence integer (0-based)
+        - inquiry integer (0-based)
         - letter text (letter or icon)
         - lm real (language model probability for the trial; same for every
-            sequence and only considered in the cumulative value during the
-            first sequence)
-        - eeg real (likelihood for the given sequence; a value of 1.0 indicates
+            inquiry and only considered in the cumulative value during the
+            first inquiry)
+        - eeg real (likelihood for the given inquiry; a value of 1.0 indicates
             that the letter was not presented)
         - cumulative real (cumulative likelihood for the trial thus far)
-        - seq_position integer (sequence position; null if not presented)
+        - inq_position integer (inquiry position; null if not presented)
         - is_target integer (boolean; true(1) if this letter is the target)
         - presented integer (boolean; true if the letter was presented in
-            this sequence)
+            this inquiry)
         - above_threshold (boolean; true if cumulative likelihood was above
             the configured threshold)
     """
@@ -160,22 +160,22 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
         cursor.execute('CREATE TABLE trial (id integer, target text)')
         cursor.execute(
-            'CREATE TABLE evidence (series integer, sequence integer, '
-            'stim text, lm real, eeg real, cumulative real, seq_position '
+            'CREATE TABLE evidence (series integer, inquiry integer, '
+            'stim text, lm real, eeg real, cumulative real, inq_position '
             'integer, is_target integer, presented integer, above_threshold)'
         )
         conn.commit()
 
-        for series in data['epochs'].keys():
-            for i, seq_index in enumerate(data['epochs'][series].keys()):
-                sequence = data['epochs'][series][seq_index]
+        for series in data['series'].keys():
+            for i, inq_index in enumerate(data['series'][series].keys()):
+                inquiry = data['series'][series][inq_index]
                 session_type = data['session_type']
 
                 target_letter = get_target(
-                    session_type, sequence,
-                    max(sequence['likelihood']) >
+                    session_type, inquiry,
+                    max(inquiry['likelihood']) >
                     parameters['decision_threshold'])
-                stimuli = get_stimuli(session_type, sequence)
+                stimuli = get_stimuli(session_type, inquiry)
 
                 if i == 0:
                     # create record for the trial
@@ -183,14 +183,14 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
                         'INSERT INTO trial VALUES (?,?)',
                         [(int(series), target_letter)])
 
-                lm_ev = dict(zip(alp, sequence['lm_evidence']))
-                cumulative_likelihoods = dict(zip(alp, sequence['likelihood']))
+                lm_ev = dict(zip(alp, inquiry['lm_evidence']))
+                cumulative_likelihoods = dict(zip(alp, inquiry['likelihood']))
 
                 ev_rows = []
-                for letter, prob in zip(alp, sequence['eeg_evidence']):
-                    seq_position = None
+                for letter, prob in zip(alp, inquiry['eeg_evidence']):
+                    inq_position = None
                     if letter in stimuli:
-                        seq_position = stimuli.index(letter)
+                        inq_position = stimuli.index(letter)
                     if target_letter:
                         is_target = 1 if target_letter == letter else 0
                     else:
@@ -198,9 +198,9 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
                     cumulative = cumulative_likelihoods[letter]
                     above_threshold = cumulative >= parameters[
                         'decision_threshold']
-                    ev_row = (int(series), int(seq_index), letter, lm_ev[letter],
-                              prob, cumulative, seq_position, is_target,
-                              seq_position is not None, above_threshold)
+                    ev_row = (int(series), int(inq_index), letter, lm_ev[letter],
+                              prob, cumulative, inq_position, is_target,
+                              inq_position is not None, above_threshold)
                     ev_rows.append(ev_row)
 
                 conn.executemany(
@@ -275,9 +275,9 @@ def session_excel(db_name='session.db',
     columns = [description[0] for description in cursor.description]
 
     series_column = columns.index('series')
-    sequence_column = columns.index('sequence')
+    inquiry_column = columns.index('inquiry')
     is_target_column = columns.index('is_target')
-    series, sequence, is_target = None, None, None
+    series, inquiry, is_target = None, None, None
 
     # Write header
     write_row(sheet, 1, columns)
@@ -286,7 +286,7 @@ def session_excel(db_name='session.db',
     chart_data = {}
 
     # Write rows
-    seq_background = next(backgrounds_iter)
+    inq_background = next(backgrounds_iter)
     alp_len = None
     for i, row in enumerate(cursor):
         rownum = i + 2  # Excel is 1-indexed; also account for column row.
@@ -299,26 +299,26 @@ def session_excel(db_name='session.db',
             series = row[series_column]
             border = new_series_border
 
-        if row[sequence_column] != sequence:
-            sequence = row[sequence_column]
+        if row[inquiry_column] != inquiry:
+            inquiry = row[inquiry_column]
 
             # Set the alphabet length used for chart data ranges.
             if not alp_len and i > 0:
                 alp_len = i
-            chart_data[f"Series {series} Sequence {sequence}"] = rownum
+            chart_data[f"Series {series} inquiry {inquiry}"] = rownum
 
-            # Toggle the background for each sequence for easier viewing.
-            seq_background = next(backgrounds_iter)
+            # Toggle the background for each inquiry for easier viewing.
+            inq_background = next(backgrounds_iter)
 
         # write to spreadsheet
         write_row(
             sheet,
             rownum,
             row,
-            background=highlighted_background if is_target else seq_background,
+            background=highlighted_background if is_target else inq_background,
             border=border)
 
-    # Add chart for each sequence
+    # Add chart for each inquiry
     if include_charts:
         stim_col = columns.index('stim') + 1
         lm_col = columns.index('lm') + 1
@@ -357,7 +357,7 @@ def session_excel(db_name='session.db',
 
 
 def copy_phrase_target(phrase: str, current_text: str, backspace='<'):
-    """Determine the target for the current CopyPhrase sequence.
+    """Determine the target for the current CopyPhrase inquiry.
 
     >>> copy_phrase_target("HELLO_WORLD", "")
     'H'

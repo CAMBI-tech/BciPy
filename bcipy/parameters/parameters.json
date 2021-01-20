@@ -153,7 +153,7 @@
     "value": "false",
     "section": "artifact_rejection",
     "readableName": "Artifact Rejection On/Off",
-    "helpTip": "If ‘true’, the system will detect and reject sequences containing unwanted artifacts (e.g. blinks). This is not implemented in the current version of the system.",
+    "helpTip": "If ‘true’, the system will detect and reject inquiries containing unwanted artifacts (e.g. blinks). This is not implemented in the current version of the system.",
     "recommended_values": "",
     "type": "bool"
   },
@@ -161,7 +161,7 @@
     "value": "false",
     "section": "artifact_rejection",
     "readableName": "High Voltage Threshold On/Off",
-    "helpTip": "If ‘true’, an upper voltage threshold will be set for artifact rejection. Detection of values above the specified threshold will trigger rejection of a sequence. This is not implemented in the current version of the system.",
+    "helpTip": "If ‘true’, an upper voltage threshold will be set for artifact rejection. Detection of values above the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
     "recommended_values": "",
     "type": "bool"
   },
@@ -177,7 +177,7 @@
     "value": "false",
     "section": "artifact_rejection",
     "readableName": "Low Voltage Threshold On/Off",
-    "helpTip": "If ‘true’, a lower voltage threshold will be set for artifact rejection. Detection of values below the specified threshold will trigger rejection of a sequence. This is not implemented in the current version of the system.",
+    "helpTip": "If ‘true’, a lower voltage threshold will be set for artifact rejection. Detection of values below the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
     "recommended_values": "",
     "type": "bool"
   },
@@ -316,8 +316,8 @@
   "task_buffer_len": {
     "value": "0.75",
     "section": "bci_config",
-    "readableName": "Inter-Sequence Interval",
-    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one sequence and the beginning (target stimulus or fixation cross) of the next sequence in an RSVP task. Default: 0.75",
+    "readableName": "Inter-inquiry Interval",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in an RSVP task. Default: 0.75",
     "recommended_values": "",
     "type": "float"
   },
@@ -353,8 +353,8 @@
   "stim_length": {
     "value": "10",
     "section": "bci_config",
-    "readableName": "Stimuli Per Sequence",
-    "helpTip": "Specifies the number of stimuli to present in each sequence. Default: 10",
+    "readableName": "Stimuli Per inquiry",
+    "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
     "recommended_values": "",
     "type": "int"
   },
@@ -440,7 +440,7 @@
     "value": "red",
     "section": "bci_config",
     "readableName": "Fixation Cross Color",
-    "helpTip": "Specifies the color of the fixation cross that appears before each sequence. Default: red",
+    "helpTip": "Specifies the color of the fixation cross that appears before each inquiry. Default: red",
     "recommended_values": "",
     "type": "str"
   },
@@ -603,8 +603,8 @@
   "stim_number": {
     "value": "100",
     "section": "bci_config",
-    "readableName": "Number of Calibration Sequences",
-    "helpTip": "Specifies the number of sequences to present in a calibration session. Default: 100",
+    "readableName": "Number of Calibration inquiries",
+    "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
     "recommended_values": "",
     "type": "int"
   },
@@ -628,7 +628,7 @@
     "value": "20",
     "section": "bci_config",
     "readableName": "Automatic Calibration Break Timing",
-    "helpTip": "Specifies the number of sequences between automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
+    "helpTip": "Specifies the number of inquiries between automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended_values": "",
     "type": "int"
   },
@@ -640,32 +640,32 @@
     "recommended_values": "",
     "type": "str"
   },
-  "min_seq_len": {
+  "min_inq_len": {
     "value": "1",
     "section": "bci_config",
-    "readableName": "Minimum Sequence Length",
-    "helpTip": "The minimum number of sequences to present in spelling tasks",
+    "readableName": "Minimum Inquiry Length",
+    "helpTip": "The minimum number of inquiries to present in spelling tasks",
     "recommended_values": [
       "1"
     ],
     "type": "int"
   },
-  "max_seq_len": {
+  "max_inq_len": {
     "value": "50",
     "section": "bci_config",
-    "readableName": "Maximum Task Length (Sequences)",
-    "helpTip": "Specifies the maximum number of sequences to present in copy/spelling tasks. The task will end if this number is reached.",
+    "readableName": "Maximum Inquiry Length",
+    "helpTip": "Specifies the maximum number of inquiries to present in copy/spelling tasks. The task will end if this number is reached.",
     "recommended_values": [
       "20",
       "25"
     ],
     "type": "int"
   },
-  "max_seq_per_trial": {
+  "max_inq_per_trial": {
     "value": "10",
     "section": "bci_config",
-    "readableName": "Maximum Sequences Per Trial",
-    "helpTip": "Maximum number of sequences to present for a single trial before making a decision",
+    "readableName": "Maximum Inquiries Per Trial",
+    "helpTip": "Maximum number of inquiries to present for a single trial before making a decision",
     "recommended_values": [
       "10",
       "15"
@@ -688,21 +688,21 @@
     "recommended_values": "",
     "type": "float"
   },
-  "min_seq_per_series": {
+  "min_inq_per_series": {
     "value": "1",
     "section": "bci_config",
-    "readableName": "Minimum Sequences Per Series",
-    "helpTip": "Specifies the minimum number of sequences to present before making a decision in copy/spelling tasks. Default: 1",
+    "readableName": "Minimum Inquiries Per Series",
+    "helpTip": "Specifies the minimum number of inquiries to present before making a decision in copy/spelling tasks. Default: 1",
     "recommended_values": [
       "1"
     ],
     "type": "int"
   },
-  "max_seq_per_series": {
+  "max_inq_per_series": {
     "value": "11",
     "section": "bci_config",
-    "readableName": "Maximum Sequences Per Series",
-    "helpTip": "Specifies the maximum number of sequences to present before making a decision in copy/spelling tasks.",
+    "readableName": "Maximum Inquiries Per Series",
+    "helpTip": "Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks.",
     "recommended_values": [
       "10",
       "15"
@@ -713,7 +713,7 @@
     "value": "true",
     "section": "bci_config",
     "readableName": "Always Show Backspace On/Off",
-    "helpTip": "If ‘true’, the backspace character will be included in every sequence in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in sequences only when warranted by EEG/language model evidence.",
+    "helpTip": "If ‘true’, the backspace character will be included in every inquiry in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in inquiries only when warranted by EEG/language model evidence.",
     "recommended_values": "",
     "type": "bool"
   },
@@ -807,7 +807,7 @@
     "value": "1",
     "section": "feedback_config",
     "readableName": "Feedback Delay Time",
-    "helpTip": "Specifies the length of time (in seconds) between the end of a sequence and the onset of feedback display in the feedback calibration task. Default: 1",
+    "helpTip": "Specifies the length of time (in seconds) between the end of a inquiry and the onset of feedback display in the feedback calibration task. Default: 1",
     "recommended_values": "",
     "type": "float"
   },
@@ -815,7 +815,7 @@
     "value": "2",
     "section": "feedback_config",
     "readableName": "Feedback Display Time",
-    "helpTip": "Specifies the length of time (in seconds) feedback will be displayed after each sequence in the feedback calibration task. Default: 2",
+    "helpTip": "Specifies the length of time (in seconds) feedback will be displayed after each inquiry in the feedback calibration task. Default: 2",
     "recommended_values": "",
     "type": "float"
   },

@@ -111,7 +111,7 @@ def _demo_validate_real_data():
     # Get data and labels
     s_i, t_t_i, t_i = trigger_decoder(mode=mode,
                                       trigger_loc=data_train_folder + '/triggers.txt')
-    x_train, y_train, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode,
+    x_train, y_train, num_inq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode,
                                                   fs=fs,
                                                   k=ds_rate,
                                                   channel_map=channel_map)
@@ -148,7 +148,7 @@ def _demo_validate_real_data():
     # Get data and labels
     s_i, t_t_i, t_i = trigger_decoder(mode=mode,
                                       trigger_loc=data_test_folder + '/triggers.txt')
-    x_test, y_test, num_seq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode,
+    x_test, y_test, num_inq, _ = trial_reshaper(t_t_i, t_i, dat, mode=mode,
                                                 fs=fs,
                                                 k=ds_rate,
                                                 channel_map=channel_map)

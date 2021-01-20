@@ -81,7 +81,7 @@ rsvp = CalibrationDisplay(
     stim_font=font_sti,
     stim_pos=pos_sti,
     stim_height=sti_height,
-    stim_sequence=['a'] * 10,
+    stim_inquiry=['a'] * 10,
     stim_colors=['white'] * 10,
     stim_timing=[3] * 10,
     is_txt_stim=is_txt_stim)
@@ -95,8 +95,8 @@ for idx_o in range(len(task_text)):
     win.flip()
     rsvp.sti.height = sti_height
 
-    # Schedule a sequence
-    rsvp.stimuli_sequence = ele_sti[idx_o]
+    # Schedule a inquiry
+    rsvp.stimuli_inquiry = ele_sti[idx_o]
 
     if is_txt_stim:
         rsvp.stimuli_colors = color_sti[idx_o]
@@ -104,9 +104,9 @@ for idx_o in range(len(task_text)):
     rsvp.stimuli_timing = timing_sti[idx_o]
 
     core.wait(.4)
-    sequence_timing = rsvp.do_sequence()
+    inquiry_timing = rsvp.do_inquiry()
 
-    # _write_triggers_from_sequence_calibration(sequence_timing, trigger_file)
+    # _write_triggers_from_inquiry_calibration(inquiry_timing, trigger_file)
 
     core.wait(.5)
 

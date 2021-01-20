@@ -39,7 +39,7 @@ def demo_copy_phrase_wrapper():
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),
                  ('THIS_IS_A_DEMO', 'THIS_IS_A_')]
 
-    task = CopyPhraseWrapper(min_num_seq=1, max_num_seq=25, signal_model=model,
+    task = CopyPhraseWrapper(min_num_inq=1, max_num_inq=25, signal_model=model,
                              fs=dim_x * 2, k=1, alp=alphabet(),
                              task_list=task_list)
 

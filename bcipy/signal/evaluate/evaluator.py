@@ -5,7 +5,7 @@ class Evaluator:
     """Evaluator.
 
     Takes in raw data and tests them against given
-    rules, which elicit the rejection of a sequence when broken.
+    rules, which elicit the rejection of a inquiry when broken.
     Feeds warnings to artifact rejector as suggestions.
 
     Add rules given in parameters to evaluator's ruleset and set
@@ -29,7 +29,7 @@ class Evaluator:
     def evaluate(self, data):
         """Evaluate.
 
-        Evaluates sequence data using selected rules from parameters file.
+        Evaluates inquiry data using selected rules from parameters file.
         """
 
         for rule in self.rules:

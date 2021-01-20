@@ -209,7 +209,7 @@ class TestTriggers(unittest.TestCase):
 
         # Mock the raw_data file
         content, trigger_times = sample_raw_data(trigger_seq)
-        extracted = extract_from_calibration(StringIO(content), seq_len=10)
+        extracted = extract_from_calibration(StringIO(content), inq_len=10)
 
         # Assertions
         self.assertEqual(len(trigger_seq), len(extracted))
@@ -240,7 +240,7 @@ class TestTriggers(unittest.TestCase):
         output = StringIO()
         write_trigger_file_from_lsl_calibration(StringIO(raw_data),
                                                 output,
-                                                seq_len=10)
+                                                inq_len=10)
 
         written_contents = output.getvalue()
         lines = written_contents.split("\n")

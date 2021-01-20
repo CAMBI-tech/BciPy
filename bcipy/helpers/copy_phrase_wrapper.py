@@ -20,8 +20,8 @@ class CopyPhraseWrapper:
 
     Given the phrases once operate() is called performs the task.
     Attr:
-        min_num_seq: The minimum number of sequences to be displayed
-        max_num_seq: The maximum number of sequences to be displayed
+        min_num_inq: The minimum number of inquiries to be displayed
+        max_num_inq: The maximum number of inquiries to be displayed
         model(pipeline): model trained using a calibration session of the
             same user.
         fs(int): sampling frequency
@@ -42,7 +42,7 @@ class CopyPhraseWrapper:
             always be presented.
     """
 
-    def __init__(self, min_num_seq, max_num_seq, signal_model=None, fs=300, k=2,
+    def __init__(self, min_num_inq, max_num_inq, signal_model=None, fs=300, k=2,
                  alp=None, evidence_names=['LM', 'ERP'],
                  task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
                  is_txt_stim=True, device_name='LSL', device_channels=None,
@@ -57,14 +57,14 @@ class CopyPhraseWrapper:
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
-        seq_constants = []
+        inq_constants = []
         if backspace_always_shown and BACKSPACE_CHAR in alp:
-            seq_constants.append(BACKSPACE_CHAR)
+            inq_constants.append(BACKSPACE_CHAR)
 
         # Stimuli Selection Module
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq),
+            continue_criteria=[MinIterationsCriteria(min_num_inq)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq),
                              ProbThresholdCriteria(decision_threshold)])
 
         # TODO: Parametrize len_query in the future releases!
@@ -78,7 +78,7 @@ class CopyPhraseWrapper:
             alphabet=alp,
             is_txt_stim=is_txt_stim,
             stimuli_timing=stimuli_timing,
-            seq_constants=seq_constants)
+            inq_constants=inq_constants)
 
         self.alp = alp
         # non-letter target labels include the fixation cross and calibration.
@@ -99,7 +99,7 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_sequence(self, raw_data, triggers, target_info, window_length):
+    def evaluate_inquiry(self, raw_data, triggers, target_info, window_length):
         """Once data is collected, infers meaning from the data.
 
         Args:
@@ -173,11 +173,11 @@ class CopyPhraseWrapper:
 
         return letters, times, target_types
 
-    def initialize_epoch(self):
-        """If a decision is made initializes the next epoch."""
+    def initialize_series(self):
+        """If a decision is made initializes the next series."""
 
         try:
-            # First, reset the history for this new epoch
+            # First, reset the history for this new series
             self.conjugator.reset_history()
 
             # If there is no language model specified, mock the LM prior
@@ -233,7 +233,7 @@ class CopyPhraseWrapper:
             is_accepted, sti = self.decision_maker.decide(prob_dist)
 
         except Exception as init_exception:
-            print("Error in initialize_epoch: %s" % (init_exception))
+            print("Error in initialize_series: %s" % (init_exception))
             raise init_exception
 
         return is_accepted, sti

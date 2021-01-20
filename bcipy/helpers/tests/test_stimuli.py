@@ -7,7 +7,7 @@ from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
 from bcipy.helpers.stimuli import play_sound, soundfiles,\
-    random_rsvp_calibration_seq_gen, best_selection, best_case_rsvp_seq_gen
+    random_rsvp_calibration_inq_gen, best_selection, best_case_rsvp_inq_gen
 
 MOCK_FS = 44100
 
@@ -129,8 +129,8 @@ class TestStimuliGeneration(unittest.TestCase):
         gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
 
-    def test_random_sequence_gen(self):
-        """Test generation of random sequences"""
+    def test_random_inquiry_gen(self):
+        """Test generation of random inquiries"""
         alp = [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -138,7 +138,7 @@ class TestStimuliGeneration(unittest.TestCase):
         ]
         stim_number = 10
         stim_length = 10
-        seqs, seq_timings, seq_colors = random_rsvp_calibration_seq_gen(
+        inquiries, inq_timings, inq_colors = random_rsvp_calibration_inq_gen(
             alp,
             timing=[0.5, 1, 0.2],
             color=['green', 'red', 'white'],
@@ -147,27 +147,27 @@ class TestStimuliGeneration(unittest.TestCase):
             is_txt=True)
 
         self.assertEqual(
-            len(seqs), stim_number,
-            'Should have produced the correct number of sequences')
-        self.assertEqual(len(seq_timings), stim_number)
-        self.assertEqual(len(seq_colors), stim_number)
+            len(inquiries), stim_number,
+            'Should have produced the correct number of inquiries')
+        self.assertEqual(len(inq_timings), stim_number)
+        self.assertEqual(len(inq_colors), stim_number)
 
-        seq_strings = []
-        for seq in seqs:
+        inq_strings = []
+        for inq in inquiries:
             self.assertEqual(
-                len(seq), stim_length + 2,
-                ('Sequence should include the correct number of choices as ',
+                len(inq), stim_length + 2,
+                ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
-            choices = seq[2:]
+            choices = inq[2:]
             self.assertEqual(stim_length, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
-            seq_strings.append(''.join(choices))
+            inq_strings.append(''.join(choices))
 
         self.assertEqual(
-            len(seqs), len(set(seq_strings)),
-            'All sequences should be different')
+            len(inquiries), len(set(inq_strings)),
+            'All inquiries should be different')
 
     def test_best_selection(self):
         """Test best_selection"""
@@ -228,11 +228,11 @@ class TestStimuliGeneration(unittest.TestCase):
             always_included=['<']),
             'should ignore items not in the set.')
 
-    def test_best_case_sequence_gen(self):
-        """Test best_case_rsvp_seq_gen"""
+    def test_best_case_inquiry_gen(self):
+        """Test best_case_rsvp_inq_gen"""
         alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
         n = 5
-        samples, times, colors = best_case_rsvp_seq_gen(
+        samples, times, colors = best_case_rsvp_inq_gen(
             alp=alp,
             session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
             timing=[1, 0.2],
@@ -241,55 +241,55 @@ class TestStimuliGeneration(unittest.TestCase):
             stim_length=n,
             is_txt=True)
 
-        first_seq = samples[0]
+        first_inq = samples[0]
         self.assertEqual(1, len(samples))
-        self.assertEqual(n + 1, len(first_seq),
+        self.assertEqual(n + 1, len(first_inq),
                          'Should include fixation cross.')
         self.assertEqual(len(samples), len(times))
         self.assertEqual(len(samples), len(colors))
 
         expected = ['+', 'a', 'b', 'd', 'e', 'g']
         for letter in expected:
-            self.assertTrue(letter in first_seq)
+            self.assertTrue(letter in first_inq)
 
-        self.assertNotEqual(expected, first_seq, 'Should be in random order.')
+        self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 
-    def test_best_case_sequence_gen_with_seq_constants(self):
-        """Test best_case_rsvp_seq_gen with sequence constants"""
+    def test_best_case_inquiry_gen_with_inq_constants(self):
+        """Test best_case_rsvp_inq_gen with inquiry constants"""
 
         alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
         n = 5
 
         with self.assertRaises(
                 Exception, msg='Constants should be in the alphabet'):
-            best_case_rsvp_seq_gen(
+            best_case_rsvp_inq_gen(
                 alp=alp,
                 session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
-                seq_constants=['<'])
+                inq_constants=['<'])
 
         alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g', '<']
-        samples, times, colors = best_case_rsvp_seq_gen(
+        samples, times, colors = best_case_rsvp_inq_gen(
             alp=alp,
             session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2, 0.0],
             stim_number=1,
             stim_length=n,
             is_txt=True,
-            seq_constants=['<'])
+            inq_constants=['<'])
 
-        first_seq = samples[0]
+        first_inq = samples[0]
         self.assertEqual(1, len(samples))
-        self.assertEqual(n + 1, len(first_seq),
+        self.assertEqual(n + 1, len(first_inq),
                          'Should include fixation cross.')
         self.assertEqual(len(samples), len(times))
         self.assertEqual(len(samples), len(colors))
 
         expected = ['+', 'a', 'd', 'e', 'g', '<']
         for letter in expected:
-            self.assertTrue(letter in first_seq)
+            self.assertTrue(letter in first_inq)
 
-        self.assertNotEqual(expected, first_seq, 'Should be in random order.')
+        self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 

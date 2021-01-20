@@ -95,13 +95,13 @@ def _calibration_trigger(experiment_clock: core.Clock,
     return trigger_callback.timing
 
 
-def _write_triggers_from_sequence_calibration(array: list,
-                                              trigger_file: TextIO,
-                                              offset: bool = False):
+def _write_triggers_from_inquiry_calibration(array: list,
+                                             trigger_file: TextIO,
+                                             offset: bool = False):
     """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
-        target letter based on the first presented letter in sequence, then
+        target letter based on the first presented letter in inquiry, then
         assigns target/nontarget label to following letters.
 
     It writes in the following order:
@@ -145,11 +145,11 @@ def _write_triggers_from_sequence_calibration(array: list,
     return trigger_file
 
 
-def _write_triggers_from_sequence_copy_phrase(array,
-                                              trigger_file,
-                                              copy_text,
-                                              typed_text,
-                                              offset=None):
+def _write_triggers_from_inquiry_copy_phrase(array,
+                                             trigger_file,
+                                             copy_text,
+                                             typed_text,
+                                             offset=None):
     """
     Write triggers from copy phrase.
 
@@ -204,7 +204,7 @@ def _write_triggers_from_sequence_copy_phrase(array,
     return trigger_file
 
 
-def _write_triggers_from_sequence_free_spell(array, trigger_file):
+def _write_triggers_from_inquiry_free_spell(array, trigger_file):
     """
     Write triggers from free spell.
 
@@ -225,11 +225,11 @@ def _write_triggers_from_sequence_free_spell(array, trigger_file):
     return trigger_file
 
 
-def write_triggers_from_sequence_icon_to_icon(sequence_timing: List[Tuple],
-                                              trigger_file: TextIO,
-                                              target: str,
-                                              target_displayed: bool,
-                                              offset=None):
+def write_triggers_from_inquiry_icon_to_icon(inquiry_timing: List[Tuple],
+                                             trigger_file: TextIO,
+                                             target: str,
+                                             target_displayed: bool,
+                                             offset=None):
     """
     Write triggers from icon to icon task.
     It writes in the following order:
@@ -237,20 +237,20 @@ def write_triggers_from_sequence_icon_to_icon(sequence_timing: List[Tuple],
 
     Parameters:
     ----------
-        sequence_timing - list of (icon, time) output from rsvp after
-            displaying a sequence.
+        inquiry_timing - list of (icon, time) output from rsvp after
+            displaying a inquiry.
         trigger_file - open file in which to write.
-        target - target for the current sequence
+        target - target for the current inquiry
         target_displayed - whether or not the target was presented during the
-            sequence.
+            inquiry.
     """
     if offset:
-        (letter, time) = sequence_timing
+        (letter, time) = inquiry_timing
         targetness = 'offset_correction'
         trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
         return
 
-    icons, _times = zip(*sequence_timing)
+    icons, _times = zip(*inquiry_timing)
     calib_presented = 'calibration_trigger' in icons
     calib_index = 0 if calib_presented else -1
 
@@ -264,7 +264,7 @@ def write_triggers_from_sequence_icon_to_icon(sequence_timing: List[Tuple],
         target_pres_index = -1
         fixation_index = 0
 
-    for i, (icon, presentation_time) in enumerate(sequence_timing):
+    for i, (icon, presentation_time) in enumerate(inquiry_timing):
         targetness = 'nontarget'
         if i == calib_index:
             targetness = 'calib'
@@ -365,16 +365,16 @@ class LslCalibrationLabeller(Labeller):
 
     Parameters:
     -----------
-        seq_len: stim_length parameter value for the experiment; used to calculate
+        inq_len: stim_length parameter value for the experiment; used to calculate
             targetness for first_pres_target.
     """
 
-    def __init__(self, seq_len: int):
+    def __init__(self, inq_len: int):
         super(LslCalibrationLabeller, self).__init__()
-        self.seq_len = seq_len
+        self.inq_len = inq_len
         self.prev = None
         self.current_target = None
-        self.seq_position = 0
+        self.inq_position = 0
 
     def label(self, trigger):
         """Calculates the targetness for the given trigger, accounting for the
@@ -387,12 +387,12 @@ class LslCalibrationLabeller(Labeller):
             self.current_target = trigger
             state = 'first_pres_target'
         elif self.prev == 'first_pres_target':
-            # reset the sequence when fixation '+' is encountered.
-            self.seq_pos = 0
+            # reset the inquiry when fixation '+' is encountered.
+            self.inq_pos = 0
             state = 'fixation'
         else:
-            self.seq_pos += 1
-            if self.seq_pos > self.seq_len:
+            self.inq_pos += 1
+            if self.inq_pos > self.inq_len:
                 self.current_target = trigger
                 state = 'first_pres_target'
             elif trigger == self.current_target:
@@ -413,7 +413,7 @@ class LslCopyPhraseLabeller(Labeller):
         self.prev = None
 
         self.pos = 0
-        self.typing_pos = -1  # sequence length should be >= typed text.
+        self.typing_pos = -1  # inquiry length should be >= typed text.
 
         self.current_target = None
 
@@ -488,11 +488,11 @@ def _extract_triggers(csvfile: TextIO,
 
 def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
                                             trigger_file: TextIO,
-                                            seq_len: int,
+                                            inq_len: int,
                                             trg_field: str = 'TRG'):
     """Creates a triggers.txt file from TRG data recorded in the raw_data
     output from a calibration."""
-    extracted = extract_from_calibration(csvfile, seq_len, trg_field)
+    extracted = extract_from_calibration(csvfile, inq_len, trg_field)
     _write_trigger_file_from_extraction(trigger_file, extracted)
 
 
@@ -520,7 +520,7 @@ def _write_trigger_file_from_extraction(
 
 
 def extract_from_calibration(csvfile: TextIO,
-                             seq_len: int,
+                             inq_len: int,
                              trg_field: str = 'TRG',
                              skip_meta: bool = True
                              ) -> List[Tuple[str, str, str]]:
@@ -528,7 +528,7 @@ def extract_from_calibration(csvfile: TextIO,
     Parameters:
     -----------
         csvfile: open csv file containing data.
-        seq_len: stim_length parameter value for the experiment; used to calculate
+        inq_len: stim_length parameter value for the experiment; used to calculate
                  targetness for first_pres_target.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
@@ -542,7 +542,7 @@ def extract_from_calibration(csvfile: TextIO,
 
     return _extract_triggers(csvfile,
                              trg_field,
-                             labeller=LslCalibrationLabeller(seq_len),
+                             labeller=LslCalibrationLabeller(inq_len),
                              skip_meta=skip_meta)
 
 

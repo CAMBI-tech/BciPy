@@ -82,7 +82,7 @@ rsvp = CopyPhraseDisplay(
     task_height=height_task,
     stim_font=font_sti, stim_pos=pos_sti,
     stim_height=sti_height,
-    stim_sequence=['a'] * 10, stim_colors=['white'] * 10,
+    stim_inquiry=['a'] * 10, stim_colors=['white'] * 10,
     stim_timing=[3] * 10,
     is_txt_stim=is_txt_stim)
 
@@ -98,8 +98,8 @@ for idx_o in range(len(task_text)):
     rsvp.sti.height = sti_height
 
     for idx in range(int(len(ele_sti) / 2)):
-        # Schedule a sequence
-        rsvp.stimuli_sequence = ele_sti[counter]
+        # Schedule a inquiry
+        rsvp.stimuli_inquiry = ele_sti[counter]
         if is_txt_stim:
             rsvp.stimuli_colors = color_sti[counter]
 
@@ -107,9 +107,9 @@ for idx_o in range(len(task_text)):
 
         #
         core.wait(.4)
-        sequence_timing = rsvp.do_sequence()
+        inquiry_timing = rsvp.do_inquiry()
 
-        # _write_triggers_from_sequence_copy_phrase(sequence_timing,
+        # _write_triggers_from_inquiry_copy_phrase(inquiry_timing,
         #                                           trigger_file, text_task,
         #                                           task_text[idx_o])
 
@@ -117,10 +117,10 @@ for idx_o in range(len(task_text)):
         counter += 1
 
     # Get stimuli parameters
-    rsvp.stim_sequence = ele_list_dec[idx_o]
+    rsvp.stim_inquiry = ele_list_dec[idx_o]
     rsvp.color_list_sti = ['green']
     rsvp.time_list_sti = [2]
-    rsvp.do_sequence()
+    rsvp.do_inquiry()
 
 win.close()
 # trigger_file.close()

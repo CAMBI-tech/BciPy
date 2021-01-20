@@ -6,7 +6,7 @@ from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 class RSVPAlertToneCalibrationTask(Task):
     """RSVP Calibration Task that uses alert tones to maintain user focus.
 
-    Calibration task performs an RSVP stimulus sequence to elicit an ERP.
+    Calibration task performs an RSVP stimulus inquiry to elicit an ERP.
     Parameters will change how many stim and for how long they present.
     Parameters also change color and text / image inputs and alert sounds.
 

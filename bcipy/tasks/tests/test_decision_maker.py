@@ -16,8 +16,8 @@ class TestDecisionMaker(unittest.TestCase):
         """Test default behavior"""
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
@@ -46,13 +46,13 @@ class TestDecisionMaker(unittest.TestCase):
         self.assertEqual('..d', decision_maker.state)
         self.assertEqual('d', decision_maker.displayed_state)
 
-    def test_min_sequences(self):
-        """Test min sequences criteria."""
+    def test_min_inquiries(self):
+        """Test min inquiries criteria."""
 
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=2)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=2)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
@@ -70,20 +70,20 @@ class TestDecisionMaker(unittest.TestCase):
 
         likelihood = np.array([0.05, 0.05, 0.09, 0.81])
         decision, _arg = decision_maker.decide(likelihood)
-        self.assertFalse(decision, "Not enough sequences presented")
+        self.assertFalse(decision, "Not enough inquiries presented")
 
         likelihood = np.array([0.05, 0.05, 0.09, 0.81])
         decision, _arg = decision_maker.decide(likelihood)
         self.assertTrue(decision)
         self.assertEqual('d', decision_maker.displayed_state)
 
-    def test_max_sequences(self):
-        """Test max sequences criteria."""
+    def test_max_inquiries(self):
+        """Test max inquiries criteria."""
 
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=3),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=3),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
@@ -111,7 +111,7 @@ class TestDecisionMaker(unittest.TestCase):
         decision, _arg = decision_maker.decide(likelihood)
         self.assertTrue(
             decision,
-            "Should make a decision after max sequences are reached even if max value is below threshold"
+            "Should make a decision after max inquiries are reached even if max value is below threshold"
         )
         self.assertEqual('c', decision_maker.displayed_state)
 
@@ -120,8 +120,8 @@ class TestDecisionMaker(unittest.TestCase):
 
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.8)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
@@ -145,8 +145,8 @@ class TestDecisionMaker(unittest.TestCase):
         """Threshold should be configurable"""
         alphabet = ['a', 'b', 'c', 'd']
         stopping_criteria = CriteriaEvaluator(
-            continue_criteria=[MinIterationsCriteria(min_num_seq=1)],
-            commit_criteria=[MaxIterationsCriteria(max_num_seq=10),
+            continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
+            commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.5)])
 
         stimuli_agent = NBestStimuliAgent(alphabet=alphabet,

@@ -11,11 +11,11 @@ class TestEvidenceFusion(unittest.TestCase):
     def test_fusion(self):
         len_alp = 4
         evidence_names = ['LM', 'ERP', 'FRP']
-        num_sequences = 10
+        num_inquiries = 10
 
         conjugator = mf.EvidenceFusion(evidence_names, len_dist=len_alp)
 
-        # generated random sequences
+        # generated random inquiries
         erp_evidence = [
             np.array([1.46762823, 0.40728661, 9.48721375, 11.47963171]),
             np.array([6.18696887, 8.66360132, 4.10906719, 10.40379058]),
@@ -46,12 +46,12 @@ class TestEvidenceFusion(unittest.TestCase):
             9.16884720e-01, 2.38754536e-04, 4.33163904e-05, 8.28332090e-02
         ]
 
-        # Single epoch
+        # Single series
 
         # initialize with language model priors
         conjugator.update_and_fuse({'LM': lm_evidence})
 
-        for idx in range(num_sequences):
+        for idx in range(num_inquiries):
             conjugator.update_and_fuse({
                 'ERP': erp_evidence[idx],
                 'FRP': frp_evidence[idx]

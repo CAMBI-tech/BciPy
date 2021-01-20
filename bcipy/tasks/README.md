@@ -17,7 +17,7 @@ Currently, these are the modes and experiment types implemented:
 > Icon to Icon
 > Icon to Word
 > Alert Tone
-> Intersequence Feedback Calibration
+> Inter-Inquiry Feedback Calibration
 
 
 ## Start Task
