@@ -49,6 +49,8 @@ Connectors are are drivers that knows how to communicate with specific EEG hardw
 
 A connector can be initialized with a dict of connection params that are relevant to that specific hardware (ex. host and port for socket devices), as well as the specification for the device with which to communicate. If provided, the connector will usually validate the provided parameters against initialization messages received from the device.
 
+BciPy currently has Connectors for reading Wearable Sensing Headsets over TCP (DsiConnector) and for reading EEG devices (including Wearable Sensing and GTec headsets) using LabStreamingLayer (LslConnector). The correct Connector will be automatically chosen based on the Device and ConnectionMethod parameters provided through the GUI.
+
 #### Connection Methods
 
 `ConnectionMethod` is an enumeration of the currently supported connection methods. The currently supported methods are TCP and LabStreamingLayer (LSL).
