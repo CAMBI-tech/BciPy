@@ -31,7 +31,7 @@ def main(debug: bool = False):
 
     host = '127.0.0.1'
     port = 9000
-    # The Protocol is for mocking data.
+
     device_spec = supported_device('DSI')
     protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
     server = TcpDataServer(protocol=protocol, host=host, port=port)
