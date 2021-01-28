@@ -5,23 +5,24 @@
 def main():
     import bci_main
     from bcipy.helpers.load import load_json_parameters
+    from bcipy.tasks.task_registry import TaskType
+    from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
     # Load a parameters file
-    parameters = load_json_parameters(
-        'bcipy/parameters/parameters.json', value_cast=True)
+    parameters = DEFAULT_PARAMETERS_PATH
 
-    # Mode: ex. RSVP, Shuffle, Matrix
-    test_mode = 'RSVP'
+    # Task. Ex. `RSVP Calibration`
+    task = TaskType.by_value('RSVP Calibration')
 
-    # Test Type: ex. RSVP Calibration = 1, Copy Phrase = 2
-    test_type = 2
+    # Experiment. Use the default registered experiment!
+    experiment = 'default'
 
     # Define a user
     user = 'bci_main_demo_user'
 
-    # Try and intialize with bci main
+    # Try and initialize with bci main
     try:
-        bci_main.bci_main(parameters, user, test_type, test_mode)
+        bci_main.bci_main(parameters, user, task, experiment)
     except Exception as e:
         print("BCI MAIN Fail. Exiting. Error: \n")
         print(e)

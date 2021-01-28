@@ -1,25 +1,37 @@
 """Interface for creating new device drivers."""
 from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.connection_method import ConnectionMethod
 
 
-class Device():
+class Connector:
     """Base class for device-specific behavior.
 
     Parameters
     ----------
         connection_params : dict
             Parameters needed to connect with the given device
-        fs : int
-            Sample frequency in Hz.
-        channels : list
-            List of channel names.
+        device_spec: DeviceSpec
+            spec with information about the device to which to connect.
     """
+    subclasses = []
+
+    def __init_subclass__(cls, **kwargs):
+        """Any subclasses will be automatically registered."""
+        super().__init_subclass__(**kwargs)
+        cls.subclasses.append(cls)
 
     # pylint: disable=invalid-name
-    def __init__(self, connection_params, fs, channels):
-        self._connection_params = connection_params
-        self.fs = fs
-        self.channels = channels
+    def __init__(self, connection_params: dict, device_spec: DeviceSpec):
+        self.connection_params = connection_params
+        self.device_spec = device_spec
+        self.fs = device_spec.sample_rate
+        self.channels = device_spec.channels.copy()
+
+    @classmethod
+    def supports(cls, device_spec: DeviceSpec,
+                 connection_method: ConnectionMethod) -> bool:
+        return False
 
     @property
     def name(self):
@@ -27,9 +39,11 @@ class Device():
         raise NotImplementedError('Subclass must define a name property')
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Information about the acquisition parameters. Should be called after
-        acquisition_init for those devices which set this information."""
+        acquisition_init for those devices which set this information. Note that
+        DeviceInfo may differ from the DeviceSpec if additional information is
+        added by the Connector."""
         device_name = self.name if not callable(self.name) else self.name()
         return DeviceInfo(fs=self.fs, channels=self.channels, name=device_name)
 

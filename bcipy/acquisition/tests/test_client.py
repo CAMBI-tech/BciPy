@@ -4,21 +4,25 @@ Generators are used by a Producer to stream the data at a given frequency.
 
 import time
 import unittest
-from bcipy.acquisition.client import DataAcquisitionClient, CountClock
+from typing import List
+
+from bcipy.acquisition.client import CountClock, DataAcquisitionClient
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.processor import Processor
-from bcipy.acquisition.protocols.device import Device
+from bcipy.acquisition.protocols.connector import Connector
 from bcipy.acquisition.util import mock_data, mock_record
 
 
-class _MockDevice(Device):
+class _MockConnector(Connector):
     """Device that mocks reading data. Does not need a server. Continues as
     long as there is mock data."""
 
-    def __init__(self, data=None, channels=None, fs=500):
+    def __init__(self,
+                 data: List[float] = None,
+                 device_spec: DeviceSpec = None):
         data = data or []
-        channels = channels or []
-        super(_MockDevice, self).__init__(
-            connection_params={}, channels=channels, fs=fs)
+        super(_MockConnector, self).__init__(connection_params={},
+                                             device_spec=device_spec)
         self.data = data
         self.i = 0
 
@@ -51,12 +55,15 @@ class TestDataAcquisitionClient(unittest.TestCase):
         super(TestDataAcquisitionClient, self).__init__(*args, **kwargs)
         num_channels = 25
         num_records = 500
-        self.mock_channels = ['ch' + str(i) for i in range(num_channels)]
+        self.device_spec = DeviceSpec(
+            name="Mock_device",
+            channels=['ch' + str(i) for i in range(num_channels)],
+            sample_rate=300.0)
         self.mock_data = list(mock_data(num_records, num_channels))
 
     def test_acquisition_null_device_exception(self):
         """Exception should be thrown if unable to connect to device or message not understood """
-        daq = DataAcquisitionClient(device=None)
+        daq = DataAcquisitionClient(connector=None)
         daq._is_streaming = False
         with self.assertRaises(Exception):
             daq.start_acquisition()
@@ -68,8 +75,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
         data length should return 0
         """
 
-        device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -99,8 +106,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_get_data(self):
         """Data should be queryable."""
 
-        device = _MockDevice(data=self.mock_data, channels=self.mock_channels)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
                                     delete_archive=True,
                                     raw_data_file_name=None)
         daq.start_acquisition()
@@ -129,13 +136,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
         clock = CountClock()
         clock.counter = 10  # ensures that clock gets reset.
 
-        daq = DataAcquisitionClient(
-            device=_MockDevice(data=self.mock_data,
-                               channels=self.mock_channels),
-            buffer_name='buffer_client_test_clock.db',
-            raw_data_file_name=None,
-            delete_archive=True,
-            clock=clock)
+        device = _MockConnector(data=self.mock_data, device_spec=self.device_spec)
+        daq = DataAcquisitionClient(connector=device,
+                                    buffer_name='buffer_client_test_clock.db',
+                                    raw_data_file_name=None,
+                                    delete_archive=True,
+                                    clock=clock)
         with daq:
             time.sleep(0.1)
 
@@ -159,16 +165,58 @@ class TestDataAcquisitionClient(unittest.TestCase):
         num_records = 500
         n_channels = len(channels) - 1
 
-        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
-                for i in range(num_records)]
+        data = [
+            mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+            for i in range(num_records)
+        ]
 
-        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
                                     clock=CountClock())
 
+        daq.start_acquisition()
+        time.sleep(0.1)
+        daq.stop_acquisition()
+
+        # The assertions should work before the stop_acquisition, but on some
+        # Windows environments the tests were taking too long to setup and the
+        # time would complete before any data had been processed.
+        self.assertTrue(daq.is_calibrated)
+        self.assertEqual(daq.offset, float(trigger_at) / sample_hz)
+
+        daq.cleanup()
+
+    def test_offset_column(self):
+        """Test offset calculation when a custom offset column is specified."""
+
+        col_name = 'PHOTODIODE'
+        channels = ['ch1', 'ch2', col_name]
+        sample_hz = 100
+        trigger_at = 10
+        num_records = 500
+        n_channels = len(channels) - 1
+
+        data = [
+            mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+            for i in range(num_records)
+        ]
+
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
+        daq = DataAcquisitionClient(connector=device,
+                                    buffer_name='buffer_client_test_offset.db',
+                                    raw_data_file_name=None,
+                                    delete_archive=True,
+                                    clock=CountClock())
+        daq.trigger_column = col_name
         daq.start_acquisition()
         time.sleep(0.1)
         daq.stop_acquisition()
@@ -191,9 +239,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
         n_channels = len(channels) - 1
         data = [mock_record(n_channels) + [0] for i in range(num_records)]
 
-        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(
-            device=device,
+            connector=device,
             clock=CountClock(),
             buffer_name='buffer_client_test_missing_offset.db',
             raw_data_file_name=None,
@@ -215,11 +266,16 @@ class TestDataAcquisitionClient(unittest.TestCase):
         num_records = 500
         n_channels = len(channels) - 1
 
-        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
-                for i in range(num_records)]
+        data = [
+            mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+            for i in range(num_records)
+        ]
 
-        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
-        daq = DataAcquisitionClient(device=device,
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
+        daq = DataAcquisitionClient(connector=device,
                                     buffer_name='buffer_client_test_offset.db',
                                     raw_data_file_name=None,
                                     delete_archive=True,
@@ -231,7 +287,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
         daq.stop_acquisition()
 
         self.assertTrue(daq.is_calibrated)
-        self.assertEqual(daq.offset, 0.0, "Setting the is_calibrated to True\
+        self.assertEqual(
+            daq.offset, 0.0, "Setting the is_calibrated to True\
             should override the offset calcution.")
 
         daq.cleanup()
@@ -244,12 +301,17 @@ class TestDataAcquisitionClient(unittest.TestCase):
         trigger_at = 10
         num_records = 1000
         n_channels = len(channels) - 1
-        data = [mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
-                for i in range(num_records)]
+        data = [
+            mock_record(n_channels) + [0 if (i + 1) < trigger_at else 1]
+            for i in range(num_records)
+        ]
 
-        device = _MockDevice(data=data, channels=channels, fs=sample_hz)
+        device = _MockConnector(data=data,
+                                device_spec=DeviceSpec(name="Mock_device",
+                                                       channels=channels,
+                                                       sample_rate=sample_hz))
         daq = DataAcquisitionClient(
-            device=device,
+            connector=device,
             buffer_name='buffer_client_test_get_data_for_clock.db',
             raw_data_file_name=None,
             delete_archive=True,
@@ -268,7 +330,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         # Test with clocks exactly synchronized.
         self.assertEqual(0.1, daq.offset)
-        data_slice = daq.get_data_for_clock(calib_time=0.1, start_time=0.2,
+        data_slice = daq.get_data_for_clock(calib_time=0.1,
+                                            start_time=0.2,
                                             end_time=0.3)
         self.assertEqual(10, len(data_slice))
 
@@ -279,7 +342,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
             self.assertEqual(record.data, data[mock_data_index])
 
         # Test with clocks offset
-        data_slice = daq.get_data_for_clock(calib_time=0.2, start_time=0.4,
+        data_slice = daq.get_data_for_clock(calib_time=0.2,
+                                            start_time=0.4,
                                             end_time=0.6)
         self.assertEqual(20, len(data_slice))
         start_offset = 30

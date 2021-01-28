@@ -1,6 +1,4 @@
 # Modified from https://github.com/kennethreitz/setup.py
-# Note: To use the 'upload' functionality of this file, you must:
-#   $ pip install twine
 import os
 import sys
 from shutil import rmtree
@@ -10,12 +8,12 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'bcipy'
 DESCRIPTION = 'Python Software for Brain-Computer Interface.'
-URL = 'https://github.com/BciPy/BciPy'
-EMAIL = 'memmott@ohsu.com'
-AUTHOR = 'Tab Memmott'
+URL = 'https://github.com/CAMBI-tech/BciPy'
+EMAIL = 'cambi_support@googlegroups.com'
+AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '~=3.6'
 
-VERSION = '1.4.2'
+VERSION = '1.5.0'
 
 
 # What packages are required for this module to be executed?
@@ -91,11 +89,11 @@ setup(
     },
     install_requires=REQUIRED,
     include_package_data=True,
-    license='MIT',
+    license='BSD',
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',

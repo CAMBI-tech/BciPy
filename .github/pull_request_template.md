@@ -12,8 +12,8 @@ Link a pivotal ticket here
 
 ## Test
 
-- Define steps used to test here. Include unit and integration test steps!
+- Define the steps used to test your code here. Include unit and integration test steps!
 
-## Documentaion
+## Documentation
 
 - Are documentation updates required? In-line, README, or [documentation](https://github.com/BciPy/bcipy.github.io)? Verify the updates you did here.

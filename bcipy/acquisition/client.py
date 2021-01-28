@@ -8,6 +8,7 @@ from bcipy.acquisition import buffer_server
 from bcipy.acquisition.record import Record
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.acquisition.marker_writer import NullMarkerWriter, LslMarkerWriter
+from bcipy.acquisition.connection_method import ConnectionMethod
 
 log = logging.getLogger(__name__)
 DEBUG = False
@@ -15,6 +16,8 @@ DEBUG_FREQ = 500
 MSG_DEVICE_INFO = "device_info"
 MSG_ERROR = "error"
 MSG_PROCESSOR_INITIALIZED = "processor_initialized"
+
+TRIGGER_COLUMN_NAME = 'TRG'
 
 
 class CountClock():
@@ -44,7 +47,7 @@ class DataAcquisitionClient:
 
     Parameters
     ----------
-        device: Device instance
+        connector: Connector instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
         processor : Processor; optional
@@ -63,13 +66,13 @@ class DataAcquisitionClient:
     """
 
     def __init__(self,
-                 device,
+                 connector,
                  buffer_name='raw_data.db',
                  raw_data_file_name='raw_data.csv',
                  clock=CountClock(),
                  delete_archive=True):
 
-        self._device = device
+        self._connector = connector
         self._buffer_name = buffer_name
         self._raw_data_file_name = raw_data_file_name
         self._clock = clock
@@ -87,6 +90,9 @@ class DataAcquisitionClient:
         self._max_wait = 0.1  # for process loop
 
         self.marker_writer = NullMarkerWriter()
+
+        # column in the acquisition data used to calculate offset.
+        self.trigger_column = TRIGGER_COLUMN_NAME
         self._acq_process = None
         self._buf = None
 
@@ -118,11 +124,7 @@ class DataAcquisitionClient:
 
             msg_queue = Queue()
 
-            # Initialize the marker streams before the device connection so the
-            # device can start listening.
-            # TODO: Should this be a property of the device?
-            if self._device.name == 'LSL':
-                self.marker_writer = LslMarkerWriter()
+            self.configure_connector()
 
             # Clock is copied, so reset should happen in the main thread.
             self._clock.reset()
@@ -131,7 +133,7 @@ class DataAcquisitionClient:
             # as well as the acquisition thread.
             self._buf = buffer_server.new_mailbox()
 
-            self._acq_process = AcquisitionProcess(device=self._device,
+            self._acq_process = AcquisitionProcess(connector=self._connector,
                                                    clock=self._clock,
                                                    buf=self._buf,
                                                    msg_queue=msg_queue)
@@ -155,6 +157,21 @@ class DataAcquisitionClient:
             msg_queue.put(True)
             msg_queue = None
             self._is_streaming = True
+
+    def configure_connector(self) -> None:
+        """Steps to configure the device connector before starting acquisition."""
+
+        if self._connector.__class__.supports(
+                self._connector.device_spec, ConnectionMethod.LSL
+        ) and self._connector.device_spec.content_type == 'EEG':
+            log.debug("Initializing LSL Marker Writer.")
+            self._connector.include_marker_streams = True
+            # If there are any device channels with the same name as the offset_column ('TRG'),
+            # rename these to avoid conflicts.
+            self._connector.rename_rules[self.trigger_column] = f"{self.trigger_column}_device_stream"
+            # Initialize the marker streams before the device connection (name it 'TRG').
+            self.marker_writer = LslMarkerWriter(
+                stream_name=self.trigger_column)
 
     def stop_acquisition(self):
         """Stop acquiring data; perform cleanup."""
@@ -266,8 +283,7 @@ class DataAcquisitionClient:
 
         Returns
         -------
-            float or None if TRG channel is all 0.
-        TODO: Consider setting the trigger channel name in the device_info.
+            float or None if values in offset_column are all 0.
         """
 
         # cached value if previously queried; only needs to be computed once.
@@ -279,14 +295,14 @@ class DataAcquisitionClient:
             return None
 
         log.debug("Querying database for offset")
-        # Assumes that the TRG column is present and used for calibration, and
+        # Assumes that the offset_column is present and used for calibration, and
         # that non-calibration values are all 0.
         rows = buffer_server.query(self._buf,
-                                   filters=[("TRG", ">", 0)],
+                                   filters=[(self.trigger_column, ">", 0)],
                                    ordering=("timestamp", "asc"),
                                    max_results=1)
         if not rows:
-            log.debug("No rows have a TRG value.")
+            log.debug(f"No rows have a {self.trigger_column} value.")
             return None
 
         log.debug(rows[0])
@@ -317,7 +333,7 @@ class AcquisitionProcess(StoppableProcess):
 
     Parameters
     ----------
-        device: Device instance
+        connector: Connector instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
         clock : Clock
@@ -326,9 +342,9 @@ class AcquisitionProcess(StoppableProcess):
         msg_queue : Queue used to communicate with the main thread.
     """
 
-    def __init__(self, device, clock, buf, msg_queue):
+    def __init__(self, connector, clock, buf, msg_queue):
         super(AcquisitionProcess, self).__init__()
-        self._device = device
+        self._connector = connector
         self._clock = clock
         self._buf = buf
         self.msg_queue = msg_queue
@@ -341,15 +357,15 @@ class AcquisitionProcess(StoppableProcess):
 
         try:
             log.debug("Connecting to device")
-            self._device.connect()
-            self._device.acquisition_init()
+            self._connector.connect()
+            self._connector.acquisition_init()
         except Exception as error:
             self.msg_queue.put((MSG_ERROR, str(error)))
             raise error
 
         # Send updated device info to the main thread; this also signals that
         # initialization is complete.
-        self.msg_queue.put((MSG_DEVICE_INFO, self._device.device_info))
+        self.msg_queue.put((MSG_DEVICE_INFO, self._connector.device_info))
 
         # Wait for db server start
         self.msg_queue.get()
@@ -357,7 +373,7 @@ class AcquisitionProcess(StoppableProcess):
 
         log.debug("Starting Acquisition read data loop")
         sample = 0
-        data = self._device.read_data()
+        data = self._connector.read_data()
 
         # begin continuous acquisition process as long as data received
         while self.running() and data:
@@ -368,14 +384,14 @@ class AcquisitionProcess(StoppableProcess):
             buffer_server.append(self._buf, Record(data, self._clock.getTime(), sample))
             try:
                 # Read data again
-                data = self._device.read_data()
+                data = self._connector.read_data()
             # pylint: disable=broad-except
             except Exception as error:
                 log.error("Error reading data from device: %s", str(error))
                 data = None
                 break
         log.debug("Total samples read: %s", str(sample))
-        self._device.disconnect()
+        self._connector.disconnect()
 
 
 def main():
@@ -389,27 +405,30 @@ def main():
     import argparse
     import json
     from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import supported_devices
+    from bcipy.acquisition.connection_method import ConnectionMethod
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',
                         help='buffer db name')
     parser.add_argument('-f', '--filename', default='rawdata.csv')
     parser.add_argument('-d', '--device', default='DSI',
-                        choices=registry.supported_devices.keys())
-    parser.add_argument('-c', '--channels', default='',
-                        help='comma-delimited list')
+                        choices=supported_devices().keys())
+    parser.add_argument('-c', '--connection_method', default='LSL',
+                        choices=ConnectionMethod.list())
     parser.add_argument('-p', '--params', type=json.loads,
                         default={'host': '127.0.0.1', 'port': 9000},
                         help="device connection params; json")
     args = parser.parse_args()
 
-    device_builder = registry.find_device(args.device)
+    device_builder = registry.find_connector(
+        args.device, ConnectionMethod.by_name(args.connection_method))
 
     # Instantiate and start collecting data
     dev = device_builder(connection_params=args.params)
     if args.channels:
         dev.channels = args.channels.split(',')
-    daq = DataAcquisitionClient(device=dev,
+    daq = DataAcquisitionClient(connector=dev,
                                 buffer_name=args.buffer,
                                 delete_archive=True)
 

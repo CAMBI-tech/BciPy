@@ -3,9 +3,9 @@
 
 ### What is it?
 
-It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system.
+It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system. See our official BciPy documentation including affliations and more context information here: https://bcipy.github.io/  (in progress).
 
-It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
+It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10 Pro) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
 ### Contributions Welcome!
 
@@ -55,20 +55,29 @@ To use all the goodies locally (including the GUI and demo scripts)
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
 4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
-5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we are in this repository!)
+5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we use in this repository!)
 
-To just use the built-in functions:
+If wanting the latest version from PyPi:
 1. `pip install bcipy`
+
+Alternatley, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
+
+```sh
+# install in development mode
+make dev-install
+```
 
 ## Usage Locally
 
 Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
 
-Ex.`python bci_main.py` *this will default parameters, mode, user, and types.*
+Ex. `python bci_main.py` *this will use default parameters, user, experiment and task*
 
 You can pass it attributes with flags, if desired.
 
-Ex. `python bci_main.py --user "bci_user" --mode "RSVP"`
+Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration"`
+
+Use the help flag to see other available input options: `python bci_main.py --help`
 
 ## Example usage as a package
 
@@ -85,7 +94,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
 - `signal`: eeg signal models, filters, processing, evaluators and viewers. 
-- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py and mode/RSVPKeyboard.py.
+- `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
 - `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
@@ -130,7 +139,7 @@ Use this resource for examples: http://docs.python-guide.org/en/latest/writing/s
 
 When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module tests for examples!
 
-Test requirements must be installed before running: `pip install test_requirements.txt`
+Development requirements must be installed before running: `pip install dev_requirements.txt`
 
 To run all tests, in the command line:
 
@@ -157,6 +166,12 @@ coverage report
 coverage html
 ```
 
+Alternatley, if Make is installed, you may run the follow command to run coverage/pytest and generate the html:
+
+```sh
+make coverage-html
+```
+
 ## Linting
 
 This project enforces `PEP` style guidelines using [flake8](http://flake8.pycqa.org/en/latest/).
@@ -173,15 +188,35 @@ autopep8 --in-place --aggressive bcipy/acquisition/processor.py
 
 Finally, run the lint check: `flake8 bcipy`.
 
+Alternatley, if Make is installed, you may run the follow command to run autopep8 and flake8:
+
+```sh
+make lint
+```
+
+## Glossary
+-----------
+
+***Stimuli***: A single letter, tone or image shown (generally in an inquiry). Singular = stimulus, plural = stimuli.
+
+***Trial***: A collection of data after a stimuli is shown. A----
+
+***Inquiry***: The set of stimuli after a fixation cross in a spelling task to gather user intent. A ---- B --- C ----
+
+***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
+
+
 ## Authorship
 --------------
 
 - Tab Memmott (OHSU)
+- Matthew Lawhead (OHSU)
 - Aziz Kocanaogullari (NEU)
-- Matthew Lawhead (OHSU- OCTRI)
-- Berkan Kadioglu (NEU)
+- Shiran Dudy (OHSU)
 - Dani Smektala (OHSU)
-- Ian Jackson (OHSU/ Reed)
+- Ian Jackson (Reed)
+- Alister Cedeño (OHSU)
+- Berkan Kadioglu (NEU)
+- Basak Celik (NEU)
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
-- Shiran Dudy (OHSU)

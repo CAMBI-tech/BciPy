@@ -1,56 +1,106 @@
+import logging
+import pickle
+import json
+from pathlib import Path
+from shutil import copyfile
+from time import localtime, strftime
 from tkinter import Tk
+from tkinter.filedialog import askdirectory, askopenfilename
+
 import numpy as np
 import pandas as pd
-import logging
-from codecs import open as codecsopen
-from json import load as jsonload
-import pickle
 
-from tkinter.filedialog import askopenfilename, askdirectory
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+from bcipy.helpers.exceptions import InvalidExperimentException
+
 
 log = logging.getLogger(__name__)
 
 
-def _cast_parameters(parameters: dict) -> dict:
-    """Cast to Value.
+def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
+                    destination: str = None) -> str:
+    """Creates a copy of the given configuration (parameters.json) to the
+    given directory and returns the path.
 
-    Take in a parameters dictionary and coverts to a dictionary with type converted
-        and extranous information removed.
+    Parameters:
+    -----------
+        path: str - optional path of parameters file to copy; used default if not provided.
+        destination: str - optional destination directory; default is the same
+          directory as the default parameters.
+    Returns:
+    --------
+        path to the new file.
     """
-    new_parameters = {}
-    for key, value in parameters.items():
-        new_parameters[key] = cast_value(value)
+    default_dir = str(Path(DEFAULT_PARAMETERS_PATH).parent)
 
-    return new_parameters
+    destination = default_dir if destination is None else destination
+    filename = strftime('parameters_%Y-%m-%d_%Hh%Mm%Ss.json', localtime())
+
+    path = str(Path(destination, filename))
+    copyfile(DEFAULT_PARAMETERS_PATH, path)
+    return path
 
 
-def cast_value(value):
-    """Cast Value.
+def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
+    """Load Experiments.
 
-    Takes in a value with a desired type and attempts to cast it to that type.
+    PARAMETERS
+    ----------
+    :param: path: string path to the experiments file.
+
+    Returns
+    -------
+        A dictionary of experiments, with the following format:
+            { name: { fields : {name: '', required: bool}, summary: '' } }
+
     """
-    actual_value = str(value['value'])
-    actual_type = value['type']
-
-    try:
-        if actual_type == 'int':
-            new_value = int(actual_value)
-        elif actual_type == 'float':
-            new_value = float(actual_value)
-        elif actual_type == 'bool':
-            new_value = True if actual_value == 'true' else False
-        elif actual_type == 'str' or 'path' in actual_type:
-            new_value = str(actual_value)
-        else:
-            raise ValueError('Unrecognized value type')
-
-    except Exception:
-        raise ValueError(f'Could not cast {actual_value} to {actual_type}')
-
-    return new_value
+    with open(path, 'r') as json_file:
+        return json.load(json_file)
 
 
-def load_json_parameters(path: str, value_cast: bool = False) -> dict:
+def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
+    """Load Fields.
+
+    PARAMETERS
+    ----------
+    :param: path: string path to the fields file.
+
+    Returns
+    -------
+        A dictionary of fields, with the following format:
+            {
+                "field_name": {
+                    "help_text": "",
+                    "type": ""
+            }
+
+    """
+    with open(path, 'r') as json_file:
+        return json.load(json_file)
+
+
+def load_experiment_fields(experiment: dict) -> list:
+    """Load Experiment Fields.
+
+    {
+        'fields': [{}, {}],
+        'summary': ''
+    }
+
+    Using the experiment dictionary, loop over the field keys and put them in a list.
+    """
+    if isinstance(experiment, dict):
+        try:
+            return [name for field in experiment['fields'] for name in field.keys()]
+        except KeyError:
+            raise InvalidExperimentException(
+                'Experiment is not formatted correctly. It should be passed as a dictionary with the fields and'
+                f' summary keys. Fields is a list of dictionaries. Summary is a string. \n experiment=[{experiment}]')
+    raise TypeError('Unsupported experiment type. It should be passed as a dictionary with the fields and summary keys')
+
+
+def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     """Load JSON Parameters.
 
     Given a path to a json of parameters, convert to a dictionary and optionally
@@ -70,26 +120,12 @@ def load_json_parameters(path: str, value_cast: bool = False) -> dict:
     ----------
     :param: path: string path to the parameters file.
     :param: value_case: True/False cast values to specified type.
+
+    Returns
+    -------
+        a Parameters object that behaves like a dict.
     """
-    # loads in json parameters and turns it into a dictionary
-    try:
-        with codecsopen(path, 'r', encoding='utf-8') as f:
-            parameters = []
-            try:
-                parameters = jsonload(f)
-
-                if value_cast:
-                    parameters = _cast_parameters(parameters)
-            except ValueError:
-                raise ValueError(
-                    "Parameters file is formatted incorrectly!")
-
-        f.close()
-
-    except IOError:
-        raise IOError("Incorrect path to parameters given! Please try again.")
-
-    return parameters
+    return Parameters(source=path, cast_values=value_cast)
 
 
 def load_experimental_data() -> str:
@@ -166,7 +202,7 @@ def read_data_csv(folder: str, dat_first_row: int = 2,
     numeric_dat_file = dat_file.select_dtypes(exclude=['object'])
     channels = list(numeric_dat_file.columns[1:])  # without timestamp column
 
-    temp = pd.DataFrame.as_matrix(numeric_dat_file)
+    temp = numeric_dat_file.values
     stamp_time = temp[:, 0]
     raw_dat = temp[:, 1:temp.shape[1]].transpose()
 

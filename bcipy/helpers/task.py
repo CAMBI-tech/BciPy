@@ -61,15 +61,15 @@ def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
 def calculate_stimulation_freq(flash_time: float) -> float:
     """Calculate Stimulation Frequency.
 
-    In an RSVP paradigm, the sequence itself will produce an
+    In an RSVP paradigm, the inquiry itself will produce an
         SSVEP response to the stimulation. Here we calculate
         what that frequency should be based in the presentation
         time.
 
     PARAMETERS
     ----------
-    :param: flash_time: time in seconds to present RSVP sequence letters
-    :returns: frequency: stimulation frequency of the sequence
+    :param: flash_time: time in seconds to present RSVP inquiry letters
+    :returns: frequency: stimulation frequency of the inquiry
     """
 
     # We want to know how many stimuli will present in a second
@@ -107,7 +107,7 @@ def alphabet(parameters=None, include_path=True):
 
 
 def process_data_for_decision(
-        sequence_timing,
+        inquiry_timing,
         daq,
         window,
         parameters,
@@ -121,13 +121,16 @@ def process_data_for_decision(
 
     Parameters
     ----------
-        sequence_timing(array): array of tuples containing stimulus timing and
+        inquiry_timing(array): array of tuples containing stimulus timing and
             text
         daq (object): data acquisition object
         window: window to reactivate if deactivated by windows
         parameters: parameters dictionary
         first_session_stim_time (float): time that the first stimuli was presented
             for the session. Used to calculate offsets.
+        static_offset (float): offset present in the system which should be accounted for when
+            creating data for classification
+        buf_length: length of data needed after the last sample in order to reshape correctly
 
     Returns
     -------
@@ -135,15 +138,15 @@ def process_data_for_decision(
     """
 
     # Get timing of the first and last stimuli
-    _, first_stim_time = sequence_timing[0]
-    _, last_stim_time = sequence_timing[-1]
+    _, first_stim_time = inquiry_timing[0]
+    _, last_stim_time = inquiry_timing[-1]
 
     static_offset = static_offset or parameters['static_trigger_offset']
     # if there is an argument supplied for buffer length use that
     if buf_length:
         buffer_length = buf_length
     else:
-        buffer_length = parameters['len_data_sequence_buffer']
+        buffer_length = parameters['trial_length']
 
     # get any offset calculated from the daq
     daq_offset = daq.offset
@@ -159,7 +162,7 @@ def process_data_for_decision(
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
-                for text, timing in sequence_timing]
+                for text, timing in inquiry_timing]
 
     # Assign labels for triggers
     # TODO: This doesn't seem useful and is misleading
@@ -321,7 +324,7 @@ def trial_reshaper(trial_target_info: list,
 
     In all modes > calibration, we assume the timing info is given in samples not seconds.
 
-    :return (reshaped_trials, labels, num_of_sequences, trials_per_seq)
+    :return (reshaped_trials, labels, num_of_inquiries, trials_per_inq)
 
         reshaped_trials is a 3 dimensional np array where the first dimension
             is the channel, second dimension the trial/letter, and third
@@ -359,12 +362,12 @@ def trial_reshaper(trial_target_info: list,
 
         # MODE CALIBRATION
         if mode == 'calibration':
-            trials_per_seq = []
+            trials_per_inq = []
             count = 0
-            # Count every sequences trials
+            # Count every inquiries trials
             for symbol_info in trial_target_info:
                 if symbol_info == 'first_pres_target':
-                    trials_per_seq.append(count)
+                    trials_per_inq.append(count)
                     count = 0
                 elif symbol_info == 'nontarget' or 'target':
                     count += 1
@@ -373,11 +376,11 @@ def trial_reshaper(trial_target_info: list,
                     See trial_reshaper documentation for expected input.')
 
             # The first element is garbage. Get rid of it.
-            trials_per_seq = trials_per_seq[1:]
-            # Append the last sequences trial number
-            trials_per_seq.append(count)
+            trials_per_inq = trials_per_inq[1:]
+            # Append the last inquiries trial number
+            trials_per_inq.append(count)
             # Make the list a numpy array.
-            trials_per_seq = np.array(trials_per_seq)
+            trials_per_inq = np.array(trials_per_inq)
 
             # Mark every element in timing_info if 'first_pres_target'
             for symbol_info_index in range(len(trial_target_info)):
@@ -411,7 +414,7 @@ def trial_reshaper(trial_target_info: list,
                     reshaped_trials[channel][trial] = \
                         eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
 
-            num_of_sequences = int(sum(labels))
+            num_of_inquiries = int(sum(labels))
 
         # MODE COPY PHRASE
         elif mode == 'copy_phrase':
@@ -440,10 +443,10 @@ def trial_reshaper(trial_target_info: list,
                         eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
-            # In copy phrase, num of sequence is assumed to be 1.
-            num_of_sequences = 1
-            # Since there is only one sequence, all trials are in the sequence
-            trials_per_seq = len(triggers)
+            # In copy phrase, num of inquiry is assumed to be 1.
+            num_of_inquiries = 1
+            # Since there is only one inquiry, all trials are in the inquiry
+            trials_per_inq = len(triggers)
 
         # MODE FREE SPELL
         elif mode == 'free_spell':
@@ -468,17 +471,17 @@ def trial_reshaper(trial_target_info: list,
                         eeg_data[channel][
                         triggers[trial]:triggers[trial] + num_samples]
 
-            # In copy phrase, num of sequence is assumed to be 1.
-            num_of_sequences = 1
-            # Since there is only one sequence, all trials are in the sequence
-            trials_per_seq = len(triggers)
+            # In copy phrase, num of inquiry is assumed to be 1.
+            num_of_inquiries = 1
+            # Since there is only one inquiry, all trials are in the inquiry
+            trials_per_inq = len(triggers)
         else:
             raise Exception(
                 'Trial_reshaper does not work in this operating mode.')
 
         # Return our trials, labels and some useful information about the
         # arrays
-        return reshaped_trials, labels, num_of_sequences, trials_per_seq
+        return reshaped_trials, labels, num_of_inquiries, trials_per_inq
 
     except Exception as e:
         raise Exception(

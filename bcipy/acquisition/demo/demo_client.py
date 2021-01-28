@@ -20,22 +20,25 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.protocols import registry
+    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
 
-    # pylint: disable=invalid-name
-    Device = registry.find_device('DSI')
-    dsi_device = Device(connection_params={'host': '127.0.0.1', 'port': 9000})
+    # Start the server with the command:
+    # python bcipy/acquisition/datastream/tcp_server.py --name DSI --port 9000
+    device_spec = supported_device('DSI')
+    connection_params = {'host': '127.0.0.1', 'port': 9000}
+    connector = DsiConnector(connection_params=connection_params,
+                             device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = DataAcquisitionClient(device=dsi_device, clock=clock.Clock())
+    client = DataAcquisitionClient(connector=connector, clock=clock.Clock())
 
     try:
         client.start_acquisition()
-        print("\nCollecting data... (Interrupt [Ctl-C] to stop)\n")
+        print("\nCollecting data for 3s... (Interrupt [Ctl-C] to stop)\n")
         while True:
-            time.sleep(10)
-            print("Ten Second Passed")
-            print("Number of samples: {0}".format(client.get_data_len()))
+            time.sleep(3)
+            print(f"Number of samples: {client.get_data_len()}")
             client.stop_acquisition()
             client.cleanup()
             break
@@ -43,7 +46,6 @@ def main():
         print(f'{e.strerror}; make sure you started the server.')
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
-        print("Number of samples: {0}".format(client.get_data_len()))
         client.stop_acquisition()
         client.cleanup()
 

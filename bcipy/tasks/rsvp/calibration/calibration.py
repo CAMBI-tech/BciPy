@@ -4,8 +4,8 @@ from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 
 from bcipy.tasks.task import Task
 
-from bcipy.helpers.triggers import _write_triggers_from_sequence_calibration
-from bcipy.helpers.stimuli import random_rsvp_calibration_seq_gen, get_task_info
+from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
+from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
 from bcipy.helpers.task import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
@@ -13,14 +13,14 @@ from bcipy.helpers.task import (
 class RSVPCalibrationTask(Task):
     """RSVP Calibration Task.
 
-    Calibration task performs an RSVP stimulus sequence
+    Calibration task performs an RSVP stimulus inquiry
         to elicit an ERP. Parameters will change how many stimuli
         and for how long they present. Parameters also change
         color and text / image inputs.
 
     A task begins setting up variables --> initializing eeg -->
         awaiting user input to start -->
-        setting up stimuli --> presenting sequences -->
+        setting up stimuli --> presenting inquiries -->
         saving data
 
     PARAMETERS:
@@ -59,7 +59,7 @@ class RSVPCalibrationTask(Task):
                        parameters['time_cross'],
                        parameters['time_flash']]
 
-        self.color = [parameters['target_letter_color'],
+        self.color = [parameters['target_color'],
                       parameters['fixation_color'],
                       parameters['stim_color']]
 
@@ -73,15 +73,15 @@ class RSVPCalibrationTask(Task):
         self.enable_breaks = parameters['enable_breaks']
 
     def generate_stimuli(self):
-        """Generates the sequences to be presented.
+        """Generates the inquiries to be presented.
         Returns:
         --------
             tuple(
-                samples[list[list[str]]]: list of sequences
+                samples[list[list[str]]]: list of inquiries
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return random_rsvp_calibration_seq_gen(self.alp,
+        return random_rsvp_calibration_inq_gen(self.alp,
                                                stim_number=self.stim_number,
                                                stim_length=self.stim_length,
                                                timing=self.timing,
@@ -102,13 +102,13 @@ class RSVPCalibrationTask(Task):
         # Begin the Experiment
         while run:
 
-            # Get sequence information given stimuli parameters
+            # Get inquiry information given stimuli parameters
             (ele_sti, timing_sti, color_sti) = self.generate_stimuli()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
-            # Execute the RSVP sequences
+            # Execute the RSVP inquiries
             for idx_o in range(len(task_text)):
 
                 # check user input to make sure we should be going
@@ -133,8 +133,8 @@ class RSVPCalibrationTask(Task):
                 # Get height
                 self.rsvp.sti.height = self.stimuli_height
 
-                # Schedule a sequence
-                self.rsvp.stimuli_sequence = ele_sti[idx_o]
+                # Schedule a inquiry
+                self.rsvp.stimuli_inquiry = ele_sti[idx_o]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_stim:
@@ -145,12 +145,12 @@ class RSVPCalibrationTask(Task):
                 # Wait for a time
                 core.wait(self.buffer_val)
 
-                # Do the sequence
-                last_sequence_timing = self.rsvp.do_sequence()
+                # Do the inquiry
+                last_inquiry_timing = self.rsvp.do_inquiry()
 
-                # Write triggers for the sequence
-                _write_triggers_from_sequence_calibration(
-                    last_sequence_timing, self.trigger_file)
+                # Write triggers for the inquiry
+                _write_triggers_from_inquiry_calibration(
+                    last_inquiry_timing, self.trigger_file)
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -168,7 +168,7 @@ class RSVPCalibrationTask(Task):
         core.wait(self.buffer_val)
 
         if self.daq.is_calibrated:
-            _write_triggers_from_sequence_calibration(
+            _write_triggers_from_inquiry_calibration(
                 ['offset', self.daq.offset], self.trigger_file, offset=True)
 
         # Close this sessions trigger file and return some data

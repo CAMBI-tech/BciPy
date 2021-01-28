@@ -1,3 +1,37 @@
+# 1.5.0
+
+## Contributions
+
+This version contains major refactoring and tooling improvements across the codebase. In addition, it indtrocudes the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
+
+### Added
+- Language model histogram #91 
+- BciPy official glossary (Sequence -> Inquiry & Epoch -> Series) #121 
+- System information to `system_utils` (cpu, platform, etc) #98 
+- BciPy Experiments and Fields: See PRs #113 #111 and #114 for more information on the additions!
+- `.bcipy` system directory to support experiment and fields #100 
+- support for python 3.7
+- `rsvp/query_mechanisms`: to model the way we build inquiries #108 
+- `Makefile`: contains useful install and development commands
+- `convert`: a module for data conversions that will be useful for data sharing. Implemented a conversion function to the EDF format. #104 
+- `exceptions`: a module for BciPy core exceptions
+
+### Updated
+- `acquisition`: refactored the acquisition module to separate the concept of a device (ex. DSI-24 headset) and a connection method to that device (TCP or LSL). #122 
+- `setup.py`: with new repo location and CAMBI official support email 
+- `offline_analysis`: to pull parameters from session file #90 
+- `requirements.txt`: to the latest available #99 #107 
+- `Parameters` (added help text, removed redundant parameters). Refactored to make them immutable. #101 
+- `gui_main `: to use PyQt5. We will refactor all GUI code to use this in the future. After this PR, the signal viewer (WxPython) and a couple of loading functions will remain (Tk). #102 
+- `BCInterface` : updated to use new gui_main methods. Added user if validations. #102  #120 
+- `params_form`: moved into a parameters modules within GUI and updated to use PyQt5. #109 
+- `dev_requirements`: used to be called test_requirements. It contains more than that, so we updated the name! #99 
+- `README`: with relevant updates and contributors 
+
+### Removed
+- `RSVPKeyboard.py`
+
+
 # 1.4.2
 
 ## Contributions

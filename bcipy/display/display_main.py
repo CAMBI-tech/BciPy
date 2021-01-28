@@ -1,5 +1,5 @@
 from psychopy import visual
-from bcipy.helpers.system_utils import get_system_info
+from bcipy.helpers.system_utils import get_screen_resolution
 
 
 def init_display_window(parameters):
@@ -16,12 +16,8 @@ def init_display_window(parameters):
     # Check is full_screen mode is set and get necessary values
     if parameters['full_screen']:
 
-        # get relevant info about the system
-        info = get_system_info()
-
         # set window attributes based on resolution
-        window_height = info['resolution'][1]
-        window_width = info['resolution'][0]
+        window_width, window_height = get_screen_resolution()
 
         # set full screen mode to true (removes os dock, explorer etc.)
         full_screen = True

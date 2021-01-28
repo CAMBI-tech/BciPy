@@ -44,33 +44,43 @@ def offline_analysis(data_folder: str = None,
         data_folder = load_experimental_data()
 
     mode = 'calibration'
-    trial_length = parameters.get('collection_window_after_trial_length')
+
+    # extract relevant session information from parameters file
+    trial_length = parameters.get('trial_length')
+    triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
+    raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
+
+    # get signal filtering information
+    downsample_rate = parameters.get('down_sampling_rate', 2)
+    notch_filter = parameters.get('notch_filter_frequency', 60)
+    hp_filter = parameters.get('filter_high', 45)
+    lp_filter = parameters.get('filter_low', 2)
+    filter_order = parameters.get('filter_order', 2)
+
+    # get offset and k folds
+    static_offset = parameters.get('static_trigger_offset', 0)
+    k_folds = parameters.get('k_folds', 10)
 
     raw_dat, _, channels, type_amp, fs = read_data_csv(
-        data_folder + '/' + parameters.get('raw_data_name', 'raw_data.csv'))
+        data_folder + '/' + raw_data_file)
 
     log.info(f'Channels read from csv: {channels}')
     log.info(f'Device type: {type_amp}')
 
-    downsample_rate = parameters.get('down_sampling_rate', 2)
-
     # Remove 60hz noise with a notch filter
-    notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=60)
+    notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=notch_filter)
 
-    # bandpass filter from 2-45hz
+    # bandpass filter
     filtered_data = bandpass.butter_bandpass_filter(
-        notch_filter_data, 2, 45, fs, order=2)
+        notch_filter_data, lp_filter, hp_filter, fs, order=filter_order)
 
     # downsample
     data = downsample.downsample(filtered_data, factor=downsample_rate)
 
     # Process triggers.txt
-    triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
     _, t_t_i, t_i, offset = trigger_decoder(
         mode=mode,
         trigger_path=f'{data_folder}/{triggers_file}')
-
-    static_offset = parameters.get('static_trigger_offset', 0)
 
     offset = offset + static_offset
 
@@ -83,8 +93,6 @@ def offline_analysis(data_folder: str = None,
                                 offset=offset,
                                 channel_map=channel_map,
                                 trial_length=trial_length)
-
-    k_folds = parameters.get('k_folds', 10)
 
     model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
 

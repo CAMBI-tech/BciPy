@@ -1,41 +1,68 @@
 import errno
 import os
 from time import localtime, strftime
-from shutil import copy2
+from shutil import copyfile
+from pathlib import Path
 import json
 
+from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
 
-def init_save_data_structure(data_save_path,
-                             user_information,
-                             parameters_used,
-                             mode=None,
-                             experiment_type=None):
+
+def save_json_data(data: dict, location: str, name: str) -> str:
     """
-    Initialize Save Data Strucutre.
+    Writes Parameters as a json file.
+
+        parameters[dict]: dict of configuration
+        location[str]: directory in which to save
+        name[str]: optional name of file; default is parameters.json
+
+    Returns path of saved file
+    """
+    path = Path(location, name)
+    with open(Path(location, name), 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=2)
+    return str(path)
+
+
+def save_experiment_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
+def save_field_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
+def save_experiment_field_data(data, location, name) -> str:
+    return save_json_data(data, location, name)
+
+
+def init_save_data_structure(data_save_path: str,
+                             user_id: str,
+                             parameters: str,
+                             task: str,
+                             experiment_id: str = DEFAULT_EXPERIMENT_ID
+                             ) -> str:
+    """
+    Initialize Save Data Structure.
 
         data_save_path[str]: string of path to save our data in
-        user_information[str]: string of user name / related information
-        parameters_used[str]: a path to parameters file for the experiment
+        user_id[str]: string of user name / related information
+        parameters[str]: parameter location for the experiment
+        experiment_id[str]: Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
+        task[str]: name of task type. Ex. RSVP Calibration
 
     """
 
     # make an experiment folder : note datetime is in utc
-    save_folder_name = data_save_path + user_information
-    if mode and experiment_type:
-        save_directory = save_folder_name + '/' + \
-            user_information + '_' + str(mode) + '_' + str(experiment_type) + '_' + strftime(
-                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
-    else:
-        save_directory = save_folder_name + '/' + \
-            user_information + '_' + strftime(
-                '%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
-    helper_folder_name = save_directory + '/helpers/'
+    save_folder_name = f'{data_save_path}{experiment_id}/{user_id}'
+    dt = strftime('%a_%d_%b_%Y_%Hhr%Mmin%Ssec_%z', localtime())
+    task = task.replace(' ', '_')
+    save_directory = f"{save_folder_name}/{user_id}_{task}_{dt}"
 
     try:
         # make a directory to save data to
         os.makedirs(save_folder_name)
         os.makedirs(save_directory)
-        os.makedirs(helper_folder_name)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     except OSError as error:
@@ -45,33 +72,9 @@ def init_save_data_structure(data_save_path,
 
         # since this is only called on init, we can make another folder run
         os.makedirs(save_directory)
-        os.makedirs(helper_folder_name)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
-    try:
-        # Go to folder helpers and list files within it
-        src_files = os.listdir('bcipy/helpers/')
-
-        # Loop through files in helpers and copy important ones over
-        for file_name in src_files:
-
-            # get the full name
-            full_file_name = os.path.join('bcipy/helpers/', file_name)
-
-            # Check that constructed file is a real file and ends in .py
-            if (os.path.isfile(full_file_name)) and '.py' in file_name:
-                # Copy over!
-                copy2(full_file_name, helper_folder_name)
-
-        # Check that parameters file given is a real file
-        if (os.path.isfile(parameters_used)):
-            # Copy over parameters file
-            copy2(parameters_used, save_directory)
-        else:
-            raise Exception('Parameter File Not Found!')
-
-    except IOError as error:
-        raise error
+    copyfile(parameters, Path(save_directory, 'parameters.json'))
 
     return save_directory
 
@@ -85,7 +88,7 @@ def _save_session_related_data(file, session_dictionary):
         file[str]: string of path to save our data in
         session_dictionary[dict]: dictionary of session data. It will appear
             as follows:
-                {{ "epochs": {
+                {{ "series": {
                         "1": {
                           "0": {
                             "copy_phrase": "COPY_PHRASE",

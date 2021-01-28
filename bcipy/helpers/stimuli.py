@@ -16,6 +16,58 @@ from psychopy import core
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
+# TODO: since we have a querying this should replace the other generators
+def rsvp_inq_generator(query: list,
+                       timing=[1, 0.2],
+                       color=['red', 'white'],
+                       stim_number=1,
+                       is_txt=True,
+                       inq_constants=None) -> tuple:
+    """ Given the query set, prepares the stimuli, color and timing
+        Args:
+            query(list[str]): list of queries to be shown
+            timing(list[float]): Task specific timing for generator
+            color(list[str]): Task specific color for generator
+                First element is the target, second element is the fixation
+                Observe that [-1] element represents the trial information
+            inq_constants(list[str]): list of letters that should always be
+                included in every inquiry. If provided, must be alp items.
+        Return:
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)): scheduled inquiries
+            """
+
+    # shuffle the returned values
+    random.shuffle(query)
+
+    stim_length = len(query)
+
+    # Init some lists to construct our stimuli with
+    samples, times, colors = [], [], []
+    for idx_num in range(stim_number):
+
+        # append a fixation cross. if not text, append path to image fixation
+        if is_txt:
+            sample = ['+']
+        else:
+            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+
+        # construct the sample from the query
+        sample += [i for i in query]
+        samples.append(sample)
+
+        # append timing
+        times.append([timing[i] for i in range(len(timing) - 1)] +
+                     [timing[-1]] * stim_length)
+
+        # append colors
+        colors.append([color[i] for i in range(len(color) - 1)] +
+                      [color[-1]] * stim_length)
+    return (samples, times, colors)
+
+
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
@@ -50,17 +102,17 @@ def best_selection(selection_elements: list,
     return best
 
 
-def best_case_rsvp_seq_gen(alp: list,
+def best_case_rsvp_inq_gen(alp: list,
                            session_stimuli: list,
                            timing=[1, 0.2],
                            color=['red', 'white'],
                            stim_number=1,
                            stim_length=10,
                            is_txt=True,
-                           seq_constants=None) -> tuple:
-    """Best Case RSVP Sequence Generation.
+                           inq_constants=None) -> tuple:
+    """Best Case RSVP Inquiry Generation.
 
-    generates RSVPKeyboard sequence by picking n-most likely letters.
+    generates RSVPKeyboard inquiry by picking n-most likely letters.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
             session_stimuli(ndarray[float]): quantifier metric for query selection
@@ -70,14 +122,14 @@ def best_case_rsvp_seq_gen(alp: list,
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
             stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a sequence
-            seq_constants(list[str]): list of letters that should always be
-                included in every sequence. If provided, must be alp items.
+            stim_length(int): number of trials in a inquiry
+            inq_constants(list[str]): list of letters that should always be
+                included in every inquiry. If provided, must be alp items.
         Return:
-            schedule_seq(tuple(
-                samples[list[list[str]]]: list of sequences
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
                 timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled sequences
+                color(list(list[str])): list of colors)): scheduled inquiries
             """
 
     if len(alp) != len(session_stimuli):
@@ -85,8 +137,8 @@ def best_case_rsvp_seq_gen(alp: list,
                         'len(session_stimuli):{}, should be same!'.format(
                             len(alp), len(session_stimuli)))
 
-    if seq_constants and not set(seq_constants).issubset(alp):
-        raise Exception('Sequence constants must be alphabet items.')
+    if inq_constants and not set(inq_constants).issubset(alp):
+        raise Exception('Inquiry constants must be alphabet items.')
 
     # create a list of alphabet letters
     alphabet = [i for i in alp]
@@ -96,7 +148,7 @@ def best_case_rsvp_seq_gen(alp: list,
         alphabet,
         session_stimuli,
         stim_length,
-        seq_constants)
+        inq_constants)
 
     # shuffle the returned values
     random.shuffle(query)
@@ -125,13 +177,13 @@ def best_case_rsvp_seq_gen(alp: list,
     return (samples, times, colors)
 
 
-def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
+def random_rsvp_calibration_inq_gen(alp, timing=[0.5, 1, 0.2],
                                     color=['green', 'red', 'white'],
                                     stim_number=10,
                                     stim_length=10, is_txt=True):
-    """Random RSVP Calibration Sequence Generator.
+    """Random RSVP Calibration Inquiry Generator.
 
-    Generates random RSVPKeyboard sequences.
+    Generates random RSVPKeyboard inquiries.
         Args:
             alp(list[str]): alphabet (can be arbitrary)
             timing(list[float]): Task specific timing for generator
@@ -139,12 +191,12 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
             stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a sequence
+            stim_length(int): number of trials in a inquiry
         Return:
-            schedule_seq(tuple(
-                samples[list[list[str]]]: list of sequences
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
                 timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled sequences
+                color(list(list[str])): list of colors)): scheduled inquiries
     """
 
     len_alp = len(alp)
@@ -167,17 +219,18 @@ def random_rsvp_calibration_seq_gen(alp, timing=[0.5, 1, 0.2],
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
-    schedule_seq = (samples, times, colors)
+    schedule_inq = (samples, times, colors)
 
-    return schedule_seq
+    return schedule_inq
 
 
-def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 1, 0.2],
-                                   color=['green', 'white', 'white'],
-                                   stim_length=10, is_txt=True):
-    """Target RSVP Sequence Generator.
+def target_rsvp_inquiry_generator(alp, target_letter, parameters,
+                                  timing=[0.5, 1, 0.2],
+                                  color=['green', 'white', 'white'],
+                                  stim_length=10, is_txt=True):
+    """Target RSVP Inquiry Generator.
 
-    Generate target RSVPKeyboard sequences.
+    Generate target RSVPKeyboard inquiries.
 
         Args:
             alp(list[str]): alphabet (can be arbitrary)
@@ -186,12 +239,12 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
-            stim_length(int): number of trials in a sequence
+            stim_length(int): number of trials in a inquiry
         Return:
-            schedule_seq(tuple(
-                samples[list[list[str]]]: list of sequences
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
                 timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled sequences
+                color(list(list[str])): list of colors)): scheduled inquiries
     """
 
     len_alp = len(alp)
@@ -224,9 +277,9 @@ def target_rsvp_sequence_generator(alp, target_letter, parameters, timing=[0.5, 
     colors.append([color[i] for i in range(len(color) - 1)] +
                   [color[-1]] * stim_length)
 
-    schedule_seq = (samples, times, colors)
+    schedule_inq = (samples, times, colors)
 
-    return schedule_seq
+    return schedule_inq
 
 
 def get_task_info(experiment_length, task_color):
@@ -235,7 +288,7 @@ def get_task_info(experiment_length, task_color):
     Generates fixed RSVPKeyboard task text and color information for
             display.
     Args:
-        experiment_length(int): Number of sequences for the experiment
+        experiment_length(int): Number of inquiries for the experiment
         task_color(str): Task information display color
 
     Return get_task_info((tuple): task_text: array of task text to display
@@ -252,10 +305,10 @@ def get_task_info(experiment_length, task_color):
     return (task_text, task_color)
 
 
-def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
+def rsvp_copy_phrase_inq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
                                    stim_length=10):
-    """Generate copy phrase RSVPKeyboard sequences.
+    """Generate copy phrase RSVPKeyboard inquiries.
 
         Args:
             alp(list[str]): alphabet (can be arbitrary)
@@ -264,12 +317,12 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
-            stim_length(int): number of trials in a sequence
+            stim_length(int): number of trials in an inquiry
         Return:
-            schedule_seq(tuple(
-                samples[list[list[str]]]: list of sequences
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
                 timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled sequences
+                color(list(list[str])): list of colors)): scheduled inquiries
     """
 
     len_alp = len(alp)
@@ -294,20 +347,20 @@ def rsvp_copy_phrase_seq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     colors.append([color[i] for i in range(len(color) - 1)] +
                   [color[-1]] * stim_length)
 
-    schedule_seq = (samples, times, colors)
+    schedule_inq = (samples, times, colors)
 
-    return schedule_seq
+    return schedule_inq
 
 
 def generate_icon_match_images(
-        experiment_length, image_path, number_of_sequences, timing, is_word):
+        experiment_length, image_path, number_of_inquiries, timing, is_word):
     """Generate Image Icon Matches.
 
     Generates an array of images to use for the icon matching task.
     Args:
-        experiment_length(int): Number of images per sequence
+        experiment_length(int): Number of images per inquiry
         image_path(str): Path to image files
-        number_of_sequences(int): Number of sequences to generate
+        number_of_inquiries(int): Number of inquiries to generate
         timing(list): List of timings; [parameters['time_target'],
                        parameters['time_cross'],
                        parameters['time_flash']]
@@ -327,7 +380,7 @@ def generate_icon_match_images(
 
     # Generate indexes of target images
     target_image_numbers = np.random.randint(
-        0, len(image_array), number_of_sequences)
+        0, len(image_array), number_of_inquiries)
 
     # Array of images to return
     return_array = []
@@ -339,31 +392,32 @@ def generate_icon_match_images(
     for item_without_timing in range(len(return_timing), experiment_length):
         return_timing.append(timing[-1])
 
-    for sequence in range(number_of_sequences):
+    for inquiry in range(number_of_inquiries):
         return_array.append([])
         # Generate random permutation of image indexes
         random_number_array = np.random.permutation(len(image_array))
         if is_word:
             # Add name of target image to array
             image_path = path.basename(
-                image_array[target_image_numbers[sequence]])
-            return_array[sequence].append(image_path.replace('.png', ''))
+                image_array[target_image_numbers[inquiry]])
+            return_array[inquiry].append(image_path.replace('.png', ''))
         else:
             # Add target image to image array
-            return_array[sequence].append(
-                image_array[target_image_numbers[sequence]])
+            return_array[inquiry].append(
+                image_array[target_image_numbers[inquiry]])
         # Add PLUS.png to image array
-        return_array[sequence].append(
+        return_array[inquiry].append(
             'bcipy/static/images/bci_main_images/PLUS.png')
 
-        # Add target image to sequence, if it is not already there
-        if not target_image_numbers[sequence] in random_number_array[2:experiment_length]:
+        # Add target image to inquiry, if it is not already there
+        if not target_image_numbers[inquiry] in random_number_array[
+                2:experiment_length]:
             random_number_array[np.random.randint(
-                2, experiment_length)] = target_image_numbers[sequence]
+                2, experiment_length)] = target_image_numbers[inquiry]
 
         # Fill the rest of the image array with random images
         for item in range(2, experiment_length):
-            return_array[sequence].append(
+            return_array[inquiry].append(
                 image_array[random_number_array[item]])
 
     return (return_array, return_timing)
@@ -393,7 +447,8 @@ def resize_image(image_path: str, screen_size: tuple, sti_height: int):
                     proportions[0], sti_height * proportions[1])
     else:
         sti_size = (
-            sti_height * proportions[0], (screen_width / screen_height) * sti_height * proportions[1])
+            sti_height * proportions[0],
+            (screen_width / screen_height) * sti_height * proportions[1])
 
     return sti_size
 

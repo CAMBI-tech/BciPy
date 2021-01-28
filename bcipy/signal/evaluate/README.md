@@ -5,7 +5,7 @@ evaluated.
 
 ## Evaluator
 
-Handles signal evaluation by maintaining a set of enabled rules and testing sequences against
+Handles signal evaluation by maintaining a set of enabled rules and testing inquiries against
 each rule. Is boolean in nature, informing whether a rule was broken.
 
 ### Example usage
@@ -21,8 +21,8 @@ low_voltage_rule = False
 # init evaluator
 evaluator = Evaluator(parameter_location, high_voltage_rule, low_voltage_rule)
 
-# Evaluate if sequence is good (returns True / False)
-evaluator.evaluate(sequence)
+# Evaluate if inquiry is good (returns True / False)
+evaluator.evaluate(inquiry)
 ```
 
 ### Importing

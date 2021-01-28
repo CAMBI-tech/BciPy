@@ -3,9 +3,9 @@ from psychopy import core
 from bcipy.tasks.task import Task
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.triggers import _write_triggers_from_sequence_copy_phrase
+from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.signal_model import CopyPhraseWrapper
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.task import (
     fake_copy_phrase_decision, alphabet, process_data_for_decision,
     trial_complete_message, get_user_input)
@@ -77,7 +77,7 @@ class RSVPCopyPhraseTask(Task):
                        self.time_cross,
                        self.time_flash]
 
-        self.color = [parameters['target_letter_color'],
+        self.color = [parameters['target_color'],
                       parameters['fixation_color'],
                       parameters['stim_color']]
 
@@ -94,21 +94,21 @@ class RSVPCopyPhraseTask(Task):
             self.logger.debug('Already spelled letters exceeds phrase length.')
             self.spelled_letters_count = 0
 
-        self.max_seq_length = parameters['max_seq_len']
+        self.max_inq_length = parameters['max_inq_len']
         self.max_seconds = parameters['max_minutes'] * 60  # convert to seconds
-        self.max_seq_per_trial = parameters['max_seq_per_trial']
+        self.max_inq_per_trial = parameters['max_inq_per_trial']
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
         self.down_sample_rate = parameters['down_sampling_rate']
 
-        self.filter_low = self.parameters['filter_low_pass']
-        self.filter_high = self.parameters['filter_high_pass']
+        self.filter_low = self.parameters['filter_low']
+        self.filter_high = self.parameters['filter_high']
         self.fitler_order = self.parameters['filter_order']
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
-        self.min_num_seq = parameters['min_seq_len']
-        self.collection_window_len = parameters['collection_window_after_trial_length']
+        self.min_num_inq = parameters['min_inq_len']
+        self.collection_window_len = parameters['trial_length']
 
         self.static_offset = parameters['static_trigger_offset']
         self.show_feedback = parameters['show_feedback']
@@ -128,8 +128,8 @@ class RSVPCopyPhraseTask(Task):
 
         # Try Initializing Copy Phrase Wrapper:
         copy_phrase_task = CopyPhraseWrapper(
-            self.min_num_seq,
-            self.max_seq_per_trial,
+            self.min_num_inq,
+            self.max_inq_per_trial,
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
             k=2,
@@ -148,25 +148,25 @@ class RSVPCopyPhraseTask(Task):
             filter_order=self.fitler_order,
             notch_filter_frequency=self.notch_filter_frequency)
 
-        # Set new epoch (whether to present a new epoch),
+        # Set new series (whether to present a new series),
         #   run (whether to cont. session),
-        #   sequence counter (how many seq have occured).
-        #   epoch counter and index
-        #   (what epoch, and how many sequences within it)
-        new_epoch = True
+        #   inquiry counter (how many inquiries have occured).
+        #   series counter and index
+        #   (what series, and how many inquiries within it)
+        new_series = True
         run = True
-        seq_counter = 0
-        epoch_counter = 0
-        epoch_index = 0
+        inq_counter = 0
+        series_counter = 0
+        series_index = 0
 
         # Init session data and save before beginning
         data = {
             'session': self.file_save,
             'session_type': 'Copy Phrase',
             'paradigm': 'RSVP',
-            'epochs': {},
+            'series': {},
             'total_time_spent': self.experiment_clock.getTime(),
-            'total_number_epochs': 0,
+            'total_number_series': 0,
         }
 
         # Save session data
@@ -193,21 +193,21 @@ class RSVPCopyPhraseTask(Task):
                 # otherwise target is the backspace char.
                 target_letter = '<'
 
-            # Get sequence information
-            if new_epoch:
+            # Get inquiry information
+            if new_series:
 
-                # Init an epoch, getting initial stimuli
-                new_epoch, sti = copy_phrase_task.initialize_epoch()
+                # Init an series, getting initial stimuli
+                new_series, sti = copy_phrase_task.initialize_series()
                 ele_sti = sti[0]
                 timing_sti = sti[1]
                 color_sti = sti[2]
 
-                # Increase epoch number and reset epoch index
-                epoch_counter += 1
-                data['epochs'][epoch_counter] = {}
-                epoch_index = 0
+                # Increase series number and reset series index
+                series_counter += 1
+                data['series'][series_counter] = {}
+                series_index = 0
             else:
-                epoch_index += 1
+                series_index += 1
 
             # Update task state and reset the static
             self.rsvp.update_task_state(text=text_task, color_list=['white'])
@@ -215,7 +215,7 @@ class RSVPCopyPhraseTask(Task):
             self.window.flip()
 
             # Setup the new Stimuli
-            self.rsvp.stimuli_sequence = ele_sti[0]
+            self.rsvp.stimuli_inquiry = ele_sti[0]
             if self.is_txt_stim:
                 self.rsvp.stimuli_colors = color_sti[0]
             self.rsvp.stimuli_timing = timing_sti[0]
@@ -223,12 +223,12 @@ class RSVPCopyPhraseTask(Task):
             # Pause for a time
             core.wait(self.buffer_val)
 
-            # Do the self.RSVP sequence!
-            sequence_timing = self.rsvp.do_sequence()
+            # Do the self.RSVP inquiry!
+            inquiry_timing = self.rsvp.do_inquiry()
 
             # Write triggers to file
-            _write_triggers_from_sequence_copy_phrase(
-                sequence_timing,
+            _write_triggers_from_inquiry_copy_phrase(
+                inquiry_timing,
                 self.trigger_file,
                 self.copy_phrase,
                 text_task)
@@ -236,13 +236,13 @@ class RSVPCopyPhraseTask(Task):
             core.wait(self.buffer_val)
 
             # Delete calibration
-            if seq_counter == 0:
-                del sequence_timing[0]
+            if inq_counter == 0:
+                del inquiry_timing[0]
 
             # reshape the data and triggers as needed for later modules
             raw_data, triggers, target_info = \
                 process_data_for_decision(
-                    sequence_timing,
+                    inquiry_timing,
                     self.daq,
                     self.window,
                     self.parameters,
@@ -253,7 +253,7 @@ class RSVPCopyPhraseTask(Task):
             # self.fake = False
             if self.fake:
                 # Construct Data Record
-                data['epochs'][epoch_counter][epoch_index] = {
+                data['series'][series_counter][series_index] = {
                     'stimuli': ele_sti,
                     'eeg_len': len(raw_data),
                     'timing_sti': timing_sti,
@@ -263,35 +263,35 @@ class RSVPCopyPhraseTask(Task):
                     'current_text': text_task,
                     'copy_phrase': self.copy_phrase}
 
-                # Evaluate this sequence
+                # Evaluate this inquiry
                 (target_letter, text_task, run) = \
                     fake_copy_phrase_decision(self.copy_phrase,
                                               target_letter,
                                               text_task)
 
-                # here we assume, in fake mode, all sequences result in a
+                # here we assume, in fake mode, all inquiries result in a
                 # selection.
                 last_selection = text_task[-1]
-                new_epoch, sti = copy_phrase_task.initialize_epoch()
+                new_series, sti = copy_phrase_task.initialize_series()
                 # Update next state for this record
-                data['epochs'][
-                    epoch_counter][
-                    epoch_index][
+                data['series'][
+                    series_counter][
+                    series_index][
                     'next_display_state'] = \
                     text_task
 
             else:
-                # Evaluate this sequence, returning whether to gen a new
-                #  epoch (seq) or stimuli to present
-                new_epoch, sti = \
-                    copy_phrase_task.evaluate_sequence(
+                # Evaluate this inquiry, returning whether to gen a new
+                #  series (inq) or stimuli to present
+                new_series, sti = \
+                    copy_phrase_task.evaluate_inquiry(
                         raw_data,
                         triggers,
                         target_info,
                         self.collection_window_len)
 
                 # Construct Data Record
-                data['epochs'][epoch_counter][epoch_index] = {
+                data['series'][series_counter][series_index] = {
                     'stimuli': ele_sti,
                     'eeg_len': len(raw_data),
                     'timing_sti': timing_sti,
@@ -313,8 +313,8 @@ class RSVPCopyPhraseTask(Task):
                         .conjugator.likelihood.tolist()
                 }
 
-                # If new_epoch is False, get the stimuli info returned
-                if not new_epoch:
+                # If new_series is False, get the stimuli info returned
+                if not new_series:
                     ele_sti = sti[0]
                     timing_sti = sti[1]
                     color_sti = sti[2]
@@ -325,7 +325,7 @@ class RSVPCopyPhraseTask(Task):
 
             # if a letter was selected and feedback enabled, show the chosen
             # letter
-            if new_epoch and self.show_feedback:
+            if new_series and self.show_feedback:
                 self.feedback.administer(
                     last_selection,
                     message='Selected:',
@@ -334,24 +334,24 @@ class RSVPCopyPhraseTask(Task):
 
             # Update time spent and save data
             data['total_time_spent'] = self.experiment_clock.getTime()
-            data['total_number_epochs'] = epoch_counter
+            data['total_number_series'] = series_counter
             _save_session_related_data(self.session_save_location, data)
 
             # Decide whether to keep the task going
-            max_tries_exceeded = seq_counter >= self.max_seq_length
+            max_tries_exceeded = inq_counter >= self.max_inq_length
             max_time_exceeded = data['total_time_spent'] >= self.max_seconds
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
                     self.logger.debug('COPYPHRASE ERROR: Max tries exceeded. To allow for more tries '
-                                      'adjust the max_seq_len parameter.')
+                                      'adjust the max_inq_len parameter.')
                 if max_time_exceeded:
                     self.logger.debug('COPYPHRASE ERROR: Max time exceeded. To allow for more time '
                                       'adjust the max_minutes parameter.')
                 run = False
 
-            # Increment sequence counter
-            seq_counter += 1
+            # Increment inquiry counter
+            inq_counter += 1
 
         # Update task state and reset the static
         self.rsvp.update_task_state(text=text_task, color_list=['white'])
@@ -365,7 +365,7 @@ class RSVPCopyPhraseTask(Task):
         core.wait(self.buffer_val)
 
         if self.daq.is_calibrated:
-            _write_triggers_from_sequence_copy_phrase(
+            _write_triggers_from_inquiry_copy_phrase(
                 ['offset', self.daq.offset], self.trigger_file,
                 self.copy_phrase, text_task, offset=True)
 
@@ -403,7 +403,7 @@ def _init_copy_phrase_display(
         stim_pos=(parameters['stim_pos_x'],
                   parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
-        stim_sequence=['a'] * 10,
+        stim_inquiry=['a'] * 10,
         stim_colors=[parameters['stim_color']] * 10,
         stim_timing=[3] * 10,
         is_txt_stim=parameters['is_txt_stim'],

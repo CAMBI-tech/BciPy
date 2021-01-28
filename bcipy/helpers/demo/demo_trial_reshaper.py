@@ -104,8 +104,8 @@ def demo1():
 
     # Print results.
     print('Reshaped trials:\n', arg[0], '\nLabels:', arg[1],
-          '\nTotal number of sequences:',
-          arg[2], '\nTrial number in each sequence:', arg[3])
+          '\nTotal number of inquiries:',
+          arg[2], '\nTrial number in each inquiry:', arg[3])
 
 
 def demo2():
