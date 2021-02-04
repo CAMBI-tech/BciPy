@@ -6,8 +6,13 @@ from pathlib import Path
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
+IRREGULAR_RATE = 0.0
 DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
 _SUPPORTED_DEVICES = {}
+# see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
+SUPPORTED_DATA_TYPES = [
+    'float32', 'double64', 'string', 'int32', 'int16', 'int8'
+]
 
 
 @auto_str
@@ -25,6 +30,8 @@ class DeviceSpec:
         connection_methods - list of methods for connecting to the device
         description - device description
             ex. 'Wearable Sensing DSI-24 dry electrode EEG headset'
+        data_type - data format of a channel; all channels must have the same type;
+            see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
     """
 
     def __init__(self,
@@ -33,13 +40,18 @@ class DeviceSpec:
                  sample_rate: float,
                  content_type: str = 'EEG',
                  connection_methods: List[ConnectionMethod] = None,
-                 description: str = None):
+                 description: str = None,
+                 data_type='float32'):
+
+        assert sample_rate >= 0, "Sample rate can't be negative."
+        assert data_type in SUPPORTED_DATA_TYPES
         self.name = name
         self.channels = channels
         self.sample_rate = sample_rate
         self.content_type = content_type
         self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
+        self.data_type = data_type
 
     @property
     def channel_count(self) -> int:
@@ -79,24 +91,24 @@ def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
         _SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
 
 
-def supported_devices() -> Dict[str, DeviceSpec]:
-    """Returns the currently supported devices keyed by name."""
+def preconfigured_devices() -> Dict[str, DeviceSpec]:
+    """Returns the preconfigured devices keyed by name."""
     global _SUPPORTED_DEVICES
     if not _SUPPORTED_DEVICES:
         load()
     return _SUPPORTED_DEVICES
 
 
-def supported_device(name: str) -> DeviceSpec:
+def preconfigured_device(name: str) -> DeviceSpec:
     """Retrieve the DeviceSpec with the given name. An exception is raised
-    if the device is not supported."""
-    device = supported_devices().get(name, None)
+    if the device is not found."""
+    device = preconfigured_devices().get(name, None)
     if not device:
-        raise ValueError(f"Device not supported: {name}")
+        raise ValueError(f"Device not found: {name}")
     return device
 
 
 def register(device_spec: DeviceSpec):
     """Register the given DeviceSpec."""
-    config = supported_devices()
+    config = preconfigured_devices()
     config[device_spec.name] = device_spec

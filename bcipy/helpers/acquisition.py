@@ -10,7 +10,7 @@ from bcipy.acquisition.client import CountClock, DataAcquisitionClient
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import TcpDataServer, await_start
-from bcipy.acquisition.devices import DeviceSpec, supported_device
+from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.util import StoppableThread
 
 
@@ -57,7 +57,7 @@ def init_eeg_acquisition(parameters: dict,
         parameters['acq_connection_method'])
     # TODO: parameter for loading devices; path to devices.json?
     # devices.load(devices_path)
-    device_spec = supported_device(parameters['acq_device'])
+    device_spec = preconfigured_device(parameters['acq_device'])
 
     dataserver = False
     if server:
@@ -131,7 +131,7 @@ def analysis_channels(channels: List[str], device_name: str) -> list:
         A binary list indicating which channels should be used for analysis.
         If i'th element is 0, i'th channel in filtered_eeg is removed.
     """
-    device = supported_device(device_name)
+    device = preconfigured_device(device_name)
     relevant_channels = device.analysis_channels()
     if not relevant_channels:
         raise Exception("Analysis channels for the given device not found: "

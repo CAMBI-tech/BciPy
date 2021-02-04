@@ -10,10 +10,10 @@ def main():
     The client/server can be stopped with a Keyboard Interrupt (Ctl-C)."""
 
     from bcipy.acquisition.datastream.lsl_server import LslDataServer
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
     from bcipy.gui.viewer import data_viewer
 
-    device_spec = supported_device('LSL')
+    device_spec = preconfigured_device('LSL')
     server = LslDataServer(device_spec=device_spec)
 
     try:

@@ -405,7 +405,7 @@ def main():
     import argparse
     import json
     from bcipy.acquisition.protocols import registry
-    from bcipy.acquisition.devices import supported_devices
+    from bcipy.acquisition.devices import preconfigured_devices
     from bcipy.acquisition.connection_method import ConnectionMethod
 
     parser = argparse.ArgumentParser()
@@ -413,7 +413,7 @@ def main():
                         help='buffer db name')
     parser.add_argument('-f', '--filename', default='rawdata.csv')
     parser.add_argument('-d', '--device', default='DSI',
-                        choices=supported_devices().keys())
+                        choices=preconfigured_devices().keys())
     parser.add_argument('-c', '--connection_method', default='LSL',
                         choices=ConnectionMethod.list())
     parser.add_argument('-p', '--params', type=json.loads,
