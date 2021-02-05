@@ -50,9 +50,6 @@ class DataAcquisitionClient:
         connector: Connector instance
             Object with device-specific implementations for connecting,
             initializing, and reading a packet.
-        processor : Processor; optional
-            A data Processor that does something with the streaming data (ex.
-            writes to a file.)
         buffer_name : str, optional
             Name of the sql database archive; default is buffer.db.
         raw_data_file_name: str,
@@ -105,7 +102,7 @@ class DataAcquisitionClient:
     def __exit__(self, _exc_type, _exc_value, _traceback):
         self.stop_acquisition()
 
-    def start_acquisition(self):
+    def start_acquisition(self) -> None:
         """Run the initialization code and start the loop to acquire data from
         the server.
 
@@ -173,7 +170,7 @@ class DataAcquisitionClient:
             self.marker_writer = LslMarkerWriter(
                 stream_name=self.trigger_column)
 
-    def stop_acquisition(self):
+    def stop_acquisition(self) -> None:
         """Stop acquiring data; perform cleanup."""
         log.debug("Stopping Acquisition Process")
 

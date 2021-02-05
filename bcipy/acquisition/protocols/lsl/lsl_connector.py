@@ -123,6 +123,10 @@ class LslConnector(Connector):
         # to resolve the LSL stream based on the device_spec.
         return connection_method == ConnectionMethod.LSL
 
+    @classmethod
+    def connection_method(cls) -> ConnectionMethod:
+        return ConnectionMethod.LSL
+
     @property
     def name(self):
         if 'stream_name' in self.connection_params:
@@ -130,6 +134,20 @@ class LslConnector(Connector):
         if self._inlet and self._inlet.info().name():
             return self._inlet.info().name()
         return self.device_spec.name
+
+    @property
+    def lsl_timestamp_included(self) -> bool:
+        return LSL_TIMESTAMP in self._appended_channels
+
+    @lsl_timestamp_included.setter
+    def lsl_timestamp_included(self, bool_val: bool):
+        """Setter to append the lsl_timestamp field. Only available if the
+        connection has not yet been made."""
+        if not self._inlet:
+            if bool_val and not LSL_TIMESTAMP in self._appended_channels:
+                self._appended_channels.append(LSL_TIMESTAMP)
+            elif not bool_val:
+                self._appended_channels.remove(LSL_TIMESTAMP)
 
     def connect(self):
         """Connect to the data source."""
