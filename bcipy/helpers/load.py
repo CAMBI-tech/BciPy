@@ -1,11 +1,14 @@
 import logging
 import pickle
 import json
+import os
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
+
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -227,3 +230,50 @@ def load_txt_data() -> str:
             'File type unrecognized. Please use a supported text type')
 
     return filename
+
+
+def load_users(parameters) -> List[str]:
+    """Load Users.
+
+    Loads user directory names below experiments from the data path defined in parameters.json
+    and returns them as a list.
+    """
+    saved_users = []
+    data_save_loc = parameters['data_save_loc']
+
+    # check the directory is valid
+    if os.path.isdir(data_save_loc):
+        path = data_save_loc
+
+    elif os.path.isdir(f'bcipy/{data_save_loc}'):
+        path = f'bcipy/{data_save_loc}'
+
+    else:
+        raise Exception('User data save location not found! Please enter a new user id.')
+
+    # grab all experiments in the directory and iterate over them to get the users
+    experiments = fast_scandir(path, return_path=True)
+
+    for experiment in experiments:
+        users = fast_scandir(experiment, return_path=False)
+        saved_users.extend(users)
+
+    # If new user it appends to the saved list 
+    for user in users: 
+        if user not in saved_users:
+            saved_users.append(user)
+    
+    return saved_users
+
+
+def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
+    """Fast Scan Directory.
+
+    directory_name: name of the directory to be scanned
+    return_path: whether or not to return the scanned directories as a relative path or name.
+        False will return the directory name only.
+    """
+    if return_path:
+        return [f.path for f in os.scandir(directory_name) if f.is_dir()]
+
+    return [f.name for f in os.scandir(directory_name) if f.is_dir()]

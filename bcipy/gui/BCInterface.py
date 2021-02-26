@@ -13,7 +13,7 @@ from bcipy.gui.gui_main import (
     contains_whitespaces,
     invalid_length,
 )
-from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters
+from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.tasks.task_registry import TaskType
 
@@ -108,25 +108,13 @@ class BCInterface(BCIGui):
 
         self.update_experiment_list()
 
-    def fast_scandir(self, directory_name: str, return_path: bool = True) -> List[str]:
-        """Fast Scan Directory.
-
-        directory_name: name of the directory to be scanned
-        return_path: whether or not to return the scanned directories as a relative path or name.
-            False will return the directory name only.
-        """
-        if return_path:
-            return [f.path for f in os.scandir(directory_name) if f.is_dir()]
-
-        return [f.name for f in os.scandir(directory_name) if f.is_dir()]
-
     def update_user_list(self) -> None:
         """Updates the user_input combo box with a list of user ids based on the
         data directory configured in the current parameters."""
 
         self.user_input.clear()
         self.user_input.addItem(BCInterface.default_text)
-        self.user_input.addItems(self.load_users())
+        self.user_input.addItems(load_users(self.parameters))
 
     def update_experiment_list(self) -> None:
         """Updates the experiment_input combo box with a list of experiments based on the
@@ -367,34 +355,6 @@ class BCInterface(BCIGui):
                 return False
         return True
 
-    def load_users(self) -> List[str]:
-        """Load Users.
-
-        Loads user directory names below experiments from the data path defined in parameters.json
-        and returns them as a list.
-        """
-        saved_users = []
-        data_save_loc = self.parameters['data_save_loc']
-
-        # check the directory is valid
-        if os.path.isdir(data_save_loc):
-            path = data_save_loc
-
-        elif os.path.isdir(f'bcipy/{data_save_loc}'):
-            path = f'bcipy/{data_save_loc}'
-
-        else:
-            self.logger.info('User data save location not found! Please enter a new user id.')
-            return saved_users
-
-        # grab all experiments in the directory and iterate over them to get the users
-        experiments = self.fast_scandir(path, return_path=True)
-
-        for experiment in experiments:
-            users = self.fast_scandir(experiment, return_path=False)
-            saved_users.extend(users)
-
-        return saved_users
 
     def load_experiments(self) -> List[str]:
         """Load experiments
