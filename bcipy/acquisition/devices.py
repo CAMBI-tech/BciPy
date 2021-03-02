@@ -13,6 +13,7 @@ _SUPPORTED_DEVICES = {}
 SUPPORTED_DATA_TYPES = [
     'float32', 'double64', 'string', 'int32', 'int16', 'int8'
 ]
+DEFAULT_DEVICE_TYPE = 'EEG'
 
 
 @auto_str
@@ -38,7 +39,7 @@ class DeviceSpec:
                  name: str,
                  channels: List[str],
                  sample_rate: float,
-                 content_type: str = 'EEG',
+                 content_type: str = DEFAULT_DEVICE_TYPE,
                  connection_methods: List[ConnectionMethod] = None,
                  description: str = None,
                  data_type='float32'):

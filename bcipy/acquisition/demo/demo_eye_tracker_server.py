@@ -52,8 +52,7 @@ def eye_tracker_server() -> LslDataServer:
     """Create a demo lsl_server that serves eye tracking data."""
 
     return LslDataServer(device_spec=eye_tracker_device(),
-                         generator=eye_tracker_data_generator(),
-                         include_meta=False)
+                         generator=eye_tracker_data_generator())
 
 
 def main():

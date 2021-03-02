@@ -52,6 +52,8 @@ def inlet_name(inlet) -> str:
 def channel_names(stream_info: pylsl.StreamInfo) -> List[str]:
     """Extracts the channel names from the LSL Stream metadata."""
     channels = []
+    if stream_info.type() == 'Markers':
+        return ['Marker']
     if stream_info.desc().child("channels").empty():
         return channels
 
@@ -62,6 +64,24 @@ def channel_names(stream_info: pylsl.StreamInfo) -> List[str]:
         channel = channel.next_sibling()
 
     return channels
+
+
+def check_device(device_spec: DeviceSpec, metadata: pylsl.StreamInfo):
+    """Confirm that the properties of the given device_spec match the metadata
+    acquired from the device."""
+    channels = channel_names(metadata)
+    # Confirm that provided channels match metadata, or meta is empty.
+    if channels and device_spec.channels != channels:
+        print(f"device channels: {channels}")
+        print(device_spec.channels)
+        raise Exception(f"Channels read from the device do not match "
+                        "the provided parameters.")
+    assert len(device_spec.channels) == metadata.channel_count(
+    ), "Channel count error"
+
+    if device_spec.sample_rate != metadata.nominal_srate():
+        raise Exception("Sample frequency read from device does not match "
+                        "the provided parameter")
 
 
 def rename_items(items: List[str], rules: Dict[str, str]) -> None:
@@ -181,20 +201,7 @@ class LslConnector(Connector):
         metadata = self._inlet.info()
         self.log_info(metadata)
 
-        channels = channel_names(metadata)
-        # Confirm that provided channels match metadata, or meta is empty.
-        if channels and self.device_spec.channels != channels:
-            print(f"device channels: {channels}")
-            print(self.device_spec.channels)
-            raise Exception(f"Channels read from the device do not match "
-                            "the provided parameters.")
-        assert len(self.device_spec.channels) == metadata.channel_count(
-        ), "Channel count error"
-
-        if self.device_spec.sample_rate != metadata.nominal_srate():
-            raise Exception("Sample frequency read from device does not match "
-                            "the provided parameter")
-
+        check_device(self.device_spec, metadata)
         rename_items(self.channels, self.rename_rules)
 
         self.channels.extend(self._appended_channels)
