@@ -30,6 +30,7 @@ class LslRecorder:
         """Start recording all streams currently on the network."""
 
         if not self.streams:
+            log.debug("Recording data")
             # create a thread for each.
             self.streams = [
                 LslRecordingThread(stream, self.path)
@@ -127,6 +128,10 @@ class LslRecordingThread(StoppableThread):
         log.debug(full_metadata.as_xml())
 
         self.init_data_store(full_metadata)
+
+        # TODO: account for remote acquisition by recording remote clock offsets
+        # so we can map from remote timestamp to local lsl clock for comparing
+        # datasets.
 
         ## Run loop for continous acquisition
         while self.running():

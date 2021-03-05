@@ -2,6 +2,7 @@
 import time
 import unittest
 from typing import List
+from psychopy.core import Clock
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import preconfigured_device, DeviceSpec, IRREGULAR_RATE
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
@@ -91,6 +92,27 @@ class TestDataAcquisitionClient(unittest.TestCase):
         samples = client.get_latest_data()
         client.stop_acquisition()
         self.assertEqual(DEVICE.sample_rate, len(samples))
+
+    def test_get_data(self):
+        """Test functionality with a provided device_spec"""
+        client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        client.start_acquisition()
+
+        experiment_clock = Clock()
+        # Ensure we are at 0
+        experiment_clock.reset()
+        time.sleep(1)
+
+        # Get a half second of data
+        offset = client.clock_offset(experiment_clock)
+        start = 0.5 + offset
+        end = 1.0 + offset
+        samples = client.get_data(start, end)
+
+        client.stop_acquisition()
+        expected_samples = DEVICE.sample_rate / 2
+        self.assertEqual(expected_samples, len(samples))
+        self.assertAlmostEqual(client.sample_time(experiment_clock, 0.5), start, delta=0.001)
 
     def test_with_recording(self):
         """Test that recording works."""

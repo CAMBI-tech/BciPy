@@ -2,14 +2,15 @@
 import logging
 from typing import Tuple
 
-from pylsl import StreamInfo, StreamInlet, resolve_stream
-
+from pylsl import StreamInfo, StreamInlet, resolve_stream, local_clock
+from psychopy.core import Clock
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
+from bcipy.acquisition.errors import InvalidClockError
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +37,6 @@ class LslAcquisitionClient:
     def __init__(self,
                  max_buflen: int,
                  device_spec: DeviceSpec = None,
-                 append_timestamps: bool = True,
                  save_directory: str = None):
         super().__init__()
         if device_spec:
@@ -44,11 +44,13 @@ class LslAcquisitionClient:
             assert device_spec.sample_rate > 0, "Marker streams may be recorded but not queried."
         self.device_spec = device_spec
         self.max_buflen = max_buflen
-        self.append_timestamps = append_timestamps
+        self.append_timestamps = True
+        self.experiment_clock = None
 
         self.inlet = None
         self.first_sample = None
-        self.recorder = LslRecorder(path=save_directory) if save_directory else None
+        self.recorder = LslRecorder(
+            path=save_directory) if save_directory else None
 
     def start_acquisition(self) -> None:
         """Connect to the datasource and start acquiring data."""
@@ -80,7 +82,7 @@ class LslAcquisitionClient:
             self.recorder.stop()
         self.inlet = None
 
-    def get_data(self, start=None, end=None, field='_rowid_'):
+    def get_data(self, start=None, end=None, field='_rowid_', device: DeviceSpec = None):
         """Queries the buffer by field.
 
         Parameters
@@ -95,6 +97,37 @@ class LslAcquisitionClient:
         -------
             list of Records
         """
+        log.debug(f"Getting data from {start} to {end}")
+        assert self.append_timestamps, "Timestamps must be present for queries"
+        
+        # TODO: use device to get data from the correct stream
+        # TODO: for remote acquisition sources we need to account for sample timestamp offset 
+        # from local_clock(). Shouldn't matter if everything is on the same machine.
+        return [
+            sample for sample in self.get_latest_data()
+            if sample[-1] >= start and sample[-1] <= end
+        ]
+
+    def get_data_for_clock(self, start_time: float,
+                           end_time: float, experiment_clock: Clock = None, 
+                           calib_time: float = None,
+                           device: DeviceSpec = None):
+        """Queries the data stream, using start and end values relative to a
+        clock different than the acquisition clock.
+
+        Parameters
+        ----------
+            start_time : float, optional
+                start of time slice; units are those of the experiment clock.
+            end_time : float, optional
+                end of time slice; units are those of the experiment clock.
+            calib_time: float
+                experiment_clock time (in seconds) at calibration.
+        Returns
+        -------
+            list of Records
+        """
+        # TODO: implement this
         pass
 
     @property
@@ -116,6 +149,22 @@ class LslAcquisitionClient:
             for i, sample in enumerate(samples):
                 sample.append(timestamps[i])
         return samples
+
+    def sample_time(self, experiment_clock: Clock, timestamp: float) -> float:
+        """
+        Convert a timestamp from the experiment clock to the acquisition clock.
+        Used for querying the acquisition data for a time slice.
+
+        Parameters:
+        ----------
+            experiment_clock - clock used to generate the timestamp
+            timestamp - timestamp from the experiment clock
+        
+        Returns: corresponding timestamp for the acquistion clock
+        """
+
+        # experiment_time = pylsl.local_clock() - offset
+        return timestamp + self.clock_offset(experiment_clock)
 
     def get_data_seconds(self, seconds: int):
         """Returns the last n second of data"""
@@ -162,11 +211,37 @@ class LslAcquisitionClient:
         """
         pass
 
+    def clock_offset(self, experiment_clock: Clock = None) -> float:
+        """
+        Offset in seconds from the experiment clock to the acquisition local clock.
+        
+        The experiment clock should be monotonic from experiment start time.
+        The acquisition clock (pylsl.local_clock()) is monotonic from local
+        machine start time (or since 1970-01-01 00:00). Therefore the acquisition
+        clock should always be greater than experiment clock. An exception is
+        raised if this doesn't hold.
+        
+        See https://labstreaminglayer.readthedocs.io/info/faqs.html#lsl-local-clock
+        """
+        clock = experiment_clock or self.experiment_clock
+        assert clock, "An experiment clock must be provided"
+
+        diff = local_clock() - clock.getTime()
+        if diff < 0:
+            raise InvalidClockError(
+                "The acquisition clock should always be greater than experiment clock"
+            )
+        return diff
+
     @property
     def offset(self):
         """Offset in seconds from the start of acquisition to calibration
         trigger."""
-        pass
+        # first sample time is 0
+        # sample_time at calib - first_sample time
+        # TODO: how do we get the sample time at calib
+        log.debug("Acquisition offset called")
+        return 0
 
     def cleanup(self):
         """Perform any necessary cleanup."""

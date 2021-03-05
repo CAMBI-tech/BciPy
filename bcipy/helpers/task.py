@@ -129,7 +129,7 @@ def process_data_for_decision(
         first_session_stim_time (float): time that the first stimuli was presented
             for the session. Used to calculate offsets.
         static_offset (float): offset present in the system which should be accounted for when
-            creating data for classification
+            creating data for classification; this is determined experimentally.
         buf_length: length of data needed after the last sample in order to reshape correctly
 
     Returns
@@ -148,17 +148,18 @@ def process_data_for_decision(
     else:
         buffer_length = parameters['trial_length']
 
-    # get any offset calculated from the daq
+    # Seconds from the start of acquisition to first_session_stim_time (calibration trigger).
     daq_offset = daq.offset
+    clock_diff_seconds = (daq_offset - first_session_stim_time) if daq_offset > 0 else 0.0
 
-    if daq_offset:
-        offset = daq_offset - first_session_stim_time + static_offset
-        time1 = (first_stim_time + offset) * daq.device_info.fs
-        time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
-    else:
-        time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset +
-                 buffer_length) * daq.device_info.fs
+    # offset (in seconds) to use when converting from an experiment clock timestamp to daq clock.
+    offset = clock_diff_seconds + static_offset
+
+    # get acquisition clock timestamp, then use that to convert to sample number.
+    time1 = (first_stim_time + offset) * daq.device_info.fs
+    # Ending time also needs to account for the time after the last stimulus in the inquiry to ensure
+    # that we're getting enough data.
+    time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
