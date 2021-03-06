@@ -6,7 +6,7 @@ from psychopy.core import Clock
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import preconfigured_device, DeviceSpec, IRREGULAR_RATE
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient, range_evaluator
 from mockito import mock
 
 DEVICE_NAME = 'DSI'
@@ -91,7 +91,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
-        self.assertEqual(DEVICE.sample_rate, len(samples))
+        self.assertAlmostEqual(DEVICE.sample_rate, len(samples))
 
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
@@ -111,8 +111,30 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         client.stop_acquisition()
         expected_samples = DEVICE.sample_rate / 2
-        self.assertEqual(expected_samples, len(samples))
-        self.assertAlmostEqual(client.sample_time(experiment_clock, 0.5), start, delta=0.001)
+        self.assertAlmostEqual(expected_samples, len(samples), delta=1.0)
+        self.assertAlmostEqual(client.convert_time(experiment_clock, 0.5), start, delta=0.001)
+
+    def test_range_evaluator(self):
+        """Test range evaluator function"""
+        in_range = range_evaluator(start=1, end=10)
+        self.assertFalse(in_range(0))
+        self.assertTrue(in_range(1))
+        self.assertTrue(in_range(10))
+        self.assertFalse(in_range(11))
+
+        in_range = range_evaluator(start=1)
+        self.assertFalse(in_range(0))
+        self.assertTrue(in_range(1))
+        self.assertTrue(in_range(11))
+
+        in_range = range_evaluator(end=10)
+        self.assertTrue(in_range(0))
+        self.assertTrue(in_range(10))
+        self.assertFalse(in_range(11))
+
+        in_range = range_evaluator()
+        self.assertTrue(in_range(0))
+        self.assertTrue(in_range(11))
 
     def test_with_recording(self):
         """Test that recording works."""

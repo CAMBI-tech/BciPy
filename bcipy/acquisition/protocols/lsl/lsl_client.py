@@ -1,6 +1,6 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import Tuple
+from typing import Tuple, List
 
 from pylsl import StreamInfo, StreamInlet, resolve_stream, local_clock
 from psychopy.core import Clock
@@ -11,8 +11,25 @@ from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 from bcipy.acquisition.errors import InvalidClockError
+from bcipy.acquisition.record import Record
 
 log = logging.getLogger(__name__)
+
+
+def range_evaluator(start: float = None, end: float = None):
+    """Returns a function that can evaluate if a value is within the given range.
+    Parameters:
+    -----------
+        start - optional start of the range
+        end - optional end of the range"""
+    if start and end:
+        return lambda value: value >= start and value <= end
+    elif start and not end:
+        return lambda value: value >= start
+    elif not start and end:
+        return lambda value: value <= end
+    # Both missing; anything goes.
+    return lambda record: True
 
 
 class LslAcquisitionClient:
@@ -44,7 +61,7 @@ class LslAcquisitionClient:
             assert device_spec.sample_rate > 0, "Marker streams may be recorded but not queried."
         self.device_spec = device_spec
         self.max_buflen = max_buflen
-        self.append_timestamps = True
+
         self.experiment_clock = None
 
         self.inlet = None
@@ -82,8 +99,11 @@ class LslAcquisitionClient:
             self.recorder.stop()
         self.inlet = None
 
-    def get_data(self, start=None, end=None, field='_rowid_', device: DeviceSpec = None):
-        """Queries the buffer by field.
+    def get_data(self,
+                 start=None,
+                 end=None,
+                 device: DeviceSpec = None) -> List[Record]:
+        """Get data in time range.
 
         Parameters
         ----------
@@ -91,27 +111,29 @@ class LslAcquisitionClient:
                 start of time slice; units are those of the acquisition clock.
             end : float, optional
                 end of time slice; units are those of the acquisition clock.
-            field: str, optional
-                field on which to query; default value is the row id.
+
         Returns
         -------
             list of Records
         """
         log.debug(f"Getting data from {start} to {end}")
-        assert self.append_timestamps, "Timestamps must be present for queries"
-        
+
         # TODO: use device to get data from the correct stream
-        # TODO: for remote acquisition sources we need to account for sample timestamp offset 
+        # TODO: for remote acquisition sources we need to account for sample timestamp offset
         # from local_clock(). Shouldn't matter if everything is on the same machine.
+
+        within_time_window = range_evaluator(start, end)
         return [
-            sample for sample in self.get_latest_data()
-            if sample[-1] >= start and sample[-1] <= end
+            record for record in self.get_latest_data()
+            if within_time_window(record.timestamp)
         ]
 
-    def get_data_for_clock(self, start_time: float,
-                           end_time: float, experiment_clock: Clock = None, 
+    def get_data_for_clock(self,
+                           start_time: float,
+                           end_time: float,
+                           experiment_clock: Clock = None,
                            calib_time: float = None,
-                           device: DeviceSpec = None):
+                           device: DeviceSpec = None) -> List[Record]:
         """Queries the data stream, using start and end values relative to a
         clock different than the acquisition clock.
 
@@ -135,22 +157,21 @@ class LslAcquisitionClient:
         """Maximum number of samples available at any given time."""
         return int(self.max_buflen * self.device_spec.sample_rate)
 
-    def get_latest_data(self):
+    def get_latest_data(self) -> List[Record]:
         """Pull all available samples in the buffer.
 
         The number of items returned depends on the size of the configured
-        max_buflen as well as the time since the last data pull. If the
-        append_timestamps property is set the LSL timestamps will be appended
-        as an additional column for each row."""
+        max_buflen as well as the time since the last data pull."""
 
         samples, timestamps = self.inlet.pull_chunk(
             max_samples=self.max_samples)
-        if self.append_timestamps:
-            for i, sample in enumerate(samples):
-                sample.append(timestamps[i])
-        return samples
 
-    def sample_time(self, experiment_clock: Clock, timestamp: float) -> float:
+        return [
+            Record(data=sample, timestamp=timestamps[i], rownum=None)
+            for i, sample in enumerate(samples)
+        ]
+
+    def convert_time(self, experiment_clock: Clock, timestamp: float) -> float:
         """
         Convert a timestamp from the experiment clock to the acquisition clock.
         Used for querying the acquisition data for a time slice.
@@ -166,20 +187,18 @@ class LslAcquisitionClient:
         # experiment_time = pylsl.local_clock() - offset
         return timestamp + self.clock_offset(experiment_clock)
 
-    def get_data_seconds(self, seconds: int):
+    def get_data_seconds(self, seconds: int) -> List[Record]:
         """Returns the last n second of data"""
         assert seconds <= self.max_buflen, f"Seconds can't exceed {self.max_buflen}"
 
         sample_count = seconds * self.device_spec.sample_rate
-        samples = self.get_latest_data()
+        records = self.get_latest_data()
 
-        if len(samples) < sample_count:
-            return samples
+        start_index = 0 if len(
+            records) > sample_count else len(records) - sample_count
+        return records[start_index:]
 
-        starting_index = len(samples) - sample_count
-        return samples[starting_index:]
-
-    def get_data_len(self):
+    def get_data_len(self) -> int:
         """Total amount of data recorded. This is a calculated value and may not be precise."""
         if self.first_sample:
             _, first_sample_time = self.first_sample
@@ -238,7 +257,7 @@ class LslAcquisitionClient:
         """Offset in seconds from the start of acquisition to calibration
         trigger."""
         # first sample time is 0
-        # sample_time at calib - first_sample time
+        # convert_time at calib - first_sample time
         # TODO: how do we get the sample time at calib
         log.debug("Acquisition offset called")
         return 0
