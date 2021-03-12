@@ -6,6 +6,7 @@ from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 import matplotlib
 import wx
 matplotlib.use('WXAgg')
@@ -33,12 +34,14 @@ class EEGFrame(wx.Frame):
         refresh - time in milliseconds; how often to refresh the plots
     """
 
-    def __init__(self, data_source, device_info: DeviceInfo,
-                 seconds: int = 5, downsample_factor: int = 2,
+    def __init__(self,
+                 data_source,
+                 device_info: DeviceInfo,
+                 parameters: Parameters,
+                 seconds: int = 5,
                  refresh: int = 500,
                  y_scale=100):
-        wx.Frame.__init__(self, None, -1,
-                          'EEG Viewer', size=(800, 550))
+        wx.Frame.__init__(self, None, -1, 'EEG Viewer', size=(800, 550))
 
         self.data_source = data_source
 
@@ -52,8 +55,13 @@ class EEGFrame(wx.Frame):
         self.data_indices = self.init_data_indices()
 
         self.seconds = seconds
-        self.downsample_factor = downsample_factor
-        self.filter = downsample_filter(downsample_factor, device_info.fs)
+        self.downsample_factor = parameters['down_sampling_rate']
+        self.notch_filter_frequency = parameters['notch_filter_frequency']
+        self.filter_low = parameters['filter_low']
+        self.filter_high = parameters['filter_high']
+        self.filter_order = parameters['filter_order']
+        # Default filter
+        self.filter = downsample_filter(self.downsample_factor, device_info.fs)
 
         self.autoscale = True
         self.y_min = -y_scale
@@ -62,7 +70,8 @@ class EEGFrame(wx.Frame):
         self.buffer = self.init_buffer()
 
         # figure size is in inches.
-        self.figure = Figure(figsize=(12, 9), dpi=80,
+        self.figure = Figure(figsize=(12, 9),
+                             dpi=80,
                              tight_layout={'pad': 0.0})
         # space between axis label and tick labels
         self.yaxis_label_space = 60
@@ -92,6 +101,16 @@ class EEGFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.toggle_filtering_handler,
                   self.sigpro_checkbox)
 
+        # Filter settings
+        filter_settings = [
+            f"Downsample: {self.downsample_factor}",
+            f"Notch Freq: {self.notch_filter_frequency}",
+            f"Low: {self.filter_low}", f"High: {self.filter_high}",
+            f"Order: {self.filter_order}"
+        ]
+        filter_label = "[" + ", ".join(filter_settings) + "]"
+        self.filter_settings_text = wx.StaticText(self, label=filter_label)
+
         # Autoscale checkbox
         self.autoscale_checkbox = wx.CheckBox(self, label="Autoscale")
         self.autoscale_checkbox.SetValue(self.autoscale)
@@ -111,17 +130,17 @@ class EEGFrame(wx.Frame):
 
         controls = wx.BoxSizer(wx.HORIZONTAL)
         controls.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
-        controls.Add(self.sigpro_checkbox, 1, wx.ALIGN_CENTER, 0)
+        controls.Add(self.seconds_input, 0, wx.ALIGN_CENTER, 0)
         controls.Add(self.autoscale_checkbox, 1, wx.ALIGN_CENTER, 0)
-        # TODO: pull right; currently doesn't do that
-        controls.Add(self.seconds_input, 0, wx.ALIGN_RIGHT, 0)
+        controls.Add(self.sigpro_checkbox, 0, wx.ALIGN_CENTER, 0)
+        controls.Add(self.filter_settings_text, 0, wx.ALIGN_CENTER, 0)
 
         self.toolbar.Add(controls, 1, wx.ALIGN_CENTER, 0)
         self.init_channel_buttons()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.EXPAND)
-        sizer.Add(self.toolbar, 0, wx.ALIGN_BOTTOM | wx. ALIGN_CENTER)
+        sizer.Add(self.toolbar, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTER)
         self.SetSizer(sizer)
         self.SetAutoLayout(1)
         self.Fit()
@@ -135,9 +154,11 @@ class EEGFrame(wx.Frame):
         filters out TRG channels and any channels marked as
         removed_channels."""
 
-        return [i for i in range(len(self.channels))
-                if self.channels[i] not in self.removed_channels
-                and 'TRG' not in self.channels[i]]
+        return [
+            i for i in range(len(self.channels))
+            if self.channels[i] not in self.removed_channels
+            and 'TRG' not in self.channels[i]
+        ]
 
     def init_buffer(self):
         """Initialize the underlying RingBuffer by pre-allocating empty
@@ -157,11 +178,10 @@ class EEGFrame(wx.Frame):
         for i, channel in enumerate(self.data_indices):
             ch_name = self.channels[channel]
             axes[i].set_frame_on(False)
-            axes[i].set_ylabel(
-                ch_name,
-                rotation=0,
-                labelpad=self.yaxis_label_space,
-                fontsize=self.yaxis_label_fontsize)
+            axes[i].set_ylabel(ch_name,
+                               rotation=0,
+                               labelpad=self.yaxis_label_space,
+                               fontsize=self.yaxis_label_fontsize)
             # x-axis shows seconds in 0.5 sec increments
             tick_names = np.arange(0, self.seconds, 0.5)
             ticks = [(self.samples_per_second * sec) / self.downsample_factor
@@ -169,8 +189,9 @@ class EEGFrame(wx.Frame):
             axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
             axes[i].xaxis.set_major_formatter(
                 ticker.FixedFormatter(tick_names))
-            axes[i].tick_params(
-                axis='y', which='major', labelsize=self.yaxis_tick_fontsize)
+            axes[i].tick_params(axis='y',
+                                which='major',
+                                labelsize=self.yaxis_tick_fontsize)
             for tick in axes[i].get_yticklabels():
                 tick.set_fontname(self.yaxis_tick_font)
             axes[i].grid()
@@ -244,10 +265,15 @@ class EEGFrame(wx.Frame):
         """Toggles data filtering."""
         if self.sigpro_checkbox.GetValue():
             self.filter = stream_filter(
-                self.downsample_factor, self.samples_per_second)
+                factor=self.downsample_factor,
+                fs=self.samples_per_second,
+                notch_filter_frequency=self.notch_filter_frequency,
+                filter_low=self.filter_low,
+                filter_high=self.filter_high,
+                filter_order=self.filter_order)
         else:
-            self.filter = downsample_filter(
-                self.downsample_factor, self.samples_per_second)
+            self.filter = downsample_filter(self.downsample_factor,
+                                            self.samples_per_second)
 
     def toggle_autoscale_handler(self, event):
         """Event handler for toggling autoscale"""
@@ -309,8 +335,8 @@ class EEGFrame(wx.Frame):
         the data. If the datasource does not have the requested number of
         samples, viewer streaming is stopped."""
         try:
-            records = self.data_source.next_n(
-                self.records_per_refresh, fast_forward=fast_forward)
+            records = self.data_source.next_n(self.records_per_refresh,
+                                              fast_forward=fast_forward)
             for row in records:
                 self.buffer.append(row)
         except StopIteration:
@@ -343,10 +369,12 @@ class EEGFrame(wx.Frame):
                 ch_name = self.channels[_channel]
                 tick_labels = self.axes[i].get_yticks()
                 # Min tick value does not display so index is 1, not 0.
-                pad = self.adjust_padding(
-                    int(tick_labels[1]), int(tick_labels[-1]))
-                self.axes[i].set_ylabel(
-                    ch_name, rotation=0, labelpad=pad, fontsize=14)
+                pad = self.adjust_padding(int(tick_labels[1]),
+                                          int(tick_labels[-1]))
+                self.axes[i].set_ylabel(ch_name,
+                                        rotation=0,
+                                        labelpad=pad,
+                                        fontsize=14)
             else:
                 # lower=min(data), upper=max(data))
                 self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
@@ -413,8 +441,12 @@ def file_data(path: str):
     return (data_source, device_info, streamer)
 
 
-def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
-         yscale: int, display_screen: int = 1):
+def main(data_file: str,
+         seconds: int,
+         refresh: int,
+         yscale: int,
+         display_screen: int = 1,
+         parameters: str = DEFAULT_PARAMETERS_PATH):
     """Run the viewer GUI. If a raw_data.csv data_file is provided, data is
     streamed from that, otherwise it will read from an LSLDataStream by
     default.
@@ -427,13 +459,15 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
             displays the raw data.
         display_screen - monitor in which to display the viewer
             (0 for primary, 1 for secondary)
+        parameters - location of parameters.json file with configuration for filters.
     """
     data_source, device_info, proc = file_data(
         data_file) if data_file else lsl_data()
 
     app = wx.App(False)
     frame = EEGFrame(data_source, device_info,
-                     seconds, downsample_factor, refresh, yscale)
+                     Parameters(parameters, cast_values=True), seconds,
+                     refresh, yscale)
 
     if wx.Display.GetCount() > 1 and display_screen == 1:
         # place frame in the second monitor if one exists.
@@ -451,24 +485,35 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-f', '--file', help='path to the data file', default=None)
-    parser.add_argument('-s', '--seconds',
-                        help='seconds to display', default=5, type=int)
-    parser.add_argument('-d', '--downsample',
-                        help='downsample factor', default=2, type=int)
-    parser.add_argument('-r', '--refresh',
-                        help='refresh rate in ms', default=500, type=int)
-    parser.add_argument('-y', '--yscale',
-                        help='yscale', default=150, type=int)
-    parser.add_argument('-m', '--monitor',
-                        help='display screen (0: primary, 1: secondary)', default=0, type=int)
+    parser.add_argument('-f',
+                        '--file',
+                        help='path to the data file',
+                        default=None)
+    parser.add_argument('-p',
+                        '--parameters',
+                        default=DEFAULT_PARAMETERS_PATH,
+                        help='Parameter location. Pass as *.json')
+    parser.add_argument('-s',
+                        '--seconds',
+                        help='seconds to display',
+                        default=5,
+                        type=int)
+    parser.add_argument('-r',
+                        '--refresh',
+                        help='refresh rate in ms',
+                        default=500,
+                        type=int)
+    parser.add_argument('-y', '--yscale', help='yscale', default=150, type=int)
+    parser.add_argument('-m',
+                        '--monitor',
+                        help='display screen (0: primary, 1: secondary)',
+                        default=0,
+                        type=int)
 
     args = parser.parse_args()
-    main(
-        args.file,
-        args.seconds,
-        args.downsample,
-        args.refresh,
-        args.yscale,
-        args.monitor)
+    main(data_file=args.file,
+         seconds=args.seconds,
+         refresh=args.refresh,
+         yscale=args.yscale,
+         display_screen=args.monitor,
+         parameters=args.parameters)
