@@ -49,12 +49,15 @@ class TestSession(unittest.TestCase):
         expected_keys = [
             'stimuli', 'eeg_len', 'timing_sti', 'triggers', 'target_info',
             'target_letter', 'current_text', 'copy_phrase',
-            'next_display_state', 'lm_evidence', 'eeg_evidence', 'likelihood'
+            'next_display_state'
         ]
 
         for key in expected_keys:
             self.assertTrue(key in serialized)
             self.assertEqual(serialized[key], stim_seq.__getattribute__(key))
+
+        for key in ['lm_evidence', 'eeg_evidence', 'likelihood']:
+            self.assertFalse(key in serialized)
 
     def test_empty_session(self):
         """Test initial session creation"""

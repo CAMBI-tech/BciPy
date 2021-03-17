@@ -76,7 +76,8 @@ class Session:
         return len([lst for lst in self.series if lst])
 
     def add_series(self):
-        if len(self.last_series()) > 0:
+        """Add another series unless the last one is empty"""
+        if self.last_series():
             self.series.append([])
 
     def add_sequence(self,
