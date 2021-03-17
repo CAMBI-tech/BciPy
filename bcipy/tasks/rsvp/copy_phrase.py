@@ -1,6 +1,7 @@
 from psychopy import core
 
 from bcipy.tasks.task import Task
+from bcipy.tasks.session_data import StimSequence, Session
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
@@ -118,6 +119,7 @@ class RSVPCopyPhraseTask(Task):
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
 
+    @property
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
 
@@ -150,27 +152,17 @@ class RSVPCopyPhraseTask(Task):
 
         # Set new series (whether to present a new series),
         #   run (whether to cont. session),
-        #   inquiry counter (how many inquiries have occured).
-        #   series counter and index
-        #   (what series, and how many inquiries within it)
+        #   inquiry counter (how many inquiries have occurred).
         new_series = True
         run = True
         inq_counter = 0
-        series_counter = 0
-        series_index = 0
 
-        # Init session data and save before beginning
-        data = {
-            'session': self.file_save,
-            'session_type': 'Copy Phrase',
-            'paradigm': 'RSVP',
-            'series': {},
-            'total_time_spent': self.experiment_clock.getTime(),
-            'total_number_series': 0,
-        }
+        session = Session(save_location=self.file_save,
+                          session_type='Copy Phrase',
+                          paradigm='RSVP')
 
         # Save session data
-        _save_session_related_data(self.session_save_location, data)
+        _save_session_related_data(self.session_save_location, session.as_dict())
 
         # check user input to make sure we should be going
         if not get_user_input(self.rsvp, self.wait_screen_message,
@@ -201,13 +193,6 @@ class RSVPCopyPhraseTask(Task):
                 ele_sti = sti[0]
                 timing_sti = sti[1]
                 color_sti = sti[2]
-
-                # Increase series number and reset series index
-                series_counter += 1
-                data['series'][series_counter] = {}
-                series_index = 0
-            else:
-                series_index += 1
 
             # Update task state and reset the static
             self.rsvp.update_task_state(text=text_task, color_list=['white'])
@@ -249,19 +234,18 @@ class RSVPCopyPhraseTask(Task):
                     self.rsvp.first_stim_time,
                     self.static_offset)
 
+            # Construct Data Record
+            stim_sequence = StimSequence(stimuli=ele_sti,
+                                         eeg_len=len(raw_data),
+                                         timing_sti=timing_sti,
+                                         triggers=triggers,
+                                         target_info=target_info,
+                                         target_letter=target_letter,
+                                         current_text=text_task,
+                                         copy_phrase=self.copy_phrase)
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
             if self.fake:
-                # Construct Data Record
-                data['series'][series_counter][series_index] = {
-                    'stimuli': ele_sti,
-                    'eeg_len': len(raw_data),
-                    'timing_sti': timing_sti,
-                    'triggers': triggers,
-                    'target_info': target_info,
-                    'target_letter': target_letter,
-                    'current_text': text_task,
-                    'copy_phrase': self.copy_phrase}
 
                 # Evaluate this inquiry
                 (target_letter, text_task, run) = \
@@ -272,13 +256,9 @@ class RSVPCopyPhraseTask(Task):
                 # here we assume, in fake mode, all inquiries result in a
                 # selection.
                 last_selection = text_task[-1]
-                new_series, sti = copy_phrase_task.initialize_series()
+                _, sti = copy_phrase_task.initialize_series()
                 # Update next state for this record
-                data['series'][
-                    series_counter][
-                    series_index][
-                    'next_display_state'] = \
-                    text_task
+                stim_sequence.next_display_state = text_task
 
             else:
                 # Evaluate this inquiry, returning whether to gen a new
@@ -290,28 +270,13 @@ class RSVPCopyPhraseTask(Task):
                         target_info,
                         self.collection_window_len)
 
-                # Construct Data Record
-                data['series'][series_counter][series_index] = {
-                    'stimuli': ele_sti,
-                    'eeg_len': len(raw_data),
-                    'timing_sti': timing_sti,
-                    'triggers': triggers,
-                    'target_info': target_info,
-                    'current_text': text_task,
-                    'copy_phrase': self.copy_phrase,
-                    'next_display_state':
-                        copy_phrase_task.decision_maker.displayed_state,
-                    'lm_evidence': copy_phrase_task
-                        .conjugator
-                        .evidence_history['LM'][0]
-                        .tolist(),
-                    'eeg_evidence': copy_phrase_task
-                        .conjugator
-                        .evidence_history['ERP'][-1]
-                        .tolist(),
-                    'likelihood': copy_phrase_task
-                        .conjugator.likelihood.tolist()
-                }
+                # Add the evidence to the data record.
+                ev_hist = copy_phrase_task.conjugator.evidence_history
+                likelihood = copy_phrase_task.conjugator.likelihood
+                stim_sequence.next_display_state = copy_phrase_task.decision_maker.displayed_state
+                stim_sequence.lm_evidence = ev_hist['LM'][0].tolist()
+                stim_sequence.eeg_evidence = ev_hist['ERP'][-1].tolist()
+                stim_sequence.likelihood = likelihood.tolist()
 
                 # If new_series is False, get the stimuli info returned
                 if not new_series:
@@ -323,6 +288,8 @@ class RSVPCopyPhraseTask(Task):
                 text_task = copy_phrase_task.decision_maker.displayed_state
                 last_selection = copy_phrase_task.decision_maker.last_selection
 
+            session.add_sequence(stim_sequence)
+
             # if a letter was selected and feedback enabled, show the chosen
             # letter
             if new_series and self.show_feedback:
@@ -332,14 +299,17 @@ class RSVPCopyPhraseTask(Task):
                     line_color=self.feedback_color,
                     fill_color=self.feedback_color)
 
+            if new_series:
+                session.add_series()
+
             # Update time spent and save data
-            data['total_time_spent'] = self.experiment_clock.getTime()
-            data['total_number_series'] = series_counter
-            _save_session_related_data(self.session_save_location, data)
+            session.total_time_spent = self.experiment_clock.getTime()
+
+            _save_session_related_data(self.session_save_location, session.as_dict())
 
             # Decide whether to keep the task going
             max_tries_exceeded = inq_counter >= self.max_inq_length
-            max_time_exceeded = data['total_time_spent'] >= self.max_seconds
+            max_time_exceeded = session.total_time_spent >= self.max_seconds
             if (text_task == self.copy_phrase or max_tries_exceeded or
                     max_time_exceeded):
                 if max_tries_exceeded:
