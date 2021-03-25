@@ -241,6 +241,7 @@ def load_users(parameters: Parameters) -> List[str]:
     """
     # build a saved users list, pull out the data save location from parameters
     saved_users = []
+    # parameters.get('data_save_loc', False)
     data_save_loc = parameters['data_save_loc']
 
     # check the directory is valid, if it is, set path as data save location
@@ -260,12 +261,10 @@ def load_users(parameters: Parameters) -> List[str]:
 
     for experiment in experiments:
         users = fast_scandir(experiment, return_path=False)
-        saved_users.extend(users)
-
-    # If it is a new user, append it to the saved_user list
-    for user in users:
-        if user not in saved_users:
-            saved_users.append(user)
+        # If it is a new user, append it to the saved_user list
+        for user in users:
+            if user not in saved_users:
+                saved_users.append(user)
 
     return saved_users
 

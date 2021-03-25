@@ -1,4 +1,5 @@
 import unittest
+import os
 from unittest.mock import patch, mock_open
 
 from collections import abc
@@ -15,6 +16,7 @@ from bcipy.helpers.load import (
     load_experiments,
     load_experiment_fields,
     load_fields,
+    load_users,
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import InvalidExperimentException
@@ -159,6 +161,46 @@ class TestExperimentFieldLoad(unittest.TestCase):
         }
         with self.assertRaises(InvalidExperimentException):
             load_experiment_fields(invalid_experiment_field_name)
+
+
+class TestUserLoad(unittest.TestCase):
+
+    def setUp(self):
+        # setup parameters to pass to load users method, it expects a key of data_save_loc only
+        self.directory_name = 'test_data_load_user'
+        self.parameters = {
+            'data_save_loc': f'{self.directory_name}/'
+        }
+
+    def test_user_load_with_no_directory(self):
+        response = load_users(self.parameters)
+
+        self.assertEqual(response, [])
+
+    # def test_user_load_no_data_save_location_provided_parameters(self):
+    #     parameters = {}
+
+    #     response = load_users(parameters)
+
+    def test_user_load_with_valid_directory(self):
+        user = 'user_001'
+        file_path = f'{self.directory_name}/experiment/{user}'
+        os.makedirs(file_path)
+
+        response = load_users(self.parameters)
+
+        # There is only one user returned
+        length_of_users = len(response)
+        self.assertTrue(length_of_users == 1)
+
+        # assert user returned is user defined above
+        self.assertEqual(response[0], user)
+
+        os.rmdir(file_path)
+
+    def test_user_load_with_invalid_directory(self):
+        # create an invalid save structure and assert expected behavior. See file path above
+        pass
 
 
 if __name__ == '__main__':
