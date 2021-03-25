@@ -355,7 +355,6 @@ class BCInterface(BCIGui):
                 return False
         return True
 
-
     def load_experiments(self) -> List[str]:
         """Load experiments
 

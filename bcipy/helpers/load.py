@@ -232,24 +232,28 @@ def load_txt_data() -> str:
     return filename
 
 
-def load_users(parameters) -> List[str]:
+def load_users(parameters: Parameters) -> List[str]:
     """Load Users.
 
     Loads user directory names below experiments from the data path defined in parameters.json
-    and returns them as a list.
+    and returns them as a list. If the save data directory is not found, this method returns an
+    empty list assuming no experiments have been run yet.
     """
+    # build a saved users list, pull out the data save location from parameters
     saved_users = []
     data_save_loc = parameters['data_save_loc']
 
-    # check the directory is valid
+    # check the directory is valid, if it is, set path as data save location
     if os.path.isdir(data_save_loc):
         path = data_save_loc
 
+    # check the directory is valid after adding bcipy, if it is, set path as data save location
     elif os.path.isdir(f'bcipy/{data_save_loc}'):
         path = f'bcipy/{data_save_loc}'
 
     else:
-        raise Exception('User data save location not found! Please enter a new user id.')
+        log.info(f'User save data location not found at [{data_save_loc}]! Returning empty user list.')
+        return saved_users
 
     # grab all experiments in the directory and iterate over them to get the users
     experiments = fast_scandir(path, return_path=True)
@@ -258,11 +262,11 @@ def load_users(parameters) -> List[str]:
         users = fast_scandir(experiment, return_path=False)
         saved_users.extend(users)
 
-    # If new user it appends to the saved list 
-    for user in users: 
+    # If it is a new user, append it to the saved_user list
+    for user in users:
         if user not in saved_users:
             saved_users.append(user)
-    
+
     return saved_users
 
 
