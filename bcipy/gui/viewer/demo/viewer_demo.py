@@ -20,7 +20,6 @@ def main():
         server.start()
         data_viewer.main(data_file=None,
                          seconds=5,
-                         downsample_factor=2,
                          refresh=500,
                          yscale=150,
                          display_screen=0)

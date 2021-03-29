@@ -79,7 +79,8 @@ def init_eeg_acquisition(parameters: dict,
 
     if parameters['acq_show_viewer']:
         viewer_screen = 1 if int(parameters['stim_screen']) == 0 else 0
-        start_viewer(display_screen=viewer_screen)
+        start_viewer(display_screen=viewer_screen,
+                     parameter_location=parameters['parameter_location'])
 
     # If we're using a server or data generator, there is no reason to
     # calibrate data.
@@ -157,9 +158,9 @@ def analysis_channel_names_by_pos(channels: List[str],
     return {i: ch for i, ch in enumerate(selected_channels)}
 
 
-def start_viewer(display_screen):
+def start_viewer(display_screen, parameter_location):
     viewer = 'bcipy/gui/viewer/data_viewer.py'
-    cmd = f'python {viewer} -m {display_screen}'
+    cmd = f'python {viewer} -m {display_screen} -p {parameter_location}'
     subprocess.Popen(cmd, shell=True)
 
     # hack: wait for window to open, so it doesn't error out when the main
