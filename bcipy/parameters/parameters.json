@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -274,7 +274,7 @@
     "type": "directorypath"
   },
   "full_screen": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "readableName": "Full Screen Mode On/Off",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
@@ -330,7 +330,7 @@
     "type": "bool"
   },
   "path_to_presentation_images": {
-    "value": "bcipy/static/images/Icon_Set_1/",
+    "value": "bcipy/static/images/rsvp_images/",
     "section": "bci_config",
     "readableName": "Image Stimulus Folder",
     "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",

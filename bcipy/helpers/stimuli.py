@@ -405,7 +405,7 @@ def generate_icon_match_images(
             # Add target image to image array
             return_array[inquiry].append(
                 image_array[target_image_numbers[inquiry]])
-        # Add PLUS.png to image array
+        # Add PLUS.png to image array TODO: get this from parameters file
         return_array[inquiry].append(
             'bcipy/static/images/bci_main_images/PLUS.png')
 
