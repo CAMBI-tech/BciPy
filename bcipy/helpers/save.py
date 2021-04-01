@@ -123,9 +123,5 @@ def _save_session_related_data(file, session_dictionary):
         file = open(file, 'wt')
 
     # Use the file to dump data to
-    try:
-        json.dump(session_dictionary, file, indent=2)
-    except Exception as e:
-        raise e
-
+    json.dump(session_dictionary, file, indent=2)
     return file
