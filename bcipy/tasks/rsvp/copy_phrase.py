@@ -119,7 +119,6 @@ class RSVPCopyPhraseTask(Task):
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
 
-    @property
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
 
