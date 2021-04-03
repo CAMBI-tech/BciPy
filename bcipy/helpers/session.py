@@ -18,6 +18,7 @@ from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
+from bcipy.tasks.session_data import Session, StimSequence
 
 
 def session_data(data_dir: str, alp=None):
@@ -38,46 +39,21 @@ def session_data(data_dir: str, alp=None):
 
     session_path = os.path.join(data_dir, "session.json")
     with open(session_path, 'r') as json_file:
-        data = json.load(json_file)
+        session = Session.from_dict(json.load(json_file))
+        data = session.as_dict(alphabet=alp, evidence_only=True)
         data['copy_phrase'] = parameters['task_text']
-        for series in data['series'].keys():
-            for trial in data['series'][series].keys():
-                likelihood = dict(
-                    zip(alp, data['series'][series][trial]['likelihood']))
-
-                # Remove unused properties
-                unused = [
-                    'eeg_len', 'timing_sti', 'triggers', 'target_info',
-                    'copy_phrase'
-                ]
-                remove_props(data['series'][series][trial], unused)
-
-                data['series'][series][trial]['stimuli'] = data['series'][
-                    series][trial]['stimuli'][0]
-
-                # Associate letters to values
-                data['series'][series][trial]['lm_evidence'] = dict(
-                    zip(alp, data['series'][series][trial]['lm_evidence']))
-                data['series'][series][trial]['eeg_evidence'] = dict(
-                    zip(alp, data['series'][series][trial]['eeg_evidence']))
-                data['series'][series][trial]['likelihood'] = likelihood
-
-                # Display the 5 most likely values.
-                data['series'][series][trial]['most_likely'] = dict(
-                    Counter(likelihood).most_common(5))
-
         return data
 
 
-def collect_experiment_field_data(experiment_name, save_path, file_name='experiment_data.json') -> None:
+def collect_experiment_field_data(experiment_name,
+                                  save_path,
+                                  file_name='experiment_data.json') -> None:
     experiment = load_experiments()[experiment_name]
     experiment_fields = load_experiment_fields(experiment)
 
     if experiment_fields:
-        cmd = (
-            'python bcipy/gui/experiments/ExperimentField.py -e'
-            f' "{experiment_name}" -p "{save_path}" -f "{file_name}"'
-        )
+        cmd = ('python bcipy/gui/experiments/ExperimentField.py -e'
+               f' "{experiment_name}" -p "{save_path}" -f "{file_name}"')
         subprocess.check_call(cmd, shell=True)
         # verify data was written before moving on
         if not validate_field_data_written(save_path, file_name):
@@ -96,7 +72,8 @@ def get_target(task_type, inquiry, above_threshold):
     """Returns the target for the given inquiry. For icon tasks this information
     is in the inquiry, but for Copy Phrase it must be computed."""
     if task_type == 'Copy Phrase':
-        return copy_phrase_target(inquiry['copy_phrase'], inquiry['current_text'])
+        return copy_phrase_target(inquiry['copy_phrase'],
+                                  inquiry['current_text'])
     return inquiry.get('target_letter', None)
 
 
@@ -162,8 +139,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         cursor.execute(
             'CREATE TABLE evidence (series integer, inquiry integer, '
             'stim text, lm real, eeg real, cumulative real, inq_position '
-            'integer, is_target integer, presented integer, above_threshold)'
-        )
+            'integer, is_target integer, presented integer, above_threshold)')
         conn.commit()
 
         for series in data['series'].keys():
@@ -179,9 +155,8 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
                 if i == 0:
                     # create record for the trial
-                    conn.executemany(
-                        'INSERT INTO trial VALUES (?,?)',
-                        [(int(series), target_letter)])
+                    conn.executemany('INSERT INTO trial VALUES (?,?)',
+                                     [(int(series), target_letter)])
 
                 lm_ev = dict(zip(alp, inquiry['lm_evidence']))
                 cumulative_likelihoods = dict(zip(alp, inquiry['likelihood']))
@@ -198,9 +173,10 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
                     cumulative = cumulative_likelihoods[letter]
                     above_threshold = cumulative >= parameters[
                         'decision_threshold']
-                    ev_row = (int(series), int(inq_index), letter, lm_ev[letter],
-                              prob, cumulative, inq_position, is_target,
-                              inq_position is not None, above_threshold)
+                    ev_row = (int(series), int(inq_index), letter,
+                              lm_ev[letter], prob, cumulative, inq_position,
+                              is_target, inq_position is not None,
+                              above_threshold)
                     ev_rows.append(ev_row)
 
                 conn.executemany(

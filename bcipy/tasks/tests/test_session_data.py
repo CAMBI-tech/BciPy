@@ -4,8 +4,8 @@ import unittest
 from bcipy.tasks.session_data import Session, StimSequence
 
 
-def sample_stim_seq():
-    return StimSequence(
+def sample_stim_seq(include_evidence: bool = False):
+    stim_seq = StimSequence(
         stimuli=["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"],
         eeg_len=17,
         timing_sti=[0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
@@ -25,9 +25,42 @@ def sample_stim_seq():
         copy_phrase="HELLO_WORLD",
         next_display_state="H")
 
+    if include_evidence:
+        stim_seq.lm_evidence = [
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+            0.03518518518518518, 0.03518518518518518, 0.05, 0.03518518518518518
+        ]
+        stim_seq.eeg_evidence = [
+            1.0771572587661082, 0.9567667980052755, 0.9447790096182402,
+            0.9557979187496592, 0.9639921426239895, 1.0149791038166587,
+            0.9332784168303235, 1.0020770058735426, 1.0143856794734767, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0075605462487651, 1.0
+        ]
+        stim_seq.likelihood = [
+            0.03806880657023323, 0.03381397643627917, 0.03339030496807247,
+            0.03377973438232484, 0.03406933399382669, 0.03587131114010814,
+            0.03298385192816283, 0.035415326215948305, 0.035850338383947605,
+            0.03534192083878387, 0.03534192083878387, 0.03534192083878387,
+            0.03534192083878387, 0.03534192083878387, 0.03534192083878387,
+            0.03534192083878387, 0.03534192083878387, 0.03534192083878387,
+            0.03534192083878387, 0.03534192083878387, 0.03534192083878387,
+            0.03534192083878387, 0.03534192083878387, 0.03534192083878387,
+            0.03534192083878387, 0.03534192083878387, 0.05060244088298704,
+            0.03534192083878387
+        ]
+    return stim_seq
 
-class TestSession(unittest.TestCase):
-    """Tests for session."""
+
+class TestSessionData(unittest.TestCase):
+    """Tests for session data."""
 
     def setUp(self):
         """Override; set up the needed path for load functions."""
@@ -58,6 +91,36 @@ class TestSession(unittest.TestCase):
 
         for key in ['lm_evidence', 'eeg_evidence', 'likelihood']:
             self.assertFalse(key in serialized)
+
+    def test_stim_sequence_deserialization(self):
+        """Test that a stim sequence can be deserialized from a dict."""
+        stim_seq = sample_stim_seq()
+        serialized = stim_seq.as_dict()
+        deserialized = StimSequence.from_dict(serialized)
+
+        self.assertEquals(stim_seq.stimuli, deserialized.stimuli)
+        self.assertEquals(stim_seq.eeg_len, deserialized.eeg_len)
+        self.assertEquals(stim_seq.timing_sti, deserialized.timing_sti)
+        self.assertEquals(stim_seq.triggers, deserialized.triggers)
+        self.assertEquals(stim_seq.target_info, deserialized.target_info)
+        self.assertEquals(stim_seq.target_letter, deserialized.target_letter)
+        self.assertEquals(stim_seq.current_text, deserialized.current_text)
+        self.assertEquals(stim_seq.copy_phrase, deserialized.copy_phrase)
+        self.assertEquals(stim_seq.next_display_state,
+                          deserialized.next_display_state)
+
+    def test_stim_sequence_evidence(self):
+        """Test simplified evidence view"""
+        alp = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '<', '_'
+        ]
+
+        stim_seq = sample_stim_seq(include_evidence=True)
+        evidence = stim_seq.stim_evidence(alp, n=5)
+        self.assertEqual(len(evidence['most_likely']), 5)
+        self.assertAlmostEqual(evidence['most_likely']['<'], 0.05, places=2)
 
     def test_empty_session(self):
         """Test initial session creation"""
@@ -109,3 +172,27 @@ class TestSession(unittest.TestCase):
         session.add_series()
         session.add_sequence(sample_stim_seq())
         self.assertEqual(2, session.total_number_series)
+
+    def test_session_deserialization(self):
+        """Test that a Session can be deserialized"""
+        session = Session(save_location=".")
+        session.add_sequence(sample_stim_seq())
+        session.add_sequence(sample_stim_seq())
+
+        stim_seq = sample_stim_seq()
+        stim_seq.target_letter = "E",
+        stim_seq.current_text = "H",
+        stim_seq.next_display_state = "HE"
+        session.add_sequence(stim_seq, new_series=True)
+
+        session.total_time_spent = 0.01
+
+        serialized = session.as_dict()
+
+        deserialized = Session.from_dict(serialized)
+        self.assertEqual(deserialized.total_time_spent,
+                         session.total_time_spent)
+        self.assertEqual(deserialized.total_number_series,
+                         session.total_number_series)
+        self.assertEqual(deserialized.last_series()[-1].next_display_state,
+                         'HE')
