@@ -44,7 +44,11 @@ class StimSequence:
             data - a dict in the format of the data output by the as_dict
                 method.
         """
-        return cls(**data)
+        stim_seq = cls(**data)
+        if (len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list)):
+            # flatten
+            stim_seq.stimuli = data['stimuli'][0]
+        return stim_seq
 
     def as_dict(self) -> Dict:
         data = {

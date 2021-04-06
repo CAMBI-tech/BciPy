@@ -196,3 +196,8 @@ class TestSessionData(unittest.TestCase):
                          session.total_number_series)
         self.assertEqual(deserialized.last_series()[-1].next_display_state,
                          'HE')
+
+        first_stim_seq = deserialized.series[0][0]
+        self.assertEqual(
+            first_stim_seq.stimuli,
+            ["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"])
