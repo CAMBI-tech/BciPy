@@ -12,10 +12,13 @@ from bcipy.helpers.load import load_json_parameters, read_data_csv, extract_mode
 from bcipy.helpers.triggers import trigger_decoder, apply_trigger_offset, trigger_durations
 
 
+logger = logging.getLogger(__name__)
+
+
 def convert_to_edf(data_dir: str,
                    edf_path: str = None,
                    overwrite=False,
-                   write_targetness=True,
+                   write_targetness=False,
                    use_event_durations=False,
                    mode=False,
                    annotation_channels=None) -> Path:
@@ -34,7 +37,7 @@ def convert_to_edf(data_dir: str,
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
     write_targetness - If True, and targetness information is available, write
-        that instead of the stimuli markers.
+        that instead of the stimuli markers. False by default.
     mode - optional; for a given task, define the task mode. Ex. 'calibration', 'copy_phrase'.
         If not provided, it will be extracted from the data_dir.
     use_event_durations - optional; if True assigns a duration to each event.
@@ -51,7 +54,7 @@ def convert_to_edf(data_dir: str,
 
     params = load_json_parameters(Path(data_dir, 'parameters.json'),
                                   value_cast=True)
-    raw_data, _, ch_names, _, sfreq = read_data_csv(
+    raw_data, _, ch_names, _, sample_rate = read_data_csv(
         Path(data_dir, params['raw_data_name']))
     durations = trigger_durations(params) if use_event_durations else {}
 
@@ -62,6 +65,9 @@ def convert_to_edf(data_dir: str,
     symbol_info, trial_target_info, timing_info, offset = trigger_decoder(
         mode, Path(data_dir, params.get('trigger_file_name', 'triggers.txt')), remove_pre_fixation=False)
 
+    # validate annotation parameters given data length and trigger count
+    validate_annotations(len(raw_data[0]) / sample_rate, len(symbol_info), annotation_channels)
+
     # get static and system offsets
     observed_offset = offset + params.get('static_trigger_offset', 0.0)
     trigger_timing = apply_trigger_offset(timing_info, observed_offset)
@@ -71,15 +77,36 @@ def convert_to_edf(data_dir: str,
 
     events = edf_annotations(triggers, durations)
 
-    return write_edf(edf_path, raw_data, ch_names, sfreq, events, overwrite, annotation_channels)
+    return write_edf(edf_path, raw_data, ch_names, sample_rate, events, overwrite, annotation_channels)
 
 
-def compile_triggers(labels, targetness, timing, write_targetness):
+def validate_annotations(record_time: float, trigger_count: int, annotation_channels: bool) -> None:
+    """Validate Annotations.
+
+    Using the pyedflib library, it is recommended the number of triggers (or annotations) not exceed the recording
+        time in seconds. This may not result in an unsuccessful export, therefore, we advise users to increase
+        annotation channels incrementally as needed to avoid loosing information. If the number of annotation
+        channels is too high and no annotations are written to all channels created, a read error may result.
+    """
+    if trigger_count > record_time and not annotation_channels:
+        logger.warning(
+            f'\n*Warning* The number of triggers [{trigger_count}] exceeds recording time [{record_time}]. '
+            'Not all triggers may be written. '
+            'Validate export carefully and increase annotation_channels incrementally to add missing triggers.')
+
+
+def compile_triggers(labels: List[str], targetness: List[str], timing: List[float],
+                     write_targetness: bool) -> List[Tuple[str, str, float]]:
+    """Compile Triggers.
+
+    Compile trigger information in a way that we edf conversion can easily digest. (label, targetness, timing).
+        If write targetness is true, use the targetness as a label.
+    """
     triggers = []
     i = 0
     for label in labels:
         # if targetness information available and the flag set to true, write another trigger with target information
-        if targetness and write_targetness:
+        if write_targetness:
             triggers.append((targetness[i], targetness[i], timing[i]))
         else:
             triggers.append((label, targetness[i], timing[i]))
@@ -90,7 +117,7 @@ def compile_triggers(labels, targetness, timing, write_targetness):
 def write_edf(output_path: str,
               raw_data: np.array,
               ch_names: List[str],
-              sfreq: float,
+              sample_rate: float,
               events: List[Tuple[float, float, str]],
               overwrite=False,
               annotation_channels=None) -> Path:
@@ -105,7 +132,7 @@ def write_edf(output_path: str,
         a file named raw.edf in the raw_data_dir.
     raw_data - raw data with a row for each channel
     ch_names - names of the channels
-    sfreq - sample frequency
+    sample_rate - sample frequency
     events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
@@ -122,8 +149,8 @@ def write_edf(output_path: str,
         raise OSError('EDF file already exists.')
 
     # set conversion parameters
-    dmin, dmax = [-32768, 32767]
-    pmin, pmax = [raw_data.min(), raw_data.max()]
+    digital_min, digital_max = [-32768, 32767]
+    physical_min, physical_max = [raw_data.min(), raw_data.max()]
 
     n_channels = len(raw_data)
 
@@ -140,11 +167,11 @@ def write_edf(output_path: str,
             ch_dict = {
                 'label': ch_names[i],
                 'dimension': 'uV',
-                'sample_rate': sfreq,
-                'physical_min': pmin,
-                'physical_max': pmax,
-                'digital_min': dmin,
-                'digital_max': dmax,
+                'sample_rate': sample_rate,
+                'physical_min': physical_min,
+                'physical_max': physical_max,
+                'digital_min': digital_min,
+                'digital_max': digital_max,
                 'transducer': '',
                 'prefilter': ''
             }

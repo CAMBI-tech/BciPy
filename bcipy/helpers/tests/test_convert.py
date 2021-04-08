@@ -4,15 +4,16 @@ import shutil
 import tempfile
 import unittest
 import warnings
+
 from itertools import chain
 from pathlib import Path
 from typing import List
 
-from mne.io import read_raw_edf
-
 from bcipy.helpers.convert import convert_to_edf
 from bcipy.helpers.parameters import Parameters
 from bcipy.signal.generator.generator import gen_random_data
+
+from mne.io import read_raw_edf
 
 
 MOCK_TRIGGER_DATA = '''calibration_trigger calib 0.4748408449813724
@@ -114,7 +115,7 @@ class TestConvert(unittest.TestCase):
         convert_to_edf(self.temp_dir, overwrite=True, mode=self.default_mode)
 
     def test_with_custom_path(self):
-        """Test creating the EDF without event annotations"""
+        """Test creating the EDF using a custom edf path"""
         path = convert_to_edf(self.temp_dir,
                               mode=self.default_mode,
                               edf_path=Path(self.temp_dir, 'mydata.edf'))
@@ -122,7 +123,7 @@ class TestConvert(unittest.TestCase):
         self.assertEqual(Path(path).name, 'mydata.edf')
 
     def test_with_write_targetness(self):
-        """Test creating the EDF without event annotations"""
+        """Test creating the EDF using targetness for event annotations"""
         path = convert_to_edf(self.temp_dir,
                               mode=self.default_mode,
                               write_targetness=True,
@@ -135,8 +136,23 @@ class TestConvert(unittest.TestCase):
         self.assertIn('target', edf.annotations.description)
         self.assertIn('nontarget', edf.annotations.description)
 
+    def test_without_write_targetness(self):
+        """Test creating the EDF with labels as event annotations"""
+        path = convert_to_edf(self.temp_dir,
+                              mode=self.default_mode,
+                              write_targetness=False,
+                              edf_path=Path(self.temp_dir, 'mydata.edf'))
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            edf = read_raw_edf(path, preload=True)
+
+        self.assertNotIn('target', edf.annotations.description)
+        self.assertNotIn('nontarget', edf.annotations.description)
+        self.assertIn('+', edf.annotations.description)
+
     def test_with_annotation_channels(self):
-        """Test creating the EDF without event annotations"""
+        """Test creating the EDF with additional annotation channels"""
         # Increase the number of annotation channels by 1
         annotation_channels = 2
         # The expected channels should be equal to the number of annotation channels +
@@ -145,6 +161,25 @@ class TestConvert(unittest.TestCase):
         path = convert_to_edf(self.temp_dir,
                               mode=self.default_mode,
                               write_targetness=True,
+                              annotation_channels=annotation_channels,
+                              edf_path=Path(self.temp_dir, 'mydata.edf'))
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            edf = read_raw_edf(path, preload=True)
+
+        self.assertEqual(len(edf.ch_names), expected_channel_number)
+
+    def test_with_annotation_channels_without_targetness(self):
+        """Test creating the EDF with additional annotation channels and no targetness written (labels)"""
+        # Increase the number of annotation channels by 1
+        annotation_channels = 2
+        # The expected channels should be equal to the number of annotation channels +
+        #   channels defined in the class + a TRG channel
+        expected_channel_number = annotation_channels + len(self.channels) + 1
+        path = convert_to_edf(self.temp_dir,
+                              mode=self.default_mode,
+                              write_targetness=False,
                               annotation_channels=annotation_channels,
                               edf_path=Path(self.temp_dir, 'mydata.edf'))
 
