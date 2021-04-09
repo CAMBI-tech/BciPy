@@ -177,10 +177,11 @@ class TestUserLoad(unittest.TestCase):
 
         self.assertEqual(response, [])
 
-    # def test_user_load_no_data_save_location_provided_parameters(self):
-    #     parameters = {}
-
-    #     response = load_users(parameters)
+    def test_user_load_no_data_save_location_provided_parameters(self):
+        parameters = {}
+        with self.assertRaises(KeyError):
+            load_users(parameters)
+        
 
     def test_user_load_with_valid_directory(self):
         user = 'user_001'
@@ -195,13 +196,26 @@ class TestUserLoad(unittest.TestCase):
 
         # assert user returned is user defined above
         self.assertEqual(response[0], user)
-
         os.rmdir(file_path)
 
     def test_user_load_with_invalid_directory(self):
-        # create an invalid save structure and assert expected behavior. See file path above
-        pass
+        # create an invalid save structure and assert expected behavior. 
+        user = 'user_001'
+        file_path = f'{self.directory_name}/experiment{user}'
+        os.makedirs(file_path)
+
+        response = load_users(self.parameters)
+        length_of_users = len(response)
+        self.assertTrue(length_of_users == 0)
+        os.rmdir(file_path)
+
+
+
+        
 
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
