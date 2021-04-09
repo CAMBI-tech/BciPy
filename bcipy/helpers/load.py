@@ -1,11 +1,14 @@
 import logging
 import pickle
 import json
+import os
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
+
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -227,3 +230,51 @@ def load_txt_data() -> str:
             'File type unrecognized. Please use a supported text type')
 
     return filename
+
+
+def load_users(data_save_loc) -> List[str]:
+    """Load Users.
+
+    Loads user directory names below experiments from the data path defined and returns them as a list.
+    If the save data directory is not found, this method returns an empty list assuming no experiments
+    have been run yet.
+    """
+    # build a saved users list, pull out the data save location from parameters
+    saved_users = []
+
+    # check the directory is valid, if it is, set path as data save location
+    if os.path.isdir(data_save_loc):
+        path = data_save_loc
+
+    # check the directory is valid after adding bcipy, if it is, set path as data save location
+    elif os.path.isdir(f'bcipy/{data_save_loc}'):
+        path = f'bcipy/{data_save_loc}'
+
+    else:
+        log.info(f'User save data location not found at [{data_save_loc}]! Returning empty user list.')
+        return saved_users
+
+    # grab all experiments in the directory and iterate over them to get the users
+    experiments = fast_scandir(path, return_path=True)
+
+    for experiment in experiments:
+        users = fast_scandir(experiment, return_path=False)
+        # If it is a new user, append it to the saved_user list
+        for user in users:
+            if user not in saved_users:
+                saved_users.append(user)
+
+    return saved_users
+
+
+def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
+    """Fast Scan Directory.
+
+    directory_name: name of the directory to be scanned
+    return_path: whether or not to return the scanned directories as a relative path or name.
+        False will return the directory name only.
+    """
+    if return_path:
+        return [f.path for f in os.scandir(directory_name) if f.is_dir()]
+
+    return [f.name for f in os.scandir(directory_name) if f.is_dir()]
