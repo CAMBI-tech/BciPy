@@ -232,17 +232,15 @@ def load_txt_data() -> str:
     return filename
 
 
-def load_users(parameters: Parameters) -> List[str]:
+def load_users(data_save_loc) -> List[str]:
     """Load Users.
 
-    Loads user directory names below experiments from the data path defined in parameters.json
-    and returns them as a list. If the save data directory is not found, this method returns an
-    empty list assuming no experiments have been run yet.
+    Loads user directory names below experiments from the data path defined and returns them as a list.
+    If the save data directory is not found, this method returns an empty list assuming no experiments
+    have been run yet.
     """
     # build a saved users list, pull out the data save location from parameters
     saved_users = []
-    # parameters.get('data_save_loc', False)
-    data_save_loc = parameters['data_save_loc']
 
     # check the directory is valid, if it is, set path as data save location
     if os.path.isdir(data_save_loc):

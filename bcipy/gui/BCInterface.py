@@ -113,7 +113,7 @@ class BCInterface(BCIGui):
 
         self.user_input.clear()
         self.user_input.addItem(BCInterface.default_text)
-        self.user_input.addItems(load_users(self.parameters))
+        self.user_input.addItems(load_users(self.parameters['data_save_loc']))
 
     def update_experiment_list(self) -> None:
         """Updates the experiment_input combo box with a list of experiments based on the

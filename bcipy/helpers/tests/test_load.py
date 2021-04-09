@@ -168,26 +168,20 @@ class TestUserLoad(unittest.TestCase):
     def setUp(self):
         # setup parameters to pass to load users method, it expects a key of data_save_loc only
         self.directory_name = 'test_data_load_user'
-        self.parameters = {
-            'data_save_loc': f'{self.directory_name}/'
-        }
+        self.data_save_loc = f'{self.directory_name}/'
 
-    def test_user_load_with_no_directory(self):
-        response = load_users(self.parameters)
+    def test_user_load_with_no_directory_written(self):
+        """Use defined data save location without writing anything"""
+        response = load_users(self.data_save_loc)
 
         self.assertEqual(response, [])
-
-    def test_user_load_no_data_save_location_provided_parameters(self):
-        parameters = {}
-        with self.assertRaises(KeyError):
-            load_users(parameters)
 
     def test_user_load_with_valid_directory(self):
         user = 'user_001'
         file_path = f'{self.directory_name}/experiment/{user}'
         os.makedirs(file_path)
 
-        response = load_users(self.parameters)
+        response = load_users(self.data_save_loc)
 
         # There is only one user returned
         length_of_users = len(response)
@@ -203,7 +197,7 @@ class TestUserLoad(unittest.TestCase):
         file_path = f'{self.directory_name}/experiment{user}'
         os.makedirs(file_path)
 
-        response = load_users(self.parameters)
+        response = load_users(self.data_save_loc)
         length_of_users = len(response)
         self.assertTrue(length_of_users == 0)
         os.rmdir(file_path)
