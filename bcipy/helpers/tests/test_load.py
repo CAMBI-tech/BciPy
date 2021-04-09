@@ -181,7 +181,6 @@ class TestUserLoad(unittest.TestCase):
         parameters = {}
         with self.assertRaises(KeyError):
             load_users(parameters)
-        
 
     def test_user_load_with_valid_directory(self):
         user = 'user_001'
@@ -199,7 +198,7 @@ class TestUserLoad(unittest.TestCase):
         os.rmdir(file_path)
 
     def test_user_load_with_invalid_directory(self):
-        # create an invalid save structure and assert expected behavior. 
+        # create an invalid save structure and assert expected behavior.
         user = 'user_001'
         file_path = f'{self.directory_name}/experiment{user}'
         os.makedirs(file_path)
@@ -210,12 +209,5 @@ class TestUserLoad(unittest.TestCase):
         os.rmdir(file_path)
 
 
-
-        
-
-
 if __name__ == '__main__':
     unittest.main()
-
-
-
