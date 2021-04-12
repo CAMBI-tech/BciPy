@@ -9,7 +9,6 @@ class Inquiry:
     Parameters:
     ----------
         stimuli - list of stimuli presented (letters, icons, etc)
-        eeg_len - number of channels in the EEG data
         timing - duration in seconds for each stimulus
         target_info - targetness ('nontarget', 'target', etc) for each stimulus
         target_letter - current letter that the user is attempting to spell
@@ -23,7 +22,6 @@ class Inquiry:
 
     def __init__(self,
                  stimuli: List[str],
-                 eeg_len: int,
                  timing: List[float],
                  triggers: List[List],
                  target_info: List[str],
@@ -36,7 +34,6 @@ class Inquiry:
                  likelihood: List[float] = None):
         super().__init__()
         self.stimuli = stimuli
-        self.eeg_len = eeg_len
         self.timing = timing
         self.triggers = triggers
         self.target_info = target_info
@@ -68,7 +65,6 @@ class Inquiry:
     def as_dict(self) -> Dict:
         data = {
             'stimuli': self.stimuli,
-            'eeg_len': self.eeg_len,
             'timing': self.timing,
             'triggers': self.triggers,
             'target_info': self.target_info,
