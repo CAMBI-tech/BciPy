@@ -11,6 +11,7 @@ import json
 from mockito import any, expect, unstub, when
 
 from bcipy.helpers.load import (
+    extract_mode,
     load_json_parameters,
     load_signal_model,
     load_experiments,
@@ -19,7 +20,7 @@ from bcipy.helpers.load import (
     load_users,
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.exceptions import InvalidExperimentException
+from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, FIELD_FILENAME, EXPERIMENT_FILENAME
 
 
@@ -201,6 +202,32 @@ class TestUserLoad(unittest.TestCase):
         length_of_users = len(response)
         self.assertTrue(length_of_users == 0)
         os.rmdir(file_path)
+
+
+class TestExtractMode(unittest.TestCase):
+
+    def test_extract_mode_calibration(self):
+        data_save_path = 'data/default/user/user_RSVP_Calibration_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        expected_mode = 'calibration'
+        response = extract_mode(data_save_path)
+        self.assertEqual(expected_mode, response)
+
+    def test_extract_mode_copy_phrase(self):
+        data_save_path = 'data/default/user/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        expected_mode = 'copy_phrase'
+        response = extract_mode(data_save_path)
+        self.assertEqual(expected_mode, response)
+
+    def test_extract_mode_free_spell(self):
+        data_save_path = 'data/default/user/user_RSVP_Free_Spell_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        expected_mode = 'free_spell'
+        response = extract_mode(data_save_path)
+        self.assertEqual(expected_mode, response)
+
+    def test_extract_mode_without_mode_defined(self):
+        invalid_data_save_dir = 'data/default/user/user_bad_dir'
+        with self.assertRaises(BciPyCoreException):
+            extract_mode(invalid_data_save_dir)
 
 
 if __name__ == '__main__':

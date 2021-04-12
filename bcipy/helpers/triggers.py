@@ -81,7 +81,7 @@ def _calibration_trigger(experiment_clock: core.Clock,
                 display.callOnFlip(on_trigger, trigger_name)
 
             presentation_time = int(1 * display.getActualFrameRate())
-            for num_frames in range(presentation_time):
+            for _ in range(presentation_time):
                 calibration_box.draw()
                 display.flip()
 
@@ -280,7 +280,7 @@ def write_triggers_from_inquiry_icon_to_icon(inquiry_timing: List[Tuple],
                            "\n")
 
 
-def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
+def trigger_decoder(mode: str, trigger_path: str = None, remove_pre_fixation=True) -> tuple:
     """Trigger Decoder.
 
     Given a mode of operation (calibration, copy phrase, etc) and
@@ -307,11 +307,17 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
         #   SYMBOL, TARGETNESS_INFO[OPTIONAL], TIMING
         trigger_txt = [line.split() for line in text_file]
 
-    # extract stimuli from the text
-    stimuli_triggers = [
-        line for line in trigger_txt
-        if line[1] == 'target' or line[1] == 'nontarget'
-    ]
+    # extract stimuli from the text.
+    if remove_pre_fixation:
+        stimuli_triggers = [
+            line for line in trigger_txt
+            if line[1] == 'target' or line[1] == 'nontarget'
+        ]
+    else:
+        stimuli_triggers = [
+            line for line in trigger_txt
+            if line[0] != 'calibration_trigger' and line[0] != 'offset'
+        ]
 
     # from the stimuli array, pull our the symbol information
     symbol_info = list(map(lambda x: x[0], stimuli_triggers))
@@ -347,6 +353,18 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
         offset = 0
 
     return symbol_info, trial_target_info, timing_info, offset
+
+
+def apply_trigger_offset(timing: List[float], offset: float):
+    """Apply trigger offset.
+
+    Due to refresh rates and clock differences between display and acquisition, offsets in the system exist.
+    This method takes a list of trigger times and adds the offset to them.
+    """
+    corrected_timing = []
+    for time in timing:
+        corrected_timing.append(time + offset)
+    return corrected_timing
 
 
 class Labeller(object):
@@ -603,6 +621,6 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     offset = float(acq_stamp) - float(calibration_stamp)
 
     corrected = []
-    for i, (name, trg_type, stamp) in enumerate(records):
+    for _, (name, trg_type, stamp) in enumerate(records):
         corrected.append((name, trg_type, float(stamp) + offset))
     return corrected

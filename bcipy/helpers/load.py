@@ -15,7 +15,7 @@ import pandas as pd
 
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
-from bcipy.helpers.exceptions import InvalidExperimentException
+from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
 
 
 log = logging.getLogger(__name__)
@@ -60,6 +60,29 @@ def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME
     """
     with open(path, 'r') as json_file:
         return json.load(json_file)
+
+
+def extract_mode(bcipy_data_directory: str) -> str:
+    """Extract Mode.
+
+    This method extracts the task mode from a BciPy data save directory. This is important for
+        trigger conversions and extracting targeteness.
+
+    *note*: this is not compatiable with older versions of BciPy (pre 1.5.0) where
+        the tasks and modes were considered together using integers (1, 2, 3).
+
+    PARAMETERS
+    ----------
+    :param: bcipy_data_directory: string path to the data directory
+    """
+    directory = bcipy_data_directory.lower()
+    if 'calibration' in directory:
+        return 'calibration'
+    elif 'copy' in directory:
+        return 'copy_phrase'
+    elif 'free_spell' in directory:
+        return 'free_spell'
+    raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
 
 
 def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:

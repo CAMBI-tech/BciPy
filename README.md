@@ -205,6 +205,10 @@ make lint
 
 ***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
 
+***Task**: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
+
+***Mode***: Common design elements between task types. For instance, Calibration and Free Spelling are modes.
+
 
 ## Authorship
 --------------

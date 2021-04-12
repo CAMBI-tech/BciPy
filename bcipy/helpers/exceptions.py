@@ -1,4 +1,16 @@
 
+
+class BciPyCoreException(Exception):
+    """BciPy Core Exception.
+
+    Thrown when an error occurs specific to BciPy core concepts.
+    """
+
+    def __init__(self, message, errors=None):
+        super().__init__(message)
+        self.errors = errors
+
+
 class UnregisteredExperimentException(Exception):
     """Unregistered Experiment.
 
