@@ -3,18 +3,33 @@ from typing import Dict, List
 from collections import Counter
 
 
-class StimSequence:
-    """Represents a sequence of stimuli."""
+class Inquiry:
+    """Represents a sequence of stimuli.
+
+    Parameters:
+    ----------
+        stimuli - list of stimuli presented (letters, icons, etc)
+        eeg_len - number of channels in the EEG data
+        timing - duration in seconds for each stimulus
+        target_info - targetness ('nontarget', 'target', etc) for each stimulus
+        target_letter - current letter that the user is attempting to spell
+        current_text - letters spelled so far
+        target_text - word or words the user is attempting to spell
+        next_display_state - text to be displayed after evaluating the current evidence
+        lm_evidence - language model evidence for each stimulus
+        eeg_evidence - eeg evidence for each stimulus
+        likelihood - combined likelihood for each stimulus
+    """
 
     def __init__(self,
                  stimuli: List[str],
                  eeg_len: int,
-                 timing_sti: List[float],
+                 timing: List[float],
                  triggers: List[List],
                  target_info: List[str],
                  target_letter: str,
                  current_text: str,
-                 copy_phrase: str,
+                 target_text: str = None,
                  next_display_state: str = None,
                  lm_evidence: List[float] = None,
                  eeg_evidence: List[float] = None,
@@ -22,12 +37,12 @@ class StimSequence:
         super().__init__()
         self.stimuli = stimuli
         self.eeg_len = eeg_len
-        self.timing_sti = timing_sti
+        self.timing = timing
         self.triggers = triggers
         self.target_info = target_info
         self.target_letter = target_letter
         self.current_text = current_text
-        self.copy_phrase = copy_phrase
+        self.target_text = target_text
         self.next_display_state = next_display_state
 
         # TODO: refactor for multimodal; List of Evidences?
@@ -44,22 +59,22 @@ class StimSequence:
             data - a dict in the format of the data output by the as_dict
                 method.
         """
-        stim_seq = cls(**data)
-        if (len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list)):
+        inquiry = cls(**data)
+        if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
             # flatten
-            stim_seq.stimuli = data['stimuli'][0]
-        return stim_seq
+            inquiry.stimuli = data['stimuli'][0]
+        return inquiry
 
     def as_dict(self) -> Dict:
         data = {
             'stimuli': self.stimuli,
             'eeg_len': self.eeg_len,
-            'timing_sti': self.timing_sti,
+            'timing': self.timing,
             'triggers': self.triggers,
             'target_info': self.target_info,
             'target_letter': self.target_letter,
             'current_text': self.current_text,
-            'copy_phrase': self.copy_phrase,
+            'target_text': self.target_text,
             'next_display_state': self.next_display_state
         }
 
@@ -71,7 +86,7 @@ class StimSequence:
             data['likelihood'] = self.likelihood
         return data
 
-    def stim_evidence(self, alphabet: List[str], n: int = 5) -> Dict:
+    def stim_evidence(self, alphabet: List[str], n_most_likely: int = 5) -> Dict:
         """Returns a dict of stim sequence data useful for debugging. Evidences
         are paired with the appropriate alphabet letter for easier visual
         scanning. Also, an additional attribute is provided to display the
@@ -80,7 +95,7 @@ class StimSequence:
         Parameters:
         -----------
             alphabet - list of stim in the same order as the evidences.
-            n - number of most likely elements to include
+            n_most_likely - number of most likely elements to include
         """
         likelihood = dict(zip(alphabet, self.likelihood))
         return {
@@ -88,7 +103,7 @@ class StimSequence:
             'lm_evidence': dict(zip(alphabet, self.lm_evidence)),
             'eeg_evidence': dict(zip(alphabet, self.eeg_evidence)),
             'likelihood': likelihood,
-            'most_likely': dict(Counter(likelihood).most_common(5))
+            'most_likely': dict(Counter(likelihood).most_common(n_most_likely))
         }
 
 
@@ -97,13 +112,13 @@ class Session:
 
     def __init__(self,
                  save_location: str,
-                 session_type: str = 'Copy Phrase',
-                 paradigm: str = 'RSVP'):
+                 task: str = 'Copy Phrase',
+                 mode: str = 'RSVP'):
         super().__init__()
         self.save_location = save_location
-        self.session_type = session_type
-        self.paradigm = paradigm
-        self.series: List[List[StimSequence]] = [[]]
+        self.task = task
+        self.mode = mode
+        self.series: List[List[Inquiry]] = [[]]
         self.total_time_spent = 0
 
     @property
@@ -117,21 +132,21 @@ class Session:
             self.series.append([])
 
     def add_sequence(self,
-                     stim_sequence: StimSequence,
+                     inquiry: Inquiry,
                      new_series: bool = False):
         """Append sequence information
 
         Parameters:
         -----------
-            stim_sequence - data to append
+            inquiry - data to append
             new_series - a True value indicates that this is the first stim of
                 a new series.
         """
         if new_series:
             self.add_series()
-        self.last_series().append(stim_sequence)
+        self.last_series().append(inquiry)
 
-    def last_series(self) -> List[StimSequence]:
+    def last_series(self) -> List[Inquiry]:
         """Returns the last series"""
         return self.series[-1]
 
@@ -151,8 +166,8 @@ class Session:
 
         return {
             'session': self.save_location,
-            'session_type': self.session_type,
-            'paradigm': self.paradigm,
+            'task': self.task,
+            'mode': self.mode,
             'series': series_dict,
             'total_time_spent': self.total_time_spent,
             'total_number_series': self.total_number_series
@@ -168,8 +183,8 @@ class Session:
                 method.
         """
         session = cls(save_location=data['session'],
-                      session_type=data['session_type'],
-                      paradigm=data['paradigm'])
+                      task=data['task'],
+                      mode=data['mode'])
         session.total_time_spent = data['total_time_spent']
 
         if data['series']:
@@ -179,6 +194,6 @@ class Session:
                 for sequence_counter in sorted(data['series'][series_counter]):
                     sequence_dict = data['series'][series_counter][
                         sequence_counter]
-                    session.add_sequence(StimSequence.from_dict(sequence_dict))
+                    session.add_sequence(Inquiry.from_dict(sequence_dict))
 
         return session

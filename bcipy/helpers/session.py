@@ -18,7 +18,7 @@ from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
-from bcipy.tasks.session_data import Session, StimSequence
+from bcipy.tasks.session_data import Session, Inquiry
 
 
 def session_data(data_dir: str, alp=None):
@@ -41,7 +41,7 @@ def session_data(data_dir: str, alp=None):
     with open(session_path, 'r') as json_file:
         session = Session.from_dict(json.load(json_file))
         data = session.as_dict(alphabet=alp, evidence_only=True)
-        data['copy_phrase'] = parameters['task_text']
+        data['target_text'] = parameters['task_text']
         return data
 
 
@@ -60,11 +60,11 @@ def collect_experiment_field_data(experiment_name,
             raise Exception('Field data not collected!')
 
 
-def get_target(task_type, inquiry: StimSequence):
+def get_target(task_type, inquiry: Inquiry):
     """Returns the target for the given inquiry. For icon tasks this information
     is in the inquiry, but for Copy Phrase it must be computed."""
     if task_type == 'Copy Phrase':
-        return copy_phrase_target(inquiry.copy_phrase, inquiry.current_text)
+        return copy_phrase_target(inquiry.target_text, inquiry.current_text)
     return inquiry.target_letter
 
 
@@ -140,7 +140,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         for series_index, inquiry_list in enumerate(session.series):
             for inq_index, inquiry in enumerate(inquiry_list):
 
-                target = get_target(session.session_type, inquiry)
+                target = get_target(session.task, inquiry)
 
                 if inq_index == 0:
                     # create record for the trial

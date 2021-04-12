@@ -91,7 +91,7 @@ def _save_session_related_data(file, session_dictionary):
                 {{ "series": {
                         "1": {
                           "0": {
-                            "copy_phrase": "COPY_PHRASE",
+                            "target_text": "COPY_PHRASE",
                             "current_text": "COPY_",
                             "eeg_len": 22,
                             "next_display_state": "COPY_",
@@ -106,9 +106,9 @@ def _save_session_related_data(file, session_dictionary):
                         "7": {
                             ... ,
                   },
-                  "paradigm": "RSVP",
+                  "mode": "RSVP",
                   "session": "data/demo_user/demo_user",
-                  "session_type": "Copy Phrase",
+                  "task": "Copy Phrase",
                   "total_time_spent": 83.24798703193665
                 }}
     Returns

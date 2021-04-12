@@ -1,7 +1,7 @@
 from psychopy import core
 
 from bcipy.tasks.task import Task
-from bcipy.tasks.session_data import StimSequence, Session
+from bcipy.tasks.session_data import Inquiry, Session
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
@@ -157,8 +157,8 @@ class RSVPCopyPhraseTask(Task):
         inq_counter = 0
 
         session = Session(save_location=self.file_save,
-                          session_type='Copy Phrase',
-                          paradigm='RSVP')
+                          task='Copy Phrase',
+                          mode='RSVP')
 
         # Save session data
         _save_session_related_data(self.session_save_location, session.as_dict())
@@ -234,14 +234,14 @@ class RSVPCopyPhraseTask(Task):
                     self.static_offset)
 
             # Construct Data Record
-            stim_sequence = StimSequence(stimuli=ele_sti,
-                                         eeg_len=len(raw_data),
-                                         timing_sti=timing_sti,
-                                         triggers=triggers,
-                                         target_info=target_info,
-                                         target_letter=target_letter,
-                                         current_text=text_task,
-                                         copy_phrase=self.copy_phrase)
+            stim_sequence = Inquiry(stimuli=ele_sti,
+                                    eeg_len=len(raw_data),
+                                    timing=timing_sti,
+                                    triggers=triggers,
+                                    target_info=target_info,
+                                    target_letter=target_letter,
+                                    current_text=text_task,
+                                    target_text=self.copy_phrase)
             # Uncomment this to turn off fake decisions, but use fake data.
             # self.fake = False
             if self.fake:

@@ -1,14 +1,14 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.tasks.session_data import Session, StimSequence
+from bcipy.tasks.session_data import Session, Inquiry
 
 
 def sample_stim_seq(include_evidence: bool = False):
-    stim_seq = StimSequence(
+    stim_seq = Inquiry(
         stimuli=["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"],
         eeg_len=17,
-        timing_sti=[0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+        timing=[0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
         triggers=[["+", 0.0], ["I", 0.4688645350106526],
                   ["D", 0.737725474027684], ["H", 1.0069859480136074],
                   ["G", 1.2752754990069661], ["F", 1.5437563360028435],
@@ -22,7 +22,7 @@ def sample_stim_seq(include_evidence: bool = False):
         ],
         target_letter="H",
         current_text="",
-        copy_phrase="HELLO_WORLD",
+        target_text="HELLO_WORLD",
         next_display_state="H")
 
     if include_evidence:
@@ -80,8 +80,8 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(dict, type(serialized))
 
         expected_keys = [
-            'stimuli', 'eeg_len', 'timing_sti', 'triggers', 'target_info',
-            'target_letter', 'current_text', 'copy_phrase',
+            'stimuli', 'eeg_len', 'timing', 'triggers', 'target_info',
+            'target_letter', 'current_text', 'target_text',
             'next_display_state'
         ]
 
@@ -96,16 +96,16 @@ class TestSessionData(unittest.TestCase):
         """Test that a stim sequence can be deserialized from a dict."""
         stim_seq = sample_stim_seq()
         serialized = stim_seq.as_dict()
-        deserialized = StimSequence.from_dict(serialized)
+        deserialized = Inquiry.from_dict(serialized)
 
         self.assertEquals(stim_seq.stimuli, deserialized.stimuli)
         self.assertEquals(stim_seq.eeg_len, deserialized.eeg_len)
-        self.assertEquals(stim_seq.timing_sti, deserialized.timing_sti)
+        self.assertEquals(stim_seq.timing, deserialized.timing)
         self.assertEquals(stim_seq.triggers, deserialized.triggers)
         self.assertEquals(stim_seq.target_info, deserialized.target_info)
         self.assertEquals(stim_seq.target_letter, deserialized.target_letter)
         self.assertEquals(stim_seq.current_text, deserialized.current_text)
-        self.assertEquals(stim_seq.copy_phrase, deserialized.copy_phrase)
+        self.assertEquals(stim_seq.target_text, deserialized.target_text)
         self.assertEquals(stim_seq.next_display_state,
                           deserialized.next_display_state)
 
@@ -118,7 +118,7 @@ class TestSessionData(unittest.TestCase):
         ]
 
         stim_seq = sample_stim_seq(include_evidence=True)
-        evidence = stim_seq.stim_evidence(alp, n=5)
+        evidence = stim_seq.stim_evidence(alp, n_most_likely=5)
         self.assertEqual(len(evidence['most_likely']), 5)
         self.assertAlmostEqual(evidence['most_likely']['<'], 0.05, places=2)
 
