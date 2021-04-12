@@ -85,7 +85,7 @@ def validate_annotations(record_time: float, trigger_count: int, annotation_chan
 
     Using the pyedflib library, it is recommended the number of triggers (or annotations) not exceed the recording
         time in seconds. This may not result in an unsuccessful export, therefore, we advise users to increase
-        annotation channels incrementally as needed to avoid loosing information. If the number of annotation
+        annotation channels incrementally as needed to avoid losing information. If the number of annotation
         channels is too high and no annotations are written to all channels created, a read error may result.
     """
     if trigger_count > record_time and not annotation_channels:
