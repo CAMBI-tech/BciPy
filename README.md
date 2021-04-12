@@ -3,7 +3,7 @@
 
 ### What is it?
 
-It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system. See our official BciPy documentation including affliations and more context information here: https://bcipy.github.io/  (in progress).
+It is Brain-computer interface software written in Python. It can function as a standalone or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information here: https://bcipy.github.io/  (in progress).
 
 It should, based on our dependencies, work on most recent operating systems, however it has only been verified on Windows (7 & 10 Pro) and Mac OSx (High Sierra & Mojave) at this time. It won't build as is on Linux. Some additional work will be needed to install WxPython and pylsl.
 
@@ -60,7 +60,7 @@ To use all the goodies locally (including the GUI and demo scripts)
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
 
-Alternatley, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
+Alternately, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
 
 ```sh
 # install in development mode
@@ -166,7 +166,7 @@ coverage report
 coverage html
 ```
 
-Alternatley, if Make is installed, you may run the follow command to run coverage/pytest and generate the html:
+Alternately, if Make is installed, you may run the follow command to run coverage/pytest and generate the html:
 
 ```sh
 make coverage-html
@@ -188,7 +188,7 @@ autopep8 --in-place --aggressive bcipy/acquisition/processor.py
 
 Finally, run the lint check: `flake8 bcipy`.
 
-Alternatley, if Make is installed, you may run the follow command to run autopep8 and flake8:
+Alternately, if Make is installed, you may run the follow command to run autopep8 and flake8:
 
 ```sh
 make lint
@@ -204,6 +204,8 @@ make lint
 ***Inquiry***: The set of stimuli after a fixation cross in a spelling task to gather user intent. A ---- B --- C ----
 
 ***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
+
+***Session***: Data collected for a task. Comprised of metadata about the task and a list of Series.
 
 ***Task**: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
 

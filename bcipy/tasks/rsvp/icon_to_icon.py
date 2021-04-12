@@ -135,8 +135,8 @@ class RSVPIconToIconTask(Task):
         """
         data = {
             'session': self.file_save,
-            'session_type': self.session_description,
-            'paradigm': 'RSVP',
+            'task': self.session_description,
+            'mode': 'RSVP',
             'series': {},
             'total_time_spent': self.experiment_clock.getTime(),
             'total_number_series': 0,
