@@ -235,7 +235,6 @@ class RSVPCopyPhraseTask(Task):
 
             # Construct Data Record
             stim_sequence = Inquiry(stimuli=ele_sti,
-                                    eeg_len=len(raw_data),
                                     timing=timing_sti,
                                     triggers=triggers,
                                     target_info=target_info,
