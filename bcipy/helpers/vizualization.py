@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bcipy.helpers.load import load_csv_data, read_data_csv
+from mne.io import read_raw_edf
 
 import logging
 log = logging.getLogger(__name__)
@@ -140,6 +141,23 @@ def generate_offline_analysis_screen(
 
     if show_figure:
         plt.show()
+
+
+def plot_edf(edf_path: str, auto_scale: bool = False):
+    """Plot data from the raw edf file. Note: this works from an iPython
+    session but seems to throw errors when provided in a script.
+
+    Parameters
+    ----------
+        edf_path - full path to the generated edf file
+        auto_scale - optional; if True will scale the EEG data; this is
+            useful for fake (random) data but makes real data hard to read.
+    """
+    edf = read_raw_edf(edf_path, preload=True)
+    if auto_scale:
+        edf.plot(scalings='auto')
+    else:
+        edf.plot()
 
 
 def visualize_csv_eeg_triggers(trigger_col=None):

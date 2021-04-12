@@ -207,6 +207,10 @@ make lint
 
 ***Session***: Data collected for a task. Comprised of metadata about the task and a list of Series.
 
+***Task**: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
+
+***Mode***: Common design elements between task types. For instance, Calibration and Free Spelling are modes.
+
 
 ## Authorship
 --------------
