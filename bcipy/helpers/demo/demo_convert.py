@@ -6,7 +6,6 @@ To use at bcipy root,
 """
 from bcipy.helpers.convert import convert_to_edf
 from bcipy.helpers.vizualization import plot_edf
-from mne.io import read_raw_edf
 
 
 if __name__ == '__main__':
@@ -27,5 +26,5 @@ if __name__ == '__main__':
         write_targetness=False,
         overwrite=True,
         annotation_channels=None)
-    # plot_edf(edf_path) # uncomment in an iPython notebook to plot using MNE
+    plot_edf(edf_path)  # comment if not in an iPython notebook to plot using MNE
     print(f"\nWrote edf file to {edf_path}")

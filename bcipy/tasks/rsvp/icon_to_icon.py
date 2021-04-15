@@ -223,7 +223,6 @@ class RSVPIconToIconTask(Task):
                                   clock=self.experiment_clock)
         feedback.message_color = 'green' if correct else 'red'
         feedback.administer(self.img_path(selection),
-                            compare_assertion=None,
                             message='Decision: ',
                             stimuli_type=FeedbackType.IMAGE)
 
