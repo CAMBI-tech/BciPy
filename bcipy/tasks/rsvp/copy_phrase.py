@@ -3,6 +3,7 @@ from psychopy import core
 from bcipy.tasks.task import Task
 from bcipy.tasks.session_data import Inquiry, Session
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.rsvp import PreviewInquiryProperties, InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
@@ -105,19 +106,24 @@ class RSVPCopyPhraseTask(Task):
 
         self.filter_low = self.parameters['filter_low']
         self.filter_high = self.parameters['filter_high']
-        self.fitler_order = self.parameters['filter_order']
+        self.filter_order = self.parameters['filter_order']
         self.notch_filter_frequency = self.parameters['notch_filter_frequency']
 
         self.min_num_inq = parameters['min_inq_len']
         self.collection_window_len = parameters['trial_length']
 
         self.static_offset = parameters['static_trigger_offset']
+
+        # Show selection feedback
         self.show_feedback = parameters['show_feedback']
         self.feedback_color = parameters['feedback_message_color']
 
         if self.show_feedback:
             self.feedback = VisualFeedback(
                 self.window, self.parameters, self.experiment_clock)
+
+        # Preview inquiry parameters
+        self.preview_inquiry = parameters['show_preview_inquiry']
 
     def execute(self):
         self.logger.debug('Starting Copy Phrase Task!')
@@ -146,7 +152,7 @@ class RSVPCopyPhraseTask(Task):
             backspace_always_shown=self.parameters['backspace_always_shown'],
             filter_high=self.filter_high,
             filter_low=self.filter_low,
-            filter_order=self.fitler_order,
+            filter_order=self.filter_order,
             notch_filter_frequency=self.notch_filter_frequency)
 
         # Set new series (whether to present a new series),
@@ -178,7 +184,7 @@ class RSVPCopyPhraseTask(Task):
                 break
 
             if self.copy_phrase[0:len(text_task)] == text_task:
-                # if correctly spelled so far, get the next unspelled letter.
+                # if correctly spelled so far, get the next letter.
                 target_letter = self.copy_phrase[len(text_task)]
             else:
                 # otherwise target is the backspace char.
@@ -207,8 +213,17 @@ class RSVPCopyPhraseTask(Task):
             # Pause for a time
             core.wait(self.buffer_val)
 
-            # Do the self.RSVP inquiry!
-            inquiry_timing = self.rsvp.do_inquiry()
+            if self.preview_inquiry:
+                inquiry_timing, proceed = self.rsvp.preview_inquiry()
+                if proceed:
+                    inquiry_timing.extend(self.rsvp.do_inquiry())
+                else:
+                    self.logger.warning(
+                        '*warning* Inquiry Preview - Updating inquiries is not implemented yet. '
+                        'The inquiry will present as normal.')
+                    inquiry_timing.extend(self.rsvp.do_inquiry())
+            else:
+                inquiry_timing = self.rsvp.do_inquiry()
 
             # Write triggers to file
             _write_triggers_from_inquiry_copy_phrase(
@@ -350,22 +365,21 @@ class RSVPCopyPhraseTask(Task):
 
 def _init_copy_phrase_display(
         parameters, win, daq, static_clock, experiment_clock):
-    return CopyPhraseDisplay(
-        win,
-        static_clock,
-        experiment_clock,
-        daq.marker_writer,
-        info_text=parameters['info_text'],
-        static_task_text=parameters['task_text'],
-        task_text='****',
+    preview_inquiry = PreviewInquiryProperties(
+        preview_inquiry_length=parameters['preview_inquiry_length'],
+        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
+        preview_inquiry_progress_method=parameters['preview_inquiry_progress_method'],
+        preview_inquiry_isi=parameters['preview_inquiry_isi']
+    )
+    info = InformationProperties(
         info_color=parameters['info_color'],
         info_pos=(parameters['text_pos_x'],
                   parameters['text_pos_y']),
         info_height=parameters['info_height'],
         info_font=parameters['info_font'],
-        task_color=[parameters['task_color']],
-        task_font=parameters['task_font'],
-        task_height=parameters['task_height'],
+        info_text=parameters['info_text'],
+    )
+    stimuli = StimuliProperties(
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
                   parameters['stim_pos_y']),
@@ -373,6 +387,24 @@ def _init_copy_phrase_display(
         stim_inquiry=['a'] * 10,
         stim_colors=[parameters['stim_color']] * 10,
         stim_timing=[3] * 10,
-        is_txt_stim=parameters['is_txt_stim'],
+        is_txt_stim=parameters['is_txt_stim'])
+    task_display = TaskDisplayProperties(
+        task_color=[parameters['task_color']],
+        task_pos=(-.8, .9),
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        task_text='****'
+    )
+    return CopyPhraseDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        stimuli,
+        task_display,
+        info,
+        marker_writer=daq.marker_writer,
+        static_task_text=parameters['task_text'],
+        static_task_color=parameters['task_color'],
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['stim_space_char'])
+        space_char=parameters['stim_space_char'],
+        preview_inquiry=preview_inquiry)

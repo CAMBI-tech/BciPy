@@ -170,9 +170,6 @@ class RSVPInterInquiryFeedbackCalibration(Task):
                 self.rsvp.draw_static()
                 self.window.flip()
 
-                # Get height
-                self.rsvp.sti.height = self.stimuli_height
-
                 # Schedule a inquiry
                 self.rsvp.stimuli_inquiry = stimuli_elements[inquiry_idx]
 

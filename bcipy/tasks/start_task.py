@@ -5,7 +5,6 @@ from bcipy.tasks.rsvp.calibration.inter_inquiry_feedback_calibration import (
 )
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.tasks.rsvp.icon_to_icon import RSVPIconToIconTask
 from bcipy.tasks.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
 
 from bcipy.tasks.task import Task
@@ -20,7 +19,7 @@ def make_task(display_window, daq, task, parameters, file_save,
 
     Parameters:
     -----------
-        display_window: pyschopy Window
+        display_window: psychopy Window
         daq: DataAcquisitionClient
         task: TaskType
         parameters: dict
@@ -43,19 +42,6 @@ def make_task(display_window, daq, task, parameters, file_save,
         return RSVPCopyPhraseTask(
             display_window, daq, parameters, file_save, signal_model,
             language_model, fake=fake)
-
-    # ICON TASKS
-    if task is TaskType.RSVP_ICON_TO_ICON:
-        return RSVPIconToIconTask(display_window, daq,
-                                  parameters, file_save, signal_model,
-                                  language_model, fake, False, auc_filename)
-
-    if task is TaskType.RSVP_ICON_TO_WORD:
-        # pylint: disable=fixme
-        # TODO: consider a new class for this scenario.
-        return RSVPIconToIconTask(display_window, daq,
-                                  parameters, file_save, signal_model,
-                                  language_model, fake, True, auc_filename)
 
     # CALIBRATION FEEDBACK TASKS
     if task is TaskType.RSVP_ALERT_TONE_CALIBRATION:

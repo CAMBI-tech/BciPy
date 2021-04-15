@@ -306,6 +306,13 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
+def get_key_press(key_list, stamp_label='bcipy_key_press', clock=False):
+    response = event.getKeys(keyList=key_list, timeStamped=clock)
+    if response:
+        return [f'{stamp_label}_{response[0][0]}', response[0][1]]
+    return None
+
+
 def trial_reshaper(trial_target_info: list,
                    timing_info: list,
                    eeg_data: np.array,

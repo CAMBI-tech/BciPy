@@ -190,7 +190,7 @@ class TestUserLoad(unittest.TestCase):
 
         # assert user returned is user defined above
         self.assertEqual(response[0], user)
-        os.rmdir(file_path)
+        shutil.rmtree(self.data_save_loc)
 
     def test_user_load_with_invalid_directory(self):
         # create an invalid save structure and assert expected behavior.
@@ -201,7 +201,7 @@ class TestUserLoad(unittest.TestCase):
         response = load_users(self.data_save_loc)
         length_of_users = len(response)
         self.assertTrue(length_of_users == 0)
-        os.rmdir(file_path)
+        shutil.rmtree(self.data_save_loc)
 
 
 class TestExtractMode(unittest.TestCase):

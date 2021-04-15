@@ -131,7 +131,7 @@ class LevelFeedback(VisualFeedback):
 
 if __name__ == '__main__':
     from bcipy.helpers.load import load_json_parameters
-    from bcipy.display.display_main import init_display_window
+    from bcipy.display import init_display_window
 
     # Load a parameters file
     parameters = load_json_parameters(

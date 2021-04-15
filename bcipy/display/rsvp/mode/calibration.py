@@ -10,56 +10,33 @@ class CalibrationDisplay(RSVPDisplay):
                  window,
                  static_clock,
                  experiment_clock,
-                 marker_writer,
-                 info_text='Press Space Bar to Pause',
-                 info_color='White',
-                 info_pos=(0, -.9),
-                 info_height=0.2,
-                 info_font='Times',
-                 task_color=['white'],
-                 task_font='Times',
-                 task_text='1/100',
-                 task_height=0.1,
-                 stim_font='Times',
-                 stim_pos=(-.8, .9),
-                 stim_height=0.2,
-                 stim_inquiry=['a'] * 10,
-                 stim_colors=['white'] * 10,
-                 stim_timing=[1] * 10,
-                 is_txt_stim=True,
+                 stimuli,
+                 task_display,
+                 info,
+                 marker_writer=None,
                  trigger_type='image',
-                 space_char=SPACE_CHAR):
+                 space_char=SPACE_CHAR,
+                 full_screen=False):
 
-        info_color = [info_color]
-        info_font = [info_font]
-        info_text = [info_text]
-        info_pos = [info_pos]
-        info_height = [info_height]
+        # TODO require user to set these as an array
+        info.info_color = [info.info_color]
+        info.info_font = [info.info_font]
+        info.info_text = [info.info_text]
+        info.info_pos = [info.info_pos]
+        info.info_height = [info.info_height]
 
-        tmp = visual.TextStim(win=window, font=task_font, text=task_text)
+        tmp = visual.TextStim(win=window, font=task_display.task_font, text=task_display.task_text)
         x_task_pos = tmp.boundingBox[0] / window.size[0] - 1
-        task_pos = (x_task_pos, 1 - task_height)
+        task_display.task_pos = (x_task_pos, 1 - task_display.task_height)
 
         super(CalibrationDisplay, self).__init__(
             window,
             static_clock,
             experiment_clock,
-            marker_writer,
-            task_color=task_color,
-            task_font=task_font,
-            task_pos=task_pos,
-            task_height=task_height,
-            task_text=task_text,
-            info_color=info_color,
-            info_text=info_text,
-            info_font=info_font,
-            info_pos=info_pos,
-            stim_font=stim_font,
-            stim_pos=stim_pos,
-            stim_height=stim_height,
-            stim_inquiry=stim_inquiry,
-            stim_colors=stim_colors,
-            stim_timing=stim_timing,
-            is_txt_stim=is_txt_stim,
+            stimuli,
+            task_display,
+            info,
+            marker_writer=marker_writer,
             trigger_type=trigger_type,
-            space_char=space_char)
+            space_char=space_char,
+            full_screen=full_screen)

@@ -1,5 +1,5 @@
 import logging
-from bcipy.display.display_main import init_display_window
+from bcipy.display import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
 from bcipy.helpers.session import collect_experiment_field_data
