@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import psychopy
 from collections import Counter
-from mockito import unstub, when, verifyStubbedInvocationsAreUsed
+from mockito import unstub, mock, when, verifyStubbedInvocationsAreUsed
 
 from bcipy.helpers.task import (
     alphabet,
@@ -159,14 +159,15 @@ class TestGetKeyPress(unittest.TestCase):
     def test_get_key_press_appends_stamp_label_defaults(self):
         """Test for the stamp label defaults, ensures the calls occur with the correct inputs to psychopy"""
         key_list = ['space']
+        clock = mock()
         # get keys returns a list of lists with the key and timestamp per hit
         key_response = [[key_list[0], 1000]]
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=False).thenReturn(key_response)
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
 
         # use the default label
         stamp_label = 'bcipy_key_press'
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
-        response = get_key_press(key_list)
+        response = get_key_press(key_list, clock)
         self.assertEqual(expected, response)
 
     def test_get_key_press_returns_none_if_no_keys_pressed(self):
@@ -174,23 +175,24 @@ class TestGetKeyPress(unittest.TestCase):
 
         key_list = ['space']
         key_response = None
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=False).thenReturn(key_response)
+        clock = mock()
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
 
-        response = get_key_press(key_list)
+        response = get_key_press(key_list, clock)
         self.assertEqual(None, response)
 
     def test_get_key_press_set_custom_stamp_message(self):
         """Test for a custom stamp label, ensures the calls occur with the correct inputs to psychopy"""
-
+        clock = mock()
         key_list = ['space']
         # get keys returns a list of lists with the key and timestamp per hit
         key_response = [[key_list[0], 1000]]
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=False).thenReturn(key_response)
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
 
         # set a custom label
         stamp_label = 'custom_label'
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
-        response = get_key_press(key_list, stamp_label=stamp_label)
+        response = get_key_press(key_list, clock, stamp_label=stamp_label)
         self.assertEqual(expected, response)
 
 

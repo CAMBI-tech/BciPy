@@ -1,6 +1,6 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from psychopy import core, visual
 
@@ -13,16 +13,29 @@ from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
 class StimuliProperties:
+    """"Stimuli Properties.
 
+    An encapsulation of properties relevant to core stimuli presentation in an RSVP paradigm.
+    """
     def __init__(
             self,
             stim_font: str,
-            stim_pos: Tuple[float],
+            stim_pos: Tuple[float, float],
             stim_height: float,
             stim_inquiry: List[str],
             stim_colors: List[str],
             stim_timing: List[float],
             is_txt_stim: bool):
+        """Initialize Stimuli Parameters.
+
+        stim_font(List[str]): Ordered list of colors to apply to information stimuli
+        stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
+        stim_height(float): Height of all stimuli
+        stim_inquiry(List[str]): Ordered list of text to build stimuli with
+        stim_colors(List[str]): Ordered list of colors to apply to stimuli
+        stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
+        is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
+        """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
         self.stim_height = stim_height
@@ -33,7 +46,13 @@ class StimuliProperties:
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
 
-    def build_init_stimuli(self, window):
+    def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
+        """"Build Initial Stimuli.
+
+        This method constructs the stimuli object which can be updated later. This is more
+            performant than creating a new stimuli each call. It can create either an image or text stimuli
+            based on the boolean self.is_txt_stim.
+        """
         if self.is_txt_stim:
             self.sti = visual.TextStim(
                 win=window,
@@ -55,21 +74,37 @@ class StimuliProperties:
 
 
 class InformationProperties:
+    """"Information Properties.
 
+    An encapsulation of properties relevant to task information presentation in an RSVP paradigm. This could be
+        messaging relevant to feedback or static text to remain on screen not related to task tracking.
+    """
     def __init__(
             self,
             info_color: List[str],
             info_text: List[str],
             info_font: List[str],
-            info_pos,
-            info_height):
+            info_pos: Tuple[float, float],
+            info_height: List[float]):
+        """Initialize Information Parameters.
+
+        info_color(List[str]): Ordered list of colors to apply to information stimuli
+        info_text(List[str]): Ordered list of text to apply to information stimuli
+        info_font(List[str]): Ordered list of font to apply to information stimuli
+        info_pos(Tuple[float, float]): Position on window where the Information stimuli will be presented
+        info_height(List[float]): Ordered list of height of Information stimuli
+        """
         self.info_color = info_color
         self.info_text = info_text
         self.info_font = info_font
         self.info_pos = info_pos
         self.info_height = info_height
 
-    def build_info_text(self, window):
+    def build_info_text(self, window: visual.Window) -> List[visual.TextStim]:
+        """"Build Information Text.
+
+        Constructs a list of Information stimuli to display.
+        """
         self.text_stim = []
         for idx in range(len(self.info_text)):
             self.text_stim.append(visual.TextStim(
@@ -85,7 +120,10 @@ class InformationProperties:
 
 
 class TaskDisplayProperties:
+    """"Task Dispay Properties.
 
+    An encapsulation of properties relevant to task stimuli presentation in an RSVP paradigm.
+    """
     def __init__(
             self,
             task_color: List[str],
@@ -93,7 +131,14 @@ class TaskDisplayProperties:
             task_pos: Tuple[float, float],
             task_height: float,
             task_text: str):
+        """Initialize Task Display Parameters.
 
+        task_color(List[str]): Ordered list of colors to apply to task stimuli
+        task_font(str): Font to apply to all task stimuli
+        task_pos(Tuple[float, float]): Position on the screen where to present to task text
+        task_height(float): Height of all task text stimuli
+        task_text(str): Task text to apply to stimuli
+        """
         self.task_color = task_color
         self.task_font = task_font
         self.task_pos = task_pos
@@ -101,7 +146,12 @@ class TaskDisplayProperties:
         self.task_text = task_text
         self.task = None
 
-    def build_task(self, window):
+    def build_task(self, window: visual.Window) -> visual.TextStim:
+        """"Build Task.
+
+        This method constructs the task stimuli object which can be updated later. This is more
+            performant than creating a new stimuli for each update in task state.
+        """
         self.task = visual.TextStim(
             win=window,
             color=self.task_color[0],
@@ -115,6 +165,10 @@ class TaskDisplayProperties:
 
 
 class PreviewInquiryProperties:
+    """"Preview Inquiry Properties.
+
+    An encapsulation of properties relevant to preview_inquiry() operation.
+    """
 
     def __init__(
             self,
@@ -122,7 +176,14 @@ class PreviewInquiryProperties:
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
+        """Initialize Inquiry Preview Parameters.
 
+        preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
+        preview_inquiry_progress_method(int): Method of progression for inquiry preview. 1 == press to accept
+            inquiry 2 == press to skip inquiry
+        preview_inquiry_key_input(str): Defines which key should be listened to for progressing
+        preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
+        """
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
@@ -143,12 +204,12 @@ class RSVPDisplay(Display):
             stimuli: StimuliProperties,
             task_display: TaskDisplayProperties,
             info: InformationProperties,
-            preview_inquiry=None,
+            preview_inquiry: PreviewInquiryProperties = None,
             marker_writer: Optional[MarkerWriter] = NullMarkerWriter(),
             trigger_type: str = 'image',
-            space_char: SPACE_CHAR = SPACE_CHAR,
-            full_screen=False):
-        """Initialize RSVP window parameters and objects.
+            space_char: str = SPACE_CHAR,
+            full_screen: bool = False):
+        """Initialize RSVP display parameters and objects.
 
         PARAMETERS:
         ----------
@@ -172,12 +233,9 @@ class RSVPDisplay(Display):
 
         marker_writer(MarkerWriter) Optional: object used to write triggers to
             a acquisition stream.
-
         trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
             task. This will be used to reconcile timing differences between acquisition and the display.
-
-        space_char(SPACE_CHAR) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
-
+        space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
         full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
             scaling display items as needed.
         """
@@ -526,18 +584,13 @@ class RSVPDisplay(Display):
         """Create Stimulus.
 
         Returns a TextStim or ImageStim object.
-            Args:
-            height: The height of the stimulus
-            mode: "text" or "image", determines which to return
-
-        TODO: update docstring
         """
         if not stimuli_position:
             stimuli_position = self.stimuli_pos
         if mode == 'text':
             return visual.TextStim(
                 win=self.window,
-                color='white',
+                color=color,
                 height=height,
                 text=stimulus,
                 font=self.stimuli_font,
@@ -561,11 +614,11 @@ class RSVPDisplay(Display):
             return visual.TextBox2(
                 win=self.window,
                 text=stimulus,
-                color='white',
+                color=color,
                 colorSpace='rgb',
                 borderWidth=2,
                 borderColor='white',
-                units='height',
+                units=units,
                 font=self.stimuli_font,
                 letterHeight=height,
                 size=[.5, .5],
