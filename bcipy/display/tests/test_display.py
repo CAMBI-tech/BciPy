@@ -2,7 +2,7 @@ import unittest
 
 from mockito import any, mock, when, unstub
 import psychopy
-from bcipy.display.display_main import init_display_window
+from bcipy.display.main import init_display_window
 
 
 class TestInitializeDisplayWindow(unittest.TestCase):
