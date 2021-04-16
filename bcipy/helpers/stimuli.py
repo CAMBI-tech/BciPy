@@ -249,7 +249,7 @@ def target_rsvp_inquiry_generator(alp, target_letter, parameters,
 
     len_alp = len(alp)
 
-    # intialize our arrays
+    # initialize our arrays
     samples, times, colors = [], [], []
     rand_smp = random.sample(range(len_alp), stim_length)
     if is_txt:

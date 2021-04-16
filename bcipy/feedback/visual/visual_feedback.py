@@ -117,7 +117,7 @@ class VisualFeedback(Feedback):
 if __name__ == "__main__":
     import argparse
     from bcipy.helpers.load import load_json_parameters
-    from bcipy.display.display_main import init_display_window
+    from bcipy.display import init_display_window
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--parameters',

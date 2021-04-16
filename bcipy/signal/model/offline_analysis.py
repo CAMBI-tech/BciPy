@@ -8,7 +8,7 @@ from bcipy.helpers.load import (
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import trial_reshaper
-from bcipy.helpers.vizualization import generate_offline_analysis_screen
+from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos

@@ -1,9 +1,17 @@
 import unittest
 import numpy as np
+import psychopy
 from collections import Counter
-from mockito import unstub
+from mockito import unstub, mock, when, verifyStubbedInvocationsAreUsed
 
-from bcipy.helpers.task import alphabet, calculate_stimulation_freq, trial_reshaper, _float_val, generate_targets
+from bcipy.helpers.task import (
+    alphabet,
+    calculate_stimulation_freq,
+    get_key_press,
+    trial_reshaper,
+    _float_val,
+    generate_targets
+)
 from bcipy.helpers.load import load_json_parameters
 
 
@@ -139,6 +147,53 @@ class TestTargetGeneration(unittest.TestCase):
         for item in alp:
             self.assertGreaterEqual(counts[item], 2)
             self.assertLessEqual(counts[item], 3)
+
+
+class TestGetKeyPress(unittest.TestCase):
+    """Tests for the get key press method"""
+
+    def tearDown(self):
+        verifyStubbedInvocationsAreUsed()
+        unstub()
+
+    def test_get_key_press_appends_stamp_label_defaults(self):
+        """Test for the stamp label defaults, ensures the calls occur with the correct inputs to psychopy"""
+        key_list = ['space']
+        clock = mock()
+        # get keys returns a list of lists with the key and timestamp per hit
+        key_response = [[key_list[0], 1000]]
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
+
+        # use the default label
+        stamp_label = 'bcipy_key_press'
+        expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
+        response = get_key_press(key_list, clock)
+        self.assertEqual(expected, response)
+
+    def test_get_key_press_returns_none_if_no_keys_pressed(self):
+        """Test for the case not keys are returned, ensures the calls occur with the correct inputs to psychopy"""
+
+        key_list = ['space']
+        key_response = None
+        clock = mock()
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
+
+        response = get_key_press(key_list, clock)
+        self.assertEqual(None, response)
+
+    def test_get_key_press_set_custom_stamp_message(self):
+        """Test for a custom stamp label, ensures the calls occur with the correct inputs to psychopy"""
+        clock = mock()
+        key_list = ['space']
+        # get keys returns a list of lists with the key and timestamp per hit
+        key_response = [[key_list[0], 1000]]
+        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
+
+        # set a custom label
+        stamp_label = 'custom_label'
+        expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
+        response = get_key_press(key_list, clock, stamp_label=stamp_label)
+        self.assertEqual(expected, response)
 
 
 if __name__ == '__main__':

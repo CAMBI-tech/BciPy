@@ -1,39 +1,35 @@
 from psychopy import visual, core
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.rsvp import InformationProperties, TaskDisplayProperties, StimuliProperties
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
-# Initialize Stimulus Parameters
-# Task Bar
-color_task = 'White'
-font_task = 'Times'
-height_task = 0.1
-text_task = '0/100'
-
-# Text Bar
-color_text = 'white'
-font_text = 'Times'
-
-pos_text = (0, -.75)
-text_text = 'Demo For Calibration Task'
-txt_height = 0.1
-
-# Stimuli
-font_sti = 'Times'
-pos_sti = (0, 0)
-sti_height = 0.6
+info = InformationProperties(
+        info_color='White',
+        info_pos=(-.5, -.75),
+        info_height=0.1,
+        info_font='Arial',
+        info_text='Calibration Demo',
+    )
+task_display = TaskDisplayProperties(
+        task_color=['White'],
+        task_pos=(-.5, .8),
+        task_font='Arial',
+        task_height=.1,
+        task_text='1/100'
+    )
 
 # Initialize Stimulus
 is_txt_stim = True
 
 if is_txt_stim:
     ele_sti = [
-        ['B', '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-', 'L'],
-        ['E', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['W', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z'],
-        ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A', 'Z']]
+        ['B', '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '<', '-'],
+        ['E', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A'],
+        ['W', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A'],
+        ['Q', '+', 'F', 'G', 'E', '-', 'S', 'Q', 'W', 'E', '<', 'A']]
     color_sti = [['green', 'red', 'white', 'white', 'white', 'white', 'white',
-                  'white', 'white', 'white', 'white', 'white', 'white']] * 4
+                  'white', 'white', 'white', 'white', 'white']] * 4
 
 
 time_flash = .25
@@ -49,7 +45,7 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 # Initialize decision
 ele_list_dec = [['[<]'], ['[R]']]
 
-# Initialize Window
+# Initialize Window TODO use initialize_display_window
 win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
@@ -63,28 +59,23 @@ print(frameRate)
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
-
+len_stimuli = 10
+stimuli = StimuliProperties(
+        stim_font='Arial',
+        stim_pos=(0, 0),
+        stim_height=0.6,
+        stim_inquiry=['a'] * len_stimuli,
+        stim_colors=['white'] * len_stimuli,
+        stim_timing=[3] * len_stimuli,
+        is_txt_stim=is_txt_stim)
 rsvp = CalibrationDisplay(
     win,
     clock,
     experiment_clock,
-    marker_writer=NullMarkerWriter(),
-    info_text=text_text,
-    info_color=color_text,
-    info_pos=pos_text,
-    info_height=txt_height,
-    info_font=font_text,
-    task_color=['white'],
-    task_font=font_task,
-    task_text=task_text[0],
-    task_height=height_task,
-    stim_font=font_sti,
-    stim_pos=pos_sti,
-    stim_height=sti_height,
-    stim_inquiry=['a'] * 10,
-    stim_colors=['white'] * 10,
-    stim_timing=[3] * 10,
-    is_txt_stim=is_txt_stim)
+    stimuli,
+    task_display,
+    info,
+    marker_writer=NullMarkerWriter())
 
 # uncomment trigger_file lines for demo with triggers!
 # trigger_file = open('calibration_triggers.txt','w')
@@ -93,7 +84,6 @@ for idx_o in range(len(task_text)):
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
     rsvp.draw_static()
     win.flip()
-    rsvp.sti.height = sti_height
 
     # Schedule a inquiry
     rsvp.stimuli_inquiry = ele_sti[idx_o]

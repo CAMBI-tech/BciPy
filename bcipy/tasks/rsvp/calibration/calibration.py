@@ -1,6 +1,7 @@
 from psychopy import core
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, InformationProperties
 
 from bcipy.tasks.task import Task
 
@@ -55,6 +56,7 @@ class RSVPCalibrationTask(Task):
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
+
         self.timing = [parameters['time_target'],
                        parameters['time_cross'],
                        parameters['time_flash']]
@@ -130,9 +132,6 @@ class RSVPCalibrationTask(Task):
                 self.rsvp.draw_static()
                 self.window.flip()
 
-                # Get height
-                self.rsvp.sti.height = self.stimuli_height
-
                 # Schedule a inquiry
                 self.rsvp.stimuli_inquiry = ele_sti[idx_o]
 
@@ -144,13 +143,13 @@ class RSVPCalibrationTask(Task):
 
                 # Wait for a time
                 core.wait(self.buffer_val)
-
+                
                 # Do the inquiry
-                last_inquiry_timing = self.rsvp.do_inquiry()
+                timing = self.rsvp.do_inquiry()
 
                 # Write triggers for the inquiry
                 _write_triggers_from_inquiry_calibration(
-                    last_inquiry_timing, self.trigger_file)
+                    timing, self.trigger_file)
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -185,25 +184,38 @@ class RSVPCalibrationTask(Task):
 
 def init_calibration_display_task(
         parameters, window, daq, static_clock, experiment_clock):
-    return CalibrationDisplay(
-        window,
-        static_clock,
-        experiment_clock,
-        daq.marker_writer,
-        info_text=parameters['info_text'],
+    info = InformationProperties(
         info_color=parameters['info_color'],
         info_pos=(parameters['text_pos_x'],
                   parameters['text_pos_y']),
         info_height=parameters['info_height'],
         info_font=parameters['info_font'],
-        task_color=[parameters['task_color']],
-        task_font=parameters['task_font'],
-        task_height=parameters['task_height'],
+        info_text=parameters['info_text'],
+    )
+    stimuli = StimuliProperties(
         stim_font=parameters['stim_font'],
         stim_pos=(parameters['stim_pos_x'],
                   parameters['stim_pos_y']),
         stim_height=parameters['stim_height'],
-        stim_colors=[parameters['stim_color'] * 10],
-        is_txt_stim=parameters['is_txt_stim'],
+        stim_inquiry=['a'] * 10,
+        stim_colors=[parameters['stim_color']] * 10,
+        stim_timing=[3] * 10,
+        is_txt_stim=parameters['is_txt_stim'])
+    task_display = TaskDisplayProperties(
+        task_color=[parameters['task_color']],
+        task_pos=(-.8, .9),
+        task_font=parameters['task_font'],
+        task_height=parameters['task_height'],
+        task_text='****'
+    )
+    return CalibrationDisplay(
+        window,
+        static_clock,
+        experiment_clock,
+        stimuli,
+        task_display,
+        info,
+        marker_writer=daq.marker_writer,
         trigger_type=parameters['trigger_type'],
-        space_char=parameters['stim_space_char'])
+        space_char=parameters['stim_space_char'],
+        full_screen=parameters['full_screen'])

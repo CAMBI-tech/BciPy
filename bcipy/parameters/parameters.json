@@ -733,14 +733,6 @@
     "recommended_values": "",
     "type": "int"
   },
-  "word_matching_text_size": {
-    "value": "0.2",
-    "section": "bci_config",
-    "readableName": "Word Stimulus Size",
-    "helpTip": "Specifies the height (in ???) of words used as stimuli in the word-icon matching task. Possible values range from X to X. Default: 0.2",
-    "recommended_values": "",
-    "type": "float"
-  },
   "lang_model_enabled": {
     "value": "false",
     "section": "lang_model_config",
@@ -794,6 +786,51 @@
     "helpTip": "Specifies the port for language model server integration. Default: 5000",
     "recommended_values": "",
     "type": "int"
+  },
+  "show_preview_inquiry": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry On/Off",
+    "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "preview_inquiry_progress_method": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Progression Method",
+    "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 1 = press to confirm 2 = press to skip to another inquiry",
+    "recommended_values": [
+      "1",
+      "2"
+    ],
+    "type": "int"
+  },
+  "preview_inquiry_length": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Display Length",
+    "helpTip": "Length of time in seconds to present an inquiry preview to the user.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "preview_inquiry_key_input": {
+    "value": "space",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Display Key Input Method",
+    "helpTip": "Defines the key used to engage with inquiry preview.",
+    "recommended_values": 
+      ["space",
+       "escape"],
+    "type": "str"
+  },
+  "preview_inquiry_isi": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Inter-Stimulus Interval",
+    "helpTip": "The time between previewing an inquiry and the start of an inquiry.",
+    "recommended_values": "",
+    "type": "float"
   },
   "show_feedback": {
     "value": "true",

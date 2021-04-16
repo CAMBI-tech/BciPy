@@ -207,9 +207,11 @@ make lint
 
 ***Session***: Data collected for a task. Comprised of metadata about the task and a list of Series.
 
-***Task**: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
+***Task***: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
 
 ***Mode***: Common design elements between task types. For instance, Calibration and Free Spelling are modes.
+
+***Paradigm***: Display paradigm with unique properties and modes. Ex. Rapid-Serial Visual Presentation (RSVP), Matrix Speller, Steady-State Visual Evoked Potential (SSVEP).
 
 
 ## Authorship

@@ -1,7 +1,7 @@
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from psychopy import core
 from bcipy.helpers.load import load_json_parameters
-from bcipy.display.display_main import init_display_window
+from bcipy.display import init_display_window
 
 
 # Load a parameters file

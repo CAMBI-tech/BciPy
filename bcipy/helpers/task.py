@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, List, Union
 import logging
 import random
 import numpy as np
@@ -216,7 +216,7 @@ def _float_val(col: Any) -> float:
 def trial_complete_message(win, parameters):
     """Trial Complete Message.
 
-    Function return a TextStim Object (see Psycopy) to complete the trial.
+    Function return a TextStim Object (see Psychopy) to complete the trial.
 
     Parameters
     ----------
@@ -304,6 +304,32 @@ def get_user_input(window, message, color, first_run=False):
             pause = False
 
     return True
+
+
+def get_key_press(
+        key_list: List[str],
+        clock: core.Clock,
+        stamp_label: str = 'bcipy_key_press') -> Union[list, None]:
+    """Get Key Press.
+
+    A method to retrieve keys pressed of interest and get back a timestamp with
+        a custom label
+
+
+    Parameters
+    ----------
+        key_list(List[str]): list of keys to look for being pressed. Ex. ['space']
+        clock(core.Clock): clock to use for timestamping any key press
+        stamp_label(str): custom label to use for timstamping along with the key itself
+
+    Returns
+    -------
+        Key Press Timing(List[stamp_label, timestamp])
+    """
+    response = event.getKeys(keyList=key_list, timeStamped=clock)
+    if response:
+        return [f'{stamp_label}_{response[0][0]}', response[0][1]]
+    return None
 
 
 def trial_reshaper(trial_target_info: list,
