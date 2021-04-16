@@ -294,7 +294,6 @@ class RSVPCopyPhraseTask(Task):
                 self.feedback.administer(
                     last_selection,
                     message='Selected:',
-                    line_color=self.feedback_color,
                     fill_color=self.feedback_color)
 
             if new_series:

@@ -8,7 +8,7 @@ class LevelFeedback(VisualFeedback):
     """Level Feedback.
 
     A progress bar like feedback to indicate current abilities in a BCI task. This could
-        be atteniveness, muscle or eye activity, etc.
+        be attentiveness, muscle or eye activity, etc.
 
     It does not return stimuli timing or allow for parameterized configuration of levels / color gradient
     at this time.

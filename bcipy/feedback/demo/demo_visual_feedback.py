@@ -13,11 +13,10 @@ clock = core.Clock()
 visual_feedback = VisualFeedback(
     display=display, parameters=parameters, clock=clock)
 stimulus = 'A'
-assertion = 'B'
-message = 'Incorrect:'
-visual_feedback.message_color = 'red'
+message = 'Selected:'
+visual_feedback.message_color = 'white'
 timing = visual_feedback.administer(
-    stimulus, compare_assertion=assertion, message=message)
+    stimulus, message=message)
 print(timing)
 print(visual_feedback._type())
 display.close()
