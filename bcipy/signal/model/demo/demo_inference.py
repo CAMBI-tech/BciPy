@@ -3,7 +3,7 @@
 import matplotlib.pylab as plt
 import numpy as np
 from bcipy.signal.model.inference import inference
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
+from bcipy.signal.model.ml.train_model import train_pca_rda_kde_model
 
 import matplotlib as mpl
 

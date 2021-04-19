@@ -38,6 +38,16 @@ Appends ML elements to a list. Currently `Pipeline:= [CW-PCA, RDA, KDE]`
 
 Generalizes the model using data, avoids overfitting. Implementation is tied to optimizing hyperparameters of the `RDA`.
 
+# Testing
+## pytest-mpl
 
+Tests in <tests/test_inference.py> and <mach_learning/tests/test_density_estimation.py> use a pytest plugin to compare an output plot against the expected output plot.
 
+- Generate the "baseline" result by running: `pytest bcipy/signal/model/ -k <NAME_OF_TEST> --mpl-generate-path=bcipy/signal/model/tests/baseline` 
+  (the expected output will be stored in a new folder there called `baseline`)
+- Run the test using `pytest --mpl` (otherwise this test will be skipped)
+
+To sanity check that this test is sensitive, you can generate the baseline using one seed, then change the seed and run the test (it will fail).
+
+See more about `pytest-mpl` at https://pypi.org/project/pytest-mpl/
 

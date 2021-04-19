@@ -19,8 +19,7 @@ def inference(x, targets, model, alphabet):
     # Evaluates the likelihood probabilities for p(e|l=1) and p(e|l=0)
     scores = np.exp(model.transform(x))
     # Evaluates the likelihood ratios
-    scores = scores[:, 1] / \
-        (scores[:, 0] + np.power(.1, 10)) + np.power(.1, 10)
+    scores = scores[:, 1] / (scores[:, 0] + np.power(0.1, 10)) + np.power(0.1, 10)
     # print("These values should be between 0 and 1: ", scores)
 
     # This maps the likelihood distribution over the alphabet
