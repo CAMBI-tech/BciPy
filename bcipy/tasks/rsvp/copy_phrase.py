@@ -153,7 +153,8 @@ class RSVPCopyPhraseTask(Task):
             filter_high=self.filter_high,
             filter_low=self.filter_low,
             filter_order=self.filter_order,
-            notch_filter_frequency=self.notch_filter_frequency)
+            notch_filter_frequency=self.notch_filter_frequency,
+            stim_length=self.stim_length)
 
         # Set new series (whether to present a new series),
         #   run (whether to cont. session),

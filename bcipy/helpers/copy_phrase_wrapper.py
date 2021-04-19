@@ -40,6 +40,7 @@ class CopyPhraseWrapper:
             backspace character.
         backspace_always_shown(bool): whether or not the backspace should
             always be presented.
+        stim_length: the number of stimuli to present in each inquiry
     """
 
     def __init__(self, min_num_inq, max_num_inq, signal_model=None, fs=300, k=2,
@@ -53,7 +54,8 @@ class CopyPhraseWrapper:
                  filter_high=45,
                  filter_low=2,
                  filter_order=2,
-                 notch_filter_frequency=60):
+                 notch_filter_frequency=60,
+                 stim_length=10):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -67,9 +69,8 @@ class CopyPhraseWrapper:
             commit_criteria=[MaxIterationsCriteria(max_num_inq),
                              ProbThresholdCriteria(decision_threshold)])
 
-        # TODO: Parametrize len_query in the future releases!
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
-                                          len_query=10)
+                                          len_query=stim_length)
 
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
