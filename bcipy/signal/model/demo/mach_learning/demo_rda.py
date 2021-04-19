@@ -2,7 +2,7 @@ import numpy as np
 
 
 def _demo_rda():
-    from bcipy.signal.model.ml.classifier.function_classifier import \
+    from bcipy.signal.model.mach_learning.classifier.function_classifier import \
         RegularizedDiscriminantAnalysis
     dim_x = 2
     num_x_p = 2000

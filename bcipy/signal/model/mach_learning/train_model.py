@@ -1,9 +1,9 @@
 import numpy as np
-from bcipy.signal.model.ml.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.ml.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.ml.pipeline import Pipeline
-from bcipy.signal.model.ml.cross_validation import cross_validation, cost_cross_validation_auc
-from bcipy.signal.model.ml.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.mach_learning.pipeline import Pipeline
+from bcipy.signal.model.mach_learning.cross_validation import cross_validation, cost_cross_validation_auc
+from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEstimate
 from scipy.stats import iqr
 
 import logging

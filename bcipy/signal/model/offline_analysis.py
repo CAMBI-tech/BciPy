@@ -3,7 +3,7 @@ import logging
 
 from bcipy.helpers.load import read_data_csv, load_experimental_data, load_json_parameters
 from bcipy.signal.process.filter import bandpass, notch, downsample
-from bcipy.signal.model.ml.train_model import train_pca_rda_kde_model
+from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import trial_reshaper
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder

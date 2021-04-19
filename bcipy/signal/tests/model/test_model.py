@@ -9,12 +9,12 @@ from scipy.stats import iqr, norm
 
 """Unit tests for PCA/RDA/KDE model"""
 from bcipy.signal.model.inference import inference
-from bcipy.signal.model.ml.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.ml.cross_validation import cross_validation
-from bcipy.signal.model.ml.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.ml.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.ml.pipeline import Pipeline
-from bcipy.signal.model.ml.train_model import train_pca_rda_kde_model
+from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.mach_learning.cross_validation import cross_validation
+from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.mach_learning.pipeline import Pipeline
+from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 
 expected_output_folder = Path(__file__).absolute().parent / "unit_test_expected_output"
 

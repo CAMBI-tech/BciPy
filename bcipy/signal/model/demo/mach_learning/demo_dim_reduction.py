@@ -1,4 +1,4 @@
-from bcipy.signal.model.ml.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 import numpy as np
 
 
