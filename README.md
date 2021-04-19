@@ -13,10 +13,8 @@ This is our first release. It is verified using LSL with DSI and gtec for the Ca
 
 *Please cite us when using!*
 
-Use this citation for now:
-
 ```
-Memmott, T., Kocanaogullari, A., Erdogmus, D., Bedrick, S., Peters, B., Fried-Oken, M. & Oken, B. (2018, May). BciPy: A Python Framework for Brain-Computer Interface Research. Poster presented at the 7th International BCI meeting 2018 in Asilomar, CA.
+Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken, M., & Oken, B. (2021). BciPy: brain–computer interface software in Python. Brain-Computer Interfaces, 1-18.
 ```
 
 ## Features
