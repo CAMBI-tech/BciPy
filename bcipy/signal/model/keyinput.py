@@ -8,10 +8,15 @@ def compute_keyinput_probs(
     proceed: bool,
 ):
     """
-    inquiry - the symbols presented in the inquiry preview
-    symbol_set - the full alphabet of symbols
-    proceed - whether or not the user wants to proceed with this inquiry
-    user_error_prob - the probability that the user selects incorrectly during preview
+    When the user responds to an inquiry preview, we compute a likelihood term for each symbol
+    based on their response. These likelihood terms will be multiplied with the prior probabilities of
+    each symbol and then normalized, in order to update the symbol probabilities.
+
+    Args:
+        inquiry - the symbols presented in the inquiry preview
+        symbol_set - the full alphabet of symbols
+        proceed - whether or not the user wants to proceed with this inquiry
+        user_error_prob - the probability that the user selects incorrectly during preview
     """
     K = len(inquiry)
     A = len(symbol_set)
