@@ -23,8 +23,13 @@ class SignalModel(ABC):
         ...
 
     @abstractmethod
-    def predict(self, data: np.array, presented_symbols: List[str], all_symbols: List[str]) -> np.array:
-        """Using the provided data, compute log likelihoods over the entire symbol set."""
+    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+        """
+        Using the provided data, compute log likelihoods over the entire symbol set.
+        Args:
+            inquiry - the subset of symbols presented
+            symbol_set - the entire alphabet of symbols
+        """
         ...
 
     @abstractmethod
@@ -37,21 +42,11 @@ class SignalModel(ABC):
         """Restore model state from the provided checkpoint"""
         ...
 
-    @abstractmethod
-    def __eq__(self, other) -> bool:
-        """Might be useful for confirming that model.load(model.save) == model"""
-        ...
-
 
 @dataclass
 class ModelEvaluationReport:
     """
     Describes model performance characteristics.
-
-    TODO - add more attributes as needed. Note that the model
-    may not know about how its outputs are applied to compute a decision rule,
-    so the model alone cannot compute AUC unless `model.evaluate` is also invoked
-    with a callback or something. (This would get a bit finnicky).
     """
 
     auc: float
