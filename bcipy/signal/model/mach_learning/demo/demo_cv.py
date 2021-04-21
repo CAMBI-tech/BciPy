@@ -1,21 +1,8 @@
 import numpy as np
 from bcipy.signal.model.mach_learning.cross_validation import cross_validation
-from bcipy.signal.model.mach_learning.classifier.function_classifier \
-    import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.mach_learning.dimensionality_reduction.function_dim_reduction \
-    import DummyDimReduction
+from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.mach_learning.pipeline import Pipeline
-
-
-def test_cv(x, y):
-    rda = RegularizedDiscriminantAnalysis()
-    pca = DummyDimReduction()
-    pipeline = Pipeline()
-    pipeline.add(pca)
-    pipeline.add(rda)
-    arg = cross_validation(x, y, pipeline)
-
-    return arg
 
 
 def _demo_cv():
@@ -35,17 +22,13 @@ def _demo_cv():
     x = x[:, permutation, :]
     y = y[permutation]
 
-    arg_0 = test_cv(x, y)
-
     rda = RegularizedDiscriminantAnalysis()
-    pca = DummyDimReduction()
+    pca = ChannelWisePrincipalComponentAnalysis(num_ch=num_ch)
     pipeline = Pipeline()
     pipeline.add(pca)
     pipeline.add(rda)
-    arg_1 = cross_validation(x, y, pipeline)
+    _ = cross_validation(x, y, pipeline)
     print('Cross Validation Flows!')
-
-    return 0
 
 
 if __name__ == "__main__":

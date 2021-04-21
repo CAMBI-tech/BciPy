@@ -1,5 +1,7 @@
 import pickle
 import logging
+from matplotlib.figure import Figure
+from typing import List
 
 from bcipy.helpers.load import (
     read_data_csv,
@@ -18,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True):
+                     parameters: dict = {}, alert_finished: bool = True) -> List[Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -38,6 +40,7 @@ def offline_analysis(data_folder: str = None,
         - pickle dumps model into .pkl file
         - generates and saves offline analysis screen
         - [optional] alert the user finished processing
+        - returns handles for the figures that are created
     """
 
     if not data_folder:
@@ -100,7 +103,7 @@ def offline_analysis(data_folder: str = None,
 
     # After obtaining the model get the transformed data for plotting purposes
     model.transform(x)
-    generate_offline_analysis_screen(
+    fig_handles = generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs, save_figure=True, show_figure=False,
@@ -114,7 +117,7 @@ def offline_analysis(data_folder: str = None,
         offline_analysis_tone = parameters.get('offline_analysis_tone')
         play_sound(offline_analysis_tone)
 
-    return model
+    return model, fig_handles
 
 
 if __name__ == "__main__":

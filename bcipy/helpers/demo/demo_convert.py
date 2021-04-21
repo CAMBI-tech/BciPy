@@ -5,7 +5,7 @@ To use at bcipy root,
     `python bcipy/helpers/demo/demo_convert.py -p "path://to/bcipy/data/folder"`
 """
 from bcipy.helpers.convert import convert_to_edf
-from bcipy.helpers.vizualization import plot_edf
+from bcipy.helpers.visualization import plot_edf
 
 
 if __name__ == '__main__':

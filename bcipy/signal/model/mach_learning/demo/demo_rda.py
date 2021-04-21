@@ -1,9 +1,8 @@
 import numpy as np
+from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
 
 
 def _demo_rda():
-    from bcipy.signal.model.mach_learning.classifier.function_classifier import \
-        RegularizedDiscriminantAnalysis
     dim_x = 2
     num_x_p = 2000
     num_x_n = 500
@@ -16,17 +15,13 @@ def _demo_rda():
     x = np.concatenate(np.asarray([x_p, x_n]), 0)
     y = np.concatenate(np.asarray([y_p, y_n]), 0)
 
-    # out = test_rda(x, y)
-
     rda = RegularizedDiscriminantAnalysis()
 
     z = rda.fit_transform(x, y)
     print('Successfully used RDA')
     rda.fit(x, y)
     z_2 = rda.transform(x)
-    print('MSE:{} for fit_transform'.format(np.sum(np.abs(z_2 - z))))
-
-    return 0
+    print(f'MSE:{np.sum(np.abs(z_2 - z))} for fit_transform')
 
 
 if __name__ == "__main__":

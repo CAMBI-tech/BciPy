@@ -72,57 +72,6 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     return -auc, sc_h, y_valid_h
 
 
-def grid_search(model, opt_el, x, y, grid=[5, 5], op_type='cost_auc',
-                arg_op_type=[10, 'uniform']):
-    """ Description: This function performs an exhaustive grid search
-                     to estimate the hyper parameters lambda and gamma
-                     that minimize the cost of AUC.
-        Args:
-            model(pipeline): model to be iterated on
-            opt_el(int): number of the element in pipeline to be optimized
-            x(ndarray[float]): N x k data array
-            y(ndarray[int]): N x k observation (class) array
-                 N is number of samples k is dimensionality of features
-            grid(list(int)): a list of 2 numbers for grid
-            op_type(string): type of the optimization
-        Returns:
-            arg_opt(list[float]): optimized hyper parameters
-            """
-    if op_type == 'cost_auc':
-        k_folds, split = arg_op_type
-        # This specifies the different candidate values we want to try.
-        # The grid search will try all combination of these parameter values
-        # and select the set of parameters that provides the most accurate
-        # model.
-        param_cand = {  # dictionary of parameter candidates
-            'lam': np.linspace(.01, .99, grid[0], endpoint=False),
-            'gam': np.linspace(.01, .99, grid[1], endpoint=False),
-        }
-        best_auc = 0  # auc can't be smaller than 0
-        arg_opt = {'lam': 0, 'gam': 0}
-
-        # For every coordinate on the grid, try every combination of
-        # hyper parameters:
-        tmp_counter = 0
-        for i in range(len(param_cand['lam'])):
-            for j in range(len(param_cand['gam'])):
-                auc = -cost_cross_validation_auc(model, opt_el, x, y,
-                                                 [param_cand['lam'][i],
-                                                  param_cand['gam'][j]],
-                                                 k_folds=k_folds, split=split)[0]
-                if auc > best_auc:
-                    best_auc = auc
-                    arg_opt['lam'], arg_opt['gam'] = param_cand['lam'][i], \
-                        param_cand['gam'][j]
-
-                tmp_counter += 1
-    else:
-        raise Exception('Error: Operation type other than AUC cost.')
-
-    # This returns the parameter estimates with the highest scores:
-    return [arg_opt['lam'], arg_opt['gam']]
-
-
 def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
                   arg_op_type=[10, 'uniform']):
     """ Optimizes lambda, gamma values for given  penalty function

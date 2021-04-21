@@ -1,8 +1,10 @@
 import os
 import numpy as np
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from bcipy.helpers.load import load_csv_data, read_data_csv
 from mne.io import read_raw_edf
+from typing import List
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,11 +22,13 @@ def generate_offline_analysis_screen(
         plot_x_ticks=8,
         plot_average=False,
         show_figure=False,
-        channel_names=None) -> None:
+        channel_names=None) -> List[Figure]:
     """ Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.
-    The figure has multiple tabs containing the average ERP plots
+    The figure has multiple tabs containing the average ERP plots.
+
+    Returns a list of the figure handles created.
 
     PARAMETERS
     ----------
@@ -44,6 +48,7 @@ def generate_offline_analysis_screen(
     show_figure: boolean: whether or not to show the figures generated
     channel_names: dict of channel names keyed by their position.
     """
+    fig_handles = []
 
     channel_names = channel_names or {}
     classes = np.unique(y)
@@ -112,6 +117,8 @@ def generate_offline_analysis_screen(
             bbox_inches='tight',
             format='pdf')
 
+    fig_handles.append(fig)
+
     if plot_lik_dens:
         fig, ax = plt.subplots()
         x_plot = np.linspace(
@@ -139,8 +146,12 @@ def generate_offline_analysis_screen(
                 bbox_inches='tight',
                 format='pdf')
 
+        fig_handles.append(fig)
+
     if show_figure:
         plt.show()
+
+    return fig_handles
 
 
 def plot_edf(edf_path: str, auto_scale: bool = False):
