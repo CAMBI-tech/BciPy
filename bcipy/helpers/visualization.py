@@ -1,8 +1,10 @@
 import os
 import numpy as np
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from bcipy.helpers.load import load_csv_data, read_data_csv
 from mne.io import read_raw_edf
+from typing import List
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ def generate_offline_analysis_screen(
         plot_x_ticks=8,
         plot_average=False,
         show_figure=False,
-        channel_names=None) -> None:
+        channel_names=None) -> List[Figure]:
     """ Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.

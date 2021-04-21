@@ -22,35 +22,32 @@ def _demo_kde():
     # generate a dummy density function to sample data from
     true_dens = 0.3 * norm(0, 1).pdf(x_plot[:, 0]) + 0.7 * norm(5, 1).pdf(x_plot[:, 0])
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.fill(x_plot[:, 0], true_dens, fc="black", alpha=0.2, label="input distribution")
 
     # thumb up rule for bandwidth selection
     bandwidth = 1.06 * min(np.std(x), iqr(x) / 1.34) * np.power(x.shape[0], -0.2)
 
     # try different kernels and show how the look like
-    for kernel in ["gaussian", "tophat", "epanechnikov"]:
+    for kernel in ['gaussian', 'tophat', 'epanechnikov']:
         kde = KernelDensityEstimate(kernel=kernel, bandwidth=bandwidth, num_cls=1)
         kde.fit(x, y)
         log_dens = kde.list_den_est[0].score_samples(x_plot)
-        ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label="kernel = '{0}'".format(kernel))
+        ax.plot(x_plot[:, 0], np.exp(log_dens), '-', label=f"kernel = '{kernel}'")
 
-    ax.text(6, 0.38, "N={0} points".format(n))
+    ax.text(6, 0.38, f'N={n} points')
 
-    ax.legend(loc="upper left")
-    ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), "+k")
+    ax.legend(loc='upper left')
+    ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), '+k')
 
     ax.set_xlim(-4, 9)
     ax.set_ylim(-0.02, 0.4)
     plt.show()
-    print("KDE Flows!")
-    return 0
+    print('KDE Flows!')
 
 
 def main():
     _demo_kde()
-
-    return 0
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from scipy.stats import iqr
 import time
 import matplotlib as mpl
 
-mpl.use("TkAgg")
+mpl.use('TkAgg')
 
 
 def _demo_pipeline():
@@ -71,11 +71,11 @@ def _demo_pipeline():
                 sv_final = [
                     model.pipeline[0].list_pca[i].singular_values_ for i in range(len(model.pipeline[0].list_pca))
                 ]
-                print("Initial SV:{}".format(sv_init))
-                print("-- using tolerance:{} -->".format(var_tol))
-                print("Final SV:{}".format(sv_final))
+                print(f'Initial SV:{sv_init}')
+                print(f'-- using tolerance:{var_tol} -->')
+                print(f'Final SV:{sv_final}')
 
-                print("Init dim.:{} -> Final dim.:{}".format(x.shape, model.line_el[1].shape))
+                print(f'Init dim.:{x.shape} -> Final dim.:{model.line_el[1].shape}')
 
             model.fit_transform(x, y)
 
@@ -91,17 +91,17 @@ def _demo_pipeline():
             ax_3.clear()
             ax.contourf(xx, yy, z, alpha=0.2, c=y, s=20)
 
-            ax.scatter(model.line_el[1][y == 1, 0], model.line_el[1][y == 1, 1], c="r")
-            ax.scatter(model.line_el[1][y == 0, 0], model.line_el[1][y == 0, 1], c="g")
-            ax.set_title("after PCA")
+            ax.scatter(model.line_el[1][y == 1, 0], model.line_el[1][y == 1, 1], c='r')
+            ax.scatter(model.line_el[1][y == 0, 0], model.line_el[1][y == 0, 1], c='g')
+            ax.set_title('after PCA')
 
-            ax_2.scatter(x[0, y == 1, 0], x[0, y == 1, 1], c="r")
-            ax_2.scatter(x[0, y == 0, 0], x[0, y == 0, 1], c="g")
+            ax_2.scatter(x[0, y == 1, 0], x[0, y == 1, 1], c='r')
+            ax_2.scatter(x[0, y == 0, 0], x[0, y == 0, 1], c='g')
 
-            ax_3.scatter(x[1, y == 1, 0], x[1, y == 1, 1], c="r")
-            ax_3.scatter(x[1, y == 0, 0], x[1, y == 0, 1], c="g")
-            ax_2.set_title("1st dim")
-            ax_3.set_title("2nd dim")
+            ax_3.scatter(x[1, y == 1, 0], x[1, y == 1, 1], c='r')
+            ax_3.scatter(x[1, y == 0, 0], x[1, y == 0, 1], c='g')
+            ax_2.set_title('1st dim')
+            ax_3.set_title('2nd dim')
 
             fig.canvas.draw()
 
@@ -114,22 +114,22 @@ def _demo_pipeline():
     axn.plot(
         model.line_el[2][y == 0],
         -0.005 - 0.01 * np.random.random(model.line_el[2][y == 0].shape[0]),
-        "ro",
-        label="class(-)",
+        'ro',
+        label='class(-)',
     )
     axn.plot(
         model.line_el[2][y == 1],
         -0.005 - 0.01 * np.random.random(model.line_el[2][y == 1].shape[0]),
-        "go",
-        label="class(+)",
+        'go',
+        label='class(+)',
     )
     for idx in range(len(model.pipeline[2].list_den_est)):
         log_dens = model.pipeline[2].list_den_est[idx].score_samples(x_plot)
-        axn.plot(x_plot[:, 0], np.exp(log_dens), "r-" * (idx == 0) + "g--" * (idx == 1), linewidth=2.0)
-    axn.legend(loc="upper right")
-    plt.title("Likelihoods Given the Labels")
-    plt.ylabel("p(e|l)")
-    plt.xlabel("scores")
+        axn.plot(x_plot[:, 0], np.exp(log_dens), 'r-' * (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
+    axn.legend(loc='upper right')
+    plt.title('Likelihoods Given the Labels')
+    plt.ylabel('p(e|l)')
+    plt.xlabel('scores')
     fig_2.show()
     time.sleep(10)
 

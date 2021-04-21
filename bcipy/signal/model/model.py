@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List
-from dataclasses import dataclass
 
 import numpy as np
 
 
 class SignalModel(ABC):
     @abstractmethod
-    def fit(self, training_data: np.array, training_labels: np.array) -> SignalModel:
+    def fit(self, training_data: np.array, training_labels: np.array):
         """
         Train the model using the provided data and labels.
         Return self for convenience.
@@ -18,7 +15,7 @@ class SignalModel(ABC):
         ...
 
     @abstractmethod
-    def evaluate(self, test_data: np.array, test_labels: np.array) -> ModelEvaluationReport:
+    def evaluate(self, test_data: np.array, test_labels: np.array):
         """Compute model performance characteristics on the provided test data and labels."""
         ...
 
@@ -43,15 +40,9 @@ class SignalModel(ABC):
         ...
 
 
-@dataclass
 class ModelEvaluationReport:
     """
     Describes model performance characteristics.
-
-    TODO - add more attributes as needed. Note that the model
-    may not know about how its outputs are applied to compute a decision rule,
-    so the model alone cannot compute AUC unless `model.evaluate` is also invoked
-    with a callback or something. (This would get a bit finnicky).
     """
-
-    auc: float
+    def __init__(self, auc: float):
+        self.auc = auc

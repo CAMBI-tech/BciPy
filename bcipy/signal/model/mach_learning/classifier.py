@@ -26,8 +26,6 @@ class RegularizedDiscriminantAnalysis:
         cov_i (list[ndarray]): list of k x k ndarray, sample covariance for class i
         log_det_cov(list[float]): list of negative det(cov_i)
         inv_reg_cov_i(list[ndarray]): inverse of regularized covariance matrix for class i
-
-    TODO - Aziz mentioned it is possible to parallelize to speed up -- significant gains to be had
     """
 
     def __init__(self):  # TODO: Make it more modular

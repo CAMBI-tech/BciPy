@@ -17,10 +17,6 @@ expected_output_folder = pwd / "integration_test_expected_output"  # global for 
 
 
 class TestOfflineAnalysis(unittest.TestCase):
-    """
-    TODO - are there other output files that should be tested?
-    """
-
     @classmethod
     def setUpClass(cls):
         np.random.seed(0)
@@ -37,9 +33,7 @@ class TestOfflineAnalysis(unittest.TestCase):
             shutil.copyfile(input_folder / f, cls.tmp_dir / f)
 
         cls.parameters = load_json_parameters(cls.tmp_dir / "parameters.json", value_cast=True)
-        cls.model, fig_handles = offline_analysis(
-            str(cls.tmp_dir), cls.parameters, alert_finished=False, return_fig_handles=True
-        )
+        cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
         cls.mean_erp_fig_handle, cls.lik_dens_fig_handle = fig_handles
 
     @classmethod
@@ -58,11 +52,11 @@ class TestOfflineAnalysis(unittest.TestCase):
         found_auc = self.get_auc(list(self.tmp_dir.glob("model_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.001)
 
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png")
+    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png", remove_text=True)
     def test_mean_erp(self):
         return self.mean_erp_fig_handle
 
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_lik_dens.png")
+    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_lik_dens.png", remove_text=True)
     def test_lik_dens(self):
         return self.lik_dens_fig_handle
 

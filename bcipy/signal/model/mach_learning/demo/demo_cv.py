@@ -28,7 +28,7 @@ def _demo_cv():
     pipeline.add(pca)
     pipeline.add(rda)
     _ = cross_validation(x, y, pipeline)
-    print("Cross Validation Flows!")
+    print('Cross Validation Flows!')
 
 
 if __name__ == "__main__":

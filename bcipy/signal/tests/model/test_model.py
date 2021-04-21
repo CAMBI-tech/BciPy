@@ -52,7 +52,9 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         self.x = x
         self.y = y
 
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_inference.expected.png")
+    @pytest.mark.mpl_image_compare(
+        baseline_dir=expected_output_folder, filename="test_inference.expected.png", remove_text=True
+    )
     def test_inference(self):
         model, _ = train_pca_rda_kde_model(self.x, self.y, k_folds=10)
 
@@ -91,7 +93,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         expected = np.load(expected_output_folder / "test_pca.expected.npy")
         self.assertTrue(np.allclose(x_reduced, expected))
 
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_kde_plot.png")
+    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_kde_plot.png", remove_text=True)
     def test_kde_plot(self):
         """
         Notes:
