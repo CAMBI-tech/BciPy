@@ -64,3 +64,30 @@ class TestProducer(unittest.TestCase):
         self.assertTrue(expected_n - tolerance > maxiters)
         data_n = data_queue.qsize()
         self.assertEqual(data_n, maxiters)
+
+    def test_producer_end(self):
+        data_queue = queue.Queue()
+
+        def stopiteration_generator(n):
+            i = 0
+            while True:
+                yield i
+                i += 1
+                if i >= n:
+                    raise StopIteration
+
+        def simple_generator(n):
+            for i in range(n):
+                yield i
+
+        with self.assertRaises(Exception):
+            with Producer(data_queue, generator=stopiteration_generator(10)) as p:
+                p.run()
+
+        with self.assertRaises(Exception):
+            with Producer(data_queue, generator=simple_generator(10)) as p:
+                p.run()
+
+        with self.assertRaises(Exception):
+            with Producer(data_queue, generator=(1 for _ in range(10))) as p:
+                p.run()

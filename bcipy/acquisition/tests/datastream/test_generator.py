@@ -112,7 +112,7 @@ class TestGenerator(unittest.TestCase):
             for _ in range(row_count):
                 next(gen)
 
-            with self.assertRaises(StopIteration):
+            with self.assertRaises((StopIteration, RuntimeError)):
                 data.append(next(gen))
 
     def test_file_with_custom_encoder(self):
