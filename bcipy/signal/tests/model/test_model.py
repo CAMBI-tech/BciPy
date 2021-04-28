@@ -95,7 +95,9 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         expected = np.load(expected_output_folder / "test_pca.expected.npy")
         self.assertTrue(np.allclose(x_reduced, expected))
 
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_kde_plot.png", remove_text=True)
+    @pytest.mark.mpl_image_compare(
+        baseline_dir=expected_output_folder, filename="test_kde_plot.expected.png", remove_text=True
+    )
     def test_kde_plot(self):
         """
         Notes:

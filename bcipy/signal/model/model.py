@@ -44,5 +44,9 @@ class ModelEvaluationReport:
     """
     Describes model performance characteristics.
     """
+
     def __init__(self, auc: float):
         self.auc = auc
+
+    def __eq__(self, other):
+        return np.allclose(self.auc, other.auc)
