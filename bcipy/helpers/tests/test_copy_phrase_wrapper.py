@@ -4,9 +4,7 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.task import alphabet
 
 
-class TestSignalModelRelated(unittest.TestCase):
-    """Test CopyPhraseWrapper"""
-
+class TestCopyPhraseWrapper(unittest.TestCase):
     def test_valid_letters(self):
         alp = alphabet()
         cp = CopyPhraseWrapper(
