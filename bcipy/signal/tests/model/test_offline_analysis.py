@@ -16,6 +16,7 @@ input_folder = pwd / "integration_test_input"
 expected_output_folder = pwd / "integration_test_expected_output"  # global for the purpose of pytest-mpl decorator
 
 
+@pytest.mark.slow
 class TestOfflineAnalysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
