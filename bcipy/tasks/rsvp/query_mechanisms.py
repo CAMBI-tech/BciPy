@@ -167,7 +167,6 @@ class MomentumStimuliAgent(StimuliAgent):
         self.reset()
 
 
-# A generic best selection from set function using values
 def best_selection(list_el: List[Any], val: List[float], len_query: int):
     """Return the top `len_query` items from `list_el` according to the values in `val`"""
     # numpy version: return list_el[(-val).argsort()][:len_query]
