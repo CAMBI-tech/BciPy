@@ -7,9 +7,8 @@ import tempfile
 import shutil
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.save import init_save_data_structure
-from bcipy.acquisition.devices import supported_device
 from bcipy.acquisition.devices import DeviceSpec, register
+from bcipy.signal.model import PcaRdaKdeModel
 
 from pathlib import Path
 import random
@@ -54,7 +53,8 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         x = x[:, permutation, :]
         y = y[permutation]
 
-        cls.model, _ = train_pca_rda_kde_model(x, y, k_folds=10)
+        cls.model = PcaRdaKdeModel(k_folds=10)
+        cls.model.fit(x, y)
 
     @classmethod
     def tearDownClass(cls):

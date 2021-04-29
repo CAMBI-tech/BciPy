@@ -1,12 +1,11 @@
 import unittest
-from bcipy.helpers.task import SPACE_CHAR
 import numpy as np
 import math
-import string
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
     MaxIterationsCriteria, MinIterationsCriteria, ProbThresholdCriteria
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
+from bcipy.helpers.task import alphabet
 
 
 class TestDecisionMaker(unittest.TestCase):
@@ -14,19 +13,19 @@ class TestDecisionMaker(unittest.TestCase):
 
     def setUp(self):
         """Set up decision maker object for testing """
-        alphabet = list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR]
+        alp = alphabet()
         stopping_criteria = CriteriaEvaluator(
             continue_criteria=[MinIterationsCriteria(min_num_inq=1)],
             commit_criteria=[MaxIterationsCriteria(max_num_inq=10),
                              ProbThresholdCriteria(threshold=0.8)])
 
-        stimuli_agent = NBestStimuliAgent(alphabet=alphabet,
+        stimuli_agent = NBestStimuliAgent(alphabet=alp,
                                           len_query=10)
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
             stopping_evaluator=stopping_criteria,
             state='',
-            alphabet=alphabet,
+            alphabet=alp,
             is_txt_stim=True,
             stimuli_timing=[1, .2],
             inq_constants=None)
@@ -126,8 +125,7 @@ class TestDecisionMaker(unittest.TestCase):
         """Test do_series method"""
         probability_distribution = np.ones(
             len(self.decision_maker.alphabet)) / 8
-        decision, chosen_stimuli = self.decision_maker.decide(
-            probability_distribution)
+        self.decision_maker.decide(probability_distribution)
         self.decision_maker.do_series()
         self.assertEqual(self.decision_maker.inquiry_counter, 0)
 
@@ -137,7 +135,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker.list_series[-1]['list_distribution'].append(
             probability_distribution)
         decision = self.decision_maker.decide_state_update()
-        expected = 'A'  # expect to commit to first letter in inquiry, due to uniform probability
+        # expect to commit to first letter in inquiry, due to uniform probability
         self.assertEqual(decision, 'A')
 
     def test_schedule_inquiry(self):

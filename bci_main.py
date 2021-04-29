@@ -1,16 +1,20 @@
 import logging
+import argparse
+import multiprocessing
+
 from bcipy.display import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
 from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.system_utils import get_system_info, configure_logger, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_json_parameters, load_signal_model, load_experiments
+from bcipy.helpers.load import load_json_parameters, load_experiments
 from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import TaskType
+from bcipy.signal.model import load_signal_model
 
 
 def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
@@ -147,10 +151,6 @@ def _clean_up_session(display, daq, server):
 
 
 if __name__ == "__main__":
-    import argparse
-    import multiprocessing
-    from bcipy.helpers.load import load_json_parameters
-
     # Needed for windows machines
     multiprocessing.freeze_support()
 
