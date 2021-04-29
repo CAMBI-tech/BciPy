@@ -1,6 +1,5 @@
 import unittest
 from pathlib import Path
-from string import ascii_uppercase
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +14,8 @@ from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEst
 from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.mach_learning.pipeline import Pipeline
 from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
+
+from bcipy.helpers.task import alphabet
 
 expected_output_folder = Path(__file__).absolute().parent / "unit_test_expected_output"
 
@@ -60,7 +61,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
     def test_inference(self):
         model, _ = train_pca_rda_kde_model(self.x, self.y, k_folds=10)
 
-        alphabet = list(ascii_uppercase) + ["<", "_"]
+        alp = alphabet()
 
         # Create test items that resemble the fake training data
         num_x_p = 1
@@ -70,14 +71,14 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
         x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        letters = alphabet[10 : 10 + num_x_p + num_x_n]  # Target letter is K
+        letters = alp[10 : 10 + num_x_p + num_x_n]  # Target letter is K
 
-        lik_r = inference(x=x_test, targets=letters, model=model, alphabet=alphabet)
+        lik_r = inference(x=x_test, targets=letters, model=model, alphabet=alp)
 
         fig, ax = plt.subplots()
-        ax.plot(np.arange(len(alphabet)), lik_r, "ro")
-        ax.set_xticks(np.arange(len(alphabet)))
-        ax.set_xticklabels(alphabet)
+        ax.plot(np.arange(len(alp)), lik_r, "ro")
+        ax.set_xticks(np.arange(len(alp)))
+        ax.set_xticklabels(alp)
         ax.set_yticks(np.arange(0, 101, 10))
         return fig
 

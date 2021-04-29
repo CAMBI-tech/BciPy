@@ -1,12 +1,12 @@
 import unittest
 from pathlib import Path
-from string import ascii_uppercase
 import shutil
 import tempfile
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from bcipy.helpers.task import alphabet
 
 """Unit tests for PCA/RDA/KDE model"""
 from bcipy.signal.model import PcaRdaKdeModel, ModelEvaluationReport
@@ -19,6 +19,7 @@ class TestRefactoredPcaRdaKdeModel(unittest.TestCase):
     Note - When the code is in a known & working state, generate "baseline" images using:
     `pytest --mpl-generate-path=bcipy/signal/tests/model/unit_test_expected_output -k TestPcaRdaKdeModel`
     """
+
     @classmethod
     def setUpClass(cls):
         np.random.seed(0)
@@ -61,25 +62,25 @@ class TestRefactoredPcaRdaKdeModel(unittest.TestCase):
     )
     def test_fit_predict(self):
         """Fit and then predict"""
-        alphabet = list(ascii_uppercase) + ["<", "_"]
+        alp = alphabet()
 
-        # Create test items that resemble the fake training data, testing inference
+        # Create test items that resemble the fake training data
         num_x_p = 1
         num_x_n = 9
 
         x_test_pos = self.pos_mean + self.pos_std * np.random.randn(self.num_channel, num_x_p, self.dim_x)
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
-        x_test = np.concatenate((x_test_neg, x_test_pos), 1)
+        x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        idx_let = np.random.permutation(len(alphabet))
-        letters = [alphabet[i] for i in idx_let[0 : (num_x_p + num_x_n)]]
+        letters = alp[10 : 10 + num_x_p + num_x_n]  # Target letter is K
 
-        lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alphabet)
+        lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alp)
 
         fig, ax = plt.subplots()
-        ax.plot(np.array(list(range(len(alphabet)))), lik_r, "ro")
-        ax.set_xticks(np.arange(len(alphabet)))
-        ax.set_xticklabels(alphabet)
+        ax.plot(np.arange(len(alp)), lik_r, "ro")
+        ax.set_xticks(np.arange(len(alp)))
+        ax.set_xticklabels(alp)
+        ax.set_yticks(np.arange(0, 101, 10))
         return fig
 
     def test_evaluate(self):
@@ -88,18 +89,17 @@ class TestRefactoredPcaRdaKdeModel(unittest.TestCase):
 
     def test_save_load(self):
         n_trial = 15
-        symbol_set = list(ascii_uppercase) + ["<", "_"]
+        symbol_set = alphabet()
         inquiry = symbol_set[:n_trial]
         data = np.random.randn(self.num_channel, n_trial, self.dim_x)
-
         output_before = self.model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         checkpoint_path = self.tmp_dir / "model.pkl"
         self.model.save(checkpoint_path)
         other_model = PcaRdaKdeModel(k_folds=self.model.k_folds)
         other_model.load(checkpoint_path)
-
         output_after = other_model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
+
         self.assertTrue(np.allclose(output_before, output_after))
 
 

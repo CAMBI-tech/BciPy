@@ -5,7 +5,6 @@ import numpy as np
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
-from bcipy.signal.model.inference import inference
 from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
@@ -135,7 +134,7 @@ class CopyPhraseWrapper:
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
 
-        lik_r = inference(x, letters, self.signal_model, self.alp)
+        lik_r = self.signal_model.predict(x, letters, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
         decision, sti = self.decision_maker.decide(prob)
 

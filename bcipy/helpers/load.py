@@ -1,5 +1,4 @@
 import logging
-import pickle
 import json
 import os
 from pathlib import Path
@@ -16,7 +15,6 @@ import pandas as pd
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-
 
 log = logging.getLogger(__name__)
 
@@ -165,24 +163,6 @@ def load_experimental_data() -> str:
 
     log.debug("Loaded Experimental Data From: %s" % filename)
     return filename
-
-
-def load_signal_model(filename: str = None):
-    # use python's internal gui to call file explorers and get the filename
-
-    if not filename:
-        try:
-            Tk().withdraw()  # we don't want a full GUI
-            filename = askopenfilename()  # show dialog box and return the path
-
-        # except, raise error
-        except Exception as error:
-            raise error
-
-    # load the signal_model with pickle
-    signal_model = pickle.load(open(filename, 'rb'))
-
-    return (signal_model, filename)
 
 
 def load_csv_data(filename: str = None) -> str:
