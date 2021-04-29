@@ -10,6 +10,12 @@ test-all:
 	flake8 bcipy
 	coverage report
 
+unit-test:
+	pytest -k "not slow"
+
+integration-test:
+	pytest -k "slow"
+
 coverage-html:
 	coverage run --branch --source=bcipy -m pytest
 	coverage html
