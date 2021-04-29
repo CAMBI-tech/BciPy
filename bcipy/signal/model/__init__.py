@@ -1,6 +1,6 @@
 from .offline_analysis import offline_analysis
-from .model import SignalModel, ModelEvaluationReport
-from .pca_rda_kde_model import PcaRdaKdeModel
+from .base_model import SignalModel, ModelEvaluationReport
+from .pca_rda_kde import PcaRdaKdeModel
 from .utils import load_signal_model
 
 __all__ = [

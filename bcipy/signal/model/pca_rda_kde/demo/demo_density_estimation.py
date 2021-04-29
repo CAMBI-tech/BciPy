@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy.stats import norm, iqr
-from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 import matplotlib.pyplot as plt
 
 

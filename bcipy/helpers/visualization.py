@@ -15,7 +15,6 @@ def generate_offline_analysis_screen(
         y,
         model=None,
         folder=None,
-        plot_lik_dens=True,
         save_figure=True,
         down_sample_rate=2,
         fs=300,
@@ -39,7 +38,6 @@ def generate_offline_analysis_screen(
         C is number of channels
     model(): trained model for data
     folder(str): Folder of the data
-    plot_lik_dens: boolean: whether or not to plot likelihood densities
     save_figures: boolean: whether or not to save the plots as PDF
     down_sample_rate: downsampling rate applied to signal (if any)
     fs (sampling_rate): original sampling rate of the signal
@@ -118,35 +116,6 @@ def generate_offline_analysis_screen(
             format='pdf')
 
     fig_handles.append(fig)
-
-    if plot_lik_dens:
-        fig, ax = plt.subplots()
-        x_plot = np.linspace(
-            np.min(model.line_el[-2]), np.max(model.line_el[-2]), 1000)[:, np.newaxis]
-        ax.plot(model.line_el[2][y == 0], -0.005 - 0.01 * np.random.random(
-            model.line_el[2][y == 0].shape[0]), 'ro', label='class(-)')
-        ax.plot(model.line_el[2][y == 1], -0.005 - 0.01 * np.random.random(
-            model.line_el[2][y == 1].shape[0]), 'go', label='class(+)')
-        for idx in range(len(model.pipeline[2].list_den_est)):
-            log_dens = model.pipeline[2].list_den_est[idx].score_samples(
-                x_plot)
-            ax.plot(x_plot[:, 0], np.exp(log_dens), 'r-' *
-                    (idx == 0) + 'g--' * (idx == 1), linewidth=2.0)
-
-        ax.legend(loc='upper right')
-        plt.title('Likelihoods Given the Labels')
-        plt.ylabel('p(e|l)')
-        plt.xlabel('scores')
-
-        if save_figure:
-            fig.savefig(
-                os.path.join(
-                    folder,
-                    'lik_dens.pdf'),
-                bbox_inches='tight',
-                format='pdf')
-
-        fig_handles.append(fig)
 
     if show_figure:
         plt.show()
@@ -247,7 +216,6 @@ if __name__ == '__main__':
         x,
         y,
         folder='bcipy',
-        plot_lik_dens=False,
         save_figure=False,
         show_figure=True,
         channel_names=names)

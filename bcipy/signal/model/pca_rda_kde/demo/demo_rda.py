@@ -1,5 +1,5 @@
 import numpy as np
-from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
 
 
 def _demo_rda():

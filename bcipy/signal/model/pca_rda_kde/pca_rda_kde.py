@@ -3,12 +3,12 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-from .model import ModelEvaluationReport, SignalModel
-from .mach_learning.classifier import RegularizedDiscriminantAnalysis
-from .mach_learning.cross_validation import cost_cross_validation_auc, cross_validation
-from .mach_learning.density_estimation import KernelDensityEstimate
-from .mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from .mach_learning.pipeline import Pipeline
+from ..base_model import ModelEvaluationReport, SignalModel
+from .classifier import RegularizedDiscriminantAnalysis
+from .cross_validation import cost_cross_validation_auc, cross_validation
+from .density_estimation import KernelDensityEstimate
+from .dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from .pipeline import Pipeline
 from scipy.stats import iqr
 
 

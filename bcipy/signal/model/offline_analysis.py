@@ -15,7 +15,7 @@ from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
 from bcipy.helpers.stimuli import play_sound
 
-from .pca_rda_kde_model import PcaRdaKdeModel
+from .pca_rda_kde import PcaRdaKdeModel
 
 log = logging.getLogger(__name__)
 
@@ -104,8 +104,6 @@ def offline_analysis(data_folder: str = None,
 
     log.info('Saving offline analysis plots!')
 
-    # After obtaining the model get the transformed data for plotting purposes
-    model.transform(x)
     fig_handles = generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
