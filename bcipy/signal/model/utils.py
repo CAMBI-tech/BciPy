@@ -1,4 +1,4 @@
-from .pca_rda_kde_model import PcaRdaKdeModel
+from .pca_rda_kde import PcaRdaKdeModel
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 

@@ -5,7 +5,6 @@ from bcipy.helpers.task import alphabet
 import numpy as np
 import tempfile
 import shutil
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.load import load_json_parameters
 from bcipy.acquisition.devices import DeviceSpec, register
 from bcipy.signal.model import PcaRdaKdeModel

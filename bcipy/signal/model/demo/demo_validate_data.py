@@ -1,11 +1,11 @@
 import matplotlib.pylab as plt
 import numpy as np
-from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 import matplotlib as mpl
 from scipy.stats import iqr
 from bcipy.helpers.load import read_data_csv, load_experimental_data
 from bcipy.signal.process.filter import bandpass
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
+from bcipy.signal.model.pca_rda_kde.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import trial_reshaper
 from bcipy.helpers.triggers import trigger_decoder
 

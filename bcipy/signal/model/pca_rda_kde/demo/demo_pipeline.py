@@ -1,8 +1,8 @@
 import matplotlib.pylab as plt
-from bcipy.signal.model.mach_learning.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.mach_learning.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.mach_learning.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.mach_learning.pipeline import Pipeline
+from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
 import numpy as np
 from scipy.stats import iqr
 import time

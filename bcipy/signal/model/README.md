@@ -6,8 +6,6 @@ Aims to model likelihood for EEG evidence.
 
 Includes machine learning algorithms for feature extraction and likelihood calculation.
 
-For examples refer to the `.\mach_learning\demo` folder.
-
 ### Dimensionality Reduction
 
 Reduces dimensionality of the EEG data obtained based on a comparison metric. 
