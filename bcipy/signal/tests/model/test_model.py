@@ -26,7 +26,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
     """
 
     def setUp(self):
-        np.random.seed(0)
+        np.random.seed(0)  # Set seed before generating test data
 
         # Specify data dimensions
         self.dim_x = 10
@@ -52,11 +52,12 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         self.x = x
         self.y = y
 
+        np.random.seed(0)  # Set seed again right before test body
+
     @pytest.mark.mpl_image_compare(
         baseline_dir=expected_output_folder, filename="test_inference.expected.png", remove_text=True
     )
     def test_inference(self):
-        np.random.seed(0)
         model, _ = train_pca_rda_kde_model(self.x, self.y, k_folds=10)
 
         alphabet = list(ascii_uppercase) + ["<", "_"]
@@ -81,7 +82,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         return fig
 
     def test_pca(self):
-        np.random.seed(0)
         var_tol = 0.95
 
         # .fit() then .transform() should match .fit_transform()
@@ -102,7 +102,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         - TODO - can this test be re-written to use some data from self.setUp()?
           (Not vital, but would make this file shorter)
         """
-        np.random.seed(0)
         n = 100
 
         # generate some dummy data
@@ -138,7 +137,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         return fig
 
     def test_kde_values(self):
-        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
         kde = KernelDensityEstimate()
@@ -167,7 +165,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
           before fitting it - it is not clear how sensitive this test is to changes in the code
           or input data, so this may be a weak test of cross_validation().
         """
-        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
@@ -180,7 +177,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         self.assertAlmostEqual(gam, 0.1)
 
     def test_rda(self):
-        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
