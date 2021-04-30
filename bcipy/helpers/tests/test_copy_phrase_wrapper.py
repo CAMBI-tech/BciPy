@@ -31,7 +31,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         # # Generate fake data and train a model
         # Specify data dimensions
         cls.num_trial = cls.params["stim_length"]
-        cls.dim_x = 5  # TODO - compute this based on device_spec and params
+        cls.dim_x = 5
         cls.num_channel = cls.device_spec.channel_count
         cls.num_x_pos = 200
         cls.num_x_neg = 200
@@ -54,7 +54,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
 
         cls.model = PcaRdaKdeModel(k_folds=10)
         cls.model.fit(x, y)
-
+        
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmp_dir)
@@ -159,17 +159,14 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             cp.letter_info([("A", 0.0), ("*", 1.0)], ["nontarget", "nontarget"])
 
     def test_init_series_evaluate_inquiry(self):
-        # TODO - it would be just as easy to store a snippet of real data, which would be a much better test
-        # (since this fake data likely does not exercise the dynamic range of the model)
         alp = alphabet()
 
         # Create fake data to provide as the user's response
-        # Create test items that resemble the fake training data, testing inference
-        # TODO - is this duration calculated precisely, or is it just large enough by coincidence?
-        # int(self.num_trial * self.device_spec.sample_rate * (self.params["time_flash"] + self.params["static_trigger_offset"]))
-        duration = 1000
+        duration = int(self.num_trial * self.device_spec.sample_rate * self.params["trial_length"])
         response_eeg = self.pos_mean + self.pos_std * np.random.randn(self.num_channel, duration)
 
+        # Note that frequencies for notch and bandpass filter below are chosen to be < 1/2 of sampling frequency
+        # due to limitations of nyquist-shannon sampling theorem
         copy_phrase_task = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
@@ -194,7 +191,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         self.assertEqual(
             sti,
             (
-                [['+', 'U', 'T', '_', 'W', 'Y', 'X', 'Z', '<', 'S', 'V']],
+                [["+", "U", "T", "_", "W", "Y", "X", "Z", "<", "S", "V"]],
                 [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
                 [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
             ),
@@ -234,7 +231,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         self.assertEqual(
             sti,
             (
-                [["+", "E", "I", "B", "F", "D", "G", "H", "C", "A", "J"]],
+                [["+", "I", "F", "B", "G", "C", "D", "J", "A", "E", "H"]],
                 [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
                 [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
             ),
