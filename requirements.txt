@@ -1,23 +1,23 @@
 wheel==0.30.0
-wxPython #==4.0.4
+wxPython==4.0.4
 docker==2.6.1
 construct==2.8.14
 mne==0.17.0
-opencv_python #==4.1.0.25
+opencv_python==4.1.0.25
 PsychoPy==2020.2.10
 openpyxl==2.6.3
 pyglet==1.4.10
-numpy #==1.19.2
+numpy==1.19.2
 sounddevice==0.4.1
 SoundFile==0.10.3.post1
 scipy==1.5.2
 scikit-learn==0.23.2
 seaborn==0.9.0
 matplotlib==3.1.1
-pylsl #==1.13.1
+pylsl==1.13.1
 pandas==1.1.3
 psutil==5.7.2
-Pillow==8.0.0
+Pillow==8.1.1
 py-cpuinfo==7.0.0
 pyedflib==0.1.19
 PyQt5==5.15.1

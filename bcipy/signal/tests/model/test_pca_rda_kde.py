@@ -19,6 +19,7 @@ from bcipy.signal.model.pca_rda_kde.cross_validation import cross_validation
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
+from bcipy.signal.model.pca_rda_kde import NotFittedError
 
 expected_output_folder = Path(__file__).absolute().parent / "unit_test_expected_output"
 
@@ -215,7 +216,6 @@ class TestPcaRdaKdeModelExternals(SharedSetup):
         letters = [alp[i] for i in idx_let[0 : (num_x_p + num_x_n)]]
 
         lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alp)
-
         fig, ax = plt.subplots()
         ax.plot(np.array(list(range(len(alp)))), lik_r, "ro")
         ax.set_xticks(np.arange(len(alp)))
@@ -240,6 +240,16 @@ class TestPcaRdaKdeModelExternals(SharedSetup):
         output_after = other_model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         self.assertTrue(np.allclose(output_before, output_after))
+
+    def test_predict_before_fit(self):
+        model = PcaRdaKdeModel()
+        with self.assertRaises(NotFittedError):
+            model.predict(self.x, inquiry=["A"], symbol_set=alphabet())
+
+    def test_evaluate_before_fit(self):
+        model = PcaRdaKdeModel()
+        with self.assertRaises(NotFittedError):
+            model.evaluate(self.x, self.y)
 
 
 if __name__ == "__main__":
