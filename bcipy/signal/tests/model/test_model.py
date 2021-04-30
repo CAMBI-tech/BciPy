@@ -56,30 +56,32 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         baseline_dir=expected_output_folder, filename="test_inference.expected.png", remove_text=True
     )
     def test_inference(self):
+        np.random.seed(0)
         model, _ = train_pca_rda_kde_model(self.x, self.y, k_folds=10)
 
         alphabet = list(ascii_uppercase) + ["<", "_"]
 
-        # Create test items that resemble the fake training data, testing inference
+        # Create test items that resemble the fake training data
         num_x_p = 1
         num_x_n = 9
 
         x_test_pos = self.pos_mean + self.pos_std * np.random.randn(self.num_channel, num_x_p, self.dim_x)
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
-        x_test = np.concatenate((x_test_neg, x_test_pos), 1)
+        x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        idx_let = np.random.permutation(len(alphabet))
-        letters = [alphabet[i] for i in idx_let[0 : (num_x_p + num_x_n)]]
+        letters = alphabet[10 : 10 + num_x_p + num_x_n]  # Target letter is K
 
         lik_r = inference(x=x_test, targets=letters, model=model, alphabet=alphabet)
 
         fig, ax = plt.subplots()
-        ax.plot(np.array(list(range(len(alphabet)))), lik_r, "ro")
+        ax.plot(np.arange(len(alphabet)), lik_r, "ro")
         ax.set_xticks(np.arange(len(alphabet)))
         ax.set_xticklabels(alphabet)
+        ax.set_yticks(np.arange(0, 101, 10))
         return fig
 
     def test_pca(self):
+        np.random.seed(0)
         var_tol = 0.95
 
         # .fit() then .transform() should match .fit_transform()
@@ -100,6 +102,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         - TODO - can this test be re-written to use some data from self.setUp()?
           (Not vital, but would make this file shorter)
         """
+        np.random.seed(0)
         n = 100
 
         # generate some dummy data
@@ -127,8 +130,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
             log_dens = kde.list_den_est[0].score_samples(x_plot)
             ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
 
-        ax.text(6, 0.38, "N={0} points".format(n))
-
         ax.legend(loc="upper left")
         ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), "+k")
 
@@ -137,6 +138,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         return fig
 
     def test_kde_values(self):
+        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
         kde = KernelDensityEstimate()
@@ -165,6 +167,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
           before fitting it - it is not clear how sensitive this test is to changes in the code
           or input data, so this may be a weak test of cross_validation().
         """
+        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
@@ -177,6 +180,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         self.assertAlmostEqual(gam, 0.1)
 
     def test_rda(self):
+        np.random.seed(0)
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
