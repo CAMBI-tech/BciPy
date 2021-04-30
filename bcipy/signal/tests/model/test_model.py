@@ -26,7 +26,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
     """
 
     def setUp(self):
-        np.random.seed(0)
+        np.random.seed(0)  # Set seed before generating test data
 
         # Specify data dimensions
         self.dim_x = 10
@@ -52,6 +52,8 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         self.x = x
         self.y = y
 
+        np.random.seed(0)  # Set seed again right before test body
+
     @pytest.mark.mpl_image_compare(
         baseline_dir=expected_output_folder, filename="test_inference.expected.png", remove_text=True
     )
@@ -60,23 +62,23 @@ class TestPcaRdaKdeModel(unittest.TestCase):
 
         alphabet = list(ascii_uppercase) + ["<", "_"]
 
-        # Create test items that resemble the fake training data, testing inference
+        # Create test items that resemble the fake training data
         num_x_p = 1
         num_x_n = 9
 
         x_test_pos = self.pos_mean + self.pos_std * np.random.randn(self.num_channel, num_x_p, self.dim_x)
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
-        x_test = np.concatenate((x_test_neg, x_test_pos), 1)
+        x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        idx_let = np.random.permutation(len(alphabet))
-        letters = [alphabet[i] for i in idx_let[0 : (num_x_p + num_x_n)]]
+        letters = alphabet[10 : 10 + num_x_p + num_x_n]  # Target letter is K
 
         lik_r = inference(x=x_test, targets=letters, model=model, alphabet=alphabet)
 
         fig, ax = plt.subplots()
-        ax.plot(np.array(list(range(len(alphabet)))), lik_r, "ro")
+        ax.plot(np.arange(len(alphabet)), lik_r, "ro")
         ax.set_xticks(np.arange(len(alphabet)))
         ax.set_xticklabels(alphabet)
+        ax.set_yticks(np.arange(0, 101, 10))
         return fig
 
     def test_pca(self):
@@ -126,8 +128,6 @@ class TestPcaRdaKdeModel(unittest.TestCase):
             kde.fit(x, y)
             log_dens = kde.list_den_est[0].score_samples(x_plot)
             ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
-
-        ax.text(6, 0.38, "N={0} points".format(n))
 
         ax.legend(loc="upper left")
         ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), "+k")
