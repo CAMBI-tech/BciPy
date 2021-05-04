@@ -134,7 +134,7 @@ class RSVPCopyPhraseTask(Task):
                       str(self.copy_phrase[0:self.spelled_letters_count]))]
 
         # Try Initializing Copy Phrase Wrapper:
-        copy_phrase_task = CopyPhraseWrapper(
+        copy_phrase_task = _init_copy_phrase_wrapper(
             self.min_num_inq,
             self.max_inq_per_trial,
             signal_model=self.signal_model,
@@ -168,20 +168,23 @@ class RSVPCopyPhraseTask(Task):
                           mode='RSVP')
 
         # Save session data
-        _save_session_related_data(self.session_save_location, session.as_dict())
+        _save_session_related_data(self.session_save_location,
+                                   session.as_dict())
 
         # check user input to make sure we should be going
-        if not get_user_input(self.rsvp, self.wait_screen_message,
-                              self.wait_screen_message_color,
-                              first_run=True):
+        if not get_user_input(self.rsvp,
+                                   self.wait_screen_message,
+                                   self.wait_screen_message_color,
+                                   first_run=True):
             run = False
 
         # Start the Session!
         while run:
-
+            self.logger.debug("Doing Copy Phrase run loop")
             # check user input to make sure we should be going
             if not get_user_input(self.rsvp, self.wait_screen_message,
-                                  self.wait_screen_message_color):
+                                       self.wait_screen_message_color):
+                self.logger.debug("User signaled to exit the task")
                 break
 
             if self.copy_phrase[0:len(text_task)] == text_task:
@@ -199,6 +202,8 @@ class RSVPCopyPhraseTask(Task):
                 ele_sti = sti[0]
                 timing_sti = sti[1]
                 color_sti = sti[2]
+                self.logger.debug(f"Initializing series; new series: {new_series}")
+                self.logger.debug(f"Stim:\n{ele_sti}")
 
             # Update task state and reset the static
             self.rsvp.update_task_state(text=text_task, color_list=['white'])
@@ -225,6 +230,8 @@ class RSVPCopyPhraseTask(Task):
                     inquiry_timing.extend(self.rsvp.do_inquiry())
             else:
                 inquiry_timing = self.rsvp.do_inquiry()
+                self.logger.debug("Inquiry timing:")
+                self.logger.debug(inquiry_timing)
 
             # Write triggers to file
             _write_triggers_from_inquiry_copy_phrase(
@@ -248,6 +255,7 @@ class RSVPCopyPhraseTask(Task):
                     self.parameters,
                     self.rsvp.first_stim_time,
                     self.static_offset)
+            self.logger.debug(f"Process data for decision triggers:\n{triggers}")
 
             # Construct Data Record
             stim_sequence = Inquiry(stimuli=ele_sti,
@@ -307,10 +315,9 @@ class RSVPCopyPhraseTask(Task):
             # if a letter was selected and feedback enabled, show the chosen
             # letter
             if new_series and self.show_feedback:
-                self.feedback.administer(
-                    last_selection,
-                    message='Selected:',
-                    fill_color=self.feedback_color)
+                self.feedback.administer(last_selection,
+                                         message='Selected:',
+                                         fill_color=self.feedback_color)
 
             if new_series:
                 session.add_series()
@@ -318,19 +325,22 @@ class RSVPCopyPhraseTask(Task):
             # Update time spent and save data
             session.total_time_spent = self.experiment_clock.getTime()
 
-            _save_session_related_data(self.session_save_location, session.as_dict())
+            _save_session_related_data(self.session_save_location,
+                                       session.as_dict())
 
             # Decide whether to keep the task going
             max_tries_exceeded = inq_counter >= self.max_inq_length
             max_time_exceeded = session.total_time_spent >= self.max_seconds
-            if (text_task == self.copy_phrase or max_tries_exceeded or
-                    max_time_exceeded):
+            if (text_task == self.copy_phrase or max_tries_exceeded
+                    or max_time_exceeded):
                 if max_tries_exceeded:
-                    self.logger.debug('COPYPHRASE ERROR: Max tries exceeded. To allow for more tries '
-                                      'adjust the max_inq_len parameter.')
+                    self.logger.debug(
+                        'COPYPHRASE ERROR: Max tries exceeded. To allow for more tries '
+                        'adjust the max_inq_len parameter.')
                 if max_time_exceeded:
-                    self.logger.debug('COPYPHRASE ERROR: Max time exceeded. To allow for more time '
-                                      'adjust the max_minutes parameter.')
+                    self.logger.debug(
+                        'COPYPHRASE ERROR: Max time exceeded. To allow for more time '
+                        'adjust the max_minutes parameter.')
                 run = False
 
             # Increment inquiry counter
@@ -349,8 +359,11 @@ class RSVPCopyPhraseTask(Task):
 
         if self.daq.is_calibrated:
             _write_triggers_from_inquiry_copy_phrase(
-                ['offset', self.daq.offset], self.trigger_file,
-                self.copy_phrase, text_task, offset=True)
+                ['offset', self.daq.offset],
+                self.trigger_file,
+                self.copy_phrase,
+                text_task,
+                offset=True)
 
         # Close the trigger file for this session
         self.trigger_file.close()
@@ -409,3 +422,32 @@ def _init_copy_phrase_display(
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'],
         preview_inquiry=preview_inquiry)
+
+
+def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
+                              alp, task_list, lmodel, is_txt_stim, device_name,
+                              device_channels, stimuli_timing,
+                              decision_threshold, backspace_prob,
+                              backspace_always_shown, filter_high, filter_low,
+                              filter_order, notch_filter_frequency,
+                              stim_length):
+    return CopyPhraseWrapper(min_num_inq,
+                             max_num_inq,
+                             signal_model=signal_model,
+                             fs=fs,
+                             k=k,
+                             alp=alp,
+                             task_list=task_list,
+                             lmodel=lmodel,
+                             is_txt_stim=is_txt_stim,
+                             device_name=device_name,
+                             device_channels=device_channels,
+                             stimuli_timing=stimuli_timing,
+                             decision_threshold=decision_threshold,
+                             backspace_prob=backspace_prob,
+                             backspace_always_shown=backspace_always_shown,
+                             filter_high=filter_high,
+                             filter_low=filter_low,
+                             filter_order=filter_order,
+                             notch_filter_frequency=notch_filter_frequency,
+                             stim_length=stim_length)
