@@ -5,19 +5,19 @@ from bcipy.display.rsvp import InformationProperties, TaskDisplayProperties, Sti
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
 info = InformationProperties(
-        info_color='White',
-        info_pos=(-.5, -.75),
-        info_height=0.1,
-        info_font='Arial',
-        info_text='Calibration Demo',
-    )
+    info_color='White',
+    info_pos=(-.5, -.75),
+    info_height=0.1,
+    info_font='Arial',
+    info_text='Calibration Demo',
+)
 task_display = TaskDisplayProperties(
-        task_color=['White'],
-        task_pos=(-.5, .8),
-        task_font='Arial',
-        task_height=.1,
-        task_text='1/100'
-    )
+    task_color=['White'],
+    task_pos=(-.5, .8),
+    task_font='Arial',
+    task_height=.1,
+    task_text='1/100'
+)
 
 # Initialize Stimulus
 is_txt_stim = True
@@ -61,13 +61,13 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 len_stimuli = 10
 stimuli = StimuliProperties(
-        stim_font='Arial',
-        stim_pos=(0, 0),
-        stim_height=0.6,
-        stim_inquiry=['a'] * len_stimuli,
-        stim_colors=['white'] * len_stimuli,
-        stim_timing=[3] * len_stimuli,
-        is_txt_stim=is_txt_stim)
+    stim_font='Arial',
+    stim_pos=(0, 0),
+    stim_height=0.6,
+    stim_inquiry=['a'] * len_stimuli,
+    stim_colors=['white'] * len_stimuli,
+    stim_timing=[3] * len_stimuli,
+    is_txt_stim=is_txt_stim)
 rsvp = CalibrationDisplay(
     win,
     clock,

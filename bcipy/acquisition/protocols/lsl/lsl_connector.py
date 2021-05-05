@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 LSL_TIMESTAMP = 'LSL_timestamp'
 LSL_TIMEOUT_SECONDS = 5.0
 
+
 class Marker():
     """Data class which wraps a LSL marker; data pulled from a marker stream is
     a tuple where the first item is a list of channels and second item is the
@@ -116,7 +117,7 @@ class LslConnector(Connector):
         # There can be 1 current marker for each marker channel.
         self.current_markers = {}
         # seconds to wait for a data stream
-        self.timeout=LSL_TIMEOUT_SECONDS
+        self.timeout = LSL_TIMEOUT_SECONDS
 
     @classmethod
     def supports(cls, device_spec: DeviceSpec,

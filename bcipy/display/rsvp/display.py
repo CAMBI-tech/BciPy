@@ -17,6 +17,7 @@ class StimuliProperties:
 
     An encapsulation of properties relevant to core stimuli presentation in an RSVP paradigm.
     """
+
     def __init__(
             self,
             stim_font: str,
@@ -79,6 +80,7 @@ class InformationProperties:
     An encapsulation of properties relevant to task information presentation in an RSVP paradigm. This could be
         messaging relevant to feedback or static text to remain on screen not related to task tracking.
     """
+
     def __init__(
             self,
             info_color: List[str],
@@ -124,6 +126,7 @@ class TaskDisplayProperties:
 
     An encapsulation of properties relevant to task stimuli presentation in an RSVP paradigm.
     """
+
     def __init__(
             self,
             task_color: List[str],
@@ -389,7 +392,7 @@ class RSVPDisplay(Display):
 
         Returns:
             - A tuple containing the timing information and a boolean describing whether to present
-                the inquiry (True) or generate another (False). 
+                the inquiry (True) or generate another (False).
         """
         # construct the timing to return and generate the content for preview
         timing = []
