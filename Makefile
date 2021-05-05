@@ -6,9 +6,9 @@ dev-install:
 	pip install -e .
 
 test-all:
-	coverage run --branch --source=bcipy -m pytest
-	flake8 bcipy
+	coverage run --branch --source=bcipy -m pytest -k "not slow"
 	coverage report
+	flake8 bcipy
 
 unit-test:
 	pytest -k "not slow"

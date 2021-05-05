@@ -219,7 +219,7 @@ class TestPcaRdaKdeModelExternals(SharedSetup):
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
         x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        letters = alp[10 : 10 + num_x_p + num_x_n]  # Target letter is K
+        letters = alp[10: 10 + num_x_p + num_x_n]  # Target letter is K
 
         lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alp)
         fig, ax = plt.subplots()

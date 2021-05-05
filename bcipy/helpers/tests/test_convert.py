@@ -42,7 +42,7 @@ def sample_data(rows: int = 1000, ch_names: List[str] = None) -> str:
         ch_names = ['ch1', 'ch2', 'ch3']
     # Mock the raw_data file
     sep = '\n'
-    meta = sep.join([f'daq_type,LSL', 'sample_rate,256.0'])
+    meta = sep.join(['daq_type,LSL', 'sample_rate,256.0'])
     header = 'timestamp,' + ','.join(ch_names) + ',TRG'
 
     data = []

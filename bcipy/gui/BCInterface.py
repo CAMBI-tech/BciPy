@@ -102,7 +102,7 @@ class BCInterface(BCIGui):
         Launch the experiment registry which will be used to add new experiments for selection in the GUI.
         """
         subprocess.call(
-            f'python bcipy/gui/experiments/ExperimentRegistry.py',
+            'python bcipy/gui/experiments/ExperimentRegistry.py',
             shell=True)
 
         self.update_experiment_list()
