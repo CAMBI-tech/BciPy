@@ -143,7 +143,7 @@ class RSVPCalibrationTask(Task):
 
                 # Wait for a time
                 core.wait(self.buffer_val)
-                
+
                 # Do the inquiry
                 timing = self.rsvp.do_inquiry()
 

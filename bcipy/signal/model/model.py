@@ -44,5 +44,6 @@ class ModelEvaluationReport:
     """
     Describes model performance characteristics.
     """
+
     def __init__(self, auc: float):
         self.auc = auc

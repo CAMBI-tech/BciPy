@@ -20,19 +20,19 @@ preview_inquiry_progress_method = 1  # press to accept ==1 wait to accept ==2
 preview_inquiry_isi = 3
 
 info = InformationProperties(
-        info_color='White',
-        info_pos=(-.5, -.75),
-        info_height=0.1,
-        info_font='Arial',
-        info_text='Dummy Message',
-    )
+    info_color='White',
+    info_pos=(-.5, -.75),
+    info_height=0.1,
+    info_font='Arial',
+    info_text='Dummy Message',
+)
 task_display = TaskDisplayProperties(
-        task_color=['White'],
-        task_pos=(-.8, .9),
-        task_font='Arial',
-        task_height=.1,
-        task_text='COPY_PHRASE'
-    )
+    task_color=['White'],
+    task_pos=(-.8, .9),
+    task_font='Arial',
+    task_height=.1,
+    task_text='COPY_PHRASE'
+)
 
 # Stimuli
 time_flash = .25
@@ -41,13 +41,13 @@ time_cross = .6
 len_stimuli = 10
 inter_stim_buffer = .5
 stimuli = StimuliProperties(
-        stim_font='Arial',
-        stim_pos=(0, 0),
-        stim_height=0.6,
-        stim_inquiry=['a'] * len_stimuli,
-        stim_colors=['white'] * len_stimuli,
-        stim_timing=[3] * len_stimuli,
-        is_txt_stim=is_txt_stim)
+    stim_font='Arial',
+    stim_pos=(0, 0),
+    stim_height=0.6,
+    stim_inquiry=['a'] * len_stimuli,
+    stim_colors=['white'] * len_stimuli,
+    stim_timing=[3] * len_stimuli,
+    is_txt_stim=is_txt_stim)
 
 window_parameters = {
     'full_screen': False,
@@ -90,10 +90,10 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = core.MonotonicClock(start_time=None)
 
 preview_inquiry = PreviewInquiryProperties(
-        preview_inquiry_length=preview_inquiry_length,
-        preview_inquiry_key_input=preview_inquiry_key_input,
-        preview_inquiry_progress_method=preview_inquiry_progress_method,
-        preview_inquiry_isi=preview_inquiry_isi
+    preview_inquiry_length=preview_inquiry_length,
+    preview_inquiry_key_input=preview_inquiry_key_input,
+    preview_inquiry_progress_method=preview_inquiry_progress_method,
+    preview_inquiry_isi=preview_inquiry_isi
 )
 rsvp = CopyPhraseDisplay(
     win,

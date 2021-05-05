@@ -70,7 +70,7 @@ class TestPcaRdaKdeModel(unittest.TestCase):
         x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
         x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
 
-        letters = alphabet[10 : 10 + num_x_p + num_x_n]  # Target letter is K
+        letters = alphabet[10: 10 + num_x_p + num_x_n]  # Target letter is K
 
         lik_r = inference(x=x_test, targets=letters, model=model, alphabet=alphabet)
 

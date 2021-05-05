@@ -314,7 +314,7 @@ class ExperimentRegistry(BCIGui):
         Launch to FieldRegistry to create a new field for experiments.
         """
         subprocess.call(
-            f'python bcipy/gui/experiments/FieldRegistry.py',
+            'python bcipy/gui/experiments/FieldRegistry.py',
             shell=True)
 
         self.update_field_list()
