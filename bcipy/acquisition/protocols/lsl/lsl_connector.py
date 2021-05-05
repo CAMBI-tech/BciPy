@@ -172,7 +172,7 @@ class LslConnector(Connector):
         if channels and self.device_spec.channels != channels:
             print(f"device channels: {channels}")
             print(self.device_spec.channels)
-            raise Exception(f"Channels read from the device do not match "
+            raise Exception("Channels read from the device do not match "
                             "the provided parameters.")
         assert len(self.device_spec.channels) == metadata.channel_count(
         ), "Channel count error"

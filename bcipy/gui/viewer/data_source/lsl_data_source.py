@@ -57,7 +57,7 @@ class LslDataSource(DataSource):
 
         if fast_forward:
             tmp = samples
-            print(f'Fast forwarding:')
+            print('Fast forwarding:')
             chomped_count = 0
             while len(tmp) == n:
                 samples = tmp
