@@ -1,7 +1,4 @@
 import logging
-import argparse
-import multiprocessing
-
 from bcipy.display import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
@@ -15,6 +12,7 @@ from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import TaskType
 from bcipy.signal.model import load_signal_model
+from bcipy.signal.model import PcaRdaKdeModel
 
 
 def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
@@ -97,7 +95,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     if not fake and task not in TaskType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
-            signal_model, filename = load_signal_model()
+            signal_model, filename = load_signal_model(model_class=PcaRdaKdeModel, model_kwargs={"k_folds": 10})
         except Exception as e:
             print(f'Cannot load signal model. Exiting. {e}')
             raise e
@@ -151,6 +149,9 @@ def _clean_up_session(display, daq, server):
 
 
 if __name__ == "__main__":
+    import argparse
+    import multiprocessing
+
     # Needed for windows machines
     multiprocessing.freeze_support()
 

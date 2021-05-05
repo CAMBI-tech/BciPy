@@ -156,8 +156,8 @@ class EEGFrame(wx.Frame):
 
         return [
             i for i in range(len(self.channels))
-            if self.channels[i] not in self.removed_channels
-            and 'TRG' not in self.channels[i]
+            if self.channels[i] not in self.removed_channels and
+            'TRG' not in self.channels[i]
         ]
 
     def init_buffer(self):

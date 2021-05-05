@@ -54,7 +54,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
 
         cls.model = PcaRdaKdeModel(k_folds=10)
         cls.model.fit(x, y)
-        
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmp_dir)

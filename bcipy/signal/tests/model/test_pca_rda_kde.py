@@ -1,7 +1,3 @@
-"""
-When the code is in a known & working state, generate "baseline" images using:
-`pytest --mpl-generate-path=bcipy/signal/tests/model/unit_test_expected_output -k "TestPcaRdaKdeModelInternals or TestPcaRdaKdeExternals"`
-"""
 import shutil
 import tempfile
 import unittest
@@ -10,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from scipy.stats import iqr, norm
+from scipy.stats import norm
 
 from bcipy.helpers.task import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
@@ -19,12 +15,12 @@ from bcipy.signal.model.pca_rda_kde.cross_validation import cross_validation
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
-from bcipy.signal.model.pca_rda_kde import NotFittedError
+from bcipy.signal.exceptions import SignalException
 
 expected_output_folder = Path(__file__).absolute().parent / "unit_test_expected_output"
 
 
-class SharedSetup(unittest.TestCase):
+class ModelSetup(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(0)
@@ -60,7 +56,7 @@ class SharedSetup(unittest.TestCase):
         shutil.rmtree(cls.tmp_dir)
 
 
-class TestPcaRdaKdeModelInternals(SharedSetup):
+class TestPcaRdaKdeModelInternals(ModelSetup):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -114,12 +110,9 @@ class TestPcaRdaKdeModelInternals(SharedSetup):
         fig, ax = plt.subplots()
         ax.fill(x_plot[:, 0], true_dens, fc="black", alpha=0.2, label="input distribution")
 
-        # thumb up rule for bandwidth selection
-        bandwidth = 1.06 * min(np.std(x), iqr(x) / 1.34) * np.power(x.shape[0], -0.2)
-
         # try different kernels and show how the look like
         for kernel in ["gaussian", "tophat", "epanechnikov"]:
-            kde = KernelDensityEstimate(kernel=kernel, bandwidth=bandwidth, num_cls=1)
+            kde = KernelDensityEstimate(kernel=kernel, scores=x, num_channels=x.shape[0], num_cls=1)
             kde.fit(x, y)
             log_dens = kde.list_den_est[0].score_samples(x_plot)
             ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
@@ -136,10 +129,7 @@ class TestPcaRdaKdeModelInternals(SharedSetup):
         rda = RegularizedDiscriminantAnalysis()
         kde = KernelDensityEstimate()
 
-        pipeline = Pipeline()
-        pipeline.add(pca)
-        pipeline.add(rda)
-        pipeline.add(kde)
+        pipeline = Pipeline([pca, rda, kde])
 
         # .fit() followed by .transform() should match .fit_transform()
         z = pipeline.fit_transform(self.x, self.y)
@@ -162,9 +152,7 @@ class TestPcaRdaKdeModelInternals(SharedSetup):
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
-        pipeline = Pipeline()
-        pipeline.add(pca)
-        pipeline.add(rda)
+        pipeline = Pipeline([pca, rda])
         lam, gam = cross_validation(self.x, self.y, pipeline)
 
         self.assertAlmostEqual(lam, 0.9)
@@ -174,9 +162,7 @@ class TestPcaRdaKdeModelInternals(SharedSetup):
         pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
         rda = RegularizedDiscriminantAnalysis()
 
-        pipeline = Pipeline()
-        pipeline.add(pca)
-        pipeline.add(rda)
+        pipeline = Pipeline([pca, rda])
 
         # .fit() followed by .transform() should match .fit_transform()
         z = pipeline.fit_transform(self.x, self.y)
@@ -189,7 +175,7 @@ class TestPcaRdaKdeModelInternals(SharedSetup):
         self.assertTrue(np.allclose(z, expected))
 
 
-class TestPcaRdaKdeModelExternals(SharedSetup):
+class TestPcaRdaKdeModelExternals(ModelSetup):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -205,7 +191,9 @@ class TestPcaRdaKdeModelExternals(SharedSetup):
         np.random.seed(0)
 
     @pytest.mark.mpl_image_compare(
-        baseline_dir=expected_output_folder, filename="test_inference.expected.png", remove_text=True
+        baseline_dir=expected_output_folder,
+        filename="test_inference.expected.png",
+        remove_text=True,
     )
     def test_fit_predict(self):
         """Fit and then predict"""
@@ -250,12 +238,12 @@ class TestPcaRdaKdeModelExternals(SharedSetup):
 
     def test_predict_before_fit(self):
         model = PcaRdaKdeModel()
-        with self.assertRaises(NotFittedError):
+        with self.assertRaises(SignalException):
             model.predict(self.x, inquiry=["A"], symbol_set=alphabet())
 
     def test_evaluate_before_fit(self):
         model = PcaRdaKdeModel()
-        with self.assertRaises(NotFittedError):
+        with self.assertRaises(SignalException):
             model.evaluate(self.x, self.y)
 
 

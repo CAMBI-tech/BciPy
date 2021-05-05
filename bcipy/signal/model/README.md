@@ -4,8 +4,6 @@ This module provides models to use EEG evidence to update the posterior probabil
 
 ## PCA/RDA/KDE Model
 
-TODO - more detail is needed here. These explanations should be detailed and self-sufficient, or a pointer to such an explanation (preferrably with diagrams!) should be given.
-
 This model involves the following stages:
 
 1. Channelwise-PCA to reduce data dimension while preserving as much variation in the data as possible. See `pca_rda_kde/dimensionality_reduction.py`.

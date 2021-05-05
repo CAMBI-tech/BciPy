@@ -1,5 +1,5 @@
 """Integration test of offline_analysis.py (slow)"""
-from bcipy.signal.model import offline_analysis
+from bcipy.signal.model.offline_analysis import offline_analysis
 import unittest
 from bcipy.helpers.load import load_json_parameters
 from pathlib import Path

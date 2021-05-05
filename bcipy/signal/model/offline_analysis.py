@@ -15,7 +15,7 @@ from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
 from bcipy.helpers.stimuli import play_sound
 
-from .pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 
 log = logging.getLogger(__name__)
 
