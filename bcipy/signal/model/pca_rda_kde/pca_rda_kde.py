@@ -13,7 +13,7 @@ from bcipy.signal.exceptions import SignalException
 
 
 class PcaRdaKdeModel(SignalModel):
-    def __init__(self, k_folds=10):
+    def __init__(self, k_folds: int):
         self.k_folds = k_folds
         self.model = None
         self._ready_to_predict = False
@@ -36,10 +36,11 @@ class PcaRdaKdeModel(SignalModel):
         arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
 
         # Get the AUC using those optimized gamma + lambda
-        model.pipeline[1].lam = arg_cv[0]
-        model.pipeline[1].gam = arg_cv[1]
+        rda_index = 1  # the index in the pipeline
+        model.pipeline[rda_index].lam = arg_cv[0]
+        model.pipeline[rda_index].gam = arg_cv[1]
         _, sc_cv, y_cv = cost_cross_validation_auc(
-            model, 1, train_data, train_labels, arg_cv, k_folds=self.k_folds, split="uniform"
+            model, rda_index, train_data, train_labels, arg_cv, k_folds=self.k_folds, split="uniform"
         )
 
         # After finding cross validation scores do one more round to learn the

@@ -1,6 +1,8 @@
-from sklearn.neighbors import KernelDensity
+from typing import Optional
+
 import numpy as np
 from scipy.stats import iqr
+from sklearn.neighbors import KernelDensity
 
 
 class KernelDensityEstimate:
@@ -9,6 +11,7 @@ class KernelDensityEstimate:
     Attr:
         bandwidth(float): bandwidth of the kernel
         scores(np.array): Shape (num_items, 2) - ratio of classification scores from RDA; used to compute bandwidth
+        num_channels(int): Number of channels in the original data; used to compute bandwidth
         algorithm(string): algorithm type
         kernel(string): element to form the actual fitted pdf.
         metric(string): distance metric used by algorithm to insert kernels
@@ -21,10 +24,9 @@ class KernelDensityEstimate:
 
         """
 
-    def __init__(self, scores=None, num_channels=None, algorithm='auto', kernel='gaussian',
-                 # def __init__(self, bandwidth=1.0, algorithm='auto', kernel='gaussian',
-                 metric='euclidean', atol=0, rtol=0, breadth_first=True,
-                 leaf_size=40, metric_params=None, num_cls=2):
+    def __init__(self, scores: Optional[np.array] = None, num_channels: Optional[int] = None,
+                 algorithm='auto', kernel='gaussian', metric='euclidean', atol=0, rtol=0,
+                 breadth_first=True, leaf_size=40, metric_params=None, num_cls=2):
         if scores is None or num_channels is None:
             bandwidth = 1.0
         else:
@@ -42,7 +44,7 @@ class KernelDensityEstimate:
                                                    leaf_size=leaf_size,
                                                    metric_params=metric_params))
 
-    def _compute_bandwidth(self, scores, num_channels):
+    def _compute_bandwidth(self, scores: np.array, num_channels: int):
         """Estimate bandwidth parameter
 
         Args:

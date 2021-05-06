@@ -95,7 +95,9 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     if not fake and task not in TaskType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         try:
-            signal_model, filename = load_signal_model(model_class=PcaRdaKdeModel, model_kwargs={"k_folds": 10})
+            signal_model, filename = load_signal_model(
+                model_class=PcaRdaKdeModel, model_kwargs={
+                    "k_folds": parameters["k_folds"]})
         except Exception as e:
             print(f'Cannot load signal model. Exiting. {e}')
             raise e

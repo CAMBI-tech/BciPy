@@ -237,12 +237,12 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         self.assertTrue(np.allclose(output_before, output_after))
 
     def test_predict_before_fit(self):
-        model = PcaRdaKdeModel()
+        model = PcaRdaKdeModel(k_folds=10)
         with self.assertRaises(SignalException):
             model.predict(self.x, inquiry=["A"], symbol_set=alphabet())
 
     def test_evaluate_before_fit(self):
-        model = PcaRdaKdeModel()
+        model = PcaRdaKdeModel(k_folds=10)
         with self.assertRaises(SignalException):
             model.evaluate(self.x, self.y)
 

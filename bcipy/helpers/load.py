@@ -1,20 +1,23 @@
-import logging
 import json
+import logging
 import os
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
-
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.system_utils import (
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME,
+)
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -166,7 +169,8 @@ def load_experimental_data() -> str:
     return filename
 
 
-def load_signal_model(model_class: SignalModel, model_kwargs: Dict[str, Any], filename: str = None):
+def load_signal_model(model_class: SignalModel,
+                      model_kwargs: Dict[str, Any], filename: str = None) -> Tuple[SignalModel, str]:
     """Construct the specified model and load pretrained parameters.
 
     Args:
