@@ -8,13 +8,14 @@ from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters)
 from bcipy.signal.process.filter import bandpass, notch, downsample
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import trial_reshaper
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels,\
     analysis_channel_names_by_pos
 from bcipy.helpers.stimuli import play_sound
+
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 
 log = logging.getLogger(__name__)
 
@@ -97,12 +98,12 @@ def offline_analysis(data_folder: str = None,
                                 channel_map=channel_map,
                                 trial_length=trial_length)
 
-    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
+    model = PcaRdaKdeModel(k_folds=k_folds)
+    model.fit(x, y)
+    model_performance = model.evaluate(x, y)
 
     log.info('Saving offline analysis plots!')
 
-    # After obtaining the model get the transformed data for plotting purposes
-    model.transform(x)
     fig_handles = generate_offline_analysis_screen(
         x, y, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
@@ -110,7 +111,7 @@ def offline_analysis(data_folder: str = None,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
 
     log.info('Saving the model!')
-    with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
+    with open(data_folder + f'/model_{model_performance.auc}.pkl', 'wb') as output:
         pickle.dump(model, output)
 
     if alert_finished:

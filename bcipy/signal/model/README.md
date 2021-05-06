@@ -1,53 +1,46 @@
-# EEG Model Module
+# EEG Modeling
 
-Aims to model likelihood for EEG evidence.
+This module provides models to use EEG evidence to update the posterior probability of stimuli viewed by a user. 
 
-## Machine Learning (ML)
+## PCA/RDA/KDE Model
 
-Includes machine learning algorithms for feature extraction and likelihood calculation.
+This model involves the following stages:
 
-For examples refer to the `.\mach_learning\demo` folder.
+1. Channelwise-PCA to reduce data dimension while preserving as much variation in the data as possible. See `pca_rda_kde/dimensionality_reduction.py`.
 
-### Dimensionality Reduction
+2. Cross-validation to choose optimal regularization parameters for RDA (see the next step).
 
-Reduces dimensionality of the EEG data obtained based on a comparison metric. 
+3. Regularized Discriminant Analysis (RDA), which further reduces dimension to 1D by estimating class probabilities for a positive and negative class (i.e. whether a single letter was desired or not). RDA includes two key parameters, `gamma` and `lambda` which determine how much the estimated class covariances are regularized towards the whole-data covariance matrix and towards the identity matrix. See `pca_rda_kde/classifier.py`.
 
-Includes 
+4. Kernel Density Estimation (KDE), which performs generative modeling on the reduced dimension data, computing the probability that it arose from the positive class, and from the negative class. This method involves choosing a kernel (a notion of distance) and a bandwidth (a length scale for the kernel). See `pca_rda_kde/density_estimation.py`.
 
--`PCA`: a dimensionality reduction, finds and keeps meaningfull dimensions with high variance.
-
--`Channel-Wise-PCA`: a PCA per channel
-
-### Classifier
-
-Classifiers for EEG likelihood computation is used as a dimensionality reduction wrt. the decision metric.
-
-Includes `RDA`: an extension to `QDA` with regularization and thresholding parameters. Allows to fit tight decision boundaries in high dimensional spaces.
-
-### Generative Models
-
-Used the generate likelihoods based on scores obtained through feature extraction.
-
-Includes `KDE`: a non-parametric density estimate using a pre-defined kernel and its width.
-
-### Pipeline
-
-Appends ML elements to a list. Currently `Pipeline:= [CW-PCA, RDA, KDE]`
-
-### Cross Validation (CV)
-
-Generalizes the model using data, avoids overfitting. Implementation is tied to optimizing hyperparameters of the `RDA`.
+5. The ratio of the likelihood terms computed by kernel density estimation (`p(eeg | +)` and `p(eeg | -)`) is used in the final decision rule. See `pca_rda_kde/pca_rda_kde.py`
 
 # Testing
+
+Run tests for this module with:
+```bash
+pytest --mpl bcipy/signal/tests/model -k "not slow"  # unit tests only
+pytest --mpl bcipy/signal/tests/model -k "slow"      # integration tests only
+pytest --mpl bcipy/signal/tests/model                # all tests
+```
+
 ## pytest-mpl
 
-Tests in <tests/test_inference.py> and <mach_learning/tests/test_density_estimation.py> use a pytest plugin to compare an output plot against the expected output plot.
+Some tests in `bcipy/signal/tests/model` use a pytest plugin to compare an output plot against the expected output plot.
 
-- Generate the "baseline" result by running: `pytest bcipy/signal/model/ -k <NAME_OF_TEST> --mpl-generate-path=bcipy/signal/model/tests/baseline` 
-  (the expected output will be stored in a new folder there called `baseline`)
-- Run the test using `pytest --mpl` (otherwise this test will be skipped)
+When the code is in a known working state, generate the "expected" results by running: 
 
-To sanity check that this test is sensitive, you can generate the baseline using one seed, then change the seed and run the test (it will fail).
+```bash
+pytest -k <NAME_OF_TEST> --mpl-generate-path=<OUTPUT_PATH>
+```
+
+where `<OUTPUT_PATH>` is either `bcipy/signal/tests/model/unit_test_expected_output` or `bcipy/signal/tests/model/integration_test_expected_output` depending on the test.
+
+To test the code, use the `--mpl` flag as in `pytest --mpl` (otherwise these figure tests will be skipped).
+
+To sanity check that these tests are sensitive, you can generate the baseline using one random seed, then change the seed and run the test.
+
+Note that the tolerance for pixel differences is configurable, but nonetheless figures should be stripped down to the essential details (since text can move position slightly depending on font libraries and minor version updates of libraries). Furthermore, figures should use a fixed x-axis and y-axis scale to help ensure an easy comparison.
 
 See more about `pytest-mpl` at https://pypi.org/project/pytest-mpl/
-

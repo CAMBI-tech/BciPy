@@ -17,8 +17,8 @@ class Pipeline(object):
             [0] is the input and the rest follows
         """
 
-    def __init__(self):
-        self.pipeline = []
+    def __init__(self, pipeline=None):
+        self.pipeline = pipeline if pipeline is not None else []
         self.line_el = []
 
     def add(self, method):
@@ -36,8 +36,7 @@ class Pipeline(object):
             y(ndarray[int]): of desired shape """
         self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            self.line_el.append(
-                self.pipeline[i].fit_transform(self.line_el[i], y))
+            self.line_el.append(self.pipeline[i].fit_transform(self.line_el[i], y))
 
         self.pipeline[-1].fit(self.line_el[-1], y)
 
@@ -49,8 +48,7 @@ class Pipeline(object):
 
         self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            self.line_el.append(
-                self.pipeline[i].fit_transform(self.line_el[i], y))
+            self.line_el.append(self.pipeline[i].fit_transform(self.line_el[i], y))
 
         arg = self.pipeline[-1].fit_transform(self.line_el[-1], y)
         return arg

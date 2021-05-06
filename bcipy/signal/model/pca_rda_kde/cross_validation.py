@@ -34,8 +34,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     num_samples = x.shape[1]
     fold_len = np.floor(float(num_samples) / k_folds)
 
-    model.pipeline[1].lam = param[0]
-    model.pipeline[1].gam = param[1]
+    model.pipeline[opt_el].lam = param[0]
+    model.pipeline[opt_el].gam = param[1]
 
     fold_x, fold_y = [], []
     sc_h, y_valid_h = [], []

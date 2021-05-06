@@ -5,7 +5,6 @@ from unittest.mock import patch, mock_open
 from collections import abc
 import tempfile
 import shutil
-import pickle
 import json
 
 from mockito import any, expect, unstub, when
@@ -13,7 +12,6 @@ from mockito import any, expect, unstub, when
 from bcipy.helpers.load import (
     extract_mode,
     load_json_parameters,
-    load_signal_model,
     load_experiments,
     load_experiment_fields,
     load_fields,
@@ -67,19 +65,6 @@ class TestParameterLoad(unittest.TestCase):
         with self.assertRaises(Exception):
             load_json_parameters('/garbage/dir/wont/work')
 
-    def test_load_classifier(self):
-        """Test load classifier can load pickled file when given path."""
-
-        # create a pickle file to save a pickled json
-        pickle_file = self.temp_dir + "save.p"
-        pickle.dump(self.parameters, open(pickle_file, "wb"))
-
-        # Load classifier
-        unpickled_parameters = load_signal_model(pickle_file)
-
-        # assert the same data was returned
-        self.assertEqual(unpickled_parameters, (self.parameters, pickle_file))
-
     def test_copy_default_parameters(self):
         """Test that default parameters can be copied."""
         path = copy_parameters(destination=self.temp_dir)
@@ -112,7 +97,7 @@ class TestExperimentLoad(unittest.TestCase):
             load_experiments(path='')
 
     def test_load_experiments_calls_json_module_as_expected(self):
-        with patch('builtins.open', mock_open(read_data='data')) as mock_file:
+        with patch('builtins.open', mock_open(read_data='data')) as _:
             expect(json, times=1).loads(self.experiments_path)
             load_experiments()
 
@@ -135,7 +120,7 @@ class TestFieldLoad(unittest.TestCase):
             load_fields(path='')
 
     def test_load_fields_calls_json_module_as_expected(self):
-        with patch('builtins.open', mock_open(read_data='data')) as mock_file:
+        with patch('builtins.open', mock_open(read_data='data')) as _:
             expect(json, times=1).loads(self.fields_path)
             load_fields()
 

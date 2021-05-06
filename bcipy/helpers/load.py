@@ -1,22 +1,24 @@
-import logging
-import pickle
 import json
+import logging
 import os
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
-
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.system_utils import (
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME,
+)
+from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +169,18 @@ def load_experimental_data() -> str:
     return filename
 
 
-def load_signal_model(filename: str = None):
+def load_signal_model(model_class: SignalModel,
+                      model_kwargs: Dict[str, Any], filename: str = None) -> Tuple[SignalModel, str]:
+    """Construct the specified model and load pretrained parameters.
+
+    Args:
+        model_class (SignalModel, optional): Model class to construct.
+        model_kwargs (dict, optional): Keyword arguments for constructing model.
+        filename (str, optional): Location of pretrained model parameters.
+
+    Returns:
+        SignalModel: Model after loading pretrained parameters.
+    """
     # use python's internal gui to call file explorers and get the filename
 
     if not filename:
@@ -180,9 +193,11 @@ def load_signal_model(filename: str = None):
             raise error
 
     # load the signal_model with pickle
-    signal_model = pickle.load(open(filename, 'rb'))
+    signal_model = model_class(**model_kwargs)
+    with open(filename, "rb") as f:
+        signal_model.load(f)
 
-    return (signal_model, filename)
+    return signal_model, filename
 
 
 def load_csv_data(filename: str = None) -> str:

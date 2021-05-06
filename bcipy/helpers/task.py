@@ -4,6 +4,7 @@ import logging
 import random
 import numpy as np
 from psychopy import core, event, visual
+from string import ascii_uppercase
 
 from bcipy.tasks.exceptions import InsufficientDataException
 
@@ -101,9 +102,7 @@ def alphabet(parameters=None, include_path=True):
                     stimulus_array.append(img)
             return stimulus_array
 
-    return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            BACKSPACE_CHAR, SPACE_CHAR]
+    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 
 def process_data_for_decision(
