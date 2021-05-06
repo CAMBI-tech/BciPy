@@ -153,7 +153,6 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
         self.assertEqual(self.temp_dir, result)
 
-
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
@@ -209,6 +208,128 @@ class TestCopyPhrase(unittest.TestCase):
         with open(Path(task.session_save_location), 'r') as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
+
+    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch(
+        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+    )
+    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    def test_max_inq_len(self, process_data_mock, write_trg_mock, message_mock,
+                         user_input_mock):
+        """Test stoppage criteria for the max inquiry length"""
+        self.parameters['max_inq_len'] = 2
+        task = RSVPCopyPhraseTask(win=self.win,
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=True)
+
+        # Don't provide any `escape` input from the user
+        user_input_mock.side_effect = [True, True, True, True, True, True]
+
+        # mock data for initial series
+        series_gen = mock_inquiry_data()
+        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
+            next(series_gen))
+
+        timings_gen = mock_inquiry_timings()
+        when(self.display).do_inquiry().thenReturn(next(timings_gen))
+
+        # mock data for single inquiry
+        process_data_mock.return_value = mock_process_data()
+
+        result = task.execute()
+
+        # Assertions
+        verify(self.display, times=2).do_inquiry()
+        self.assertTrue(write_trg_mock.called, 'Triggers should be written')
+        self.assertEqual(self.temp_dir, result)
+
+        self.assertTrue(
+            Path(task.session_save_location).is_file(),
+            'Session data should be written')
+        with open(Path(task.session_save_location), 'r') as json_file:
+            session = Session.from_dict(json.load(json_file))
+            self.assertEqual(1, session.total_number_series)
+            self.assertEqual(2, len(session.series[0]))
+
+    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch(
+        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+    )
+    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    def test_spelling_complete(self, process_data_mock, write_trg_mock, message_mock,
+                         user_input_mock):
+        """Test that the task stops when the copy_phrase has been correctly spelled."""
+        self.parameters['task_text'] = 'Hello'
+        self.parameters['spelled_letters_count'] = 4
+        task = RSVPCopyPhraseTask(win=self.win,
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=True)
+
+        # Don't provide any `escape` input from the user
+        user_input_mock.side_effect = [True, True, True, True, True, True]
+
+        # TODO: do another test with real data; mock the decision_maker.displayed_state is the copy_phrase
+
+        # mock data for initial series
+        series_gen = mock_inquiry_data()
+        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
+            next(series_gen))
+
+        timings_gen = mock_inquiry_timings()
+        when(self.display).do_inquiry().thenReturn(next(timings_gen))
+
+        # mock data for single inquiry
+        process_data_mock.return_value = mock_process_data()
+
+        result = task.execute()
+
+        # Assertions
+        verify(self.display, times=1).do_inquiry()
+        self.assertTrue(write_trg_mock.called, 'Triggers should be written')
+        self.assertEqual(self.temp_dir, result)
+
+        self.assertTrue(
+            Path(task.session_save_location).is_file(),
+            'Session data should be written')
+        with open(Path(task.session_save_location), 'r') as json_file:
+            session = Session.from_dict(json.load(json_file))
+            self.assertEqual(1, session.total_number_series)
+            self.assertEqual(1, len(session.last_series()))
+            self.assertEqual('Hello', session.last_inquiry().next_display_state)
+
+    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch(
+        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+    )
+    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    def test_next_letter(self, process_data_mock, write_trg_mock, message_mock,
+                         user_input_mock):
+        """Test that the task stops when the copy_phrase has been correctly spelled."""
+        self.parameters['task_text'] = 'Hello'
+        task = RSVPCopyPhraseTask(win=self.win,
+                            daq=self.daq,
+                            parameters=self.parameters,
+                            file_save=self.temp_dir,
+                            signal_model=self.signal_model,
+                            language_model=self.language_model,
+                            fake=True)
+        self.assertEqual(task.next_target('H'), 'e')
+        self.assertEqual(task.next_target('He'), 'l')
+        self.assertEqual(task.next_target('HE'), '<', "Should be case sensitive")
+        self.assertEqual(task.next_target('A'), '<')
+        self.assertEqual(task.next_target('Heo'), '<')
+
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')

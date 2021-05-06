@@ -146,6 +146,13 @@ class Session:
         """Returns the last series"""
         return self.series[-1]
 
+    def last_inquiry(self) -> Inquiry:
+        """Returns the last inquiry of the last series."""
+        series = self.last_series()
+        if series:
+            return series[-1]
+        return None
+
     def as_dict(self, alphabet=None, evidence_only: bool = False) -> Dict:
         """Dict representation"""
         series_dict = {}
