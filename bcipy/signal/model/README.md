@@ -16,6 +16,10 @@ This model involves the following stages:
 
 5. The ratio of the likelihood terms computed by kernel density estimation (`p(eeg | +)` and `p(eeg | -)`) is used in the final decision rule. See `pca_rda_kde/pca_rda_kde.py`
 
+## Neural Net Model
+
+TODO
+
 # Testing
 
 Run tests for this module with:

@@ -1,0 +1,39 @@
+quick-test: False
+fake-data: False # Negative control; data which cannot be classified
+
+# Shared options
+use-cuda: True
+output-dir: Null # default_output_dir())
+success-flag: "SUCCESS.txt" # empty file to help identify completed runs
+
+# Optimization options - TODO tuning
+epochs: 300
+batch-size: 128
+activation: "SiLU"
+optimizer: "AdamW"
+scheduler: "CosineAnnealingLR"
+adam-beta1: 0.9
+adam-beta2: 0.95
+initial-lr: 5.0e-4
+final-lr: 1.0e-8
+use-early-stop: True
+early-stop-patience: 15 # Number of epochs without improvement before stop
+seed: Null # Null causes us to pick a new random seed
+
+# Data options
+data-dir: "../VisualERPDatasets/Data/Extracted"
+loader-num-workers: 6
+data-device: "dsi"
+data-mode: "sequences"
+val-frac: 0.05
+test-frac: 0.05
+alphabet-len: 28
+
+# Preprocessing options
+preprocess: False
+notch-freq-hz: 60.0
+notch-q-factor: 30
+bandpass-lo-hz: 2.0
+bandpass-hi-hz: 45.0
+bandpass-order: 5
+downsample-factor: 0.5 # Downsample from length L to length L*<factor>"

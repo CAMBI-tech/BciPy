@@ -45,8 +45,11 @@ class ModelEvaluationReport:
     Describes model performance characteristics.
     """
 
-    def __init__(self, auc: float):
-        self.auc = auc
+    def __init__(self, auroc: float):
+        self.auroc = auroc
 
     def __eq__(self, other):
-        return np.allclose(self.auc, other.auc)
+        return np.allclose(self.auroc, other.auroc)
+
+    def __repr__(self):
+        return f"ModelEvaluationReport(AUROC={self.auroc})"
