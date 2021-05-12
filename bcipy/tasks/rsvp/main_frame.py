@@ -6,6 +6,7 @@ from bcipy.helpers.task import SPACE_CHAR
 import logging
 import numpy as np
 import string
+from typing import Dict, List
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,14 @@ class EvidenceFusion(object):
     def save_history(self):
         """ Saves the current likelihood history """
         return 0
+
+    @property
+    def latest_evidence(self) -> Dict[str, List[float]]:
+        """Returns the latest evidence of each type in the evidence history."""
+        return {
+            name: list(evidence[-1])
+            for name, evidence in self.evidence_history.items() if evidence
+        }
 
 
 class DecisionMaker:

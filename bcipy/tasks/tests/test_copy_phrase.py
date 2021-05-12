@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 import numpy as np
+import pygame
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
@@ -15,7 +16,6 @@ from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.session_data import Session
-
 
 class TestCopyPhrase(unittest.TestCase):
     """Tests for Copy Phrase task."""
@@ -55,7 +55,7 @@ class TestCopyPhrase(unittest.TestCase):
             'preview_inquiry_length': 5.0,
             'preview_inquiry_progress_method': 1,
             'session_file_name': 'session.json',
-            'show_feedback': True,
+            'show_feedback': False,
             'show_preview_inquiry': False,
             'spelled_letters_count': 0,
             'static_trigger_offset': 0.1,
@@ -196,7 +196,7 @@ class TestCopyPhrase(unittest.TestCase):
         result = task.execute()
 
         # Assertions
-        verify(self.copy_phrase_wrapper, times=2).initialize_series()
+        verify(self.copy_phrase_wrapper, times=1).initialize_series()
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
@@ -253,8 +253,8 @@ class TestCopyPhrase(unittest.TestCase):
             'Session data should be written')
         with open(Path(task.session_save_location), 'r') as json_file:
             session = Session.from_dict(json.load(json_file))
-            self.assertEqual(1, session.total_number_series)
-            self.assertEqual(2, len(session.series[0]))
+            self.assertEqual(2, session.total_number_series, "In fake data a decision is made every time.")
+            self.assertEqual(1, len(session.series[0]))
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
@@ -262,8 +262,8 @@ class TestCopyPhrase(unittest.TestCase):
         'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
-    def test_spelling_complete(self, process_data_mock, write_trg_mock, message_mock,
-                         user_input_mock):
+    def test_spelling_complete(self, process_data_mock, write_trg_mock,
+                               message_mock, user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
         self.parameters['spelled_letters_count'] = 4
@@ -274,6 +274,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   signal_model=self.signal_model,
                                   language_model=self.language_model,
                                   fake=True)
+        self.assertEqual(task.spelled_text, 'Hell')
 
         # Don't provide any `escape` input from the user
         user_input_mock.side_effect = [True, True, True, True, True, True]
@@ -305,7 +306,21 @@ class TestCopyPhrase(unittest.TestCase):
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
             self.assertEqual(1, len(session.last_series()))
-            self.assertEqual('Hello', session.last_inquiry().next_display_state)
+            self.assertEqual('Hello',
+                             session.last_inquiry().next_display_state)
+
+    def test_spelled_letters(self):
+        """Spelled letters should reset if count is larger than copy phrase."""
+        self.parameters['task_text'] = 'Hello'
+        self.parameters['spelled_letters_count'] = 6
+        task = RSVPCopyPhraseTask(win=self.win,
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=True)
+        self.assertEqual(task.spelled_text, '')
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
@@ -318,18 +333,26 @@ class TestCopyPhrase(unittest.TestCase):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
         task = RSVPCopyPhraseTask(win=self.win,
-                            daq=self.daq,
-                            parameters=self.parameters,
-                            file_save=self.temp_dir,
-                            signal_model=self.signal_model,
-                            language_model=self.language_model,
-                            fake=True)
-        self.assertEqual(task.next_target('H'), 'e')
-        self.assertEqual(task.next_target('He'), 'l')
-        self.assertEqual(task.next_target('HE'), '<', "Should be case sensitive")
-        self.assertEqual(task.next_target('A'), '<')
-        self.assertEqual(task.next_target('Heo'), '<')
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=True)
+        task.spelled_text = 'H'
+        self.assertEqual(task.next_target(), 'e')
 
+        task.spelled_text = 'He'
+        self.assertEqual(task.next_target(), 'l')
+
+        task.spelled_text = 'HE'
+        self.assertEqual(task.next_target(), '<', "Should be case sensitive")
+
+        task.spelled_text = 'A'
+        self.assertEqual(task.next_target(), '<')
+
+        task.spelled_text = 'Heo'
+        self.assertEqual(task.next_target(), '<')
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
@@ -369,7 +392,7 @@ class TestCopyPhrase(unittest.TestCase):
         result = task.execute()
 
         # Assertions
-        verify(self.copy_phrase_wrapper, times=2).initialize_series()
+        verify(self.copy_phrase_wrapper, times=1).initialize_series()
         verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
@@ -397,25 +420,20 @@ class TestCopyPhrase(unittest.TestCase):
         user_input_mock.side_effect = [True, True, False]
 
         conjugator_mock = mock({
-            'evidence_history': {
+            'latest_evidence': {
                 'LM': [
-                    np.array([
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.03518519, 0.03518519,
-                        0.03518519, 0.03518519, 0.05, 0.03518519
-                    ])
+                    0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
+                    0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
+                    0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
+                    0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
+                    0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
+                    0.03518519, 0.05, 0.03518519
                 ],
                 'ERP': [
-                    np.array([
-                        0.84381388, 1.18913356, 0.74758085, 1.22871603,
-                        1.1952462, 1.19054715, 1.24945839, 1.17512002,
-                        1.25628015, 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
-                        1., 1., 1., 1., 1., 1., 1.20164427, 1.
-                    ])
+                    0.84381388, 1.18913356, 0.74758085, 1.22871603, 1.1952462,
+                    1.19054715, 1.24945839, 1.17512002, 1.25628015, 1., 1., 1.,
+                    1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+                    1.20164427, 1.
                 ]
             },
             'likelihood':
@@ -496,6 +514,7 @@ class TestCopyPhrase(unittest.TestCase):
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 
+    # TODO: test feedback; patch VisualFeedback constructor, returning a mock; verify(feedback, times=1).administer(...)
 
 def mock_inquiry_data():
     """Generator that yields data mocking the copy_phrase_wrapper initialize_series method"""

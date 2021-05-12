@@ -2,7 +2,6 @@
 from typing import Dict, List
 from collections import Counter
 
-
 class Inquiry:
     """Represents a sequence of stimuli.
 
@@ -43,10 +42,11 @@ class Inquiry:
         self.next_display_state = next_display_state
 
         # TODO: refactor for multimodal; List of Evidences?
+        # self.evidences = {}
         self.lm_evidence = lm_evidence or []
         self.eeg_evidence = eeg_evidence or []
         self.likelihood = likelihood or []
-
+        
     @classmethod
     def from_dict(cls, data: dict):
         """Deserializes from a dict
@@ -74,6 +74,7 @@ class Inquiry:
             'next_display_state': self.next_display_state
         }
 
+        # TODO: refactor: `for name, evidence in self.evidences: data[f'{name}_evidence'] = evidence`
         if self.lm_evidence:
             data['lm_evidence'] = self.lm_evidence
         if self.eeg_evidence:
