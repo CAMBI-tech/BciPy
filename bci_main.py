@@ -96,7 +96,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         try:
             signal_model, filename = load_signal_model(
                 model_class=PcaRdaKdeModel, model_kwargs={
-                    "k_folds": parameters["k_folds"]}, filename="data/default/test_user/calib/model.pkl")
+                    "k_folds": parameters["k_folds"]})
         except Exception as e:
             print(f'Cannot load signal model. Exiting. {e}')
             raise e
