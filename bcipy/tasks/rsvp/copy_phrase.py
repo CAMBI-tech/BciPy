@@ -191,20 +191,16 @@ class RSVPCopyPhraseTask(Task):
         seconds = seconds or self.parameters['task_buffer_len']
         core.wait(seconds)
 
-    def present_inquiry(self, inq: List[str], colors: List[str],
-                        durations: List[float]):
+    def present_inquiry(self, inquiry_spec: InquirySpec): 
         """Present the given inquiry and return the trigger timing info.
         Parameters:
-        ----------
- 
-          inq - list of stimuli to present
-          duration - list of durations (float) to present each item
-          show_target - optional item to highlight the first inquiry item as
-            the target (displayed in the header and outlined).
+        ---------- 
+          inquiry_spec - specification for next sequence of stimuli to present
+
         Returns:
         --------
-            inquiry timings - list of tuples representing the letter and time
-                that it was presented.
+            stim_times - list of tuples representing the letter and time
+                that it was presented relative to the experiment clock.
         """
         # Update task state and reset the static
         self.rsvp.update_task_state(text=self.spelled_text,
@@ -213,29 +209,29 @@ class RSVPCopyPhraseTask(Task):
         self.window.flip()
 
         # Setup the new Stimuli
-        self.rsvp.stimuli_inquiry = inq
+        self.rsvp.stimuli_inquiry = inquiry_spec.stims[0]
         if self.parameters['is_txt_stim']:
-            self.rsvp.stimuli_colors = colors
-        self.rsvp.stimuli_timing = durations
+            self.rsvp.stimuli_colors = inquiry_spec.colors[0]
+        self.rsvp.stimuli_timing = inquiry_spec.durations[0]
 
         self.wait()
 
         if self.parameters['show_preview_inquiry']:
-            inquiry_timing, proceed = self.rsvp.preview_inquiry()
+            stim_times, proceed = self.rsvp.preview_inquiry()
             if proceed:
-                inquiry_timing.extend(self.rsvp.do_inquiry())
+                stim_times.extend(self.rsvp.do_inquiry())
             else:
                 self.logger.warning(
                     '*warning* Inquiry Preview - Updating inquiries is not implemented yet. '
                     'The inquiry will present as normal.')
-                inquiry_timing.extend(self.rsvp.do_inquiry())
+                stim_times.extend(self.rsvp.do_inquiry())
         else:
-            inquiry_timing = self.rsvp.do_inquiry()
+            stim_times = self.rsvp.do_inquiry()
             self.logger.debug("Inquiry timing:")
-            self.logger.debug(inquiry_timing)
+            self.logger.debug(stim_times)
 
         # TODO: return proceed?
-        return inquiry_timing
+        return stim_times
 
     def show_feedback(self, selection: str, correct: bool):
         """Display the last selection as feedback if the 'show_feedback'
@@ -303,29 +299,27 @@ class RSVPCopyPhraseTask(Task):
                 if new_series:
                     # Init an series, getting initial stimuli
                     new_series, sti = copy_phrase_task.initialize_series()
-                    inquiry_spec = InquirySpec._make(sti)
-                    ele_sti, timing_sti, color_sti = sti
+                    current_inquiry = InquirySpec._make(sti)
                     self.logger.debug(
-                        f"Initializing series; Stim:\n{ele_sti}")
+                        f"Initializing series; Stim:\n{current_inquiry.stims}")
 
-                inquiry_timing = self.present_inquiry(ele_sti[0], color_sti[0],
-                                                      timing_sti[0])
+                stim_times = self.present_inquiry(current_inquiry)
 
                 # Write triggers to file
                 _write_triggers_from_inquiry_copy_phrase(
-                    inquiry_timing, trigger_file, self.copy_phrase,
+                    stim_times, trigger_file, self.copy_phrase,
                     self.spelled_text)
 
                 self.wait()
 
                 # Delete calibration
                 if self.is_first_inquiry:
-                    del inquiry_timing[0]
+                    del stim_times[0]
 
                 # reshape the data and triggers as needed for later modules
                 raw_data, triggers, target_info = \
                     process_data_for_decision(
-                        inquiry_timing,
+                        stim_times,
                         self.daq,
                         self.window,
                         self.parameters,
@@ -335,8 +329,8 @@ class RSVPCopyPhraseTask(Task):
                     f"Process data for decision triggers:\n{triggers}")
 
                 # Construct Data Record
-                inquiry = Inquiry(stimuli=ele_sti,
-                                  timing=timing_sti,
+                data = Inquiry(stimuli=current_inquiry.stims,
+                                  timing=current_inquiry.durations,
                                   triggers=triggers,
                                   target_info=target_info,
                                   target_letter=target_letter,
@@ -359,21 +353,19 @@ class RSVPCopyPhraseTask(Task):
                             triggers,
                             target_info,
                             self.parameters['trial_length'])
-                    self.add_evidence(inquiry, copy_phrase_task.conjugator)
+                    self.add_evidence(data, copy_phrase_task.conjugator)
 
-                    # If new_series is False, get the stimuli info returned
-                    # TODO: could also say, if sti: ...
+                    # TODO: could also say, if new_sti: ...
                     if not new_series:
-                        inquiry_spec = InquirySpec._make(sti)
-                        ele_sti, timing_sti, color_sti = sti
+                        current_inquiry = InquirySpec._make(new_sti)
 
                     # Get the current text from the decision maker
                     self.spelled_text = copy_phrase_task.decision_maker.displayed_state
                     # Selection may be the last spelled letter or backspace.
                     selection = copy_phrase_task.decision_maker.last_selection
 
-                inquiry.next_display_state = self.spelled_text
-                self.session.add_sequence(inquiry)
+                data.next_display_state = self.spelled_text
+                self.session.add_sequence(data)
 
                 # if a letter was selected and feedback enabled, show the chosen
                 # letter
