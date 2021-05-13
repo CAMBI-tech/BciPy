@@ -5,13 +5,12 @@ from bcipy.helpers.task import print_message
 from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.system_utils import get_system_info, configure_logger, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_json_parameters, load_experiments
+from bcipy.helpers.load import load_json_parameters, load_experiments, load_signal_model
 from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.tasks.start_task import start_task
 from bcipy.tasks.task_registry import TaskType
-from bcipy.signal.model import load_signal_model
 from bcipy.signal.model import PcaRdaKdeModel
 
 
@@ -97,7 +96,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         try:
             signal_model, filename = load_signal_model(
                 model_class=PcaRdaKdeModel, model_kwargs={
-                    "k_folds": parameters["k_folds"]})
+                    "k_folds": parameters["k_folds"]}, filename="data/default/test_user/calib/model.pkl")
         except Exception as e:
             print(f'Cannot load signal model. Exiting. {e}')
             raise e

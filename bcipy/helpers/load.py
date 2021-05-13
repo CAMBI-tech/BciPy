@@ -194,8 +194,7 @@ def load_signal_model(model_class: SignalModel,
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)
-    with open(filename, "rb") as f:
-        signal_model.load(f)
+    signal_model.load(filename)
 
     return signal_model, filename
 
