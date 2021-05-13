@@ -111,8 +111,7 @@ def offline_analysis(data_folder: str = None,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
 
     log.info('Saving the model!')
-    with open(data_folder + f'/model_{model_performance.auc}.pkl', 'wb') as output:
-        pickle.dump(model, output)
+    model.save(data_folder + f'/model_{model_performance.auc}.pkl')
 
     if alert_finished:
         offline_analysis_tone = parameters.get('offline_analysis_tone')
