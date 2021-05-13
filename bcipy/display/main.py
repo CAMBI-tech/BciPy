@@ -9,7 +9,7 @@ from bcipy.helpers.system_utils import get_screen_resolution
 
 class Display(ABC):
     """Display.
-    
+
     Base class for BciPy displays. This defines the logic necessary for task excecutions that require a display.
     """
 
@@ -34,7 +34,7 @@ class Display(ABC):
     @abstractmethod
     def wait_screen(self) -> None:
         """Wait Screen.
-        
+
         Define what happens on the screen when a user pauses a session.
         """
         ...
@@ -42,21 +42,21 @@ class Display(ABC):
     @abstractmethod
     def update_task(self) -> None:
         """Update Task.
-        
+
         Update any task related display items not releated to the inquiry. Ex. stimuli count 1/200.
         """
         ...
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule To.
-        
+
         Schedule stimuli elements (works as a buffer) before calling do_inquiry.
         """
         ...
 
     def draw_static(self) -> None:
         """Draw Static.
-        
+
         Displays task information not related to the inquiry.
         """
         ...

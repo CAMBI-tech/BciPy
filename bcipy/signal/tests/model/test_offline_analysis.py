@@ -1,5 +1,5 @@
 """Integration test of offline_analysis.py (slow)"""
-from bcipy.signal.model import offline_analysis
+from bcipy.signal.model.offline_analysis import offline_analysis
 import unittest
 from bcipy.helpers.load import load_json_parameters
 from pathlib import Path
@@ -16,6 +16,7 @@ input_folder = pwd / "integration_test_input"
 expected_output_folder = pwd / "integration_test_expected_output"  # global for the purpose of pytest-mpl decorator
 
 
+@pytest.mark.slow
 class TestOfflineAnalysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -34,7 +35,7 @@ class TestOfflineAnalysis(unittest.TestCase):
 
         cls.parameters = load_json_parameters(cls.tmp_dir / "parameters.json", value_cast=True)
         cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
-        cls.mean_erp_fig_handle, cls.lik_dens_fig_handle = fig_handles
+        cls.mean_erp_fig_handle = fig_handles[0]
 
     @classmethod
     def tearDownClass(cls):
@@ -55,10 +56,6 @@ class TestOfflineAnalysis(unittest.TestCase):
     @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png", remove_text=True)
     def test_mean_erp(self):
         return self.mean_erp_fig_handle
-
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_lik_dens.png", remove_text=True)
-    def test_lik_dens(self):
-        return self.lik_dens_fig_handle
 
 
 if __name__ == "__main__":

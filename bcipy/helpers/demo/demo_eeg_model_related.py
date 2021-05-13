@@ -1,7 +1,7 @@
 import numpy as np
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
 from bcipy.helpers.task import alphabet
+from bcipy.signal.model import PcaRdaKdeModel
 
 channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]
 dim_x = 5
@@ -32,8 +32,8 @@ def demo_copy_phrase_wrapper():
 
     train_x = train_x[list(np.where(np.asarray(channel_map) == 1)[0]), :, :]
 
-    k_folds = 10
-    model, _ = train_pca_rda_kde_model(train_x, train_y, k_folds=k_folds)
+    model = PcaRdaKdeModel(k_folds=10)
+    model.fit(train_x, train_y)
 
     # Define task and operate
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),

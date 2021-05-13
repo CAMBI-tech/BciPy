@@ -1,5 +1,8 @@
-from sklearn.neighbors import KernelDensity
+from typing import Optional
+
 import numpy as np
+from scipy.stats import iqr
+from sklearn.neighbors import KernelDensity
 
 
 class KernelDensityEstimate:
@@ -7,6 +10,8 @@ class KernelDensityEstimate:
     library. For further reference, please check scikit learn website.
     Attr:
         bandwidth(float): bandwidth of the kernel
+        scores(np.array): Shape (num_items, 2) - ratio of classification scores from RDA; used to compute bandwidth
+        num_channels(int): Number of channels in the original data; used to compute bandwidth
         algorithm(string): algorithm type
         kernel(string): element to form the actual fitted pdf.
         metric(string): distance metric used by algorithm to insert kernels
@@ -19,12 +24,16 @@ class KernelDensityEstimate:
 
         """
 
-    def __init__(self, bandwidth=1.0, algorithm='auto', kernel='gaussian',
-                 metric='euclidean', atol=0, rtol=0, breadth_first=True,
-                 leaf_size=40, metric_params=None, num_cls=2):
+    def __init__(self, scores: Optional[np.array] = None, num_channels: Optional[int] = None,
+                 algorithm='auto', kernel='gaussian', metric='euclidean', atol=0, rtol=0,
+                 breadth_first=True, leaf_size=40, metric_params=None, num_cls=2):
+        if scores is None or num_channels is None:
+            bandwidth = 1.0
+        else:
+            bandwidth = self._compute_bandwidth(scores, num_channels)
         self.list_den_est = []
         self.num_cls = num_cls
-        for i in range(num_cls):
+        for _ in range(num_cls):
             self.list_den_est.append(KernelDensity(bandwidth=bandwidth,
                                                    algorithm=algorithm,
                                                    kernel=kernel,
@@ -34,6 +43,18 @@ class KernelDensityEstimate:
                                                    breadth_first=breadth_first,
                                                    leaf_size=leaf_size,
                                                    metric_params=metric_params))
+
+    def _compute_bandwidth(self, scores: np.array, num_channels: int):
+        """Estimate bandwidth parameter
+
+        Args:
+            scores (np.array): Shape (num_items, 2) - positive and negative class probabilities from RDA
+            num_channels (int): number of channels in the original data
+
+        Returns:
+            float: rule-of-thumb bandwidth parameter for KDE
+        """
+        return 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_channels, -0.2)
 
     def fit(self, x, y):
         """ Fits the kernel density estimates base on labelled data.

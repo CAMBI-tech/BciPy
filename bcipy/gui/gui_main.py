@@ -209,8 +209,8 @@ class FormInput(QWidget):
         """Returns True if the input matches the given text, otherwise False."""
         text = term.lower()
         return (text in self.label.lower()) or (
-            self.help_tip
-            and text in self.help_tip.lower()) or text in self.value().lower()
+            self.help_tip and
+            text in self.help_tip.lower()) or text in self.value().lower()
 
     def show(self):
         """Show this widget, and all child widgets."""

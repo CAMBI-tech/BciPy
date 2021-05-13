@@ -1,33 +1,16 @@
 import numpy as np
 from copy import copy
 import random
-from typing import List
-
-# the small epsilon value. Prevents numerical issues with log
-eps = np.power(.1, 6)
+from typing import List, Any
+from abc import ABC, abstractmethod
 
 
-class StimuliAgent:
-    """ Query mechanism base class.
-        Attr:
-            alphabet(list[str]): Query space(possible queries).
-            len_query(int): number of elements in a query
-        Functions:
-            reset(): reset the agent
-            return_stimuli(): update the agent and return a stimuli set
-            do_series(): one a commitment is made update agent
-            """
-
-    def __init__(self,
-                 alphabet: List[str],
-                 len_query: int,
-                 **kwargs):
-        self.alp = alphabet
-        self.len_query = len_query
-
+class StimuliAgent(ABC):
+    @abstractmethod
     def reset(self):
-        return
+        ...
 
+    @abstractmethod
     def return_stimuli(self, list_distribution: np.ndarray, **kwargs):
         """ updates the agent with most likely posterior and selects queries
             Args:
@@ -35,11 +18,12 @@ class StimuliAgent:
                     stored in the decision maker
             Return:
                 query(list[str]): queries """
-        return
+        ...
 
+    @abstractmethod
     def do_series(self):
         """ If the system decides on a class let the agent know about it """
-        return
+        ...
 
 
 class RandomStimuliAgent(StimuliAgent):
@@ -82,6 +66,7 @@ class NBestStimuliAgent(StimuliAgent):
 
 
 class MomentumStimuliAgent(StimuliAgent):
+    # TODO - either add demo, add test, or delete this unused code!
     """ A query agent that utilizes the observed evidence so far at each step.
         This agent is specifically designed to overcome the adversary effect of
         the prior information to the system.
@@ -127,7 +112,7 @@ class MomentumStimuliAgent(StimuliAgent):
         tmp = list_distribution[-1]
 
         # conditional entropy as a surrogate for mutual information
-        entropy_term = np.array(tmp) * np.log(tmp + eps) + (
+        entropy_term = np.array(tmp) * np.log(tmp + 1e-6) + (
             1.01 - np.array(tmp)) * (np.log(1.01 - np.array(tmp)))
         entropy_term[np.isnan(entropy_term)] = 0
 
@@ -182,26 +167,8 @@ class MomentumStimuliAgent(StimuliAgent):
         self.reset()
 
 
-# A generic best selection from set function using values
-def best_selection(list_el, val, len_query):
-    """ given set of elements and a value function over the set,
-        picks the len_query number of elements with the best value.
-        Args:
-            list_el(list[str]): the set of elements
-            val(list[float]): values for the corresponding elements
-            len_query(int): number of elements to be picked from the set
-        Return:
-            query(list[str]): elements from list_el with the best value """
-    max_p_val = np.sort(val)[::-1]
-    max_p_val = max_p_val[0:len_query]
-
-    query = []
-    for idx in range(len_query):
-        idx_q = np.where(val == max_p_val[idx])[0][0]
-
-        q = list_el[idx_q]
-        val = np.delete(val, idx_q)
-        list_el.remove(q)
-        query.append(q)
-
-    return query
+def best_selection(list_el: List[Any], val: List[float], len_query: int):
+    """Return the top `len_query` items from `list_el` according to the values in `val`"""
+    # numpy version: return list_el[(-val).argsort()][:len_query]
+    sorted_items = reversed(sorted(zip(val, list_el)))
+    return [el for (value, el) in sorted_items][:len_query]

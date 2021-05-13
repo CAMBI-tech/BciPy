@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
 from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
 from bcipy.helpers.stimuli import rsvp_inq_generator
