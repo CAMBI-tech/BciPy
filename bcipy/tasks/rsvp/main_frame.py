@@ -140,9 +140,7 @@ class DecisionMaker:
                  stopping_evaluator=CriteriaEvaluator.default(min_num_inq=2,
                                                               max_num_inq=10,
                                                               threshold=0.8),
-                 stimuli_agent=RandomStimuliAgent(
-                     alphabet=list(string.ascii_uppercase) +
-                     [BACKSPACE_CHAR] + [SPACE_CHAR])):
+                 stimuli_agent=None):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -162,7 +160,7 @@ class DecisionMaker:
         self.stopping_evaluator = stopping_evaluator
 
         # Stimuli Agent
-        self.stimuli_agent = stimuli_agent
+        self.stimuli_agent = RandomStimuliAgent(alphabet=self.alphabet)
 
         self.last_selection = ''
 

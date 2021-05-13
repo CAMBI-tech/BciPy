@@ -27,6 +27,17 @@ class StimuliAgent(ABC):
 
 
 class RandomStimuliAgent(StimuliAgent):
+    """ An inherited class of StimuliAgent. Chooses random set of letters for
+        queries instead of most likely letters.
+        Attr:
+            alphabet(list[str]): Query space(possible queries).
+            len_query(int): number of elements in a query
+        Functions:
+            reset(): reset the agent
+            return_stimuli(): update the agent and return a stimuli set
+            do_series(): one a commitment is made update agent
+            """
+
     def __init__(self, alphabet: List[str], len_query: int = 4):
         self.alphabet = alphabet
         self.len_query = len_query
@@ -47,6 +58,17 @@ class RandomStimuliAgent(StimuliAgent):
 
 
 class NBestStimuliAgent(StimuliAgent):
+    """ An inherited class of StimuliAgent. Updates the agent with N most likely 
+        letters based on posteriors and selects queries.
+        Attr:
+            alphabet(list[str]): Query space(possible queries).
+            len_query(int): number of elements in a query
+        Functions:
+            reset(): reset the agent
+            return_stimuli(): update the agent and return a stimuli set
+            do_series(): one a commitment is made update agent
+            """
+
     def __init__(self, alphabet: List[str], len_query: int = 4):
         self.alphabet = alphabet
         self.len_query = len_query
