@@ -143,11 +143,15 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         user_input_mock.return_value = False
+        # mock data for initial series
+        series_gen = mock_inquiry_data()
+        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
+            next(series_gen))
 
         result = task.execute()
 
         # Assertions
-        verify(self.copy_phrase_wrapper, times=0).initialize_series()
+        verify(self.copy_phrase_wrapper, times=1).initialize_series()
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=0).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
@@ -196,7 +200,7 @@ class TestCopyPhrase(unittest.TestCase):
         result = task.execute()
 
         # Assertions
-        verify(self.copy_phrase_wrapper, times=1).initialize_series()
+        verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
@@ -274,7 +278,6 @@ class TestCopyPhrase(unittest.TestCase):
                                   signal_model=self.signal_model,
                                   language_model=self.language_model,
                                   fake=True)
-        self.assertEqual(task.spelled_text, 'Hell')
 
         # Don't provide any `escape` input from the user
         user_input_mock.side_effect = [True, True, True, True, True, True]
@@ -311,8 +314,8 @@ class TestCopyPhrase(unittest.TestCase):
 
     def test_spelled_letters(self):
         """Spelled letters should reset if count is larger than copy phrase."""
-        self.parameters['task_text'] = 'Hello'
-        self.parameters['spelled_letters_count'] = 6
+        self.parameters['task_text'] = 'Hi'
+        self.parameters['spelled_letters_count'] = 3
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -320,7 +323,8 @@ class TestCopyPhrase(unittest.TestCase):
                                   signal_model=self.signal_model,
                                   language_model=self.language_model,
                                   fake=True)
-        self.assertEqual(task.spelled_text, '')
+  
+        self.assertEqual(task.starting_spelled_letters(), 0)
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
@@ -392,7 +396,7 @@ class TestCopyPhrase(unittest.TestCase):
         result = task.execute()
 
         # Assertions
-        verify(self.copy_phrase_wrapper, times=1).initialize_series()
+        verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
