@@ -166,8 +166,7 @@ class MomentumCommitCriteria(DecisionCriteria):
         tau_ = -np.sum(tmp_p * np.log2(tmp_p + eps))
 
         tmp_ = np.array(prob_history)
-        mom_ = tmp_[1:] * (
-            np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
+        mom_ = tmp_[1:] * (np.log(tmp_[1:] + eps) - np.log(tmp_[:-1] + eps))
         momentum = np.linalg.norm(mom_) / len(prob_history)
 
         if len(prob_history) > 1:
