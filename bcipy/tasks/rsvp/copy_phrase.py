@@ -1,3 +1,4 @@
+import numpy as np
 from psychopy import core
 from typing import List, Tuple, TextIO, NamedTuple
 from bcipy.tasks.task import Task
@@ -7,25 +8,32 @@ from bcipy.display.rsvp import PreviewInquiryProperties, InformationProperties, 
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper, EvidenceName
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion
 from bcipy.helpers.task import (fake_copy_phrase_decision, alphabet,
                                 process_data_for_decision,
                                 trial_complete_message, get_user_input,
                                 BACKSPACE_CHAR)
-
-from collections import namedtuple
-
-
-class InquirySpec(NamedTuple):
-    """Specification for the next inquiry to present, including stimulus,
-    duration, and color information."""
-    stims: List[List[str]]
-    durations: List[List[float]]
-    colors: List[List[str]]
+from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 
 
-# InquirySpec = namedtuple('InquirySpec', ['stims', 'durations', 'colors'])
+class Decision(NamedTuple):
+    """Represents the result of evaluating evidence.
+    
+    Attrs
+    -----
+    - decision_made : whether or a not there was a commitment to a letter.
+    - selection : selected letter; will be an empty string if there was no
+    commitment.
+    - spelled_text : spelled text resulting from the decision.
+    - new_inq_schedule : the next inquiry to present if there was not a
+    decision.
+    """
+    decision_made: bool
+    selection: str
+    spelled_text: str
+    new_inq_schedule: InquirySchedule
 
 
 class RSVPCopyPhraseTask(Task):
@@ -85,7 +93,6 @@ class RSVPCopyPhraseTask(Task):
         super(RSVPCopyPhraseTask, self).__init__()
 
         self.window = win
-        # TODO: assert required params
         self.parameters = parameters
         self.daq = daq
         self.static_clock = core.StaticPeriod(
@@ -107,6 +114,12 @@ class RSVPCopyPhraseTask(Task):
         self.language_model = language_model
         self.signal_model = signal_model
 
+        # TODO: add a parameter for button_press_error_prob.
+        self.button_press_error_prob = 0.05
+        self.evidence_names = [EvidenceName.LM, EvidenceName.ERP]
+        if self.parameters['show_preview_inquiry']:
+            self.evidence_names.append(EvidenceName.BTN)
+
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 
@@ -120,21 +133,22 @@ class RSVPCopyPhraseTask(Task):
         self.write_session_data()
 
         self.init_copy_phrase_task()
-        self.next_inquiry()
+        self.current_inquiry = self.next_inquiry()
 
     def starting_spelled_letters(self) -> int:
-        """Number of letters already spelled at the start of the task"""
+        """Number of letters already spelled at the start of the task."""
         spelled_letters_count = self.parameters['spelled_letters_count']
         if spelled_letters_count > len(self.copy_phrase):
             self.logger.debug('Already spelled letters exceeds phrase length.')
             spelled_letters_count = 0
         return spelled_letters_count
 
-    def next_inquiry(self) -> None:
-        """Initialize the current_inquiry for spelling the next letter."""
+    def next_inquiry(self) -> InquirySchedule:
+        """Generate the first InquirySchedule for spelling the next letter."""
         if self.copy_phrase_task:
-            _, sti = self.copy_phrase_task.initialize_series()
-            self.current_inquiry = InquirySpec._make(sti)
+            _, inquiry_schedule = self.copy_phrase_task.initialize_series()
+            return inquiry_schedule
+        return None
 
     def init_copy_phrase_task(self) -> CopyPhraseWrapper:
         """Initialize the CopyPhraseWrapper
@@ -145,6 +159,7 @@ class RSVPCopyPhraseTask(Task):
         --------
             initialized CopyPhraseWrapper
         """
+
         self.copy_phrase_task = _init_copy_phrase_wrapper(
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_trial'],
@@ -152,6 +167,7 @@ class RSVPCopyPhraseTask(Task):
             fs=self.daq.device_info.fs,
             k=self.parameters['down_sampling_rate'],
             alp=self.alp,
+            evidence_names=self.evidence_names,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
             lmodel=self.language_model,
             is_txt_stim=self.parameters['is_txt_stim'],
@@ -169,12 +185,8 @@ class RSVPCopyPhraseTask(Task):
             notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'])
 
-    @property
-    def is_first_inquiry(self) -> bool:
-        return self.inq_counter and self.inq_counter == 0
-
     def await_start(self) -> bool:
-        """Wait for on the splash screen for the user to either exit or start."""
+        """Wait on the splash screen for the user to either exit or start."""
         self.logger.debug('Awaiting user start.')
         should_continue = get_user_input(
             self.rsvp,
@@ -185,7 +197,12 @@ class RSVPCopyPhraseTask(Task):
 
     def user_wants_to_continue(self) -> bool:
         """Check if user wants to continue or terminate.
-        Returns True to continue."""
+        
+        Returns
+        -------
+        - `True` to continue
+        - `False` to finish the task.
+        """
         should_continue = get_user_input(
             self.rsvp,
             self.parameters['wait_screen_message'],
@@ -198,25 +215,33 @@ class RSVPCopyPhraseTask(Task):
     def wait(self, seconds: float = None):
         """Pause for a time.
 
-        Parameters:
+        Parameters
         ----------
-            seconds - duration of time to wait; if missing defaults to the
-                value of the parameter 'task_buffer_len'
+        - seconds : duration of time to wait; if missing, defaults to the
+        value of the parameter `'task_buffer_len'`
         """
         seconds = seconds or self.parameters['task_buffer_len']
         core.wait(seconds)
 
-    def present_inquiry(self,
-                        inquiry_spec: InquirySpec) -> List[Tuple[str, float]]:
+    def present_inquiry(self, inquiry_schedule: InquirySchedule
+                        ) -> Tuple[List[Tuple[str, float]], bool]:
         """Present the given inquiry and return the trigger timing info.
-        Parameters:
-        ---------- 
-          inquiry_spec - specification for next sequence of stimuli to present
 
-        Returns:
-        --------
-            stim_times - list of tuples representing the letter and time
-                that it was presented relative to the experiment clock.
+        Parameters
+        ---------- 
+        - inquiry_schedule : schedule for next sequences of stimuli to present.
+        Currently, only the first list of stims in the schedule is used.
+
+        Returns
+        -------
+        Tuple of `(stim_times, proceed)`
+
+        - stim_times : list of tuples representing the stimulus and time that
+        it was presented relative to the experiment clock. Non-stim triggers
+        may be also be included in the list ('calibration', etc).
+        - proceed : indicates whether to proceed with evaluating eeg evidence.
+        a value of False indicates that the inquiry was previewed but not 
+        presented in sequence.
         """
         # Update task state and reset the static
         self.rsvp.update_task_state(text=self.spelled_text,
@@ -225,10 +250,10 @@ class RSVPCopyPhraseTask(Task):
         self.window.flip()
 
         # Setup the new Stimuli
-        self.rsvp.stimuli_inquiry = inquiry_spec.stims[0]
+        self.rsvp.stimuli_inquiry = inquiry_schedule.stims[0]
         if self.parameters['is_txt_stim']:
-            self.rsvp.stimuli_colors = inquiry_spec.colors[0]
-        self.rsvp.stimuli_timing = inquiry_spec.durations[0]
+            self.rsvp.stimuli_colors = inquiry_schedule.colors[0]
+        self.rsvp.stimuli_timing = inquiry_schedule.durations[0]
 
         self.wait()
 
@@ -236,18 +261,11 @@ class RSVPCopyPhraseTask(Task):
             stim_times, proceed = self.rsvp.preview_inquiry()
             if proceed:
                 stim_times.extend(self.rsvp.do_inquiry())
-            else:
-                self.logger.warning(
-                    '*warning* Inquiry Preview - Updating inquiries is not implemented yet. '
-                    'The inquiry will present as normal.')
-                stim_times.extend(self.rsvp.do_inquiry())
         else:
             stim_times = self.rsvp.do_inquiry()
-            self.logger.debug("Inquiry timing:")
-            self.logger.debug(stim_times)
+            proceed = True
 
-        # TODO: return proceed?
-        return stim_times
+        return stim_times, proceed
 
     def show_feedback(self, selection: str, correct: bool):
         """Display the last selection as feedback if the 'show_feedback'
@@ -265,7 +283,6 @@ class RSVPCopyPhraseTask(Task):
         """Returns True if experiment is currently within params and the task
         should continue.
         """
-
         if self.copy_phrase == self.spelled_text:
             self.logger.debug('Spelling complete')
             return False
@@ -283,7 +300,7 @@ class RSVPCopyPhraseTask(Task):
             return False
         return True
 
-    def next_target(self):
+    def next_target(self) -> str:
         """Computes the next target letter based on the currently spelled_text.
         """
         if self.copy_phrase[0:len(self.spelled_text)] == self.spelled_text:
@@ -291,87 +308,55 @@ class RSVPCopyPhraseTask(Task):
             return self.copy_phrase[len(self.spelled_text)]
         return BACKSPACE_CHAR
 
-    def execute(self):
+    def execute(self) -> str:
+        """Executes the task.
+
+        Returns
+        -------
+        data save location (triggers.txt, session.json)
+        """
         self.logger.debug('Starting Copy Phrase Task!')
         self.setup()
 
         with open(self.trigger_save_location, 'w') as trigger_file:
             run = self.await_start()
 
-            # Start the Session!
             while run and self.user_wants_to_continue():
-
-                target_letter = self.next_target()
-                stim_times = self.present_inquiry(self.current_inquiry)
+                stim_times, proceed = self.present_inquiry(
+                    self.current_inquiry)
 
                 self.write_trigger_data(stim_times, trigger_file)
-
                 self.wait()
 
-                # Delete calibration
-                if self.is_first_inquiry:
-                    del stim_times[0]
+                # TODO: construct triggers, target_info locally
+                # TODO: single method to add_evidence, which calls the next two items.
 
-                # reshape the data and triggers as needed for later modules
-                raw_data, triggers, target_info = \
-                    process_data_for_decision(
-                        stim_times,
-                        self.daq,
-                        self.window,
-                        self.parameters,
-                        self.rsvp.first_stim_time,
-                        self.parameters['static_trigger_offset'])
+                self.add_button_press_evidence(proceed)
+                triggers, target_info = self.add_eeg_evidence(
+                    stim_times, proceed)
 
-                # Construct Data Record
-                data = Inquiry(stimuli=self.current_inquiry.stims,
-                               timing=self.current_inquiry.durations,
-                               triggers=triggers,
-                               target_info=target_info,
-                               target_letter=target_letter,
-                               current_text=self.spelled_text,
-                               target_text=self.copy_phrase)
+                decision = self.evaluate_evidence()
 
-                if self.fake:
-                    # In fake mode, all inquiries result in a selection.
-                    _, self.spelled_text, run = fake_copy_phrase_decision(
-                        self.copy_phrase, target_letter, self.spelled_text)
+                target_letter = self.next_target()
+                self.update_session_data(self.new_data_record(
+                    triggers,
+                    target_info,
+                    target_letter,
+                    current_text=self.spelled_text,
+                    next_state=decision.spelled_text),
+                                         save=True,
+                                         decision_made=decision.decision_made)
 
-                    new_series = True
-                    selection = self.spelled_text[-1]
-                    # Reset the stoppage criteria
-                    self.copy_phrase_task.decision_maker.do_series()
+                if decision.decision_made:
+                    self.show_feedback(decision.selection,
+                                       (decision.selection == target_letter))
+                    self.spelled_text = decision.spelled_text
+                    self.current_inquiry = self.next_inquiry()
+
                 else:
-                    # Evaluate this inquiry, returning whether to gen a new
-                    #  series (inq) or stimuli to present
-                    new_series, new_sti = \
-                        self.copy_phrase_task.evaluate_inquiry(
-                            raw_data,
-                            triggers,
-                            target_info,
-                            self.parameters['trial_length'])
+                    self.current_inquiry = decision.new_inq_schedule
 
-                    self.add_evidence(data, self.copy_phrase_task.conjugator)
-                    self.spelled_text = self.copy_phrase_task.decision_maker.displayed_state
-                    # Selection may be the last spelled letter or backspace.
-                    selection = self.copy_phrase_task.decision_maker.last_selection
-
-                    if new_sti:
-                        # Decision was not made; initialize the next inquiry to display.
-                        self.current_inquiry = InquirySpec._make(new_sti)
-
-                data.next_display_state = self.spelled_text
-                self.update_session_data(data, save=True)
-
-                # If a letter was selected, show feedback and initialize an
-                # inquiry for the next letter.
-                if new_series:
-                    self.show_feedback(selection, (selection == target_letter))
-                    self.session.add_series()
-                    self.next_inquiry()
-
-                # Decide whether to keep the task going
                 run = self.stoppage_criteria_ok()
-
                 self.inq_counter += 1
 
             self.exit_display()
@@ -382,12 +367,140 @@ class RSVPCopyPhraseTask(Task):
 
         return self.file_save
 
-    def add_evidence(self, inquiry: Inquiry, conjugator: EvidenceFusion):
-        """Update the inquiry with the latest evidence."""
-        ev_hist = conjugator.latest_evidence
-        inquiry.lm_evidence = ev_hist['LM']
-        inquiry.eeg_evidence = ev_hist['ERP']
-        inquiry.likelihood = list(conjugator.likelihood)
+    def evaluate_evidence(self) -> Decision:
+        """Uses the `copy_phrase_task` parameter to evaluate the provided
+        evidence and attempt a decision. 
+        
+        Modifies
+        --------
+        - self.copy_phrase_task
+        """
+        if self.fake:
+            _, spelled, _ = fake_copy_phrase_decision(self.copy_phrase,
+                                                      self.next_target(),
+                                                      self.spelled_text)
+            # Reset the stoppage criteria by forcing the commit to a decision.
+            self.copy_phrase_task.decision_maker.do_series()
+
+            # In fake mode, all inquiries result in a selection.
+            return Decision(decision_made=True,
+                            selection=spelled[-1],
+                            spelled_text=spelled,
+                            new_inq_schedule=None)
+
+        decision_made, new_sti = self.copy_phrase_task.decide()
+        spelled_text = self.copy_phrase_task.decision_maker.displayed_state
+        selection = self.copy_phrase_task.decision_maker.last_selection
+
+        return Decision(decision_made, selection, spelled_text, new_sti)
+
+    def add_button_press_evidence(self, proceed: bool) -> List[float]:
+        """If 'show_preview_inquiry' feature is enabled, compute the button
+        press evidence and add it to the copy phrase task.
+
+        Parameters
+        ----------
+        - proceed : whether to proceed with the inquiry after the preview
+
+        Returns
+        -------
+        button press evidence
+
+        Modifies
+        --------
+        - self.copy_phrase_task
+        """
+        if not self.parameters['show_preview_inquiry']:
+            return None
+        probs = compute_probs_after_preview(self.current_inquiry.stims[0],
+                                            self.alp,
+                                            self.button_press_error_prob,
+                                            proceed)
+        self.copy_phrase_task.add_evidence(EvidenceName.BTN, probs)
+        return probs
+
+    def add_eeg_evidence(self, stim_times: List[List], proceed: bool = True
+                         ) -> Tuple[List[Tuple[str, float]], List[str]]:
+        """Evaluate the EEG evidence and add it to the copy_phrase_task, but
+        don't yet attempt a decision.
+
+        Parameters
+        ----------
+        - stim_times : list of stimuli returned from the display
+        - proceed : whether or not to evaluate the evidence, if `False` returns
+        empty values.
+
+        Returns
+        -------
+        (triggers, target_info)
+
+        Modifies
+        --------
+        - self.copy_phrase_task
+        """
+        if not proceed:
+            return [], []
+
+        raw_data, triggers, target_info = process_data_for_decision(
+            self.stims_for_decision(stim_times), self.daq, self.window,
+            self.parameters, self.rsvp.first_stim_time,
+            self.parameters['static_trigger_offset'])
+
+        if not self.fake:
+            probs = self.copy_phrase_task.evaluate_eeg_evidence(
+                raw_data, triggers, target_info,
+                self.parameters['trial_length'])
+            self.copy_phrase_task.add_evidence(EvidenceName.ERP, probs)
+        return triggers, target_info
+
+    def stims_for_decision(self, stim_times: List[List]) -> List[List]:
+        """The stim_timings from the display may include non-letter stimuli
+        such as calibration and inquiry_preview timings. This method extracts
+        only the letter data used to process the data for a decision.
+        
+        Parameters
+        ----------
+        - stim_times : list of [stim, clock_time] pairs returned from display.
+
+        Returns
+        -------
+        stim times where the stim is in the current alphabet; filters out
+        'calibration', 'inquiry_preview', etc.
+        """
+        return [
+            timing for timing in stim_times if timing[0] in (self.alp + ['+'])
+        ]
+
+    def new_data_record(self, triggers: List[Tuple[str, float]],
+                        target_info: List[str], target_letter: str,
+                        current_text: str, next_state: str) -> Inquiry:
+        """Construct a new inquiry data record.
+        
+        Parameters
+        ----------
+        - triggers : list of (stimulus, clock time) tuples
+        - target_info : targetness of each trigger
+        - target_letter : stim the user is currently attempting to spell.
+        - current_text : spelled text before the inquiry
+        - next_state : spelled text after consulting the decision maker
+
+        Returns
+        -------
+        Inquiry data for the current schedule
+        """
+        data = Inquiry(stimuli=self.current_inquiry.stims,
+                       timing=self.current_inquiry.durations,
+                       triggers=triggers,
+                       target_info=target_info,
+                       target_letter=target_letter,
+                       current_text=current_text,
+                       target_text=self.copy_phrase,
+                       next_display_state=next_state)
+
+        if not self.fake:
+            data.evidences = self.copy_phrase_task.conjugator.latest_evidence
+            data.likelihood = list(self.copy_phrase_task.conjugator.likelihood)
+        return data
 
     def exit_display(self):
         """Close the UI and cleanup."""
@@ -402,16 +515,27 @@ class RSVPCopyPhraseTask(Task):
         # Give the system time to process
         self.wait()
 
-    def update_session_data(self, data: Inquiry, save: bool = True) -> None:
+    def update_session_data(self,
+                            data: Inquiry,
+                            save: bool = True,
+                            decision_made: bool = False) -> None:
         """Update the current session with the latest inquiry data
-        Parameters:
-            data - inquiry to append to the session
-            save - if True, persists the session to disk.
+
+        Parameters
+        ----------
+        - data : inquiry to append to the session
+        - save : if True, persists the session to disk.
+
+        Modifies
+        --------
+        - self.session
         """
         self.session.add_sequence(data)
         self.session.total_time_spent = self.experiment_clock.getTime()
         if save:
             self.write_session_data()
+        if decision_made:
+            self.session.add_series()
 
     def write_session_data(self) -> None:
         """Save session data to disk."""
@@ -421,9 +545,10 @@ class RSVPCopyPhraseTask(Task):
 
     def write_offset_trigger(self, trigger_file: TextIO):
         """Append the offset to the end of the triggers file.
-        Parameters:
+
+        Parameters
         -----------
-            trigger_file - open file in which to write
+        - trigger_file : open file in which to write
         """
         if self.daq.is_calibrated:
             _write_triggers_from_inquiry_copy_phrase(
@@ -435,11 +560,14 @@ class RSVPCopyPhraseTask(Task):
 
     def write_trigger_data(self, stim_times: List[Tuple[str, float]],
                            trigger_file: TextIO) -> None:
-        """Save trigger data to disk
-        Parameters:
-            stim_times - list of (stim, clock_time) tuples
-            trigger_file - data will be appended to this file
+        """Save trigger data to disk.
+
+        Parameters
+        ----------
+        - stim_times : list of (stim, clock_time) tuples
+        - trigger_file : data will be appended to this file
         """
+        # TODO: fix the helper to correctly handle the targetness of inquiry_preview stims.
         _write_triggers_from_inquiry_copy_phrase(stim_times, trigger_file,
                                                  self.copy_phrase,
                                                  self.spelled_text)
@@ -491,18 +619,19 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
 
 
 def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
-                              alp, task_list, lmodel, is_txt_stim, device_name,
-                              device_channels, stimuli_timing,
-                              decision_threshold, backspace_prob,
-                              backspace_always_shown, filter_high, filter_low,
-                              filter_order, notch_filter_frequency,
-                              stim_length):
+                              alp, evidence_names, task_list, lmodel,
+                              is_txt_stim, device_name, device_channels,
+                              stimuli_timing, decision_threshold,
+                              backspace_prob, backspace_always_shown,
+                              filter_high, filter_low, filter_order,
+                              notch_filter_frequency, stim_length):
     return CopyPhraseWrapper(min_num_inq,
                              max_num_inq,
                              signal_model=signal_model,
                              fs=fs,
                              k=k,
                              alp=alp,
+                             evidence_names=evidence_names,
                              task_list=task_list,
                              lmodel=lmodel,
                              is_txt_stim=is_txt_stim,

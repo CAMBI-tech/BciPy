@@ -4,7 +4,7 @@ import logging
 import random
 from os import path, sep
 
-from typing import Iterator
+from typing import Iterator, List, NamedTuple
 
 import numpy as np
 import sounddevice as sd
@@ -16,13 +16,27 @@ from psychopy import core
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
+class InquirySchedule(NamedTuple):
+    """Schedule for the next inquiries to present, where each inquiry specifies
+    the stimulus, duration, and color information.
+
+    Attributes
+    ----------
+    - stims: `List[List[str]]`
+    - durations: `List[List[float]]`
+    - colors: `List[List[str]]`
+    """
+    stims: List[List[str]]
+    durations: List[List[float]]
+    colors: List[List[str]]
+
 # TODO: since we have a querying this should replace the other generators
 def rsvp_inq_generator(query: list,
                        timing=[1, 0.2],
                        color=['red', 'white'],
                        stim_number=1,
                        is_txt=True,
-                       inq_constants=None) -> tuple:
+                       inq_constants=None) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
         Args:
             query(list[str]): list of queries to be shown
@@ -65,7 +79,7 @@ def rsvp_inq_generator(query: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
-    return (samples, times, colors)
+    return InquirySchedule(samples, times, colors)
 
 
 def best_selection(selection_elements: list,
@@ -109,7 +123,7 @@ def best_case_rsvp_inq_gen(alp: list,
                            stim_number=1,
                            stim_length=10,
                            is_txt=True,
-                           inq_constants=None) -> tuple:
+                           inq_constants=None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
     generates RSVPKeyboard inquiry by picking n-most likely letters.
@@ -174,13 +188,15 @@ def best_case_rsvp_inq_gen(alp: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
-    return (samples, times, colors)
+    return InquirySchedule(samples, times, colors)
 
 
-def random_rsvp_calibration_inq_gen(alp, timing=[0.5, 1, 0.2],
+def random_rsvp_calibration_inq_gen(alp,
+                                    timing=[0.5, 1, 0.2],
                                     color=['green', 'red', 'white'],
                                     stim_number=10,
-                                    stim_length=10, is_txt=True):
+                                    stim_length=10,
+                                    is_txt=True) -> InquirySchedule:
     """Random RSVP Calibration Inquiry Generator.
 
     Generates random RSVPKeyboard inquiries.
@@ -219,15 +235,16 @@ def random_rsvp_calibration_inq_gen(alp, timing=[0.5, 1, 0.2],
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
-    schedule_inq = (samples, times, colors)
-
-    return schedule_inq
+    return InquirySchedule(samples, times, colors)
 
 
-def target_rsvp_inquiry_generator(alp, target_letter, parameters,
+def target_rsvp_inquiry_generator(alp,
+                                  target_letter,
+                                  parameters,
                                   timing=[0.5, 1, 0.2],
                                   color=['green', 'white', 'white'],
-                                  stim_length=10, is_txt=True):
+                                  stim_length=10,
+                                  is_txt=True) -> InquirySchedule:
     """Target RSVP Inquiry Generator.
 
     Generate target RSVPKeyboard inquiries.
@@ -277,9 +294,7 @@ def target_rsvp_inquiry_generator(alp, target_letter, parameters,
     colors.append([color[i] for i in range(len(color) - 1)] +
                   [color[-1]] * stim_length)
 
-    schedule_inq = (samples, times, colors)
-
-    return schedule_inq
+    return InquirySchedule(samples, times, colors)
 
 
 def get_task_info(experiment_length, task_color):
@@ -307,7 +322,7 @@ def get_task_info(experiment_length, task_color):
 
 def rsvp_copy_phrase_inq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
                                    color=['green', 'white', 'white'],
-                                   stim_length=10):
+                                   stim_length=10) -> InquirySchedule:
     """Generate copy phrase RSVPKeyboard inquiries.
 
         Args:
@@ -347,9 +362,7 @@ def rsvp_copy_phrase_inq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
     colors.append([color[i] for i in range(len(color) - 1)] +
                   [color[-1]] * stim_length)
 
-    schedule_inq = (samples, times, colors)
-
-    return schedule_inq
+    return InquirySchedule(samples, times, colors)
 
 
 def generate_icon_match_images(

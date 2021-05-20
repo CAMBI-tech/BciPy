@@ -25,24 +25,27 @@ def sample_stim_seq(include_evidence: bool = False):
         next_display_state="H")
 
     if include_evidence:
-        stim_seq.lm_evidence = [
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
-            0.03518518518518518, 0.03518518518518518, 0.05, 0.03518518518518518
-        ]
-        stim_seq.eeg_evidence = [
-            1.0771572587661082, 0.9567667980052755, 0.9447790096182402,
-            0.9557979187496592, 0.9639921426239895, 1.0149791038166587,
-            0.9332784168303235, 1.0020770058735426, 1.0143856794734767, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0075605462487651, 1.0
-        ]
+        stim_seq.evidences = {
+            'LM': [
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
+                0.03518518518518518, 0.03518518518518518, 0.05,
+                0.03518518518518518
+            ],
+            'ERP': [
+                1.0771572587661082, 0.9567667980052755, 0.9447790096182402,
+                0.9557979187496592, 0.9639921426239895, 1.0149791038166587,
+                0.9332784168303235, 1.0020770058735426, 1.0143856794734767,
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0075605462487651, 1.0
+            ]
+        }
         stim_seq.likelihood = [
             0.03806880657023323, 0.03381397643627917, 0.03339030496807247,
             0.03377973438232484, 0.03406933399382669, 0.03587131114010814,
@@ -79,22 +82,24 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(dict, type(serialized))
 
         expected_keys = [
-            'stimuli', 'timing', 'triggers', 'target_info',
-            'target_letter', 'current_text', 'target_text',
-            'next_display_state'
+            'stimuli', 'timing', 'triggers', 'target_info', 'target_letter',
+            'current_text', 'target_text', 'next_display_state'
         ]
 
         for key in expected_keys:
             self.assertTrue(key in serialized)
             self.assertEqual(serialized[key], stim_seq.__getattribute__(key))
 
-        for key in ['lm_evidence', 'eeg_evidence', 'likelihood']:
+        for key in ['lm_evidence', 'erp_evidence', 'likelihood']:
             self.assertFalse(key in serialized)
 
     def test_stim_sequence_deserialization(self):
         """Test that a stim sequence can be deserialized from a dict."""
-        stim_seq = sample_stim_seq()
+        stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
+        self.assertTrue('lm_evidence' in serialized.keys())
+        self.assertEquals(serialized['lm_evidence'], stim_seq.evidences['LM'])
+
         deserialized = Inquiry.from_dict(serialized)
 
         self.assertEquals(stim_seq.stimuli, deserialized.stimuli)
@@ -106,6 +111,7 @@ class TestSessionData(unittest.TestCase):
         self.assertEquals(stim_seq.target_text, deserialized.target_text)
         self.assertEquals(stim_seq.next_display_state,
                           deserialized.next_display_state)
+        self.assertEquals(stim_seq.evidences['LM'], deserialized.evidences['LM'])
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""

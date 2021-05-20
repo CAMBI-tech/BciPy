@@ -1,8 +1,6 @@
 """Defines the CopyPhraseWrapper."""
 from typing import List, Tuple
-
 import numpy as np
-
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
 from bcipy.signal.process.filter import bandpass, notch, downsample
@@ -12,7 +10,12 @@ from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
     MinIterationsCriteria, MaxIterationsCriteria, ProbThresholdCriteria
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
     equally_probable, histogram
+from bcipy.helpers.stimuli import InquirySchedule
 
+from collections import namedtuple
+
+_EV_NAMES = ['LM', 'ERP', 'BTN']
+EvidenceName = namedtuple('Enum', _EV_NAMES)(*_EV_NAMES)
 
 class CopyPhraseWrapper:
     """Basic copy phrase task duty cycle wrapper.
@@ -99,16 +102,47 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_inquiry(self, raw_data, triggers, target_info, window_length):
-        """Once data is collected, infers meaning from the data.
+    def evaluate_inquiry(
+            self, raw_data, triggers, target_info, window_length
+    ) -> Tuple[bool, Tuple[List[str], List[float], List[str]]]:
+        """Once data is collected, infers meaning from the data and attempt to
+        make a decision.
 
-        Args:
-            raw_data(ndarray[float]): C x L eeg data where C is number of
-                channels and L is the signal length
-            triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
-                as letter and flash time for the letter
-            target_info(list[str]): target information about the stimuli
-            window_length(int): The length of the time between stimuli presentation
+        Parameters
+        ----------
+        - raw_data(ndarray[float]): C x L eeg data where C is number of
+        channels and L is the signal length
+        - triggers(list[tuple(str,float)]): triggers e.g. `('A', 1)`
+        as letter and flash time for the letter
+        - target_info(list[str]): target information about the stimuli
+        - window_length(int): The length of the time between stimuli presentation
+
+        Returns
+        -------
+        - (True, None) when commitment is made.
+        - (False, next set of stimuli) when not enough evidence has
+        been provided and stoppage criteria is not yet met.
+        """
+        lik_r = self.evaluate_eeg_evidence(raw_data, triggers, target_info,
+                                           window_length)
+        self.add_evidence(EvidenceName.ERP, lik_r)
+        return self.decide()
+
+    def evaluate_eeg_evidence(self, raw_data, triggers, target_info, window_length) -> np.array:
+        """Once data is collected, infers meaning from the data and return the results.
+
+        Parameters
+        ----------
+        - raw_data(ndarray[float]): C x L eeg data where C is number of
+        channels and L is the signal length
+        - triggers(list[tuple(str,float)]): triggers e.g. `('A', 1)`
+        as letter and flash time for the letter
+        - target_info(list[str]): target information about the stimuli
+        - window_length(int): The length of the time between stimuli presentation
+
+        Returns
+        -------
+        np.array of likelihood evidence
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
@@ -134,26 +168,53 @@ class CopyPhraseWrapper:
                                     channel_map=self.channel_map,
                                     trial_length=window_length)
 
-        lik_r = self.signal_model.predict(x, letters, self.alp)
-        prob = self.conjugator.update_and_fuse({'ERP': lik_r})
-        decision, sti = self.decision_maker.decide(prob)
+        return self.signal_model.predict(x, letters, self.alp)
 
-        return decision, sti
+    def add_evidence(self, name: str, evidence: List[float]) -> np.array:
+        """Add evidence to the conjugator.
+
+        Parameters
+        ----------
+        - name : name of evidence (ex. `'LM'`, `'ERP'`)
+        - evidence : ndarray[float], evidence for each stim
+
+        Returns
+        -------
+        updated likelihoods after fusing the new evidence
+        """
+        assert name in self.conjugator.evidence_history.keys(
+        ), f"Copy Phrase wrapper was not initialized with evidence type: {name}."
+        return self.conjugator.update_and_fuse({name: np.array(evidence)})
+
+    def decide(self) -> Tuple[bool, InquirySchedule]:
+        """Make a decision based on the current evidence.
+
+        Returns
+        -------
+        - (True, None) when commitment is made.
+        - (False, next set of stimuli) when not enough evidence has
+        been provided and stoppage criteria is not yet met.
+        """
+        decision, new_stim = self.decision_maker.decide(
+            self.conjugator.likelihood[:])
+        return decision, new_stim
 
     def letter_info(self, triggers: List[Tuple[str, float]],
                     target_info: List[str]
                     ) -> Tuple[List[str], List[float], List[str]]:
         """
         Filters out non-letters and separates timings from letters.
-        Parameters:
-        -----------
-         triggers: triggers e.g. [['A', 0.5], ...]
-                as letter and flash time for the letter
-         target_info: target information about the stimuli;
-            ex. ['nontarget', 'nontarget', ...]
-        Returns:
-        --------
-            (letters, times, target_info)
+
+        Parameters
+        ----------
+        - triggers: triggers e.g. [['A', 0.5], ...]
+        as letter and flash time for the letter
+        - target_info: target information about the stimuli;
+        ex. ['nontarget', 'nontarget', ...]
+        
+        Returns
+        -------
+        (letters, times, target_info)
         """
         letters = []
         times = []
@@ -173,7 +234,7 @@ class CopyPhraseWrapper:
 
         return letters, times, target_types
 
-    def initialize_series(self):
+    def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
 
         try:

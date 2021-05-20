@@ -16,6 +16,8 @@ from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.session_data import Session
+from bcipy.helpers.stimuli import InquirySchedule
+
 
 class TestCopyPhrase(unittest.TestCase):
     """Tests for Copy Phrase task."""
@@ -101,7 +103,10 @@ class TestCopyPhrase(unittest.TestCase):
         self.signal_model = mock()
         self.language_model = mock()
 
-        self.copy_phrase_wrapper = mock(spec=CopyPhraseWrapper)
+        decision_maker = mock()
+        when(decision_maker).do_series()
+        self.copy_phrase_wrapper = mock({'decision_maker': decision_maker},
+                                        spec=CopyPhraseWrapper)
 
         self.display = mock()
         when(bcipy.tasks.rsvp.copy_phrase)._init_copy_phrase_display(
@@ -257,7 +262,8 @@ class TestCopyPhrase(unittest.TestCase):
             'Session data should be written')
         with open(Path(task.session_save_location), 'r') as json_file:
             session = Session.from_dict(json.load(json_file))
-            self.assertEqual(2, session.total_number_series, "In fake data a decision is made every time.")
+            self.assertEqual(2, session.total_number_series,
+                             "In fake data a decision is made every time.")
             self.assertEqual(1, len(session.series[0]))
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
@@ -323,8 +329,53 @@ class TestCopyPhrase(unittest.TestCase):
                                   signal_model=self.signal_model,
                                   language_model=self.language_model,
                                   fake=True)
-  
+
         self.assertEqual(task.starting_spelled_letters(), 0)
+
+    def test_stims_for_eeg(self):
+        """The correct stims should be sent to process_data_for_decision"""
+        task = RSVPCopyPhraseTask(win=self.win,
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=True)
+        timings1 = [['calibration_trigger', 2.0539278959913645],
+                    ['+', 3.7769652379938634], ['Y', 4.247819707990857],
+                    ['S', 4.46274590199755], ['W', 4.679621118993964],
+                    ['T', 4.896305427988409], ['Z', 5.113133526989259],
+                    ['U', 5.330021020999993], ['_', 5.5466853869875195],
+                    ['V', 5.763273582997499], ['<', 5.980079917993862],
+                    ['X', 6.196792346992879]]
+        timings2 = [['+', 10.012395212994306], ['S', 10.480566113998066],
+                    ['W', 10.698780701000942], ['_', 10.914151947989012],
+                    ['T', 11.131801953000831], ['X', 11.348126853990834],
+                    ['V', 11.564720113994554], ['<', 11.78139575899695],
+                    ['U', 11.998181054994348], ['Z', 12.216052213989315],
+                    ['Y', 12.431886781996582]]
+        timings3 = [['inquiry_preview', 4.17302582100092],
+                    ['bcipy_key_press_space', 5.240045738988556],
+                    ['calibration_trigger', 6.246425178993377],
+                    ['+', 7.9547649689920945], ['U', 8.423195326002315],
+                    ['Y', 8.63952172199788], ['W', 8.85597900499124],
+                    ['S', 9.072196301989607], ['V', 9.288272819001577],
+                    ['_', 9.504346693996922], ['Z', 9.720611868993728],
+                    ['<', 9.936859529989306], ['T', 10.181245272993692],
+                    ['X', 10.414546125000925]]
+        timings4 = [['inquiry_preview', 14.260656393991667],
+                    ['+', 20.29594270499365], ['W', 20.76407659400138],
+                    ['Z', 20.98034024599474], ['X', 21.196644898998784],
+                    ['U', 21.413044401997468], ['T', 21.62935446499614],
+                    ['<', 21.845442681995337], ['S', 22.06172111700289],
+                    ['V', 22.277897565989406], ['Y', 22.494165399999474],
+                    ['_', 22.710345731989946]]
+
+        self.assertEqual(task.stims_for_decision(timings1), timings1[1:],
+                         "calibration trigger should be omitted")
+        self.assertEqual(task.stims_for_decision(timings2), timings2)
+        self.assertEqual(task.stims_for_decision(timings3), timings3[3:])
+        self.assertEqual(task.stims_for_decision(timings4), timings4[1:])
 
     @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
@@ -385,6 +436,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         when(self.copy_phrase_wrapper).initialize_series().thenReturn(
             next(series_gen))
+        when(self.copy_phrase_wrapper).add_evidence(any, any).thenReturn([])
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -399,6 +451,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
+        verify(self.copy_phrase_wrapper, times=1).add_evidence('BTN', ...)
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
         self.assertEqual(self.temp_dir, result)
 
@@ -470,24 +523,26 @@ class TestCopyPhrase(unittest.TestCase):
 
         # mock data for initial series
         when(copy_phrase_wrapper_mock).initialize_series().thenReturn(
-            (False, ([['+', '<', 'G', 'A', 'E', 'H', 'D', 'F', 'I', 'B',
-                       'C']], [[
-                           0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
-                           0.25, 0.25
-                       ]], [[
-                           'red', 'white', 'white', 'white', 'white', 'white',
-                           'white', 'white', 'white', 'white', 'white'
-                       ]])))
+            (False,
+             InquirySchedule(
+                 [['+', '<', 'G', 'A', 'E', 'H', 'D', 'F', 'I', 'B', 'C']], [[
+                     0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+                     0.25
+                 ]], [[
+                     'red', 'white', 'white', 'white', 'white', 'white',
+                     'white', 'white', 'white', 'white', 'white'
+                 ]])))
 
-        when(copy_phrase_wrapper_mock).evaluate_inquiry(...).thenReturn(
-            (False, ([['+', 'E', 'I', 'F', 'G', '<', 'J', 'H', 'B', 'D',
-                       'K']], [[
-                           0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
-                           0.25, 0.25
-                       ]], [[
-                           'red', 'white', 'white', 'white', 'white', 'white',
-                           'white', 'white', 'white', 'white', 'white'
-                       ]])))
+        when(copy_phrase_wrapper_mock).decide(...).thenReturn(
+            (False,
+             InquirySchedule(
+                 [['+', 'E', 'I', 'F', 'G', '<', 'J', 'H', 'B', 'D', 'K']], [[
+                     0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+                     0.25
+                 ]], [[
+                     'red', 'white', 'white', 'white', 'white', 'white',
+                     'white', 'white', 'white', 'white', 'white'
+                 ]])))
 
         when(self.display).do_inquiry().thenReturn(
             [['calibration_trigger', 2.5866074122022837],
@@ -505,7 +560,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Assertions
         verify(copy_phrase_wrapper_mock, times=1).initialize_series()
-        verify(copy_phrase_wrapper_mock, times=1).evaluate_inquiry(...)
+        verify(copy_phrase_wrapper_mock, times=1).decide(...)
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
@@ -519,6 +574,7 @@ class TestCopyPhrase(unittest.TestCase):
             self.assertEqual(1, session.total_number_series)
 
     # TODO: test feedback; patch VisualFeedback constructor, returning a mock; verify(feedback, times=1).administer(...)
+
 
 def mock_inquiry_data():
     """Generator that yields data mocking the copy_phrase_wrapper initialize_series method"""
@@ -536,7 +592,7 @@ def mock_inquiry_data():
              ['+', '<', 'C', 'A', 'I', 'D', 'G', 'E', 'B', 'F', 'H'],
              ['+', 'F', 'I', 'A', 'B', 'G', 'C', 'H', 'D', 'E', '<']]
 
-    for tup in [([stim], timings, colors) for stim in stims]:
+    for tup in [InquirySchedule([stim], timings, colors) for stim in stims]:
         yield (False, tup)
 
 

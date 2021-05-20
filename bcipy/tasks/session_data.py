@@ -2,6 +2,7 @@
 from typing import Dict, List
 from collections import Counter
 
+
 class Inquiry:
     """Represents a sequence of stimuli.
 
@@ -18,6 +19,7 @@ class Inquiry:
         eeg_evidence - eeg evidence for each stimulus
         likelihood - combined likelihood for each stimulus
     """
+    EVIDENCE_SUFFIX = '_evidence'
 
     def __init__(self,
                  stimuli: List[str],
@@ -28,8 +30,6 @@ class Inquiry:
                  current_text: str = None,
                  target_text: str = None,
                  next_display_state: str = None,
-                 lm_evidence: List[float] = None,
-                 eeg_evidence: List[float] = None,
                  likelihood: List[float] = None):
         super().__init__()
         self.stimuli = stimuli
@@ -41,12 +41,17 @@ class Inquiry:
         self.target_text = target_text
         self.next_display_state = next_display_state
 
-        # TODO: refactor for multimodal; List of Evidences?
-        # self.evidences = {}
-        self.lm_evidence = lm_evidence or []
-        self.eeg_evidence = eeg_evidence or []
+        self.evidences = {}
         self.likelihood = likelihood or []
-        
+
+    @property
+    def lm_evidence(self):
+        return self.evidences.get('LM', [])
+
+    @property
+    def eeg_evidence(self):
+        return self.evidences.get('ERP', [])
+
     @classmethod
     def from_dict(cls, data: dict):
         """Deserializes from a dict
@@ -56,11 +61,47 @@ class Inquiry:
             data - a dict in the format of the data output by the as_dict
                 method.
         """
-        inquiry = cls(**data)
+        # partition into evidence data and other data.
+        suffix = cls.EVIDENCE_SUFFIX
+        evidences = {
+            cls.deserialized_name(name): value
+            for name, value in data.items() if name.endswith(suffix)
+        }
+
+        non_evidence_data = {
+            name: value
+            for name, value in data.items() if not name.endswith(suffix)
+        }
+        inquiry = cls(**non_evidence_data)
         if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
             # flatten
             inquiry.stimuli = data['stimuli'][0]
+        inquiry.evidences = evidences
         return inquiry
+
+    @classmethod
+    def serialized_name(cls, evidence_name: str) -> str:
+        """Serialized name of the given evidence type.
+        Parameters:
+            evidence_name - ex. 'LM' or 'ERP'
+        Returns:
+            serialized name; ex. 'lm_evidence'
+        """
+        if (evidence_name == 'ERP'):
+            return 'eeg_evidence'
+        return f'{evidence_name.lower()}{cls.EVIDENCE_SUFFIX}'
+    
+    @classmethod
+    def deserialized_name(cls, evidence_name: str) -> str:
+        """Deserialized name of the given evidence type.
+        Parameters:
+            evidence_name - ex. 'lm_evidence'
+        Returns:
+            deserialized name; ex. 'LM'
+        """
+        if (evidence_name == 'eeg_evidence'):
+            return 'ERP'
+        return evidence_name[:-len(cls.EVIDENCE_SUFFIX)].upper()
 
     def as_dict(self) -> Dict:
         data = {
@@ -74,16 +115,15 @@ class Inquiry:
             'next_display_state': self.next_display_state
         }
 
-        # TODO: refactor: `for name, evidence in self.evidences: data[f'{name}_evidence'] = evidence`
-        if self.lm_evidence:
-            data['lm_evidence'] = self.lm_evidence
-        if self.eeg_evidence:
-            data['eeg_evidence'] = self.eeg_evidence
+        for name, evidence in self.evidences.items():
+            data[Inquiry.serialized_name(name)] = evidence
+
         if self.likelihood:
             data['likelihood'] = self.likelihood
         return data
 
-    def stim_evidence(self, alphabet: List[str], n_most_likely: int = 5) -> Dict:
+    def stim_evidence(self, alphabet: List[str],
+                      n_most_likely: int = 5) -> Dict:
         """Returns a dict of stim sequence data useful for debugging. Evidences
         are paired with the appropriate alphabet letter for easier visual
         scanning. Also, an additional attribute is provided to display the
@@ -95,13 +135,16 @@ class Inquiry:
             n_most_likely - number of most likely elements to include
         """
         likelihood = dict(zip(alphabet, self.likelihood))
-        return {
+        data = {
             'stimuli': self.stimuli,
-            'lm_evidence': dict(zip(alphabet, self.lm_evidence)),
-            'eeg_evidence': dict(zip(alphabet, self.eeg_evidence)),
-            'likelihood': likelihood,
-            'most_likely': dict(Counter(likelihood).most_common(n_most_likely))
         }
+        for name, evidence in self.evidences.items():
+            data[Inquiry.serialized_name(name)] = dict(zip(alphabet, evidence))
+
+        data['likelihood'] = likelihood
+        data['most_likely'] = dict(
+            Counter(likelihood).most_common(n_most_likely))
+        return data
 
 
 class Session:
@@ -128,9 +171,7 @@ class Session:
         if self.last_series():
             self.series.append([])
 
-    def add_sequence(self,
-                     inquiry: Inquiry,
-                     new_series: bool = False):
+    def add_sequence(self, inquiry: Inquiry, new_series: bool = False):
         """Append sequence information
 
         Parameters:
