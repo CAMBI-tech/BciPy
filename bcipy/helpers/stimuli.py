@@ -21,11 +21,11 @@ class InquirySchedule(NamedTuple):
 
     Attributes
     ----------
-    - stims: `List[List[str]]`
+    - stimuli: `List[List[str]]`
     - durations: `List[List[float]]`
     - colors: `List[List[str]]`
     """
-    stims: List[List[str]]
+    stimuli: List[List[str]]
     durations: List[List[float]]
     colors: List[List[str]]
 

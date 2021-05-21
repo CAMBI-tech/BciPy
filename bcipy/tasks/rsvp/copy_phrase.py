@@ -252,7 +252,7 @@ class RSVPCopyPhraseTask(Task):
         self.window.flip()
 
         # Setup the new Stimuli
-        self.rsvp.stimuli_inquiry = inquiry_schedule.stims[0]
+        self.rsvp.stimuli_inquiry = inquiry_schedule.stimuli[0]
         if self.parameters['is_txt_stim']:
             self.rsvp.stimuli_colors = inquiry_schedule.colors[0]
         self.rsvp.stimuli_timing = inquiry_schedule.durations[0]
@@ -286,7 +286,7 @@ class RSVPCopyPhraseTask(Task):
                 message='Selected:',
                 fill_color=self.parameters['feedback_message_color'])
 
-    def stoppage_criteria_ok(self) -> bool:
+    def check_stop_criteria(self) -> bool:
         """Returns True if experiment is currently within params and the task
         should continue.
         """
@@ -357,7 +357,7 @@ class RSVPCopyPhraseTask(Task):
                 else:
                     self.current_inquiry = decision.new_inq_schedule
 
-                run = self.stoppage_criteria_ok()
+                run = self.check_stop_criteria()
                 self.inq_counter += 1
 
             self.exit_display()
@@ -441,7 +441,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if not self.parameters['show_preview_inquiry']:
             return None
-        probs = compute_probs_after_preview(self.current_inquiry.stims[0],
+        probs = compute_probs_after_preview(self.current_inquiry.stimuli[0],
                                             self.alp,
                                             self.button_press_error_prob,
                                             proceed)
@@ -516,7 +516,7 @@ class RSVPCopyPhraseTask(Task):
         evidence for the provided evidence_types, leaving the other types empty
         """
         triggers = construct_triggers(self.stims_for_decision(stim_times))
-        data = Inquiry(stimuli=self.current_inquiry.stims,
+        data = Inquiry(stimuli=self.current_inquiry.stimuli,
                        timing=self.current_inquiry.durations,
                        triggers=triggers,
                        target_info=target_info(triggers, target_letter),
