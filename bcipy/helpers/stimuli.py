@@ -3,7 +3,6 @@ import itertools
 import logging
 import random
 from os import path, sep
-
 from typing import Iterator, List, NamedTuple
 
 import numpy as np

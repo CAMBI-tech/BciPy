@@ -1,21 +1,25 @@
+from typing import List, NamedTuple, TextIO, Tuple
+
 import numpy as np
 from psychopy import core
-from typing import List, Tuple, TextIO, NamedTuple
-from bcipy.tasks.task import Task
-from bcipy.tasks.session_data import Inquiry, Session
+
+from bcipy.display.rsvp import (InformationProperties,
+                                PreviewInquiryProperties, StimuliProperties,
+                                TaskDisplayProperties)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
-from bcipy.display.rsvp import PreviewInquiryProperties, InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
-from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper, EvidenceName
-from bcipy.tasks.rsvp.main_frame import EvidenceFusion
-from bcipy.helpers.task import (fake_copy_phrase_decision, alphabet,
-                                process_data_for_decision, construct_triggers,
-                                target_info, trial_complete_message,
-                                get_user_input, BACKSPACE_CHAR)
+from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
+                                fake_copy_phrase_decision, get_user_input,
+                                process_data_for_decision, target_info,
+                                trial_complete_message)
+from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
+from bcipy.tasks.rsvp.main_frame import EvidenceFusion
+from bcipy.tasks.session_data import Inquiry, Session
+from bcipy.tasks.task import Task
 
 
 class Decision(NamedTuple):

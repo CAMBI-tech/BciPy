@@ -1,11 +1,13 @@
-from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
-from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
-from bcipy.helpers.stimuli import rsvp_inq_generator, InquirySchedule
-from bcipy.helpers.task import SPACE_CHAR
 import logging
-import numpy as np
 import string
 from typing import Dict, List, Tuple
+
+import numpy as np
+
+from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator
+from bcipy.helpers.task import SPACE_CHAR
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
 
 log = logging.getLogger(__name__)
 

@@ -1,18 +1,21 @@
 """Defines the CopyPhraseWrapper."""
-from typing import List, Tuple
-import numpy as np
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
-from bcipy.signal.process.filter import bandpass, notch, downsample
-from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
-from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
-    MinIterationsCriteria, MaxIterationsCriteria, ProbThresholdCriteria
-from bcipy.helpers.language_model import norm_domain, sym_appended, \
-    equally_probable, histogram
-from bcipy.helpers.stimuli import InquirySchedule
-
 from collections import namedtuple
+from typing import List, Tuple
+
+import numpy as np
+
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.language_model import (equally_probable, histogram,
+                                          norm_domain, sym_appended)
+from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
+from bcipy.signal.process.filter import bandpass, downsample, notch
+from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
+from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import (CriteriaEvaluator,
+                                                MaxIterationsCriteria,
+                                                MinIterationsCriteria,
+                                                ProbThresholdCriteria)
 
 _EV_NAMES = ['LM', 'ERP', 'BTN']
 EvidenceName = namedtuple('Enum', _EV_NAMES)(*_EV_NAMES)
