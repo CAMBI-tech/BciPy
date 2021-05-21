@@ -11,9 +11,9 @@ from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper, EvidenceName
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion
 from bcipy.helpers.task import (fake_copy_phrase_decision, alphabet,
-                                process_data_for_decision,
-                                trial_complete_message, get_user_input,
-                                BACKSPACE_CHAR)
+                                process_data_for_decision, construct_triggers,
+                                target_info, trial_complete_message,
+                                get_user_input, BACKSPACE_CHAR)
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 
@@ -144,20 +144,18 @@ class RSVPCopyPhraseTask(Task):
         return spelled_letters_count
 
     def next_inquiry(self) -> InquirySchedule:
-        """Generate the first InquirySchedule for spelling the next letter."""
+        """Generate an InquirySchedule for spelling the next letter."""
         if self.copy_phrase_task:
             _, inquiry_schedule = self.copy_phrase_task.initialize_series()
             return inquiry_schedule
         return None
 
     def init_copy_phrase_task(self) -> CopyPhraseWrapper:
-        """Initialize the CopyPhraseWrapper
-        Parameters:
-        -----------
-            task_list: List of (inquiry to match, items matched so far).
+        """Initialize the CopyPhraseWrapper.
+
         Returns:
         --------
-            initialized CopyPhraseWrapper
+        initialized CopyPhraseWrapper
         """
 
         self.copy_phrase_task = _init_copy_phrase_wrapper(
@@ -267,9 +265,14 @@ class RSVPCopyPhraseTask(Task):
 
         return stim_times, proceed
 
-    def show_feedback(self, selection: str, correct: bool):
-        """Display the last selection as feedback if the 'show_feedback'
+    def show_feedback(self, selection: str, correct: bool = True):
+        """Display the selection as feedback if the 'show_feedback'
         parameter is configured.
+
+        Parameters
+        ----------
+        - selection : selected stimulus to display
+        - correct : whether or not the correct stim was chosen
         """
         if self.parameters['show_feedback']:
             feedback = VisualFeedback(self.window, self.parameters,
@@ -322,28 +325,22 @@ class RSVPCopyPhraseTask(Task):
             run = self.await_start()
 
             while run and self.user_wants_to_continue():
+                target_letter = self.next_target()
                 stim_times, proceed = self.present_inquiry(
                     self.current_inquiry)
 
                 self.write_trigger_data(stim_times, trigger_file)
                 self.wait()
 
-                # TODO: construct triggers, target_info locally
-                # TODO: single method to add_evidence, which calls the next two items.
-
-                self.add_button_press_evidence(proceed)
-                triggers, target_info = self.add_eeg_evidence(
-                    stim_times, proceed)
-
+                evidence_types = self.add_evidence(stim_times, proceed)
                 decision = self.evaluate_evidence()
 
-                target_letter = self.next_target()
-                self.update_session_data(self.new_data_record(
-                    triggers,
-                    target_info,
-                    target_letter,
-                    current_text=self.spelled_text,
-                    next_state=decision.spelled_text),
+                data = self.new_data_record(stim_times,
+                                            target_letter,
+                                            current_text=self.spelled_text,
+                                            next_state=decision.spelled_text,
+                                            evidence_types=evidence_types)
+                self.update_session_data(data,
                                          save=True,
                                          decision_made=decision.decision_made)
 
@@ -394,7 +391,39 @@ class RSVPCopyPhraseTask(Task):
 
         return Decision(decision_made, selection, spelled_text, new_sti)
 
-    def add_button_press_evidence(self, proceed: bool) -> List[float]:
+    def add_evidence(self, stim_times: List[List],
+                     proceed: bool = True) -> List[str]:
+        """Add all evidence used to make a decision.
+
+        Parameters
+        ----------
+        - stim_times : list of stimuli returned from the display
+        - proceed : whether or not to proceed with the inquiry
+        
+        Returns
+        -------
+        list of evidence types added
+
+        Modifies
+        --------
+        - self.copy_phrase_task
+        """
+        evidences = [
+            self.compute_button_press_evidence(proceed),
+            self.compute_eeg_evidence(stim_times, proceed)
+        ]
+        evidence_types = []
+        for evidence in evidences:
+            if evidence:
+                name, probs = evidence
+                evidence_types.append(name)
+                self.copy_phrase_task.add_evidence(name, probs)
+        if self.session.latest_series_is_empty():
+            evidence_types.append(EvidenceName.LM)
+        return evidence_types
+
+    def compute_button_press_evidence(self, proceed: bool
+                                      ) -> Tuple[str, List[float]]:
         """If 'show_preview_inquiry' feature is enabled, compute the button
         press evidence and add it to the copy phrase task.
 
@@ -404,11 +433,7 @@ class RSVPCopyPhraseTask(Task):
 
         Returns
         -------
-        button press evidence
-
-        Modifies
-        --------
-        - self.copy_phrase_task
+        tuple of (evidence name, evidence)
         """
         if not self.parameters['show_preview_inquiry']:
             return None
@@ -416,11 +441,11 @@ class RSVPCopyPhraseTask(Task):
                                             self.alp,
                                             self.button_press_error_prob,
                                             proceed)
-        self.copy_phrase_task.add_evidence(EvidenceName.BTN, probs)
-        return probs
+        return (EvidenceName.BTN, probs)
 
-    def add_eeg_evidence(self, stim_times: List[List], proceed: bool = True
-                         ) -> Tuple[List[Tuple[str, float]], List[str]]:
+    def compute_eeg_evidence(self,
+                             stim_times: List[List],
+                             proceed: bool = True) -> Tuple[str, List[float]]:
         """Evaluate the EEG evidence and add it to the copy_phrase_task, but
         don't yet attempt a decision.
 
@@ -432,26 +457,19 @@ class RSVPCopyPhraseTask(Task):
 
         Returns
         -------
-        (triggers, target_info)
-
-        Modifies
-        --------
-        - self.copy_phrase_task
+        tuple of (evidence name, evidence)
         """
-        if not proceed:
-            return [], []
+        if not proceed or self.fake:
+            return None
 
         raw_data, triggers, target_info = process_data_for_decision(
             self.stims_for_decision(stim_times), self.daq, self.window,
             self.parameters, self.rsvp.first_stim_time,
             self.parameters['static_trigger_offset'])
 
-        if not self.fake:
-            probs = self.copy_phrase_task.evaluate_eeg_evidence(
-                raw_data, triggers, target_info,
-                self.parameters['trial_length'])
-            self.copy_phrase_task.add_evidence(EvidenceName.ERP, probs)
-        return triggers, target_info
+        probs = self.copy_phrase_task.evaluate_eeg_evidence(
+            raw_data, triggers, target_info, self.parameters['trial_length'])
+        return (EvidenceName.ERP, probs)
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
         """The stim_timings from the display may include non-letter stimuli
@@ -471,34 +489,44 @@ class RSVPCopyPhraseTask(Task):
             timing for timing in stim_times if timing[0] in (self.alp + ['+'])
         ]
 
-    def new_data_record(self, triggers: List[Tuple[str, float]],
-                        target_info: List[str], target_letter: str,
-                        current_text: str, next_state: str) -> Inquiry:
+    def new_data_record(self,
+                        stim_times: List[List],
+                        target_letter: str,
+                        current_text: str,
+                        next_state: str,
+                        evidence_types: List[str] = []) -> Inquiry:
         """Construct a new inquiry data record.
         
         Parameters
         ----------
-        - triggers : list of (stimulus, clock time) tuples
-        - target_info : targetness of each trigger
+        - stim_times : list of [stim, clock_time] pairs returned from display.
         - target_letter : stim the user is currently attempting to spell.
         - current_text : spelled text before the inquiry
         - next_state : spelled text after consulting the decision maker
+        - evidence_types : evidence provided to the decision-maker during the
+        current inquiry.
 
         Returns
         -------
-        Inquiry data for the current schedule
+        Inquiry data for the current schedule; returned value only contains
+        evidence for the provided evidence_types, leaving the other types empty
         """
+        triggers = construct_triggers(self.stims_for_decision(stim_times))
         data = Inquiry(stimuli=self.current_inquiry.stims,
                        timing=self.current_inquiry.durations,
                        triggers=triggers,
-                       target_info=target_info,
+                       target_info=target_info(triggers, target_letter),
                        target_letter=target_letter,
                        current_text=current_text,
                        target_text=self.copy_phrase,
                        next_display_state=next_state)
 
         if not self.fake:
-            data.evidences = self.copy_phrase_task.conjugator.latest_evidence
+            latest_evidence = self.copy_phrase_task.conjugator.latest_evidence
+            data.evidences = {
+                name: evidence if name in evidence_types else []
+                for name, evidence in latest_evidence.items()
+            }
             data.likelihood = list(self.copy_phrase_task.conjugator.likelihood)
         return data
 

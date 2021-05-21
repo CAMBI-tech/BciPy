@@ -195,6 +195,10 @@ class Session:
             return series[-1]
         return None
 
+    def latest_series_is_empty(self) -> bool:
+        """Whether the latest series has had any inquiries added to it."""
+        return len(self.last_series()) == 0
+
     def as_dict(self, alphabet=None, evidence_only: bool = False) -> Dict:
         """Dict representation"""
         series_dict = {}
