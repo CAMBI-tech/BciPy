@@ -64,7 +64,7 @@ class Trainer:
         self.val_loader = self._get_loader(val_set)
 
         logger.debug("Begin fit")
-        for _ in trange(self.cfg.epochs, desc="Epochs", leave=True):
+        for _ in trange(self.cfg.epochs, desc="Epochs", leave=True):  # TODO - start from 0 or from resumed epoch
             self.train_epoch()
             self.val_epoch()
             if self.cfg.use_early_stop and self.early_stop_now:
@@ -172,6 +172,7 @@ class Trainer:
     def load(self, checkpoint_path: Path):
         ckpt = torch.load(checkpoint_path)
         logger.info(f"Load checkpoint: {checkpoint_path} from epoch: {ckpt['epoch']}")
+        self.epoch = ckpt["epoch"]
         self.global_step = ckpt["global_step"]
         self.model.load_state_dict(ckpt["model_state_dict"])
         self.optim.load_state_dict(ckpt["optim_state_dict"])
