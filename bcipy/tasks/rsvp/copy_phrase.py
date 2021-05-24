@@ -97,8 +97,11 @@ class RSVPCopyPhraseTask(Task):
         super(RSVPCopyPhraseTask, self).__init__()
 
         self.window = win
-        self.parameters = parameters
         self.daq = daq
+        self.parameters = parameters
+        for param in RSVPCopyPhraseTask.PARAMETERS_USED:
+            assert param in self.parameters, "parameter '{param}' is required"
+
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
         self.experiment_clock = core.Clock()
