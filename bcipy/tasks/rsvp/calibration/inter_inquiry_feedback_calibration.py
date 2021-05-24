@@ -7,7 +7,6 @@ from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
-from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
     trial_complete_message,
     trial_reshaper,
@@ -16,6 +15,7 @@ from bcipy.helpers.task import (
     process_data_for_decision)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
+from bcipy.signal.process import get_default_transform
 
 
 class RSVPInterInquiryFeedbackCalibration(Task):
@@ -297,21 +297,24 @@ class RSVPInterInquiryFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        notch_filterted_data = notch.notch_filter(
-            raw_data, self.fs, self.notch_filter_frequency)
-        filtered_data = bandpass.butter_bandpass_filter(
-            notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.filter_order)
-        data = downsample.downsample(
-            filtered_data, factor=self.downsample_rate)
-        letters, times, target_info = self.letter_info(triggers, target_info)
+        default_transform = get_default_transform(
+            sample_rate_hz=self.fs,
+            notch_freq_hz=self.notch_filter_frequency,
+            bandpass_low=self.filter_low,
+            bandpass_high=self.filter_high,
+            bandpass_order=self.filter_order,
+            downsample_factor=self.downsample_rate,
+        )
+        data, fs_after = default_transform(raw_data, self.fs)
+        _, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
-        reshaped_data, _, _, _ = trial_reshaper(
+        reshaped_data, _ = trial_reshaper(
             target_info,
             times,
             data,
-            fs=self.fs,
-            k=self.downsample_rate, mode='calibration',
+            fs=fs_after,
+            mode='calibration',
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return reshaped_data

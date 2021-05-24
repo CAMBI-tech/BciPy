@@ -1,4 +1,3 @@
-import pickle
 import logging
 from matplotlib.figure import Figure
 from typing import List
@@ -7,7 +6,6 @@ from bcipy.helpers.load import (
     read_data_csv,
     load_experimental_data,
     load_json_parameters)
-from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.helpers.task import trial_reshaper
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
@@ -16,6 +14,8 @@ from bcipy.helpers.acquisition import analysis_channels,\
 from bcipy.helpers.stimuli import play_sound
 
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+
+from bcipy.signal.process import get_default_transform
 
 log = logging.getLogger(__name__)
 
@@ -71,15 +71,15 @@ def offline_analysis(data_folder: str = None,
     log.info(f'Channels read from csv: {channels}')
     log.info(f'Device type: {type_amp}')
 
-    # Remove 60hz noise with a notch filter
-    notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=notch_filter)
-
-    # bandpass filter
-    filtered_data = bandpass.butter_bandpass_filter(
-        notch_filter_data, lp_filter, hp_filter, fs, order=filter_order)
-
-    # downsample
-    data = downsample.downsample(filtered_data, factor=downsample_rate)
+    default_transform = get_default_transform(
+        sample_rate_hz=fs,
+        notch_freq_hz=notch_filter,
+        bandpass_low=lp_filter,
+        bandpass_high=hp_filter,
+        bandpass_order=filter_order,
+        downsample_factor=downsample_rate,
+    )
+    data, fs = default_transform(raw_dat, fs)
 
     # Process triggers.txt
     _, t_t_i, t_i, offset = trigger_decoder(
@@ -92,11 +92,11 @@ def offline_analysis(data_folder: str = None,
     # read_data_csv already removes the timespamp column.
     channel_map = analysis_channels(channels, type_amp)
 
-    x, y, _, _ = trial_reshaper(t_t_i, t_i, data,
-                                mode=mode, fs=fs, k=downsample_rate,
-                                offset=offset,
-                                channel_map=channel_map,
-                                trial_length=trial_length)
+    x, y = trial_reshaper(t_t_i, t_i, data,
+                          mode=mode, fs=fs,
+                          offset=offset,
+                          channel_map=channel_map,
+                          trial_length=trial_length)
 
     model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(x, y)

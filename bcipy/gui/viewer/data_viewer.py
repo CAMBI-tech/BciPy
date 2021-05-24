@@ -2,7 +2,6 @@
 EEG viewer that uses a queue as a data source. Records are retrieved by a
 wx Timer.
 """
-from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.acquisition.device_info import DeviceInfo
@@ -17,6 +16,8 @@ import csv
 from queue import Queue
 
 import numpy as np
+
+from bcipy.signal.process import get_default_transform, Downsample
 
 
 class EEGFrame(wx.Frame):
@@ -61,7 +62,7 @@ class EEGFrame(wx.Frame):
         self.filter_high = parameters['filter_high']
         self.filter_order = parameters['filter_order']
         # Default filter
-        self.filter = downsample_filter(self.downsample_factor, device_info.fs)
+        self.filter = Downsample(self.downsample_factor)
 
         self.autoscale = True
         self.y_min = -y_scale
@@ -264,16 +265,15 @@ class EEGFrame(wx.Frame):
     def toggle_filtering(self):
         """Toggles data filtering."""
         if self.sigpro_checkbox.GetValue():
-            self.filter = stream_filter(
-                factor=self.downsample_factor,
-                fs=self.samples_per_second,
-                notch_filter_frequency=self.notch_filter_frequency,
-                filter_low=self.filter_low,
-                filter_high=self.filter_high,
-                filter_order=self.filter_order)
+            self.filter = get_default_transform(
+                sample_rate_hz=self.samples_per_second,
+                downsample_factor=self.downsample_factor,
+                notch_freq_hq=self.notch_filter_frequency,
+                bandpass_low=self.filter_low,
+                bandpass_high=self.filter_high,
+                bandpass_order=self.filter_order)
         else:
-            self.filter = downsample_filter(self.downsample_factor,
-                                            self.samples_per_second)
+            self.filter = Downsample(self.downsample_factor)
 
     def toggle_autoscale_handler(self, event):
         """Event handler for toggling autoscale"""
@@ -322,7 +322,7 @@ class EEGFrame(wx.Frame):
 
     def init_data(self):
         """Initialize the data."""
-        channel_data = self.filter(self.current_data())
+        channel_data, _ = self.filter(self.current_data(), 0)
 
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
@@ -351,7 +351,7 @@ class EEGFrame(wx.Frame):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
-        channel_data = self.filter(self.current_data())
+        channel_data, _ = self.filter(self.current_data(), 0)
 
         # plot each channel
         for i, _channel in enumerate(self.data_indices):

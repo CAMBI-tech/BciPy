@@ -5,13 +5,14 @@ import numpy as np
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
-from bcipy.signal.process.filter import bandpass, notch, downsample
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
     MinIterationsCriteria, MaxIterationsCriteria, ProbThresholdCriteria
 from bcipy.helpers.language_model import norm_domain, sym_appended, \
     equally_probable, histogram
+
+from bcipy.signal.process import get_default_transform
 
 
 class CopyPhraseWrapper:
@@ -112,27 +113,21 @@ class CopyPhraseWrapper:
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
-        # Remove 60hz noise with a notch filter
-        notch_filter_data = notch.notch_filter(
-            raw_data, self.sampling_rate,
-            frequency_to_remove=self.notch_filter_frequency)
+        default_transform = get_default_transform(
+            sample_rate_hz=self.sampling_rate,
+            notch_freq_hz=self.notch_filter_frequency,
+            bandpass_low=self.filter_low,
+            bandpass_high=self.filter_high,
+            bandpass_order=self.filter_order,
+            downsample_factor=self.downsample_rate,
+        )
+        data, self.sampling_rate = default_transform(raw_data, self.sampling_rate)
 
-        # bandpass filter from 2-45hz
-        filtered_data = bandpass.butter_bandpass_filter(
-            notch_filter_data,
-            self.filter_low,
-            self.filter_high,
-            self.sampling_rate,
-            order=self.filter_order)
-
-        # downsample
-        data = downsample.downsample(
-            filtered_data, factor=self.downsample_rate)
-        x, _, _, _ = trial_reshaper(target_info, times, data,
-                                    fs=self.sampling_rate,
-                                    k=self.downsample_rate, mode=self.mode,
-                                    channel_map=self.channel_map,
-                                    trial_length=window_length)
+        x, _ = trial_reshaper(target_info, times, data,
+                              fs=self.sampling_rate,
+                              mode=self.mode,
+                              channel_map=self.channel_map,
+                              trial_length=window_length)
 
         lik_r = self.signal_model.predict(x, letters, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})
