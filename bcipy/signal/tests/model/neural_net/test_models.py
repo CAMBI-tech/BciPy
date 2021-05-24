@@ -2,14 +2,10 @@
 import unittest
 
 import torch
-
 from bcipy.signal.model.neural_net.data import EEGDataset, data_config, get_fake_data
-from bcipy.signal.model.neural_net.models import (
-    DummyEEGClassifier,
-    ResNet1D,
-    RiggedClassifier,
-)
+from bcipy.signal.model.neural_net.models import ResNet1D
 from bcipy.signal.model.neural_net.utils import get_default_cfg
+from bcipy.signal.tests.model.neural_net.rigged_classifier import RiggedClassifier
 
 
 class TestModels(unittest.TestCase):
@@ -53,15 +49,6 @@ class TestModels(unittest.TestCase):
             num_classes=data_config[self.cfg.data_device][self.cfg.data_mode]["n_classes"],
             in_channels=data_config[self.cfg.data_device]["n_channels"],
             act_name=self.cfg.activation,
-            device=self.cfg.device,
-        )
-        self.assertTrue(self.check_model_api(prod_model, self.cfg.batch_size))
-
-    def test_DummyEEGClassifier(self):
-        prod_model = DummyEEGClassifier(
-            in_chan=data_config[self.cfg.data_device]["n_channels"],
-            duration=data_config[self.cfg.data_device][self.cfg.data_mode]["length"],
-            n_classes=data_config[self.cfg.data_device][self.cfg.data_mode]["n_classes"],
             device=self.cfg.device,
         )
         self.assertTrue(self.check_model_api(prod_model, self.cfg.batch_size))

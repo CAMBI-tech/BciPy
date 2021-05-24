@@ -1,11 +1,23 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List
+from enum import Enum
 
 import numpy as np
 
 
+class InputDataType(Enum):
+    """Controls how data is reshaped before being passed to a model"""
+    TRIAL = 1
+    INQUIRY = 2
+
+
 class SignalModel(ABC):
+    @property
+    @abstractmethod
+    def input_data_type(self) -> InputDataType:
+        ...
+
     @abstractmethod
     def fit(self, training_data: np.array, training_labels: np.array):
         """

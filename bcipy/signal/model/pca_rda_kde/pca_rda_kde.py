@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-from bcipy.signal.model.base_model import ModelEvaluationReport, SignalModel
+from bcipy.signal.model import ModelEvaluationReport, SignalModel, InputDataType
 from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validation_auc, cross_validation
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
@@ -13,6 +13,8 @@ from bcipy.signal.exceptions import SignalException
 
 
 class PcaRdaKdeModel(SignalModel):
+    input_data_type = InputDataType.TRIAL
+
     def __init__(self, k_folds: int):
         self.k_folds = k_folds
         self.model = None

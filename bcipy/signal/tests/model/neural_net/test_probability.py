@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from bcipy.signal.model.neural_net.models import RiggedClassifier
+from bcipy.signal.tests.model.neural_net.rigged_classifier import RiggedClassifier
 from bcipy.signal.model.neural_net.probability import update_log_posterior
 
 

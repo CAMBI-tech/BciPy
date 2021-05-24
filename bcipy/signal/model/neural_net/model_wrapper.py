@@ -14,7 +14,7 @@ from bcipy.signal.model.neural_net.models import ResNet1D
 from bcipy.signal.model.neural_net.probability import compute_log_likelihoods
 from bcipy.signal.model.neural_net.trainer import Trainer
 
-from bcipy.signal.model import ModelEvaluationReport, SignalModel
+from bcipy.signal.model import ModelEvaluationReport, SignalModel, InputDataType
 from bcipy.signal.exceptions import SignalException
 
 
@@ -39,6 +39,7 @@ def model_from_checkpoint(path: Path, **cfg_overrides):
 
 class EegClassifierModel(SignalModel):
     """Discriminative signal model for EEG"""
+    input_data_type = InputDataType.INQUIRY
 
     def __init__(self, cfg: DottedDict):
         self.cfg = cfg
