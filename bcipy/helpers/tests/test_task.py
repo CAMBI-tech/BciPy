@@ -1,5 +1,4 @@
 import unittest
-from mockito.mockito import expect
 import numpy as np
 import psychopy
 from collections import Counter
