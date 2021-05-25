@@ -6,7 +6,7 @@ from bcipy.helpers.load import (
     read_data_csv,
     load_experimental_data,
     load_json_parameters)
-from bcipy.helpers.task import trial_reshaper
+from bcipy.helpers.task import data_reshaper
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels,\
@@ -92,13 +92,16 @@ def offline_analysis(data_folder: str = None,
     # read_data_csv already removes the timespamp column.
     channel_map = analysis_channels(channels, type_amp)
 
-    x, y = trial_reshaper(t_t_i, t_i, data,
-                          fs=fs,
-                          offset=offset,
-                          channel_map=channel_map,
-                          trial_length=trial_length)
-
     model = PcaRdaKdeModel(k_folds=k_folds)
+    x, y = data_reshaper(input_data_type=model.input_data_type,
+                         trial_target_info=t_t_i,
+                         timing_info=t_i,
+                         eeg_data=data,
+                         fs=fs,
+                         trials_per_inquiry=parameters.get('stim_length', 10),
+                         offset=offset,
+                         channel_map=channel_map,
+                         trial_length=trial_length)
     model.fit(x, y)
     model_performance = model.evaluate(x, y)
 
@@ -111,7 +114,7 @@ def offline_analysis(data_folder: str = None,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
 
     log.info('Saving the model!')
-    model.save(data_folder + f'/model_{model_performance.auc}.pkl')
+    model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
 
     if alert_finished:
         offline_analysis_tone = parameters.get('offline_analysis_tone')

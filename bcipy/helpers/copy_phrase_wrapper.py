@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
+from bcipy.helpers.task import BACKSPACE_CHAR, data_reshaper
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
@@ -69,8 +69,9 @@ class CopyPhraseWrapper:
             commit_criteria=[MaxIterationsCriteria(max_num_inq),
                              ProbThresholdCriteria(decision_threshold)])
 
+        self.stim_length = stim_length
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
-                                          len_query=stim_length)
+                                          len_query=self.stim_length)
 
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
@@ -123,10 +124,14 @@ class CopyPhraseWrapper:
         )
         data, self.sampling_rate = default_transform(raw_data, self.sampling_rate)
 
-        x, _ = trial_reshaper(target_info, times, data,
-                              fs=self.sampling_rate,
-                              channel_map=self.channel_map,
-                              trial_length=window_length)
+        x, _ = data_reshaper(input_data_type=self.signal_model.input_data_type,
+                             trial_target_info=target_info,
+                             timing_info=times,
+                             eeg_data=data,
+                             fs=self.sampling_rate,
+                             trials_per_inquiry=self.stim_length,
+                             channel_map=self.channel_map,
+                             trial_length=window_length)
 
         lik_r = self.signal_model.predict(x, letters, self.alp)
         prob = self.conjugator.update_and_fuse({'ERP': lik_r})

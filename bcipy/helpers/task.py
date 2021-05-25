@@ -1,12 +1,12 @@
 import os
-from typing import Any, List, Union, Tuple
+from typing import Any, List, Union, Tuple, Optional
 import logging
 import random
 import numpy as np
 from psychopy import core, event, visual
 from string import ascii_uppercase
 
-from bcipy.signal.model import SignalModel, InputDataType
+from bcipy.signal.model import InputDataType
 from bcipy.tasks.exceptions import InsufficientDataException
 from itertools import zip_longest
 
@@ -333,13 +333,13 @@ def get_key_press(
     return None
 
 
-def data_reshaper(model_class: SignalModel, *args, **kwargs):
-    if model_class.input_data_type == InputDataType.TRIAL:
+def data_reshaper(input_data_type: InputDataType, *args, **kwargs):
+    if input_data_type == InputDataType.TRIAL:
         return trial_reshaper(*args, **kwargs)
-    elif model_class.input_data_type == InputDataType.INQUIRY:
-        raise NotImplementedError()
+    elif input_data_type == InputDataType.INQUIRY:
+        return inquiry_reshaper(*args, **kwargs)
     else:
-        raise NotImplementedError(f"Unsupported input data type: {model_class.input_data_type}")
+        raise NotImplementedError(f"Unsupported input data type: {input_data_type}")
 
 
 def grouper(iterable, n, fillvalue=None):
@@ -423,6 +423,7 @@ def trial_reshaper(trial_target_info: list,
                    timing_info: list,
                    eeg_data: np.ndarray,
                    fs: int,
+                   trials_per_inquiry: Optional[int] = None,
                    offset: float = 0,
                    channel_map: List[int] = DEFAULT_CHANNEL_MAP,
                    trial_length: float = 0.5) -> Tuple[np.ndarray, np.ndarray]:
@@ -433,6 +434,7 @@ def trial_reshaper(trial_target_info: list,
         timing_info (list): Timestamp of each event in seconds
         eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
         fs (int): sample rate of preprocessed EEG data
+        trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
         offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
         channel_map (tuple, optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
         trial_length (float, optional): [description]. Defaults to 0.5.
