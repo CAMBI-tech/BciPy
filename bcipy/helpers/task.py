@@ -1,14 +1,14 @@
-import os
-from typing import Any, List, Union, Tuple, Optional
 import logging
+import os
 import random
-import numpy as np
-from psychopy import core, event, visual
+from itertools import zip_longest
 from string import ascii_uppercase
+from typing import Any, List, Optional, Set, Tuple, Union
 
+import numpy as np
 from bcipy.signal.model import InputDataType
 from bcipy.tasks.exceptions import InsufficientDataException
-from itertools import zip_longest
+from psychopy import core, event, visual
 
 log = logging.getLogger(__name__)
 
@@ -387,24 +387,28 @@ def grouper(iterable, n, fillvalue=None):
     return zip_longest(*args, fillvalue=fillvalue)
 
 
-def inquiry_reshaper(trial_target_info: list,
-                     timing_info: list,
+def inquiry_reshaper(trial_target_info: List[str],
+                     timing_info: List[float],
                      eeg_data: np.ndarray,
                      fs: int,
                      trials_per_inquiry: int,
                      offset: float = 0,
                      channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                     trial_length: float = 0.5):
+                     trial_length: float = 0.5,
+                     targets_included: Set[str] = set(["target", "nontarget"]),
+                     targets_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
     """Extract inquiry data and labels.
     Args:
-        trial_target_info (list): labels each trial as "target", "non-target", "first_pres_target", etc
-        timing_info (list): Timestamp of each event in seconds
+        trial_target_info (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+        timing_info (List[float]): Timestamp of each event in seconds
         eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-        fs (int): sample rate of preprocessed EEG data
+        fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
         trials_per_inquiry (int): number of trials in each inquiry
         offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
-        channel_map (tuple, optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
+        channel_map (List[int], optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
         trial_length (float, optional): [description]. Defaults to 0.5.
+        targets_included (Set[str]): target labels to include
+        targets_excluded (Set[str]): target labels to exclude
 
     Returns:
         reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
@@ -420,10 +424,9 @@ def inquiry_reshaper(trial_target_info: list,
     num_samples = int(trial_length * fs * trials_per_inquiry)
 
     # Remove unwanted elements from target info and timing info
-    targets_included = set(["target", "nontarget"])
     tmp_targets, tmp_timing = [], []
     for target, timing in zip(trial_target_info, timing_info):
-        if target in targets_included:
+        if target in targets_included and target not in targets_excluded:
             tmp_targets.append(target)
             tmp_timing.append(timing)
     trial_target_info = tmp_targets
@@ -466,7 +469,9 @@ def trial_reshaper(trial_target_info: list,
                    trials_per_inquiry: Optional[int] = None,
                    offset: float = 0,
                    channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                   trial_length: float = 0.5) -> Tuple[np.ndarray, np.ndarray]:
+                   trial_length: float = 0.5,
+                   targets_included: Set[str] = set(["target", "nontarget"]),
+                   targets_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
     """Extract trial data and labels.
 
     Args:
@@ -478,6 +483,8 @@ def trial_reshaper(trial_target_info: list,
         offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
         channel_map (tuple, optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
         trial_length (float, optional): [description]. Defaults to 0.5.
+        targets_included (Set[str]): target labels to include
+        targets_excluded (Set[str]): target labels to exclude
 
     Returns:
         trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
@@ -496,7 +503,7 @@ def trial_reshaper(trial_target_info: list,
     targets_included = set(["target", "nontarget"])
     tmp_targets, tmp_timing = [], []
     for target, timing in zip(trial_target_info, timing_info):
-        if target in targets_included:
+        if target in targets_included and target not in targets_excluded:
             tmp_targets.append(target)
             tmp_timing.append(timing)
     trial_target_info = tmp_targets

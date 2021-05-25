@@ -15,7 +15,7 @@ from bcipy.helpers.stimuli import play_sound
 
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 
-from bcipy.signal.process import get_default_transform
+from bcipy.signal.process.filter import get_default_transform
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def offline_analysis(data_folder: str = None,
                          timing_info=t_i,
                          eeg_data=data,
                          fs=fs,
-                         trials_per_inquiry=parameters.get('stim_length', 10),
+                         trials_per_inquiry=parameters.get('stim_length'),
                          offset=offset,
                          channel_map=channel_map,
                          trial_length=trial_length)

@@ -72,7 +72,7 @@ class TestDataReshaper(unittest.TestCase):
             trial_target_info=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=256,
+            fs=self.fs,
             trials_per_inquiry=self.trial_per_inquiry,
             channel_map=self.channel_map)
 
@@ -80,7 +80,7 @@ class TestDataReshaper(unittest.TestCase):
             trial_target_info=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=256,
+            fs=self.fs,
             trials_per_inquiry=self.trial_per_inquiry,
             channel_map=self.channel_map)
 
@@ -93,7 +93,7 @@ class TestDataReshaper(unittest.TestCase):
             trial_target_info=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=256,
+            fs=self.fs,
             trials_per_inquiry=self.trial_per_inquiry,
             channel_map=self.channel_map)
 
@@ -101,7 +101,7 @@ class TestDataReshaper(unittest.TestCase):
             trial_target_info=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=256,
+            fs=self.fs,
             trials_per_inquiry=self.trial_per_inquiry,
             channel_map=self.channel_map)
 
@@ -137,7 +137,7 @@ class TestTrialReshaper(unittest.TestCase):
 class TestInquiryReshaper(unittest.TestCase):
     def setUp(self):
         self.n_channel = 7
-        self.trial_length = 0.5  # seconds
+        self.trial_length = 0.5
         self.trials_per_inquiry = 3
         self.fs = 10
         self.target_info = [
@@ -165,7 +165,8 @@ class TestInquiryReshaper(unittest.TestCase):
             channel_map=self.channel_map,
             trial_length=self.trial_length,
         )
-        expected_shape = (self.n_channel, 3, int(self.trial_length * self.fs) * self.trials_per_inquiry)
+        expected_shape = (self.n_channel, self.trials_per_inquiry, int(
+            self.trial_length * self.fs) * self.trials_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(all(labels == [0, 3, 1]))
 

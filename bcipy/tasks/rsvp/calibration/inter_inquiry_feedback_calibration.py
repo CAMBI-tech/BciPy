@@ -15,7 +15,7 @@ from bcipy.helpers.task import (
     process_data_for_decision)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
-from bcipy.signal.process import get_default_transform
+from bcipy.signal.process.filter import get_default_transform
 from bcipy.signal.model import InputDataType
 
 
@@ -123,6 +123,8 @@ class RSVPInterInquiryFeedbackCalibration(Task):
 
         # true/false order is desceding from 5 -> 1 for level
         self.feedback_descending = self.parameters['feedback_level_descending']
+
+        self.input_data_type = InputDataType.TRIAL
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -311,7 +313,7 @@ class RSVPInterInquiryFeedbackCalibration(Task):
 
         # reshape with the filtered data with our desired window length
         reshaped_data, _ = data_reshaper(
-            input_data_type=InputDataType.TRIAL,
+            input_data_type=self.input_data_type,
             timing_info=times,
             eeg_data=data,
             fs=fs_after,

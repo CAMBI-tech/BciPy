@@ -12,7 +12,7 @@ from bcipy.helpers.language_model import (
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.helpers.task import BACKSPACE_CHAR, data_reshaper
 from bcipy.signal.model import SignalModel
-from bcipy.signal.process import get_default_transform
+from bcipy.signal.process.filter import get_default_transform
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
 from bcipy.tasks.rsvp.stopping_criteria import (
