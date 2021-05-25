@@ -13,7 +13,9 @@ from bcipy.helpers.task import (
     trial_reshaper,
     inquiry_reshaper,
     _float_val,
-    generate_targets
+    generate_targets,
+    construct_triggers,
+    target_info
 )
 from bcipy.helpers.load import load_json_parameters
 
@@ -276,6 +278,48 @@ class TestGetKeyPress(unittest.TestCase):
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
         response = get_key_press(key_list, clock, stamp_label=stamp_label)
         self.assertEqual(expected, response)
+
+
+class TestTriggers(unittest.TestCase):
+    """Tests related to triggers"""
+
+    def test_construct_triggers(self):
+        stim_times = [['+', 7.009946188016329], ['<', 7.477798109990545],
+                      ['_', 7.69470399999409], ['Z', 7.911495972017292],
+                      ['U', 8.128477902995655], ['S', 8.345279764995212],
+                      ['T', 8.562265532993479], ['V', 8.779025560012087],
+                      ['X', 8.995945784990909], ['Y', 9.213076218002243],
+                      ['W', 9.429835998016642]]
+        expected = [('+', 0.0), ('<', 0.46785192197421566),
+                    ('_', 0.6847578119777609), ('Z', 0.901549784000963),
+                    ('U', 1.1185317149793264), ('S', 1.3353335769788828),
+                    ('T', 1.5523193449771497), ('V', 1.7690793719957583),
+                    ('X', 1.9859995969745796), ('Y', 2.203130029985914),
+                    ('W', 2.4198898100003134)]
+        self.assertEqual(expected, construct_triggers(stim_times))
+        self.assertEqual([], construct_triggers([]))
+
+    def test_target_info(self):
+        triggers = [('+', 0.0), ('<', 0.46785192197421566),
+                    ('_', 0.6847578119777609), ('Z', 0.901549784000963),
+                    ('U', 1.1185317149793264), ('S', 1.3353335769788828),
+                    ('T', 1.5523193449771497), ('V', 1.7690793719957583),
+                    ('X', 1.9859995969745796), ('Y', 2.203130029985914),
+                    ('W', 2.4198898100003134)]
+        expected = [
+            'nontarget', 'nontarget', 'nontarget', 'target', 'nontarget',
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget'
+        ]
+        self.assertEqual(expected, target_info(triggers, target_letter='Z'))
+
+        expected = [
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget'
+        ]
+        self.assertEqual(expected, target_info(triggers))
+        self.assertEqual([], target_info([]))
 
 
 if __name__ == '__main__':

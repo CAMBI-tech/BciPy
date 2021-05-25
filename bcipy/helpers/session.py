@@ -70,7 +70,7 @@ def get_target(task_type, inquiry: Inquiry):
 
 # Database record
 EvidenceRecord = namedtuple('EvidenceRecord', [
-    'series', 'inquiry', 'stim', 'lm', 'eeg', 'cumulative', 'inq_position',
+    'series', 'inquiry', 'stim', 'lm', 'eeg', 'btn', 'cumulative', 'inq_position',
     'is_target', 'presented', 'above_threshold'
 ])
 
@@ -133,7 +133,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         cursor.execute('CREATE TABLE trial (id integer, target text)')
         cursor.execute(
             'CREATE TABLE evidence (series integer, inquiry integer, '
-            'stim text, lm real, eeg real, cumulative real, inq_position '
+            'stim text, lm real, eeg real, btn real, cumulative real, inq_position '
             'integer, is_target integer, presented integer, above_threshold)')
         conn.commit()
 
@@ -149,25 +149,27 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
 
                 evidence = inquiry.stim_evidence(alphabet=alp)
 
+                # TODO: this assumes that eeg evidence is present in every inquiry
                 ev_rows = [
                     EvidenceRecord(
                         series=series_index + 1,
                         inquiry=inq_index,
                         stim=stim,
-                        lm=evidence['lm_evidence'][stim],
-                        eeg=eeg_likelihood,
+                        lm=evidence['lm_evidence'].get(stim, ''),
+                        eeg=evidence['eeg_evidence'].get(stim, ''),
+                        btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
                         inq_position=inquiry.stimuli.index(stim)
                         if stim in inquiry.stimuli else None,
                         is_target=(target == stim) if target else None,
                         presented=stim in inquiry.stimuli,
                         above_threshold=evidence['likelihood'][stim] >
-                        threshold) for stim, eeg_likelihood in
-                    evidence['eeg_evidence'].items()
+                        threshold) for stim, _likelihood_ev in
+                    evidence['likelihood'].items()
                 ]
 
                 conn.executemany(
-                    'INSERT INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?)',
+                    'INSERT INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?)',
                     ev_rows)
                 conn.commit()
         dataframe = pd.read_sql_query("SELECT * FROM evidence", conn)

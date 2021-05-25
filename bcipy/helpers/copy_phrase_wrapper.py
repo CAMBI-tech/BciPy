@@ -1,61 +1,95 @@
 """Defines the CopyPhraseWrapper."""
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
-
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.language_model import (
+    equally_probable,
+    histogram,
+    norm_domain,
+    sym_appended,
+)
+from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.helpers.task import BACKSPACE_CHAR, data_reshaper
-from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
-from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator, \
-    MinIterationsCriteria, MaxIterationsCriteria, ProbThresholdCriteria
-from bcipy.helpers.language_model import norm_domain, sym_appended, \
-    equally_probable, histogram
-
+from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
+from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
+from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import (
+    CriteriaEvaluator,
+    MaxIterationsCriteria,
+    MinIterationsCriteria,
+    ProbThresholdCriteria,
+)
+from bcipy.tasks.session_data import EvidenceType
 
 
 class CopyPhraseWrapper:
-    """Basic copy phrase task duty cycle wrapper.
+    """Basic copy phrase task duty cycle wrapper. Coordinates activities around
+    spelling tasks, including:
 
-    Given the phrases once operate() is called performs the task.
-    Attr:
-        min_num_inq: The minimum number of inquiries to be displayed
-        max_num_inq: The maximum number of inquiries to be displayed
-        model(pipeline): model trained using a calibration session of the
-            same user.
-        fs(int): sampling frequency
-        k(int): down sampling rate
-        alp(list[str]): symbol set of the task
-        task_list(list[tuple(str,str)]): list[(phrases, initial_states)] for
-            the copy phrase task
-        is_txt_stim: Whether or not the stimuli are text objects
-        conjugator(EvidenceFusion): fuses evidences in the task
-        decision_maker(DecisionMaker): mastermind of the task
-        mode(str): mode of thet task (should be copy phrase)
-        d(binary): decision flag
-        sti(list(tuple)): stimuli for the display
-        decision_threshold: Minimum likelihood value required for a decision
-        backspace_prob(float): default language model probability for the
-            backspace character.
-        backspace_always_shown(bool): whether or not the backspace should
-            always be presented.
-        stim_length: the number of stimuli to present in each inquiry
+    - Evidence management: adding and fusing evidence using the EvidenceFusion
+    module.
+    - Decision-making: uses evidence to make a decision or decide to continue
+    by providing another inquiry (DecisionMaker).
+    - Determining when to stop an inquiry and make a decision (StoppageCriteria).
+    - Generation of inquiries.
+    - Coordination with the Language Model.
+    - Preparing EEG data for the SignalModel for classification.
+
+    Parameters
+    ----------
+    - min_num_inq: The minimum number of inquiries to be displayed
+    - max_num_inq: The maximum number of inquiries to be displayed
+    - signal_model: model trained using a calibration session of the same user.
+    - fs: sampling frequency
+    - k: down sampling rate
+    - alp: symbol set of the task
+    - evidence_names: list of evidence types used for decision-making
+    - task_list: list[(phrases, initial_states)] for the copy phrase task
+    - lmodel: language model used (when 'LM') evidence type is used.
+    - is_txt_stim: Whether or not the stimuli are text objects
+    - device_name: name of the EEG device
+    - device_channels: list of device channel names
+    - stimuli_timing: seconds each stimuli is displayed; used for inquiry
+    generation
+    - decision_threshold: Minimum likelihood value required for a decision
+    - backspace_prob: default language model probability for the
+    backspace character.
+    - backspace_always_shown: whether or not the backspace should
+    always be presented.
+    - filter_high: filter setting used when evaluating EEG data
+    - filter_low: filter setting used when evaluating EEG data
+    - filter_order: filter setting used when evaluating EEG data
+    - notch_filter_frequency: filter setting used when evaluating EEG data
+    - stim_length(int): the number of stimuli to present in each inquiry
     """
 
-    def __init__(self, min_num_inq, max_num_inq, signal_model=None, fs=300, k=2,
-                 alp=None, evidence_names=['LM', 'ERP'],
-                 task_list=[('I_LOVE_COOKIES', 'I_LOVE_')], lmodel=None,
-                 is_txt_stim=True, device_name='LSL', device_channels=None,
-                 stimuli_timing=[1, .2],
-                 decision_threshold=0.8,
-                 backspace_prob=0.05,
-                 backspace_always_shown=False,
-                 filter_high=45,
-                 filter_low=2,
-                 filter_order=2,
-                 notch_filter_frequency=60,
-                 stim_length=10):
+    def __init__(self,
+                 min_num_inq: int,
+                 max_num_inq: int,
+                 signal_model: SignalModel = None,
+                 fs: int = 300,
+                 k: int = 2,
+                 alp: List[str] = None,
+                 evidence_names: List[EvidenceType] = [
+                     EvidenceType.LM, EvidenceType.ERP
+                 ],
+                 task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
+                                                      'I_LOVE_')],
+                 lmodel: Any = None,
+                 is_txt_stim: bool = True,
+                 device_name: str = 'LSL',
+                 device_channels: List[str] = None,
+                 stimuli_timing: List[float] = [1, .2],
+                 decision_threshold: float = 0.8,
+                 backspace_prob: float = 0.05,
+                 backspace_always_shown: bool = False,
+                 filter_high: int = 45,
+                 filter_low: int = 2,
+                 filter_order: int = 2,
+                 notch_filter_frequency: int = 60,
+                 stim_length: int = 10):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -101,16 +135,51 @@ class CopyPhraseWrapper:
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
-    def evaluate_inquiry(self, raw_data, triggers, target_info, window_length):
-        """Once data is collected, infers meaning from the data.
+    def evaluate_inquiry(
+            self, raw_data: np.array, triggers: List[Tuple[str, float]],
+            target_info: List[str], window_length: int
+    ) -> Tuple[bool, Tuple[List[str], List[float], List[str]]]:
+        """Once data is collected, infers meaning from the data and attempt to
+        make a decision.
 
-        Args:
-            raw_data(ndarray[float]): C x L eeg data where C is number of
-                channels and L is the signal length
-            triggers(list[tuple(str,float)]): triggers e.g. ('A', 1)
-                as letter and flash time for the letter
-            target_info(list[str]): target information about the stimuli
-            window_length(int): The length of the time between stimuli presentation
+        Parameters
+        ----------
+        - raw_data: C x L eeg data where C is number of channels and L is the
+        signal length
+        - triggers: triggers e.g. `('A', 1)` as letter and flash time for the
+        letter
+        - target_info: target information about the stimuli
+        - window_length: The length of the time between stimuli presentation
+
+        Returns
+        -------
+        - (True, None) when commitment is made.
+        - (False, next set of stimuli) when not enough evidence has
+        been provided and stoppage criteria is not yet met.
+        """
+        lik_r = self.evaluate_eeg_evidence(raw_data, triggers, target_info,
+                                           window_length)
+        self.add_evidence(EvidenceType.ERP, lik_r)
+        return self.decide()
+
+    def evaluate_eeg_evidence(self, raw_data: np.array,
+                              triggers: List[Tuple[str, float]],
+                              target_info: List[str],
+                              window_length: int) -> np.array:
+        """Once data is collected, infers meaning from the data and return the results.
+
+        Parameters
+        ----------
+        - raw_data: C x L eeg data where C is number of channels and L is the
+        signal length
+        - triggers: triggers e.g. `('A', 1)` as letter and flash time for the
+        letter
+        - target_info: target information about the stimuli
+        - window_length: The length of the time between stimuli presentation
+
+        Returns
+        -------
+        np.array of likelihood evidence
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
@@ -133,26 +202,55 @@ class CopyPhraseWrapper:
                              channel_map=self.channel_map,
                              trial_length=window_length)
 
-        lik_r = self.signal_model.predict(x, letters, self.alp)
-        prob = self.conjugator.update_and_fuse({'ERP': lik_r})
-        decision, sti = self.decision_maker.decide(prob)
+        return self.signal_model.predict(x, letters, self.alp)
 
-        return decision, sti
+    def add_evidence(self, evidence_type: EvidenceType,
+                     evidence: List[float]) -> np.array:
+        """Add evidence to the conjugator.
+
+        Parameters
+        ----------
+        - evidence_type : type of evidence (ex. `'LM'`, `'ERP'`)
+        - evidence : ndarray[float], evidence for each stim
+
+        Returns
+        -------
+        updated likelihoods after fusing the new evidence
+        """
+        assert evidence_type in self.conjugator.evidence_history.keys(
+        ), f"Copy Phrase wrapper was not initialized with evidence type: {evidence_type}."
+        return self.conjugator.update_and_fuse(
+            {evidence_type: np.array(evidence)})
+
+    def decide(self) -> Tuple[bool, InquirySchedule]:
+        """Make a decision based on the current evidence.
+
+        Returns
+        -------
+        - (True, None) when commitment is made.
+        - (False, next set of stimuli) when not enough evidence has
+        been provided and stoppage criteria is not yet met.
+        """
+        decision, new_stim = self.decision_maker.decide(
+            self.conjugator.likelihood[:])
+        return decision, new_stim
 
     def letter_info(self, triggers: List[Tuple[str, float]],
                     target_info: List[str]
                     ) -> Tuple[List[str], List[float], List[str]]:
         """
         Filters out non-letters and separates timings from letters.
-        Parameters:
-        -----------
-         triggers: triggers e.g. [['A', 0.5], ...]
-                as letter and flash time for the letter
-         target_info: target information about the stimuli;
-            ex. ['nontarget', 'nontarget', ...]
-        Returns:
-        --------
-            (letters, times, target_info)
+
+        Parameters
+        ----------
+        - triggers: triggers e.g. [['A', 0.5], ...]
+        as letter and flash time for the letter
+        - target_info: target information about the stimuli;
+        ex. ['nontarget', 'nontarget', ...]
+
+        Returns
+        -------
+        (letters, times, target_info)
         """
         letters = []
         times = []
@@ -172,7 +270,7 @@ class CopyPhraseWrapper:
 
         return letters, times, target_types
 
-    def initialize_series(self):
+    def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
 
         try:
@@ -223,7 +321,7 @@ class CopyPhraseWrapper:
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
-                    {'LM': np.array(prior)})
+                    {EvidenceType.LM: np.array(prior)})
             except Exception as lm_exception:
                 print("Error updating language model!")
                 raise lm_exception
