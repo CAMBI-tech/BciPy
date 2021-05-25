@@ -1,14 +1,17 @@
 from scipy.signal import butter, filtfilt, iirnotch, sosfilt
 import numpy as np
+from typing import Optional
 
 
 class Composition:
     def __init__(self, *transforms):
         self.transforms = transforms
 
-    def __call__(self, data: np.ndarray, fs: int):
+    def __call__(self, data: np.ndarray, fs: Optional[int] = None):
         for t in self.transforms:
             data, fs = t(data, fs)
+        if fs is None:
+            return data
         return data, fs
 
 
@@ -17,7 +20,9 @@ class Notch:
         remove_freq_hz = remove_freq_hz / (sample_rate_hz / 2)
         self.b, self.a = iirnotch(remove_freq_hz, quality_factor)
 
-    def __call__(self, data: np.ndarray, fs: int):
+    def __call__(self, data: np.ndarray, fs: Optional[int] = None):
+        if fs is None:
+            return filtfilt(self.b, self.a, data)
         return filtfilt(self.b, self.a, data), fs
 
 
@@ -27,7 +32,9 @@ class Bandpass:
         lo, hi = lo / nyq, hi / nyq
         self.sos = butter(order, [lo, hi], analog=False, btype="band", output="sos")
 
-    def __call__(self, data: np.ndarray, fs: int):
+    def __call__(self, data: np.ndarray, fs: Optional[int] = None):
+        if fs is None:
+            return sosfilt(self.sos, data)
         return sosfilt(self.sos, data), fs
 
 
@@ -35,7 +42,9 @@ class Downsample:
     def __init__(self, factor: int = 2):
         self.factor = factor
 
-    def __call__(self, data: np.ndarray, fs: int):
+    def __call__(self, data: np.ndarray, fs: Optional[int] = None):
+        if fs is None:
+            return data[:, :: self.factor]
         return data[:, :: self.factor], fs // self.factor
 
 
@@ -43,7 +52,9 @@ class Lambda:
     def __init__(self, f):
         self.f = f
 
-    def __call__(self, data: np.ndarray, fs: int):
+    def __call__(self, data: np.ndarray, fs: Optional[int] = None):
+        if fs is None:
+            return self.f(data)
         return self.f(data), fs
 
 

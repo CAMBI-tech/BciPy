@@ -322,7 +322,7 @@ class EEGFrame(wx.Frame):
 
     def init_data(self):
         """Initialize the data."""
-        channel_data, _ = self.filter(self.current_data(), 0)
+        channel_data = self.filter(self.current_data())
 
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
@@ -351,7 +351,7 @@ class EEGFrame(wx.Frame):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
-        channel_data, _ = self.filter(self.current_data(), 0)
+        channel_data = self.filter(self.current_data())
 
         # plot each channel
         for i, _channel in enumerate(self.data_indices):
