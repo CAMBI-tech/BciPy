@@ -8,7 +8,7 @@ from bcipy.display.rsvp import (InformationProperties,
                                 TaskDisplayProperties)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper, EvidenceName
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
@@ -18,7 +18,7 @@ from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.tasks.rsvp.main_frame import EvidenceFusion
-from bcipy.tasks.session_data import Inquiry, Session
+from bcipy.tasks.session_data import Inquiry, Session, EvidenceType
 from bcipy.tasks.task import Task
 
 
@@ -123,9 +123,9 @@ class RSVPCopyPhraseTask(Task):
 
         # TODO: add a parameter for button_press_error_prob.
         self.button_press_error_prob = 0.05
-        self.evidence_names = [EvidenceName.LM, EvidenceName.ERP]
+        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
         if self.parameters['show_preview_inquiry']:
-            self.evidence_names.append(EvidenceName.BTN)
+            self.evidence_types.append(EvidenceType.BTN)
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -172,7 +172,7 @@ class RSVPCopyPhraseTask(Task):
             fs=self.daq.device_info.fs,
             k=self.parameters['down_sampling_rate'],
             alp=self.alp,
-            evidence_names=self.evidence_names,
+            evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
             lmodel=self.language_model,
             is_txt_stim=self.parameters['is_txt_stim'],
@@ -399,7 +399,7 @@ class RSVPCopyPhraseTask(Task):
         return Decision(decision_made, selection, spelled_text, new_sti)
 
     def add_evidence(self, stim_times: List[List],
-                     proceed: bool = True) -> List[str]:
+                     proceed: bool = True) -> List[EvidenceType]:
         """Add all evidence used to make a decision.
 
         Parameters
@@ -422,15 +422,15 @@ class RSVPCopyPhraseTask(Task):
         evidence_types = []
         for evidence in evidences:
             if evidence:
-                name, probs = evidence
-                evidence_types.append(name)
-                self.copy_phrase_task.add_evidence(name, probs)
+                evidence_type, probs = evidence
+                evidence_types.append(evidence_type)
+                self.copy_phrase_task.add_evidence(evidence_type, probs)
         if self.session.latest_series_is_empty():
-            evidence_types.append(EvidenceName.LM)
+            evidence_types.append(EvidenceType.LM)
         return evidence_types
 
     def compute_button_press_evidence(self, proceed: bool
-                                      ) -> Tuple[str, List[float]]:
+                                      ) -> Tuple[EvidenceType, List[float]]:
         """If 'show_preview_inquiry' feature is enabled, compute the button
         press evidence and add it to the copy phrase task.
 
@@ -440,7 +440,7 @@ class RSVPCopyPhraseTask(Task):
 
         Returns
         -------
-        tuple of (evidence name, evidence)
+        tuple of (evidence type, evidence)
         """
         if not self.parameters['show_preview_inquiry']:
             return None
@@ -448,11 +448,12 @@ class RSVPCopyPhraseTask(Task):
                                             self.alp,
                                             self.button_press_error_prob,
                                             proceed)
-        return (EvidenceName.BTN, probs)
+        return (EvidenceType.BTN, probs)
 
     def compute_eeg_evidence(self,
                              stim_times: List[List],
-                             proceed: bool = True) -> Tuple[str, List[float]]:
+                             proceed: bool = True
+                             ) -> Tuple[EvidenceType, List[float]]:
         """Evaluate the EEG evidence and add it to the copy_phrase_task, but
         don't yet attempt a decision.
 
@@ -464,7 +465,7 @@ class RSVPCopyPhraseTask(Task):
 
         Returns
         -------
-        tuple of (evidence name, evidence)
+        tuple of (evidence type, evidence)
         """
         if not proceed or self.fake:
             return None
@@ -476,7 +477,7 @@ class RSVPCopyPhraseTask(Task):
 
         probs = self.copy_phrase_task.evaluate_eeg_evidence(
             raw_data, triggers, target_info, self.parameters['trial_length'])
-        return (EvidenceName.ERP, probs)
+        return (EvidenceType.ERP, probs)
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
         """The stim_timings from the display may include non-letter stimuli
@@ -501,7 +502,7 @@ class RSVPCopyPhraseTask(Task):
                         target_letter: str,
                         current_text: str,
                         next_state: str,
-                        evidence_types: List[str] = []) -> Inquiry:
+                        evidence_types: List[EvidenceType] = []) -> Inquiry:
         """Construct a new inquiry data record.
         
         Parameters
@@ -531,8 +532,8 @@ class RSVPCopyPhraseTask(Task):
         if not self.fake:
             latest_evidence = self.copy_phrase_task.conjugator.latest_evidence
             data.evidences = {
-                name: evidence if name in evidence_types else []
-                for name, evidence in latest_evidence.items()
+                ev_type: evidence if ev_type in evidence_types else []
+                for ev_type, evidence in latest_evidence.items()
             }
             data.likelihood = list(self.copy_phrase_task.conjugator.likelihood)
         return data

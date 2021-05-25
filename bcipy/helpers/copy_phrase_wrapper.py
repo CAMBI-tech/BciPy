@@ -1,5 +1,4 @@
 """Defines the CopyPhraseWrapper."""
-from collections import namedtuple
 from typing import List, Tuple, Any
 
 import numpy as np
@@ -16,10 +15,8 @@ from bcipy.tasks.rsvp.stopping_criteria import (CriteriaEvaluator,
                                                 MaxIterationsCriteria,
                                                 MinIterationsCriteria,
                                                 ProbThresholdCriteria)
+from bcipy.tasks.session_data import EvidenceType
 from bcipy.signal.model import SignalModel
-
-_EV_NAMES = ['LM', 'ERP', 'BTN']
-EvidenceName = namedtuple('Enum', _EV_NAMES)(*_EV_NAMES)
 
 
 class CopyPhraseWrapper:
@@ -70,7 +67,9 @@ class CopyPhraseWrapper:
                  fs: int = 300,
                  k: int = 2,
                  alp: List[str] = None,
-                 evidence_names: List[str] = ['LM', 'ERP'],
+                 evidence_names: List[EvidenceType] = [
+                     EvidenceType.LM, EvidenceType.ERP
+                 ],
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
                  lmodel: Any = None,
@@ -154,7 +153,7 @@ class CopyPhraseWrapper:
         """
         lik_r = self.evaluate_eeg_evidence(raw_data, triggers, target_info,
                                            window_length)
-        self.add_evidence(EvidenceName.ERP, lik_r)
+        self.add_evidence(EvidenceType.ERP, lik_r)
         return self.decide()
 
     def evaluate_eeg_evidence(self, raw_data: np.array,
@@ -202,21 +201,23 @@ class CopyPhraseWrapper:
 
         return self.signal_model.predict(x, letters, self.alp)
 
-    def add_evidence(self, name: str, evidence: List[float]) -> np.array:
+    def add_evidence(self, evidence_type: EvidenceType,
+                     evidence: List[float]) -> np.array:
         """Add evidence to the conjugator.
 
         Parameters
         ----------
-        - name : name of evidence (ex. `'LM'`, `'ERP'`)
+        - evidence_type : type of evidence (ex. `'LM'`, `'ERP'`)
         - evidence : ndarray[float], evidence for each stim
 
         Returns
         -------
         updated likelihoods after fusing the new evidence
         """
-        assert name in self.conjugator.evidence_history.keys(
-        ), f"Copy Phrase wrapper was not initialized with evidence type: {name}."
-        return self.conjugator.update_and_fuse({name: np.array(evidence)})
+        assert evidence_type in self.conjugator.evidence_history.keys(
+        ), f"Copy Phrase wrapper was not initialized with evidence type: {evidence_type}."
+        return self.conjugator.update_and_fuse(
+            {evidence_type: np.array(evidence)})
 
     def decide(self) -> Tuple[bool, InquirySchedule]:
         """Make a decision based on the current evidence.
@@ -317,7 +318,7 @@ class CopyPhraseWrapper:
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
-                    {'LM': np.array(prior)})
+                    {EvidenceType.LM: np.array(prior)})
             except Exception as lm_exception:
                 print("Error updating language model!")
                 raise lm_exception

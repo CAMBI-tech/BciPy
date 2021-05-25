@@ -1,16 +1,17 @@
-import unittest
-
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.task import alphabet
-import numpy as np
-import tempfile
-import shutil
-from bcipy.helpers.load import load_json_parameters
-from bcipy.acquisition.devices import DeviceSpec, register
-from bcipy.signal.model import PcaRdaKdeModel
-
-from pathlib import Path
 import random
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+from bcipy.acquisition.devices import DeviceSpec, register
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.task import alphabet
+from bcipy.signal.model import PcaRdaKdeModel
+from bcipy.tasks.session_data import EvidenceType
 
 
 class TestCopyPhraseWrapper(unittest.TestCase):
@@ -71,7 +72,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
             device_name=self.device_spec.name,
-            evidence_names=["LM", "ERP"],
+            evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
             stimuli_timing=[0.5, 0.25],
         )
@@ -177,7 +178,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
             device_name=self.device_spec.name,
-            evidence_names=["LM", "ERP"],
+            evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
             stimuli_timing=[0.5, 0.25],
             notch_filter_frequency=4.0,

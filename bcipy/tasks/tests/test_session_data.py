@@ -1,7 +1,7 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.tasks.session_data import Session, Inquiry
+from bcipy.tasks.session_data import Session, Inquiry, EvidenceType
 
 
 def sample_stim_seq(include_evidence: bool = False):
@@ -26,7 +26,7 @@ def sample_stim_seq(include_evidence: bool = False):
 
     if include_evidence:
         stim_seq.evidences = {
-            'LM': [
+            EvidenceType.LM: [
                 0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
                 0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
                 0.03518518518518518, 0.03518518518518518, 0.03518518518518518,
@@ -38,7 +38,7 @@ def sample_stim_seq(include_evidence: bool = False):
                 0.03518518518518518, 0.03518518518518518, 0.05,
                 0.03518518518518518
             ],
-            'ERP': [
+            EvidenceType.ERP: [
                 1.0771572587661082, 0.9567667980052755, 0.9447790096182402,
                 0.9557979187496592, 0.9639921426239895, 1.0149791038166587,
                 0.9332784168303235, 1.0020770058735426, 1.0143856794734767,
@@ -98,7 +98,7 @@ class TestSessionData(unittest.TestCase):
         stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
         self.assertTrue('lm_evidence' in serialized.keys())
-        self.assertEquals(serialized['lm_evidence'], stim_seq.evidences['LM'])
+        self.assertEquals(serialized['lm_evidence'], stim_seq.evidences[EvidenceType.LM])
 
         deserialized = Inquiry.from_dict(serialized)
 
@@ -111,7 +111,7 @@ class TestSessionData(unittest.TestCase):
         self.assertEquals(stim_seq.target_text, deserialized.target_text)
         self.assertEquals(stim_seq.next_display_state,
                           deserialized.next_display_state)
-        self.assertEquals(stim_seq.evidences['LM'], deserialized.evidences['LM'])
+        self.assertEquals(stim_seq.evidences[EvidenceType.LM], deserialized.evidences[EvidenceType.LM])
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""

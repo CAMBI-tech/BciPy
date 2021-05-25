@@ -15,7 +15,7 @@ from bcipy.acquisition.client import DataAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.tasks.session_data import Session
+from bcipy.tasks.session_data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
 
 
@@ -451,7 +451,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
-        verify(self.copy_phrase_wrapper, times=1).add_evidence('BTN', ...)
+        verify(self.copy_phrase_wrapper, times=1).add_evidence(EvidenceType.BTN, ...)
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
         self.assertEqual(self.temp_dir, result)
 
@@ -478,7 +478,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         conjugator_mock = mock({
             'latest_evidence': {
-                'LM': [
+                EvidenceType.LM: [
                     0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
                     0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
                     0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
@@ -486,7 +486,7 @@ class TestCopyPhrase(unittest.TestCase):
                     0.03518519, 0.03518519, 0.03518519, 0.03518519, 0.03518519,
                     0.03518519, 0.05, 0.03518519
                 ],
-                'ERP': [
+                EvidenceType.ERP: [
                     0.84381388, 1.18913356, 0.74758085, 1.22871603, 1.1952462,
                     1.19054715, 1.24945839, 1.17512002, 1.25628015, 1., 1., 1.,
                     1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,

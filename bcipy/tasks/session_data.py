@@ -1,6 +1,42 @@
 """Module for functionality related to session-related data."""
 from typing import Dict, List
 from collections import Counter
+from enum import Enum
+
+EVIDENCE_SUFFIX = "_evidence"
+
+
+class EvidenceType(Enum):
+    """Enum of the supported evidence types used in the various spelling tasks."""
+    LM = 'LM'  # Language Model
+    ERP = 'ERP'  # Event-Related Potential using EEG signals
+    BTN = 'BTN'  # Button
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return list(map(lambda c: c.name, cls))
+
+    @classmethod
+    def deserialized(cls, serialized_name: str) -> 'EvidenceType':
+        """Deserialized name of the given evidence type.
+        Parameters:
+            evidence_name - ex. 'lm_evidence'
+        Returns:
+            deserialized value: ex. EvidenceType.LM
+        """
+        if (serialized_name == 'eeg_evidence'):
+            return EvidenceType.ERP
+        return cls(serialized_name[:-len(EVIDENCE_SUFFIX)].upper())
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def serialized(self) -> str:
+        """Name used when serialized to a json file."""
+        if (self == EvidenceType.ERP):
+            return 'eeg_evidence'
+        return f'{self.name.lower()}{EVIDENCE_SUFFIX}'
 
 
 class Inquiry:
@@ -19,7 +55,6 @@ class Inquiry:
         eeg_evidence - eeg evidence for each stimulus
         likelihood - combined likelihood for each stimulus
     """
-    EVIDENCE_SUFFIX = '_evidence'
 
     def __init__(self,
                  stimuli: List[str],
@@ -46,11 +81,11 @@ class Inquiry:
 
     @property
     def lm_evidence(self):
-        return self.evidences.get('LM', [])
+        return self.evidences.get(EvidenceType.LM, [])
 
     @property
     def eeg_evidence(self):
-        return self.evidences.get('ERP', [])
+        return self.evidences.get(EvidenceType.ERP, [])
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -62,9 +97,10 @@ class Inquiry:
                 method.
         """
         # partition into evidence data and other data.
-        suffix = cls.EVIDENCE_SUFFIX
+
+        suffix = EVIDENCE_SUFFIX
         evidences = {
-            cls.deserialized_name(name): value
+            EvidenceType.deserialized(name): value
             for name, value in data.items() if name.endswith(suffix)
         }
 
@@ -79,30 +115,6 @@ class Inquiry:
         inquiry.evidences = evidences
         return inquiry
 
-    @classmethod
-    def serialized_name(cls, evidence_name: str) -> str:
-        """Serialized name of the given evidence type.
-        Parameters:
-            evidence_name - ex. 'LM' or 'ERP'
-        Returns:
-            serialized name; ex. 'lm_evidence'
-        """
-        if (evidence_name == 'ERP'):
-            return 'eeg_evidence'
-        return f'{evidence_name.lower()}{cls.EVIDENCE_SUFFIX}'
-    
-    @classmethod
-    def deserialized_name(cls, evidence_name: str) -> str:
-        """Deserialized name of the given evidence type.
-        Parameters:
-            evidence_name - ex. 'lm_evidence'
-        Returns:
-            deserialized name; ex. 'LM'
-        """
-        if (evidence_name == 'eeg_evidence'):
-            return 'ERP'
-        return evidence_name[:-len(cls.EVIDENCE_SUFFIX)].upper()
-
     def as_dict(self) -> Dict:
         data = {
             'stimuli': self.stimuli,
@@ -115,8 +127,8 @@ class Inquiry:
             'next_display_state': self.next_display_state
         }
 
-        for name, evidence in self.evidences.items():
-            data[Inquiry.serialized_name(name)] = evidence
+        for evidence_type, evidence in self.evidences.items():
+            data[evidence_type.serialized] = evidence
 
         if self.likelihood:
             data['likelihood'] = self.likelihood
@@ -138,8 +150,8 @@ class Inquiry:
         data = {
             'stimuli': self.stimuli,
         }
-        for name, evidence in self.evidences.items():
-            data[Inquiry.serialized_name(name)] = dict(zip(alphabet, evidence))
+        for evidence_type, evidence in self.evidences.items():
+            data[evidence_type.serialized] = dict(zip(alphabet, evidence))
 
         data['likelihood'] = likelihood
         data['most_likely'] = dict(
