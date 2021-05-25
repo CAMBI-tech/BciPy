@@ -115,7 +115,3 @@ A `Protocol` contains device-specific behavior for how to generate mock data. It
 #### Producer
 
 A `Producer` is a class internal to a server that manages the generation of data at a specified frequency. It's purpose it to mimic the data rate that would be presented if an actual hardware device was used.
-
-## sig_pro
-
-TODO
