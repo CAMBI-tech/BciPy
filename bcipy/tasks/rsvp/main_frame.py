@@ -1,10 +1,13 @@
-from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
-from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
-from bcipy.helpers.stimuli import rsvp_inq_generator
-from bcipy.helpers.task import SPACE_CHAR
 import logging
-import numpy as np
 import string
+from typing import Dict, List, Tuple
+
+import numpy as np
+
+from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator
+from bcipy.helpers.task import SPACE_CHAR
+from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
+from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +62,19 @@ class EvidenceFusion(object):
     def save_history(self):
         """ Saves the current likelihood history """
         return 0
+
+    @property
+    def latest_evidence(self) -> Dict[str, List[float]]:
+        """Latest evidence of each type in the evidence history.
+        
+        Returns
+        -------
+        a dictionary with an entry for all configured evidence types.
+        """
+        return {
+            name: list(evidence[-1]) if evidence else []
+            for name, evidence in self.evidence_history.items()
+        }
 
 
 class DecisionMaker:
@@ -188,18 +204,22 @@ class DecisionMaker:
         self.state = state
         self.displayed_state = self.form_display_state(state)
 
-    def decide(self, p):
+    def decide(self, p) -> Tuple[bool, InquirySchedule]:
         """ Once evidence is collected, decision_maker makes a decision to
             stop or not by leveraging the information of the stopping
             criteria. Can decide to do an series or schedule another inquiry.
-            Args:
-                p(ndarray[float]): |A| x 1 distribution array
-                    |A|: cardinality of the alphabet
-            Return:
-                commitment(bin): True if a letter is a commitment is made
-                                 False if requires more evidence
-                args(dict[]): Extra arguments depending on the decision
-                """
+
+        Args
+        ----
+        p(ndarray[float]): |A| x 1 distribution array
+            |A|: cardinality of the alphabet
+        
+        Return
+        ------
+        - commitment: True if a letter is a commitment is made
+        False if requires more evidence
+        - inquiry schedule: Extra arguments depending on the decision
+        """
 
         self.list_series[-1]['list_distribution'].append(p[:])
 
@@ -228,7 +248,7 @@ class DecisionMaker:
         self.stimuli_agent.do_series()
         self.stopping_evaluator.do_series()
 
-    def schedule_inquiry(self):
+    def schedule_inquiry(self) -> InquirySchedule:
         """ Schedules next inquiry """
         self.state += '.'
         stimuli = self.prepare_stimuli()
@@ -246,13 +266,15 @@ class DecisionMaker:
         self.list_series[-1]['decision'] = decision
         return decision
 
-    def prepare_stimuli(self):
+    def prepare_stimuli(self) -> InquirySchedule:
         """ Given the alphabet, under a rule, prepares a stimuli for
-            the next inquiry
-            Return:
-                stimuli(tuple[list[char],list[float],list[str]]): tuple of
-                    stimuli information. [0]: letter, [1]: timing, [2]: color
-                """
+            the next inquiry.
+
+        Return
+        ------
+        stimuli(tuple[list[char],list[float],list[str]]): tuple of
+        stimuli information. [0]: letter, [1]: timing, [2]: color
+        """
 
         # querying agent decides on possible letters to be shown on the screen
         query_els = self.stimuli_agent.return_stimuli(

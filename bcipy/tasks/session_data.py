@@ -1,6 +1,42 @@
 """Module for functionality related to session-related data."""
 from typing import Dict, List
 from collections import Counter
+from enum import Enum
+
+EVIDENCE_SUFFIX = "_evidence"
+
+
+class EvidenceType(Enum):
+    """Enum of the supported evidence types used in the various spelling tasks."""
+    LM = 'LM'  # Language Model
+    ERP = 'ERP'  # Event-Related Potential using EEG signals
+    BTN = 'BTN'  # Button
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return list(map(lambda c: c.name, cls))
+
+    @classmethod
+    def deserialized(cls, serialized_name: str) -> 'EvidenceType':
+        """Deserialized name of the given evidence type.
+        Parameters:
+            evidence_name - ex. 'lm_evidence'
+        Returns:
+            deserialized value: ex. EvidenceType.LM
+        """
+        if (serialized_name == 'eeg_evidence'):
+            return EvidenceType.ERP
+        return cls(serialized_name[:-len(EVIDENCE_SUFFIX)].upper())
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def serialized(self) -> str:
+        """Name used when serialized to a json file."""
+        if (self == EvidenceType.ERP):
+            return 'eeg_evidence'
+        return f'{self.name.lower()}{EVIDENCE_SUFFIX}'
 
 
 class Inquiry:
@@ -29,8 +65,6 @@ class Inquiry:
                  current_text: str = None,
                  target_text: str = None,
                  next_display_state: str = None,
-                 lm_evidence: List[float] = None,
-                 eeg_evidence: List[float] = None,
                  likelihood: List[float] = None):
         super().__init__()
         self.stimuli = stimuli
@@ -42,10 +76,16 @@ class Inquiry:
         self.target_text = target_text
         self.next_display_state = next_display_state
 
-        # TODO: refactor for multimodal; List of Evidences?
-        self.lm_evidence = lm_evidence or []
-        self.eeg_evidence = eeg_evidence or []
+        self.evidences = {}
         self.likelihood = likelihood or []
+
+    @property
+    def lm_evidence(self):
+        return self.evidences.get(EvidenceType.LM, [])
+
+    @property
+    def eeg_evidence(self):
+        return self.evidences.get(EvidenceType.ERP, [])
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -56,10 +96,23 @@ class Inquiry:
             data - a dict in the format of the data output by the as_dict
                 method.
         """
-        inquiry = cls(**data)
+        # partition into evidence data and other data.
+
+        suffix = EVIDENCE_SUFFIX
+        evidences = {
+            EvidenceType.deserialized(name): value
+            for name, value in data.items() if name.endswith(suffix)
+        }
+
+        non_evidence_data = {
+            name: value
+            for name, value in data.items() if not name.endswith(suffix)
+        }
+        inquiry = cls(**non_evidence_data)
         if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
             # flatten
             inquiry.stimuli = data['stimuli'][0]
+        inquiry.evidences = evidences
         return inquiry
 
     def as_dict(self) -> Dict:
@@ -74,15 +127,15 @@ class Inquiry:
             'next_display_state': self.next_display_state
         }
 
-        if self.lm_evidence:
-            data['lm_evidence'] = self.lm_evidence
-        if self.eeg_evidence:
-            data['eeg_evidence'] = self.eeg_evidence
+        for evidence_type, evidence in self.evidences.items():
+            data[evidence_type.serialized] = evidence
+
         if self.likelihood:
             data['likelihood'] = self.likelihood
         return data
 
-    def stim_evidence(self, alphabet: List[str], n_most_likely: int = 5) -> Dict:
+    def stim_evidence(self, alphabet: List[str],
+                      n_most_likely: int = 5) -> Dict:
         """Returns a dict of stim sequence data useful for debugging. Evidences
         are paired with the appropriate alphabet letter for easier visual
         scanning. Also, an additional attribute is provided to display the
@@ -94,13 +147,16 @@ class Inquiry:
             n_most_likely - number of most likely elements to include
         """
         likelihood = dict(zip(alphabet, self.likelihood))
-        return {
+        data = {
             'stimuli': self.stimuli,
-            'lm_evidence': dict(zip(alphabet, self.lm_evidence)),
-            'eeg_evidence': dict(zip(alphabet, self.eeg_evidence)),
-            'likelihood': likelihood,
-            'most_likely': dict(Counter(likelihood).most_common(n_most_likely))
         }
+        for evidence_type, evidence in self.evidences.items():
+            data[evidence_type.serialized] = dict(zip(alphabet, evidence))
+
+        data['likelihood'] = likelihood
+        data['most_likely'] = dict(
+            Counter(likelihood).most_common(n_most_likely))
+        return data
 
 
 class Session:
@@ -127,9 +183,7 @@ class Session:
         if self.last_series():
             self.series.append([])
 
-    def add_sequence(self,
-                     inquiry: Inquiry,
-                     new_series: bool = False):
+    def add_sequence(self, inquiry: Inquiry, new_series: bool = False):
         """Append sequence information
 
         Parameters:
@@ -145,6 +199,17 @@ class Session:
     def last_series(self) -> List[Inquiry]:
         """Returns the last series"""
         return self.series[-1]
+
+    def last_inquiry(self) -> Inquiry:
+        """Returns the last inquiry of the last series."""
+        series = self.last_series()
+        if series:
+            return series[-1]
+        return None
+
+    def latest_series_is_empty(self) -> bool:
+        """Whether the latest series has had any inquiries added to it."""
+        return len(self.last_series()) == 0
 
     def as_dict(self, alphabet=None, evidence_only: bool = False) -> Dict:
         """Dict representation"""

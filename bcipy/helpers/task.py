@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Union
+from typing import Any, List, Union, Tuple
 import logging
 import random
 import numpy as np
@@ -103,6 +103,45 @@ def alphabet(parameters=None, include_path=True):
             return stimulus_array
 
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
+
+
+def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
+    """Construct triggers from inquiry_timing data.
+
+    Parameters
+    ----------
+    - inquiry_timing: list of tuples containing stimulus timing and text
+
+    Returns
+    -------
+    list of (stim, offset) tuples, where offset is calculated relative to the
+    first stim time.
+    """
+    if inquiry_timing:
+        _, first_stim_time = inquiry_timing[0]
+        return [(stim, ((timing) - first_stim_time))
+                for stim, timing in inquiry_timing]
+    return []
+
+def target_info(triggers: List[Tuple[str, float]],
+                target_letter: str = None) -> List[str]:
+    """Targetness for each item in triggers.
+
+    Parameters
+    ----------
+    - triggers : list of (stim, offset)
+    - target_letter : letter the user is attempting to spell
+
+    Returns
+    -------
+    list of ('target' | 'nontarget') for each trigger.
+    """
+    if target_letter:
+        return [
+            'target' if trg[0] == target_letter else 'nontarget'
+            for trg in triggers
+        ]
+    return ['nontarget'] * len(triggers)
 
 
 def process_data_for_decision(
