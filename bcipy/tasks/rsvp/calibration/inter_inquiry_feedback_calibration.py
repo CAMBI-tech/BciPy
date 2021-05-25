@@ -314,7 +314,6 @@ class RSVPInterInquiryFeedbackCalibration(Task):
             times,
             data,
             fs=fs_after,
-            mode='calibration',
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return reshaped_data

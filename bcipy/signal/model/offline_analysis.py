@@ -93,7 +93,7 @@ def offline_analysis(data_folder: str = None,
     channel_map = analysis_channels(channels, type_amp)
 
     x, y = trial_reshaper(t_t_i, t_i, data,
-                          mode=mode, fs=fs,
+                          fs=fs,
                           offset=offset,
                           channel_map=channel_map,
                           trial_length=trial_length)

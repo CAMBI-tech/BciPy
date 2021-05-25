@@ -125,7 +125,6 @@ class CopyPhraseWrapper:
 
         x, _ = trial_reshaper(target_info, times, data,
                               fs=self.sampling_rate,
-                              mode=self.mode,
                               channel_map=self.channel_map,
                               trial_length=window_length)
 
