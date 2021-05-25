@@ -398,6 +398,7 @@ def inquiry_reshaper(trial_target_info: List[str],
                      targets_included: Set[str] = set(["target", "nontarget"]),
                      targets_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
     """Extract inquiry data and labels.
+
     Args:
         trial_target_info (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
         timing_info (List[float]): Timestamp of each event in seconds
@@ -489,8 +490,6 @@ def trial_reshaper(trial_target_info: list,
     Returns:
         trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
         labels (np.ndarray): integer label for each trial
-
-    TODO ??? In all modes > calibration, we assume the timing info is given in samples not seconds.
     """
     # Remove the channels that we are not interested in
     channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
