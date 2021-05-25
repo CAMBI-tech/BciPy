@@ -357,10 +357,20 @@ def inquiry_reshaper(trial_target_info: list,
                      trial_length: float = 0.5):
     """Extract inquiry data and labels.
     Args:
-        TODO
+        trial_target_info (list): labels each trial as "target", "non-target", "first_pres_target", etc
+        timing_info (list): Timestamp of each event in seconds
+        eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+        fs (int): sample rate of preprocessed EEG data
+        trials_per_inquiry (int): number of trials in each inquiry
+        offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
+        channel_map (tuple, optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
+        trial_length (float, optional): [description]. Defaults to 0.5.
 
     Returns:
-        TODO
+        reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+        labels (np.ndarray): integer label for each inquiry. With trials_per_inquiry=K,
+            a label of [0, K-1] indicates position of "target", or label of K indicates
+            target was not present.
     """
     # Remove the channels that we are not interested in
     channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
@@ -370,10 +380,10 @@ def inquiry_reshaper(trial_target_info: list,
     num_samples = int(trial_length * fs * trials_per_inquiry)
 
     # Remove unwanted elements from target info and timing info
-    targets_to_remove = set(["first_pres_target", "fixation"])
+    targets_included = set(["target", "nontarget"])
     tmp_targets, tmp_timing = [], []
     for target, timing in zip(trial_target_info, timing_info):
-        if target not in targets_to_remove:
+        if target in targets_included:
             tmp_targets.append(target)
             tmp_timing.append(timing)
     trial_target_info = tmp_targets
@@ -441,10 +451,10 @@ def trial_reshaper(trial_target_info: list,
     num_samples = int(trial_length * fs)
 
     # Remove unwanted elements from target info and timing info
-    targets_to_remove = set(["first_pres_target", "fixation"])
+    targets_included = set(["target", "nontarget"])
     tmp_targets, tmp_timing = [], []
     for target, timing in zip(trial_target_info, timing_info):
-        if target not in targets_to_remove:
+        if target in targets_included:
             tmp_targets.append(target)
             tmp_timing.append(timing)
     trial_target_info = tmp_targets
