@@ -421,14 +421,14 @@ class InquiryReshaper(Reshaper):
                 Defaults to DEFAULT_CHANNEL_MAP.
             trial_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): target labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): target labels to exclude. Defaults to empty set.
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
-            labels (np.ndarray): integer label for each inquiry. With trials_per_inquiry=K,
-                a label of [0, K-1] indicates position of "target", or label of K indicates
-                target was not present.
+            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
+                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                `target_label` was not present.
         """
         # Remove the channels that we are not interested in
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
@@ -439,9 +439,9 @@ class InquiryReshaper(Reshaper):
 
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
-        for target, timing in zip(trial_labels, timing_info):
-            if target in labels_included and target not in labels_excluded:
-                tmp_labels.append(target)
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
                 tmp_timing.append(timing)
         trial_labels = tmp_labels
         timing_info = tmp_timing
@@ -456,22 +456,21 @@ class InquiryReshaper(Reshaper):
 
         # Label for every inquiry
         labels = np.zeros(n_inquiry)
-
         for inquiry_idx, chunk in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
             # label is the index of the "target", or else the length of the inquiry
-            label = trials_per_inquiry
+            inquiry_label = trials_per_inquiry
             first_trigger = None
-            for trial_idx, (target, trigger) in enumerate(chunk):
+            for trial_idx, (trial_label, trigger) in enumerate(chunk):
                 if first_trigger is None:
                     first_trigger = trigger
 
-                if target == target_label:
-                    label = trial_idx
+                if trial_label == target_label:
+                    inquiry_label = trial_idx
 
-            labels[inquiry_idx] = label
+            labels[inquiry_idx] = inquiry_label
 
             # For every channel append filtered channel data to trials
-            reshaped_data[:, inquiry_idx, :] = eeg_data[:, first_trigger:first_trigger + num_samples]
+            reshaped_data[:, inquiry_idx, :] = eeg_data[:, first_trigger: first_trigger + num_samples]
 
         return reshaped_data, labels
 
@@ -503,8 +502,8 @@ class TrialReshaper(Reshaper):
                 Defaults to DEFAULT_CHANNEL_MAP.
             trial_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): target labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): target labels to exclude. Defaults to empty set.
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
             trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
@@ -519,9 +518,9 @@ class TrialReshaper(Reshaper):
 
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
-        for target, timing in zip(trial_labels, timing_info):
-            if target in labels_included and target not in labels_excluded:
-                tmp_labels.append(target)
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
                 tmp_timing.append(timing)
         trial_labels = tmp_labels
         timing_info = tmp_timing
@@ -534,10 +533,8 @@ class TrialReshaper(Reshaper):
 
         # Label for every trial
         labels = np.zeros(len(triggers))
-
-        for trial_idx, (target, trigger) in enumerate(zip(trial_labels, triggers)):
-            # Assign targetness to labels for each trial
-            if target == target_label:
+        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
+            if trial_label == target_label:
                 labels[trial_idx] = 1
 
             # For every channel append filtered channel data to trials
