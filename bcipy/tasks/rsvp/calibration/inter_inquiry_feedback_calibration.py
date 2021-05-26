@@ -9,14 +9,13 @@ from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
 from bcipy.helpers.task import (
     trial_complete_message,
-    data_reshaper,
     get_user_input,
     pause_calibration,
-    process_data_for_decision)
+    process_data_for_decision,
+    TrialReshaper)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
-from bcipy.signal.process.filter import get_default_transform
-from bcipy.signal.model import InputDataType
+from bcipy.signal.process import get_default_transform
 
 
 class RSVPInterInquiryFeedbackCalibration(Task):
@@ -124,7 +123,7 @@ class RSVPInterInquiryFeedbackCalibration(Task):
         # true/false order is desceding from 5 -> 1 for level
         self.feedback_descending = self.parameters['feedback_level_descending']
 
-        self.input_data_type = InputDataType.TRIAL
+        self.reshaper = TrialReshaper()
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -312,11 +311,12 @@ class RSVPInterInquiryFeedbackCalibration(Task):
         _, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
-        reshaped_data, _ = data_reshaper(
-            input_data_type=self.input_data_type,
+        reshaped_data, _ = self.reshaper(
+            trial_labels=target_info,
             timing_info=times,
             eeg_data=data,
             fs=fs_after,
+            trials_per_inquiry=self.stim_length,
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return reshaped_data

@@ -4,14 +4,12 @@ import psychopy
 from collections import Counter
 from mockito import unstub, mock, when, verifyStubbedInvocationsAreUsed
 
-from bcipy.signal.model import InputDataType
 from bcipy.helpers.task import (
     alphabet,
     calculate_stimulation_freq,
     get_key_press,
-    data_reshaper,
-    trial_reshaper,
-    inquiry_reshaper,
+    InquiryReshaper,
+    TrialReshaper,
     _float_val,
     generate_targets,
     construct_triggers,
@@ -53,62 +51,6 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
 
-class TestDataReshaper(unittest.TestCase):
-    """Checks that `data_reshaper` is a transparent wrapper of `trial_reshaper` and `inquiry_reshaper`"""
-
-    def setUp(self):
-        self.target_info = ['first_pres_target', 'fixation',
-                            'target', 'nontarget', 'nontarget']
-        self.timing_info = [1.001, 1.2001, 1.4001, 1.6001, 1.8001]
-        self.n_channel = 7
-        self.fs = 256
-        self.trial_per_inquiry = 3
-        self.eeg = np.random.randn(self.n_channel, self.fs * 10)
-        self.channel_map = [1] * self.n_channel
-
-    def test_data_reshaper_vs_trial_reshaper(self):
-        reshaped_trials_1, reshaped_labels_1 = data_reshaper(
-            input_data_type=InputDataType.TRIAL,
-            trial_target_info=self.target_info,
-            timing_info=self.timing_info,
-            eeg_data=self.eeg,
-            fs=self.fs,
-            trials_per_inquiry=self.trial_per_inquiry,
-            channel_map=self.channel_map)
-
-        reshaped_trials_2, reshaped_labels_2 = trial_reshaper(
-            trial_target_info=self.target_info,
-            timing_info=self.timing_info,
-            eeg_data=self.eeg,
-            fs=self.fs,
-            trials_per_inquiry=self.trial_per_inquiry,
-            channel_map=self.channel_map)
-
-        self.assertTrue(np.allclose(reshaped_trials_1, reshaped_trials_2))
-        self.assertTrue(np.allclose(reshaped_labels_1, reshaped_labels_2))
-
-    def test_data_reshaper_vs_inquiry_reshaper(self):
-        reshaped_trials_1, reshaped_labels_1 = data_reshaper(
-            input_data_type=InputDataType.INQUIRY,
-            trial_target_info=self.target_info,
-            timing_info=self.timing_info,
-            eeg_data=self.eeg,
-            fs=self.fs,
-            trials_per_inquiry=self.trial_per_inquiry,
-            channel_map=self.channel_map)
-
-        reshaped_trials_2, reshaped_labels_2 = inquiry_reshaper(
-            trial_target_info=self.target_info,
-            timing_info=self.timing_info,
-            eeg_data=self.eeg,
-            fs=self.fs,
-            trials_per_inquiry=self.trial_per_inquiry,
-            channel_map=self.channel_map)
-
-        self.assertTrue(np.allclose(reshaped_trials_1, reshaped_trials_2))
-        self.assertTrue(np.allclose(reshaped_labels_1, reshaped_labels_2))
-
-
 class TestTrialReshaper(unittest.TestCase):
     def setUp(self):
         self.target_info = ['first_pres_target', 'fixation',
@@ -123,8 +65,8 @@ class TestTrialReshaper(unittest.TestCase):
         self.channel_map = [1] * self.channel_number
 
     def test_trial_reshaper(self):
-        reshaped_trials, _ = trial_reshaper(
-            trial_target_info=self.target_info,
+        reshaped_trials, _ = TrialReshaper()(
+            trial_labels=self.target_info,
             timing_info=self.timing_info, eeg_data=self.eeg,
             fs=256, channel_map=self.channel_map)
 
@@ -156,8 +98,8 @@ class TestInquiryReshaper(unittest.TestCase):
         self.channel_map = [1] * self.n_channel
 
     def test_inquiry_reshaper(self):
-        reshaped_data, labels = inquiry_reshaper(
-            trial_target_info=self.target_info,
+        reshaped_data, labels = InquiryReshaper()(
+            trial_labels=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
             fs=self.fs,

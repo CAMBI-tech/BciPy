@@ -1,4 +1,4 @@
-from bcipy.signal.process.filter import Downsample
+from bcipy.signal.process import Downsample
 import numpy as np
 import unittest
 

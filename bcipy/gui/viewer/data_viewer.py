@@ -17,7 +17,7 @@ from queue import Queue
 
 import numpy as np
 
-from bcipy.signal.process.filter import get_default_transform, Downsample
+from bcipy.signal.process import get_default_transform, Downsample
 
 
 class EEGFrame(wx.Frame):
