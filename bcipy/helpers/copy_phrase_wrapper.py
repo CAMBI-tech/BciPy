@@ -1,28 +1,33 @@
 """Defines the CopyPhraseWrapper."""
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
 import numpy as np
-
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.language_model import (equally_probable, histogram,
-                                          norm_domain, sym_appended)
+from bcipy.helpers.language_model import (
+    equally_probable,
+    histogram,
+    norm_domain,
+    sym_appended,
+)
 from bcipy.helpers.stimuli import InquirySchedule
-from bcipy.helpers.task import BACKSPACE_CHAR, trial_reshaper
-from bcipy.signal.process.filter import bandpass, downsample, notch
+from bcipy.helpers.task import BACKSPACE_CHAR
+from bcipy.signal.model import SignalModel
+from bcipy.signal.process import get_default_transform
 from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
 from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import (CriteriaEvaluator,
-                                                MaxIterationsCriteria,
-                                                MinIterationsCriteria,
-                                                ProbThresholdCriteria)
+from bcipy.tasks.rsvp.stopping_criteria import (
+    CriteriaEvaluator,
+    MaxIterationsCriteria,
+    MinIterationsCriteria,
+    ProbThresholdCriteria,
+)
 from bcipy.tasks.session_data import EvidenceType
-from bcipy.signal.model import SignalModel
 
 
 class CopyPhraseWrapper:
     """Basic copy phrase task duty cycle wrapper. Coordinates activities around
     spelling tasks, including:
-    
+
     - Evidence management: adding and fusing evidence using the EvidenceFusion
     module.
     - Decision-making: uses evidence to make a decision or decide to continue
@@ -98,8 +103,9 @@ class CopyPhraseWrapper:
             commit_criteria=[MaxIterationsCriteria(max_num_inq),
                              ProbThresholdCriteria(decision_threshold)])
 
+        self.stim_length = stim_length
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
-                                          len_query=stim_length)
+                                          len_query=self.stim_length)
 
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
@@ -177,29 +183,26 @@ class CopyPhraseWrapper:
         """
         letters, times, target_info = self.letter_info(triggers, target_info)
 
-        # Remove 60hz noise with a notch filter
-        notch_filter_data = notch.notch_filter(
-            raw_data, self.sampling_rate,
-            frequency_to_remove=self.notch_filter_frequency)
+        default_transform = get_default_transform(
+            sample_rate_hz=self.sampling_rate,
+            notch_freq_hz=self.notch_filter_frequency,
+            bandpass_low=self.filter_low,
+            bandpass_high=self.filter_high,
+            bandpass_order=self.filter_order,
+            downsample_factor=self.downsample_rate,
+        )
+        data, self.sampling_rate = default_transform(raw_data, self.sampling_rate)
 
-        # bandpass filter from 2-45hz
-        filtered_data = bandpass.butter_bandpass_filter(
-            notch_filter_data,
-            self.filter_low,
-            self.filter_high,
-            self.sampling_rate,
-            order=self.filter_order)
+        data, _ = self.signal_model.reshaper(
+            trial_labels=target_info,
+            timing_info=times,
+            eeg_data=data,
+            fs=self.sampling_rate,
+            trials_per_inquiry=self.stim_length,
+            channel_map=self.channel_map,
+            trial_length=window_length)
 
-        # downsample
-        data = downsample.downsample(
-            filtered_data, factor=self.downsample_rate)
-        x, _, _, _ = trial_reshaper(target_info, times, data,
-                                    fs=self.sampling_rate,
-                                    k=self.downsample_rate, mode=self.mode,
-                                    channel_map=self.channel_map,
-                                    trial_length=window_length)
-
-        return self.signal_model.predict(x, letters, self.alp)
+        return self.signal_model.predict(data, letters, self.alp)
 
     def add_evidence(self, evidence_type: EvidenceType,
                      evidence: List[float]) -> np.array:
@@ -244,7 +247,7 @@ class CopyPhraseWrapper:
         as letter and flash time for the letter
         - target_info: target information about the stimuli;
         ex. ['nontarget', 'nontarget', ...]
-        
+
         Returns
         -------
         (letters, times, target_info)

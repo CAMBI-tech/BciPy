@@ -1,19 +1,21 @@
-import os
-from typing import Any, List, Union, Tuple
 import logging
+import os
 import random
-import numpy as np
-from psychopy import core, event, visual
+from abc import ABC, abstractmethod
+from itertools import zip_longest
 from string import ascii_uppercase
+from typing import Any, List, Optional, Set, Tuple, Union
 
+import numpy as np
 from bcipy.tasks.exceptions import InsufficientDataException
+from psychopy import core, event, visual
 
 log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
-DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
+DEFAULT_CHANNEL_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
+                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0]
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -122,6 +124,7 @@ def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
         return [(stim, ((timing) - first_stim_time))
                 for stim, timing in inquiry_timing]
     return []
+
 
 def target_info(triggers: List[Tuple[str, float]],
                 target_letter: str = None) -> List[str]:
@@ -370,186 +373,174 @@ def get_key_press(
     return None
 
 
-def trial_reshaper(trial_target_info: list,
-                   timing_info: list,
-                   eeg_data: np.array,
-                   fs: int, k: int, mode: str,
-                   offset: float = 0,
-                   channel_map: tuple = DEFAULT_CHANNEL_MAP,
-                   trial_length: float = 0.5) -> tuple:
-    """Trial Reshaper.
+class Reshaper(ABC):
+    @abstractmethod
+    def __call__(self,
+                 trial_labels: List[str],
+                 timing_info: List[float],
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        ...
 
-    Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
-        timing information (sec), eeg_data, sampling rate (fs), down-sampling rate (k),
-        mode of operation (ex. 'calibration'),
-        offset (any calculated or hypothesized offsets in timings),
-        channel map (which channels to include in reshaping) and
-        trial length (length of reshaped trials in secs)
 
-    In all modes > calibration, we assume the timing info is given in samples not seconds.
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
-    :return (reshaped_trials, labels, num_of_inquiries, trials_per_inq)
 
-        reshaped_trials is a 3 dimensional np array where the first dimension
-            is the channel, second dimension the trial/letter, and third
-            dimension is time samples. So at 300hz and a presentation time of
-            0.2 seconds per letter, the third dimension would have about 60
-            samples.
-            If this were a json structure it might look like:
-                {
-                    'ch1': {
-                        'B' : [-647.123, -93.124, ...],
-                        'T' : [...],
-                        ...
-                    },
-                    'ch2': {
-                        'B' : [39.60, -224.124, ...],
-                        'T' : [...],
-                        ...
-                    },
-                    ...
-                }
-    """
-    try:
+class InquiryReshaper(Reshaper):
+    def __call__(self,
+                 trial_labels: List[str],
+                 timing_info: List[float],
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract inquiry data and labels.
+
+        Args:
+            trial_labels (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (List[float]): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
+            trials_per_inquiry (int): number of trials in each inquiry
+            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
+            trial_length (float, optional): [description]. Defaults to 0.5.
+            target_label (str): label of target symbol. Defaults to "target"
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
+
+        Returns:
+            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
+                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                `target_label` was not present.
+        """
         # Remove the channels that we are not interested in
-        channel_indexes_to_remove = []
-        for channel_index in range(len(eeg_data)):
-            if channel_map[channel_index] == 0:
-                channel_indexes_to_remove.append(channel_index)
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
-        eeg_data = np.delete(eeg_data,
-                             channel_indexes_to_remove,
-                             axis=0)
-        after_filter_frequency = fs / k
+        # Number of samples we are interested per inquiry
+        num_samples = int(trial_length * fs * trials_per_inquiry)
+
+        # Remove unwanted elements from target info and timing info
+        tmp_labels, tmp_timing = [], []
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
+                tmp_timing.append(timing)
+        trial_labels = tmp_labels
+        timing_info = tmp_timing
+
+        n_inquiry = len(timing_info) // trials_per_inquiry
+
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+
+        # shape (Channels, Inquiries, Samples)
+        reshaped_data = np.zeros((len(eeg_data), n_inquiry, num_samples))
+
+        # Label for every inquiry
+        labels = np.zeros(n_inquiry)
+        for inquiry_idx, chunk in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
+            # label is the index of the "target", or else the length of the inquiry
+            inquiry_label = trials_per_inquiry
+            first_trigger = None
+            for trial_idx, (trial_label, trigger) in enumerate(chunk):
+                if first_trigger is None:
+                    first_trigger = trigger
+
+                if trial_label == target_label:
+                    inquiry_label = trial_idx
+
+            labels[inquiry_idx] = inquiry_label
+
+            # For every channel append filtered channel data to trials
+            reshaped_data[:, inquiry_idx, :] = eeg_data[:, first_trigger: first_trigger + num_samples]
+
+        return reshaped_data, labels
+
+
+class TrialReshaper(Reshaper):
+    def __call__(self,
+                 trial_labels: list,
+                 timing_info: list,
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: Optional[int] = None,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract trial data and labels.
+
+        Args:
+            trial_labels (list): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (list): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of preprocessed EEG data
+            trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
+            offset (float, optional): Any calculated or hypothesized offsets in timings.
+                Defaults to 0.
+            channel_map (tuple, optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
+            trial_length (float, optional): [description]. Defaults to 0.5.
+            target_label (str): label of target symbol. Defaults to "target"
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
+
+        Returns:
+            trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
+            labels (np.ndarray): integer label for each trial
+        """
+        # Remove the channels that we are not interested in
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
         # Number of samples we are interested per trial
-        num_samples = int(trial_length * after_filter_frequency)
+        num_samples = int(trial_length * fs)
 
-        # MODE CALIBRATION
-        if mode == 'calibration':
-            trials_per_inq = []
-            count = 0
-            # Count every inquiries trials
-            for symbol_info in trial_target_info:
-                if symbol_info == 'first_pres_target':
-                    trials_per_inq.append(count)
-                    count = 0
-                elif symbol_info == 'nontarget' or 'target':
-                    count += 1
-                else:
-                    raise Exception('Incorrectly formatted trigger file. \
-                    See trial_reshaper documentation for expected input.')
+        # Remove unwanted elements from target info and timing info
+        tmp_labels, tmp_timing = [], []
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
+                tmp_timing.append(timing)
+        trial_labels = tmp_labels
+        timing_info = tmp_timing
 
-            # The first element is garbage. Get rid of it.
-            trials_per_inq = trials_per_inq[1:]
-            # Append the last inquiries trial number
-            trials_per_inq.append(count)
-            # Make the list a numpy array.
-            trials_per_inq = np.array(trials_per_inq)
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-            # Mark every element in timing_info if 'first_pres_target'
-            for symbol_info_index in range(len(trial_target_info)):
-                if trial_target_info[symbol_info_index] == 'first_pres_target':
-                    timing_info[symbol_info_index] = -1
+        # shape (Channels, Trials, Samples)
+        reshaped_trials = np.zeros((len(eeg_data), len(triggers), num_samples))
 
-            # Get rid of 'first_pres_target' trials information
-            trial_target_info = list(filter(lambda x: x != 'first_pres_target',
-                                            trial_target_info))
-            timing_info = list(filter(lambda x: x != -1, timing_info))
+        # Label for every trial
+        labels = np.zeros(len(triggers))
+        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
+            if trial_label == target_label:
+                labels[trial_idx] = 1
 
-            # triggers in seconds are mapped to triggers in number of samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
+            # For every channel append filtered channel data to trials
+            reshaped_trials[:, trial_idx, :] = eeg_data[:, trigger:trigger + num_samples]
 
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            # Label for every trial
-            labels = np.zeros(len(triggers))
-
-            for trial in range(len(triggers)):
-                # Assign targetness to labels for each trial
-                if trial_target_info[trial] == 'target':
-                    labels[trial] = 1
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
-
-            num_of_inquiries = int(sum(labels))
-
-        # MODE COPY PHRASE
-        elif mode == 'copy_phrase':
-
-            # triggers in samples are mapped to triggers in number of filtered
-            # samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
-
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            # Label for every trial
-            labels = np.zeros(len(triggers))
-
-            for trial in range(len(triggers)):
-                # Assign targetness to labels for each trial
-                if trial_target_info[trial] == 'target':
-                    labels[trial] = 1
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
-
-            # In copy phrase, num of inquiry is assumed to be 1.
-            num_of_inquiries = 1
-            # Since there is only one inquiry, all trials are in the inquiry
-            trials_per_inq = len(triggers)
-
-        # MODE FREE SPELL
-        elif mode == 'free_spell':
-
-            # triggers in sample are mapped to triggers in number of filtered
-            # samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
-
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            labels = None
-
-            for trial in range(len(triggers)):
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
-
-            # In copy phrase, num of inquiry is assumed to be 1.
-            num_of_inquiries = 1
-            # Since there is only one inquiry, all trials are in the inquiry
-            trials_per_inq = len(triggers)
-        else:
-            raise Exception(
-                'Trial_reshaper does not work in this operating mode.')
-
-        # Return our trials, labels and some useful information about the
-        # arrays
-        return reshaped_trials, labels, num_of_inquiries, trials_per_inq
-
-    except Exception as e:
-        raise Exception(
-            f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
+        return reshaped_trials, labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):

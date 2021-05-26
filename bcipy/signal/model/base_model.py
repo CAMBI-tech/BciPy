@@ -1,13 +1,19 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List
-
 import numpy as np
+from bcipy.helpers.task import Reshaper
 
 
 class SignalModel(ABC):
+    @property
     @abstractmethod
-    def fit(self, training_data: np.array, training_labels: np.array):
+    def reshaper(self) -> Reshaper:
+        """Reshapes data into trials or inquiry as needed for each model."""
+        ...
+
+    @abstractmethod
+    def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
         """
         Train the model using the provided data and labels.
         Return self for convenience.
@@ -15,12 +21,12 @@ class SignalModel(ABC):
         ...
 
     @abstractmethod
-    def evaluate(self, test_data: np.array, test_labels: np.array):
+    def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         """Compute model performance characteristics on the provided test data and labels."""
         ...
 
     @abstractmethod
-    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    def predict(self, data: np.ndarray, inquiry: List[str], symbol_set: List[str]) -> np.ndarray:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:

@@ -66,7 +66,7 @@ class EvidenceFusion(object):
     @property
     def latest_evidence(self) -> Dict[str, List[float]]:
         """Latest evidence of each type in the evidence history.
-        
+
         Returns
         -------
         a dictionary with an entry for all configured evidence types.
@@ -213,7 +213,7 @@ class DecisionMaker:
         ----
         p(ndarray[float]): |A| x 1 distribution array
             |A|: cardinality of the alphabet
-        
+
         Return
         ------
         - commitment: True if a letter is a commitment is made

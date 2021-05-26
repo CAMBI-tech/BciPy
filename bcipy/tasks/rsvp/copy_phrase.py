@@ -1,6 +1,5 @@
 from typing import List, NamedTuple, TextIO, Tuple
 
-import numpy as np
 from psychopy import core
 
 from bcipy.display.rsvp import (InformationProperties,
@@ -17,14 +16,13 @@ from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.tasks.rsvp.main_frame import EvidenceFusion
 from bcipy.tasks.session_data import Inquiry, Session, EvidenceType
 from bcipy.tasks.task import Task
 
 
 class Decision(NamedTuple):
     """Represents the result of evaluating evidence.
-    
+
     Attrs
     -----
     - decision_made : whether or a not there was a commitment to a letter.
@@ -202,7 +200,7 @@ class RSVPCopyPhraseTask(Task):
 
     def user_wants_to_continue(self) -> bool:
         """Check if user wants to continue or terminate.
-        
+
         Returns
         -------
         - `True` to continue
@@ -233,7 +231,7 @@ class RSVPCopyPhraseTask(Task):
         """Present the given inquiry and return the trigger timing info.
 
         Parameters
-        ---------- 
+        ----------
         - inquiry_schedule : schedule for next sequences of stimuli to present.
         Currently, only the first list of stims in the schedule is used.
 
@@ -245,7 +243,7 @@ class RSVPCopyPhraseTask(Task):
         it was presented relative to the experiment clock. Non-stim triggers
         may be also be included in the list ('calibration', etc).
         - proceed : indicates whether to proceed with evaluating eeg evidence.
-        a value of False indicates that the inquiry was previewed but not 
+        a value of False indicates that the inquiry was previewed but not
         presented in sequence.
         """
         # Update task state and reset the static
@@ -373,8 +371,8 @@ class RSVPCopyPhraseTask(Task):
 
     def evaluate_evidence(self) -> Decision:
         """Uses the `copy_phrase_task` parameter to evaluate the provided
-        evidence and attempt a decision. 
-        
+        evidence and attempt a decision.
+
         Modifies
         --------
         - self.copy_phrase_task
@@ -406,7 +404,7 @@ class RSVPCopyPhraseTask(Task):
         ----------
         - stim_times : list of stimuli returned from the display
         - proceed : whether or not to proceed with the inquiry
-        
+
         Returns
         -------
         list of evidence types added
@@ -483,7 +481,7 @@ class RSVPCopyPhraseTask(Task):
         """The stim_timings from the display may include non-letter stimuli
         such as calibration and inquiry_preview timings. This method extracts
         only the letter data used to process the data for a decision.
-        
+
         Parameters
         ----------
         - stim_times : list of [stim, clock_time] pairs returned from display.
@@ -504,7 +502,7 @@ class RSVPCopyPhraseTask(Task):
                         next_state: str,
                         evidence_types: List[EvidenceType] = []) -> Inquiry:
         """Construct a new inquiry data record.
-        
+
         Parameters
         ----------
         - stim_times : list of [stim, clock_time] pairs returned from display.

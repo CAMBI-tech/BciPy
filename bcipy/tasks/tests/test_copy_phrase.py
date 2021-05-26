@@ -5,7 +5,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-import pygame
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
@@ -507,7 +506,7 @@ class TestCopyPhrase(unittest.TestCase):
                 0.03357564204563455, 0.05733375793385561, 0.03357564204563455
             ])
         })
-        ## mock copy phrase
+        # mock copy phrase
         copy_phrase_wrapper_mock = mock({
             'conjugator':
             conjugator_mock,

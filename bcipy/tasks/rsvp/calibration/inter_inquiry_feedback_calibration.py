@@ -7,15 +7,15 @@ from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
 from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
-from bcipy.signal.process.filter import bandpass, downsample, notch
 from bcipy.helpers.task import (
     trial_complete_message,
-    trial_reshaper,
     get_user_input,
     pause_calibration,
-    process_data_for_decision)
+    process_data_for_decision,
+    TrialReshaper)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
+from bcipy.signal.process import get_default_transform
 
 
 class RSVPInterInquiryFeedbackCalibration(Task):
@@ -122,6 +122,8 @@ class RSVPInterInquiryFeedbackCalibration(Task):
 
         # true/false order is desceding from 5 -> 1 for level
         self.feedback_descending = self.parameters['feedback_level_descending']
+
+        self.reshaper = TrialReshaper()
 
     def execute(self):
         self.logger.debug(f'Starting {self.name()}!')
@@ -297,21 +299,24 @@ class RSVPInterInquiryFeedbackCalibration(Task):
             buf_length=self.trial_length)
 
         # filter it
-        notch_filterted_data = notch.notch_filter(
-            raw_data, self.fs, self.notch_filter_frequency)
-        filtered_data = bandpass.butter_bandpass_filter(
-            notch_filterted_data, self.filter_low, self.filter_high, self.fs, order=self.filter_order)
-        data = downsample.downsample(
-            filtered_data, factor=self.downsample_rate)
-        letters, times, target_info = self.letter_info(triggers, target_info)
+        default_transform = get_default_transform(
+            sample_rate_hz=self.fs,
+            notch_freq_hz=self.notch_filter_frequency,
+            bandpass_low=self.filter_low,
+            bandpass_high=self.filter_high,
+            bandpass_order=self.filter_order,
+            downsample_factor=self.downsample_rate,
+        )
+        data, fs_after = default_transform(raw_data, self.fs)
+        _, times, target_info = self.letter_info(triggers, target_info)
 
         # reshape with the filtered data with our desired window length
-        reshaped_data, _, _, _ = trial_reshaper(
-            target_info,
-            times,
-            data,
-            fs=self.fs,
-            k=self.downsample_rate, mode='calibration',
+        reshaped_data, _ = self.reshaper(
+            trial_labels=target_info,
+            timing_info=times,
+            eeg_data=data,
+            fs=fs_after,
+            trials_per_inquiry=self.stim_length,
             channel_map=self.channel_map,
             trial_length=self.trial_length)
         return reshaped_data

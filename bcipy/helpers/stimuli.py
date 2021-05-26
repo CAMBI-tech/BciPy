@@ -29,7 +29,7 @@ class InquirySchedule(NamedTuple):
     durations: List[List[float]]
     colors: List[List[str]]
 
-# TODO: since we have a querying this should replace the other generators
+
 def rsvp_inq_generator(query: list,
                        timing=[1, 0.2],
                        color=['red', 'white'],
