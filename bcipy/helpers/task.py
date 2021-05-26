@@ -417,7 +417,8 @@ class InquiryReshaper(Reshaper):
             fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
-            channel_map (List[int], optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
             trial_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
             labels_included (Set[str]): target labels to include. Defaults to "target" and "nontarget"
@@ -496,8 +497,10 @@ class TrialReshaper(Reshaper):
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
             fs (int): sample rate of preprocessed EEG data
             trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
-            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
-            channel_map (tuple, optional): Describes which channels to include or discard. Defaults to DEFAULT_CHANNEL_MAP.
+            offset (float, optional): Any calculated or hypothesized offsets in timings.
+                Defaults to 0.
+            channel_map (tuple, optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
             trial_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
             labels_included (Set[str]): target labels to include. Defaults to "target" and "nontarget"
