@@ -224,5 +224,7 @@ make lint
 - Alister Cedeño (OHSU)
 - Berkan Kadioglu (NEU)
 - Basak Celik (NEU)
+- Niklas Smedemark-Margulies (NEU) 
 - Andac Demir (NEU)
 - Shaobin Xu (NEU)
+

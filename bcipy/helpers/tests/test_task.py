@@ -8,15 +8,17 @@ from bcipy.helpers.task import (
     alphabet,
     calculate_stimulation_freq,
     get_key_press,
-    trial_reshaper,
+    InquiryReshaper,
+    TrialReshaper,
     _float_val,
-    generate_targets
+    generate_targets,
+    construct_triggers,
+    target_info
 )
 from bcipy.helpers.load import load_json_parameters
 
 
 class TestAlphabet(unittest.TestCase):
-
     def test_alphabet_text(self):
         parameters_used = './bcipy/parameters/parameters.json'
         parameters = load_json_parameters(parameters_used, value_cast=True)
@@ -50,11 +52,10 @@ class TestAlphabet(unittest.TestCase):
 
 
 class TestTrialReshaper(unittest.TestCase):
-
     def setUp(self):
-        self.target_info = ['first_pres_target',
+        self.target_info = ['first_pres_target', 'fixation',
                             'target', 'nontarget', 'nontarget']
-        self.timing_info = [1.001, 1.2001, 1.4001, 1.6001]
+        self.timing_info = [1.001, 1.2001, 1.4001, 1.6001, 1.8001]
         # make some fake eeg data
         self.channel_number = 21
         tmp_inp = np.array([range(4000)] * self.channel_number)
@@ -63,29 +64,56 @@ class TestTrialReshaper(unittest.TestCase):
         self.eeg = tmp_inp
         self.channel_map = [1] * self.channel_number
 
-    def tearDown(self):
-        unstub()
-
-    def test_trial_reshaper_calibration(self):
-        (reshaped_trials, labels,
-         num_of_inq, trials_per_inquiry) = trial_reshaper(
-            trial_target_info=self.target_info,
+    def test_trial_reshaper(self):
+        reshaped_trials, _ = TrialReshaper()(
+            trial_labels=self.target_info,
             timing_info=self.timing_info, eeg_data=self.eeg,
-            fs=256, k=2, mode='calibration', channel_map=self.channel_map)
+            fs=256, channel_map=self.channel_map)
 
         self.assertTrue(
             len(reshaped_trials) == self.channel_number,
             f'len is {len(reshaped_trials)} not {self.channel_number}')
         self.assertEqual(len(reshaped_trials[0]), 3)
-        self.assertEqual(num_of_inq, 1)
-        self.assertEqual(trials_per_inquiry, 3)
 
-    def test_trial_reshaper_copy_phrase(self):
-        pass
+
+class TestInquiryReshaper(unittest.TestCase):
+    def setUp(self):
+        self.n_channel = 7
+        self.trial_length = 0.5
+        self.trials_per_inquiry = 3
+        self.fs = 10
+        self.target_info = [
+            "first_pres_target", "fixation", "target", "nontarget", "nontarget",
+            "first_pres_target", "fixation", "nontarget", "nontarget", "nontarget",
+            "first_pres_target", "fixation", "nontarget", "target", "nontarget",
+        ]
+        self.timing_info = [
+            1.0, 1.2, 1.4, 1.6, 1.8,
+            2.0, 2.2, 2.4, 2.6, 2.8,
+            3.0, 3.2, 3.4, 3.6, 3.8,
+        ]
+
+        # total duration = 4s
+        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4 + self.trial_length) * 2))
+        self.channel_map = [1] * self.n_channel
+
+    def test_inquiry_reshaper(self):
+        reshaped_data, labels = InquiryReshaper()(
+            trial_labels=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            fs=self.fs,
+            trials_per_inquiry=self.trials_per_inquiry,
+            channel_map=self.channel_map,
+            trial_length=self.trial_length,
+        )
+        expected_shape = (self.n_channel, self.trials_per_inquiry, int(
+            self.trial_length * self.fs) * self.trials_per_inquiry)
+        self.assertTrue(reshaped_data.shape == expected_shape)
+        self.assertTrue(all(labels == [0, 3, 1]))
 
 
 class TestCalculateStimulationFreq(unittest.TestCase):
-
     def test_calculate_stimulate_frequency_returns_number_less_one(self):
         flash_time = 5
         stimulation_frequency = calculate_stimulation_freq(flash_time)
@@ -99,7 +127,6 @@ class TestCalculateStimulationFreq(unittest.TestCase):
 
 
 class TestFloatVal(unittest.TestCase):
-
     def test_float_val_as_str(self):
         col = 'Apple'
         result = _float_val(col)
@@ -194,6 +221,48 @@ class TestGetKeyPress(unittest.TestCase):
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
         response = get_key_press(key_list, clock, stamp_label=stamp_label)
         self.assertEqual(expected, response)
+
+
+class TestTriggers(unittest.TestCase):
+    """Tests related to triggers"""
+
+    def test_construct_triggers(self):
+        stim_times = [['+', 7.009946188016329], ['<', 7.477798109990545],
+                      ['_', 7.69470399999409], ['Z', 7.911495972017292],
+                      ['U', 8.128477902995655], ['S', 8.345279764995212],
+                      ['T', 8.562265532993479], ['V', 8.779025560012087],
+                      ['X', 8.995945784990909], ['Y', 9.213076218002243],
+                      ['W', 9.429835998016642]]
+        expected = [('+', 0.0), ('<', 0.46785192197421566),
+                    ('_', 0.6847578119777609), ('Z', 0.901549784000963),
+                    ('U', 1.1185317149793264), ('S', 1.3353335769788828),
+                    ('T', 1.5523193449771497), ('V', 1.7690793719957583),
+                    ('X', 1.9859995969745796), ('Y', 2.203130029985914),
+                    ('W', 2.4198898100003134)]
+        self.assertEqual(expected, construct_triggers(stim_times))
+        self.assertEqual([], construct_triggers([]))
+
+    def test_target_info(self):
+        triggers = [('+', 0.0), ('<', 0.46785192197421566),
+                    ('_', 0.6847578119777609), ('Z', 0.901549784000963),
+                    ('U', 1.1185317149793264), ('S', 1.3353335769788828),
+                    ('T', 1.5523193449771497), ('V', 1.7690793719957583),
+                    ('X', 1.9859995969745796), ('Y', 2.203130029985914),
+                    ('W', 2.4198898100003134)]
+        expected = [
+            'nontarget', 'nontarget', 'nontarget', 'target', 'nontarget',
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget'
+        ]
+        self.assertEqual(expected, target_info(triggers, target_letter='Z'))
+
+        expected = [
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'nontarget'
+        ]
+        self.assertEqual(expected, target_info(triggers))
+        self.assertEqual([], target_info([]))
 
 
 if __name__ == '__main__':
