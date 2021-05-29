@@ -28,7 +28,7 @@ def get_fake_data(N, channels, classes, length) -> Tuple[torch.Tensor, torch.Ten
 
 
 def get_data_from_folder(
-    folder: Union[str, Path], subfolder: str, length: int, length_tol: int, shuffle=True, quick_test=False
+    folder: Union[str, Path], length: int, length_tol: int, shuffle=True, quick_test=False, subfolder="sequences"
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     data_list = []
     labels_list = []

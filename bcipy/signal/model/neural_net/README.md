@@ -1,15 +1,5 @@
 # Notes from code review 5/14
 
-- inquiry_reshaper/trial_reshaper can happen outside
-    - replace "inquiry_reshaper" with:
-    ```python
-    x, y, _ = reshape_data(model_class=PcaRdaKdeModel, ...)  
-    ```
-    - model class can have a required enum "input_data_type" in ["trial", "inquiry"]
-    - somewhere, an enum of model types
-
-- To simplify things to start with - don't worry about resuming training (assume either success or failure)
-    - note that current "resume" will not actually work!
 
 - document assumptions that affect "outer" code:
     - Model assumes random symbol ordering during presentation.
@@ -53,7 +43,8 @@
 
 - Standardize our data classes (EEG etc)
 
+- [x] remove transform
 
-Separate PR: 
+- [x] remove checkpoint (except minimal for early stop)
 
-- in `bcipy/signal/process` - use the "composition" style, handle the fs
+- [ ] change "sequence" to "inquiry"

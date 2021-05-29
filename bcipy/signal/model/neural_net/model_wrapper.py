@@ -4,49 +4,39 @@ from typing import List
 import numpy as np
 import torch
 import yaml
-from dotted_dict import DottedDict
-from loguru import logger
-from sklearn.metrics import roc_auc_score, confusion_matrix
-from sklearn.model_selection import train_test_split
-
-from bcipy.signal.model.neural_net.data import EEGDataset, data_config, get_transform
+from bcipy.helpers.task import InquiryReshaper
+from bcipy.signal.exceptions import SignalException
+from bcipy.signal.model import ModelEvaluationReport, SignalModel
+from bcipy.signal.model.neural_net.data import EEGDataset
 from bcipy.signal.model.neural_net.models import ResNet1D
 from bcipy.signal.model.neural_net.probability import compute_log_likelihoods
 from bcipy.signal.model.neural_net.trainer import Trainer
+from loguru import logger
+from sklearn.metrics import confusion_matrix, roc_auc_score
+from sklearn.model_selection import train_test_split
+import jsonpickle
+from bcipy.signal.model.neural_net.config import Config
 
-from bcipy.signal.model import ModelEvaluationReport, SignalModel, InputDataType
-from bcipy.signal.exceptions import SignalException
-
-
-def model_from_checkpoint(path: Path, **cfg_overrides):
-    config_yaml = path / "config.yaml"
-    if not config_yaml.exists():
-        raise ValueError("config yaml not found!")
-
-    with open(config_yaml, "r") as f:
-        cfg = yaml.load(f, Loader=yaml.Loader)
-
-    for key, val in cfg_overrides.items():
-        try:
-            cfg[key] = val
-        except KeyError:
-            raise ValueError(f"Invalid override: key {key} not in config")
-
-    model = EegClassifierModel(cfg)
-    model.load(path)
-    return model, cfg
+MODEL_CHECKPOINT_NAME = "model_checkpoint.pt"
 
 
 class EegClassifierModel(SignalModel):
     """Discriminative signal model for EEG"""
-    input_data_type = InputDataType.INQUIRY
+    reshaper = InquiryReshaper()
 
-    def __init__(self, cfg: DottedDict):
+    def __init__(self, cfg: Config):
+        """
+        Args:
+            cfg (Config): <TODO>
+            n_classes (int): number of stimuli in inquiry.
+                class [0, K-1] represent symbols presented, and [K] represents all other possible symbols
+            n_channels (int): number of channels in input EEG data
+        """
         self.cfg = cfg
         self.model = ResNet1D(
             layers=[2, 2, 2, 2],
-            num_classes=data_config[cfg.data_device][cfg.data_mode]["n_classes"],
-            in_channels=data_config[cfg.data_device]["n_channels"],
+            num_classes=cfg.n_classes,
+            in_channels=cfg.n_channels,
             act_name=cfg.activation,
             device=cfg.device,
         )
@@ -69,8 +59,7 @@ class EegClassifierModel(SignalModel):
         x_train, x_val, y_train, y_val = train_test_split(
             train_data, train_labels, test_size=self.cfg.val_frac, random_state=self.cfg.seed
         )
-        transform = get_transform(self.cfg)
-        self.trainer.fit(EEGDataset(x_train, y_train, transform), EEGDataset(x_val, y_val, transform))
+        self.trainer.fit(EEGDataset(x_train, y_train), EEGDataset(x_val, y_val))
         self._ready_to_predict = True
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray) -> ModelEvaluationReport:
@@ -80,6 +69,9 @@ class EegClassifierModel(SignalModel):
             test_data (np.array): shape (sequences, samples) - EEG of each sequence
             test_labels (np.array): shape (sequences) - integer label of each sequence
 
+        Raises:
+            SignalException: if model was not fit first.
+
         Returns:
             ModelEvaluationReport: stores AUROC
         """
@@ -87,7 +79,7 @@ class EegClassifierModel(SignalModel):
             raise SignalException("call model.fit() before model.evaluate()")
 
         logger.info("Begin evaluate")
-        outputs = self.trainer.test(EEGDataset(test_data, test_labels, get_transform(self.cfg)))
+        outputs = self.trainer.test(EEGDataset(test_data, test_labels))
         predicted_probs = torch.cat([x["log_probs"].exp() for x in outputs]).cpu()
 
         logger.info(f"Confusion matrix: \n{confusion_matrix(test_labels, predicted_probs.argmax(1))}")
@@ -138,38 +130,38 @@ class EegClassifierModel(SignalModel):
         assert len(set(symbol_set)) == len(symbol_set)
 
         self.model.eval()
+        logger.warning("TODO - estimate alpha parameter")
         return compute_log_likelihoods(
             model_log_probs=self.model(torch.tensor(data).unsqueeze(0)),
             alphabet_len=len(symbol_set),
             presented_seq_idx=torch.tensor([symbol_set.index(letter) for letter in inquiry]).unsqueeze(0),
             none_class_idx=0,
-            alpha=0.8,  # TODO
+            alpha=0.8,
         )
 
-    def save(self, path: Path):
+    def save(self, folder: Path):
         # Save config
-        config_yaml = path / "config.yaml"
-        logger.debug(f"Save config to {config_yaml}")
-        with open(config_yaml, "w") as f:
-            yaml.dump(self.cfg, f)
+        config_path = folder / "config.json"
+        logger.debug(f"Save config to {config_path}")
+        self.cfg.save(config_path)
 
-        # Save weights
-        # TODO
-        logger.warning("Need to figure out how this interacts with Trainer.save()")
-        # weights_ckpt = path / "model_weights.pt"
-        # logger.debug(f"Save weights to {weights_ckpt}")
-        # self.trainer.save(weights_ckpt)
+        # Save weights, optim, sched
+        weights_ckpt = folder / MODEL_CHECKPOINT_NAME
+        logger.debug(f"Save weights to {weights_ckpt}")
+        self.trainer.save(weights_ckpt)
 
         # Save model description
-        model_arch = path / "model_arch.txt"
+        model_arch = folder / "model_arch.txt"
         logger.debug(f"Save model arch description to {model_arch}")
         with open(model_arch, "w") as f:
             f.write(str(self.model))
 
-    def load(self, path: Path):
-        """
-        Args:
-            path (Path): Folder containing trained model outputs
-        """
-        self.trainer.load(self.trainer.final_checkpoint)
+    def load(self, folder: Path):
+        # Load config and re-init
+        config_path = folder / "config.json"
+        config = Config.load(config_path)
+        self.__init__(config)
+
+        # Load trainer state, including model weights
+        self.trainer.load(folder / MODEL_CHECKPOINT_NAME)
         self._ready_to_predict = True

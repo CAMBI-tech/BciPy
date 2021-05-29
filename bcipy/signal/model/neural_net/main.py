@@ -6,8 +6,9 @@ import colored_traceback
 from loguru import logger
 
 from bcipy.signal.model.neural_net.data import setup_datasets
-from bcipy.signal.model.neural_net.model_wrapper import EegClassifierModel, model_from_checkpoint
+from bcipy.signal.model.neural_net.model_wrapper import EegClassifierModel
 from bcipy.signal.model.neural_net.utils import parse_args
+from bcipy.signal.model.neural_net.config import Config
 
 colored_traceback.add_hook(always=True)
 
@@ -30,9 +31,11 @@ def train():
 def evaluate():
     parser = ArgumentParser()
     parser.add_argument("--path", required=True, type=Path, help="Path to trained model folder")
-    parser.add_argument("--fake-data", action="store_true")
     args = parser.parse_args()
-    eeg_model, cfg = model_from_checkpoint(args.path, fake_data=args.fake_data)
+    cfg = Config()
+    eeg_model = EegClassifierModel(cfg)
+    eeg_model.load(args.path)
+    cfg = eeg_model.cfg  # overwrite config with whatever we loaded from checkpoint
 
     # TODO - ensure dataset creation uses known fixed seed, to get same AUROC
     _, x_test, _, y_test = setup_datasets(cfg)

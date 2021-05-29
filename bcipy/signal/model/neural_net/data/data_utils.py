@@ -2,22 +2,19 @@ from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 
-from .data_config import data_config
 from .datasets import get_data_from_folder, get_fake_data
 
 wd = Path(__file__).absolute().parent.parent.parent.parent
 
 
 def load_data(cfg):
-    x, y = get_data_from_folder(
+    return get_data_from_folder(
         folder=cfg.data_dir,
-        subfolder=cfg.data_mode,
-        length=data_config[cfg.data_device][cfg.data_mode]["length"],
-        length_tol=data_config[cfg.data_device][cfg.data_mode]["length_tol"],
+        length=cfg.length,
+        length_tol=cfg.length_tol,
         shuffle=True,
         quick_test=cfg.quick_test,
     )
-    return x, y
 
 
 def setup_datasets(cfg):
@@ -27,9 +24,9 @@ def setup_datasets(cfg):
     if cfg.fake_data:  # Fake test data, to demonstrate that classification fails
         x_test, y_test = get_fake_data(
             N=100,
-            channels=data_config[cfg.data_device]["n_channels"],
-            classes=data_config[cfg.data_device][cfg.data_mode]["n_classes"],
-            length=data_config[cfg.data_device][cfg.data_mode]["length"],
+            channels=cfg.n_channels,
+            classes=cfg.n_classes,
+            length=cfg.length,
         )
 
     if cfg.quick_test:

@@ -2,9 +2,9 @@
 import unittest
 
 import torch
-from bcipy.signal.model.neural_net.data import EEGDataset, data_config, get_fake_data
+from bcipy.signal.model.neural_net.data import EEGDataset, get_fake_data
 from bcipy.signal.model.neural_net.models import ResNet1D
-from bcipy.signal.model.neural_net.utils import get_default_cfg
+from bcipy.signal.model.neural_net.config import Config
 from bcipy.signal.tests.model.neural_net.rigged_classifier import RiggedClassifier
 
 
@@ -12,13 +12,13 @@ class TestModels(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Create fake training data
-        cls.cfg = get_default_cfg()
+        cls.cfg = Config()
 
         dataset_kw = {
             "N": cls.cfg.batch_size,
-            "channels": data_config[cls.cfg.data_device]["n_channels"],  # type: ignore
-            "classes": data_config[cls.cfg.data_device][cls.cfg.data_mode]["n_classes"],  # type: ignore
-            "length": data_config[cls.cfg.data_device][cls.cfg.data_mode]["length"],  # type: ignore
+            "channels": cls.cfg.n_channels,
+            "classes": cls.cfg.n_classes,
+            "length": cls.cfg.length,
         }
 
         cls.train_set = EEGDataset(*get_fake_data(**dataset_kw))
@@ -46,15 +46,15 @@ class TestModels(unittest.TestCase):
     def test_ResNet1D(self):
         prod_model = ResNet1D(
             layers=[2, 2, 2, 2],
-            num_classes=data_config[self.cfg.data_device][self.cfg.data_mode]["n_classes"],
-            in_channels=data_config[self.cfg.data_device]["n_channels"],
+            num_classes=self.cfg.n_classes,
+            in_channels=self.cfg.n_channels,
             act_name=self.cfg.activation,
             device=self.cfg.device,
         )
         self.assertTrue(self.check_model_api(prod_model, self.cfg.batch_size))
 
     def test_RiggedClassifier(self):
-        n_classes = data_config[self.cfg.data_device][self.cfg.data_mode]["n_classes"]
+        n_classes = self.cfg.n_classes
         seq_len = n_classes - 1
         peak = 0.8
         other_seen = (1 - peak) / (n_classes - 2)
