@@ -145,61 +145,66 @@ def _write_triggers_from_inquiry_calibration(array: list,
     return trigger_file
 
 
-def _write_triggers_from_inquiry_copy_phrase(array,
-                                             trigger_file,
-                                             copy_text,
-                                             typed_text,
-                                             offset=None):
-    """
-    Write triggers from copy phrase.
+def _write_triggers_from_inquiry_copy_phrase(
+        triggers: list,
+        trigger_file: TextIO,
+        copy_phrase: str,
+        typed_text: str,
+        offset: bool = False) -> TextIO:
+    """Write triggers from copy phrase.
 
-    Helper Function to write trigger data to provided trigger_file. It assigns
-        target letter based on matching the next needed letter in typed text
-        then assigns target/nontarget label to following letters.
+    Helper Function to write trigger data to provided trigger_file in a copy phrase task.
+        It assigns target letter based on matching the next needed letter in typed text
+        then assigns target/nontarget label to following letters. It's assumed if offset
+        is true, only one record will be written (the offset_correction).
 
     It writes in the following order:
         (I) presented letter, (II) targetness, (III) timestamp
     """
-
+    # write the offset and return the file
     if offset:
         # extract the letter and timing from the array
-        (letter, time) = array
-        targetness = 'offset_correction'
-        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        (symbol, time) = triggers
+        trigger_file.write(f'{symbol} offset_correction {time}\n')
+        return trigger_file
 
+    spelling_length = len(typed_text)
+    last_typed = typed_text[-1] if typed_text else None
+    target_symbol = copy_phrase[spelling_length - 1]
+
+    # because there is the possibility of incorrect letters and correction,
+    # we check here what is expected response.
+    if last_typed == target_symbol or not last_typed:
+        target_symbol = copy_phrase[spelling_length - 1]
     else:
-        # get relevant spelling info to determine what was and should be typed
-        spelling_length = len(typed_text)
-        last_typed = typed_text[-1] if typed_text else None
-        correct_letter = copy_text[spelling_length - 1]
+        # If the last typed and target do not match and this is not the
+        # symbols have been typed. The correct symbol is backspace.
+        target_symbol = '<'
 
-        # because there is the impassibility of incorrect letter and correction,
-        # we check here what is appropriate as a correct response
-        if last_typed == correct_letter:
-            correct_letter = copy_text[spelling_length]
+    for trigger in triggers:
+
+        # extract the letter and timing from the array
+        (symbol, time) = trigger
+
+        # catch all the internal labels and assign targetness
+        if symbol == 'calibration_trigger':
+            targetness = 'calib'
+        elif symbol == 'inquiry_preview':
+            targetness = 'preview'
+        # we write the key press + key so we check the prefix is in the symbol
+        elif 'bcipy_key_press' in symbol:
+            targetness = 'key_press'
+
+        # assign targetness to the core symbols
+        elif symbol == '+':
+            targetness = 'fixation'
+        elif target_symbol == symbol:
+            targetness = 'target'
         else:
-            correct_letter = '<'
+            targetness = 'nontarget'
 
-        x = 0
-
-        for i in array:
-
-            # extract the letter and timing from the array
-            (letter, time) = i
-
-            # determine what the triggers are:
-            #       assumes there is no target letter presentation.
-            if x == 0:
-                targetness = 'fixation'
-            elif x > 1 and correct_letter == letter:
-                targetness = 'target'
-            else:
-                targetness = 'nontarget'
-
-            # write to the trigger_file
-            trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
-
-            x += 1
+        # write to the trigger_file
+        trigger_file.write(f'{symbol} {targetness} {time}\n')
 
     return trigger_file
 
