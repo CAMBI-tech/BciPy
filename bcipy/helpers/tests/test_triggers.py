@@ -1,4 +1,6 @@
 import unittest
+
+from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
 
@@ -7,7 +9,8 @@ from bcipy.helpers.triggers import (NONE_VALUES, LslCopyPhraseLabeller,
                                     extract_from_calibration,
                                     extract_from_copy_phrase, read_triggers,
                                     trigger_durations,
-                                    write_trigger_file_from_lsl_calibration)
+                                    write_trigger_file_from_lsl_calibration,
+                                    _write_triggers_from_inquiry_copy_phrase)
 from bcipy.signal.generator.generator import gen_random_data
 
 
@@ -62,9 +65,6 @@ def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
 
 class TestTriggers(unittest.TestCase):
     """This is Test Case for Triggers."""
-
-    def test_triggers_for_calibration(self):
-        return
 
     def test_copy_phrase_labeller(self):
         copy_phrase = 'HI'
@@ -306,6 +306,166 @@ offset offset_correction 6.23828125
         self.assertEqual(type(calib[2]), float)
         self.assertTrue(calib[2] > 3.47 and calib[2] < 7,
                         "Should account for offset")
+
+
+class TestWriteCopyPhrase(unittest.TestCase):
+
+    trigger_file = mock()
+    copy_phrase = 'TEST_PHRASE'
+    typed_text = 'TEST_P'
+
+    def tearDown(self) -> None:
+        unstub()
+
+    def test_write_offset(self):
+        triggers = ['offset', 1]
+        expected = f'{triggers[0]} offset_correction {triggers[1]}\n'
+        # mock the write to avoid any extra files
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            triggers,
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=True
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_nontarget(self):
+        triggers = ['L', 1]  # given the defined typed text the target would be P
+        expected = f'{triggers[0]} nontarget {triggers[1]}\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            [triggers],
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_target(self):
+        triggers = ['P', 1]  # given the defined typed text the target would be P
+        expected = f'{triggers[0]} target {triggers[1]}\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            [triggers],
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_fixation(self):
+        triggers = ['+', 1]
+        expected = f'{triggers[0]} fixation {triggers[1]}\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            [triggers],
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_inquiry_preview(self):
+        triggers = ['inquiry_preview', 1]
+        expected = f'{triggers[0]} preview {triggers[1]}\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            [triggers],
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_key_press(self):
+        # The key press is output as bcipy_key_press_*key_pressed*
+        triggers = ['bcipy_key_press_space', 1]
+        expected = f'{triggers[0]} key_press {triggers[1]}\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            [triggers],
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_inquiry(self):
+        triggers = [
+            ['+', 1],
+            ['P', 2],
+            ['N', 3]
+        ]
+
+        when(self.trigger_file).write(any()).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            triggers,
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=3).write(any())
+
+    def test_write_offset_multiple_triggers_fails(self):
+        triggers = ['offset', 1]
+
+        with self.assertRaises(ValueError):
+            _write_triggers_from_inquiry_copy_phrase(
+                [triggers],
+                self.trigger_file,
+                self.copy_phrase,
+                self.typed_text,
+                offset=True
+            )
+
+    def test_write_offset_backspace_target(self):
+        triggers = [
+            ['<', 1]
+        ]
+        # update the typed text to an incorrect letter given copy phrase
+        typed_text = 'TEST_H'
+        expected = '< target 1\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            triggers,
+            self.trigger_file,
+            self.copy_phrase,
+            typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
+
+    def test_write_calibration_trigger(self):
+        triggers = [
+            ['calibration_trigger', 1]
+        ]
+        expected = 'calibration_trigger calib 1\n'
+        when(self.trigger_file).write(expected).thenReturn(None)
+
+        _write_triggers_from_inquiry_copy_phrase(
+            triggers,
+            self.trigger_file,
+            self.copy_phrase,
+            self.typed_text,
+            offset=False
+        )
+        verify(self.trigger_file, times=1).write(expected)
 
 
 if __name__ == '__main__':
