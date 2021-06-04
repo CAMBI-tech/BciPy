@@ -65,7 +65,7 @@ def rsvp_inq_generator(query: list,
         if is_txt:
             sample = ['+']
         else:
-            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+            sample = ['bcipy/static/images/main/PLUS.png']
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -174,7 +174,7 @@ def best_case_rsvp_inq_gen(alp: list,
         if is_txt:
             sample = ['+']
         else:
-            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+            sample = ['bcipy/static/images/main/PLUS.png']
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -223,7 +223,7 @@ def random_rsvp_calibration_inq_gen(alp,
         if not is_txt:
             sample = [
                 alp[rand_smp[0]],
-                'bcipy/static/images/bci_main_images/PLUS.png']
+                'bcipy/static/images/main/PLUS.png']
         else:
             sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
@@ -271,7 +271,7 @@ def target_rsvp_inquiry_generator(alp,
     if is_txt:
         sample = ['+']
     else:
-        sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+        sample = ['bcipy/static/images/main/PLUS.png']
         target_letter = parameters['path_to_presentation_images'] + \
             target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
@@ -419,7 +419,7 @@ def generate_icon_match_images(
                 image_array[target_image_numbers[inquiry]])
         # Add PLUS.png to image array TODO: get this from parameters file
         return_array[inquiry].append(
-            'bcipy/static/images/bci_main_images/PLUS.png')
+            'bcipy/static/images/main/PLUS.png')
 
         # Add target image to inquiry, if it is not already there
         if not target_image_numbers[inquiry] in random_number_array[
@@ -507,13 +507,10 @@ def play_sound(sound_file_path: str,
 
     #  if timing is wanted, get trigger timing for this sound stimuli
     if track_timing:
-        timing.append(trigger_name)
-        timing.append(experiment_clock.getTime())
-
-        # if there is a timing callback for sound, evoke it with the timing
-        # list
+        # if there is a timing callback for sound, evoke it
         if sound_callback is not None:
-            sound_callback(timing)
+            sound_callback(experiment_clock, trigger_name)
+        timing.append([trigger_name, experiment_clock.getTime()])
 
     # play our loaded sound and wait for some time before it's finished
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;

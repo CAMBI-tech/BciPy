@@ -326,15 +326,7 @@ class RSVPDisplay(Display):
         timing = []
 
         if self.first_run:
-            # play a inquiry start sound to help orient triggers
-            first_stim_timing = _calibration_trigger(
-                self.experiment_clock,
-                trigger_type=self.trigger_type, display=self.window,
-                on_trigger=self.marker_writer.push_marker)
-
-            timing.append(first_stim_timing)
-
-            self.first_stim_time = first_stim_timing[-1]
+            timing = self._trigger_pulse(timing)
             self.first_run = False
 
         # generate a inquiry (list of stimuli with meta information)
@@ -342,8 +334,6 @@ class RSVPDisplay(Display):
 
         # do the inquiry
         for idx in range(len(inquiry)):
-
-            self.is_first_stim = (idx == 0)
 
             # set a static period to do all our stim setting.
             #   will warn if ISI value is violated.
@@ -357,14 +347,11 @@ class RSVPDisplay(Display):
                 inquiry[idx]['sti_label'])
             self.window.callOnFlip(self.marker_writer.push_marker, inquiry[idx]['sti_label'])
 
-            if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(inquiry[idx]['sti'])
-
             # Draw stimulus for n frames
             inquiry[idx]['sti'].draw()
             self.draw_static()
             self.window.flip()
-            core.wait((inquiry[idx]['time_to_present'] - 1) / self.refresh_rate)
+            core.wait(inquiry[idx]['time_to_present'])
 
             # End static period
             self.staticPeriod.complete()
@@ -383,6 +370,18 @@ class RSVPDisplay(Display):
 
         return timing
 
+    def _trigger_pulse(self, timing: List[str]):
+        # play a inquiry start sound to help orient triggers
+        first_stim_timing = _calibration_trigger(
+            self.experiment_clock,
+            trigger_type=self.trigger_type, display=self.window,
+            on_trigger=self.marker_writer.push_marker)
+
+        timing.append(first_stim_timing)
+
+        self.first_stim_time = first_stim_timing[-1]
+        return timing
+
     def preview_inquiry(self) -> Tuple[List[float], bool]:
         """Preview Inquiry.
 
@@ -396,6 +395,10 @@ class RSVPDisplay(Display):
         """
         # construct the timing to return and generate the content for preview
         timing = []
+        if self.first_run:
+            timing = self._trigger_pulse(timing)
+            self.first_run = False
+
         content = self._generate_inquiry_preview()
 
         # define the trigger callbacks. Here we use the trigger_callback to return immediately and a marker_writer
@@ -473,8 +476,7 @@ class RSVPDisplay(Display):
         for idx in range(len(self.stimuli_inquiry)):
             current_stim = {}
 
-            # turn ms timing into frames! Much more accurate!
-            current_stim['time_to_present'] = int(self.stimuli_timing[idx] * self.refresh_rate)
+            current_stim['time_to_present'] = self.stimuli_timing[idx]
 
             # check if stimulus needs to use a non-default size
             if self.size_list_sti:
@@ -556,12 +558,12 @@ class RSVPDisplay(Display):
         try:
             wait_logo = visual.ImageStim(
                 self.window,
-                image='bcipy/static/images/gui_images/bci_cas_logo.png',
+                image='bcipy/static/images/gui/bci_cas_logo.png',
                 pos=(0, .5),
                 mask=None,
                 ori=0.0)
             wait_logo.size = resize_image(
-                'bcipy/static/images/gui_images/bci_cas_logo.png',
+                'bcipy/static/images/gui/bci_cas_logo.png',
                 self.window.size, 1)
             wait_logo.draw()
 

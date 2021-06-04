@@ -4,13 +4,20 @@ from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
 
+import psychopy
+import bcipy
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.triggers import (NONE_VALUES, LslCopyPhraseLabeller,
-                                    extract_from_calibration,
-                                    extract_from_copy_phrase, read_triggers,
-                                    trigger_durations,
-                                    write_trigger_file_from_lsl_calibration,
-                                    _write_triggers_from_inquiry_copy_phrase)
+from bcipy.helpers.triggers import (
+    _calibration_trigger,
+    _write_triggers_from_inquiry_copy_phrase,
+    extract_from_calibration,
+    extract_from_copy_phrase,
+    read_triggers,
+    LslCopyPhraseLabeller,
+    NONE_VALUES,
+    trigger_durations,
+    write_trigger_file_from_lsl_calibration,
+)
 from bcipy.signal.generator.generator import gen_random_data
 
 
@@ -466,6 +473,177 @@ class TestWriteCopyPhrase(unittest.TestCase):
             offset=False
         )
         verify(self.trigger_file, times=1).write(expected)
+
+
+class TestCalibrationTrigger(unittest.TestCase):
+    """Test Calibration Triggers.
+
+    Unittests to assert the calibration trigger method. This is used
+        during our tasks to reconcile timing between acquisition and displays.
+    """
+
+    clock = mock()
+    display = mock()
+    display.size = [500, 500]
+    trigger_name = 'calibration_trigger'
+    trigger_time = 1
+
+    def setUp(self) -> None:
+        unstub()
+
+    def test_sound_calibration_trigger(self):
+        when(bcipy.helpers.triggers).play_sound(
+            sound_file_path=any(),
+            dtype=any(),
+            sound_load_buffer_time=any(),
+            experiment_clock=any(),
+            track_timing=any(),
+            sound_callback=any(),
+            trigger_name=any())
+        trigger_type = 'sound'
+        when(psychopy.core).wait(self.trigger_time)
+
+        _calibration_trigger(
+            self.clock,
+            trigger_type,
+            self.trigger_name,
+            self.trigger_time,
+            self.display)
+
+        verify(psychopy.core, times=1).wait(self.trigger_time)
+        verify(bcipy.helpers.triggers, times=1).play_sound(
+            sound_file_path=any(),
+            dtype=any(),
+            track_timing=any(),
+            sound_load_buffer_time=any(),
+            experiment_clock=any(),
+            sound_callback=any(),
+            trigger_name=any()
+        )
+
+    def test_image_calibration_trigger(self):
+        trigger_type = 'image'
+        image_mock = mock()
+        when(psychopy.visual).ImageStim(
+            win=self.display,
+            image=any(),
+            pos=any(),
+            mask=any(),
+            ori=any()).thenReturn(image_mock)
+        when(self.display).callOnFlip(any(), any(), any())
+        when(image_mock).draw()
+        when(self.display).flip()
+        when(psychopy.core).wait(self.trigger_time)
+
+        _calibration_trigger(
+            self.clock,
+            trigger_type,
+            self.trigger_name,
+            self.trigger_time,
+            self.display)
+
+        verify(self.display, times=1).callOnFlip(any(), any(), any())
+        verify(image_mock, times=1).draw()
+        verify(self.display, times=1).flip()
+        verify(psychopy.core, times=1).wait(self.trigger_time)
+
+    def test_image_calibration_trigger_with_on_trigger(self):
+        trigger_type = 'image'
+        image_mock = mock()
+        on_trigger = mock()
+        when(psychopy.visual).ImageStim(
+            win=self.display,
+            image=any(),
+            pos=any(),
+            mask=any(),
+            ori=any()).thenReturn(image_mock)
+        when(self.display).callOnFlip(any(), any(), any())
+        when(self.display).callOnFlip(on_trigger, self.trigger_name)
+        when(image_mock).draw()
+        when(self.display).flip()
+        when(psychopy.core).wait(self.trigger_time)
+
+        _calibration_trigger(
+            self.clock,
+            trigger_type,
+            self.trigger_name,
+            self.trigger_time,
+            self.display,
+            on_trigger)
+
+        verify(self.display, times=1).callOnFlip(any(), any(), any())
+        verify(self.display, times=1).callOnFlip(on_trigger, self.trigger_name)
+        verify(image_mock, times=1).draw()
+        verify(self.display, times=1).flip()
+        verify(psychopy.core, times=1).wait(self.trigger_time)
+
+    def test_text_calibration_trigger(self):
+        trigger_type = 'text'
+        text_mock = mock()
+        when(psychopy.visual).TextStim(self.display, text='').thenReturn(text_mock)
+        when(self.display).callOnFlip(any(), any(), any())
+        when(text_mock).draw()
+        when(self.display).flip()
+        when(psychopy.core).wait(self.trigger_time)
+
+        _calibration_trigger(
+            self.clock,
+            trigger_type,
+            self.trigger_name,
+            self.trigger_time,
+            self.display)
+
+        verify(self.display, times=1).callOnFlip(any(), any(), any())
+        verify(text_mock, times=1).draw()
+        verify(self.display, times=1).flip()
+        verify(psychopy.core, times=1).wait(self.trigger_time)
+
+    def test_text_calibration_trigger_with_on_trigger(self):
+        trigger_type = 'text'
+        text_mock = mock()
+        on_trigger = mock()
+        when(psychopy.visual).TextStim(self.display, text='').thenReturn(text_mock)
+        when(self.display).callOnFlip(any(), any(), any())
+        when(self.display).callOnFlip(on_trigger, self.trigger_name)
+        when(text_mock).draw()
+        when(self.display).flip()
+        when(psychopy.core).wait(self.trigger_time)
+
+        _calibration_trigger(
+            self.clock,
+            trigger_type,
+            self.trigger_name,
+            self.trigger_time,
+            self.display,
+            on_trigger)
+
+        verify(self.display, times=1).callOnFlip(any(), any(), any())
+        verify(self.display, times=1).callOnFlip(on_trigger, self.trigger_name)
+        verify(text_mock, times=1).draw()
+        verify(self.display, times=1).flip()
+        verify(psychopy.core, times=1).wait(self.trigger_time)
+
+    def test_exception_invalid_calibration_trigger_type(self):
+        trigger_type = 'invalid_type'
+        with self.assertRaises(Exception):
+            _calibration_trigger(
+                self.clock,
+                trigger_type,
+                self.trigger_name,
+                self.trigger_time,
+                self.display
+            )
+
+    def test_exception_no_display_calibration_trigger_type(self):
+        trigger_type = 'image'
+        with self.assertRaises(Exception):
+            _calibration_trigger(
+                self.clock,
+                trigger_type,
+                self.trigger_name,
+                self.trigger_time,
+                None,
+            )
 
 
 if __name__ == '__main__':

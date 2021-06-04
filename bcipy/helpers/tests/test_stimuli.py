@@ -65,8 +65,8 @@ class TestStimuliGeneration(unittest.TestCase):
 
         experiment_clock = mock()
 
-        def mock_callback_function(timing):
-            self.assertEqual(timing, self.test_timing)
+        def mock_callback_function(clock, stimuli):
+            self.assertEqual(stimuli, self.test_timing[0])
 
         # mock the other library interactions
         when(sf).read(

@@ -852,7 +852,7 @@ def start_app() -> None:
     # ex.throw_alert_message(title='title', message='test', okay_to_exit=True)
     ex.get_filename_dialog()
     ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
-    # ex.add_image(path='../static/images/gui_images/bci_cas_logo.png', position=[50, 50], size=200)
+    # ex.add_image(path='../static/images/gui/bci_cas_logo.png', position=[50, 50], size=200)
     # ex.add_static_textbox(
     #   text='Test static text',
     #   background_color='black',
