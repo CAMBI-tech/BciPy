@@ -58,10 +58,9 @@
     "value": "text",
     "section": "bci_config",
     "readableName": "Trigger Stimulus Type",
-    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: image",
+    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: text",
     "recommended_values": [
       "image",
-      "sound",
       "text"
     ],
     "type": "str"

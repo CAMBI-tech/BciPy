@@ -371,12 +371,12 @@ class RSVPDisplay(Display):
 
     def _trigger_pulse(self, timing: List[str]) -> List[str]:
         """Trigger Pulse.
-        
+
         This method uses a marker writer and calibration trigger to determine any functional
             offsets needed for operation with this display. By setting the first_stim_time and searching for the
             same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
-            correction may be required. 
+            correction may be required.
         """
         calibration_time = _calibration_trigger(
             self.experiment_clock,
@@ -385,7 +385,7 @@ class RSVPDisplay(Display):
             on_trigger=self.marker_writer.push_marker)
 
         timing.append(calibration_time)
-        
+
         # set the first stim time if not present and first_run to False
         if not self.first_stim_time:
             self.first_stim_time = calibration_time[-1]

@@ -493,36 +493,6 @@ class TestCalibrationTrigger(unittest.TestCase):
     def setUp(self) -> None:
         unstub()
 
-    def test_sound_calibration_trigger(self):
-        when(bcipy.helpers.triggers).play_sound(
-            sound_file_path=any(),
-            dtype=any(),
-            sound_load_buffer_time=any(),
-            experiment_clock=any(),
-            track_timing=any(),
-            sound_callback=any(),
-            trigger_name=any())
-        trigger_type = 'sound'
-        when(psychopy.core).wait(self.trigger_time)
-
-        _calibration_trigger(
-            self.clock,
-            trigger_type,
-            self.trigger_name,
-            self.trigger_time,
-            self.display)
-
-        verify(psychopy.core, times=1).wait(self.trigger_time)
-        verify(bcipy.helpers.triggers, times=1).play_sound(
-            sound_file_path=any(),
-            dtype=any(),
-            track_timing=any(),
-            sound_load_buffer_time=any(),
-            experiment_clock=any(),
-            sound_callback=any(),
-            trigger_name=any()
-        )
-
     def test_image_calibration_trigger(self):
         trigger_type = 'image'
         image_mock = mock()

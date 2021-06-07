@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 NONE_VALUES = ['0', '0.0']
 
 CALIBRATION_IMAGE_PATH = 'bcipy/static/images/testing/white.png'
-CALIBRATION_SOUND_PATH = 'bcipy/static/sounds/1k_800mV_20ms_stereo.wav'
 DEFAULT_CALIBRATION_TRIGGER_NAME = 'calibration_trigger'
 
 
@@ -26,7 +25,6 @@ class CalibrationType(Enum):
     """
     TEXT = 'text'
     IMAGE = 'image'
-    SOUND = 'sound'
 
     @classmethod
     def list(cls):
@@ -65,9 +63,9 @@ def _calibration_trigger(experiment_clock: core.Clock,
     ---------
     experiment_clock(clock): clock with getTime() method, which is used in the code
         to report timing of stimuli
-    trigger_type(string): type of trigger that is desired (sound, image, etc)
+    trigger_type(string): type of trigger that is desired (text, image, etc)
     trigger_name(string): name of the trigger used for callbacks / labeling
-    trigger_time(float): time to display the trigger. Can also be used as a buffer for sound stimuli.
+    trigger_time(float): time to display the trigger. Can also be used as a buffer.
     display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
     on_trigger(function): optional callback; if present gets called
                 when the calibration trigger is fired; accepts a single
@@ -84,22 +82,12 @@ def _calibration_trigger(experiment_clock: core.Clock,
         log.exception(msg)
         raise BciPyCoreException(msg)
 
-    if trigger_type not in CalibrationType.SOUND.value and not display:
+    if not display:
         msg = f'Calibration type=[{trigger_type}] requires a display'
         log.exception(msg)
         raise BciPyCoreException(msg)
 
-    if trigger_type == CalibrationType.SOUND.value:
-        play_sound(
-            sound_file_path=CALIBRATION_SOUND_PATH,
-            dtype='float32',
-            track_timing=True,
-            sound_callback=trigger_callback.callback,
-            sound_load_buffer_time=0.5,
-            experiment_clock=experiment_clock,
-            trigger_name='calibration_trigger')
-
-    elif trigger_type == CalibrationType.IMAGE.value:
+    if trigger_type == CalibrationType.IMAGE.value:
         calibration_box = visual.ImageStim(
             win=display,
             image=CALIBRATION_IMAGE_PATH,
