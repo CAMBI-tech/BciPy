@@ -4,8 +4,8 @@ from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
 
-import psychopy
 import bcipy
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import (
     _calibration_trigger,
@@ -19,6 +19,8 @@ from bcipy.helpers.triggers import (
     write_trigger_file_from_lsl_calibration,
 )
 from bcipy.signal.generator.generator import gen_random_data
+
+import psychopy
 
 
 def sample_raw_data(trigger_seq: List[Tuple[str, str]] = [],
@@ -625,7 +627,7 @@ class TestCalibrationTrigger(unittest.TestCase):
 
     def test_exception_invalid_calibration_trigger_type(self):
         trigger_type = 'invalid_type'
-        with self.assertRaises(Exception):
+        with self.assertRaises(BciPyCoreException):
             _calibration_trigger(
                 self.clock,
                 trigger_type,
@@ -636,7 +638,7 @@ class TestCalibrationTrigger(unittest.TestCase):
 
     def test_exception_no_display_calibration_trigger_type(self):
         trigger_type = 'image'
-        with self.assertRaises(Exception):
+        with self.assertRaises(BciPyCoreException):
             _calibration_trigger(
                 self.clock,
                 trigger_type,

@@ -327,7 +327,6 @@ class RSVPDisplay(Display):
 
         if self.first_run:
             timing = self._trigger_pulse(timing)
-            self.first_run = False
 
         # generate a inquiry (list of stimuli with meta information)
         inquiry = self._generate_inquiry()
@@ -370,16 +369,28 @@ class RSVPDisplay(Display):
 
         return timing
 
-    def _trigger_pulse(self, timing: List[str]):
-        # play a inquiry start sound to help orient triggers
-        first_stim_timing = _calibration_trigger(
+    def _trigger_pulse(self, timing: List[str]) -> List[str]:
+        """Trigger Pulse.
+        
+        This method uses a marker writer and calibration trigger to determine any functional
+            offsets needed for operation with this display. By setting the first_stim_time and searching for the
+            same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
+            beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
+            correction may be required. 
+        """
+        calibration_time = _calibration_trigger(
             self.experiment_clock,
-            trigger_type=self.trigger_type, display=self.window,
+            trigger_type=self.trigger_type,
+            display=self.window,
             on_trigger=self.marker_writer.push_marker)
 
-        timing.append(first_stim_timing)
+        timing.append(calibration_time)
+        
+        # set the first stim time if not present and first_run to False
+        if not self.first_stim_time:
+            self.first_stim_time = calibration_time[-1]
+            self.first_run = False
 
-        self.first_stim_time = first_stim_timing[-1]
         return timing
 
     def preview_inquiry(self) -> Tuple[List[float], bool]:
@@ -397,7 +408,6 @@ class RSVPDisplay(Display):
         timing = []
         if self.first_run:
             timing = self._trigger_pulse(timing)
-            self.first_run = False
 
         content = self._generate_inquiry_preview()
 

@@ -2,11 +2,15 @@ from enum import Enum
 from typing import Dict, TextIO, List, Tuple
 import csv
 
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.load import load_txt_data
 from bcipy.helpers.stimuli import resize_image, play_sound
 from bcipy.helpers.parameters import Parameters
 
 from psychopy import visual, core
+
+import logging
+log = logging.getLogger(__name__)
 
 NONE_VALUES = ['0', '0.0']
 
@@ -76,10 +80,14 @@ def _calibration_trigger(experiment_clock: core.Clock,
 
     # catch invalid trigger types
     if trigger_type not in CalibrationType.list():
-        raise Exception(f'Trigger type=[{trigger_type}] not implemented')
+        msg = f'Trigger type=[{trigger_type}] not implemented'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
     if trigger_type not in CalibrationType.SOUND.value and not display:
-        raise Exception(f'Calibration type=[{trigger_type}] requires a display')
+        msg = f'Calibration type=[{trigger_type}] requires a display'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
     if trigger_type == CalibrationType.SOUND.value:
         play_sound(
