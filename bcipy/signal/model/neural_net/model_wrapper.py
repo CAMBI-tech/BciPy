@@ -18,6 +18,7 @@ import jsonpickle
 from bcipy.signal.model.neural_net.config import Config
 
 MODEL_CHECKPOINT_NAME = "model_checkpoint.pt"
+MODEL_CONFIG_NAME = "config.json"
 
 
 class EegClassifierModel(SignalModel):
@@ -35,12 +36,12 @@ class EegClassifierModel(SignalModel):
         self.cfg = cfg
         self.model = ResNet1D(
             layers=[2, 2, 2, 2],
-            num_classes=cfg.n_classes,
-            in_channels=cfg.n_channels,
-            act_name=cfg.activation,
-            device=cfg.device,
+            num_classes=self.cfg.n_classes,
+            in_channels=self.cfg.n_channels,
+            act_name=self.cfg.activation,
+            device=self.cfg.device,
         )
-        self.trainer = Trainer(cfg, self.model)
+        self.trainer = Trainer(self.cfg, self.model)
         self._ready_to_predict = False
 
     def __repr__(self):
@@ -50,7 +51,7 @@ class EegClassifierModel(SignalModel):
         """Train model using `train_data` and `train_labels`
 
         Args:
-            train_data (np.array): shape (sequences, samples) - EEG of each sequence
+            train_data (np.array): shape (sequences, channels, samples) - EEG of each sequence
             train_labels (np.array): shape (sequences) - integer label of each sequence
         """
 
@@ -66,7 +67,7 @@ class EegClassifierModel(SignalModel):
         """Compute model AUROC
 
         Args:
-            test_data (np.array): shape (sequences, samples) - EEG of each sequence
+            test_data (np.array): shape (sequences, channels, samples) - EEG of each sequence
             test_labels (np.array): shape (sequences) - integer label of each sequence
 
         Raises:
@@ -111,7 +112,7 @@ class EegClassifierModel(SignalModel):
 
     @torch.no_grad()
     def predict(self, data: np.ndarray, inquiry: List[str], symbol_set: List[str]) -> np.ndarray:
-        """Compute log likelihood updates after an inquiry
+        """Compute log likelihood after after a single inquiry
 
         Args:
             data (np.array): shape (channels, samples) - user's EEG response
@@ -121,6 +122,8 @@ class EegClassifierModel(SignalModel):
         Returns:
             np.array: log likelihoods for full alphabet
         """
+        data = torch.tensor(data).unsqueeze(0).to(self.cfg.device)
+
         if not self._ready_to_predict:
             raise SignalException("call model.fit() before model.predict()")
 
@@ -132,7 +135,7 @@ class EegClassifierModel(SignalModel):
         self.model.eval()
         logger.warning("TODO - estimate alpha parameter")
         return compute_log_likelihoods(
-            model_log_probs=self.model(torch.tensor(data).unsqueeze(0)),
+            model_log_probs=self.model(data).to("cpu"),
             alphabet_len=len(symbol_set),
             presented_seq_idx=torch.tensor([symbol_set.index(letter) for letter in inquiry]).unsqueeze(0),
             none_class_idx=0,
@@ -141,7 +144,10 @@ class EegClassifierModel(SignalModel):
 
     def save(self, folder: Path):
         # Save config
-        config_path = folder / "config.json"
+        if not folder.exists():
+            folder.mkdir(parents=True)
+
+        config_path = folder / MODEL_CONFIG_NAME
         logger.debug(f"Save config to {config_path}")
         self.cfg.save(config_path)
 
@@ -158,7 +164,7 @@ class EegClassifierModel(SignalModel):
 
     def load(self, folder: Path):
         # Load config and re-init
-        config_path = folder / "config.json"
+        config_path = folder / MODEL_CONFIG_NAME
         config = Config.load(config_path)
         self.__init__(config)
 
