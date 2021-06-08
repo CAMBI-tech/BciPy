@@ -10,10 +10,10 @@ from bcipy.helpers.exceptions import (
 
 
 def validate_experiment(
-        experiment_name,
-        experiment_path=f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
-        field_path=f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}',
-        fail_silent=False) -> bool:
+        experiment_name: str,
+        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
+        field_path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'
+) -> bool:
     """Validate Experiment.
 
     Validate the experiment is in the correct format and the fields are properly registered.

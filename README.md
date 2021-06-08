@@ -17,7 +17,7 @@ This is our first release. It is verified using LSL with DSI and gtec for the Ca
 Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken, M., & Oken, B. (2021). BciPy: brain–computer interface software in Python. Brain-Computer Interfaces, 1-18.
 ```
 
-## Features
+## Paradigms
 -----------
 
 *RSVPKeyboard*
@@ -30,8 +30,6 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 		in RSVP KeyboardTM, the symbols (the letters and additional symbols) are
 		shown at the center of screen. When the subject wants to select a symbol,
 		they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
-
-	To run on windows, run `python bcipy/gui/BCInterface.py` in your terminal to begin.
 ```
 
 ## Dependencies
@@ -67,15 +65,15 @@ make dev-install
 
 ## Usage Locally
 
-Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. You may also invoke the experiment directly using command line tools for bci_main.py.
+Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. This will run the GUI. You may also use the command `make bci-gui`. You may also invoke the experiment directly using command line tools from bcipy.
 
-Ex. `python bci_main.py` *this will use default parameters, user, experiment and task*
+Ex. `bcipy` *this will use default parameters, user, experiment and task*
 
 You can pass it attributes with flags, if desired.
 
-Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration"`
+Ex. `bcipy --user "bci_user" --task "RSVP Calibration"`
 
-Use the help flag to see other available input options: `python bci_main.py --help`
+Use the help flag to see other available input options: `bcipy --help`
 
 ## Example usage as a package
 
@@ -99,14 +97,14 @@ This a list of the major modules and their functionality. Each module will conta
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `tasks`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVPCalibration.
 - `feedback`: feedback mechanisms for sound and visual stimuli.
-- `bci_main`: executor of experiments. Main entry point into the application
+- `main`: executor of experiments. Main entry point into the application
 
 ## Demo and Tests
 -----------------
 
 All major functions and modules have demo and test files associated with them which may be run locally. This should help orient you to the functionality as well as serve as documentation. *If you add to the repo, you should be adding tests and fixing any test that fail when you change the code.*
 
-For example, you may run the bci_main demo by:
+For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 

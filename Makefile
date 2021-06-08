@@ -17,7 +17,7 @@ integration-test:
 	pytest -k "slow"
 
 coverage-html:
-	coverage run --branch --source=bcipy -m pytest
+	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 	coverage html
 
 lint:
@@ -31,3 +31,6 @@ clean:
 
 bci-gui:
 	python bcipy/gui/BCInterface.py
+
+run-with-defaults:
+	bcipy

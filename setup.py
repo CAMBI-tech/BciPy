@@ -13,7 +13,7 @@ EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '~=3.6'
 
-VERSION = '1.5.0'
+VERSION = '2.0.0'
 
 
 # What packages are required for this module to be executed?
@@ -81,24 +81,25 @@ setup(
     python_requires=REQUIRES_PYTHON,
     url=URL,
     packages=find_packages(exclude=('tests', 'demo', 'data', )),
-    # If your package is a single module, use this instead of 'packages':
-    # py_modules=['mypackage'],
-
     entry_points={
-        'console_scripts': ['mycli=mymodule:cli'],
+        'console_scripts': ['bcipy = bcipy.main:bcipy_main'],
     },
     install_requires=REQUIRED,
     include_package_data=True,
-    license='BSD',
+    license='Hippocratic License 2.1',
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'License :: OSI Approved :: BSD License',
+        'License :: Other/Proprietary License',
+        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
+        'Intended Audience :: Science/Research',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     # $ setup.py publish support.
     cmdclass={

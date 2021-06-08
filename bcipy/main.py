@@ -1,4 +1,7 @@
+import argparse
 import logging
+import multiprocessing
+
 from bcipy.display import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.task import print_message
@@ -14,6 +17,9 @@ from bcipy.tasks.task_registry import TaskType
 from bcipy.signal.model import PcaRdaKdeModel
 
 
+log = logging.getLogger(__name__)
+
+
 def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
     """BCI Main.
 
@@ -22,10 +28,10 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
     running the app.
 
     It may also be invoked via tha command line.
-        Ex. `python bci_main.py` this will default parameters, mode, user, and type.
+        Ex. `bcipy` this will default parameters, mode, user, and type.
 
         You can pass it those attributes with flags, if desired.
-            Ex. `python bci_main.py --user "bci_user" --task "RSVP Calibration" --experiment "default"
+            Ex. `bcipy --user "bci_user" --task "RSVP Calibration" --experiment "default"
 
     Input:
         parameter_location (str): location of parameters file to use
@@ -45,7 +51,9 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
         parameters.save()
         default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
         if parameters.add_missing_items(default_params):
-            raise Exception('Parameters file out of date.')
+            msg = 'Parameters file out of date.'
+            log.exception(msg)
+            raise Exception(msg)
 
     # update our parameters file with system related information
     sys_info = get_system_info()
@@ -63,7 +71,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
                      log_name=parameters['log_name'],
                      version=sys_info['bcipy_version'])
 
-    logging.getLogger(__name__).info(sys_info)
+    log.info(sys_info)
 
     # Collect experiment field data
     collect_experiment_field_data(experiment, save_folder)
@@ -96,9 +104,9 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         try:
             signal_model, filename = load_signal_model(
                 model_class=PcaRdaKdeModel, model_kwargs={
-                    "k_folds": parameters["k_folds"]})
+                    'k_folds': parameters['k_folds']})
         except Exception as e:
-            print(f'Cannot load signal model. Exiting. {e}')
+            log.exception(f'Cannot load signal model. Exiting. {e}')
             raise e
 
         # if Language Model enabled init lm
@@ -124,6 +132,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
 
     # If exception, close all display and acquisition objects
     except Exception as e:
+        log.exception(str(e))
         _clean_up_session(display, daq, server)
         raise e
 
@@ -149,10 +158,12 @@ def _clean_up_session(display, daq, server):
     return True
 
 
-if __name__ == "__main__":
-    import argparse
-    import multiprocessing
+def bcipy_main() -> None:
+    """BciPy Main.
 
+    Command line interface used for running a registered experiment task in Bcipy. To see what
+        is available use the --help flag.
+    """
     # Needed for windows machines
     multiprocessing.freeze_support()
 
@@ -166,9 +177,16 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--user', default='test_user')
     parser.add_argument('-t', '--task', default='RSVP Calibration',
                         help=f'Task type to execute. Registered options: {task_options}')
-    parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID,
-                        help=f'Select a valid experiment to run the task for this user. Available options: {experiment_options}')
+    parser.add_argument(
+        '-e',
+        '--experiment',
+        default=DEFAULT_EXPERIMENT_ID,
+        help=f'Select a valid experiment to run the task for this user. Available options: {experiment_options}')
     args = parser.parse_args()
 
     # Start BCI Main
     bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)), str(args.experiment))
+
+
+if __name__ == '__main__':
+    bcipy_main()
