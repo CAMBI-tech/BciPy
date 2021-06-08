@@ -365,7 +365,7 @@ class BCInterface(BCIGui):
         """Start Experiment Session.
 
         Using the inputs gathers, check for validity using the check_input method, then launch the experiment using a
-            command to bci_main.py and subprocess.
+            command to bcipy main and subprocess.
         """
         if self.check_input():
             self.throw_alert_message(
@@ -374,7 +374,7 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.INFO,
                 okay_to_exit=False)
             cmd = (
-                f'python bci_main.py -e "{self.experiment}" '
+                f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
             subprocess.Popen(cmd, shell=True)

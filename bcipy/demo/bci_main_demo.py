@@ -3,8 +3,7 @@
 
 
 def main():
-    import bci_main
-    from bcipy.helpers.load import load_json_parameters
+    from bcipy.main import bcipy_main
     from bcipy.tasks.task_registry import TaskType
     from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
@@ -20,12 +19,7 @@ def main():
     # Define a user
     user = 'bci_main_demo_user'
 
-    # Try and initialize with bci main
-    try:
-        bci_main.bci_main(parameters, user, task, experiment)
-    except Exception as e:
-        print("BCI MAIN Fail. Exiting. Error: \n")
-        print(e)
+    bcipy_main(parameters, user, task, experiment)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,27 @@
+# 2.0.0
+
+## Contributions
+
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and CAMBI. These will support multi-modality, data sharing, and more complex language modeling.  
+
+### Added
+
+- `run-with-defaults`: make command for running `bcipy`
+
+### Updated
+
+- `LICENSE.md`: to used the Hippocratic license 2.1
+- `CODE_OF_CONDUCT.md`: to latest version of the Contributor Covenant
+- `bcipy.main`: formally, `bci_main`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py` 
+
+### Removed
+
+
 # 1.5.0
 
 ## Contributions
 
-This version contains major refactoring and tooling improvements across the codebase. In addition, it indtrocudes the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
+This version contains major refactoring and tooling improvements across the codebase. In addition, it introduces the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
 
 ### Added
 - Language model histogram #91 
