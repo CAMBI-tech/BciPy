@@ -6,8 +6,15 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
-from bcipy.helpers.stimuli import play_sound, soundfiles,\
-    random_rsvp_calibration_inq_gen, best_selection, best_case_rsvp_inq_gen
+from bcipy.helpers.stimuli import (
+    best_case_rsvp_inq_gen,
+    best_selection,
+    DEFAULT_FIXATION_PATH,
+    get_fixation,
+    play_sound,
+    random_rsvp_calibration_inq_gen,
+    soundfiles,
+)
 
 MOCK_FS = 44100
 
@@ -292,6 +299,19 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
+
+
+class TestGetFixation(unittest.TestCase):
+
+    def test_text_fixation(self):
+        expected = '+'
+        response = get_fixation(is_txt=True)
+        self.assertEqual(expected, response)
+
+    def test_image_fixation_uses_default(self):
+        expected = DEFAULT_FIXATION_PATH
+        response = get_fixation(is_txt=False)
+        self.assertEqual(expected, response)
 
 
 if __name__ == '__main__':

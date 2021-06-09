@@ -537,7 +537,7 @@ def soundfiles(directory: str) -> Iterator[str]:
 
 def get_fixation(is_txt: bool) -> str:
     """Get Fixation.
-    
+
     Return the correct stimulus fixation given the type (text or image).
     """
     if is_txt:

@@ -64,7 +64,6 @@ class EEGFrame(wx.Frame):
         self.records_per_refresh = int(
             (self.refresh_rate / 1000) * self.samples_per_second)
 
-
         self.autoscale = True
         self.y_min = -y_scale
         self.y_max = y_scale
