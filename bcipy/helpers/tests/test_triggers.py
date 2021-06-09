@@ -4,7 +4,6 @@ from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
 
-import bcipy
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import (

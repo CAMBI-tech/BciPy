@@ -12,7 +12,8 @@ from PIL import Image
 from psychopy import core
 
 # Prevents pillow from filling the console with debug info
-logging.getLogger("PIL").setLevel(logging.WARNING)
+logging.getLogger('PIL').setLevel(logging.WARNING)
+DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
 
 
 class InquirySchedule(NamedTuple):
@@ -59,13 +60,10 @@ def rsvp_inq_generator(query: list,
 
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
+    for _ in range(stim_number):
 
         # append a fixation cross. if not text, append path to image fixation
-        if is_txt:
-            sample = ['+']
-        else:
-            sample = ['bcipy/static/images/main/PLUS.png']
+        sample = [get_fixation(is_txt)]
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -168,13 +166,10 @@ def best_case_rsvp_inq_gen(alp: list,
 
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
+    for _ in range(stim_number):
 
         # append a fixation cross. if not text, append path to image fixation
-        if is_txt:
-            sample = ['+']
-        else:
-            sample = ['bcipy/static/images/main/PLUS.png']
+        sample = [get_fixation(is_txt)]
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -217,13 +212,13 @@ def random_rsvp_calibration_inq_gen(alp,
     len_alp = len(alp)
 
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
+    for _ in range(stim_number):
         idx = np.random.permutation(np.array(list(range(len_alp))))
         rand_smp = (idx[0:stim_length])
         if not is_txt:
             sample = [
                 alp[rand_smp[0]],
-                'bcipy/static/images/main/PLUS.png']
+                get_fixation(is_txt=False)]
         else:
             sample = [alp[rand_smp[0]], '+']
         rand_smp = np.random.permutation(rand_smp)
@@ -268,12 +263,9 @@ def target_rsvp_inquiry_generator(alp,
     # initialize our arrays
     samples, times, colors = [], [], []
     rand_smp = random.sample(range(len_alp), stim_length)
-    if is_txt:
-        sample = ['+']
-    else:
-        sample = ['bcipy/static/images/main/PLUS.png']
-        target_letter = parameters['path_to_presentation_images'] + \
-            target_letter + '.png'
+    sample = [get_fixation(is_txt)]
+    target_letter = parameters['path_to_presentation_images'] + \
+        target_letter + '.png'
     sample += [alp[i] for i in rand_smp]
 
     # if the target isn't in the array, replace it with some random index that
@@ -419,7 +411,7 @@ def generate_icon_match_images(
                 image_array[target_image_numbers[inquiry]])
         # Add PLUS.png to image array TODO: get this from parameters file
         return_array[inquiry].append(
-            'bcipy/static/images/main/PLUS.png')
+            get_fixation(is_txt=False))
 
         # Add target image to inquiry, if it is not already there
         if not target_image_numbers[inquiry] in random_number_array[
@@ -541,3 +533,14 @@ def soundfiles(directory: str) -> Iterator[str]:
     if not directory.endswith(sep):
         directory += sep
     return itertools.cycle(glob.glob(directory + '*.wav'))
+
+
+def get_fixation(is_txt: bool) -> str:
+    """Get Fixation.
+    
+    Return the correct stimulus fixation given the type (text or image).
+    """
+    if is_txt:
+        return '+'
+    else:
+        return DEFAULT_FIXATION_PATH

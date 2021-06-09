@@ -4,7 +4,7 @@ import csv
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli import resize_image, play_sound
+from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.parameters import Parameters
 
 from psychopy import visual, core

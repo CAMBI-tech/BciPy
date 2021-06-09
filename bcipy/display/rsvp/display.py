@@ -266,6 +266,7 @@ class RSVPDisplay(Display):
 
         # Trigger handling
         self.first_run = True
+        self.first_stim_time = None
         self.trigger_type = trigger_type
         self.trigger_callback = TriggerCallback()
         self.marker_writer = marker_writer or NullMarkerWriter()
@@ -345,6 +346,10 @@ class RSVPDisplay(Display):
                 self.experiment_clock,
                 inquiry[idx]['sti_label'])
             self.window.callOnFlip(self.marker_writer.push_marker, inquiry[idx]['sti_label'])
+
+            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(inquiry[idx]['sti'])
 
             # Draw stimulus for n frames
             inquiry[idx]['sti'].draw()
