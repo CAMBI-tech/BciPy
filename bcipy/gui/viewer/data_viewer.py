@@ -60,7 +60,7 @@ class EEGFrame(wx.Frame):
         self.filter = Downsample(self.downsample_factor)
 
         self.refresh_rate = refresh
-        self.samples_per_second = device_info.fs / self.downsample_factor
+        self.samples_per_second = device_info.fs
         self.records_per_refresh = int(
             (self.refresh_rate / 1000) * self.samples_per_second)
 
@@ -501,7 +501,7 @@ if __name__ == "__main__":
     parser.add_argument('-r',
                         '--refresh',
                         help='refresh rate in ms',
-                        default=300,
+                        default=500,
                         type=int)
     parser.add_argument('-y', '--yscale', help='yscale', default=150, type=int)
     parser.add_argument('-m',
