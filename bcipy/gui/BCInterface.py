@@ -213,9 +213,9 @@ class BCInterface(BCIGui):
         Build add images needed for the UI. In this case, the OHSU and NEU logos.
         """
         self.add_image(
-            path='bcipy/static/images/gui_images/ohsu.png', position=[self.padding, 0], size=100)
+            path='bcipy/static/images/gui/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 110, 0], size=100)
+            path='bcipy/static/images/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.

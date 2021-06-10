@@ -23,7 +23,10 @@ class Downsample:
         self.factor = factor
 
     def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
-        return data[:, :: self.factor], fs // self.factor
+        if fs:
+            return data[:, :: self.factor], fs // self.factor
+        else:
+            return data[:, :: self.factor], None
 
 
 def get_default_transform(
@@ -34,7 +37,7 @@ def get_default_transform(
     bandpass_order: int,
     downsample_factor: int,
     notch_quality_factor: int = 30,
-):
+) -> Composition:
     return Composition(
         Notch(sample_rate_hz, notch_freq_hz, notch_quality_factor),
         Bandpass(bandpass_low, bandpass_high, sample_rate_hz, bandpass_order),

@@ -40,7 +40,7 @@ class TestAlphabet(unittest.TestCase):
 
         parameters['is_txt_stim'] = False
         parameters['path_to_presentation_images'] = ('bcipy/static/images/'
-                                                     'rsvp_images/')
+                                                     'rsvp/')
 
         alp = alphabet(parameters)
 

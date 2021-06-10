@@ -1,14 +1,35 @@
-from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli import resize_image, play_sound
-from bcipy.helpers.parameters import Parameters
-import csv
+from enum import Enum
 from typing import Dict, TextIO, List, Tuple
+import csv
+
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.load import load_txt_data
+from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.parameters import Parameters
 
 from psychopy import visual, core
 
+import logging
+log = logging.getLogger(__name__)
+
 NONE_VALUES = ['0', '0.0']
-SOUND_TYPE = 'sound'
-IMAGE_TYPE = 'image'
+
+CALIBRATION_IMAGE_PATH = 'bcipy/static/images/testing/white.png'
+DEFAULT_CALIBRATION_TRIGGER_NAME = 'calibration_trigger'
+
+
+class CalibrationType(Enum):
+    """Calibration Type.
+
+    Enum to define the supported calibration trigger types.
+    """
+    TEXT = 'text'
+    IMAGE = 'image'
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
 
 
 class TriggerCallback:
@@ -26,72 +47,74 @@ class TriggerCallback:
 
 
 def _calibration_trigger(experiment_clock: core.Clock,
-                         trigger_type: str = 'sound',
-                         trigger_name: str = 'calibration_trigger',
+                         trigger_type: str = CalibrationType.TEXT.value,
+                         trigger_name: str = DEFAULT_CALIBRATION_TRIGGER_NAME,
+                         trigger_time: float = 1,
                          display=None,
                          on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
-        Outputs triggers for the purpose of calibrating data and stimuli.
-        This is an ongoing difficulty between OS, DAQ devices and stimuli type. This
-        code aims to operationalize the approach to finding the correct DAQ samples in
-        relation to our trigger code.
+    Outputs triggers for the purpose of calibrating data and stimuli.
+    This is an ongoing difficulty between OS, DAQ devices and stimuli type. This
+    code aims to operationalize the approach to finding the correct DAQ samples in
+    relation to our trigger code.
 
     PARAMETERS
     ---------
-        experiment_clock(clock): clock with getTime() method, which is used in the code
-            to report timing of stimuli
-        trigger_type(string): type of trigger that is desired (sound, image, etc)
-        display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
-        on_trigger(function): optional callback; if present gets called
-                 when the calibration trigger is fired; accepts a single
-                 parameter for the timing information.
-        Return:
-            timing(array): timing values for the calibration triggers to be written to trigger file or
-                    used to calculate offsets.
+    experiment_clock(clock): clock with getTime() method, which is used in the code
+        to report timing of stimuli
+    trigger_type(string): type of trigger that is desired (text, image, etc)
+    trigger_name(string): name of the trigger used for callbacks / labeling
+    trigger_time(float): time to display the trigger. Can also be used as a buffer.
+    display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
+    on_trigger(function): optional callback; if present gets called
+                when the calibration trigger is fired; accepts a single
+                parameter for the timing information.
+    Return:
+        timing(array): timing values for the calibration triggers to be written to trigger file or
+                used to calculate offsets.
     """
     trigger_callback = TriggerCallback()
 
-    # If sound trigger is selected, output calibration tones
-    if trigger_type == SOUND_TYPE:
-        play_sound(
-            sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
-            dtype='float32',
-            track_timing=True,
-            sound_callback=trigger_callback,
-            sound_load_buffer_time=0.5,
-            experiment_clock=experiment_clock,
-            trigger_name='calibration_trigger')
+    # catch invalid trigger types
+    if trigger_type not in CalibrationType.list():
+        msg = f'Trigger type=[{trigger_type}] not implemented'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
-    elif trigger_type == IMAGE_TYPE:
-        if display:
-            calibration_box = visual.ImageStim(
-                win=display,
-                image='bcipy/static/images/testing_images/white.png',
-                pos=(-.5, -.5),
-                mask=None,
-                ori=0.0)
-            calibration_box.size = resize_image(
-                'bcipy/static/images/testing_images/white.png', display.size,
-                0.75)
+    if not display:
+        msg = f'Calibration type=[{trigger_type}] requires a display'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
-            display.callOnFlip(trigger_callback.callback, experiment_clock,
-                               trigger_name)
-            if on_trigger is not None:
-                display.callOnFlip(on_trigger, trigger_name)
+    if trigger_type == CalibrationType.IMAGE.value:
+        calibration_box = visual.ImageStim(
+            win=display,
+            image=CALIBRATION_IMAGE_PATH,
+            pos=(-.5, -.5),
+            mask=None,
+            ori=0.0)
+        calibration_box.size = resize_image(CALIBRATION_IMAGE_PATH, display.size, 0.75)
 
-            presentation_time = int(1 * display.getActualFrameRate())
-            for _ in range(presentation_time):
-                calibration_box.draw()
-                display.flip()
+        display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
+        if on_trigger is not None:
+            display.callOnFlip(on_trigger, trigger_name)
 
-        else:
-            raise Exception(
-                'Display object required for calibration with images!')
+        calibration_box.draw()
+        display.flip()
 
-    else:
-        raise Exception('Trigger type not implemented for Calibration yet!')
+    elif trigger_type == CalibrationType.TEXT.value:
+        calibration_text = visual.TextStim(display, text='')
 
+        display.callOnFlip(trigger_callback.callback, experiment_clock,
+                           trigger_name)
+        if on_trigger is not None:
+            display.callOnFlip(on_trigger, trigger_name)
+
+        calibration_text.draw()
+        display.flip()
+
+    core.wait(trigger_time)
     return trigger_callback.timing
 
 

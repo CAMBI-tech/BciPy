@@ -32,5 +32,8 @@ clean:
 bci-gui:
 	python bcipy/gui/BCInterface.py
 
+viewer:
+	python bcipy/gui/viewer/data_viewer.py --file $(filepath)
+
 run-with-defaults:
 	bcipy

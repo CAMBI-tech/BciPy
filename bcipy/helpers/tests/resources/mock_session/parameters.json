@@ -445,10 +445,10 @@
     "type": "str"
   },
   "alert_sounds_path": {
-    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "value": "bcipy/static/sounds/rsvp/",
     "section": "bci_config",
     "readableName": "Alert sounds directory",
-    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp_sounds/",
+    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp/",
     "recommended_values": "",
     "type": "directorypath"
   },

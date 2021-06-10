@@ -55,13 +55,13 @@
     "type": "float"
   },
   "trigger_type": {
-    "value": "image",
+    "value": "text",
     "section": "bci_config",
     "readableName": "Trigger Stimulus Type",
-    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: image",
+    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: text",
     "recommended_values": [
       "image",
-      "sound"
+      "text"
     ],
     "type": "str"
   },
@@ -330,7 +330,7 @@
     "type": "bool"
   },
   "path_to_presentation_images": {
-    "value": "bcipy/static/images/rsvp_images/",
+    "value": "bcipy/static/images/rsvp/",
     "section": "bci_config",
     "readableName": "Image Stimulus Folder",
     "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",
@@ -445,10 +445,10 @@
     "type": "str"
   },
   "alert_sounds_path": {
-    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "value": "bcipy/static/sounds/rsvp/",
     "section": "bci_config",
     "readableName": "Alert sounds directory",
-    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp_sounds/",
+    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp/",
     "recommended_values": "",
     "type": "directorypath"
   },

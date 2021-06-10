@@ -46,11 +46,6 @@ class EEGFrame(wx.Frame):
 
         self.data_source = data_source
 
-        self.refresh_rate = refresh
-        self.samples_per_second = device_info.fs
-        self.records_per_refresh = int(
-            (self.refresh_rate / 1000) * self.samples_per_second)
-
         self.channels = device_info.channels
         self.removed_channels = ['TRG', 'timestamp']
         self.data_indices = self.init_data_indices()
@@ -63,6 +58,11 @@ class EEGFrame(wx.Frame):
         self.filter_order = parameters['filter_order']
         # Default filter
         self.filter = Downsample(self.downsample_factor)
+
+        self.refresh_rate = refresh
+        self.samples_per_second = device_info.fs
+        self.records_per_refresh = int(
+            (self.refresh_rate / 1000) * self.samples_per_second)
 
         self.autoscale = True
         self.y_min = -y_scale
@@ -322,7 +322,7 @@ class EEGFrame(wx.Frame):
 
     def init_data(self):
         """Initialize the data."""
-        channel_data = self.filter(self.current_data())
+        channel_data, _ = self.filter(self.current_data())
 
         for i, _channel in enumerate(self.data_indices):
             data = channel_data[i].tolist()
@@ -351,7 +351,7 @@ class EEGFrame(wx.Frame):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
-        channel_data = self.filter(self.current_data())
+        channel_data, _ = self.filter(self.current_data())
 
         # plot each channel
         for i, _channel in enumerate(self.data_indices):
