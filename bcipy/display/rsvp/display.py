@@ -6,7 +6,7 @@ from psychopy import core, visual
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
-from bcipy.display import Display
+from bcipy.display import Display, BCIPY_LOGO_PATH
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
@@ -482,7 +482,7 @@ class RSVPDisplay(Display):
             mode='textbox',
             wrap_width=wrap_width)
 
-    def _generate_inquiry(self):
+    def _generate_inquiry(self) -> list:
         """Generate inquiry.
 
         Generate stimuli for next RSVP inquiry.
@@ -552,38 +552,42 @@ class RSVPDisplay(Display):
 
         self.update_task(text=text, color_list=color_list, pos=task_pos)
 
-    def wait_screen(self, message, color):
+    def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.
 
         Args:
             message(string): message to be displayed while waiting
+            color(string): color of the message to be displayed
         """
 
         # Construct the wait message
-        wait_message = visual.TextStim(win=self.window, font=self.stimuli_font,
+        wait_message = visual.TextStim(win=self.window,
+                                       font=self.stimuli_font,
                                        text=message,
                                        height=.1,
                                        color=color,
                                        pos=(0, -.5),
                                        wrapWidth=2,
                                        colorSpace='rgb',
-                                       opacity=1, depth=-6.0)
+                                       opacity=1,
+                                       depth=-6.0)
 
-        # Try adding our BCI logo. Pass if not found.
+        # try adding the BciPy logo to the wait screen
         try:
             wait_logo = visual.ImageStim(
                 self.window,
-                image='bcipy/static/images/gui/bci_cas_logo.png',
-                pos=(0, .5),
+                image=BCIPY_LOGO_PATH,
+                pos=(0, .25),
                 mask=None,
                 ori=0.0)
             wait_logo.size = resize_image(
-                'bcipy/static/images/gui/bci_cas_logo.png',
-                self.window.size, 1)
+                BCIPY_LOGO_PATH,
+                self.window.size,
+                1)
             wait_logo.draw()
 
         except Exception:
-            self.logger.debug('Cannot load logo image')
+            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             pass
 
         # Draw and flip the screen.
