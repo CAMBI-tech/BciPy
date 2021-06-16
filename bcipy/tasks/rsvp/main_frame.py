@@ -4,8 +4,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator
-from bcipy.helpers.task import SPACE_CHAR
+from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator, StimuliOrder
+from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
 from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
 
@@ -133,19 +133,21 @@ class DecisionMaker:
 
     def __init__(self,
                  state='',
-                 alphabet=list(string.ascii_uppercase) + ['<'] + [SPACE_CHAR],
+                 alphabet=list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
+                 stimuli_order: StimuliOrder = StimuliOrder.RANDOM.value,
                  inq_constants=None,
                  stopping_evaluator=CriteriaEvaluator.default(min_num_inq=2,
                                                               max_num_inq=10,
                                                               threshold=0.8),
                  stimuli_agent=RandomStimuliAgent(
                      alphabet=list(string.ascii_uppercase) +
-                     ['<'] + [SPACE_CHAR])):
+                     [BACKSPACE_CHAR] + [SPACE_CHAR])):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
+        self.stimuli_order = stimuli_order
 
         # TODO: read from parameters file
         self.alphabet = alphabet
@@ -165,7 +167,7 @@ class DecisionMaker:
 
         self.last_selection = ''
 
-        # Items shown in every inquiry
+        # Items shown in every inquiry TODO this is unused
         self.inq_constants = inq_constants
 
     def reset(self, state=''):
@@ -184,7 +186,7 @@ class DecisionMaker:
 
     def form_display_state(self, state):
         """ Forms the state information or the user that fits to the
-            display. Basically takes '.' and '<' into consideration and rewrites
+            display. Basically takes '.' and BACKSPACE_CHAR into consideration and rewrites
             the state
             Args:
                 state(str): state string
@@ -193,7 +195,7 @@ class DecisionMaker:
                     backspaced letters """
         tmp = ''
         for i in state:
-            if i == '<':
+            if i == BACKSPACE_CHAR:
                 tmp = tmp[0:-1]
             elif i != '.':
                 tmp += i
@@ -229,6 +231,7 @@ class DecisionMaker:
             return True, None
         else:
             stimuli = self.schedule_inquiry()
+            print(stimuli)
             return False, stimuli
 
     def do_series(self):
@@ -279,10 +282,10 @@ class DecisionMaker:
         # querying agent decides on possible letters to be shown on the screen
         query_els = self.stimuli_agent.return_stimuli(
             self.list_series[-1]['list_distribution'])
-        # once querying is determined, append with timing and color info
+        # once querying is determined, append with timing and color info.
         stimuli = rsvp_inq_generator(query=query_els,
                                      stim_number=1,
                                      is_txt=self.is_txt_stim,
                                      timing=self.stimuli_timing,
-                                     inq_constants=self.inq_constants)
+                                     stim_order=self.stimuli_order)
         return stimuli

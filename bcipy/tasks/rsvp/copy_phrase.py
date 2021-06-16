@@ -82,7 +82,7 @@ class RSVPCopyPhraseTask(Task):
         'preview_inquiry_progress_method', 'session_file_name',
         'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
         'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height',
-        'stim_length', 'stim_number', 'stim_pos_x', 'stim_pos_y',
+        'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
         'stim_space_char', 'target_color', 'task_buffer_len', 'task_color',
         'task_font', 'task_height', 'task_text', 'text_pos_x', 'text_pos_y',
         'time_cross', 'time_flash', 'time_target', 'trial_complete_message',
@@ -186,7 +186,8 @@ class RSVPCopyPhraseTask(Task):
             filter_low=self.parameters['filter_low'],
             filter_order=self.parameters['filter_order'],
             notch_filter_frequency=self.parameters['notch_filter_frequency'],
-            stim_length=self.parameters['stim_length'])
+            stim_length=self.parameters['stim_length'],
+            stim_order=self.parameters['stim_order'])
 
     def await_start(self) -> bool:
         """Wait on the splash screen for the user to either exit or start."""
@@ -601,7 +602,6 @@ class RSVPCopyPhraseTask(Task):
         - stim_times : list of (stim, clock_time) tuples
         - trigger_file : data will be appended to this file
         """
-        # TODO: fix the helper to correctly handle the targetness of inquiry_preview stims.
         _write_triggers_from_inquiry_copy_phrase(stim_times, trigger_file,
                                                  self.copy_phrase,
                                                  self.spelled_text)
@@ -658,7 +658,7 @@ def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
                               stimuli_timing, decision_threshold,
                               backspace_prob, backspace_always_shown,
                               filter_high, filter_low, filter_order,
-                              notch_filter_frequency, stim_length):
+                              notch_filter_frequency, stim_length, stim_order):
     return CopyPhraseWrapper(min_num_inq,
                              max_num_inq,
                              signal_model=signal_model,
@@ -679,4 +679,5 @@ def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
                              filter_low=filter_low,
                              filter_order=filter_order,
                              notch_filter_frequency=notch_filter_frequency,
-                             stim_length=stim_length)
+                             stim_length=stim_length,
+                             stim_order=stim_order)

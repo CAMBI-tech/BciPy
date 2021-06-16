@@ -6,7 +6,7 @@ from bcipy.tasks.task import Task
 from bcipy.tasks.exceptions import InsufficientDataException
 from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
+from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info
 from bcipy.helpers.task import (
     trial_complete_message,
     get_user_input,
@@ -140,7 +140,7 @@ class RSVPInterInquiryFeedbackCalibration(Task):
 
             # Get random inquiry information given stimuli parameters
             (stimuli_elements, timing_sti,
-             color_sti) = random_rsvp_calibration_inq_gen(
+             color_sti) = calibration_inquiry_generator(
                  self.alp,
                  stim_number=self.stim_number,
                  stim_length=self.stim_length,

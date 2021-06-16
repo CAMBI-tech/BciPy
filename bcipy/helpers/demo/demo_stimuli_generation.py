@@ -1,4 +1,4 @@
-from bcipy.helpers.stimuli_generation import random_rsvp_calibration_inq_gen, best_case_rsvp_inq_gen
+from bcipy.helpers.stimuli import StimuliOrder, calibration_inquiry_generator, best_case_rsvp_inq_gen
 import numpy as np
 
 
@@ -6,16 +6,17 @@ def _demo_random_rsvp_inquiry_generator():
     alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
            'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
-    num_samples = int(np.random.randint(10, 30, 1))
-    len_samples = int(np.random.randint(1, 20, 1))
+    num_samples = 2
+    len_samples = 10
 
     print('Number of inquiries:{}, Number of trials:{}'.format(num_samples,
                                                                len_samples))
 
     print('Alphabet:{}'.format(alp))
-    schedule = random_rsvp_calibration_inq_gen(alp=alp,
-                                               stim_number=num_samples,
-                                               stim_length=len_samples)
+    schedule = calibration_inquiry_generator(alp=alp,
+                                             stim_number=num_samples,
+                                             stim_length=len_samples,
+                                             stim_order=StimuliOrder.RANDOM.value)
     inquiries = schedule[0]
     timing = schedule[1]
     color = schedule[2]
@@ -26,15 +27,41 @@ def _demo_random_rsvp_inquiry_generator():
             raise Exception('Letter repetition!')
         print('time{}:{}'.format(i, timing[i]))
         print('color{}:{}'.format(i, color[i]))
-    return 0
+
+
+def _demo_alphabetical_rsvp_inquiry_generator():
+    alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+           'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
+
+    num_samples = 2
+    len_samples = 10
+
+    print('Number of inquiries:{}, Number of trials:{}'.format(num_samples,
+                                                               len_samples))
+
+    print('Alphabet:{}'.format(alp))
+    schedule = calibration_inquiry_generator(alp=alp,
+                                             stim_number=num_samples,
+                                             stim_length=len_samples,
+                                             stim_order=StimuliOrder.ALPHABETICAL.value)
+    inquiries = schedule[0]
+    timing = schedule[1]
+    color = schedule[2]
+
+    for i in range(len(inquiries)):
+        print('inq{}:{}'.format(i, inquiries[i]))
+        if len(set(inquiries[i][2::])) != len(inquiries[i][2::]):
+            raise Exception('Letter repetition!')
+        print('time{}:{}'.format(i, timing[i]))
+        print('color{}:{}'.format(i, color[i]))
 
 
 def _demo_best_case_inquiry_generator():
     alp = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
            'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_']
 
-    num_samples = int(np.random.randint(1, 10, 1))
-    len_samples = int(np.random.randint(1, 20, 1))
+    num_samples = 2
+    len_samples = 10
 
     print('Number of inquiries:{}, Number of trials:{}'.format(num_samples,
                                                                len_samples))
@@ -56,5 +83,11 @@ def _demo_best_case_inquiry_generator():
 
 
 if __name__ == '__main__':
+    print('\n\n\n====== Best Case =======\n')
     _demo_best_case_inquiry_generator()
+
+    print('\n\n\n====== Random RSVP Inquiry Generator =======\n')
     _demo_random_rsvp_inquiry_generator()
+
+    print('\n\n\n====== Alphabetical RSVP Inquiry Generator =======\n')
+    _demo_alphabetical_rsvp_inquiry_generator()
