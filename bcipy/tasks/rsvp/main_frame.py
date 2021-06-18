@@ -40,7 +40,6 @@ class EvidenceFusion(object):
         for value in dict_evidence.values():
             self.likelihood *= value[:]
 
-        # I
         if np.isinf(np.sum(self.likelihood)):
             tmp = np.zeros(len(self.likelihood))
             tmp[np.where(self.likelihood == np.inf)[0][0]] = 1
@@ -136,7 +135,7 @@ class DecisionMaker:
                  alphabet=list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR],
                  is_txt_stim=True,
                  stimuli_timing=[1, .2],
-                 stimuli_order: StimuliOrder = StimuliOrder.RANDOM.value,
+                 stimuli_order: StimuliOrder = StimuliOrder.RANDOM,
                  inq_constants=None,
                  stopping_evaluator=CriteriaEvaluator.default(min_num_inq=2,
                                                               max_num_inq=10,

@@ -95,7 +95,7 @@ class CopyPhraseWrapper:
                  filter_order: int = 2,
                  notch_filter_frequency: int = 60,
                  stim_length: int = 10,
-                 stim_order: StimuliOrder = StimuliOrder.RANDOM.value):
+                 stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 

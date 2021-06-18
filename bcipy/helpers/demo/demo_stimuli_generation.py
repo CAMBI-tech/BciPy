@@ -16,7 +16,7 @@ def _demo_random_rsvp_inquiry_generator():
     schedule = calibration_inquiry_generator(alp=alp,
                                              stim_number=num_samples,
                                              stim_length=len_samples,
-                                             stim_order=StimuliOrder.RANDOM.value)
+                                             stim_order=StimuliOrder.RANDOM)
     inquiries = schedule[0]
     timing = schedule[1]
     color = schedule[2]
@@ -43,7 +43,7 @@ def _demo_alphabetical_rsvp_inquiry_generator():
     schedule = calibration_inquiry_generator(alp=alp,
                                              stim_number=num_samples,
                                              stim_length=len_samples,
-                                             stim_order=StimuliOrder.ALPHABETICAL.value)
+                                             stim_order=StimuliOrder.ALPHABETICAL)
     inquiries = schedule[0]
     timing = schedule[1]
     color = schedule[2]
