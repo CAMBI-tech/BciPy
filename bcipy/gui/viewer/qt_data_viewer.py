@@ -1,23 +1,18 @@
-"""Data Viewer ported to PyQt"""
-"""
-EEG viewer that uses a queue as a data source. Records are retrieved by a
-wx Timer.
-"""
+"""EEG Data Viewer"""
 import csv
 import sys
 from functools import partial
 from queue import Queue
-# from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
 from typing import Callable, Dict, List, Optional, Tuple
 
-import matplotlib
-import matplotlib.ticker as ticker
-import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
-                             QPushButton, QScrollArea, QVBoxLayout, QWidget)
+import matplotlib.ticker as ticker
+import numpy as np
+from PyQt5.QtCore import QTimer # pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import (QApplication, QDesktopWidget, QCheckBox, QComboBox, QHBoxLayout,
+                             QPushButton, QVBoxLayout, QWidget)
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.gui_main import static_text_control
@@ -49,7 +44,7 @@ def active_indices(all_channels, removed_channels) -> List[int]:
     """List of indices of all channels which will be displayed. By default
     filters out TRG channels and any channels marked as
     removed_channels.
-    
+
     Parameters
     ----------
     - all_channels : list of channel names
@@ -72,7 +67,7 @@ def init_buffer(samples_per_second: int, seconds: int,
     """Initialize the underlying RingBuffer by pre-allocating empty
     values. Buffer size is determined by the sample frequency and the
     number of seconds to display.
-    
+
     Parameters
     ----------
     - samples_per_second : sample rate
@@ -81,7 +76,6 @@ def init_buffer(samples_per_second: int, seconds: int,
     """
 
     buf_size = int(samples_per_second * seconds)
-    print(f"Bufsize: {buf_size}")
     empty_val = [0.0 for _x in channels]
     return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
 
@@ -108,7 +102,6 @@ class EEGPanel(QWidget):
                  refresh: int = 500,
                  y_scale=100):
         super().__init__()
-        # wx.Frame.__init__(self, None, -1, 'EEG Viewer', size=(800, 550))
 
         self.data_source = data_source
         self.parameters = parameters
@@ -144,6 +137,7 @@ class EEGPanel(QWidget):
         self.init_data_plots()
         self.start()
 
+    # pylint: disable=attribute-defined-outside-init
     def init_canvas(self):
         """Initialize the Figure for drawing plots"""
         self.y_min = -self.y_scale
@@ -163,6 +157,7 @@ class EEGPanel(QWidget):
         self.axes = self.init_axes()
         self.canvas = FigureCanvasQTAgg(self.figure)
 
+    # pylint: disable=invalid-name,attribute-defined-outside-init
     def initUI(self):
         """Initialize the UI"""
         vbox = QVBoxLayout()
@@ -176,7 +171,7 @@ class EEGPanel(QWidget):
         controls = QHBoxLayout()
 
         # Start/Pause button
-        self.start_stop_btn = QPushButton('Pause' if self.started else 'Start')
+        self.start_stop_btn = QPushButton('Pause', self)
         self.start_stop_btn.setFixedWidth(80)
         self.start_stop_btn.clicked.connect(self.toggle_stream)
         controls.addWidget(self.start_stop_btn)
@@ -238,12 +233,13 @@ class EEGPanel(QWidget):
 
         self.setWindowTitle('EEG Viewer')
         self.setLayout(vbox)
-        # self.setFixedWidth(800)
-        # self.setFixedHeight(550)
+        self.setMinimumWidth(800)
+        self.setMinimumHeight(550)
         self.show()
 
     @property
     def filter(self):
+        """Returns the current filter"""
         return self.filter_options[self.selected_filter]
 
     def init_axes(self):
@@ -302,25 +298,25 @@ class EEGPanel(QWidget):
     def start(self):
         """Start streaming data in the viewer."""
         # update buffer with latest data on (re)start.
-        self.started = True
         self.start_stop_btn.setText('Pause')
+        self.started = True
         self.update_buffer(fast_forward=True)
         self.timer.start(self.refresh_rate)
 
     def stop(self):
         """Stop/Pause the viewer."""
-        self.timer.stop()
-        self.started = False
         self.start_stop_btn.setText('Start')
+        self.started = False
+        self.timer.stop()
 
-    def toggle_stream(self, _event):
+    def toggle_stream(self):
         """Toggle data streaming"""
         if self.started:
             self.stop()
         else:
             self.start()
 
-    def toggle_filtering_handler(self, event):
+    def toggle_filtering_handler(self):
         """Event handler for toggling data filtering."""
         self.with_refresh(self.toggle_filtering)
 
@@ -329,7 +325,7 @@ class EEGPanel(QWidget):
         self.selected_filter = 'default_transform' if self.sigpro_checkbox.isChecked(
         ) else 'downsample'
 
-    def toggle_autoscale_handler(self, event):
+    def toggle_autoscale_handler(self):
         """Event handler for toggling autoscale"""
         self.with_refresh(self.toggle_autoscale)
 
@@ -374,7 +370,7 @@ class EEGPanel(QWidget):
 
     def filtered_data(self):
         """Channel data after applying the current filter.
-        
+
         Returns the data as an np array with a row of floats for each
         displayed channel.
         """
@@ -391,14 +387,15 @@ class EEGPanel(QWidget):
         """Initialize the data in the viewer."""
         channel_data = self.filtered_data()
 
+        cursor_x = self.cursor_x
         for i, _channel in enumerate(self.active_channel_indices):
             data = channel_data[i].tolist()
             self.axes[i].plot(data, linewidth=0.8)
             # plot cursor
-            self.axes[i].axvline(self.cursor_x, color='r')
+            self.axes[i].axvline(cursor_x, color='r')
 
     def update_buffer(self, fast_forward=False):
-        """Update the buffer with latest data from the datasource. 
+        """Update the buffer with latest data from the datasource.
         If the datasource does not have the requested number of
         samples, viewer streaming is stopped."""
         try:
@@ -408,8 +405,6 @@ class EEGPanel(QWidget):
                 self.buffer.append(row)
         except StopIteration:
             self.stop()
-            # close the Wx.Frame to shutdown the viewer application
-            self.Close()
         except BaseException:
             self.stop()
 
@@ -419,12 +414,13 @@ class EEGPanel(QWidget):
         self.update_buffer()
         channel_data = self.filtered_data()
 
+        cursor_x = self.cursor_x
         # plot each channel
         for i, _channel in enumerate(self.active_channel_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
             # cursor line
-            self.axes[i].lines[1].set_xdata(self.cursor_x)
+            self.axes[i].lines[1].set_xdata(cursor_x)
             if self.autoscale:
                 data_min = min(data)
                 data_max = max(data)
@@ -491,10 +487,10 @@ def file_data(path: str):
     from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
     with open(path) as csvfile:
-        r1 = next(csvfile)
-        name = r1.strip().split(",")[1]
-        r2 = next(csvfile)
-        freq = float(r2.strip().split(",")[1])
+        row1 = next(csvfile)
+        name = row1.strip().split(",")[1]
+        row2 = next(csvfile)
+        freq = float(row2.strip().split(",")[1])
 
         reader = csv.reader(csvfile)
         channels = next(reader)
@@ -531,17 +527,20 @@ def main(data_file: str,
         data_file) if data_file else lsl_data()
 
     app = QApplication(sys.argv)
-    _panel = EEGPanel(data_source, device_info,
+    panel = EEGPanel(data_source, device_info,
                       Parameters(parameters, cast_values=True), seconds,
                       refresh, yscale)
 
     # TODO: position on the appropriate monitor / screen
+    # if display_screen == 1 and len(app.screens()) > 1:
+        # place frame in the second monitor if one exists
+        # https://doc.qt.io/archives/qtforpython-5.12/PySide2/QtWidgets/QDesktopWidget.html
+        # https://stackoverflow.com/questions/6854947/how-to-display-a-window-on-a-secondary-display-in-pyqt
+        # non_primary_screens = [screen for screen in app.screens() if screen != app.primaryScreen()]
+        # display_monitor = non_primary_screens[0]
+        # monitor = QDesktopWidget().screenGeometry(display_monitor)
+        # panel.move(monitor.left(), monitor.top())
 
-    # if wx.Display.GetCount() > 1 and display_screen == 1:
-    #     # place frame in the second monitor if one exists.
-    #     s2_x, s2_y, _width, _height = wx.Display(1).GetGeometry()
-    #     offset = 30
-    #     frame.SetPosition((s2_x + offset, s2_y + offset))
     sys.exit(app.exec_())
 
     if proc:
