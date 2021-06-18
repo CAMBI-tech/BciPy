@@ -231,7 +231,6 @@ class DecisionMaker:
             return True, None
         else:
             stimuli = self.schedule_inquiry()
-            print(stimuli)
             return False, stimuli
 
     def do_series(self):

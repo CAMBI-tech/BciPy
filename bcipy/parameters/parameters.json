@@ -351,10 +351,10 @@
     "type": "str"
   },
   "stim_order": {
-    "value": "alphabetical",
+    "value": "random",
     "section": "bci_config",
     "readableName": "Stimuli Order",
-    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is alphabetical.",
+    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is random.",
     "recommended_values": [
       "alphabetical",
       "random"

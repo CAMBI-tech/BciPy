@@ -9,7 +9,7 @@ from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision, get_user_input,
                                 process_data_for_decision, target_info,
@@ -187,7 +187,7 @@ class RSVPCopyPhraseTask(Task):
             filter_order=self.parameters['filter_order'],
             notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
-            stim_order=self.parameters['stim_order'])
+            stim_order=StimuliOrder(self.parameters['stim_order']))
 
     def await_start(self) -> bool:
         """Wait on the splash screen for the user to either exit or start."""

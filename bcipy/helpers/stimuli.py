@@ -64,7 +64,7 @@ def rsvp_inq_generator(query: List[str],
                        timing: List[float] = [1, 0.2],
                        color: List[str] = ['red', 'white'],
                        stim_number: int = 1,
-                       stim_order: StimuliOrder = StimuliOrder.RANDOM.value,
+                       stim_order: StimuliOrder = StimuliOrder.RANDOM,
                        is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
         Args:
@@ -80,7 +80,7 @@ def rsvp_inq_generator(query: List[str],
                 color(list(list[str])): list of colors)): scheduled inquiries
             """
 
-    if stim_order == StimuliOrder.ALPHABETICAL.value:
+    if stim_order == StimuliOrder.ALPHABETICAL:
         query = alphabetize(query)
     else:
         random.shuffle(query)
@@ -148,7 +148,7 @@ def best_case_rsvp_inq_gen(alp: list,
                            color: List[str] = ['red', 'white'],
                            stim_number: int = 1,
                            stim_length: int = 10,
-                           stim_order: StimuliOrder = StimuliOrder.RANDOM.value,
+                           stim_order: StimuliOrder = StimuliOrder.RANDOM,
                            is_txt: bool = True,
                            inq_constants: List[str] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
@@ -192,7 +192,7 @@ def best_case_rsvp_inq_gen(alp: list,
         stim_length,
         inq_constants)
 
-    if stim_order == StimuliOrder.ALPHABETICAL.value:
+    if stim_order == StimuliOrder.ALPHABETICAL:
         query = alphabetize(query)
     else:
         random.shuffle(query)
@@ -224,7 +224,7 @@ def calibration_inquiry_generator(
         color: List[str] = ['green', 'red', 'white'],
         stim_number: int = 10,
         stim_length: int = 10,
-        stim_order: StimuliOrder = StimuliOrder.RANDOM.value,
+        stim_order: StimuliOrder = StimuliOrder.RANDOM,
         is_txt: bool = True) -> InquirySchedule:
     """Random RSVP Calibration Inquiry Generator.
 
@@ -263,7 +263,7 @@ def calibration_inquiry_generator(
 
         # generate the samples using the permutated random indexes
         rand_smp = np.random.permutation(rand_smp)
-        if stim_order == StimuliOrder.ALPHABETICAL.value:
+        if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
             inquiry = [alp[i] for i in rand_smp]

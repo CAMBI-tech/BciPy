@@ -6,7 +6,7 @@ from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, Informa
 from bcipy.tasks.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info
+from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info, StimuliOrder
 from bcipy.helpers.task import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
@@ -56,7 +56,7 @@ class RSVPCalibrationTask(Task):
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
-        self.stim_order = parameters['stim_order']
+        self.stim_order = StimuliOrder(parameters['stim_order'])
 
         self.timing = [parameters['time_target'],
                        parameters['time_cross'],

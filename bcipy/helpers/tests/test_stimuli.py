@@ -153,7 +153,7 @@ class TestStimuliGeneration(unittest.TestCase):
             color=['green', 'red', 'white'],
             stim_number=stim_number,
             stim_length=stim_length,
-            stim_order=StimuliOrder.RANDOM.value,
+            stim_order=StimuliOrder.RANDOM,
             is_txt=True)
 
         self.assertEqual(
@@ -194,7 +194,7 @@ class TestStimuliGeneration(unittest.TestCase):
             color=['green', 'red', 'white'],
             stim_number=stim_number,
             stim_length=stim_length,
-            stim_order=StimuliOrder.ALPHABETICAL.value,
+            stim_order=StimuliOrder.ALPHABETICAL,
             is_txt=True)
 
         self.assertEqual(
@@ -365,7 +365,6 @@ class TestAlphabetize(unittest.TestCase):
         self.list_to_alphabetize = ['Z', 'Q', 'A', 'G']
 
     def test_alphabetize(self):
-
         expected = ['A', 'G', 'Q', 'Z']
         response = alphabetize(self.list_to_alphabetize)
         self.assertEqual(expected, response)
@@ -379,7 +378,7 @@ class TestAlphabetize(unittest.TestCase):
     def test_alphabetize_special_characters_at_end(self):
         character = '<'
         expected = ['A', 'G', 'Q', 'Z', character]
-        self.list_to_alphabetize.append(character)
+        self.list_to_alphabetize.insert(1, character)
         response = alphabetize(self.list_to_alphabetize)
         self.assertEqual(expected, response)
 
