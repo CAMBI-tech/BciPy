@@ -3,9 +3,10 @@ This import statement allows users to import submodules from display more direct
 
 `from bcipy.display import init_display_window` vs. `from bcipy.display.main import init_display_window`
 """
-from .main import Display, init_display_window
+from .main import Display, init_display_window, BCIPY_LOGO_PATH
 
 __all__ = [
     'Display',
-    'init_display_window'
+    'init_display_window',
+    'BCIPY_LOGO_PATH',
 ]
