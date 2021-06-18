@@ -350,6 +350,17 @@
     ],
     "type": "str"
   },
+  "stim_order": {
+    "value": "random",
+    "section": "bci_config",
+    "readableName": "Stimuli Order",
+    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is random.",
+    "recommended_values": [
+      "alphabetical",
+      "random"
+    ],
+    "type": "str"
+  },
   "stim_length": {
     "value": "10",
     "section": "bci_config",

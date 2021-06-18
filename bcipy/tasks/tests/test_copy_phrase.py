@@ -15,7 +15,7 @@ from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.tasks.session_data import Session, EvidenceType
-from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -65,6 +65,7 @@ class TestCopyPhrase(unittest.TestCase):
             'stim_height': 0.6,
             'stim_length': 10,
             'stim_number': 100,
+            'stim_order': StimuliOrder.RANDOM,
             'stim_pos_x': 0.0,
             'stim_pos_y': 0.0,
             'stim_space_char': '–',

@@ -7,15 +7,25 @@ This version contains major refactoring efforts and features. We anticipate a fe
 ### Added
 
 - `run-with-defaults`: make command for running `bcipy`
+- `bcipy.helpers.stimuli.StimuliOrder`: defined ordering of inquiry stimuli. The current approach is to randomize. This adds
+    an alphabetical option. #153 
+- `bcipy.helpers.stimuli.alphabetize`: method for taking a list of strings and returning them in alphabetical order with characters last in the list. #153
 
 ### Updated
 
 - `LICENSE.md`: to used the Hippocratic license 2.1
 - `CODE_OF_CONDUCT.md`: to latest version of the Contributor Covenant
 - `bcipy.main`: formally, `bci_main`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py` 
+- `parameters.json`: add stim_order #153 
+- `demo_stimuli_generation.py`: update imports and add a case showing the new ordering functionality. #153
+- `copy_phrase_wrapper`: update logging and exception handling. add stim order. #153
+- `random_rsvp_calibration_inq_gen`: rename to `calibration_inquiry_generator` #153
 
 ### Removed
-
+ 
+ - `target_rsvp_inquiry_generator`: #153 unused
+ - `rsvp_copy_phrase_inq_generator`: #153 unused
+ - `generate_icon_match_images`: #153 deprecated task
 
 # 1.5.0
 
