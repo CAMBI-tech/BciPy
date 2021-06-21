@@ -6,7 +6,7 @@ from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, Informa
 from bcipy.tasks.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-from bcipy.helpers.stimuli import random_rsvp_calibration_inq_gen, get_task_info
+from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info, StimuliOrder
 from bcipy.helpers.task import (
     alphabet, trial_complete_message, get_user_input, pause_calibration)
 
@@ -56,6 +56,7 @@ class RSVPCalibrationTask(Task):
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
+        self.stim_order = StimuliOrder(parameters['stim_order'])
 
         self.timing = [parameters['time_target'],
                        parameters['time_cross'],
@@ -83,12 +84,13 @@ class RSVPCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return random_rsvp_calibration_inq_gen(self.alp,
-                                               stim_number=self.stim_number,
-                                               stim_length=self.stim_length,
-                                               timing=self.timing,
-                                               is_txt=self.rsvp.is_txt_stim,
-                                               color=self.color)
+        return calibration_inquiry_generator(self.alp,
+                                             stim_number=self.stim_number,
+                                             stim_length=self.stim_length,
+                                             stim_order=self.stim_order,
+                                             timing=self.timing,
+                                             is_txt=self.rsvp.is_txt_stim,
+                                             color=self.color)
 
     def execute(self):
 

@@ -2,14 +2,16 @@
 from typing import Any, List, Tuple
 
 import numpy as np
+import logging
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
     equally_probable,
     histogram,
     norm_domain,
     sym_appended,
 )
-from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
@@ -22,6 +24,9 @@ from bcipy.tasks.rsvp.stopping_criteria import (
     ProbThresholdCriteria,
 )
 from bcipy.tasks.session_data import EvidenceType
+
+
+log = logging.getLogger(__name__)
 
 
 class CopyPhraseWrapper:
@@ -89,7 +94,8 @@ class CopyPhraseWrapper:
                  filter_low: int = 2,
                  filter_order: int = 2,
                  notch_filter_frequency: int = 60,
-                 stim_length: int = 10):
+                 stim_length: int = 10,
+                 stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -104,6 +110,7 @@ class CopyPhraseWrapper:
                              ProbThresholdCriteria(decision_threshold)])
 
         self.stim_length = stim_length
+        self.stim_order = stim_order
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
                                           len_query=self.stim_length)
 
@@ -114,6 +121,7 @@ class CopyPhraseWrapper:
             alphabet=alp,
             is_txt_stim=is_txt_stim,
             stimuli_timing=stimuli_timing,
+            stimuli_order=self.stim_order,
             inq_constants=inq_constants)
 
         self.alp = alp
@@ -265,8 +273,9 @@ class CopyPhraseWrapper:
         # Raise an error if the stimuli includes unexpected terms
         if not set(letters).issubset(self.valid_targets):
             invalid = set(letters).difference(self.valid_targets)
-            raise Exception(
-                f'unexpected letters received in copy phrase: {invalid}')
+            error_message = f'unexpected letters received in copy phrase: {invalid}'
+            log.error(error_message)
+            raise BciPyCoreException(error_message)
 
         return letters, times, target_types
 
@@ -314,23 +323,23 @@ class CopyPhraseWrapper:
                          if alp_letter == prior_sym]
 
                 # display histogram of LM probabilities
-                print(
+                log.info(
                     f"Printed letters: '{self.decision_maker.displayed_state}'")
-                print(histogram(lm_letter_prior))
+                log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
                     {EvidenceType.LM: np.array(prior)})
-            except Exception as lm_exception:
-                print("Error updating language model!")
-                raise lm_exception
+            except Exception as e:
+                log.exception(f'Error updating language model!: {e}')
+                raise BciPyCoreException(e)
 
             # Get decision maker to give us back some decisions and stimuli
             is_accepted, sti = self.decision_maker.decide(prob_dist)
 
-        except Exception as init_exception:
-            print("Error in initialize_series: %s" % (init_exception))
-            raise init_exception
+        except Exception as e:
+            log.exception(f'Error in initialize_series: {e}')
+            raise BciPyCoreException(e)
 
         return is_accepted, sti
