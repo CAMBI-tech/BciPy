@@ -160,7 +160,7 @@ class DecisionMaker:
         self.stopping_evaluator = stopping_evaluator
 
         # Stimuli Agent
-        self.stimuli_agent = RandomStimuliAgent(alphabet=self.alphabet)
+        self.stimuli_agent = stimuli_agent or RandomStimuliAgent(alphabet=self.alphabet)
 
         self.last_selection = ''
 
