@@ -531,15 +531,12 @@ def main(data_file: str,
                       Parameters(parameters, cast_values=True), seconds,
                       refresh, yscale)
 
-    # TODO: position on the appropriate monitor / screen
-    # if display_screen == 1 and len(app.screens()) > 1:
+    if display_screen == 1 and len(app.screens()) > 1:
         # place frame in the second monitor if one exists
-        # https://doc.qt.io/archives/qtforpython-5.12/PySide2/QtWidgets/QDesktopWidget.html
-        # https://stackoverflow.com/questions/6854947/how-to-display-a-window-on-a-secondary-display-in-pyqt
-        # non_primary_screens = [screen for screen in app.screens() if screen != app.primaryScreen()]
-        # display_monitor = non_primary_screens[0]
-        # monitor = QDesktopWidget().screenGeometry(display_monitor)
-        # panel.move(monitor.left(), monitor.top())
+        non_primary_screens = [screen for screen in app.screens() if screen != app.primaryScreen()]
+        display_monitor = non_primary_screens[0]
+        monitor = display_monitor.geometry()
+        panel.move(monitor.left(), monitor.top())
 
     sys.exit(app.exec_())
 
