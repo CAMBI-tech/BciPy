@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from typing import Any, List
 
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtCore import pyqtSlot, Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
@@ -124,6 +124,45 @@ class ComboBox(QComboBox):
     def text(self):
         """Gets the currentText."""
         return self.currentText()
+
+
+class MessageBox(QMessageBox):
+    """Message Box.
+
+    A custom QMessageBox implementation to provide timeout functionality to QMessageBoxes.
+    """
+
+    def __init__(self, *args, **kwargs):
+        QMessageBox.__init__(self, *args, **kwargs)
+
+        self.timeout = 0
+        self.current = 0
+
+    def showEvent(self, event) -> None:
+        """showEvent.
+
+        If a timeout greater than zero is defined, set a QTimer to call self.close after the defined timeout.
+        """
+        if self.timeout > 0:
+            QTimer().singleShot(self.timeout * 1000, self.close)
+        super(MessageBox, self).showEvent(event)
+
+    def setTimeout(self, timeout):
+        """setTimeout.
+
+        Setter for timeout variable. This keeps the pattern for setting on pyqt5 QMessageBoxes consistent.
+        """
+        self.timeout = timeout
+
+
+class AlertMessageResponse(Enum):
+    """AlertMessageResponse.
+
+    Defines the types of response buttons to give users receiving an AlertMessage.
+    """
+
+    OTE = "Okay to Exit"
+    OCE = "Okay or Cancel Exit"
 
 
 class FormInput(QWidget):
@@ -700,18 +739,19 @@ class BCIGui(QWidget):
                             title: str,
                             message: str,
                             message_type: AlertMessageType = AlertMessageType.INFO,
-                            okay_to_exit: bool = False,
-                            okay_or_cancel: bool = False) -> QMessageBox:
+                            message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+                            message_timeout=0) -> MessageBox:
         """Throw Alert Message."""
 
-        msg = QMessageBox()
+        msg = MessageBox()
         msg.setWindowTitle(title)
         msg.setText(message)
         msg.setIcon(message_type.value)
+        msg.setTimeout(message_timeout)
 
-        if okay_to_exit:
+        if message_response is AlertMessageResponse.OTE:
             msg.setStandardButtons(AlertResponse.OK.value)
-        elif okay_or_cancel:
+        elif message_response is AlertMessageResponse.OCE:
             msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
         return msg.exec_()
@@ -849,9 +889,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = BCIGui(title='BCI GUI', height=650, width=650, background_color='white')
 
-    # ex.throw_alert_message(title='title', message='test', okay_to_exit=True)
-    ex.get_filename_dialog()
-    ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
+    # ex.get_filename_dialog()
+    # ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
     # ex.add_image(path='../static/images/gui/bci_cas_logo.png', position=[50, 50], size=200)
     # ex.add_static_textbox(
     #   text='Test static text',
@@ -862,6 +901,7 @@ def start_app() -> None:
     # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
     # ex.add_text_input(position=[100, 100], size=[100, 100])
     ex.show_gui()
+    ex.throw_alert_message(title='title', message='test', message_response=AlertMessageResponse.OCE, message_timeout=5)
 
     sys.exit(bcipy_gui.exec_())
 

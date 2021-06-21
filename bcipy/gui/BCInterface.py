@@ -4,6 +4,7 @@ import sys
 from typing import List
 
 from bcipy.gui.gui_main import (
+    AlertMessageResponse,
     AlertMessageType,
     AlertResponse,
     app,
@@ -31,6 +32,7 @@ class BCInterface(BCIGui):
     btn_height = 40
     max_length = 25
     min_length = 1
+    task_start_timeout = 2
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -47,6 +49,8 @@ class BCInterface(BCIGui):
         self.user = None
         self.experiment = None
         self.task = None
+
+        self.autoclose = True
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
@@ -256,7 +260,7 @@ class BCInterface(BCIGui):
                     message='The selected parameters file is out of date.'
                             'Would you like to update it with the latest options?',
                     message_type=AlertMessageType.INFO,
-                    okay_or_cancel=True)
+                    message_response=AlertMessageResponse.OCE)
 
                 if save_response == AlertResponse.OK.value:
                     self.parameters.save()
@@ -274,7 +278,7 @@ class BCInterface(BCIGui):
                 title='BciPy Alert',
                 message='The default parameters.json cannot be overridden. A copy will be used.',
                 message_type=AlertMessageType.INFO,
-                okay_or_cancel=True)
+                message_response=AlertMessageResponse.OCE)
 
             if response == AlertResponse.OK.value:
                 self.parameter_location = copy_parameters()
@@ -305,21 +309,21 @@ class BCInterface(BCIGui):
                     title='BciPy Alert',
                     message='Please select or create an Experiment',
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE)
                 return False
             if self.task == BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
                     message='Please select a Task',
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE)
                 return False
         except Exception as e:
             self.throw_alert_message(
                 title='BciPy Alert',
                 message=f'Error, {e}',
                 message_type=AlertMessageType.CRIT,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE)
             return False
         return True
 
@@ -339,7 +343,7 @@ class BCInterface(BCIGui):
                 title='BciPy Alert',
                 message='Please input a User ID',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE)
             return False
         # Loop over defined user validations and check for error conditions
         for validator in self.user_id_validations:
@@ -349,7 +353,7 @@ class BCInterface(BCIGui):
                     title='BciPy Alert',
                     message=error_message,
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True
+                    message_response=AlertMessageResponse.OTE
                 )
                 return False
         return True
@@ -372,13 +376,16 @@ class BCInterface(BCIGui):
                 title='BciPy Alert',
                 message='Task Starting ...',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=False)
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.task_start_timeout)
             cmd = (
                 f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
             subprocess.Popen(cmd, shell=True)
-            self.close()
+
+            if self.autoclose:
+                self.close()
 
     def offline_analysis(self) -> None:
         """Offline Analysis.
