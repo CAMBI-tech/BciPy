@@ -81,6 +81,44 @@ def init_buffer(samples_per_second: int, seconds: int,
     return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
 
 
+class FixedHeightHBox(QWidget):
+    """Container for holding controls for the EEG Viewer. Acts like a
+    QHBoxLayout with a fixed height."""
+
+    def __init__(self, height: int = 30):
+        super().__init__()
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.layout)
+        self.setFixedHeight(height)
+
+    def addWidget(self, widget: QWidget):
+        """Add the given widget to the layout"""
+        self.layout.addWidget(widget)
+
+
+class ChannelControls(QWidget):
+    """Controls for toggling channels"""
+
+    def __init__(self, font_size: int, channels: List[str],
+                 active_channel_indices: List[int],
+                 toggle_channel_fn: Callable):
+        super().__init__()
+        control_stylesheet = f"font-size: {font_size}px;"
+        channel_box = QHBoxLayout()
+        channel_box.setContentsMargins(0, 0, 0, 0)
+
+        for channel_index in active_channel_indices:
+            channel_name = channels[channel_index]
+            chkbox = QCheckBox(channel_name)
+            chkbox.setChecked(True)
+            chkbox.setStyleSheet(control_stylesheet)
+            chkbox.toggled.connect(partial(toggle_channel_fn, channel_index))
+            channel_box.addWidget(chkbox)
+        self.setLayout(channel_box)
+        self.setFixedHeight(font_size + 4)
+
+
 class EEGPanel(QWidget):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on a Timer to retrieve data at a specified interval. Data to be
@@ -136,6 +174,7 @@ class EEGPanel(QWidget):
         self.buffer = init_buffer(self.samples_per_second, self.seconds,
                                   self.channels)
         self.init_data_plots()
+        self.axes_changed = False
         self.start()
 
     # pylint: disable=attribute-defined-outside-init
@@ -169,9 +208,7 @@ class EEGPanel(QWidget):
         # Toolbar
         self.toolbar = QVBoxLayout()
 
-        controls = QHBoxLayout()
-        controls.setContentsMargins(0, 0, 0, 0)
-        controls.setSpacing(2)
+        controls = FixedHeightHBox()
         font_size = 11
         control_stylesheet = f"font-size: {font_size}px;"
 
@@ -224,22 +261,15 @@ class EEGPanel(QWidget):
             label=f"[{', '.join(filter_settings)}]",
             size=10,
             color='dimgray')
+        self.filter_settings_text.setWordWrap(False)
         controls.addWidget(self.filter_settings_text)
 
-        # Buttons for toggling channels
-        channel_box = QHBoxLayout()
-        channel_box.setContentsMargins(0, 0, 0, 0)
-        channel_box.setSpacing(2)
-        for channel_index in self.active_channel_indices:
-            channel_name = self.channels[channel_index]
-            chkbox = QCheckBox(channel_name)
-            chkbox.setChecked(channel_name not in self.removed_channels)
-            chkbox.setStyleSheet(control_stylesheet)
-            chkbox.toggled.connect(partial(self.toggle_channel, channel_index))
-            channel_box.addWidget(chkbox)
+        self.toolbar.addWidget(controls)
 
-        self.toolbar.addLayout(controls)
-        self.toolbar.addLayout(channel_box)
+        channel_box = ChannelControls(font_size, self.channels,
+                                      self.active_channel_indices,
+                                      self.toggle_channel)
+        self.toolbar.addWidget(channel_box)
 
         vbox.addLayout(self.toolbar)
 
@@ -288,11 +318,11 @@ class EEGPanel(QWidget):
         """Clear the data in the GUI."""
         self.figure.clear()
         self.axes = self.init_axes()
+        self.init_data_plots()
 
     def toggle_channel(self, channel_index):
         """Remove the provided channel from the display"""
         channel = self.channels[channel_index]
-        previously_running = self.started
         if self.started:
             self.stop()
 
@@ -302,11 +332,7 @@ class EEGPanel(QWidget):
             self.removed_channels.append(channel)
         self.active_channel_indices = active_indices(self.channels,
                                                      self.removed_channels)
-        self.reset_axes()
-        self.init_data_plots()
-        self.canvas.draw()
-        if previously_running:
-            self.start()
+        self.axes_changed = True
 
     def start(self):
         """Start streaming data in the viewer."""
@@ -314,6 +340,11 @@ class EEGPanel(QWidget):
         self.start_stop_btn.setText('Pause')
         self.start_stop_btn.repaint()
         self.started = True
+
+        if self.axes_changed:
+            self.axes_changed = False
+            self.reset_axes()
+
         self.update_buffer(fast_forward=True)
         self.timer.start(self.refresh_rate)
 
@@ -360,16 +391,13 @@ class EEGPanel(QWidget):
                                   self.channels)
 
     def with_refresh(self, fn):
-        """Performs the given action and refreshes the display."""
-        previously_running = self.started
+        """Pauses streaming, performs the given action, and sets a flag
+        indicating that the display axes should be refreshed on restart."""
+
         if self.started:
             self.stop()
         fn()
-        # re-initialize
-        self.reset_axes()
-        self.init_data_plots()
-        if previously_running:
-            self.start()
+        self.axes_changed = True
 
     @property
     def current_data(self):
