@@ -9,10 +9,11 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 import numpy as np
-from PyQt5.QtCore import QTimer # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QTimer  # pylint: disable=no-name-in-module
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import (QApplication, QDesktopWidget, QCheckBox, QComboBox, QHBoxLayout,
-                             QPushButton, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QApplication, QDesktopWidget, QCheckBox,
+                             QComboBox, QHBoxLayout, QPushButton, QVBoxLayout,
+                             QWidget)
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.gui_main import static_text_control
@@ -145,7 +146,8 @@ class EEGPanel(QWidget):
 
         # figure size is in inches.
         self.figure = Figure(figsize=(12, 9),
-                             dpi=72, tight_layout={'pad': 0.0})
+                             dpi=72,
+                             tight_layout={'pad': 0.0})
         # space between axis label and tick labels
         self.yaxis_label_space = 60
         self.yaxis_label_fontsize = 12
@@ -166,9 +168,9 @@ class EEGPanel(QWidget):
 
         # Toolbar
         self.toolbar = QVBoxLayout()
-        
+
         controls = QHBoxLayout()
-        controls.setContentsMargins(0,0,0,0)
+        controls.setContentsMargins(0, 0, 0, 0)
         controls.setSpacing(2)
         font_size = 11
         control_stylesheet = f"font-size: {font_size}px;"
@@ -226,7 +228,7 @@ class EEGPanel(QWidget):
 
         # Buttons for toggling channels
         channel_box = QHBoxLayout()
-        channel_box.setContentsMargins(0,0,0,0)
+        channel_box.setContentsMargins(0, 0, 0, 0)
         channel_box.setSpacing(2)
         for channel_index in self.active_channel_indices:
             channel_name = self.channels[channel_index]
@@ -310,6 +312,7 @@ class EEGPanel(QWidget):
         """Start streaming data in the viewer."""
         # update buffer with latest data on (re)start.
         self.start_stop_btn.setText('Pause')
+        self.start_stop_btn.repaint()
         self.started = True
         self.update_buffer(fast_forward=True)
         self.timer.start(self.refresh_rate)
@@ -317,6 +320,7 @@ class EEGPanel(QWidget):
     def stop(self):
         """Stop/Pause the viewer."""
         self.start_stop_btn.setText('Start')
+        self.start_stop_btn.repaint()
         self.started = False
         self.timer.stop()
 
@@ -540,12 +544,15 @@ def main(data_file: str,
 
     app = QApplication(sys.argv)
     panel = EEGPanel(data_source, device_info,
-                      Parameters(parameters, cast_values=True), seconds,
-                      refresh, yscale)
+                     Parameters(parameters, cast_values=True), seconds,
+                     refresh, yscale)
 
     if display_screen == 1 and len(app.screens()) > 1:
         # place frame in the second monitor if one exists
-        non_primary_screens = [screen for screen in app.screens() if screen != app.primaryScreen()]
+        non_primary_screens = [
+            screen for screen in app.screens()
+            if screen != app.primaryScreen()
+        ]
         display_monitor = non_primary_screens[0]
         monitor = display_monitor.geometry()
         panel.move(monitor.left(), monitor.top())
