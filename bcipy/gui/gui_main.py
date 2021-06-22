@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, List
 
 from PyQt5.QtCore import pyqtSlot, Qt, QTimer
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont, QPixmap, QShowEvent
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
                              QMessageBox, QPushButton, QScrollArea,
@@ -138,19 +138,21 @@ class MessageBox(QMessageBox):
         self.timeout = 0
         self.current = 0
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QShowEvent) -> None:
         """showEvent.
 
         If a timeout greater than zero is defined, set a QTimer to call self.close after the defined timeout.
         """
         if self.timeout > 0:
+            # timeout is in seconds (multiply by 1000 to get ms)
             QTimer().singleShot(self.timeout * 1000, self.close)
         super(MessageBox, self).showEvent(event)
 
-    def setTimeout(self, timeout):
+    def setTimeout(self, timeout: float) -> None:
         """setTimeout.
 
-        Setter for timeout variable. This keeps the pattern for setting on pyqt5 QMessageBoxes consistent.
+        Setter for timeout variable. This keeps the pattern for setting on pyqt5 QMessageBoxes consistent. Timeout
+            should be provided in seconds.
         """
         self.timeout = timeout
 
@@ -740,7 +742,7 @@ class BCIGui(QWidget):
                             message: str,
                             message_type: AlertMessageType = AlertMessageType.INFO,
                             message_response: AlertMessageResponse = AlertMessageResponse.OTE,
-                            message_timeout=0) -> MessageBox:
+                            message_timeout: float = 0) -> MessageBox:
         """Throw Alert Message."""
 
         msg = MessageBox()
