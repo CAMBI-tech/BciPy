@@ -145,11 +145,10 @@ class EEGPanel(QWidget):
 
         # figure size is in inches.
         self.figure = Figure(figsize=(12, 9),
-                             dpi=80,
-                             tight_layout={'pad': 0.0})
+                             dpi=72, tight_layout={'pad': 0.0})
         # space between axis label and tick labels
         self.yaxis_label_space = 60
-        self.yaxis_label_fontsize = 14
+        self.yaxis_label_fontsize = 12
         # fixed width font so we can adjust spacing predictably
         self.yaxis_tick_font = 'DejaVu Sans Mono'
         self.yaxis_tick_fontsize = 10
@@ -167,17 +166,23 @@ class EEGPanel(QWidget):
 
         # Toolbar
         self.toolbar = QVBoxLayout()
-
+        
         controls = QHBoxLayout()
+        controls.setContentsMargins(0,0,0,0)
+        controls.setSpacing(2)
+        font_size = 11
+        control_stylesheet = f"font-size: {font_size}px;"
 
         # Start/Pause button
         self.start_stop_btn = QPushButton('Pause', self)
         self.start_stop_btn.setFixedWidth(80)
+        self.start_stop_btn.setStyleSheet(control_stylesheet)
         self.start_stop_btn.clicked.connect(self.toggle_stream)
         controls.addWidget(self.start_stop_btn)
 
         # Autoscale checkbox
         self.autoscale_checkbox = QCheckBox('Auto-scale')
+        self.autoscale_checkbox.setStyleSheet(control_stylesheet)
         self.autoscale_checkbox.setChecked(self.autoscale)
         self.autoscale_checkbox.toggled.connect(self.toggle_autoscale_handler)
         controls.addWidget(self.autoscale_checkbox)
@@ -193,11 +198,13 @@ class EEGPanel(QWidget):
             [str(x) + " seconds" for x in self.seconds_choices])
         self.seconds_input.setCurrentIndex(
             self.seconds_choices.index(self.seconds))
+        self.seconds_input.setStyleSheet(control_stylesheet)
         self.seconds_input.currentIndexChanged.connect(self.seconds_handler)
         controls.addWidget(self.seconds_input)
 
         # Filter checkbox
         self.sigpro_checkbox = QCheckBox('Filtered')
+        self.sigpro_checkbox.setStyleSheet(control_stylesheet)
         self.sigpro_checkbox.setChecked(False)
         self.sigpro_checkbox.toggled.connect(self.toggle_filtering_handler)
         controls.addWidget(self.sigpro_checkbox)
@@ -213,16 +220,19 @@ class EEGPanel(QWidget):
         self.filter_settings_text = static_text_control(
             self,
             label=f"[{', '.join(filter_settings)}]",
-            size=11,
+            size=10,
             color='dimgray')
         controls.addWidget(self.filter_settings_text)
 
         # Buttons for toggling channels
         channel_box = QHBoxLayout()
+        channel_box.setContentsMargins(0,0,0,0)
+        channel_box.setSpacing(2)
         for channel_index in self.active_channel_indices:
             channel_name = self.channels[channel_index]
             chkbox = QCheckBox(channel_name)
             chkbox.setChecked(channel_name not in self.removed_channels)
+            chkbox.setStyleSheet(control_stylesheet)
             chkbox.toggled.connect(partial(self.toggle_channel, channel_index))
             channel_box.addWidget(chkbox)
 
@@ -234,7 +244,8 @@ class EEGPanel(QWidget):
         self.setWindowTitle('EEG Viewer')
         self.setLayout(vbox)
         self.setMinimumWidth(800)
-        self.setMinimumHeight(550)
+        self.setMinimumHeight(600)
+
         self.show()
 
     @property
@@ -438,8 +449,9 @@ class EEGPanel(QWidget):
                                         labelpad=pad,
                                         fontsize=14)
             else:
-                # lower=min(data), upper=max(data))
-                self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
+                # TODO: cache previous min and max values.
+                # self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
+                self.axes[i].set_ybound(lower=min(data), upper=max(data))
 
         self.canvas.draw()
 
