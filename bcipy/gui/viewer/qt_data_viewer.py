@@ -169,13 +169,11 @@ class EEGPanel(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plots)
 
-        # Start streaming
-        # # The buffer stores raw, unfiltered data.
+        # The buffer stores raw, unfiltered data.
         self.buffer = init_buffer(self.samples_per_second, self.seconds,
                                   self.channels)
         self.init_data_plots()
         self.axes_changed = False
-        self.start()
 
     # pylint: disable=attribute-defined-outside-init
     def init_canvas(self):
@@ -213,7 +211,8 @@ class EEGPanel(QWidget):
         control_stylesheet = f"font-size: {font_size}px;"
 
         # Start/Pause button
-        self.start_stop_btn = QPushButton('Pause', self)
+        self.start_stop_btn = QPushButton('Pause' if self.started else 'Start',
+                                          self)
         self.start_stop_btn.setFixedWidth(80)
         self.start_stop_btn.setStyleSheet(control_stylesheet)
         self.start_stop_btn.clicked.connect(self.toggle_stream)
@@ -275,9 +274,6 @@ class EEGPanel(QWidget):
 
         self.setWindowTitle('EEG Viewer')
         self.setLayout(vbox)
-        self.setMinimumWidth(800)
-        self.setMinimumHeight(600)
-
         self.show()
 
     @property
@@ -583,7 +579,18 @@ def main(data_file: str,
         ]
         display_monitor = non_primary_screens[0]
         monitor = display_monitor.geometry()
-        panel.move(monitor.left(), monitor.top())
+    else:
+        monitor = app.primaryScreen().geometry()
+
+    # increase height to 90% of monitor height and preserve aspect ratio.
+    new_height = int(monitor.height() * 0.9)
+    pct_increase = (new_height - panel.height()) / panel.height()
+    width_increase = int(panel.width() * pct_increase)
+    panel.setMinimumHeight(int(monitor.height() * 0.9))
+    panel.setMinimumWidth(panel.width() + width_increase)
+
+    panel.move(monitor.left(), monitor.top())
+    panel.start()
 
     sys.exit(app.exec_())
 
