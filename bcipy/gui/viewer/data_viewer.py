@@ -2,6 +2,8 @@
 EEG viewer that uses a queue as a data source. Records are retrieved by a
 wx Timer.
 """
+from typing import Dict, Callable, List, Tuple, Optional
+from bcipy.signal.process.transform import Downsample, get_default_transform
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.acquisition.device_info import DeviceInfo
@@ -17,7 +19,60 @@ from queue import Queue
 
 import numpy as np
 
-from bcipy.signal.process import get_default_transform, Downsample
+def filters(
+        sample_rate_hz: float, parameters: Parameters
+) -> Dict[str, Callable[[np.ndarray, Optional[int]], Tuple[np.ndarray, int]]]:
+    """Returns a dict of filters that can be used"""
+    return {
+        'downsample':
+        Downsample(parameters['down_sampling_rate']),
+        'default_transform':
+        get_default_transform(
+            sample_rate_hz=sample_rate_hz,
+            notch_freq_hz=parameters['notch_filter_frequency'],
+            bandpass_low=parameters['filter_low'],
+            bandpass_high=parameters['filter_high'],
+            bandpass_order=parameters['filter_order'],
+            downsample_factor=parameters['down_sampling_rate'])
+    }
+
+def active_indices(all_channels, removed_channels) -> List[int]:
+    """List of indices of all channels which will be displayed. By default
+    filters out TRG channels and any channels marked as
+    removed_channels.
+    
+    Parameters
+    ----------
+    - all_channels : list of channel names
+    - removed_channels : list of channel names to exclude
+
+    Returns
+    -------
+    list of indices for channel names in use.
+    """
+
+    return [
+        i for i in range(len(all_channels))
+        if all_channels[i] not in removed_channels and
+        'TRG' not in all_channels[i]
+    ]
+
+def init_buffer(samples_per_second: int, seconds: int, channels: List[str]) -> RingBuffer:
+    """Initialize the underlying RingBuffer by pre-allocating empty
+    values. Buffer size is determined by the sample frequency and the
+    number of seconds to display.
+    
+    Parameters
+    ----------
+    - samples_per_second : sample rate
+    - seconds : number of seconds of data to store
+    - channels : list of channel names
+    """
+
+    buf_size = int(samples_per_second * seconds)
+    print(f"Bufsize: {buf_size}")
+    empty_val = [0.0 for _x in channels]
+    return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
 
 
 class EEGFrame(wx.Frame):
@@ -27,12 +82,11 @@ class EEGFrame(wx.Frame):
 
     Parameters:
     -----------
-        data_source - object that implements the viewer DataSource interface.
-        device_info - metadata about the data.
-        seconds - how many seconds worth of data to display.
-        downsample_factor - how much to compress the data. A factor of 1
-            displays the raw data.
-        refresh - time in milliseconds; how often to refresh the plots
+    - data_source : object that implements the viewer DataSource interface.
+    - device_info : metadata about the data.
+    - parameters : configuration for filters, etc.
+    - seconds : how many seconds worth of data to display.
+    - refresh : time in milliseconds; how often to refresh the plots
     """
 
     def __init__(self,
@@ -46,29 +100,28 @@ class EEGFrame(wx.Frame):
 
         self.data_source = data_source
 
-        self.channels = device_info.channels
-        self.removed_channels = ['TRG', 'timestamp']
-        self.data_indices = self.init_data_indices()
-
-        self.seconds = seconds
-        self.downsample_factor = parameters['down_sampling_rate']
-        self.notch_filter_frequency = parameters['notch_filter_frequency']
-        self.filter_low = parameters['filter_low']
-        self.filter_high = parameters['filter_high']
-        self.filter_order = parameters['filter_order']
-        # Default filter
-        self.filter = Downsample(self.downsample_factor)
-
         self.refresh_rate = refresh
         self.samples_per_second = device_info.fs
         self.records_per_refresh = int(
             (self.refresh_rate / 1000) * self.samples_per_second)
 
+        self.channels = device_info.channels
+        self.removed_channels = ['TRG', 'timestamp']
+        self.active_channel_indices = active_indices(self.channels, self.removed_channels)
+
+        self.seconds = seconds
+        self.downsample_factor = parameters['down_sampling_rate']
+
+        self.filter_options = filters(self.samples_per_second, parameters)
+        self.selected_filter = 'downsample'
+
+        # The buffer stores raw, unfiltered data.
+        self.buffer = init_buffer(self.samples_per_second, self.seconds, self.channels)
+
         self.autoscale = True
         self.y_min = -y_scale
         self.y_max = y_scale
 
-        self.buffer = self.init_buffer()
 
         # figure size is in inches.
         self.figure = Figure(figsize=(12, 9),
@@ -93,7 +146,7 @@ class EEGFrame(wx.Frame):
         self.start_stop_btn = wx.Button(self, -1, "Start")
 
         self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update_view, self.timer)
+        self.Bind(wx.EVT_TIMER, self.update_plots, self.timer)
         self.Bind(wx.EVT_BUTTON, self.toggle_stream, self.start_stop_btn)
 
         # Filtered checkbox
@@ -105,9 +158,9 @@ class EEGFrame(wx.Frame):
         # Filter settings
         filter_settings = [
             f"Downsample: {self.downsample_factor}",
-            f"Notch Freq: {self.notch_filter_frequency}",
-            f"Low: {self.filter_low}", f"High: {self.filter_high}",
-            f"Order: {self.filter_order}"
+            f"Notch Freq: {parameters['notch_filter_frequency']}",
+            f"Low: {parameters['filter_low']}", f"High: {parameters['filter_high']}",
+            f"Order: {parameters['filter_order']}"
         ]
         filter_label = "[" + ", ".join(filter_settings) + "]"
         self.filter_settings_text = wx.StaticText(self, label=filter_label)
@@ -146,37 +199,22 @@ class EEGFrame(wx.Frame):
         self.SetAutoLayout(1)
         self.Fit()
 
-        self.init_data()
+        self.init_data_plots()
+        # self.canvas.draw()
         self.started = False
         self.start()
 
-    def init_data_indices(self):
-        """List of indices of all channels which will be displayed. By default
-        filters out TRG channels and any channels marked as
-        removed_channels."""
+    @property
+    def filter(self):
+        return self.filter_options[self.selected_filter]
 
-        return [
-            i for i in range(len(self.channels))
-            if self.channels[i] not in self.removed_channels and
-            'TRG' not in self.channels[i]
-        ]
-
-    def init_buffer(self):
-        """Initialize the underlying RingBuffer by pre-allocating empty
-        values. Buffer size is determined by the sample frequency and the
-        number of seconds to display."""
-
-        buf_size = int(self.samples_per_second * self.seconds)
-        empty_val = [0.0 for _x in self.channels]
-        buf = RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
-        return buf
 
     def init_axes(self):
         """Sets configuration for axes. Creates a subplot for every data
         channel and configures the appropriate labels and tick marks."""
 
-        axes = self.figure.subplots(len(self.data_indices), 1, sharex=True)
-        for i, channel in enumerate(self.data_indices):
+        axes = self.figure.subplots(len(self.active_channel_indices), 1, sharex=True)
+        for i, channel in enumerate(self.active_channel_indices):
             ch_name = self.channels[channel]
             axes[i].set_frame_on(False)
             axes[i].set_ylabel(ch_name,
@@ -207,7 +245,7 @@ class EEGFrame(wx.Frame):
         """Add buttons for toggling the channels."""
 
         channel_box = wx.BoxSizer(wx.HORIZONTAL)
-        for channel_index in self.data_indices:
+        for channel_index in self.active_channel_indices:
             channel = self.channels[channel_index]
             chkbox = wx.CheckBox(self, label=channel, id=channel_index)
             chkbox.SetValue(channel not in self.removed_channels)
@@ -230,9 +268,9 @@ class EEGFrame(wx.Frame):
             self.removed_channels.remove(channel)
         else:
             self.removed_channels.append(channel)
-        self.data_indices = self.init_data_indices()
+        self.active_channel_indices = active_indices(self.channels, self.removed_channels)
         self.reset_axes()
-        self.init_data()
+        self.init_data_plots()
         self.canvas.draw()
         if previously_running:
             self.start()
@@ -264,16 +302,8 @@ class EEGFrame(wx.Frame):
 
     def toggle_filtering(self):
         """Toggles data filtering."""
-        if self.sigpro_checkbox.GetValue():
-            self.filter = get_default_transform(
-                sample_rate_hz=self.samples_per_second,
-                downsample_factor=self.downsample_factor,
-                notch_freq_hq=self.notch_filter_frequency,
-                bandpass_low=self.filter_low,
-                bandpass_high=self.filter_high,
-                bandpass_order=self.filter_order)
-        else:
-            self.filter = Downsample(self.downsample_factor)
+        self.selected_filter = 'default_transform' if self.sigpro_checkbox.GetValue(
+        ) else 'downsample'
 
     def toggle_autoscale_handler(self, event):
         """Event handler for toggling autoscale"""
@@ -291,7 +321,7 @@ class EEGFrame(wx.Frame):
         """Set the number of seconds worth of data to display from the
         pulldown list."""
         self.seconds = self.seconds_choices[self.seconds_input.GetSelection()]
-        self.buffer = self.init_buffer()
+        self.buffer = init_buffer(self.samples_per_second, self.seconds, self.channels)
 
     def with_refresh(self, fn):
         """Performs the given action and refreshes the display."""
@@ -301,10 +331,11 @@ class EEGFrame(wx.Frame):
         fn()
         # re-initialize
         self.reset_axes()
-        self.init_data()
+        self.init_data_plots()
         if previously_running:
             self.start()
 
+    @property
     def current_data(self):
         """Returns the data as an np array with a row of floats for each
         displayed channel."""
@@ -313,26 +344,36 @@ class EEGFrame(wx.Frame):
         data = np.array(self.buffer.data)
 
         # select only data columns and convert to float
-        return np.array(data[:, self.data_indices],
+        return np.array(data[:, self.active_channel_indices],
                         dtype='float64').transpose()
 
+    def filtered_data(self):
+        """Channel data after applying the current filter.
+        
+        Returns the data as an np array with a row of floats for each
+        displayed channel.
+        """
+        channel_data, _fs = self.filter(self.current_data, self.samples_per_second)
+        return channel_data
+
+    @property
     def cursor_x(self):
         """Current cursor position (x-axis), accounting for downsampling."""
         return self.buffer.cur // self.downsample_factor
 
-    def init_data(self):
-        """Initialize the data."""
-        channel_data, _ = self.filter(self.current_data())
+    def init_data_plots(self):
+        """Initialize the data in the viewer."""
+        channel_data = self.filtered_data()
 
-        for i, _channel in enumerate(self.data_indices):
+        for i, _channel in enumerate(self.active_channel_indices):
             data = channel_data[i].tolist()
             self.axes[i].plot(data, linewidth=0.8)
             # plot cursor
-            self.axes[i].axvline(self.cursor_x(), color='r')
+            self.axes[i].axvline(self.cursor_x, color='r')
 
     def update_buffer(self, fast_forward=False):
-        """Update the buffer with latest data from the datasource and return
-        the data. If the datasource does not have the requested number of
+        """Update the buffer with latest data from the datasource. 
+        If the datasource does not have the requested number of
         samples, viewer streaming is stopped."""
         try:
             records = self.data_source.next_n(self.records_per_refresh,
@@ -345,20 +386,19 @@ class EEGFrame(wx.Frame):
             self.Close()
         except BaseException:
             self.stop()
-        return self.buffer.get()
 
-    def update_view(self, _evt):
+    def update_plots(self, _evt):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
-        channel_data, _ = self.filter(self.current_data())
+        channel_data = self.filtered_data()
 
         # plot each channel
-        for i, _channel in enumerate(self.data_indices):
+        for i, _channel in enumerate(self.active_channel_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
             # cursor line
-            self.axes[i].lines[1].set_xdata(self.cursor_x())
+            self.axes[i].lines[1].set_xdata(self.cursor_x)
             if self.autoscale:
                 data_min = min(data)
                 data_max = max(data)

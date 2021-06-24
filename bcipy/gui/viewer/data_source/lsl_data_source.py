@@ -9,15 +9,17 @@ class LslDataSource(DataSource):
 
     Parameters
     ----------
-        stream_type: str
-            StreamInlet stream type; default is 'EEG'
+    - stream_type: StreamInlet stream type; default is 'EEG'
     """
 
-    def __init__(self, stream_type: str = 'EEG'):
+    def __init__(self,
+                 stream_type: str = 'EEG',
+                 max_timeout_seconds: float = 1.0):
         super(LslDataSource, self).__init__()
 
         print('Waiting for LSL EEG data stream...')
         self.stream_type = stream_type
+        self.max_timeout_seconds = max_timeout_seconds
         streams = pylsl.resolve_stream('type', self.stream_type)
         inlet = pylsl.StreamInlet(streams[0])
         info = inlet.info()
@@ -53,7 +55,8 @@ class LslDataSource(DataSource):
         """
         # Read data from the inlet. May blocks GUI interaction if n samples
         # are not yet available.
-        samples, _ts = self.inlet.pull_chunk(timeout=0.1, max_samples=n)
+        samples, _ts = self.inlet.pull_chunk(timeout=self.max_timeout_seconds,
+                                             max_samples=n)
 
         if fast_forward:
             tmp = samples
