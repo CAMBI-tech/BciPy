@@ -678,12 +678,9 @@ def main(data_file: str,
     # increase height to 90% of monitor height and preserve aspect ratio.
     new_height = int(monitor.height() * 0.9)
     pct_increase = (new_height - panel.height()) / panel.height()
-    width_increase = int(panel.width() * pct_increase)
+    new_width = panel.width() + int(panel.width() * pct_increase)
 
-    # TODO: allow for resizing smaller
-    panel.setMinimumHeight(int(monitor.height() * 0.9))
-    panel.setMinimumWidth(panel.width() + width_increase)
-
+    panel.resize(new_width, new_height)
     panel.move(monitor.left(), monitor.top())
 
     panel.start()
