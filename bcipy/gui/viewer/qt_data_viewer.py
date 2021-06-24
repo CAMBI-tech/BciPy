@@ -5,16 +5,15 @@ from functools import partial
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 import numpy as np
-
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 from PyQt5.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import (QApplication, QDesktopWidget, QCheckBox,
-                             QComboBox, QHBoxLayout, QPushButton, QVBoxLayout,
-                             QWidget, QSpinBox, QLabel, QSizePolicy)
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
+                             QLabel, QPushButton, QSpinBox, QVBoxLayout,
+                             QWidget)
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.gui_main import static_text_control
@@ -22,7 +21,6 @@ from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.signal.process.transform import Downsample, get_default_transform
-from bcipy.gui.gui_main import TextInput
 
 
 def filters(
@@ -153,6 +151,7 @@ class FixedScaleInput(QWidget):
         self.setLayout(layout)
 
     def value(self) -> int:
+        """Returns the input value"""
         return self.fixed_scale_input.value()
 
 
@@ -517,7 +516,7 @@ class EEGPanel(QWidget):
 
     def update_axes_bounds(self, index: int, data: List[float]) -> bool:
         """Update the upper and lower bounds of the axis at the given index.
-        
+
         Parameters
         ----------
         - index : index of the axis to update
@@ -538,9 +537,8 @@ class EEGPanel(QWidget):
             self.axes_bounds[index] = (min(current_min, data_min),
                                        max(current_max, data_max))
             return (current_min, current_max) != self.axes_bounds[index]
-        else:
-            self.axes_bounds[index] = (data_min, data_max)
-            return True
+        self.axes_bounds[index] = (data_min, data_max)
+        return True
 
     def update_plots(self):
         """Called by the timer on refresh. Updates the buffer with the latest
