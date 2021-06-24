@@ -16,8 +16,10 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QWidget)
 
 from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.util import StoppableProcess
 from bcipy.gui.gui_main import static_text_control
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
+from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.signal.process.transform import Downsample, get_default_transform
@@ -170,6 +172,13 @@ class EEGPanel(QWidget):
     - y_scale : max y-value to use when using a fixed scale for plots
     (autoscale turned off);
     """
+    control_font_size = 11
+    # space between axis label and tick labels
+    yaxis_label_space = 60
+    yaxis_label_fontsize = 12
+    # fixed width font so we can adjust spacing predictably
+    yaxis_tick_font = 'DejaVu Sans Mono'
+    yaxis_tick_fontsize = 10
 
     def __init__(self,
                  data_source,
@@ -223,12 +232,6 @@ class EEGPanel(QWidget):
         self.figure = Figure(figsize=(12, 9),
                              dpi=72,
                              tight_layout={'pad': 0.0})
-        # space between axis label and tick labels
-        self.yaxis_label_space = 60
-        self.yaxis_label_fontsize = 12
-        # fixed width font so we can adjust spacing predictably
-        self.yaxis_tick_font = 'DejaVu Sans Mono'
-        self.yaxis_tick_fontsize = 10
 
         self.axes = self.init_axes()
         self.axes_bounds = self.init_axes_bounds()
@@ -246,8 +249,8 @@ class EEGPanel(QWidget):
         self.toolbar = QVBoxLayout()
 
         controls = FixedHeightHBox()
-        font_size = 11
-        control_stylesheet = f"font-size: {font_size}px;"
+
+        control_stylesheet = f"font-size: {self.control_font_size}px;"
 
         # Start/Pause button
         self.start_stop_btn = QPushButton('Pause' if self.started else 'Start',
@@ -280,10 +283,11 @@ class EEGPanel(QWidget):
         controls.addWidget(self.autoscale_checkbox)
 
         # Fixed scale input
-        self.fixed_scale_input = FixedScaleInput(self.y_scale,
-                                                 self.fixed_scale_handler,
-                                                 label='Fixed scale:',
-                                                 font_size=font_size)
+        self.fixed_scale_input = FixedScaleInput(
+            self.y_scale,
+            self.fixed_scale_handler,
+            label='Fixed scale:',
+            font_size=self.control_font_size)
         controls.addWidget(self.fixed_scale_input)
 
         # Filter checkbox
@@ -311,7 +315,7 @@ class EEGPanel(QWidget):
 
         self.toolbar.addWidget(controls)
 
-        channel_box = ChannelControls(font_size, self.channels,
+        channel_box = ChannelControls(self.control_font_size, self.channels,
                                       self.active_channel_indices,
                                       self.toggle_channel)
         self.toolbar.addWidget(channel_box)
@@ -385,6 +389,8 @@ class EEGPanel(QWidget):
         """Start streaming data in the viewer."""
         # update buffer with latest data on (re)start.
         self.start_stop_btn.setText('Pause')
+        stylesheet = f'font-size: {self.control_font_size}px;'
+        self.start_stop_btn.setStyleSheet(stylesheet)
         self.start_stop_btn.repaint()
         self.started = True
 
@@ -398,6 +404,11 @@ class EEGPanel(QWidget):
     def stop(self):
         """Stop/Pause the viewer."""
         self.start_stop_btn.setText('Start')
+        stylesheet = (f'font-size: {self.control_font_size}px;'
+                      'color: white; background-color: green;'
+                      'border: 1px solid darkgreen;'
+                      'border-radius: 4px; padding: 3px;')
+        self.start_stop_btn.setStyleSheet(stylesheet)
         self.start_stop_btn.repaint()
         self.started = False
         self.timer.stop()
@@ -500,7 +511,7 @@ class EEGPanel(QWidget):
             # plot cursor
             self.axes[i].axvline(cursor_x, color='r')
 
-    def update_buffer(self, fast_forward=False):
+    def update_buffer(self, fast_forward: bool = False) -> None:
         """Update the buffer with latest data from the datasource.
         If the datasource does not have the requested number of
         samples, viewer streaming is stopped."""
@@ -590,15 +601,15 @@ class EEGPanel(QWidget):
             ((chars - baseline_chars) * ytick_digit_width)
 
 
-def lsl_data():
+def lsl_data() -> Tuple[LslDataSource, DeviceInfo, None]:
     """Constructs an LslDataSource, which provides data written to an LSL EEG
     stream."""
-    from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
     data_source = LslDataSource(stream_type='EEG')
     return (data_source, data_source.device_info, None)
 
 
-def file_data(path: str):
+def file_data(path: str
+              ) -> Tuple[QueueDataSource, DeviceInfo, StoppableProcess]:
     """Constructs a QueueDataSource from the contents of the file at the given
     path. Data is written to the datasource at the rate specified in the
     raw_data.csv metadata, so it acts as a live stream.
