@@ -9,11 +9,12 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 import numpy as np
-from PyQt5.QtCore import QTimer  # pylint: disable=no-name-in-module
+
+from PyQt5.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import (QApplication, QDesktopWidget, QCheckBox,
                              QComboBox, QHBoxLayout, QPushButton, QVBoxLayout,
-                             QWidget)
+                             QWidget, QSpinBox, QLabel, QSizePolicy)
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.gui.gui_main import static_text_control
@@ -21,6 +22,7 @@ from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.signal.process.transform import Downsample, get_default_transform
+from bcipy.gui.gui_main import TextInput
 
 
 def filters(
@@ -119,6 +121,41 @@ class ChannelControls(QWidget):
         self.setFixedHeight(font_size + 4)
 
 
+class FixedScaleInput(QWidget):
+    """Input for adjusting the fixed scale value"""
+
+    def __init__(self,
+                 initial_value: int,
+                 on_change_fn: Callable,
+                 label: str = 'Fixed scale:',
+                 max_value: int = 5000,
+                 font_size: int = 11):
+        super().__init__()
+        stylesheet = f"font-size: {font_size}px;"
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        lbl = QLabel(label)
+        lbl.setStyleSheet(stylesheet)
+        lbl.setAlignment(Qt.AlignRight)
+        lbl.setContentsMargins(0, 2, 0, 0)
+        layout.addWidget(lbl)
+
+        self.fixed_scale_input = QSpinBox()
+        self.fixed_scale_input.setMaximum(max_value)
+        self.fixed_scale_input.setValue(initial_value)
+        self.fixed_scale_input.setStyleSheet(stylesheet)
+        self.fixed_scale_input.setAlignment(Qt.AlignLeft)
+        self.fixed_scale_input.valueChanged.connect(on_change_fn)
+        self.fixed_scale_input.setFocusPolicy(Qt.ClickFocus)
+
+        layout.addWidget(self.fixed_scale_input)
+        self.setLayout(layout)
+
+    def value(self) -> int:
+        return self.fixed_scale_input.value()
+
+
 class EEGPanel(QWidget):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on a Timer to retrieve data at a specified interval. Data to be
@@ -131,6 +168,8 @@ class EEGPanel(QWidget):
     - parameters : configuration for filters, etc.
     - seconds : how many seconds worth of data to display.
     - refresh : time in milliseconds; how often to refresh the plots
+    - y_scale : max y-value to use when using a fixed scale for plots
+    (autoscale turned off);
     """
 
     def __init__(self,
@@ -139,7 +178,7 @@ class EEGPanel(QWidget):
                  parameters: Parameters,
                  seconds: int = 5,
                  refresh: int = 500,
-                 y_scale=100):
+                 y_scale=500):
         super().__init__()
 
         self.data_source = data_source
@@ -193,6 +232,7 @@ class EEGPanel(QWidget):
         self.yaxis_tick_fontsize = 10
 
         self.axes = self.init_axes()
+        self.axes_bounds = self.init_axes_bounds()
         self.canvas = FigureCanvasQTAgg(self.figure)
 
     # pylint: disable=invalid-name,attribute-defined-outside-init
@@ -218,13 +258,6 @@ class EEGPanel(QWidget):
         self.start_stop_btn.clicked.connect(self.toggle_stream)
         controls.addWidget(self.start_stop_btn)
 
-        # Autoscale checkbox
-        self.autoscale_checkbox = QCheckBox('Auto-scale')
-        self.autoscale_checkbox.setStyleSheet(control_stylesheet)
-        self.autoscale_checkbox.setChecked(self.autoscale)
-        self.autoscale_checkbox.toggled.connect(self.toggle_autoscale_handler)
-        controls.addWidget(self.autoscale_checkbox)
-
         # Pulldown list of seconds to display
         self.seconds_choices = [2, 5, 10]
         if self.seconds not in self.seconds_choices:
@@ -239,6 +272,20 @@ class EEGPanel(QWidget):
         self.seconds_input.setStyleSheet(control_stylesheet)
         self.seconds_input.currentIndexChanged.connect(self.seconds_handler)
         controls.addWidget(self.seconds_input)
+
+        # Autoscale checkbox
+        self.autoscale_checkbox = QCheckBox('Auto-scale')
+        self.autoscale_checkbox.setStyleSheet(control_stylesheet)
+        self.autoscale_checkbox.setChecked(self.autoscale)
+        self.autoscale_checkbox.toggled.connect(self.toggle_autoscale_handler)
+        controls.addWidget(self.autoscale_checkbox)
+
+        # Fixed scale input
+        self.fixed_scale_input = FixedScaleInput(self.y_scale,
+                                                 self.fixed_scale_handler,
+                                                 label='Fixed scale:',
+                                                 font_size=font_size)
+        controls.addWidget(self.fixed_scale_input)
 
         # Filter checkbox
         self.sigpro_checkbox = QCheckBox('Filtered')
@@ -314,7 +361,12 @@ class EEGPanel(QWidget):
         """Clear the data in the GUI."""
         self.figure.clear()
         self.axes = self.init_axes()
+        self.axes_bounds = self.init_axes_bounds()
         self.init_data_plots()
+
+    def init_axes_bounds(self):
+        """Initial value for ymin, ymax bounds for every axis."""
+        return [None] * len(self.axes)
 
     def toggle_channel(self, channel_index):
         """Remove the provided channel from the display"""
@@ -386,6 +438,19 @@ class EEGPanel(QWidget):
         self.buffer = init_buffer(self.samples_per_second, self.seconds,
                                   self.channels)
 
+    def fixed_scale_handler(self):
+        """Event handler for updating the fixed scale"""
+        self.with_refresh(self.update_fixed_scale)
+
+    def update_fixed_scale(self):
+        """Sets the fixed scale value from the input."""
+        self.y_scale = abs(self.fixed_scale_input.value())
+        self.y_min = -self.y_scale
+        self.y_max = self.y_scale
+        self.autoscale = False
+        self.autoscale_checkbox.setChecked(self.autoscale)
+        self.autoscale_checkbox.repaint()
+
     def with_refresh(self, fn):
         """Pauses streaming, performs the given action, and sets a flag
         indicating that the display axes should be refreshed on restart."""
@@ -428,7 +493,10 @@ class EEGPanel(QWidget):
 
         cursor_x = self.cursor_x
         for i, _channel in enumerate(self.active_channel_indices):
+            # Initial data plotted will be a list 0.0; this will be updated
+            # with real data every tick using the `update_plots` method.
             data = channel_data[i].tolist()
+            self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
             self.axes[i].plot(data, linewidth=0.8)
             # plot cursor
             self.axes[i].axvline(cursor_x, color='r')
@@ -447,6 +515,33 @@ class EEGPanel(QWidget):
         except BaseException:
             self.stop()
 
+    def update_axes_bounds(self, index: int, data: List[float]) -> bool:
+        """Update the upper and lower bounds of the axis at the given index.
+        
+        Parameters
+        ----------
+        - index : index of the axis to update
+        - data : current data to be displayed
+
+        Returns
+        -------
+        bool indicating whether or not the bounds changed
+        """
+        assert self.axes_bounds, "Axes bounds must be initialized"
+        # Maintains a symmetrical scale. Alternatively we could set:
+        #   data_min = round(min(data))
+        #   data_max = round(max(data))
+        data_max = max(abs(round(min(data))), abs(round(max(data))))
+        data_min = -data_max
+        if self.axes_bounds[index]:
+            current_min, current_max = self.axes_bounds[index]
+            self.axes_bounds[index] = (min(current_min, data_min),
+                                       max(current_max, data_max))
+            return (current_min, current_max) != self.axes_bounds[index]
+        else:
+            self.axes_bounds[index] = (data_min, data_max)
+            return True
+
     def update_plots(self):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
@@ -461,25 +556,23 @@ class EEGPanel(QWidget):
             # cursor line
             self.axes[i].lines[1].set_xdata(cursor_x)
             if self.autoscale:
-                data_min = min(data)
-                data_max = max(data)
+                bounds_changed = self.update_axes_bounds(i, data)
+                data_min, data_max = self.axes_bounds[i]
+
                 self.axes[i].set_ybound(lower=data_min, upper=data_max)
 
-                # For ylabels to be aligned consistently, labelpad is
-                # re-calculated on every draw.
-                ch_name = self.channels[_channel]
-                tick_labels = self.axes[i].get_yticks()
-                # Min tick value does not display so index is 1, not 0.
-                pad = self.adjust_padding(int(tick_labels[1]),
-                                          int(tick_labels[-1]))
-                self.axes[i].set_ylabel(ch_name,
-                                        rotation=0,
-                                        labelpad=pad,
-                                        fontsize=14)
+                if bounds_changed:
+                    # For ylabels to be aligned consistently, labelpad is re-calculated
+                    ch_name = self.channels[_channel]
+                    tick_labels = self.axes[i].get_yticks()
+                    # Min tick value does not display so index is 1, not 0.
+                    pad = self.adjust_padding(data_min, data_max)
+                    self.axes[i].set_ylabel(ch_name,
+                                            rotation=0,
+                                            labelpad=pad,
+                                            fontsize=12)
             else:
-                # TODO: cache previous min and max values.
-                # self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
-                self.axes[i].set_ybound(lower=min(data), upper=max(data))
+                self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
 
         self.canvas.draw()
 
@@ -586,10 +679,13 @@ def main(data_file: str,
     new_height = int(monitor.height() * 0.9)
     pct_increase = (new_height - panel.height()) / panel.height()
     width_increase = int(panel.width() * pct_increase)
+
+    # TODO: allow for resizing smaller
     panel.setMinimumHeight(int(monitor.height() * 0.9))
     panel.setMinimumWidth(panel.width() + width_increase)
 
     panel.move(monitor.left(), monitor.top())
+
     panel.start()
 
     sys.exit(app.exec_())
@@ -620,7 +716,7 @@ if __name__ == "__main__":
                         help='refresh rate in ms',
                         default=500,
                         type=int)
-    parser.add_argument('-y', '--yscale', help='yscale', default=150, type=int)
+    parser.add_argument('-y', '--yscale', help='yscale', default=500, type=int)
     parser.add_argument('-m',
                         '--monitor',
                         help='display screen (0: primary, 1: secondary)',
