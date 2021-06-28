@@ -202,7 +202,7 @@ class FormInput(QWidget):
         self.init_layout()
 
     def init_label(self) -> QWidget:
-        """Initize the label widget."""
+        """Initialize the label widget."""
         return static_text_control(None, label=self.label)
 
     def init_help(self, font_size: int, color: str) -> QWidget:
@@ -244,7 +244,7 @@ class FormInput(QWidget):
 
         *If not defined by downstream classes, it will return the value.*
         """
-        self.value()
+        return self.value()
 
     def matches(self, term: str) -> bool:
         """Returns True if the input matches the given text, otherwise False."""
@@ -287,7 +287,9 @@ class IntegerInput(FormInput):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
         spin_box.setMaximum(100000)
-        spin_box.setValue(int(value))
+
+        if value:
+            spin_box.setValue(int(value))
         return spin_box
 
     def cast_value(self) -> str:

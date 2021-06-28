@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, ScrollableFrame, LineItems
+from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
 
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
@@ -18,13 +18,14 @@ class ExperimentRegistry(BCIGui):
     btn_height = 50
     default_text = '...'
     alert_title = 'Experiment Registry Alert'
+    alert_timeout = 10
     experiment_fields = []
 
     def __init__(self, *args, **kwargs):
         super(ExperimentRegistry, self).__init__(*args, **kwargs)
 
         # Structure of an experiment:
-        #   { name: { fields : {name: '', required: bool}, summary: '' } }
+        #   { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
         self.update_experiment_data()
 
         # These are set in the build_inputs and represent text inputs from the user
@@ -34,7 +35,9 @@ class ExperimentRegistry(BCIGui):
         self.panel = None
         self.line_items = None
 
+        # fields is for display of registered fields
         self.fields = []
+        self.registered_fields = load_fields()
         self.name = None
         self.summary = None
 
@@ -79,6 +82,24 @@ class ExperimentRegistry(BCIGui):
                     field[field_name]['required'] = 'false'
         self.refresh_field_panel()
 
+    def toggle_anonymize_field(self) -> None:
+        """Toggle Anonymize Field.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and toggle
+            the anonymize field ('true' or 'false').
+        """
+        field_name = self.window.sender().get_id()
+        for field in self.experiment_fields:
+            if field_name in field:
+                anonymize = field[field_name]['anonymize']
+                if anonymize == 'false':
+                    field[field_name]['anonymize'] = 'true'
+                else:
+                    field[field_name]['anonymize'] = 'false'
+        self.refresh_field_panel()
+
     def remove_field(self) -> None:
         """Remove Field.
 
@@ -104,22 +125,32 @@ class ExperimentRegistry(BCIGui):
         """Build Line Items From Fields.
 
         Loop over the registered experiment fields and create LineItems, which can by used to toggle the required
-            field or remove as a registered experiment field.
+            field, anonymization, or remove as a registered experiment field.
         """
         items = []
         for field in self.experiment_fields:
-            # experiment fields is a list of dicts, here we loop over the dict to get the field_name and requirement
+            # experiment fields is a list of dicts, here we loop over the dict to get
+            # the field_name, anonymization, and requirement
             for field_name, required in field.items():
 
-                # Set the button text and colors, based on the requirement
+                # Set the button text and colors, based on the requirement and anonymization
                 if required['required'] == 'false':
-                    required_button_label = 'Not Required'
+                    required_button_label = 'Do Not Require'
                     required_button_color = 'black'
                     required_button_text_color = 'white'
                 else:
-                    required_button_label = 'Required'
+                    required_button_label = 'Require'
                     required_button_color = 'green'
                     required_button_text_color = 'white'
+
+                if required['anonymize'] == 'false':
+                    anon_button_label = 'Do Not Anonymize'
+                    anon_button_color = 'black'
+                    anon_button_text_color = 'white'
+                else:
+                    anon_button_label = 'Anonymize'
+                    anon_button_color = 'green'
+                    anon_button_text_color = 'white'
 
                 # Construct the item to turn into a LineItem, we set the id as field_name to use later via the action
                 item = {
@@ -128,6 +159,12 @@ class ExperimentRegistry(BCIGui):
                             'action': self.toggle_required_field,
                             'color': required_button_color,
                             'textColor': required_button_text_color,
+                            'id': field_name
+                        },
+                        anon_button_label: {
+                            'action': self.toggle_anonymize_field,
+                            'color': anon_button_color,
+                            'textColor': anon_button_text_color,
                             'id': field_name
                         },
                         'Remove': {
@@ -253,8 +290,6 @@ class ExperimentRegistry(BCIGui):
             text_color='white'
         )
 
-        # remove field
-
         # add field
         self.add_button(
             message='Register',
@@ -277,7 +312,8 @@ class ExperimentRegistry(BCIGui):
                 title=self.alert_title,
                 message='Experiment saved successfully! Please exit window or create another experiment!',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=True
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.alert_timeout
             )
             self.update_experiment_data()
 
@@ -293,7 +329,7 @@ class ExperimentRegistry(BCIGui):
         """Add Experiment:
 
         Add a new experiment to the dict of experiments. It follows the format:
-             { name: { fields : {name: '', required: bool}, summary: '' } }
+             { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
         """
         self.experiments[self.name] = {
             'fields': self.experiment_fields,
@@ -306,7 +342,7 @@ class ExperimentRegistry(BCIGui):
         Save the experiments registered to the correct path as pulled from system_utils.
         """
         # add fields to the experiment
-        save_experiment_data(self.experiments, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME)
+        save_experiment_data(self.experiments, self.registered_fields, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME)
 
     def create_field(self) -> None:
         """Create Field.
@@ -332,9 +368,10 @@ class ExperimentRegistry(BCIGui):
         if field in registered_fields:
             return self.throw_alert_message(
                 title=self.alert_title,
-                message='Field already registered in the experiment!',
+                message=f'{field} already registered with this experiment!',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=True
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.alert_timeout,
             )
 
         # else add the field!
@@ -342,9 +379,9 @@ class ExperimentRegistry(BCIGui):
             {
                 field:
                     {
-                        'required': 'false'
+                        'required': 'false',
+                        'anonymize': 'true'
                     }
-
             }
         )
 
@@ -355,7 +392,8 @@ class ExperimentRegistry(BCIGui):
 
         self.field_input.clear()
         self.field_input.addItem(ExperimentRegistry.default_text)
-        self.fields = [item for item in load_fields()]
+        self.registered_fields = load_fields()
+        self.fields = [item for item in self.registered_fields]
         self.field_input.addItems(self.fields)
 
     def build_assets(self) -> None:
@@ -380,7 +418,8 @@ class ExperimentRegistry(BCIGui):
                     title=self.alert_title,
                     message='Please add an Experiment Name!',
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
             if self.name in self.experiment_names:
                 self.throw_alert_message(
@@ -391,21 +430,24 @@ class ExperimentRegistry(BCIGui):
                         f'Registed names: {self.experiment_names}'
                     ),
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
             if self.summary == ExperimentRegistry.default_text:
                 self.throw_alert_message(
                     title=self.alert_title,
                     message='Please add an Experiment Summary!',
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
         except Exception as e:
             self.throw_alert_message(
                 title=self.alert_title,
                 message=f'Error, {e}',
                 message_type=AlertMessageType.CRIT,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.alert_timeout)
             return False
         return True
 

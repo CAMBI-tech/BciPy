@@ -34,7 +34,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Psychopy, Python v 3.6.5, and other packages. See requirements.txt. When possible integration with other open source libraries will be done.
+This project requires Python > 3.6.5 and other packages defined in the requirements.txt.
 
 
 ## Installation
@@ -42,7 +42,7 @@ This project requires Psychopy, Python v 3.6.5, and other packages. See requirem
 
 #### BCI Setup
 
-In order to run BCI suite on your computer, first install **Python 3.6.5** [from here.](https://www.python.org/downloads/)
+In order to run BCI suite on your computer, first install **Python 3** [from here.](https://www.python.org/downloads/)
 
 You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). You'll also need to download and load the language model [images](https://drive.google.com/drive/folders/1OYpUYASAceb60b2c5obyYytEZ0AZrajY?usp=sharing). If not using or rolling your own, set fake_lm to true in the parameters.json file.
 
@@ -133,7 +133,7 @@ Use this resource for examples: http://docs.python-guide.org/en/latest/writing/s
 ## Testing
 ----------
 
-When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test` in order for pytest to discover it. See other module tests for examples!
+When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test_` in order for pytest to discover it. See other module tests for examples!
 
 Development requirements must be installed before running: `pip install dev_requirements.txt`
 
@@ -153,7 +153,7 @@ py.test acquisition
 To generate test coverage metrics, in the command line:
 
 ```bash
-coverage run --branch --source=bcipy -m pytest
+coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 
 #Generate a command line report
 coverage report
