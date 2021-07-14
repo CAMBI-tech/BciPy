@@ -135,20 +135,20 @@ class ExperimentRegistry(BCIGui):
 
                 # Set the button text and colors, based on the requirement and anonymization
                 if required['required'] == 'false':
-                    required_button_label = 'Do Not Require'
+                    required_button_label = 'Optional'
                     required_button_color = 'black'
                     required_button_text_color = 'white'
                 else:
-                    required_button_label = 'Require'
+                    required_button_label = 'Required'
                     required_button_color = 'green'
                     required_button_text_color = 'white'
 
                 if required['anonymize'] == 'false':
-                    anon_button_label = 'Do Not Anonymize'
+                    anon_button_label = 'Onymous'
                     anon_button_color = 'black'
                     anon_button_text_color = 'white'
                 else:
-                    anon_button_label = 'Anonymize'
+                    anon_button_label = 'Anonymous'
                     anon_button_color = 'green'
                     anon_button_text_color = 'white'
 
