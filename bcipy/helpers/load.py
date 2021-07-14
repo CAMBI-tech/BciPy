@@ -57,7 +57,7 @@ def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME
     Returns
     -------
         A dictionary of experiments, with the following format:
-            { name: { fields : {name: '', required: bool}, summary: '' } }
+            { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
 
     """
     with open(path, 'r') as json_file:
@@ -70,7 +70,7 @@ def extract_mode(bcipy_data_directory: str) -> str:
     This method extracts the task mode from a BciPy data save directory. This is important for
         trigger conversions and extracting targeteness.
 
-    *note*: this is not compatiable with older versions of BciPy (pre 1.5.0) where
+    *note*: this is not compatible with older versions of BciPy (pre 1.5.0) where
         the tasks and modes were considered together using integers (1, 2, 3).
 
     PARAMETERS

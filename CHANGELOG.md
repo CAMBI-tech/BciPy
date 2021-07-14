@@ -1,8 +1,8 @@
-# 2.0.0
+# 2.0.0-rc.1
 
 ## Contributions
 
-This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and CAMBI. These will support multi-modality, data sharing, and more complex language modeling.  
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and CAMBI. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support!
 
 ### Added
 
@@ -10,6 +10,8 @@ This version contains major refactoring efforts and features. We anticipate a fe
 - `bcipy.helpers.stimuli.StimuliOrder`: defined ordering of inquiry stimuli. The current approach is to randomize. This adds
     an alphabetical option. #153 
 - `bcipy.helpers.stimuli.alphabetize`: method for taking a list of strings and returning them in alphabetical order with characters last in the list. #153
+- `.bcipy/README.md`: describes experiments and fields in greater detail #156
+- `validate`: `_validate_experiment_fields` and `validate_experiments`: validates experiments and fields in the correct format #156
 
 ### Updated
 
@@ -20,6 +22,13 @@ This version contains major refactoring efforts and features. We anticipate a fe
 - `demo_stimuli_generation.py`: update imports and add a case showing the new ordering functionality. #153
 - `copy_phrase_wrapper`: update logging and exception handling. add stim order. #153
 - `random_rsvp_calibration_inq_gen`: rename to `calibration_inquiry_generator` #153
+- `ExperimentField.py`: updated to use new alert types with timeouts #156
+- `ExperimentRegistry.py`: add the ability to toggle anonymization of field data and use new alert types with timeouts #156
+- `FieldRegistry.py`: updated to use new alert types with timeout #156
+- `README.md`: update dependencies and coverage run command #156
+- `gui/gui_main.py`: update to return a value in FormInput, set a value for IntegerInput only if provided #156
+- `ring_buffer_test.py` -> `test_ring_buffer.py`: to comply with naming conventions #156
+- `exceptions`: refactored Field and Experiment exceptions to corresponding base exception #156
 
 ### Removed
  

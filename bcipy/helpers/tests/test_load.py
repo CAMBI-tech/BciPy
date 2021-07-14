@@ -27,7 +27,8 @@ MOCK_EXPERIMENT = {
         "fields": [
             {
                 "age": {
-                    "required": "false"
+                    "required": "false",
+                    "anonymize": "true"
                 }
             }
         ],
