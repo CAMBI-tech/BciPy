@@ -1,5 +1,5 @@
 sudo apt-get install libgtk-3-dev
-sudo apt-get install python3-pip  # for ubuntu 20.04, this gives python3.8.5
+sudo apt-get install python3-pip  # for ubuntu 20.04, this gives python3.8.5. If not python installed, sudo apt-get install python3
 sudo apt-get install freeglut3-dev
 sudo apt-get install freetype
 sudo apt-get install portaudio
