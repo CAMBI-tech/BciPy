@@ -1,11 +1,11 @@
 import logging
 from typing import List
-
+from pathlib import Path
 from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
-    read_data_csv,
+    load_raw_data,
 )
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.triggers import trigger_decoder
@@ -62,8 +62,11 @@ def offline_analysis(data_folder: str = None,
     static_offset = parameters.get('static_trigger_offset', 0)
     k_folds = parameters.get('k_folds', 10)
 
-    raw_dat, _, channels, type_amp, fs = read_data_csv(
-        data_folder + '/' + raw_data_file)
+    # Load raw data
+    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    channels = raw_data.channels
+    type_amp = raw_data.daq_type
+    fs = raw_data.sample_rate
 
     log.info(f'Channels read from csv: {channels}')
     log.info(f'Device type: {type_amp}')
@@ -76,7 +79,7 @@ def offline_analysis(data_folder: str = None,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-    data, fs = default_transform(raw_dat, fs)
+    data, fs = default_transform(raw_data.by_channel(), fs)
 
     # Process triggers.txt
     _, t_t_i, t_i, offset = trigger_decoder(
@@ -86,7 +89,7 @@ def offline_analysis(data_folder: str = None,
     offset = offset + static_offset
 
     # Channel map can be checked from raw_data.csv file.
-    # read_data_csv already removes the timespamp column.
+    # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, type_amp)
 
     model = PcaRdaKdeModel(k_folds=k_folds)

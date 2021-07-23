@@ -2,7 +2,7 @@ import os
 import numpy as np
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-from bcipy.helpers.load import load_csv_data, read_data_csv
+from bcipy.helpers.load import choose_csv_file, load_raw_data
 from mne.io import read_raw_edf
 from typing import List
 
@@ -153,8 +153,8 @@ def visualize_csv_eeg_triggers(trigger_col=None):
         Figure of Triggers
     """
     # Load in CSV
-    file_name = load_csv_data()
-    raw_data, stamp_time, channels, type_amp, fs = read_data_csv(file_name)
+    data = load_raw_data(choose_csv_file())
+    raw_data = data.by_channel()
 
     # Pull out the triggers
     if not trigger_col:

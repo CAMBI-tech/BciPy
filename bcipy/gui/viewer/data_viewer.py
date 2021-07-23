@@ -1,5 +1,4 @@
 """EEG Data Viewer"""
-import csv
 import sys
 from functools import partial
 from queue import Queue
@@ -22,6 +21,7 @@ from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.raw_data import settings
 from bcipy.signal.process.transform import Downsample, get_default_transform
 
 
@@ -628,14 +628,7 @@ def file_data(path: str
 
     from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
-    with open(path) as csvfile:
-        row1 = next(csvfile)
-        name = row1.strip().split(",")[1]
-        row2 = next(csvfile)
-        freq = float(row2.strip().split(",")[1])
-
-        reader = csv.reader(csvfile)
-        channels = next(reader)
+    name, freq, channels = settings(path)
     queue = Queue()
     streamer = FileStreamer(path, queue)
     data_source = QueueDataSource(queue)
@@ -694,10 +687,10 @@ def main(data_file: str,
 
     panel.start()
 
-    sys.exit(app.exec_())
-
+    app_exit = app.exec_()
     if proc:
         proc.stop()
+    sys.exit(app_exit)
 
 
 if __name__ == "__main__":

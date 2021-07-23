@@ -8,10 +8,9 @@ from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
 from typing import Any, Dict, List, Tuple
 
-import numpy as np
-import pandas as pd
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.system_utils import (
     DEFAULT_EXPERIMENT_PATH,
     DEFAULT_FIELD_PATH,
@@ -199,7 +198,17 @@ def load_signal_model(model_class: SignalModel,
     return signal_model, filename
 
 
-def load_csv_data(filename: str = None) -> str:
+def choose_csv_file(filename: str = None) -> str:
+    """GUI prompt to select a csv file from the file system.
+
+    Parameters
+    ----------
+    - filename : optional filename to use; if provided the GUI is not shown.
+
+    Returns
+    -------
+    file name of selected file; throws an exception if the file is not a csv.
+    """
     if not filename:
         try:
             Tk().withdraw()  # we don't want a full GUI
@@ -218,39 +227,18 @@ def load_csv_data(filename: str = None) -> str:
     return filename
 
 
-def read_data_csv(folder: str, dat_first_row: int = 2,
-                  info_end_row: int = 1) -> tuple:
-    """ Reads the data (.csv) provided by the data acquisition
-        Arg:
-            folder(str): file location for the data
-            dat_first_row(int): row with channel names
-            info_end_row(int): final row related with daq. info
-                where first row idx is '0'
-        Return:
-            raw_dat(ndarray[float]): C x N numpy array with samples
-                where C is number of channels N is number of time samples
-            channels(list[str]): channels used in DAQ
-            stamp_time(ndarray[float]): time stamps for each sample
-            type_amp(str): type of the device used for DAQ
-            fs(int): sampling frequency
+def load_raw_data(filename: str) -> RawData:
+    """Reads the data (.csv) file written by data acquisition.
+
+    Parameters
+    ----------
+    - filename : path to the serialized data (csv file)
+
+    Returns
+    -------
+    RawData object with data held in memory
     """
-    dat_file = pd.read_csv(folder, skiprows=dat_first_row)
-
-    # Remove object columns (ex. BCI_Stimulus_Marker column)
-    # TODO: might be better in use:
-    # dat_file.select_dtypes(include=['float64'])
-    numeric_dat_file = dat_file.select_dtypes(exclude=['object'])
-    channels = list(numeric_dat_file.columns[1:])  # without timestamp column
-
-    temp = numeric_dat_file.values
-    stamp_time = temp[:, 0]
-    raw_dat = temp[:, 1:temp.shape[1]].transpose()
-
-    dat_file_2 = pd.read_csv(folder, nrows=info_end_row)
-    type_amp = list(dat_file_2.axes[1])[1]
-    fs = np.array(dat_file_2)[0][1]
-
-    return raw_dat, stamp_time, channels, type_amp, fs
+    return RawData.load(filename)
 
 
 def load_txt_data() -> str:

@@ -1,15 +1,15 @@
+import logging
 from enum import Enum
-from typing import Dict, TextIO, List, Tuple
-import csv
+from typing import Dict, List, TextIO, Tuple
+
+from psychopy import core, visual
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.raw_data import RawDataReader
+from bcipy.helpers.stimuli import resize_image
 
-from psychopy import visual, core
-
-import logging
 log = logging.getLogger(__name__)
 
 NONE_VALUES = ['0', '0.0']
@@ -395,7 +395,7 @@ def apply_trigger_offset(timing: List[float], offset: float):
     return corrected_timing
 
 
-class Labeller(object):
+class Labeller:
     """Labels the targetness for a trigger value in a raw_data file."""
 
     def __init__(self):
@@ -495,44 +495,39 @@ class LslCopyPhraseLabeller(Labeller):
         return state
 
 
-def _extract_triggers(csvfile: TextIO,
+def _extract_triggers(csvfile: str,
                       trg_field,
-                      labeller: Labeller,
-                      skip_meta: bool = True) -> List[Tuple[str, str, str]]:
+                      labeller: Labeller) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from an experiment output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to raw data file
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
         labeller: Labeller used to calculate the targetness value for a
             given trigger.
-        skip_meta: skips the metadata rows
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp)
     """
     data = []
 
-    # Skip metadata rows
-    if skip_meta:
-        _daq_type = next(csvfile)
-        _sample_rate = next(csvfile)
+    with RawDataReader(csvfile) as reader:
+        trg_index = reader.columns.index(trg_field)
+        timestamp_index = reader.columns.index('timestamp')
 
-    reader = csv.DictReader(csvfile)
-
-    for row in reader:
-        trg = row[trg_field]
-        if trg not in NONE_VALUES:
-            if 'calibration' in trg:
-                trg = 'calibration_trigger'
-            targetness = labeller.label(trg)
-            data.append((trg, targetness, row['timestamp']))
+        for row in reader:
+            trg = row[trg_index]
+            if trg not in NONE_VALUES:
+                if 'calibration' in trg:
+                    trg = 'calibration_trigger'
+                targetness = labeller.label(trg)
+                data.append((trg, targetness, row[timestamp_index]))
 
     return data
 
 
-def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
+def write_trigger_file_from_lsl_calibration(csvfile: str,
                                             trigger_file: TextIO,
                                             inq_len: int,
                                             trg_field: str = 'TRG'):
@@ -542,7 +537,7 @@ def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
     _write_trigger_file_from_extraction(trigger_file, extracted)
 
 
-def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
+def write_trigger_file_from_lsl_copy_phrase(csvfile: str,
                                             trigger_file: TextIO,
                                             copy_text: str,
                                             typed_text: str,
@@ -567,19 +562,16 @@ def _write_trigger_file_from_extraction(
 
 def extract_from_calibration(csvfile: TextIO,
                              inq_len: int,
-                             trg_field: str = 'TRG',
-                             skip_meta: bool = True
+                             trg_field: str = 'TRG'
                              ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a calibration output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to the raw data file.
         inq_len: stim_length parameter value for the experiment; used to calculate
                  targetness for first_pres_target.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
-        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
-            the start of the file.
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
@@ -588,36 +580,29 @@ def extract_from_calibration(csvfile: TextIO,
 
     return _extract_triggers(csvfile,
                              trg_field,
-                             labeller=LslCalibrationLabeller(inq_len),
-                             skip_meta=skip_meta)
+                             labeller=LslCalibrationLabeller(inq_len))
 
 
-def extract_from_copy_phrase(csvfile: TextIO,
+def extract_from_copy_phrase(csvfile: str,
                              copy_text: str,
                              typed_text: str,
-                             trg_field: str = 'TRG',
-                             skip_meta: bool = True
+                             trg_field: str = 'TRG'
                              ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a copy phrase output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to raw data file.
         copy_text: phrase to copy
         typed_text: participant typed response
         trg_field: optional; name of the data column with the trigger data;
-                   defaults to 'TRG',
-        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
-            the start of the file.
+                   defaults to 'TRG'
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
     labeller = LslCopyPhraseLabeller(copy_text, typed_text)
-    return _extract_triggers(csvfile,
-                             trg_field,
-                             labeller=labeller,
-                             skip_meta=skip_meta)
+    return _extract_triggers(csvfile, trg_field, labeller=labeller)
 
 
 def trigger_durations(params: Parameters) -> Dict[str, float]:
