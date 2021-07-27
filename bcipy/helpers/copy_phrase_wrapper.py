@@ -199,13 +199,13 @@ class CopyPhraseWrapper:
             bandpass_order=self.filter_order,
             downsample_factor=self.downsample_rate,
         )
-        data, self.sampling_rate = default_transform(raw_data, self.sampling_rate)
+        data, transformed_sample_rate = default_transform(raw_data, self.sampling_rate)
 
         data, _ = self.signal_model.reshaper(
             trial_labels=target_info,
             timing_info=times,
             eeg_data=data,
-            fs=self.sampling_rate,
+            fs=transformed_sample_rate,
             trials_per_inquiry=self.stim_length,
             channel_map=self.channel_map,
             trial_length=window_length)
