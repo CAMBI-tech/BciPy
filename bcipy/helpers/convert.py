@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
 
-from bcipy.helpers.load import load_json_parameters, read_data_csv, extract_mode
+from bcipy.helpers.load import load_json_parameters, load_raw_data, extract_mode
 from bcipy.helpers.triggers import trigger_decoder, apply_trigger_offset, trigger_durations
 
 
@@ -54,8 +54,8 @@ def convert_to_edf(data_dir: str,
 
     params = load_json_parameters(Path(data_dir, 'parameters.json'),
                                   value_cast=True)
-    raw_data, _, ch_names, _, sample_rate = read_data_csv(
-        Path(data_dir, params['raw_data_name']))
+    data = load_raw_data(Path(data_dir, params['raw_data_name']))
+    raw_data = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
 
     # If a mode override is not provided, try to extract it from the file structure
@@ -66,7 +66,7 @@ def convert_to_edf(data_dir: str,
         mode, Path(data_dir, params.get('trigger_file_name', 'triggers.txt')), remove_pre_fixation=False)
 
     # validate annotation parameters given data length and trigger count
-    validate_annotations(len(raw_data[0]) / sample_rate, len(symbol_info), annotation_channels)
+    validate_annotations(len(raw_data[0]) / data.sample_rate, len(symbol_info), annotation_channels)
 
     # get static and system offsets
     observed_offset = offset + params.get('static_trigger_offset', 0.0)
@@ -77,7 +77,7 @@ def convert_to_edf(data_dir: str,
 
     events = edf_annotations(triggers, durations)
 
-    return write_edf(edf_path, raw_data, ch_names, sample_rate, events, overwrite, annotation_channels)
+    return write_edf(edf_path, raw_data, data.channels, data.sample_rate, events, overwrite, annotation_channels)
 
 
 def validate_annotations(record_time: float, trigger_count: int, annotation_channels: bool) -> None:
