@@ -1,8 +1,9 @@
 """Functionality for loading and querying configuration for supported hardware
 devices."""
-from typing import Dict, List
 import json
 from pathlib import Path
+from typing import Dict, List
+
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
@@ -25,6 +26,7 @@ class DeviceSpec:
         connection_methods - list of methods for connecting to the device
         description - device description
             ex. 'Wearable Sensing DSI-24 dry electrode EEG headset'
+        excluded_from_analysis - list of channels to exclude from analysis.
     """
 
     def __init__(self,
@@ -33,28 +35,32 @@ class DeviceSpec:
                  sample_rate: float,
                  content_type: str = 'EEG',
                  connection_methods: List[ConnectionMethod] = None,
-                 description: str = None):
+                 description: str = None,
+                 excluded_from_analysis: List[str] = ['TRG']):
         self.name = name
         self.channels = channels
         self.sample_rate = sample_rate
         self.content_type = content_type
         self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
+        self.excluded_from_analysis = excluded_from_analysis
 
     @property
     def channel_count(self) -> int:
         return len(self.channels)
 
-    def analysis_channels(self, exclude_trg: bool = True) -> List[str]:
+    @property
+    def analysis_channels(self) -> List[str]:
         """List of channels used for analysis by the signal module.
         Parameters:
         -----------
             exclude_trg - indicates whether or not to exclude a TRG channel if present.
         """
-        if exclude_trg:
-            return list(filter(lambda channel: channel != 'TRG',
-                               self.channels))
-        return self.channels
+
+        return list(
+            filter(lambda channel: channel not in self.excluded_from_analysis,
+                   self.channels))
+
 
 
 def make_device_spec(config: dict) -> DeviceSpec:

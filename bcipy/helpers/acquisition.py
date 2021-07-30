@@ -133,7 +133,7 @@ def analysis_channels(channels: List[str], device_name: str) -> list:
         If i'th element is 0, i'th channel in filtered_eeg is removed.
     """
     device = supported_device(device_name)
-    relevant_channels = device.analysis_channels()
+    relevant_channels = device.analysis_channels
     if not relevant_channels:
         raise Exception("Analysis channels for the given device not found: "
                         f"{device_name}.")

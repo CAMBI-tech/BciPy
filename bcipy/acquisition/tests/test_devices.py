@@ -101,6 +101,13 @@ class TestDeviceSpecs(unittest.TestCase):
                                   channels=['C1', 'C2', 'C3', 'TRG'],
                                   sample_rate=256.0)
 
-        self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels())
+        self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
+        spec.excluded_from_analysis = []
         self.assertEqual(['C1', 'C2', 'C3', 'TRG'],
-                         spec.analysis_channels(exclude_trg=False))
+                         spec.analysis_channels)
+
+        spec2 = devices.DeviceSpec(name='Device2',
+                                  channels=['C1', 'C2', 'C3', 'TRG'],
+                                  sample_rate=256.0,
+                                  excluded_from_analysis=['C1', 'TRG'])
+        self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
