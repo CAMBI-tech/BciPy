@@ -4,8 +4,10 @@ from typing import List, Tuple, Union
 
 from psychopy import core, visual
 
-from bcipy.display import BCIPY_LOGO_PATH, Display
 from bcipy.helpers.clock import Clock
+from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
+from bcipy.helpers.task import SPACE_CHAR, get_key_press
+from bcipy.display import Display, BCIPY_LOGO_PATH, StimuliProperties, TaskDisplayProperties, InformationProperties, PreviewInquiryProperties
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
@@ -175,7 +177,6 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
-            preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
@@ -183,15 +184,14 @@ class PreviewInquiryProperties:
         """Initialize Inquiry Preview Parameters.
 
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
-        preview_inquiry_progress_method(int): Method of progression for inquiry preview.
-            0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.
+        preview_inquiry_progress_method(int): Method of progression for inquiry preview. 1 == press to accept
+            inquiry 2 == press to skip inquiry
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
-        self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
 
 
@@ -487,7 +487,7 @@ class RSVPDisplay(Display):
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
 
-        Generate stimuli for next RSVP inquiry.
+        Generate stimuli for next RSVP inquiry. [A + A, C, Q, D]
         """
         stim_info = []
         for idx in range(len(self.stimuli_inquiry)):
