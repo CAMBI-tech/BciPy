@@ -1,7 +1,7 @@
 from psychopy import visual, core
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.rsvp import InformationProperties, TaskDisplayProperties, StimuliProperties
+from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
 info = InformationProperties(
@@ -46,7 +46,7 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window TODO use initialize_display_window
-win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], fullscr=False, screen=1, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
                     waitBlanking=True,
