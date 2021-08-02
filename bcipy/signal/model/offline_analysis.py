@@ -17,8 +17,9 @@ from matplotlib.figure import Figure
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
-        level=logging.INFO,
-        format='(%(threadName)-9s) %(message)s')
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 @report_execution_time
 def offline_analysis(data_folder: str = None,
