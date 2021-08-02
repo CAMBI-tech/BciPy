@@ -15,7 +15,7 @@ from bcipy.gui.gui_main import (
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
-from bcipy.tasks.task_registry import TaskType
+from bcipy.task.task_registry import TaskType
 
 
 class BCInterface(BCIGui):

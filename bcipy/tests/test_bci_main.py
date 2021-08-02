@@ -12,7 +12,7 @@ from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.exceptions import (
     UnregisteredExperimentException,
 )
-from bcipy.tasks.task_registry import TaskType
+from bcipy.task.task_registry import TaskType
 
 import logging
 logging.disable(logging.CRITICAL)
@@ -180,7 +180,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=None,
             fake=self.parameters['fake_data'],
-            auc_filename=None
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -201,7 +200,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=None,
             fake=self.parameters['fake_data'],
-            auc_filename=None
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -224,7 +222,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=None,
             fake=self.parameters['fake_data'],
-            auc_filename=None
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -245,7 +242,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=None,
             fake=self.parameters['fake_data'],
-            auc_filename=None
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -275,7 +271,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
-            auc_filename=file_name
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -296,7 +291,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=None,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
-            auc_filename=file_name
         )
         verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
             'k_folds': self.parameters['k_folds']
@@ -359,7 +353,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=language_model,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
-            auc_filename=file_name
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -380,7 +373,6 @@ class TestExecuteTask(unittest.TestCase):
             language_model=language_model,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
-            auc_filename=file_name
         )
         verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
             'k_folds': self.parameters['k_folds']

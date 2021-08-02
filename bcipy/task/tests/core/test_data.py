@@ -1,7 +1,7 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.tasks.session_data import Session, Inquiry, EvidenceType
+from bcipy.task.control.data import Session, Inquiry, EvidenceType
 
 
 def sample_stim_seq(include_evidence: bool = False):
@@ -205,3 +205,7 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(
             first_stim_seq.stimuli,
             ["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"])
+
+
+if __name__ == '__main__':
+    unittest.main()

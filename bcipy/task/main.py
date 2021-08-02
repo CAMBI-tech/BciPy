@@ -1,7 +1,9 @@
 import logging
 
+from abc import ABC, abstractmethod
 
-class Task(object):
+
+class Task(ABC):
     """Task.
 
     Base class for BciPy tasks.
@@ -12,10 +14,12 @@ class Task(object):
         self.logger = logging.getLogger(__name__)
 
     def configure(self):
-        pass
+        ...
 
+    @abstractmethod
     def execute(self):
-        raise NotImplementedError()
+        ...
 
+    @abstractmethod
     def name(self):
-        raise NotImplementedError()
+        ...

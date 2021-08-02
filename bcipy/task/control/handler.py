@@ -6,8 +6,8 @@ import numpy as np
 
 from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator, StimuliOrder
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.tasks.rsvp.query_mechanisms import RandomStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import CriteriaEvaluator
+from bcipy.task.control.query import RandomStimuliAgent
+from bcipy.task.control.criteria import CriteriaEvaluator
 
 log = logging.getLogger(__name__)
 
@@ -58,9 +58,10 @@ class EvidenceFusion(object):
             del value[:]
         self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)
 
-    def save_history(self):
+    def save_history(self) -> None:
         """ Saves the current likelihood history """
-        return 0
+        log.warning('save_history not implemented')
+        return
 
     @property
     def latest_evidence(self) -> Dict[str, List[float]]:

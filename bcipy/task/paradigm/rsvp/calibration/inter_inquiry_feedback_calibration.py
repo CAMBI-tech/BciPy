@@ -2,9 +2,9 @@ from psychopy import core
 from typing import List, Tuple
 
 from bcipy.feedback.visual.level_feedback import LevelFeedback
-from bcipy.tasks.task import Task
-from bcipy.tasks.exceptions import InsufficientDataException
-from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task import Task
+from bcipy.task.exceptions import InsufficientDataException
+from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
 from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info
 from bcipy.helpers.task import (

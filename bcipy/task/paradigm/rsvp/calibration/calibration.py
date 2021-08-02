@@ -3,7 +3,7 @@ from psychopy import core
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, InformationProperties
 
-from bcipy.tasks.task import Task
+from bcipy.task import Task
 
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
 from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info, StimuliOrder

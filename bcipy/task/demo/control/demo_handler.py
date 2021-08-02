@@ -1,4 +1,4 @@
-from bcipy.tasks.rsvp.main_frame import EvidenceFusion, DecisionMaker
+from bcipy.task.control.handler import EvidenceFusion, DecisionMaker
 import numpy as np
 
 
