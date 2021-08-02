@@ -1,27 +1,34 @@
 # BCI TASKS
 -----------
 
-These are the experimental tasks that can be implemented.
+These are the tasks that can be run to collect experimental data.
 
-## Modes
----------
-Within `tasks/` there are folders for each of the supported modes, and within them, the supported experiment types. To add new modes, create a folder for it and place the tasks in files within it. Be sure to add it to the `start_task` file at the root to be able execute it! An entry must also be added to the task_registry TaskType
-enum. This updates the GUI (BCInterface.py) as well makes the task available to `start_task`.
+## Paradigms
+------------
+Within `task/` there are folders for each of the supported paradigms, and within them, the supported modes. To add new paradigms, create a folder for it and place the tasks in files within it. Be sure to add it to the `start_task` file at the root to be able execute it! An entry must also be added to the task_registry TaskType
+enum. This updates the GUI (BCInterface.py) and makes the task available to `start_task`.
 
-Currently, these are the modes and experiment types implemented:
+Currently, these are the supported paradigms and modes:
 
-*RSVP* 
+### *Paradigm: RSVP* 
+
+##### Mode: Calibration
 
 > Calibration
-> Copy Phrase
-> Alert Tone
+
+> Alert Tone Calibration
+
 > Inter-Inquiry Feedback Calibration
+
+> Timing Verification Calibration
+
+##### Mode: Copy Phrase
+
+> Copy Phrase
 
 
 ## Start Task
 -------------
-
-*Start Task* 
 
 Start Task takes in Display [object], parameters [dict], file save [str-path] and task type [dict]. Using the
 task type, start_task() will route to the correct paradigm (RSVP, SSVEP, MATRIX) and mode (Calibration, Copy Phrase, etc.)
@@ -30,7 +37,7 @@ It is called in the following way:
 
 
 ```
-	from bcipy.task import start_task
+	from bcipy.task.start_task import start_task
 
     start_task(
        	display_window,
@@ -40,4 +47,4 @@ It is called in the following way:
 
 ```
 
-It will throw an error that the task isn't implemented.
+It will throw an error if the task isn't implemented.

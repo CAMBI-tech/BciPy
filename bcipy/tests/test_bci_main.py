@@ -12,7 +12,7 @@ from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.exceptions import (
     UnregisteredExperimentException,
 )
-from bcipy.task.task_registry import TaskType
+from bcipy.task import TaskType
 
 import logging
 logging.disable(logging.CRITICAL)
