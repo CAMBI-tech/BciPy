@@ -8,6 +8,7 @@ from bcipy.helpers.load import (
     load_raw_data,
 )
 from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
@@ -15,8 +16,11 @@ from bcipy.signal.process import get_default_transform
 from matplotlib.figure import Figure
 
 log = logging.getLogger(__name__)
+logging.basicConfig(
+        level=logging.INFO,
+        format='(%(threadName)-9s) %(message)s')
 
-
+@report_execution_time
 def offline_analysis(data_folder: str = None,
                      parameters: dict = {}, alert_finished: bool = True) -> List[Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
@@ -131,10 +135,6 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--parameters_file',
                         default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='(%(threadName)-9s) %(message)s')
 
     log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,

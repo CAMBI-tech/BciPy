@@ -10,6 +10,7 @@ import psutil
 import pyglet
 import importlib
 import pkgutil
+import time
 import logging
 
 
@@ -220,3 +221,14 @@ def log_to_stdout():
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
+
+
+def report_execution_time(method):
+    log = logging.getLogger()
+    def wrap(*args, **kwargs):
+        time1 = time.perf_counter_ns()
+        response = method(*args, **kwargs)
+        time2 = time.perf_counter_ns()
+        log.info('{:s} method took {:.4f} s'.format(method.__name__, (time2-time1)))
+        return response
+    return wrap
