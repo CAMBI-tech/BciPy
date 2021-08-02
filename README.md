@@ -95,7 +95,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `language_model`: gives probabilities of next letters during typing.
 - `parameters`: location of json parameters.
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
-- `tasks`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVPCalibration.
+- `task`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVP Calibration.
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `main`: executor of experiments. Main entry point into the application
 
