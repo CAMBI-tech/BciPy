@@ -8,6 +8,7 @@ from bcipy.helpers.load import (
     load_raw_data,
 )
 from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
@@ -15,8 +16,12 @@ from bcipy.signal.process import get_default_transform
 from matplotlib.figure import Figure
 
 log = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
 
 
+@report_execution_time
 def offline_analysis(data_folder: str = None,
                      parameters: dict = {}, alert_finished: bool = True) -> List[Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
@@ -102,18 +107,18 @@ def offline_analysis(data_folder: str = None,
         offset=offset,
         channel_map=channel_map,
         trial_length=trial_length)
+
+    log.info('Training model. This will take some time...')
     model.fit(data, labels)
     model_performance = model.evaluate(data, labels)
 
-    log.info('Saving offline analysis plots!')
+    log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
 
     fig_handles = generate_offline_analysis_screen(
         data, labels, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs, save_figure=True, show_figure=False,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
-
-    log.info('Saving the model!')
     model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
 
     if alert_finished:
@@ -132,13 +137,8 @@ if __name__ == "__main__":
                         default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='(%(threadName)-9s) %(message)s')
-
     log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
-
     log.info('Offline Analysis complete.')

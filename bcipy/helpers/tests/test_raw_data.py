@@ -34,7 +34,7 @@ class TestRawData(unittest.TestCase):
     def _write_raw_data(self, include_rows=False) -> RawData:
         """Helper function to write a sample raw data file to disk using the
         settings from setUp.
-        
+
         Parameters
         ----------
         - include_rows : if True adds data, otherwise just writes the metadata

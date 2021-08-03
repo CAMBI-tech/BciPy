@@ -99,7 +99,8 @@ class TestDeviceSpecs(unittest.TestCase):
         """DeviceSpec should have a list of channels used for analysis."""
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3', 'TRG'],
-                                  sample_rate=256.0)
+                                  sample_rate=256.0,
+                                  excluded_from_analysis=['TRG'])
 
         self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
         spec.excluded_from_analysis = []
@@ -107,7 +108,7 @@ class TestDeviceSpecs(unittest.TestCase):
                          spec.analysis_channels)
 
         spec2 = devices.DeviceSpec(name='Device2',
-                                  channels=['C1', 'C2', 'C3', 'TRG'],
-                                  sample_rate=256.0,
-                                  excluded_from_analysis=['C1', 'TRG'])
+                                   channels=['C1', 'C2', 'C3', 'TRG'],
+                                   sample_rate=256.0,
+                                   excluded_from_analysis=['C1', 'TRG'])
         self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
