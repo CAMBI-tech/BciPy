@@ -13,6 +13,7 @@ _SUPPORTED_DEVICES = {}
 
 log = logging.getLogger(__name__)
 
+
 @auto_str
 class DeviceSpec:
     """Specification for a hardware device used in data acquisition.

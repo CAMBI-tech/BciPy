@@ -107,18 +107,18 @@ def offline_analysis(data_folder: str = None,
         offset=offset,
         channel_map=channel_map,
         trial_length=trial_length)
+
+    log.info('Training model. This will take some time...')
     model.fit(data, labels)
     model_performance = model.evaluate(data, labels)
 
-    log.info('Saving offline analysis plots!')
+    log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
 
     fig_handles = generate_offline_analysis_screen(
         data, labels, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs, save_figure=True, show_figure=False,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
-
-    log.info('Saving the model!')
     model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
 
     if alert_finished:
@@ -141,5 +141,4 @@ if __name__ == "__main__":
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
-
     log.info('Offline Analysis complete.')
