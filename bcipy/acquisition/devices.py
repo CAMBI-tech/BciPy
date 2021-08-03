@@ -1,14 +1,17 @@
 """Functionality for loading and querying configuration for supported hardware
 devices."""
-from typing import Dict, List
 import json
+import logging
 from pathlib import Path
+from typing import Dict, List
+
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
 DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
 _SUPPORTED_DEVICES = {}
 
+log = logging.getLogger(__name__)
 
 @auto_str
 class DeviceSpec:
@@ -25,6 +28,7 @@ class DeviceSpec:
         connection_methods - list of methods for connecting to the device
         description - device description
             ex. 'Wearable Sensing DSI-24 dry electrode EEG headset'
+        excluded_from_analysis - list of channels to exclude from analysis.
     """
 
     def __init__(self,
@@ -33,28 +37,38 @@ class DeviceSpec:
                  sample_rate: float,
                  content_type: str = 'EEG',
                  connection_methods: List[ConnectionMethod] = None,
-                 description: str = None):
+                 description: str = None,
+                 excluded_from_analysis: List[str] = []):
         self.name = name
         self.channels = channels
         self.sample_rate = sample_rate
         self.content_type = content_type
         self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
+        self.excluded_from_analysis = excluded_from_analysis
+        self._validate_excluded_channels()
 
     @property
     def channel_count(self) -> int:
         return len(self.channels)
 
-    def analysis_channels(self, exclude_trg: bool = True) -> List[str]:
+    @property
+    def analysis_channels(self) -> List[str]:
         """List of channels used for analysis by the signal module.
         Parameters:
         -----------
             exclude_trg - indicates whether or not to exclude a TRG channel if present.
         """
-        if exclude_trg:
-            return list(filter(lambda channel: channel != 'TRG',
-                               self.channels))
-        return self.channels
+
+        return list(
+            filter(lambda channel: channel not in self.excluded_from_analysis,
+                   self.channels))
+
+    def _validate_excluded_channels(self):
+        """Warn if excluded channels are not in the list of channels"""
+        for channel in self.excluded_from_analysis:
+            if channel not in self.channels:
+                log.warn(f"Excluded channel {channel} not found in spec for {self.name}")
 
 
 def make_device_spec(config: dict) -> DeviceSpec:
@@ -67,7 +81,8 @@ def make_device_spec(config: dict) -> DeviceSpec:
                       channels=config['channels'],
                       connection_methods=connection_methods,
                       sample_rate=config['sample_rate'],
-                      description=config['description'])
+                      description=config['description'],
+                      excluded_from_analysis=config.get('excluded_from_analysis', []))
 
 
 def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
