@@ -7,7 +7,7 @@
         "connection_methods": [ "TCP", "LSL" ],
         "sample_rate": 300.0,
         "description": "Wearable Sensing DSI-24",
-        "excluded_from_analysis": ["Pz", "TRG", "X1", "X2", "X3"]
+        "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
     },
     {
         "name": "DSI-VR300",
@@ -35,7 +35,7 @@
         "connection_methods": [ "TCP", "LSL" ],
         "sample_rate": 300.0,
         "description": "Alias to DSI-24 for backwards compatibility and demos.",
-        "excluded_from_analysis": ["Pz", "TRG", "X1", "X2", "X3"]
+        "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
     },
     {
         "name": "LSL",

@@ -1,6 +1,7 @@
 """Functionality for loading and querying configuration for supported hardware
 devices."""
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List
 
@@ -10,6 +11,7 @@ from bcipy.helpers.system_utils import auto_str
 DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
 _SUPPORTED_DEVICES = {}
 
+log = logging.getLogger(__name__)
 
 @auto_str
 class DeviceSpec:
@@ -36,7 +38,7 @@ class DeviceSpec:
                  content_type: str = 'EEG',
                  connection_methods: List[ConnectionMethod] = None,
                  description: str = None,
-                 excluded_from_analysis: List[str] = ['TRG']):
+                 excluded_from_analysis: List[str] = []):
         self.name = name
         self.channels = channels
         self.sample_rate = sample_rate
@@ -44,6 +46,7 @@ class DeviceSpec:
         self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
         self.excluded_from_analysis = excluded_from_analysis
+        self._validate_excluded_channels()
 
     @property
     def channel_count(self) -> int:
@@ -61,6 +64,11 @@ class DeviceSpec:
             filter(lambda channel: channel not in self.excluded_from_analysis,
                    self.channels))
 
+    def _validate_excluded_channels(self):
+        """Warn if excluded channels are not in the list of channels"""
+        for channel in self.excluded_from_analysis:
+            if channel not in self.channels:
+                log.warn(f"Excluded channel {channel} not found in spec for {self.name}")
 
 
 def make_device_spec(config: dict) -> DeviceSpec:
@@ -73,7 +81,8 @@ def make_device_spec(config: dict) -> DeviceSpec:
                       channels=config['channels'],
                       connection_methods=connection_methods,
                       sample_rate=config['sample_rate'],
-                      description=config['description'])
+                      description=config['description'],
+                      excluded_from_analysis=config.get('excluded_from_analysis', []))
 
 
 def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
