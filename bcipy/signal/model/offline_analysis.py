@@ -18,7 +18,7 @@ from matplotlib.figure import Figure
 log = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    format='[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
 
 
 @report_execution_time
