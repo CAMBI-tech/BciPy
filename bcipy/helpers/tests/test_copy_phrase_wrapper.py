@@ -11,7 +11,7 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.task.control.data import EvidenceType
+from bcipy.task.data import EvidenceType
 
 
 class TestCopyPhraseWrapper(unittest.TestCase):

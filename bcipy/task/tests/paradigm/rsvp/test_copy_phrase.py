@@ -14,7 +14,7 @@ from bcipy.acquisition.client import DataAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.control.data import Session, EvidenceType
+from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 
 

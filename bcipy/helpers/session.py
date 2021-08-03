@@ -18,7 +18,7 @@ from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
-from bcipy.task.control.data import Session, Inquiry
+from bcipy.task.data import Session, Inquiry
 
 
 def session_data(data_dir: str, alp=None):

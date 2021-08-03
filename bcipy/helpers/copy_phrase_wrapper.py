@@ -23,7 +23,7 @@ from bcipy.task.control.criteria import (
     MinIterationsCriteria,
     ProbThresholdCriteria,
 )
-from bcipy.task.control.data import EvidenceType
+from bcipy.task.data import EvidenceType
 
 
 log = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.task.control.data import Inquiry, Session, EvidenceType
+from bcipy.task.data import Inquiry, Session, EvidenceType
 from bcipy.task import Task
 
 

@@ -1,7 +1,7 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.task.control.data import Session, Inquiry, EvidenceType
+from bcipy.task.data import Session, Inquiry, EvidenceType
 
 
 def sample_stim_seq(include_evidence: bool = False):
