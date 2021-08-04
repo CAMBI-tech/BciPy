@@ -25,7 +25,7 @@ class TestSessionHelper(unittest.TestCase):
     def test_session_data(self):
         """Test session_data method outputs letters with evidence."""
         data = session_data(data_dir=self.data_dir)
-        self.assertEquals(data["total_number_series"], 2)
+        self.assertEqual(data["total_number_series"], 2)
         self.assertTrue("A" in data["series"]["1"]["0"]["likelihood"])
         self.assertTrue("B" in data["series"]["1"]["0"]["likelihood"])
 

@@ -3,8 +3,6 @@
 # Make sure DSI cap is on and paired via bluetooth or connection to a port.
 # You can locate what port is paired to the device in the Device Manager in Windows.
 # Change directory to the location of the DSI App
-cd C:/Users/
-
 
 sname_prompt="Select the DSI headset type:"
 options=("DSI" "DSI_VR300")
