@@ -7,7 +7,7 @@ from string import ascii_uppercase
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from bcipy.tasks.exceptions import InsufficientDataException
+from bcipy.task.exceptions import InsufficientDataException
 from psychopy import core, event, visual
 
 log = logging.getLogger(__name__)

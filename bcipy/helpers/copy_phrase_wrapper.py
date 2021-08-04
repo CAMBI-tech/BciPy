@@ -15,15 +15,15 @@ from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
-from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
-from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import (
+from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
+from bcipy.task.control.query import NBestStimuliAgent
+from bcipy.task.control.criteria import (
     CriteriaEvaluator,
     MaxIterationsCriteria,
     MinIterationsCriteria,
     ProbThresholdCriteria,
 )
-from bcipy.tasks.session_data import EvidenceType
+from bcipy.task.data import EvidenceType
 
 
 log = logging.getLogger(__name__)

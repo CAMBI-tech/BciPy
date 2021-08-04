@@ -1,20 +1,19 @@
 """Code for constructing and executing Tasks"""
-from bcipy.tasks.rsvp.calibration.alert_tone_calibration import RSVPAlertToneCalibrationTask
-from bcipy.tasks.rsvp.calibration.inter_inquiry_feedback_calibration import (
+from bcipy.task.paradigm.rsvp.calibration.alert_tone_calibration import RSVPAlertToneCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.inter_inquiry_feedback_calibration import (
     RSVPInterInquiryFeedbackCalibration
 )
-from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.tasks.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bcipy.task.paradigm.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
 
-from bcipy.tasks.task import Task
-from bcipy.tasks.exceptions import TaskRegistryException
-from bcipy.tasks.task_registry import TaskType
+from bcipy.task import Task
+from bcipy.task.exceptions import TaskRegistryException
+from bcipy.task.task_registry import TaskType
 
 
 def make_task(display_window, daq, task, parameters, file_save,
-              signal_model=None, language_model=None, fake=True,
-              auc_filename=None) -> Task:
+              signal_model=None, language_model=None, fake=True) -> Task:
     """Creates a Task based on the provided parameters.
 
     Parameters:
@@ -27,7 +26,6 @@ def make_task(display_window, daq, task, parameters, file_save,
         signal_model
         language_model - language model
         fake: boolean - true if eeg stream is randomly generated
-        auc_filename: str
     Returns:
     --------
         Task instance
@@ -60,8 +58,8 @@ def make_task(display_window, daq, task, parameters, file_save,
 
 
 def start_task(display_window, daq, task, parameters, file_save,
-               signal_model=None, language_model=None, fake=True, auc_filename=None):
+               signal_model=None, language_model=None, fake=True):
     """Creates a Task and starts execution."""
     task = make_task(display_window, daq, task, parameters, file_save,
-                     signal_model, language_model, fake, auc_filename)
+                     signal_model, language_model, fake)
     task.execute()

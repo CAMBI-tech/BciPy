@@ -4,7 +4,7 @@
 
 def main():
     from bcipy.main import bcipy_main
-    from bcipy.tasks.task_registry import TaskType
+    from bcipy.task import TaskType
     from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 
     # Load a parameters file

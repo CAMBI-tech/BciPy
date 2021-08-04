@@ -1,6 +1,6 @@
 from itertools import cycle
-from bcipy.tasks.task import Task
-from bcipy.tasks.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task import Task
+from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 
 
 class RSVPTimingVerificationCalibration(Task):

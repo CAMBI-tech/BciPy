@@ -12,8 +12,8 @@ from bcipy.helpers.load import load_json_parameters, load_experiments, load_sign
 from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
-from bcipy.tasks.start_task import start_task
-from bcipy.tasks.task_registry import TaskType
+from bcipy.task import TaskType
+from bcipy.task.start_task import start_task
 from bcipy.signal.model import PcaRdaKdeModel
 
 
@@ -128,7 +128,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         start_task(
             display, daq, task, parameters, save_folder,
             language_model=language_model,
-            signal_model=signal_model, fake=fake, auc_filename=filename)
+            signal_model=signal_model, fake=fake)
 
     # If exception, close all display and acquisition objects
     except Exception as e:

@@ -13,8 +13,8 @@ import bcipy.helpers.task
 from bcipy.acquisition.client import DataAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.tasks.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.tasks.session_data import Session, EvidenceType
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 
 
@@ -109,11 +109,11 @@ class TestCopyPhrase(unittest.TestCase):
                                         spec=CopyPhraseWrapper)
 
         self.display = mock()
-        when(bcipy.tasks.rsvp.copy_phrase)._init_copy_phrase_display(
+        when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_display(
             self.parameters, self.win, self.daq, any,
             any).thenReturn(self.display)
 
-        when(bcipy.tasks.rsvp.copy_phrase)._init_copy_phrase_wrapper(
+        when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
 
     def tearDown(self):
@@ -131,10 +131,10 @@ class TestCopyPhrase(unittest.TestCase):
                                   language_model=self.language_model,
                                   fake=True)
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
     def test_execute_without_inquiry(self, write_trg_mock, message_mock,
                                      user_input_mock):
@@ -169,12 +169,12 @@ class TestCopyPhrase(unittest.TestCase):
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(0, session.total_number_series)
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_execute_fake_data_single_inquiry(self, process_data_mock,
                                               write_trg_mock, message_mock,
                                               user_input_mock):
@@ -218,12 +218,12 @@ class TestCopyPhrase(unittest.TestCase):
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_max_inq_len(self, process_data_mock, write_trg_mock, message_mock,
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
@@ -266,12 +266,12 @@ class TestCopyPhrase(unittest.TestCase):
                              "In fake data a decision is made every time.")
             self.assertEqual(1, len(session.series[0]))
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_spelling_complete(self, process_data_mock, write_trg_mock,
                                message_mock, user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -377,12 +377,12 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertEqual(task.stims_for_decision(timings3), timings3[3:])
         self.assertEqual(task.stims_for_decision(timings4), timings4[1:])
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_next_letter(self, process_data_mock, write_trg_mock, message_mock,
                          user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -409,12 +409,12 @@ class TestCopyPhrase(unittest.TestCase):
         task.spelled_text = 'Heo'
         self.assertEqual(task.next_target(), '<')
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_execute_fake_data_with_preview(self, process_data_mock,
                                             write_trg_mock, message_mock,
                                             user_input_mock):
@@ -455,12 +455,12 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(write_trg_mock.called, 'Triggers should be written')
         self.assertEqual(self.temp_dir, result)
 
-    @patch('bcipy.tasks.rsvp.copy_phrase.get_user_input')
-    @patch('bcipy.tasks.rsvp.copy_phrase.trial_complete_message')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.tasks.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.tasks.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
     def test_execute_real_data_single_inquiry(self, process_data_mock,
                                               write_trg_mock, message_mock,
                                               user_input_mock):
@@ -518,7 +518,7 @@ class TestCopyPhrase(unittest.TestCase):
             })
         })
 
-        when(bcipy.tasks.rsvp.copy_phrase)._init_copy_phrase_wrapper(
+        when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(
             ...).thenReturn(copy_phrase_wrapper_mock)
 
         # mock data for initial series
@@ -643,3 +643,7 @@ def mock_process_data():
         'nontarget'
     ]
     return (raw_data, triggers, target_info)
+
+
+if __name__ == '__main__':
+    unittest.main()

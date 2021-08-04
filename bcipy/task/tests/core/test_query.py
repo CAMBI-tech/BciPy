@@ -1,5 +1,5 @@
 import unittest
-from bcipy.tasks.rsvp.query_mechanisms import best_selection
+from bcipy.task.control.query import best_selection
 
 
 class TestQueryMechanisms(unittest.TestCase):
@@ -18,3 +18,7 @@ class TestQueryMechanisms(unittest.TestCase):
         values = [0.1, 0.2, 0.2, 0.2, 0.2]
         len_query = 3
         self.assertEqual(["U", "O", "I"], best_selection(list_el, values, len_query))
+
+
+if __name__ == '__main__':
+    unittest.main()
