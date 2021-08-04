@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,9 +35,9 @@ jobs:
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
-    - name: Test with pytest
+    - name: Unit test
       run: |
-        xvfb-run pytest -k "not slow"
+        xvfb-run coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
         
   build-windows:
 
@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -62,9 +62,9 @@ jobs:
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
-    - name: Test with pytest
+    - name: Unit test
       run: |
-        pytest -k "not slow"
+        coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 
   build-macos:
 
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -89,6 +89,6 @@ jobs:
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
-    - name: Test with pytest
+    - name: Unit test
       run: |
-        pytest -k "not slow"
+        coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
