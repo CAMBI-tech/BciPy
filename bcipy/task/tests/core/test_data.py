@@ -98,20 +98,20 @@ class TestSessionData(unittest.TestCase):
         stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
         self.assertTrue('lm_evidence' in serialized.keys())
-        self.assertEquals(serialized['lm_evidence'], stim_seq.evidences[EvidenceType.LM])
+        self.assertEqual(serialized['lm_evidence'], stim_seq.evidences[EvidenceType.LM])
 
         deserialized = Inquiry.from_dict(serialized)
 
-        self.assertEquals(stim_seq.stimuli, deserialized.stimuli)
-        self.assertEquals(stim_seq.timing, deserialized.timing)
-        self.assertEquals(stim_seq.triggers, deserialized.triggers)
-        self.assertEquals(stim_seq.target_info, deserialized.target_info)
-        self.assertEquals(stim_seq.target_letter, deserialized.target_letter)
-        self.assertEquals(stim_seq.current_text, deserialized.current_text)
-        self.assertEquals(stim_seq.target_text, deserialized.target_text)
-        self.assertEquals(stim_seq.next_display_state,
+        self.assertEqual(stim_seq.stimuli, deserialized.stimuli)
+        self.assertEqual(stim_seq.timing, deserialized.timing)
+        self.assertEqual(stim_seq.triggers, deserialized.triggers)
+        self.assertEqual(stim_seq.target_info, deserialized.target_info)
+        self.assertEqual(stim_seq.target_letter, deserialized.target_letter)
+        self.assertEqual(stim_seq.current_text, deserialized.current_text)
+        self.assertEqual(stim_seq.target_text, deserialized.target_text)
+        self.assertEqual(stim_seq.next_display_state,
                           deserialized.next_display_state)
-        self.assertEquals(stim_seq.evidences[EvidenceType.LM], deserialized.evidences[EvidenceType.LM])
+        self.assertEqual(stim_seq.evidences[EvidenceType.LM], deserialized.evidences[EvidenceType.LM])
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""
