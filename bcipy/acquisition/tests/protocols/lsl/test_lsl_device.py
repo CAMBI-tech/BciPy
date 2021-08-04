@@ -171,7 +171,7 @@ class TestLslChannelConfig(TestLslDevice):
         device.connect()
         device.acquisition_init()
         self.assertEqual(self.channels + [MARKER_STREAM_NAME],
-                          device.channels)
+                         device.channels)
         self.assertEqual(len(self.channels) + 1, len(device.read_data()))
 
     def test_with_marker_stream_and_timestamp(self):
@@ -185,7 +185,7 @@ class TestLslChannelConfig(TestLslDevice):
         device.connect()
         device.acquisition_init()
         self.assertEqual(self.channels + [LSL_TIMESTAMP, MARKER_STREAM_NAME],
-                          device.channels)
+                         device.channels)
         self.assertEqual(len(self.channels) + 2, len(device.read_data()))
 
     def test_renaming_columns(self):

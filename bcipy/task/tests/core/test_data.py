@@ -110,7 +110,7 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(stim_seq.current_text, deserialized.current_text)
         self.assertEqual(stim_seq.target_text, deserialized.target_text)
         self.assertEqual(stim_seq.next_display_state,
-                          deserialized.next_display_state)
+                         deserialized.next_display_state)
         self.assertEqual(stim_seq.evidences[EvidenceType.LM], deserialized.evidences[EvidenceType.LM])
 
     def test_stim_sequence_evidence(self):
