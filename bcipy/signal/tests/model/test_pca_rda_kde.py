@@ -85,6 +85,7 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
         expected = np.load(expected_output_folder / "test_pca.expected.npy")
         self.assertTrue(np.allclose(x_reduced, expected))
 
+    @pytest.mark.slow
     @pytest.mark.mpl_image_compare(
         baseline_dir=expected_output_folder, filename="test_kde_plot.expected.png", remove_text=True
     )
@@ -190,6 +191,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         self.model.fit(self.x, self.y)
         np.random.seed(0)
 
+    @pytest.mark.slow
     @pytest.mark.mpl_image_compare(
         baseline_dir=expected_output_folder,
         filename="test_inference.expected.png",
