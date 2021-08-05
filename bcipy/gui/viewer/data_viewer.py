@@ -1,47 +1,196 @@
-"""
-EEG viewer that uses a queue as a data source. Records are retrieved by a
-wx Timer.
-"""
-from bcipy.gui.viewer.data_source.filter import downsample_filter, stream_filter
-from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.gui.viewer.data_source.data_source import QueueDataSource
-from bcipy.acquisition.device_info import DeviceInfo
-import matplotlib
-import wx
-matplotlib.use('WXAgg')
-import matplotlib.ticker as ticker
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-import csv
+"""EEG Data Viewer"""
+import sys
+from functools import partial
 from queue import Queue
+from typing import Callable, Dict, List, Optional, Tuple
 
+import matplotlib.ticker as ticker
 import numpy as np
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+from PyQt5.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
+                             QLabel, QPushButton, QSpinBox, QVBoxLayout,
+                             QWidget)
+
+from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.util import StoppableProcess
+from bcipy.gui.gui_main import static_text_control
+from bcipy.gui.viewer.data_source.data_source import QueueDataSource
+from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
+from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.raw_data import settings
+from bcipy.signal.process.transform import Downsample, get_default_transform
 
 
-class EEGFrame(wx.Frame):
+def filters(
+        sample_rate_hz: float, parameters: Parameters
+) -> Dict[str, Callable[[np.ndarray, Optional[int]], Tuple[np.ndarray, int]]]:
+    """Returns a dict of filters that can be used"""
+    return {
+        'downsample':
+        Downsample(parameters['down_sampling_rate']),
+        'default_transform':
+        get_default_transform(
+            sample_rate_hz=sample_rate_hz,
+            notch_freq_hz=parameters['notch_filter_frequency'],
+            bandpass_low=parameters['filter_low'],
+            bandpass_high=parameters['filter_high'],
+            bandpass_order=parameters['filter_order'],
+            downsample_factor=parameters['down_sampling_rate'])
+    }
+
+
+def active_indices(all_channels, removed_channels) -> List[int]:
+    """List of indices of all channels which will be displayed. By default
+    filters out TRG channels and any channels marked as
+    removed_channels.
+
+    Parameters
+    ----------
+    - all_channels : list of channel names
+    - removed_channels : list of channel names to exclude
+
+    Returns
+    -------
+    list of indices for channel names in use.
+    """
+
+    return [
+        i for i in range(len(all_channels))
+        if all_channels[i] not in removed_channels
+        and 'TRG' not in all_channels[i]
+    ]
+
+
+def init_buffer(samples_per_second: int, seconds: int,
+                channels: List[str]) -> RingBuffer:
+    """Initialize the underlying RingBuffer by pre-allocating empty
+    values. Buffer size is determined by the sample frequency and the
+    number of seconds to display.
+
+    Parameters
+    ----------
+    - samples_per_second : sample rate
+    - seconds : number of seconds of data to store
+    - channels : list of channel names
+    """
+
+    buf_size = int(samples_per_second * seconds)
+    empty_val = [0.0 for _x in channels]
+    return RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
+
+
+class FixedHeightHBox(QWidget):
+    """Container for holding controls for the EEG Viewer. Acts like a
+    QHBoxLayout with a fixed height."""
+
+    def __init__(self, height: int = 30):
+        super().__init__()
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.layout)
+        self.setFixedHeight(height)
+
+    def addWidget(self, widget: QWidget):
+        """Add the given widget to the layout"""
+        self.layout.addWidget(widget)
+
+
+class ChannelControls(QWidget):
+    """Controls for toggling channels"""
+
+    def __init__(self, font_size: int, channels: List[str],
+                 active_channel_indices: List[int],
+                 toggle_channel_fn: Callable):
+        super().__init__()
+        control_stylesheet = f"font-size: {font_size}px;"
+        channel_box = QHBoxLayout()
+        channel_box.setContentsMargins(0, 0, 0, 0)
+
+        for channel_index in active_channel_indices:
+            channel_name = channels[channel_index]
+            chkbox = QCheckBox(channel_name)
+            chkbox.setChecked(True)
+            chkbox.setStyleSheet(control_stylesheet)
+            chkbox.toggled.connect(partial(toggle_channel_fn, channel_index))
+            channel_box.addWidget(chkbox)
+        self.setLayout(channel_box)
+        self.setFixedHeight(font_size + 4)
+
+
+class FixedScaleInput(QWidget):
+    """Input for adjusting the fixed scale value"""
+
+    def __init__(self,
+                 initial_value: int,
+                 on_change_fn: Callable,
+                 label: str = 'Fixed scale:',
+                 max_value: int = 5000,
+                 font_size: int = 11):
+        super().__init__()
+        stylesheet = f"font-size: {font_size}px;"
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        lbl = QLabel(label)
+        lbl.setStyleSheet(stylesheet)
+        lbl.setAlignment(Qt.AlignRight)
+        lbl.setContentsMargins(0, 2, 0, 0)
+        layout.addWidget(lbl)
+
+        self.fixed_scale_input = QSpinBox()
+        self.fixed_scale_input.setMaximum(max_value)
+        self.fixed_scale_input.setValue(initial_value)
+        self.fixed_scale_input.setStyleSheet(stylesheet)
+        self.fixed_scale_input.setAlignment(Qt.AlignLeft)
+        self.fixed_scale_input.valueChanged.connect(on_change_fn)
+        self.fixed_scale_input.setFocusPolicy(Qt.ClickFocus)
+
+        layout.addWidget(self.fixed_scale_input)
+        self.setLayout(layout)
+
+    def value(self) -> int:
+        """Returns the input value"""
+        return self.fixed_scale_input.value()
+
+
+class EEGPanel(QWidget):
     """GUI Frame in which data is plotted. Plots a subplot for every channel.
     Relies on a Timer to retrieve data at a specified interval. Data to be
     displayed is retrieved from a provided DataSource.
 
     Parameters:
     -----------
-        data_source - object that implements the viewer DataSource interface.
-        device_info - metadata about the data.
-        seconds - how many seconds worth of data to display.
-        downsample_factor - how much to compress the data. A factor of 1
-            displays the raw data.
-        refresh - time in milliseconds; how often to refresh the plots
+    - data_source : object that implements the viewer DataSource interface.
+    - device_info : metadata about the data.
+    - parameters : configuration for filters, etc.
+    - seconds : how many seconds worth of data to display.
+    - refresh : time in milliseconds; how often to refresh the plots
+    - y_scale : max y-value to use when using a fixed scale for plots
+    (autoscale turned off);
     """
+    control_font_size = 11
+    # space between axis label and tick labels
+    yaxis_label_space = 60
+    yaxis_label_fontsize = 12
+    # fixed width font so we can adjust spacing predictably
+    yaxis_tick_font = 'DejaVu Sans Mono'
+    yaxis_tick_fontsize = 10
 
-    def __init__(self, data_source, device_info: DeviceInfo,
-                 seconds: int = 5, downsample_factor: int = 2,
+    def __init__(self,
+                 data_source,
+                 device_info: DeviceInfo,
+                 parameters: Parameters,
+                 seconds: int = 5,
                  refresh: int = 500,
-                 y_scale=100):
-        wx.Frame.__init__(self, None, -1,
-                          'EEG Viewer', size=(800, 550))
+                 y_scale=500):
+        super().__init__()
 
         self.data_source = data_source
-
+        self.parameters = parameters
         self.refresh_rate = refresh
         self.samples_per_second = device_info.fs
         self.records_per_refresh = int(
@@ -49,119 +198,153 @@ class EEGFrame(wx.Frame):
 
         self.channels = device_info.channels
         self.removed_channels = ['TRG', 'timestamp']
-        self.data_indices = self.init_data_indices()
+        self.active_channel_indices = active_indices(self.channels,
+                                                     self.removed_channels)
 
         self.seconds = seconds
-        self.downsample_factor = downsample_factor
-        self.filter = downsample_filter(downsample_factor, device_info.fs)
+        self.downsample_factor = parameters['down_sampling_rate']
+
+        self.filter_options = filters(self.samples_per_second, parameters)
+        self.selected_filter = 'downsample'
 
         self.autoscale = True
-        self.y_min = -y_scale
-        self.y_max = y_scale
+        self.y_scale = y_scale
 
-        self.buffer = self.init_buffer()
+        self.started = False
+        self.initUI()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_plots)
+
+        # The buffer stores raw, unfiltered data.
+        self.buffer = init_buffer(self.samples_per_second, self.seconds,
+                                  self.channels)
+        self.init_data_plots()
+        self.axes_changed = False
+
+    # pylint: disable=attribute-defined-outside-init
+    def init_canvas(self):
+        """Initialize the Figure for drawing plots"""
+        self.y_min = -self.y_scale
+        self.y_max = self.y_scale
 
         # figure size is in inches.
-        self.figure = Figure(figsize=(12, 9), dpi=80,
+        self.figure = Figure(figsize=(12, 9),
+                             dpi=72,
                              tight_layout={'pad': 0.0})
-        # space between axis label and tick labels
-        self.yaxis_label_space = 60
-        self.yaxis_label_fontsize = 14
-        # fixed width font so we can adjust spacing predictably
-        self.yaxis_tick_font = 'DejaVu Sans Mono'
-        self.yaxis_tick_fontsize = 10
 
         self.axes = self.init_axes()
+        self.axes_bounds = self.init_axes_bounds()
+        self.canvas = FigureCanvasQTAgg(self.figure)
 
-        self.canvas = FigureCanvas(self, -1, self.figure)
+    # pylint: disable=invalid-name,attribute-defined-outside-init
+    def initUI(self):
+        """Initialize the UI"""
+        vbox = QVBoxLayout()
 
-        self.CreateStatusBar()
+        self.init_canvas()
+        vbox.addWidget(self.canvas)
 
         # Toolbar
-        self.toolbar = wx.BoxSizer(wx.VERTICAL)
+        self.toolbar = QVBoxLayout()
 
-        self.start_stop_btn = wx.Button(self, -1, "Start")
+        controls = FixedHeightHBox()
 
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update_view, self.timer)
-        self.Bind(wx.EVT_BUTTON, self.toggle_stream, self.start_stop_btn)
+        control_stylesheet = f"font-size: {self.control_font_size}px;"
 
-        # Filtered checkbox
-        self.sigpro_checkbox = wx.CheckBox(self, label="Filtered")
-        self.sigpro_checkbox.SetValue(False)
-        self.Bind(wx.EVT_CHECKBOX, self.toggle_filtering_handler,
-                  self.sigpro_checkbox)
+        # Start/Pause button
+        self.start_stop_btn = QPushButton('Pause' if self.started else 'Start',
+                                          self)
+        self.start_stop_btn.setFixedWidth(80)
+        self.start_stop_btn.setStyleSheet(control_stylesheet)
+        self.start_stop_btn.clicked.connect(self.toggle_stream)
+        controls.addWidget(self.start_stop_btn)
 
-        # Autoscale checkbox
-        self.autoscale_checkbox = wx.CheckBox(self, label="Autoscale")
-        self.autoscale_checkbox.SetValue(self.autoscale)
-        self.Bind(wx.EVT_CHECKBOX, self.toggle_autoscale_handler,
-                  self.autoscale_checkbox)
-
-        # Number of seconds text box
+        # Pulldown list of seconds to display
         self.seconds_choices = [2, 5, 10]
         if self.seconds not in self.seconds_choices:
             self.seconds_choices.append(self.seconds)
             self.seconds_choices.sort()
-        opts = [str(x) + " seconds" for x in self.seconds_choices]
-        self.seconds_input = wx.Choice(self, choices=opts)
-        cur_sec_selection = self.seconds_choices.index(self.seconds)
-        self.seconds_input.SetSelection(cur_sec_selection)
-        self.Bind(wx.EVT_CHOICE, self.seconds_handler, self.seconds_input)
 
-        controls = wx.BoxSizer(wx.HORIZONTAL)
-        controls.Add(self.start_stop_btn, 1, wx.ALIGN_CENTER, 0)
-        controls.Add(self.sigpro_checkbox, 1, wx.ALIGN_CENTER, 0)
-        controls.Add(self.autoscale_checkbox, 1, wx.ALIGN_CENTER, 0)
-        # TODO: pull right; currently doesn't do that
-        controls.Add(self.seconds_input, 0, wx.ALIGN_RIGHT, 0)
+        self.seconds_input = QComboBox()
+        self.seconds_input.addItems(
+            [str(x) + " seconds" for x in self.seconds_choices])
+        self.seconds_input.setCurrentIndex(
+            self.seconds_choices.index(self.seconds))
+        self.seconds_input.setStyleSheet(control_stylesheet)
+        self.seconds_input.currentIndexChanged.connect(self.seconds_handler)
+        controls.addWidget(self.seconds_input)
 
-        self.toolbar.Add(controls, 1, wx.ALIGN_CENTER, 0)
-        self.init_channel_buttons()
+        # Autoscale checkbox
+        self.autoscale_checkbox = QCheckBox('Auto-scale')
+        self.autoscale_checkbox.setStyleSheet(control_stylesheet)
+        self.autoscale_checkbox.setChecked(self.autoscale)
+        self.autoscale_checkbox.toggled.connect(self.toggle_autoscale_handler)
+        controls.addWidget(self.autoscale_checkbox)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.EXPAND)
-        sizer.Add(self.toolbar, 0, wx.ALIGN_BOTTOM | wx. ALIGN_CENTER)
-        self.SetSizer(sizer)
-        self.SetAutoLayout(1)
-        self.Fit()
+        # Fixed scale input
+        self.fixed_scale_input = FixedScaleInput(
+            self.y_scale,
+            self.fixed_scale_handler,
+            label='Fixed scale:',
+            font_size=self.control_font_size)
+        controls.addWidget(self.fixed_scale_input)
 
-        self.init_data()
-        self.started = False
-        self.start()
+        # Filter checkbox
+        self.sigpro_checkbox = QCheckBox('Filtered')
+        self.sigpro_checkbox.setStyleSheet(control_stylesheet)
+        self.sigpro_checkbox.setChecked(False)
+        self.sigpro_checkbox.toggled.connect(self.toggle_filtering_handler)
+        controls.addWidget(self.sigpro_checkbox)
 
-    def init_data_indices(self):
-        """List of indices of all channels which will be displayed. By default
-        filters out TRG channels and any channels marked as
-        removed_channels."""
+        # Filter settings label
+        filter_settings = [
+            f"Downsample: {self.downsample_factor}",
+            f"Notch Freq: {self.parameters['notch_filter_frequency']}",
+            f"Low: {self.parameters['filter_low']}",
+            f"High: {self.parameters['filter_high']}",
+            f"Order: {self.parameters['filter_order']}"
+        ]
+        self.filter_settings_text = static_text_control(
+            self,
+            label=f"[{', '.join(filter_settings)}]",
+            size=10,
+            color='dimgray')
+        self.filter_settings_text.setWordWrap(False)
+        controls.addWidget(self.filter_settings_text)
 
-        return [i for i in range(len(self.channels))
-                if self.channels[i] not in self.removed_channels
-                and 'TRG' not in self.channels[i]]
+        self.toolbar.addWidget(controls)
 
-    def init_buffer(self):
-        """Initialize the underlying RingBuffer by pre-allocating empty
-        values. Buffer size is determined by the sample frequency and the
-        number of seconds to display."""
+        channel_box = ChannelControls(self.control_font_size, self.channels,
+                                      self.active_channel_indices,
+                                      self.toggle_channel)
+        self.toolbar.addWidget(channel_box)
 
-        buf_size = int(self.samples_per_second * self.seconds)
-        empty_val = [0.0 for _x in self.channels]
-        buf = RingBuffer(buf_size, pre_allocated=True, empty_value=empty_val)
-        return buf
+        vbox.addLayout(self.toolbar)
+
+        self.setWindowTitle('EEG Viewer')
+        self.setLayout(vbox)
+        self.show()
+
+    @property
+    def filter(self):
+        """Returns the current filter"""
+        return self.filter_options[self.selected_filter]
 
     def init_axes(self):
         """Sets configuration for axes. Creates a subplot for every data
         channel and configures the appropriate labels and tick marks."""
 
-        axes = self.figure.subplots(len(self.data_indices), 1, sharex=True)
-        for i, channel in enumerate(self.data_indices):
+        axes = self.figure.subplots(len(self.active_channel_indices),
+                                    1,
+                                    sharex=True)
+        for i, channel in enumerate(self.active_channel_indices):
             ch_name = self.channels[channel]
             axes[i].set_frame_on(False)
-            axes[i].set_ylabel(
-                ch_name,
-                rotation=0,
-                labelpad=self.yaxis_label_space,
-                fontsize=self.yaxis_label_fontsize)
+            axes[i].set_ylabel(ch_name,
+                               rotation=0,
+                               labelpad=self.yaxis_label_space,
+                               fontsize=self.yaxis_label_fontsize)
             # x-axis shows seconds in 0.5 sec increments
             tick_names = np.arange(0, self.seconds, 0.5)
             ticks = [(self.samples_per_second * sec) / self.downsample_factor
@@ -169,8 +352,9 @@ class EEGFrame(wx.Frame):
             axes[i].xaxis.set_major_locator(ticker.FixedLocator(ticks))
             axes[i].xaxis.set_major_formatter(
                 ticker.FixedFormatter(tick_names))
-            axes[i].tick_params(
-                axis='y', which='major', labelsize=self.yaxis_tick_fontsize)
+            axes[i].tick_params(axis='y',
+                                which='major',
+                                labelsize=self.yaxis_tick_fontsize)
             for tick in axes[i].get_yticklabels():
                 tick.set_fontname(self.yaxis_tick_font)
             axes[i].grid()
@@ -180,27 +364,16 @@ class EEGFrame(wx.Frame):
         """Clear the data in the GUI."""
         self.figure.clear()
         self.axes = self.init_axes()
+        self.axes_bounds = self.init_axes_bounds()
+        self.init_data_plots()
 
-    def init_channel_buttons(self):
-        """Add buttons for toggling the channels."""
+    def init_axes_bounds(self):
+        """Initial value for ymin, ymax bounds for every axis."""
+        return [None] * len(self.axes)
 
-        channel_box = wx.BoxSizer(wx.HORIZONTAL)
-        for channel_index in self.data_indices:
-            channel = self.channels[channel_index]
-            chkbox = wx.CheckBox(self, label=channel, id=channel_index)
-            chkbox.SetValue(channel not in self.removed_channels)
-
-            self.Bind(wx.EVT_CHECKBOX, self.toggle_channel, chkbox)
-            channel_box.Add(chkbox, 0, wx.ALIGN_CENTER, 0)
-
-        self.toolbar.Add(channel_box, 1, wx.ALIGN_LEFT, 0)
-
-    def toggle_channel(self, event):
+    def toggle_channel(self, channel_index):
         """Remove the provided channel from the display"""
-        channel_index = event.GetEventObject().GetId()
         channel = self.channels[channel_index]
-
-        previously_running = self.started
         if self.started:
             self.stop()
 
@@ -208,77 +381,96 @@ class EEGFrame(wx.Frame):
             self.removed_channels.remove(channel)
         else:
             self.removed_channels.append(channel)
-        self.data_indices = self.init_data_indices()
-        self.reset_axes()
-        self.init_data()
-        self.canvas.draw()
-        if previously_running:
-            self.start()
+        self.active_channel_indices = active_indices(self.channels,
+                                                     self.removed_channels)
+        self.axes_changed = True
 
     def start(self):
         """Start streaming data in the viewer."""
         # update buffer with latest data on (re)start.
-        self.update_buffer(fast_forward=True)
-        self.timer.Start(self.refresh_rate)
+        self.start_stop_btn.setText('Pause')
+        stylesheet = f'font-size: {self.control_font_size}px;'
+        self.start_stop_btn.setStyleSheet(stylesheet)
+        self.start_stop_btn.repaint()
         self.started = True
-        self.start_stop_btn.SetLabel("Pause")
+
+        if self.axes_changed:
+            self.axes_changed = False
+            self.reset_axes()
+
+        self.update_buffer(fast_forward=True)
+        self.timer.start(self.refresh_rate)
 
     def stop(self):
         """Stop/Pause the viewer."""
-        self.timer.Stop()
+        self.start_stop_btn.setText('Start')
+        stylesheet = (f'font-size: {self.control_font_size}px;'
+                      'color: white; background-color: green;'
+                      'border: 1px solid darkgreen;'
+                      'border-radius: 4px; padding: 3px;')
+        self.start_stop_btn.setStyleSheet(stylesheet)
+        self.start_stop_btn.repaint()
         self.started = False
-        self.start_stop_btn.SetLabel("Start")
+        self.timer.stop()
 
-    def toggle_stream(self, _event):
+    def toggle_stream(self):
         """Toggle data streaming"""
         if self.started:
             self.stop()
         else:
             self.start()
 
-    def toggle_filtering_handler(self, event):
+    def toggle_filtering_handler(self):
         """Event handler for toggling data filtering."""
         self.with_refresh(self.toggle_filtering)
 
     def toggle_filtering(self):
         """Toggles data filtering."""
-        if self.sigpro_checkbox.GetValue():
-            self.filter = stream_filter(
-                self.downsample_factor, self.samples_per_second)
-        else:
-            self.filter = downsample_filter(
-                self.downsample_factor, self.samples_per_second)
+        self.selected_filter = 'default_transform' if self.sigpro_checkbox.isChecked(
+        ) else 'downsample'
 
-    def toggle_autoscale_handler(self, event):
+    def toggle_autoscale_handler(self):
         """Event handler for toggling autoscale"""
         self.with_refresh(self.toggle_autoscale)
 
     def toggle_autoscale(self):
         """Sets autoscale to checkbox value"""
-        self.autoscale = self.autoscale_checkbox.GetValue()
+        self.autoscale = self.autoscale_checkbox.isChecked()
 
-    def seconds_handler(self, event):
+    def seconds_handler(self):
         """Event handler for changing seconds"""
         self.with_refresh(self.update_seconds)
 
     def update_seconds(self):
         """Set the number of seconds worth of data to display from the
         pulldown list."""
-        self.seconds = self.seconds_choices[self.seconds_input.GetSelection()]
-        self.buffer = self.init_buffer()
+        self.seconds = self.seconds_choices[self.seconds_input.currentIndex()]
+        self.buffer = init_buffer(self.samples_per_second, self.seconds,
+                                  self.channels)
+
+    def fixed_scale_handler(self):
+        """Event handler for updating the fixed scale"""
+        self.with_refresh(self.update_fixed_scale)
+
+    def update_fixed_scale(self):
+        """Sets the fixed scale value from the input."""
+        self.y_scale = abs(self.fixed_scale_input.value())
+        self.y_min = -self.y_scale
+        self.y_max = self.y_scale
+        self.autoscale = False
+        self.autoscale_checkbox.setChecked(self.autoscale)
+        self.autoscale_checkbox.repaint()
 
     def with_refresh(self, fn):
-        """Performs the given action and refreshes the display."""
-        previously_running = self.started
+        """Pauses streaming, performs the given action, and sets a flag
+        indicating that the display axes should be refreshed on restart."""
+
         if self.started:
             self.stop()
         fn()
-        # re-initialize
-        self.reset_axes()
-        self.init_data()
-        if previously_running:
-            self.start()
+        self.axes_changed = True
 
+    @property
     def current_data(self):
         """Returns the data as an np array with a row of floats for each
         displayed channel."""
@@ -287,68 +479,108 @@ class EEGFrame(wx.Frame):
         data = np.array(self.buffer.data)
 
         # select only data columns and convert to float
-        return np.array(data[:, self.data_indices],
+        return np.array(data[:, self.active_channel_indices],
                         dtype='float64').transpose()
 
+    def filtered_data(self):
+        """Channel data after applying the current filter.
+
+        Returns the data as an np array with a row of floats for each
+        displayed channel.
+        """
+        channel_data, _fs = self.filter(self.current_data,
+                                        self.samples_per_second)
+        return channel_data
+
+    @property
     def cursor_x(self):
         """Current cursor position (x-axis), accounting for downsampling."""
         return self.buffer.cur // self.downsample_factor
 
-    def init_data(self):
-        """Initialize the data."""
-        channel_data = self.filter(self.current_data())
+    def init_data_plots(self):
+        """Initialize the data in the viewer."""
+        channel_data = self.filtered_data()
 
-        for i, _channel in enumerate(self.data_indices):
+        cursor_x = self.cursor_x
+        for i, _channel in enumerate(self.active_channel_indices):
+            # Initial data plotted will be a list 0.0; this will be updated
+            # with real data every tick using the `update_plots` method.
             data = channel_data[i].tolist()
+            self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
             self.axes[i].plot(data, linewidth=0.8)
             # plot cursor
-            self.axes[i].axvline(self.cursor_x(), color='r')
+            self.axes[i].axvline(cursor_x, color='r')
 
-    def update_buffer(self, fast_forward=False):
-        """Update the buffer with latest data from the datasource and return
-        the data. If the datasource does not have the requested number of
+    def update_buffer(self, fast_forward: bool = False) -> None:
+        """Update the buffer with latest data from the datasource.
+        If the datasource does not have the requested number of
         samples, viewer streaming is stopped."""
         try:
-            records = self.data_source.next_n(
-                self.records_per_refresh, fast_forward=fast_forward)
+            records = self.data_source.next_n(self.records_per_refresh,
+                                              fast_forward=fast_forward)
             for row in records:
                 self.buffer.append(row)
         except StopIteration:
             self.stop()
-            # close the Wx.Frame to shutdown the viewer application
-            self.Close()
         except BaseException:
             self.stop()
-        return self.buffer.get()
 
-    def update_view(self, _evt):
+    def update_axes_bounds(self, index: int, data: List[float]) -> bool:
+        """Update the upper and lower bounds of the axis at the given index.
+
+        Parameters
+        ----------
+        - index : index of the axis to update
+        - data : current data to be displayed
+
+        Returns
+        -------
+        bool indicating whether or not the bounds changed
+        """
+        assert self.axes_bounds, "Axes bounds must be initialized"
+        # Maintains a symmetrical scale. Alternatively we could set:
+        #   data_min = round(min(data))
+        #   data_max = round(max(data))
+        data_max = max(abs(round(min(data))), abs(round(max(data))))
+        data_min = -data_max
+        if self.axes_bounds[index]:
+            current_min, current_max = self.axes_bounds[index]
+            self.axes_bounds[index] = (min(current_min, data_min),
+                                       max(current_max, data_max))
+            return (current_min, current_max) != self.axes_bounds[index]
+        self.axes_bounds[index] = (data_min, data_max)
+        return True
+
+    def update_plots(self):
         """Called by the timer on refresh. Updates the buffer with the latest
         data and refreshes the plots. This is called on every tick."""
         self.update_buffer()
-        channel_data = self.filter(self.current_data())
+        channel_data = self.filtered_data()
 
+        cursor_x = self.cursor_x
         # plot each channel
-        for i, _channel in enumerate(self.data_indices):
+        for i, _channel in enumerate(self.active_channel_indices):
             data = channel_data[i].tolist()
             self.axes[i].lines[0].set_ydata(data)
             # cursor line
-            self.axes[i].lines[1].set_xdata(self.cursor_x())
+            self.axes[i].lines[1].set_xdata(cursor_x)
             if self.autoscale:
-                data_min = min(data)
-                data_max = max(data)
+                bounds_changed = self.update_axes_bounds(i, data)
+                data_min, data_max = self.axes_bounds[i]
+
                 self.axes[i].set_ybound(lower=data_min, upper=data_max)
 
-                # For ylabels to be aligned consistently, labelpad is
-                # re-calculated on every draw.
-                ch_name = self.channels[_channel]
-                tick_labels = self.axes[i].get_yticks()
-                # Min tick value does not display so index is 1, not 0.
-                pad = self.adjust_padding(
-                    int(tick_labels[1]), int(tick_labels[-1]))
-                self.axes[i].set_ylabel(
-                    ch_name, rotation=0, labelpad=pad, fontsize=14)
+                if bounds_changed:
+                    # For ylabels to be aligned consistently, labelpad is re-calculated
+                    ch_name = self.channels[_channel]
+                    tick_labels = self.axes[i].get_yticks()
+                    # Min tick value does not display so index is 1, not 0.
+                    pad = self.adjust_padding(data_min, data_max)
+                    self.axes[i].set_ylabel(ch_name,
+                                            rotation=0,
+                                            labelpad=pad,
+                                            fontsize=12)
             else:
-                # lower=min(data), upper=max(data))
                 self.axes[i].set_ybound(lower=self.y_min, upper=self.y_max)
 
         self.canvas.draw()
@@ -369,15 +601,15 @@ class EEGFrame(wx.Frame):
             ((chars - baseline_chars) * ytick_digit_width)
 
 
-def lsl_data():
+def lsl_data() -> Tuple[LslDataSource, DeviceInfo, None]:
     """Constructs an LslDataSource, which provides data written to an LSL EEG
     stream."""
-    from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
     data_source = LslDataSource(stream_type='EEG')
     return (data_source, data_source.device_info, None)
 
 
-def file_data(path: str):
+def file_data(path: str
+              ) -> Tuple[QueueDataSource, DeviceInfo, StoppableProcess]:
     """Constructs a QueueDataSource from the contents of the file at the given
     path. Data is written to the datasource at the rate specified in the
     raw_data.csv metadata, so it acts as a live stream.
@@ -396,14 +628,7 @@ def file_data(path: str):
 
     from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
-    with open(path) as csvfile:
-        r1 = next(csvfile)
-        name = r1.strip().split(",")[1]
-        r2 = next(csvfile)
-        freq = float(r2.strip().split(",")[1])
-
-        reader = csv.reader(csvfile)
-        channels = next(reader)
+    name, freq, channels = settings(path)
     queue = Queue()
     streamer = FileStreamer(path, queue)
     data_source = QueueDataSource(queue)
@@ -413,8 +638,12 @@ def file_data(path: str):
     return (data_source, device_info, streamer)
 
 
-def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
-         yscale: int, display_screen: int = 1):
+def main(data_file: str,
+         seconds: int,
+         refresh: int,
+         yscale: int,
+         display_screen: int = 1,
+         parameters: str = DEFAULT_PARAMETERS_PATH):
     """Run the viewer GUI. If a raw_data.csv data_file is provided, data is
     streamed from that, otherwise it will read from an LSLDataStream by
     default.
@@ -427,48 +656,76 @@ def main(data_file: str, seconds: int, downsample_factor: int, refresh: int,
             displays the raw data.
         display_screen - monitor in which to display the viewer
             (0 for primary, 1 for secondary)
+        parameters - location of parameters.json file with configuration for filters.
     """
     data_source, device_info, proc = file_data(
         data_file) if data_file else lsl_data()
 
-    app = wx.App(False)
-    frame = EEGFrame(data_source, device_info,
-                     seconds, downsample_factor, refresh, yscale)
+    app = QApplication(sys.argv)
+    panel = EEGPanel(data_source, device_info,
+                     Parameters(parameters, cast_values=True), seconds,
+                     refresh, yscale)
 
-    if wx.Display.GetCount() > 1 and display_screen == 1:
-        # place frame in the second monitor if one exists.
-        s2_x, s2_y, _width, _height = wx.Display(1).GetGeometry()
-        offset = 30
-        frame.SetPosition((s2_x + offset, s2_y + offset))
+    if display_screen == 1 and len(app.screens()) > 1:
+        # place frame in the second monitor if one exists
+        non_primary_screens = [
+            screen for screen in app.screens()
+            if screen != app.primaryScreen()
+        ]
+        display_monitor = non_primary_screens[0]
+        monitor = display_monitor.geometry()
+    else:
+        monitor = app.primaryScreen().geometry()
 
-    frame.Show(True)
-    app.MainLoop()
+    # increase height to 90% of monitor height and preserve aspect ratio.
+    new_height = int(monitor.height() * 0.9)
+    pct_increase = (new_height - panel.height()) / panel.height()
+    new_width = panel.width() + int(panel.width() * pct_increase)
+
+    panel.resize(new_width, new_height)
+    panel.move(monitor.left(), monitor.top())
+
+    panel.start()
+
+    app_exit = app.exec_()
     if proc:
         proc.stop()
+    sys.exit(app_exit)
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-f', '--file', help='path to the data file', default=None)
-    parser.add_argument('-s', '--seconds',
-                        help='seconds to display', default=5, type=int)
-    parser.add_argument('-d', '--downsample',
-                        help='downsample factor', default=2, type=int)
-    parser.add_argument('-r', '--refresh',
-                        help='refresh rate in ms', default=500, type=int)
-    parser.add_argument('-y', '--yscale',
-                        help='yscale', default=150, type=int)
-    parser.add_argument('-m', '--monitor',
-                        help='display screen (0: primary, 1: secondary)', default=0, type=int)
+    parser.add_argument('-f',
+                        '--file',
+                        help='path to the data file',
+                        default=None)
+    parser.add_argument('-p',
+                        '--parameters',
+                        default=DEFAULT_PARAMETERS_PATH,
+                        help='Parameter location. Pass as *.json')
+    parser.add_argument('-s',
+                        '--seconds',
+                        help='seconds to display',
+                        default=5,
+                        type=int)
+    parser.add_argument('-r',
+                        '--refresh',
+                        help='refresh rate in ms',
+                        default=500,
+                        type=int)
+    parser.add_argument('-y', '--yscale', help='yscale', default=500, type=int)
+    parser.add_argument('-m',
+                        '--monitor',
+                        help='display screen (0: primary, 1: secondary)',
+                        default=0,
+                        type=int)
 
     args = parser.parse_args()
-    main(
-        args.file,
-        args.seconds,
-        args.downsample,
-        args.refresh,
-        args.yscale,
-        args.monitor)
+    main(data_file=args.file,
+         seconds=args.seconds,
+         refresh=args.refresh,
+         yscale=args.yscale,
+         display_screen=args.monitor,
+         parameters=args.parameters)

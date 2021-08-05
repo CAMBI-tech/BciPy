@@ -8,7 +8,6 @@ from typing import List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QHBoxLayout,
-    QMessageBox,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -17,7 +16,9 @@ from PyQt5.QtWidgets import (
 
 from bcipy.gui.gui_main import (
     AlertMessageType,
+    AlertMessageResponse,
     AlertResponse,
+    MessageBox,
     app,
     BoolInput,
     DirectoryInput,
@@ -47,6 +48,7 @@ class ExperimentFieldCollection(QWidget):
         'directorypath': DirectoryInput
     }
     require_mark = '*'
+    alert_timeout = 10
     save_data = {}
 
     def __init__(self, title: str, width: int, height: int, experiment_name: str, save_path: str, file_name: str):
@@ -95,6 +97,7 @@ class ExperimentFieldCollection(QWidget):
         """
 
         form_input = self.type_inputs.get(field_type, TextInput)
+
         if required:
             field_name += self.require_mark
         return form_input(
@@ -107,7 +110,7 @@ class ExperimentFieldCollection(QWidget):
     def build_assets(self) -> None:
         """Build Assets.
 
-        Build any needed assests for the Experiment Field Widget. Currently, only a form is needed.
+        Build any needed assets for the Experiment Field Widget. Currently, only a form is needed.
         """
         self.build_form()
 
@@ -124,7 +127,8 @@ class ExperimentFieldCollection(QWidget):
                     title='BciPy Alert',
                     message=f'Required field {name.strip(self.require_mark)} must be filled out!',
                     message_type=AlertMessageType.CRIT,
-                    okay_or_cancel=True)
+                    message_response=AlertMessageResponse.OCE,
+                    message_timeout=self.alert_timeout)
                 return False
         return True
 
@@ -171,7 +175,8 @@ class ExperimentFieldCollection(QWidget):
                 title='Error',
                 message=f'Error saving data. Invalid value provided. \n {e}',
                 message_type=AlertMessageType.WARN,
-                okay_or_cancel=True
+                message_response=AlertMessageResponse.OCE,
+                message_timeout=self.alert_timeout
             )
 
     def write_save_data(self) -> None:
@@ -179,28 +184,30 @@ class ExperimentFieldCollection(QWidget):
         self.throw_alert_message(
             title='Success',
             message=(
-                f'Data sucessfully written to: \n\n{self.save_path}/{self.file_name} \n\n\n'
-                'Please close this window to start the task!'),
+                f'Data successfully written to: \n\n{self.save_path}/{self.file_name} \n\n\n'
+                'Please wait or close this window to start the task!'),
             message_type=AlertMessageType.INFO,
-            okay_or_cancel=True
+            message_response=AlertMessageResponse.OCE,
+            message_timeout=self.alert_timeout,
         )
 
     def throw_alert_message(self,
                             title: str,
                             message: str,
                             message_type: AlertMessageType = AlertMessageType.INFO,
-                            okay_to_exit: bool = False,
-                            okay_or_cancel: bool = False) -> QMessageBox:
+                            message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+                            message_timeout: float = 0) -> MessageBox:
         """Throw Alert Message."""
 
-        msg = QMessageBox()
+        msg = MessageBox()
         msg.setWindowTitle(title)
         msg.setText(message)
         msg.setIcon(message_type.value)
+        msg.setTimeout(message_timeout)
 
-        if okay_to_exit:
+        if message_response is AlertMessageResponse.OTE:
             msg.setStandardButtons(AlertResponse.OK.value)
-        elif okay_or_cancel:
+        elif message_response is AlertMessageResponse.OCE:
             msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
         return msg.exec_()
@@ -267,7 +274,6 @@ def start_app() -> None:
     from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
 
     parser = argparse.ArgumentParser()
-    # save path
 
     # experiment_name
     parser.add_argument('-p', '--path', default='.',
@@ -292,7 +298,7 @@ def start_app() -> None:
     file_name = args.filename
 
     bcipy_gui = app(sys.argv)
-    # todo change height based on field #?
+
     ex = MainPanel(
         title='Experiment Field Collection',
         height=250,

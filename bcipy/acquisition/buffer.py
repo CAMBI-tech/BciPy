@@ -6,11 +6,11 @@ import os
 import sqlite3
 from collections import deque
 import logging
-import csv
 
 from typing import List
 from builtins import range
 from bcipy.acquisition.record import Record
+from bcipy.helpers.raw_data import RawDataWriter
 
 log = logging.getLogger(__name__)
 
@@ -286,23 +286,14 @@ class Buffer():
             sample_rate - metadata for the sample rate; ex. 300.0
         """
 
-        with open(raw_data_file_name, "w", encoding='utf-8', newline='') as raw_data_file:
-            # write metadata
-            raw_data_file.write(f"daq_type,{daq_type}\n")
-            raw_data_file.write(f"sample_rate,{sample_rate}\n")
-
-            # if flush is missing the previous content may be appended at the end
-            raw_data_file.flush()
-
-            self._flush()
-            cursor = self._new_connection().cursor()
-            cursor.execute("select * from data;")
-            columns = [description[0] for description in cursor.description]
-
-            csv_writer = csv.writer(raw_data_file, delimiter=',')
-            csv_writer.writerow(columns)
+        self._flush()
+        cursor = self._new_connection().cursor()
+        cursor.execute("select * from data;")
+        columns = [description[0] for description in cursor.description]
+        with RawDataWriter(raw_data_file_name, daq_type, sample_rate,
+                           columns) as writer:
             for row in cursor:
-                csv_writer.writerow(row)
+                writer.writerow(row)
 
 
 def _adapt_record(record):

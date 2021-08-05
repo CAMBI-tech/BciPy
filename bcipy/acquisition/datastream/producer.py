@@ -89,8 +89,8 @@ class Producer(threading.Thread):
 
         sleep_len = tick()
         times = 0
-        while self._running and (self.maxiters is None
-                                 or times < self.maxiters):
+        while self._running and (self.maxiters is None or
+                                 times < self.maxiters):
             times += 1
             time.sleep(next(sleep_len))
             self._additem()

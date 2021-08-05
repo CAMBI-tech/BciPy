@@ -1,3 +1,4 @@
+from bcipy.helpers.validate import validate_experiments
 import errno
 import os
 from time import localtime, strftime
@@ -24,12 +25,13 @@ def save_json_data(data: dict, location: str, name: str) -> str:
     return str(path)
 
 
-def save_experiment_data(data, location, name) -> str:
-    return save_json_data(data, location, name)
+def save_experiment_data(experiments, fields, location, name) -> str:
+    validate_experiments(experiments, fields)
+    return save_json_data(experiments, location, name)
 
 
-def save_field_data(data, location, name) -> str:
-    return save_json_data(data, location, name)
+def save_field_data(fields, location, name) -> str:
+    return save_json_data(fields, location, name)
 
 
 def save_experiment_field_data(data, location, name) -> str:
@@ -91,7 +93,7 @@ def _save_session_related_data(file, session_dictionary):
                 {{ "series": {
                         "1": {
                           "0": {
-                            "copy_phrase": "COPY_PHRASE",
+                            "target_text": "COPY_PHRASE",
                             "current_text": "COPY_",
                             "eeg_len": 22,
                             "next_display_state": "COPY_",
@@ -106,9 +108,9 @@ def _save_session_related_data(file, session_dictionary):
                         "7": {
                             ... ,
                   },
-                  "paradigm": "RSVP",
+                  "mode": "RSVP",
                   "session": "data/demo_user/demo_user",
-                  "session_type": "Copy Phrase",
+                  "task": "Copy Phrase",
                   "total_time_spent": 83.24798703193665
                 }}
     Returns
@@ -123,9 +125,5 @@ def _save_session_related_data(file, session_dictionary):
         file = open(file, 'wt')
 
     # Use the file to dump data to
-    try:
-        json.dump(session_dictionary, file, indent=2)
-    except Exception as e:
-        raise e
-
+    json.dump(session_dictionary, file, indent=2)
     return file

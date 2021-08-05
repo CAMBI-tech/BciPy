@@ -15,6 +15,9 @@ class AuditoryFeedback(Feedback):
 
         # Parameters Dictionary
         self.parameters = parameters
+        # this should not be changed. Needed to play sound correctly
+        self.sound_buffer_time = 1
+        self.feedback_timestamp_label = 'auditory_feedback'
 
         # Clock
         self.clock = clock
@@ -25,9 +28,9 @@ class AuditoryFeedback(Feedback):
         if assertion:
             pass
 
-        time = ['auditory_feedback', self.clock.getTime()]
+        time = [self.feedback_timestamp_label, self.clock.getTime()]
         sd.play(sound, fs, blocking=True)
-        core.wait(1)
+        core.wait(self.sound_buffer_time)
         timing.append(time)
 
         return timing

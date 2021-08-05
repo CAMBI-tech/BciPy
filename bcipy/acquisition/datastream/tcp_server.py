@@ -9,6 +9,7 @@ import time
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.util import StoppableThread
+from bcipy.helpers.raw_data import settings
 
 log = logging.getLogger(__name__)
 
@@ -180,18 +181,6 @@ def await_start(dataserver, max_wait=2):
             dataserver.stop()
             raise Exception("Server couldn't start up in time.")
 
-# TODO: refactor this into a raw_data module
-
-
-def _settings(filename):
-    """Read the daq settings from the given data file"""
-
-    with open(filename, 'r') as infile:
-        daq_type = infile.readline().strip().split(',')[1]
-        sample_hz = int(infile.readline().strip().split(',')[1])
-        channels = infile.readline().strip().split(',')
-        return daq_type, sample_hz, channels
-
 
 def main():
     """Initialize and run the server."""
@@ -214,7 +203,7 @@ def main():
     args = parser.parse_args()
 
     if args.filename:
-        daq_type, sample_rate, channels = _settings(args.filename)
+        daq_type, sample_rate, channels = settings(args.filename)
         device_spec = preconfigured_device(daq_type)
         device_spec.sample_rate = sample_rate
         device_spec.channels = channels

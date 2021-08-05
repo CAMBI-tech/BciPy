@@ -2,7 +2,7 @@ import sys
 import os
 
 from cpuinfo import get_cpu_info
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 from pathlib import Path
 import pkg_resources
 import platform
@@ -10,6 +10,7 @@ import psutil
 import pyglet
 import importlib
 import pkgutil
+import time
 import logging
 
 
@@ -139,7 +140,8 @@ def configure_logger(
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
     handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
-    handler.setFormatter(logging.Formatter('(%(threadName)-9s) %(message)s'))
+    handler.setFormatter(logging.Formatter(
+        '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
     root_logger.addHandler(handler)
 
     print(f'Printing all BciPy logs to: {logfile}')
@@ -217,6 +219,23 @@ def log_to_stdout():
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
+
+
+def report_execution_time(func: Callable) -> Callable:
+    """Report execution time.
+
+    A decorator to log execution time of methods in seconds. To use,
+        decorate your method with @report_execution_time.
+    """
+    log = logging.getLogger()
+
+    def wrap(*args, **kwargs):
+        time1 = time.perf_counter()
+        response = func(*args, **kwargs)
+        time2 = time.perf_counter()
+        log.info('{:s} method took {:0.4f}s to execute'.format(func.__name__, (time2 - time1)))
+        return response
+    return wrap

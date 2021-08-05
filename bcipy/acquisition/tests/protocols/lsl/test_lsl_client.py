@@ -37,7 +37,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
-        self.assertEqual(DEVICE.sample_rate, len(samples))
+        self.assertAlmostEqual(DEVICE.sample_rate, len(samples), delta=1.0)
 
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""

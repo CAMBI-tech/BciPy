@@ -1,14 +1,35 @@
-from bcipy.helpers.load import load_txt_data
-from bcipy.helpers.stimuli import resize_image, play_sound
-from bcipy.helpers.parameters import Parameters
-import csv
-from typing import Dict, TextIO, List, Tuple
+import logging
+from enum import Enum
+from typing import Dict, List, TextIO, Tuple
 
-from psychopy import visual, core
+from psychopy import core, visual
+
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.load import load_txt_data
+from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.raw_data import RawDataReader
+from bcipy.helpers.stimuli import resize_image
+
+log = logging.getLogger(__name__)
 
 NONE_VALUES = ['0', '0.0']
-SOUND_TYPE = 'sound'
-IMAGE_TYPE = 'image'
+
+CALIBRATION_IMAGE_PATH = 'bcipy/static/images/testing/white.png'
+DEFAULT_CALIBRATION_TRIGGER_NAME = 'calibration_trigger'
+
+
+class CalibrationType(Enum):
+    """Calibration Type.
+
+    Enum to define the supported calibration trigger types.
+    """
+    TEXT = 'text'
+    IMAGE = 'image'
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
 
 
 class TriggerCallback:
@@ -26,72 +47,74 @@ class TriggerCallback:
 
 
 def _calibration_trigger(experiment_clock: core.Clock,
-                         trigger_type: str = 'sound',
-                         trigger_name: str = 'calibration_trigger',
+                         trigger_type: str = CalibrationType.TEXT.value,
+                         trigger_name: str = DEFAULT_CALIBRATION_TRIGGER_NAME,
+                         trigger_time: float = 1,
                          display=None,
                          on_trigger=None) -> List[tuple]:
     """Calibration Trigger.
 
-        Outputs triggers for the purpose of calibrating data and stimuli.
-        This is an ongoing difficulty between OS, DAQ devices and stimuli type. This
-        code aims to operationalize the approach to finding the correct DAQ samples in
-        relation to our trigger code.
+    Outputs triggers for the purpose of calibrating data and stimuli.
+    This is an ongoing difficulty between OS, DAQ devices and stimuli type. This
+    code aims to operationalize the approach to finding the correct DAQ samples in
+    relation to our trigger code.
 
     PARAMETERS
     ---------
-        experiment_clock(clock): clock with getTime() method, which is used in the code
-            to report timing of stimuli
-        trigger_type(string): type of trigger that is desired (sound, image, etc)
-        display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
-        on_trigger(function): optional callback; if present gets called
-                 when the calibration trigger is fired; accepts a single
-                 parameter for the timing information.
-        Return:
-            timing(array): timing values for the calibration triggers to be written to trigger file or
-                    used to calculate offsets.
+    experiment_clock(clock): clock with getTime() method, which is used in the code
+        to report timing of stimuli
+    trigger_type(string): type of trigger that is desired (text, image, etc)
+    trigger_name(string): name of the trigger used for callbacks / labeling
+    trigger_time(float): time to display the trigger. Can also be used as a buffer.
+    display(DisplayWindow): a window that can display stimuli. Currently, a Psychopy window.
+    on_trigger(function): optional callback; if present gets called
+                when the calibration trigger is fired; accepts a single
+                parameter for the timing information.
+    Return:
+        timing(array): timing values for the calibration triggers to be written to trigger file or
+                used to calculate offsets.
     """
     trigger_callback = TriggerCallback()
 
-    # If sound trigger is selected, output calibration tones
-    if trigger_type == SOUND_TYPE:
-        play_sound(
-            sound_file_path='bcipy/static/sounds/1k_800mV_20ms_stereo.wav',
-            dtype='float32',
-            track_timing=True,
-            sound_callback=trigger_callback,
-            sound_load_buffer_time=0.5,
-            experiment_clock=experiment_clock,
-            trigger_name='calibration_trigger')
+    # catch invalid trigger types
+    if trigger_type not in CalibrationType.list():
+        msg = f'Trigger type=[{trigger_type}] not implemented'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
-    elif trigger_type == IMAGE_TYPE:
-        if display:
-            calibration_box = visual.ImageStim(
-                win=display,
-                image='bcipy/static/images/testing_images/white.png',
-                pos=(-.5, -.5),
-                mask=None,
-                ori=0.0)
-            calibration_box.size = resize_image(
-                'bcipy/static/images/testing_images/white.png', display.size,
-                0.75)
+    if not display:
+        msg = f'Calibration type=[{trigger_type}] requires a display'
+        log.exception(msg)
+        raise BciPyCoreException(msg)
 
-            display.callOnFlip(trigger_callback.callback, experiment_clock,
-                               trigger_name)
-            if on_trigger is not None:
-                display.callOnFlip(on_trigger, trigger_name)
+    if trigger_type == CalibrationType.IMAGE.value:
+        calibration_box = visual.ImageStim(
+            win=display,
+            image=CALIBRATION_IMAGE_PATH,
+            pos=(-.5, -.5),
+            mask=None,
+            ori=0.0)
+        calibration_box.size = resize_image(CALIBRATION_IMAGE_PATH, display.size, 0.75)
 
-            presentation_time = int(1 * display.getActualFrameRate())
-            for num_frames in range(presentation_time):
-                calibration_box.draw()
-                display.flip()
+        display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
+        if on_trigger is not None:
+            display.callOnFlip(on_trigger, trigger_name)
 
-        else:
-            raise Exception(
-                'Display object required for calibration with images!')
+        calibration_box.draw()
+        display.flip()
 
-    else:
-        raise Exception('Trigger type not implemented for Calibration yet!')
+    elif trigger_type == CalibrationType.TEXT.value:
+        calibration_text = visual.TextStim(display, text='')
 
+        display.callOnFlip(trigger_callback.callback, experiment_clock,
+                           trigger_name)
+        if on_trigger is not None:
+            display.callOnFlip(on_trigger, trigger_name)
+
+        calibration_text.draw()
+        display.flip()
+
+    core.wait(trigger_time)
     return trigger_callback.timing
 
 
@@ -145,61 +168,66 @@ def _write_triggers_from_inquiry_calibration(array: list,
     return trigger_file
 
 
-def _write_triggers_from_inquiry_copy_phrase(array,
-                                             trigger_file,
-                                             copy_text,
-                                             typed_text,
-                                             offset=None):
-    """
-    Write triggers from copy phrase.
+def _write_triggers_from_inquiry_copy_phrase(
+        triggers: list,
+        trigger_file: TextIO,
+        copy_phrase: str,
+        typed_text: str,
+        offset: bool = False) -> TextIO:
+    """Write triggers from copy phrase.
 
-    Helper Function to write trigger data to provided trigger_file. It assigns
-        target letter based on matching the next needed letter in typed text
-        then assigns target/nontarget label to following letters.
+    Helper Function to write trigger data to provided trigger_file in a copy phrase task.
+        It assigns target letter based on matching the next needed letter in typed text
+        then assigns target/nontarget label to following letters. It's assumed if offset
+        is true, only one record will be written (the offset_correction).
 
     It writes in the following order:
         (I) presented letter, (II) targetness, (III) timestamp
     """
-
+    # write the offset and return the file
     if offset:
         # extract the letter and timing from the array
-        (letter, time) = array
-        targetness = 'offset_correction'
-        trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
+        (symbol, time) = triggers
+        trigger_file.write(f'{symbol} offset_correction {time}\n')
+        return trigger_file
 
+    spelling_length = len(typed_text)
+    last_typed = typed_text[-1] if typed_text else None
+    target_symbol = copy_phrase[spelling_length - 1]
+
+    # because there is the possibility of incorrect letters and correction,
+    # we check here what is expected response.
+    if last_typed == target_symbol or not last_typed:
+        target_symbol = copy_phrase[spelling_length - 1]
     else:
-        # get relevant spelling info to determine what was and should be typed
-        spelling_length = len(typed_text)
-        last_typed = typed_text[-1] if typed_text else None
-        correct_letter = copy_text[spelling_length - 1]
+        # If the last typed and target do not match and this is not the
+        # symbols have been typed. The correct symbol is backspace.
+        target_symbol = '<'
 
-        # because there is the impassibility of incorrect letter and correction,
-        # we check here what is appropriate as a correct response
-        if last_typed == correct_letter:
-            correct_letter = copy_text[spelling_length]
+    for trigger in triggers:
+
+        # extract the letter and timing from the array
+        (symbol, time) = trigger
+
+        # catch all the internal labels and assign targetness
+        if symbol == 'calibration_trigger':
+            targetness = 'calib'
+        elif symbol == 'inquiry_preview':
+            targetness = 'preview'
+        # we write the key press + key so we check the prefix is in the symbol
+        elif 'bcipy_key_press' in symbol:
+            targetness = 'key_press'
+
+        # assign targetness to the core symbols
+        elif symbol == '+':
+            targetness = 'fixation'
+        elif target_symbol == symbol:
+            targetness = 'target'
         else:
-            correct_letter = '<'
+            targetness = 'nontarget'
 
-        x = 0
-
-        for i in array:
-
-            # extract the letter and timing from the array
-            (letter, time) = i
-
-            # determine what the triggers are:
-            #       assumes there is no target letter presentation.
-            if x == 0:
-                targetness = 'fixation'
-            elif x > 1 and correct_letter == letter:
-                targetness = 'target'
-            else:
-                targetness = 'nontarget'
-
-            # write to the trigger_file
-            trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
-
-            x += 1
+        # write to the trigger_file
+        trigger_file.write(f'{symbol} {targetness} {time}\n')
 
     return trigger_file
 
@@ -280,7 +308,7 @@ def write_triggers_from_inquiry_icon_to_icon(inquiry_timing: List[Tuple],
                            "\n")
 
 
-def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
+def trigger_decoder(mode: str, trigger_path: str = None, remove_pre_fixation=True) -> tuple:
     """Trigger Decoder.
 
     Given a mode of operation (calibration, copy phrase, etc) and
@@ -307,11 +335,17 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
         #   SYMBOL, TARGETNESS_INFO[OPTIONAL], TIMING
         trigger_txt = [line.split() for line in text_file]
 
-    # extract stimuli from the text
-    stimuli_triggers = [
-        line for line in trigger_txt
-        if line[1] == 'target' or line[1] == 'nontarget'
-    ]
+    # extract stimuli from the text.
+    if remove_pre_fixation:
+        stimuli_triggers = [
+            line for line in trigger_txt
+            if line[1] == 'target' or line[1] == 'nontarget'
+        ]
+    else:
+        stimuli_triggers = [
+            line for line in trigger_txt
+            if line[0] != 'calibration_trigger' and line[0] != 'offset'
+        ]
 
     # from the stimuli array, pull our the symbol information
     symbol_info = list(map(lambda x: x[0], stimuli_triggers))
@@ -349,7 +383,19 @@ def trigger_decoder(mode: str, trigger_path: str = None) -> tuple:
     return symbol_info, trial_target_info, timing_info, offset
 
 
-class Labeller(object):
+def apply_trigger_offset(timing: List[float], offset: float):
+    """Apply trigger offset.
+
+    Due to refresh rates and clock differences between display and acquisition, offsets in the system exist.
+    This method takes a list of trigger times and adds the offset to them.
+    """
+    corrected_timing = []
+    for time in timing:
+        corrected_timing.append(time + offset)
+    return corrected_timing
+
+
+class Labeller:
     """Labels the targetness for a trigger value in a raw_data file."""
 
     def __init__(self):
@@ -449,44 +495,39 @@ class LslCopyPhraseLabeller(Labeller):
         return state
 
 
-def _extract_triggers(csvfile: TextIO,
+def _extract_triggers(csvfile: str,
                       trg_field,
-                      labeller: Labeller,
-                      skip_meta: bool = True) -> List[Tuple[str, str, str]]:
+                      labeller: Labeller) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from an experiment output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to raw data file
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
         labeller: Labeller used to calculate the targetness value for a
             given trigger.
-        skip_meta: skips the metadata rows
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp)
     """
     data = []
 
-    # Skip metadata rows
-    if skip_meta:
-        _daq_type = next(csvfile)
-        _sample_rate = next(csvfile)
+    with RawDataReader(csvfile) as reader:
+        trg_index = reader.columns.index(trg_field)
+        timestamp_index = reader.columns.index('timestamp')
 
-    reader = csv.DictReader(csvfile)
-
-    for row in reader:
-        trg = row[trg_field]
-        if trg not in NONE_VALUES:
-            if 'calibration' in trg:
-                trg = 'calibration_trigger'
-            targetness = labeller.label(trg)
-            data.append((trg, targetness, row['timestamp']))
+        for row in reader:
+            trg = row[trg_index]
+            if trg not in NONE_VALUES:
+                if 'calibration' in trg:
+                    trg = 'calibration_trigger'
+                targetness = labeller.label(trg)
+                data.append((trg, targetness, row[timestamp_index]))
 
     return data
 
 
-def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
+def write_trigger_file_from_lsl_calibration(csvfile: str,
                                             trigger_file: TextIO,
                                             inq_len: int,
                                             trg_field: str = 'TRG'):
@@ -496,7 +537,7 @@ def write_trigger_file_from_lsl_calibration(csvfile: TextIO,
     _write_trigger_file_from_extraction(trigger_file, extracted)
 
 
-def write_trigger_file_from_lsl_copy_phrase(csvfile: TextIO,
+def write_trigger_file_from_lsl_copy_phrase(csvfile: str,
                                             trigger_file: TextIO,
                                             copy_text: str,
                                             typed_text: str,
@@ -521,19 +562,16 @@ def _write_trigger_file_from_extraction(
 
 def extract_from_calibration(csvfile: TextIO,
                              inq_len: int,
-                             trg_field: str = 'TRG',
-                             skip_meta: bool = True
+                             trg_field: str = 'TRG'
                              ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a calibration output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to the raw data file.
         inq_len: stim_length parameter value for the experiment; used to calculate
                  targetness for first_pres_target.
         trg_field: optional; name of the data column with the trigger data;
                    defaults to 'TRG'
-        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
-            the start of the file.
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
@@ -542,36 +580,29 @@ def extract_from_calibration(csvfile: TextIO,
 
     return _extract_triggers(csvfile,
                              trg_field,
-                             labeller=LslCalibrationLabeller(inq_len),
-                             skip_meta=skip_meta)
+                             labeller=LslCalibrationLabeller(inq_len))
 
 
-def extract_from_copy_phrase(csvfile: TextIO,
+def extract_from_copy_phrase(csvfile: str,
                              copy_text: str,
                              typed_text: str,
-                             trg_field: str = 'TRG',
-                             skip_meta: bool = True
+                             trg_field: str = 'TRG'
                              ) -> List[Tuple[str, str, str]]:
     """Extracts trigger data from a copy phrase output csv file.
     Parameters:
     -----------
-        csvfile: open csv file containing data.
+        csvfile: path to raw data file.
         copy_text: phrase to copy
         typed_text: participant typed response
         trg_field: optional; name of the data column with the trigger data;
-                   defaults to 'TRG',
-        skip_meta: skip metadata fields; set this to true if csvfile cursor is at
-            the start of the file.
+                   defaults to 'TRG'
     Returns:
     --------
         list of tuples of (trigger, targetness, timestamp), where timestamp is
         the timestamp recorded in the file.
     """
     labeller = LslCopyPhraseLabeller(copy_text, typed_text)
-    return _extract_triggers(csvfile,
-                             trg_field,
-                             labeller=labeller,
-                             skip_meta=skip_meta)
+    return _extract_triggers(csvfile, trg_field, labeller=labeller)
 
 
 def trigger_durations(params: Parameters) -> Dict[str, float]:
@@ -603,6 +634,6 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     offset = float(acq_stamp) - float(calibration_stamp)
 
     corrected = []
-    for i, (name, trg_type, stamp) in enumerate(records):
+    for _, (name, trg_type, stamp) in enumerate(records):
         corrected.append((name, trg_type, float(stamp) + offset))
     return corrected

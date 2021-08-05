@@ -1,24 +1,29 @@
-import pickle
 import logging
-
+from typing import List
+from pathlib import Path
+from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
 from bcipy.helpers.load import (
-    read_data_csv,
     load_experimental_data,
-    load_json_parameters)
-from bcipy.signal.process.filter import bandpass, notch, downsample
-from bcipy.signal.model.mach_learning.train_model import train_pca_rda_kde_model
-from bcipy.helpers.task import trial_reshaper
-from bcipy.helpers.vizualization import generate_offline_analysis_screen
-from bcipy.helpers.triggers import trigger_decoder
-from bcipy.helpers.acquisition import analysis_channels,\
-    analysis_channel_names_by_pos
+    load_json_parameters,
+    load_raw_data,
+)
 from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.system_utils import report_execution_time
+from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.visualization import generate_offline_analysis_screen
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.process import get_default_transform
+from matplotlib.figure import Figure
 
 log = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
 
 
+@report_execution_time
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True):
+                     parameters: dict = {}, alert_finished: bool = True) -> List[Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -38,6 +43,7 @@ def offline_analysis(data_folder: str = None,
         - pickle dumps model into .pkl file
         - generates and saves offline analysis screen
         - [optional] alert the user finished processing
+        - returns handles for the figures that are created
     """
 
     if not data_folder:
@@ -61,21 +67,24 @@ def offline_analysis(data_folder: str = None,
     static_offset = parameters.get('static_trigger_offset', 0)
     k_folds = parameters.get('k_folds', 10)
 
-    raw_dat, _, channels, type_amp, fs = read_data_csv(
-        data_folder + '/' + raw_data_file)
+    # Load raw data
+    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    channels = raw_data.channels
+    type_amp = raw_data.daq_type
+    fs = raw_data.sample_rate
 
     log.info(f'Channels read from csv: {channels}')
     log.info(f'Device type: {type_amp}')
 
-    # Remove 60hz noise with a notch filter
-    notch_filter_data = notch.notch_filter(raw_dat, fs, frequency_to_remove=notch_filter)
-
-    # bandpass filter
-    filtered_data = bandpass.butter_bandpass_filter(
-        notch_filter_data, lp_filter, hp_filter, fs, order=filter_order)
-
-    # downsample
-    data = downsample.downsample(filtered_data, factor=downsample_rate)
+    default_transform = get_default_transform(
+        sample_rate_hz=fs,
+        notch_freq_hz=notch_filter,
+        bandpass_low=lp_filter,
+        bandpass_high=hp_filter,
+        bandpass_order=filter_order,
+        downsample_factor=downsample_rate,
+    )
+    data, fs = default_transform(raw_data.by_channel(), fs)
 
     # Process triggers.txt
     _, t_t_i, t_i, offset = trigger_decoder(
@@ -85,36 +94,38 @@ def offline_analysis(data_folder: str = None,
     offset = offset + static_offset
 
     # Channel map can be checked from raw_data.csv file.
-    # read_data_csv already removes the timespamp column.
+    # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, type_amp)
 
-    x, y, _, _ = trial_reshaper(t_t_i, t_i, data,
-                                mode=mode, fs=fs, k=downsample_rate,
-                                offset=offset,
-                                channel_map=channel_map,
-                                trial_length=trial_length)
+    model = PcaRdaKdeModel(k_folds=k_folds)
+    data, labels = model.reshaper(
+        trial_labels=t_t_i,
+        timing_info=t_i,
+        eeg_data=data,
+        fs=fs,
+        trials_per_inquiry=parameters.get('stim_length'),
+        offset=offset,
+        channel_map=channel_map,
+        trial_length=trial_length)
 
-    model, auc = train_pca_rda_kde_model(x, y, k_folds=k_folds)
+    log.info('Training model. This will take some time...')
+    model.fit(data, labels)
+    model_performance = model.evaluate(data, labels)
 
-    log.info('Saving offline analysis plots!')
+    log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
 
-    # After obtaining the model get the transformed data for plotting purposes
-    model.transform(x)
-    generate_offline_analysis_screen(
-        x, y, model=model, folder=data_folder,
+    fig_handles = generate_offline_analysis_screen(
+        data, labels, model=model, folder=data_folder,
         down_sample_rate=downsample_rate,
         fs=fs, save_figure=True, show_figure=False,
         channel_names=analysis_channel_names_by_pos(channels, channel_map))
-
-    log.info('Saving the model!')
-    with open(data_folder + f'/model_{auc}.pkl', 'wb') as output:
-        pickle.dump(model, output)
+    model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
 
     if alert_finished:
         offline_analysis_tone = parameters.get('offline_analysis_tone')
         play_sound(offline_analysis_tone)
 
-    return model
+    return model, fig_handles
 
 
 if __name__ == "__main__":
@@ -126,13 +137,8 @@ if __name__ == "__main__":
                         default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='(%(threadName)-9s) %(message)s')
-
     log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
-
     log.info('Offline Analysis complete.')
