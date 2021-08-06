@@ -180,6 +180,7 @@ class RawDataWriter:
         self._file_obj = None
 
     def __enter__(self):
+        """Enter the context manager. Initializes the underlying data file."""
         self._file_obj = open(self.file_path,
                               mode='w',
                               encoding='utf-8',
@@ -202,7 +203,12 @@ class RawDataWriter:
 
     def writerow(self, row: List) -> None:
         assert self._csv_writer, "Writer must be initialized"
+        assert len(row) == len(self.columns), "Wrong number of columns"
         self._csv_writer.writerow(row)
+
+    def writerows(self, rows: List[List]) -> None:
+        for row in rows:
+            self.writerow(row)
 
 
 def load(filename: str) -> RawData:

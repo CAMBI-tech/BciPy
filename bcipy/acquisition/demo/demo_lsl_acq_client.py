@@ -7,7 +7,8 @@ from bcipy.acquisition.devices import preconfigured_device
 
 
 def main():
-    """Creates a sample client that reads data from an LSL server.
+    """Creates a sample client that reads data from an LSL server. The demo
+    client is not configured to save data to disk.    
 
     The client can be stopped with a Keyboard Interrupt (Ctl-C)."""
 

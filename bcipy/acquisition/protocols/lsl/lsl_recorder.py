@@ -1,13 +1,12 @@
 """Records LSL data streams to a data store."""
-import csv
 import logging
 import time
 from pathlib import Path
-from typing import List
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
 from bcipy.acquisition.util import StoppableThread
 from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names
+from bcipy.helpers.raw_data import RawDataWriter
 
 log = logging.getLogger(__name__)
 
@@ -37,14 +36,24 @@ class LslRecorder:
                 for stream in resolve_streams()
             ]
 
-            # TODO: validate that streams have unique names for their type
+            # Validate that streams have unique names for their type
+            stream_names = [stream.filename for stream in self.streams]
+            if len(stream_names) != len(set(stream_names)):
+                raise Exception("Data stream names are not unique")
             for stream in self.streams:
                 stream.start()
 
-    def stop(self):
-        """Stop recording"""
+    def stop(self, wait: bool = False):
+        """Stop recording
+
+        Parameters
+        ----------
+        - wait : if True waits for all threads to stop before returning.
+        """
         for stream in self.streams:
             stream.stop()
+            if wait:
+                stream.join()
         self.streams = None
 
 
@@ -53,8 +62,8 @@ class LslRecordingThread(StoppableThread):
 
     Parameters:
     ----------
-        stream - information about the stream of interest
-        path - location to store the recording
+    - stream : information about the stream of interest
+    - path : location to store the recording
     """
 
     def __init__(self, stream_info: StreamInfo, path: str, *args, **kwargs):
@@ -63,10 +72,10 @@ class LslRecordingThread(StoppableThread):
         self.path = path
 
         self.sample_count = 0
-        self.max_chunk_size = 1024  # default value
+        self.max_chunk_size = 1024
 
+        # seconds to sleep between data pulls from LSL
         self.sleep_seconds = 0.2
-        self.file = None
         self.writer = None
 
     @property
@@ -87,21 +96,21 @@ class LslRecordingThread(StoppableThread):
             metadata - full metadata that is the result of a stream_inlet.info()
                 call; self.stream_info does not have the channel names
         """
+        assert self.writer is None
         filename = self.filename
         log.debug(f"Writing data to {filename}")
-        self.file = open(filename, 'w', newline='')
-        self.writer = csv.writer(self.file, delimiter=',')
-
-        # write header
-        self.writer.writerow(['daq_type', self.stream_info.name()])
-        self.writer.writerow(['sample_rate', self.stream_info.nominal_srate()])
-        self.writer.writerow(['timestamp'] + channel_names(metadata) +
-                             ['lsl_timestamp'])
+        self.writer = RawDataWriter(
+            filename,
+            daq_type=self.stream_info.name(),
+            sample_rate=self.stream_info.nominal_srate(),
+            columns=['timestamp'] + channel_names(metadata) +
+            ['lsl_timestamp'])
+        self.writer.__enter__()
 
     def cleanup(self):
         """Performs cleanup tasks."""
-        assert self.file, "File not initialized"
-        self.file.close()
+        assert self.writer, "Writer not initialized"
+        self.writer.__exit__()
 
     def write_chunk(self, data, timestamps):
         """Persists the data."""
@@ -160,7 +169,7 @@ def main(path: str, seconds: int = 5, debug: bool = False):
     if debug:
         from bcipy.helpers.system_utils import log_to_stdout
         log_to_stdout()
-    recorder = LslRecorder(path=args.path)
+    recorder = LslRecorder(path)
     print(f"\nCollecting data for {seconds}s...")
     recorder.start()
     try:
@@ -173,10 +182,12 @@ def main(path: str, seconds: int = 5, debug: bool = False):
 
 if __name__ == '__main__':
     import argparse
-
+    # pylint: disable=invalid-name
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', default='.')
     parser.add_argument('--seconds', default=5)
     parser.add_argument('--debug', action='store_true')
-    args = parser.parse_args()
-    main(path=args.path, seconds=int(args.seconds), debug=args.debug)
+    parsed_args = parser.parse_args()
+    main(path=parsed_args.path,
+         seconds=int(parsed_args.seconds),
+         debug=parsed_args.debug)

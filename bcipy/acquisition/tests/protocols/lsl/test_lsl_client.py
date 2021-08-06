@@ -1,13 +1,18 @@
 """Unit tests for LslAcquisitionClient"""
+import shutil
+import tempfile
 import time
 import unittest
-from typing import List
+from pathlib import Path
+
 from psychopy.core import Clock
+
 from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.acquisition.devices import preconfigured_device, DeviceSpec, IRREGULAR_RATE
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient, range_evaluator
-from mockito import mock
+from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
+                                       preconfigured_device)
+from bcipy.acquisition.protocols.lsl.lsl_client import (LslAcquisitionClient,
+                                                        range_evaluator)
 
 DEVICE_NAME = 'DSI'
 DEVICE = preconfigured_device(DEVICE_NAME)
@@ -57,7 +62,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             connection_methods=DEVICE.connection_methods)
         client = LslAcquisitionClient(max_buflen=1, device_spec=device)
         with self.assertRaises(Exception):
-            client.client.start_acquisition()
+            client.start_acquisition()
 
     def test_specified_device_wrong_connection_type(self):
         """Should only allow devices that can connect to LSL"""
@@ -68,8 +73,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             data_type=DEVICE.data_type,
                             connection_methods=[ConnectionMethod.TCP])
         with self.assertRaises(Exception):
-            client = LslAcquisitionClient(max_buflen=1, device_spec=device)
-    
+            LslAcquisitionClient(max_buflen=1, device_spec=device)
+
     def test_specified_device_for_markers(self):
         """Should not allow a device_spec for a Marker stream."""
         device = DeviceSpec(name='Mouse',
@@ -78,16 +83,16 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             content_type='Markers',
                             data_type='string')
         with self.assertRaises(Exception):
-            client = LslAcquisitionClient(max_buflen=1, device_spec=device)
+            LslAcquisitionClient(max_buflen=1, device_spec=device)
 
     def test_with_unspecified_device(self):
         """Test with unspecified device."""
         client = LslAcquisitionClient(max_buflen=1)
         client.start_acquisition()
 
-        self.assertEquals(DEVICE.name, client.device_spec.name)
-        self.assertEquals(DEVICE.channels, client.device_spec.channels)
-        self.assertEquals(DEVICE.sample_rate, client.device_spec.sample_rate)
+        self.assertEqual(DEVICE.name, client.device_spec.name)
+        self.assertEqual(DEVICE.channels, client.device_spec.channels)
+        self.assertEqual(DEVICE.sample_rate, client.device_spec.sample_rate)
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
@@ -138,8 +143,19 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_with_recording(self):
         """Test that recording works."""
-        # TODO:
-        pass
+
+        temp_dir = tempfile.mkdtemp()
+        path = Path(temp_dir, f'eeg_data_{DEVICE_NAME.lower()}.csv')
+
+        self.assertFalse(path.exists())
+
+        client = LslAcquisitionClient(max_buflen=1, save_directory=temp_dir)
+        client.start_acquisition()
+        time.sleep(0.1)
+        client.stop_acquisition()
+        self.assertTrue(path.exists())
+
+        shutil.rmtree(temp_dir)
 
 
 if __name__ == '__main__':

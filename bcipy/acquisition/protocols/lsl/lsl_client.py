@@ -40,15 +40,15 @@ class LslAcquisitionClient:
 
     Parameters:
     -----------
-        max_buflen - the maximum length, in seconds, of data to be queried.
-            For the RSVP paradigm, this should be calculated based on the
-            total inquiry length.
-        device_spec - spec for the device from which to query data; if
-            missing, this class will attempt to find the first EEG stream.
-        append_timestamps - if True appends the LSL timestamp as an additional
-            column in any queried data.
-        save_directory - if present, recordings of the data will be persisted
-            here.
+    - max_buflen : the maximum length, in seconds, of data to be queried.
+    For the RSVP paradigm, this should be calculated based on the total inquiry
+    length.
+    - device_spec : spec for the device from which to query data; if
+    missing, this class will attempt to find the first EEG stream.
+    - append_timestamps : if True appends the LSL timestamp as an additional
+    column in any queried data.
+    - save_directory : if present, uses an LslRecorder to persist the data to
+    the given location.
     """
 
     def __init__(self,
@@ -100,21 +100,21 @@ class LslAcquisitionClient:
         self.inlet = None
 
     def get_data(self,
-                 start=None,
-                 end=None,
+                 start: float = None,
+                 end: float = None,
                  device: DeviceSpec = None) -> List[Record]:
         """Get data in time range.
 
         Parameters
         ----------
-            start : number, optional
-                start of time slice; units are those of the acquisition clock.
-            end : float, optional
-                end of time slice; units are those of the acquisition clock.
+        - start : number, optional start of time slice; units are those of the
+        acquisition clock.
+        - end : float, optional end of time slice; units are those of the
+        acquisition clock.
 
         Returns
         -------
-            list of Records
+        list of Records
         """
         log.debug(f"Getting data from {start} to {end}")
 
@@ -139,15 +139,16 @@ class LslAcquisitionClient:
 
         Parameters
         ----------
-            start_time : float, optional
-                start of time slice; units are those of the experiment clock.
-            end_time : float, optional
-                end of time slice; units are those of the experiment clock.
-            calib_time: float
-                experiment_clock time (in seconds) at calibration.
+        - start_time : float, optional
+        start of time slice; units are those of the experiment clock.
+        - end_time : float, optional
+        end of time slice; units are those of the experiment clock.
+        - calib_time: float
+        experiment_clock time (in seconds) at calibration.
+        
         Returns
         -------
-            list of Records
+        list of Records
         """
         # TODO: implement this
         pass
@@ -178,8 +179,8 @@ class LslAcquisitionClient:
 
         Parameters:
         ----------
-            experiment_clock - clock used to generate the timestamp
-            timestamp - timestamp from the experiment clock
+        - experiment_clock : clock used to generate the timestamp
+        - timestamp : timestamp from the experiment clock
         
         Returns: corresponding timestamp for the acquistion clock
         """
@@ -225,8 +226,8 @@ class LslAcquisitionClient:
 
         Parameters
         ----------
-            bool_val: boolean
-                if True, uses a 0 offset; if False forces the calculation.
+        - bool_val : boolean
+        if True, uses a 0 offset; if False forces the calculation.
         """
         pass
 
@@ -281,12 +282,12 @@ def default_stream(max_buflen: int) -> Tuple[StreamInlet, DeviceSpec]:
 
     Parameters:
     -----------
-        max_buflen - maximum length, in seconds, for the stream to buffer.
+    - max_buflen : maximum length, in seconds, for the stream to buffer.
 
     Returns:
     --------
-        stream_inlet, device_spec tuple where device_spec is created from
-            the stream metadata.
+    (stream_inlet, device_spec) tuple where device_spec is created from
+    the stream metadata.
     """
     streams = resolve_stream('type', DEFAULT_DEVICE_TYPE)
     if not streams:
@@ -302,12 +303,12 @@ def device_stream(device_spec: DeviceSpec, max_buflen: int) -> StreamInlet:
 
     Parameters:
     -----------
-        device_spec - info about the device to which to connect.
-        max_buflen - maximum length, in seconds, for the stream to buffer.
+    - device_spec : info about the device to which to connect.
+    - max_buflen : maximum length, in seconds, for the stream to buffer.
 
     Returns:
     --------
-        stream_inlet, device_spec tuple
+    stream_inlet, device_spec tuple
     """
     assert device_spec, "device_spec is required"
     streams = resolve_stream('type', device_spec.content_type)
