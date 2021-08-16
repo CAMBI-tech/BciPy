@@ -3,19 +3,17 @@
 import time
 
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.acquisition.devices import preconfigured_device
-
 
 def main():
     """Creates a sample client that reads data from an LSL server. The demo
-    client is not configured to save data to disk.    
+    client is not configured to save data to disk.
 
     The client can be stopped with a Keyboard Interrupt (Ctl-C)."""
 
     # Start the server with the command:
     # python bcipy/acquisition/datastream/lsl_server.py --name LSL
 
-    client = LslAcquisitionClient(max_buflen=1, save_directory='.')
+    client = LslAcquisitionClient(max_buflen=1, save_directory='.', use_marker_writer=True)
 
     try:
         seconds = 3
@@ -23,8 +21,9 @@ def main():
         print(
             f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n"
         )
-
+        client.marker_writer.push_marker('Hello')
         time.sleep(seconds)
+        client.marker_writer.push_marker('World')
         samples = client.get_latest_data()
         print(f"Number of samples: {len(samples)}")
         print(f"Last sample:\n{samples[-1]}")

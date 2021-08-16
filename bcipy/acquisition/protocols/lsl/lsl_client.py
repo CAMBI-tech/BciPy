@@ -1,16 +1,18 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import Tuple, List
+from typing import List, Tuple
 
-from pylsl import StreamInfo, StreamInlet, resolve_stream, local_clock
 from psychopy.core import Clock
+from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream
+
+from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
-from bcipy.acquisition.connection_method import ConnectionMethod
+from bcipy.acquisition.errors import InvalidClockError
+from bcipy.acquisition.marker_writer import LslMarkerWriter, NullMarkerWriter, MarkerWriter
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
-from bcipy.acquisition.errors import InvalidClockError
 from bcipy.acquisition.record import Record
 
 log = logging.getLogger(__name__)
@@ -18,15 +20,16 @@ log = logging.getLogger(__name__)
 
 def range_evaluator(start: float = None, end: float = None):
     """Returns a function that can evaluate if a value is within the given range.
+
     Parameters:
     -----------
-        start - optional start of the range
-        end - optional end of the range"""
+    - start : optional start of the range
+    - end : optional end of the range"""
     if start and end:
-        return lambda value: value >= start and value <= end
-    elif start and not end:
+        return lambda value: start <= value <= end
+    if start and not end:
         return lambda value: value >= start
-    elif not start and end:
+    if not start and end:
         return lambda value: value <= end
     # Both missing; anything goes.
     return lambda record: True
@@ -49,15 +52,20 @@ class LslAcquisitionClient:
     column in any queried data.
     - save_directory : if present, uses an LslRecorder to persist the data to
     the given location.
+    - raw_data_file_name : if present, uses this name for the EEG data.
+    - use_marker_writer : if present, initializes a marker writer when acquisition begins.
     """
 
     def __init__(self,
                  max_buflen: int,
                  device_spec: DeviceSpec = None,
-                 save_directory: str = None):
+                 save_directory: str = None,
+                 raw_data_file_name: str = None,
+                 use_marker_writer: bool = False):
         super().__init__()
         if device_spec:
-            assert ConnectionMethod.LSL in device_spec.connection_methods, "Only LSL devices allowed."
+            ok_device = ConnectionMethod.LSL in device_spec.connection_methods
+            assert ok_device, "Only LSL devices allowed."
             assert device_spec.sample_rate > 0, "Marker streams may be recorded but not queried."
         self.device_spec = device_spec
         self.max_buflen = max_buflen
@@ -66,17 +74,31 @@ class LslAcquisitionClient:
 
         self.inlet = None
         self.first_sample = None
-        self.recorder = LslRecorder(
-            path=save_directory) if save_directory else None
+        self.use_marker_writer = use_marker_writer
+        self.marker_writer = None
+
+        self.recorder = None
+        if save_directory:
+            self.recorder = LslRecorder(path=save_directory,
+                                        filenames={'EEG': raw_data_file_name})
+
+    def _init_marker_writer(self) -> MarkerWriter:
+        """Initialize the marker writer if needed."""
+        if not self.marker_writer:
+            self.marker_writer = LslMarkerWriter(
+            ) if self.use_marker_writer else NullMarkerWriter()
+
+        return self.marker_writer
 
     def start_acquisition(self) -> None:
         """Connect to the datasource and start acquiring data."""
+        self._init_marker_writer()
+
         if self.recorder:
             self.recorder.start()
 
         # TODO: Should we resolve all streams and query by name?
         if self._connect_to_query_stream():
-            log.info(self.inlet.info().as_xml())
             self.first_sample = self.inlet.pull_sample()
 
     def _connect_to_query_stream(self) -> bool:
@@ -98,6 +120,18 @@ class LslAcquisitionClient:
         if self.recorder:
             self.recorder.stop()
         self.inlet = None
+
+        if self.marker_writer:
+            self.marker_writer.cleanup()
+
+    def __enter__(self):
+        """Context manager enter method that starts data acquisition."""
+        self.start_acquisition()
+        return self
+
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        """Context manager exit method to clean up resources."""
+        self.stop_acquisition()
 
     def get_data(self,
                  start: float = None,
@@ -145,13 +179,12 @@ class LslAcquisitionClient:
         end of time slice; units are those of the experiment clock.
         - calib_time: float
         experiment_clock time (in seconds) at calibration.
-        
+
         Returns
         -------
         list of Records
         """
         # TODO: implement this
-        pass
 
     @property
     def max_samples(self) -> int:
@@ -181,7 +214,7 @@ class LslAcquisitionClient:
         ----------
         - experiment_clock : clock used to generate the timestamp
         - timestamp : timestamp from the experiment clock
-        
+
         Returns: corresponding timestamp for the acquistion clock
         """
 
@@ -229,18 +262,17 @@ class LslAcquisitionClient:
         - bool_val : boolean
         if True, uses a 0 offset; if False forces the calculation.
         """
-        pass
 
     def clock_offset(self, experiment_clock: Clock = None) -> float:
         """
         Offset in seconds from the experiment clock to the acquisition local clock.
-        
+
         The experiment clock should be monotonic from experiment start time.
         The acquisition clock (pylsl.local_clock()) is monotonic from local
         machine start time (or since 1970-01-01 00:00). Therefore the acquisition
         clock should always be greater than experiment clock. An exception is
         raised if this doesn't hold.
-        
+
         See https://labstreaminglayer.readthedocs.io/info/faqs.html#lsl-local-clock
         """
         clock = experiment_clock or self.experiment_clock
@@ -265,7 +297,6 @@ class LslAcquisitionClient:
 
     def cleanup(self):
         """Perform any necessary cleanup."""
-        pass
 
 
 def device_from_metadata(metadata: StreamInfo) -> DeviceSpec:

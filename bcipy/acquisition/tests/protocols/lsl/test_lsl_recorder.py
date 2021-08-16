@@ -78,8 +78,34 @@ class TestLslRecorder(unittest.TestCase):
         server.stop()
 
         for filename in filenames:
-            path = Path(filename)
+            path = Path(self.temp_dir, filename)
             self.assertTrue(path.exists())
+
+    def test_custom_filenames(self):
+        """Test that recorder can be customized with filenames for each
+        device type."""
+        # create another server with a different device type
+        server = eye_tracker_server()
+        server.start()
+
+        recorder = LslRecorder(path=self.temp_dir,
+                               filenames={
+                                   'EEG': 'raw_data.csv',
+                                   'Gaze': 'gaze_data.csv'
+                               })
+        recorder.start()
+
+        filenames = [stream.filename for stream in recorder.streams]
+        self.assertEqual(2, len(filenames))
+
+        time.sleep(0.1)
+        recorder.stop(wait=True)
+        server.stop()
+
+        self.assertTrue('raw_data.csv' in filenames)
+        self.assertTrue('gaze_data.csv' in filenames)
+        self.assertTrue(Path(self.temp_dir, 'raw_data.csv').exists())
+        self.assertTrue(Path(self.temp_dir, 'gaze_data.csv').exists())
 
     def test_duplicate_streams(self):
         """Test that an exception is thrown when there are multiple LSL streams
@@ -87,5 +113,8 @@ class TestLslRecorder(unittest.TestCase):
         dup_server = LslDataServer(device_spec=DEVICE)
         recorder = LslRecorder(path=self.temp_dir)
 
+        dup_server.start()
         with pytest.raises(Exception):
             recorder.start()
+
+        dup_server.stop()

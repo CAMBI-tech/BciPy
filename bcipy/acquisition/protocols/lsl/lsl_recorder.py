@@ -2,10 +2,12 @@
 import logging
 import time
 from pathlib import Path
+from typing import List
+
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
-from bcipy.acquisition.util import StoppableThread
 from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names
+from bcipy.acquisition.util import StoppableThread
 from bcipy.helpers.raw_data import RawDataWriter
 
 log = logging.getLogger(__name__)
@@ -16,14 +18,16 @@ class LslRecorder:
 
     Parameters:
     -----------
-        path - location to store the recordings
-
+    - path : location to store the recordings
+    - filenames : optional dict mapping device type to its raw data filename.
+    Devices without an entry will use a naming convention.
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, filenames: dict = None):
         super().__init__()
         self.path = path
         self.streams = None
+        self.filenames = filenames or {}
 
     def start(self):
         """Start recording all streams currently on the network."""
@@ -32,7 +36,8 @@ class LslRecorder:
             log.debug("Recording data")
             # create a thread for each.
             self.streams = [
-                LslRecordingThread(stream, self.path)
+                LslRecordingThread(stream, self.path,
+                                   self.filenames.get(stream.type(), None))
                 for stream in resolve_streams()
             ]
 
@@ -44,7 +49,7 @@ class LslRecorder:
                 stream.start()
 
     def stop(self, wait: bool = False):
-        """Stop recording
+        """Stop recording.
 
         Parameters
         ----------
@@ -58,18 +63,22 @@ class LslRecorder:
 
 
 class LslRecordingThread(StoppableThread):
-    """Records data for the given LabStreamingLayer data stream.
+    """Records data for the given LabStreamingLayer (LSL) data stream.
 
     Parameters:
     ----------
     - stream : information about the stream of interest
-    - path : location to store the recording
+    - directory : location to store the recording
+    - filename : optional, name of the data file.
     """
 
-    def __init__(self, stream_info: StreamInfo, path: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 stream_info: StreamInfo,
+                 directory: str,
+                 filename: str = None):
+        super().__init__()
         self.stream_info = stream_info
-        self.path = path
+        self.directory = directory
 
         self.sample_count = 0
         self.max_chunk_size = 1024
@@ -78,45 +87,46 @@ class LslRecordingThread(StoppableThread):
         self.sleep_seconds = 0.2
         self.writer = None
 
-    @property
-    def filename(self) -> str:
-        """Filename, including the path of the raw_data to be written."""
-        # TODO: EEG content should take a filename parameter.
+        self.filename = filename if filename else self.default_filename()
+
+    def default_filename(self):
+        """Default filename to use if a name is not provided."""
         content_type = '_'.join(self.stream_info.type().split()).lower()
         name = '_'.join(self.stream_info.name().split()).lower()
+        return f"{content_type}_data_{name}.csv"
 
-        return str(Path(self.path, f"{content_type}_data_{name}.csv"))
-
-    def init_data_store(self, metadata: StreamInfo):
-        """Opens a csv file for the raw_data format and writes the metadata
-        headers.
+    def _init_data_writer(self, channels: List[str]) -> None:
+        """Initializes the raw data writer.
 
         Parameters:
         ----------
-            metadata - full metadata that is the result of a stream_inlet.info()
-                call; self.stream_info does not have the channel names
+        - channels : list of channel names provided for each sample.
         """
-        assert self.writer is None
-        filename = self.filename
-        log.debug(f"Writing data to {filename}")
+        assert self.writer is None, "Data store has already been initialized."
+        path = Path(self.directory, self.filename)
+        log.debug(f"Writing data to {path}")
         self.writer = RawDataWriter(
-            filename,
+            path,
             daq_type=self.stream_info.name(),
             sample_rate=self.stream_info.nominal_srate(),
-            columns=['timestamp'] + channel_names(metadata) +
-            ['lsl_timestamp'])
+            columns=['timestamp'] + channels + ['lsl_timestamp'])
         self.writer.__enter__()
 
-    def cleanup(self):
+    def _cleanup(self) -> None:
         """Performs cleanup tasks."""
         assert self.writer, "Writer not initialized"
         self.writer.__exit__()
 
-    def write_chunk(self, data, timestamps):
-        """Persists the data."""
+    def _write_chunk(self, data: List, timestamps: List) -> None:
+        """Persists the data resulting from pulling a chunk from the inlet.
+
+        Parameters
+        ----------
+        - data : list of samples
+        - timestamps : list of timestamps
+        """
         assert self.writer, "Writer not initialized"
 
-        log.debug(f"Writing {len(timestamps)} entries")
         chunk = []
         for i, sample in enumerate(data):
             self.sample_count += 1
@@ -125,9 +135,9 @@ class LslRecordingThread(StoppableThread):
 
     # @override
     def run(self):
-        """Process startup. Connects to the device and start reading data.
-        Since this is done in a separate process from the main thread, any
-        errors encountered will be written to the msg_queue.
+        """Process startup. Connects to the device, reads chunks of data at the
+        given interval, and persists the results. This happens continuously
+        until the `stop()` method is called.
         """
         # Note that self.stream_info does not have the channel names.
         inlet = StreamInlet(self.stream_info)
@@ -136,7 +146,7 @@ class LslRecordingThread(StoppableThread):
         log.debug("Acquiring data from data stream:")
         log.debug(full_metadata.as_xml())
 
-        self.init_data_store(full_metadata)
+        self._init_data_writer(channel_names(full_metadata))
 
         # TODO: account for remote acquisition by recording remote clock offsets
         # so we can map from remote timestamp to local lsl clock for comparing
@@ -147,7 +157,7 @@ class LslRecordingThread(StoppableThread):
             data, timestamps = inlet.pull_chunk(
                 max_samples=self.max_chunk_size)
             if timestamps:
-                self.write_chunk(data, timestamps)
+                self._write_chunk(data, timestamps)
             time.sleep(self.sleep_seconds)
 
         # Pull one last chunk to account for data streaming during sleep. This
@@ -158,9 +168,10 @@ class LslRecordingThread(StoppableThread):
         # parameter accordingly.
         data, timestamps = inlet.pull_chunk(max_samples=self.max_chunk_size)
         if timestamps:
-            self.write_chunk(data, timestamps)
+            self._write_chunk(data, timestamps)
 
-        self.cleanup()
+        log.info(f"Ending data stream recording for {self.stream_info.name}")
+        self._cleanup()
 
 
 def main(path: str, seconds: int = 5, debug: bool = False):
