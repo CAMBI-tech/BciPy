@@ -4,7 +4,7 @@ import logging
 from psychopy import visual, core
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
-from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties,
+from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
@@ -51,7 +51,7 @@ class MatrixDisplay(Display):
 
         self.staticPeriod = static_clock
 
-        self.position = (-.7, .5)
+        self.position = stimuli.stim_pos
         self.position_increment = 0.2
         self.max_grid_width = 0.7
         self.stim_registry = {}
@@ -99,7 +99,12 @@ class MatrixDisplay(Display):
 
         pos = self.position
         for sym in self.symbol_set:
-            text_stim = visual.TextStim(self.window, text=sym, opacity=self.opacity, pos=pos)
+            text_stim = visual.TextStim(
+                self.window,
+                text=sym,
+                opacity=self.opacity,
+                pos=pos,
+                height=self.stimuli_height)
             self.stim_registry[sym] = text_stim
             text_stim.draw()
 
