@@ -22,7 +22,7 @@ task_display = TaskDisplayProperties(
 )
 stim_properties = StimuliProperties(
     stim_font='Arial',
-    stim_pos=(-0.7, 0.5),
+    stim_pos=(-0.6, 0.4),
     stim_height=0.1,
     stim_inquiry=['A'],
     stim_colors=[],
@@ -51,12 +51,11 @@ matrix_display = MatrixDisplay(
 
 
 matrix_display.schedule_to(stimuli=['A', 'B', 'C'], timing=[0.5, 0.5, 0.5], colors=[])
-matrix_display.update_task('2/100')
 matrix_display.do_inquiry()
 
 matrix_display.schedule_to(stimuli=['X', 'F', '<', 'X', 'F', '<', 'X', 'F', '<'],
                            timing=[0.2, 1, 0.2, 0.2, 1, 0.2, 0.2, 1, 0.2], colors=[])
-matrix_display.update_task('3/100')
+# matrix_display.update_task('3/100')
 matrix_display.do_inquiry()
 
 # Flash a grid
@@ -69,8 +68,8 @@ core.wait(1)
 matrix_display.build_grid()
 matrix_display.window.flip()
 
-
-# Add Task Text using the existing TaskDisplay and self.task
+# Remaining Items
+# Add Task Text using the existing TaskDisplay and self.task (top of the screen 1/100 --> 2/100). Look at how RSVP does it.
 # Add logic to update and draw static (Task text)
 # Unit Tests
 # Typing
