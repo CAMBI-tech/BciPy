@@ -122,6 +122,7 @@ def init_display_window(parameters):
     # Return display window to caller
     return display_window
 
+
 class StimuliProperties:
     """"Stimuli Properties.
 
