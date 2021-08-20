@@ -51,11 +51,17 @@ matrix_display = MatrixDisplay(
 
 
 matrix_display.schedule_to(stimuli=['A', 'B', 'C'], timing=[0.5, 0.5, 0.5], colors=[])
+matrix_display.update_task_state(text='1/100', color_list=['White'])
+# matrix_display.draw_static()
+win.flip()
+core.wait(1)
 matrix_display.do_inquiry()
 
-matrix_display.schedule_to(stimuli=['X', 'F', '<', 'X', 'F', '<', 'X', 'F', '<'],
-                           timing=[0.2, 1, 0.2, 0.2, 1, 0.2, 0.2, 1, 0.2], colors=[])
-# matrix_display.update_task('3/100')
+matrix_display.schedule_to(stimuli=['X', 'F', '<'], timing=[1, 1, 1], colors=[])
+matrix_display.update_task_state(text='2/100', color_list=['White'])
+# matrix_display.draw_static()
+win.flip()
+core.wait(1)
 matrix_display.do_inquiry()
 
 # Flash a grid

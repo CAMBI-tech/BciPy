@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import logging
 
 from psychopy import visual, core
@@ -6,6 +6,7 @@ from psychopy import visual, core
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
+from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
 
@@ -132,7 +133,7 @@ class MatrixDisplay(Display):
             self.stim_registry[sym].draw()
             i += 1
 
-    def wait_screen(self) -> None:
+    def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.
 
         Define what happens on the screen when a user pauses a session.
@@ -172,12 +173,44 @@ class MatrixDisplay(Display):
         wait_message.draw()
         self.window.flip()
 
-    def update_task(self) -> None:
+    def draw_static(self) -> None:
+        """Draw static elements in a stimulus."""
+        self.task.draw()
+        for idx in range(len(self.text)):
+            self.text[idx].draw()
+
+    def update_task(self, text: str, color_list: List[str], pos: Tuple[float, float]) -> None:
         """Update Task.
 
         Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
+
+        PARAMETERS:
+
+        text: text for task
+        color_list: list of the colors for each char
+        pos: position of task
         """
-        pass
+        self.task.text = text
+        self.task.color = color_list[0]
+        self.task.pos = pos
+
+    def update_task_state(self, text: str, color_list: List[str]) -> None:
+        """Update task state.
+
+        Removes letters or appends to the right.
+        Args:
+                text(string): new text for task state
+                color_list(list[string]): list of colors for each
+        """
+        task_state_text = visual.TextStim(
+            win=self.window, font=self.task.font, text=text)
+        # x_task_position = task_state_text.boundingBox[0] / \
+        #   self.window.size[0] - 1
+        #task_pos = (x_task_position, 1 - self.task.height)
+        task_pos = (-.5, .8)
+
+        self.update_task(text=text, color_list=color_list, pos=task_pos)
+        self.task.draw()
 
 
 if __name__ == '__main__':
