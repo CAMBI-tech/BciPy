@@ -1,6 +1,7 @@
 """Defines classes that can write markers to LabStreamingLayer StreamOutlet."""
 import logging
 from typing import Any
+
 import pylsl
 
 log = logging.getLogger(__name__)

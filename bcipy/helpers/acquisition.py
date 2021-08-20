@@ -86,7 +86,8 @@ def init_client(connection_method: ConnectionMethod, parameters: dict,
         warnings.warn("TCP connections are no longer supported",
                       DeprecationWarning)
         return init_tcp_client(parameters, device_spec, save_folder)
-    return init_lsl_client(parameters, device_spec, save_folder)
+    # return init_lsl_client(parameters, device_spec, save_folder)
+    return init_lsl_client_original(parameters, device_spec, save_folder)
 
 
 def init_tcp_client(parameters: dict, device_spec: DeviceSpec,
@@ -94,6 +95,24 @@ def init_tcp_client(parameters: dict, device_spec: DeviceSpec,
     """Initialize a TCP client."""
 
     connector = registry.make_connector(device_spec, ConnectionMethod.TCP, {
+        'host': parameters['acq_host'],
+        'port': parameters['acq_port']
+    })
+
+    return DataAcquisitionClient(
+        connector=connector,
+        buffer_name=str(
+            Path(save_folder, parameters.get('buffer_name', 'raw_data.db'))),
+        delete_archive=False,
+        raw_data_file_name=Path(
+            save_folder, parameters.get('raw_data_name', 'raw_data.csv')))
+
+
+def init_lsl_client_original(parameters: dict, device_spec: DeviceSpec,
+                             save_folder: str) -> DataAcquisitionClient:
+    """Initialize a TCP client."""
+
+    connector = registry.make_connector(device_spec, ConnectionMethod.LSL, {
         'host': parameters['acq_host'],
         'port': parameters['acq_port']
     })

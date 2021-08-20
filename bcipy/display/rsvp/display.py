@@ -4,11 +4,12 @@ from typing import List, Optional, Tuple, Union
 
 from psychopy import core, visual
 
-from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
-from bcipy.display import Display, BCIPY_LOGO_PATH
+from bcipy.acquisition.marker_writer import MarkerWriter, NullMarkerWriter
+from bcipy.display import BCIPY_LOGO_PATH, Display
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -203,7 +204,7 @@ class RSVPDisplay(Display):
             self,
             window: visual.Window,
             static_clock,
-            experiment_clock: core.Clock,
+            experiment_clock: Clock,
             stimuli: StimuliProperties,
             task_display: TaskDisplayProperties,
             info: InformationProperties,
@@ -218,8 +219,8 @@ class RSVPDisplay(Display):
         ----------
         # Experiment
         window(visual.Window): PsychoPy Window
-        static_clock(core.Clock): Used to schedule static periods of display time
-        experiment_clock(core.Clock): Clock used to timestamp display onsets
+        static_clock(core.MonotonicClock): Used to schedule static periods of display time
+        experiment_clock(Clock): Clock used to timestamp display onsets
 
         # Stimuli
         stimuli(StimuliProperties): attributes used for inquiries

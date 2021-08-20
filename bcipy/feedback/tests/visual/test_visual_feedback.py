@@ -1,10 +1,12 @@
-from psychopy import core
-import psychopy
 import unittest
 
-from mockito import any, mock, when, unstub, verify, verifyNoUnwantedInteractions, verifyStubbedInvocationsAreUsed
+import psychopy
+from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+                     verifyStubbedInvocationsAreUsed, when)
+from psychopy import core
 
-from bcipy.feedback.visual.visual_feedback import VisualFeedback, FeedbackType
+from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
+from bcipy.helpers.clock import Clock
 
 
 class TestVisualFeedback(unittest.TestCase):
@@ -25,7 +27,7 @@ class TestVisualFeedback(unittest.TestCase):
         self.text_mock = mock()
         self.image_mock = mock()
 
-        self.clock = core.Clock()
+        self.clock = Clock()
 
         self.visual_feedback = VisualFeedback(
             display=self.display, parameters=self.parameters,

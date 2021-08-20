@@ -5,14 +5,13 @@ import time
 import unittest
 from pathlib import Path
 
-from psychopy.core import Clock
-
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
                                        preconfigured_device)
 from bcipy.acquisition.protocols.lsl.lsl_client import (LslAcquisitionClient,
                                                         range_evaluator)
+from bcipy.helpers.clock import Clock
 
 DEVICE_NAME = 'DSI'
 DEVICE = preconfigured_device(DEVICE_NAME)
@@ -103,7 +102,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
         client.start_acquisition()
 
-        experiment_clock = Clock()
+        experiment_clock = Clock(start_at_zero=True)
         # Ensure we are at 0
         experiment_clock.reset()
         time.sleep(1)
@@ -125,7 +124,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         """Test the offset in seconds of a given event relative to the first
         sample time."""
         client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
-        experiment_clock = Clock()
+        experiment_clock = Clock(start_at_zero=True)
 
         client.start_acquisition()
 

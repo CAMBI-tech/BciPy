@@ -7,8 +7,10 @@ from string import ascii_uppercase
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from bcipy.task.exceptions import InsufficientDataException
 from psychopy import core, event, visual
+
+from bcipy.helpers.clock import Clock
+from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(__name__)
 
@@ -350,7 +352,7 @@ def get_user_input(window, message, color, first_run=False):
 
 def get_key_press(
         key_list: List[str],
-        clock: core.Clock,
+        clock: Clock,
         stamp_label: str = 'bcipy_key_press') -> Union[list, None]:
     """Get Key Press.
 
@@ -361,7 +363,7 @@ def get_key_press(
     Parameters
     ----------
         key_list(List[str]): list of keys to look for being pressed. Ex. ['space']
-        clock(core.Clock): clock to use for timestamping any key press
+        clock(Clock): clock to use for timestamping any key press
         stamp_label(str): custom label to use for timstamping along with the key itself
 
     Returns

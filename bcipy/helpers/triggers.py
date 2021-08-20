@@ -4,6 +4,7 @@ from typing import Dict, List, TextIO, Tuple
 
 from psychopy import core, visual
 
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.load import load_txt_data
 from bcipy.helpers.parameters import Parameters
@@ -36,7 +37,7 @@ class TriggerCallback:
     timing = None
     first_time = True
 
-    def callback(self, clock: core.Clock, stimuli: str) -> None:
+    def callback(self, clock: Clock, stimuli: str) -> None:
         if self.first_time:
             self.timing = [stimuli, clock.getTime()]
             self.first_time = False
@@ -46,7 +47,7 @@ class TriggerCallback:
         self.first_time = True
 
 
-def _calibration_trigger(experiment_clock: core.Clock,
+def _calibration_trigger(experiment_clock: Clock,
                          trigger_type: str = CalibrationType.TEXT.value,
                          trigger_name: str = DEFAULT_CALIBRATION_TRIGGER_NAME,
                          trigger_time: float = 1,

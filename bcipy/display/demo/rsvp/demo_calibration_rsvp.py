@@ -1,8 +1,10 @@
-from psychopy import visual, core
+from psychopy import core, visual
 
-from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.rsvp import InformationProperties, TaskDisplayProperties, StimuliProperties
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.display.rsvp import (InformationProperties, StimuliProperties,
+                                TaskDisplayProperties)
+from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.helpers.clock import Clock
 
 info = InformationProperties(
     info_color='White',
@@ -58,7 +60,7 @@ print(frameRate)
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
-experiment_clock = core.MonotonicClock(start_time=None)
+experiment_clock = Clock()
 len_stimuli = 10
 stimuli = StimuliProperties(
     stim_font='Arial',

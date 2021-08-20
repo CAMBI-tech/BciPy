@@ -4,10 +4,13 @@
 
 from psychopy import core
 
-from bcipy.display import init_display_window
-from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
-from bcipy.display.rsvp import PreviewInquiryProperties, InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.display import init_display_window
+from bcipy.display.rsvp import (InformationProperties,
+                                PreviewInquiryProperties, StimuliProperties,
+                                TaskDisplayProperties)
+from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.helpers.clock import Clock
 
 # Initialize Stimulus
 is_txt_stim = True
@@ -87,7 +90,7 @@ print(frameRate)
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
-experiment_clock = core.MonotonicClock(start_time=None)
+experiment_clock = Clock()
 
 preview_inquiry = PreviewInquiryProperties(
     preview_inquiry_length=preview_inquiry_length,

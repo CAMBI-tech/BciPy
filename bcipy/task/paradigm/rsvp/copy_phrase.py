@@ -7,6 +7,7 @@ from bcipy.display.rsvp import (InformationProperties,
                                 TaskDisplayProperties)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -16,8 +17,8 @@ from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.task.data import Inquiry, Session, EvidenceType
 from bcipy.task import Task
+from bcipy.task.data import EvidenceType, Inquiry, Session
 
 
 class Decision(NamedTuple):
@@ -102,7 +103,8 @@ class RSVPCopyPhraseTask(Task):
 
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
-        self.experiment_clock = core.Clock()
+        self.experiment_clock = Clock()
+        self.start_time = self.experiment_clock.getTime()
 
         self.alp = alphabet(parameters)
         self.rsvp = _init_copy_phrase_display(self.parameters, self.window,
@@ -566,7 +568,7 @@ class RSVPCopyPhraseTask(Task):
         - self.session
         """
         self.session.add_sequence(data)
-        self.session.total_time_spent = self.experiment_clock.getTime()
+        self.session.total_time_spent = self.experiment_clock.getTime() - self.start_time
         if save:
             self.write_session_data()
         if decision_made:

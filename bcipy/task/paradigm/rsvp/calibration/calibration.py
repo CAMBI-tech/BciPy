@@ -1,14 +1,15 @@
 from psychopy import core
 
+from bcipy.display.rsvp import (InformationProperties, StimuliProperties,
+                                TaskDisplayProperties)
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, InformationProperties
-
-from bcipy.task import Task
-
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
+                                   get_task_info)
+from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
+                                trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-from bcipy.helpers.stimuli import calibration_inquiry_generator, get_task_info, StimuliOrder
-from bcipy.helpers.task import (
-    alphabet, trial_complete_message, get_user_input, pause_calibration)
+from bcipy.task import Task
 
 
 class RSVPCalibrationTask(Task):
@@ -40,7 +41,7 @@ class RSVPCalibrationTask(Task):
         self.parameters = parameters
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
-        self.experiment_clock = core.Clock()
+        self.experiment_clock = Clock()
         self.buffer_val = parameters['task_buffer_len']
         self.alp = alphabet(parameters)
         self.rsvp = init_calibration_display_task(

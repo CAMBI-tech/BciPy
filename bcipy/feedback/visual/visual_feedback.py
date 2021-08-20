@@ -1,7 +1,10 @@
-from bcipy.feedback.feedback import Feedback
-from psychopy import visual, core
-from bcipy.helpers.stimuli import resize_image
 from enum import Enum
+
+from psychopy import core, visual
+
+from bcipy.feedback.feedback import Feedback
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import resize_image
 
 
 class FeedbackType(Enum):
@@ -130,7 +133,7 @@ if __name__ == "__main__":
     # Load a parameters file
     parameters = load_json_parameters(args.parameters, value_cast=True)
     display = init_display_window(parameters)
-    clock = core.Clock()
+    clock = Clock()
     # Start Visual Feedback
     visual_feedback = VisualFeedback(
         display=display, parameters=parameters, clock=clock)
