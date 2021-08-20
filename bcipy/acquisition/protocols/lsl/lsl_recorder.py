@@ -166,6 +166,7 @@ class LslRecordingThread(StoppableThread):
         # and capture a timestamp, then use that timestamp to determine how
         # long we slept since receiving the call and set the max_samples
         # parameter accordingly.
+        # TODO: do we need to use max_chunk_size here
         data, timestamps = inlet.pull_chunk(max_samples=self.max_chunk_size)
         if timestamps:
             self._write_chunk(data, timestamps)

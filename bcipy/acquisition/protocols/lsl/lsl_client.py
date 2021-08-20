@@ -73,7 +73,7 @@ class LslAcquisitionClient:
         self.experiment_clock = None
 
         self.inlet = None
-        self.first_sample = None
+        self.first_sample_time = None
         self.use_marker_writer = use_marker_writer
         self.marker_writer = None
 
@@ -99,7 +99,7 @@ class LslAcquisitionClient:
 
         # TODO: Should we resolve all streams and query by name?
         if self._connect_to_query_stream():
-            self.first_sample = self.inlet.pull_sample()
+            _, self.first_sample_time = self.inlet.pull_sample()
 
     def _connect_to_query_stream(self) -> bool:
         """Initialize a stream inlet to use for querying data.
@@ -133,10 +133,7 @@ class LslAcquisitionClient:
         """Context manager exit method to clean up resources."""
         self.stop_acquisition()
 
-    def get_data(self,
-                 start: float = None,
-                 end: float = None,
-                 device: DeviceSpec = None) -> List[Record]:
+    def get_data(self, start: float = None, end: float = None) -> List[Record]:
         """Get data in time range.
 
         Parameters
@@ -166,8 +163,7 @@ class LslAcquisitionClient:
                            start_time: float,
                            end_time: float,
                            experiment_clock: Clock = None,
-                           calib_time: float = None,
-                           device: DeviceSpec = None) -> List[Record]:
+                           calib_time: float = None) -> List[Record]:
         """Queries the data stream, using start and end values relative to a
         clock different than the acquisition clock.
 
@@ -234,10 +230,10 @@ class LslAcquisitionClient:
 
     def get_data_len(self) -> int:
         """Total amount of data recorded. This is a calculated value and may not be precise."""
-        if self.first_sample:
-            _, first_sample_time = self.first_sample
+        if self.first_sample_time:
             _, stamp = self.inlet.pull_sample()
-            return (stamp - first_sample_time) * self.device_spec.sample_rate
+            return (stamp -
+                    self.first_sample_time) * self.device_spec.sample_rate
         return None
 
     @property
@@ -285,15 +281,56 @@ class LslAcquisitionClient:
             )
         return diff
 
+    def event_offset(self, event_clock: Clock, event_time: float) -> float:
+        """Compute number of seconds that recording started prior to the given
+        event.
+
+        Parameters
+        ----------
+        - event_clock : monotonic clock used to record the event time.
+        - event_time : timestamp of the event of interest.
+
+        Returns
+        -------
+        Seconds between acquisition start and the event.
+        """
+        if self.first_sample_time:
+            lsl_event_time = self.convert_time(event_clock, event_time)
+            return lsl_event_time - self.first_sample_time
+        return 0.0
+
     @property
-    def offset(self):
+    def offset(self) -> float:
         """Offset in seconds from the start of acquisition to calibration
-        trigger."""
-        # first sample time is 0
-        # convert_time at calib - first_sample time
-        # TODO: how do we get the sample time at calib
+        trigger.
+
+        The LSL timestamp at calibration depends on the use of the
+        LslMarkerWriter. If a marker writer is not used the `event_offset`
+        method should be used to calculate the offset.
+
+        Returns
+        -------
+        The number of seconds between acquisition start and the calibration
+        event, or 0.0 if the marker writer was not used.
+        """
+
         log.debug("Acquisition offset called")
-        return 0
+
+        # pylint: disable=no-member
+        if isinstance(
+                self.marker_writer, LslMarkerWriter
+        ) and self.marker_writer.first_marker_stamp and self.first_sample_time:
+            calib_time = self.marker_writer.first_marker_stamp
+            # TODO: The first_sample_time is the time the data stream used for
+            # queries was accessed. This may be off from the corresponding
+            # sample in the LslRecordingThread by 0.5 seconds or so. The offset
+            # here is sufficient for data queries but not for positioning triggers
+            # within the raw_data file. Consider a shared message queue
+            # communicate with the recording thread for the purpose of calculating
+            # that offset. Alternatively, it may be better to used a single clock
+            # for both the triggers and the data recording.
+            return calib_time - self.first_sample_time
+        return 0.0
 
     def cleanup(self):
         """Perform any necessary cleanup."""

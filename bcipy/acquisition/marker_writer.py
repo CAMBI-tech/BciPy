@@ -39,6 +39,7 @@ class LslMarkerWriter(MarkerWriter):
         markers_info = pylsl.StreamInfo(stream_name, "Markers", 1, 0, 'string',
                                         stream_id)
         self.markers_outlet = pylsl.StreamOutlet(markers_info)
+        self.first_marker_stamp: float = None
 
     def push_marker(self, marker: Any):
         """Push the given stimulus marker for processing.
@@ -47,8 +48,11 @@ class LslMarkerWriter(MarkerWriter):
         ----------
         - marker : any object that can be converted to a str
         """
-        log.debug(f'Pushing marker {str(marker)} at {pylsl.local_clock()}')
-        self.markers_outlet.push_sample([str(marker)])
+        stamp = pylsl.local_clock()
+        log.debug(f'Pushing marker {str(marker)} at {stamp}')
+        self.markers_outlet.push_sample([str(marker)], stamp)
+        if not self.first_marker_stamp:
+            self.first_marker_stamp = stamp
 
     def cleanup(self):
         """Cleans up the StreamOutlet."""

@@ -117,7 +117,29 @@ class TestDataAcquisitionClient(unittest.TestCase):
         client.stop_acquisition()
         expected_samples = DEVICE.sample_rate / 2
         self.assertAlmostEqual(expected_samples, len(samples), delta=1.0)
-        self.assertAlmostEqual(client.convert_time(experiment_clock, 0.5), start, delta=0.001)
+        self.assertAlmostEqual(client.convert_time(experiment_clock, 0.5),
+                               start,
+                               delta=0.001)
+
+    def test_event_offset(self):
+        """Test the offset in seconds of a given event relative to the first
+        sample time."""
+        client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        experiment_clock = Clock()
+
+        client.start_acquisition()
+
+        # Ensure experiment clock is at 0
+        experiment_clock.reset()
+
+        # We don't need to wait for any data. Starting acquisition pulls a sample.
+        client.stop_acquisition()
+
+        event_time = 0.5
+        self.assertAlmostEqual(client.event_offset(experiment_clock,
+                                                   event_time),
+                               0.5,
+                               delta=0.02)
 
     def test_range_evaluator(self):
         """Test range evaluator function"""
