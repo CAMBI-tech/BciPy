@@ -8,8 +8,6 @@ from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
 from bcipy.acquisition.errors import InvalidClockError
-from bcipy.acquisition.marker_writer import (LslMarkerWriter, MarkerWriter,
-                                             NullMarkerWriter)
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
@@ -54,15 +52,13 @@ class LslAcquisitionClient:
     - save_directory : if present, uses an LslRecorder to persist the data to
     the given location.
     - raw_data_file_name : if present, uses this name for the EEG data.
-    - use_marker_writer : if present, initializes a marker writer when acquisition begins.
     """
 
     def __init__(self,
                  max_buflen: int,
                  device_spec: DeviceSpec = None,
                  save_directory: str = None,
-                 raw_data_file_name: str = None,
-                 use_marker_writer: bool = False):
+                 raw_data_file_name: str = None):
         super().__init__()
         if device_spec:
             ok_device = ConnectionMethod.LSL in device_spec.connection_methods
@@ -75,25 +71,14 @@ class LslAcquisitionClient:
 
         self.inlet = None
         self.first_sample_time = None
-        self.use_marker_writer = use_marker_writer
-        self.marker_writer = None
 
         self.recorder = None
         if save_directory:
             self.recorder = LslRecorder(path=save_directory,
                                         filenames={'EEG': raw_data_file_name})
 
-    def _init_marker_writer(self) -> MarkerWriter:
-        """Initialize the marker writer if needed."""
-        if not self.marker_writer:
-            self.marker_writer = LslMarkerWriter(
-            ) if self.use_marker_writer else NullMarkerWriter()
-
-        return self.marker_writer
-
     def start_acquisition(self) -> None:
         """Connect to the datasource and start acquiring data."""
-        self._init_marker_writer()
 
         if self.recorder:
             self.recorder.start()
@@ -121,9 +106,6 @@ class LslAcquisitionClient:
         if self.recorder:
             self.recorder.stop()
         self.inlet = None
-
-        if self.marker_writer:
-            self.marker_writer.cleanup()
 
     def __enter__(self):
         """Context manager enter method that starts data acquisition."""
@@ -301,37 +283,33 @@ class LslAcquisitionClient:
         return 0.0
 
     @property
-    def offset(self) -> float:
+    def offset(self, first_stim_time: float) -> float:
         """Offset in seconds from the start of acquisition to calibration
         trigger.
 
-        The LSL timestamp at calibration depends on the use of the
-        LslMarkerWriter. If a marker writer is not used the `event_offset`
-        method should be used to calculate the offset.
+        Parameters
+        ----------
+        - first_stim_time : LSL local clock timestamp of the first stimulus.
 
         Returns
         -------
         The number of seconds between acquisition start and the calibration
-        event, or 0.0 if the marker writer was not used.
+        event, or 0.0 .
         """
 
         log.debug("Acquisition offset called")
 
-        # pylint: disable=no-member
-        if isinstance(
-                self.marker_writer, LslMarkerWriter
-        ) and self.marker_writer.first_marker_stamp and self.first_sample_time:
-            calib_time = self.marker_writer.first_marker_stamp
-            # TODO: The first_sample_time is the time the data stream used for
-            # queries was accessed. This may be off from the corresponding
-            # sample in the LslRecordingThread by 0.5 seconds or so. The offset
-            # here is sufficient for data queries but not for positioning triggers
-            # within the raw_data file. Consider a shared message queue
-            # communicate with the recording thread for the purpose of calculating
-            # that offset. Alternatively, it may be better to used a single clock
-            # for both the triggers and the data recording.
-            return calib_time - self.first_sample_time
-        return 0.0
+        assert self.first_sample_time, "Acquisition was not started."
+
+        # TODO: The first_sample_time is the time the data stream used for
+        # queries was accessed. This may be off from the corresponding
+        # sample in the LslRecordingThread by 0.5 seconds or so. The offset
+        # here is sufficient for data queries but not for positioning triggers
+        # within the raw_data file. Consider a shared message queue
+        # communicate with the recording thread for the purpose of calculating
+        # that offset. Alternatively, it may be better to used a single clock
+        # for both the triggers and the data recording.
+        return first_stim_time - self.first_sample_time
 
     def cleanup(self):
         """Perform any necessary cleanup."""

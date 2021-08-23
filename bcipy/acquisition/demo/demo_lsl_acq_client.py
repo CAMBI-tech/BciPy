@@ -13,7 +13,7 @@ def main():
     # Start the server with the command:
     # python bcipy/acquisition/datastream/lsl_server.py --name LSL
 
-    client = LslAcquisitionClient(max_buflen=1, save_directory='.', use_marker_writer=True)
+    client = LslAcquisitionClient(max_buflen=1, save_directory='.')
 
     try:
         seconds = 3
@@ -21,9 +21,7 @@ def main():
         print(
             f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n"
         )
-        client.marker_writer.push_marker('Hello')
         time.sleep(seconds)
-        client.marker_writer.push_marker('World')
         samples = client.get_latest_data()
         print(f"Number of samples: {len(samples)}")
         print(f"Last sample:\n{samples[-1]}")

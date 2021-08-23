@@ -218,7 +218,6 @@ def init_calibration_display_task(
         stimuli,
         task_display,
         info,
-        marker_writer=daq.marker_writer,
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'],
         full_screen=parameters['full_screen'])

@@ -4,7 +4,6 @@ from typing import List, Optional
 
 from psychopy import core, visual
 
-from bcipy.acquisition.marker_writer import MarkerWriter
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_resolution
 
@@ -20,7 +19,6 @@ class Display(ABC):
     window: visual.Window = None
     timing_clock: Clock = None
     experiment_clock: Clock = None
-    marker_writer: Optional[MarkerWriter] = None
     logger: Logger = None
     stimuli_inquiry: List[str] = None
     stimuli_colors: List[str] = None

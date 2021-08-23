@@ -4,7 +4,6 @@
 
 from psychopy import core
 
-from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.display import init_display_window
 from bcipy.display.rsvp import (InformationProperties,
                                 PreviewInquiryProperties, StimuliProperties,
@@ -105,7 +104,6 @@ rsvp = CopyPhraseDisplay(
     stimuli,
     task_display,
     info,
-    marker_writer=NullMarkerWriter(),
     static_task_text='COPY_PHRASE',
     static_task_color='white',
     preview_inquiry=preview_inquiry)

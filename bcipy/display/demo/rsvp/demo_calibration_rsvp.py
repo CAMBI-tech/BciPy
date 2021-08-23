@@ -1,6 +1,5 @@
 from psychopy import core, visual
 
-from bcipy.acquisition.marker_writer import NullMarkerWriter
 from bcipy.display.rsvp import (InformationProperties, StimuliProperties,
                                 TaskDisplayProperties)
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
@@ -76,8 +75,7 @@ rsvp = CalibrationDisplay(
     experiment_clock,
     stimuli,
     task_display,
-    info,
-    marker_writer=NullMarkerWriter())
+    info)
 
 # uncomment trigger_file lines for demo with triggers!
 # trigger_file = open('calibration_triggers.txt','w')

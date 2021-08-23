@@ -403,7 +403,6 @@ def main():
     import json
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.devices import preconfigured_devices
-    from bcipy.acquisition.connection_method import ConnectionMethod
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--buffer', default='buffer.db',
