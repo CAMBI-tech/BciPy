@@ -1,26 +1,23 @@
 """Helper functions for working with the acquisition module"""
 import subprocess
 import time
-import warnings
 from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
 import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import CountClock, DataAcquisitionClient
+from bcipy.acquisition.client import DataAcquisitionClient
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.tcp_server import TcpDataServer, await_start
+from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.acquisition.util import StoppableThread
 
 
 def init_eeg_acquisition(parameters: dict,
                          save_folder: str,
-                         clock=CountClock(),
-                         server: bool = False):
+                         server: bool = False) -> tuple:
     """Initialize EEG Acquisition.
 
     Initializes a client that connects with the EEG data source and begins
@@ -48,21 +45,16 @@ def init_eeg_acquisition(parameters: dict,
         (client, server) tuple
     """
 
-    connection_method = ConnectionMethod.by_name(
-        parameters['acq_connection_method'])
-
     # TODO: parameter for loading devices; path to devices.json?
     # devices.load(devices_path)
     device_spec = preconfigured_device(parameters['acq_device'])
 
     dataserver = False
     if server:
-        dataserver = start_server(connection_method, device_spec,
-                                  parameters['acq_host'],
-                                  parameters['acq_port'])
+        dataserver = LslDataServer(device_spec=device_spec)
+        await_start(dataserver)
 
-    client = init_client(connection_method, parameters, device_spec,
-                         save_folder)
+    client = init_client(parameters, device_spec, save_folder)
     client.start_acquisition()
 
     if parameters['acq_show_viewer']:
@@ -70,52 +62,14 @@ def init_eeg_acquisition(parameters: dict,
         start_viewer(display_screen=viewer_screen,
                      parameter_location=parameters['parameter_location'])
 
-    # If we're using a server or data generator, there is no reason to
-    # calibrate data.
-    if server and connection_method != ConnectionMethod.LSL:
-        client.is_calibrated = True
-
     return (client, dataserver)
 
 
-def init_client(connection_method: ConnectionMethod, parameters: dict,
-                device_spec: DeviceSpec, save_folder: str):
-    """Initialize the correct acquisition client based on the connection
-    method."""
-    if connection_method == ConnectionMethod.TCP:
-        warnings.warn("TCP connections are no longer supported",
-                      DeprecationWarning)
-        return init_tcp_client(parameters, device_spec, save_folder)
-    # return init_lsl_client(parameters, device_spec, save_folder)
-    return init_lsl_client_original(parameters, device_spec, save_folder)
+def init_client(parameters: dict, device_spec: DeviceSpec,
+                save_folder: str) -> DataAcquisitionClient:
+    """Initialize the original client."""
 
-
-def init_tcp_client(parameters: dict, device_spec: DeviceSpec,
-                    save_folder: str) -> DataAcquisitionClient:
-    """Initialize a TCP client."""
-
-    connector = registry.make_connector(device_spec, ConnectionMethod.TCP, {
-        'host': parameters['acq_host'],
-        'port': parameters['acq_port']
-    })
-
-    return DataAcquisitionClient(
-        connector=connector,
-        buffer_name=str(
-            Path(save_folder, parameters.get('buffer_name', 'raw_data.db'))),
-        delete_archive=False,
-        raw_data_file_name=Path(
-            save_folder, parameters.get('raw_data_name', 'raw_data.csv')))
-
-
-def init_lsl_client_original(parameters: dict, device_spec: DeviceSpec,
-                             save_folder: str) -> DataAcquisitionClient:
-    """Initialize a TCP client."""
-
-    connector = registry.make_connector(device_spec, ConnectionMethod.LSL, {
-        'host': parameters['acq_host'],
-        'port': parameters['acq_port']
-    })
+    connector = registry.make_connector(device_spec, ConnectionMethod.LSL, {})
 
     return DataAcquisitionClient(
         connector=connector,
@@ -136,8 +90,7 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
                                 raw_data_file_name=parameters.get(
-                                    'raw_data_name', None),
-                                use_marker_writer=True)
+                                    'raw_data_name', None))
 
 
 def max_inquiry_duration(parameters: dict) -> float:
@@ -157,33 +110,6 @@ def max_inquiry_duration(parameters: dict) -> float:
 
     return target_duration + fixation_duration + (
         stim_count * stim_duration) + interval_duration
-
-
-def start_server(connection_method: ConnectionMethod,
-                 device_spec: DeviceSpec,
-                 host: str = None,
-                 port: int = None) -> StoppableThread:
-    """Create a server that will generate mock data for the given DeviceSpec
-    using the appropriate connection method.
-
-    Parameters
-    ----------
-    - connection_method : method used to serve data.
-    - device_spec : specifies what kind of data to serve (channels, sample_rate, etc).
-    - host : if using TCP, serves on this host.
-    - port : if using TCP, serves on this port.
-    """
-    if connection_method == ConnectionMethod.TCP:
-        protocol = registry.find_protocol(device_spec, connection_method)
-        dataserver = TcpDataServer(protocol=protocol, host=host, port=port)
-    elif connection_method == ConnectionMethod.LSL:
-        dataserver = LslDataServer(device_spec=device_spec)
-    else:
-        raise ValueError(
-            (f'{connection_method} server (fake data mode) for device type '
-             f'{device_spec.name} not supported'))
-    await_start(dataserver)
-    return dataserver
 
 
 def analysis_channels(channels: List[str], device_name: str) -> list:

@@ -31,7 +31,7 @@ class TestAcquisition(unittest.TestCase):
     def test_default_values(self):
         """Test default values."""
         self.parameters['acq_device'] = 'DSI'
-        self.parameters['acq_connection_method'] = 'TCP'
+        self.parameters['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(self.parameters,
                                               self.save,
@@ -45,25 +45,6 @@ class TestAcquisition(unittest.TestCase):
 
         self.assertEqual(client.device_info.name,
                          self.parameters['acq_device'])
-        self.assertEqual(client.device_info.fs, 300)
-
-    def test_allows_customization(self):
-        """Test init_eeg_acquisition with custom values."""
-
-        params = self.parameters
-        params['raw_data_name'] = 'foo.csv'
-        params['acq_port'] = 9000
-        params['acq_device'] = 'DSI'
-        params['acq_connection_method'] = 'TCP'
-
-        client, server = init_eeg_acquisition(params, self.save, server=True)
-
-        with client:
-            time.sleep(0.1)
-        client.cleanup()
-        server.stop()
-
-        self.assertEqual(client.device_info.name, params['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
     def test_lsl_client(self):
