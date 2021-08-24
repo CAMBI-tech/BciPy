@@ -12,6 +12,10 @@ from bcipy.helpers.task import alphabet
 
 
 class MatrixDisplay(Display):
+    """Matix Display Object for inquiry Presentation.
+
+    Animates display objects in matrix grid common to any RSVP task.
+    """
 
     def __init__(
             self,
@@ -27,6 +31,38 @@ class MatrixDisplay(Display):
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
             symbol_set=None):
+
+        """Initialize Matrix display parameters and objects.
+
+        PARAMETERS:
+        ----------
+        # Experiment
+        window(visual.Window): PsychoPy Window
+        static_clock(core.Clock): Used to schedule static periods of display time
+        experiment_clock(core.Clock): Clock used to timestamp display onsets
+
+        # Stimuli
+        stimuli(StimuliProperties): attributes used for inquiries
+
+        # Task
+        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+
+        # Info
+        info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
+
+        # Preview Inquiry
+        preview_inquiry(PreviewInquiryProperties) Optional: attributes to display a preview of upcoming stimuli defined
+            via self.stimuli(StimuliProperties).
+
+        marker_writer(MarkerWriter) Optional: object used to write triggers to
+            a acquisition stream.
+        trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
+            task. This will be used to reconcile timing differences between acquisition and the display.
+        space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
+        full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
+            scaling display items as needed.
+        symbol_set default = none : set of stimuli to be flashed during an inquiry
+        """
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = window.getActualFrameRate()
@@ -52,6 +88,7 @@ class MatrixDisplay(Display):
 
         self.staticPeriod = static_clock
 
+        #Set position and parameters for grid of alphabet
         self.position = stimuli.stim_pos
         self.position_increment = 0.2
         self.max_grid_width = 0.7
@@ -76,14 +113,22 @@ class MatrixDisplay(Display):
         self.scp = True  # for future row / col integration
 
         # Create multiple text objects based on input FIX THIS!
-        # self.info = info
+        #self.info = info
         # self.text = info.build_info_text(window)
         #  Letter selected
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
+        
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
+        """Schedule stimuli elements (works as a buffer).
+
+        Args:
+                stimuli(list[string]): list of stimuli text / name
+                timing(list[float]): list of timings of stimuli
+                colors(list[string]): list of colors
+        """
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
         self.stimuli_colors = colors
@@ -97,7 +142,10 @@ class MatrixDisplay(Display):
             self.animate_scp()
 
     def build_grid(self) -> None:
+        """Build grid.
 
+        Builds and displays a 7x4 matrix of stimuli.
+        """
         pos = self.position
         for sym in self.symbol_set:
             text_stim = visual.TextStim(
@@ -117,6 +165,11 @@ class MatrixDisplay(Display):
             pos = (x, y)
 
     def animate_scp(self) -> None:
+        """Animate SCP.
+
+        Flashes each stimuli in stimuli_inquiry for their respective flash
+        times.
+        """
         i = 0
         for sym in self.stimuli_inquiry:
             self.window.callOnFlip(
