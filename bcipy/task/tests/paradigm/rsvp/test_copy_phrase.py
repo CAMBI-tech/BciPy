@@ -10,7 +10,7 @@ from mockito import any, mock, unstub, verify, when
 
 import bcipy.display.rsvp.mode.copy_phrase
 import bcipy.helpers.task
-from bcipy.acquisition.client import DataAcquisitionClient
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
@@ -96,9 +96,10 @@ class TestCopyPhrase(unittest.TestCase):
             {
                 'device_info': device_info,
                 'is_calibrated': True,
-                'offset': None
+                'offset': lambda x: 0.0
             },
-            spec=DataAcquisitionClient)
+            spec=LslAcquisitionClient)
+
         self.temp_dir = tempfile.mkdtemp()
         self.signal_model = mock()
         self.language_model = mock()
@@ -174,7 +175,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_fake_data_single_inquiry(self, process_data_mock,
                                               write_trg_mock, message_mock,
                                               user_input_mock):
@@ -223,7 +224,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_max_inq_len(self, process_data_mock, write_trg_mock, message_mock,
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
@@ -271,7 +272,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_spelling_complete(self, process_data_mock, write_trg_mock,
                                message_mock, user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -333,7 +334,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertEqual(task.starting_spelled_letters(), 0)
 
     def test_stims_for_eeg(self):
-        """The correct stims should be sent to process_data_for_decision"""
+        """The correct stims should be sent to get_data_for_decision"""
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -382,7 +383,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_next_letter(self, process_data_mock, write_trg_mock, message_mock,
                          user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -414,7 +415,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_fake_data_with_preview(self, process_data_mock,
                                             write_trg_mock, message_mock,
                                             user_input_mock):
@@ -460,7 +461,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch(
         'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
     )
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.process_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_real_data_single_inquiry(self, process_data_mock,
                                               write_trg_mock, message_mock,
                                               user_input_mock):
@@ -629,7 +630,7 @@ def mock_inquiry_timings():
 
 
 def mock_process_data():
-    """Generator that yields data mocking the process_data_for_decision helper"""
+    """Generator that yields data mocking the get_data_for_decision helper"""
     raw_data = None
     triggers = [('+', 0.0), ('H', 0.4680980280973017),
                 ('C', 0.6852016930934042), ('D', 0.9016020260751247),

@@ -54,7 +54,7 @@ def init_eeg_acquisition(parameters: dict,
         dataserver = LslDataServer(device_spec=device_spec)
         await_start(dataserver)
 
-    client = init_client(parameters, device_spec, save_folder)
+    client = init_lsl_client(parameters, device_spec, save_folder)
     client.start_acquisition()
 
     if parameters['acq_show_viewer']:

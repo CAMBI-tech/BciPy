@@ -11,7 +11,7 @@ from bcipy.helpers.task import (
     trial_complete_message,
     get_user_input,
     pause_calibration,
-    process_data_for_decision,
+    get_data_for_decision,
     TrialReshaper)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
@@ -289,14 +289,11 @@ class RSVPInterInquiryFeedbackCalibration(Task):
 
     def _get_data_for_psd(self, inquiry_timing):
         # get data from the DAQ
-        raw_data, triggers, target_info = process_data_for_decision(
-            inquiry_timing,
-            self.daq,
-            self.window,
-            self.parameters,
-            self.rsvp.first_stim_time,
-            self.static_offset,
-            buf_length=self.trial_length)
+        raw_data, triggers, target_info = get_data_for_decision(
+            inquiry_timing=inquiry_timing,
+            daq=self.daq,
+            static_offset=self.static_offset,
+            buffer_length=self.trial_length)
 
         # filter it
         default_transform = get_default_transform(

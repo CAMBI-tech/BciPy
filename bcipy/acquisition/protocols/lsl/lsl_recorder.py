@@ -88,6 +88,7 @@ class LslRecordingThread(StoppableThread):
         self.writer = None
 
         self.filename = filename if filename else self.default_filename()
+        self.first_sample_time = None
 
     def default_filename(self):
         """Default filename to use if a name is not provided."""
@@ -158,6 +159,9 @@ class LslRecordingThread(StoppableThread):
                 max_samples=self.max_chunk_size)
             if timestamps:
                 self._write_chunk(data, timestamps)
+                if not self.first_sample_time:
+                    self.first_sample_time = timestamps[0]
+
             time.sleep(self.sleep_seconds)
 
         # Pull one last chunk to account for data streaming during sleep. This

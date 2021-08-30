@@ -1,6 +1,6 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import List, Tuple
+from typing import List
 
 from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream
 
@@ -10,35 +10,18 @@ from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
 from bcipy.acquisition.errors import InvalidClockError
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
-from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
+from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
 from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
 
 
-def range_evaluator(start: float = None, end: float = None):
-    """Returns a function that can evaluate if a value is within the given range.
-
-    Parameters:
-    -----------
-    - start : optional start of the range
-    - end : optional end of the range"""
-    if start and end:
-        return lambda value: start <= value <= end
-    if start and not end:
-        return lambda value: value >= start
-    if not start and end:
-        return lambda value: value <= end
-    # Both missing; anything goes.
-    return lambda record: True
-
-
 class LslAcquisitionClient:
     """Data Acquisition Client for devices streaming data using Lab Streaming
-    Layer. Its primary use is dynamically querying streaming data in realtime.
-
-    TODO: support multiple devices.
+    Layer. Its primary use is dynamically querying streaming data in realtime,
+    however, if the save_directory and filename parameters are provided it uses
+    a LslRecordingThread to persist the data.
 
     Parameters:
     -----------
@@ -47,11 +30,8 @@ class LslAcquisitionClient:
     length.
     - device_spec : spec for the device from which to query data; if
     missing, this class will attempt to find the first EEG stream.
-    - append_timestamps : if True appends the LSL timestamp as an additional
-    column in any queried data.
-    - save_directory : if present, uses an LslRecorder to persist the data to
-    the given location.
-    - raw_data_file_name : if present, uses this name for the EEG data.
+    - save_directory : if present, persists the data to the given location.
+    - raw_data_file_name : if present, uses this name for the data file.
     """
 
     def __init__(self,
@@ -70,42 +50,59 @@ class LslAcquisitionClient:
         self.experiment_clock = None
 
         self.inlet = None
-        self.first_sample_time = None
+        self._first_sample_time = None
+
+        self.save_directory = save_directory
+        self.raw_data_file_name = raw_data_file_name
 
         self.recorder = None
-        if save_directory:
-            self.recorder = LslRecorder(path=save_directory,
-                                        filenames={'EEG': raw_data_file_name})
 
-    def start_acquisition(self) -> None:
-        """Connect to the datasource and start acquiring data."""
+    def start_acquisition(self) -> bool:
+        """Connect to the datasource and start acquiring data.
 
-        if self.recorder:
-            self.recorder.start()
-
-        # TODO: Should we resolve all streams and query by name?
-        if self._connect_to_query_stream():
-            _, self.first_sample_time = self.inlet.pull_sample()
-
-    def _connect_to_query_stream(self) -> bool:
-        """Initialize a stream inlet to use for querying data.
-
-        PostConditions: The inlet and device_spec properties are set.
+        Returns
+        -------
+        bool : False if acquisition is already in progress, otherwise True.
         """
         if self.inlet:
-            # Acquisition is already in progress
             return False
+
+        content_type = self.device_spec.content_type if self.device_spec else DEFAULT_DEVICE_TYPE
+        streams = resolve_stream('type', content_type)
+        if not streams:
+            raise Exception(
+                f'LSL Stream not found for content type {content_type}')
+        stream_info = streams[0]
+
+        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buflen)
+
         if self.device_spec:
-            self.inlet = device_stream(self.device_spec, self.max_buflen)
+            check_device(self.device_spec, self.inlet.info())
         else:
-            self.inlet, self.device_spec = default_stream(self.max_buflen)
+            self.device_spec = device_from_metadata(self.inlet.info())
+
+        if self.save_directory:
+            self.recorder = LslRecordingThread(stream_info,
+                                               self.save_directory,
+                                               self.raw_data_file_name)
+            self.recorder.start()
+
+        _, self._first_sample_time = self.inlet.pull_sample()
         return True
+
+    @property
+    def first_sample_time(self) -> float:
+        """Timestamp returned by the first sample. If the data is being
+        recorded this value reflects the timestamp of the first recorded sample"""
+        if self.recorder:
+            return self.recorder.first_sample_time
+        return self._first_sample_time
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
+        self.inlet = None
         if self.recorder:
             self.recorder.stop()
-        self.inlet = None
 
     def __enter__(self):
         """Context manager enter method that starts data acquisition."""
@@ -130,17 +127,24 @@ class LslAcquisitionClient:
         -------
         list of Records
         """
-        log.debug(f"Getting data from {start} to {end}")
+        log.debug(f"Getting data from time {start} to {end}")
 
-        # TODO: use device to get data from the correct stream
-        # TODO: for remote acquisition sources we need to account for sample timestamp offset
-        # from local_clock(). Shouldn't matter if everything is on the same machine.
+        data = self.get_latest_data()
+        log.debug(f'{len(data)} records available')
 
-        within_time_window = range_evaluator(start, end)
-        return [
-            record for record in self.get_latest_data()
-            if within_time_window(record.timestamp)
-        ]
+        if data:
+            start = start or data[0].timestamp
+            end = end or data[-1].timestamp
+            assert start >= data[0].timestamp, (
+                f'Start time of {start} is out of range:',
+                f'({data[0].timestamp} to {data[-1].timestamp}).')
+
+            data_slice = [
+                record for record in data if start <= record.timestamp <= end
+            ]
+            log.debug(f'{len(data_slice)} records returned')
+            return data_slice
+        return []
 
     def get_data_for_clock(self,
                            start_time: float,
@@ -212,7 +216,8 @@ class LslAcquisitionClient:
         return records[start_index:]
 
     def get_data_len(self) -> int:
-        """Total amount of data recorded. This is a calculated value and may not be precise."""
+        """Estimate of the total amount of data recorded. This is a calculated
+        value and may not be precise."""
         if self.first_sample_time:
             _, stamp = self.inlet.pull_sample()
             return (stamp -
@@ -282,10 +287,9 @@ class LslAcquisitionClient:
             return lsl_event_time - self.first_sample_time
         return 0.0
 
-    @property
     def offset(self, first_stim_time: float) -> float:
-        """Offset in seconds from the start of acquisition to calibration
-        trigger.
+        """Offset in seconds from the start of acquisition to the given stim
+        time.
 
         Parameters
         ----------
@@ -298,17 +302,9 @@ class LslAcquisitionClient:
         """
 
         log.debug("Acquisition offset called")
-
+        if not first_stim_time:
+            return 0.0
         assert self.first_sample_time, "Acquisition was not started."
-
-        # TODO: The first_sample_time is the time the data stream used for
-        # queries was accessed. This may be off from the corresponding
-        # sample in the LslRecordingThread by 0.5 seconds or so. The offset
-        # here is sufficient for data queries but not for positioning triggers
-        # within the raw_data file. Consider a shared message queue
-        # communicate with the recording thread for the purpose of calculating
-        # that offset. Alternatively, it may be better to used a single clock
-        # for both the triggers and the data recording.
         return first_stim_time - self.first_sample_time
 
     def cleanup(self):
@@ -321,50 +317,3 @@ def device_from_metadata(metadata: StreamInfo) -> DeviceSpec:
                       channels=channel_names(metadata),
                       sample_rate=metadata.nominal_srate(),
                       content_type=metadata.type())
-
-
-def default_stream(max_buflen: int) -> Tuple[StreamInlet, DeviceSpec]:
-    """Connect to the default query stream. Used when no device_spec is
-    provided.
-
-    Parameters:
-    -----------
-    - max_buflen : maximum length, in seconds, for the stream to buffer.
-
-    Returns:
-    --------
-    (stream_inlet, device_spec) tuple where device_spec is created from
-    the stream metadata.
-    """
-    streams = resolve_stream('type', DEFAULT_DEVICE_TYPE)
-    if not streams:
-        raise Exception(
-            f'LSL Stream not found for content type {DEFAULT_DEVICE_TYPE}')
-    inlet = StreamInlet(streams[0], max_buflen=max_buflen)
-    device_spec = device_from_metadata(inlet.info())
-    return (inlet, device_spec)
-
-
-def device_stream(device_spec: DeviceSpec, max_buflen: int) -> StreamInlet:
-    """Connect to the LSL stream for the given device.
-
-    Parameters:
-    -----------
-    - device_spec : info about the device to which to connect.
-    - max_buflen : maximum length, in seconds, for the stream to buffer.
-
-    Returns:
-    --------
-    stream_inlet, device_spec tuple
-    """
-    assert device_spec, "device_spec is required"
-    streams = resolve_stream('type', device_spec.content_type)
-    if not streams:
-        raise Exception(
-            f'LSL Stream not found for content type {device_spec.content_type}'
-        )
-
-    # TODO: if multiple streams are encountered search by name.
-    inlet = StreamInlet(streams[0], max_buflen=max_buflen)
-    check_device(device_spec, inlet.info())
-    return inlet

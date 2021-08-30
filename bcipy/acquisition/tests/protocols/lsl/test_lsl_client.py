@@ -9,8 +9,8 @@ from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
                                        preconfigured_device)
-from bcipy.acquisition.protocols.lsl.lsl_client import (LslAcquisitionClient,
-                                                        range_evaluator)
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+
 from bcipy.helpers.clock import Clock
 
 DEVICE_NAME = 'DSI'
@@ -41,7 +41,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
-        self.assertAlmostEqual(DEVICE.sample_rate, len(samples), delta=1.0)
+        self.assertAlmostEqual(int(DEVICE.sample_rate), len(samples), delta=1.0)
 
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
@@ -140,27 +140,6 @@ class TestDataAcquisitionClient(unittest.TestCase):
                                0.5,
                                delta=0.02)
 
-    def test_range_evaluator(self):
-        """Test range evaluator function"""
-        in_range = range_evaluator(start=1, end=10)
-        self.assertFalse(in_range(0))
-        self.assertTrue(in_range(1))
-        self.assertTrue(in_range(10))
-        self.assertFalse(in_range(11))
-
-        in_range = range_evaluator(start=1)
-        self.assertFalse(in_range(0))
-        self.assertTrue(in_range(1))
-        self.assertTrue(in_range(11))
-
-        in_range = range_evaluator(end=10)
-        self.assertTrue(in_range(0))
-        self.assertTrue(in_range(10))
-        self.assertFalse(in_range(11))
-
-        in_range = range_evaluator()
-        self.assertTrue(in_range(0))
-        self.assertTrue(in_range(11))
 
     def test_with_recording(self):
         """Test that recording works."""

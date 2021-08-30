@@ -169,9 +169,13 @@ class RSVPCalibrationTask(Task):
         # Give the system time to process
         core.wait(self.buffer_val)
 
+        # Write offset
         if self.daq.is_calibrated:
             _write_triggers_from_inquiry_calibration(
-                ['offset', self.daq.offset], self.trigger_file, offset=True)
+                ['offset',
+                 self.daq.offset(self.rsvp.first_stim_time)],
+                self.trigger_file,
+                offset=True)
 
         # Close this sessions trigger file and return some data
         self.trigger_file.close()
