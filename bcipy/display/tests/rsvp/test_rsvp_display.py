@@ -10,11 +10,13 @@ from mockito import (
     verifyNoUnwantedInteractions
 )
 from bcipy.display.rsvp import (
+    RSVPDisplay
+)
+from bcipy.display import (
     StimuliProperties,
     InformationProperties,
     TaskDisplayProperties,
     PreviewInquiryProperties,
-    RSVPDisplay
 )
 
 # Define some reusable elements to test RSVPDisplay with

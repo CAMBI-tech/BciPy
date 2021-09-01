@@ -1,7 +1,7 @@
 from psychopy import core
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.rsvp import StimuliProperties, TaskDisplayProperties, InformationProperties
+from bcipy.display import StimuliProperties, TaskDisplayProperties, InformationProperties
 
 from bcipy.task import Task
 
