@@ -543,7 +543,7 @@ class RSVPCopyPhraseTask(Task):
         self.rsvp.update_task_state(text=self.spelled_text,
                                     color_list=['white'])
         # Say Goodbye!
-        self.rsvp.text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.info_text = trial_complete_message(self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -621,7 +621,7 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'],
-                  parameters['info_pos_y'])],
+                   parameters['info_pos_y'])],
         info_height=[parameters['info_height']],
         info_font=[parameters['info_font']],
         info_text=[parameters['info_text']],
@@ -630,15 +630,15 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
                                 stim_pos=(parameters['stim_pos_x'],
                                           parameters['stim_pos_y']),
                                 stim_height=parameters['stim_height'],
-                                stim_inquiry=['a'] * 10,
-                                stim_colors=[parameters['stim_color']] * 10,
-                                stim_timing=[3] * 10,
+                                stim_inquiry=[''] * parameters['stim_length'],
+                                stim_colors=[parameters['stim_color']] * parameters['stim_length'],
+                                stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
     task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
                                          task_pos=(-.8, .85),
                                          task_font=parameters['task_font'],
                                          task_height=parameters['task_height'],
-                                         task_text='****')
+                                         task_text='')
     return CopyPhraseDisplay(win,
                              static_clock,
                              experiment_clock,

@@ -7,7 +7,7 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
+from bcipy.helpers.triggers import TriggerCallback
 from bcipy.helpers.task import alphabet
 
 
@@ -30,7 +30,6 @@ class MatrixDisplay(Display):
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
             symbol_set=None):
-
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -87,7 +86,7 @@ class MatrixDisplay(Display):
 
         self.staticPeriod = static_clock
 
-        #Set position and parameters for grid of alphabet
+        # Set position and parameters for grid of alphabet
         self.position = stimuli.stim_pos
         self.position_increment = 0.2
         self.max_grid_width = 0.7
@@ -116,7 +115,6 @@ class MatrixDisplay(Display):
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
-        
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
@@ -181,7 +179,7 @@ class MatrixDisplay(Display):
             # build grid and static
             self.build_grid()
             self.draw_static()
-    
+
             # highlight a stimuli
             self.stim_registry[sym].opacity = 1
             self.stim_registry[sym].draw()
@@ -198,7 +196,7 @@ class MatrixDisplay(Display):
             # append timing information
             timing.append(self.trigger_callback.timing)
             self.trigger_callback.reset()
-    
+
         return timing
 
     def wait_screen(self, message: str, color: str) -> None:

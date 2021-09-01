@@ -13,7 +13,7 @@ info = InformationProperties(
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
-    task_pos=(-.5, .8),
+    task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
     task_text='1/100'

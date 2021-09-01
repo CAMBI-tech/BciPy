@@ -66,9 +66,8 @@ matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1,
 matrix_display.update_task_state(text='4/100', color_list=['White'])
 matrix_display.do_inquiry()
 
-
-# Remaining Items
-# Add Task Text using the existing TaskDisplay and self.task (top of the screen 1/100 --> 2/100). Look at how RSVP does it.
-# Add logic to update and draw static (Task text)
+#  TODO
+# Clean-up and make final hardcoded decisions on position etc
+# Test in full screen
 # Unit Tests
-# Typing
+# Typing / documentation

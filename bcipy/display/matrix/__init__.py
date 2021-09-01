@@ -1,3 +1,3 @@
-from .display import(
+from .display import (
     MatrixDisplay
 )
