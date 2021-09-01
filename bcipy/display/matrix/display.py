@@ -110,8 +110,8 @@ class MatrixDisplay(Display):
 
         self.scp = True  # for future row / col integration
 
+        self.info = info
         self.info_text = info.build_info_text(window)
-        #  Letter selected
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
@@ -183,8 +183,8 @@ class MatrixDisplay(Display):
             # highlight a stimuli
             self.stim_registry[sym].opacity = 1
             self.stim_registry[sym].draw()
-
             # present stimuli and wait for self.stimuli_timing
+
             self.window.flip()
             core.wait(self.stimuli_timing[i])
 
@@ -274,5 +274,4 @@ class MatrixDisplay(Display):
 
 
 if __name__ == '__main__':
-
     display = MatrixDisplay()
