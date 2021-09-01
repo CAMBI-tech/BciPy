@@ -196,7 +196,7 @@ class InformationProperties:
             info_color: List[str],
             info_text: List[str],
             info_font: List[str],
-            info_pos: Tuple[float, float],
+            info_pos: List[Tuple[float, float]],
             info_height: List[float]):
         """Initialize Information Parameters.
 

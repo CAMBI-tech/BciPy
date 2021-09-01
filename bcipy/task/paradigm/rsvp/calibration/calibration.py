@@ -187,12 +187,12 @@ class RSVPCalibrationTask(Task):
 def init_calibration_display_task(
         parameters, window, daq, static_clock, experiment_clock):
     info = InformationProperties(
-        info_color=parameters['info_color'],
-        info_pos=(parameters['text_pos_x'],
-                  parameters['text_pos_y']),
-        info_height=parameters['info_height'],
-        info_font=parameters['info_font'],
-        info_text=parameters['info_text'],
+        info_color=[parameters['info_color']],
+        info_pos=[(parameters['info_pos_x'],
+                  parameters['info_pos_y'])],
+        info_height=[parameters['info_height']],
+        info_font=[parameters['info_font']],
+        info_text=[parameters['info_text']],
     )
     stimuli = StimuliProperties(
         stim_font=parameters['stim_font'],
@@ -205,10 +205,10 @@ def init_calibration_display_task(
         is_txt_stim=parameters['is_txt_stim'])
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
-        task_pos=(-.8, .9),
+        task_pos=(-.85, .9),
         task_font=parameters['task_font'],
         task_height=parameters['task_height'],
-        task_text='****'
+        task_text=''
     )
     return CalibrationDisplay(
         window,

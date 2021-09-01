@@ -84,7 +84,7 @@ class RSVPCopyPhraseTask(Task):
         'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height',
         'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
         'stim_space_char', 'target_color', 'task_buffer_len', 'task_color',
-        'task_font', 'task_height', 'task_text', 'text_pos_x', 'text_pos_y',
+        'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
         'time_cross', 'time_flash', 'time_target', 'trial_complete_message',
         'trial_complete_message_color', 'trial_length', 'trigger_file_name',
         'trigger_type', 'wait_screen_message', 'wait_screen_message_color'
@@ -98,7 +98,7 @@ class RSVPCopyPhraseTask(Task):
         self.daq = daq
         self.parameters = parameters
         for param in RSVPCopyPhraseTask.PARAMETERS_USED:
-            assert param in self.parameters, "parameter '{param}' is required"
+            assert param in self.parameters, f"parameter '{param}' is required"
 
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
@@ -619,11 +619,12 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
             'preview_inquiry_progress_method'],
         preview_inquiry_isi=parameters['preview_inquiry_isi'])
     info = InformationProperties(
-        info_color=parameters['info_color'],
-        info_pos=(parameters['text_pos_x'], parameters['text_pos_y']),
-        info_height=parameters['info_height'],
-        info_font=parameters['info_font'],
-        info_text=parameters['info_text'],
+        info_color=[parameters['info_color']],
+        info_pos=[(parameters['info_pos_x'],
+                  parameters['info_pos_y'])],
+        info_height=[parameters['info_height']],
+        info_font=[parameters['info_font']],
+        info_text=[parameters['info_text']],
     )
     stimuli = StimuliProperties(stim_font=parameters['stim_font'],
                                 stim_pos=(parameters['stim_pos_x'],
@@ -634,7 +635,7 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
                                 stim_timing=[3] * 10,
                                 is_txt_stim=parameters['is_txt_stim'])
     task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
-                                         task_pos=(-.8, .9),
+                                         task_pos=(-.8, .85),
                                          task_font=parameters['task_font'],
                                          task_height=parameters['task_height'],
                                          task_text='****')
