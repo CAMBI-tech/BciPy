@@ -35,3 +35,11 @@ class LanguageModel(ABC):
     def load(self, path: Path) -> None:
         """Restore model state from the provided checkpoint"""
         ...
+
+    def reset(self) -> None:
+        """Reset language model state"""
+        ...
+
+    def state_update(self, evidence: List[Tuple]) -> None:
+        """Update state by predicting and updating"""
+        ...
