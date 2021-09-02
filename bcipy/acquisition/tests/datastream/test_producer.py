@@ -21,7 +21,8 @@ class TestProducer(unittest.TestCase):
 
         data_n = data_queue.qsize()
         expected_n = sample_hz * runtime
-        tolerance = 5
+        tolerance = 10
+        print(f'Expected: {expected_n}; Actual: {data_n}')
         self.assertTrue(data_n + tolerance >= expected_n)
         self.assertTrue(data_n <= expected_n + tolerance)
 
