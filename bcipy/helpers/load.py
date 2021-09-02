@@ -4,19 +4,16 @@ import os
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from tkinter import Tk
-from tkinter.filedialog import askdirectory, askopenfilename
 from typing import Any, Dict, List, Tuple
 
-from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.gui.file_dialog import ask_directory, ask_filename
+from bcipy.helpers.exceptions import (BciPyCoreException,
+                                      InvalidExperimentException)
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.system_utils import (
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME,
-)
+from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_PATH,
+                                        DEFAULT_FIELD_PATH,
+                                        EXPERIMENT_FILENAME, FIELD_FILENAME)
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -156,14 +153,7 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
 
 
 def load_experimental_data() -> str:
-    # use python's internal gui to call file explorers and get the filename
-    try:
-        Tk().withdraw()  # we don't want a full GUI
-        filename = askdirectory()  # show dialog box and return the path
-
-    except Exception as error:
-        raise error
-
+    filename = ask_directory()  # show dialog box and return the path
     log.debug("Loaded Experimental Data From: %s" % filename)
     return filename
 
@@ -183,13 +173,7 @@ def load_signal_model(model_class: SignalModel,
     # use python's internal gui to call file explorers and get the filename
 
     if not filename:
-        try:
-            Tk().withdraw()  # we don't want a full GUI
-            filename = askopenfilename()  # show dialog box and return the path
-
-        # except, raise error
-        except Exception as error:
-            raise error
+        filename = ask_filename('*.pkl')
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)
@@ -210,12 +194,7 @@ def choose_csv_file(filename: str = None) -> str:
     file name of selected file; throws an exception if the file is not a csv.
     """
     if not filename:
-        try:
-            Tk().withdraw()  # we don't want a full GUI
-            filename = askopenfilename()  # show dialog box and return the path
-
-        except Exception as error:
-            raise error
+        filename = ask_filename('*.csv')
 
     # get the last part of the path to determine file type
     file_name = filename.split('/')[-1]
@@ -242,12 +221,7 @@ def load_raw_data(filename: str) -> RawData:
 
 
 def load_txt_data() -> str:
-    try:
-        Tk().withdraw()  # we don't want a full GUI
-        filename = askopenfilename()  # show dialog box and return the path
-    except Exception as error:
-        raise error
-
+    filename = ask_filename('*.txt')  # show dialog box and return the path
     file_name = filename.split('/')[-1]
 
     if 'txt' not in file_name:

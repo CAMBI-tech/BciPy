@@ -21,7 +21,8 @@ class TestProducer(unittest.TestCase):
 
         data_n = data_queue.qsize()
         expected_n = sample_hz * runtime
-        tolerance = 5
+        tolerance = 10
+        print(f'Expected: {expected_n}; Actual: {data_n}')
         self.assertTrue(data_n + tolerance >= expected_n)
         self.assertTrue(data_n <= expected_n + tolerance)
 
@@ -82,12 +83,15 @@ class TestProducer(unittest.TestCase):
 
         with self.assertRaises(Exception):
             with Producer(data_queue, generator=stopiteration_generator(10)) as p:
+                print("stopiteration_generator")
                 p.run()
 
         with self.assertRaises(Exception):
             with Producer(data_queue, generator=simple_generator(10)) as p:
+                print("simple generator")
                 p.run()
 
         with self.assertRaises(Exception):
             with Producer(data_queue, generator=(1 for _ in range(10))) as p:
+                print("generator expression")
                 p.run()
