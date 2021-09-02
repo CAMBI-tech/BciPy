@@ -1,13 +1,20 @@
 import logging
 import os.path as path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from psychopy import core, visual
 
 from bcipy.helpers.clock import Clock
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
-from bcipy.display import Display, BCIPY_LOGO_PATH, StimuliProperties, TaskDisplayProperties, InformationProperties, PreviewInquiryProperties
+from bcipy.display import (
+    BCIPY_LOGO_PATH,
+    Display,
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties,
+    TaskDisplayProperties,
+)
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
@@ -279,7 +286,7 @@ class RSVPDisplay(Display):
 
         # Create multiple text objects based on input
         self.info = info
-        self.text = info.build_info_text(window)
+        self.info_text = info.build_info_text(window)
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
@@ -287,8 +294,8 @@ class RSVPDisplay(Display):
     def draw_static(self):
         """Draw static elements in a stimulus."""
         self.task.draw()
-        for idx in range(len(self.text)):
-            self.text[idx].draw()
+        for info in self.info_text:
+            info.draw()
 
     def schedule_to(self, stimuli=[], timing=[], colors=[]):
         """Schedule stimuli elements (works as a buffer).
@@ -302,18 +309,18 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing
         self.stimuli_colors = colors
 
-    def update_task(self, text: str, color_list: List[str], pos: Tuple[float]):
+    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple]):
         """Update Task Object.
 
         PARAMETERS:
         -----------
         text: text for task
         color_list: list of the colors for each char
-        pos: position of task
         """
         self.task.text = text
         self.task.color = color_list[0]
-        self.task.pos = pos
+        if pos:
+            self.task.pos = pos
 
     def do_inquiry(self) -> List[float]:
         """Do inquiry.
@@ -538,21 +545,16 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_state(self, text: str, color_list: List[str]) -> None:
+    def update_task_state(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
                 color_list(list[string]): list of colors for each
+                pos(tuple): [optional] tuple of task position
         """
-        task_state_text = visual.TextStim(
-            win=self.window, font=self.task.font, text=text)
-        x_task_position = task_state_text.boundingBox[0] / \
-            self.window.size[0] - 1
-        task_pos = (x_task_position, 1 - self.task.height)
-
-        self.update_task(text=text, color_list=color_list, pos=task_pos)
+        self.update_task(text=text, color_list=color_list, pos=pos)
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.

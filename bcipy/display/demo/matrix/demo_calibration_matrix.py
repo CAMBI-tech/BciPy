@@ -1,21 +1,19 @@
-from psychopy import visual, core
-from psychopy.iohub.devices import experiment
-from psychopy.visual import text
+from psychopy import core
 from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
 from bcipy.display.matrix import MatrixDisplay
-from bcipy.acquisition.marker_writer import NullMarkerWriter
-from bcipy.helpers.task import alphabet
+
+from bcipy.display import init_display_window
 
 info = InformationProperties(
     info_color=['White'],
-    info_pos=(-.5, -.75),
+    info_pos=[(-.5, -.75)],
     info_height=[0.1],
     info_font=['Arial'],
-    info_text='Calibration Demo',
+    info_text=['Matrix Calibration Demo'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
-    task_pos=(-.5, .8),
+    task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
     task_text='1/100'
@@ -31,14 +29,16 @@ stim_properties = StimuliProperties(
 )
 
 # Initialize Stimulus
-full_screen = False
+window_parameters = {
+    'full_screen': False,
+    'window_height': 500,
+    'window_width': 500,
+    'stim_screen': 1,
+    'background_color': 'black'
+}
 static_clock = core.StaticPeriod()
 experiment_clock = core.Clock()
-win = visual.Window(size=[500, 500], fullscr=full_screen, screen=0, allowGUI=False,
-                    allowStencil=False, monitor='testMonitor', color='black',
-                    colorSpace='rgb', blendMode='avg',
-                    waitBlanking=True,
-                    winType='pyglet')
+win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
 matrix_display = MatrixDisplay(
@@ -52,30 +52,22 @@ matrix_display = MatrixDisplay(
 
 matrix_display.schedule_to(stimuli=['A', 'B', 'C'], timing=[0.5, 0.5, 0.5], colors=[])
 matrix_display.update_task_state(text='1/100', color_list=['White'])
-# matrix_display.draw_static()
-win.flip()
-core.wait(1)
 matrix_display.do_inquiry()
 
-matrix_display.schedule_to(stimuli=['X', 'F', '<'], timing=[1, 1, 1], colors=[])
+matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
 matrix_display.update_task_state(text='2/100', color_list=['White'])
-# matrix_display.draw_static()
-win.flip()
-core.wait(1)
 matrix_display.do_inquiry()
 
-# Flash a grid
-matrix_display.build_grid()
-matrix_display.window.flip()
+matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
+matrix_display.update_task_state(text='3/100', color_list=['White'])
+matrix_display.do_inquiry()
 
-core.wait(1)
+matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
+matrix_display.update_task_state(text='4/100', color_list=['White'])
+matrix_display.do_inquiry()
 
-# Flash a grid
-matrix_display.build_grid()
-matrix_display.window.flip()
-
-# Remaining Items
-# Add Task Text using the existing TaskDisplay and self.task (top of the screen 1/100 --> 2/100). Look at how RSVP does it.
-# Add logic to update and draw static (Task text)
+#  TODO
+# Clean-up and make final hardcoded decisions on position etc
+# Test in full screen
 # Unit Tests
-# Typing
+# Typing / documentation

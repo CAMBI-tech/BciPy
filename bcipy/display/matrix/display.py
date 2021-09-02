@@ -7,14 +7,14 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
+from bcipy.helpers.triggers import TriggerCallback
 from bcipy.helpers.task import alphabet
 
 
 class MatrixDisplay(Display):
-    """Matix Display Object for inquiry Presentation.
+    """Matrix Display Object for Inquiry Presentation.
 
-    Animates display objects in matrix grid common to any RSVP task.
+    Animates display objects in matrix grid common to any Matrix task.
     """
 
     def __init__(
@@ -25,13 +25,11 @@ class MatrixDisplay(Display):
             stimuli: StimuliProperties,
             task_display: TaskDisplayProperties,
             info: InformationProperties,
-            # window.callOnFlip(callback()) --> writes a marker to LSL
             marker_writer: Optional[MarkerWriter] = NullMarkerWriter(),
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
             symbol_set=None):
-
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -88,7 +86,7 @@ class MatrixDisplay(Display):
 
         self.staticPeriod = static_clock
 
-        #Set position and parameters for grid of alphabet
+        # Set position and parameters for grid of alphabet
         self.position = stimuli.stim_pos
         self.position_increment = 0.2
         self.max_grid_width = 0.7
@@ -112,14 +110,11 @@ class MatrixDisplay(Display):
 
         self.scp = True  # for future row / col integration
 
-        # Create multiple text objects based on input FIX THIS!
         self.info = info
-        self.text = info.build_info_text(window)
-        #  Letter selected
+        self.info_text = info.build_info_text(window)
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
-        
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
@@ -170,22 +165,39 @@ class MatrixDisplay(Display):
         Flashes each stimuli in stimuli_inquiry for their respective flash
         times.
         """
+        timing = []
         i = 0
         for sym in self.stimuli_inquiry:
+
+            # register any timing and marker callbacks
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 sym)
             self.window.callOnFlip(self.marker_writer.push_marker, sym)
+
+            # build grid and static
             self.build_grid()
+            self.draw_static()
+
+            # highlight a stimuli
             self.stim_registry[sym].opacity = 1
             self.stim_registry[sym].draw()
-            self.draw_static()
+            # present stimuli and wait for self.stimuli_timing
+
             self.window.flip()
             core.wait(self.stimuli_timing[i])
+
+            # reset the highlighted symbol and continue
             self.stim_registry[sym].opacity = 0.0
             self.stim_registry[sym].draw()
             i += 1
+
+            # append timing information
+            timing.append(self.trigger_callback.timing)
+            self.trigger_callback.reset()
+
+        return timing
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.
@@ -230,8 +242,9 @@ class MatrixDisplay(Display):
     def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
         self.task.draw()
-        for idx in range(len(self.text)):
-            self.text[idx].draw()
+
+        for info in self.info_text:
+            info.draw()
 
     def update_task(self, text: str, color_list: List[str], pos: Tuple[float, float]) -> None:
         """Update Task.
@@ -256,17 +269,9 @@ class MatrixDisplay(Display):
                 text(string): new text for task state
                 color_list(list[string]): list of colors for each
         """
-        task_state_text = visual.TextStim(
-            win=self.window, font=self.task.font, text=text)
-        # x_task_position = task_state_text.boundingBox[0] / \
-        #   self.window.size[0] - 1
-        #task_pos = (x_task_position, 1 - self.task.height)
-        task_pos = (-.5, .8)
-
-        self.update_task(text=text, color_list=color_list, pos=task_pos)
+        self.update_task(text=text, color_list=color_list, pos=self.task.pos)
         self.task.draw()
 
 
 if __name__ == '__main__':
-
     display = MatrixDisplay()

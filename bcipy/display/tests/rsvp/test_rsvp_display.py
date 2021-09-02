@@ -11,11 +11,13 @@ from mockito import (
     verifyNoUnwantedInteractions
 )
 from bcipy.display.rsvp import (
+    RSVPDisplay
+)
+from bcipy.display import (
     StimuliProperties,
     InformationProperties,
     TaskDisplayProperties,
     PreviewInquiryProperties,
-    RSVPDisplay
 )
 
 # Define some reusable elements to test RSVPDisplay with
@@ -37,7 +39,7 @@ TEST_TASK_DISPLAY = TaskDisplayProperties(
 )
 TEST_INFO = InformationProperties(
     info_color=['White'],
-    info_pos=(-.5, -.75),
+    info_pos=[(-.5, -.75)],
     info_height=[0.1],
     info_font=['Arial'],
     info_text=['Calibration Demo'],
@@ -85,7 +87,7 @@ class TestRSVPDisplay(unittest.TestCase):
 
     def test_information_properties_set_correctly(self):
         self.assertEqual(self.rsvp.info, self.info)
-        self.assertEqual(self.rsvp.text, self.info.build_info_text(self.window))
+        self.assertEqual(self.rsvp.info_text, self.info.build_info_text(self.window))
 
     def test_stimuli_properties_set_correctly(self):
         """Stimuli properties are set on the instance to allow easy resetting of this properties during a task."""

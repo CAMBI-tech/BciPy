@@ -4,7 +4,7 @@ construct==2.8.14
 mne==0.17.0
 PsychoPy==2020.2.10
 openpyxl==2.6.3
-pyglet==1.4.10
+pyglet==1.5.11
 numpy==1.20.3
 sounddevice==0.4.1
 SoundFile==0.10.3.post1

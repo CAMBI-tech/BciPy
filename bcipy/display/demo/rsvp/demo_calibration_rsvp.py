@@ -8,15 +8,15 @@ from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliP
 from bcipy.acquisition.marker_writer import NullMarkerWriter
 
 info = InformationProperties(
-    info_color='White',
-    info_pos=(-.5, -.75),
-    info_height=0.1,
-    info_font='Arial',
-    info_text='Calibration Demo',
+    info_color=['White'],
+    info_pos=[(-.5, -.75)],
+    info_height=[0.1],
+    info_font=['Arial'],
+    info_text=['Calibration Demo'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
-    task_pos=(-.5, .8),
+    task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
     task_text='1/100'
