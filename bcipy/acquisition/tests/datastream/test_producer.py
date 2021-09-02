@@ -80,17 +80,17 @@ class TestProducer(unittest.TestCase):
             for i in range(n):
                 yield i
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(Exception):
             with Producer(data_queue, generator=stopiteration_generator(10)) as p:
                 print("stopiteration_generator")
                 p.run()
 
-        with self.assertRaises(StopIteration):
+        with self.assertRaises(Exception):
             with Producer(data_queue, generator=simple_generator(10)) as p:
                 print("simple generator")
                 p.run()
 
-        with self.assertRaises(StopIteration):
+        with self.assertRaises(Exception):
             with Producer(data_queue, generator=(1 for _ in range(10))) as p:
                 print("generator expression")
                 p.run()
