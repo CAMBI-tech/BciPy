@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Tuple, List, Union
+from typing import Tuple, List
 from enum import Enum
 
 
@@ -22,7 +22,7 @@ class LanguageModel(ABC):
             evidence - [('A', .08), ('B', .1)]
 
         Response:
-            probability - dependant on response type, a list of words or symbols with probability 
+            probability - dependant on response type, a list of words or symbols with probability
         """
         ...
 
