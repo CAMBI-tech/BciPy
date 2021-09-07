@@ -22,27 +22,14 @@ def main():
         seconds = 3
         client.start_acquisition()
 
-
         print(
             f"\nCollecting data for {seconds}s... (Interrupt [Ctl-C] to stop)\n"
         )
         time.sleep(seconds)
         samples = client.get_latest_data()
-        print(f"Number of samples: {len(samples)}")
         print(f"Last sample:\n{samples[-1]}")
-
-        filename = Path(client.recorder.filename)
-
+        print(f"Data written to: {client.recorder.filename}")
         client.stop_acquisition()
-
-        print(f"First sample time: {client.first_sample_time}")
-        print(f"Recorder first sample time: {client.recorder.first_sample_time}")
-
-        data = load(Path(filename))
-        frame = data.dataframe
-        raw_data_first_sample_stamp = frame.iloc[0]['lsl_timestamp']
-        offset = client.first_sample_time - raw_data_first_sample_stamp
-        print(f"\nOffset from client start to recording start: {offset:.8f}")
 
     except IOError as err:
         print(f'{err.strerror}; make sure you started the server.')

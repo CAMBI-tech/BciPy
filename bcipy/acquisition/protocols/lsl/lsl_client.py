@@ -33,9 +33,8 @@ class LslAcquisitionClient:
     - save_directory : if present, persists the data to the given location.
     - raw_data_file_name : if present, uses this name for the data file.
     """
-
     def __init__(self,
-                 max_buflen: int,
+                 max_buflen: int = 1,
                  device_spec: DeviceSpec = None,
                  save_directory: str = None,
                  raw_data_file_name: str = None):
@@ -43,7 +42,6 @@ class LslAcquisitionClient:
         if device_spec:
             ok_device = ConnectionMethod.LSL in device_spec.connection_methods
             assert ok_device, "Only LSL devices allowed."
-            assert device_spec.sample_rate > 0, "Marker streams may be recorded but not queried."
         self.device_spec = device_spec
         self.max_buflen = max_buflen
 
@@ -100,9 +98,13 @@ class LslAcquisitionClient:
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        self.inlet = None
+        log.debug("Stopping Acquisition...")
+        if self.inlet:
+            self.inlet.close_stream()
+            self.inlet = None
         if self.recorder:
             self.recorder.stop()
+            self.recorder.join()
 
     def __enter__(self):
         """Context manager enter method that starts data acquisition."""
@@ -145,29 +147,6 @@ class LslAcquisitionClient:
             log.debug(f'{len(data_slice)} records returned')
             return data_slice
         return []
-
-    def get_data_for_clock(self,
-                           start_time: float,
-                           end_time: float,
-                           experiment_clock: Clock = None,
-                           calib_time: float = None) -> List[Record]:
-        """Queries the data stream, using start and end values relative to a
-        clock different than the acquisition clock.
-
-        Parameters
-        ----------
-        - start_time : float, optional
-        start of time slice; units are those of the experiment clock.
-        - end_time : float, optional
-        end of time slice; units are those of the experiment clock.
-        - calib_time: float
-        experiment_clock time (in seconds) at calibration.
-
-        Returns
-        -------
-        list of Records
-        """
-        # TODO: implement this
 
     @property
     def max_samples(self) -> int:
@@ -214,15 +193,6 @@ class LslAcquisitionClient:
         start_index = 0 if len(
             records) > sample_count else len(records) - sample_count
         return records[start_index:]
-
-    def get_data_len(self) -> int:
-        """Estimate of the total amount of data recorded. This is a calculated
-        value and may not be precise."""
-        if self.first_sample_time:
-            _, stamp = self.inlet.pull_sample()
-            return (stamp -
-                    self.first_sample_time) * self.device_spec.sample_rate
-        return None
 
     @property
     def device_info(self):
@@ -301,11 +271,12 @@ class LslAcquisitionClient:
         event, or 0.0 .
         """
 
-        log.debug("Acquisition offset called")
         if not first_stim_time:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
-        return first_stim_time - self.first_sample_time
+        offset_from_stim = first_stim_time - self.first_sample_time
+        log.debug(f"Acquisition offset: {offset_from_stim}")
+        return offset_from_stim
 
     def cleanup(self):
         """Perform any necessary cleanup."""

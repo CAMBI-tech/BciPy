@@ -153,6 +153,7 @@ class LslRecordingThread(StoppableThread):
         # so we can map from remote timestamp to local lsl clock for comparing
         # datasets.
 
+        latest_sample_time = 0
         ## Run loop for continous acquisition
         while self.running():
             data, timestamps = inlet.pull_chunk(
@@ -161,7 +162,7 @@ class LslRecordingThread(StoppableThread):
                 self._write_chunk(data, timestamps)
                 if not self.first_sample_time:
                     self.first_sample_time = timestamps[0]
-
+                latest_sample_time = timestamps[-1]
             time.sleep(self.sleep_seconds)
 
         # Pull one last chunk to account for data streaming during sleep. This
@@ -174,11 +175,15 @@ class LslRecordingThread(StoppableThread):
         data, timestamps = inlet.pull_chunk(max_samples=self.max_chunk_size)
         if timestamps:
             self._write_chunk(data, timestamps)
+            latest_sample_time = timestamps[-1]
 
-        log.info(f"Ending data stream recording for {self.stream_info.name}")
+        log.info(f"Ending data stream recording for {self.stream_info.name()}")
+        log.info(f"Total recorded seconds: {latest_sample_time - self.first_sample_time}")
+        log.info(f"Total recorded samples: {self.sample_count}")
+        inlet.close_stream()
         self._cleanup()
 
-
+# pylint: disable=import-outside-toplevel
 def main(path: str, seconds: int = 5, debug: bool = False):
     """Function to demo the LslRecorder. Expects LSL data streams to be already
     running."""

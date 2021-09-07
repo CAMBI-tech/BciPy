@@ -5,15 +5,14 @@ import math
 import time
 
 from numpy.random import uniform
-from pylsl import StreamInfo, StreamOutlet
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.signal.generator.generator import gen_random_data
 
 log = logging.getLogger(__name__)
 
 def eye_tracker_device() -> DeviceSpec:
+    """Mock DeviceSpec for an eye tracker."""
     return DeviceSpec(name='EyeTracker',
                       channels=[
                           'leftEyeX', 'leftEyeY', 'rightEyeX', 'rightEyeY',

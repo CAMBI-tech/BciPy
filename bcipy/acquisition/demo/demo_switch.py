@@ -1,39 +1,47 @@
 """Functionality to simulate a switch"""
-import pygame
-import time
-import sys
-from pylsl import StreamInfo, StreamOutlet
-from bcipy.acquisition import devices
-from bcipy.gui.gui_main import app, BCIGui
 import logging
+import sys
+
+from pylsl import StreamInfo, StreamOutlet
+
+from bcipy.acquisition.devices import DeviceSpec, IRREGULAR_RATE
+from bcipy.gui.gui_main import BCIGui, app
+
 log = logging.getLogger(__name__)
+
+
+def switch_device() -> DeviceSpec:
+    """Mock DeviceSpec for a switch"""
+    return DeviceSpec(name='Switch',
+                      channels=['Marker'],
+                      sample_rate=IRREGULAR_RATE,
+                      content_type='Markers')
 
 
 class Switch:
     """Mock switch which streams data over LSL at an irregular interval."""
-
     def __init__(self):
         super().__init__()
-        self.device = devices.DeviceSpec(name='Switch',
-                                         channels=['Btn1'],
-                                         sample_rate=devices.IRREGULAR_RATE,
-                                         content_type='Markers')
+        self.device = switch_device()
         self.lsl_id = 'bci_demo_switch'
         info = StreamInfo(self.device.name, self.device.content_type,
                           self.device.channel_count, self.device.sample_rate,
                           self.device.data_type, self.lsl_id)
         self.outlet = StreamOutlet(info)
 
-    def click(self, position):
+    def click(self, _position):
+        """Click event that pushes a sample"""
         log.debug("Click!")
         self.outlet.push_sample([1.0])
 
     def quit(self):
+        """Quit and cleanup"""
         del self.outlet
         self.outlet = None
 
 
 class SwitchGui(BCIGui):
+    """GUI to emulate a switch."""
     def __init__(self, switch: Switch, *args, **kwargs):
         super(SwitchGui, self).__init__(*args, **kwargs)
         self.switch = switch
