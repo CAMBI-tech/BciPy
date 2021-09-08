@@ -188,21 +188,16 @@ def get_data_for_decision(inquiry_timing,
     # Define the amount of data required for any processing to occur.
     data_limit = round((last_stim_time - first_stim_time + buffer_length) *
                        daq.device_info.fs)
+    log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
     raw_data = daq.get_data(start=time1, end=time2)
 
-    # If not enough raw_data returned in the first query, try again using only
-    # the start param. This is known issue on Windows.
-    # #windowsbug
     if len(raw_data) < data_limit:
-        raw_data = daq.get_data(start=time1)
-
-        if len(raw_data) < data_limit:
-            message = f'Process Data Error: Not enough data received to process. ' \
-                        f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
-            log.error(message)
-            raise InsufficientDataException(message)
+        message = f'Process Data Error: Not enough data received to process. ' \
+                    f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+        log.error(message)
+        raise InsufficientDataException(message)
 
     # Take only the sensor data from raw data and transpose it
     raw_data = np.array([

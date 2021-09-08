@@ -23,15 +23,15 @@ class LslAcquisitionClient:
     however, if the save_directory and filename parameters are provided it uses
     a LslRecordingThread to persist the data.
 
-    Parameters:
-    -----------
-    - max_buflen : the maximum length, in seconds, of data to be queried.
-    For the RSVP paradigm, this should be calculated based on the total inquiry
-    length.
-    - device_spec : spec for the device from which to query data; if
-    missing, this class will attempt to find the first EEG stream.
-    - save_directory : if present, persists the data to the given location.
-    - raw_data_file_name : if present, uses this name for the data file.
+    Parameters
+    ----------
+        max_buflen: the maximum length, in seconds, of data to be queried.
+            For the RSVP paradigm, this should be calculated based on the total
+            inquiry length.
+        device_spec: spec for the device from which to query data; if missing,
+            this class will attempt to find the first EEG stream.
+        save_directory: if present, persists the data to the given location.
+        raw_data_file_name: if present, uses this name for the data file.
     """
     def __init__(self,
                  max_buflen: int = 1,
@@ -120,25 +120,32 @@ class LslAcquisitionClient:
 
         Parameters
         ----------
-        - start : number, optional start of time slice; units are those of the
-        acquisition clock.
-        - end : float, optional end of time slice; units are those of the
-        acquisition clock.
+            start : starting timestamp (acquisition clock).
+            end : end timestamp (in acquisition clock).
 
         Returns
         -------
-        list of Records
+            List of Records
         """
         log.debug(f"Getting data from time {start} to {end}")
 
+        # Implementation Notes:
+        #   - Only data in the current buffer is available to query;
+        #     requests for data outside of this will fail. Buffer size is
+        #     set using the max_buflen parameter.
+        #   - Pulling data depletes the buffer so a subsequent query with
+        #     the same parameters will fail. If this becomes a requirement,
+        #     consider caching the last query result.
         data = self.get_latest_data()
-        log.debug(f'{len(data)} records available')
 
         if data:
+            log.debug(
+                (f'{len(data)} records available '
+                 f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
             start = start or data[0].timestamp
             end = end or data[-1].timestamp
             assert start >= data[0].timestamp, (
-                f'Start time of {start} is out of range:',
+                f'Start time of {start} is out of range: '
                 f'({data[0].timestamp} to {data[-1].timestamp}).')
 
             data_slice = [
@@ -146,6 +153,7 @@ class LslAcquisitionClient:
             ]
             log.debug(f'{len(data_slice)} records returned')
             return data_slice
+        log.debug('No records available')
         return []
 
     @property
@@ -177,7 +185,9 @@ class LslAcquisitionClient:
         - experiment_clock : clock used to generate the timestamp
         - timestamp : timestamp from the experiment clock
 
-        Returns: corresponding timestamp for the acquistion clock
+        Returns:
+        --------
+            corresponding timestamp for the acquistion clock
         """
 
         # experiment_time = pylsl.local_clock() - offset

@@ -75,14 +75,14 @@ class TestDataAcquisitionClient(unittest.TestCase):
             LslAcquisitionClient(max_buflen=1, device_spec=device)
 
     def test_specified_device_for_markers(self):
-        """Should not allow a device_spec for a Marker stream."""
+        """Should allow a device_spec for a Marker stream."""
         device = DeviceSpec(name='Mouse',
-                            channels=['Btn1', 'Btn2'],
+                            channels=['Marker'],
                             sample_rate=IRREGULAR_RATE,
                             content_type='Markers',
                             data_type='string')
-        with self.assertRaises(Exception):
-            LslAcquisitionClient(max_buflen=1, device_spec=device)
+
+        LslAcquisitionClient(max_buflen=1, device_spec=device)
 
     def test_with_unspecified_device(self):
         """Test with unspecified device."""
@@ -95,7 +95,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
-        self.assertAlmostEqual(DEVICE.sample_rate, len(samples))
+        self.assertAlmostEqual(DEVICE.sample_rate, len(samples), delta=1.0)
 
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
