@@ -1,5 +1,4 @@
 """Tests for LslRecorder"""
-import shutil
 import tempfile
 import time
 import unittest
@@ -38,10 +37,6 @@ class TestLslRecorder(unittest.TestCase):
         """Override; set up the needed path for load functions."""
         self.temp_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
-        """Override"""
-        shutil.rmtree(self.temp_dir)
-
     def test_recorder(self):
         """Test basic recording functionality"""
         path = Path(self.temp_dir, f'eeg_data_{DEVICE_NAME.lower()}.csv')
@@ -61,37 +56,17 @@ class TestLslRecorder(unittest.TestCase):
         self.assertEqual(raw_data.columns[-1], 'lsl_timestamp')
         self.assertTrue(len(raw_data.rows) > 0)
 
-    def test_multiple_data_sources(self):
-        """Test that recorder works with multiple sources"""
-        # create another server with a different device type
-        server = eye_tracker_server()
-        server.start()
-
-        recorder = LslRecorder(path=self.temp_dir)
-        recorder.start()
-
-        filenames = [stream.filename for stream in recorder.streams]
-        self.assertEqual(2, len(filenames))
-
-        time.sleep(0.1)
-        recorder.stop(wait=True)
-        server.stop()
-
-        for filename in filenames:
-            path = Path(self.temp_dir, filename)
-            self.assertTrue(path.exists())
-
-    def test_custom_filenames(self):
-        """Test that recorder can be customized with filenames for each
-        device type."""
+    def test_multiple_sources(self):
+        """Test that recorder works with multiple sources and can be customized
+        with filenames for each device type."""
         # create another server with a different device type
         server = eye_tracker_server()
         server.start()
 
         recorder = LslRecorder(path=self.temp_dir,
                                filenames={
-                                   'EEG': 'raw_data.csv',
-                                   'Gaze': 'gaze_data.csv'
+                                   'EEG': 'raw_data_1.csv',
+                                   'Gaze': 'gaze_data_1.csv'
                                })
         recorder.start()
 
@@ -102,10 +77,10 @@ class TestLslRecorder(unittest.TestCase):
         recorder.stop(wait=True)
         server.stop()
 
-        self.assertTrue('raw_data.csv' in filenames)
-        self.assertTrue('gaze_data.csv' in filenames)
-        self.assertTrue(Path(self.temp_dir, 'raw_data.csv').exists())
-        self.assertTrue(Path(self.temp_dir, 'gaze_data.csv').exists())
+        self.assertTrue('raw_data_1.csv' in filenames)
+        self.assertTrue('gaze_data_1.csv' in filenames)
+        self.assertTrue(Path(self.temp_dir, 'raw_data_1.csv').exists())
+        self.assertTrue(Path(self.temp_dir, 'gaze_data_1.csv').exists())
 
     def test_duplicate_streams(self):
         """Test that an exception is thrown when there are multiple LSL streams
