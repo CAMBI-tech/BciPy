@@ -1,19 +1,18 @@
 """Demo a server with a custom generator"""
-import time
 import argparse
-
-from bcipy.acquisition.datastream.generator import file_data_generator
-from bcipy.acquisition.devices import preconfigured_device
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.devices import DeviceSpec
-from bcipy.signal.generator.generator import gen_random_data
 import logging
+import time
+
+from bcipy.acquisition.datastream.lsl_server import LslDataServer
+from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
+from bcipy.signal.generator.generator import gen_random_data
+
 log = logging.getLogger(__name__)
 
 
 def custom_generator(device_spec: DeviceSpec, low=-1000, high=1000):
     """Generates sequential data for the first channel and random data for the
-    rest. The low and high parameters set the bounds for the random data.    
+    rest. The low and high parameters set the bounds for the random data.
     """
     i = 0
     while True:

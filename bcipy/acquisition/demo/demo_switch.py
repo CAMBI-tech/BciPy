@@ -20,6 +20,7 @@ def switch_device() -> DeviceSpec:
 
 class Switch:
     """Mock switch which streams data over LSL at an irregular interval."""
+
     def __init__(self):
         super().__init__()
         self.device = switch_device()
@@ -42,6 +43,7 @@ class Switch:
 
 class SwitchGui(BCIGui):
     """GUI to emulate a switch."""
+
     def __init__(self, switch: Switch, *args, **kwargs):
         super(SwitchGui, self).__init__(*args, **kwargs)
         self.switch = switch

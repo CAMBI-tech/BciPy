@@ -2,12 +2,13 @@
 """Defines the driver for the Device for communicating with
 LabStreamingLayer (LSL)."""
 import logging
+from typing import Any, Dict, List
 
-from typing import List, Dict, Any
 import pylsl
-from bcipy.acquisition.protocols.connector import Connector
+
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.protocols.connector import Connector
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ def check_device(device_spec: DeviceSpec, metadata: pylsl.StreamInfo):
     if channels and device_spec.channels != channels:
         print(f"device channels: {channels}")
         print(device_spec.channels)
-        raise Exception(f"Channels read from the device do not match "
+        raise Exception("Channels read from the device do not match "
                         "the provided parameters.")
     assert len(device_spec.channels) == metadata.channel_count(
     ), "Channel count error"
@@ -167,7 +168,7 @@ class LslConnector(Connector):
         """Setter to append the lsl_timestamp field. Only available if the
         connection has not yet been made."""
         if not self._inlet:
-            if bool_val and not LSL_TIMESTAMP in self._appended_channels:
+            if bool_val and LSL_TIMESTAMP not in self._appended_channels:
                 self._appended_channels.append(LSL_TIMESTAMP)
             elif not bool_val:
                 self._appended_channels.remove(LSL_TIMESTAMP)

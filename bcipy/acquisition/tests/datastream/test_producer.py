@@ -16,6 +16,7 @@ from bcipy.acquisition.datastream.producer import Producer
 @pytest.mark.slow
 class TestProducer(unittest.TestCase):
     """Tests for Producer"""
+
     def test_frequency(self):
         """Data should be generated at the provided frequency"""
         sample_hz = 300

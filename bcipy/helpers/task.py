@@ -195,7 +195,7 @@ def get_data_for_decision(inquiry_timing,
 
     if len(raw_data) < data_limit:
         message = f'Process Data Error: Not enough data received to process. ' \
-                    f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+            f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
         log.error(message)
         raise InsufficientDataException(message)
 
@@ -204,7 +204,7 @@ def get_data_for_decision(inquiry_timing,
         np.array([_float_val(col) for col in record.data])
         for record in raw_data
     ],
-                        dtype=np.float64).transpose()
+        dtype=np.float64).transpose()
 
     return raw_data, triggers, target_labels
 

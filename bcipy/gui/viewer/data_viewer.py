@@ -60,8 +60,8 @@ def active_indices(all_channels, removed_channels) -> List[int]:
 
     return [
         i for i in range(len(all_channels))
-        if all_channels[i] not in removed_channels
-        and 'TRG' not in all_channels[i]
+        if all_channels[i] not in removed_channels and
+        'TRG' not in all_channels[i]
     ]
 
 

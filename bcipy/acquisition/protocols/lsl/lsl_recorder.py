@@ -154,7 +154,7 @@ class LslRecordingThread(StoppableThread):
         # datasets.
 
         latest_sample_time = 0
-        ## Run loop for continous acquisition
+        # Run loop for continous acquisition
         while self.running():
             data, timestamps = inlet.pull_chunk(
                 max_samples=self.max_chunk_size)
@@ -184,6 +184,8 @@ class LslRecordingThread(StoppableThread):
         self._cleanup()
 
 # pylint: disable=import-outside-toplevel
+
+
 def main(path: str, seconds: int = 5, debug: bool = False):
     """Function to demo the LslRecorder. Expects LSL data streams to be already
     running."""

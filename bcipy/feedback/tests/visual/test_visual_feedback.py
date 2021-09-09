@@ -3,7 +3,6 @@ import unittest
 import psychopy
 from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
                      verifyStubbedInvocationsAreUsed, when)
-from psychopy import core
 
 from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
 from bcipy.helpers.clock import Clock

@@ -140,7 +140,6 @@ class TestDataAcquisitionClient(unittest.TestCase):
                                0.5,
                                delta=0.02)
 
-
     def test_with_recording(self):
         """Test that recording works."""
 

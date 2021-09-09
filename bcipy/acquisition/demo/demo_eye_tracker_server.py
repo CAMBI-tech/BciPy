@@ -11,6 +11,7 @@ from bcipy.acquisition.devices import DeviceSpec
 
 log = logging.getLogger(__name__)
 
+
 def eye_tracker_device() -> DeviceSpec:
     """Mock DeviceSpec for an eye tracker."""
     return DeviceSpec(name='EyeTracker',

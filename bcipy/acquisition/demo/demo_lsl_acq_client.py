@@ -1,10 +1,8 @@
 """Demo for the LslAcquisitionClient"""
 
 import time
-from pathlib import Path
 
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.helpers.raw_data import load
 
 
 def main():

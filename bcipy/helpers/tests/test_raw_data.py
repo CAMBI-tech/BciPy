@@ -172,7 +172,7 @@ class TestRawData(unittest.TestCase):
             for row in rows:
                 writer.writerow(row)
         self.assertTrue(self.path.exists())
-    
+
     def test_raw_data_writer_writerows(self):
         """Test that data can be written in chunks."""
 
@@ -182,7 +182,7 @@ class TestRawData(unittest.TestCase):
         with RawDataWriter(self.path,
                            daq_type=self.daq_type,
                            sample_rate=self.sample_rate,
-                           columns=self.columns) as writer:            
+                           columns=self.columns) as writer:
             writer.writerows(rows)
         self.assertTrue(self.path.exists())
 
@@ -191,7 +191,7 @@ class TestRawData(unittest.TestCase):
         self.assertEqual(loaded_data.sample_rate, self.sample_rate)
         self.assertEqual(loaded_data.columns, self.columns)
         self.assertEqual(len(loaded_data.rows), 3)
-    
+
     def test_raw_data_writer_initialization(self):
         """Test that writer can be manually opened and closed"""
 
@@ -199,9 +199,9 @@ class TestRawData(unittest.TestCase):
 
         self.assertFalse(self.path.exists())
         writer = RawDataWriter(self.path,
-                           daq_type=self.daq_type,
-                           sample_rate=self.sample_rate,
-                           columns=self.columns)
+                               daq_type=self.daq_type,
+                               sample_rate=self.sample_rate,
+                               columns=self.columns)
         writer.__enter__()
         writer.writerows(rows)
         writer.__exit__()

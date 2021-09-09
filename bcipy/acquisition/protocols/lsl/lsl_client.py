@@ -33,6 +33,7 @@ class LslAcquisitionClient:
         save_directory: if present, persists the data to the given location.
         raw_data_file_name: if present, uses this name for the data file.
     """
+
     def __init__(self,
                  max_buflen: int = 1,
                  device_spec: DeviceSpec = None,

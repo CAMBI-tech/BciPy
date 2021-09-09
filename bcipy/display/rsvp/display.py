@@ -1,6 +1,6 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 from psychopy import core, visual
 
