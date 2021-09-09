@@ -152,12 +152,15 @@ class MatrixDisplay(Display):
             self.stim_registry[sym] = text_stim
             text_stim.draw()
 
-            x, y = pos
-            x += self.position_increment
-            if x >= self.max_grid_width:
-                y -= self.position_increment
-                x = self.position[0]
-            pos = (x, y)
+            pos = self.increment_position(pos)
+
+    def increment_position(self, pos: Tuple[float]) -> Tuple[float]:
+        x, y = pos
+        x += self.position_increment
+        if x >= self.max_grid_width:
+            y -= self.position_increment
+            x = self.position[0]
+        return (x, y)
 
     def animate_scp(self) -> None:
         """Animate SCP.
@@ -270,7 +273,6 @@ class MatrixDisplay(Display):
                 color_list(list[string]): list of colors for each
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
-        self.task.draw()
 
 
 if __name__ == '__main__':
