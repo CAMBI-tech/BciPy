@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from typing import List, Any, Optional
+from typing import List, Optional
 from abc import ABC, abstractmethod
 
 from bcipy.helpers.stimuli import best_selection
@@ -47,7 +47,7 @@ class RandomStimuliAgent(StimuliAgent):
         """ This querying method is memoryless no reset needed """
         pass
 
-    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]]=None):
+    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]] = None):
         """ return random elements from the alphabet """
         tmp = [i for i in self.alphabet]
         query = random.sample(tmp, self.len_query)
@@ -80,7 +80,7 @@ class NBestStimuliAgent(StimuliAgent):
     def reset(self):
         pass
 
-    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]]=None):
+    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]] = None):
         p = list_distribution[-1]
         tmp = [i for i in self.alphabet]
         query = best_selection(tmp, p, self.len_query, always_included=constants)
