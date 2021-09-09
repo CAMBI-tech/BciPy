@@ -165,7 +165,7 @@ class DecisionMaker:
 
         self.last_selection = ''
 
-        # Items shown in every inquiry TODO this is unused
+        # Items shown in every inquiry
         self.inq_constants = inq_constants
 
     def reset(self, state=''):
@@ -278,10 +278,11 @@ class DecisionMaker:
 
         # querying agent decides on possible letters to be shown on the screen
         query_els = self.stimuli_agent.return_stimuli(
-            self.list_series[-1]['list_distribution'])
+            self.list_series[-1]['list_distribution'],
+            constants=self.inq_constants)
         # once querying is determined, append with timing and color info.
         stimuli = rsvp_inq_generator(query=query_els,
-                                     stim_number=1,
+                                     inquiry_count=1,
                                      is_txt=self.is_txt_stim,
                                      timing=self.stimuli_timing,
                                      stim_order=self.stimuli_order)

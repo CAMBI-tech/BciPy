@@ -189,14 +189,6 @@ class TestCopyPhraseWrapper(unittest.TestCase):
 
         is_accepted, sti = copy_phrase_task.initialize_series()
         self.assertFalse(is_accepted)
-        self.assertEqual(
-            sti,
-            (
-                [["+", "U", "T", "_", "W", "Y", "X", "Z", "<", "S", "V"]],
-                [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
-                [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
-            ),
-        )
 
         triggers = [
             ("+", 0.0),

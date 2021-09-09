@@ -1,7 +1,9 @@
 import numpy as np
 import random
-from typing import List, Any
+from typing import List, Any, Optional
 from abc import ABC, abstractmethod
+
+from bcipy.helpers.stimuli import best_selection
 
 
 class StimuliAgent(ABC):
@@ -45,10 +47,13 @@ class RandomStimuliAgent(StimuliAgent):
         """ This querying method is memoryless no reset needed """
         pass
 
-    def return_stimuli(self, list_distribution: np.ndarray):
+    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]]=None):
         """ return random elements from the alphabet """
         tmp = [i for i in self.alphabet]
         query = random.sample(tmp, self.len_query)
+
+        if constants:
+            query[-len(constants):] = constants
 
         return query
 
@@ -75,19 +80,12 @@ class NBestStimuliAgent(StimuliAgent):
     def reset(self):
         pass
 
-    def return_stimuli(self, list_distribution: np.ndarray):
+    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]]=None):
         p = list_distribution[-1]
         tmp = [i for i in self.alphabet]
-        query = best_selection(tmp, p, self.len_query)
+        query = best_selection(tmp, p, self.len_query, always_included=constants)
 
         return query
 
     def do_series(self):
         pass
-
-
-def best_selection(list_el: List[Any], val: List[float], len_query: int):
-    """Return the top `len_query` items from `list_el` according to the values in `val`"""
-    # numpy version: return list_el[(-val).argsort()][:len_query]
-    sorted_items = reversed(sorted(zip(val, list_el)))
-    return [el for (value, el) in sorted_items][:len_query]

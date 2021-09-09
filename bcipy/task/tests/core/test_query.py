@@ -17,7 +17,7 @@ class TestQueryMechanisms(unittest.TestCase):
         list_el = ["A", "E", "I", "O", "U"]
         values = [0.1, 0.2, 0.2, 0.2, 0.2]
         len_query = 3
-        self.assertEqual(["U", "O", "I"], best_selection(list_el, values, len_query))
+        self.assertEqual(["E", "I", "O"], best_selection(list_el, values, len_query))
 
 
 if __name__ == '__main__':
