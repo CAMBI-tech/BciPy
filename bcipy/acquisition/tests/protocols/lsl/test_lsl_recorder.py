@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.demo.demo_eye_tracker_server import eye_tracker_server
+from bcipy.acquisition.datastream.mock.eye_tracker_server import eye_tracker_server
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 from bcipy.helpers.raw_data import TIMESTAMP_COLUMN, load

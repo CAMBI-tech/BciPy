@@ -4,21 +4,9 @@ import logging
 import time
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
-from bcipy.signal.generator.generator import gen_random_data
+from bcipy.acquisition.devices import preconfigured_device
 
 log = logging.getLogger(__name__)
-
-
-def custom_generator(device_spec: DeviceSpec, low=-1000, high=1000):
-    """Generates sequential data for the first channel and random data for the
-    rest. The low and high parameters set the bounds for the random data.
-    """
-    i = 0
-    while True:
-        i += 1
-        sensor_data = gen_random_data(low, high, device_spec.channel_count - 1)
-        yield [i] + sensor_data
 
 
 def main():
@@ -33,8 +21,7 @@ def main():
     args = parser.parse_args()
     device_spec = preconfigured_device(args.name)
     try:
-        server = LslDataServer(device_spec=device_spec,
-                               generator=custom_generator(device_spec))
+        server = LslDataServer(device_spec=device_spec)
 
         log.debug("New server created")
         server.start()

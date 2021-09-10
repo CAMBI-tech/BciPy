@@ -7,7 +7,7 @@ from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
-from bcipy.acquisition.errors import InvalidClockError
+from bcipy.acquisition.exceptions import InvalidClockError
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread

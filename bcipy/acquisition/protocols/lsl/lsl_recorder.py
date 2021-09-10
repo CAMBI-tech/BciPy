@@ -81,6 +81,7 @@ class LslRecordingThread(StoppableThread):
         self.directory = directory
 
         self.sample_count = 0
+        # see: https://labstreaminglayer.readthedocs.io/info/faqs.html#chunk-sizes
         self.max_chunk_size = 1024
 
         # seconds to sleep between data pulls from LSL
@@ -178,18 +179,19 @@ class LslRecordingThread(StoppableThread):
             latest_sample_time = timestamps[-1]
 
         log.info(f"Ending data stream recording for {self.stream_info.name()}")
-        log.info(f"Total recorded seconds: {latest_sample_time - self.first_sample_time}")
+        log.info(
+            f"Total recorded seconds: {latest_sample_time - self.first_sample_time}"
+        )
         log.info(f"Total recorded samples: {self.sample_count}")
         inlet.close_stream()
         self._cleanup()
-
-# pylint: disable=import-outside-toplevel
 
 
 def main(path: str, seconds: int = 5, debug: bool = False):
     """Function to demo the LslRecorder. Expects LSL data streams to be already
     running."""
     if debug:
+        # pylint: disable=import-outside-toplevel
         from bcipy.helpers.system_utils import log_to_stdout
         log_to_stdout()
     recorder = LslRecorder(path)

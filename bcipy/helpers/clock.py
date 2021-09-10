@@ -11,10 +11,12 @@ class Clock():
 
     Parameters
     ----------
-    - start_at_zero : If `True` the value returned by `getTime` is
-    relative to when the clock was started or reset. Default if `False`.
-    - get_time : optional function called to get the current time. The
-    default value is the LabStreamingLayer (LSL) local_clock.
+        start_at_zero : If `True` the value returned by `getTime` is
+            relative to when the clock was started or reset. Default is `False`
+        get_time : optional function called to get the current time. The
+            default value is the LabStreamingLayer (LSL) local_clock. This is
+            the clock used by the acquisition module when sampling data and
+            allows us to make time comparisons without conversion.
     """
 
     def __init__(self,

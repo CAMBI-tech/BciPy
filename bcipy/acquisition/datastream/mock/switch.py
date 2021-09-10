@@ -45,10 +45,9 @@ class SwitchGui(BCIGui):
     """GUI to emulate a switch."""
 
     def __init__(self, switch: Switch, *args, **kwargs):
-        super(SwitchGui, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.switch = switch
 
-    # @override
     def build_buttons(self) -> None:
         """Build all buttons necessary for the UI.
         """
@@ -58,7 +57,6 @@ class SwitchGui(BCIGui):
                         background_color='white',
                         action=self.switch.click)
 
-    # @override
     def build_text(self) -> None:
         """Build all static text needed for the UI.
         Positions are relative to the height / width of the UI defined in start_app.
@@ -89,5 +87,4 @@ def main(switch: Switch):
 
 
 if __name__ == '__main__':
-    # pyqt_gui()
     main(Switch())

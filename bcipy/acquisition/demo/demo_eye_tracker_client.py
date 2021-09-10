@@ -3,8 +3,8 @@ import time
 
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.datastream.tcp_server import await_start
-from bcipy.acquisition.demo.demo_eye_tracker_server import (eye_tracker_device,
-                                                            eye_tracker_server)
+from bcipy.acquisition.datastream.mock.eye_tracker_server import (eye_tracker_device,
+                                                                  eye_tracker_server)
 
 
 def main():
