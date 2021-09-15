@@ -7,22 +7,24 @@ from mne.io import read_raw_edf
 from typing import List
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
 def generate_offline_analysis_screen(
-        x,
-        y,
-        model=None,
-        folder=None,
-        save_figure=True,
-        down_sample_rate=2,
-        fs=300,
-        plot_x_ticks=8,
-        plot_average=False,
-        show_figure=False,
-        channel_names=None) -> List[Figure]:
-    """ Offline Analysis Screen.
+    x,
+    y,
+    model=None,
+    folder=None,
+    save_figure=True,
+    down_sample_rate=2,
+    fs=300,
+    plot_x_ticks=8,
+    plot_average=False,
+    show_figure=False,
+    channel_names=None,
+) -> List[Figure]:
+    """Offline Analysis Screen.
 
     Generates the information figure following the offlineAnalysis.
     The figure has multiple tabs containing the average ERP plots.
@@ -51,8 +53,7 @@ def generate_offline_analysis_screen(
     channel_names = channel_names or {}
     classes = np.unique(y)
 
-    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2))
-             for i in classes]
+    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2)) for i in classes]
 
     fig = plt.figure(figsize=(20, 10))
     ax1 = fig.add_subplot(211)
@@ -76,8 +77,8 @@ def generate_offline_analysis_screen(
             ax1.plot(means[0][count, :], label=lbl)
             ax2.plot(means[1][count, :], label=lbl)
             count += 1
-        ax1.legend(loc='upper left', prop={'size': 8})
-        ax2.legend(loc='upper left', prop={'size': 8})
+        ax1.legend(loc="upper left", prop={"size": 8})
+        ax2.legend(loc="upper left", prop={"size": 8})
 
     # data points
     data_length = len(means[0][1, :])
@@ -86,11 +87,10 @@ def generate_offline_analysis_screen(
     lower = 0
 
     # find the upper length of data and convert to seconds
-    upper = data_length * down_sample_rate / fs * 1000
+    upper = data_length * fs * 1000
 
     # make the labels
-    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in
-              range(plot_x_ticks)]
+    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in range(plot_x_ticks)]
 
     # make sure it starts at zero
     labels.insert(0, 0)
@@ -100,20 +100,14 @@ def generate_offline_analysis_screen(
     ax2.set_xticklabels(labels)
 
     # Set common labels
-    fig.text(0.5, 0.04, 'Time (Seconds)', ha='center', va='center')
-    fig.text(0.06, 0.5, r'$\mu V$', ha='center', va='center',
-             rotation='vertical')
+    fig.text(0.5, 0.04, "Time (Seconds)", ha="center", va="center")
+    fig.text(0.06, 0.5, r"$\mu V$", ha="center", va="center", rotation="vertical")
 
-    ax1.set_title('Non-target ERP')
-    ax2.set_title('Target ERP')
+    ax1.set_title("Non-target ERP")
+    ax2.set_title("Target ERP")
 
     if save_figure:
-        fig.savefig(
-            os.path.join(
-                folder,
-                'mean_erp.pdf'),
-            bbox_inches='tight',
-            format='pdf')
+        fig.savefig(os.path.join(folder, "mean_erp.pdf"), bbox_inches="tight", format="pdf")
 
     fig_handles.append(fig)
 
@@ -135,7 +129,7 @@ def plot_edf(edf_path: str, auto_scale: bool = False):
     """
     edf = read_raw_edf(edf_path, preload=True)
     if auto_scale:
-        edf.plot(scalings='auto')
+        edf.plot(scalings="auto")
     else:
         edf.plot()
 
@@ -166,56 +160,44 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     plt.plot(triggers)
 
     # Add some titles and labels to the figure
-    plt.title('Trigger Signal')
-    plt.ylabel('Trigger Value')
-    plt.xlabel('Samples')
+    plt.title("Trigger Signal")
+    plt.ylabel("Trigger Value")
+    plt.xlabel("Samples")
 
-    log.debug('Press Ctrl + C to exit!')
+    log.debug("Press Ctrl + C to exit!")
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pickle
 
     # load some x, y data from test files
-    x = pickle.load(
-        open(
-            'bcipy/helpers/tests/resources/mock_x_generate_erp.pkl',
-            'rb'))
-    y = pickle.load(
-        open(
-            'bcipy/helpers/tests/resources/mock_y_generate_erp.pkl',
-            'rb'))
+    x = pickle.load(open("bcipy/helpers/tests/resources/mock_x_generate_erp.pkl", "rb"))
+    y = pickle.load(open("bcipy/helpers/tests/resources/mock_y_generate_erp.pkl", "rb"))
 
     names = {
-        0: 'P3',
-        1: 'C3',
-        2: 'F3',
-        3: 'Fz',
-        4: 'F4',
-        5: 'C4',
-        6: 'P4',
-        7: 'Cz',
-        8: 'A1',
-        9: 'Fp1',
-        10: 'Fp2',
-        11: 'T3',
-        12: 'T5',
-        13: 'O1',
-        14: 'O2',
-        15: 'F7',
-        16: 'F8',
-        17: 'A2',
-        18: 'T6',
-        19: 'T4'
+        0: "P3",
+        1: "C3",
+        2: "F3",
+        3: "Fz",
+        4: "F4",
+        5: "C4",
+        6: "P4",
+        7: "Cz",
+        8: "A1",
+        9: "Fp1",
+        10: "Fp2",
+        11: "T3",
+        12: "T5",
+        13: "O1",
+        14: "O2",
+        15: "F7",
+        16: "F8",
+        17: "A2",
+        18: "T6",
+        19: "T4",
     }
     # generate the offline analysis screen. show figure at the end
-    generate_offline_analysis_screen(
-        x,
-        y,
-        folder='bcipy',
-        save_figure=False,
-        show_figure=True,
-        channel_names=names)
+    generate_offline_analysis_screen(x, y, folder="bcipy", save_figure=False, show_figure=True, channel_names=names)
