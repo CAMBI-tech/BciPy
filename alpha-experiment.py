@@ -12,12 +12,14 @@ from bcipy.helpers.load import load_json_parameters
 
 from bcipy.helpers.visualization import generate_offline_analysis_screen
 
+import matplotlib.pyplot as plt
+
 
 def cwt(data, freq: int, fs: int):
     # Original data.shape == (channels, trials, samples)
     # Want: (trials, channels, samples)
     data = data.transpose(1, 0, 2)
-    wavelet = "cmor3.0-1.0"  # "morl"  # TODO - important choice of hyperparams here
+    wavelet = "cmor5.0-1.0"  # "morl"  # TODO - important choice of hyperparams here
     scales = pywt.central_frequency(wavelet) * fs / np.array(freq)
     all_coeffs = []
     for trial in data:
@@ -107,6 +109,13 @@ def fit_model(data, labels):
     return model_performance
 
 
+def make_plots(data, labels):
+    """
+    targets = data[labels]
+    """
+    breakpoint()
+
+
 def main(data_path, parameters):
     data, labels, fs = load_data(data_path, parameters)
     data = cwt(data, args.selected_freq, fs)
@@ -134,6 +143,8 @@ def main(data_path, parameters):
     data = data / stdevs
     print(data.min(), data.mean(), data.max())
 
+    # make_plots(data, labels)
+
     # NOTE - model expects (channels, trials, samples)
     data = data.transpose([1, 0, 2])
 
@@ -157,41 +168,36 @@ def main(data_path, parameters):
 
 if __name__ == "__main__":
     """
-    raw data:
-        7 channel, exclude F7 and Fcz, include Pz, Oz, Po7, Po8
-        -1250ms to 1250ms around stim
+    Overall workflow:
+        raw data:
+            7 channel, exclude F7 and Fcz, include Pz, Oz, Po7, Po8
+            -1250ms to 1250ms around stim
 
-    pick the 4 channels of interest
+        pick the 4 channels of interest
 
-    CWT:
-        give a parameter for the single wavelet frequency/scale to keep at the end (default ~10)
-        consider overlap with SSVEP response (or its harmonics)
+        CWT:
+            give a parameter for the single wavelet frequency/scale to keep at the end (default ~10)
+            consider overlap with SSVEP response (or its harmonics)
 
-    -600ms to -100ms window for "baseline"
-        get mean, stdev
+        -600ms to -100ms window for "baseline"
+            get mean, stdev
 
-    for each point in [300, 800]:
-        z-score each sample point using the mean & stdev above
+        for each point in [300, 800]:
+            z-score each sample point using the mean & stdev above
 
-    pca/rda/kde
+        pca/rda/kde
+
+    TODO:
+    - Set CWT parameters so that data matches BrainVision - try plotting the full (-1250, 1250) trials, averaged for target and nontarget
+    - Can try export data from BrainVision and train model
+    - Try with/without PCA step
     """
 
     import argparse
 
     p = argparse.ArgumentParser()
-    p.add_argument(
-        "--data",
-        "--Data",
-        type=Path,
-        help="Path to data folder",
-        required=True,
-    )
-    p.add_argument(
-        "--selected-freq",
-        type=int,
-        help="Frequency to keep after CWT",
-        default=10,
-    )
+    p.add_argument("--data", type=Path, help="Path to data folder", required=True)
+    p.add_argument("--selected-freq", type=int, help="Frequency to keep after CWT", default=10)
     p.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
     args = p.parse_args()
 
@@ -200,8 +206,6 @@ if __name__ == "__main__":
 
     print(f"Input data folder: {str(args.data)}")
     print(f"Selected freq: {str(args.selected_freq)}")
-
     print(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
-
     main(args.data, parameters)
