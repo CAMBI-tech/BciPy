@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from psychopy import visual, core
-from typing import List, Optional
+from typing import List
 
-from bcipy.acquisition.marker_writer import MarkerWriter
+from psychopy import visual
+
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_resolution
 
 BCIPY_LOGO_PATH = 'bcipy/static/images/gui/cambi.png'
@@ -16,9 +17,8 @@ class Display(ABC):
     """
 
     window: visual.Window = None
-    timing_clock: core.Clock = None
-    experiment_clock: core.Clock = None
-    marker_writer: Optional[MarkerWriter] = None
+    timing_clock: Clock = None
+    experiment_clock: Clock = None
     logger: Logger = None
     stimuli_inquiry: List[str] = None
     stimuli_colors: List[str] = None

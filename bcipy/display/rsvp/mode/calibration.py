@@ -13,7 +13,6 @@ class CalibrationDisplay(RSVPDisplay):
                  stimuli,
                  task_display,
                  info,
-                 marker_writer=None,
                  trigger_type='image',
                  space_char=SPACE_CHAR,
                  full_screen=False):
@@ -36,7 +35,6 @@ class CalibrationDisplay(RSVPDisplay):
             stimuli,
             task_display,
             info,
-            marker_writer=marker_writer,
             trigger_type=trigger_type,
             space_char=space_char,
             full_screen=full_screen)

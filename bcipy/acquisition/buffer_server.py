@@ -220,6 +220,8 @@ def get_data(mailbox, start=None, end=None, field='_rowid_'):
             timestamp of data lower bound; if missing, gets all data
         end : float, optional
             timestamp of data upper bound
+        field : str, optional
+            field to query
     Returns
     -------
         list of data rows within the given range.

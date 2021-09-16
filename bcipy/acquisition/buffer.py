@@ -7,6 +7,7 @@ import sqlite3
 from collections import deque
 import logging
 
+from typing import List
 from builtins import range
 from bcipy.acquisition.record import Record
 from bcipy.helpers.raw_data import RawDataWriter
@@ -158,7 +159,7 @@ class Buffer():
         return self.query_data(ordering=("timestamp", "desc"),
                                max_results=limit)
 
-    def query(self, start, end=None, field="_rowid_"):
+    def query(self, start, end=None, field="_rowid_") -> List[Record]:
         """Query the buffer by for a slice of data.
 
         Parameters
@@ -245,7 +246,7 @@ class Buffer():
         sql_query = ' '.join(filter(None, [select, where, order, limit]))
         return sql_query, query_params
 
-    def query_data(self, filters=None, ordering=None, max_results=None):
+    def query_data(self, filters=None, ordering=None, max_results=None) -> List[Record]:
         """Query the data with the provided filters.
 
         Parameters:
@@ -305,7 +306,7 @@ def _adapt_record(record):
     return tuple([record.timestamp] + record.data)
 
 
-def _convert_row(row):
+def _convert_row(row) -> Record:
     """Convert from database row to Record.
 
     Parameters

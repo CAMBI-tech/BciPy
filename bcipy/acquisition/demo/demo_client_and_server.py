@@ -22,7 +22,7 @@ def main(debug: bool = False):
     from bcipy.acquisition.protocols import registry
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.datastream.tcp_server import TcpDataServer
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.helpers.system_utils import log_to_stdout
 
@@ -32,7 +32,7 @@ def main(debug: bool = False):
     host = '127.0.0.1'
     port = 9000
 
-    device_spec = supported_device('DSI')
+    device_spec = preconfigured_device('DSI')
     protocol = registry.find_protocol(device_spec, ConnectionMethod.TCP)
     server = TcpDataServer(protocol=protocol, host=host, port=port)
 

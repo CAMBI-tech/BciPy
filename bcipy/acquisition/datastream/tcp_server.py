@@ -189,7 +189,7 @@ def main():
     from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_with_args
     from bcipy.acquisition.protocols.registry import find_protocol
     from bcipy.acquisition.connection_method import ConnectionMethod
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='127.0.0.1')
@@ -204,14 +204,14 @@ def main():
 
     if args.filename:
         daq_type, sample_rate, channels = settings(args.filename)
-        device_spec = supported_device(daq_type)
+        device_spec = preconfigured_device(daq_type)
         device_spec.sample_rate = sample_rate
         device_spec.channels = channels
 
         generator = generator_with_args(file_data_generator,
                                         filename=args.filename)
     else:
-        device_spec = supported_device(args.name)
+        device_spec = preconfigured_device(args.name)
         generator = random_data_generator
 
     protocol = find_protocol(device_spec, ConnectionMethod.TCP)

@@ -7,17 +7,18 @@ from bcipy.display.rsvp import (InformationProperties,
                                 TaskDisplayProperties)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision, get_user_input,
-                                process_data_for_decision, target_info,
+                                get_data_for_decision, target_info,
                                 trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.task.data import Inquiry, Session, EvidenceType
 from bcipy.task import Task
+from bcipy.task.data import EvidenceType, Inquiry, Session
 
 
 class Decision(NamedTuple):
@@ -102,7 +103,8 @@ class RSVPCopyPhraseTask(Task):
 
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
-        self.experiment_clock = core.Clock()
+        self.experiment_clock = Clock()
+        self.start_time = self.experiment_clock.getTime()
 
         self.alp = alphabet(parameters)
         self.rsvp = _init_copy_phrase_display(self.parameters, self.window,
@@ -469,13 +471,14 @@ class RSVPCopyPhraseTask(Task):
         if not proceed or self.fake:
             return None
 
-        raw_data, triggers, target_info = process_data_for_decision(
-            self.stims_for_decision(stim_times), self.daq, self.window,
-            self.parameters, self.rsvp.first_stim_time,
-            self.parameters['static_trigger_offset'])
+        raw_data, triggers, labels = get_data_for_decision(
+            inquiry_timing=self.stims_for_decision(stim_times),
+            daq=self.daq,
+            static_offset=self.parameters['static_trigger_offset'],
+            buffer_length=self.parameters['trial_length'])
 
         probs = self.copy_phrase_task.evaluate_eeg_evidence(
-            raw_data, triggers, target_info, self.parameters['trial_length'])
+            raw_data, triggers, labels, self.parameters['trial_length'])
         return (EvidenceType.ERP, probs)
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
@@ -566,7 +569,7 @@ class RSVPCopyPhraseTask(Task):
         - self.session
         """
         self.session.add_sequence(data)
-        self.session.total_time_spent = self.experiment_clock.getTime()
+        self.session.total_time_spent = self.experiment_clock.getTime() - self.start_time
         if save:
             self.write_session_data()
         if decision_made:
@@ -587,7 +590,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if self.daq.is_calibrated:
             _write_triggers_from_inquiry_copy_phrase(
-                ['offset', self.daq.offset],
+                ['offset', self.daq.offset(self.rsvp.first_stim_time)],
                 trigger_file,
                 self.copy_phrase,
                 self.spelled_text,
@@ -644,7 +647,6 @@ def _init_copy_phrase_display(parameters, win, daq, static_clock,
                              stimuli,
                              task_display,
                              info,
-                             marker_writer=daq.marker_writer,
                              static_task_text=parameters['task_text'],
                              static_task_color=parameters['task_color'],
                              trigger_type=parameters['trigger_type'],

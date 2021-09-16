@@ -36,7 +36,6 @@ class TestProducer(unittest.TestCase):
 
     def test_custom_generator(self):
         """Producer should be able to take a custom generator."""
-
         def gen():
             counter = 0
             while True:
@@ -90,7 +89,8 @@ class TestProducer(unittest.TestCase):
                 yield i
 
         with self.assertRaises(Exception):
-            with Producer(data_queue, generator=stopiteration_generator(10)) as p:
+            with Producer(data_queue,
+                          generator=stopiteration_generator(10)) as p:
                 print("stopiteration_generator")
                 p.run()
 

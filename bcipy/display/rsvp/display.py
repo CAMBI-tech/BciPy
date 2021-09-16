@@ -1,14 +1,14 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 from psychopy import core, visual
 
-from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
-from bcipy.display import Display, BCIPY_LOGO_PATH
+from bcipy.display import BCIPY_LOGO_PATH, Display
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -203,12 +203,11 @@ class RSVPDisplay(Display):
             self,
             window: visual.Window,
             static_clock,
-            experiment_clock: core.Clock,
+            experiment_clock: Clock,
             stimuli: StimuliProperties,
             task_display: TaskDisplayProperties,
             info: InformationProperties,
             preview_inquiry: PreviewInquiryProperties = None,
-            marker_writer: Optional[MarkerWriter] = NullMarkerWriter(),
             trigger_type: str = 'image',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False):
@@ -218,8 +217,8 @@ class RSVPDisplay(Display):
         ----------
         # Experiment
         window(visual.Window): PsychoPy Window
-        static_clock(core.Clock): Used to schedule static periods of display time
-        experiment_clock(core.Clock): Clock used to timestamp display onsets
+        static_clock(core.MonotonicClock): Used to schedule static periods of display time
+        experiment_clock(Clock): Clock used to timestamp display onsets
 
         # Stimuli
         stimuli(StimuliProperties): attributes used for inquiries
@@ -234,8 +233,6 @@ class RSVPDisplay(Display):
         preview_inquiry(PreviewInquiryProperties) Optional: attributes to display a preview of upcoming stimuli defined
             via self.stimuli(StimuliProperties).
 
-        marker_writer(MarkerWriter) Optional: object used to write triggers to
-            a acquisition stream.
         trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
             task. This will be used to reconcile timing differences between acquisition and the display.
         space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
@@ -269,7 +266,6 @@ class RSVPDisplay(Display):
         self.first_stim_time = None
         self.trigger_type = trigger_type
         self.trigger_callback = TriggerCallback()
-        self.marker_writer = marker_writer or NullMarkerWriter()
         self.experiment_clock = experiment_clock
 
         # Callback used on presentation of first stimulus.
@@ -345,7 +341,6 @@ class RSVPDisplay(Display):
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 inquiry[idx]['sti_label'])
-            self.window.callOnFlip(self.marker_writer.push_marker, inquiry[idx]['sti_label'])
 
             # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
             if idx == 0 and callable(self.first_stim_callback):
@@ -377,7 +372,7 @@ class RSVPDisplay(Display):
     def _trigger_pulse(self, timing: List[str]) -> List[str]:
         """Trigger Pulse.
 
-        This method uses a marker writer and calibration trigger to determine any functional
+        This method uses a calibration trigger to determine any functional
             offsets needed for operation with this display. By setting the first_stim_time and searching for the
             same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
@@ -386,8 +381,7 @@ class RSVPDisplay(Display):
         calibration_time = _calibration_trigger(
             self.experiment_clock,
             trigger_type=self.trigger_type,
-            display=self.window,
-            on_trigger=self.marker_writer.push_marker)
+            display=self.window)
 
         timing.append(calibration_time)
 
@@ -416,13 +410,11 @@ class RSVPDisplay(Display):
 
         content = self._generate_inquiry_preview()
 
-        # define the trigger callbacks. Here we use the trigger_callback to return immediately and a marker_writer
-        # which can link to external acquisition devices
+        # define the trigger callbacks. Here we use the trigger_callback to return immediately
         self.window.callOnFlip(
             self.trigger_callback.callback,
             self.experiment_clock,
             'inquiry_preview')
-        self.window.callOnFlip(self.marker_writer.push_marker, 'inquiry_preview')
 
         # Draw and flip the screen.
         content.draw()

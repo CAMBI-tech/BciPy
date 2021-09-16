@@ -1,10 +1,9 @@
 """Module for functionality related to system configuration"""
-from typing import Tuple
 from codecs import open as codecsopen
-from collections import abc
+from collections import abc, namedtuple
 from json import dump, load
 from pathlib import Path
-from collections import namedtuple
+from typing import Tuple
 
 DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
 

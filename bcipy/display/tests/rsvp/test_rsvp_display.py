@@ -175,8 +175,6 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
-        # mock the marker writer call
-        when(self.rsvp.window).callOnFlip(any(), 'inquiry_preview')
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
@@ -199,8 +197,6 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
-        # mock the marker writer call
-        when(self.rsvp.window).callOnFlip(any(), 'inquiry_preview')
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
@@ -221,8 +217,6 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
-        # mock the marker writer call
-        when(self.rsvp.window).callOnFlip(any(), 'inquiry_preview')
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
@@ -243,8 +237,6 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
-        # mock the marker writer call
-        when(self.rsvp.window).callOnFlip(any(), 'inquiry_preview')
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()

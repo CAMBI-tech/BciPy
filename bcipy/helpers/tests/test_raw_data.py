@@ -173,6 +173,48 @@ class TestRawData(unittest.TestCase):
                 writer.writerow(row)
         self.assertTrue(self.path.exists())
 
+    def test_raw_data_writer_writerows(self):
+        """Test that data can be written in chunks."""
+
+        rows = [self.row1, self.row2, self.row3]
+
+        self.assertFalse(self.path.exists())
+        with RawDataWriter(self.path,
+                           daq_type=self.daq_type,
+                           sample_rate=self.sample_rate,
+                           columns=self.columns) as writer:
+            writer.writerows(rows)
+        self.assertTrue(self.path.exists())
+
+        loaded_data = RawData.load(self.path)
+        self.assertEqual(loaded_data.daq_type, self.daq_type)
+        self.assertEqual(loaded_data.sample_rate, self.sample_rate)
+        self.assertEqual(loaded_data.columns, self.columns)
+        self.assertEqual(len(loaded_data.rows), 3)
+
+    def test_raw_data_writer_initialization(self):
+        """Test that writer can be manually opened and closed"""
+
+        rows = [self.row1, self.row2, self.row3]
+
+        self.assertFalse(self.path.exists())
+        writer = RawDataWriter(self.path,
+                               daq_type=self.daq_type,
+                               sample_rate=self.sample_rate,
+                               columns=self.columns)
+        writer.__enter__()
+        writer.writerows(rows)
+        writer.__exit__()
+
+        self.assertTrue(self.path.exists())
+        loaded_data = RawData.load(self.path)
+
+        self.assertEqual(loaded_data.daq_type, self.daq_type)
+        self.assertEqual(loaded_data.sample_rate, self.sample_rate)
+        self.assertEqual(loaded_data.columns, self.columns)
+
+        self.assertEqual(len(loaded_data.rows), 3)
+
     def test_sample_data(self):
         """Test that sample data can be generated for testing purposes."""
         channels = ['ch1', 'ch2', 'ch3']
