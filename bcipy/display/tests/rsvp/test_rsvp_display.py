@@ -1,6 +1,7 @@
 import unittest
 
 import psychopy
+from mock import patch
 from mockito import (
     any,
     mock,
@@ -171,7 +172,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         response = self.rsvp._generate_inquiry_preview()
         self.assertEqual(response, stim_mock)
 
-    def test_preview_inquiry_evoked_press_to_accept_pressed(self):
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_evoked_press_to_accept_pressed(self, get_key_press_mock):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
@@ -183,15 +185,17 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
         key_timestamp = 1000
-        key_response = [[self.preview_inquiry_key_input, key_timestamp]]
-        when(psychopy.event).getKeys(keyList=any(), timeStamped=any()).thenReturn(key_response)
+        get_key_press_mock.return_value = [
+            f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp
+        ]
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
         #  The second item should be True as it is press to accept and a response was returned
         expected = ([None, [f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp]], True)
         self.assertEqual(response, expected)
 
-    def test_preview_inquiry_evoked_press_to_skip_pressed(self):
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_evoked_press_to_skip_pressed(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False
         stim_mock = mock()
@@ -205,15 +209,17 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
         key_timestamp = 1000
-        key_response = [[self.preview_inquiry_key_input, key_timestamp]]
-        when(psychopy.event).getKeys(keyList=any(), timeStamped=any()).thenReturn(key_response)
+        get_key_press_mock.return_value = [
+            f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp
+        ]
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
         #  The second item should be False as it is press to skip and a response was returned
         expected = ([None, [f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp]], False)
         self.assertEqual(response, expected)
 
-    def test_preview_inquiry_evoked_press_to_accept_not_pressed(self):
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_evoked_press_to_accept_not_pressed(self, get_key_press_mock):
         stim_mock = mock()
         # mock the stimulus generation
         when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
@@ -224,14 +230,15 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
-        when(psychopy.event).getKeys(keyList=any(), timeStamped=any()).thenReturn(None)
+        get_key_press_mock.return_value = None
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
         #  The second item should be True as it is press to accept and a response was returned
         expected = ([None], False)
         self.assertEqual(response, expected)
 
-    def test_preview_inquiry_evoked_press_to_skip_not_pressed(self):
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_evoked_press_to_skip_not_pressed(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False
         stim_mock = mock()
@@ -244,7 +251,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
-        when(psychopy.event).getKeys(keyList=any(), timeStamped=any()).thenReturn(None)
+        get_key_press_mock.return_value = None
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
         #  The second item should be False as it is press to skip and a response was returned
