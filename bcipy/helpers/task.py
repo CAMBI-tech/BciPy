@@ -331,9 +331,15 @@ def get_key_press(
     -------
         Key Press Timing(List[stamp_label, timestamp])
     """
-    response = event.getKeys(keyList=key_list, timeStamped=clock)
+    response = event.getKeys(keyList=key_list, timeStamped=True)
     if response:
-        return [f'{stamp_label}_{response[0][0]}', response[0][1]]
+        # The timestamp from the response uses the psychopy.core.monotonicClock
+        # which records the number of seconds since the experiment start (core
+        # was imported).
+        key, stamp = response[0]
+        offset = clock.getTime() - core.getTime()
+        timestamp = stamp + offset
+        return [f'{stamp_label}_{key}', timestamp]
     return None
 
 

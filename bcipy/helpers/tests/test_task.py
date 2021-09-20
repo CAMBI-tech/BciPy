@@ -189,13 +189,31 @@ class TestGetKeyPress(unittest.TestCase):
         clock = mock()
         # get keys returns a list of lists with the key and timestamp per hit
         key_response = [[key_list[0], 1000]]
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
-
+        when(psychopy.event).getKeys(keyList=key_list,
+                                     timeStamped=True).thenReturn(key_response)
+        when(clock).getTime().thenReturn(psychopy.core.getTime())
         # use the default label
         stamp_label = 'bcipy_key_press'
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
         response = get_key_press(key_list, clock)
-        self.assertEqual(expected, response)
+        self.assertEqual(expected[0], response[0])
+        self.assertAlmostEqual(expected[1], response[1], delta=0.01)
+
+    def test_get_key_press_clock_adjustment(self):
+        """Test for the stamp label defaults, ensures the calls occur with the correct inputs to psychopy"""
+        key_list = ['space']
+        clock = mock()
+        # get keys returns a list of lists with the key and timestamp per hit
+        key_response = [[key_list[0], 1000]]
+        when(psychopy.event).getKeys(keyList=key_list,
+                                     timeStamped=True).thenReturn(key_response)
+        when(clock).getTime().thenReturn(psychopy.core.getTime() + 100)
+        # use the default label
+        stamp_label = 'bcipy_key_press'
+        expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
+        response = get_key_press(key_list, clock)
+        self.assertEqual(expected[0], response[0])
+        self.assertAlmostEqual(1100, response[1], delta=0.01)
 
     def test_get_key_press_returns_none_if_no_keys_pressed(self):
         """Test for the case not keys are returned, ensures the calls occur with the correct inputs to psychopy"""
@@ -203,7 +221,8 @@ class TestGetKeyPress(unittest.TestCase):
         key_list = ['space']
         key_response = None
         clock = mock()
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
+        when(psychopy.event).getKeys(keyList=key_list,
+                                     timeStamped=True).thenReturn(key_response)
 
         response = get_key_press(key_list, clock)
         self.assertEqual(None, response)
@@ -214,13 +233,15 @@ class TestGetKeyPress(unittest.TestCase):
         key_list = ['space']
         # get keys returns a list of lists with the key and timestamp per hit
         key_response = [[key_list[0], 1000]]
-        when(psychopy.event).getKeys(keyList=key_list, timeStamped=clock).thenReturn(key_response)
-
+        when(psychopy.event).getKeys(keyList=key_list,
+                                     timeStamped=True).thenReturn(key_response)
+        when(clock).getTime().thenReturn(psychopy.core.getTime())
         # set a custom label
         stamp_label = 'custom_label'
         expected = [f'{stamp_label}_{key_response[0][0]}', key_response[0][1]]
         response = get_key_press(key_list, clock, stamp_label=stamp_label)
-        self.assertEqual(expected, response)
+        self.assertEqual(expected[0], response[0])
+        self.assertAlmostEqual(expected[1], response[1], delta=0.01)
 
 
 class TestTriggers(unittest.TestCase):
