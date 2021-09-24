@@ -3,7 +3,6 @@
 import logging
 import os
 import tarfile
-import gzip
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -233,12 +232,12 @@ def compress(tar_file_name: str, members: List[str]) -> None:
         if len(member) > FILE_LENGTH_LIMIT:
             logger.warning(
                 f'File length exceeds compression limit=[{FILE_LENGTH_LIMIT}]. '
-                 'This may cause issues later with extraction. Please proceed at your own discretion.')
+                'This may cause issues later with extraction. Please proceed at your own discretion.')
 
     full_tar_name = f'{tar_file_name}.tar.gz'
     if os.path.exists(full_tar_name):
         raise Exception(f"This tar archive=[{full_tar_name}] already exists, continuing will "
-                       "overwrite anything in the existing archive.")
+                        "overwrite anything in the existing archive.")
 
     # Opens file for gzip (gz) compressed writing (w)
     # Uses default compression level 9 (highest compression, slowest speed)
@@ -288,6 +287,6 @@ def file_list(tar_file: str) -> list:
         raise FileNotFoundError(f"This file or folder, '{tar_file}', "
                                 "does not exist!\nPlease rerun program")
 
-    with tarfile.open(tar_file+".tar.gz", mode="r") as tar:
+    with tarfile.open(tar_file + ".tar.gz", mode="r") as tar:
         tar_list = tar.getnames()
     return tar_list

@@ -167,7 +167,7 @@ class TestCompressionSupport(unittest.TestCase):
     def setUp(self):
         self.dir_name = 'test/'
         self.tar_file_name = 'test_file'
-        self.tar_file_full_name =  f'{self.tar_file_name}.tar.gz'
+        self.tar_file_full_name = f'{self.tar_file_name}.tar.gz'
         # write a test file
         self.test_file_name = 'test.text'
         with open(self.test_file_name, 'w') as fp:
@@ -197,7 +197,7 @@ class TestCompressionSupport(unittest.TestCase):
     def test_file_list_returns_compressed_file_name(self):
         compress(self.tar_file_name, [self.test_file_name])
         tar_list = file_list(self.tar_file_name)
-        self.assertTrue(tar_list[0] == self.test_file_name
+        self.assertTrue(tar_list[0] == self.test_file_name)
 
 
 if __name__ == '__main__':
