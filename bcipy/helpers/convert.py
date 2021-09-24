@@ -2,17 +2,22 @@
 
 import logging
 import os
+import tarfile
+import gzip
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
+from tqdm import tqdm
 
 from bcipy.helpers.load import load_json_parameters, load_raw_data, extract_mode
 from bcipy.helpers.triggers import trigger_decoder, apply_trigger_offset, trigger_durations
 
 
 logger = logging.getLogger(__name__)
+
+FILE_LENGTH_LIMIT = 150
 
 
 def convert_to_edf(data_dir: str,
@@ -210,3 +215,79 @@ def edf_annotations(triggers: List[Tuple[str, str, float]],
     """
     return [(timestamp, durations.get(targetness, 0.0), label)
             for (label, targetness, timestamp) in triggers]
+
+
+def compress(tar_file_name: str, members: List[str]) -> None:
+    """Compress.
+       Adds files (members) to a tar_file and compresses them using gzip
+
+    tar_file_name (str): the name of resulting compressed file
+    """
+
+    for member in members:
+        # Checks if file exists
+        if not os.path.exists(member):
+            raise FileNotFoundError(f"This file or folder, '{member}', "
+                                    "does not exist!\nPlease rerun program")
+        # Checks for file names that may be too long. OS level restriction.
+        if len(member) > FILE_LENGTH_LIMIT:
+            logger.warning(
+                f'File length exceeds compression limit=[{FILE_LENGTH_LIMIT}]. '
+                 'This may cause issues later with extraction. Please proceed at your own discretion.')
+
+    full_tar_name = f'{tar_file_name}.tar.gz'
+    if os.path.exists(full_tar_name):
+        raise Exception(f"This tar archive=[{full_tar_name}] already exists, continuing will "
+                       "overwrite anything in the existing archive.")
+
+    # Opens file for gzip (gz) compressed writing (w)
+    # Uses default compression level 9 (highest compression, slowest speed)
+    with tarfile.open(full_tar_name, mode="w:gz") as tar:
+        # Sets progress bar through tqdm
+        progress = tqdm(members)
+        for member in progress:
+            # Adds file/folder to the tar file and compresses it
+            tar.add(member)
+            # Sets progress description of progress bar
+            progress.set_description(f"Compressing {member}")
+
+
+def decompress(tar_file: str, path: str) -> None:
+    """Extracts tar_file and places specified "members" in "path"
+       If members remains None, all members will be extracted
+    """
+
+    full_tar_name = f'{tar_file}.tar.gz'
+
+    # Checks if file exists
+    if not os.path.exists(full_tar_name):
+        raise FileNotFoundError(f"This file or folder, '{tar_file}', "
+                                "does not exist!\nPlease rerun program")
+
+    # Opens file for gzip (gz) compressed reading (r)
+    with tarfile.open(full_tar_name, mode="r:gz") as tar:
+        members = tar.getmembers()
+
+        # Sets progress bar through tqdm
+        progress = tqdm(members)
+        for member in progress:
+            tar.extract(member, path=path)
+            # Sets progress description of progress bar
+            progress.set_description(f"Extracting {member.name}")
+
+
+def file_list(tar_file: str) -> list:
+    """Displays all directories and files in a given tar archive
+       Assumes .tar.gz
+    """
+
+    full_tar_name = f'{tar_file}.tar.gz'
+
+    # Checks if file exists
+    if not os.path.exists(full_tar_name):
+        raise FileNotFoundError(f"This file or folder, '{tar_file}', "
+                                "does not exist!\nPlease rerun program")
+
+    with tarfile.open(tar_file+".tar.gz", mode="r") as tar:
+        tar_list = tar.getnames()
+    return tar_list

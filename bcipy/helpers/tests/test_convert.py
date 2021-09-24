@@ -7,7 +7,7 @@ import warnings
 
 from pathlib import Path
 
-from bcipy.helpers.convert import convert_to_edf
+from bcipy.helpers.convert import convert_to_edf, compress, decompress, file_list
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
 from mne.io import read_raw_edf
@@ -160,6 +160,44 @@ class TestConvert(unittest.TestCase):
             edf = read_raw_edf(path, preload=True)
 
         self.assertEqual(len(edf.ch_names), expected_channel_number)
+
+
+class TestCompressionSupport(unittest.TestCase):
+
+    def setUp(self):
+        self.dir_name = 'test/'
+        self.tar_file_name = 'test_file'
+        self.tar_file_full_name =  f'{self.tar_file_name}.tar.gz'
+        # write a test file
+        self.test_file_name = 'test.text'
+        with open(self.test_file_name, 'w') as fp:
+            pass
+
+    def tearDown(self):
+        os.remove(self.test_file_name)
+
+        if os.path.exists(self.tar_file_full_name):
+            os.remove(self.tar_file_full_name)
+
+    def test_compression_writes_tar_gz(self):
+        compress(self.tar_file_name, [self.test_file_name])
+        # assert correct file was written
+        self.assertTrue(os.path.exists(self.tar_file_full_name))
+
+    def test_decompression_extracts_file(self):
+        compress(self.tar_file_name, [self.test_file_name])
+        decompress(self.tar_file_name, ".")
+        self.assertTrue(os.path.exists(self.test_file_name))
+
+    def test_file_not_found_error_thrown_on_compression(self):
+        garbage_name = 'not_possible_to_exist.biz'
+        with self.assertRaises(FileNotFoundError):
+            compress(self.tar_file_name, [garbage_name])
+
+    def test_file_list_returns_compressed_file_name(self):
+        compress(self.tar_file_name, [self.test_file_name])
+        tar_list = file_list(self.tar_file_name)
+        self.assertTrue(tar_list[0] == self.test_file_name
 
 
 if __name__ == '__main__':
