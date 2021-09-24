@@ -17,10 +17,10 @@ class RawData:
     def __init__(self,
                  daq_type: str = None,
                  sample_rate: int = None,
-                 columns: List[str] = []):
+                 columns: List[str] = None):
         self.daq_type = daq_type
         self.sample_rate = sample_rate
-        self.columns = columns
+        self.columns = columns or []
         self._rows = []
         self._dataframe = None
 
@@ -76,10 +76,46 @@ class RawData:
 
     @property
     def dataframe(self) -> pd.DataFrame:
+        """Returns a dataframe of the row data."""
         if self._dataframe is None:
             self._dataframe = pd.DataFrame(data=self.rows,
                                            columns=self.columns)
         return self._dataframe
+
+    @property
+    def total_seconds(self) -> float:
+        """Total recorded seconds, defined as the diff between the first and
+        last timestamp."""
+        frame = self.dataframe
+        col = 'lsl_timestamp'
+        return frame.iloc[-1][col] - frame.iloc[0][col]
+
+    @property
+    def total_samples(self) -> int:
+        """Number of samples recorded."""
+        return int(self.dataframe.iloc[-1]['timestamp'])
+
+    def query(self,
+              start: float = None,
+              stop: float = None,
+              column: str = 'lsl_timestamp') -> pd.DataFrame:
+        """Query for a subset of data.
+
+        Pararameters
+        ------------
+            start - find records greater than or equal to this value
+            stop - find records less than or equal to this value
+            column - column to compare to the given start and stop values
+
+        Returns
+        -------
+        Dataframe for the given slice of data
+        """
+        dataframe = self.dataframe
+        start = start or dataframe.iloc[0][column]
+        stop = stop or dataframe.iloc[-1][column]
+        mask = (dataframe[column] >= start) & (dataframe[column] <= stop)
+        return dataframe[mask]
 
     def append(self, row: List):
         """Append the given row of data.

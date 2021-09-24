@@ -173,10 +173,7 @@ def get_data_for_decision(inquiry_timing,
     _, first_stim_time = inquiry_timing[0]
     _, last_stim_time = inquiry_timing[-1]
 
-    time1 = (first_stim_time + static_offset)
-    # Ending time also needs to account for the time after the last stimulus in
-    # the inquiry to ensure that we're getting enough data.
-    time2 = (last_stim_time + static_offset + buffer_length)
+    time1 = first_stim_time + static_offset
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
@@ -191,7 +188,7 @@ def get_data_for_decision(inquiry_timing,
     log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
-    raw_data = daq.get_data(start=time1, end=time2)
+    raw_data = daq.get_data(start=time1, limit=data_limit)
 
     if len(raw_data) < data_limit:
         message = f'Process Data Error: Not enough data received to process. ' \

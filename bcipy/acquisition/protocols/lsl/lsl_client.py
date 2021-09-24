@@ -116,19 +116,24 @@ class LslAcquisitionClient:
         """Context manager exit method to clean up resources."""
         self.stop_acquisition()
 
-    def get_data(self, start: float = None, end: float = None) -> List[Record]:
+    def get_data(self,
+                 start: float = None,
+                 end: float = None,
+                 limit: int = None) -> List[Record]:
         """Get data in time range.
 
         Parameters
         ----------
             start : starting timestamp (acquisition clock).
             end : end timestamp (in acquisition clock).
+            limit: the max number of records that should be returned.
 
         Returns
         -------
             List of Records
         """
-        log.debug(f"Getting data from time {start} to {end}")
+
+        log.debug(f"Getting data from: {start} to: {end} limit: {limit}")
 
         # Implementation Notes:
         #   - Only data in the current buffer is available to query;
@@ -145,13 +150,14 @@ class LslAcquisitionClient:
                  f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
             start = start or data[0].timestamp
             end = end or data[-1].timestamp
+            limit = limit or -1
             assert start >= data[0].timestamp, (
                 f'Start time of {start} is out of range: '
                 f'({data[0].timestamp} to {data[-1].timestamp}).')
 
             data_slice = [
                 record for record in data if start <= record.timestamp <= end
-            ]
+            ][0:limit]
             log.debug(f'{len(data_slice)} records returned')
             return data_slice
         log.debug('No records available')
