@@ -217,10 +217,25 @@ def edf_annotations(triggers: List[Tuple[str, str, float]],
 
 
 def compress(tar_file_name: str, members: List[str]) -> None:
-    """Compress.
-       Adds files (members) to a tar_file and compresses them using gzip
+    """
+    File compression and archiving.
 
-    tar_file_name (str): the name of resulting compressed file
+    Adds files to a tar archive and compresses them using the gzip compression
+        format.
+
+    Parameters
+    ----------
+    tar_file_name (str): name of resulting compressed tar archive. Input string
+        can either include or not include file extension (.tar.gz), as this will
+        be checked.
+    members (List[str]): list of files and folders to be compressed into archive.
+        Each file or folder requires the relative file path and full file extension.
+        Individual file paths and names that are very long may throw an error
+        upon extraction, proceed with caution.
+
+    Returns
+    -------
+        None
     """
 
     for member in members:
@@ -234,7 +249,8 @@ def compress(tar_file_name: str, members: List[str]) -> None:
                 f'File length exceeds compression limit=[{FILE_LENGTH_LIMIT}]. '
                 'This may cause issues later with extraction. Please proceed at your own discretion.')
 
-    full_tar_name = f'{tar_file_name}.tar.gz'
+    full_tar_name = tar_name_checker(tar_file_name)
+    # Warns user that reopening tar archive that already exists will overwrite it
     if os.path.exists(full_tar_name):
         raise Exception(f"This tar archive=[{full_tar_name}] already exists, continuing will "
                         "overwrite anything in the existing archive.")
@@ -252,11 +268,28 @@ def compress(tar_file_name: str, members: List[str]) -> None:
 
 
 def decompress(tar_file: str, path: str) -> None:
-    """Extracts tar_file and places specified "members" in "path"
-       If members remains None, all members will be extracted
+    """
+    Archive decompression and extraction.
+
+    Takes .tar.gz archive, decompresses, and extracts its contents. Should only be
+    used with files created by compress() method.
+
+    Parameters
+    ----------
+    tar_file (str): name of .tar.gz archive to be decompressed. Input string
+        can either include or not include file extension (.tar.gz), as this will
+        be checked.
+    path (str): file path and name of folder for the extracted contents of the
+        archive. If only a name is entered, by default it will place the folder
+        in the current working directory. (ex. "extracted" creates a new folder
+        in the current directory and extracts the archive contents to it)
+
+    Returns
+    -------
+        None
     """
 
-    full_tar_name = f'{tar_file}.tar.gz'
+    full_tar_name = tar_name_checker(tar_file)
 
     # Checks if file exists
     if not os.path.exists(full_tar_name):
@@ -275,18 +308,54 @@ def decompress(tar_file: str, path: str) -> None:
             progress.set_description(f"Extracting {member.name}")
 
 
-def file_list(tar_file: str) -> list:
-    """Displays all directories and files in a given tar archive
-       Assumes .tar.gz
+def archive_list(tar_file: str) -> list:
+    """
+    Returns contents of tar archive.
+
+    Takes .tar.gz archive and returns a full list of its contents, including
+        folders, subfolders, and files, with their full relative paths and names.
+
+    Parameters
+    ----------
+    tar_file (str): name of desired .tar.gz archive. Input string can either
+        include or not include file extension (.tar.gz), as this will be checked.
+
+    Returns
+    -------
+        List[str] of all items in archive
     """
 
-    full_tar_name = f'{tar_file}.tar.gz'
+    full_tar_name = tar_name_checker(tar_file)
 
     # Checks if file exists
     if not os.path.exists(full_tar_name):
         raise FileNotFoundError(f"This file or folder, '{tar_file}', "
                                 "does not exist!\nPlease rerun program")
 
-    with tarfile.open(tar_file + ".tar.gz", mode="r") as tar:
+    # Adds names of archive contents to list
+    with tarfile.open(full_tar_name, mode="r") as tar:
         tar_list = tar.getnames()
     return tar_list
+
+
+def tar_name_checker(tar_file_name: str) -> str:
+    """
+    Checks and modifies file name for tar archive.
+
+    Helper method that takes a tar file name and checks it for the appropriate
+        file extension (".tar.gz" for now), returning it if it already does, and
+        adding the extension and then returning it if it does not.
+
+    Parameters
+    ----------
+    tar_file_name (str): name for archive being checked.
+
+    Returns
+    -------
+        String of properly formatted tar archive name
+    """
+
+    if tar_file_name.endswith('.tar.gz'):
+        return tar_file_name
+    else:
+        return f'{tar_file_name}.tar.gz'

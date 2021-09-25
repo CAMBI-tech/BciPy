@@ -7,7 +7,7 @@ import warnings
 
 from pathlib import Path
 
-from bcipy.helpers.convert import convert_to_edf, compress, decompress, file_list
+from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
 from mne.io import read_raw_edf
@@ -168,7 +168,7 @@ class TestCompressionSupport(unittest.TestCase):
         self.dir_name = 'test/'
         self.tar_file_name = 'test_file'
         self.tar_file_full_name = f'{self.tar_file_name}.tar.gz'
-        # write a test file
+        # Write a test file
         self.test_file_name = 'test.text'
         with open(self.test_file_name, 'w') as fp:
             pass
@@ -179,14 +179,28 @@ class TestCompressionSupport(unittest.TestCase):
         if os.path.exists(self.tar_file_full_name):
             os.remove(self.tar_file_full_name)
 
-    def test_compression_writes_tar_gz(self):
+    def test_compression_writes_tar_gz_no_extension(self):
+        # Test with no extension on tar name
         compress(self.tar_file_name, [self.test_file_name])
-        # assert correct file was written
+        # Assert correct file was written
         self.assertTrue(os.path.exists(self.tar_file_full_name))
 
-    def test_decompression_extracts_file(self):
+    def test_compression_writes_tar_gz_with_extension(self):
+        # Test with extension on tar name
+        compress(self.tar_file_full_name, [self.test_file_name])
+        # Assert correct file was written
+        self.assertTrue(os.path.exists(self.tar_file_full_name))
+
+    def test_decompression_extracts_file_no_extension(self):
+        # Test with no extension on tar name
         compress(self.tar_file_name, [self.test_file_name])
         decompress(self.tar_file_name, ".")
+        self.assertTrue(os.path.exists(self.test_file_name))
+
+    def test_decompression_extracts_file_with_extension(self):
+        # Test with extension on tar name
+        compress(self.tar_file_name, [self.test_file_name])
+        decompress(self.tar_file_full_name, ".")
         self.assertTrue(os.path.exists(self.test_file_name))
 
     def test_file_not_found_error_thrown_on_compression(self):
@@ -194,9 +208,16 @@ class TestCompressionSupport(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             compress(self.tar_file_name, [garbage_name])
 
-    def test_file_list_returns_compressed_file_name(self):
+    def test_file_list_returns_compressed_file_name_no_extension(self):
+        # Test with no extension on tar name
         compress(self.tar_file_name, [self.test_file_name])
-        tar_list = file_list(self.tar_file_name)
+        tar_list = archive_list(self.tar_file_name)
+        self.assertTrue(tar_list[0] == self.test_file_name)
+
+    def test_file_list_returns_compressed_file_name_with_extension(self):
+        # Test with extension on tar name
+        compress(self.tar_file_name, [self.test_file_name])
+        tar_list = archive_list(self.tar_file_full_name)
         self.assertTrue(tar_list[0] == self.test_file_name)
 
 
