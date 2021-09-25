@@ -112,12 +112,10 @@ class TestDataAcquisitionClient(unittest.TestCase):
         # Get a half second of data
         offset = client.clock_offset(experiment_clock)
         start = 0.5 + offset
-        end = 1.0 + offset
-        samples = client.get_data(start, end)
+        samples = client.get_data(start, limit=100)
 
         client.stop_acquisition()
-        expected_samples = DEVICE.sample_rate / 2
-        self.assertAlmostEqual(expected_samples, len(samples), delta=5.0)
+        self.assertEqual(100, len(samples))
         self.assertAlmostEqual(client.convert_time(experiment_clock, 0.5),
                                start,
                                delta=0.002)
