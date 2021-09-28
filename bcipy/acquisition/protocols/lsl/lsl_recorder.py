@@ -2,7 +2,7 @@
 import logging
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
@@ -90,12 +90,20 @@ class LslRecordingThread(StoppableThread):
 
         self.filename = filename if filename else self.default_filename()
         self.first_sample_time = None
+        self.last_sample_time = None
 
     def default_filename(self):
         """Default filename to use if a name is not provided."""
         content_type = '_'.join(self.stream_info.type().split()).lower()
         name = '_'.join(self.stream_info.name().split()).lower()
         return f"{content_type}_data_{name}.csv"
+
+    @property
+    def recorded_seconds(self) -> float:
+        """Total seconds of data recorded."""
+        if self.first_sample_time and self.last_sample_time:
+            return self.last_sample_time - self.first_sample_time
+        return 0.0
 
     def _init_data_writer(self, channels: List[str]) -> None:
         """Initializes the raw data writer.
@@ -118,14 +126,15 @@ class LslRecordingThread(StoppableThread):
         """Performs cleanup tasks."""
         assert self.writer, "Writer not initialized"
         self.writer.__exit__()
+        self.writer = None
 
     def _write_chunk(self, data: List, timestamps: List) -> None:
         """Persists the data resulting from pulling a chunk from the inlet.
 
         Parameters
         ----------
-        - data : list of samples
-        - timestamps : list of timestamps
+            data : list of samples
+            timestamps : list of timestamps
         """
         assert self.writer, "Writer not initialized"
 
@@ -134,6 +143,35 @@ class LslRecordingThread(StoppableThread):
             self.sample_count += 1
             chunk.append([self.sample_count] + sample + [timestamps[i]])
         self.writer.writerows(chunk)
+
+    def _pull_chunk(self, inlet: StreamInlet) -> Tuple[int, float]:
+        """Pull a chunk of data and persist. Updates first_sample_time,
+        last_sample_time, and sample_count.
+
+        Parameters
+        ----------
+            inlet : stream inlet from which to pull
+
+        Returns
+        -------
+            number of samples pulled
+        """
+        # A timeout of 0.0 does not block and only gets samples immediately
+        # available.
+        data, timestamps = inlet.pull_chunk(timeout=0.0,
+                                            max_samples=self.max_chunk_size)
+        if timestamps:
+            if not self.first_sample_time:
+                self.first_sample_time = timestamps[0]
+            self.last_sample_time = timestamps[-1]
+            self._write_chunk(data, timestamps)
+        return len(timestamps)
+
+    def _reset(self) -> None:
+        """Reset state"""
+        self.sample_count = 0
+        self.first_sample_time = None
+        self.last_sample_time = None
 
     # @override
     def run(self):
@@ -148,40 +186,26 @@ class LslRecordingThread(StoppableThread):
         log.debug("Acquiring data from data stream:")
         log.debug(full_metadata.as_xml())
 
+        self._reset()
         self._init_data_writer(channel_names(full_metadata))
 
         # TODO: account for remote acquisition by recording remote clock offsets
         # so we can map from remote timestamp to local lsl clock for comparing
         # datasets.
 
-        latest_sample_time = 0
-        # Run loop for continous acquisition
+        # Run loop for continuous acquisition
         while self.running():
-            data, timestamps = inlet.pull_chunk(
-                max_samples=self.max_chunk_size)
-            if timestamps:
-                self._write_chunk(data, timestamps)
-                if not self.first_sample_time:
-                    self.first_sample_time = timestamps[0]
-                latest_sample_time = timestamps[-1]
+            self._pull_chunk(inlet)
             time.sleep(self.sleep_seconds)
 
-        # Pull one last chunk to account for data streaming during sleep. This
-        # may result in up to (sleep_seconds * sample_rate) more records than
-        # anticipated. If this is a problem we can override the `stop` method
-        # and capture a timestamp, then use that timestamp to determine how
-        # long we slept since receiving the call and set the max_samples
-        # parameter accordingly.
-        # TODO: do we need to use max_chunk_size here
-        data, timestamps = inlet.pull_chunk(max_samples=self.max_chunk_size)
-        if timestamps:
-            self._write_chunk(data, timestamps)
-            latest_sample_time = timestamps[-1]
+        # Pull any remaining samples up to the current time.
+        log.debug("Pulling remaining samples")
+        record_count = self._pull_chunk(inlet)
+        while record_count == self.max_chunk_size:
+            record_count = self._pull_chunk(inlet)
 
         log.info(f"Ending data stream recording for {self.stream_info.name()}")
-        log.info(
-            f"Total recorded seconds: {latest_sample_time - self.first_sample_time}"
-        )
+        log.info(f"Total recorded seconds: {self.recorded_seconds}")
         log.info(f"Total recorded samples: {self.sample_count}")
         inlet.close_stream()
         self._cleanup()
