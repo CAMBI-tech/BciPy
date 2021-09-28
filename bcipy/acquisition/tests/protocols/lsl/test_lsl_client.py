@@ -113,9 +113,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
         offset = client.clock_offset(experiment_clock)
         start = 0.5 + offset
         samples = client.get_data(start, limit=100)
+        samples2 = client.get_data(start, limit=100)
 
         client.stop_acquisition()
         self.assertEqual(100, len(samples))
+        self.assertEqual(samples, samples2,
+                         "Consecutive queries should yield the same answers")
         self.assertAlmostEqual(client.convert_time(experiment_clock, 0.5),
                                start,
                                delta=0.002)
