@@ -1,25 +1,27 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pywt
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 
-from bcipy.helpers.load import load_raw_data
+from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
-
-from bcipy.helpers.load import load_json_parameters
-
-from bcipy.helpers.visualization import generate_offline_analysis_screen
-
-import matplotlib.pyplot as plt
+from functools import partial
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 
 def cwt(data, freq: int, fs: int):
     # Original data.shape == (channels, trials, samples)
     # Want: (trials, channels, samples)
     data = data.transpose(1, 0, 2)
-    wavelet = "cmor5.0-1.0"  # "morl"  # TODO - important choice of hyperparams here
+    wavelet = "cmor1.5-1.0"  # "morl"  # TODO - important choice of hyperparams here
+    # wavelet = "morl"  # "morl"  # TODO - important choice of hyperparams here
     scales = pywt.central_frequency(wavelet) * fs / np.array(freq)
     all_coeffs = []
     for trial in data:
@@ -28,11 +30,15 @@ def cwt(data, freq: int, fs: int):
 
     final_data = np.stack(all_coeffs)
     if np.any(np.iscomplex(final_data)):
+        print("Converting complex to real")
         final_data = np.abs(final_data) ** 2
 
     # have shape == (trials, freqs, channels, time)
     # want shape == (trials, freqs*channels, time)
     final_data = final_data.reshape(final_data.shape[0], -1, final_data.shape[-1])
+
+    # now put channels in front
+    final_data = final_data.transpose([1, 0, 2])
     return final_data
 
 
@@ -106,30 +112,75 @@ def fit_model(data, labels):
     print("Training model. This will take some time...")
     model.fit(data, labels)
     model_performance = model.evaluate(data, labels)
+    print(model_performance.auc)
     return model_performance
 
 
-def make_plots(data, labels):
-    """
-    targets = data[labels]
-    """
-    breakpoint()
+def _fit(data, labels, test_frac, model_class):
+    # Flatten each trial to a long vector
+
+    data = data.transpose([1, 0, 2])
+    data = data.reshape([data.shape[0], -1])
+
+    try:
+        clf = model_class(random_state=1, max_iter=300)
+    except TypeError:
+        clf = model_class()
+
+    data_train, data_test, labels_train, labels_test = train_test_split(
+        data, labels, test_size=test_frac, random_state=1
+    )
+    clf.fit(data_train, labels_train)
+    del data_train, labels_train
+
+    acc = clf.score(data_test, labels_test)
+    probs = clf.predict_proba(data_test)
+    auc = roc_auc_score(labels_test, probs[:, 1])
+    print(f"Accuracy: {acc}")
+    print(f"AUC: {auc}")
+    return acc, auc
+
+
+def fit_mlp(data, labels, test_frac=0.1):
+    return _fit(data, labels, test_frac, model_class=MLPClassifier)
+
+
+def fit_svm(data, labels, test_frac=0.1):
+    return _fit(data, labels, test_frac, model_class=partial(SVC, probability=True))
+    # return _fit(data, labels, test_frac, model_class=partial(SVC, probability=True, gamma=2, C=1))
+
+
+def fit_qda(data, labels, test_frac=0.1):
+    return _fit(data, labels, test_frac, model_class=QuadraticDiscriminantAnalysis)
+
+
+def make_plots(data, labels, title):
+    targets_data = data[:, labels == 1, :]
+    nontargets_data = data[:, labels == 0, :]
+    fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
+    ax.plot(targets_data.mean(axis=(0, 1)), c="r")  # average across channels and trials
+    ax.plot(nontargets_data.mean(axis=(0, 1)), c="b")
+    fig.savefig(title, bbox_inches="tight", dpi=300)
 
 
 def main(data_path, parameters):
+    # Load data and CWT preprocess
     data, labels, fs = load_data(data_path, parameters)
+    make_plots(data, labels, "0.raw_data.png")
     data = cwt(data, args.selected_freq, fs)
+    make_plots(data, labels, "1.cwt_data.png")
     print(data.shape)
     # data.shape == (trials, channels, samples)
     # each trial has [-1.25s, 1.25s]
 
+    # Normalize data
     # data begins at -1250, want to slice all trials from -600 to -100
     begin = int(0.65 * fs)  # .650 s * N samples/s = samples   # TODO - don't hardcode
     duration = int(0.5 * fs)
     end = begin + duration
     print(f"Baseline region (in samples, not seconds): {begin=}, {duration=}, {end=}")
-    means = data[..., begin:end].mean(axis=2, keepdims=True)  # (trials * 4) means
-    stdevs = data[..., begin:end].std(axis=2, keepdims=True)  # (trials * 4) stdevs
+    means = data[..., begin:end].mean(axis=(1, 2), keepdims=True)  # (4) means
+    stdevs = data[..., begin:end].std(axis=(1, 2), keepdims=True)  # (4) stdevs
 
     # z-score the data in the window of interest [300, 800]
     # TODO - this assumes each trial starts at -1250ms, not yet true!
@@ -139,31 +190,29 @@ def main(data_path, parameters):
     end = begin + duration
     print(f"Response region (in samples, not seconds): {begin=}, {duration=}, {end=}")
     print(data.min(), data.mean(), data.max())
-    data = data[..., begin:end] - means
-    data = data / stdevs
-    print(data.min(), data.mean(), data.max())
+    # The copy we care about for modeling
+    z_transformed_target_window = (data[..., begin:end] - means) / stdevs
+    # Copy of entire window for plotting
+    z_transformed_entire_data = (data - means) / stdevs
+    print(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
 
     # make_plots(data, labels)
 
     # NOTE - model expects (channels, trials, samples)
-    data = data.transpose([1, 0, 2])
+    make_plots(z_transformed_target_window, labels, "2.z_target_window.png")
+    make_plots(z_transformed_entire_data, labels, "3.z_entire_data.png")
 
-    generate_offline_analysis_screen(
-        data,
-        labels,
-        model=None,
-        folder=data_path,
-        save_figure=True,
-        # down_sample_rate=2,
-        fs=fs,
-        plot_x_ticks=8,
-        plot_average=False,
-        show_figure=False,
-        channel_names=None,
-    )
+    # RDA/KDE (no PCA step)
+    print(fit_model(z_transformed_target_window, labels).auc)
 
-    model_performance = fit_model(data, labels)
-    print(model_performance.auc)
+    # MLP
+    # print(fit_mlp(z_transformed_target_window, labels))
+
+    # SVM
+    # print(fit_svm(z_transformed_target_window, labels))
+
+    # QDA
+    # print(fit_qda(z_transformed_target_window, labels))
 
 
 if __name__ == "__main__":
@@ -188,6 +237,12 @@ if __name__ == "__main__":
         pca/rda/kde
 
     TODO:
+    - Hyperparams:
+        - wavelet and its params
+        - classifier model
+        - Pca or not for PcaRdaKdeModel
+        - how to make fair comparison between models
+
     - Set CWT parameters so that data matches BrainVision - try plotting the full (-1250, 1250) trials, averaged for target and nontarget
     - Can try export data from BrainVision and train model
     - Try with/without PCA step
