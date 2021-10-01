@@ -308,7 +308,7 @@ def decompress(tar_file: str, path: str) -> None:
             progress.set_description(f"Extracting {member.name}")
 
 
-def archive_list(tar_file: str) -> list:
+def archive_list(tar_file: str) -> List[str]:
     """
     Returns contents of tar archive.
 
@@ -357,5 +357,4 @@ def tar_name_checker(tar_file_name: str) -> str:
 
     if tar_file_name.endswith('.tar.gz'):
         return tar_file_name
-    else:
-        return f'{tar_file_name}.tar.gz'
+    return f'{tar_file_name}.tar.gz'
