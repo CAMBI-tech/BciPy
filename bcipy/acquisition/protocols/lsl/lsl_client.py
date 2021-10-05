@@ -13,6 +13,7 @@ from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
 from bcipy.helpers.clock import Clock
+from bcipy.gui.viewer.ring_buffer import RingBuffer
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class LslAcquisitionClient:
         self.raw_data_file_name = raw_data_file_name
 
         self.recorder = None
+        self.buffer = None
 
     def start_acquisition(self) -> bool:
         """Connect to the datasource and start acquiring data.
@@ -86,6 +88,7 @@ class LslAcquisitionClient:
                                                self.raw_data_file_name)
             self.recorder.start()
 
+        self.buffer = RingBuffer(size_max=self.max_samples)
         _, self._first_sample_time = self.inlet.pull_sample()
         return True
 
@@ -107,6 +110,8 @@ class LslAcquisitionClient:
             self.recorder.stop()
             self.recorder.join()
 
+        self.buffer = None
+
     def __enter__(self):
         """Context manager enter method that starts data acquisition."""
         self.start_acquisition()
@@ -116,46 +121,47 @@ class LslAcquisitionClient:
         """Context manager exit method to clean up resources."""
         self.stop_acquisition()
 
-    def get_data(self, start: float = None, end: float = None) -> List[Record]:
+    def get_data(self,
+                 start: float = None,
+                 end: float = None,
+                 limit: int = None) -> List[Record]:
         """Get data in time range.
 
         Parameters
         ----------
             start : starting timestamp (acquisition clock).
             end : end timestamp (in acquisition clock).
+            limit: the max number of records that should be returned.
 
         Returns
         -------
             List of Records
         """
-        log.debug(f"Getting data from time {start} to {end}")
+        log.debug(f"Getting data from: {start} to: {end} limit: {limit}")
 
-        # Implementation Notes:
-        #   - Only data in the current buffer is available to query;
-        #     requests for data outside of this will fail. Buffer size is
-        #     set using the max_buflen parameter.
-        #   - Pulling data depletes the buffer so a subsequent query with
-        #     the same parameters will fail. If this becomes a requirement,
-        #     consider caching the last query result.
+        # Only data in the current buffer is available to query;
+        # requests for data outside of this will fail. Buffer size is
+        # set using the max_buflen parameter.
         data = self.get_latest_data()
 
-        if data:
-            log.debug(
-                (f'{len(data)} records available '
-                 f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
-            start = start or data[0].timestamp
-            end = end or data[-1].timestamp
-            assert start >= data[0].timestamp, (
-                f'Start time of {start} is out of range: '
-                f'({data[0].timestamp} to {data[-1].timestamp}).')
+        if not data:
+            log.debug('No records available')
+            return []
 
-            data_slice = [
-                record for record in data if start <= record.timestamp <= end
-            ]
-            log.debug(f'{len(data_slice)} records returned')
-            return data_slice
-        log.debug('No records available')
-        return []
+        log.debug((f'{len(data)} records available '
+                   f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
+        start = start or data[0].timestamp
+        end = end or data[-1].timestamp
+        limit = limit or -1
+        assert start >= data[0].timestamp, (
+            f'Start time of {start} is out of range: '
+            f'({data[0].timestamp} to {data[-1].timestamp}).')
+
+        data_slice = [
+            record for record in data if start <= record.timestamp <= end
+        ][0:limit]
+        log.debug(f'{len(data_slice)} records returned')
+        return data_slice
 
     @property
     def max_samples(self) -> int:
@@ -163,18 +169,19 @@ class LslAcquisitionClient:
         return int(self.max_buflen * self.device_spec.sample_rate)
 
     def get_latest_data(self) -> List[Record]:
-        """Pull all available samples in the buffer.
+        """Add all available samples in the inlet to the buffer.
 
         The number of items returned depends on the size of the configured
-        max_buflen as well as the time since the last data pull."""
+        max_buflen and the amount of data available in the inlet."""
 
         samples, timestamps = self.inlet.pull_chunk(
             max_samples=self.max_samples)
+        print(f'Pulled chunk size: {len(timestamps)}')
+        for i, sample in enumerate(samples):
+            self.buffer.append(
+                Record(data=sample, timestamp=timestamps[i], rownum=None))
 
-        return [
-            Record(data=sample, timestamp=timestamps[i], rownum=None)
-            for i, sample in enumerate(samples)
-        ]
+        return self.buffer.get()
 
     def convert_time(self, experiment_clock: Clock, timestamp: float) -> float:
         """
