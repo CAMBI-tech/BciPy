@@ -71,6 +71,6 @@ for p in participant_files.keys():
         file = participant_files[p][hz]
         freq = participant_freqs[p][hz]
 
-        cmd = f"python alpha-experiment.py --input data/bcipy_recordings/{p}/{file} --output results/{p}/{hz}.cwt_freq{freq} --freq {freq}"
+        cmd = f"xvfb-run --auto-servernum python alpha-experiment.py --input data/bcipy_recordings/{p}/{file} --output results/{p}/{hz}.cwt_freq{freq} --freq {freq}"
         print(cmd)
         subprocess.run(cmd, shell=True, check=True)
