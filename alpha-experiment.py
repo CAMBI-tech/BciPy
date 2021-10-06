@@ -314,7 +314,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--input", type=Path, help="Path to data folder", required=True)
     p.add_argument("--output", type=Path, help="Path to save outputs", required=True)
-    p.add_argument("--freq", type=int, help="Frequency to keep after CWT", default=10)
+    p.add_argument("--freq", type=float, help="Frequency to keep after CWT", default=10)
     p.add_argument("--parameters_file", default="bcipy/parameters/parameters.json")
     args = p.parse_args()
 
