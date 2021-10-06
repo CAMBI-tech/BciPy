@@ -1,19 +1,29 @@
+import sys
+from functools import partial
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pywt
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import train_test_split
+from loguru import logger
+from pyriemann.classification import TSclassifier
+from pyriemann.estimation import Covariances
+from rich.console import Console
+from rich.table import Table
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_validate
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
-from functools import partial
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 
 def cwt(data, freq: int, fs: int):
@@ -116,29 +126,46 @@ def fit_model(data, labels):
     return model_performance
 
 
-def _fit(data, labels, test_frac, model_class):
+def _fit(data, labels, n_folds, flatten_data, clf):
     # Flatten each trial to a long vector
+    np.random.seed(1)
 
     data = data.transpose([1, 0, 2])
-    data = data.reshape([data.shape[0], -1])
+    if flatten_data:
+        data = data.reshape([data.shape[0], -1])
 
-    try:
-        clf = model_class(random_state=1, max_iter=300)
-    except TypeError:
-        clf = model_class()
+    # data_train, data_test, labels_train, labels_test = train_test_split(
+    # data, labels, test_size=test_frac, random_state=1
+    # )
+    # clf.fit(data_train, labels_train)
+    # del data_train, labels_train
 
-    data_train, data_test, labels_train, labels_test = train_test_split(
-        data, labels, test_size=test_frac, random_state=1
+    # preds = clf.predict(data_test)
+    # probs = clf.predict_proba(data_test)
+
+    results = cross_validate(
+        clf,
+        data,
+        labels,
+        cv=n_folds,
+        n_jobs=-1,
+        return_train_score=True,
+        scoring=["balanced_accuracy", "roc_auc"],
     )
-    clf.fit(data_train, labels_train)
-    del data_train, labels_train
 
-    acc = clf.score(data_test, labels_test)
-    probs = clf.predict_proba(data_test)
-    auc = roc_auc_score(labels_test, probs[:, 1])
-    print(f"Accuracy: {acc}")
-    print(f"AUC: {auc}")
-    return acc, auc
+    return {
+        "avg_fit_time": round(results["fit_time"].mean(), 3),
+        "avg_score_time": round(results["score_time"].mean(), 3),
+        "avg_train_roc_auc": round(results["train_roc_auc"].mean(), 3),
+        "avg_test_roc_auc": round(results["test_roc_auc"].mean(), 3),
+        "avg_train_balanced_accuracy": round(results["train_balanced_accuracy"].mean(), 3),
+        "avg_test_balanced_accuracy": round(results["test_balanced_accuracy"].mean(), 3),
+    }
+
+    # return {
+    #     "accuracy": metrics.accuracy_score(labels_test, preds),
+    #     "auc": round(roc_auc_score(labels_test, probs[:, 1]), 3),
+    # }
 
 
 def fit_mlp(data, labels, test_frac=0.1):
@@ -154,21 +181,25 @@ def fit_qda(data, labels, test_frac=0.1):
     return _fit(data, labels, test_frac, model_class=QuadraticDiscriminantAnalysis)
 
 
-def make_plots(data, labels, title):
+def fit_logr(data, labels, test_frac=0.1):
+    return _fit(data, labels, test_frac, model_class=LogisticRegression)
+
+
+def make_plots(data, labels, filename):
     targets_data = data[:, labels == 1, :]
     nontargets_data = data[:, labels == 0, :]
     fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
     ax.plot(targets_data.mean(axis=(0, 1)), c="r")  # average across channels and trials
     ax.plot(nontargets_data.mean(axis=(0, 1)), c="b")
-    fig.savefig(title, bbox_inches="tight", dpi=300)
+    fig.savefig(filename, bbox_inches="tight", dpi=300)
 
 
-def main(data_path, parameters):
+def main(input_path, output_path, parameters):
     # Load data and CWT preprocess
-    data, labels, fs = load_data(data_path, parameters)
-    make_plots(data, labels, "0.raw_data.png")
-    data = cwt(data, args.selected_freq, fs)
-    make_plots(data, labels, "1.cwt_data.png")
+    data, labels, fs = load_data(input_path, parameters)
+    make_plots(data, labels, output_path / "0.raw_data.png")
+    data = cwt(data, args.freq, fs)
+    make_plots(data, labels, output_path / "1.cwt_data.png")
     print(data.shape)
     # data.shape == (trials, channels, samples)
     # each trial has [-1.25s, 1.25s]
@@ -199,20 +230,65 @@ def main(data_path, parameters):
     # make_plots(data, labels)
 
     # NOTE - model expects (channels, trials, samples)
-    make_plots(z_transformed_target_window, labels, "2.z_target_window.png")
-    make_plots(z_transformed_entire_data, labels, "3.z_entire_data.png")
+    make_plots(z_transformed_target_window, labels, output_path / "2.z_target_window.png")
+    make_plots(z_transformed_entire_data, labels, output_path / "3.z_entire_data.png")
 
     # RDA/KDE (no PCA step)
-    print(fit_model(z_transformed_target_window, labels).auc)
+    # print(fit_model(z_transformed_target_window, labels).auc)
 
-    # MLP
-    # print(fit_mlp(z_transformed_target_window, labels))
+    ts_logr = make_pipeline(Covariances(), TSclassifier(clf=LogisticRegression(class_weight="balanced")))
 
-    # SVM
-    # print(fit_svm(z_transformed_target_window, labels))
+    reports = []
+    lr_kw = {"max_iter": 200, "solver": "liblinear"}
+    for model_name, uses_balanced_training, flatten_data, clf in [
+        ("Multi-layer Perceptron", False, True, MLPClassifier(max_iter=500)),
+        ("Support Vector Classifier", True, True, SVC(probability=True, class_weight="balanced")),
+        ("Support Vector Classifier", False, True, SVC(probability=True)),
+        ("QuadraticDiscriminantAnalysis", True, True, QuadraticDiscriminantAnalysis()),
+        ("LogisticRegression", True, True, LogisticRegression(class_weight="balanced", **lr_kw)),
+        ("LogisticRegression", False, True, LogisticRegression(**lr_kw)),
+        ("Decision Tree", True, True, DecisionTreeClassifier(class_weight="balanced")),
+        ("Decision Tree", False, True, DecisionTreeClassifier()),
+        ("Random Forest", True, True, RandomForestClassifier(class_weight="balanced")),
+        ("Random Forest", False, True, RandomForestClassifier()),
+        ("K-nearest neighbors", False, True, KNeighborsClassifier(10)),
+        ("K-nearest neighbors, distance-weighted", False, True, KNeighborsClassifier(10, weights="distance")),
+        ("Tangent Space, Logistic Regression", True, False, ts_logr),
+    ]:
+        n_folds = 10
+        print("Run model class:", model_name)
+        report = _fit(data, labels, n_folds, flatten_data, clf)
+        report["name"] = model_name
+        report["uses_balanced_training"] = uses_balanced_training
+        reports.append(report)
 
-    # QDA
-    # print(fit_qda(z_transformed_target_window, labels))
+    table = Table(title=f"Alpha Classifier Comparison ({n_folds}-fold cross validation)")
+    table.add_column("Model Name", style="red")
+    table.add_column("Train with balanced classes?", style="orange1")
+    table.add_column("Avg fit time", style="yellow"),
+    table.add_column("Avg score time", style="green"),
+    table.add_column("Avg train roc auc", style="blue"),
+    table.add_column("Avg test roc auc", style="magenta"),
+    table.add_column("Avg train balanced accuracy", style="red"),
+    table.add_column("Avg test balanced accuracy", style="orange1"),
+
+    for report in reports:
+        report = {k: str(v) for k, v in report.items()}
+        table.add_row(
+            report["name"],
+            report["uses_balanced_training"],
+            report["avg_fit_time"],
+            report["avg_score_time"],
+            report["avg_train_roc_auc"],
+            report["avg_test_roc_auc"],
+            report["avg_train_balanced_accuracy"],
+            report["avg_test_balanced_accuracy"],
+        )
+
+    console = Console(record=True)
+    console.print(table)
+    console.save_html(output_path / "results.html")
+    console.save_text(output_path / "results.txt")
 
 
 if __name__ == "__main__":
@@ -238,29 +314,36 @@ if __name__ == "__main__":
 
     TODO:
     - Hyperparams:
+        - when converting from complex, square or not?
+        - for z-scoring, per channel, or per trial, etc
         - wavelet and its params
-        - classifier model
-        - Pca or not for PcaRdaKdeModel
-        - how to make fair comparison between models
+        - Set CWT parameters so that data matches BrainVision - try plotting the full (-1250, 1250) trials, averaged for target and nontarget
 
-    - Set CWT parameters so that data matches BrainVision - try plotting the full (-1250, 1250) trials, averaged for target and nontarget
+    - switch to https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.cross_validate.html#sklearn.model_selection.cross_validate
+    - Include the PcaRdaKdeModel and RdaKdeModel
+    - fine-tune the choice of models
+    - Setting up a quick run script to run the code on each participant using the right wavelet frequency
+
     - Can try export data from BrainVision and train model
-    - Try with/without PCA step
     """
 
     import argparse
 
     p = argparse.ArgumentParser()
-    p.add_argument("--data", type=Path, help="Path to data folder", required=True)
-    p.add_argument("--selected-freq", type=int, help="Frequency to keep after CWT", default=10)
-    p.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
+    p.add_argument("--input", type=Path, help="Path to data folder", required=True)
+    p.add_argument("--output", type=Path, help="Path to save outputs", required=True)
+    p.add_argument("--freq", type=int, help="Frequency to keep after CWT", default=10)
+    p.add_argument("--parameters_file", default="bcipy/parameters/parameters.json")
     args = p.parse_args()
 
-    if not args.data.exists():
+    if not args.input.exists():
         raise ValueError("data path does not exist")
 
-    print(f"Input data folder: {str(args.data)}")
-    print(f"Selected freq: {str(args.selected_freq)}")
+    args.output.mkdir(exist_ok=True, parents=True)
+
+    print(f"Input data folder: {str(args.input)}")
+    print(f"Selected freq: {str(args.freq)}")
     print(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
-    main(args.data, parameters)
+    with logger.catch(onerror=lambda _: sys.exit(1)):
+        main(args.input, args.output, parameters)
