@@ -127,21 +127,11 @@ def fit_model(data, labels):
 
 
 def _fit(data, labels, n_folds, flatten_data, clf):
-    # Flatten each trial to a long vector
     np.random.seed(1)
 
     data = data.transpose([1, 0, 2])
     if flatten_data:
         data = data.reshape([data.shape[0], -1])
-
-    # data_train, data_test, labels_train, labels_test = train_test_split(
-    # data, labels, test_size=test_frac, random_state=1
-    # )
-    # clf.fit(data_train, labels_train)
-    # del data_train, labels_train
-
-    # preds = clf.predict(data_test)
-    # probs = clf.predict_proba(data_test)
 
     results = cross_validate(
         clf,
@@ -161,11 +151,6 @@ def _fit(data, labels, n_folds, flatten_data, clf):
         "avg_train_balanced_accuracy": round(results["train_balanced_accuracy"].mean(), 3),
         "avg_test_balanced_accuracy": round(results["test_balanced_accuracy"].mean(), 3),
     }
-
-    # return {
-    #     "accuracy": metrics.accuracy_score(labels_test, preds),
-    #     "auc": round(roc_auc_score(labels_test, probs[:, 1]), 3),
-    # }
 
 
 def fit_mlp(data, labels, test_frac=0.1):
@@ -227,8 +212,6 @@ def main(input_path, output_path, parameters):
     z_transformed_entire_data = (data - means) / stdevs
     print(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
 
-    # make_plots(data, labels)
-
     # NOTE - model expects (channels, trials, samples)
     make_plots(z_transformed_target_window, labels, output_path / "2.z_target_window.png")
     make_plots(z_transformed_entire_data, labels, output_path / "3.z_entire_data.png")
@@ -288,7 +271,6 @@ def main(input_path, output_path, parameters):
     console = Console(record=True)
     console.print(table)
     console.save_html(output_path / "results.html")
-    console.save_text(output_path / "results.txt")
 
 
 if __name__ == "__main__":
