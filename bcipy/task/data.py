@@ -1,7 +1,7 @@
 """Module for functionality related to session-related data."""
-from typing import Dict, List
 from collections import Counter
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 EVIDENCE_SUFFIX = "_evidence"
 
@@ -14,7 +14,8 @@ class EvidenceType(Enum):
 
     @classmethod
     def list(cls) -> List[str]:
-        return list(map(lambda c: c.name, cls))
+        """List of evidence types"""
+        return [ev_type.name for ev_type in cls]
 
     @classmethod
     def deserialized(cls, serialized_name: str) -> 'EvidenceType':
@@ -24,7 +25,7 @@ class EvidenceType(Enum):
         Returns:
             deserialized value: ex. EvidenceType.LM
         """
-        if (serialized_name == 'eeg_evidence'):
+        if serialized_name == 'eeg_evidence':
             return EvidenceType.ERP
         return cls(serialized_name[:-len(EVIDENCE_SUFFIX)].upper())
 
@@ -34,7 +35,7 @@ class EvidenceType(Enum):
     @property
     def serialized(self) -> str:
         """Name used when serialized to a json file."""
-        if (self == EvidenceType.ERP):
+        if self == EvidenceType.ERP:
             return 'eeg_evidence'
         return f'{self.name.lower()}{EVIDENCE_SUFFIX}'
 
@@ -76,16 +77,23 @@ class Inquiry:
         self.target_text = target_text
         self.next_display_state = next_display_state
 
-        self.evidences = {}
+        self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
 
     @property
     def lm_evidence(self):
+        """Language model evidence"""
         return self.evidences.get(EvidenceType.LM, [])
 
     @property
     def eeg_evidence(self):
+        """EEG evidence"""
         return self.evidences.get(EvidenceType.ERP, [])
+
+    @property
+    def decision_made(self) -> bool:
+        """Returns true if the result of the inquiry was a decision."""
+        return self.current_text != self.next_display_state
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -116,6 +124,7 @@ class Inquiry:
         return inquiry
 
     def as_dict(self) -> Dict:
+        """Dict representation"""
         data = {
             'stimuli': self.stimuli,
             'timing': self.timing,
@@ -134,8 +143,9 @@ class Inquiry:
             data['likelihood'] = self.likelihood
         return data
 
-    def stim_evidence(self, alphabet: List[str],
-                      n_most_likely: int = 5) -> Dict:
+    def stim_evidence(self,
+                      alphabet: List[str],
+                      n_most_likely: int = 5) -> Dict[str, Any]:
         """Returns a dict of stim sequence data useful for debugging. Evidences
         are paired with the appropriate alphabet letter for easier visual
         scanning. Also, an additional attribute is provided to display the
@@ -147,7 +157,7 @@ class Inquiry:
             n_most_likely - number of most likely elements to include
         """
         likelihood = dict(zip(alphabet, self.likelihood))
-        data = {
+        data: Dict[str, Any] = {
             'stimuli': self.stimuli,
         }
         for evidence_type, evidence in self.evidences.items():
@@ -178,6 +188,13 @@ class Session:
         """Total number of series that contain sequences."""
         return len([lst for lst in self.series if lst])
 
+    @property
+    def total_number_decisions(self) -> int:
+        """Total number of series that ended in a decision."""
+        # An alternate implementation would be to count the inquiries with
+        # decision_made property of true.
+        return len(self.series) - 1
+
     def add_series(self):
         """Add another series unless the last one is empty"""
         if self.last_series():
@@ -200,7 +217,7 @@ class Session:
         """Returns the last series"""
         return self.series[-1]
 
-    def last_inquiry(self) -> Inquiry:
+    def last_inquiry(self) -> Optional[Inquiry]:
         """Returns the last inquiry of the last series."""
         series = self.last_series()
         if series:
@@ -211,9 +228,11 @@ class Session:
         """Whether the latest series has had any inquiries added to it."""
         return len(self.last_series()) == 0
 
-    def as_dict(self, alphabet=None, evidence_only: bool = False) -> Dict:
+    def as_dict(self,
+                alphabet=None,
+                evidence_only: bool = False) -> Dict[str, Any]:
         """Dict representation"""
-        series_dict = {}
+        series_dict: Dict[str, Any] = {}
         for i, series in enumerate(self.series):
             if series:
                 series_counter = str(i + 1)

@@ -176,7 +176,7 @@ class LslAcquisitionClient:
 
         samples, timestamps = self.inlet.pull_chunk(
             max_samples=self.max_samples)
-        print(f'Pulled chunk size: {len(timestamps)}')
+
         for i, sample in enumerate(samples):
             self.buffer.append(
                 Record(data=sample, timestamp=timestamps[i], rownum=None))

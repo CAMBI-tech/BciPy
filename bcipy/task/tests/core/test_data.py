@@ -129,6 +129,8 @@ class TestSessionData(unittest.TestCase):
     def test_empty_session(self):
         """Test initial session creation"""
         session = Session(save_location=".")
+        self.assertEqual(0, session.total_number_series)
+        self.assertEqual(0, session.total_number_decisions)
         serialized = session.as_dict()
 
         self.assertEqual(0, serialized['total_time_spent'])
@@ -169,13 +171,18 @@ class TestSessionData(unittest.TestCase):
 
         session.add_series()
         self.assertEqual(0, session.total_number_series)
+        self.assertEqual(0, session.total_number_decisions)
 
         session.add_sequence(sample_stim_seq())
         self.assertEqual(1, session.total_number_series)
+        self.assertEqual(0, session.total_number_decisions)
 
         session.add_series()
+        self.assertEqual(1, session.total_number_decisions)
+
         session.add_sequence(sample_stim_seq())
         self.assertEqual(2, session.total_number_series)
+        self.assertEqual(1, session.total_number_decisions)
 
     def test_session_deserialization(self):
         """Test that a Session can be deserialized"""

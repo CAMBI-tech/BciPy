@@ -1,4 +1,4 @@
-from typing import List, NamedTuple, TextIO, Tuple
+from typing import List, NamedTuple, Optional, TextIO, Tuple
 
 from psychopy import core
 
@@ -12,9 +12,9 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
-                                fake_copy_phrase_decision, get_user_input,
-                                get_data_for_decision, target_info,
-                                trial_complete_message)
+                                fake_copy_phrase_decision,
+                                get_data_for_decision, get_user_input,
+                                target_info, trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
@@ -36,7 +36,7 @@ class Decision(NamedTuple):
     decision_made: bool
     selection: str
     spelled_text: str
-    new_inq_schedule: InquirySchedule
+    new_inq_schedule: Optional[InquirySchedule]
 
 
 class RSVPCopyPhraseTask(Task):
@@ -78,7 +78,7 @@ class RSVPCopyPhraseTask(Task):
         'filter_high', 'filter_low', 'filter_order', 'fixation_color',
         'info_color', 'info_font', 'info_height', 'info_text', 'is_txt_stim',
         'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series', 'max_minutes',
-        'min_inq_len', 'notch_filter_frequency', 'preview_inquiry_isi',
+        'max_selections', 'min_inq_len', 'notch_filter_frequency', 'preview_inquiry_isi',
         'preview_inquiry_key_input', 'preview_inquiry_length',
         'preview_inquiry_progress_method', 'session_file_name',
         'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
@@ -150,14 +150,14 @@ class RSVPCopyPhraseTask(Task):
             spelled_letters_count = 0
         return spelled_letters_count
 
-    def next_inquiry(self) -> InquirySchedule:
+    def next_inquiry(self) -> Optional[InquirySchedule]:
         """Generate an InquirySchedule for spelling the next letter."""
         if self.copy_phrase_task:
             _, inquiry_schedule = self.copy_phrase_task.initialize_series()
             return inquiry_schedule
         return None
 
-    def init_copy_phrase_task(self) -> CopyPhraseWrapper:
+    def init_copy_phrase_task(self) -> None:
         """Initialize the CopyPhraseWrapper.
 
         Returns:
@@ -309,6 +309,12 @@ class RSVPCopyPhraseTask(Task):
             self.logger.debug('Max time exceeded. To allow for more time '
                               'adjust the max_minutes parameter.')
             return False
+
+        if self.session.total_number_decisions >= self.parameters['max_selections']:
+            self.logger.debug('Max number of selections reached '
+                              '(configured with the max_selections parameter)')
+            return False
+
         return True
 
     def next_target(self) -> str:
@@ -332,7 +338,8 @@ class RSVPCopyPhraseTask(Task):
         with open(self.trigger_save_location, 'w') as trigger_file:
             run = self.await_start()
 
-            while run and self.user_wants_to_continue():
+            while run and self.user_wants_to_continue(
+            ) and self.current_inquiry:
                 target_letter = self.next_target()
                 stim_times, proceed = self.present_inquiry(
                     self.current_inquiry)
@@ -430,20 +437,22 @@ class RSVPCopyPhraseTask(Task):
             evidence_types.append(EvidenceType.LM)
         return evidence_types
 
-    def compute_button_press_evidence(self, proceed: bool
-                                      ) -> Tuple[EvidenceType, List[float]]:
+    def compute_button_press_evidence(
+            self, proceed: bool) -> Optional[Tuple[EvidenceType, List[float]]]:
         """If 'show_preview_inquiry' feature is enabled, compute the button
         press evidence and add it to the copy phrase task.
 
         Parameters
         ----------
-        - proceed : whether to proceed with the inquiry after the preview
+            proceed : whether to proceed with the inquiry after the preview
 
         Returns
         -------
-        tuple of (evidence type, evidence)
+            tuple of (evidence type, evidence) or None if inquiry preview is
+            not enabled.
         """
-        if not self.parameters['show_preview_inquiry']:
+        if not self.parameters[
+                'show_preview_inquiry'] or not self.current_inquiry:
             return None
         probs = compute_probs_after_preview(self.current_inquiry.stimuli[0],
                                             self.alp,
@@ -454,7 +463,7 @@ class RSVPCopyPhraseTask(Task):
     def compute_eeg_evidence(self,
                              stim_times: List[List],
                              proceed: bool = True
-                             ) -> Tuple[EvidenceType, List[float]]:
+                             ) -> Optional[Tuple[EvidenceType, List[float]]]:
         """Evaluate the EEG evidence and add it to the copy_phrase_task, but
         don't yet attempt a decision.
 
@@ -521,6 +530,7 @@ class RSVPCopyPhraseTask(Task):
         Inquiry data for the current schedule; returned value only contains
         evidence for the provided evidence_types, leaving the other types empty
         """
+        assert self.current_inquiry, "Current inquiry is required"
         triggers = construct_triggers(self.stims_for_decision(stim_times))
         data = Inquiry(stimuli=self.current_inquiry.stimuli,
                        timing=self.current_inquiry.durations,
