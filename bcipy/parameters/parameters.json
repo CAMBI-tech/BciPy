@@ -672,17 +672,6 @@
     ],
     "type": "int"
   },
-  "max_inq_per_trial": {
-    "value": "10",
-    "section": "bci_config",
-    "readableName": "Maximum Inquiries Per Trial",
-    "helpTip": "Maximum number of inquiries to present for a single trial before making a decision",
-    "recommended_values": [
-      "10",
-      "15"
-    ],
-    "type": "int"
-  },
   "max_minutes": {
     "value": "20",
     "section": "bci_config",
@@ -830,7 +819,7 @@
     "section": "bci_config",
     "readableName": "Preview Inquiry Display Key Input Method",
     "helpTip": "Defines the key used to engage with inquiry preview.",
-    "recommended_values": 
+    "recommended_values":
       ["space",
        "escape"],
     "type": "str"
