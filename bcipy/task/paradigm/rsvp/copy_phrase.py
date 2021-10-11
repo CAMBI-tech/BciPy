@@ -77,7 +77,7 @@ class RSVPCopyPhraseTask(Task):
         'feedback_pos_y', 'feedback_stim_height', 'feedback_stim_width',
         'filter_high', 'filter_low', 'filter_order', 'fixation_color',
         'info_color', 'info_font', 'info_height', 'info_text', 'is_txt_stim',
-        'lm_backspace_prob', 'max_inq_len', 'max_inq_per_trial', 'max_minutes',
+        'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series', 'max_minutes',
         'min_inq_len', 'notch_filter_frequency', 'preview_inquiry_isi',
         'preview_inquiry_key_input', 'preview_inquiry_length',
         'preview_inquiry_progress_method', 'session_file_name',
@@ -167,7 +167,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.copy_phrase_task = _init_copy_phrase_wrapper(
             self.parameters['min_inq_len'],
-            self.parameters['max_inq_per_trial'],
+            self.parameters['max_inq_per_series'],
             signal_model=self.signal_model,
             fs=self.daq.device_info.fs,
             k=self.parameters['down_sampling_rate'],

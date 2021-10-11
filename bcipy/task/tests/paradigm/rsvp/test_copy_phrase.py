@@ -47,7 +47,7 @@ class TestCopyPhrase(unittest.TestCase):
             'is_txt_stim': True,
             'lm_backspace_prob': 0.05,
             'max_inq_len': 50,
-            'max_inq_per_trial': 10,
+            'max_inq_per_series': 10,
             'max_minutes': 20,
             'min_inq_len': 1,
             'notch_filter_frequency': 60.0,
