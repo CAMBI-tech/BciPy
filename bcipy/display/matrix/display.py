@@ -9,6 +9,7 @@ from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback
 from bcipy.helpers.task import alphabet
+from bcipy.helpers.exceptions import BciPyCoreException
 
 
 class MatrixDisplay(Display):
@@ -134,7 +135,9 @@ class MatrixDisplay(Display):
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
         if self.scp:
-            self.animate_scp()
+            return self.animate_scp()
+
+        raise BciPyCoreException('Only SCP Matrix is available.')
 
     def build_grid(self) -> None:
         """Build grid.
@@ -144,7 +147,7 @@ class MatrixDisplay(Display):
         pos = self.position
         for sym in self.symbol_set:
             text_stim = visual.TextStim(
-                self.window,
+                win=self.window,
                 text=sym,
                 opacity=self.opacity,
                 pos=pos,
@@ -162,7 +165,7 @@ class MatrixDisplay(Display):
             x = self.position[0]
         return (x, y)
 
-    def animate_scp(self) -> None:
+    def animate_scp(self) -> List[float]:
         """Animate SCP.
 
         Flashes each stimuli in stimuli_inquiry for their respective flash
