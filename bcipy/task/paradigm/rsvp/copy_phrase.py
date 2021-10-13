@@ -453,7 +453,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if not self.parameters['show_preview_inquiry'] \
                 or not self.current_inquiry \
-                or self.parameters['preview_inquiry_progress_method'] == 0:
+                or self.rsvp._preview_inquiry.preview_only:
             return None
         probs = compute_probs_after_preview(self.current_inquiry.stimuli[0],
                                             self.alp,
