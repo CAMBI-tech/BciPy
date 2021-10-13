@@ -451,8 +451,9 @@ class RSVPCopyPhraseTask(Task):
             tuple of (evidence type, evidence) or None if inquiry preview is
             not enabled.
         """
-        if not self.parameters[
-                'show_preview_inquiry'] or not self.current_inquiry:
+        if not self.parameters['show_preview_inquiry'] \
+                or not self.current_inquiry \
+                or self.parameters['preview_inquiry_progress_method'] == 0:
             return None
         probs = compute_probs_after_preview(self.current_inquiry.stimuli[0],
                                             self.alp,

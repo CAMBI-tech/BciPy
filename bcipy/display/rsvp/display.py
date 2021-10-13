@@ -182,14 +182,15 @@ class PreviewInquiryProperties:
         """Initialize Inquiry Preview Parameters.
 
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
-        preview_inquiry_progress_method(int): Method of progression for inquiry preview. 1 == press to accept
-            inquiry 2 == press to skip inquiry
+        preview_inquiry_progress_method(int): Method of progression for inquiry preview.
+            0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
+        self.preview_only = True if preview_inquiry_progress_method == 0 else False
         self.preview_inquiry_isi = preview_inquiry_isi
 
 
@@ -424,21 +425,25 @@ class RSVPDisplay(Display):
 
         timer = core.CountdownTimer(self._preview_inquiry.preview_inquiry_length)
         response = False
+
         while timer.getTime() > 0:
             # wait for a key press event
             response = get_key_press(
                 key_list=[self._preview_inquiry.preview_inquiry_key_input],
                 clock=self.experiment_clock,
             )
-            if response:
+
+            # break if a response given unless this is preview only and wait the timer out
+            if response and not self._preview_inquiry.preview_only:
                 break
 
-        # reset the screen
         self.draw_static()
         self.window.flip()
         self.trigger_callback.reset()
-
         core.wait(self._preview_inquiry.preview_inquiry_isi)
+
+        if self._preview_inquiry.preview_only:
+            return timing, True
 
         # depending on whether or not press to accept, define what to return to the task
         if response and self._preview_inquiry.press_to_accept:
