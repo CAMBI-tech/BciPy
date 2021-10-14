@@ -175,6 +175,7 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
+            preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
@@ -190,7 +191,7 @@ class PreviewInquiryProperties:
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
-        self.preview_only = True if preview_inquiry_progress_method == 0 else False
+        self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
 
 
@@ -404,6 +405,10 @@ class RSVPDisplay(Display):
             - A tuple containing the timing information and a boolean describing whether to present
                 the inquiry (True) or generate another (False).
         """
+        # self._preview_inquiry defaults to None on __init__, assert it is defined correctly
+        assert isinstance(self._preview_inquiry, PreviewInquiryProperties), (
+            'PreviewInquiryProperties are not set on this RSVPDisplay. '
+            'Add them as a preview_inquiry kwarg to use preview_inquiry().')
         # construct the timing to return and generate the content for preview
         timing = []
         if self.first_run:
@@ -433,7 +438,7 @@ class RSVPDisplay(Display):
                 clock=self.experiment_clock,
             )
 
-            # break if a response given unless this is preview only and wait the timer out
+            # break if a response given unless this is preview only and wait the timer
             if response and not self._preview_inquiry.preview_only:
                 break
 

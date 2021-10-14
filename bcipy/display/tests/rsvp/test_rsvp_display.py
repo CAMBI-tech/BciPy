@@ -110,6 +110,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         self.preview_inquiry_progress_method = 1  # preview only = 0; press to accept == 1; press to skip == 2
         self.preview_inquiry_key_input = 'space'
         self.preview_inquiry = PreviewInquiryProperties(
+            preview_only=False,
             preview_inquiry_length=self.preview_inquiry_length,
             preview_inquiry_isi=self.preview_inquiry_isi,
             preview_inquiry_progress_method=self.preview_inquiry_progress_method,
@@ -307,6 +308,15 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         #  The second item should be True as it is preview only
         expected = ([None], True)
         self.assertEqual(response, expected)
+
+    def test_error_thrown_when_calling_preview_inquiry_without_properties_set(self):
+        # If not defined using the kwarg preview_inquiry, this value is set to None
+        self.rsvp._preview_inquiry = None
+
+        # Assert when set to None, calling the method will result in an exception
+        with self.assertRaises(Exception):
+            self.rsvp.preview_inquiry()
+
 
 if __name__ == '__main__':
     unittest.main()
