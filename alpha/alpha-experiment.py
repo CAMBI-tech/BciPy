@@ -5,12 +5,17 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pywt
+from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.triggers import trigger_decoder
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.process import get_default_transform
 from loguru import logger
 from pyriemann.classification import TSclassifier
 from pyriemann.estimation import Covariances
 from rich.console import Console
 from rich.table import Table
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_validate
@@ -19,11 +24,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-
-from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.triggers import trigger_decoder
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import get_default_transform
+from itertools import cycle
 
 
 def cwt(data, freq: int, fs: int):
@@ -63,8 +64,8 @@ def load_data(data_folder: Path, parameters: dict):
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate", 2)
     notch_filter = parameters.get("notch_filter_frequency", 60)
-    hp_filter = parameters.get("filter_high", 45)
-    lp_filter = parameters.get("filter_low", 2)
+    hp_filter = parameters.get("filter_high", 13)
+    lp_filter = parameters.get("filter_low", 8)
     filter_order = parameters.get("filter_order", 2)
 
     # get offset and k folds
@@ -87,6 +88,7 @@ def load_data(data_folder: Path, parameters: dict):
         bandpass_high=hp_filter,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
+        # notch_freq_hz_second=8,
     )
     data, fs = default_transform(raw_data.by_channel(), fs)
 
@@ -99,8 +101,6 @@ def load_data(data_folder: Path, parameters: dict):
     # The timestamp column is already excluded.
     # channel_names = ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"]
     channel_map = [0, 0, 1, 0, 1, 1, 1, 0]
-
-    # TODO - need to extract trials including some amt of time BEFORE stim
 
     data, labels = PcaRdaKdeModel.reshaper(
         trial_labels=t_t_i,
@@ -149,7 +149,10 @@ def _fit(data, labels, n_folds, flatten_data, clf):
         "avg_train_roc_auc": round(results["train_roc_auc"].mean(), 3),
         "avg_test_roc_auc": round(results["test_roc_auc"].mean(), 3),
         "avg_train_balanced_accuracy": round(results["train_balanced_accuracy"].mean(), 3),
-        "avg_test_balanced_accuracy": round(results["test_balanced_accuracy"].mean(), 3),
+        "std_train_balanced_accuracy": round(results["train_balanced_accuracy"].mean(), 3),
+        "avg_test_balanced_accuracy": round(results["test_balanced_accuracy"].std(), 3),
+        "std_test_balanced_accuracy": round(results["test_balanced_accuracy"].std(), 3),
+        "positive_bayes_factor": round(results["test_true_positive"]),
     }
 
 
@@ -170,51 +173,110 @@ def fit_logr(data, labels, test_frac=0.1):
     return _fit(data, labels, test_frac, model_class=LogisticRegression)
 
 
-def make_plots(data, labels, filename):
+def make_plots(data, labels, filename, baseline_start, baseline_stop, response_start, response_stop):
     targets_data = data[:, labels == 1, :]
     nontargets_data = data[:, labels == 0, :]
     fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
-    ax.plot(targets_data.mean(axis=(0, 1)), c="r")  # average across channels and trials
-    ax.plot(nontargets_data.mean(axis=(0, 1)), c="b")
+    ax.plot(targets_data.mean(axis=(0, 1)), c="r", label="target")  # average across channels and trials
+    ax.plot(nontargets_data.mean(axis=(0, 1)), c="b", label="non-target")
+    targets_sem = targets_data.std(axis=(0, 1)) / np.sqrt(targets_data.shape[0])
+    nontargets_sem = targets_data.std(axis=(0, 1)) / np.sqrt(nontargets_data.shape[0])
+
+    # error bars
+    ax.fill_between(
+        np.arange(targets_data.shape[-1]),
+        targets_data.mean(axis=(0, 1)) + targets_sem,
+        targets_data.mean(axis=(0, 1)) - targets_sem,
+        color="r",
+        alpha=0.5,
+    )
+    ax.fill_between(
+        np.arange(nontargets_data.shape[-1]),
+        nontargets_data.mean(axis=(0, 1)) + nontargets_sem,
+        nontargets_data.mean(axis=(0, 1)) - nontargets_sem,
+        color="b",
+        alpha=0.5,
+    )
+
+    ax.axvline(baseline_start, c="k", linestyle="--", alpha=0.5)
+    ax.axvline(baseline_stop, c="k", linestyle="--", alpha=0.5)
+    ax.axvline(response_start, c="k", linestyle="--", alpha=0.5)
+    ax.axvline(response_stop, c="k", linestyle="--", alpha=0.5)
+
+    plt.legend()
     fig.savefig(filename, bbox_inches="tight", dpi=300)
 
 
-def main(input_path, output_path, parameters):
-    # Load data and CWT preprocess
+def main(input_path, output_path, parameters, z_score_per_trial=False):
     data, labels, fs = load_data(input_path, parameters)
-    make_plots(data, labels, output_path / "0.raw_data.png")
+
+    # Compute offset times
+    # data begins at -1250, want to slice all trials from -600 to -100
+    begin_baseline = int(0.65 * fs)  # .650 s * N samples/s = samples   # TODO - don't hardcode
+    duration_baseline = int(0.5 * fs)
+    end_baseline = begin_baseline + duration_baseline
+    print(f"Baseline region (in samples, not seconds): {begin_baseline=}, {duration_baseline=}, {end_baseline=}")
+
+    # z-score the data in the window of interest [300, 800]
+    # TODO - this assumes each trial starts at -1250ms, not yet true!
+    start_s_response = 1.25 + 0.55  # 0.3
+    begin_response = int(start_s_response * fs)
+    duration_response = int(0.5 * fs)
+    end_response = begin_response + duration_response
+    print(f"Response region (in samples, not seconds): {begin_response=}, {duration_response=}, {end_response=}")
+
+    # CWT preprocess
+    make_plots(data, labels, output_path / "0.raw_data.png", begin_baseline, end_baseline, begin_response, end_response)
     data = cwt(data, args.freq, fs)
-    make_plots(data, labels, output_path / "1.cwt_data.png")
+    make_plots(data, labels, output_path / "1.cwt_data.png", begin_baseline, end_baseline, begin_response, end_response)
     print(data.shape)
+
     # data.shape == (trials, channels, samples)
     # each trial has [-1.25s, 1.25s]
 
     # Normalize data
-    # data begins at -1250, want to slice all trials from -600 to -100
-    begin = int(0.65 * fs)  # .650 s * N samples/s = samples   # TODO - don't hardcode
-    duration = int(0.5 * fs)
-    end = begin + duration
-    print(f"Baseline region (in samples, not seconds): {begin=}, {duration=}, {end=}")
-    means = data[..., begin:end].mean(axis=(1, 2), keepdims=True)  # (4) means
-    stdevs = data[..., begin:end].std(axis=(1, 2), keepdims=True)  # (4) stdevs
+    # TODO - Another parameter here; try:
+    # - 1 baseline per channel per trial
+    # - 1 baseline per channel, for the whole experiment
 
-    # z-score the data in the window of interest [300, 800]
-    # TODO - this assumes each trial starts at -1250ms, not yet true!
-    start_s = 1.25 + 0.3
-    begin = int(start_s * fs)
-    duration = int(0.5 * fs)
-    end = begin + duration
-    print(f"Response region (in samples, not seconds): {begin=}, {duration=}, {end=}")
+    baseline_data = np.copy(data[..., begin_baseline:end_baseline])
+    q5 = np.percentile(baseline_data, q=5, axis=(0, 1))
+    q95 = np.percentile(baseline_data, q=95, axis=(0, 1))
+    baseline_data = np.clip(baseline_data, q5, q95)
+    if z_score_per_trial:
+        means = baseline_data.mean(axis=2, keepdims=True)  # (1000 *4) means
+        stdevs = baseline_data.std(axis=2, keepdims=True)  # (1000 *4) stdevs
+    else:
+        means = baseline_data.mean(axis=(1, 2), keepdims=True)  # (4) means
+        stdevs = baseline_data.std(axis=(1, 2), keepdims=True)  # (4) stdevs
+
     print(data.min(), data.mean(), data.max())
     # The copy we care about for modeling
-    z_transformed_target_window = (data[..., begin:end] - means) / stdevs
+    z_transformed_target_window = (data[..., begin_response:end_response] - means) / stdevs
     # Copy of entire window for plotting
     z_transformed_entire_data = (data - means) / stdevs
     print(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
 
     # NOTE - model expects (channels, trials, samples)
-    make_plots(z_transformed_target_window, labels, output_path / "2.z_target_window.png")
-    make_plots(z_transformed_entire_data, labels, output_path / "3.z_entire_data.png")
+    make_plots(
+        z_transformed_target_window,
+        labels,
+        output_path / "2.z_target_window.png",
+        begin_baseline,
+        end_baseline,
+        begin_response,
+        end_response,
+    )
+    make_plots(
+        z_transformed_entire_data,
+        labels,
+        output_path / "3.z_entire_data.png",
+        begin_baseline,
+        end_baseline,
+        begin_response,
+        end_response,
+    )
+    sys.exit(1)
 
     # RDA/KDE (no PCA step)
     # print(fit_model(z_transformed_target_window, labels).auc)
@@ -227,6 +289,9 @@ def main(input_path, output_path, parameters):
         ("Multi-layer Perceptron", False, True, MLPClassifier(max_iter=500)),
         ("Support Vector Classifier", True, True, SVC(probability=True, class_weight="balanced")),
         ("Support Vector Classifier", False, True, SVC(probability=True)),
+        ("Uniform random", False, True, DummyClassifier(strategy="uniform")),
+        ("Class prior", False, True, DummyClassifier(strategy="prior")),
+        ("Always nontarget", False, True, DummyClassifier(strategy="constant", constant=0)),
         ("QuadraticDiscriminantAnalysis", True, True, QuadraticDiscriminantAnalysis()),
         ("LogisticRegression", True, True, LogisticRegression(class_weight="balanced", **lr_kw)),
         ("LogisticRegression", False, True, LogisticRegression(**lr_kw)),
@@ -246,27 +311,24 @@ def main(input_path, output_path, parameters):
         reports.append(report)
 
     table = Table(title=f"Alpha Classifier Comparison ({n_folds}-fold cross validation)")
-    table.add_column("Model Name", style="red")
-    table.add_column("Train with balanced classes?", style="orange1")
-    table.add_column("Avg fit time", style="yellow"),
-    table.add_column("Avg score time", style="green"),
-    table.add_column("Avg train roc auc", style="blue"),
-    table.add_column("Avg test roc auc", style="magenta"),
-    table.add_column("Avg train balanced accuracy", style="red"),
-    table.add_column("Avg test balanced accuracy", style="orange1"),
+    colors = cycle(["red", "orange1", "yellow", "green", "blue", "magenta", "black"])
+    col_names = [
+        ("Model Name", "name"),
+        ("Train with balanced classes?", "uses_balanced_training"),
+        ("Avg fit time", "avg_fit_time"),
+        ("Avg score time", "avg_score_time"),
+        ("Avg train roc auc", "avg_train_roc_auc"),
+        ("Avg test roc auc", "avg_test_roc_auc"),
+        ("Avg train balanced accuracy", "avg_train_balanced_accuracy"),
+        ("Avg test balanced accuracy", "avg_test_balanced_accuracy"),
+    ]
+
+    for col_name, color in zip(col_names, colors):
+        table.add_column(col_name[0], style=color)
 
     for report in reports:
         report = {k: str(v) for k, v in report.items()}
-        table.add_row(
-            report["name"],
-            report["uses_balanced_training"],
-            report["avg_fit_time"],
-            report["avg_score_time"],
-            report["avg_train_roc_auc"],
-            report["avg_test_roc_auc"],
-            report["avg_train_balanced_accuracy"],
-            report["avg_test_balanced_accuracy"],
-        )
+        table.add_row([report[c[1]] for c in col_names])
 
     console = Console(record=True)
     console.print(table)
@@ -301,10 +363,8 @@ if __name__ == "__main__":
         - wavelet and its params
         - Set CWT parameters so that data matches BrainVision - try plotting the full (-1250, 1250) trials, averaged for target and nontarget
 
-    - switch to https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.cross_validate.html#sklearn.model_selection.cross_validate
     - Include the PcaRdaKdeModel and RdaKdeModel
     - fine-tune the choice of models
-    - Setting up a quick run script to run the code on each participant using the right wavelet frequency
 
     - Can try export data from BrainVision and train model
     """
@@ -316,6 +376,14 @@ if __name__ == "__main__":
     p.add_argument("--output", type=Path, help="Path to save outputs", required=True)
     p.add_argument("--freq", type=float, help="Frequency to keep after CWT", default=10)
     p.add_argument("--parameters_file", default="bcipy/parameters/parameters.json")
+    p.add_argument(
+        "--z_score_per_trial",
+        type=bool,
+        default=False,
+        help="True: 1 'pre-stim' behavior for entire experiment per channel"
+        + "False: 1 'pre-stim' behavior per trial per channel",
+    )
+
     args = p.parse_args()
 
     if not args.input.exists():
@@ -328,4 +396,4 @@ if __name__ == "__main__":
     print(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
     with logger.catch(onerror=lambda _: sys.exit(1)):
-        main(args.input, args.output, parameters)
+        main(args.input, args.output, parameters, args.z_score_per_trial)
