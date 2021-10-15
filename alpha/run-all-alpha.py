@@ -1,4 +1,5 @@
 import subprocess
+from itertools import product
 
 participant_files = {
     "p01": {
@@ -66,11 +67,16 @@ participant_freqs = {
     "p12": {"1hz": 9, "4hz": 9},
 }
 
-for p in participant_files.keys():
-    for hz in ["1hz", "4hz"]:
-        file = participant_files[p][hz]
-        freq = participant_freqs[p][hz]
+for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], ["", "--z_score_per_trial", "--hparam_tuning"]):
+    file = participant_files[p][hz]
+    freq = participant_freqs[p][hz]
 
-        cmd = f"xvfb-run --auto-servernum python alpha-experiment.py --input data/bcipy_recordings/{p}/{file} --output results/{p}/{hz}.cwt_freq{freq} --freq {freq}"
-        print(cmd)
-        subprocess.run(cmd, shell=True, check=True)
+    prefix = "xvfb-run --auto-servernum python alpha-experiment.py "
+    subfolder = setting[2:] if setting else "default"
+
+    cmd = prefix
+    cmd += f"--input data/bcipy_recordings/{p}/{file} "
+    cmd += f"--output results/{p}/{hz}.cwt_freq{freq}/{subfolder} "
+    cmd += f"--freq {freq} {setting}"
+    print(cmd)
+    subprocess.run(cmd, shell=True, check=True)

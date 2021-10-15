@@ -26,3 +26,6 @@ build/
 dist/
 
 bcipy/parameters/parameters_*
+results/*
+results_tmp/*
+bcipy/signal/model/neural_net/runs/*
