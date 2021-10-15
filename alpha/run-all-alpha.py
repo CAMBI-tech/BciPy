@@ -71,7 +71,7 @@ for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], ["", "--
     file = participant_files[p][hz]
     freq = participant_freqs[p][hz]
 
-    prefix = "xvfb-run --auto-servernum python alpha-experiment.py "
+    prefix = "xvfb-run --auto-servernum python alpha/alpha-experiment.py "
     subfolder = setting[2:] if setting else "default"
 
     cmd = prefix
