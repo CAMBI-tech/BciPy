@@ -336,7 +336,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     for col_name, color in zip(col_names, colors):
         table.add_column(col_name[0], style=color, no_wrap=True)
 
-    with open(output_path / "results.avg_plus_stdev.csv", "w") as csvfile:
+    with open(output_path / f"results.{n_folds=}.csv", "w") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=[c[1] for c in col_names])
         writer.writeheader()
         for report in reports:
@@ -346,7 +346,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
 
     console = Console(record=True, width=500)
     console.print(table)
-    console.save_html(output_path / "results.html")
+    console.save_html(output_path / f"results.{n_folds=}.html")
 
 
 if __name__ == "__main__":
