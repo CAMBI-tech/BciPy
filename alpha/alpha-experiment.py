@@ -251,7 +251,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         }
 
         print("WARNING - leaking test data")
-        cv = GridSearchCV(estimator=preprocessing_pipeline, param_grid=parameters_to_tune, scoring="balanced_accuracy")
+        cv = GridSearchCV(estimator=preprocessing_pipeline, param_grid=parameters_to_tune, scoring="balanced_accuracy", n_jobs=-1)
         cv.fit(data, labels)
         baseline_start_s = cv.best_params_["alpha__baseline_start_s"]
         response_start_s = cv.best_params_["alpha__response_start_s"]
