@@ -13,9 +13,10 @@ import bcipy.helpers.task
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.data import Session, EvidenceType
-from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
+from bcipy.helpers.stimuli import InquirySchedule
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -23,7 +24,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     def setUp(self):
         """Override; set up the needed path for load functions."""
-        self.parameters = {
+        parameters = {
             'backspace_always_shown': True,
             'decision_threshold': 0.8,
             'down_sampling_rate': 2,
@@ -66,7 +67,7 @@ class TestCopyPhrase(unittest.TestCase):
             'stim_height': 0.6,
             'stim_length': 10,
             'stim_number': 100,
-            'stim_order': StimuliOrder.RANDOM,
+            'stim_order': 'random',
             'stim_pos_x': 0.0,
             'stim_pos_y': 0.0,
             'stim_space_char': '–',
@@ -89,6 +90,7 @@ class TestCopyPhrase(unittest.TestCase):
             'wait_screen_message': 'Press Space to start or Esc to exit',
             'wait_screen_message_color': 'white'
         }
+        self.parameters = Parameters.from_cast_values(**parameters)
 
         self.win = mock({'size': [500, 500], 'units': 'height'})
 
@@ -112,7 +114,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         self.display = mock()
         when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_display(
-            self.parameters, self.win, self.daq, any,
+            self.parameters, self.win, any,
             any).thenReturn(self.display)
 
         when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(

@@ -107,9 +107,10 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         self.stimuli = TEST_STIM
         self.preview_inquiry_length = 0.1
         self.preview_inquiry_isi = 0.1
-        self.preview_inquiry_progress_method = 1  # press to accept == 1 press to skip == 2
+        self.preview_inquiry_progress_method = 1  # preview only = 0; press to accept == 1; press to skip == 2
         self.preview_inquiry_key_input = 'space'
         self.preview_inquiry = PreviewInquiryProperties(
+            preview_only=False,
             preview_inquiry_length=self.preview_inquiry_length,
             preview_inquiry_isi=self.preview_inquiry_isi,
             preview_inquiry_progress_method=self.preview_inquiry_progress_method,
@@ -233,7 +234,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         get_key_press_mock.return_value = None
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
-        #  The second item should be True as it is press to accept and a response was returned
+        #  The second item should be False as it is press to accept and a response was returned
         expected = ([None], False)
         self.assertEqual(response, expected)
 
@@ -254,9 +255,67 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         get_key_press_mock.return_value = None
         response = self.rsvp.preview_inquiry()
         # we expect the trigger callback to return none, the key press to return the time and key press message,
-        #  The second item should be False as it is press to skip and a response was returned
+        #  The second item should be True as it is press to skip and a response was not returned
         expected = ([None], True)
         self.assertEqual(response, expected)
+
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_preview_only_response_registered(self, get_key_press_mock):
+        # set the progress method to press to skip
+        self.rsvp._preview_inquiry.press_to_accept = False
+        self.rsvp._preview_inquiry.preview_only = True
+        stim_mock = mock()
+        # mock the stimulus generation
+        when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
+        when(stim_mock).draw().thenReturn()
+        when(self.rsvp).draw_static().thenReturn()
+        when(self.rsvp.window).flip().thenReturn()
+        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+
+        # skip the core wait for testing
+        when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
+        # we return a key press value here to demonstrate, even if a response is returned by this method, it will not
+        #  be used in the preview_inquiry response from our display.
+        key_timestamp = 1000
+        get_key_press_mock.return_value = [
+            f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp
+        ]
+        response = self.rsvp.preview_inquiry()
+        # we expect the trigger callback to return none, no key press response even if returned,
+        #  The second item should be True as it is preview only
+        expected = ([None], True)
+        self.assertEqual(response, expected)
+
+    @patch('bcipy.display.rsvp.display.get_key_press')
+    def test_preview_inquiry_preview_only_no_response(self, get_key_press_mock):
+        # set the progress method to press to skip
+        self.rsvp._preview_inquiry.press_to_accept = False
+        self.rsvp._preview_inquiry.preview_only = True
+        stim_mock = mock()
+        # mock the stimulus generation
+        when(self.rsvp)._generate_inquiry_preview().thenReturn(stim_mock)
+        when(stim_mock).draw().thenReturn()
+        when(self.rsvp).draw_static().thenReturn()
+        when(self.rsvp.window).flip().thenReturn()
+        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+
+        # skip the core wait for testing
+        when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
+
+        get_key_press_mock.return_value = None
+        response = self.rsvp.preview_inquiry()
+        # we expect the trigger callback to return none, no key press response,
+        #  The second item should be True as it is preview only
+        expected = ([None], True)
+        self.assertEqual(response, expected)
+
+    def test_error_thrown_when_calling_preview_inquiry_without_properties_set(self):
+        # If not defined using the kwarg preview_inquiry, this value is set to None
+        self.rsvp._preview_inquiry = None
+
+        # Assert when set to None, calling the method will result in an exception
+        with self.assertRaises(Exception):
+            self.rsvp.preview_inquiry()
 
 
 if __name__ == '__main__':

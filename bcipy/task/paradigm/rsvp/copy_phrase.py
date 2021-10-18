@@ -106,10 +106,27 @@ class RSVPCopyPhraseTask(Task):
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
 
-        self.alp = alphabet(parameters)
+        self.alp = alphabet(self.parameters)
+
+        self.button_press_error_prob = 0.05
+        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
+        if self.parameters['show_preview_inquiry']:
+            self.evidence_types.append(EvidenceType.BTN)
+        # set a preview_only parameter
+        self.parameters.add_entry(
+            'preview_only',
+            {
+                'value': True if self.parameters['preview_inquiry_progress_method'] == 0 else False,
+                'section': '',
+                'readableName': '',
+                'helpTip': '',
+                'recommended_values': '',
+                'type': 'bool'
+            }
+        )
+
         self.rsvp = _init_copy_phrase_display(self.parameters, self.window,
-                                              self.daq, self.static_clock,
-                                              self.experiment_clock)
+                                              self.static_clock, self.experiment_clock)
         self.file_save = file_save
 
         self.trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
@@ -120,12 +137,6 @@ class RSVPCopyPhraseTask(Task):
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
-
-        # TODO: add a parameter for button_press_error_prob.
-        self.button_press_error_prob = 0.05
-        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
-        if self.parameters['show_preview_inquiry']:
-            self.evidence_types.append(EvidenceType.BTN)
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -451,8 +462,9 @@ class RSVPCopyPhraseTask(Task):
             tuple of (evidence type, evidence) or None if inquiry preview is
             not enabled.
         """
-        if not self.parameters[
-                'show_preview_inquiry'] or not self.current_inquiry:
+        if not self.parameters['show_preview_inquiry'] \
+                or not self.current_inquiry \
+                or self.parameters['preview_only']:
             return None
         probs = compute_probs_after_preview(self.current_inquiry.stimuli[0],
                                             self.alp,
@@ -623,9 +635,10 @@ class RSVPCopyPhraseTask(Task):
         return self.TASK_NAME
 
 
-def _init_copy_phrase_display(parameters, win, daq, static_clock,
+def _init_copy_phrase_display(parameters, win, static_clock,
                               experiment_clock):
     preview_inquiry = PreviewInquiryProperties(
+        preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
         preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
         preview_inquiry_progress_method=parameters[

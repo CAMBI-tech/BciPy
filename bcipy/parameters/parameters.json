@@ -804,11 +804,12 @@
     "type": "bool"
   },
   "preview_inquiry_progress_method": {
-    "value": "1",
+    "value": "0",
     "section": "bci_config",
     "readableName": "Preview Inquiry Progression Method",
-    "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 1 = press to confirm 2 = press to skip to another inquiry",
+    "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 0 = preview only; 1 = press to confirm; 2 = press to skip to another inquiry",
     "recommended_values": [
+      "0",
       "1",
       "2"
     ],
