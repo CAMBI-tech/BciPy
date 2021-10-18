@@ -63,7 +63,7 @@ def alphabetize(stimuli: List[str]) -> List[str]:
 def rsvp_inq_generator(query: List[str],
                        timing: List[float] = [1, 0.2],
                        color: List[str] = ['red', 'white'],
-                       stim_number: int = 1,
+                       inquiry_count: int = 1,
                        stim_order: StimuliOrder = StimuliOrder.RANDOM,
                        is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
@@ -89,7 +89,7 @@ def rsvp_inq_generator(query: List[str],
 
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
-    for _ in range(stim_number):
+    for _ in range(inquiry_count):
 
         # append a fixation cross. if not text, append path to image fixation
         sample = [get_fixation(is_txt)]
@@ -127,15 +127,14 @@ def best_selection(selection_elements: list,
             best_selection(list[str]): elements from selection_elements with the best values """
 
     always_included = always_included or []
-    n = len_query
     # pick the top n items sorted by value in decreasing order
     elem_val = dict(zip(selection_elements, val))
-    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
+    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:len_query]
 
     replacements = [
         item for item in always_included
         if item not in best and item in selection_elements
-    ][0:n]
+    ][0:len_query]
 
     if replacements:
         best[-len(replacements):] = replacements
@@ -182,12 +181,9 @@ def best_case_rsvp_inq_gen(alp: list,
     if inq_constants and not set(inq_constants).issubset(alp):
         raise BciPyCoreException('Inquiry constants must be alphabet items.')
 
-    # create a list of alphabet letters
-    alphabet = [i for i in alp]
-
     # query for the best selection
     query = best_selection(
-        alphabet,
+        alp,
         session_stimuli,
         stim_length,
         inq_constants)
