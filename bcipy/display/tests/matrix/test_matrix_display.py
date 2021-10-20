@@ -1,5 +1,3 @@
-from distutils.log import info
-from typing import List, Tuple
 import unittest
 from bcipy.helpers.exceptions import BciPyCoreException
 
@@ -8,13 +6,10 @@ from mockito import (
     any,
     mock,
     verify,
-    verifyNoMoreInteractions,
     when,
     unstub,
-    verifyStubbedInvocationsAreUsed,
     verifyNoUnwantedInteractions
 )
-from bcipy.display import matrix
 from bcipy.display.matrix import (
     MatrixDisplay
 )
@@ -52,7 +47,6 @@ TEST_INFO = InformationProperties(
 
 class TestMatrixDisplay(unittest.TestCase):
     """This is Test Case for the Matrix Display"""
-    # TODO: Set these up for Matrix Display!
 
     def setUp(self):
         """Set up needed items for test."""
@@ -82,7 +76,7 @@ class TestMatrixDisplay(unittest.TestCase):
             self.info)
 
     def tearDown(self):
-        # verifyNoUnwantedInteractions()
+        verifyNoUnwantedInteractions()
         # verifyStubbedInvocationsAreUsed()
         unstub()
 
@@ -106,7 +100,7 @@ class TestMatrixDisplay(unittest.TestCase):
         self.assertEqual(self.matrix.stim_length, self.stimuli.stim_length)
 
     def test_schedule_to(self):
-        #Test schedule_to method correctly sets stim inquiry, timing, and colors to given parameters.
+        # Test schedule_to method correctly sets stim inquiry, timing, and colors to given parameters.
         self.matrix.schedule_to(self.stimuli.stim_inquiry, self.stimuli.stim_timing, self.stimuli.stim_colors)
 
         self.assertEqual(self.matrix.stimuli_inquiry, self.stimuli.stim_inquiry)
@@ -139,7 +133,7 @@ class TestMatrixDisplay(unittest.TestCase):
         ).thenReturn(self.text_stim_mock)
         when(self.matrix).increment_position(any()).thenReturn()
 
-        sym_length = len(self.matrix.symbol_set)    
+        sym_length = len(self.matrix.symbol_set)
         self.matrix.build_grid()
         # we expect the legth of the stimulus regisitry to be the same as the length of the symbol set
         self.assertEqual(len(self.matrix.stim_registry), sym_length)
@@ -164,7 +158,7 @@ class TestMatrixDisplay(unittest.TestCase):
         self.assertEqual(response, (0, -self.matrix.position_increment))
 
     def test_animate_scp(self):
-        # mock the text stims
+        # mock the text stims and window
         when(psychopy.visual).TextStim(
             win=self.window,
             height=any(),
@@ -178,7 +172,7 @@ class TestMatrixDisplay(unittest.TestCase):
         when(self.matrix).draw_static().thenReturn()
         when(self.text_stim_mock).draw().thenReturn()
         when(self.matrix.window).flip().thenReturn()
-        # skip the core wait 
+        # skip the core wait
         when(psychopy.core).wait(any()).thenReturn()
         when(self.matrix.trigger_callback).reset().thenReturn()
         # we expect the timing returned to be a list
@@ -186,16 +180,17 @@ class TestMatrixDisplay(unittest.TestCase):
         self.assertIsInstance(response, list)
 
     def test_draw_static(self):
-        info_text_mock = mock()
         # mock the task draw and info text draw methods
         when(self.matrix.task).draw().thenReturn()
-        when(info_text_mock).draw().thenReturn()
+        info_mock = mock()
+        self.matrix.info_text = [info_mock]
+        when(info_mock).draw().thenReturn()
         info_text_len = len(self.matrix.info_text)
 
         self.matrix.draw_static()
-        # verify that task was drawn once and all info text ware drawn 
-        verify(self.matrix.task, times=(info_text_len+1)).draw()  
-        #verify(info_text_mock, times=info_text_len).draw()  
+        # verify that task was drawn once and all info text ware drawn
+        verify(self.matrix.task, times=1).draw()
+        verify(info_mock, times=info_text_len).draw()
 
     def test_update_task(self):
         self.matrix.update_task(self.task_display.task_text, self.task_display.task_color, self.task_display.task_pos)
@@ -206,11 +201,20 @@ class TestMatrixDisplay(unittest.TestCase):
 
     def test_update_task_state(self):
         # mock update_task()
-        when(self.matrix).update_task(self.task_display.task_text, self.task_display.task_color, self.task_display.task_pos).thenReturn()
-        
+        when(self.matrix).update_task(
+            text=self.task_display.task_text,
+            color_list=self.task_display.task_color,
+            pos=any()).thenReturn()
+
         self.matrix.update_task_state(self.task_display.task_text, self.task_display.task_color)
         # verify that update_task() was called once
-        verify(self.matrix, times=1).update_task(self.task_display.task_text, self.task_display.task_color, self.task_display.task_pos)
+        verify(
+            self.matrix,
+            times=1).update_task(
+            text=self.task_display.task_text,
+            color_list=self.task_display.task_color,
+            pos=any())
+
 
 if __name__ == '__main__':
     unittest.main()
