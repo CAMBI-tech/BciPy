@@ -6,15 +6,15 @@ from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 
 info = InformationProperties(
-    info_color='White',
-    info_pos=(-.5, -.75),
-    info_height=0.1,
-    info_font='Arial',
-    info_text='Calibration Demo',
+    info_color=['White'],
+    info_pos=[(-.5, -.75)],
+    info_height=[0.1],
+    info_font=['Arial'],
+    info_text=['Calibration Demo'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
-    task_pos=(-.5, .8),
+    task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
     task_text='1/100'
@@ -47,7 +47,7 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window TODO use initialize_display_window
-win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], fullscr=False, screen=1, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
                     waitBlanking=True,
