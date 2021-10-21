@@ -169,12 +169,10 @@ def _write_triggers_from_inquiry_calibration(array: list,
     return trigger_file
 
 
-def _write_triggers_from_inquiry_copy_phrase(
-        triggers: list,
-        trigger_file: TextIO,
-        copy_phrase: str,
-        typed_text: str,
-        offset: bool = False) -> TextIO:
+def write_triggers_from_inquiry_copy_phrase(triggers: list,
+                                            trigger_file: TextIO,
+                                            target_symbol: str,
+                                            offset: bool = False) -> TextIO:
     """Write triggers from copy phrase.
 
     Helper Function to write trigger data to provided trigger_file in a copy phrase task.
@@ -192,45 +190,28 @@ def _write_triggers_from_inquiry_copy_phrase(
         trigger_file.write(f'{symbol} offset_correction {time}\n')
         return trigger_file
 
-    spelling_length = len(typed_text)
-    last_typed = typed_text[-1] if typed_text else None
-    target_symbol = copy_phrase[spelling_length - 1]
-
-    # because there is the possibility of incorrect letters and correction,
-    # we check here what is expected response.
-    if last_typed == target_symbol or not last_typed:
-        target_symbol = copy_phrase[spelling_length - 1]
-    else:
-        # If the last typed and target do not match and this is not the
-        # symbols have been typed. The correct symbol is backspace.
-        target_symbol = '<'
-
     for trigger in triggers:
-
         # extract the letter and timing from the array
         (symbol, time) = trigger
-
-        # catch all the internal labels and assign targetness
-        if symbol == 'calibration_trigger':
-            targetness = 'calib'
-        elif symbol == 'inquiry_preview':
-            targetness = 'preview'
-        # we write the key press + key so we check the prefix is in the symbol
-        elif 'bcipy_key_press' in symbol:
-            targetness = 'key_press'
-
-        # assign targetness to the core symbols
-        elif symbol == '+':
-            targetness = 'fixation'
-        elif target_symbol == symbol:
-            targetness = 'target'
-        else:
-            targetness = 'nontarget'
-
-        # write to the trigger_file
-        trigger_file.write(f'{symbol} {targetness} {time}\n')
+        label = _copy_phrase_trigger_label(symbol, target_symbol)
+        trigger_file.write(f'{symbol} {label} {time}\n')
 
     return trigger_file
+
+
+def _copy_phrase_trigger_label(symbol: str, target_symbol: str) -> str:
+    """Label the given symbol."""
+    labels = {
+        'calibration_trigger': 'calib',
+        'inquiry_preview': 'preview',
+        'bci_key_press': 'key_press',
+        '+': 'fixation'
+    }
+    if target_symbol == symbol:
+        return 'target'
+    if 'bcipy_key_press' in symbol:
+        return 'key_press'
+    return labels.get(symbol, 'nontarget')
 
 
 def _write_triggers_from_inquiry_free_spell(array, trigger_file):

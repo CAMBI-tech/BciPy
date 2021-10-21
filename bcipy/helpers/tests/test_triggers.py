@@ -11,7 +11,7 @@ from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import (
     _calibration_trigger,
-    _write_triggers_from_inquiry_copy_phrase,
+    write_triggers_from_inquiry_copy_phrase,
     extract_from_calibration,
     extract_from_copy_phrase,
     read_triggers,
@@ -314,8 +314,6 @@ offset offset_correction 6.23828125
 class TestWriteCopyPhrase(unittest.TestCase):
 
     trigger_file = mock()
-    copy_phrase = 'TEST_PHRASE'
-    typed_text = 'TEST_P'
 
     def tearDown(self) -> None:
         unstub()
@@ -326,11 +324,10 @@ class TestWriteCopyPhrase(unittest.TestCase):
         # mock the write to avoid any extra files
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase(triggers,
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=True)
+        write_triggers_from_inquiry_copy_phrase(triggers,
+                                                self.trigger_file,
+                                                target_symbol=None,
+                                                offset=True)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_nontarget(self):
@@ -339,24 +336,22 @@ class TestWriteCopyPhrase(unittest.TestCase):
         expected = f'{triggers[0]} nontarget {triggers[1]}\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase([triggers],
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_target(self):
-        triggers = ['P',
-                    1]  # given the defined typed text the target would be P
+        # given the defined typed text the target would be H
+        triggers = ['H', 1]
         expected = f'{triggers[0]} target {triggers[1]}\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase([triggers],
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_fixation(self):
@@ -364,11 +359,10 @@ class TestWriteCopyPhrase(unittest.TestCase):
         expected = f'{triggers[0]} fixation {triggers[1]}\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase([triggers],
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_inquiry_preview(self):
@@ -376,11 +370,10 @@ class TestWriteCopyPhrase(unittest.TestCase):
         expected = f'{triggers[0]} preview {triggers[1]}\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase([triggers],
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_key_press(self):
@@ -389,11 +382,10 @@ class TestWriteCopyPhrase(unittest.TestCase):
         expected = f'{triggers[0]} key_press {triggers[1]}\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase([triggers],
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_inquiry(self):
@@ -401,35 +393,31 @@ class TestWriteCopyPhrase(unittest.TestCase):
 
         when(self.trigger_file).write(any()).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase(triggers,
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase(triggers,
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=3).write(any())
 
     def test_write_offset_multiple_triggers_fails(self):
         triggers = ['offset', 1]
 
         with self.assertRaises(ValueError):
-            _write_triggers_from_inquiry_copy_phrase([triggers],
-                                                     self.trigger_file,
-                                                     self.copy_phrase,
-                                                     self.typed_text,
-                                                     offset=True)
+            write_triggers_from_inquiry_copy_phrase([triggers],
+                                                    self.trigger_file,
+                                                    target_symbol=None,
+                                                    offset=True)
 
     def test_write_offset_backspace_target(self):
         triggers = [['<', 1]]
         # update the typed text to an incorrect letter given copy phrase
-        typed_text = 'TEST_H'
         expected = '< target 1\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase(triggers,
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase(triggers,
+                                                self.trigger_file,
+                                                target_symbol='<',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
     def test_write_calibration_trigger(self):
@@ -437,11 +425,10 @@ class TestWriteCopyPhrase(unittest.TestCase):
         expected = 'calibration_trigger calib 1\n'
         when(self.trigger_file).write(expected).thenReturn(None)
 
-        _write_triggers_from_inquiry_copy_phrase(triggers,
-                                                 self.trigger_file,
-                                                 self.copy_phrase,
-                                                 self.typed_text,
-                                                 offset=False)
+        write_triggers_from_inquiry_copy_phrase(triggers,
+                                                self.trigger_file,
+                                                target_symbol='H',
+                                                offset=False)
         verify(self.trigger_file, times=1).write(expected)
 
 

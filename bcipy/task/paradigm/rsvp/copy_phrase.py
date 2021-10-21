@@ -15,7 +15,7 @@ from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
-from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
+from bcipy.helpers.triggers import write_triggers_from_inquiry_copy_phrase
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
 from bcipy.task.data import EvidenceType, Inquiry, Session
@@ -355,7 +355,8 @@ class RSVPCopyPhraseTask(Task):
                 stim_times, proceed = self.present_inquiry(
                     self.current_inquiry)
 
-                self.write_trigger_data(stim_times, trigger_file)
+                write_triggers_from_inquiry_copy_phrase(
+                    stim_times, trigger_file, target_letter)
                 self.wait()
 
                 evidence_types = self.add_evidence(stim_times, proceed)
@@ -611,25 +612,12 @@ class RSVPCopyPhraseTask(Task):
         - trigger_file : open file in which to write
         """
         if self.daq.is_calibrated:
-            _write_triggers_from_inquiry_copy_phrase(
-                ['offset', self.daq.offset(self.rsvp.first_stim_time)],
+            write_triggers_from_inquiry_copy_phrase(
+                ['offset',
+                 self.daq.offset(self.rsvp.first_stim_time)],
                 trigger_file,
-                self.copy_phrase,
-                self.spelled_text,
+                target_symbol=None,
                 offset=True)
-
-    def write_trigger_data(self, stim_times: List[Tuple[str, float]],
-                           trigger_file: TextIO) -> None:
-        """Save trigger data to disk.
-
-        Parameters
-        ----------
-        - stim_times : list of (stim, clock_time) tuples
-        - trigger_file : data will be appended to this file
-        """
-        _write_triggers_from_inquiry_copy_phrase(stim_times, trigger_file,
-                                                 self.copy_phrase,
-                                                 self.spelled_text)
 
     def name(self) -> str:
         return self.TASK_NAME

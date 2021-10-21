@@ -138,7 +138,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     def test_execute_without_inquiry(self, write_trg_mock, message_mock,
                                      user_input_mock):
@@ -176,7 +176,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_fake_data_single_inquiry(self, process_data_mock,
@@ -225,7 +225,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_max_inq_len(self, process_data_mock, write_trg_mock, message_mock,
@@ -273,7 +273,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_spelling_complete(self, process_data_mock, write_trg_mock,
@@ -384,7 +384,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_next_letter(self, process_data_mock, write_trg_mock, message_mock,
@@ -416,7 +416,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_fake_data_with_preview(self, process_data_mock,
@@ -462,7 +462,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     @patch(
-        'bcipy.task.paradigm.rsvp.copy_phrase._write_triggers_from_inquiry_copy_phrase'
+        'bcipy.task.paradigm.rsvp.copy_phrase.write_triggers_from_inquiry_copy_phrase'
     )
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
     def test_execute_real_data_single_inquiry(self, process_data_mock,
