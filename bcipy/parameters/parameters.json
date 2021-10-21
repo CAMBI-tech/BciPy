@@ -479,7 +479,7 @@
     "recommended_values": "",
     "type": "str"
   },
-  "info_pos_x": {
+  "text_pos_x": {
     "value": "0",
     "section": "bci_config",
     "readableName": "Position Text (X)",
@@ -489,7 +489,7 @@
     ],
     "type": "float"
   },
-  "info_pos_y": {
+  "text_pos_y": {
     "value": "-0.75",
     "section": "bci_config",
     "readableName": "Position Text (Y)",

@@ -42,11 +42,11 @@ class CopyPhraseDisplay(RSVPDisplay):
         static_task_pos = (
             tmp.boundingBox[0] / window.size[0] - 1, 1 - task_display.task_height)
 
-        info.info_color.append(static_task_color)
-        info.info_font.append(task_display.task_font)
-        info.info_text.append(static_task_text)
-        info.info_pos.append(task_display.task_pos)
-        info.info_height.append(task_display.task_height)
+        info.info_color = [static_task_color, info.info_color]
+        info.info_font = [task_display.task_font, info.info_font]
+        info.info_text = [static_task_text, info.info_text]
+        info.info_pos = [static_task_pos, info.info_pos]
+        info.info_height = [task_display.task_height, info.info_height]
 
         # Adjust task position wrt. static task position. Definition of
         # dummy texts are required. Place the task on bottom
@@ -76,6 +76,6 @@ class CopyPhraseDisplay(RSVPDisplay):
         txt = text if len(text) > 0 else ' '
         tmp2 = visual.TextStim(win=self.window, font=self.task.font, text=txt)
         x_task_pos = tmp2.boundingBox[0] / self.window.size[0] - 1
-        task_pos = (x_task_pos, self.info.info_pos[-1][1] - self.task.height)
+        task_pos = (x_task_pos, self.text[0].pos[1] - self.task.height)
 
         self.update_task(text=text, color_list=color_list, pos=task_pos)

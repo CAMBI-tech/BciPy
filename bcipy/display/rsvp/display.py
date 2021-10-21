@@ -1,17 +1,14 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 from psychopy import core, visual
 
+from bcipy.display import BCIPY_LOGO_PATH, Display
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
-from bcipy.display import (
-    BCIPY_LOGO_PATH,
-    Display
-)
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -178,6 +175,7 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
+            preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
@@ -185,14 +183,15 @@ class PreviewInquiryProperties:
         """Initialize Inquiry Preview Parameters.
 
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
-        preview_inquiry_progress_method(int): Method of progression for inquiry preview. 1 == press to accept
-            inquiry 2 == press to skip inquiry
+        preview_inquiry_progress_method(int): Method of progression for inquiry preview.
+            0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
+        self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
 
 
@@ -280,7 +279,7 @@ class RSVPDisplay(Display):
 
         # Create multiple text objects based on input
         self.info = info
-        self.info_text = info.build_info_text(window)
+        self.text = info.build_info_text(window)
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
@@ -288,8 +287,8 @@ class RSVPDisplay(Display):
     def draw_static(self):
         """Draw static elements in a stimulus."""
         self.task.draw()
-        for info in self.info_text:
-            info.draw()
+        for idx in range(len(self.text)):
+            self.text[idx].draw()
 
     def schedule_to(self, stimuli=[], timing=[], colors=[]):
         """Schedule stimuli elements (works as a buffer).
@@ -303,18 +302,18 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing
         self.stimuli_colors = colors
 
-    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple]):
+    def update_task(self, text: str, color_list: List[str], pos: Tuple[float]):
         """Update Task Object.
 
         PARAMETERS:
         -----------
         text: text for task
         color_list: list of the colors for each char
+        pos: position of task
         """
         self.task.text = text
         self.task.color = color_list[0]
-        if pos:
-            self.task.pos = pos
+        self.task.pos = pos
 
     def do_inquiry(self) -> List[float]:
         """Do inquiry.
@@ -488,7 +487,7 @@ class RSVPDisplay(Display):
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
 
-        Generate stimuli for next RSVP inquiry. [A + A, C, Q, D]
+        Generate stimuli for next RSVP inquiry.
         """
         stim_info = []
         for idx in range(len(self.stimuli_inquiry)):
@@ -539,16 +538,21 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_state(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
+    def update_task_state(self, text: str, color_list: List[str]) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
                 color_list(list[string]): list of colors for each
-                pos(tuple): [optional] tuple of task position
         """
-        self.update_task(text=text, color_list=color_list, pos=pos)
+        task_state_text = visual.TextStim(
+            win=self.window, font=self.task.font, text=text)
+        x_task_position = task_state_text.boundingBox[0] / \
+            self.window.size[0] - 1
+        task_pos = (x_task_position, 1 - self.task.height)
+
+        self.update_task(text=text, color_list=color_list, pos=task_pos)
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.
