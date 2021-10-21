@@ -4,8 +4,6 @@ from bcipy.display.rsvp import (InformationProperties, StimuliProperties,
                                 TaskDisplayProperties)
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.acquisition.marker_writer import NullMarkerWriter
 
 info = InformationProperties(
     info_color=['White'],

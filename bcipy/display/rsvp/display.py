@@ -5,19 +5,13 @@ from typing import List, Optional, Tuple, Union
 from psychopy import core, visual
 
 from bcipy.helpers.clock import Clock
-from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.display import (
     BCIPY_LOGO_PATH,
-    Display,
-    InformationProperties,
-    PreviewInquiryProperties,
-    StimuliProperties,
-    TaskDisplayProperties,
+    Display
 )
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 

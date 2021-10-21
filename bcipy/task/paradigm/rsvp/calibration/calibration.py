@@ -9,7 +9,6 @@ from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-from bcipy.display import StimuliProperties, TaskDisplayProperties, InformationProperties
 
 from bcipy.task import Task
 

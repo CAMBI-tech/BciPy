@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from psychopy import visual, core
-from typing import List, Optional, Tuple, Union
-
 from psychopy import visual
+from typing import List, Tuple, Union
 
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_resolution
