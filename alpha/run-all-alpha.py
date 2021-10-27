@@ -54,17 +54,17 @@ participant_files = {
 
 participant_freqs = {
     "p01": {"1hz": 10, "4hz": 10},
-    "p02": {"1hz": 10.5, "4hz": 10.5},
-    "p03": {"1hz": 12, "4hz": 12},
+    "p02": {"1hz": 11, "4hz": 11},
+    "p03": {"1hz": 10, "4hz": 10},
     "p04": {"1hz": 10, "4hz": 10},
     "p05": {"1hz": 11, "4hz": 11.5},
     "p06": {"1hz": 11, "4hz": 11},
     "p07": {"1hz": 10, "4hz": 10},
-    "p08": {"1hz": 10.5, "4hz": 10.5},
+    "p08": {"1hz": 10, "4hz": 10},
     "p09": {"1hz": 9, "4hz": 9},
     "p10": {"1hz": 10.5, "4hz": 10.5},
     "p11": {"1hz": 9, "4hz": 10},
-    "p12": {"1hz": 9, "4hz": 9},
+    "p12": {"1hz": 9, "4hz": 9.5},
 }
 
 for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], ["", "--z_score_per_trial", "--hparam_tuning"]):
