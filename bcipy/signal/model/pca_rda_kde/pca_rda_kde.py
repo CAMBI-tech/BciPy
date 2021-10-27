@@ -32,8 +32,12 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             trained likelihood model
         """
-        model = Pipeline([ChannelWisePrincipalComponentAnalysis(var_tol=1e-5, num_ch=train_data.shape[0]),
-                          RegularizedDiscriminantAnalysis()])
+        model = Pipeline(
+            [
+                ChannelWisePrincipalComponentAnalysis(var_tol=1e-5, num_ch=train_data.shape[0]),
+                RegularizedDiscriminantAnalysis(),
+            ]
+        )
 
         # Find the optimal gamma + lambda values
         arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
@@ -57,6 +61,10 @@ class PcaRdaKdeModel(SignalModel):
         model.pipeline[-1].fit(sc_cv, y_cv)
 
         self.model = model
+        self.prior_class_1 = 0.5
+        self.prior_class_0 = 1 - self.prior_class_1
+        # self.prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+        # self.prior_class_0 = 1 - self.prior_class_1
         self._ready_to_predict = True
         return self
 
@@ -85,38 +93,32 @@ class PcaRdaKdeModel(SignalModel):
         auc = -tmp
         return ModelEvaluationReport(auc)
 
-    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    def predict(self, data: np.array) -> np.array:
         """
-        For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
-        Rather than just computing an update p(e|l=+) for the seen symbol and p(e|l=-) for all unseen symbols,
-        we compute a likelihood ratio p(e | l=+) / p(e | l=-) to update the seen symbol, and all other symbols
-        can receive a multiplicative update of 1.
-
-        Args:
-            data (np.array): EEG data with shape (n_channel, n_trial, n_sample).
-            inquiry (List[str]): List describing the symbol shown in each trial.
-            symbol_set (List[str]): The set of all possible symbols.
-
-        Raises:
-            SignalException: error if called before model is fit.
-
-        Returns:
-            np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
+        sklearn-compatible method for predicting
         """
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
-        # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
-        scores = np.exp(self.model.transform(data))
+        # p(l=1 | e) = p(e | l=1) p(l=1)
+        probs = self.predict_proba(data)
+        return probs.argmax(-1)
 
-        # Evaluate likelihood ratios (positive class divided by negative class)
-        scores = scores[:, 1] / (scores[:, 0] + 1e-10) + 1e-10
+    def predict_proba(self, data: np.array) -> np.array:
+        """
+        sklearn-compatible method for predicting probabilities
+        """
+        if not self._ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
 
-        # Apply likelihood ratios to entire symbol set.
-        likelihood_ratios = np.ones(len(symbol_set))
-        for idx in range(len(scores)):
-            likelihood_ratios[symbol_set.index(inquiry[idx])] *= scores[idx]
-        return likelihood_ratios
+        # p(l=1 | e) = p(e | l=1) p(l=1)
+        scores_class_0 = np.exp(self.model.transform(data))[:, 0]
+        scores_class_1 = np.exp(self.model.transform(data))[:, 1]
+        unnorm_posterior_class_0 = scores_class_0 * self.prior_class_0
+        unnorm_posterior_class_1 = scores_class_1 * self.prior_class_1
+        posterior_class_0 = unnorm_posterior_class_0 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
+        posterior_class_1 = unnorm_posterior_class_1 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
+        return np.stack([posterior_class_0, posterior_class_1], 1)
 
     def save(self, path: Path):
         """Save model weights (e.g. after training) to `path`"""
