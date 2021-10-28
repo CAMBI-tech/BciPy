@@ -138,38 +138,22 @@ def fit(data, labels, n_folds, flatten_data, clf):
         scoring=["balanced_accuracy", "roc_auc"],
     )
 
-    avg_train_acc = round(results["train_balanced_accuracy"].mean(), 3)
-    std_train_acc = round(results["train_balanced_accuracy"].std(), 3)
-
-    avg_test_acc = round(results["test_balanced_accuracy"].mean(), 3)
-    std_test_acc = round(results["test_balanced_accuracy"].std(), 3)
-
-    avg_train_auc = round(results["train_roc_auc"].mean(), 3)
-    std_train_auc = round(results["train_roc_auc"].std(), 3)
-
-    avg_test_auc = round(results["test_roc_auc"].mean(), 3)
-    std_test_auc = round(results["test_roc_auc"].std(), 3)
-
-    avg_fit_time = round(results["fit_time"].mean(), 3)
-    std_fit_time = round(results["fit_time"].std(), 3)
-
-    avg_score_time = round(results["score_time"].mean(), 3)
-    std_score_time = round(results["score_time"].std(), 3)
-
-    return {
-        "avg_fit_time": avg_fit_time,
-        "std_fit_time": std_fit_time,
-        "avg_score_time": avg_score_time,
-        "std_score_time": std_score_time,
-        "avg_train_roc_auc": avg_train_auc,
-        "std_train_roc_auc": std_train_auc,
-        "avg_test_roc_auc": avg_test_auc,
-        "std_test_roc_auc": std_test_auc,
-        "avg_train_balanced_accuracy": avg_train_acc,
-        "std_train_balanced_accuracy": std_train_acc,
-        "avg_test_balanced_accuracy": avg_test_acc,
-        "std_test_balanced_accuracy": std_test_acc,
+    report = {
+        "avg_fit_time": results["fit_time"].mean(),
+        "std_fit_time": results["fit_time"].std(),
+        "avg_score_time": results["score_time"].mean(),
+        "std_score_time": results["score_time"].std(),
+        "avg_train_roc_auc": results["train_roc_auc"].mean(),
+        "std_train_roc_auc": results["train_roc_auc"].std(),
+        "avg_test_roc_auc": results["test_roc_auc"].mean(),
+        "std_test_roc_auc": results["test_roc_auc"].std(),
+        "avg_train_balanced_accuracy": results["train_balanced_accuracy"].mean(),
+        "std_train_balanced_accuracy": results["train_balanced_accuracy"].std(),
+        "avg_test_balanced_accuracy": results["test_balanced_accuracy"].mean(),
+        "std_test_balanced_accuracy": results["test_balanced_accuracy"].std(),
     }
+    report = {k: str(round(v, 3)) for k, v in report.items()}
+    return report
 
 
 def make_plots(data, labels, filename, vlines: Optional[List[int]] = None):
@@ -251,7 +235,9 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         }
 
         print("WARNING - leaking test data")
-        cv = GridSearchCV(estimator=preprocessing_pipeline, param_grid=parameters_to_tune, scoring="balanced_accuracy", n_jobs=-1)
+        cv = GridSearchCV(
+            estimator=preprocessing_pipeline, param_grid=parameters_to_tune, scoring="balanced_accuracy", n_jobs=-1
+        )
         cv.fit(data, labels)
         baseline_start_s = cv.best_params_["alpha__baseline_start_s"]
         response_start_s = cv.best_params_["alpha__response_start_s"]
@@ -340,7 +326,6 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         writer = csv.DictWriter(csvfile, fieldnames=[c[1] for c in col_names])
         writer.writeheader()
         for report in reports:
-            report = {k: str(v) for k, v in report.items()}
             table.add_row(*[report[c[1]] for c in col_names])
             writer.writerow(report)
 

@@ -1,4 +1,5 @@
-import logging
+import csv
+from itertools import cycle
 from pathlib import Path
 
 import numpy as np
@@ -7,21 +8,20 @@ from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
+from loguru import logger
+from rich.console import Console
+from rich.table import Table
 from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.model_selection import train_test_split
-
-log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
 def reorder(data):
     return data.transpose(1, 0, 2)
 
 
-def main(input_path, parameters):
+def main(input_path, output_path, parameters):
     # extract relevant session information from parameters file
     trial_length = 0.5
     triggers_file = parameters.get("trigger_file_name", "triggers.txt")
@@ -87,61 +87,60 @@ def main(input_path, parameters):
     # model.fit(x_train, y_train)
     # print(model.steps[1][1].evaluate(x_test.transpose(1, 0, 2), y_test))
 
+    n_folds = 10
     results = cross_validate(
         model,
         data,
         labels,
-        cv=10,
+        cv=n_folds,
         n_jobs=-1,
         return_train_score=True,
         scoring={"balanced_accuracy": make_scorer(balanced_accuracy_score), "roc_auc": make_scorer(roc_auc_score)},
     )
 
-    avg_train_acc = round(results["train_balanced_accuracy"].mean(), 3)
-    std_train_acc = round(results["train_balanced_accuracy"].std(), 3)
+    report = {
+        "Model Name": "PCA/RDA/KDE",
+        "Avg fit time": results["fit_time"].mean(),
+        "Std fit time": results["fit_time"].std(),
+        "Avg score time": results["score_time"].mean(),
+        "Std score time": results["score_time"].std(),
+        "Avg train roc auc": results["train_roc_auc"].mean(),
+        "Std train roc auc": results["train_roc_auc"].std(),
+        "Avg test roc auc": results["test_roc_auc"].mean(),
+        "Std test roc auc": results["test_roc_auc"].std(),
+        "Avg train balanced accuracy": results["train_balanced_accuracy"].mean(),
+        "Std train balanced accuracy": results["train_balanced_accuracy"].std(),
+        "Avg test balanced accuracy": results["test_balanced_accuracy"].mean(),
+        "Std test balanced accuracy": results["test_balanced_accuracy"].std(),
+    }
+    report = {k: str(round(v, 3)) for k, v in report.items()}
 
-    avg_test_acc = round(results["test_balanced_accuracy"].mean(), 3)
-    std_test_acc = round(results["test_balanced_accuracy"].std(), 3)
+    table = Table(title=f"Alpha Classifier Comparison ({n_folds}-fold cross validation)")
+    colors = cycle(["red", "orange1", "yellow", "green", "blue", "magenta", "black"])
+    for col_name, color in zip(report.keys(), colors):
+        table.add_column(col_name[0], style=color, no_wrap=True)
 
-    avg_train_auc = round(results["train_roc_auc"].mean(), 3)
-    std_train_auc = round(results["train_roc_auc"].std(), 3)
+    with open(output_path / f"results.{n_folds=}.csv", "w") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=[c[1] for c in report.keys()])
+        writer.writeheader()
+        table.add_row(*[report[c[1]] for c in report.keys()])
+        writer.writerow(report)
 
-    avg_test_auc = round(results["test_roc_auc"].mean(), 3)
-    std_test_auc = round(results["test_roc_auc"].std(), 3)
-
-    avg_fit_time = round(results["fit_time"].mean(), 3)
-    std_fit_time = round(results["fit_time"].std(), 3)
-
-    avg_score_time = round(results["score_time"].mean(), 3)
-    std_score_time = round(results["score_time"].std(), 3)
-
-    print(
-        {
-            "avg_fit_time": avg_fit_time,
-            "std_fit_time": std_fit_time,
-            "avg_score_time": avg_score_time,
-            "std_score_time": std_score_time,
-            "avg_train_roc_auc": avg_train_auc,
-            "std_train_roc_auc": std_train_auc,
-            "avg_test_roc_auc": avg_test_auc,
-            "std_test_roc_auc": std_test_auc,
-            "avg_train_balanced_accuracy": avg_train_acc,
-            "std_train_balanced_accuracy": std_train_acc,
-            "avg_test_balanced_accuracy": avg_test_acc,
-            "std_test_balanced_accuracy": std_test_acc,
-        }
-    )
+    console = Console(record=True, width=500)
+    console.print(table)
+    console.save_html(output_path / f"results.{n_folds=}.html")
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data_folder", default=None)
-    parser.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--parameters_file", default="bcipy/parameters/parameters.json")
     args = parser.parse_args()
 
-    log.info(f"Loading params from {args.parameters_file}")
+    logger.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
-    main(args.data_folder, parameters)
-    log.info("Offline Analysis complete.")
+    main(args.input, args.output, parameters)
+    logger.info("Offline Analysis complete.")
