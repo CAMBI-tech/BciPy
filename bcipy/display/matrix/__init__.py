@@ -1,7 +1,7 @@
 from .display import (
-    RSVPDisplay
+    MatrixDisplay
 )
 
 __all__ = [
-    'RSVPDisplay'
+    'MatrixDisplay'
 ]
