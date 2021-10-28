@@ -144,8 +144,6 @@ if __name__ == "__main__":
     args.output.mkdir(exist_ok=True, parents=True)
 
     logger.info(f"Input data folder: {str(args.input)}")
-    logger.info(f"Selected freq: {str(args.freq)}")
-    logger.info(f"Loading params from {args.parameters_file}")
     logger.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
     with logger.catch(onerror=lambda _: sys.exit(1)):
