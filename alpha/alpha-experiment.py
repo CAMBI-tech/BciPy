@@ -40,7 +40,7 @@ def cwt(data, freq: int, fs: int):
 
     final_data = np.stack(all_coeffs)
     if np.any(np.iscomplex(final_data)):
-        print("Converting complex to real")
+        logger.info("Converting complex to real")
         final_data = np.abs(final_data) ** 2
 
     # have shape == (trials, freqs, channels, time)
@@ -76,8 +76,8 @@ def load_data(data_folder: Path, parameters: dict):
     type_amp = raw_data.daq_type
     fs = raw_data.sample_rate
 
-    print(f"Channels read from csv: {channels}")
-    print(f"Device type: {type_amp}")
+    logger.info(f"Channels read from csv: {channels}")
+    logger.info(f"Device type: {type_amp}")
 
     default_transform = get_default_transform(
         sample_rate_hz=fs,
@@ -115,10 +115,10 @@ def load_data(data_folder: Path, parameters: dict):
 def fit_model(data, labels):
     k_folds = 10
     model = PcaRdaKdeModel(k_folds=k_folds)
-    print("Training model. This will take some time...")
+    logger.info("Training model. This will take some time...")
     model.fit(data, labels)
     model_performance = model.evaluate(data, labels)
-    print(model_performance.auc)
+    logger.info(model_performance.auc)
     return model_performance
 
 
@@ -202,7 +202,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     make_plots(data, labels, output_path / "0.raw_data.png")
     data = cwt(data, args.freq, fs)
     make_plots(data, labels, output_path / "1.cwt_data.png")
-    print(data.shape)
+    logger.info(data.shape)
 
     baseline_duration_s = 0.5
     response_duration_s = 0.5
@@ -234,7 +234,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
             "alpha__z_score_per_trial": [True, False],
         }
 
-        print("WARNING - leaking test data")
+        logger.warning("WARNING - leaking test data")
         cv = GridSearchCV(
             estimator=preprocessing_pipeline, param_grid=parameters_to_tune, scoring="balanced_accuracy", n_jobs=-1
         )
@@ -262,11 +262,11 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     )
 
     # The copy we care about for modeling
-    print(data.min(), data.mean(), data.max())
+    logger.info(data.min(), data.mean(), data.max())
     z_transformed_target_window = z_scorer.transform(data)
     z_transformed_entire_data = z_scorer.transform(data, do_slice=False)
     # Copy of entire window for plotting
-    print(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
+    logger.info(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
 
     # NOTE - model expects (channels, trials, samples)
     make_plots(z_transformed_target_window, labels, output_path / "2.z_target_window.png")
@@ -295,7 +295,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         ("Tangent Space, Logistic Regression, balanced", False, ts_logr),
     ]:
         n_folds = 10
-        print("Run model class:", model_name)
+        logger.info("Run model class:", model_name)
         report = fit(z_transformed_target_window, labels, n_folds, flatten_data, clf)
         report["name"] = model_name
         reports.append(report)
@@ -354,9 +354,9 @@ if __name__ == "__main__":
 
     args.output.mkdir(exist_ok=True, parents=True)
 
-    print(f"Input data folder: {str(args.input)}")
-    print(f"Selected freq: {str(args.freq)}")
-    print(f"Loading params from {args.parameters_file}")
+    logger.info(f"Input data folder: {str(args.input)}")
+    logger.info(f"Selected freq: {str(args.freq)}")
+    logger.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
     with logger.catch(onerror=lambda _: sys.exit(1)):
         main(args.input, args.output, parameters, args.hparam_tuning, args.z_score_per_trial)

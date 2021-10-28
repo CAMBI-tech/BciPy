@@ -44,8 +44,8 @@ def main(input_path, output_path, parameters):
     type_amp = raw_data.daq_type
     fs = raw_data.sample_rate
 
-    print(f"Channels read from csv: {channels}")
-    print(f"Device type: {type_amp}")
+    logger.info(f"Channels read from csv: {channels}")
+    logger.info(f"Device type: {type_amp}")
 
     default_transform = get_default_transform(
         sample_rate_hz=fs,
@@ -139,8 +139,14 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--parameters_file", default="bcipy/parameters/parameters.json")
     args = parser.parse_args()
+    if not args.input.exists():
+        raise ValueError("data path does not exist")
+    args.output.mkdir(exist_ok=True, parents=True)
 
+    logger.info(f"Input data folder: {str(args.input)}")
+    logger.info(f"Selected freq: {str(args.freq)}")
+    logger.info(f"Loading params from {args.parameters_file}")
     logger.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
-    main(args.input, args.output, parameters)
-    logger.info("Offline Analysis complete.")
+    with logger.catch(onerror=lambda _: sys.exit(1)):
+        main(args.input, args.output, parameters)
