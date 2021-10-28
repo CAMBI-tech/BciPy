@@ -1,4 +1,5 @@
 import csv
+import sys
 from itertools import cycle
 from pathlib import Path
 
@@ -118,12 +119,12 @@ def main(input_path, output_path, parameters):
     table = Table(title=f"Alpha Classifier Comparison ({n_folds}-fold cross validation)")
     colors = cycle(["red", "orange1", "yellow", "green", "blue", "magenta", "black"])
     for col_name, color in zip(report.keys(), colors):
-        table.add_column(col_name[0], style=color, no_wrap=True)
+        table.add_column(col_name, style=color, no_wrap=True)
+    table.add_row(*report.values())
 
     with open(output_path / f"results.{n_folds=}.csv", "w") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=[c[1] for c in report.keys()])
+        writer = csv.DictWriter(csvfile, fieldnames=list(report.keys()))
         writer.writeheader()
-        table.add_row(*[report[c[1]] for c in report.keys()])
         writer.writerow(report)
 
     console = Console(record=True, width=500)
