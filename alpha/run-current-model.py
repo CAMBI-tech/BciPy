@@ -56,7 +56,7 @@ participant_files = {
 for p, hz in product(participant_files.keys(), ["1hz", "4hz"]):
     file = participant_files[p][hz]
 
-    prefix = "xvfb-run --auto-servernum python alpha/alpha-experiment.py "
+    prefix = "xvfb-run --auto-servernum python alpha/current-model.py "
 
     cmd = prefix
     cmd += f"--input data/bcipy_recordings/{p}/{file} "

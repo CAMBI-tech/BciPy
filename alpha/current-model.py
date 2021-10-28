@@ -99,7 +99,6 @@ def main(input_path, output_path, parameters):
     )
 
     report = {
-        "Model Name": "PCA/RDA/KDE",
         "Avg fit time": results["fit_time"].mean(),
         "Std fit time": results["fit_time"].std(),
         "Avg score time": results["score_time"].mean(),
@@ -114,6 +113,7 @@ def main(input_path, output_path, parameters):
         "Std test balanced accuracy": results["test_balanced_accuracy"].std(),
     }
     report = {k: str(round(v, 3)) for k, v in report.items()}
+    report["Model Name"] = "PCA/RDA/KDE"
 
     table = Table(title=f"Alpha Classifier Comparison ({n_folds}-fold cross validation)")
     colors = cycle(["red", "orange1", "yellow", "green", "blue", "magenta", "black"])
