@@ -1,6 +1,7 @@
 import logging
+import os
 from enum import Enum
-from typing import Dict, List, TextIO, Tuple
+from typing import Dict, List, Optional, TextIO, Tuple
 
 from psychopy import core, visual
 
@@ -638,3 +639,182 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     for _, (name, trg_type, stamp) in enumerate(records):
         corrected.append((name, trg_type, float(stamp) + offset))
     return corrected
+
+
+
+
+class TriggerType(Enum):
+    """
+    Enum for the primary types of Triggers.
+    """
+
+    NONTARGET = "nontarget"
+    TARGET = "target"
+    FIXATION = "fixation"
+    PROMPT = "first_pres_target"
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+    def __str__(self):
+        return f'{self.value}'
+
+
+class Trigger:
+    """
+    Object that encompasses data for a single trigger instance.
+    """
+
+    def __init__(self,
+                 label: str,
+                 type: TriggerType,
+                 time: str):
+        self.label = label
+        self.type = type
+        self.time = time
+
+    def __repr__(self):
+        return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
+
+
+class FlushSensitivity(Enum):
+    """
+    Enum that defines how often list of Triggers will be written and dumped.
+    """
+
+    EVERY = "flush after every trigger addition"
+    END = "flush at end of session"
+
+
+class TriggerHandler:
+
+    triggers = []
+
+    def __init__(self,
+                 path: str,
+                 file_name: str,
+                 flush_sens: FlushSensitivity):
+        self.path = path
+        self.file_name = f'{file_name}.txt'
+        self.flush_sens = flush_sens
+        self.file = None
+
+    def __enter__(self):
+        # Throws an error if file already exists
+        if os.path.exists(self.file_name):
+            raise Exception(f"[{self.file_name}] already exists, any writing "
+                            "will overwrite data in the existing file.")
+
+        self.file = open(self.file_name, 'w+')
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.write()
+        self.file.close()
+
+    def write(self):
+        """
+        Writes current Triggers in self.triggers[] to .txt file in self.file_name.
+        File writes in the format "label, targetness, time".
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+            None
+        """
+
+        for trigger in self.triggers:
+            self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
+
+        # Something about this isn't working, trigger list isn't being cleared
+        self.triggers = []
+
+    def load(self,
+             path: str,
+             offset: Optional[float]=None,
+             exclusion: Optional[List[TriggerType]]=None) -> List[Trigger]:
+        """
+        Loads a list of triggers from a .txt of triggers.
+
+        Exclusion based on type only (ex. exclusion=[TriggerType.Fixation])
+
+        1. Checks if .txt file exists at path
+        2. Loads the triggers data as a list of lists
+        3. If offset provided, adds it to the time as float
+        4. If exclusion provided, filters those triggers
+        5. Casts all loaded and modified triggers to Trigger
+        6. Returns as a List[Triggers]
+
+        Parameters
+        ----------
+        path (str): name or file path of .txt trigger file to be loaded.
+            Input string must include file extension (.txt).
+        offset (Optional float): if desired, time offset for all loaded triggers,
+            positive number for adding time, negative number for subtracting time.
+        exclusion (Optional List[TriggerType]): if desired, list of TriggerTypes
+            to be removed from the loaded trigger list.
+
+        Returns
+        -------
+            List of Triggers from loaded .txt file with desired modifications
+        """
+
+        # Checking for file with given path, with or without .txt
+        if not path.endswith('.txt') or not os.path.exists(path):
+            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
+                                    "\nPlease rerun program.")
+
+        txt_list = []
+        with open(path_checked) as raw_txt:
+            for line in raw_txt:
+                line_split = line.split()
+                txt_list.append(line_split)
+
+        if offset:
+            # If there is exclusion but no offset,
+            # Program would read exclusion as offset and throw error
+            # This moves "offset" into its proper parameter of exclusion
+            if isinstance(offset, list) and exclusion is None:
+                exclusion = offset
+            else:
+                for item in txt_list:
+                    time_float = float(item[2]) + offset
+                    item[2] = str(time_float)
+
+        if exclusion:
+            for type in exclusion:
+                for item in txt_list:
+                    txt_list[:] = [item for item in txt_list if not type.value == item[1]]
+
+        new_trigger_list = []
+        for e in txt_list:
+            new_trigger_list.append(Trigger(e[0],
+                                    TriggerType(e[1]),
+                                    str(e[2])))
+
+        return new_trigger_list
+
+
+    def add_triggers(self, triggers: List[Trigger]) -> List[Trigger]:
+        """
+        Adds given list of Triggers to self.triggers[]
+
+        Parameters
+        ----------
+        triggers (List[Triggers]): list of Trigger objects to be added to the
+            handler's list of Triggers, self.triggers[]
+
+        Returns
+        -------
+            None
+        """
+
+        self.triggers.extend(triggers)
+
+        if self.flush_sens is FlushSensitivity.EVERY:
+            self.write()

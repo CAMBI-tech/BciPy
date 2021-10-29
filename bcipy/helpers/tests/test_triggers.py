@@ -18,6 +18,9 @@ from bcipy.helpers.triggers import (
     LslCopyPhraseLabeller,
     trigger_durations,
     write_trigger_file_from_lsl_calibration,
+    TriggerType,
+    Trigger,
+    TriggerHandler
 )
 from bcipy.helpers.raw_data import sample_data, write
 
@@ -54,7 +57,7 @@ def write_sample_trigger_data(raw_data_path: str,
     return list(triggers_by_time.keys())
 
 
-class TestTriggers(unittest.TestCase):
+class TestTriggersOld(unittest.TestCase):
     """This is Test Case for Triggers."""
 
     def setUp(self):
@@ -561,6 +564,14 @@ class TestCalibrationTrigger(unittest.TestCase):
                 self.trigger_time,
                 None,
             )
+
+
+class TestTrigger(unittest.TestCase):
+    pass
+
+
+class TestTriggerHandler(unittest.TestCase):
+    pass
 
 
 if __name__ == '__main__':
