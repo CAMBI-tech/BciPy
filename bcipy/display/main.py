@@ -13,7 +13,7 @@ BCIPY_LOGO_PATH = 'bcipy/static/images/gui/cambi.png'
 class Display(ABC):
     """Display.
 
-    Base class for BciPy displays. This defines the logic necessary for task excecutions that require a display.
+    Base class for BciPy displays. This defines the logic necessary for task executions that require a display.
     """
 
     window: visual.Window = None
@@ -45,7 +45,7 @@ class Display(ABC):
     def update_task(self) -> None:
         """Update Task.
 
-        Update any task related display items not releated to the inquiry. Ex. stimuli count 1/200.
+        Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
         """
         ...
 

@@ -373,12 +373,12 @@ class RSVPDisplay(Display):
         """
         self.update_task(text=text, color_list=color_list, pos=pos)
 
-    def wait_screen(self, message: str, color: str) -> None:
+    def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
 
         Args:
             message(string): message to be displayed while waiting
-            color(string): color of the message to be displayed
+            message_color(string): color of the message to be displayed
         """
 
         # Construct the wait message
@@ -386,7 +386,7 @@ class RSVPDisplay(Display):
                                        font=self.stimuli_font,
                                        text=message,
                                        height=.1,
-                                       color=color,
+                                       color=message_color,
                                        pos=(0, -.5),
                                        wrapWidth=2,
                                        colorSpace='rgb',
@@ -407,9 +407,9 @@ class RSVPDisplay(Display):
                 1)
             wait_logo.draw()
 
-        except Exception:
+        except Exception as e:
             self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
-            pass
+            raise e
 
         # Draw and flip the screen.
         wait_message.draw()

@@ -16,22 +16,8 @@ class MatrixDisplay(Display):
     """Matrix Display Object for Inquiry Presentation.
 
     Animates display objects in matrix grid common to any Matrix task.
-    """
 
-    def __init__(
-            self,
-            window: visual.Window,
-            static_clock,
-            experiment_clock: core.Clock,
-            stimuli: StimuliProperties,
-            task_display: TaskDisplayProperties,
-            info: InformationProperties,
-            marker_writer: Optional[MarkerWriter] = NullMarkerWriter(),
-            trigger_type: str = 'text',
-            space_char: str = SPACE_CHAR,
-            full_screen: bool = False,
-            symbol_set=None):
-        """Initialize Matrix display parameters and objects.
+    Initialize Matrix display parameters and objects.
 
         PARAMETERS:
         ----------
@@ -61,7 +47,23 @@ class MatrixDisplay(Display):
         full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
             scaling display items as needed.
         symbol_set default = none : set of stimuli to be flashed during an inquiry
-        """
+
+    """
+
+    def __init__(
+            self,
+            window: visual.Window,
+            static_clock,
+            experiment_clock: core.Clock,
+            stimuli: StimuliProperties,
+            task_display: TaskDisplayProperties,
+            info: InformationProperties,
+            marker_writer: Optional[MarkerWriter] = NullMarkerWriter(),
+            trigger_type: str = 'text',
+            space_char: str = SPACE_CHAR,
+            full_screen: bool = False,
+            symbol_set=None):
+
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = window.getActualFrameRate()
@@ -158,12 +160,12 @@ class MatrixDisplay(Display):
             pos = self.increment_position(pos)
 
     def increment_position(self, pos: Tuple[float]) -> Tuple[float]:
-        x, y = pos
-        x += self.position_increment
-        if x >= self.max_grid_width:
-            y -= self.position_increment
-            x = self.position[0]
-        return (x, y)
+        x_cordinate, y_cordinate = pos
+        x_cordinate += self.position_increment
+        if x_cordinate >= self.max_grid_width:
+            y_cordinate -= self.position_increment
+            x_cordinate = self.position[0]
+        return (x_cordinate, y_cordinate)
 
     def animate_scp(self) -> List[float]:
         """Animate SCP.
@@ -173,7 +175,7 @@ class MatrixDisplay(Display):
         """
         timing = []
         i = 0
-        for sym in self.stimuli_inquiry:
+        for i, sym in enumerate(self.stimuli_inquiry):
 
             # register any timing and marker callbacks
             self.window.callOnFlip(
@@ -197,7 +199,6 @@ class MatrixDisplay(Display):
             # reset the highlighted symbol and continue
             self.stim_registry[sym].opacity = 0.0
             self.stim_registry[sym].draw()
-            i += 1
 
             # append timing information
             timing.append(self.trigger_callback.timing)
@@ -205,18 +206,18 @@ class MatrixDisplay(Display):
 
         return timing
 
-    def wait_screen(self, message: str, color: str) -> None:
+    def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
 
         Define what happens on the screen when a user pauses a session.
         """
-        #
+
         # Construct the wait message
         wait_message = visual.TextStim(win=self.window,
                                        font=self.stimuli_font,
                                        text=message,
                                        height=.1,
-                                       color=color,
+                                       color=message_color,
                                        pos=(0, -.5),
                                        wrapWidth=2,
                                        colorSpace='rgb',
@@ -237,9 +238,9 @@ class MatrixDisplay(Display):
                 1)
             wait_logo.draw()
 
-        except Exception:
+        except Exception as e:
             self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
-            pass
+            raise e
 
         # Draw and flip the screen.
         wait_message.draw()
@@ -276,7 +277,3 @@ class MatrixDisplay(Display):
                 color_list(list[string]): list of colors for each
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
-
-
-if __name__ == '__main__':
-    display = MatrixDisplay()
