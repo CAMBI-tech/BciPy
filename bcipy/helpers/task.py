@@ -233,11 +233,11 @@ def trial_complete_message(win, parameters):
     """
     message_stim = visual.TextStim(
         win=win,
-        height=parameters['task_height'],
+        height=parameters['info_height'],
         text=parameters['trial_complete_message'],
-        font=parameters['task_font'],
-        pos=(float(parameters['text_pos_x']),
-             float(parameters['text_pos_y'])),
+        font=parameters['info_font'],
+        pos=(parameters['info_pos_x'],
+             parameters['info_pos_y']),
         wrapWidth=None,
         color=parameters['trial_complete_message_color'],
         colorSpace='rgb',

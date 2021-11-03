@@ -4,10 +4,13 @@
 
 from psychopy import core
 
-from bcipy.display import init_display_window
-from bcipy.display.rsvp import (InformationProperties,
-                                PreviewInquiryProperties, StimuliProperties,
-                                TaskDisplayProperties)
+from bcipy.display import (
+    init_display_window,
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties,
+    TaskDisplayProperties
+)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.helpers.clock import Clock
 
@@ -22,11 +25,11 @@ preview_inquiry_progress_method = 1  # press to accept ==1 wait to accept ==2
 preview_inquiry_isi = 3
 
 info = InformationProperties(
-    info_color='White',
-    info_pos=(-.5, -.75),
-    info_height=0.1,
-    info_font='Arial',
-    info_text='Dummy Message',
+    info_color=['White'],
+    info_pos=[(-.5, -.75)],
+    info_height=[0.1],
+    info_font=['Arial'],
+    info_text=['Dummy Message'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
@@ -92,6 +95,7 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = Clock()
 
 preview_inquiry = PreviewInquiryProperties(
+    preview_only=True,
     preview_inquiry_length=preview_inquiry_length,
     preview_inquiry_key_input=preview_inquiry_key_input,
     preview_inquiry_progress_method=preview_inquiry_progress_method,

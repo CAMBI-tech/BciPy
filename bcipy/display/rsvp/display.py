@@ -1,198 +1,22 @@
 import logging
 import os.path as path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple
 
 from psychopy import core, visual
 
-from bcipy.display import BCIPY_LOGO_PATH, Display
 from bcipy.helpers.clock import Clock
+from bcipy.helpers.task import SPACE_CHAR, get_key_press
+from bcipy.display import (
+    BCIPY_LOGO_PATH,
+    Display,
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties,
+    TaskDisplayProperties,
+)
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-
-
-class StimuliProperties:
-    """"Stimuli Properties.
-
-    An encapsulation of properties relevant to core stimuli presentation in an RSVP paradigm.
-    """
-
-    def __init__(
-            self,
-            stim_font: str,
-            stim_pos: Tuple[float, float],
-            stim_height: float,
-            stim_inquiry: List[str],
-            stim_colors: List[str],
-            stim_timing: List[float],
-            is_txt_stim: bool):
-        """Initialize Stimuli Parameters.
-
-        stim_font(List[str]): Ordered list of colors to apply to information stimuli
-        stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
-        stim_height(float): Height of all stimuli
-        stim_inquiry(List[str]): Ordered list of text to build stimuli with
-        stim_colors(List[str]): Ordered list of colors to apply to stimuli
-        stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
-        is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
-        """
-        self.stim_font = stim_font
-        self.stim_pos = stim_pos
-        self.stim_height = stim_height
-        self.stim_inquiry = stim_inquiry
-        self.stim_colors = stim_colors
-        self.stim_timing = stim_timing
-        self.is_txt_stim = is_txt_stim
-        self.stim_length = len(self.stim_inquiry)
-        self.sti = None
-
-    def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
-        """"Build Initial Stimuli.
-
-        This method constructs the stimuli object which can be updated later. This is more
-            performant than creating a new stimuli each call. It can create either an image or text stimuli
-            based on the boolean self.is_txt_stim.
-        """
-        if self.is_txt_stim:
-            self.sti = visual.TextStim(
-                win=window,
-                color='white',
-                height=self.stim_height,
-                text='',
-                font=self.stim_font,
-                pos=self.stim_pos,
-                wrapWidth=None, colorSpace='rgb',
-                opacity=1, depth=-6.0)
-        else:
-            self.sti = visual.ImageStim(
-                win=window,
-                image=None,
-                mask=None,
-                pos=self.stim_pos,
-                ori=0.0)
-        return self.sti
-
-
-class InformationProperties:
-    """"Information Properties.
-
-    An encapsulation of properties relevant to task information presentation in an RSVP paradigm. This could be
-        messaging relevant to feedback or static text to remain on screen not related to task tracking.
-    """
-
-    def __init__(
-            self,
-            info_color: List[str],
-            info_text: List[str],
-            info_font: List[str],
-            info_pos: Tuple[float, float],
-            info_height: List[float]):
-        """Initialize Information Parameters.
-
-        info_color(List[str]): Ordered list of colors to apply to information stimuli
-        info_text(List[str]): Ordered list of text to apply to information stimuli
-        info_font(List[str]): Ordered list of font to apply to information stimuli
-        info_pos(Tuple[float, float]): Position on window where the Information stimuli will be presented
-        info_height(List[float]): Ordered list of height of Information stimuli
-        """
-        self.info_color = info_color
-        self.info_text = info_text
-        self.info_font = info_font
-        self.info_pos = info_pos
-        self.info_height = info_height
-
-    def build_info_text(self, window: visual.Window) -> List[visual.TextStim]:
-        """"Build Information Text.
-
-        Constructs a list of Information stimuli to display.
-        """
-        self.text_stim = []
-        for idx in range(len(self.info_text)):
-            self.text_stim.append(visual.TextStim(
-                win=window,
-                color=self.info_color[idx],
-                height=self.info_height[idx],
-                text=self.info_text[idx],
-                font=self.info_font[idx],
-                pos=self.info_pos[idx],
-                wrapWidth=None, colorSpace='rgb',
-                opacity=1, depth=-6.0))
-        return self.text_stim
-
-
-class TaskDisplayProperties:
-    """"Task Dispay Properties.
-
-    An encapsulation of properties relevant to task stimuli presentation in an RSVP paradigm.
-    """
-
-    def __init__(
-            self,
-            task_color: List[str],
-            task_font: str,
-            task_pos: Tuple[float, float],
-            task_height: float,
-            task_text: str):
-        """Initialize Task Display Parameters.
-
-        task_color(List[str]): Ordered list of colors to apply to task stimuli
-        task_font(str): Font to apply to all task stimuli
-        task_pos(Tuple[float, float]): Position on the screen where to present to task text
-        task_height(float): Height of all task text stimuli
-        task_text(str): Task text to apply to stimuli
-        """
-        self.task_color = task_color
-        self.task_font = task_font
-        self.task_pos = task_pos
-        self.task_height = task_height
-        self.task_text = task_text
-        self.task = None
-
-    def build_task(self, window: visual.Window) -> visual.TextStim:
-        """"Build Task.
-
-        This method constructs the task stimuli object which can be updated later. This is more
-            performant than creating a new stimuli for each update in task state.
-        """
-        self.task = visual.TextStim(
-            win=window,
-            color=self.task_color[0],
-            height=self.task_height,
-            text=self.task_text,
-            font=self.task_font,
-            pos=self.task_pos,
-            wrapWidth=None, colorSpace='rgb',
-            opacity=1, depth=-6.0)
-        return self.task
-
-
-class PreviewInquiryProperties:
-    """"Preview Inquiry Properties.
-
-    An encapsulation of properties relevant to preview_inquiry() operation.
-    """
-
-    def __init__(
-            self,
-            preview_only: bool,
-            preview_inquiry_length: float,
-            preview_inquiry_progress_method: int,
-            preview_inquiry_key_input: str,
-            preview_inquiry_isi: float):
-        """Initialize Inquiry Preview Parameters.
-
-        preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
-        preview_inquiry_progress_method(int): Method of progression for inquiry preview.
-            0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.
-        preview_inquiry_key_input(str): Defines which key should be listened to for progressing
-        preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
-        """
-        self.preview_inquiry_length = preview_inquiry_length
-        self.preview_inquiry_key_input = preview_inquiry_key_input
-        self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
-        self.preview_only = preview_only
-        self.preview_inquiry_isi = preview_inquiry_isi
 
 
 class RSVPDisplay(Display):
@@ -279,7 +103,7 @@ class RSVPDisplay(Display):
 
         # Create multiple text objects based on input
         self.info = info
-        self.text = info.build_info_text(window)
+        self.info_text = info.build_info_text(window)
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
@@ -287,8 +111,8 @@ class RSVPDisplay(Display):
     def draw_static(self):
         """Draw static elements in a stimulus."""
         self.task.draw()
-        for idx in range(len(self.text)):
-            self.text[idx].draw()
+        for info in self.info_text:
+            info.draw()
 
     def schedule_to(self, stimuli=[], timing=[], colors=[]):
         """Schedule stimuli elements (works as a buffer).
@@ -302,18 +126,18 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing
         self.stimuli_colors = colors
 
-    def update_task(self, text: str, color_list: List[str], pos: Tuple[float]):
+    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple]):
         """Update Task Object.
 
         PARAMETERS:
         -----------
         text: text for task
         color_list: list of the colors for each char
-        pos: position of task
         """
         self.task.text = text
         self.task.color = color_list[0]
-        self.task.pos = pos
+        if pos:
+            self.task.pos = pos
 
     def do_inquiry(self) -> List[float]:
         """Do inquiry.
@@ -487,7 +311,7 @@ class RSVPDisplay(Display):
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
 
-        Generate stimuli for next RSVP inquiry.
+        Generate stimuli for next RSVP inquiry. [A + A, C, Q, D]
         """
         stim_info = []
         for idx in range(len(self.stimuli_inquiry)):
@@ -538,28 +362,23 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_state(self, text: str, color_list: List[str]) -> None:
+    def update_task_state(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
                 color_list(list[string]): list of colors for each
+                pos(tuple): [optional] tuple of task position
         """
-        task_state_text = visual.TextStim(
-            win=self.window, font=self.task.font, text=text)
-        x_task_position = task_state_text.boundingBox[0] / \
-            self.window.size[0] - 1
-        task_pos = (x_task_position, 1 - self.task.height)
+        self.update_task(text=text, color_list=color_list, pos=pos)
 
-        self.update_task(text=text, color_list=color_list, pos=task_pos)
-
-    def wait_screen(self, message: str, color: str) -> None:
+    def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
 
         Args:
             message(string): message to be displayed while waiting
-            color(string): color of the message to be displayed
+            message_color(string): color of the message to be displayed
         """
 
         # Construct the wait message
@@ -567,7 +386,7 @@ class RSVPDisplay(Display):
                                        font=self.stimuli_font,
                                        text=message,
                                        height=.1,
-                                       color=color,
+                                       color=message_color,
                                        pos=(0, -.5),
                                        wrapWidth=2,
                                        colorSpace='rgb',
@@ -588,9 +407,9 @@ class RSVPDisplay(Display):
                 1)
             wait_logo.draw()
 
-        except Exception:
+        except Exception as e:
             self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
-            pass
+            raise e
 
         # Draw and flip the screen.
         wait_message.draw()
