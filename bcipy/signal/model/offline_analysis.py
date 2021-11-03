@@ -11,6 +11,7 @@ from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import get_default_transform
 
 
@@ -22,7 +23,7 @@ logging.basicConfig(
 
 @report_execution_time
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True) -> None:
+                     parameters: dict = {}, alert_finished: bool = True) -> SignalModel:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -117,14 +118,25 @@ def offline_analysis(data_folder: str = None,
         data,
         labels,
         fs,
-        plot_average=False,
         save_path=data_folder,
         channel_names=analysis_channel_names_by_pos(channels, channel_map),
-        show_figure=True
+        show_figure=False
+    )
+    visualize_erp(
+        data,
+        labels,
+        fs,
+        plot_average=True,
+        save_path=data_folder,
+        channel_names=analysis_channel_names_by_pos(channels, channel_map),
+        show_figure=False,
+        figure_name='average_erp.pdf'
     )
     if alert_finished:
         offline_analysis_tone = parameters.get('offline_analysis_tone')
         play_sound(offline_analysis_tone)
+
+    return model
 
 
 if __name__ == "__main__":

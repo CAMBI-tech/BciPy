@@ -39,7 +39,6 @@ def visualize_erp(
     labels(ndarray[int]): N x k observation (class) array. Assumed to be two classes [0, 1]
     fs (sampling_rate): sampling rate of the current data signal
     class_labels: list of legend names for the respective classes for plotting (0 ,1).
-        Provide a single legend name in a list if plotting averages.
     plot_average: boolean: whether or not to average over all channels
     show_figure: boolean: whether or not to show the figures generated
     save_path: optional path to a save location of the figure generated
