@@ -698,20 +698,22 @@ class TriggerHandler:
         self.path = path
         self.file_name = f'{file_name}.txt'
         self.flush_sens = flush_sens
-        self.file = None
 
-    def __enter__(self):
-        # Throws an error if file already exists
         if os.path.exists(self.file_name):
             raise Exception(f"[{self.file_name}] already exists, any writing "
                             "will overwrite data in the existing file.")
 
         self.file = open(self.file_name, 'w+')
+
+    def close(self):
+        self.write()
+        self.file.close()
+
+    def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.write()
-        self.file.close()
+        self.close()
 
     def write(self):
         """
@@ -809,10 +811,12 @@ class TriggerHandler:
 
         Returns
         -------
-            None
+            Returns list of Triggers currently part of Handler
         """
 
         self.triggers.extend(triggers)
 
         if self.flush_sens is FlushSensitivity.EVERY:
             self.write()
+
+        return self.triggers

@@ -19,6 +19,7 @@ from bcipy.helpers.triggers import (
     LslCopyPhraseLabeller,
     trigger_durations,
     write_trigger_file_from_lsl_calibration,
+    FlushSensitivity,
     TriggerType,
     Trigger,
     TriggerHandler
@@ -568,64 +569,71 @@ class TestCalibrationTrigger(unittest.TestCase):
 
 
 class TestTrigger(unittest.TestCase):
+    def setUp(self):
+        self.label = 'A'
+        self.type = TriggerType.NONTARGET
+        self.time = 1
+        self.test_trigger = Trigger(self.label,
+                                     self.type,
+                                     self.time)
+
     def test_create_trigger(self):
-        test_trigger = Trigger('A', TriggerType.NONTARGET, 1)
-        self.assertTrue(test_trigger.label == 'A' and
-                        test_trigger.type == TriggerType.NONTARGET and
-                        test_trigger.time == 1)
+        self.assertTrue(self.test_trigger.label == self.label and
+                        self.test_trigger.type == self.type and
+                        self.test_trigger.time == self.time)
 
     def test_print_trigger(self):
-        # Not sure how to mock a test that prints to terminal
-        # test_trigger = Trigger('A', TriggerType.NONTARGET, 1)
-        # self.assertTrue(print(test_trigger)
-        pass
+        expected = f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
+        result = self.test_trigger.__repr__()
+        self.assertEqual(expected, result)
 
 
 class TestTriggerHandler(unittest.TestCase):
     def setUp(self):
         self.path_name = 'test/'
-        self.file_name = 'test.txt'
+        self.file_name = 'test'
+        self.flush = FlushSensitivity.END
+        self.file = f'{self.file_name}.txt'
+        self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
 
     def tearDown(self):
-        if os.path.exists(self.file_name):
-            os.remove(self.file_name)
-
-    def test_file_exist_exception(self):
-        # Writes test file before running handler
-        with open(self.file_name, 'w') as fp:
-            pass
-
-        with self.assertRaises(Exception):
-            handler = TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END)
+        del self.handler
+        if os.path.exists(self.file):
+            os.remove(self.file)
 
     def test_file_exists_after_enter(self):
-        handler = TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END)
-        self.assertTrue(os.path.exists(self.file_name))
+        self.assertTrue(os.path.exists(self.file))
 
-    def test_add_triggers(self):
+    def test_file_exist_exception(self):
+        with self.assertRaises(Exception):
+            TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END)
+
+    def test_add_triggers_returns_list(self):
         # Same thing, needs to mock print????
 
-        # inquiry_triggers = [
-        #     Trigger('A', TriggerType.NONTARGET, 1),
-        #     Trigger('B', TriggerType.TARGET, 2),
-        #     Trigger('C', TriggerType.FIXATION, 3),
-        #     Trigger('D', TriggerType.PROMPT, 4)
-        # ]
-        # with TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END) as handler:
-        #     handler.add_triggers(inquiry_triggers)
-        #     self.assertTrue(handler.triggers == []
-        pass
+        inquiry_triggers = [
+            Trigger('A', TriggerType.NONTARGET, 1),
+            Trigger('B', TriggerType.TARGET, 2),
+            Trigger('C', TriggerType.FIXATION, 3),
+            Trigger('D', TriggerType.PROMPT, 4)
+        ]
+
+        response = self.handler.add_triggers(inquiry_triggers)
+        self.assertEqual(response, inquiry_triggers)
+        self.handler.close()
+        self.assertEqual(self.handler.triggers, [])
 
     def test_write_triggers(self):
         inquiry_triggers = [Trigger('A', TriggerType.NONTARGET, 1)]
-        with TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END) as handler:
-            handler.add_triggers(inquiry_triggers)
-            handler.write()
+        response = self.handler.add_triggers(inquiry_triggers)
+        self.assertNotEqual(response, [])
+        self.assertEqual(self.handler.triggers, inquiry_triggers)
+        self.handler.write()
 
-        with open(self.file_name, rt) as txt:
+        with open(self.file, 'rt') as txt:
             contents = txt.read()
 
-        self.assertTrue(contents == 'A nontarget 1\n')
+        self.assertEqual(contents, 'A nontarget 1\n')
 
 
 if __name__ == '__main__':
