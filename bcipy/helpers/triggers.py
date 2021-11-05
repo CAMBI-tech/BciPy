@@ -642,7 +642,6 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
 
 
 
-
 class TriggerType(Enum):
     """
     Enum for the primary types of Triggers.
@@ -731,7 +730,6 @@ class TriggerHandler:
         for trigger in self.triggers:
             self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
 
-        # Something about this isn't working, trigger list isn't being cleared
         self.triggers = []
 
     def load(self,

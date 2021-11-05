@@ -3,6 +3,7 @@ import unittest
 from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
+import os
 import shutil
 from pathlib import Path
 import tempfile
@@ -567,11 +568,64 @@ class TestCalibrationTrigger(unittest.TestCase):
 
 
 class TestTrigger(unittest.TestCase):
-    pass
+    def test_create_trigger(self):
+        test_trigger = Trigger('A', TriggerType.NONTARGET, 1)
+        self.assertTrue(test_trigger.label == 'A' and
+                        test_trigger.type == TriggerType.NONTARGET and
+                        test_trigger.time == 1)
+
+    def test_print_trigger(self):
+        # Not sure how to mock a test that prints to terminal
+        # test_trigger = Trigger('A', TriggerType.NONTARGET, 1)
+        # self.assertTrue(print(test_trigger)
+        pass
 
 
 class TestTriggerHandler(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.path_name = 'test/'
+        self.file_name = 'test.txt'
+
+    def tearDown(self):
+        if os.path.exists(self.file_name):
+            os.remove(self.file_name)
+
+    def test_file_exist_exception(self):
+        # Writes test file before running handler
+        with open(self.file_name, 'w') as fp:
+            pass
+
+        with self.assertRaises(Exception):
+            handler = TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END)
+
+    def test_file_exists_after_enter(self):
+        handler = TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END)
+        self.assertTrue(os.path.exists(self.file_name))
+
+    def test_add_triggers(self):
+        # Same thing, needs to mock print????
+
+        # inquiry_triggers = [
+        #     Trigger('A', TriggerType.NONTARGET, 1),
+        #     Trigger('B', TriggerType.TARGET, 2),
+        #     Trigger('C', TriggerType.FIXATION, 3),
+        #     Trigger('D', TriggerType.PROMPT, 4)
+        # ]
+        # with TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END) as handler:
+        #     handler.add_triggers(inquiry_triggers)
+        #     self.assertTrue(handler.triggers == []
+        pass
+
+    def test_write_triggers(self):
+        inquiry_triggers = [Trigger('A', TriggerType.NONTARGET, 1)]
+        with TriggerHandler(self.path_name, self.file_name, FlushSensitivity.END) as handler:
+            handler.add_triggers(inquiry_triggers)
+            handler.write()
+
+        with open(self.file_name, rt) as txt:
+            contents = txt.read()
+
+        self.assertTrue(contents == 'A nontarget 1\n')
 
 
 if __name__ == '__main__':
