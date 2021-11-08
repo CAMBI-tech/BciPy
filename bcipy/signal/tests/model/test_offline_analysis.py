@@ -35,7 +35,7 @@ class TestOfflineAnalysis(unittest.TestCase):
 
         cls.parameters = load_json_parameters(cls.tmp_dir / "parameters.json", value_cast=True)
         cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
-        cls.mean_erp_fig_handle = fig_handles[0]
+        cls.mean_erp_fig_handle = fig_handles
 
     @classmethod
     def tearDownClass(cls):

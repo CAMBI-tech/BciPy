@@ -1,11 +1,13 @@
 import logging
 from pathlib import Path
+from typing import Tuple
 from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
+from matplotlib.figure import Figure
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import trigger_decoder
@@ -23,7 +25,7 @@ logging.basicConfig(
 
 @report_execution_time
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True) -> SignalModel:
+                     parameters: dict = {}, alert_finished: bool = True) -> Tuple[SignalModel, Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -122,11 +124,11 @@ def offline_analysis(data_folder: str = None,
         channel_names=analysis_channel_names_by_pos(channels, channel_map),
         show_figure=False
     )
-    visualize_erp(
+    figure_handles = visualize_erp(
         data,
         labels,
         fs,
-        plot_average=True,
+        plot_average=False, # set to True to see all channels target/nontarget
         save_path=data_folder,
         channel_names=analysis_channel_names_by_pos(channels, channel_map),
         show_figure=False,
@@ -136,7 +138,7 @@ def offline_analysis(data_folder: str = None,
         offline_analysis_tone = parameters.get('offline_analysis_tone')
         play_sound(offline_analysis_tone)
 
-    return model
+    return model, figure_handles
 
 
 if __name__ == "__main__":
