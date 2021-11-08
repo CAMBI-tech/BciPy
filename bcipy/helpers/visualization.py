@@ -48,8 +48,8 @@ def visualize_erp(
     channel_names = channel_names or {}
     classes = np.unique(labels)
 
-    means = [np.squeeze(np.mean(data[:, np.where(labels == i), :], 2))
-             for i in classes]
+    means = [np.squeeze(np.mean(data[:, np.where(labels == label), :], 2))
+             for label in classes]
 
     data_length = len(means[0][1, :])
 

@@ -128,7 +128,7 @@ def offline_analysis(data_folder: str = None,
         data,
         labels,
         fs,
-        plot_average=False, # set to True to see all channels target/nontarget
+        plot_average=False,  # set to True to see all channels target/nontarget
         save_path=data_folder,
         channel_names=analysis_channel_names_by_pos(channels, channel_map),
         show_figure=False,
