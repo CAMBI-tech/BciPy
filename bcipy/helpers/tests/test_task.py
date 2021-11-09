@@ -15,13 +15,11 @@ from bcipy.helpers.task import (
     construct_triggers,
     target_info
 )
-from bcipy.helpers.load import load_json_parameters
 
 
 class TestAlphabet(unittest.TestCase):
     def test_alphabet_text(self):
-        parameters_used = './bcipy/parameters/parameters.json'
-        parameters = load_json_parameters(parameters_used, value_cast=True)
+        parameters = {}
 
         parameters['is_txt_stim'] = True
 
@@ -35,9 +33,7 @@ class TestAlphabet(unittest.TestCase):
              '_'])
 
     def test_alphabet_images(self):
-        parameters_used = './bcipy/parameters/parameters.json'
-        parameters = load_json_parameters(parameters_used, value_cast=True)
-
+        parameters = {}
         parameters['is_txt_stim'] = False
         parameters['path_to_presentation_images'] = ('bcipy/static/images/'
                                                      'rsvp/')

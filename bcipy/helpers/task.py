@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from string import ascii_uppercase
@@ -68,7 +69,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
 
     In an RSVP paradigm, the inquiry itself will produce an
         SSVEP response to the stimulation. Here we calculate
-        what that frequency should be based in the presentation
+        what that frequency should be based on the presentation
         time.
 
     PARAMETERS
@@ -215,7 +216,7 @@ def _float_val(col: Any) -> float:
     return float(col)
 
 
-def trial_complete_message(win, parameters):
+def trial_complete_message(win, parameters) -> List[visual.TextStim]:
     """Trial Complete Message.
 
     Function return a TextStim Object (see Psychopy) to complete the trial.
