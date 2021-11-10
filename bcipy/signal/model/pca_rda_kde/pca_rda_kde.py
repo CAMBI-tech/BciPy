@@ -67,10 +67,10 @@ class PcaRdaKdeModel(SignalModel):
         model.pipeline[-1].fit(sc_cv, y_cv)
 
         self.model = model
-        self.prior_class_1 = 0.5
-        self.prior_class_0 = 1 - self.prior_class_1
-        # self.prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
-        # self.prior_class_0 = 1 - self.prior_class_1
+        self.log_prior_class_1 = self.log_prior_class_0 = np.log(0.5)
+        # prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+        # self.log_prior_class_1 = np.log(prior_class_1)
+        # self.log_prior_class_0 = np.log(1 - prior_class_1)
 
         self.classes_ = unique_labels(train_labels)
         self._ready_to_predict = True
@@ -119,14 +119,17 @@ class PcaRdaKdeModel(SignalModel):
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
 
-        # p(l=1 | e) = p(e | l=1) p(l=1)
-        scores_class_0 = np.exp(self.model.transform(data))[:, 0]
-        scores_class_1 = np.exp(self.model.transform(data))[:, 1]
-        unnorm_posterior_class_0 = scores_class_0 * self.prior_class_0
-        unnorm_posterior_class_1 = scores_class_1 * self.prior_class_1
-        posterior_class_0 = unnorm_posterior_class_0 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
-        posterior_class_1 = unnorm_posterior_class_1 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
-        return np.stack([posterior_class_0, posterior_class_1], -1)
+        # p(l=1 | e) = p(e | l=1) p(l=1) / p(e)
+        # log(p(l=1 | e)) = log(p(e | l=1)) + log(p(l=1)) - log(p(e))
+        log_scores_class_0 = self.model.transform(data)[:, 0]
+        log_scores_class_1 = self.model.transform(data)[:, 1]
+        log_post_0 = log_scores_class_0 + self.log_prior_class_0
+        log_post_1 = log_scores_class_1 + self.log_prior_class_1
+        denom = np.logaddexp(log_post_0, log_post_1)
+        log_post_0 -= denom
+        log_post_1 -= denom
+        posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
+        return posterior
 
     def save(self, path: Path):
         """Save model weights (e.g. after training) to `path`"""
