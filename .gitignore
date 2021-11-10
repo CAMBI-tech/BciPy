@@ -28,4 +28,6 @@ dist/
 bcipy/parameters/parameters_*
 results/*
 results_tmp/*
+results_baseline/*
 bcipy/signal/model/neural_net/runs/*
+*.zip
