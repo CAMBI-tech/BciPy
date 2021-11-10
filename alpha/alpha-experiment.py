@@ -258,12 +258,14 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     )
 
     # The copy we care about for modeling
-    logger.info(data.min(), data.mean(), data.max())
+    logger.info(f"{data.min()=}, {data.mean()=}, {data.max()=}")
     z_transformed_target_window = z_scorer.transform(data)
     z_transformed_entire_data = z_scorer.transform(data, do_slice=False)
     # Copy of entire window for plotting
     logger.info(
-        z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max()
+        f"{z_transformed_target_window.min()=}, "
+        + f"{z_transformed_target_window.mean()=}, "
+        + f"{z_transformed_target_window.max()=}"
     )
 
     # NOTE - model expects (channels, trials, samples)
@@ -293,7 +295,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         ("Tangent Space, Logistic Regression, balanced", False, ts_logr),
     ]:
         n_folds = 10
-        logger.info("Run model class:", model_name)
+        logger.info(f"Run model class: {model_name}")
         report = fit(z_transformed_target_window, labels, n_folds, flatten_data, clf)
         report["name"] = model_name
         reports.append(report)
