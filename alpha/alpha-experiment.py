@@ -219,7 +219,6 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
                         response_start_s=default_response_start_s,
                         response_duration_s=response_duration_s,
                         sample_rate_hz=fs,
-                        z_score_per_trial=z_score_per_trial,
                     ),
                 ),
                 ("flatten", FunctionTransformer(flatten)),
@@ -231,7 +230,6 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
             "alpha__baseline_start_s": np.linspace(0.2, (2.5 / 2) - baseline_duration_s - 0.1, 10),
             # response can be anywhere in [stim + 150ms, end - 200ms]
             "alpha__response_start_s": np.linspace((2.5 / 2) + 0.15, 2.5 - 0.2 - response_duration_s, 10),
-            "alpha__z_score_per_trial": [True, False],
         }
 
         logger.warning("WARNING - leaking test data")
@@ -241,11 +239,9 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
         cv.fit(data, labels)
         baseline_start_s = cv.best_params_["alpha__baseline_start_s"]
         response_start_s = cv.best_params_["alpha__response_start_s"]
-        z_score_per_trial = cv.best_params_["alpha__z_score_per_trial"]
     else:
         baseline_start_s = default_baseline_start_s
         response_start_s = default_response_start_s
-        z_score_per_trial = z_score_per_trial
 
     with open(output_path / "window_params.txt", "w") as fh:
         print(f"{baseline_start_s=:.2f}s", file=fh)
@@ -266,7 +262,9 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     z_transformed_target_window = z_scorer.transform(data)
     z_transformed_entire_data = z_scorer.transform(data, do_slice=False)
     # Copy of entire window for plotting
-    logger.info(z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max())
+    logger.info(
+        z_transformed_target_window.min(), z_transformed_target_window.mean(), z_transformed_target_window.max()
+    )
 
     # NOTE - model expects (channels, trials, samples)
     make_plots(z_transformed_target_window, labels, output_path / "2.z_target_window.png")
