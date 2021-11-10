@@ -93,7 +93,7 @@ def main(input_path, output_path, parameters):
         data,
         labels,
         cv=n_folds,
-        n_jobs=1,
+        n_jobs=-1,
         return_train_score=True,
         scoring={
             "balanced_accuracy": make_scorer(balanced_accuracy_score),
