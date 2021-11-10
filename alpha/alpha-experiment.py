@@ -104,7 +104,7 @@ def load_data(data_folder: Path, parameters: dict):
         timing_info=t_i,
         eeg_data=data,
         fs=fs,
-        trials_per_inquiry=10,
+        trials_per_inquiry=parameters.get("stim_length"),
         offset=offset,
         channel_map=channel_map,
         trial_length=trial_length,

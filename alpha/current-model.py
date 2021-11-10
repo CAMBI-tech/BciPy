@@ -4,7 +4,6 @@ from itertools import cycle
 from pathlib import Path
 
 import numpy as np
-from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
@@ -66,8 +65,8 @@ def main(input_path, output_path, parameters):
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
     # channel_names = ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"]
-    # channel_map = [0, 0, 1, 0, 1, 1, 1, 0]
-    channel_map = analysis_channels(channels, type_amp)
+    # channel_map = analysis_channels(channels, type_amp)
+    channel_map = [0, 0, 1, 0, 1, 1, 1, 0]  # Same channels as alpha models are using
     model = make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=k_folds))
     data, labels = PcaRdaKdeModel.reshaper(
         trial_labels=t_t_i,
@@ -94,9 +93,12 @@ def main(input_path, output_path, parameters):
         data,
         labels,
         cv=n_folds,
-        n_jobs=-1,
+        n_jobs=1,
         return_train_score=True,
-        scoring={"balanced_accuracy": make_scorer(balanced_accuracy_score), "roc_auc": make_scorer(roc_auc_score)},
+        scoring={
+            "balanced_accuracy": make_scorer(balanced_accuracy_score),
+            "roc_auc": make_scorer(roc_auc_score, needs_proba=True),
+        },
     )
 
     report = {

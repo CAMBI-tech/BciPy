@@ -3,14 +3,20 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
+from bcipy.helpers.task import TrialReshaper
+from bcipy.signal.exceptions import SignalException
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.pca_rda_kde.cross_validation import (
+    cost_cross_validation_auc,
+    cross_validation,
+)
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import (
+    ChannelWisePrincipalComponentAnalysis,
+)
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
-from bcipy.signal.exceptions import SignalException
-from bcipy.helpers.task import TrialReshaper
+from sklearn.utils.multiclass import unique_labels
 
 
 class PcaRdaKdeModel(SignalModel):
@@ -65,6 +71,8 @@ class PcaRdaKdeModel(SignalModel):
         self.prior_class_0 = 1 - self.prior_class_1
         # self.prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
         # self.prior_class_0 = 1 - self.prior_class_1
+
+        self.classes_ = unique_labels(train_labels)
         self._ready_to_predict = True
         return self
 
@@ -118,7 +126,7 @@ class PcaRdaKdeModel(SignalModel):
         unnorm_posterior_class_1 = scores_class_1 * self.prior_class_1
         posterior_class_0 = unnorm_posterior_class_0 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
         posterior_class_1 = unnorm_posterior_class_1 / (unnorm_posterior_class_0 + unnorm_posterior_class_1)
-        return np.stack([posterior_class_0, posterior_class_1], 1)
+        return np.stack([posterior_class_0, posterior_class_1], -1)
 
     def save(self, path: Path):
         """Save model weights (e.g. after training) to `path`"""
