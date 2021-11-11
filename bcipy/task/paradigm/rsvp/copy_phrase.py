@@ -365,7 +365,7 @@ class RSVPCopyPhraseTask(Task):
                 data = self.new_data_record(stim_times,
                                             target_letter,
                                             current_text=self.spelled_text,
-                                            next_state=decision.spelled_text,
+                                            decision=decision,
                                             evidence_types=evidence_types)
                 self.update_session_data(data,
                                          save=True,
@@ -414,7 +414,9 @@ class RSVPCopyPhraseTask(Task):
 
         decision_made, new_sti = self.copy_phrase_task.decide()
         spelled_text = self.copy_phrase_task.decision_maker.displayed_state
-        selection = self.copy_phrase_task.decision_maker.last_selection
+        selection = ''
+        if decision_made:
+            selection = self.copy_phrase_task.decision_maker.last_selection
 
         return Decision(decision_made, selection, spelled_text, new_sti)
 
@@ -525,7 +527,7 @@ class RSVPCopyPhraseTask(Task):
                         stim_times: List[List],
                         target_letter: str,
                         current_text: str,
-                        next_state: str,
+                        decision: Decision,
                         evidence_types: List[EvidenceType] = []) -> Inquiry:
         """Construct a new inquiry data record.
 
@@ -534,7 +536,7 @@ class RSVPCopyPhraseTask(Task):
         - stim_times : list of [stim, clock_time] pairs returned from display.
         - target_letter : stim the user is currently attempting to spell.
         - current_text : spelled text before the inquiry
-        - next_state : spelled text after consulting the decision maker
+        - decision : decision made by the decision maker
         - evidence_types : evidence provided to the decision-maker during the
         current inquiry.
 
@@ -552,7 +554,8 @@ class RSVPCopyPhraseTask(Task):
                        target_letter=target_letter,
                        current_text=current_text,
                        target_text=self.copy_phrase,
-                       next_display_state=next_state)
+                       selection=decision.selection,
+                       next_display_state=decision.spelled_text)
         data.precision = self.evidence_precision
 
         if not self.fake:

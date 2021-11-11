@@ -80,6 +80,7 @@ class Inquiry:
                  target_letter: str = None,
                  current_text: str = None,
                  target_text: str = None,
+                 selection: str = None,
                  next_display_state: str = None,
                  likelihood: List[float] = None):
         super().__init__()
@@ -90,6 +91,7 @@ class Inquiry:
         self.target_letter = target_letter
         self.current_text = current_text
         self.target_text = target_text
+        self.selection = selection
         self.next_display_state = next_display_state
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
@@ -123,15 +125,18 @@ class Inquiry:
         """
         # partition into evidence data and other data.
 
-        suffix = EVIDENCE_SUFFIX
         evidences = {
             EvidenceType.deserialized(name): value
-            for name, value in data.items() if name.endswith(suffix)
+            for name, value in data.items() if name.endswith(EVIDENCE_SUFFIX)
         }
 
+        computed = [
+            attr for attr in dir(cls)
+            if isinstance(getattr(cls, attr), property)
+        ]
         non_evidence_data = {
             name: value
-            for name, value in data.items() if not name.endswith(suffix)
+            for name, value in data.items() if name not in computed
         }
         inquiry = cls(**non_evidence_data)
         if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
@@ -150,6 +155,7 @@ class Inquiry:
             'target_letter': self.target_letter,
             'current_text': self.current_text,
             'target_text': self.target_text,
+            'selection': self.selection,
             'next_display_state': self.next_display_state
         }
 

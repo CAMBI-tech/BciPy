@@ -22,6 +22,7 @@ def sample_stim_seq(include_evidence: bool = False):
         target_letter="H",
         current_text="",
         target_text="HELLO_WORLD",
+        selection="H",
         next_display_state="H")
 
     if include_evidence:
@@ -75,7 +76,7 @@ class TestSessionData(unittest.TestCase):
 
         expected_keys = [
             'stimuli', 'timing', 'triggers', 'target_info', 'target_letter',
-            'current_text', 'target_text', 'next_display_state'
+            'current_text', 'target_text', 'selection', 'next_display_state'
         ]
 
         for key in expected_keys:
