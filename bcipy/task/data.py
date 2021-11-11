@@ -6,6 +6,21 @@ from typing import Any, Dict, List, Optional
 EVIDENCE_SUFFIX = "_evidence"
 
 
+def rounded(values: List[float], precision: int) -> List[float]:
+    """Round the list of values to the given precision. Values are unchanged
+    if precision is None.
+
+    Parameters
+    ----------
+        values - values to round
+        precision - number of decimal places or None of the values should not
+            be modified
+    """
+    if precision:
+        return [round(value, precision) for value in values]
+    return values
+
+
 class EvidenceType(Enum):
     """Enum of the supported evidence types used in the various spelling tasks."""
     LM = 'LM'  # Language Model
@@ -79,6 +94,8 @@ class Inquiry:
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
+        # Precision used for serialization of evidence values.
+        self.precision = None
 
     @property
     def lm_evidence(self):
@@ -137,10 +154,10 @@ class Inquiry:
         }
 
         for evidence_type, evidence in self.evidences.items():
-            data[evidence_type.serialized] = evidence
+            data[evidence_type.serialized] = rounded(evidence, self.precision)
 
         if self.likelihood:
-            data['likelihood'] = self.likelihood
+            data['likelihood'] = rounded(self.likelihood, self.precision)
         return data
 
     def stim_evidence(self,
@@ -161,9 +178,10 @@ class Inquiry:
             'stimuli': self.stimuli,
         }
         for evidence_type, evidence in self.evidences.items():
-            data[evidence_type.serialized] = dict(zip(alphabet, evidence))
+            data[evidence_type.serialized] = dict(
+                zip(alphabet, rounded(evidence, self.precision)))
 
-        data['likelihood'] = likelihood
+        data['likelihood'] = rounded(likelihood, self.precision)
         data['most_likely'] = dict(
             Counter(likelihood).most_common(n_most_likely))
         return data
@@ -249,7 +267,7 @@ class Session:
             'task': self.task,
             'mode': self.mode,
             'series': series_dict,
-            'total_time_spent': self.total_time_spent,
+            'total_time_spent': round(self.total_time_spent, 2),
             'total_number_series': self.total_number_series
         }
 

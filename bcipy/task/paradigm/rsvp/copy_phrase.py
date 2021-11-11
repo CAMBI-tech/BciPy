@@ -137,6 +137,7 @@ class RSVPCopyPhraseTask(Task):
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
+        self.evidence_precision = 5
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -552,6 +553,7 @@ class RSVPCopyPhraseTask(Task):
                        current_text=current_text,
                        target_text=self.copy_phrase,
                        next_display_state=next_state)
+        data.precision = self.evidence_precision
 
         if not self.fake:
             latest_evidence = self.copy_phrase_task.conjugator.latest_evidence
