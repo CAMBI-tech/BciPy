@@ -597,6 +597,7 @@ class TestTriggerHandler(unittest.TestCase):
         self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
 
     def tearDown(self):
+        self.handler.close()
         del self.handler
         if os.path.exists(self.file):
             os.remove(self.file)
@@ -623,12 +624,27 @@ class TestTriggerHandler(unittest.TestCase):
         self.handler.close()
         self.assertEqual(self.handler.triggers, [])
 
+
+class TestTriggerHandlerWrite(unittest.TestCase):
+    def setUp(self):
+        self.path_name = 'test/'
+        self.file_name = 'test'
+        self.flush = FlushSensitivity.END
+        self.file = f'{self.file_name}.txt'
+        self.handler2 = TriggerHandler(self.path_name, self.file_name, self.flush)
+
+    def tearDown(self):
+        self.handler2.close()
+        del self.handler2
+        if os.path.exists(self.file):
+            os.remove(self.file)
+
     def test_write_triggers(self):
         inquiry_triggers = [Trigger('A', TriggerType.NONTARGET, 1)]
-        response = self.handler.add_triggers(inquiry_triggers)
+        response = self.handler2.add_triggers(inquiry_triggers)
         self.assertNotEqual(response, [])
-        self.assertEqual(self.handler.triggers, inquiry_triggers)
-        self.handler.write()
+        self.assertEqual(self.handler2.triggers, inquiry_triggers)
+        self.handler2.write()
 
         with open(self.file, 'rt') as txt:
             contents = txt.read()
