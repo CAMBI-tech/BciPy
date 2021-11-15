@@ -130,13 +130,10 @@ class Inquiry:
             for name, value in data.items() if name.endswith(EVIDENCE_SUFFIX)
         }
 
-        computed = [
-            attr for attr in dir(cls)
-            if isinstance(getattr(cls, attr), property)
-        ]
         non_evidence_data = {
             name: value
-            for name, value in data.items() if name not in computed
+            for name, value in data.items()
+            if not name.endswith(EVIDENCE_SUFFIX)
         }
         inquiry = cls(**non_evidence_data)
         if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
