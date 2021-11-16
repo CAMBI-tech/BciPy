@@ -290,11 +290,12 @@ class Session:
 
         if data['series']:
             session.series.clear()
-            for series_counter in sorted(data['series'].keys()):
+
+            for series_key in sorted(data['series'].keys(), key=int):
                 session.series.append([])
-                for sequence_counter in sorted(data['series'][series_counter]):
-                    sequence_dict = data['series'][series_counter][
-                        sequence_counter]
-                    session.add_sequence(Inquiry.from_dict(sequence_dict))
+
+                for inquiry_key in sorted(data['series'][series_key], key=int):
+                    inquiry_dict = data['series'][series_key][inquiry_key]
+                    session.add_sequence(Inquiry.from_dict(inquiry_dict))
 
         return session
