@@ -6,6 +6,16 @@ from typing import Any, Dict, List, Optional
 EVIDENCE_SUFFIX = "_evidence"
 
 
+def rounded(values: List[float], precision: int) -> List[float]:
+    """Round the list of values to the given precision.
+
+    Parameters
+    ----------
+        values - values to round
+    """
+    return [round(value, precision) for value in values]
+
+
 class EvidenceType(Enum):
     """Enum of the supported evidence types used in the various spelling tasks."""
     LM = 'LM'  # Language Model
@@ -65,6 +75,7 @@ class Inquiry:
                  target_letter: str = None,
                  current_text: str = None,
                  target_text: str = None,
+                 selection: str = None,
                  next_display_state: str = None,
                  likelihood: List[float] = None):
         super().__init__()
@@ -75,10 +86,13 @@ class Inquiry:
         self.target_letter = target_letter
         self.current_text = current_text
         self.target_text = target_text
+        self.selection = selection
         self.next_display_state = next_display_state
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
+        # Precision used for serialization of evidence values.
+        self.precision = None
 
     @property
     def lm_evidence(self):
@@ -106,15 +120,15 @@ class Inquiry:
         """
         # partition into evidence data and other data.
 
-        suffix = EVIDENCE_SUFFIX
         evidences = {
             EvidenceType.deserialized(name): value
-            for name, value in data.items() if name.endswith(suffix)
+            for name, value in data.items() if name.endswith(EVIDENCE_SUFFIX)
         }
 
         non_evidence_data = {
             name: value
-            for name, value in data.items() if not name.endswith(suffix)
+            for name, value in data.items()
+            if not name.endswith(EVIDENCE_SUFFIX)
         }
         inquiry = cls(**non_evidence_data)
         if len(data['stimuli']) == 1 and isinstance(data['stimuli'][0], list):
@@ -133,14 +147,15 @@ class Inquiry:
             'target_letter': self.target_letter,
             'current_text': self.current_text,
             'target_text': self.target_text,
+            'selection': self.selection,
             'next_display_state': self.next_display_state
         }
 
         for evidence_type, evidence in self.evidences.items():
-            data[evidence_type.serialized] = evidence
+            data[evidence_type.serialized] = self.format(evidence)
 
         if self.likelihood:
-            data['likelihood'] = self.likelihood
+            data['likelihood'] = self.format(self.likelihood)
         return data
 
     def stim_evidence(self,
@@ -156,17 +171,28 @@ class Inquiry:
             alphabet - list of stim in the same order as the evidences.
             n_most_likely - number of most likely elements to include
         """
-        likelihood = dict(zip(alphabet, self.likelihood))
+        likelihood = dict(zip(alphabet, self.format(self.likelihood)))
         data: Dict[str, Any] = {
             'stimuli': self.stimuli,
         }
         for evidence_type, evidence in self.evidences.items():
-            data[evidence_type.serialized] = dict(zip(alphabet, evidence))
-
+            data[evidence_type.serialized] = dict(
+                zip(alphabet, self.format(evidence)))
         data['likelihood'] = likelihood
         data['most_likely'] = dict(
             Counter(likelihood).most_common(n_most_likely))
         return data
+
+    def format(self, evidence: List[float]) -> List[float]:
+        """Format the evidence for output.
+
+        Parameters
+        ----------
+            evidence - list of evidence values
+        """
+        if self.precision:
+            return rounded(evidence, self.precision)
+        return evidence
 
 
 class Session:
@@ -182,6 +208,7 @@ class Session:
         self.mode = mode
         self.series: List[List[Inquiry]] = [[]]
         self.total_time_spent = 0
+        self.time_spent_precision = 2
 
     @property
     def total_number_series(self) -> int:
@@ -249,7 +276,8 @@ class Session:
             'task': self.task,
             'mode': self.mode,
             'series': series_dict,
-            'total_time_spent': self.total_time_spent,
+            'total_time_spent': round(self.total_time_spent,
+                                      self.time_spent_precision),
             'total_number_series': self.total_number_series
         }
 
@@ -269,11 +297,12 @@ class Session:
 
         if data['series']:
             session.series.clear()
-            for series_counter in sorted(data['series'].keys()):
+
+            for series_key in sorted(data['series'].keys(), key=int):
                 session.series.append([])
-                for sequence_counter in sorted(data['series'][series_counter]):
-                    sequence_dict = data['series'][series_counter][
-                        sequence_counter]
-                    session.add_sequence(Inquiry.from_dict(sequence_dict))
+
+                for inquiry_key in sorted(data['series'][series_key], key=int):
+                    inquiry_dict = data['series'][series_key][inquiry_key]
+                    session.add_sequence(Inquiry.from_dict(inquiry_dict))
 
         return session

@@ -22,6 +22,7 @@ def sample_stim_seq(include_evidence: bool = False):
         target_letter="H",
         current_text="",
         target_text="HELLO_WORLD",
+        selection="H",
         next_display_state="H")
 
     if include_evidence:
@@ -64,14 +65,6 @@ def sample_stim_seq(include_evidence: bool = False):
 class TestSessionData(unittest.TestCase):
     """Tests for session data."""
 
-    def setUp(self):
-        """Override; set up the needed path for load functions."""
-        pass
-
-    def tearDown(self):
-        """Override"""
-        pass
-
     def test_stim_sequence(self):
         """Test stim sequence can be created and serialized to dict."""
         stim_seq = sample_stim_seq()
@@ -83,7 +76,7 @@ class TestSessionData(unittest.TestCase):
 
         expected_keys = [
             'stimuli', 'timing', 'triggers', 'target_info', 'target_letter',
-            'current_text', 'target_text', 'next_display_state'
+            'current_text', 'target_text', 'selection', 'next_display_state'
         ]
 
         for key in expected_keys:
@@ -98,7 +91,8 @@ class TestSessionData(unittest.TestCase):
         stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
         self.assertTrue('lm_evidence' in serialized.keys())
-        self.assertEqual(serialized['lm_evidence'], stim_seq.evidences[EvidenceType.LM])
+        self.assertEqual(serialized['lm_evidence'],
+                         stim_seq.evidences[EvidenceType.LM])
 
         deserialized = Inquiry.from_dict(serialized)
 
@@ -111,7 +105,8 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(stim_seq.target_text, deserialized.target_text)
         self.assertEqual(stim_seq.next_display_state,
                          deserialized.next_display_state)
-        self.assertEqual(stim_seq.evidences[EvidenceType.LM], deserialized.evidences[EvidenceType.LM])
+        self.assertEqual(stim_seq.evidences[EvidenceType.LM],
+                         deserialized.evidences[EvidenceType.LM])
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""
@@ -125,6 +120,22 @@ class TestSessionData(unittest.TestCase):
         evidence = stim_seq.stim_evidence(alp, n_most_likely=5)
         self.assertEqual(len(evidence['most_likely']), 5)
         self.assertAlmostEqual(evidence['most_likely']['<'], 0.05, places=2)
+
+    def test_evidence_precision(self):
+        """Test that evidence can be serialized with a given precision."""
+
+        stim_seq = sample_stim_seq(include_evidence=True)
+        stim_seq.precision = 3
+        serialized = stim_seq.as_dict()
+        self.assertEqual(serialized['lm_evidence'][0], 0.035)
+        self.assertEqual(serialized['eeg_evidence'][0], 1.077)
+        self.assertEqual(serialized['likelihood'][0], 0.038)
+
+        stim_seq.precision = 4
+        serialized = stim_seq.as_dict()
+        self.assertEqual(serialized['lm_evidence'][0], 0.0352)
+        self.assertEqual(serialized['eeg_evidence'][0], 1.0772)
+        self.assertEqual(serialized['likelihood'][0], 0.0381)
 
     def test_empty_session(self):
         """Test initial session creation"""
