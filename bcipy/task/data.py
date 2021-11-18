@@ -7,18 +7,13 @@ EVIDENCE_SUFFIX = "_evidence"
 
 
 def rounded(values: List[float], precision: int) -> List[float]:
-    """Round the list of values to the given precision. Values are unchanged
-    if precision is None.
+    """Round the list of values to the given precision.
 
     Parameters
     ----------
         values - values to round
-        precision - number of decimal places or None of the values should not
-            be modified
     """
-    if precision:
-        return [round(value, precision) for value in values]
-    return values
+    return [round(value, precision) for value in values]
 
 
 class EvidenceType(Enum):
@@ -157,10 +152,10 @@ class Inquiry:
         }
 
         for evidence_type, evidence in self.evidences.items():
-            data[evidence_type.serialized] = rounded(evidence, self.precision)
+            data[evidence_type.serialized] = self.format(evidence)
 
         if self.likelihood:
-            data['likelihood'] = rounded(self.likelihood, self.precision)
+            data['likelihood'] = self.format(self.likelihood)
         return data
 
     def stim_evidence(self,
@@ -176,18 +171,28 @@ class Inquiry:
             alphabet - list of stim in the same order as the evidences.
             n_most_likely - number of most likely elements to include
         """
-        likelihood = dict(zip(alphabet, self.likelihood))
+        likelihood = dict(zip(alphabet, self.format(self.likelihood)))
         data: Dict[str, Any] = {
             'stimuli': self.stimuli,
         }
         for evidence_type, evidence in self.evidences.items():
             data[evidence_type.serialized] = dict(
-                zip(alphabet, rounded(evidence, self.precision)))
-
-        data['likelihood'] = rounded(likelihood, self.precision)
+                zip(alphabet, self.format(evidence)))
+        data['likelihood'] = likelihood
         data['most_likely'] = dict(
             Counter(likelihood).most_common(n_most_likely))
         return data
+
+    def format(self, evidence: List[float]) -> List[float]:
+        """Format the evidence for output.
+
+        Parameters
+        ----------
+            evidence - list of evidence values
+        """
+        if self.precision:
+            return rounded(evidence, self.precision)
+        return evidence
 
 
 class Session:
@@ -203,6 +208,7 @@ class Session:
         self.mode = mode
         self.series: List[List[Inquiry]] = [[]]
         self.total_time_spent = 0
+        self.time_spent_precision = 2
 
     @property
     def total_number_series(self) -> int:
@@ -270,7 +276,8 @@ class Session:
             'task': self.task,
             'mode': self.mode,
             'series': series_dict,
-            'total_time_spent': round(self.total_time_spent, 2),
+            'total_time_spent': round(self.total_time_spent,
+                                      self.time_spent_precision),
             'total_number_series': self.total_number_series
         }
 
