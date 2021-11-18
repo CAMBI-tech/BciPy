@@ -5,12 +5,13 @@ import time
 import unittest
 from pathlib import Path
 
+import pytest
+
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
                                        preconfigured_device)
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-
 from bcipy.helpers.clock import Clock
 
 DEVICE_NAME = 'DSI'
@@ -123,6 +124,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
                                start,
                                delta=0.002)
 
+    @pytest.mark.slow
     def test_event_offset(self):
         """Test the offset in seconds of a given event relative to the first
         sample time."""
