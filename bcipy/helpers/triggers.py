@@ -641,7 +641,6 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     return corrected
 
 
-
 class TriggerType(Enum):
     """
     Enum for the primary types of Triggers.
@@ -727,10 +726,23 @@ class TriggerHandler:
 
         self.triggers = []
 
-    def load(self,
-             path: str,
-             offset: Optional[float]=None,
-             exclusion: Optional[List[TriggerType]]=None) -> List[Trigger]:
+    @staticmethod
+    def read_text_file(path: str) -> List[str]:
+        if not path.endswith('.txt') or not os.path.exists(path):
+            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
+                                    "\nPlease rerun program.")
+
+        triggers_list = []
+        with open(path) as raw_txt:
+            for line in raw_txt:
+                line_split = line.split()
+                triggers_list.append(line_split)
+        return triggers_list
+
+    @staticmethod
+    def load(path: str,
+             offset: Optional[float] = None,
+             exclusion: Optional[List[TriggerType]] = None) -> List[Trigger]:
         """
         Loads a list of triggers from a .txt of triggers.
 
@@ -758,15 +770,7 @@ class TriggerHandler:
         """
 
         # Checking for file with given path, with or without .txt
-        if not path.endswith('.txt') or not os.path.exists(path):
-            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
-                                    "\nPlease rerun program.")
-
-        txt_list = []
-        with open(path) as raw_txt:
-            for line in raw_txt:
-                line_split = line.split()
-                txt_list.append(line_split)
+        triggers_list = TriggerHandler.read_text_file(path)
 
         if offset:
             # If there is exclusion but no offset,
@@ -775,23 +779,25 @@ class TriggerHandler:
             if isinstance(offset, list) and exclusion is None:
                 exclusion = offset
             else:
-                for item in txt_list:
+                for item in triggers_list:
                     time_float = float(item[2]) + offset
                     item[2] = str(time_float)
 
         if exclusion:
             for type in exclusion:
-                for item in txt_list:
-                    txt_list[:] = [item for item in txt_list if not type.value == item[1]]
+                for item in triggers_list:  # possible location of refactor
+                    triggers_list[:] = [item for item in triggers_list if not type.value == item[1]]
 
         new_trigger_list = []
-        for e in txt_list:
-            new_trigger_list.append(Trigger(e[0],
-                                    TriggerType(e[1]),
-                                    str(e[2])))
+        for trigger in triggers_list:
+            new_trigger_list.append(
+                Trigger(trigger[0],
+                        TriggerType(trigger[1]),
+                        str(trigger[2])
+                        )
+            )
 
         return new_trigger_list
-
 
     def add_triggers(self, triggers: List[Trigger]) -> List[Trigger]:
         """
