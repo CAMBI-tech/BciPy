@@ -7,6 +7,8 @@ from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
 
+from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
+
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
 from bcipy.task.task_registry import TaskType
@@ -53,6 +55,10 @@ def make_task(display_window, daq, task, parameters, file_save,
     if task is TaskType.RSVP_TIMING_VERIFICATION_CALIBRATION:
         return RSVPTimingVerificationCalibration(display_window, daq,
                                                  parameters, file_save)
+    if task is TaskType.MATRIX_CALIBRATION:
+        return MatrixCalibrationTask(
+            display_window, daq, parameters, file_save
+        )
     raise TaskRegistryException(
         'The provided experiment type is not registered.')
 

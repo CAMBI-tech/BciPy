@@ -7,7 +7,7 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback
+from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.exceptions import BciPyCoreException
 
@@ -62,7 +62,8 @@ class MatrixDisplay(Display):
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
-            symbol_set=None):
+            symbol_set = None
+            ):
 
         self.window = window
         self.window_size = self.window.size  # [w, h]
@@ -136,8 +137,12 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
+        timing = []
+        if self.first_run:
+            timing = self._trigger_pulse(timing)
+
         if self.scp:
-            return self.animate_scp()
+            return timing.extend(self.animate_scp())
 
         raise BciPyCoreException('Only SCP Matrix is available.')
 
@@ -277,3 +282,26 @@ class MatrixDisplay(Display):
                 color_list(list[string]): list of colors for each
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
+    
+    def _trigger_pulse(self, timing: List[str]) -> List[str]:
+        """Trigger Pulse.
+
+        This method uses a calibration trigger to determine any functional
+            offsets needed for operation with this display. By setting the first_stim_time and searching for the
+            same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
+            beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
+            correction may be required.
+        """
+        calibration_time = _calibration_trigger(
+            self.experiment_clock,
+            trigger_type=self.trigger_type,
+            display=self.window)
+
+        timing.append(calibration_time)
+
+        # set the first stim time if not present and first_run to False
+        if not self.first_stim_time:
+            self.first_stim_time = calibration_time[-1]
+            self.first_run = False
+
+        return timing

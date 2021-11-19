@@ -249,7 +249,7 @@ def calibration_inquiry_generator(
         idx = np.random.permutation(np.array(list(range(len_alp))))
         rand_smp = (idx[0:stim_length])
 
-        # define the target and fixation that come before an inquiry
+        # # define the target and fixation that come before an inquiry
         if not is_txt:
             sample = [
                 alp[rand_smp[0]],
