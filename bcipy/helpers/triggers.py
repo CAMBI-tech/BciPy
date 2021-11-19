@@ -689,8 +689,6 @@ class FlushSensitivity(Enum):
 
 class TriggerHandler:
 
-    triggers = []
-
     def __init__(self,
                  path: str,
                  file_name: str,
@@ -698,6 +696,7 @@ class TriggerHandler:
         self.path = path
         self.file_name = f'{file_name}.txt'
         self.flush_sens = flush_sens
+        self.triggers = []
 
         if os.path.exists(self.file_name):
             raise Exception(f"[{self.file_name}] already exists, any writing "
@@ -764,7 +763,7 @@ class TriggerHandler:
                                     "\nPlease rerun program.")
 
         txt_list = []
-        with open(path_checked) as raw_txt:
+        with open(path) as raw_txt:
             for line in raw_txt:
                 line_split = line.split()
                 txt_list.append(line_split)
