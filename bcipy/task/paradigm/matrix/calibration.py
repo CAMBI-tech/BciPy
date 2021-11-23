@@ -15,7 +15,7 @@ from bcipy.task import Task
 class MatrixCalibrationTask(Task):
     """Matrix Calibration Task.
 
-    Calibration task performs an RSVP stimulus inquiry
+    Calibration task performs an Matrix stimulus inquiry
         to elicit an ERP. Parameters will change how many stimuli
         and for how long they present. Parameters also change
         color and text / image inputs.
@@ -63,13 +63,9 @@ class MatrixCalibrationTask(Task):
         self.stim_length = parameters['stim_length']
         self.stim_order = StimuliOrder(parameters['stim_order'])
 
-        self.timing = [parameters['time_target'],
-                       parameters['time_cross'],
-                       parameters['time_flash']]
+        self.timing = [parameters['time_flash']]
 
-        self.color = [parameters['target_color'],
-                      parameters['fixation_color'],
-                      parameters['stim_color']]
+        self.color = [parameters['stim_color']]
 
         self.task_info_color = parameters['task_color']
 
@@ -94,17 +90,13 @@ class MatrixCalibrationTask(Task):
                                              stim_length=self.stim_length,
                                              stim_order=self.stim_order,
                                              timing=self.timing,
-                                             is_txt=self.matrix.is_txt_stim, # TODO get rid of is_txt_stim throughout; we only permit text in matrix!
                                              color=self.color)
-
-        # TODO modify to generate a list of matrix inquiries
-        print(samples, timing, color)
 
         return (samples, timing, color)
 
     def execute(self):
 
-        self.logger.debug(f'Starting {self.name()}!')
+        self.logger.info(f'Starting {self.name()}!')
         run = True
 
         # Check user input to make sure we should be going
@@ -117,12 +109,14 @@ class MatrixCalibrationTask(Task):
         while run:
 
             # Get inquiry information given stimuli parameters
-            (ele_sti, timing_sti, color_sti) = self.generate_stimuli()
+            (stimuli_labels, stimuli_timing, stimuli_colors) = self.generate_stimuli()
+
+            assert len(stimuli_labels) == len(stimuli_timing)
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
-            for idx_o in range(len(task_text)):
+            for i in range(len(task_text)):
 
                 # check user input to make sure we should be going
                 if not get_user_input(self.matrix, self.wait_screen_message,
@@ -131,33 +125,35 @@ class MatrixCalibrationTask(Task):
 
                 # Take a break every number of trials defined
                 if self.enable_breaks:
-                    pause_calibration(self.window, self.matrix, idx_o,
+                    pause_calibration(self.window, self.matrix, i,
                                       self.parameters)
 
                 # update task state
                 self.matrix.update_task_state(
-                    text=task_text[idx_o],
-                    color_list=task_color[idx_o])
+                    text=task_text[i],
+                    color_list=task_color[i])
 
                 # Draw and flip screen
                 self.matrix.draw_static()
                 self.window.flip()
 
                 self.matrix.schedule_to(
-                    ele_sti[idx_o],
-                    timing_sti[idx_o],
-                    color_sti[idx_o])
+                    stimuli_labels[i],
+                    stimuli_timing[i],
+                    stimuli_colors[i])
                 # Schedule a inquiry
 
                 # Wait for a time
                 core.wait(self.buffer_val)
 
+                timing, target = self.matrix.prompt_target()
+
                 # Do the inquiry
-                timing = self.matrix.do_inquiry()
+                timing += self.matrix.do_inquiry()
 
                 # Write triggers for the inquiry
                 _write_triggers_from_inquiry_calibration(
-                    timing, self.trigger_file)
+                    timing, self.trigger_file, target=target)
 
                 # Wait for a time
                 core.wait(self.buffer_val)

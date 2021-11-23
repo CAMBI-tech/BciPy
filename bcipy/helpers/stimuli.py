@@ -278,8 +278,7 @@ def matrix_calibration_inquiry_generator(
         color: List[str] = ['green', 'red', 'white'],
         stim_number: int = 10,
         stim_length: int = 10,
-        stim_order: StimuliOrder = StimuliOrder.RANDOM,
-        is_txt: bool = True) -> InquirySchedule:
+        stim_order: StimuliOrder = StimuliOrder.RANDOM) -> InquirySchedule:
     """Random Matrix Calibration Inquiry Generator.
 
     Generates random MatrixKeyboard inquiries.
@@ -292,7 +291,6 @@ def matrix_calibration_inquiry_generator(
             stim_number(int): number of random stimuli to be created
             stim_length(int): number of trials in a inquiry
             stim_order(StimuliOrder): ordering of stimuli in the inquiry
-            is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
         Return:
             schedule_inq(tuple(
                 samples[list[list[str]]]: list of inquiries
@@ -305,7 +303,7 @@ def matrix_calibration_inquiry_generator(
     samples, times, colors = [], [], []
     for _ in range(stim_number):
         idx = np.random.permutation(np.array(list(range(len_alp))))
-        rand_smp = (idx[0:stim_length])
+        rand_smp = (idx[0:stim_length - 1])
 
         sample = [alp[rand_smp[0]]]
 

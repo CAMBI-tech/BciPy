@@ -119,9 +119,11 @@ def _calibration_trigger(experiment_clock: Clock,
     return trigger_callback.timing
 
 
+
 def _write_triggers_from_inquiry_calibration(array: list,
                                              trigger_file: TextIO,
-                                             offset: bool = False):
+                                             offset: bool = False,
+                                             target=False):
     """Write triggers from calibration.
 
     Helper Function to write trigger data to provided trigger_file. It assigns
@@ -146,23 +148,34 @@ def _write_triggers_from_inquiry_calibration(array: list,
             # extract the letter and timing from the array
             (letter, time) = i
 
-            # determine what the trigger are
             if letter == 'calibration_trigger':
-                targetness = 'calib'
-                target_letter = letter
-            else:
-                if x == 0:
-                    targetness = 'first_pres_target'
+                    targetness = 'calib'
                     target_letter = letter
-                elif x == 1:
-                    targetness = 'fixation'
-                elif x > 1 and target_letter == letter:
-                    targetness = 'target'
+            else:
+
+                # if no target provided assume it is an RSVP inquiry
+                if not target:
+                    if x == 0:
+                        targetness = 'first_pres_target'
+                        target_letter = letter
+                    elif x == 1:
+                        targetness = 'fixation'
+                    elif x > 1 and target_letter == letter:
+                        targetness = 'target'
+                    else:
+                        targetness = 'nontarget'
+
+                    x += 1
                 else:
-                    targetness = 'nontarget'
-
-                x += 1
-
+                    if x == 0:
+                        targetness = 'first_pres_target'
+                    elif x > 0 and letter == target:
+                        targetness = 'target'
+                    else:
+                        targetness = 'nontarget'
+                    
+                    x += 1
+            
             # write to the trigger_file
             trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
 
