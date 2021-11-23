@@ -272,6 +272,57 @@ def calibration_inquiry_generator(
 
     return InquirySchedule(samples, times, colors)
 
+def matrix_calibration_inquiry_generator(
+        alp: List[str],
+        timing: List[float] = [0.5, 1, 0.2],
+        color: List[str] = ['green', 'red', 'white'],
+        stim_number: int = 10,
+        stim_length: int = 10,
+        stim_order: StimuliOrder = StimuliOrder.RANDOM,
+        is_txt: bool = True) -> InquirySchedule:
+    """Random Matrix Calibration Inquiry Generator.
+
+    Generates random MatrixKeyboard inquiries.
+        Args:
+            alp(list[str]): stimuli
+            timing(list[float]): Task specific timing for generator.
+                [target, fixation, stimuli]
+            color(list[str]): Task specific color for generator
+                [target, fixation, stimuli]
+            stim_number(int): number of random stimuli to be created
+            stim_length(int): number of trials in a inquiry
+            stim_order(StimuliOrder): ordering of stimuli in the inquiry
+            is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
+        Return:
+            schedule_inq(tuple(
+                samples[list[list[str]]]: list of inquiries
+                timing(list[list[float]]): list of timings
+                color(list(list[str])): list of colors)): scheduled inquiries
+    """
+
+    len_alp = len(alp)
+
+    samples, times, colors = [], [], []
+    for _ in range(stim_number):
+        idx = np.random.permutation(np.array(list(range(len_alp))))
+        rand_smp = (idx[0:stim_length])
+
+        sample = [alp[rand_smp[0]]]
+
+        # generate the samples using the permutated random indexes
+        rand_smp = np.random.permutation(rand_smp)
+        if stim_order == StimuliOrder.ALPHABETICAL:
+            inquiry = alphabetize([alp[i] for i in rand_smp])
+        else:
+            inquiry = [alp[i] for i in rand_smp]
+        sample.extend(inquiry)
+        samples.append(sample)
+        times.append([timing[i] for i in range(len(timing) - 1)] +
+                     [timing[-1]] * stim_length)
+        colors.append([color[i] for i in range(len(color) - 1)] +
+                      [color[-1]] * stim_length)
+
+    return InquirySchedule(samples, times, colors)
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.

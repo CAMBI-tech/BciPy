@@ -3,7 +3,7 @@ from psychopy import core
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
+from bcipy.helpers.stimuli import (StimuliOrder, matrix_calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
@@ -89,7 +89,7 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        samples, timing, color = calibration_inquiry_generator(self.alp,
+        samples, timing, color = matrix_calibration_inquiry_generator(self.alp,
                                              stim_number=self.stim_number,
                                              stim_length=self.stim_length,
                                              stim_order=self.stim_order,
@@ -204,10 +204,9 @@ def init_calibration_display_task(
         info_font=[parameters['info_font']],
         info_text=[parameters['info_text']],
     )
-    stimuli = StimuliProperties(stim_font=parameters['stim_font'],
-                                stim_pos=(parameters['stim_pos_x'],
-                                          parameters['stim_pos_y']),
-                                stim_height=parameters['stim_height'],
+    stimuli = StimuliProperties(stim_font='Arial',
+                                stim_pos=(-0.6, 0.4),
+                                stim_height=0.1,
                                 stim_inquiry=[''] * parameters['stim_length'],
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
