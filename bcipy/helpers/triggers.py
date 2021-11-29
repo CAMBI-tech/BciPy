@@ -785,17 +785,19 @@ class TriggerHandler:
 
         if exclusion:
             for type in exclusion:
-                for item in triggers_list:  # possible location of refactor
-                    triggers_list[:] = [item for item in triggers_list if not type.value == item[1]]
+                triggers_list[:] = [item for item in triggers_list if not type.value == item[1]]
 
         new_trigger_list = []
         for trigger in triggers_list:
-            new_trigger_list.append(
-                Trigger(trigger[0],
-                        TriggerType(trigger[1]),
-                        str(trigger[2])
-                        )
-            )
+            try:
+                new_trigger_list.append(
+                    Trigger(trigger[0],
+                            TriggerType(trigger[1]),
+                            str(trigger[2])
+                            )
+                )
+            except Exception as e:
+                raise BciPyCoreException(f'{trigger} read from {path} is not able to be cast')
 
         return new_trigger_list
 

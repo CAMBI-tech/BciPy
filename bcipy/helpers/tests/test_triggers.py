@@ -633,9 +633,6 @@ class TestTriggerHandler(unittest.TestCase):
 
     def test_load_returns_list_of_triggers(self):
         txt_list = [['A', 'nontarget', '1']]
-        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
-
-        response = self.handler.load('test_path_not_real')
         expected = [
             Trigger(
                 txt_list[0][0],
@@ -643,38 +640,63 @@ class TestTriggerHandler(unittest.TestCase):
                 txt_list[0][2]
             )
         ]
+
+        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
+
+        response = self.handler.load('test_path_not_real')
         self.assertEqual(response[0].label, expected[0].label)
         self.assertEqual(response[0].type, expected[0].type)
         self.assertEqual(response[0].time, expected[0].time)
 
     def test_load_applies_offset(self):
         txt_list = [['A', 'nontarget', '1']]
-        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
         offset = 1
-        response = self.handler.load('test_path_not_real', offset=offset)
         expected = [
             Trigger(
                 txt_list[0][0],
                 TriggerType(txt_list[0][1]),
-                txt_list[0][2]  # apply offset here
+                str(float(txt_list[0][2])+offset)
             )
         ]
+
+        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
+        response = self.handler.load('test_path_not_real', offset=offset)
         self.assertEqual(response[0].time, expected[0].time)
 
     def test_load_exclusion(self):
         txt_list = [['A', 'nontarget', '1'], ['A', 'fixation', '1']]
-        exclude = TriggerType.FIXATION
+        expected = [
+            Trigger(
+                txt_list[1][0],
+                TriggerType(txt_list[1][1]),
+                txt_list[1][2]
+            )
+        ]
+
+        exclude = TriggerType.NONTARGET
         when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
 
         response = self.handler.load('test_path_not_real', exclusion=[exclude])
-        expected = [
-            Trigger(
-                txt_list[0][0],
-                TriggerType(txt_list[0][1]),
-                txt_list[0][2]
-            )
-        ]
-        # assert length is one amd that the one that wasn't excluded is as expected
+        self.assertEqual(response[0].label, expected[0].label)
+        self.assertEqual(response[0].type, expected[0].type)
+        self.assertEqual(response[0].time, expected[0].time)
+
+    def test_load_exception_thrown_invalid_triggers_list(self):
+        txt_list = [['A', 'nontarget']]
+        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
+
+        with self.assertRaises(BciPyCoreException):
+            self.handler.load('test_path_not_real')
+
+    def test_load_exception_thrown_invalid_trigger_type(self):
+        txt_list = [['A', 'notatriggertype', '1']]
+        when(TriggerHandler).read_text_file(any()).thenReturn(txt_list)
+
+        with self.assertRaises(BciPyCoreException):
+            self.handler.load('test_path_not_real')
+
+
+
 
 
 if __name__ == '__main__':
