@@ -655,7 +655,7 @@ class TestTriggerHandler(unittest.TestCase):
             Trigger(
                 txt_list[0][0],
                 TriggerType(txt_list[0][1]),
-                str(float(txt_list[0][2])+offset)
+                str(float(txt_list[0][2]) + offset)
             )
         ]
 
@@ -694,9 +694,6 @@ class TestTriggerHandler(unittest.TestCase):
 
         with self.assertRaises(BciPyCoreException):
             self.handler.load('test_path_not_real')
-
-
-
 
 
 if __name__ == '__main__':
