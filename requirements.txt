@@ -23,3 +23,8 @@ PyWavelets
 rich
 pyriemann
 loguru
+umap-learn
+# umap-learn plotting: 
+datashader
+bokeh
+holoviews
