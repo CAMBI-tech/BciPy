@@ -1,5 +1,6 @@
 import logging
 import os
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, TextIO, Tuple
 
@@ -641,7 +642,7 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     return corrected
 
 
-class TriggerType(Enum):
+class TriggerCategory(Enum):
     """
     Enum for the primary types of Triggers.
     """
@@ -649,7 +650,7 @@ class TriggerType(Enum):
     NONTARGET = "nontarget"
     TARGET = "target"
     FIXATION = "fixation"
-    PROMPT = "first_pres_target"
+    PROMPT = "prompt"
 
     @classmethod
     def list(cls):
@@ -660,6 +661,7 @@ class TriggerType(Enum):
         return f'{self.value}'
 
 
+# @dataclass(frozen=True)
 class Trigger:
     """
     Object that encompasses data for a single trigger instance.
@@ -667,17 +669,17 @@ class Trigger:
 
     def __init__(self,
                  label: str,
-                 type: TriggerType,
+                 category: TriggerCategory,
                  time: str):
         self.label = label
-        self.type = type
+        self.category = category
         self.time = time
 
     def __repr__(self):
-        return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
+        return f'Trigger: label=[{self.label}] category=[{self.category}] time=[{self.time}]'
 
 
-class FlushSensitivity(Enum):
+class FlushFrequency(Enum):
     """
     Enum that defines how often list of Triggers will be written and dumped.
     """
@@ -687,11 +689,15 @@ class FlushSensitivity(Enum):
 
 
 class TriggerHandler:
+    """
+    Class that contains methods to work with Triggers, including adding and
+    writing triggers and loading triggers from a txt file.
+    """
 
     def __init__(self,
                  path: str,
                  file_name: str,
-                 flush_sens: FlushSensitivity):
+                 flush_sens: FlushFrequency):
         self.path = path
         self.file_name = f'{file_name}.txt'
         self.flush_sens = flush_sens
@@ -722,12 +728,12 @@ class TriggerHandler:
         """
 
         for trigger in self.triggers:
-            self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
+            self.file.write(f'{trigger.label} {trigger.category.value} {trigger.time}\n')
 
         self.triggers = []
 
     @staticmethod
-    def read_text_file(path: str) -> List[str]:
+    def read_text_file(path: str) -> List[List[str]]:
         if not path.endswith('.txt') or not os.path.exists(path):
             raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
                                     "\nPlease rerun program.")
@@ -742,11 +748,11 @@ class TriggerHandler:
     @staticmethod
     def load(path: str,
              offset: Optional[float] = None,
-             exclusion: Optional[List[TriggerType]] = None) -> List[Trigger]:
+             exclusion: Optional[List[TriggerCategory]] = None) -> List[Trigger]:
         """
         Loads a list of triggers from a .txt of triggers.
 
-        Exclusion based on type only (ex. exclusion=[TriggerType.Fixation])
+        Exclusion based on category only (ex. exclusion=[TriggerCategory.Fixation])
 
         1. Checks if .txt file exists at path
         2. Loads the triggers data as a list of lists
@@ -761,7 +767,7 @@ class TriggerHandler:
             Input string must include file extension (.txt).
         offset (Optional float): if desired, time offset for all loaded triggers,
             positive number for adding time, negative number for subtracting time.
-        exclusion (Optional List[TriggerType]): if desired, list of TriggerTypes
+        exclusion (Optional List[TriggerCategory]): if desired, list of TriggerCategory's
             to be removed from the loaded trigger list.
 
         Returns
@@ -784,15 +790,15 @@ class TriggerHandler:
                     item[2] = str(time_float)
 
         if exclusion:
-            for type in exclusion:
-                triggers_list[:] = [item for item in triggers_list if not type.value == item[1]]
+            for category in exclusion:
+                triggers_list[:] = [item for item in triggers_list if not category.value == item[1]]
 
         new_trigger_list = []
         for trigger in triggers_list:
             try:
                 new_trigger_list.append(
                     Trigger(trigger[0],
-                            TriggerType(trigger[1]),
+                            TriggerCategory(trigger[1]),
                             str(trigger[2])
                             )
                 )
@@ -817,7 +823,7 @@ class TriggerHandler:
 
         self.triggers.extend(triggers)
 
-        if self.flush_sens is FlushSensitivity.EVERY:
+        if self.flush_sens is FlushFrequency.EVERY:
             self.write()
 
         return self.triggers
