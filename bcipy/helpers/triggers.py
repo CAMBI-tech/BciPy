@@ -1,6 +1,6 @@
 import logging
 import os
-# from dataclasses import dataclass
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, TextIO, Tuple
 
@@ -661,19 +661,15 @@ class TriggerCategory(Enum):
         return f'{self.value}'
 
 
-# @dataclass(frozen=True)
+@dataclass(frozen=True)
 class Trigger:
     """
     Object that encompasses data for a single trigger instance.
     """
 
-    def __init__(self,
-                 label: str,
-                 category: TriggerCategory,
-                 time: str):
-        self.label = label
-        self.category = category
-        self.time = time
+    label: str
+    category: TriggerCategory
+    time: float
 
     def __repr__(self):
         return f'Trigger: label=[{self.label}] category=[{self.category}] time=[{self.time}]'
@@ -799,7 +795,7 @@ class TriggerHandler:
                 new_trigger_list.append(
                     Trigger(trigger[0],
                             TriggerCategory(trigger[1]),
-                            str(trigger[2])
+                            float(trigger[2])
                             )
                 )
             except Exception as e:

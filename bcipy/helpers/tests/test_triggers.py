@@ -637,7 +637,7 @@ class TestTriggerHandler(unittest.TestCase):
             Trigger(
                 txt_list[0][0],
                 TriggerCategory(txt_list[0][1]),
-                txt_list[0][2]
+                float(txt_list[0][2])
             )
         ]
 
@@ -655,7 +655,7 @@ class TestTriggerHandler(unittest.TestCase):
             Trigger(
                 txt_list[0][0],
                 TriggerCategory(txt_list[0][1]),
-                str(float(txt_list[0][2]) + offset)
+                float(txt_list[0][2]) + offset
             )
         ]
 
@@ -669,7 +669,7 @@ class TestTriggerHandler(unittest.TestCase):
             Trigger(
                 txt_list[1][0],
                 TriggerCategory(txt_list[1][1]),
-                txt_list[1][2]
+                float(txt_list[1][2])
             )
         ]
 
