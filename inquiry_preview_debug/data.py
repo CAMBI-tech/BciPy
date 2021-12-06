@@ -5,6 +5,14 @@ from bcipy.signal.process import get_default_transform
 from loguru import logger
 from bcipy.helpers.triggers import trigger_decoder
 from bcipy.signal.model import PcaRdaKdeModel
+from bcipy.helpers.acquisition import analysis_channels
+import pandas as pd
+
+
+def load_session_csv(input_path: Path):
+    # cols = "series,inquiry,stim,lm,eeg,btn,cumulative,inq_position,is_target,presented,above_threshold".split(",")
+    df = pd.read_csv(input_path)
+    return df
 
 
 def load_data(input_path: Path):
@@ -12,7 +20,7 @@ def load_data(input_path: Path):
     parameters = load_json_parameters(parameters_file, value_cast=True)
 
     # extract relevant session information from parameters file
-    trial_length = 0.5
+    trial_length = parameters.get("trial_length", 0.5)
     triggers_file = parameters.get("trigger_file_name", "triggers.txt")
     raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
@@ -52,9 +60,7 @@ def load_data(input_path: Path):
 
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
-    # channel_names = ["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz"]
-    # channel_map = analysis_channels(channels, type_amp)
-    channel_map = [0, 0, 1, 0, 1, 1, 1, 0]  # Same channels as alpha models are using
+    channel_map = analysis_channels(channels, type_amp)
     data, labels = PcaRdaKdeModel.reshaper(
         trial_labels=t_t_i,
         timing_info=t_i,
