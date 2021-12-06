@@ -48,14 +48,19 @@ import seaborn as sns
 
 if __name__ == "__main__":
     input_path = (
+        Path(__file__).parent.parent.resolve() / "data" / "ip05_RSVP_Copy_Phrase_Thu_04_Nov_2021_11hr58min49sec_-0700"
+    )
+    data, labels = load_data(input_path)
+    csv_path = (
         Path(__file__).parent.parent.resolve()
         / "data"
         / "ip05_RSVP_Copy_Phrase_Thu_04_Nov_2021_11hr58min49sec_-0700"
         / "session.csv"
     )
     output_path = Path(__file__).parent.resolve() / "result.png"
+    output_path2 = Path(__file__).parent.resolve() / "result2.png"
 
-    df = load_session_csv(input_path)
+    df = load_session_csv(csv_path)
     targets = df[(df["presented"] == 1) & (df["is_target"] == 1)]
     nontargets = df[(df["presented"] == 1) & (df["is_target"] == 0)]
 
@@ -87,6 +92,21 @@ if __name__ == "__main__":
     )
     ax.axhline(1.0, color="red", linestyle="--", linewidth=2)
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    ax.set_title("Multiplicative Updates from EEG Model")
+    # breakpoint()
+
+    # Another plot to make:
+    # - inspect the "best" few target and the "worst" few target responses against the mean target response
+    # - can try grabbing data based on its index in `data` and in the session.csv (`df`)
+    # print(len(df))
+    # top50p = df[(df["presented"] == 1) & (df["is_target"] == 1) & (df["eeg"] > df["eeg"].quantile(0.5))]
+    # bot50p = df[(df["presented"] == 1) & (df["is_target"] == 1) & (df["eeg"] <= df["eeg"].quantile(0.5))]
+
+    # fig, ax = plt.subplots(2, 2, constrained_layout=True, figsize=(16, 9))
+    # ax[0, 0].set_title("Top 50%")
+
+    # ax[1, 1].set_title("Bottom 50%")
+    # fig.savefig(output_path2)
 
     print("targets", targets["eeg"].describe())
     print("nontargets", nontargets["eeg"].describe())
