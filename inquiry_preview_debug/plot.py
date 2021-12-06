@@ -96,6 +96,7 @@ if __name__ == "__main__":
     # breakpoint()
 
     # Another plot to make:
+    # - get example sessions with high/low AUC (good/bad typing). Maybe use "preview only" mode
     # - inspect the "best" few target and the "worst" few target responses against the mean target response
     # - can try grabbing data based on its index in `data` and in the session.csv (`df`)
     # print(len(df))
