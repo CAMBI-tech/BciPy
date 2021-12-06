@@ -204,14 +204,13 @@ class MatrixDisplay(Display):
         self.draw_static()
         self.window.flip()
 
-        core.wait(2) # get first_pres_time and set on matrix display! What does RSVP use?
+        core.wait(2)  # get first_pres_time and set on matrix display! What does RSVP use?
 
         # append timing information
         timing.append(self.trigger_callback.timing)
         self.trigger_callback.reset()
 
         return timing, target
-
 
     def animate_scp(self) -> List[float]:
         """Animate SCP.
@@ -331,7 +330,7 @@ class MatrixDisplay(Display):
                 color_list(list[string]): list of colors for each
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
-    
+
     def _trigger_pulse(self, timing: List[str]) -> List[str]:
         """Trigger Pulse.
 

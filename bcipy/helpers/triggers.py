@@ -119,7 +119,6 @@ def _calibration_trigger(experiment_clock: Clock,
     return trigger_callback.timing
 
 
-
 def _write_triggers_from_inquiry_calibration(array: list,
                                              trigger_file: TextIO,
                                              offset: bool = False,
@@ -149,8 +148,8 @@ def _write_triggers_from_inquiry_calibration(array: list,
             (letter, time) = i
 
             if letter == 'calibration_trigger':
-                    targetness = 'calib'
-                    target_letter = letter
+                targetness = 'calib'
+                target_letter = letter
             else:
 
                 # if no target provided assume it is an RSVP inquiry
@@ -173,9 +172,9 @@ def _write_triggers_from_inquiry_calibration(array: list,
                         targetness = 'target'
                     else:
                         targetness = 'nontarget'
-                    
+
                     x += 1
-            
+
             # write to the trigger_file
             trigger_file.write('%s %s %s' % (letter, targetness, time) + "\n")
 

@@ -302,25 +302,25 @@ def matrix_calibration_inquiry_generator(
 
     samples, times, colors = [], [], []
     for _ in range(stim_number):
+        # list of indexes of stimuli in random order
         idx = np.random.permutation(np.array(list(range(len_alp))))
+        # take first chunk of random indexes of size stim_length
         rand_smp = (idx[0:stim_length - 1])
 
-        sample = [alp[rand_smp[0]]]
-
-        # generate the samples using the permutated random indexes
-        rand_smp = np.random.permutation(rand_smp)
+        # create inquiry of alphabet stimuli from random indexes
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
             inquiry = [alp[i] for i in rand_smp]
-        sample.extend(inquiry)
-        samples.append(sample)
+
+        samples.append(inquiry)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
     return InquirySchedule(samples, times, colors)
+
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.
