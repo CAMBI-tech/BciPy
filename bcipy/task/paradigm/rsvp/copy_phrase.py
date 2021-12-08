@@ -2,9 +2,8 @@ from typing import List, NamedTuple, Optional, TextIO, Tuple
 
 from psychopy import core
 
-from bcipy.display import (InformationProperties,
-                           PreviewInquiryProperties, StimuliProperties,
-                           TaskDisplayProperties)
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
+                           StimuliProperties, TaskDisplayProperties)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
@@ -77,8 +76,9 @@ class RSVPCopyPhraseTask(Task):
         'feedback_pos_y', 'feedback_stim_height', 'feedback_stim_width',
         'filter_high', 'filter_low', 'filter_order', 'fixation_color',
         'info_color', 'info_font', 'info_height', 'info_text', 'is_txt_stim',
-        'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series', 'max_minutes',
-        'max_selections', 'min_inq_len', 'notch_filter_frequency', 'preview_inquiry_isi',
+        'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series',
+        'max_minutes', 'max_selections', 'min_inq_len',
+        'notch_filter_frequency', 'preview_inquiry_isi',
         'preview_inquiry_key_input', 'preview_inquiry_length',
         'preview_inquiry_progress_method', 'session_file_name',
         'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
@@ -386,6 +386,9 @@ class RSVPCopyPhraseTask(Task):
             self.exit_display()
             self.write_offset_trigger(trigger_file)
 
+        self.session.task_summary = TaskSummary(self.session,
+                                                self.parameters).as_dict()
+        self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait(seconds=self.parameters['eeg_buffer_len'])
 
@@ -640,8 +643,77 @@ class RSVPCopyPhraseTask(Task):
         return self.TASK_NAME
 
 
-def _init_copy_phrase_display(parameters, win, static_clock,
-                              experiment_clock):
+class TaskSummary:
+    """Summary data for tracking performance metrics.
+
+    Parameters
+    ----------
+        session - current session information
+        parameters - task configuration
+    """
+
+    def __init__(self, session: Session, parameters: dict):
+        self.session = session
+        self.parameters = parameters
+
+    def as_dict(self) -> dict:
+        """Computes the task summary data to append to the session."""
+
+        selections = [
+            inq for inq in self.session.all_inquiries if inq.selection
+        ]
+        correct = [inq for inq in selections if inq.is_correct_decision]
+        incorrect = [inq for inq in selections if not inq.is_correct_decision]
+
+        # TODO: what about SPACE?
+        correct_letters = [
+            inq for inq in correct if inq.selection != BACKSPACE_CHAR
+        ]
+        correct_backspace = [
+            inq for inq in correct if inq.selection == BACKSPACE_CHAR
+        ]
+
+        btn_presses = self.btn_press_count()
+        sel_count = len(selections)
+        switch_per_selection = (btn_presses /
+                                sel_count) if sel_count > 0 else 0
+        accuracy = (len(correct) / sel_count) if sel_count > 0 else 0
+
+        # Note that minutes includes startup time and any breaks.
+        minutes = self.session.total_time_spent / 60
+        return {
+            'selections_correct': len(correct),
+            'selections_incorrect': len(incorrect),
+            'selections_correct_letters': len(correct_letters),
+            'selections_correct_backspace': len(correct_backspace),
+            'switch_response_time': None,  # TODO: parameter?
+            'switch_total': btn_presses,
+            'switch_per_selection': switch_per_selection,
+            'typing_accuracy': accuracy,
+            'correct_rate': len(correct) / minutes if minutes else 0,
+            'copy_rate': len(correct_letters) / minutes if minutes else 0
+        }
+
+    def btn_press_count(self) -> int:
+        """Compute the number of times the switch was activated. Returns 0 if
+        inquiry preview mode was off or mode was preview-only."""
+
+        show_preview = self.parameters['show_preview_inquiry']
+        preview_mode = self.parameters['preview_inquiry_progress_method']
+        if not show_preview or preview_mode == 0:
+            return 0
+
+        inquiries = self.session.all_inquiries
+        if preview_mode == 1:
+            # press to confirm
+            activations = [inq for inq in inquiries if inq.eeg_evidence]
+        elif preview_mode == 2:
+            # press to skip
+            activations = [inq for inq in inquiries if not inq.eeg_evidence]
+        return len(activations)
+
+
+def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):
     preview_inquiry = PreviewInquiryProperties(
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
