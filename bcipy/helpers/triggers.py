@@ -749,8 +749,8 @@ class TriggerHandler:
             else:
                 offset = 0.0
         except Exception as e:
-                raise BciPyCoreException(
-                    f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
+            raise BciPyCoreException(
+                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
         return triggers_list, offset
 
     @staticmethod
@@ -795,8 +795,8 @@ class TriggerHandler:
             for item in triggers_list:
                 item[2] = float(item[2]) + offset + system_offset
         except Exception as e:
-                raise BciPyCoreException(
-                    f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
+            raise BciPyCoreException(
+                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
 
         new_trigger_list = []
         for trigger in triggers_list:
