@@ -642,7 +642,7 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     return corrected
 
 
-class TriggerCategory(Enum):
+class TriggerType(Enum):
     """
     Enum for the primary types of Triggers.
     """
@@ -651,6 +651,7 @@ class TriggerCategory(Enum):
     TARGET = "target"
     FIXATION = "fixation"
     PROMPT = "prompt"
+    SYSTEM = "offset"
 
     @classmethod
     def list(cls):
@@ -668,11 +669,11 @@ class Trigger:
     """
 
     label: str
-    category: TriggerCategory
+    type: TriggerType
     time: float
 
     def __repr__(self):
-        return f'Trigger: label=[{self.label}] category=[{self.category}] time=[{self.time}]'
+        return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
 
 
 class FlushFrequency(Enum):
@@ -724,12 +725,12 @@ class TriggerHandler:
         """
 
         for trigger in self.triggers:
-            self.file.write(f'{trigger.label} {trigger.category.value} {trigger.time}\n')
+            self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
 
         self.triggers = []
 
     @staticmethod
-    def read_text_file(path: str) -> List[List[str]]:
+    def read_text_file(path: str) -> Tuple[List[List[str]], float]:
         if not path.endswith('.txt') or not os.path.exists(path):
             raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
                                     "\nPlease rerun program.")
@@ -739,16 +740,27 @@ class TriggerHandler:
             for line in raw_txt:
                 line_split = line.split()
                 triggers_list.append(line_split)
-        return triggers_list
+
+        # find offset values in list and Return
+        try:
+            if triggers_list[0][1] == TriggerType.OFFSET.value:
+                offset = float(triggers_list[0][2])
+                triggers_list.pop(0)
+            else:
+                offset = 0.0
+        except Exception as e:
+                raise BciPyCoreException(
+                    f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
+        return triggers_list, offset
 
     @staticmethod
     def load(path: str,
-             offset: Optional[float] = None,
-             exclusion: Optional[List[TriggerCategory]] = None) -> List[Trigger]:
+             offset: Optional[float] = 0.0,
+             exclusion: Optional[List[TriggerType]] = None) -> List[Trigger]:
         """
         Loads a list of triggers from a .txt of triggers.
 
-        Exclusion based on category only (ex. exclusion=[TriggerCategory.Fixation])
+        Exclusion based on type only (ex. exclusion=[TriggerType.Fixation])
 
         1. Checks if .txt file exists at path
         2. Loads the triggers data as a list of lists
@@ -763,7 +775,7 @@ class TriggerHandler:
             Input string must include file extension (.txt).
         offset (Optional float): if desired, time offset for all loaded triggers,
             positive number for adding time, negative number for subtracting time.
-        exclusion (Optional List[TriggerCategory]): if desired, list of TriggerCategory's
+        exclusion (Optional List[TriggerType]): if desired, list of TriggerType's
             to be removed from the loaded trigger list.
 
         Returns
@@ -772,29 +784,26 @@ class TriggerHandler:
         """
 
         # Checking for file with given path, with or without .txt
-        triggers_list = TriggerHandler.read_text_file(path)
+        triggers_list, system_offset = TriggerHandler.read_text_file(path)
 
-        if offset:
-            # If there is exclusion but no offset,
-            # Program would read exclusion as offset and throw error
-            # This moves "offset" into its proper parameter of exclusion
-            if isinstance(offset, list) and exclusion is None:
-                exclusion = offset
-            else:
-                for item in triggers_list:
-                    time_float = float(item[2]) + offset
-                    item[2] = str(time_float)
+        try:
+            if exclusion:
+                for trigger_type in exclusion:
+                    triggers_list[:] = [item for item in triggers_list if not trigger_type.value == item[1]]
 
-        if exclusion:
-            for category in exclusion:
-                triggers_list[:] = [item for item in triggers_list if not category.value == item[1]]
+            # apply system and provided offsets
+            for item in triggers_list:
+                item[2] = float(item[2]) + offset + system_offset
+        except Exception as e:
+                raise BciPyCoreException(
+                    f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
 
         new_trigger_list = []
         for trigger in triggers_list:
             try:
                 new_trigger_list.append(
                     Trigger(trigger[0],
-                            TriggerCategory(trigger[1]),
+                            TriggerType(trigger[1]),
                             float(trigger[2])
                             )
                 )
