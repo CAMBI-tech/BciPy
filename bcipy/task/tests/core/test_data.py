@@ -137,16 +137,34 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(serialized['eeg_evidence'][0], 1.0772)
         self.assertEqual(serialized['likelihood'][0], 0.0381)
 
+    def test_is_correct_decision(self):
+        """Test correct decision calculation"""
+        inq = sample_stim_seq(include_evidence=False)
+        inq.target_letter = "H"
+        inq.selection = "H"
+        self.assertTrue(inq.is_correct_decision)
+
+        inq.target_letter = "H"
+        inq.selection = "T"
+        self.assertFalse(inq.is_correct_decision)
+
+        inq.target_letter = ""
+        inq.selection = "H"
+        self.assertFalse(inq.is_correct_decision)
+
     def test_empty_session(self):
         """Test initial session creation"""
         session = Session(save_location=".")
         self.assertEqual(0, session.total_number_series)
+        self.assertEqual(0, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
+        self.assertIsNone(session.inquiries_per_selection)
         serialized = session.as_dict()
 
         self.assertEqual(0, serialized['total_time_spent'])
         self.assertEqual({}, serialized['series'])
         self.assertEqual(0, serialized['total_number_series'])
+        self.assertEqual(0, serialized['total_inquiries'])
 
     def test_session(self):
         """Test session functionality"""
@@ -167,6 +185,10 @@ class TestSessionData(unittest.TestCase):
 
         self.assertEqual(dict, type(serialized))
         self.assertEqual(2, serialized['total_number_series'])
+        self.assertEqual(3, serialized['total_inquiries'])
+        self.assertEqual(1, serialized['total_selections'])
+        self.assertEqual(3, serialized['inquiries_per_selection'])
+
         self.assertTrue('1' in serialized['series'].keys())
         self.assertTrue('2' in serialized['series'].keys())
 
@@ -182,10 +204,12 @@ class TestSessionData(unittest.TestCase):
 
         session.add_series()
         self.assertEqual(0, session.total_number_series)
+        self.assertEqual(0, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
 
         session.add_sequence(sample_stim_seq())
         self.assertEqual(1, session.total_number_series)
+        self.assertEqual(1, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
 
         session.add_series()
@@ -193,6 +217,7 @@ class TestSessionData(unittest.TestCase):
 
         session.add_sequence(sample_stim_seq())
         self.assertEqual(2, session.total_number_series)
+        self.assertEqual(2, session.total_inquiries)
         self.assertEqual(1, session.total_number_decisions)
 
     def test_session_deserialization(self):
@@ -223,6 +248,16 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(
             first_stim_seq.stimuli,
             ["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"])
+
+    def test_task_summary(self):
+        """Test that arbitrary data can be added."""
+        session = Session(save_location=".")
+        self.assertFalse('task_summary' in session.as_dict().keys())
+
+        session.task_summary = {"typing_accuracy": 22}
+        serialized = session.as_dict()
+        self.assertTrue('task_summary' in serialized.keys())
+        self.assertEqual(serialized['task_summary']['typing_accuracy'], 22)
 
 
 if __name__ == '__main__':

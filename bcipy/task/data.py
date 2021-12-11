@@ -109,6 +109,11 @@ class Inquiry:
         """Returns true if the result of the inquiry was a decision."""
         return self.current_text != self.next_display_state
 
+    @property
+    def is_correct_decision(self) -> bool:
+        """Indicates whether the current selection was the target"""
+        return self.selection and (self.selection == self.target_letter)
+
     @classmethod
     def from_dict(cls, data: dict):
         """Deserializes from a dict
@@ -209,6 +214,7 @@ class Session:
         self.series: List[List[Inquiry]] = [[]]
         self.total_time_spent = 0
         self.time_spent_precision = 2
+        self.task_summary = {}
 
     @property
     def total_number_series(self) -> int:
@@ -221,6 +227,24 @@ class Session:
         # An alternate implementation would be to count the inquiries with
         # decision_made property of true.
         return len(self.series) - 1
+
+    @property
+    def total_inquiries(self) -> int:
+        """Total number of inquiries presented."""
+        return sum([len(lst) for lst in self.series])
+
+    @property
+    def inquiries_per_selection(self) -> Optional[float]:
+        """Inquiries per selection"""
+        selections = self.total_number_decisions
+        if selections == 0:
+            return None
+        return self.total_inquiries / selections
+
+    @property
+    def all_inquiries(self) -> List[Inquiry]:
+        """List of all Inquiries for the whole session"""
+        return [inq for inquiries in self.series for inq in inquiries if inquiries]
 
     def add_series(self):
         """Add another series unless the last one is empty"""
@@ -271,15 +295,23 @@ class Session:
                         stim_dict = stim.as_dict()
                     series_dict[series_counter][str(series_index)] = stim_dict
 
-        return {
+        info = {
             'session': self.save_location,
             'task': self.task,
             'mode': self.mode,
             'series': series_dict,
             'total_time_spent': round(self.total_time_spent,
                                       self.time_spent_precision),
-            'total_number_series': self.total_number_series
+            'total_minutes': round(self.total_time_spent / 60, self.time_spent_precision),
+            'total_number_series': self.total_number_series,
+            'total_inquiries': self.total_inquiries,
+            'total_selections': self.total_number_decisions,
+            'inquiries_per_selection': self.inquiries_per_selection
         }
+
+        if self.task_summary:
+            info['task_summary'] = self.task_summary
+        return info
 
     @classmethod
     def from_dict(cls, data: dict):
