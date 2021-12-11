@@ -111,12 +111,11 @@ class TestCopyPhraseTaskSummary(unittest.TestCase):
             'preview_inquiry_progress_method': 0,
             'show_preview_inquiry': False
         }
-        summary = TaskSummary(session, params).as_dict()
+        summary = TaskSummary(session).as_dict()
 
         self.assertEqual(summary['selections_correct'], 2)
         self.assertEqual(summary['selections_incorrect'], 1)
-        self.assertEqual(summary['selections_correct_letters'], 1)
-        self.assertEqual(summary['selections_correct_backspace'], 1)
+        self.assertEqual(summary['selections_correct_symbols'], 1)
         self.assertEqual(summary['switch_total'], 0)
         self.assertEqual(summary['switch_per_selection'], 0)
         self.assertEqual(summary['typing_accuracy'], 2 / 3)
@@ -127,11 +126,7 @@ class TestCopyPhraseTaskSummary(unittest.TestCase):
         """Test switch metrics when preview inquiry mode is set to preview
         only."""
         session = session_btn()
-        params = {
-            'preview_inquiry_progress_method': 0,
-            'show_preview_inquiry': True
-        }
-        summary = TaskSummary(session, params).as_dict()
+        summary = TaskSummary(session, show_preview=True, preview_mode=0).as_dict()
         self.assertEqual(summary['switch_total'], 0)
         self.assertEqual(summary['switch_per_selection'], 0)
 
@@ -139,11 +134,7 @@ class TestCopyPhraseTaskSummary(unittest.TestCase):
         """Test calculations for switch metrics when preview inquiry mode is
         set with press switch to continue."""
         session = session_btn()
-        params = {
-            'preview_inquiry_progress_method': 1,
-            'show_preview_inquiry': True
-        }
-        summary = TaskSummary(session, params).as_dict()
+        summary = TaskSummary(session, show_preview=True, preview_mode=1).as_dict()
         self.assertEqual(summary['switch_total'], 4)
         self.assertEqual(summary['switch_per_selection'], 4 / 3)
 
@@ -151,10 +142,6 @@ class TestCopyPhraseTaskSummary(unittest.TestCase):
         """Test calculations for switch metrics when preview inquiry mode is
         set with press switch to skip."""
         session = session_btn()
-        params = {
-            'preview_inquiry_progress_method': 2,
-            'show_preview_inquiry': True
-        }
-        summary = TaskSummary(session, params).as_dict()
+        summary = TaskSummary(session, show_preview=True, preview_mode=2).as_dict()
         self.assertEqual(summary['switch_total'], 1)
         self.assertEqual(summary['switch_per_selection'], 1 / 3)

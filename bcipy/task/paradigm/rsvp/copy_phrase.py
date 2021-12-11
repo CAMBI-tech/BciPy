@@ -386,8 +386,9 @@ class RSVPCopyPhraseTask(Task):
             self.exit_display()
             self.write_offset_trigger(trigger_file)
 
-        self.session.task_summary = TaskSummary(self.session,
-                                                self.parameters).as_dict()
+        self.session.task_summary = TaskSummary(
+            self.session, self.parameters['show_preview_inquiry'],
+            self.parameters['preview_inquiry_progress_method']).as_dict()
         self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait(seconds=self.parameters['eeg_buffer_len'])
@@ -649,12 +650,21 @@ class TaskSummary:
     Parameters
     ----------
         session - current session information
-        parameters - task configuration
+        show_preview - whether or not inquiry preview was displayed
+        preview_mode - the switch mode for inquiry preview:
+            0 = preview only;
+            1 = press to confirm;
+            2 = press to skip to another inquiry
     """
 
-    def __init__(self, session: Session, parameters: dict):
+    def __init__(self,
+                 session: Session,
+                 show_preview: bool = False,
+                 preview_mode: int = 0):
+        assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
-        self.parameters = parameters
+        self.show_preview = show_preview
+        self.preview_mode = preview_mode
 
     def as_dict(self) -> dict:
         """Computes the task summary data to append to the session."""
@@ -665,12 +675,9 @@ class TaskSummary:
         correct = [inq for inq in selections if inq.is_correct_decision]
         incorrect = [inq for inq in selections if not inq.is_correct_decision]
 
-        # TODO: what about SPACE?
-        correct_letters = [
+        # Note that SPACE is considered a symbol
+        correct_symbols = [
             inq for inq in correct if inq.selection != BACKSPACE_CHAR
-        ]
-        correct_backspace = [
-            inq for inq in correct if inq.selection == BACKSPACE_CHAR
         ]
 
         btn_presses = self.btn_press_count()
@@ -684,30 +691,26 @@ class TaskSummary:
         return {
             'selections_correct': len(correct),
             'selections_incorrect': len(incorrect),
-            'selections_correct_letters': len(correct_letters),
-            'selections_correct_backspace': len(correct_backspace),
-            'switch_response_time': None,  # TODO: parameter?
+            'selections_correct_symbols': len(correct_symbols),
             'switch_total': btn_presses,
             'switch_per_selection': switch_per_selection,
             'typing_accuracy': accuracy,
             'correct_rate': len(correct) / minutes if minutes else 0,
-            'copy_rate': len(correct_letters) / minutes if minutes else 0
+            'copy_rate': len(correct_symbols) / minutes if minutes else 0
         }
 
     def btn_press_count(self) -> int:
         """Compute the number of times the switch was activated. Returns 0 if
         inquiry preview mode was off or mode was preview-only."""
 
-        show_preview = self.parameters['show_preview_inquiry']
-        preview_mode = self.parameters['preview_inquiry_progress_method']
-        if not show_preview or preview_mode == 0:
+        if not self.show_preview or self.preview_mode == 0:
             return 0
 
         inquiries = self.session.all_inquiries
-        if preview_mode == 1:
+        if self.preview_mode == 1:
             # press to confirm
             activations = [inq for inq in inquiries if inq.eeg_evidence]
-        elif preview_mode == 2:
+        elif self.preview_mode == 2:
             # press to skip
             activations = [inq for inq in inquiries if not inq.eeg_evidence]
         return len(activations)
