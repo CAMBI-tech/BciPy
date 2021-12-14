@@ -1,6 +1,8 @@
 import logging
+import os
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, TextIO, Tuple
+from typing import Dict, List, Optional, TextIO, Tuple
 
 from psychopy import core, visual
 
@@ -638,3 +640,195 @@ def read_triggers(triggers_file: TextIO) -> List[Tuple[str, str, float]]:
     for _, (name, trg_type, stamp) in enumerate(records):
         corrected.append((name, trg_type, float(stamp) + offset))
     return corrected
+
+
+class TriggerType(Enum):
+    """
+    Enum for the primary types of Triggers.
+    """
+
+    NONTARGET = "nontarget"
+    TARGET = "target"
+    FIXATION = "fixation"
+    PROMPT = "prompt"
+    SYSTEM = "offset"
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+    def __str__(self):
+        return f'{self.value}'
+
+
+@dataclass(frozen=True)
+class Trigger:
+    """
+    Object that encompasses data for a single trigger instance.
+    """
+
+    label: str
+    type: TriggerType
+    time: float
+
+    def __repr__(self):
+        return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
+
+
+class FlushFrequency(Enum):
+    """
+    Enum that defines how often list of Triggers will be written and dumped.
+    """
+
+    EVERY = "flush after every trigger addition"
+    END = "flush at end of session"
+
+
+class TriggerHandler:
+    """
+    Class that contains methods to work with Triggers, including adding and
+    writing triggers and loading triggers from a txt file.
+    """
+
+    def __init__(self,
+                 path: str,
+                 file_name: str,
+                 flush_sens: FlushFrequency):
+        self.path = path
+        self.file_name = f'{file_name}.txt'
+        self.flush_sens = flush_sens
+        self.triggers = []
+
+        if os.path.exists(self.file_name):
+            raise Exception(f"[{self.file_name}] already exists, any writing "
+                            "will overwrite data in the existing file.")
+
+        self.file = open(self.file_name, 'w+')
+
+    def close(self):
+        self.write()
+        self.file.close()
+
+    def write(self):
+        """
+        Writes current Triggers in self.triggers[] to .txt file in self.file_name.
+        File writes in the format "label, targetness, time".
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+            None
+        """
+
+        for trigger in self.triggers:
+            self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
+
+        self.triggers = []
+
+    @staticmethod
+    def read_text_file(path: str) -> Tuple[List[List[str]], float]:
+        if not path.endswith('.txt') or not os.path.exists(path):
+            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}]."
+                                    "\nPlease rerun program.")
+
+        triggers_list = []
+        with open(path) as raw_txt:
+            for line in raw_txt:
+                line_split = line.split()
+                triggers_list.append(line_split)
+
+        # find offset values in list and Return
+        try:
+            if triggers_list[0][1] == TriggerType.OFFSET.value:
+                offset = float(triggers_list[0][2])
+                triggers_list.pop(0)
+            else:
+                offset = 0.0
+        except Exception as e:
+            raise BciPyCoreException(
+                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
+        return triggers_list, offset
+
+    @staticmethod
+    def load(path: str,
+             offset: Optional[float] = 0.0,
+             exclusion: Optional[List[TriggerType]] = None) -> List[Trigger]:
+        """
+        Loads a list of triggers from a .txt of triggers.
+
+        Exclusion based on type only (ex. exclusion=[TriggerType.Fixation])
+
+        1. Checks if .txt file exists at path
+        2. Loads the triggers data as a list of lists
+        3. If offset provided, adds it to the time as float
+        4. If exclusion provided, filters those triggers
+        5. Casts all loaded and modified triggers to Trigger
+        6. Returns as a List[Triggers]
+
+        Parameters
+        ----------
+        path (str): name or file path of .txt trigger file to be loaded.
+            Input string must include file extension (.txt).
+        offset (Optional float): if desired, time offset for all loaded triggers,
+            positive number for adding time, negative number for subtracting time.
+        exclusion (Optional List[TriggerType]): if desired, list of TriggerType's
+            to be removed from the loaded trigger list.
+
+        Returns
+        -------
+            List of Triggers from loaded .txt file with desired modifications
+        """
+
+        # Checking for file with given path, with or without .txt
+        triggers_list, system_offset = TriggerHandler.read_text_file(path)
+
+        try:
+            if exclusion:
+                for trigger_type in exclusion:
+                    triggers_list[:] = [item for item in triggers_list if not trigger_type.value == item[1]]
+
+            # apply system and provided offsets
+            for item in triggers_list:
+                item[2] = float(item[2]) + offset + system_offset
+        except Exception as e:
+            raise BciPyCoreException(
+                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
+
+        new_trigger_list = []
+        for trigger in triggers_list:
+            try:
+                new_trigger_list.append(
+                    Trigger(trigger[0],
+                            TriggerType(trigger[1]),
+                            float(trigger[2])
+                            )
+                )
+            except Exception as e:
+                raise BciPyCoreException(f'{trigger} read from {path} is not able to be cast')
+
+        return new_trigger_list
+
+    def add_triggers(self, triggers: List[Trigger]) -> List[Trigger]:
+        """
+        Adds given list of Triggers to self.triggers[]
+
+        Parameters
+        ----------
+        triggers (List[Triggers]): list of Trigger objects to be added to the
+            handler's list of Triggers, self.triggers[]
+
+        Returns
+        -------
+            Returns list of Triggers currently part of Handler
+        """
+
+        self.triggers.extend(triggers)
+
+        if self.flush_sens is FlushFrequency.EVERY:
+            self.write()
+
+        return self.triggers

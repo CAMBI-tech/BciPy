@@ -1,8 +1,11 @@
 import unittest
+from unittest.mock import patch, mock_open
+
 
 from mockito import any, mock, when, verify, unstub
 from io import StringIO
 from typing import List, Tuple
+import os
 import shutil
 from pathlib import Path
 import tempfile
@@ -18,6 +21,10 @@ from bcipy.helpers.triggers import (
     LslCopyPhraseLabeller,
     trigger_durations,
     write_trigger_file_from_lsl_calibration,
+    FlushFrequency,
+    TriggerType,
+    Trigger,
+    TriggerHandler
 )
 from bcipy.helpers.raw_data import sample_data, write
 
@@ -54,7 +61,7 @@ def write_sample_trigger_data(raw_data_path: str,
     return list(triggers_by_time.keys())
 
 
-class TestTriggers(unittest.TestCase):
+class TestTriggersOld(unittest.TestCase):
     """This is Test Case for Triggers."""
 
     def setUp(self):
@@ -561,6 +568,132 @@ class TestCalibrationTrigger(unittest.TestCase):
                 self.trigger_time,
                 None,
             )
+
+
+class TestTrigger(unittest.TestCase):
+    def setUp(self):
+        self.label = 'A'
+        self.type = TriggerType.NONTARGET
+        self.time = 1
+        self.test_trigger = Trigger(self.label,
+                                    self.type,
+                                    self.time)
+
+    def test_create_trigger(self):
+        self.assertTrue(self.test_trigger.label == self.label and
+                        self.test_trigger.type == self.type and
+                        self.test_trigger.time == self.time)
+
+    def test_print_trigger(self):
+        expected = f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
+        result = self.test_trigger.__repr__()
+        self.assertEqual(expected, result)
+
+
+class TestTriggerHandler(unittest.TestCase):
+
+    @patch("builtins.open", new_callable=mock_open, read_data="data")
+    def setUp(self, mock_file):
+        self.mock_file = mock_file
+        self.path_name = 'test/'
+        self.file_name = 'test'
+        self.flush = FlushFrequency.END
+        self.file = f'{self.file_name}.txt'
+        # with patch('builtins.open', mock_open(read_data='data')) as _:
+        self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
+        self.mock_file.assert_called_once_with(self.file, 'w+')
+
+    def test_file_exist_exception(self):
+        with open(self.file, 'w+') as _:
+            with self.assertRaises(Exception):
+                TriggerHandler(self.path_name, self.file_name, FlushFrequency.END)
+        os.remove(self.file)
+
+    def test_add_triggers_returns_list_of_triggers(self):
+        trigger = Trigger('A', TriggerType.NONTARGET, 1)
+        inquiry_triggers = [trigger]
+
+        response = self.handler.add_triggers(inquiry_triggers)
+        self.assertEqual(response, inquiry_triggers)
+
+    def test_write_triggers_flushes_triggers(self):
+        inquiry_triggers = [Trigger('A', TriggerType.NONTARGET, 1)]
+        self.handler.add_triggers(inquiry_triggers)
+        self.assertNotEqual(self.handler.triggers, [])
+        self.handler.write()
+        self.assertEqual(self.handler.triggers, [])
+
+    def test_add_triggers_calls_write_when_flush_sens_every(self):
+        self.handler.flush_sens = FlushFrequency.EVERY
+        when(self.handler).write().thenReturn()
+        inquiry_triggers = [Trigger('A', TriggerType.NONTARGET, 1)]
+        self.handler.add_triggers(inquiry_triggers)
+
+        verify(self.handler, times=1).write()
+
+    def test_load_returns_list_of_triggers(self):
+        txt_list = [['A', 'nontarget', '1']]
+        expected = [
+            Trigger(
+                txt_list[0][0],
+                TriggerType(txt_list[0][1]),
+                float(txt_list[0][2])
+            )
+        ]
+
+        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+
+        response = self.handler.load('test_path_not_real')
+        self.assertEqual(response[0].label, expected[0].label)
+        self.assertEqual(response[0].type, expected[0].type)
+        self.assertEqual(response[0].time, expected[0].time)
+
+    def test_load_applies_offset(self):
+        txt_list = [['A', 'nontarget', '1']]
+        offset = 1
+        expected = [
+            Trigger(
+                txt_list[0][0],
+                TriggerType(txt_list[0][1]),
+                float(txt_list[0][2]) + offset
+            )
+        ]
+
+        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+        response = self.handler.load('test_path_not_real', offset=offset)
+        self.assertEqual(response[0].time, expected[0].time)
+
+    def test_load_exclusion(self):
+        txt_list = [['A', 'nontarget', '1'], ['A', 'fixation', '1']]
+        expected = [
+            Trigger(
+                txt_list[1][0],
+                TriggerType(txt_list[1][1]),
+                float(txt_list[1][2])
+            )
+        ]
+
+        exclude = TriggerType.NONTARGET
+        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+
+        response = self.handler.load('test_path_not_real', exclusion=[exclude])
+        self.assertEqual(response[0].label, expected[0].label)
+        self.assertEqual(response[0].type, expected[0].type)
+        self.assertEqual(response[0].time, expected[0].time)
+
+    def test_load_exception_thrown_invalid_triggers_list(self):
+        txt_list = [['A', 'nontarget']]
+        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+
+        with self.assertRaises(BciPyCoreException):
+            self.handler.load('test_path_not_real')
+
+    def test_load_exception_thrown_invalid_trigger_type(self):
+        txt_list = [['A', 'notaTriggerType', '1']]
+        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+
+        with self.assertRaises(BciPyCoreException):
+            self.handler.load('test_path_not_real')
 
 
 if __name__ == '__main__':
