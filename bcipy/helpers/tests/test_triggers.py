@@ -227,68 +227,28 @@ class TestTriggerHandler(unittest.TestCase):
         verify(self.handler, times=1).write()
 
     def test_load_returns_list_of_triggers(self):
-        txt_list = [['A', 'nontarget', '1']]
-        expected = [
-            Trigger(
-                txt_list[0][0],
-                TriggerType(txt_list[0][1]),
-                float(txt_list[0][2])
-            )
-        ]
-
-        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+        trg = Trigger('A', TriggerType.NONTARGET, 1)
+        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
 
         response = self.handler.load('test_path_not_real')
-        self.assertEqual(response[0].label, expected[0].label)
-        self.assertEqual(response[0].type, expected[0].type)
-        self.assertEqual(response[0].time, expected[0].time)
+        self.assertEqual(response[0], trg)
 
     def test_load_applies_offset(self):
-        txt_list = [['A', 'nontarget', '1']]
-        offset = 1
-        expected = [
-            Trigger(
-                txt_list[0][0],
-                TriggerType(txt_list[0][1]),
-                float(txt_list[0][2]) + offset
-            )
-        ]
+        trg = Trigger('A', TriggerType.NONTARGET, 1)
 
-        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
-        response = self.handler.load('test_path_not_real', offset=offset)
-        self.assertEqual(response[0].time, expected[0].time)
+        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
+        response = self.handler.load('test_path_not_real', offset=1)
+        self.assertEqual(response[0].time, 2)
 
     def test_load_exclusion(self):
-        txt_list = [['A', 'nontarget', '1'], ['A', 'fixation', '1']]
-        expected = [
-            Trigger(
-                txt_list[1][0],
-                TriggerType(txt_list[1][1]),
-                float(txt_list[1][2])
-            )
-        ]
+        fixation_trg = Trigger('+', TriggerType.FIXATION, 2)
+        trg_list = [Trigger('A', TriggerType.NONTARGET, 1), fixation_trg]
 
-        exclude = TriggerType.NONTARGET
-        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
+        when(TriggerHandler).read_text_file(any()).thenReturn((trg_list, 0.0))
 
-        response = self.handler.load('test_path_not_real', exclusion=[exclude])
-        self.assertEqual(response[0].label, expected[0].label)
-        self.assertEqual(response[0].type, expected[0].type)
-        self.assertEqual(response[0].time, expected[0].time)
-
-    def test_load_exception_thrown_invalid_triggers_list(self):
-        txt_list = [['A', 'nontarget']]
-        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
-
-        with self.assertRaises(BciPyCoreException):
-            self.handler.load('test_path_not_real')
-
-    def test_load_exception_thrown_invalid_trigger_type(self):
-        txt_list = [['A', 'notaTriggerType', '1']]
-        when(TriggerHandler).read_text_file(any()).thenReturn((txt_list, 0.0))
-
-        with self.assertRaises(BciPyCoreException):
-            self.handler.load('test_path_not_real')
+        response = self.handler.load('test_path_not_real',
+                                     exclusion=[TriggerType.NONTARGET])
+        self.assertEqual(response[0], fixation_trg)
 
 
 if __name__ == '__main__':

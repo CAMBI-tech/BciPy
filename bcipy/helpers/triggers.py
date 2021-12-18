@@ -180,6 +180,20 @@ class Trigger:
     def __repr__(self):
         return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
 
+    def with_offset(self, offset: float):
+        """Construct a copy of this Trigger with the offset adjusted."""
+        return Trigger(self.label, self.type, self.time + offset)
+
+    @classmethod
+    def from_list(cls, lst: List[str]):
+        """Constructs a Trigger from a serialized representation.
+
+        Parameters
+        ----------
+            lst - serialized representation [label, type, stamp]
+        """
+        return cls(lst[0], TriggerType(lst[1]), float(lst[2]))
+
 
 class FlushFrequency(Enum):
     """
@@ -231,28 +245,20 @@ class TriggerHandler:
         self.triggers = []
 
     @staticmethod
-    def read_text_file(path: str) -> Tuple[List[List[str]], float]:
+    def read_text_file(path: str) -> Tuple[List[Trigger], float]:
         if not path.endswith('.txt') or not os.path.exists(path):
             raise FileNotFoundError(f"Valid triggers.txt file not found at [{path}]."
                                     "\nPlease rerun program.")
 
-        triggers_list = []
         with open(path) as raw_txt:
-            for line in raw_txt:
-                line_split = line.split()
-                triggers_list.append(line_split)
+            triggers = [Trigger.from_list(line.split()) for line in raw_txt]
 
-        # find offset values in list and return
-        try:
-            if triggers_list[0][1] == TriggerType.OFFSET.value:
-                offset = float(triggers_list[0][2])
-                triggers_list.pop(0)
-            else:
-                offset = 0.0
-        except Exception as e:
-            raise BciPyCoreException(
-                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
-        return triggers_list, offset
+        offset_trg = next(
+            filter(lambda trg: trg.type == TriggerType.SYSTEM, triggers),
+            Trigger('offset', TriggerType.SYSTEM, 0.0))
+        triggers = [trg for trg in triggers if trg.type != TriggerType.SYSTEM]
+
+        return triggers, offset_trg.time
 
     @staticmethod
     def load(path: str,
@@ -285,33 +291,13 @@ class TriggerHandler:
         """
 
         # Checking for file with given path, with or without .txt
-        triggers_list, system_offset = TriggerHandler.read_text_file(path)
-
-        try:
-            if exclusion:
-                for trigger_type in exclusion:
-                    triggers_list[:] = [item for item in triggers_list if not trigger_type.value == item[1]]
-
-            # apply system and provided offsets
-            for item in triggers_list:
-                item[2] = float(item[2]) + offset + system_offset
-        except Exception as e:
-            raise BciPyCoreException(
-                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
-
-        new_trigger_list = []
-        for trigger in triggers_list:
-            try:
-                new_trigger_list.append(
-                    Trigger(trigger[0],
-                            TriggerType(trigger[1]),
-                            float(trigger[2])
-                            )
-                )
-            except Exception as e:
-                raise BciPyCoreException(f'{trigger} read from {path} is not able to be cast')
-
-        return new_trigger_list
+        triggers, system_offset = TriggerHandler.read_text_file(path)
+        excluded_types = exclusion or []
+        total_offset = offset + system_offset
+        return [
+            trg.with_offset(total_offset) for trg in triggers
+            if trg.type not in excluded_types
+        ]
 
     def add_triggers(self, triggers: List[Trigger]) -> List[Trigger]:
         """

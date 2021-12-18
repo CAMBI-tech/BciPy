@@ -1,4 +1,5 @@
-from typing import List, NamedTuple, Optional, Tuple
+import logging
+from typing import Callable, List, NamedTuple, Optional, TextIO, Tuple
 
 from psychopy import core
 
@@ -386,7 +387,8 @@ class RSVPCopyPhraseTask(Task):
 
         self.session.task_summary = TaskSummary(
             self.session, self.parameters['show_preview_inquiry'],
-            self.parameters['preview_inquiry_progress_method']).as_dict()
+            self.parameters['preview_inquiry_progress_method'],
+            self.trigger_save_location).as_dict()
         self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait(seconds=self.parameters['eeg_buffer_len'])
@@ -689,11 +691,14 @@ class TaskSummary:
     def __init__(self,
                  session: Session,
                  show_preview: bool = False,
-                 preview_mode: int = 0):
+                 preview_mode: int = 0,
+                 trigger_path: str = None):
         assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
         self.show_preview = show_preview
         self.preview_mode = preview_mode
+        self.trigger_path = trigger_path
+        self.logger = logging.getLogger(__name__)
 
     def as_dict(self) -> dict:
         """Computes the task summary data to append to the session."""
@@ -723,6 +728,7 @@ class TaskSummary:
             'selections_correct_symbols': len(correct_symbols),
             'switch_total': btn_presses,
             'switch_per_selection': switch_per_selection,
+            'switch_response_time': self.switch_response_time(),
             'typing_accuracy': accuracy,
             'correct_rate': len(correct) / minutes if minutes else 0,
             'copy_rate': len(correct_symbols) / minutes if minutes else 0
@@ -743,6 +749,55 @@ class TaskSummary:
             # press to skip
             activations = [inq for inq in inquiries if not inq.eeg_evidence]
         return len(activations)
+
+    def switch_response_time(self) -> Optional[float]:
+        """Computes the average switch response in seconds."""
+
+        # Remove consecutive items with the same type; we are only interested
+        # in PREVIEW followed by a KEY_PRESS.
+        triggers = destutter(self.switch_triggers(), key=lambda trg: trg.type)
+        pairs = list(zip(triggers[::2], triggers[1::2]))
+
+        # Confirm that the data is structured as expected.
+        for preview, keypress in pairs:
+            valid = preview.type == TriggerType.PREVIEW and keypress.type == TriggerType.KEY_PRESS
+            if not valid:
+                self.logger.info("Could not compute switch_response_time")
+                return None
+
+        response_times = [
+            keypress.time - preview.time for preview, keypress in pairs
+        ]
+        count = len(response_times)
+        return sum(response_times) / count if count > 0 else None
+
+    def switch_triggers(self) -> List[Trigger]:
+        """Returns a list of switch-related triggers"""
+        if not self.trigger_path:
+            return []
+        triggers, _offset = TriggerHandler.read_text_file(self.trigger_path)
+        return [
+            trg for trg in triggers
+            if trg.type in [TriggerType.PREVIEW, TriggerType.KEY_PRESS]
+        ]
+
+
+def destutter(items: List, key: Callable = lambda x: x) -> List:
+    """Removes sequential duplicates from a list. Retains the last item in the
+    sequence. Equality is determined using the provided key function.
+
+    Parameters
+    ----------
+        items - list of items with sequential duplicates
+        key - equality function
+    """
+    deduped = []
+    for item in items:
+        if len(deduped) == 0 or key(item) != key(deduped[-1]):
+            deduped.append(item)
+        else:
+            deduped[-1] = item
+    return deduped
 
 
 def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):
