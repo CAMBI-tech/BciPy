@@ -1,4 +1,5 @@
 wheel==0.30.0
+huggingface==0.0.1
 docker==2.6.1
 construct==2.8.14
 mne==0.17.0
