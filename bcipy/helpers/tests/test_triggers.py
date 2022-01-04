@@ -198,6 +198,9 @@ class TestTriggerHandler(unittest.TestCase):
         self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
         self.mock_file.assert_called_once_with(self.file, 'w+')
 
+    def tearDown(self):
+        unstub()
+
     def test_file_exist_exception(self):
         with open(self.file, 'w+') as _:
             with self.assertRaises(Exception):
@@ -249,6 +252,77 @@ class TestTriggerHandler(unittest.TestCase):
         response = self.handler.load('test_path_not_real',
                                      exclusion=[TriggerType.NONTARGET])
         self.assertEqual(response[0], fixation_trg)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_data(self, path_exists_mock):
+        """Test that trigger data is correctly read."""
+        trg_data = '''calibration_trigger calib 3.47
+                    J first_pres_target 6.15
+                    + fixation 8.11
+                    F nontarget 8.58
+                    D nontarget 8.88
+                    J target 9.18
+                    T nontarget 9.49
+                    K nontarget 9.79
+                    _ nontarget 11.30
+                    offset offset_correction 6.24'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            triggers, offset = TriggerHandler.read_text_file('triggers.txt')
+            self.assertEqual(len(triggers), 9)
+            self.assertEqual(triggers[0].label, 'calibration_trigger')
+            self.assertEqual(triggers[0].type, TriggerType.CALIBRATION)
+            self.assertEqual(triggers[0].time, 3.47)
+            self.assertEqual(offset, 6.24)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_data_bad_format(self, path_exists_mock):
+        """Test that exception is thrown when trigger type doesn't exist."""
+        trg_data = '''calibration_trigger calib
+                    J first_pres_target 6.15
+                    + fixation 8.12
+                    F hello_world 8.59
+                    offset offset_correction 6.24'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            with self.assertRaises(BciPyCoreException) as ctx:
+                _trg, _ = TriggerHandler.read_text_file('triggers.txt')
+
+            self.assertIn("line 1", ctx.exception.message)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_data_bad_trigger_type(self, path_exists_mock):
+        """Test that exception is thrown when trigger type doesn't exist."""
+        trg_data = '''calibration_trigger calib 3.47
+                    J first_pres_target 6.15
+                    + fixation 8.11
+                    F hello_world 8.58
+                    offset offset_correction 6.23'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            with self.assertRaises(BciPyCoreException) as ctx:
+                _trg, _ = TriggerHandler.read_text_file('triggers.txt')
+
+            self.assertIn("line 4", ctx.exception.message)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_data_bad_timestamp(self, path_exists_mock):
+        """Test that exception is thrown when timestamp can't be converted."""
+        trg_data = '''calibration_trigger calib 3.47
+                    J first_pres_target 6.15abc
+                    + fixation 8.11
+                    F hello_world 8.58
+                    offset offset_correction 6.23'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            with self.assertRaises(BciPyCoreException) as ctx:
+                _trg, _ = TriggerHandler.read_text_file('triggers.txt')
+
+            self.assertIn("line 2", ctx.exception.message)
 
 
 if __name__ == '__main__':

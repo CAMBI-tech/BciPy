@@ -149,6 +149,7 @@ class TriggerType(Enum):
     Enum for the primary types of Triggers.
     """
 
+    FIRST_PRESENTATION = "first_pres_target"
     NONTARGET = "nontarget"
     TARGET = "target"
     FIXATION = "fixation"
@@ -192,6 +193,7 @@ class Trigger:
         ----------
             lst - serialized representation [label, type, stamp]
         """
+        assert len(lst) == 3, "Input must have a label, type, and stamp"
         return cls(lst[0], TriggerType(lst[1]), float(lst[2]))
 
 
@@ -246,12 +248,28 @@ class TriggerHandler:
 
     @staticmethod
     def read_text_file(path: str) -> Tuple[List[Trigger], float]:
+        """Read Triggers from the given text file.
+
+        Parameters
+        ----------
+            path - trigger (.txt) file to read
+
+        Returns
+        -------
+            triggers, offset tuple
+        """
         if not path.endswith('.txt') or not os.path.exists(path):
-            raise FileNotFoundError(f"Valid triggers.txt file not found at [{path}]."
-                                    "\nPlease rerun program.")
+            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}].")
 
         with open(path) as raw_txt:
-            triggers = [Trigger.from_list(line.split()) for line in raw_txt]
+            triggers = []
+            for i, line in enumerate(raw_txt):
+                try:
+                    trg = Trigger.from_list(line.split())
+                    triggers.append(trg)
+                except (AssertionError, ValueError) as trg_error:
+                    raise BciPyCoreException(
+                        f'Error reading trigger on line {i+1} of {path}: {trg_error}') from trg_error
 
         offset_trg = next(
             filter(lambda trg: trg.type == TriggerType.SYSTEM, triggers),

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, NamedTuple, Optional, TextIO, Tuple
+from typing import List, NamedTuple, Optional, TextIO, Tuple
 
 from psychopy import core
 
@@ -9,6 +9,7 @@ from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.list_processing import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
@@ -754,14 +755,14 @@ class TaskSummary:
         """Computes the average switch response in seconds."""
 
         # Remove consecutive items with the same type; we are only interested
-        # in PREVIEW followed by a KEY_PRESS.
+        # in PREVIEW followed by a EVENT_KEY_PRESS.
         triggers = destutter(self.switch_triggers(), key=lambda trg: trg.type)
         pairs = list(zip(triggers[::2], triggers[1::2]))
 
         # Confirm that the data is structured as expected.
         for preview, keypress in pairs:
-            valid = preview.type == TriggerType.PREVIEW and keypress.type == TriggerType.KEY_PRESS
-            if not valid:
+            if (preview.type != TriggerType.PREVIEW) or (
+                    keypress.type != TriggerType.EVENT_KEY_PRESS):
                 self.logger.info("Could not compute switch_response_time")
                 return None
 
@@ -778,26 +779,8 @@ class TaskSummary:
         triggers, _offset = TriggerHandler.read_text_file(self.trigger_path)
         return [
             trg for trg in triggers
-            if trg.type in [TriggerType.PREVIEW, TriggerType.KEY_PRESS]
+            if trg.type in [TriggerType.PREVIEW, TriggerType.EVENT_KEY_PRESS]
         ]
-
-
-def destutter(items: List, key: Callable = lambda x: x) -> List:
-    """Removes sequential duplicates from a list. Retains the last item in the
-    sequence. Equality is determined using the provided key function.
-
-    Parameters
-    ----------
-        items - list of items with sequential duplicates
-        key - equality function
-    """
-    deduped = []
-    for item in items:
-        if len(deduped) == 0 or key(item) != key(deduped[-1]):
-            deduped.append(item)
-        else:
-            deduped[-1] = item
-    return deduped
 
 
 def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):

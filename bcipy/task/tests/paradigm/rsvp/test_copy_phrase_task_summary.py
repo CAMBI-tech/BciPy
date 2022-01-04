@@ -6,7 +6,7 @@ from mock import patch
 
 from bcipy.helpers.triggers import Trigger
 from bcipy.task.data import EvidenceType, Inquiry, Session
-from bcipy.task.paradigm.rsvp.copy_phrase import TaskSummary, destutter
+from bcipy.task.paradigm.rsvp.copy_phrase import TaskSummary
 
 
 def mock_inquiry(target_letter="",
@@ -129,22 +129,6 @@ def sample_triggers() -> List[Trigger]:
 
 class TestCopyPhraseTaskSummary(unittest.TestCase):
     """Tests for summary metrics."""
-
-    def test_destutter(self):
-        """Test utility function used in generating switch_response"""
-        item1 = dict(a=1, b=1)
-        item2 = dict(a=1, b=2)
-        item3 = dict(a=2, b=1)
-        item4 = dict(a=2, b=2)
-
-        self.assertEqual(destutter([item1, item1, item2, item3, item4]),
-                         [item1, item2, item3, item4])
-        self.assertEqual(
-            destutter([item1, item1, item2, item3, item4],
-                      key=lambda x: x['a']), [item2, item4])
-        self.assertEqual(
-            destutter([item1, item1, item2, item3, item4],
-                      key=lambda x: x['b']), [item1, item2, item3, item4])
 
     def test_session_stats(self):
         """Test summary statistics"""
