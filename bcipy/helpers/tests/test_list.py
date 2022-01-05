@@ -1,9 +1,9 @@
 """Tests for list processing utilities"""
 import unittest
-from bcipy.helpers.list_processing import destutter
+from bcipy.helpers.list import destutter
 
 
-class TestListProcessing(unittest.TestCase):
+class TestListUtilities(unittest.TestCase):
     """Main test class for list processing"""
 
     def test_destutter(self):
