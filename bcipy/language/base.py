@@ -32,7 +32,7 @@ class LanguageModel(ABC):
         ...
 
     @abstractmethod
-    def state_update(self, evidence: List[Tuple]) -> None:
+    def state_update(self, evidence: List[Tuple]) -> List[Tuple]:
         """Update state by predicting and updating"""
         ...
 
