@@ -13,9 +13,11 @@ class LanguageModel(ABC):
 
     response_type: ResponseType
     symbol_set: List[str]
+    normalized: bool = False  # normalized to probability domain
 
+    # TODO: What should evidence be? For PRELM this is currently List[str]. What should the number represent?
     @abstractmethod
-    def predict(self, evidence: List[Tuple]) -> List[tuple]:
+    def predict(self, evidence: List[Tuple]) -> List[Tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:

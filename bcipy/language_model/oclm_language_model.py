@@ -21,7 +21,8 @@ class LangModel:
         port=6000,
         docker_port=5000)
 
-    def __init__(self, server_config: LmServerConfig = DEFAULT_CONFIG,
+    def __init__(self,
+                 lang_model_server_port: int = 6000,
                  logfile: str = "log"):
         """
         Initiate the langModel class and starts the corresponding docker
@@ -31,13 +32,15 @@ class LangModel:
           lmtype - language model type
           logfile - a valid filename to function as a logger
         """
-        self.server_config = server_config
+        self.server_config = LangModel.DEFAULT_CONFIG
+        self.server_config.port = lang_model_server_port
         self.priors = defaultdict(list)
 
         log.setLevel(logging.INFO)
         log.addHandler(logging.FileHandler(logfile))
 
-        lm_server.start(server_config)
+        lm_server.start(self.server_config)
+        self.init()
 
     def init(self, nbest: int = 1):
         """
