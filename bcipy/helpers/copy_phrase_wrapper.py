@@ -291,8 +291,8 @@ class CopyPhraseWrapper:
             self.conjugator.reset_history()
 
             # Get the displayed state
-            # TODO: for oclm this should be a list of (sym, prob)
             update = self.decision_maker.displayed_state
+            log.info(f"Querying language model: '{update}'")
 
             # update the lmodel and get back the priors
             lm_letter_prior = self.lmodel.predict(update)
@@ -316,8 +316,6 @@ class CopyPhraseWrapper:
             ]
 
             # display histogram of LM probabilities
-            log.info(
-                f"Printed letters: '{self.decision_maker.displayed_state}'")
             log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence

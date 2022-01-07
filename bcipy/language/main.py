@@ -15,9 +15,8 @@ class LanguageModel(ABC):
     symbol_set: List[str]
     normalized: bool = False  # normalized to probability domain
 
-    # TODO: What should evidence be? For PRELM this is currently List[str]. What should the number represent?
     @abstractmethod
-    def predict(self, evidence: List[Tuple]) -> List[Tuple]:
+    def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:
@@ -42,6 +41,6 @@ class LanguageModel(ABC):
         """Reset language model state"""
         ...
 
-    def state_update(self, evidence: List[Tuple]) -> None:
+    def state_update(self, evidence: List[str]) -> List[str]:
         """Update state by predicting and updating"""
         ...

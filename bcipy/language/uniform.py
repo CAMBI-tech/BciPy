@@ -1,6 +1,6 @@
 """Uniform language model"""
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
@@ -39,7 +39,7 @@ class UniformLanguageModel(LanguageModel):
         self.symbol_set = alphabet(params)
         self.normalized = True
 
-    def predict(self, evidence: List[str]) -> List[Tuple]:
+    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
         """
         Using the provided data, compute probabilities over the entire symbol.
         set.
