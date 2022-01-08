@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from collections import defaultdict
 from bcipy.helpers.task import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
@@ -61,12 +61,13 @@ class LangModel:
         self.priors = defaultdict(list)
         log.info("\ncleaning history\n")
 
-    def predict(self, evidence: List) -> List[Tuple]:
-        """Alias for the `state_update` method."""
+    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
+        """Performs `state_update` and subsequently resets the model."""
         priors = self.state_update(evidence=evidence)
+        self.reset()
         return priors['letter']
 
-    def state_update(self, evidence: List, return_mode: str = 'letter'):
+    def state_update(self, evidence: Union[str, List[str]], return_mode: str = 'letter'):
         """
         Provide a prior distribution of the language model
         in return to the system's decision regarding the
