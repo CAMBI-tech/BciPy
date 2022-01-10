@@ -86,6 +86,7 @@ def equally_probable(alphabet: List[str],
 
     # copy specified dict ignoring non-alphabet items
     overrides = {k: specified[k] for k in alphabet if k in specified}
+    assert sum(overrides.values()) < 1
 
     prob = (1 - sum(overrides.values())) / (n_letters - len(overrides))
     # override specified values

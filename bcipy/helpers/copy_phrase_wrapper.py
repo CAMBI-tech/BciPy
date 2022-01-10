@@ -98,7 +98,10 @@ class CopyPhraseWrapper:
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
         if not lmodel:
-            assert is_txt_stim, "Language model is required."
+            # There is enough information provided to construct a text-based
+            # UniformLanguageModel but additional parameters are needed for
+            # an image-based model.
+            assert is_txt_stim, "A language model is required when using non-text stimulus."
             lmodel = UniformLanguageModel(lm_backspace_prob=backspace_prob)
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
