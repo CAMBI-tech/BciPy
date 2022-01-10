@@ -3,7 +3,7 @@ from psychopy import core
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, matrix_calibration_inquiry_generator,
+from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
@@ -85,12 +85,12 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        samples, timing, color = matrix_calibration_inquiry_generator(self.alp,
-                                                                      stim_number=self.stim_number,
-                                                                      stim_length=self.stim_length,
-                                                                      stim_order=self.stim_order,
-                                                                      timing=self.timing,
-                                                                      color=self.color)
+        samples, timing, color = calibration_inquiry_generator(self.alp,
+                                                               stim_number=self.stim_number,
+                                                               stim_length=self.stim_length,
+                                                               stim_order=self.stim_order,
+                                                               timing=self.timing,
+                                                               color=self.color)
 
         return (samples, timing, color)
 
@@ -146,7 +146,8 @@ class MatrixCalibrationTask(Task):
                 # Wait for a time
                 core.wait(self.buffer_val)
 
-                timing, target = self.matrix.prompt_target()
+                timing = []
+                target = []
 
                 # Do the inquiry
                 timing += self.matrix.do_inquiry()

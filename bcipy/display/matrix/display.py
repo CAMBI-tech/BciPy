@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 import logging
-import random
 
 from psychopy import visual, core
 
@@ -63,8 +62,7 @@ class MatrixDisplay(Display):
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
-            symbol_set = None
-            ):
+            symbol_set=None):
 
         self.window = window
         self.window_size = self.window.size  # [w, h]
@@ -140,7 +138,7 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
-        timing = []
+        timing, target = self.prompt_target()
         if self.first_run:
             timing = self._trigger_pulse(timing)
 
@@ -181,8 +179,11 @@ class MatrixDisplay(Display):
         if self.first_run:
             timing = self._trigger_pulse(timing)
 
-        # select a random target from the defined stimuli inquiry
-        target = random.choice(self.stimuli_inquiry)
+        # select target which is first in list from the defined stimuli inquiry
+        target = self.stimuli_inquiry[0]
+
+        # cut off first two stimuli in inquiry, the target and fixation
+        self.stimuli_inquiry = self.stimuli_inquiry[2:]
 
         # register any timing and marker callbacks
         self.window.callOnFlip(

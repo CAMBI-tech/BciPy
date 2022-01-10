@@ -60,12 +60,12 @@ def alphabetize(stimuli: List[str]) -> List[str]:
     return sorted(stimuli, key=lambda x: re.sub(r'[^a-zA-Z0-9 \n\.]', 'ZZ', x).lower())
 
 
-def rsvp_inq_generator(query: List[str],
-                       timing: List[float] = [1, 0.2],
-                       color: List[str] = ['red', 'white'],
-                       inquiry_count: int = 1,
-                       stim_order: StimuliOrder = StimuliOrder.RANDOM,
-                       is_txt: bool = True) -> InquirySchedule:
+def inq_generator(query: List[str],
+                  timing: List[float] = [1, 0.2],
+                  color: List[str] = ['red', 'white'],
+                  inquiry_count: int = 1,
+                  stim_order: StimuliOrder = StimuliOrder.RANDOM,
+                  is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
         Args:
             query(list[str]): list of queries to be shown
@@ -265,55 +265,6 @@ def calibration_inquiry_generator(
             inquiry = [alp[i] for i in rand_smp]
         sample.extend(inquiry)
         samples.append(sample)
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
-        colors.append([color[i] for i in range(len(color) - 1)] +
-                      [color[-1]] * stim_length)
-
-    return InquirySchedule(samples, times, colors)
-
-def matrix_calibration_inquiry_generator(
-        alp: List[str],
-        timing: List[float] = [0.5, 1, 0.2],
-        color: List[str] = ['green', 'red', 'white'],
-        stim_number: int = 10,
-        stim_length: int = 10,
-        stim_order: StimuliOrder = StimuliOrder.RANDOM) -> InquirySchedule:
-    """Random Matrix Calibration Inquiry Generator.
-
-    Generates random MatrixKeyboard inquiries.
-        Args:
-            alp(list[str]): stimuli
-            timing(list[float]): Task specific timing for generator.
-                [target, fixation, stimuli]
-            color(list[str]): Task specific color for generator
-                [target, fixation, stimuli]
-            stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a inquiry
-            stim_order(StimuliOrder): ordering of stimuli in the inquiry
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
-    """
-
-    len_alp = len(alp)
-
-    samples, times, colors = [], [], []
-    for _ in range(stim_number):
-        # list of indexes of stimuli in random order
-        idx = np.random.permutation(np.array(list(range(len_alp))))
-        # take first chunk of random indexes of size stim_length
-        rand_smp = (idx[0:stim_length - 1])
-
-        # create inquiry of alphabet stimuli from random indexes
-        if stim_order == StimuliOrder.ALPHABETICAL:
-            inquiry = alphabetize([alp[i] for i in rand_smp])
-        else:
-            inquiry = [alp[i] for i in rand_smp]
-
-        samples.append(inquiry)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
         colors.append([color[i] for i in range(len(color) - 1)] +

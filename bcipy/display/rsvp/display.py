@@ -378,7 +378,7 @@ class RSVPDisplay(Display):
 
         Args:
             message(string): message to be displayed while waiting
-            message_color(string): color of the message to be displayed
+            message_`1  `color(string): color of the message to be displayed
         """
 
         # Construct the wait message
