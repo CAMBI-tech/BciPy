@@ -171,7 +171,7 @@ def write_edf(output_path: str,
             ch_dict = {
                 'label': ch_names[i],
                 'dimension': 'uV',
-                'sample_rate': sample_rate,
+                'sample_frequency': sample_rate,
                 'physical_min': physical_min,
                 'physical_max': physical_max,
                 'digital_min': digital_min,
