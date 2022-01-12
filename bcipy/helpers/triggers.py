@@ -136,9 +136,10 @@ def _calibration_trigger(experiment_clock: Clock,
 def trigger_durations(params: Parameters) -> Dict[str, float]:
     """Duration for each type of trigger given in seconds."""
     return {
-        'calib': 0.0,
-        'first_pres_target': params['time_target'],
-        'fixation': params['time_cross'],
+        'offset': 0.0,
+        'preview': params['preview_inquiry_length'],
+        'fixation': params['time_fixation'],
+        'prompt': params['time_prompt'],
         'nontarget': params['time_flash'],
         'target': params['time_flash']
     }
@@ -149,7 +150,6 @@ class TriggerType(Enum):
     Enum for the primary types of Triggers.
     """
 
-    FIRST_PRESENTATION = "first_pres_target"
     NONTARGET = "nontarget"
     TARGET = "target"
     FIXATION = "fixation"
@@ -218,6 +218,7 @@ class TriggerHandler:
                  flush: FlushFrequency):
         self.path = path
         self.file_name = f'{file_name}.txt'
+        self.file_path = f'{self.path}/{self.file_name}'
         self.flush = flush
         self.triggers = []
 
@@ -225,7 +226,7 @@ class TriggerHandler:
             raise Exception(f"[{self.file_name}] already exists, any writing "
                             "will overwrite data in the existing file.")
 
-        self.file = open(f'{self.path}/{self.file_name}', 'w+')
+        self.file = open(self.file_path, 'w+')
 
     def close(self) -> None:
         """Close.
@@ -249,17 +250,15 @@ class TriggerHandler:
     @staticmethod
     def read_text_file(path: str) -> Tuple[List[Trigger], float]:
         """Read Triggers from the given text file.
-
         Parameters
         ----------
             path - trigger (.txt) file to read
-
         Returns
         -------
-            triggers, offset tuple
+            triggers, offset
         """
         if not path.endswith('.txt') or not os.path.exists(path):
-            raise FileNotFoundError(f"Valid triggers .txt file not found at [{path}].")
+            raise FileNotFoundError(f'Valid triggers .txt file not found at [{path}].')
 
         with open(path) as raw_txt:
             triggers = []
@@ -271,12 +270,13 @@ class TriggerHandler:
                     raise BciPyCoreException(
                         f'Error reading trigger on line {i+1} of {path}: {trg_error}') from trg_error
 
-        offset_trg = next(
-            filter(lambda trg: trg.type == TriggerType.SYSTEM, triggers),
-            Trigger('offset', TriggerType.SYSTEM, 0.0))
+        # find next offset values in list and return or create a trigger with offset of 0.0
+        offset = next(
+            filter(lambda trg: trg.type == TriggerType.OFFSET, triggers),
+            Trigger('starting_offset', TriggerType.OFFSET, 0.0))
         triggers = [trg for trg in triggers if trg.type != TriggerType.SYSTEM]
 
-        return triggers, offset_trg.time
+        return triggers, offset.time
 
     @staticmethod
     def load(path: str,

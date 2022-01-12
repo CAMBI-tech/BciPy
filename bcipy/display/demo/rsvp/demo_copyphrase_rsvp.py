@@ -41,8 +41,8 @@ task_display = TaskDisplayProperties(
 
 # Stimuli
 time_flash = .25
-time_target = 2
-time_cross = .6
+time_prompt = 2
+time_fixation = .6
 len_stimuli = 10
 inter_stim_buffer = .5
 stimuli = StimuliProperties(
@@ -72,7 +72,7 @@ if is_txt_stim:
     color_sti = [['red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white']] * 4
 
-timing_sti = [[time_cross] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
+timing_sti = [[time_fixation] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
 
 
 task_text = ['COPY_PHA', 'COPY_PH']

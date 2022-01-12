@@ -377,19 +377,19 @@
     "recommended_values": "",
     "type": "float"
   },
-  "time_target": {
+  "time_prompt": {
     "value": "1",
     "section": "bci_config",
-    "readableName": "Target Letter Presentation Length (sec)",
-    "helpTip": "Target Letter Presentation Length",
+    "readableName": "Time Prompt Stimuli (sec)",
+    "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
     "recommended_values": "",
     "type": "float"
   },
-  "time_cross": {
+  "time_fixation": {
     "value": "0.5",
     "section": "bci_config",
-    "readableName": "Time Fixation Cross (sec)",
-    "helpTip": "Time Fixation Cross",
+    "readableName": "Time Fixation Stimuli (sec)",
+    "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
     "recommended_values": "",
     "type": "float"
   },

@@ -107,20 +107,20 @@ def session_btn() -> Session:
 
 def sample_triggers() -> List[Trigger]:
     """Sample trigger data for computing switch response"""
-    data = [['calibration_trigger', 'calib', '771032.89'],
+    data = [['starting_offset', 'offset', '771032.89'],
             ['inquiry_preview', 'preview', '771033.96'],
-            ['bcipy_key_press_space', 'key_press', '771034.69'],
+            ['bcipy_key_press_space', 'event', '771034.69'],
             ['+', 'fixation', '771035.73'], ['<', 'nontarget', '771036.23'],
             ['A', 'nontarget', '771036.48'], ['C', 'nontarget', '771036.73'],
             ['E', 'nontarget', '771036.98'],
             ['inquiry_preview', 'preview', '771040.29'],
-            ['bcipy_key_press_space', 'key_press', '771041.00'],
+            ['bcipy_key_press_space', 'event', '771041.00'],
             ['+', 'fixation', '771042.03'], ['H', 'nontarget', '771042.53'],
             ['G', 'nontarget', '771042.78'], ['A', 'nontarget', '771043.03'],
             ['I', 'nontarget', '771043.29'],
             ['inquiry_preview', 'preview', '771053.17'],
             ['inquiry_preview', 'preview', '771060.69'],
-            ['bcipy_key_press_space', 'key_press', '771061.59'],
+            ['bcipy_key_press_space', 'event', '771061.59'],
             ['+', 'fixation', '771062.62'], ['A', 'nontarget', '771063.12'],
             ['D', 'target', '771063.37'], ['G', 'nontarget', '771063.62'],
             ['C', 'nontarget', '771063.87']]
@@ -177,8 +177,7 @@ class TestCopyPhraseTaskSummary(unittest.TestCase):
         self.assertEqual(summary['switch_total'], 1)
         self.assertEqual(summary['switch_per_selection'], 1 / 3)
 
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.TriggerHandler.read_text_file'
-           )
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.TriggerHandler.read_text_file')
     def test_switch_response_time(self, read_triggers):
         """Test that switch response is correctly calculated from triggers."""
         read_triggers.return_value = (sample_triggers(), 0.0)

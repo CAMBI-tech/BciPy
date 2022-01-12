@@ -1,5 +1,5 @@
 import logging
-from typing import List, NamedTuple, Optional, TextIO, Tuple
+from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
@@ -88,7 +88,7 @@ class RSVPCopyPhraseTask(Task):
         'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
         'stim_space_char', 'target_color', 'task_buffer_len', 'task_color',
         'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
-        'time_cross', 'time_flash', 'time_target', 'trial_complete_message',
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_complete_message',
         'trial_complete_message_color', 'trial_length', 'trigger_file_name',
         'trigger_type', 'wait_screen_message', 'wait_screen_message_color'
     ]
@@ -192,7 +192,7 @@ class RSVPCopyPhraseTask(Task):
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[
-                self.parameters['time_cross'], self.parameters['time_flash']
+                self.parameters['time_fixation'], self.parameters['time_flash']
             ],
             decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
@@ -389,7 +389,7 @@ class RSVPCopyPhraseTask(Task):
         self.session.task_summary = TaskSummary(
             self.session, self.parameters['show_preview_inquiry'],
             self.parameters['preview_inquiry_progress_method'],
-            self.trigger_save_location).as_dict()
+            self.trigger_handler.file_path).as_dict()
         self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait(seconds=self.parameters['eeg_buffer_len'])
@@ -755,15 +755,15 @@ class TaskSummary:
         """Computes the average switch response in seconds."""
 
         # Remove consecutive items with the same type; we are only interested
-        # in PREVIEW followed by a EVENT_KEY_PRESS.
+        # in PREVIEW followed by a EVENT.
         triggers = destutter(self.switch_triggers(), key=lambda trg: trg.type)
         pairs = list(zip(triggers[::2], triggers[1::2]))
 
         # Confirm that the data is structured as expected.
         for preview, keypress in pairs:
             if (preview.type != TriggerType.PREVIEW) or (
-                    keypress.type != TriggerType.EVENT_KEY_PRESS):
-                self.logger.info("Could not compute switch_response_time")
+                    keypress.type != TriggerType.EVENT):
+                self.logger.info('Could not compute switch_response_time')
                 return None
 
         response_times = [
@@ -779,7 +779,7 @@ class TaskSummary:
         triggers, _offset = TriggerHandler.read_text_file(self.trigger_path)
         return [
             trg for trg in triggers
-            if trg.type in [TriggerType.PREVIEW, TriggerType.EVENT_KEY_PRESS]
+            if trg.type in [TriggerType.PREVIEW, TriggerType.EVENT]
         ]
 
 
