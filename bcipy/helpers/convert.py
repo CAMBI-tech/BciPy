@@ -10,8 +10,8 @@ import numpy as np
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
-from bcipy.helpers.load import load_json_parameters, load_raw_data, extract_mode
-from bcipy.helpers.triggers import trigger_decoder, apply_trigger_offset, trigger_durations
+from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 
 
 logger = logging.getLogger(__name__)
@@ -61,23 +61,16 @@ def convert_to_edf(data_dir: str,
     data = load_raw_data(Path(data_dir, params['raw_data_name']))
     raw_data = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
+    trigger_file = params.get('trigger_file_name', 'triggers')
 
-    # If a mode override is not provided, try to extract it from the file structure
-    if not mode:
-        mode = extract_mode(data_dir)
-
-    symbol_info, trial_target_info, timing_info, offset = trigger_decoder(
-        mode, Path(data_dir, params.get('trigger_file_name', 'triggers.txt')), remove_pre_fixation=False)
+    trigger_type, trigger_timing, trigger_label = trigger_decoder(
+        str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False)
 
     # validate annotation parameters given data length and trigger count
-    validate_annotations(len(raw_data[0]) / data.sample_rate, len(symbol_info), annotation_channels)
-
-    # get static and system offsets
-    observed_offset = offset + params.get('static_trigger_offset', 0.0)
-    trigger_timing = apply_trigger_offset(timing_info, observed_offset)
+    validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type), annotation_channels)
 
     triggers = compile_triggers(
-        symbol_info, trial_target_info, trigger_timing, write_targetness)
+        trigger_label, trigger_type, trigger_timing, write_targetness)
 
     events = edf_annotations(triggers, durations)
 

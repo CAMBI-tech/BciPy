@@ -214,10 +214,10 @@
     "type": "str"
   },
   "trigger_file_name": {
-    "value": "triggers.txt",
+    "value": "triggers",
     "section": "bci_config",
     "readableName": "Triggers Filename",
-    "helpTip": "Specifies the filename for an output file with trigger timing information. Default: triggers.txt",
+    "helpTip": "Specifies the filename for an output file with trigger timing information. Default: triggers",
     "recommended_values": "",
     "type": "str"
   },
@@ -955,61 +955,5 @@
       "MutliTaper"
     ],
     "type": "str"
-  },
-  "feedback_band_lower_limit": {
-    "value": "8",
-    "section": "feedback_config",
-    "readableName": "Feedback Band Lower Bound",
-    "helpTip": "Specifies the lower bound (in Hz) for the target power spectral density band used for generating feedback. Default: 8",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_band_upper_limit": {
-    "value": "10",
-    "section": "feedback_config",
-    "readableName": "Feedback Band Upper Bound",
-    "helpTip": "Specifies the upper bound (in Hz) for the target power spectral density band used for generating feedback. Default: 10",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_level_descending": {
-    "value": "false",
-    "section": "feedback_config",
-    "readableName": "Descending Feedback Level On/Off",
-    "helpTip": "Controls the directionality of the feedback band cutoffs specified above. If ‘true’, descending feedback level will be used, such that the system will assume that higher PSD values correspond with better feedback. If ‘false’, the system will assume that lower PSD values correspond with better feedback. Default: false",
-    "recommended_values": "",
-    "type": "bool"
-  },
-  "feedback_level_2_threshold": {
-    "value": "0.3780",
-    "section": "feedback_config",
-    "readableName": "Feedback Level 2 Threshold",
-    "helpTip": "Specifies the threshold (as a relative PSD value) between feedback level 1 (very bad/red) and level 2 (bad/orange). Default: 0.3780",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_level_3_threshold": {
-    "value": "0.3147",
-    "section": "feedback_config",
-    "readableName": "Feedback Level 3 Threshold",
-    "helpTip": "Specifies the threshold (as a relative PSD value) between feedback level 2 (bad/orange) and level 3 (medium/yellow). Default: 0.3147",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_level_4_threshold": {
-    "value": "0.2693",
-    "section": "feedback_config",
-    "readableName": "Feedback Level 4 Threshold",
-    "helpTip": "Specifies the threshold (as a relative PSD value) between feedback level 3 (medium/yellow) and level 4 (good/light green). Default: 0.2693",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_level_5_threshold": {
-    "value": "0.2052",
-    "section": "feedback_config",
-    "readableName": "Feedback Level 5 Threshold",
-    "helpTip": "Specifies the threshold (as a relative PSD value) between feedback level 4 (good/light green) and level 5 (very good/green). Default: 0.2052",
-    "recommended_values": "",
-    "type": "float"
   }
 }
