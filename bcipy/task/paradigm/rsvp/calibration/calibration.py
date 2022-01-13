@@ -61,8 +61,8 @@ class RSVPCalibrationTask(Task):
         self.stim_length = parameters['stim_length']
         self.stim_order = StimuliOrder(parameters['stim_order'])
 
-        self.timing = [parameters['time_target'],
-                       parameters['time_cross'],
+        self.timing = [parameters['time_prompt'],
+                       parameters['time_fixation'],
                        parameters['time_flash']]
 
         self.color = [parameters['target_color'],

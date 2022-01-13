@@ -67,8 +67,8 @@ class TestAcquisition(unittest.TestCase):
     def test_max_inquiry_duration(self):
         """Test the max inquiry duration function"""
         params = {
-            'time_cross': 0.5,
-            'time_target': 1,
+            'time_fixation': 0.5,
+            'time_prompt': 1,
             'stim_length': 10,
             'time_flash': 0.25,
             'task_buffer_len': 0.75

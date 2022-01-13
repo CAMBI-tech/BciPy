@@ -136,9 +136,10 @@ def _calibration_trigger(experiment_clock: Clock,
 def trigger_durations(params: Parameters) -> Dict[str, float]:
     """Duration for each type of trigger given in seconds."""
     return {
-        'calib': 0.0,
-        'first_pres_target': params['time_target'],
-        'fixation': params['time_cross'],
+        'offset': 0.0,
+        'preview': params['preview_inquiry_length'],
+        'fixation': params['time_fixation'],
+        'prompt': params['time_prompt'],
         'nontarget': params['time_flash'],
         'target': params['time_flash']
     }
@@ -180,6 +181,21 @@ class Trigger:
     def __repr__(self):
         return f'Trigger: label=[{self.label}] type=[{self.type}] time=[{self.time}]'
 
+    def with_offset(self, offset: float):
+        """Construct a copy of this Trigger with the offset adjusted."""
+        return Trigger(self.label, self.type, self.time + offset)
+
+    @classmethod
+    def from_list(cls, lst: List[str]):
+        """Constructs a Trigger from a serialized representation.
+
+        Parameters
+        ----------
+            lst - serialized representation [label, type, stamp]
+        """
+        assert len(lst) == 3, "Input must have a label, type, and stamp"
+        return cls(lst[0], TriggerType(lst[1]), float(lst[2]))
+
 
 class FlushFrequency(Enum):
     """
@@ -202,6 +218,7 @@ class TriggerHandler:
                  flush: FlushFrequency):
         self.path = path
         self.file_name = f'{file_name}.txt'
+        self.file_path = f'{self.path}/{self.file_name}'
         self.flush = flush
         self.triggers = []
 
@@ -209,7 +226,7 @@ class TriggerHandler:
             raise Exception(f"[{self.file_name}] already exists, any writing "
                             "will overwrite data in the existing file.")
 
-        self.file = open(f'{self.path}/{self.file_name}', 'w+')
+        self.file = open(self.file_path, 'w+')
 
     def close(self) -> None:
         """Close.
@@ -231,28 +248,35 @@ class TriggerHandler:
         self.triggers = []
 
     @staticmethod
-    def read_text_file(path: str) -> Tuple[List[List[str]], float]:
+    def read_text_file(path: str) -> Tuple[List[Trigger], float]:
+        """Read Triggers from the given text file.
+        Parameters
+        ----------
+            path - trigger (.txt) file to read
+        Returns
+        -------
+            triggers, offset
+        """
         if not path.endswith('.txt') or not os.path.exists(path):
-            raise FileNotFoundError(f"Valid triggers.txt file not found at [{path}]."
-                                    "\nPlease rerun program.")
+            raise FileNotFoundError(f'Valid triggers .txt file not found at [{path}].')
 
-        triggers_list = []
         with open(path) as raw_txt:
-            for line in raw_txt:
-                line_split = line.split()
-                triggers_list.append(line_split)
+            triggers = []
+            for i, line in enumerate(raw_txt):
+                try:
+                    trg = Trigger.from_list(line.split())
+                    triggers.append(trg)
+                except (AssertionError, ValueError) as trg_error:
+                    raise BciPyCoreException(
+                        f'Error reading trigger on line {i+1} of {path}: {trg_error}') from trg_error
 
-        # find offset values in list and return
-        try:
-            if triggers_list[0][1] == TriggerType.OFFSET.value:
-                offset = float(triggers_list[0][2])
-                triggers_list.pop(0)
-            else:
-                offset = 0.0
-        except Exception as e:
-            raise BciPyCoreException(
-                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
-        return triggers_list, offset
+        # find next offset values in list and return or create a trigger with offset of 0.0
+        offset = next(
+            filter(lambda trg: trg.type == TriggerType.OFFSET, triggers),
+            Trigger('starting_offset', TriggerType.OFFSET, 0.0))
+        triggers = [trg for trg in triggers if trg.type != TriggerType.SYSTEM]
+
+        return triggers, offset.time
 
     @staticmethod
     def load(path: str,
@@ -285,33 +309,13 @@ class TriggerHandler:
         """
 
         # Checking for file with given path, with or without .txt
-        triggers_list, system_offset = TriggerHandler.read_text_file(path)
-
-        try:
-            if exclusion:
-                for trigger_type in exclusion:
-                    triggers_list[:] = [item for item in triggers_list if not trigger_type.value == item[1]]
-
-            # apply system and provided offsets
-            for item in triggers_list:
-                item[2] = float(item[2]) + offset + system_offset
-        except Exception as e:
-            raise BciPyCoreException(
-                f'Invalid triggers.txt format error=[{e}] triggers=[{triggers_list}]')
-
-        new_trigger_list = []
-        for trigger in triggers_list:
-            try:
-                new_trigger_list.append(
-                    Trigger(trigger[0],
-                            TriggerType(trigger[1]),
-                            float(trigger[2])
-                            )
-                )
-            except Exception as e:
-                raise BciPyCoreException(f'{trigger} read from {path} is not able to be cast')
-
-        return new_trigger_list
+        triggers, system_offset = TriggerHandler.read_text_file(path)
+        excluded_types = exclusion or []
+        total_offset = offset + system_offset
+        return [
+            trg.with_offset(total_offset) for trg in triggers
+            if trg.type not in excluded_types
+        ]
 
     def add_triggers(self, triggers: List[Trigger]) -> List[Trigger]:
         """
