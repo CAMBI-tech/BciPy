@@ -46,7 +46,7 @@ class Parameters(dict):
         """Create a new Parameters object from cast values. This is useful
         primarily for testing
 
-        >>> Parameters.from_cast_values(time_target=1.0, fake_data=True)
+        >>> Parameters.from_cast_values(time_prompt=1.0, fake_data=True)
         """
         params = Parameters(source=None, cast_values=True)
         for key, val in kwargs.items():

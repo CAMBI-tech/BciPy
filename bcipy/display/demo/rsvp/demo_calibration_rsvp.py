@@ -33,10 +33,10 @@ if is_txt_stim:
 
 
 time_flash = .25
-time_target = 2
-time_cross = .6
+time_prompt = 2
+time_fixation = .6
 
-timing_sti = [[time_target] + [time_cross] + [time_flash] *
+timing_sti = [[time_prompt] + [time_fixation] + [time_flash] *
               (len(ele_sti[0]) - 1)] * 4
 
 task_text = ['1/100', '2/100', '3/100', '4/100']

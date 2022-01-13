@@ -366,7 +366,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "time_target": {
+  "time_prompt": {
     "value": "1",
     "section": "bci_config",
     "readableName": "Target Letter Presentation Length (sec)",
@@ -374,7 +374,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "time_cross": {
+  "time_fixation": {
     "value": "0.5",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
