@@ -43,12 +43,12 @@ class RSVPTimingVerificationCalibration(Task):
 
         # alternate between solid and empty boxes
         letters = cycle([solid_box, empty_box])
-        time_target, time_fixation, time_stim = self._task.timing
+        time_prompt, time_fixation, time_stim = self._task.timing
         color_target, color_fixation, color_stim = self._task.color
 
         inq_len = self._task.stim_length
         inq_stim = [target, fixation, *[next(letters) for _ in range(inq_len)]]
-        inq_times = [time_target, time_fixation, *[time_stim for _ in range(inq_len)]]
+        inq_times = [time_prompt, time_fixation, *[time_stim for _ in range(inq_len)]]
         inq_colors = [color_target, color_fixation, *[color_stim for _ in range(inq_len)]]
 
         for _ in range(self._task.stim_number):

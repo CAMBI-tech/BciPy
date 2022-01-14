@@ -225,7 +225,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             sti,
             (
                 [["+", "I", "F", "B", "G", "C", "D", "J", "A", "E", "H"]],
-                [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
+                [[self.params["time_fixation"]] + [self.params["time_flash"]] * self.params["stim_length"]],
                 [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
             ),
         )
