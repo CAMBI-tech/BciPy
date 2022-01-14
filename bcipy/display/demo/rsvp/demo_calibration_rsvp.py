@@ -1,6 +1,6 @@
 from psychopy import core, visual
 
-from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
 

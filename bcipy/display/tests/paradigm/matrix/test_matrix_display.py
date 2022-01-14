@@ -10,7 +10,7 @@ from mockito import (
     unstub,
     verifyNoUnwantedInteractions
 )
-from bcipy.display.matrix import (
+from bcipy.display.paradigm.matrix import (
     MatrixDisplay
 )
 from bcipy.display import (
@@ -75,6 +75,8 @@ class TestMatrixDisplay(unittest.TestCase):
             self.task_display,
             self.info)
 
+        when(self.matrix)._trigger_pulse().thenReturn()
+
     def tearDown(self):
         verifyNoUnwantedInteractions()
         # verifyStubbedInvocationsAreUsed()
@@ -111,8 +113,12 @@ class TestMatrixDisplay(unittest.TestCase):
         # If SCP is true, matrix should animate.
         self.matrix.scp = True
 
-        when(self.matrix).animate_scp().thenReturn()
+        when(self.matrix).prompt_target().thenReturn(([], 'A'))
+        when(self.matrix).animate_scp().thenReturn([])
         self.matrix.do_inquiry()
+
+        verify(self.matrix, times=1)._trigger_pulse()
+        verify(self.matrix, times=1).prompt_target()
         verify(self.matrix, times=1).animate_scp()
 
     def test_do_inquiry_if_not_scp(self):

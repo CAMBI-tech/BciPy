@@ -145,7 +145,7 @@ class MatrixDisplay(Display):
 
         if self.scp:
             timing.extend(self.animate_scp())
-            return timing
+            return timing, target
 
         raise BciPyCoreException('Only SCP Matrix is available.')
 
@@ -219,7 +219,6 @@ class MatrixDisplay(Display):
         times.
         """
         timing = []
-        i = 0
         # build grid and static
         self.build_grid()
         self.draw_static()

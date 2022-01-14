@@ -8,7 +8,7 @@ import numpy as np
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
-import bcipy.display.rsvp.mode.copy_phrase
+import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo

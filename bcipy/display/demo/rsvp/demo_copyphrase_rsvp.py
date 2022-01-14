@@ -11,7 +11,7 @@ from bcipy.display import (
     StimuliProperties,
     TaskDisplayProperties
 )
-from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.helpers.clock import Clock
 
 # Initialize Stimulus

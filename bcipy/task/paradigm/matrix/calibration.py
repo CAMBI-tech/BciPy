@@ -1,13 +1,15 @@
+from typing import List, Tuple
+
 from psychopy import core
 
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
-from bcipy.display.matrix.mode.calibration import CalibrationDisplay
+from bcipy.display.paradigm.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import TriggerHandler
+from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
 
 from bcipy.task import Task
 
@@ -147,7 +149,7 @@ class MatrixCalibrationTask(Task):
                 # update task state
                 self.matrix.update_task_state(
                     text=task_text[inquiry],
-                    color_lst=task_color[inquiry])
+                    color_list=task_color[inquiry])
 
                 # Draw and flip screen
                 self.matrix.draw_static()
@@ -156,14 +158,14 @@ class MatrixCalibrationTask(Task):
                 self.matrix.schedule_to(
                     stimuli_labels[inquiry],
                     stimuli_timing[inquiry],
-                    stimuli_colors[inquiry)
+                    stimuli_colors[inquiry])
                 # Schedule a inquiry
 
                 # Wait for a time
                 core.wait(self.buffer_val)
 
                 # Do the inquiry
-                timing = self.matrix.do_inquiry()
+                timing, target = self.matrix.do_inquiry()
 
                 # Write triggers for the inquiry
                 self.write_trigger_data(timing, (inquiry == 0))
@@ -225,7 +227,7 @@ class MatrixCalibrationTask(Task):
                     TriggerType.SYSTEM,
                     # to help support future refactoring or use of lsl timestamps only
                     # we write only the sample offset here
-                    self.daq.offset(self.rsvp.first_stim_time)
+                    self.daq.offset(self.matrix.first_stim_time)
                 )])
         self.trigger_handler.close()
 

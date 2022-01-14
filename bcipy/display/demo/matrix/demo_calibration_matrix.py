@@ -1,6 +1,6 @@
 from psychopy import core
 from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.matrix import MatrixDisplay
+from bcipy.display.paradigm.matrix import MatrixDisplay
 
 from bcipy.display import init_display_window
 

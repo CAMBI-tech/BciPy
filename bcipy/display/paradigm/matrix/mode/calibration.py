@@ -1,4 +1,4 @@
-from bcipy.display.matrix.display import MatrixDisplay
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.task import SPACE_CHAR
 
 

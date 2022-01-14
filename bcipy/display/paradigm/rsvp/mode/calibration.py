@@ -1,4 +1,4 @@
-from bcipy.display.rsvp.display import RSVPDisplay
+from bcipy.display.paradigm.rsvp.display import RSVPDisplay
 from bcipy.helpers.task import SPACE_CHAR
 
 
