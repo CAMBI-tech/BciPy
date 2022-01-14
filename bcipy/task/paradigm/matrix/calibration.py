@@ -191,7 +191,7 @@ class MatrixCalibrationTask(Task):
         core.wait(self.eeg_buffer)
 
         return self.file_save
-    
+
     def write_trigger_data(self, timing: List[Tuple[str, float]], first_run) -> None:
         """Write Trigger Data.
 
