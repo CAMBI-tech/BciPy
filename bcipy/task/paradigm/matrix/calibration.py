@@ -106,8 +106,6 @@ class MatrixCalibrationTask(Task):
         """
         if index == 0:
             return TriggerType.PROMPT
-        if symbol == '+':
-            return TriggerType.FIXATION
         if target == symbol:
             return TriggerType.TARGET
         return TriggerType.NONTARGET
