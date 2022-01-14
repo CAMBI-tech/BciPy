@@ -7,7 +7,7 @@ from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
+from bcipy.helpers.triggers import TriggerHandler
 
 from bcipy.task import Task
 
@@ -52,8 +52,10 @@ class MatrixCalibrationTask(Task):
             self.parameters, self.window,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
-        trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
-        self.trigger_file = open(trigger_save_location, 'w', encoding='utf-8')
+        self.trigger_handler = TriggerHandler(
+            self.file_save,
+            parameters['trigger_file_name'],
+            FlushFrequency.EVERY)
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
@@ -94,6 +96,20 @@ class MatrixCalibrationTask(Task):
 
         return (samples, timing, color)
 
+    def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
+        """Trigger Type.
+
+        This method is passed to convert_timing_triggers to properly assign TriggerTypes
+            to the timing of stimuli presented.
+        """
+        if index == 0:
+            return TriggerType.PROMPT
+        if symbol == '+':
+            return TriggerType.FIXATION
+        if target == symbol:
+            return TriggerType.TARGET
+        return TriggerType.NONTARGET
+
     def execute(self):
 
         self.logger.info(f'Starting {self.name()}!')
@@ -116,7 +132,7 @@ class MatrixCalibrationTask(Task):
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
-            for i in range(len(task_text)):
+            for inquiry in range(len(task_text)):
 
                 # check user input to make sure we should be going
                 if not get_user_input(self.matrix, self.wait_screen_message,
@@ -125,36 +141,32 @@ class MatrixCalibrationTask(Task):
 
                 # Take a break every number of trials defined
                 if self.enable_breaks:
-                    pause_calibration(self.window, self.matrix, i,
+                    pause_calibration(self.window, self.matrix, inquiry,
                                       self.parameters)
 
                 # update task state
                 self.matrix.update_task_state(
-                    text=task_text[i],
-                    color_list=task_color[i])
+                    text=task_text[inquiry],
+                    color_lst=task_color[inquiry])
 
                 # Draw and flip screen
                 self.matrix.draw_static()
                 self.window.flip()
 
                 self.matrix.schedule_to(
-                    stimuli_labels[i],
-                    stimuli_timing[i],
-                    stimuli_colors[i])
+                    stimuli_labels[inquiry],
+                    stimuli_timing[inquiry],
+                    stimuli_colors[inquiry)
                 # Schedule a inquiry
 
                 # Wait for a time
                 core.wait(self.buffer_val)
 
-                timing = []
-                target = []
-
                 # Do the inquiry
-                timing += self.matrix.do_inquiry()
+                timing = self.matrix.do_inquiry()
 
                 # Write triggers for the inquiry
-                _write_triggers_from_inquiry_calibration(
-                    timing, self.trigger_file, target=target)
+                self.write_trigger_data(timing, (inquiry == 0))
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -171,21 +183,51 @@ class MatrixCalibrationTask(Task):
         # Give the system time to process
         core.wait(self.buffer_val)
 
-        # Write offset
-        if self.daq.is_calibrated:
-            _write_triggers_from_inquiry_calibration(
-                ['offset',
-                 self.daq.offset(self.matrix.first_stim_time)],
-                self.trigger_file,
-                offset=True)
-
-        # Close this sessions trigger file and return some data
-        self.trigger_file.close()
+        self.write_offset_trigger()
 
         # Wait some time before exiting so there is trailing eeg data saved
         core.wait(self.eeg_buffer)
 
         return self.file_save
+    
+    def write_trigger_data(self, timing: List[Tuple[str, float]], first_run) -> None:
+        """Write Trigger Data.
+
+        Using the timing provided from the display and calibration information from the data acquisition
+        client, write trigger data in the correct format.
+
+        *Note on offsets*: we write the full offset value which can be used to transform all stimuli to the time since
+            session start (t = 0) for all values (as opposed to most system clocks which start much higher).
+            We do not write the calibration trigger used to generate this offset from the display.
+            See MatrixDisplay._trigger_pulse() for more information.
+        """
+        # write offsets. currently, we only check for offsets at the beginning.
+        if self.daq.is_calibrated and first_run:
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'starting_offset',
+                    TriggerType.OFFSET,
+                    # offset will factor in true offset and time relative from beginning
+                    (self.daq.offset(self.matrix.first_stim_time) - self.matrix.first_stim_time)
+                )]
+            )
+
+        # make sure triggers are written for the inquiry
+        self.trigger_handler.add_triggers(convert_timing_triggers(timing, timing[0][0], self.trigger_type))
+
+    def write_offset_trigger(self) -> None:
+        """Append an offset value to the end of the trigger file.
+        """
+        if self.daq.is_calibrated:
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'daq_sample_offset',
+                    TriggerType.SYSTEM,
+                    # to help support future refactoring or use of lsl timestamps only
+                    # we write only the sample offset here
+                    self.daq.offset(self.rsvp.first_stim_time)
+                )])
+        self.trigger_handler.close()
 
     def name(self):
         return 'Matrix Calibration Task'

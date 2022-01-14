@@ -2,7 +2,7 @@ from psychopy import core
 from typing import List, Tuple
 
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
-from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
                                    get_task_info)
@@ -175,6 +175,8 @@ class RSVPCalibrationTask(Task):
             self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
+
+        self.write_offset_trigger()
 
         # Wait some time before exiting so there is trailing eeg data saved
         core.wait(self.eeg_buffer)

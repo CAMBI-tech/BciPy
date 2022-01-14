@@ -10,7 +10,7 @@ from mockito import (
     verifyStubbedInvocationsAreUsed,
     verifyNoUnwantedInteractions
 )
-from bcipy.display.rsvp import (
+from bcipy.display.paradigm.rsvp import (
     RSVPDisplay
 )
 from bcipy.display import (
@@ -175,7 +175,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         response = self.rsvp._generate_inquiry_preview()
         self.assertEqual(response, stim_mock)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_evoked_press_to_accept_pressed(self, get_key_press_mock):
         stim_mock = mock()
         # mock the stimulus generation
@@ -197,7 +197,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         expected = ([None, [f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp]], True)
         self.assertEqual(response, expected)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_evoked_press_to_skip_pressed(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False
@@ -221,7 +221,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         expected = ([None, [f'bcipy_key_press_{self.preview_inquiry_key_input}', key_timestamp]], False)
         self.assertEqual(response, expected)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_evoked_press_to_accept_not_pressed(self, get_key_press_mock):
         stim_mock = mock()
         # mock the stimulus generation
@@ -240,7 +240,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         expected = ([None], False)
         self.assertEqual(response, expected)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_evoked_press_to_skip_not_pressed(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False
@@ -261,7 +261,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         expected = ([None], True)
         self.assertEqual(response, expected)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_preview_only_response_registered(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False
@@ -288,7 +288,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         expected = ([None], True)
         self.assertEqual(response, expected)
 
-    @patch('bcipy.display.rsvp.display.get_key_press')
+    @patch('bcipy.display.paradigm.rsvp.display.get_key_press')
     def test_preview_inquiry_preview_only_no_response(self, get_key_press_mock):
         # set the progress method to press to skip
         self.rsvp._preview_inquiry.press_to_accept = False

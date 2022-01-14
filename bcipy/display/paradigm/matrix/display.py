@@ -138,9 +138,10 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
-        timing, target = self.prompt_target()
         if self.first_run:
-            timing = self._trigger_pulse(timing)
+            self._trigger_pulse()
+
+        timing, target = self.prompt_target()
 
         if self.scp:
             timing.extend(self.animate_scp())
@@ -176,8 +177,6 @@ class MatrixDisplay(Display):
 
     def prompt_target(self) -> List[float]:
         timing = []
-        if self.first_run:
-            timing = self._trigger_pulse(timing)
 
         # select target which is first in list from the defined stimuli inquiry
         target = self.stimuli_inquiry[0]
@@ -332,7 +331,7 @@ class MatrixDisplay(Display):
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
 
-    def _trigger_pulse(self, timing: List[str]) -> List[str]:
+    def _trigger_pulse(self) -> None:
         """Trigger Pulse.
 
         This method uses a calibration trigger to determine any functional
@@ -341,17 +340,12 @@ class MatrixDisplay(Display):
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
             correction may be required.
         """
-        self.draw_static()
         calibration_time = _calibration_trigger(
             self.experiment_clock,
             trigger_type=self.trigger_type,
             display=self.window)
 
-        timing.append(calibration_time)
-
         # set the first stim time if not present and first_run to False
         if not self.first_stim_time:
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
-
-        return timing
