@@ -8,8 +8,6 @@ def main():
     """Runs the demo"""
     # init LMWrapper
     lmodel = LangModel(logfile="lmwrap.log")
-    # init LM
-    lmodel.init()
     print('\nNo History\n')
     # get initial priors
     print(lmodel.recent_priors())

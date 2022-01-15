@@ -249,6 +249,7 @@ class TestExecuteTask(unittest.TestCase):
         self.parameters['fake_data'] = False
         self.task = TaskType(2)
         signal_model = mock()
+        language_model = mock()
         file_name = 'test'
         load_model_response = (signal_model, file_name)
         eeg_response = (self.daq, self.server)
@@ -262,13 +263,14 @@ class TestExecuteTask(unittest.TestCase):
         when(main).load_signal_model(model_class=any(), model_kwargs={
             'k_folds': self.parameters['k_folds']
         }).thenReturn(load_model_response)
+        when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
             self.daq,
             self.task,
             self.parameters,
             self.save_folder,
-            language_model=None,
+            language_model=language_model,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
         )
@@ -288,7 +290,7 @@ class TestExecuteTask(unittest.TestCase):
             self.task,
             self.parameters,
             self.save_folder,
-            language_model=None,
+            language_model=language_model,
             signal_model=signal_model,
             fake=self.parameters['fake_data'],
         )

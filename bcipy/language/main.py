@@ -13,9 +13,10 @@ class LanguageModel(ABC):
 
     response_type: ResponseType
     symbol_set: List[str]
+    normalized: bool = False  # normalized to probability domain
 
     @abstractmethod
-    def predict(self, evidence: List[Tuple]) -> List[tuple]:
+    def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:
@@ -40,6 +41,6 @@ class LanguageModel(ABC):
         """Reset language model state"""
         ...
 
-    def state_update(self, evidence: List[Tuple]) -> None:
+    def state_update(self, evidence: List[str]) -> List[str]:
         """Update state by predicting and updating"""
         ...
