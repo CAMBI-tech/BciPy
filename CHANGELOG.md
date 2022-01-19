@@ -1,8 +1,46 @@
+# 2.0.0-rc.1
+
+## Contributions
+
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and CAMBI. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support!
+
+### Added
+
+- `run-with-defaults`: make command for running `bcipy`
+- `bcipy.helpers.stimuli.StimuliOrder`: defined ordering of inquiry stimuli. The current approach is to randomize. This adds
+    an alphabetical option. #153 
+- `bcipy.helpers.stimuli.alphabetize`: method for taking a list of strings and returning them in alphabetical order with characters last in the list. #153
+- `.bcipy/README.md`: describes experiments and fields in greater detail #156
+- `validate`: `_validate_experiment_fields` and `validate_experiments`: validates experiments and fields in the correct format #156
+
+### Updated
+
+- `LICENSE.md`: to used the Hippocratic license 2.1
+- `CODE_OF_CONDUCT.md`: to latest version of the Contributor Covenant
+- `bcipy.main`: formally, `bci_main`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py` 
+- `parameters.json`: add stim_order #153 
+- `demo_stimuli_generation.py`: update imports and add a case showing the new ordering functionality. #153
+- `copy_phrase_wrapper`: update logging and exception handling. add stim order. #153
+- `random_rsvp_calibration_inq_gen`: rename to `calibration_inquiry_generator` #153
+- `ExperimentField.py`: updated to use new alert types with timeouts #156
+- `ExperimentRegistry.py`: add the ability to toggle anonymization of field data and use new alert types with timeouts #156
+- `FieldRegistry.py`: updated to use new alert types with timeout #156
+- `README.md`: update dependencies and coverage run command #156
+- `gui/gui_main.py`: update to return a value in FormInput, set a value for IntegerInput only if provided #156
+- `ring_buffer_test.py` -> `test_ring_buffer.py`: to comply with naming conventions #156
+- `exceptions`: refactored Field and Experiment exceptions to corresponding base exception #156
+
+### Removed
+ 
+ - `target_rsvp_inquiry_generator`: #153 unused
+ - `rsvp_copy_phrase_inq_generator`: #153 unused
+ - `generate_icon_match_images`: #153 deprecated task
+
 # 1.5.0
 
 ## Contributions
 
-This version contains major refactoring and tooling improvements across the codebase. In addition, it indtrocudes the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
+This version contains major refactoring and tooling improvements across the codebase. In addition, it introduces the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
 
 ### Added
 - Language model histogram #91 

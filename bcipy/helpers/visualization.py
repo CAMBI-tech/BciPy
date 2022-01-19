@@ -1,73 +1,77 @@
-import os
-import numpy as np
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from bcipy.helpers.load import load_csv_data, read_data_csv
-from mne.io import read_raw_edf
-from typing import List
-
 import logging
+from os import path
+from typing import List, Optional
+
+from matplotlib.figure import Figure
+from mne.io import read_raw_edf
+import matplotlib.pyplot as plt
+import numpy as np
+
+from bcipy.helpers.load import choose_csv_file, load_raw_data
+
 log = logging.getLogger(__name__)
 
 
-def generate_offline_analysis_screen(
-        x,
-        y,
-        model=None,
-        folder=None,
-        save_figure=True,
-        down_sample_rate=2,
-        fs=300,
-        plot_x_ticks=8,
-        plot_average=False,
-        show_figure=False,
-        channel_names=None) -> List[Figure]:
-    """ Offline Analysis Screen.
+def visualize_erp(
+        data,
+        labels,
+        fs,
+        class_labels: List[str] = ['Non-Target', 'Target'],
+        plot_average: bool = False,
+        show_figure: bool = False,
+        save_path: Optional[str] = None,
+        figure_name: str = 'mean_erp.pdf',
+        channel_names: Optional[dict] = None) -> Figure:
+    """ Visualize ERP.
 
-    Generates the information figure following the offlineAnalysis.
-    The figure has multiple tabs containing the average ERP plots.
+    Generates a comparative ERP figure following a task execution. Given a set of trailed data,
+    and labels describing two classes, they are plotted and may be saved or shown in a window.
 
     Returns a list of the figure handles created.
 
     PARAMETERS
     ----------
+    N: samples
+    k: features
+    C: channels
 
-    x(ndarray[float]): C x N x k data array
-    y(ndarray[int]): N x k observation (class) array
-        N is number of samples k is dimensionality of features
-        C is number of channels
-    model(): trained model for data
-    folder(str): Folder of the data
-    save_figures: boolean: whether or not to save the plots as PDF
-    down_sample_rate: downsampling rate applied to signal (if any)
-    fs (sampling_rate): original sampling rate of the signal
-    plot_x_ticks: number of ticks desired on the ERP plot
+    data(ndarray[float]): C x N x k data array
+    labels(ndarray[int]): N x k observation (class) array. Assumed to be two classes [0, 1]
+    fs (sampling_rate): sampling rate of the current data signal
+    class_labels: list of legend names for the respective classes for plotting (0 ,1).
     plot_average: boolean: whether or not to average over all channels
     show_figure: boolean: whether or not to show the figures generated
+    save_path: optional path to a save location of the figure generated
+    figure_name: name of the figure to be used when save_path provided
     channel_names: dict of channel names keyed by their position.
     """
-    fig_handles = []
-
     channel_names = channel_names or {}
-    classes = np.unique(y)
+    classes = np.unique(labels)
 
-    means = [np.squeeze(np.mean(x[:, np.where(y == i), :], 2))
-             for i in classes]
+    means = [np.squeeze(np.mean(data[:, np.where(labels == label), :], 2))
+             for label in classes]
+
+    data_length = len(means[0][1, :])
+
+    # set upper and lower bounds of figure legend
+    lower = 0
+    upper = data_length / fs * 1000  # convert to seconds
 
     fig = plt.figure(figsize=(20, 10))
     ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
 
     if plot_average:
         # find the mean across rows for non target and target
-        non_target_mean = np.mean(means[0], axis=0)
-        target_mean = np.mean(means[1], axis=0)
+        class_one_mean = np.mean(means[0], axis=0)
+        class_two_mean = np.mean(means[1], axis=0)
 
         # plot the means
-        ax1.plot(non_target_mean)
-        ax2.plot(target_mean)
+        ax1.plot(class_one_mean, label=class_labels[0])
+        ax1.plot(class_two_mean, label=class_labels[1])
+        ax1.legend(loc='upper left', prop={'size': 8})
 
     else:
+        ax2 = fig.add_subplot(212)
         count = 0
         # Loop through all the channels and plot each on the non target/target
         # subplots
@@ -79,48 +83,36 @@ def generate_offline_analysis_screen(
         ax1.legend(loc='upper left', prop={'size': 8})
         ax2.legend(loc='upper left', prop={'size': 8})
 
-    # data points
-    data_length = len(means[0][1, :])
-
-    # generate appropriate data labels for the figure
-    lower = 0
-
-    # find the upper length of data and convert to seconds
-    upper = data_length * down_sample_rate / fs * 1000
-
     # make the labels
-    labels = [round(lower + x * (upper - lower) / (plot_x_ticks - 1)) for x in
-              range(plot_x_ticks)]
+    figure_labels = np.linspace(lower, upper, num=8).astype(int).tolist()
+    figure_labels.insert(0, 0)  # needed to force a 0 starting tick
 
-    # make sure it starts at zero
-    labels.insert(0, 0)
+    ax1.set_xticklabels(figure_labels)
 
-    # set the labels
-    ax1.set_xticklabels(labels)
-    ax2.set_xticklabels(labels)
+    if not plot_average:
+        ax2.set_xticklabels(figure_labels)
+        ax1.set_title(class_labels[0])
+        ax2.set_title(class_labels[1])
+    else:
+        ax1.set_title(f'Average {class_labels[0]} vs. {class_labels[1]}')
 
-    # Set common labels
+    # Set common figure labels
     fig.text(0.5, 0.04, 'Time (Seconds)', ha='center', va='center')
     fig.text(0.06, 0.5, r'$\mu V$', ha='center', va='center',
              rotation='vertical')
 
-    ax1.set_title('Non-target ERP')
-    ax2.set_title('Target ERP')
-
-    if save_figure:
-        fig.savefig(
-            os.path.join(
-                folder,
-                'mean_erp.pdf'),
-            bbox_inches='tight',
-            format='pdf')
-
-    fig_handles.append(fig)
-
     if show_figure:
         plt.show()
 
-    return fig_handles
+    if save_path:
+        fig.savefig(
+            path.join(
+                save_path,
+                figure_name),
+            bbox_inches='tight',
+            format='pdf')
+
+    return fig
 
 
 def plot_edf(edf_path: str, auto_scale: bool = False):
@@ -153,8 +145,8 @@ def visualize_csv_eeg_triggers(trigger_col=None):
         Figure of Triggers
     """
     # Load in CSV
-    file_name = load_csv_data()
-    raw_data, stamp_time, channels, type_amp, fs = read_data_csv(file_name)
+    data = load_raw_data(choose_csv_file())
+    raw_data = data.by_channel()
 
     # Pull out the triggers
     if not trigger_col:
@@ -212,10 +204,11 @@ if __name__ == '__main__':
         19: 'T4'
     }
     # generate the offline analysis screen. show figure at the end
-    generate_offline_analysis_screen(
+    visualize_erp(
         x,
         y,
-        folder='bcipy',
-        save_figure=False,
+        150,
+        # save_path='.', # uncomment to save to current working directory
         show_figure=True,
+        plot_average=False,
         channel_names=names)

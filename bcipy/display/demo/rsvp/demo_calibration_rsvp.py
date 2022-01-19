@@ -1,19 +1,19 @@
-from psychopy import visual, core
+from psychopy import core, visual
 
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.rsvp import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.helpers.clock import Clock
+from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
 
 info = InformationProperties(
-    info_color='White',
-    info_pos=(-.5, -.75),
-    info_height=0.1,
-    info_font='Arial',
-    info_text='Calibration Demo',
+    info_color=['White'],
+    info_pos=[(-.5, -.75)],
+    info_height=[0.1],
+    info_font=['Arial'],
+    info_text=['Calibration Demo'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
-    task_pos=(-.5, .8),
+    task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
     task_text='1/100'
@@ -33,10 +33,10 @@ if is_txt_stim:
 
 
 time_flash = .25
-time_target = 2
-time_cross = .6
+time_prompt = 2
+time_fixation = .6
 
-timing_sti = [[time_target] + [time_cross] + [time_flash] *
+timing_sti = [[time_prompt] + [time_fixation] + [time_flash] *
               (len(ele_sti[0]) - 1)] * 4
 
 task_text = ['1/100', '2/100', '3/100', '4/100']
@@ -46,7 +46,7 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 ele_list_dec = [['[<]'], ['[R]']]
 
 # Initialize Window TODO use initialize_display_window
-win = visual.Window(size=[500, 500], fullscr=False, screen=0, allowGUI=False,
+win = visual.Window(size=[500, 500], fullscr=False, screen=1, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
                     waitBlanking=True,
@@ -58,7 +58,7 @@ print(frameRate)
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
-experiment_clock = core.MonotonicClock(start_time=None)
+experiment_clock = Clock()
 len_stimuli = 10
 stimuli = StimuliProperties(
     stim_font='Arial',
@@ -74,8 +74,7 @@ rsvp = CalibrationDisplay(
     experiment_clock,
     stimuli,
     task_display,
-    info,
-    marker_writer=NullMarkerWriter())
+    info)
 
 # uncomment trigger_file lines for demo with triggers!
 # trigger_file = open('calibration_triggers.txt','w')

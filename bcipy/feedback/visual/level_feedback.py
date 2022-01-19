@@ -1,7 +1,9 @@
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from psychopy import visual, core
-
 from typing import Tuple
+
+from psychopy import core, visual
+
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.helpers.clock import Clock
 
 
 class LevelFeedback(VisualFeedback):
@@ -138,7 +140,7 @@ if __name__ == '__main__':
         'bcipy/parameters/parameters.json',
         value_cast=True)
     display = init_display_window(parameters)
-    clock = core.Clock()
+    clock = Clock()
     feedback = LevelFeedback(display, parameters, clock)
 
     for index, _ in enumerate(feedback.level_colors):

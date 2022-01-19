@@ -1,5 +1,5 @@
 import sys
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType
+from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertMessageResponse
 
 from bcipy.helpers.load import load_fields
 from bcipy.helpers.save import save_field_data
@@ -19,6 +19,7 @@ class FieldRegistry(BCIGui):
     input_text_color = 'gray'
     input_color = 'white'
     alert_title = 'Field Registry Alert'
+    alert_timeout = 10
     field_types = {
         'Text': 'str',
         'True/False or Yes/No': 'bool',
@@ -146,7 +147,8 @@ class FieldRegistry(BCIGui):
                 title=self.alert_title,
                 message='Field saved successfully! Please exit window or create another field!',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=True
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.alert_timeout
             )
             self.refresh_inputs()
 
@@ -223,7 +225,8 @@ class FieldRegistry(BCIGui):
                     title=self.alert_title,
                     message='Please add a field name!',
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
             if self.name in self.field_names:
                 self.throw_alert_message(
@@ -234,7 +237,8 @@ class FieldRegistry(BCIGui):
                         f'Registed names: {self.field_names}'
                     ),
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
             if self.helptext == FieldRegistry.default_text or \
                     self.helptext == '':
@@ -242,21 +246,24 @@ class FieldRegistry(BCIGui):
                     title=self.alert_title,
                     message='Please add help text to field. \nThis will present when collecting experiment data!',
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
             if self.type == FieldRegistry.default_text:
                 self.throw_alert_message(
                     title=self.alert_title,
                     message='Please select a valid field type!',
                     message_type=AlertMessageType.WARN,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE,
+                    message_timeout=self.alert_timeout)
                 return False
         except Exception as e:
             self.throw_alert_message(
                 title=self.alert_title,
                 message=f'Error, {e}',
                 message_type=AlertMessageType.CRIT,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.alert_timeout)
             return False
         return True
 

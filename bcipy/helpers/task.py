@@ -1,14 +1,17 @@
 import logging
 import os
 import random
+
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from string import ascii_uppercase
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from bcipy.tasks.exceptions import InsufficientDataException
 from psychopy import core, event, visual
+
+from bcipy.helpers.clock import Clock
+from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +69,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
 
     In an RSVP paradigm, the inquiry itself will produce an
         SSVEP response to the stimulation. Here we calculate
-        what that frequency should be based in the presentation
+        what that frequency should be based on the presentation
         time.
 
     PARAMETERS
@@ -88,21 +91,20 @@ def alphabet(parameters=None, include_path=True):
     -------
         array of letters.
     """
-    if parameters:
-        if not parameters['is_txt_stim']:
-            # construct an array of paths to images
-            path = parameters['path_to_presentation_images']
-            stimulus_array = []
-            for stimulus_filename in sorted(os.listdir(path)):
-                # PLUS.png is reserved for the fixation symbol
-                if stimulus_filename.endswith(
-                        '.png') and not stimulus_filename.endswith('PLUS.png'):
-                    if include_path:
-                        img = os.path.join(path, stimulus_filename)
-                    else:
-                        img = os.path.splitext(stimulus_filename)[0]
-                    stimulus_array.append(img)
-            return stimulus_array
+    if parameters and not parameters['is_txt_stim']:
+        # construct an array of paths to images
+        path = parameters['path_to_presentation_images']
+        stimulus_array = []
+        for stimulus_filename in sorted(os.listdir(path)):
+            # PLUS.png is reserved for the fixation symbol
+            if stimulus_filename.endswith(
+                    '.png') and not stimulus_filename.endswith('PLUS.png'):
+                if include_path:
+                    img = os.path.join(path, stimulus_filename)
+                else:
+                    img = os.path.splitext(stimulus_filename)[0]
+                stimulus_array.append(img)
+        return stimulus_array
 
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
@@ -147,102 +149,61 @@ def target_info(triggers: List[Tuple[str, float]],
     return ['nontarget'] * len(triggers)
 
 
-def process_data_for_decision(
-        inquiry_timing,
-        daq,
-        window,
-        parameters,
-        first_session_stim_time,
-        static_offset=None,
-        buf_length=None):
-    """Process Data for Decision.
-
-    Processes the raw data (triggers and EEG) into a form that can be passed to
-    signal processing and classifiers.
+def get_data_for_decision(inquiry_timing,
+                          daq,
+                          static_offset=0.0,
+                          buffer_length=0.0):
+    """Queries the acquisition client for a slice of data and processes the
+    resulting raw data into a form that can be passed to signal processing and
+    classifiers.
 
     Parameters
     ----------
-        inquiry_timing(array): array of tuples containing stimulus timing and
-            text
-        daq (object): data acquisition object
-        window: window to reactivate if deactivated by windows
-        parameters: parameters dictionary
-        first_session_stim_time (float): time that the first stimuli was presented
-            for the session. Used to calculate offsets.
-        static_offset (float): offset present in the system which should be accounted for when
-            creating data for classification
-        buf_length: length of data needed after the last sample in order to reshape correctly
+    - inquiry_timing(array): array of tuples containing stimulus timing and
+    text
+    - daq (object): data acquisition object
+    - static_offset (float): offset present in the system which should be accounted for when
+    creating data for classification; this is determined experimentally.
+    - buffer_length: length of data needed after the last sample in order to reshape correctly
 
     Returns
     -------
-        (raw_data, triggers, target_info) tuple
+    (raw_data, triggers, target_info) tuple
     """
-
-    # Get timing of the first and last stimuli
     _, first_stim_time = inquiry_timing[0]
     _, last_stim_time = inquiry_timing[-1]
 
-    static_offset = static_offset or parameters['static_trigger_offset']
-    # if there is an argument supplied for buffer length use that
-    if buf_length:
-        buffer_length = buf_length
-    else:
-        buffer_length = parameters['trial_length']
-
-    # get any offset calculated from the daq
-    daq_offset = daq.offset
-
-    if daq_offset:
-        offset = daq_offset - first_session_stim_time + static_offset
-        time1 = (first_stim_time + offset) * daq.device_info.fs
-        time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
-    else:
-        time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset +
-                 buffer_length) * daq.device_info.fs
+    time1 = first_stim_time + static_offset
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in inquiry_timing]
 
     # Assign labels for triggers
-    # TODO: This doesn't seem useful and is misleading
-    target_info = ['nontarget'] * len(triggers)
+    target_labels = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time +
-                  buffer_length) * daq.device_info.fs
+    data_limit = round((last_stim_time - first_stim_time + buffer_length) *
+                       daq.device_info.fs)
+    log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
-    try:
-        # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2)
+    raw_data = daq.get_data(start=time1, limit=data_limit)
 
-        # If not enough raw_data returned in the first query, let's try again
-        #  using only the start param. This is known issue on Windows.
-        #  #windowsbug
-        if len(raw_data) < data_limit:
+    if len(raw_data) < data_limit:
+        message = f'Process Data Error: Not enough data received to process. ' \
+            f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+        log.error(message)
+        raise InsufficientDataException(message)
 
-            # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1)
+    # Take only the sensor data from raw data and transpose it
+    raw_data = np.array([
+        np.array([_float_val(col) for col in record.data])
+        for record in raw_data
+    ],
+        dtype=np.float64).transpose()
 
-            # If there is still insufficient data returned, throw an error
-            if len(raw_data) < data_limit:
-                message = f'Process Data Error: Not enough data received to process. ' \
-                          f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
-                log.error(message)
-                raise InsufficientDataException(message)
-
-        # Take only the sensor data from raw data and transpose it
-        raw_data = np.array([np.array([_float_val(col) for col in record.data])
-                             for record in raw_data],
-                            dtype=np.float64).transpose()
-
-    except Exception as e:
-        log.error(f'Uncaught Error in Process Data for Decision: {e}')
-        raise e
-
-    return raw_data, triggers, target_info
+    return raw_data, triggers, target_labels
 
 
 def _float_val(col: Any) -> float:
@@ -254,7 +215,7 @@ def _float_val(col: Any) -> float:
     return float(col)
 
 
-def trial_complete_message(win, parameters):
+def trial_complete_message(win, parameters) -> List[visual.TextStim]:
     """Trial Complete Message.
 
     Function return a TextStim Object (see Psychopy) to complete the trial.
@@ -272,11 +233,11 @@ def trial_complete_message(win, parameters):
     """
     message_stim = visual.TextStim(
         win=win,
-        height=parameters['task_height'],
+        height=parameters['info_height'],
         text=parameters['trial_complete_message'],
-        font=parameters['task_font'],
-        pos=(float(parameters['text_pos_x']),
-             float(parameters['text_pos_y'])),
+        font=parameters['info_font'],
+        pos=(parameters['info_pos_x'],
+             parameters['info_pos_y']),
         wrapWidth=None,
         color=parameters['trial_complete_message_color'],
         colorSpace='rgb',
@@ -349,7 +310,7 @@ def get_user_input(window, message, color, first_run=False):
 
 def get_key_press(
         key_list: List[str],
-        clock: core.Clock,
+        clock: Clock,
         stamp_label: str = 'bcipy_key_press') -> Union[list, None]:
     """Get Key Press.
 
@@ -360,16 +321,22 @@ def get_key_press(
     Parameters
     ----------
         key_list(List[str]): list of keys to look for being pressed. Ex. ['space']
-        clock(core.Clock): clock to use for timestamping any key press
+        clock(Clock): clock to use for timestamping any key press
         stamp_label(str): custom label to use for timstamping along with the key itself
 
     Returns
     -------
         Key Press Timing(List[stamp_label, timestamp])
     """
-    response = event.getKeys(keyList=key_list, timeStamped=clock)
+    response = event.getKeys(keyList=key_list, timeStamped=True)
     if response:
-        return [f'{stamp_label}_{response[0][0]}', response[0][1]]
+        # The timestamp from the response uses the psychopy.core.monotonicClock
+        # which records the number of seconds since the experiment start (core
+        # was imported).
+        key, stamp = response[0]
+        offset = clock.getTime() - core.getTime()
+        timestamp = stamp + offset
+        return [f'{stamp_label}_{key}', timestamp]
     return None
 
 

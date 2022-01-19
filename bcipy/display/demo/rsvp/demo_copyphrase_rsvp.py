@@ -4,10 +4,15 @@
 
 from psychopy import core
 
-from bcipy.display import init_display_window
+from bcipy.display import (
+    init_display_window,
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties,
+    TaskDisplayProperties
+)
 from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
-from bcipy.display.rsvp import PreviewInquiryProperties, InformationProperties, StimuliProperties, TaskDisplayProperties
-from bcipy.acquisition.marker_writer import NullMarkerWriter
+from bcipy.helpers.clock import Clock
 
 # Initialize Stimulus
 is_txt_stim = True
@@ -20,11 +25,11 @@ preview_inquiry_progress_method = 1  # press to accept ==1 wait to accept ==2
 preview_inquiry_isi = 3
 
 info = InformationProperties(
-    info_color='White',
-    info_pos=(-.5, -.75),
-    info_height=0.1,
-    info_font='Arial',
-    info_text='Dummy Message',
+    info_color=['White'],
+    info_pos=[(-.5, -.75)],
+    info_height=[0.1],
+    info_font=['Arial'],
+    info_text=['Dummy Message'],
 )
 task_display = TaskDisplayProperties(
     task_color=['White'],
@@ -36,8 +41,8 @@ task_display = TaskDisplayProperties(
 
 # Stimuli
 time_flash = .25
-time_target = 2
-time_cross = .6
+time_prompt = 2
+time_fixation = .6
 len_stimuli = 10
 inter_stim_buffer = .5
 stimuli = StimuliProperties(
@@ -67,7 +72,7 @@ if is_txt_stim:
     color_sti = [['red', 'white', 'white', 'white', 'white', 'white',
                   'white', 'white', 'white', 'white', 'white']] * 4
 
-timing_sti = [[time_cross] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
+timing_sti = [[time_fixation] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
 
 
 task_text = ['COPY_PHA', 'COPY_PH']
@@ -87,9 +92,10 @@ print(frameRate)
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
-experiment_clock = core.MonotonicClock(start_time=None)
+experiment_clock = Clock()
 
 preview_inquiry = PreviewInquiryProperties(
+    preview_only=True,
     preview_inquiry_length=preview_inquiry_length,
     preview_inquiry_key_input=preview_inquiry_key_input,
     preview_inquiry_progress_method=preview_inquiry_progress_method,
@@ -102,7 +108,6 @@ rsvp = CopyPhraseDisplay(
     stimuli,
     task_display,
     info,
-    marker_writer=NullMarkerWriter(),
     static_task_text='COPY_PHRASE',
     static_task_color='white',
     preview_inquiry=preview_inquiry)

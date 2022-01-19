@@ -18,7 +18,7 @@ from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
-from bcipy.tasks.session_data import Session, Inquiry
+from bcipy.task.data import Session, Inquiry
 
 
 def session_data(data_dir: str, alp=None):
@@ -164,8 +164,8 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
                         is_target=(target == stim) if target else None,
                         presented=stim in inquiry.stimuli,
                         above_threshold=evidence['likelihood'][stim] >
-                        threshold) for stim, _likelihood_ev in
-                    evidence['likelihood'].items()
+                        threshold)
+                    for stim, _likelihood_ev in evidence['likelihood'].items()
                 ]
 
                 conn.executemany(
@@ -310,6 +310,8 @@ def session_excel(db_name='session.db',
             chart.series[0].title = openpyxl.chart.series.SeriesLabel(v="lm")
             chart.series[1].title = openpyxl.chart.series.SeriesLabel(v="eeg")
             chart.series[2].title = openpyxl.chart.series.SeriesLabel(
+                v="btn")
+            chart.series[3].title = openpyxl.chart.series.SeriesLabel(
                 v="combined")
 
             chart.set_categories(categories)

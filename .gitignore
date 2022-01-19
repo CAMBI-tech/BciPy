@@ -24,6 +24,5 @@ htmlcov/
 bcipy.egg-info/
 build/
 dist/
-.bcipy/*
 
 bcipy/parameters/parameters_*

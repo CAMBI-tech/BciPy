@@ -2,26 +2,31 @@
 from typing import Any, List, Tuple
 
 import numpy as np
+import logging
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
-    equally_probable,
     histogram,
     norm_domain,
     sym_appended,
 )
-from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
-from bcipy.tasks.rsvp.main_frame import DecisionMaker, EvidenceFusion
-from bcipy.tasks.rsvp.query_mechanisms import NBestStimuliAgent
-from bcipy.tasks.rsvp.stopping_criteria import (
+from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
+from bcipy.task.control.query import NBestStimuliAgent
+from bcipy.task.control.criteria import (
     CriteriaEvaluator,
     MaxIterationsCriteria,
     MinIterationsCriteria,
     ProbThresholdCriteria,
 )
-from bcipy.tasks.session_data import EvidenceType
+from bcipy.task.data import EvidenceType
+from bcipy.language.uniform import UniformLanguageModel
+
+
+log = logging.getLogger(__name__)
 
 
 class CopyPhraseWrapper:
@@ -89,7 +94,15 @@ class CopyPhraseWrapper:
                  filter_low: int = 2,
                  filter_order: int = 2,
                  notch_filter_frequency: int = 60,
-                 stim_length: int = 10):
+                 stim_length: int = 10,
+                 stim_order: StimuliOrder = StimuliOrder.RANDOM):
+
+        if not lmodel:
+            # There is enough information provided to construct a text-based
+            # UniformLanguageModel but additional parameters are needed for
+            # an image-based model.
+            assert is_txt_stim, "A language model is required when using non-text stimulus."
+            lmodel = UniformLanguageModel(lm_backspace_prob=backspace_prob)
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -104,6 +117,7 @@ class CopyPhraseWrapper:
                              ProbThresholdCriteria(decision_threshold)])
 
         self.stim_length = stim_length
+        self.stim_order = stim_order
         stimuli_agent = NBestStimuliAgent(alphabet=alp,
                                           len_query=self.stim_length)
 
@@ -114,6 +128,7 @@ class CopyPhraseWrapper:
             alphabet=alp,
             is_txt_stim=is_txt_stim,
             stimuli_timing=stimuli_timing,
+            stimuli_order=self.stim_order,
             inq_constants=inq_constants)
 
         self.alp = alp
@@ -191,13 +206,13 @@ class CopyPhraseWrapper:
             bandpass_order=self.filter_order,
             downsample_factor=self.downsample_rate,
         )
-        data, self.sampling_rate = default_transform(raw_data, self.sampling_rate)
+        data, transformed_sample_rate = default_transform(raw_data, self.sampling_rate)
 
         data, _ = self.signal_model.reshaper(
             trial_labels=target_info,
             timing_info=times,
             eeg_data=data,
-            fs=self.sampling_rate,
+            fs=transformed_sample_rate,
             trials_per_inquiry=self.stim_length,
             channel_map=self.channel_map,
             trial_length=window_length)
@@ -265,8 +280,9 @@ class CopyPhraseWrapper:
         # Raise an error if the stimuli includes unexpected terms
         if not set(letters).issubset(self.valid_targets):
             invalid = set(letters).difference(self.valid_targets)
-            raise Exception(
-                f'unexpected letters received in copy phrase: {invalid}')
+            error_message = f'unexpected letters received in copy phrase: {invalid}'
+            log.error(error_message)
+            raise BciPyCoreException(error_message)
 
         return letters, times, target_types
 
@@ -277,60 +293,47 @@ class CopyPhraseWrapper:
             # First, reset the history for this new series
             self.conjugator.reset_history()
 
-            # If there is no language model specified, mock the LM prior
-            # TODO: is the probability domain correct? ERP evidence is in
-            # the log domain; LM by default returns negative log domain.
-            if not self.lmodel:
-                # mock probabilities to be equally likely for all letters.
-                overrides = {BACKSPACE_CHAR: self.backspace_prob}
-                prior = equally_probable(self.alp, overrides)
+            # Get the displayed state
+            update = self.decision_maker.displayed_state
+            log.info(f"Querying language model: '{update}'")
 
-            # Else, let's query the lmodel for priors
-            else:
-                # Get the displayed state
-                # TODO: for oclm this should be a list of (sym, prob)
-                update = self.decision_maker.displayed_state
+            # update the lmodel and get back the priors
+            lm_letter_prior = self.lmodel.predict(update)
 
-                # update the lmodel and get back the priors
-                lm_prior = self.lmodel.state_update(update)
+            # normalize to probability domain if needed
+            normalized = getattr(self.lmodel, 'normalized', False)
+            if not normalized:
+                lm_letter_prior = norm_domain(lm_letter_prior)
 
-                # normalize to probability domain if needed
-                if getattr(self.lmodel, 'normalized', False):
-                    lm_letter_prior = lm_prior['letter']
-                else:
-                    lm_letter_prior = norm_domain(lm_prior['letter'])
+            if BACKSPACE_CHAR in self.alp:
+                # Append backspace if missing.
+                sym = (BACKSPACE_CHAR, self.backspace_prob)
+                lm_letter_prior = sym_appended(lm_letter_prior, sym)
 
-                if BACKSPACE_CHAR in self.alp:
-                    # Append backspace if missing.
-                    sym = (BACKSPACE_CHAR, self.backspace_prob)
-                    lm_letter_prior = sym_appended(lm_letter_prior, sym)
+            # convert to format needed for evidence fusion;
+            # probability value only in alphabet order.
+            prior = [
+                prior_prob for alp_letter in self.alp
+                for prior_sym, prior_prob in lm_letter_prior
+                if alp_letter == prior_sym
+            ]
 
-                # convert to format needed for evidence fusion;
-                # probability value only in alphabet order.
-                # TODO: ensure that probabilities still add to 1.0
-                prior = [prior_prob
-                         for alp_letter in self.alp
-                         for prior_sym, prior_prob in lm_letter_prior
-                         if alp_letter == prior_sym]
-
-                # display histogram of LM probabilities
-                print(
-                    f"Printed letters: '{self.decision_maker.displayed_state}'")
-                print(histogram(lm_letter_prior))
+            # display histogram of LM probabilities
+            log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
                     {EvidenceType.LM: np.array(prior)})
-            except Exception as lm_exception:
-                print("Error updating language model!")
-                raise lm_exception
+            except Exception as fusion_error:
+                log.exception(f'Error fusing language model evidence!: {fusion_error}')
+                raise BciPyCoreException(fusion_error) from fusion_error
 
             # Get decision maker to give us back some decisions and stimuli
             is_accepted, sti = self.decision_maker.decide(prob_dist)
 
-        except Exception as init_exception:
-            print("Error in initialize_series: %s" % (init_exception))
-            raise init_exception
+        except Exception as init_series_error:
+            log.exception(f'Error in initialize_series: {init_series_error}')
+            raise BciPyCoreException(init_series_error) from init_series_error
 
         return is_accepted, sti

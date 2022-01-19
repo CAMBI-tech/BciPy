@@ -11,7 +11,7 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.tasks.session_data import EvidenceType
+from bcipy.task.data import EvidenceType
 
 
 class TestCopyPhraseWrapper(unittest.TestCase):
@@ -189,14 +189,6 @@ class TestCopyPhraseWrapper(unittest.TestCase):
 
         is_accepted, sti = copy_phrase_task.initialize_series()
         self.assertFalse(is_accepted)
-        self.assertEqual(
-            sti,
-            (
-                [["+", "U", "T", "_", "W", "Y", "X", "Z", "<", "S", "V"]],
-                [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
-                [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
-            ),
-        )
 
         triggers = [
             ("+", 0.0),
@@ -233,7 +225,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             sti,
             (
                 [["+", "I", "F", "B", "G", "C", "D", "J", "A", "E", "H"]],
-                [[self.params["time_cross"]] + [self.params["time_flash"]] * self.params["stim_length"]],
+                [[self.params["time_fixation"]] + [self.params["time_flash"]] * self.params["stim_length"]],
                 [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
             ),
         )

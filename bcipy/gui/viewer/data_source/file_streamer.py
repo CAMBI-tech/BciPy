@@ -1,6 +1,8 @@
-import csv
+"""Streams file data for the viewer"""
 import logging
+import time
 from bcipy.acquisition.util import StoppableThread
+from bcipy.helpers.raw_data import RawDataReader
 log = logging.getLogger(__name__)
 
 
@@ -23,16 +25,11 @@ class FileStreamer(StoppableThread):
 
     def run(self):
         log.debug("Starting raw_data file streamer")
-        import time
-        with open(self.data_file) as csvfile:
-            # read metadata
-            _name_row = next(csvfile)
-            fs = float(next(csvfile).strip().split(",")[1])
 
-            reader = csv.reader(csvfile)
-            _channels = next(reader)
+        with RawDataReader(self.data_file, convert_data=True) as reader:
+            fs = reader.sample_rate
+            log.debug(f"Publishing data at sample rate {fs} hz")
 
-            log.debug("Publishing data")
             # publish data
             for data in reader:
                 if not self.running():

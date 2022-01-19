@@ -15,12 +15,12 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.protocols import registry
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
     from bcipy.acquisition.connection_method import ConnectionMethod
     from bcipy.acquisition.datastream.tcp_server import TcpDataServer
 
     # Find the DSI protocol by name.
-    protocol = registry.find_protocol(supported_device('DSI'), ConnectionMethod.TCP)
+    protocol = registry.find_protocol(preconfigured_device('DSI'), ConnectionMethod.TCP)
 
     try:
         server = TcpDataServer(protocol=protocol, host='127.0.0.1', port=9000)

@@ -9,6 +9,7 @@ import time
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.util import StoppableThread
+from bcipy.helpers.raw_data import settings
 
 log = logging.getLogger(__name__)
 
@@ -180,18 +181,6 @@ def await_start(dataserver, max_wait=2):
             dataserver.stop()
             raise Exception("Server couldn't start up in time.")
 
-# TODO: refactor this into a raw_data module
-
-
-def _settings(filename):
-    """Read the daq settings from the given data file"""
-
-    with open(filename, 'r') as infile:
-        daq_type = infile.readline().strip().split(',')[1]
-        sample_hz = int(infile.readline().strip().split(',')[1])
-        channels = infile.readline().strip().split(',')
-        return daq_type, sample_hz, channels
-
 
 def main():
     """Initialize and run the server."""
@@ -200,7 +189,7 @@ def main():
     from bcipy.acquisition.datastream.generator import file_data_generator, random_data_generator, generator_with_args
     from bcipy.acquisition.protocols.registry import find_protocol
     from bcipy.acquisition.connection_method import ConnectionMethod
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', default='127.0.0.1')
@@ -214,15 +203,15 @@ def main():
     args = parser.parse_args()
 
     if args.filename:
-        daq_type, sample_rate, channels = _settings(args.filename)
-        device_spec = supported_device(daq_type)
+        daq_type, sample_rate, channels = settings(args.filename)
+        device_spec = preconfigured_device(daq_type)
         device_spec.sample_rate = sample_rate
         device_spec.channels = channels
 
         generator = generator_with_args(file_data_generator,
                                         filename=args.filename)
     else:
-        device_spec = supported_device(args.name)
+        device_spec = preconfigured_device(args.name)
         generator = random_data_generator
 
     protocol = find_protocol(device_spec, ConnectionMethod.TCP)

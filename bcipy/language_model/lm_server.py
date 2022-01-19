@@ -137,7 +137,7 @@ def post_json_request(server_config: LmServerConfig,
         response = requests.post(url, json=data)
     except requests.ConnectionError:
         raise ConnectionErr(host, port)
-    if not response.status_code == requests.codes.ok:
+    if response.status_code != requests.codes.ok:
         raise StatusCodeError(response.status_code)
     try:
         return response.json()

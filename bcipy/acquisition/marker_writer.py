@@ -1,6 +1,7 @@
 """Defines classes that can write markers to LabStreamingLayer StreamOutlet."""
 import logging
 from typing import Any
+
 import pylsl
 
 log = logging.getLogger(__name__)
@@ -11,19 +12,13 @@ class MarkerWriter():
     markers.
     """
 
-    def push_marker(self, marker: Any, lsl_time: float = None):
+    def push_marker(self, marker: Any):
         """Push the given stimulus marker for processing.
 
-        Parameters:
-            marker : any object that can be converted to a str
-            lsl_time : optional float indicating the time to associate with
-                the marker.
+        Parameters
+        ----------
+        - marker : any object that can be converted to a str
         """
-        raise NotImplementedError()
-
-    def now(self) -> float:
-        """Returns current time from the clock internal to the marker
-        writer."""
         raise NotImplementedError()
 
     def cleanup(self):
@@ -37,30 +32,28 @@ class LslMarkerWriter(MarkerWriter):
     pylsl.StreamInlet. See https://github.com/sccn/labstreaminglayer/wiki.
     """
 
-    def __init__(self, stream_name: str = "BCI_Stimulus_Markers", stream_id: str = "bci_stim_markers"):
+    def __init__(self,
+                 stream_name: str = "BCI_Stimulus_Markers",
+                 stream_id: str = "bci_stim_markers"):
         super(LslMarkerWriter, self).__init__()
         self.stream_name = stream_name
-        markers_info = pylsl.StreamInfo(stream_name,
-                                        "Markers", 1, 0, 'string',
+        markers_info = pylsl.StreamInfo(stream_name, "Markers", 1, 0, 'string',
                                         stream_id)
         self.markers_outlet = pylsl.StreamOutlet(markers_info)
-        self._stamp = None
+        self.first_marker_stamp: float = None
 
-    def now(self) -> float:
-        """Create the timestamp for the next marker using the pylsl
-        local_clock."""
-        return pylsl.local_clock()
-
-    def push_marker(self, marker: Any, lsl_time: float = None):
+    def push_marker(self, marker: Any):
         """Push the given stimulus marker for processing.
-        Parameters:
-            marker : any object that can be converted to a str
-            lsl_time : optional float indicating the time to associate with
-                the marker. If omitted, the pylsl.local_clock() will be used.
+
+        Parameters
+        ----------
+        - marker : any object that can be converted to a str
         """
-        stamp = lsl_time if lsl_time is not None else self.now()
+        stamp = pylsl.local_clock()
+        log.debug(f'Pushing marker {str(marker)} at {stamp}')
         self.markers_outlet.push_sample([str(marker)], stamp)
-        log.debug("Pushing marker: %s; timestamp: %s", marker, stamp)
+        if not self.first_marker_stamp:
+            self.first_marker_stamp = stamp
 
     def cleanup(self):
         """Cleans up the StreamOutlet."""
@@ -81,11 +74,8 @@ class NullMarkerWriter(MarkerWriter):
     https://en.wikipedia.org/wiki/Null_object_pattern
     """
 
-    def push_marker(self, marker: Any, lsl_time: float = None):
+    def push_marker(self, marker: Any):
         pass
-
-    def now(self) -> float:
-        return 0.0
 
     def cleanup(self):
         pass

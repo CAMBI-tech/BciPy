@@ -6,8 +6,17 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
-from bcipy.helpers.stimuli import play_sound, soundfiles,\
-    random_rsvp_calibration_inq_gen, best_selection, best_case_rsvp_inq_gen
+from bcipy.helpers.stimuli import (
+    alphabetize,
+    best_case_rsvp_inq_gen,
+    best_selection,
+    DEFAULT_FIXATION_PATH,
+    get_fixation,
+    play_sound,
+    calibration_inquiry_generator,
+    soundfiles,
+    StimuliOrder
+)
 
 MOCK_FS = 44100
 
@@ -65,8 +74,8 @@ class TestStimuliGeneration(unittest.TestCase):
 
         experiment_clock = mock()
 
-        def mock_callback_function(timing):
-            self.assertEqual(timing, self.test_timing)
+        def mock_callback_function(clock, stimuli):
+            self.assertEqual(stimuli, self.test_timing[0])
 
         # mock the other library interactions
         when(sf).read(
@@ -138,12 +147,13 @@ class TestStimuliGeneration(unittest.TestCase):
         ]
         stim_number = 10
         stim_length = 10
-        inquiries, inq_timings, inq_colors = random_rsvp_calibration_inq_gen(
+        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
             alp,
             timing=[0.5, 1, 0.2],
             color=['green', 'red', 'white'],
             stim_number=stim_number,
             stim_length=stim_length,
+            stim_order=StimuliOrder.RANDOM,
             is_txt=True)
 
         self.assertEqual(
@@ -161,6 +171,48 @@ class TestStimuliGeneration(unittest.TestCase):
             choices = inq[2:]
             self.assertEqual(stim_length, len(set(choices)),
                              'All choices should be unique')
+
+            # create a string of the options
+            inq_strings.append(''.join(choices))
+
+        self.assertEqual(
+            len(inquiries), len(set(inq_strings)),
+            'All inquiries should be different')
+
+    def test_alphabetical_inquiry_gen(self):
+        """Test generation of random inquiries"""
+        alp = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '<', '_'
+        ]
+        stim_number = 10
+        stim_length = 10
+        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+            alp,
+            timing=[0.5, 1, 0.2],
+            color=['green', 'red', 'white'],
+            stim_number=stim_number,
+            stim_length=stim_length,
+            stim_order=StimuliOrder.ALPHABETICAL,
+            is_txt=True)
+
+        self.assertEqual(
+            len(inquiries), stim_number,
+            'Should have produced the correct number of inquiries')
+        self.assertEqual(len(inq_timings), stim_number)
+        self.assertEqual(len(inq_colors), stim_number)
+
+        inq_strings = []
+        for inq in inquiries:
+            self.assertEqual(
+                len(inq), stim_length + 2,
+                ('inquiry should include the correct number of choices as ',
+                 'well as the target and cross.'))
+            choices = inq[2:]
+            self.assertEqual(stim_length, len(set(choices)),
+                             'All choices should be unique')
+            self.assertEqual(alphabetize(choices), choices)
 
             # create a string of the options
             inq_strings.append(''.join(choices))
@@ -292,6 +344,43 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
+
+
+class TestGetFixation(unittest.TestCase):
+
+    def test_text_fixation(self):
+        expected = '+'
+        response = get_fixation(is_txt=True)
+        self.assertEqual(expected, response)
+
+    def test_image_fixation_uses_default(self):
+        expected = DEFAULT_FIXATION_PATH
+        response = get_fixation(is_txt=False)
+        self.assertEqual(expected, response)
+
+
+class TestAlphabetize(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.list_to_alphabetize = ['Z', 'Q', 'A', 'G']
+
+    def test_alphabetize(self):
+        expected = ['A', 'G', 'Q', 'Z']
+        response = alphabetize(self.list_to_alphabetize)
+        self.assertEqual(expected, response)
+
+    def test_alphabetize_image_name(self):
+        list_of_images = ['testing.png', '_ddtt.jpeg', 'bci_image.png']
+        expected = ['bci_image.png', 'testing.png', '_ddtt.jpeg']
+        response = alphabetize(list_of_images)
+        self.assertEqual(expected, response)
+
+    def test_alphabetize_special_characters_at_end(self):
+        character = '<'
+        expected = ['A', 'G', 'Q', 'Z', character]
+        self.list_to_alphabetize.insert(1, character)
+        response = alphabetize(self.list_to_alphabetize)
+        self.assertEqual(expected, response)
 
 
 if __name__ == '__main__':

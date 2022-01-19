@@ -19,7 +19,7 @@ class TestDeviceSpecs(unittest.TestCase):
     def test_default_supported_devices(self):
         """List of supported devices should include generic values for
         backwards compatibility."""
-        supported = devices.supported_devices()
+        supported = devices.preconfigured_devices()
         self.assertTrue(len(supported.keys()) > 0)
         self.assertTrue('LSL' in supported.keys())
         self.assertTrue('DSI' in supported.keys())
@@ -47,7 +47,7 @@ class TestDeviceSpecs(unittest.TestCase):
             json.dump(my_devices, config_file)
 
         devices.load(config_path)
-        supported = devices.supported_devices()
+        supported = devices.preconfigured_devices()
         self.assertEqual(1, len(supported.keys()))
         self.assertTrue('DSI-VR300' in supported.keys())
 
@@ -56,7 +56,7 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(300.0, spec.sample_rate)
         self.assertEqual(channels, spec.channels)
 
-        self.assertEqual(spec, devices.supported_device('DSI-VR300'))
+        self.assertEqual(spec, devices.preconfigured_device('DSI-VR300'))
         shutil.rmtree(temp_dir)
 
     def test_device_registration(self):
@@ -69,7 +69,7 @@ class TestDeviceSpecs(unittest.TestCase):
             sample_rate=300.0,
             connection_methods=["TCP", "LSL"],
             description="Custom built device")
-        supported = devices.supported_devices()
+        supported = devices.preconfigured_devices()
         device_count = len(supported.keys())
         self.assertTrue(device_count > 0)
         self.assertTrue('my-device' not in supported.keys())
@@ -77,13 +77,13 @@ class TestDeviceSpecs(unittest.TestCase):
         spec = devices.make_device_spec(data)
         devices.register(spec)
 
-        supported = devices.supported_devices()
+        supported = devices.preconfigured_devices()
         self.assertEqual(device_count + 1, len(supported.keys()))
         self.assertTrue('my-device' in supported.keys())
 
     def test_search_by_name(self):
         """Should be able to find a supported device by name."""
-        dsi_device = devices.supported_device('DSI')
+        dsi_device = devices.preconfigured_device('DSI')
         self.assertEqual('DSI', dsi_device.name)
 
     def test_device_spec_defaults(self):
@@ -99,8 +99,53 @@ class TestDeviceSpecs(unittest.TestCase):
         """DeviceSpec should have a list of channels used for analysis."""
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3', 'TRG'],
-                                  sample_rate=256.0)
+                                  sample_rate=256.0,
+                                  excluded_from_analysis=['TRG'])
 
-        self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels())
+        self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
+        spec.excluded_from_analysis = []
         self.assertEqual(['C1', 'C2', 'C3', 'TRG'],
-                         spec.analysis_channels(exclude_trg=False))
+                         spec.analysis_channels)
+
+        spec2 = devices.DeviceSpec(name='Device2',
+                                   channels=['C1', 'C2', 'C3', 'TRG'],
+                                   sample_rate=256.0,
+                                   excluded_from_analysis=['C1', 'TRG'])
+        self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
+
+    def test_irregular_sample_rate(self):
+        """Test that DeviceSpec supports an IRREGULAR sample rate."""
+        spec = devices.DeviceSpec(name='Mouse',
+                                  channels=['Btn1', 'Btn2'],
+                                  sample_rate=devices.IRREGULAR_RATE,
+                                  content_type='Markers')
+        self.assertEqual(devices.IRREGULAR_RATE, spec.sample_rate)
+        with self.assertRaises(AssertionError):
+            devices.DeviceSpec(name='Mouse',
+                               channels=['Btn1', 'Btn2'],
+                               sample_rate=-100.0,
+                               content_type='Markers')
+
+    def test_data_type(self):
+        """Test that DeviceSpec supports a data type."""
+        spec = devices.DeviceSpec(name='Mouse',
+                                  channels=['Btn1', 'Btn2'],
+                                  sample_rate=devices.IRREGULAR_RATE,
+                                  content_type='Markers')
+        self.assertEqual('float32', spec.data_type,
+                         "Should have a default type")
+
+        spec = devices.DeviceSpec(name='Mouse',
+                                  channels=['Btn1', 'Btn2'],
+                                  sample_rate=devices.IRREGULAR_RATE,
+                                  content_type='Markers',
+                                  data_type='string')
+        self.assertEqual('string', spec.data_type)
+
+        # Should raise an exception for an invalid data type.
+        with self.assertRaises(AssertionError):
+            devices.DeviceSpec(name='Mouse',
+                               channels=['Btn1', 'Btn2'],
+                               sample_rate=devices.IRREGULAR_RATE,
+                               content_type='Markers',
+                               data_type='Whatever')

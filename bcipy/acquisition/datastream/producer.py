@@ -30,7 +30,7 @@ class Producer(threading.Thread):
     def __init__(self,
                  queue,
                  freq=1 / 100,
-                 generator=random_data_generator(),
+                 generator=None,
                  maxiters=None):
 
         super(Producer, self).__init__()
@@ -38,7 +38,7 @@ class Producer(threading.Thread):
         self._running = True
 
         self.freq = freq
-        self.generator = generator
+        self.generator = generator or random_data_generator()
         self.maxiters = maxiters
         self.queue = queue
 
@@ -54,12 +54,7 @@ class Producer(threading.Thread):
     def _genitem(self):
         """Generates the data item to be added to the queue."""
 
-        try:
-            data = next(self.generator)
-        except StopIteration:
-            log.debug("End of input reached")
-            raise Exception("End of input reached")
-        return data
+        return next(self.generator)
 
     def _additem(self):
         """Adds the data item to the queue."""
@@ -70,6 +65,7 @@ class Producer(threading.Thread):
         """Stop the thread; stopped threads cannot be restarted."""
 
         self._running = False
+        self.join()
 
     def run(self):
         """Provides a control loop, adding a data item to the queue at the

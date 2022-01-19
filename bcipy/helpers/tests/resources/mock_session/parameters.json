@@ -366,7 +366,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "time_target": {
+  "time_prompt": {
     "value": "1.00",
     "section": "bci_config",
     "readableName": "Target Letter Presentation Length (sec)",
@@ -374,7 +374,7 @@
     "recommended_values": "",
     "type": "float"
   },
-  "time_cross": {
+  "time_fixation": {
     "value": "0.50",
     "section": "bci_config",
     "readableName": "Time Fixation Cross (sec)",
@@ -445,10 +445,10 @@
     "type": "str"
   },
   "alert_sounds_path": {
-    "value": "bcipy/static/sounds/rsvp_sounds/",
+    "value": "bcipy/static/sounds/rsvp/",
     "section": "bci_config",
     "readableName": "Alert sounds directory",
-    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp_sounds/",
+    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp/",
     "recommended_values": "",
     "type": "directorypath"
   },

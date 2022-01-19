@@ -1,24 +1,31 @@
 import logging
-from typing import List
-
+from pathlib import Path
+from typing import Tuple
 from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
-    read_data_csv,
+    load_raw_data,
 )
-from bcipy.helpers.stimuli import play_sound
-from bcipy.helpers.triggers import trigger_decoder
-from bcipy.helpers.visualization import generate_offline_analysis_screen
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import get_default_transform
 from matplotlib.figure import Figure
+from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.system_utils import report_execution_time
+from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.visualization import visualize_erp
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model.base_model import SignalModel
+from bcipy.signal.process import get_default_transform
+
 
 log = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
 
 
+@report_execution_time
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True) -> List[Figure]:
+                     parameters: dict = {}, alert_finished: bool = True) -> Tuple[SignalModel, Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -36,18 +43,16 @@ def offline_analysis(data_folder: str = None,
             - uses cross validation to select parameters
             - based on the parameters, trains system using all the data
         - pickle dumps model into .pkl file
-        - generates and saves offline analysis screen
+        - generates and saves ERP figure
         - [optional] alert the user finished processing
-        - returns handles for the figures that are created
     """
 
     if not data_folder:
         data_folder = load_experimental_data()
 
-    mode = 'calibration'
-
     # extract relevant session information from parameters file
     trial_length = parameters.get('trial_length')
+    trials_per_inquiry = parameters.get('stim_length')
     triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
     raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
 
@@ -62,8 +67,11 @@ def offline_analysis(data_folder: str = None,
     static_offset = parameters.get('static_trigger_offset', 0)
     k_folds = parameters.get('k_folds', 10)
 
-    raw_dat, _, channels, type_amp, fs = read_data_csv(
-        data_folder + '/' + raw_data_file)
+    # Load raw data
+    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    channels = raw_data.channels
+    type_amp = raw_data.daq_type
+    fs = raw_data.sample_rate
 
     log.info(f'Channels read from csv: {channels}')
     log.info(f'Device type: {type_amp}')
@@ -76,48 +84,50 @@ def offline_analysis(data_folder: str = None,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-    data, fs = default_transform(raw_dat, fs)
+    data, fs = default_transform(raw_data.by_channel(), fs)
 
     # Process triggers.txt
-    _, t_t_i, t_i, offset = trigger_decoder(
-        mode=mode,
-        trigger_path=f'{data_folder}/{triggers_file}')
-
-    offset = offset + static_offset
+    trigger_values, trigger_timing, _ = trigger_decoder(
+        offset=static_offset,
+        trigger_path=f'{data_folder}/{triggers_file}.txt')
 
     # Channel map can be checked from raw_data.csv file.
-    # read_data_csv already removes the timespamp column.
+    # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, type_amp)
 
     model = PcaRdaKdeModel(k_folds=k_folds)
     data, labels = model.reshaper(
-        trial_labels=t_t_i,
-        timing_info=t_i,
+        trial_labels=trigger_values,
+        timing_info=trigger_timing,
         eeg_data=data,
         fs=fs,
-        trials_per_inquiry=parameters.get('stim_length'),
-        offset=offset,
+        trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         trial_length=trial_length)
+
+    log.info('Training model. This will take some time...')
     model.fit(data, labels)
     model_performance = model.evaluate(data, labels)
 
-    log.info('Saving offline analysis plots!')
+    log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
 
-    fig_handles = generate_offline_analysis_screen(
-        data, labels, model=model, folder=data_folder,
-        down_sample_rate=downsample_rate,
-        fs=fs, save_figure=True, show_figure=False,
-        channel_names=analysis_channel_names_by_pos(channels, channel_map))
-
-    log.info('Saving the model!')
     model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
 
+    figure_handles = visualize_erp(
+        data,
+        labels,
+        fs,
+        plot_average=False,  # set to True to see all channels target/nontarget
+        save_path=data_folder,
+        channel_names=analysis_channel_names_by_pos(channels, channel_map),
+        show_figure=False,
+        figure_name='average_erp.pdf'
+    )
     if alert_finished:
         offline_analysis_tone = parameters.get('offline_analysis_tone')
         play_sound(offline_analysis_tone)
 
-    return model, fig_handles
+    return model, figure_handles
 
 
 if __name__ == "__main__":
@@ -129,13 +139,8 @@ if __name__ == "__main__":
                         default='bcipy/parameters/parameters.json')
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='(%(threadName)-9s) %(message)s')
-
     log.info(f'Loading params from {args.parameters_file}')
     parameters = load_json_parameters(args.parameters_file,
                                       value_cast=True)
     offline_analysis(args.data_folder, parameters)
-
     log.info('Offline Analysis complete.')

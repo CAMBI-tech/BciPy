@@ -28,8 +28,6 @@ In addition to its use during an experiment, the Signal Viewer can be run from t
       -f FILE, --file FILE  path to the data file
       -s SECONDS, --seconds SECONDS
                             seconds to display
-      -d DOWNSAMPLE, --downsample DOWNSAMPLE
-                            downsample factor
       -r REFRESH, --refresh REFRESH
                             refresh rate in ms                       
 

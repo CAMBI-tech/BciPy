@@ -4,6 +4,7 @@ import sys
 from typing import List
 
 from bcipy.gui.gui_main import (
+    AlertMessageResponse,
     AlertMessageType,
     AlertResponse,
     app,
@@ -14,7 +15,7 @@ from bcipy.gui.gui_main import (
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
-from bcipy.tasks.task_registry import TaskType
+from bcipy.task import TaskType
 
 
 class BCInterface(BCIGui):
@@ -31,6 +32,7 @@ class BCInterface(BCIGui):
     btn_height = 40
     max_length = 25
     min_length = 1
+    task_start_timeout = 2
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -47,6 +49,8 @@ class BCInterface(BCIGui):
         self.user = None
         self.experiment = None
         self.task = None
+
+        self.autoclose = True
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
@@ -213,9 +217,9 @@ class BCInterface(BCIGui):
         Build add images needed for the UI. In this case, the OHSU and NEU logos.
         """
         self.add_image(
-            path='bcipy/static/images/gui_images/ohsu.png', position=[self.padding, 0], size=100)
+            path='bcipy/static/images/gui/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui_images/neu.png', position=[self.width - self.padding - 110, 0], size=100)
+            path='bcipy/static/images/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -256,7 +260,7 @@ class BCInterface(BCIGui):
                     message='The selected parameters file is out of date.'
                             'Would you like to update it with the latest options?',
                     message_type=AlertMessageType.INFO,
-                    okay_or_cancel=True)
+                    message_response=AlertMessageResponse.OCE)
 
                 if save_response == AlertResponse.OK.value:
                     self.parameters.save()
@@ -274,7 +278,7 @@ class BCInterface(BCIGui):
                 title='BciPy Alert',
                 message='The default parameters.json cannot be overridden. A copy will be used.',
                 message_type=AlertMessageType.INFO,
-                okay_or_cancel=True)
+                message_response=AlertMessageResponse.OCE)
 
             if response == AlertResponse.OK.value:
                 self.parameter_location = copy_parameters()
@@ -305,21 +309,21 @@ class BCInterface(BCIGui):
                     title='BciPy Alert',
                     message='Please select or create an Experiment',
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE)
                 return False
             if self.task == BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
                     message='Please select a Task',
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True)
+                    message_response=AlertMessageResponse.OTE)
                 return False
         except Exception as e:
             self.throw_alert_message(
                 title='BciPy Alert',
                 message=f'Error, {e}',
                 message_type=AlertMessageType.CRIT,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE)
             return False
         return True
 
@@ -339,7 +343,7 @@ class BCInterface(BCIGui):
                 title='BciPy Alert',
                 message='Please input a User ID',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=True)
+                message_response=AlertMessageResponse.OTE)
             return False
         # Loop over defined user validations and check for error conditions
         for validator in self.user_id_validations:
@@ -349,7 +353,7 @@ class BCInterface(BCIGui):
                     title='BciPy Alert',
                     message=error_message,
                     message_type=AlertMessageType.INFO,
-                    okay_to_exit=True
+                    message_response=AlertMessageResponse.OTE
                 )
                 return False
         return True
@@ -365,20 +369,23 @@ class BCInterface(BCIGui):
         """Start Experiment Session.
 
         Using the inputs gathers, check for validity using the check_input method, then launch the experiment using a
-            command to bci_main.py and subprocess.
+            command to bcipy main and subprocess.
         """
         if self.check_input():
             self.throw_alert_message(
                 title='BciPy Alert',
                 message='Task Starting ...',
                 message_type=AlertMessageType.INFO,
-                okay_to_exit=False)
+                message_response=AlertMessageResponse.OTE,
+                message_timeout=self.task_start_timeout)
             cmd = (
-                f'python bci_main.py -e "{self.experiment}" '
+                f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
             subprocess.Popen(cmd, shell=True)
-            self.close()
+
+            if self.autoclose:
+                self.close()
 
     def offline_analysis(self) -> None:
         """Offline Analysis.

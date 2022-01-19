@@ -3,6 +3,7 @@ using pylsl."""
 import logging
 from queue import Empty, Queue
 from typing import Generator
+import uuid
 
 from pylsl import StreamInfo, StreamOutlet
 
@@ -56,16 +57,22 @@ class LslDataServer(StoppableThread):
         info = StreamInfo(device_spec.name,
                           device_spec.content_type, device_spec.channel_count,
                           device_spec.sample_rate,
-                          'float32',
-                          "uid12345")
+                          device_spec.data_type,
+                          f'{device_spec.content_type.lower()}_{uuid.uuid1()}')
 
         if include_meta:
+            # TODO: different types of metadata depending on the content type
+            unit = 'unknown'
+            channel_type = 'unknown'
+            if self.device_spec.content_type == 'EEG':
+                unit = 'microvolts'
+                channel_type = 'EEG'
             meta_channels = info.desc().append_child('channels')
             for channel in device_spec.channels:
                 meta_channels.append_child('channel') \
                     .append_child_value('label', channel) \
-                    .append_child_value('unit', 'microvolts') \
-                    .append_child_value('type', 'EEG')
+                    .append_child_value('unit', unit) \
+                    .append_child_value('type', channel_type)
 
         self.outlet = StreamOutlet(info)
 
@@ -143,7 +150,7 @@ def main():
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--filename', default=None,
@@ -155,12 +162,12 @@ def main():
 
     if args.filename:
         daq_type, sample_rate, channels = _settings(args.filename)
-        device_spec = supported_device(daq_type)
+        device_spec = preconfigured_device(daq_type)
         device_spec.sample_rate = sample_rate
         device_spec.channels = channels
         generator = file_data_generator(filename=args.filename)
     else:
-        device_spec = supported_device(args.name)
+        device_spec = preconfigured_device(args.name)
         generator = None
 
     markers = True if args.markers else False
