@@ -11,7 +11,14 @@ from collections import Counter
 
 class TransformerLanguageModel(LanguageModel):
 
-    def __init__(self, response_type, symbol_set):
+    def __init__(self, response_type, symbol_set, lm_path):
+        """
+        Initilize instance variables and load the language model with given path
+        Args:
+            response_type - SYMBOL or WORD
+            symbol_set - list of symbol strings
+            lm_path - path to language model files
+        """
         self.response_type = response_type
         self.symbol_set = symbol_set
         self.model = None
@@ -20,6 +27,7 @@ class TransformerLanguageModel(LanguageModel):
         self.vocab_size = 0
         self.idx_to_word = None
         self.curr_word_predicted_prob = None
+        self.load(lm_path)
 
     def __get_char_predictions(self, word_prefix: str) -> List[tuple]:
         """
@@ -186,8 +194,7 @@ if __name__ == "__main__":
     # data_folder = args.data_folder
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = TransformerLanguageModel(response_type, symbol_set)
-    lm.load("gpt2")
+    lm = TransformerLanguageModel(response_type, symbol_set, "gpt2")
 
 
     '''
