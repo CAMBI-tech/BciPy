@@ -15,11 +15,11 @@ class LanguageModel(ABC):
     symbol_set: List[str]
 
     @abstractmethod
-    def predict(self, evidence: List[Tuple]) -> List[tuple]:
+    def predict(self, evidence: List[str]) -> List[tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:
-            evidence - [('A', .08), ('B', .1)]
+            evidence - ['A', 'B']
 
         Response:
             probability - dependant on response type, a list of words or symbols with probability
@@ -32,7 +32,7 @@ class LanguageModel(ABC):
         ...
 
     @abstractmethod
-    def state_update(self, evidence: List[Tuple]) -> List[Tuple]:
+    def state_update(self, evidence: List[str]) -> List[Tuple]:
         """Update state by predicting and updating"""
         ...
 

@@ -1,6 +1,6 @@
 from typing import List, Tuple, Dict
 from pathlib import Path
-from bcipy.helpers.task import alphabet
+from bcipy.helpers.task import alphabet, SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.language import LanguageModel
 from bcipy.language.base import ResponseType
 
@@ -9,12 +9,17 @@ import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from collections import Counter
 
-
 class TransformerLanguageModel(LanguageModel):
 
     def __init__(self, response_type, symbol_set):
         self.response_type = response_type
         self.symbol_set = symbol_set
+        self.model = None
+        self.tokenizer = None
+        self.is_start_of_word = True
+        self.vocab_size = 0
+        self.idx_to_word = None
+        self.curr_word_predicted_prob = None
 
     def __get_char_predictions(self, word_prefix: str) -> List[tuple]:
         """
@@ -39,12 +44,12 @@ class TransformerLanguageModel(LanguageModel):
             if word.startswith(word_prefix):
                 # obtain the character following the prefix in this word
                 if len(word) == prefix_len:
-                    next_char = "_"
+                    next_char = SPACE_CHAR
                 else:
                     next_char = word[prefix_len]
                 # make sure the next character is in the symbol set
-                if next_char in self.symbol_set and next_char != "<":
-                    char_to_prob[next_char] += self.curr_predicted_prob[idx]
+                if next_char in self.symbol_set and next_char != BACKSPACE_CHAR:
+                    char_to_prob[next_char] += self.curr_word_predicted_prob[idx]
 
         # normalize char_to_prob
         sum_char_prob = sum(char_to_prob.values())
@@ -53,7 +58,7 @@ class TransformerLanguageModel(LanguageModel):
 
         # build a list of tuples (char, prob)
         char_prob_tuples = [ (k,v) for k, v in sorted(char_to_prob.items(), key = lambda item: item[1], reverse=True)]
-        
+
         return char_prob_tuples
 
     def __build_vocab(self) -> Dict[int, str]:
@@ -80,6 +85,10 @@ class TransformerLanguageModel(LanguageModel):
             the entire vocabulary
         """
 
+        # empty text indicates the beginning of a phrase, attach the BOS symbol
+        if text == "":
+            text = "<|endoftext|>"
+
         # tokenize the text
         indexed_tokens = self.tokenizer.encode(text)
         tokens_tensor = torch.tensor([indexed_tokens])
@@ -95,48 +104,48 @@ class TransformerLanguageModel(LanguageModel):
 
         return predicted_prob
 
-    def predict(self, evidence: str) -> List[tuple]:
+    def predict(self, evidence: List[str]) -> List[tuple]:
         """
         Given an evidence of typed string, predict the probability distribution of 
         the next symbol
         Args:
-            evidence - a string of evidence text
+            evidence - a list of characters (typed by the user)
         Response:
             A list of symbols with probability
         """
         assert self.model is not None, "language model does not exist!"
 
+        evidence_str = "".join(evidence)
+
+        # mark the start-of-word indicator
+        if evidence_str == "" or evidence[-1] == SPACE_CHAR:
+            self.is_start_of_word = True
+        else:
+            self.is_start_of_word = False
+
+        # predict the next character
+        evidence_str = evidence_str.replace(SPACE_CHAR, ' ')
+
         # if we are at the start of a word, let the language model predict the next word
         # then we get the probability distribution of the first character of the next word
         if self.is_start_of_word is True:
-            self.curr_predicted_prob = self.__model_infer(evidence)
-
+            self.curr_word_predicted_prob = self.__model_infer(evidence_str)
             next_char_pred = self.__get_char_predictions("")
 
         # if we are at the middle of a word, just get the marginal distribution of
         # the next character given current word prefix
         else:
-            # make sure we have the word level distribution
-            if self.curr_predicted_prob is None:
-                self.curr_predicted_prob = self.__model_infer(" ".join(evidence.split()[:-1]))
-
-            next_char_pred = self.update(evidence)
-
-        return next_char_pred
-
-    def update(self, evidence: str) -> List[tuple]:
-        """
-        Obtain the marginal distribution of next character given current word prefix
-        Args:
-            evidence - a string of evidence text
-        Response:
-            A list of symbol with probability
-        """
-        cur_word_prefix = evidence.split()[-1]
-        next_char_pred = self.__get_char_predictions(cur_word_prefix)
+            # first we need the language model predict the probability distribution of the 
+            # current word
+            self.curr_word_predicted_prob = self.__model_infer(" ".join(evidence_str.split()[:-1]))
+            cur_word_prefix = evidence_str.split()[-1]
+            next_char_pred = self.__get_char_predictions(cur_word_prefix)
 
         return next_char_pred
 
+    def update(self) -> None:
+        """Update the model state"""
+        ...
 
     def load(self, path: Path) -> None:
         """
@@ -147,43 +156,24 @@ class TransformerLanguageModel(LanguageModel):
         self.model = GPT2LMHeadModel.from_pretrained(path)
         self.model.eval()
         self.tokenizer = GPT2Tokenizer.from_pretrained(path)
-        self.is_start_of_word = True
         self.vocab_size = self.tokenizer.vocab_size
         self.idx_to_word = self.__build_vocab()
-        self.curr_predicted_prob = None
+ 
 
-    def state_update(self, evidence: str) -> List[Tuple]:
+    def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
             Wrapper method that takes in evidence text, and output probability distribution
             of next character
         Args:
-            evidence - a string of evidence text
+            evidence - a list of characters (typed by the user)
         Response:
             A list of symbol with probability
         """
-
-        # empty evidence indicates the beginning of a phrase, attach the BOS symbol
-        if evidence == "":
-            evidence = "<|endoftext|>"
-
-        # mark the start-of-word indicator
-        if evidence == "<|endoftext|>" or evidence[-1] == "_":
-            self.is_start_of_word = True
-        else:
-            self.is_start_of_word = False
-
-        # predict the next character
-        evidence = evidence.replace('_', ' ')
-
         next_char_pred = self.predict(evidence)
 
         return next_char_pred
 
-    def reset(self):
-        """
-        Erase the current prediction
-        """
-        self.curr_predicted_prob = None
+
 
 
 # test
@@ -197,27 +187,46 @@ if __name__ == "__main__":
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
     lm = TransformerLanguageModel(response_type, symbol_set)
-    lm.load('gpt2')
-    next_char_pred = lm.state_update("")
+    lm.load("gpt2")
+
+
+    '''
+    next_char_pred = lm.state_update(list("what_is_"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("peanut_butter_and_")
+    correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("what_is_i"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("j")
+    correct_char_rank = [c[0] for c in next_char_pred].index("T") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("what_is_it"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("e")
+    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("does_it_make_sen"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("l")
+    correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("does_it_make_sens"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("l")
+    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("does_it_make_sense"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("y")
+    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("as_soon_as_possib"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("_")
+    correct_char_rank = [c[0] for c in next_char_pred].index("L") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("as_soon_as_possibl"))
     print(next_char_pred)
-    lm.reset()
-    next_char_pred = lm.state_update("")
+    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("as_soon_as_possible"))
     print(next_char_pred)
-    next_char_pred = lm.state_update("peanut_but")
-    print(next_char_pred)
-    next_char_pred = lm.state_update("peanut_butte")
-    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
+    print(correct_char_rank)
+    '''
+    
+
