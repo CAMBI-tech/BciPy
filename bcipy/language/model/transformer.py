@@ -1,33 +1,40 @@
 from typing import List, Tuple, Dict
 from pathlib import Path
 from bcipy.helpers.task import alphabet, SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.language import LanguageModel
-from bcipy.language.base import ResponseType
+from bcipy.language.main import LanguageModel, ResponseType
 
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from collections import Counter
 
-class TransformerLanguageModel(LanguageModel):
+class GPT2LanguageModel(LanguageModel):
 
     def __init__(self, response_type, symbol_set, lm_path):
         """
         Initilize instance variables and load the language model with given path
         Args:
-            response_type - SYMBOL or WORD
+            response_type - SYMBOL only
             symbol_set - list of symbol strings
             lm_path - path to language model files
         """
         self.response_type = response_type
         self.symbol_set = symbol_set
+        self.__validate_response_type()
         self.model = None
         self.tokenizer = None
         self.is_start_of_word = True
         self.vocab_size = 0
         self.idx_to_word = None
         self.curr_word_predicted_prob = None
-        self.load(lm_path)
+        self.lm_path = lm_path
+        self.load()
+
+    def __validate_response_type(self):
+        """
+        Make sure the response_type is valid for this language model
+        """
+        assert self.response_type == ResponseType.SYMBOL, "response type must be SYMBOL!"
 
     def __get_char_predictions(self, word_prefix: str) -> List[tuple]:
         """
@@ -155,15 +162,15 @@ class TransformerLanguageModel(LanguageModel):
         """Update the model state"""
         ...
 
-    def load(self, path: Path) -> None:
+    def load(self) -> None:
         """
             Load the language model and tokenizer, initialize class variables
         Args:
             path: language model file path, can be just "gpt2"
         """
-        self.model = GPT2LMHeadModel.from_pretrained(path)
+        self.model = GPT2LMHeadModel.from_pretrained(self.lm_path)
         self.model.eval()
-        self.tokenizer = GPT2Tokenizer.from_pretrained(path)
+        self.tokenizer = GPT2Tokenizer.from_pretrained(self.lm_path)
         self.vocab_size = self.tokenizer.vocab_size
         self.idx_to_word = self.__build_vocab()
  
@@ -180,60 +187,5 @@ class TransformerLanguageModel(LanguageModel):
         next_char_pred = self.predict(evidence)
 
         return next_char_pred
-
-
-
-
-# test
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    # parser.add_argument('-d', '--data_folder', default=None)
-    # args = parser.parse_args()
-    # data_folder = args.data_folder
-    symbol_set = alphabet()
-    response_type = ResponseType.SYMBOL
-    lm = TransformerLanguageModel(response_type, symbol_set, "gpt2")
-
-
-    '''
-    next_char_pred = lm.state_update(list("what_is_"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("what_is_i"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("T") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("what_is_it"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sen"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sens"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sense"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("as_soon_as_possib"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("L") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("as_soon_as_possibl"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("as_soon_as_possible"))
-    print(next_char_pred)
-    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
-    '''
     
 

@@ -13,6 +13,7 @@ class LanguageModel(ABC):
 
     response_type: ResponseType
     symbol_set: List[str]
+    normalized: bool = False  # normalized to probability domain
 
     @abstractmethod
     def predict(self, evidence: List[str]) -> List[tuple]:
@@ -32,15 +33,14 @@ class LanguageModel(ABC):
         ...
 
     @abstractmethod
-    def state_update(self, evidence: List[str]) -> List[Tuple]:
-        """Update state by predicting and updating"""
-        ...
-
-    @abstractmethod
-    def load(self, path: Path) -> None:
+    def load(self) -> None:
         """Restore model state from the provided checkpoint"""
         ...
 
     def reset(self) -> None:
         """Reset language model state"""
+        ...
+
+    def state_update(self, evidence: List[str]) -> List[Tuple]:
+        """Update state by predicting and updating"""
         ...
