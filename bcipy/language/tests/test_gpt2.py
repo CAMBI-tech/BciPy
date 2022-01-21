@@ -1,4 +1,4 @@
-from bcipy.language.model.transformer import GPT2LanguageModel
+from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.helpers.task import alphabet
 from bcipy.language.main import ResponseType
 
