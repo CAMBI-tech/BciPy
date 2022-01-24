@@ -58,74 +58,70 @@ def compute_probs_after_preview(
     if not 0 <= user_error_prob <= 1:
         raise ValueError(f"invalid user error prob: {user_error_prob}")
 
-    uniform_prior = 1 / len(alphabet)
+    """suppose user_error_prob = 0.05, and len(alphabet) = 28. suppose we present AB (random 2 of 28 letters).
+    the user responds positively ("+")
+        p(want=A | +, show=AB) = p(+ | want=A, show=AB) p(want=A | show=AB) / p(+ | show=AB)
+                                = p(+ | want in show) p(want=A) / p(+ | show=AB)                 # Use assumption 1
+                                = 0.95 * (1/28) / [
+                                    p(+ | want=A, show=AB) p(want=A)
+                                    + p(+ | want=B, show=AB) p(want=B)
+                                    + p(+ | want=C, show=AB) p(want=C)
+                                    ...
+                                    + p(+ | want=Z, show=AB) p(want=Z)
+                                ]
+
+    We can compute this from just 2 terms:
+        shown_term = p(+ | want=shown_letter, show=[....,shown_letter,...]) p(want=shown_letter)
+        unshown_term = p(+ | want=unshown_letter, show=[...]) p(want=unshown_letter)
+
+    Then we can update as follows:
+        p(shown_letter | +, show=[...]) = shown_term / [
+                                            len(show) * shown_term
+                                            + (len(alphabet) - len(show)) * unshown_term
+                                        ]
+
+        p(unshown_letter | +, show=[...]) = unshown_term / [
+                                            len(show) * shown_term
+                                            + (len(alphabet) - len(show)) * unshown_term
+                                        ]
+
+    If user responds negatively ("-"):
+    Same assumptions as above, but now user responds "-"
+        p(want=A | -, show=AB) = p(- | want=A, show=AB) p(want=A | show=AB) / p(- | show=AB)
+                                = p(- | want in show) p(want=A) / p(- | show=AB)                 # Use assumption 1
+
+    We can compute this from just 2 terms:
+        shown_term = p(- | want=shown_letter, show=[....,shown_letter,...]) p(want=shown_letter)
+        unshown_term = p(- | want=unshown_letter, show=[...]) p(want=unshown_letter)
+
+    Then we can update as follows:
+        p(shown_letter | -, show=[...]) = shown_term / [
+                                            len(show) * shown_term
+                                            + (len(alphabet) - len(show)) * unshown_term
+                                        ]
+
+        p(unshown_letter | -, show=[...]) = unshown_term / [
+                                            len(show) * shown_term
+                                            + (len(alphabet) - len(show)) * unshown_term
+                                        ]"""
 
     if proceed:
-        """suppose user_error_prob = 0.05, and len(alphabet) = 28. suppose we present AB (random 2 of 28 letters).
-        the user responds positively ("+")
-            p(want=A | +, show=AB) = p(+ | want=A, show=AB) p(want=A | show=AB) / p(+ | show=AB)
-                                   = p(+ | want in show) p(want=A) / p(+ | show=AB)                 # Use assumption 1
-                                   = 0.95 * (1/28) / [
-                                        p(+ | want=A, show=AB) p(want=A)
-                                        + p(+ | want=B, show=AB) p(want=B)
-                                        + p(+ | want=C, show=AB) p(want=C)
-                                        ...
-                                        + p(+ | want=Z, show=AB) p(want=Z)
-                                    ]
-
-        We can compute this from just 2 terms:
-            shown_term = p(+ | want=shown_letter, show=[....,shown_letter,...]) p(want=shown_letter)
-            unshown_term = p(+ | want=unshown_letter, show=[...]) p(want=unshown_letter)
-
-        Then we can update as follows:
-            p(shown_letter | +, show=[...]) = shown_term / [
-                                                len(show) * shown_term
-                                                + (len(alphabet) - len(show)) * unshown_term
-                                            ]
-
-            p(unshown_letter | +, show=[...]) = unshown_term / [
-                                                len(show) * shown_term
-                                                + (len(alphabet) - len(show)) * unshown_term
-                                            ]"""
-        shown_term = uniform_prior * (1 - user_error_prob)
-        unshown_term = uniform_prior * user_error_prob
-
-        # p(+ | show=inquiry) - the denominator for bayes rule
-        n_shown = len(query)
-        n_unshown = len(alphabet) - n_shown
-        marginal = n_shown * shown_term + n_unshown * unshown_term
-
-        shown_letter_value = shown_term / marginal
-        other_letter_value = unshown_term / marginal
-
+        shown_term = 1 - user_error_prob
+        unshown_term = user_error_prob
     else:
-        """Same assumptions as above, but now user responds "-"
-            p(want=A | -, show=AB) = p(- | want=A, show=AB) p(want=A | show=AB) / p(- | show=AB)
-                                   = p(- | want in show) p(want=A) / p(- | show=AB)                 # Use assumption 1
+        shown_term = user_error_prob
+        unshown_term = 1 - user_error_prob
 
-        We can compute this from just 2 terms:
-            shown_term = p(- | want=shown_letter, show=[....,shown_letter,...]) p(want=shown_letter)
-            unshown_term = p(- | want=unshown_letter, show=[...]) p(want=unshown_letter)
+    # the denominator for bayes rule.
+    # If inquiry is very long, the prior prob of selecting the inquiry is high.
+    # Normalizing here accounts for this.
+    n_shown = len(query)
+    n_unshown = len(alphabet) - n_shown
+    marginal = n_shown * shown_term + n_unshown * unshown_term
 
-        Then we can update as follows:
-            p(shown_letter | -, show=[...]) = shown_term / [
-                                                len(show) * shown_term
-                                                + (len(alphabet) - len(show)) * unshown_term
-                                            ]
-
-            p(unshown_letter | -, show=[...]) = unshown_term / [
-                                                len(show) * shown_term
-                                                + (len(alphabet) - len(show)) * unshown_term
-                                            ]"""
-        shown_term = uniform_prior * user_error_prob
-        unshown_term = uniform_prior * (1 - user_error_prob)
-
-        # p(- | show=inquiry) - denominator for bayes rule
-        n_shown = len(query)
-        n_unshown = len(alphabet) - n_shown
-        marginal = n_shown * shown_term + n_unshown * unshown_term
-
-        shown_letter_value = shown_term / marginal
-        other_letter_value = unshown_term / marginal
+    # shown_letter_value = shown_term / marginal
+    # other_letter_value = unshown_term / marginal
+    shown_letter_value = shown_term
+    other_letter_value = unshown_term
 
     return [shown_letter_value if letter in query else other_letter_value for letter in alphabet]

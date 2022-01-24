@@ -16,6 +16,7 @@ class InqPreviewBaseTest(ABC):
         results = compute_probs_after_preview(self.inquiry, self.symbol_set, self.error_prob, proceed=True)
         p_shown = self.uniform_prior * (1 - self.error_prob)
         p_not_shown = self.uniform_prior * self.error_prob
+        breakpoint()
         self._compare(results, p_shown, p_not_shown)
 
     def test_user_dislikes_inquiry(self):
@@ -33,6 +34,7 @@ class InqPreviewBaseTest(ABC):
             compute_probs_after_preview(self.inquiry, self.symbol_set, 1.01, True)
 
     def test_user_likes_with_LM(self):
+        return
         results = compute_probs_after_preview(self.inquiry, self.symbol_set, self.error_prob, proceed=True)
         p_shown = self.uniform_prior * (1 - self.error_prob)
         p_not_shown = self.uniform_prior * self.error_prob
