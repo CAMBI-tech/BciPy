@@ -67,7 +67,8 @@ participant_freqs = {
     "p12": {"1hz": 9, "4hz": 9.5},
 }
 
-for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], ["", "--z_score_per_trial", "--hparam_tuning"]):
+# for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], ["", "--z_score_per_trial", "--hparam_tuning"]):
+for p, hz, setting in product(participant_files.keys(), ["1hz", "4hz"], [""]):
     file = participant_files[p][hz]
     freq = participant_freqs[p][hz]
 

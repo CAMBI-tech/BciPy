@@ -207,7 +207,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     baseline_duration_s = 0.5
     response_duration_s = 0.5
     default_baseline_start_s = 0.65
-    default_response_start_s = 1.25 + 0.55
+    default_response_start_s = 1.25 + 0.3
     if hparam_tuning:
         preprocessing_pipeline = Pipeline(
             steps=[
