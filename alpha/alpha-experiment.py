@@ -288,9 +288,7 @@ def main(input_path, output_path, parameters, hparam_tuning: bool, z_score_per_t
     for model_name, flatten_data, clf in [
         ("Uniform random", True, DummyClassifier(strategy="uniform")),
         ("LogisticRegression, balanced", True, LogisticRegression(class_weight="balanced", **lr_kw)),
-        ("LogisticRegression, balanced, C=0.1", True, LogisticRegression(class_weight="balanced", C=0.1, **lr_kw)),
-        ("LogisticRegression, balanced, C=0.05", True, LogisticRegression(class_weight="balanced", C=0.05, **lr_kw)),
-        ("Multi-layer Perceptron", True, MLPClassifier(early_stopping=True)),
+        ("Multi-layer Perceptron", True, MLPClassifier()),
         ("Support Vector Classifier, balanced", True, SVC(probability=True, class_weight="balanced")),
         ("Tangent Space, Logistic Regression, balanced", False, ts_logr),
     ]:
