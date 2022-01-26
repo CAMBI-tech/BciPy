@@ -183,7 +183,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
@@ -207,7 +207,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
@@ -229,7 +229,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
@@ -250,7 +250,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
@@ -272,7 +272,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()
@@ -299,7 +299,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         when(stim_mock).draw().thenReturn()
         when(self.rsvp).draw_static().thenReturn()
         when(self.rsvp.window).flip().thenReturn()
-        when(self.rsvp)._trigger_pulse(any()).thenReturn([])
+        when(self.rsvp)._trigger_pulse().thenReturn()
 
         # skip the core wait for testing
         when(psychopy.core).wait(self.preview_inquiry.preview_inquiry_isi).thenReturn()

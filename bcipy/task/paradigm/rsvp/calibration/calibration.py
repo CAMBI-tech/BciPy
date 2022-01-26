@@ -1,4 +1,5 @@
 from psychopy import core
+from typing import List, Tuple
 
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.rsvp.mode.calibration import CalibrationDisplay
@@ -7,8 +8,7 @@ from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import _write_triggers_from_inquiry_calibration
-
+from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
 from bcipy.task import Task
 
 
@@ -20,17 +20,17 @@ class RSVPCalibrationTask(Task):
         and for how long they present. Parameters also change
         color and text / image inputs.
 
-    A task begins setting up variables --> initializing eeg -->
-        awaiting user input to start -->
-        setting up stimuli --> presenting inquiries -->
-        saving data
+    This task progresses as follows:
+
+    setting up variables --> initializing eeg --> awaiting user input to start --> setting up stimuli -->
+    presenting inquiries --> saving data
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object)
-    parameters (Dictionary)
-    file_save (String)
+    win (PsychoPy Display)
+    daq (Data Acquisition Client)
+    parameters (dict)
+    file_save (str)
     """
 
     def __init__(self, win, daq, parameters, file_save):
@@ -45,11 +45,13 @@ class RSVPCalibrationTask(Task):
         self.buffer_val = parameters['task_buffer_len']
         self.alp = alphabet(parameters)
         self.rsvp = init_calibration_display_task(
-            self.parameters, self.window, self.daq,
+            self.parameters, self.window,
             self.static_clock, self.experiment_clock)
         self.file_save = file_save
-        trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
-        self.trigger_file = open(trigger_save_location, 'w', encoding='utf-8')
+        self.trigger_handler = TriggerHandler(
+            self.file_save,
+            parameters['trigger_file_name'],
+            FlushFrequency.EVERY)
 
         self.wait_screen_message = parameters['wait_screen_message']
         self.wait_screen_message_color = parameters[
@@ -59,8 +61,8 @@ class RSVPCalibrationTask(Task):
         self.stim_length = parameters['stim_length']
         self.stim_order = StimuliOrder(parameters['stim_order'])
 
-        self.timing = [parameters['time_target'],
-                       parameters['time_cross'],
+        self.timing = [parameters['time_prompt'],
+                       parameters['time_fixation'],
                        parameters['time_flash']]
 
         self.color = [parameters['target_color'],
@@ -93,6 +95,20 @@ class RSVPCalibrationTask(Task):
                                              is_txt=self.rsvp.is_txt_stim,
                                              color=self.color)
 
+    def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
+        """Trigger Type.
+
+        This method is passed to convert_timing_triggers to properly assign TriggerTypes
+            to the timing of stimuli presented.
+        """
+        if index == 0:
+            return TriggerType.PROMPT
+        if symbol == '+':
+            return TriggerType.FIXATION
+        if target == symbol:
+            return TriggerType.TARGET
+        return TriggerType.NONTARGET
+
     def execute(self):
 
         self.logger.debug(f'Starting {self.name()}!')
@@ -108,13 +124,13 @@ class RSVPCalibrationTask(Task):
         while run:
 
             # Get inquiry information given stimuli parameters
-            (ele_sti, timing_sti, color_sti) = self.generate_stimuli()
+            (stimuli, stimuli_timing, stimuli_color) = self.generate_stimuli()
 
             (task_text, task_color) = get_task_info(self.stim_number,
                                                     self.task_info_color)
 
             # Execute the RSVP inquiries
-            for idx_o in range(len(task_text)):
+            for inquiry in range(len(task_text)):
 
                 # check user input to make sure we should be going
                 if not get_user_input(self.rsvp, self.wait_screen_message,
@@ -123,38 +139,32 @@ class RSVPCalibrationTask(Task):
 
                 # Take a break every number of trials defined
                 if self.enable_breaks:
-                    pause_calibration(self.window, self.rsvp, idx_o,
+                    pause_calibration(self.window, self.rsvp, inquiry,
                                       self.parameters)
 
                 # update task state
                 self.rsvp.update_task_state(
-                    text=task_text[idx_o],
-                    color_list=task_color[idx_o])
+                    text=task_text[inquiry],
+                    color_list=task_color[inquiry])
 
                 # Draw and flip screen
                 self.rsvp.draw_static()
                 self.window.flip()
 
                 # Schedule a inquiry
-                self.rsvp.stimuli_inquiry = ele_sti[idx_o]
+                self.rsvp.stimuli_inquiry = stimuli[inquiry]
 
                 # check if text stimuli or not for color information
                 if self.is_txt_stim:
-                    self.rsvp.stimuli_colors = color_sti[idx_o]
+                    self.rsvp.stimuli_colors = stimuli_color[inquiry]
 
-                self.rsvp.stimuli_timing = timing_sti[idx_o]
+                self.rsvp.stimuli_timing = stimuli_timing[inquiry]
 
-                # Wait for a time
                 core.wait(self.buffer_val)
 
-                # Do the inquiry
+                # Do the inquiry and write necessary data
                 timing = self.rsvp.do_inquiry()
-
-                # Write triggers for the inquiry
-                _write_triggers_from_inquiry_calibration(
-                    timing, self.trigger_file)
-
-                # Wait for a time
+                self.write_trigger_data(timing, (inquiry == 0))
                 core.wait(self.buffer_val)
 
             # Set run to False to stop looping
@@ -166,31 +176,56 @@ class RSVPCalibrationTask(Task):
         self.rsvp.draw_static()
         self.window.flip()
 
-        # Give the system time to process
-        core.wait(self.buffer_val)
-
-        # Write offset
-        if self.daq.is_calibrated:
-            _write_triggers_from_inquiry_calibration(
-                ['offset',
-                 self.daq.offset(self.rsvp.first_stim_time)],
-                self.trigger_file,
-                offset=True)
-
-        # Close this sessions trigger file and return some data
-        self.trigger_file.close()
-
         # Wait some time before exiting so there is trailing eeg data saved
         core.wait(self.eeg_buffer)
 
         return self.file_save
+
+    def write_trigger_data(self, timing: List[Tuple[str, float]], first_run) -> None:
+        """Write Trigger Data.
+
+        Using the timing provided from the display and calibration information from the data acquisition
+        client, write trigger data in the correct format.
+
+        *Note on offsets*: we write the full offset value which can be used to transform all stimuli to the time since
+            session start (t = 0) for all values (as opposed to most system clocks which start much higher).
+            We do not write the calibration trigger used to generate this offset from the display.
+            See RSVPDisplay._trigger_pulse() for more information.
+        """
+        # write offsets. currently, we only check for offsets at the beginning.
+        if self.daq.is_calibrated and first_run:
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'starting_offset',
+                    TriggerType.OFFSET,
+                    # offset will factor in true offset and time relative from beginning
+                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
+                )]
+            )
+
+        # make sure triggers are written for the inquiry
+        self.trigger_handler.add_triggers(convert_timing_triggers(timing, timing[0][0], self.trigger_type))
+
+    def write_offset_trigger(self) -> None:
+        """Append an offset value to the end of the trigger file.
+        """
+        if self.daq.is_calibrated:
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'daq_sample_offset',
+                    TriggerType.SYSTEM,
+                    # to help support future refactoring or use of lsl timestamps only
+                    # we write only the sample offset here
+                    self.daq.offset(self.rsvp.first_stim_time)
+                )])
+        self.trigger_handler.close()
 
     def name(self):
         return 'RSVP Calibration Task'
 
 
 def init_calibration_display_task(
-        parameters, window, daq, static_clock, experiment_clock):
+        parameters, window, static_clock, experiment_clock):
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'],

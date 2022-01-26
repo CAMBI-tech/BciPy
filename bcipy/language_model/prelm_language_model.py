@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import List
+from typing import List, Tuple, Union
 from collections import defaultdict
 from bcipy.helpers.task import alphabet, SPACE_CHAR
 from bcipy.language_model import lm_server
@@ -20,8 +20,9 @@ class LangModel:
         volumes={dot(__file__, 'fst', 'brown_closure.n5.kn.fst'):
                  "/opt/lm/brown_closure.n5.kn.fst"})
 
-    def __init__(self, server_config: LmServerConfig = DEFAULT_CONFIG,
-                 logfile: str = "log"):
+    def __init__(self,
+                 lang_model_server_port: int = 5000,
+                 logfile: str = "lmwrap.log"):
         """
         Initiate the langModel class and starts the corresponding docker
         server for the given type.
@@ -30,11 +31,14 @@ class LangModel:
           lmtype - language model type
           logfile - a valid filename to function as a logger
         """
-        self.server_config = server_config
+        self.server_config = LangModel.DEFAULT_CONFIG
+        self.server_config.port = lang_model_server_port
+
         self.priors = defaultdict(list)
         log.setLevel(logging.INFO)
         log.addHandler(logging.FileHandler(logfile))
         lm_server.start(self.server_config)
+        self.init()
 
     def init(self, nbest: int = 1):
         """
@@ -57,7 +61,13 @@ class LangModel:
         self.priors = defaultdict(list)
         log.info("\ncleaning history\n")
 
-    def state_update(self, evidence: List, return_mode: str = 'letter'):
+    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
+        """Performs `state_update` and subsequently resets the model."""
+        priors = self.state_update(evidence=evidence)
+        self.reset()
+        return priors['letter']
+
+    def state_update(self, evidence: Union[str, List[str]], return_mode: str = 'letter'):
         """
         Provide a prior distribution of the language model
         in return to the system's decision regarding the

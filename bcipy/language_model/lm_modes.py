@@ -1,6 +1,7 @@
 from enum import Enum
 from bcipy.language_model import oclm_language_model
 from bcipy.language_model import prelm_language_model
+from bcipy.language.uniform import UniformLanguageModel
 
 
 class LmType(Enum):
@@ -11,6 +12,7 @@ class LmType(Enum):
     """
     PRELM = prelm_language_model.LangModel
     OCLM = oclm_language_model.LangModel
+    UNIFORM = UniformLanguageModel
 
     # pylint: disable=unused-argument,protected-access
     def __new__(cls, *args, **kwds):
@@ -22,14 +24,3 @@ class LmType(Enum):
 
     def __init__(self, model):
         self.model = model
-
-
-def LangModel(lmtype: LmType, logfile: str = "log", port: int = None):
-    """Creates a new Language Model given the LmType."""
-
-    assert lmtype, "Language Model type is required"
-    model = lmtype.model
-    config = model.DEFAULT_CONFIG
-    if port:
-        config.port = port
-    return model(config, logfile)

@@ -1,18 +1,14 @@
 """Helper functions for language model use."""
 import math
+import inspect
 from typing import Dict, List, Tuple
 import numpy as np
-from bcipy.language_model.lm_modes import LangModel, LmType
+from bcipy.language_model.lm_modes import LmType
 
 
-def init_language_model(parameters):
+def init_language_model(parameters: dict):
     """
-    Init Language Model.
-
-    Function to Initialize remote language model and get an instance of
-        LangModel wrapper. Assumes a docker image is already loaded.
-
-    See language_model/demo/ for more information of how it works.
+    Init Language Model configured in the parameters.
 
     Parameters
     ----------
@@ -21,15 +17,19 @@ def init_language_model(parameters):
 
     Returns
     -------
-        lmodel: instance
-            instance of lmodel wrapper with connections to docker server
+        instance of a LanguageModel.
     """
-    lmtype = LmType[parameters.get("lang_model_type", "PRELM")]
+    if not parameters['lang_model_enabled']:
+        model = LmType['UNIFORM'].model
+    else:
+        model = LmType[parameters.get("lang_model_type", "PRELM")].model
 
-    port = int(parameters['lang_model_server_port'])
-    lmodel = LangModel(lmtype, logfile="lmwrap.log", port=port)
-    lmodel.init()
-    return lmodel
+    # introspect the model arguments to determine what parameters to pass.
+    args = inspect.signature(model).parameters.keys()
+
+    # select the relevant parameters into a dict.
+    params = {key: parameters[key] for key in args & parameters.keys()}
+    return model(**params)
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:

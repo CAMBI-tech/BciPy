@@ -50,10 +50,9 @@ def offline_analysis(data_folder: str = None,
     if not data_folder:
         data_folder = load_experimental_data()
 
-    mode = 'calibration'
-
     # extract relevant session information from parameters file
     trial_length = parameters.get('trial_length')
+    trials_per_inquiry = parameters.get('stim_length')
     triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
     raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
 
@@ -88,11 +87,9 @@ def offline_analysis(data_folder: str = None,
     data, fs = default_transform(raw_data.by_channel(), fs)
 
     # Process triggers.txt
-    _, t_t_i, t_i, offset = trigger_decoder(
-        mode=mode,
-        trigger_path=f'{data_folder}/{triggers_file}')
-
-    offset = offset + static_offset
+    trigger_values, trigger_timing, _ = trigger_decoder(
+        offset=static_offset,
+        trigger_path=f'{data_folder}/{triggers_file}.txt')
 
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
@@ -100,12 +97,11 @@ def offline_analysis(data_folder: str = None,
 
     model = PcaRdaKdeModel(k_folds=k_folds)
     data, labels = model.reshaper(
-        trial_labels=t_t_i,
-        timing_info=t_i,
+        trial_labels=trigger_values,
+        timing_info=trigger_timing,
         eeg_data=data,
         fs=fs,
-        trials_per_inquiry=parameters.get('stim_length'),
-        offset=offset,
+        trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         trial_length=trial_length)
 
@@ -116,14 +112,7 @@ def offline_analysis(data_folder: str = None,
     log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
 
     model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
-    visualize_erp(
-        data,
-        labels,
-        fs,
-        save_path=data_folder,
-        channel_names=analysis_channel_names_by_pos(channels, channel_map),
-        show_figure=False
-    )
+
     figure_handles = visualize_erp(
         data,
         labels,
