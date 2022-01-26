@@ -109,9 +109,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
             log.exception(f'Cannot load signal model. Exiting. {e}')
             raise e
 
-        # if Language Model enabled init lm
-        if parameters['lang_model_enabled']:
-            language_model = init_language_model(parameters)
+        language_model = init_language_model(parameters)
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(

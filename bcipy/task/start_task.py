@@ -1,8 +1,4 @@
-"""Code for constructing and executing Tasks"""
-from bcipy.task.paradigm.rsvp.calibration.alert_tone_calibration import RSVPAlertToneCalibrationTask
-from bcipy.task.paradigm.rsvp.calibration.inter_inquiry_feedback_calibration import (
-    RSVPInterInquiryFeedbackCalibration
-)
+"""Code for constructing and executing registered tasks"""
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration

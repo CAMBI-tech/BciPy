@@ -1,4 +1,5 @@
-from typing import List, NamedTuple, Optional, TextIO, Tuple
+import logging
+from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
@@ -8,13 +9,14 @@ from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
-from bcipy.helpers.triggers import _write_triggers_from_inquiry_copy_phrase
+from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, TriggerType, Trigger, convert_timing_triggers
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
 from bcipy.task.data import EvidenceType, Inquiry, Session
@@ -86,7 +88,7 @@ class RSVPCopyPhraseTask(Task):
         'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
         'stim_space_char', 'target_color', 'task_buffer_len', 'task_color',
         'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
-        'time_cross', 'time_flash', 'time_target', 'trial_complete_message',
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_complete_message',
         'trial_complete_message_color', 'trial_length', 'trigger_file_name',
         'trigger_type', 'wait_screen_message', 'wait_screen_message_color'
     ]
@@ -129,9 +131,8 @@ class RSVPCopyPhraseTask(Task):
                                               self.static_clock, self.experiment_clock)
         self.file_save = file_save
 
-        self.trigger_save_location = f"{self.file_save}/{parameters['trigger_file_name']}"
+        self.trigger_handler = TriggerHandler(self.file_save, parameters['trigger_file_name'], FlushFrequency.EVERY)
         self.session_save_location = f"{self.file_save}/{parameters['session_file_name']}"
-
         self.copy_phrase = parameters['task_text']
 
         self.fake = fake
@@ -191,7 +192,7 @@ class RSVPCopyPhraseTask(Task):
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
             stimuli_timing=[
-                self.parameters['time_cross'], self.parameters['time_flash']
+                self.parameters['time_fixation'], self.parameters['time_flash']
             ],
             decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
@@ -210,7 +211,7 @@ class RSVPCopyPhraseTask(Task):
             self.rsvp,
             self.parameters['wait_screen_message'],
             self.parameters['wait_screen_message_color'],
-            first_run=True)
+            first_run=self.first_run)
         return should_continue
 
     def user_wants_to_continue(self) -> bool:
@@ -225,7 +226,7 @@ class RSVPCopyPhraseTask(Task):
             self.rsvp,
             self.parameters['wait_screen_message'],
             self.parameters['wait_screen_message_color'],
-            first_run=False)
+            first_run=self.first_run)
         if not should_continue:
             self.logger.debug('User wants to exit.')
         return should_continue
@@ -347,48 +348,48 @@ class RSVPCopyPhraseTask(Task):
         self.logger.debug('Starting Copy Phrase Task!')
         self.setup()
 
-        with open(self.trigger_save_location, 'w') as trigger_file:
-            run = self.await_start()
+        run = self.await_start()
 
-            while run and self.user_wants_to_continue(
-            ) and self.current_inquiry:
-                target_letter = self.next_target()
-                stim_times, proceed = self.present_inquiry(
-                    self.current_inquiry)
+        while run and self.user_wants_to_continue(
+        ) and self.current_inquiry:
+            target_stimuli = self.next_target()
+            stim_times, proceed = self.present_inquiry(
+                self.current_inquiry)
 
-                self.write_trigger_data(stim_times, trigger_file)
-                self.wait()
+            self.write_trigger_data(stim_times, target_stimuli)
+            self.wait()
 
-                evidence_types = self.add_evidence(stim_times, proceed)
-                decision = self.evaluate_evidence()
+            evidence_types = self.add_evidence(stim_times, proceed)
+            decision = self.evaluate_evidence()
 
-                data = self.new_data_record(stim_times,
-                                            target_letter,
-                                            current_text=self.spelled_text,
-                                            decision=decision,
-                                            evidence_types=evidence_types)
-                self.update_session_data(data,
-                                         save=True,
-                                         decision_made=decision.decision_made)
+            data = self.new_data_record(stim_times,
+                                        target_stimuli,
+                                        current_text=self.spelled_text,
+                                        decision=decision,
+                                        evidence_types=evidence_types)
+            self.update_session_data(data,
+                                     save=True,
+                                     decision_made=decision.decision_made)
 
-                if decision.decision_made:
-                    self.show_feedback(decision.selection,
-                                       (decision.selection == target_letter))
-                    self.spelled_text = decision.spelled_text
-                    self.current_inquiry = self.next_inquiry()
+            if decision.decision_made:
+                self.show_feedback(decision.selection,
+                                   (decision.selection == target_stimuli))
+                self.spelled_text = decision.spelled_text
+                self.current_inquiry = self.next_inquiry()
 
-                else:
-                    self.current_inquiry = decision.new_inq_schedule
+            else:
+                self.current_inquiry = decision.new_inq_schedule
 
-                run = self.check_stop_criteria()
-                self.inq_counter += 1
+            run = self.check_stop_criteria()
+            self.inq_counter += 1
 
-            self.exit_display()
-            self.write_offset_trigger(trigger_file)
+        self.exit_display()
+        self.write_offset_trigger()
 
         self.session.task_summary = TaskSummary(
             self.session, self.parameters['show_preview_inquiry'],
-            self.parameters['preview_inquiry_progress_method']).as_dict()
+            self.parameters['preview_inquiry_progress_method'],
+            self.trigger_handler.file_path).as_dict()
         self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait(seconds=self.parameters['eeg_buffer_len'])
@@ -529,7 +530,7 @@ class RSVPCopyPhraseTask(Task):
 
     def new_data_record(self,
                         stim_times: List[List],
-                        target_letter: str,
+                        target_stimuli: str,
                         current_text: str,
                         decision: Decision,
                         evidence_types: List[EvidenceType] = []) -> Inquiry:
@@ -538,7 +539,7 @@ class RSVPCopyPhraseTask(Task):
         Parameters
         ----------
         - stim_times : list of [stim, clock_time] pairs returned from display.
-        - target_letter : stim the user is currently attempting to spell.
+        - target_stimuli : stim the user is currently attempting to spell.
         - current_text : spelled text before the inquiry
         - decision : decision made by the decision maker
         - evidence_types : evidence provided to the decision-maker during the
@@ -554,8 +555,8 @@ class RSVPCopyPhraseTask(Task):
         data = Inquiry(stimuli=self.current_inquiry.stimuli,
                        timing=self.current_inquiry.durations,
                        triggers=triggers,
-                       target_info=target_info(triggers, target_letter),
-                       target_letter=target_letter,
+                       target_info=target_info(triggers, target_stimuli),
+                       target_letter=target_stimuli,
                        current_text=current_text,
                        target_text=self.copy_phrase,
                        selection=decision.selection,
@@ -612,36 +613,67 @@ class RSVPCopyPhraseTask(Task):
             _save_session_related_data(self.session_save_location,
                                        self.session.as_dict())
 
-    def write_offset_trigger(self, trigger_file: TextIO):
+    def write_offset_trigger(self) -> None:
         """Append the offset to the end of the triggers file.
-
-        Parameters
-        -----------
-        - trigger_file : open file in which to write
         """
         if self.daq.is_calibrated:
-            _write_triggers_from_inquiry_copy_phrase(
-                ['offset', self.daq.offset(self.rsvp.first_stim_time)],
-                trigger_file,
-                self.copy_phrase,
-                self.spelled_text,
-                offset=True)
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'daq_sample_offset',
+                    TriggerType.SYSTEM,
+                    # to help support future refactoring or use of lsl timestamps only
+                    # we write only the sample offset here
+                    self.daq.offset(self.rsvp.first_stim_time)
+                )])
+        self.trigger_handler.close()
 
-    def write_trigger_data(self, stim_times: List[Tuple[str, float]],
-                           trigger_file: TextIO) -> None:
+    def write_trigger_data(self, stim_times: List[Tuple[str, float]], target_stimuli: str) -> None:
         """Save trigger data to disk.
 
         Parameters
         ----------
         - stim_times : list of (stim, clock_time) tuples
-        - trigger_file : data will be appended to this file
+        - target_stimuli : current target stimuli
         """
-        _write_triggers_from_inquiry_copy_phrase(stim_times, trigger_file,
-                                                 self.copy_phrase,
-                                                 self.spelled_text)
+        if self.first_run and self.daq.is_calibrated:
+            # write offset first
+            self.trigger_handler.add_triggers(
+                [Trigger(
+                    'starting_offset',
+                    TriggerType.OFFSET,
+                    # offset will factor in true offset and time relative from beginning
+                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
+                )]
+            )
+
+        triggers = convert_timing_triggers(stim_times, target_stimuli, self.trigger_type)
+        self.trigger_handler.add_triggers(triggers)
+
+    def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
+        """Trigger Type.
+
+        Cast a given symbol to a TriggerType.
+        """
+        if symbol == 'inquiry_preview':
+            return TriggerType.PREVIEW
+        if 'bcipy_key_press' in symbol:
+            return TriggerType.EVENT
+        if symbol == '+':
+            return TriggerType.FIXATION
+        if target == symbol:
+            return TriggerType.TARGET
+        return TriggerType.NONTARGET
 
     def name(self) -> str:
         return self.TASK_NAME
+
+    @property
+    def first_run(self) -> bool:
+        """First run.
+
+        Determines whether it is the first inquiry presentation / run.
+        """
+        return self.inq_counter == 0
 
 
 class TaskSummary:
@@ -660,11 +692,14 @@ class TaskSummary:
     def __init__(self,
                  session: Session,
                  show_preview: bool = False,
-                 preview_mode: int = 0):
+                 preview_mode: int = 0,
+                 trigger_path: str = None):
         assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
         self.show_preview = show_preview
         self.preview_mode = preview_mode
+        self.trigger_path = trigger_path
+        self.logger = logging.getLogger(__name__)
 
     def as_dict(self) -> dict:
         """Computes the task summary data to append to the session."""
@@ -694,6 +729,7 @@ class TaskSummary:
             'selections_correct_symbols': len(correct_symbols),
             'switch_total': btn_presses,
             'switch_per_selection': switch_per_selection,
+            'switch_response_time': self.switch_response_time(),
             'typing_accuracy': accuracy,
             'correct_rate': len(correct) / minutes if minutes else 0,
             'copy_rate': len(correct_symbols) / minutes if minutes else 0
@@ -714,6 +750,37 @@ class TaskSummary:
             # press to skip
             activations = [inq for inq in inquiries if not inq.eeg_evidence]
         return len(activations)
+
+    def switch_response_time(self) -> Optional[float]:
+        """Computes the average switch response in seconds."""
+
+        # Remove consecutive items with the same type; we are only interested
+        # in PREVIEW followed by a EVENT.
+        triggers = destutter(self.switch_triggers(), key=lambda trg: trg.type)
+        pairs = list(zip(triggers[::2], triggers[1::2]))
+
+        # Confirm that the data is structured as expected.
+        for preview, keypress in pairs:
+            if (preview.type != TriggerType.PREVIEW) or (
+                    keypress.type != TriggerType.EVENT):
+                self.logger.info('Could not compute switch_response_time')
+                return None
+
+        response_times = [
+            keypress.time - preview.time for preview, keypress in pairs
+        ]
+        count = len(response_times)
+        return sum(response_times) / count if count > 0 else None
+
+    def switch_triggers(self) -> List[Trigger]:
+        """Returns a list of switch-related triggers"""
+        if not self.trigger_path:
+            return []
+        triggers, _offset = TriggerHandler.read_text_file(self.trigger_path)
+        return [
+            trg for trg in triggers
+            if trg.type in [TriggerType.PREVIEW, TriggerType.EVENT]
+        ]
 
 
 def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):

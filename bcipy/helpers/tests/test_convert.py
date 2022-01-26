@@ -8,25 +8,10 @@ import warnings
 from pathlib import Path
 
 from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
+from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
 from mne.io import read_raw_edf
-
-
-MOCK_TRIGGER_DATA = '''calibration_trigger calib 0.4748408449813724
-J first_pres_target 6.151848723005969
-+ fixation 8.118640798988054
-F nontarget 8.586895030981395
-D nontarget 8.887798132986063
-J target 9.18974666899885
-T nontarget 9.496583286992973
-K nontarget 9.798354075988755
-Q nontarget 10.099591801001225
-O nontarget 10.401458177977474
-Z nontarget 10.70310750597855
-R nontarget 11.00485198898241
-_ nontarget 11.306160968990298
-offset offset_correction 1.23828125'''
 
 
 class TestConvert(unittest.TestCase):
@@ -52,7 +37,7 @@ class TestConvert(unittest.TestCase):
         write(self.__class__.sample_data, Path(self.temp_dir, 'raw_data.csv'))
 
         params = Parameters.from_cast_values(raw_data_name='raw_data.csv',
-                                             trigger_file_name='triggers.txt')
+                                             trigger_file_name='triggers')
         params.save(self.temp_dir, 'parameters.json')
 
     def tearDown(self):

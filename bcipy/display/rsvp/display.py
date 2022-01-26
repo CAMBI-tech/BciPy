@@ -149,18 +149,13 @@ class RSVPDisplay(Display):
         timing = []
 
         if self.first_run:
-            timing = self._trigger_pulse(timing)
+            self._trigger_pulse()
 
         # generate a inquiry (list of stimuli with meta information)
         inquiry = self._generate_inquiry()
 
         # do the inquiry
         for idx in range(len(inquiry)):
-
-            # set a static period to do all our stim setting.
-            #   will warn if ISI value is violated.
-            self.staticPeriod.name = 'Stimulus Draw Period'
-            self.staticPeriod.start(self.stimuli_timing[idx])
 
             # Reset the timing clock to start presenting
             self.window.callOnFlip(
@@ -178,9 +173,6 @@ class RSVPDisplay(Display):
             self.window.flip()
             core.wait(inquiry[idx]['time_to_present'])
 
-            # End static period
-            self.staticPeriod.complete()
-
             # append timing information
             if self.is_txt_stim:
                 timing.append(self.trigger_callback.timing)
@@ -195,7 +187,7 @@ class RSVPDisplay(Display):
 
         return timing
 
-    def _trigger_pulse(self, timing: List[str]) -> List[str]:
+    def _trigger_pulse(self) -> None:
         """Trigger Pulse.
 
         This method uses a calibration trigger to determine any functional
@@ -209,14 +201,10 @@ class RSVPDisplay(Display):
             trigger_type=self.trigger_type,
             display=self.window)
 
-        timing.append(calibration_time)
-
         # set the first stim time if not present and first_run to False
         if not self.first_stim_time:
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
-
-        return timing
 
     def preview_inquiry(self) -> Tuple[List[float], bool]:
         """Preview Inquiry.
@@ -236,7 +224,7 @@ class RSVPDisplay(Display):
         # construct the timing to return and generate the content for preview
         timing = []
         if self.first_run:
-            timing = self._trigger_pulse(timing)
+            self._trigger_pulse()
 
         content = self._generate_inquiry_preview()
 

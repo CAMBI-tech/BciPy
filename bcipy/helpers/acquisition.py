@@ -102,8 +102,8 @@ def max_inquiry_duration(parameters: dict) -> float:
     -------
     duration in seconds
     """
-    fixation_duration = parameters['time_cross']
-    target_duration = parameters['time_target']
+    fixation_duration = parameters['time_fixation']
+    target_duration = parameters['time_prompt']
     stim_count = parameters['stim_length']
     stim_duration = parameters['time_flash']
     interval_duration = parameters['task_buffer_len']
