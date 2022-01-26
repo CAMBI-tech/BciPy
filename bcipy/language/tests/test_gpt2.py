@@ -8,7 +8,6 @@ if __name__ == "__main__":
     response_type = ResponseType.SYMBOL
     lm = GPT2LanguageModel(response_type, symbol_set, "gpt2")
 
-
     next_char_pred = lm.state_update(list("does_it_make_sen"))
     print(next_char_pred)
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1

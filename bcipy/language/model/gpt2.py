@@ -1,12 +1,12 @@
 from typing import List, Tuple, Dict
-from pathlib import Path
-from bcipy.helpers.task import alphabet, SPACE_CHAR, BACKSPACE_CHAR
+from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from collections import Counter
+
 
 class GPT2LanguageModel(LanguageModel):
 
@@ -38,7 +38,7 @@ class GPT2LanguageModel(LanguageModel):
 
     def __get_char_predictions(self, word_prefix: str) -> List[tuple]:
         """
-        Given a word prefix typed by user, predict the probability distribution 
+        Given a word prefix typed by user, predict the probability distribution
         of next character
         Args:
             word_prefix - string
@@ -72,7 +72,7 @@ class GPT2LanguageModel(LanguageModel):
             char_to_prob[char] /= sum_char_prob
 
         # build a list of tuples (char, prob)
-        char_prob_tuples = [ (k,v) for k, v in sorted(char_to_prob.items(), key = lambda item: item[1], reverse=True)]
+        char_prob_tuples = [(k, v) for k, v in sorted(char_to_prob.items(), key=lambda item: item[1], reverse=True)]
 
         return char_prob_tuples
 
@@ -96,7 +96,7 @@ class GPT2LanguageModel(LanguageModel):
         Args:
             text - a string of text representing the text input so far
         Response:
-            An numpy array representing next word's probability distribution over 
+            An numpy array representing next word's probability distribution over
             the entire vocabulary
         """
 
@@ -115,13 +115,13 @@ class GPT2LanguageModel(LanguageModel):
             predictions = outputs[0]
 
             predicted_logit = predictions[0, -1, :]
-            predicted_prob = F.softmax(predicted_logit, dim = 0).numpy()
+            predicted_prob = F.softmax(predicted_logit, dim=0).numpy()
 
         return predicted_prob
 
-    def predict(self, evidence: List[str]) -> List[tuple]:
+    def predict(self, evidence: List[str]) -> List[Tuple]:
         """
-        Given an evidence of typed string, predict the probability distribution of 
+        Given an evidence of typed string, predict the probability distribution of
         the next symbol
         Args:
             evidence - a list of characters (typed by the user)
@@ -150,7 +150,7 @@ class GPT2LanguageModel(LanguageModel):
         # if we are at the middle of a word, just get the marginal distribution of
         # the next character given current word prefix
         else:
-            # first we need the language model predict the probability distribution of the 
+            # first we need the language model predict the probability distribution of the
             # current word
             self.curr_word_predicted_prob = self.__model_infer(" ".join(evidence_str.split()[:-1]))
             cur_word_prefix = evidence_str.split()[-1]
@@ -173,7 +173,6 @@ class GPT2LanguageModel(LanguageModel):
         self.tokenizer = GPT2Tokenizer.from_pretrained(self.lm_path)
         self.vocab_size = self.tokenizer.vocab_size
         self.idx_to_word = self.__build_vocab()
- 
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
@@ -187,5 +186,3 @@ class GPT2LanguageModel(LanguageModel):
         next_char_pred = self.predict(evidence)
 
         return next_char_pred
-    
-

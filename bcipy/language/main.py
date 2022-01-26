@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Tuple, List
 from enum import Enum
 
@@ -16,7 +15,7 @@ class LanguageModel(ABC):
     normalized: bool = False  # normalized to probability domain
 
     @abstractmethod
-    def predict(self, evidence: List[str]) -> List[tuple]:
+    def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
         Args:
