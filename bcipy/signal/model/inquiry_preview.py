@@ -2,7 +2,7 @@ from typing import List
 
 
 def compute_probs_after_preview(
-    query: List[str], alphabet: List[str], user_error_prob: float, proceed: bool
+    inquiry: List[str], symbol_set: List[str], user_error_prob: float, proceed: bool
 ) -> List[float]:
     r"""
     Notation:
@@ -21,14 +21,14 @@ def compute_probs_after_preview(
        The user's behavior is fully determined by their desired letter and the shown letters.
        Only some edge effects such as frustration or fatigue are ignored by this.
 
-    We're interested in the alphabet posterior overall:
+    We're interested in the symbol_set posterior overall:
 
         p(want | button, show, past) = p(button | want, show, past) p(want | show, past) / p(button | show, past)
                                     # Use assumption 2.
                                     = p(button | want, show) p(want | show, past) / p(button | show, past)
                                     # Given past, show does not affect want
                                     = p(button | want, show) p(want | past) / p(button | show, past)
-                                    # Will normalize over alphabet anyway. Can ignore normalization const.
+                                    # Will normalize over symbol_set anyway. Can ignore normalization const.
                                     \propto p(button | want, show) p(want | past)
                                     # Leave out the prior - this is handled outside by evidence fusion.
                                     \propto p(button | want, show)
@@ -60,7 +60,7 @@ def compute_probs_after_preview(
     Thus, for a "+" response, the total probability given to the shown letters should grow as the inquiry length grows.
 
     >>> def example(N, L):
-    ...     # Show N letters from an alphabet of length L
+    ...     # Show N letters from an symbol_set of length L
     ...     probs = np.array([0.95]*N + [0.05] * (L-N))
     ...     probs /= probs.sum()
     ...     # Check the effect of a "+" response on the N shown letters
@@ -74,9 +74,9 @@ def compute_probs_after_preview(
     0.99
 
     Args:
-        query - the symbols presented in the query preview
-        alphabet - the full alphabet of symbols
-        proceed - whether or not the user wants to proceed with this query
+        inquiry - the symbols presented in the inquiry preview
+        symbol_set - the full symbol_set of symbols
+        proceed - whether or not the user wants to proceed with this inquiry
         user_error_prob - the probability that the user selects incorrectly during preview
     """
     if not 0 <= user_error_prob <= 1:
@@ -89,4 +89,4 @@ def compute_probs_after_preview(
         shown_letter_value = user_error_prob
         other_letter_value = 1 - user_error_prob
 
-    return [shown_letter_value if letter in query else other_letter_value for letter in alphabet]
+    return [shown_letter_value if letter in inquiry else other_letter_value for letter in symbol_set]
