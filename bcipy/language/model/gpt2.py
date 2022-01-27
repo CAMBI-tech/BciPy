@@ -72,7 +72,7 @@ class GPT2LanguageModel(LanguageModel):
             char_to_prob[char] /= sum_char_prob
 
         # build a list of tuples (char, prob)
-        char_prob_tuples = [(k, v) for k, v in sorted(char_to_prob.items(), key=lambda item: item[1], reverse=True)]
+        char_prob_tuples = list(sorted(char_to_prob.items(), key=lambda item: item[1], reverse=True))
 
         return char_prob_tuples
 
@@ -110,8 +110,7 @@ class GPT2LanguageModel(LanguageModel):
 
         # predict the next word
         with torch.no_grad():
-            model = self.model
-            outputs = model(tokens_tensor)
+            outputs = self.model(tokens_tensor)
             predictions = outputs[0]
 
             predicted_logit = predictions[0, -1, :]
