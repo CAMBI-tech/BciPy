@@ -51,7 +51,7 @@ class TestOfflineAnalysis(unittest.TestCase):
     def test_model_AUC(self):
         expected_auc = self.get_auc(list(expected_output_folder.glob("model_*.pkl"))[0].name)
         found_auc = self.get_auc(list(self.tmp_dir.glob("model_*.pkl"))[0].name)
-        self.assertAlmostEqual(expected_auc, found_auc, delta=0.0005)
+        self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
     @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png", remove_text=True)
     def test_mean_erp(self):
