@@ -5,7 +5,7 @@ from psychopy import core
 
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties, TaskDisplayProperties)
-from bcipy.display.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper

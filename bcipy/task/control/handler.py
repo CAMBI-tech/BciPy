@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from bcipy.helpers.stimuli import InquirySchedule, rsvp_inq_generator, StimuliOrder
+from bcipy.helpers.stimuli import InquirySchedule, inq_generator, StimuliOrder
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.task.control.query import RandomStimuliAgent
 from bcipy.task.control.criteria import CriteriaEvaluator
@@ -281,9 +281,9 @@ class DecisionMaker:
             self.list_series[-1]['list_distribution'],
             constants=self.inq_constants)
         # once querying is determined, append with timing and color info.
-        stimuli = rsvp_inq_generator(query=query_els,
-                                     inquiry_count=1,
-                                     is_txt=self.is_txt_stim,
-                                     timing=self.stimuli_timing,
-                                     stim_order=self.stimuli_order)
+        stimuli = inq_generator(query=query_els,
+                                inquiry_count=1,
+                                is_txt=self.is_txt_stim,
+                                timing=self.stimuli_timing,
+                                stim_order=self.stimuli_order)
         return stimuli

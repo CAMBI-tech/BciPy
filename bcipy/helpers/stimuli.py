@@ -60,12 +60,12 @@ def alphabetize(stimuli: List[str]) -> List[str]:
     return sorted(stimuli, key=lambda x: re.sub(r'[^a-zA-Z0-9 \n\.]', 'ZZ', x).lower())
 
 
-def rsvp_inq_generator(query: List[str],
-                       timing: List[float] = [1, 0.2],
-                       color: List[str] = ['red', 'white'],
-                       inquiry_count: int = 1,
-                       stim_order: StimuliOrder = StimuliOrder.RANDOM,
-                       is_txt: bool = True) -> InquirySchedule:
+def inq_generator(query: List[str],
+                  timing: List[float] = [1, 0.2],
+                  color: List[str] = ['red', 'white'],
+                  inquiry_count: int = 1,
+                  stim_order: StimuliOrder = StimuliOrder.RANDOM,
+                  is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
         Args:
             query(list[str]): list of queries to be shown

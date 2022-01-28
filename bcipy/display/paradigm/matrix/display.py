@@ -7,7 +7,7 @@ from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback
+from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.exceptions import BciPyCoreException
 
@@ -79,8 +79,7 @@ class MatrixDisplay(Display):
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
         self.is_txt_stim = stimuli.is_txt_stim
-        # TODO: error on non-text stimuli
-        # assert self.is_txt_stim is True
+        assert self.is_txt_stim is True, "Matrix display is a text only display"
         self.stim_length = stimuli.stim_length
 
         self.full_screen = full_screen
@@ -91,7 +90,8 @@ class MatrixDisplay(Display):
 
         # Set position and parameters for grid of alphabet
         self.position = stimuli.stim_pos
-        self.position_increment = 0.2
+        self.grid_stimuli_height = .17
+        self.position_increment = self.grid_stimuli_height + .05
         self.max_grid_width = 0.7
         self.stim_registry = {}
         self.opacity = 0.2
@@ -103,6 +103,8 @@ class MatrixDisplay(Display):
         self.trigger_callback = TriggerCallback()
         self.marker_writer = marker_writer or NullMarkerWriter()
         self.experiment_clock = experiment_clock
+
+        self.buffer_time = 2
 
         # Callback used on presentation of first stimulus.
         self.first_stim_callback = lambda _sti: None
@@ -136,8 +138,14 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
+        if self.first_run:
+            self._trigger_pulse()
+
+        timing, target = self.prompt_target()
+
         if self.scp:
-            return self.animate_scp()
+            timing.extend(self.animate_scp())
+            return timing, target
 
         raise BciPyCoreException('Only SCP Matrix is available.')
 
@@ -153,7 +161,7 @@ class MatrixDisplay(Display):
                 text=sym,
                 opacity=self.opacity,
                 pos=pos,
-                height=self.stimuli_height)
+                height=self.grid_stimuli_height)
             self.stim_registry[sym] = text_stim
             text_stim.draw()
 
@@ -167,6 +175,43 @@ class MatrixDisplay(Display):
             x_cordinate = self.position[0]
         return (x_cordinate, y_cordinate)
 
+    def prompt_target(self) -> List[float]:
+        timing = []
+
+        # select target which is first in list from the defined stimuli inquiry
+        target = self.stimuli_inquiry[0]
+
+        # cut off first two stimuli in inquiry, the target and fixation
+        self.stimuli_inquiry = self.stimuli_inquiry[2:]
+
+        # register any timing and marker callbacks
+        self.window.callOnFlip(
+            self.trigger_callback.callback,
+            self.experiment_clock,
+            target)
+        self.window.callOnFlip(self.marker_writer.push_marker, target)
+        target_prompt = visual.TextStim(win=self.window,
+                                        font=self.stimuli_font,
+                                        text=f'Target: {target}',
+                                        height=.25,
+                                        color='Green',
+                                        pos=(0, 0),
+                                        wrapWidth=2,
+                                        colorSpace='rgb',
+                                        opacity=1,
+                                        depth=-6.0)
+        target_prompt.draw()
+        self.draw_static()
+        self.window.flip()
+
+        core.wait(2)  # get first_pres_time and set on matrix display! What does RSVP use?
+
+        # append timing information
+        timing.append(self.trigger_callback.timing)
+        self.trigger_callback.reset()
+
+        return timing, target
+
     def animate_scp(self) -> List[float]:
         """Animate SCP.
 
@@ -174,7 +219,14 @@ class MatrixDisplay(Display):
         times.
         """
         timing = []
-        i = 0
+        # build grid and static
+        self.build_grid()
+        self.draw_static()
+
+        self.window.flip()
+
+        core.wait(self.buffer_time)
+
         for i, sym in enumerate(self.stimuli_inquiry):
 
             # register any timing and marker callbacks
@@ -277,3 +329,22 @@ class MatrixDisplay(Display):
                 color_list(list[string]): list of colors for each
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
+
+    def _trigger_pulse(self) -> None:
+        """Trigger Pulse.
+
+        This method uses a calibration trigger to determine any functional
+            offsets needed for operation with this display. By setting the first_stim_time and searching for the
+            same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
+            beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
+            correction may be required.
+        """
+        calibration_time = _calibration_trigger(
+            self.experiment_clock,
+            trigger_type=self.trigger_type,
+            display=self.window)
+
+        # set the first stim time if not present and first_run to False
+        if not self.first_stim_time:
+            self.first_stim_time = calibration_time[-1]
+            self.first_run = False
