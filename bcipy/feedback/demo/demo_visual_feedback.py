@@ -11,11 +11,9 @@ clock = Clock()
 # Start Visual Feedback
 visual_feedback = VisualFeedback(
     display=display, parameters=parameters, clock=clock)
-stimulus = 'A'
-message = 'Selected:'
+stimulus = 'Selected: A'
 visual_feedback.message_color = 'white'
-timing = visual_feedback.administer(
-    stimulus, message=message)
+timing = visual_feedback.administer(stimulus)
 print(timing)
 print(visual_feedback._type())
 display.close()
