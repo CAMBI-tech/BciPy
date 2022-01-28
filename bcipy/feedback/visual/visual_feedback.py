@@ -29,7 +29,6 @@ class VisualFeedback(Feedback):
         self.parameters = parameters
         self.font_stim = self.parameters['feedback_font']
         self.height_stim = self.parameters['feedback_stim_height']
-        self.width_stim = self.parameters['feedback_stim_width']
 
         pos_x = self.parameters['feedback_pos_x']
         pos_y = self.parameters['feedback_pos_y']
@@ -37,51 +36,40 @@ class VisualFeedback(Feedback):
         self.pos_stim = (pos_x, pos_y)
 
         self.feedback_length = self.parameters['feedback_flash_time']
+        self.color = self.parameters['feedback_color']
 
         # Clock
         self.clock = clock
-
-        self.message_color = self.parameters['feedback_message_color']
-        self.message_pos = (-.3, .5)
-        self.message_height = 0.3
-        self.feedback_line_width = self.parameters['feedback_line_width']
 
         self.feedback_timestamp_label = 'visual_feedback'
 
     def administer(
             self,
             stimulus,
-            fill_color='blue',
-            message=None,
             stimuli_type=FeedbackType.TEXT):
         """Administer.
 
         Administer visual feedback. Timing information from parameters,
             current feedback given by stimulus.
         """
-        timing = []
-
-        if message:
-            message = self._construct_message(message)
-            message.draw()
 
         stim = self._construct_stimulus(
             stimulus,
             self.pos_stim,
-            fill_color,
+            self.color,
             stimuli_type)
 
-        self._show_stimuli(stim)
-        time = [self.feedback_timestamp_label, self.clock.getTime()]
+        time = self._show_stimuli(stim)
 
         core.wait(self.feedback_length)
-        timing.append(time)
 
-        return timing
+        return [time]
 
     def _show_stimuli(self, stimulus) -> None:
         stimulus.draw()
+        time = [self.feedback_timestamp_label, self.clock.getTime()]  # TODO: use callback for better precision
         self.display.flip()
+        return time
 
     def _resize_image(self, stimuli, display_size, stimuli_height):
         return resize_image(
@@ -107,15 +95,6 @@ class VisualFeedback(Feedback):
                 pos=pos,
                 color=fill_color)
 
-    def _construct_message(self, message):
-        return visual.TextStim(
-            win=self.display,
-            font=self.font_stim,
-            text=message,
-            height=self.message_height,
-            pos=self.message_pos,
-            color=self.message_color)
-
 
 if __name__ == "__main__":
     import argparse
@@ -139,6 +118,6 @@ if __name__ == "__main__":
         display=display, parameters=parameters, clock=clock)
     stimulus = 'Test'
     timing = visual_feedback.administer(
-        stimulus, fill_color='blue', stimuli_type=FeedbackType.TEXT)
+        stimulus, stimuli_type=FeedbackType.TEXT)
     print(timing)
     print(visual_feedback._type())

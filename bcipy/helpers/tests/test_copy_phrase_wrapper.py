@@ -123,7 +123,6 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         self.assertEqual(len(letters), len(labels))
 
         triggers = [
-            ("calibration_trigger", 0.0),
             ("+", 0.1),
             ("H", 0.5670222830376588),
             ("D", 0.8171830819919705),
@@ -137,7 +136,6 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             ("E", 2.833274284028448),
         ]
         target_info = [
-            "calib",
             "fixation",
             "nontarget",
             "nontarget",

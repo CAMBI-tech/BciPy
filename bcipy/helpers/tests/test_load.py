@@ -204,12 +204,6 @@ class TestExtractMode(unittest.TestCase):
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 
-    def test_extract_mode_free_spell(self):
-        data_save_path = 'data/default/user/user_RSVP_Free_Spell_Mon_01_Mar_2021_11hr19min49sec_-0800'
-        expected_mode = 'free_spell'
-        response = extract_mode(data_save_path)
-        self.assertEqual(expected_mode, response)
-
     def test_extract_mode_without_mode_defined(self):
         invalid_data_save_dir = 'data/default/user/user_bad_dir'
         with self.assertRaises(BciPyCoreException):

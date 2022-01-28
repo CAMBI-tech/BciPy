@@ -78,8 +78,6 @@ def extract_mode(bcipy_data_directory: str) -> str:
         return 'calibration'
     elif 'copy' in directory:
         return 'copy_phrase'
-    elif 'free_spell' in directory:
-        return 'free_spell'
     raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
 
 
