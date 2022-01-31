@@ -212,6 +212,8 @@ class TriggerHandler:
     writing triggers and loading triggers from a txt file.
     """
 
+    encoding = 'utf-8'
+
     def __init__(self,
                  path: str,
                  file_name: str,
@@ -226,7 +228,7 @@ class TriggerHandler:
             raise Exception(f"[{self.file_name}] already exists, any writing "
                             "will overwrite data in the existing file.")
 
-        self.file = open(self.file_path, 'w+')
+        self.file = open(self.file_path, 'w+', encoding=self.encoding)
 
     def close(self) -> None:
         """Close.
@@ -260,7 +262,7 @@ class TriggerHandler:
         if not path.endswith('.txt') or not os.path.exists(path):
             raise FileNotFoundError(f'Valid triggers .txt file not found at [{path}].')
 
-        with open(path) as raw_txt:
+        with open(path, encoding=TriggerHandler.encoding) as raw_txt:
             triggers = []
             for i, line in enumerate(raw_txt):
                 try:
