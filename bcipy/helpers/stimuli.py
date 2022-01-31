@@ -222,17 +222,17 @@ def calibration_inquiry_generator(
         stim_length: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         is_txt: bool = True) -> InquirySchedule:
-    """Random RSVP Calibration Inquiry Generator.
+    """Random Calibration Inquiry Generator.
 
-    Generates random RSVPKeyboard inquiries.
+    Generates random inquiries with target letters in all possible positions.
         Args:
             alp(list[str]): stimuli
             timing(list[float]): Task specific timing for generator.
                 [target, fixation, stimuli]
             color(list[str]): Task specific color for generator
                 [target, fixation, stimuli]
-            stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a inquiry
+            stim_number(int): number of trials in a inquiry
+            stim_length(int): number of random stimuli to be created
             stim_order(StimuliOrder): ordering of stimuli in the inquiry
             is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
         Return:
@@ -244,10 +244,13 @@ def calibration_inquiry_generator(
 
     len_alp = len(alp)
 
+    targets = distributed_target_positions(stim_number, stim_length)
+
     samples, times, colors = [], [], []
     for _ in range(stim_number):
         idx = np.random.permutation(np.array(list(range(len_alp))))
-        rand_smp = (idx[0:stim_length])
+        #take random sample of stim_length (+1 for no target inquiries)
+        rand_smp = (idx[0:stim_length + 1])
 
         # define the target and fixation that come before an inquiry
         if not is_txt:
@@ -255,10 +258,15 @@ def calibration_inquiry_generator(
                 alp[rand_smp[0]],
                 get_fixation(is_txt=False)]
         else:
-            sample = [alp[rand_smp[0]], '+']
+            #define target using distributed target indexes
+            sample = [alp[rand_smp[targets[0]]], '+']
+            targets = targets[1:]
 
-        # generate the samples using the permutated random indexes
-        rand_smp = np.random.permutation(rand_smp)
+        # shuffle the samples using the permutated random indexes
+        #rand_smp = np.random.permutation(rand_smp)
+
+        #cut off extra letter used for no target inquiries
+        rand_smp = rand_smp[0:stim_length]
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
@@ -272,6 +280,35 @@ def calibration_inquiry_generator(
 
     return InquirySchedule(samples, times, colors)
 
+def distributed_target_positions(stim_number: int, stim_length: int) -> list:
+    """Distributed Target Positions.
+
+    Generates evenly distributed target positions, including no target position, and shuffles them.
+    Args:
+        stim_number(int): Number of trials for the experiment
+        stim_length(int): Number of stimuli in each inquiry
+
+    Return distributed_target_positions(list): targets: array of target indexes to be chosen
+    """
+
+    target_positions = stim_length + 1
+    num_target_pos = (int) (stim_number/target_positions)
+    num_rem_pos = (stim_number%target_positions)
+    targets = []
+
+    count = 0
+    while(count<target_positions):
+        for _ in range(num_target_pos):
+            targets.append(count)
+        count = count + 1
+
+    rem_pos = np.random.permutation(np.array(list(range(num_target_pos))))
+    rem_pos = (rem_pos[0:num_rem_pos])
+
+    targets.extend(rem_pos)
+    targets = np.random.permutation(targets)
+
+    return targets
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.
