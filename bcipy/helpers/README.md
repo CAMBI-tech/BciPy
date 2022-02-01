@@ -32,7 +32,7 @@ A new Trigger may defined as follows:
 ```python
 from bcipy.helpers.triggers import Trigger, TriggerType
 
-# label can be any utf-8 complaint string
+# label can be any utf-8 compliant string
 nontarget_trigger = Trigger('nontarget_label', TriggerType.NONTARGET, 1.0111)
 ```
 
@@ -116,12 +116,12 @@ triggers = TriggerHandler.load(path_to_trigger_save_location, offset=2.0)
 Triggers as written from BciPy tasks are assumed to have the following structure,
 
 1. A single trigger is written per line with three columns (label type timestamp).
-2. If a clock offset is present, it is written with the type offset and will be added to any timestamp values written in the file. When using various clocks that don't 
-start at zero, this can be used to align the data to similar t=0. If time should be subtracted, write a negative value as demonstrated below.
-3. Only a valid TriggerType may be read
+2. If a clock offset is present and subsequent triggers should be corrected, it may be written with the trigger type `offset`. The value of that Trigger will be added to any timestamp values written in the file. When using various clocks that don't start at zero, this can be used to align the data to similar t=0. If time should be subtracted, write a negative value as demonstrated below for both offset values. BciPy will only apply the first instance of offset, but will return all Triggers and the additional offsets may be applied as desired. In the example below, only starting_offset would be applied to all other triggers; another_offset would be returned.
+3. Only a valid TriggerType may be read.
 
 ```
 starting_offset offset -3421.2852307
+another_offset offset -2
 N prompt 3490.3607581
 + fixation 3491.3668763
 Y nontarget 3491.8722132
