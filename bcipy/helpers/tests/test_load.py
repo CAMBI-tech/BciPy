@@ -19,7 +19,13 @@ from bcipy.helpers.load import (
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, FIELD_FILENAME, EXPERIMENT_FILENAME
+from bcipy.helpers.system_utils import (
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    FIELD_FILENAME,
+    EXPERIMENT_FILENAME
+)
 
 
 MOCK_EXPERIMENT = {
@@ -91,7 +97,7 @@ class TestExperimentLoad(unittest.TestCase):
     def test_load_experiments_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_experiments()
-            mock_file.assert_called_with(self.experiments_path, 'r')
+            mock_file.assert_called_with(self.experiments_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_experiments_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -114,7 +120,7 @@ class TestFieldLoad(unittest.TestCase):
     def test_load_fields_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_fields()
-            mock_file.assert_called_with(self.fields_path, 'r')
+            mock_file.assert_called_with(self.fields_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_fields_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):

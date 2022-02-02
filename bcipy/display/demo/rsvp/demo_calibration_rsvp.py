@@ -76,8 +76,7 @@ rsvp = CalibrationDisplay(
     task_display,
     info)
 
-# uncomment trigger_file lines for demo with triggers!
-# trigger_file = open('calibration_triggers.txt','w')
+
 for idx_o in range(len(task_text)):
 
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
@@ -95,13 +94,10 @@ for idx_o in range(len(task_text)):
     core.wait(.4)
     inquiry_timing = rsvp.do_inquiry()
 
-    # _write_triggers_from_inquiry_calibration(inquiry_timing, trigger_file)
-
     core.wait(.5)
 
 # close the window and trigger_file
 win.close()
-# trigger_file.close()
 
 # Print intervals
 # intervalsMS = np.array(win.frameIntervals) * 1000

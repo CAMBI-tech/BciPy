@@ -8,6 +8,8 @@ from pathlib import Path
 from bcipy.acquisition import devices
 from bcipy.acquisition.connection_method import ConnectionMethod
 
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
+
 
 class TestDeviceSpecs(unittest.TestCase):
     """Tests for device specification."""
@@ -43,7 +45,7 @@ class TestDeviceSpecs(unittest.TestCase):
                  description="Wearable Sensing DSI-VR300")
         ]
         config_path = Path(temp_dir, 'my_devices.json')
-        with open(config_path, 'w') as config_file:
+        with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
             json.dump(my_devices, config_file)
 
         devices.load(config_path)

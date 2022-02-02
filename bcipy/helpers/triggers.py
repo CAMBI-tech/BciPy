@@ -10,6 +10,7 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -212,7 +213,7 @@ class TriggerHandler:
     writing triggers and loading triggers from a txt file.
     """
 
-    encoding = 'utf-8'
+    encoding = DEFAULT_ENCODING
 
     def __init__(self,
                  path: str,

@@ -16,6 +16,7 @@ from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
 from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
 from bcipy.task.data import Session, Inquiry
@@ -38,7 +39,7 @@ def session_data(data_dir: str, alp=None):
         alp = alphabet(parameters=parameters)
 
     session_path = os.path.join(data_dir, "session.json")
-    with open(session_path, 'r') as json_file:
+    with open(session_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         session = Session.from_dict(json.load(json_file))
         data = session.as_dict(alphabet=alp, evidence_only=True)
         data['target_text'] = parameters['task_text']
@@ -124,7 +125,7 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
         alp = alphabet(parameters=parameters)
     threshold = parameters['decision_threshold']
 
-    with open(os.path.join(data_dir, "session.json"), 'r') as json_file:
+    with open(os.path.join(data_dir, "session.json"), 'r', encoding=DEFAULT_ENCODING) as json_file:
         session = Session.from_dict(json.load(json_file))
         # Create database
         conn = sqlite3.connect(db_name)
@@ -182,7 +183,7 @@ def session_csv(db_name='session.db', csv_name='session.csv'):
     outputing the evidence table.
     """
 
-    with open(csv_name, "w", encoding='utf-8', newline='') as output:
+    with open(csv_name, "w", encoding=DEFAULT_ENCODING, newline='') as output:
         cursor = sqlite3.connect(db_name).cursor()
         cursor.execute("select * from evidence;")
         columns = [description[0] for description in cursor.description]

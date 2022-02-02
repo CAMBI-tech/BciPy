@@ -8,9 +8,11 @@ import warnings
 from pathlib import Path
 
 from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
-from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
+from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
+
 from mne.io import read_raw_edf
 
 
@@ -31,7 +33,7 @@ class TestConvert(unittest.TestCase):
 
         self.default_mode = 'calibration'
 
-        with open(Path(self.temp_dir, 'triggers.txt'), 'w') as trg_file:
+        with open(Path(self.temp_dir, 'triggers.txt'), 'w', encoding=DEFAULT_ENCODING) as trg_file:
             trg_file.write(self.__class__.trg_data)
 
         write(self.__class__.sample_data, Path(self.temp_dir, 'raw_data.csv'))
@@ -155,7 +157,7 @@ class TestCompressionSupport(unittest.TestCase):
         self.tar_file_full_name = f'{self.tar_file_name}.tar.gz'
         # Write a test file
         self.test_file_name = 'test.text'
-        with open(self.test_file_name, 'w') as fp:
+        with open(self.test_file_name, 'w', encoding=DEFAULT_ENCODING) as fp:
             pass
 
     def tearDown(self):

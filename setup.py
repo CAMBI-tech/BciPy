@@ -17,7 +17,7 @@ VERSION = '2.0.0'
 
 
 # What packages are required for this module to be executed?
-with open('requirements.txt') as f:
+with open('requirements.txt', 'r', encoding='utf-8') as f:
     REQUIRED = f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
