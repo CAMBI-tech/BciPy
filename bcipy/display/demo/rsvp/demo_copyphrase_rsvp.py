@@ -114,8 +114,6 @@ rsvp = CopyPhraseDisplay(
 
 counter = 0
 
-# uncomment trigger_file lines for demo with triggers!
-# trigger_file = open('copy_phrase_triggers.txt','w')
 for idx_o in range(len(task_text)):
 
     rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
@@ -143,11 +141,6 @@ for idx_o in range(len(task_text)):
         else:
             inquiry_timing = rsvp.do_inquiry()
 
-        # uncomment to write the triggers from the display
-        # _write_triggers_from_inquiry_copy_phrase(inquiry_timing,
-        #                                          trigger_file, text_task,
-        #                                          task_text[idx_o])
-
         core.wait(inter_stim_buffer)
         counter += 1
 
@@ -157,4 +150,3 @@ for idx_o in range(len(task_text)):
     rsvp.time_list_sti = [2]
 
 win.close()
-# trigger_file.close()

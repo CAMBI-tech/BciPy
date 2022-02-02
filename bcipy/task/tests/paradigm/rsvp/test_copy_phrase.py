@@ -17,6 +17,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -170,7 +171,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(0, session.total_number_series)
 
@@ -209,7 +210,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 
@@ -246,7 +247,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(2, session.total_number_series,
                              "In fake data a decision is made every time.")
@@ -287,7 +288,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
             self.assertEqual(1, len(session.last_series()))
@@ -527,7 +528,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 

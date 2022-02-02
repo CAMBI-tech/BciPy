@@ -6,7 +6,7 @@ from shutil import copyfile
 from pathlib import Path
 import json
 
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
+from bcipy.helpers.system_utils import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID
 
 
 def save_json_data(data: dict, location: str, name: str) -> str:
@@ -20,7 +20,7 @@ def save_json_data(data: dict, location: str, name: str) -> str:
     Returns path of saved file
     """
     path = Path(location, name)
-    with open(Path(location, name), 'w', encoding='utf-8') as json_file:
+    with open(Path(location, name), 'w', encoding=DEFAULT_ENCODING) as json_file:
         json.dump(data, json_file, ensure_ascii=False, indent=2)
     return str(path)
 
@@ -122,7 +122,7 @@ def _save_session_related_data(file, session_dictionary):
     try:
         file = json.load(file, 'wt')
     except BaseException:
-        file = open(file, 'wt')
+        file = open(file, 'wt', encoding=DEFAULT_ENCODING)
 
     # Use the file to dump data to
     json.dump(session_dictionary, file, indent=2)

@@ -11,9 +11,11 @@ from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_PATH,
+from bcipy.helpers.system_utils import (DEFAULT_ENCODING,
+                                        DEFAULT_EXPERIMENT_PATH,
                                         DEFAULT_FIELD_PATH,
-                                        EXPERIMENT_FILENAME, FIELD_FILENAME)
+                                        EXPERIMENT_FILENAME,
+                                        FIELD_FILENAME)
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -56,7 +58,7 @@ def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME
             { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
 
     """
-    with open(path, 'r') as json_file:
+    with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return json.load(json_file)
 
 
@@ -98,7 +100,7 @@ def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
             }
 
     """
-    with open(path, 'r') as json_file:
+    with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return json.load(json_file)
 
 
