@@ -36,6 +36,19 @@ class StimuliOrder(Enum):
         """Returns all enum values as a list"""
         return list(map(lambda c: c.value, cls))
 
+class TargetPositions(Enum):
+    """Target Positions.
+
+    Enum to define the positions of targets for inquiry.
+    """
+    RANDOM = 'random'
+    DISTRIBUTED = 'distributed'
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
 
 class InquirySchedule(NamedTuple):
     """Schedule for the next inquiries to present, where each inquiry specifies
@@ -221,6 +234,7 @@ def calibration_inquiry_generator(
         stim_number: int = 10,
         stim_length: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
+        target_positions: TargetPositions = TargetPositions.RANDOM,
         is_txt: bool = True) -> InquirySchedule:
     """Random Calibration Inquiry Generator.
 
@@ -244,7 +258,10 @@ def calibration_inquiry_generator(
 
     len_alp = len(alp)
 
-    targets = distributed_target_positions(stim_number, stim_length)
+    if(target_positions == target_positions.DISTRIBUTED):
+        targets = distributed_target_positions(stim_number, stim_length)
+    else:
+        targets = [0]
 
     samples, times, colors = [], [], []
     for _ in range(stim_number):
@@ -260,13 +277,17 @@ def calibration_inquiry_generator(
         else:
             #define target using distributed target indexes
             sample = [alp[rand_smp[targets[0]]], '+']
-            targets = targets[1:]
-
-        # shuffle the samples using the permutated random indexes
-        #rand_smp = np.random.permutation(rand_smp)
+            #remove first target
+            if(target_positions == target_positions.DISTRIBUTED):
+                targets = targets[1:]
 
         #cut off extra letter used for no target inquiries
         rand_smp = rand_smp[0:stim_length]
+
+        if(target_positions == target_positions.RANDOM):
+            # shuffle the samples using the permutated random indexes
+            rand_smp = np.random.permutation(rand_smp)
+                
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
@@ -283,7 +304,7 @@ def calibration_inquiry_generator(
 def distributed_target_positions(stim_number: int, stim_length: int) -> list:
     """Distributed Target Positions.
 
-    Generates evenly distributed target positions, including no target position, and shuffles them.
+    Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
     Args:
         stim_number(int): Number of trials for the experiment
         stim_length(int): Number of stimuli in each inquiry
