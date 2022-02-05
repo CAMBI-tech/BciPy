@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.language_model.prelm_language_model import LangModel
+from bcipy.language_model.prelm_language_model import PrelmLanguageModel
 from bcipy.language_model.errors import StatusCodeError
 
 
@@ -13,7 +13,7 @@ class TestPreLM(unittest.TestCase):
         input
         """
         # init LMWrapper
-        lmodel = LangModel(logfile="lmwrap.log")
+        lmodel = PrelmLanguageModel()
         # init LM
         lmodel.init()
         # get priors
@@ -33,7 +33,7 @@ class TestPreLM(unittest.TestCase):
         input
         """
         # init LMWrapper
-        lmodel = LangModel(logfile="lmwrap.log")
+        lmodel = PrelmLanguageModel()
         lmodel.init()
         # try to get priors
         with self.assertRaises(StatusCodeError):

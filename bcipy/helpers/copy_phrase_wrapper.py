@@ -1,8 +1,8 @@
 """Defines the CopyPhraseWrapper."""
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
-import numpy as np
 import logging
+import numpy as np
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
@@ -23,6 +23,7 @@ from bcipy.task.control.criteria import (
     ProbThresholdCriteria,
 )
 from bcipy.task.data import EvidenceType
+from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.uniform import UniformLanguageModel
 
 
@@ -82,7 +83,7 @@ class CopyPhraseWrapper:
                  ],
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
-                 lmodel: Any = None,
+                 lmodel: LanguageModel = None,
                  is_txt_stim: bool = True,
                  device_name: str = 'LSL',
                  device_channels: List[str] = None,
@@ -96,13 +97,6 @@ class CopyPhraseWrapper:
                  notch_filter_frequency: int = 60,
                  stim_length: int = 10,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
-
-        if not lmodel:
-            # There is enough information provided to construct a text-based
-            # UniformLanguageModel but additional parameters are needed for
-            # an image-based model.
-            assert is_txt_stim, "A language model is required when using non-text stimulus."
-            lmodel = UniformLanguageModel(lm_backspace_prob=backspace_prob)
 
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
@@ -146,9 +140,13 @@ class CopyPhraseWrapper:
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
-        self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
+
+        self.lmodel = lmodel if lmodel else UniformLanguageModel(
+            response_type=ResponseType.SYMBOL,
+            symbol_set=self.alp,
+            lm_backspace_prob=backspace_prob)
 
     def evaluate_inquiry(
             self, raw_data: np.array, triggers: List[Tuple[str, float]],
@@ -298,7 +296,7 @@ class CopyPhraseWrapper:
             log.info(f"Querying language model: '{update}'")
 
             # update the lmodel and get back the priors
-            lm_letter_prior = self.lmodel.predict(update)
+            lm_letter_prior = self.lmodel.predict(list(update))
 
             # normalize to probability domain if needed
             normalized = getattr(self.lmodel, 'normalized', False)

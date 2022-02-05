@@ -1,26 +1,27 @@
-from typing import List, Tuple, Dict
-from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.language.main import LanguageModel, ResponseType
+from collections import Counter
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from collections import Counter
+
+from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.main import LanguageModel, ResponseType
 
 
 class GPT2LanguageModel(LanguageModel):
+    """Character language model based on GPT2."""
 
-    def __init__(self, response_type, symbol_set, lm_path):
+    def __init__(self, response_type, symbol_set, lm_path="gpt2"):
         """
-        Initilize instance variables and load the language model with given path
+        Initialize instance variables and load the language model with given path
         Args:
             response_type - SYMBOL only
             symbol_set - list of symbol strings
             lm_path - path to language model files
         """
-        self.response_type = response_type
-        self.symbol_set = symbol_set
-        self.__validate_response_type()
+        super().__init__(response_type=response_type, symbol_set=symbol_set)
+        self.normalized = True
         self.model = None
         self.tokenizer = None
         self.is_start_of_word = True
@@ -30,11 +31,8 @@ class GPT2LanguageModel(LanguageModel):
         self.lm_path = lm_path
         self.load()
 
-    def __validate_response_type(self):
-        """
-        Make sure the response_type is valid for this language model
-        """
-        assert self.response_type == ResponseType.SYMBOL, "response type must be SYMBOL!"
+    def supported_response_types(self) -> List[ResponseType]:
+        return [ResponseType.SYMBOL]
 
     def __get_char_predictions(self, word_prefix: str) -> List[tuple]:
         """
@@ -72,7 +70,10 @@ class GPT2LanguageModel(LanguageModel):
             char_to_prob[char] /= sum_char_prob
 
         # build a list of tuples (char, prob)
-        char_prob_tuples = list(sorted(char_to_prob.items(), key=lambda item: item[1], reverse=True))
+        char_prob_tuples = list(
+            sorted(char_to_prob.items(),
+                   key=lambda item: item[1],
+                   reverse=True))
 
         return char_prob_tuples
 

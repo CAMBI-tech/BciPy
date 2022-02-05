@@ -61,3 +61,10 @@ class InvalidFieldException(FieldException):
     """
 
     ...
+
+
+class UnsupportedResponseType(BciPyCoreException):
+    """Unsupported ResponseType
+
+    Thrown when attempting to set the response type of a language model to an
+    unsupported value."""

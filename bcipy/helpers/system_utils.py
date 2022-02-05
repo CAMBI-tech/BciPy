@@ -166,7 +166,7 @@ def import_submodules(package, recursive=True):
     -------
         dict[str, types.ModuleType]
     """
-    if isinstance(package, str) or isinstance(package, unicode):
+    if isinstance(package, str):
         package = importlib.import_module(package)
     results = {}
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):

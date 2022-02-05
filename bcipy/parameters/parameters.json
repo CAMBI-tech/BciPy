@@ -744,14 +744,23 @@
     "type": "bool"
   },
   "lang_model_type": {
-    "value": "PRELM",
+    "value": "GPT2",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: PRELM",
+    "helpTip": "Specifies which language model to use. Default: GPT2",
     "recommended_values": [
+      "GPT2",
       "PRELM",
       "UNIFORM"
     ],
+    "type": "str"
+  },
+  "lm_path": {
+    "value": "gpt2",
+    "section": "bci_config",
+    "readableName": "Language Model Path",
+    "helpTip": "Pretrained model name or path. Default: gpt2",
+    "recommended_values": "",
     "type": "str"
   },
   "lm_backspace_prob": {
