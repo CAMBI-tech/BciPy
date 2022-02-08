@@ -12,7 +12,7 @@ from bcipy.language.main import LanguageModel, ResponseType
 class GPT2LanguageModel(LanguageModel):
     """Character language model based on GPT2."""
 
-    def __init__(self, response_type, symbol_set, lm_path="gpt2"):
+    def __init__(self, response_type, symbol_set, lm_path=None):
         """
         Initialize instance variables and load the language model with given path
         Args:
@@ -28,7 +28,7 @@ class GPT2LanguageModel(LanguageModel):
         self.vocab_size = 0
         self.idx_to_word = None
         self.curr_word_predicted_prob = None
-        self.lm_path = lm_path
+        self.lm_path = lm_path or "gpt2"
         self.load()
 
     def supported_response_types(self) -> List[ResponseType]:

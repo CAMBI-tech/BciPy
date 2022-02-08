@@ -4,12 +4,15 @@ import inspect
 from typing import Dict, List, Tuple
 import numpy as np
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.system_utils import import_submodules
 from bcipy.helpers.task import alphabet
-
-import_submodules('bcipy.language')
+# pylint: disable=unused-import
+# flake8: noqa
+from bcipy.language.uniform import UniformLanguageModel
+# flake8: noqa
+from bcipy.language.model.gpt2 import GPT2LanguageModel
 # TODO: remove this import: https://www.pivotaltracker.com/story/show/178695472
-import_submodules('bcipy.language_model')
+# flake8: noqa
+from bcipy.language_model.prelm_language_model import PrelmLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
@@ -31,10 +34,7 @@ def init_language_model(parameters: dict) -> LanguageModel:
         instance of a LanguageModel
     """
     language_models = language_models_by_name()
-    if not parameters['lang_model_enabled']:
-        model = language_models['UNIFORM']
-    else:
-        model = language_models[parameters.get("lang_model_type", "GPT2")]
+    model = language_models[parameters.get("lang_model_type", "UNIFORM")]
 
     # introspect the model arguments to determine what parameters to pass.
     args = inspect.signature(model).parameters.keys()

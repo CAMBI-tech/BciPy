@@ -735,19 +735,11 @@
     "recommended_values": "",
     "type": "int"
   },
-  "lang_model_enabled": {
-    "value": "false",
-    "section": "lang_model_config",
-    "readableName": "Language Model On/Off",
-    "helpTip": "If ‘true’, the language model will be enabled, and language model evidence will be incorporated into calculation of posterior probabilities. If ‘false’, posterior probabilities will be calculated based on EEG evidence only.",
-    "recommended_values": "",
-    "type": "bool"
-  },
   "lang_model_type": {
-    "value": "GPT2",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: GPT2",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
       "GPT2",
       "PRELM",
@@ -756,12 +748,12 @@
     "type": "str"
   },
   "lm_path": {
-    "value": "gpt2",
+    "value": "",
     "section": "bci_config",
     "readableName": "Language Model Path",
-    "helpTip": "Pretrained model name or path. Default: gpt2",
+    "helpTip": "Pretrained model name or path.",
     "recommended_values": "",
-    "type": "str"
+    "type": "directorypath"
   },
   "lm_backspace_prob": {
     "value": "0.05",

@@ -23,8 +23,7 @@ from bcipy.task.control.criteria import (
     ProbThresholdCriteria,
 )
 from bcipy.task.data import EvidenceType
-from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.language.uniform import UniformLanguageModel
+from bcipy.language.main import LanguageModel
 
 
 log = logging.getLogger(__name__)
@@ -74,6 +73,7 @@ class CopyPhraseWrapper:
     def __init__(self,
                  min_num_inq: int,
                  max_num_inq: int,
+                 lmodel: LanguageModel,
                  signal_model: SignalModel = None,
                  fs: int = 300,
                  k: int = 2,
@@ -83,7 +83,6 @@ class CopyPhraseWrapper:
                  ],
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
-                 lmodel: LanguageModel = None,
                  is_txt_stim: bool = True,
                  device_name: str = 'LSL',
                  device_channels: List[str] = None,
@@ -98,6 +97,7 @@ class CopyPhraseWrapper:
                  stim_length: int = 10,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
+        self.lmodel = lmodel
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
         inq_constants = []
@@ -142,11 +142,6 @@ class CopyPhraseWrapper:
         self.task_list = task_list
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
-
-        self.lmodel = lmodel if lmodel else UniformLanguageModel(
-            response_type=ResponseType.SYMBOL,
-            symbol_set=self.alp,
-            lm_backspace_prob=backspace_prob)
 
     def evaluate_inquiry(
             self, raw_data: np.array, triggers: List[Tuple[str, float]],
@@ -286,6 +281,7 @@ class CopyPhraseWrapper:
 
     def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
+        assert self.lmodel, "Language model must be initialized."
 
         try:
             # First, reset the history for this new series
