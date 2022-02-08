@@ -12,6 +12,7 @@ from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task.data import EvidenceType
+from bcipy.language.uniform import UniformLanguageModel
 
 
 class TestCopyPhraseWrapper(unittest.TestCase):
@@ -65,6 +66,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         cp = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
+            lmodel=None,
             signal_model=None,
             fs=25,
             k=2,
@@ -169,6 +171,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         copy_phrase_task = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
+            lmodel=UniformLanguageModel(symbol_set=alp),
             signal_model=self.model,
             fs=self.device_spec.sample_rate,
             k=1,

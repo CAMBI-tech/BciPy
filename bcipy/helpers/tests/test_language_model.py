@@ -1,11 +1,13 @@
+"""Unit test for language model helper"""
 import unittest
 
 from collections import Counter
-from bcipy.helpers.language_model import norm_domain, sym_appended, \
-    equally_probable, histogram
+from bcipy.helpers.language_model import norm_domain, sym_appended, histogram
 
 
 class TestLanguageModelRelated(unittest.TestCase):
+    """Tests for language model helper"""
+
     def test_norm_domain(self):
         """Test conversion from negative log likelihood to prob."""
         letters = [('S', 0.25179717717251715), ('U', 1.656395297172517),
@@ -81,10 +83,10 @@ class TestLanguageModelRelated(unittest.TestCase):
 
         new_list_dict = dict(new_list)
         prev_list_dict = dict(syms)
-        for s, _ in syms:
-            self.assertTrue(s in new_list_dict)
-            self.assertTrue(new_list_dict[s] < prev_list_dict[s])
-            self.assertEqual(0.2, new_list_dict[s])
+        for sym, _ in syms:
+            self.assertTrue(sym in new_list_dict)
+            self.assertTrue(new_list_dict[sym] < prev_list_dict[sym])
+            self.assertEqual(0.2, new_list_dict[sym])
         self.assertTrue(new_sym[0] in new_list_dict)
         self.assertEqual(new_sym[1], new_list_dict[new_sym[0]])
 
@@ -99,57 +101,9 @@ class TestLanguageModelRelated(unittest.TestCase):
         self.assertEqual(syms, new_list, "Value already present")
 
         new_list = sym_appended(syms, ('D', 0.2))
-        self.assertEqual(
-            syms, new_list, msg="Changing the probability does not matter")
-
-    def test_equally_probable(self):
-        """Test generation of equally probable values."""
-
-        # no overrides
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp)
-        self.assertEqual(len(alp), len(probs))
-        for prob in probs:
-            self.assertEqual(0.25, prob)
-
-        # test with override
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'A': 0.4})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.4)
-        self.assertAlmostEqual(probs[1], 0.2)
-        self.assertAlmostEqual(probs[2], 0.2)
-        self.assertAlmostEqual(probs[3], 0.2)
-
-        # test with 0.0 override
-        alp = ['A', 'B', 'C', 'D', 'E']
-        probs = equally_probable(alp, {'E': 0.0})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.25)
-        self.assertAlmostEqual(probs[1], 0.25)
-        self.assertAlmostEqual(probs[2], 0.25)
-        self.assertAlmostEqual(probs[3], 0.25)
-        self.assertAlmostEqual(probs[4], 0.0)
-
-        # test with multiple overrides
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'B': 0.2, 'D': 0.3})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.25)
-        self.assertAlmostEqual(probs[1], 0.2)
-        self.assertAlmostEqual(probs[2], 0.25)
-        self.assertAlmostEqual(probs[3], 0.3)
-
-        # test with override that's not in the alphabet
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'F': 0.4})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        for prob in probs:
-            self.assertEqual(0.25, prob)
+        self.assertEqual(syms,
+                         new_list,
+                         msg="Changing the probability does not matter")
 
     def test_small_probs(self):
         """When very small values are returned from the LM, inserting a letter
@@ -200,8 +154,8 @@ class TestLanguageModelRelated(unittest.TestCase):
             "Should be sorted")
 
         self.assertTrue(lines[-1].startswith('_'))
-        c = Counter(lines[-1])
-        self.assertEqual(81, c['*'],
+        counter = Counter(lines[-1])
+        self.assertEqual(81, counter['*'],
                          "Should be 81 stars, indicating the percentage")
 
         total_stars = Counter(hist)['*']

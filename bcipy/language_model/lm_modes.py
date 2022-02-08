@@ -10,7 +10,7 @@ class LmType(Enum):
     Ex.
     >>> LmType.PRELM.model()
     """
-    PRELM = prelm_language_model.LangModel
+    PRELM = prelm_language_model.PrelmLanguageModel
     OCLM = oclm_language_model.LangModel
     UNIFORM = UniformLanguageModel
 

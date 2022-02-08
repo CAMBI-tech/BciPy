@@ -1,43 +1,35 @@
 """Uniform language model"""
-from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 
 import numpy as np
 
-from bcipy.helpers.task import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 
 class UniformLanguageModel(LanguageModel):
     """Language model in which probabilities for symbols are uniformly
-    distributed. Symbols can be text or images. If images are used the
-    path must be provided.
+    distributed.
 
     Parameters
     ----------
-        lm_backspace_prob - optionally used to set a fixed probability for the
-            backspace symbol. Probabilities for other symbols will be adjusted.
-        is_txt_stim - Symbols can be text or images. Set to False for images.
-        path_to_presentation_images - path to images
+        response_type - SYMBOL only
+        symbol_set - optional specify the symbol set, otherwise uses DEFAULT_SYMBOL_SET
+        backspace symbol. Probabilities for other symbols will be adjusted.
     """
 
     def __init__(self,
-                 lm_backspace_prob: float = None,
-                 is_txt_stim: bool = True,
-                 path_to_presentation_images: str = None):
+                 response_type: Optional[ResponseType] = None,
+                 symbol_set: Optional[List[str]] = None,
+                 lm_backspace_prob: float = None):
+        super().__init__(response_type=response_type, symbol_set=symbol_set)
         if lm_backspace_prob:
             assert 0 <= lm_backspace_prob < 1, "Backspace probability must be between 0 and 1"
-        if not is_txt_stim:
-            assert path_to_presentation_images, "Path must be provided for images."
 
         self.backspace_prob = lm_backspace_prob
-        self.response_type = ResponseType.SYMBOL
-        params = {
-            'is_txt_stim': is_txt_stim,
-            'path_to_presentation_images': path_to_presentation_images
-        }
-        self.symbol_set = alphabet(params)
-        self.normalized = True
+
+    def supported_response_types(self) -> List[ResponseType]:
+        return [ResponseType.SYMBOL]
 
     def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
         """
@@ -61,7 +53,7 @@ class UniformLanguageModel(LanguageModel):
     def update(self) -> None:
         """Update the model state"""
 
-    def load(self, path: Path) -> None:
+    def load(self) -> None:
         """Restore model state from the provided checkpoint"""
 
 

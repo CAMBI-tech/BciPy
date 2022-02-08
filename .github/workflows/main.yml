@@ -45,7 +45,7 @@ jobs:
     - name: Unit test
       run: |
         xvfb-run coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
-        
+
   build-windows:
 
     runs-on: windows-latest

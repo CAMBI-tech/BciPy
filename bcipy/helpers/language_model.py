@@ -3,10 +3,24 @@ import math
 import inspect
 from typing import Dict, List, Tuple
 import numpy as np
-from bcipy.language_model.lm_modes import LmType
+from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.helpers.task import alphabet
+# pylint: disable=unused-import
+# flake8: noqa
+from bcipy.language.uniform import UniformLanguageModel
+# flake8: noqa
+from bcipy.language.model.gpt2 import GPT2LanguageModel
+# TODO: remove this import: https://www.pivotaltracker.com/story/show/178695472
+# flake8: noqa
+from bcipy.language_model.prelm_language_model import PrelmLanguageModel
 
 
-def init_language_model(parameters: dict):
+def language_models_by_name() -> Dict[str, LanguageModel]:
+    """Returns available language models indexed by name."""
+    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
+
+
+def init_language_model(parameters: dict) -> LanguageModel:
     """
     Init Language Model configured in the parameters.
 
@@ -17,19 +31,19 @@ def init_language_model(parameters: dict):
 
     Returns
     -------
-        instance of a LanguageModel.
+        instance of a LanguageModel
     """
-    if not parameters['lang_model_enabled']:
-        model = LmType['UNIFORM'].model
-    else:
-        model = LmType[parameters.get("lang_model_type", "PRELM")].model
+    language_models = language_models_by_name()
+    model = language_models[parameters.get("lang_model_type", "UNIFORM")]
 
     # introspect the model arguments to determine what parameters to pass.
     args = inspect.signature(model).parameters.keys()
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
-    return model(**params)
+    return model(response_type=ResponseType.SYMBOL,
+                 symbol_set=alphabet(parameters),
+                 **params)
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
@@ -77,33 +91,6 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
     return list(zip(all_symbols, normalized))
 
 
-def equally_probable(alphabet: List[str],
-                     specified: Dict[str, float] = None) -> List[float]:
-    """Returns a list of probabilities which correspond to the provided
-    alphabet. Unless overridden by the specified values, all items will
-    have the same probability. All probabilities sum to 1.0.
-
-    Parameters:
-    ----------
-        alphabet - list of symbols; a probability will be generated for each.
-        specified - dict of symbol => probability values for which we want to
-            override the default probability.
-    Returns:
-    --------
-        list of probabilities (floats)
-    """
-    n_letters = len(alphabet)
-    if not specified:
-        return np.full(n_letters, 1 / n_letters)
-
-    # copy specified dict ignoring non-alphabet items
-    overrides = {k: specified[k] for k in alphabet if k in specified}
-
-    prob = (1 - sum(overrides.values())) / (n_letters - len(overrides))
-    # override specified values
-    return [overrides[sym] if sym in overrides else prob for sym in alphabet]
-
-
 def histogram(letter_prior: List[Tuple[str, float]]) -> str:
     """Given a list of letter, prob tuples, generate a histogram that can be
     output to the console.
@@ -120,5 +107,6 @@ def histogram(letter_prior: List[Tuple[str, float]]) -> str:
     lines = []
     for letter, prob in sorted(letter_prior):
         units = int(round(prob * 100))
-        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin + (units * star))
+        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin +
+                     (units * star))
     return '\n'.join(lines)

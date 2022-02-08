@@ -151,7 +151,7 @@ class TestExecuteTask(unittest.TestCase):
         self.parameters = {
             'fake_data': True,
             'k_folds': 10,
-            'lang_model_enabled': False
+            'is_txt_stim': True
         }
         self.save_folder = '/'
         self.task = TaskType(1)
@@ -324,7 +324,6 @@ class TestExecuteTask(unittest.TestCase):
 
     def test_execute_language_model_enabled(self) -> None:
         self.parameters['fake_data'] = False
-        self.parameters['lang_model_enabled'] = True
         self.task = TaskType(2)  # set to a noncalibration task
 
         # mock the signal and language models

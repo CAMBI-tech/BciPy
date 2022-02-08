@@ -6,7 +6,7 @@ from bcipy.language.main import ResponseType
 if __name__ == "__main__":
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = GPT2LanguageModel(response_type, symbol_set, "gpt2")
+    lm = GPT2LanguageModel(response_type, symbol_set)
 
     next_char_pred = lm.state_update(list("does_it_make_sen"))
     print(next_char_pred)

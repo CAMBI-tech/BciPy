@@ -1,13 +1,12 @@
 """Defines the CopyPhraseWrapper."""
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
-import numpy as np
 import logging
+import numpy as np
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
     histogram,
-    norm_domain,
     sym_appended,
 )
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -23,7 +22,7 @@ from bcipy.task.control.criteria import (
     ProbThresholdCriteria,
 )
 from bcipy.task.data import EvidenceType
-from bcipy.language.uniform import UniformLanguageModel
+from bcipy.language.main import LanguageModel
 
 
 log = logging.getLogger(__name__)
@@ -73,6 +72,7 @@ class CopyPhraseWrapper:
     def __init__(self,
                  min_num_inq: int,
                  max_num_inq: int,
+                 lmodel: LanguageModel,
                  signal_model: SignalModel = None,
                  fs: int = 300,
                  k: int = 2,
@@ -82,7 +82,6 @@ class CopyPhraseWrapper:
                  ],
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
-                 lmodel: Any = None,
                  is_txt_stim: bool = True,
                  device_name: str = 'LSL',
                  device_channels: List[str] = None,
@@ -97,13 +96,7 @@ class CopyPhraseWrapper:
                  stim_length: int = 10,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
-        if not lmodel:
-            # There is enough information provided to construct a text-based
-            # UniformLanguageModel but additional parameters are needed for
-            # an image-based model.
-            assert is_txt_stim, "A language model is required when using non-text stimulus."
-            lmodel = UniformLanguageModel(lm_backspace_prob=backspace_prob)
-
+        self.lmodel = lmodel
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
         inq_constants = []
@@ -146,7 +139,6 @@ class CopyPhraseWrapper:
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
-        self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
@@ -288,6 +280,7 @@ class CopyPhraseWrapper:
 
     def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
+        assert self.lmodel, "Language model must be initialized."
 
         try:
             # First, reset the history for this new series
@@ -298,12 +291,7 @@ class CopyPhraseWrapper:
             log.info(f"Querying language model: '{update}'")
 
             # update the lmodel and get back the priors
-            lm_letter_prior = self.lmodel.predict(update)
-
-            # normalize to probability domain if needed
-            normalized = getattr(self.lmodel, 'normalized', False)
-            if not normalized:
-                lm_letter_prior = norm_domain(lm_letter_prior)
+            lm_letter_prior = self.lmodel.predict(list(update))
 
             if BACKSPACE_CHAR in self.alp:
                 # Append backspace if missing.
