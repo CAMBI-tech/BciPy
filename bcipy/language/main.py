@@ -23,8 +23,6 @@ class LanguageModel(ABC):
 
     _response_type: ResponseType = None
     symbol_set: List[str] = None
-    # normalized to probability domain
-    normalized: bool = False
 
     def __init__(self,
                  response_type: Optional[ResponseType] = None,

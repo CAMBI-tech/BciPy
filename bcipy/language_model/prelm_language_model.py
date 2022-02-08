@@ -1,5 +1,6 @@
 """Defines the PRELM language model"""
 import logging
+import math
 import sys
 from typing import List, Tuple, Union, Optional
 from collections import defaultdict
@@ -73,10 +74,13 @@ class PrelmLanguageModel(LanguageModel):
         log.info("\ncleaning history\n")
 
     def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
-        """Performs `state_update` and subsequently resets the model."""
+        """Performs `state_update` and subsequently resets the model.
+        Returns probabilities for each symbol.
+        """
         priors = self.state_update(evidence=evidence)
         self.reset()
-        return priors['letter']
+        # convert from log likelihood to probabilities
+        return [(sym, math.exp(-prob)) for sym, prob in priors['letter']]
 
     def update(self) -> None:
         """Update the model state"""

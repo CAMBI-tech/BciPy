@@ -21,7 +21,6 @@ class GPT2LanguageModel(LanguageModel):
             lm_path - path to language model files
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
-        self.normalized = True
         self.model = None
         self.tokenizer = None
         self.is_start_of_word = True

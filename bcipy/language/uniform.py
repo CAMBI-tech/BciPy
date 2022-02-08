@@ -27,7 +27,6 @@ class UniformLanguageModel(LanguageModel):
             assert 0 <= lm_backspace_prob < 1, "Backspace probability must be between 0 and 1"
 
         self.backspace_prob = lm_backspace_prob
-        self.normalized = True
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]

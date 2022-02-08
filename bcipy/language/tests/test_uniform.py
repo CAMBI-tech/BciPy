@@ -13,7 +13,6 @@ class TestUniformLanguageModel(unittest.TestCase):
         """Test default parameters"""
         lmodel = UniformLanguageModel()
         self.assertEqual(lmodel.response_type, ResponseType.SYMBOL)
-        self.assertTrue(lmodel.normalized)
         self.assertIsNone(lmodel.backspace_prob)
         self.assertEqual(
             len(lmodel.symbol_set), 28,

@@ -7,7 +7,6 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
     histogram,
-    norm_domain,
     sym_appended,
 )
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -293,11 +292,6 @@ class CopyPhraseWrapper:
 
             # update the lmodel and get back the priors
             lm_letter_prior = self.lmodel.predict(list(update))
-
-            # normalize to probability domain if needed
-            normalized = getattr(self.lmodel, 'normalized', False)
-            if not normalized:
-                lm_letter_prior = norm_domain(lm_letter_prior)
 
             if BACKSPACE_CHAR in self.alp:
                 # Append backspace if missing.
