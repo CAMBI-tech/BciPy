@@ -68,6 +68,11 @@ class GPT2LanguageModel(LanguageModel):
         for char in char_to_prob:
             char_to_prob[char] /= sum_char_prob
 
+        # assign probability of 0.0 for symbols not returned by the language model
+        for char in self.symbol_set:
+            if char not in char_to_prob:
+                char_to_prob[char] = 0.0
+
         # build a list of tuples (char, prob)
         char_prob_tuples = list(
             sorted(char_to_prob.items(),
