@@ -235,6 +235,7 @@ def calibration_inquiry_generator(
         stim_length: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
+        nontarget_inquiries: int = 10,
         is_txt: bool = True) -> InquirySchedule:
     """Random Calibration Inquiry Generator.
 
@@ -248,6 +249,8 @@ def calibration_inquiry_generator(
             stim_number(int): number of trials in a inquiry
             stim_length(int): number of random stimuli to be created
             stim_order(StimuliOrder): ordering of stimuli in the inquiry
+            target_positions(TargetPositions): positioning of targets to select for the inquiries
+            nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
             is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
         Return:
             schedule_inq(tuple(
@@ -259,7 +262,7 @@ def calibration_inquiry_generator(
     len_alp = len(alp)
 
     if(target_positions == target_positions.DISTRIBUTED):
-        targets = distributed_target_positions(stim_number, stim_length)
+        targets = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
     else:
         targets = [0]
 
@@ -277,16 +280,16 @@ def calibration_inquiry_generator(
         else:
             #define target using distributed target indexes
             sample = [alp[rand_smp[targets[0]]], '+']
-            #remove first target
+            #remove used target position
             if(target_positions == target_positions.DISTRIBUTED):
                 targets = targets[1:]
-
-        #cut off extra letter used for no target inquiries
-        rand_smp = rand_smp[0:stim_length]
 
         if(target_positions == target_positions.RANDOM):
             # shuffle the samples using the permutated random indexes
             rand_smp = np.random.permutation(rand_smp)
+        
+        #cut off extra letter used for no target inquiries
+        rand_smp = rand_smp[0:stim_length]
                 
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
@@ -301,32 +304,42 @@ def calibration_inquiry_generator(
 
     return InquirySchedule(samples, times, colors)
 
-def distributed_target_positions(stim_number: int, stim_length: int) -> list:
+def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries:int) -> list:
     """Distributed Target Positions.
 
     Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
     Args:
         stim_number(int): Number of trials for the experiment
         stim_length(int): Number of stimuli in each inquiry
+        nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
+    #find number of target and nontarget inquiries
+    num_nontarget_inquiries = int(stim_number*(nontarget_inquiries/100))
+    num_target_inquiries = stim_number - num_nontarget_inquiries
 
-    target_positions = stim_length + 1
-    num_target_pos = (int) (stim_number/target_positions)
-    num_rem_pos = (stim_number%target_positions)
+    #find number each target position is repeated, and leftover
+    target_indexes = (int) (num_target_inquiries/stim_length)
+    num_rem_pos = (num_target_inquiries%stim_length)
     targets = []
 
-    count = 0
-    while(count<target_positions):
-        for _ in range(num_target_pos):
-            targets.append(count)
-        count = count + 1
+    #make even list of target positions
+    for i in range(stim_length):
+        for _ in range(target_indexes):
+            targets.append(i)
 
-    rem_pos = np.random.permutation(np.array(list(range(num_target_pos))))
-    rem_pos = (rem_pos[0:num_rem_pos])
-
+    #pick leftover positions randomly
+    rem_pos = np.random.permutation(np.array(list(range(stim_length))))
+    rem_pos = rem_pos[0:num_rem_pos]
     targets.extend(rem_pos)
+
+    #add nontarget positions
+    rem_pos = (int(stim_length)) * (np.ones(num_nontarget_inquiries))
+    rem_pos =rem_pos.astype(int)
+    targets.extend(rem_pos)
+
+    #shuffle targets
     targets = np.random.permutation(targets)
 
     return targets

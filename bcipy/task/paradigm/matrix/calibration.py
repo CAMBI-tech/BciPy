@@ -5,7 +5,7 @@ from psychopy import core
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, calibration_inquiry_generator,
+from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
@@ -66,6 +66,8 @@ class MatrixCalibrationTask(Task):
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
         self.stim_order = StimuliOrder(parameters['stim_order'])
+        self.target_positions = TargetPositions(parameters['target_positions'])
+        self.nontarget_inquiries = parameters['nontarget_inquiries']
 
         self.timing = [parameters['time_flash']]
 
@@ -93,6 +95,8 @@ class MatrixCalibrationTask(Task):
                                                                stim_number=self.stim_number,
                                                                stim_length=self.stim_length,
                                                                stim_order=self.stim_order,
+                                                               target_positions=self.target_positions,
+                                                               nontarget_inquiries=self.nontarget_inquiries,
                                                                timing=self.timing,
                                                                color=self.color)
 
