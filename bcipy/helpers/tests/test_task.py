@@ -77,20 +77,24 @@ class TestInquiryReshaper(unittest.TestCase):
         self.n_channel = 7
         self.trial_length = 0.5
         self.trials_per_inquiry = 3
+        self.n_inquiry = 4
         self.fs = 10
         self.target_info = [
-            "first_pres_target", "fixation", "target", "nontarget", "nontarget",
-            "first_pres_target", "fixation", "nontarget", "nontarget", "nontarget",
-            "first_pres_target", "fixation", "nontarget", "target", "nontarget",
+            "prompt", "fixation", "target", "nontarget", "nontarget",
+            "prompt", "fixation", "nontarget", "nontarget", "nontarget",
+            "prompt", "fixation", "nontarget", "target", "nontarget",
         ]
+        self.true_labels = [0, 3, 1]
         self.timing_info = [
             1.0, 1.2, 1.4, 1.6, 1.8,
             2.0, 2.2, 2.4, 2.6, 2.8,
             3.0, 3.2, 3.4, 3.6, 3.8,
         ]
+        # Inquiry lasts from onset of first trial, to onset of last trial + trial_length
+        self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
 
-        # total duration = 4s
-        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4 + self.trial_length) * 2))
+        # total duration = 3.8s + final trial_length
+        self.eeg = np.random.randn(self.n_channel, int(self.fs * (3.8 + self.trial_length)))
         self.channel_map = [1] * self.n_channel
 
     def test_inquiry_reshaper(self):
@@ -103,10 +107,10 @@ class TestInquiryReshaper(unittest.TestCase):
             channel_map=self.channel_map,
             trial_length=self.trial_length,
         )
-        expected_shape = (self.n_channel, self.trials_per_inquiry, int(
-            self.trial_length * self.fs) * self.trials_per_inquiry)
+        samples_per_inquiry = int(self.fs * self.inquiry_duration_s)
+        expected_shape = (self.trials_per_inquiry, self.n_channel, samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
-        self.assertTrue(all(labels == [0, 3, 1]))
+        self.assertTrue(np.all(labels == self.true_labels))
 
 
 class TestCalculateStimulationFreq(unittest.TestCase):
