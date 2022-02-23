@@ -392,7 +392,7 @@ class InquiryReshaper(Reshaper):
             labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
-            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+            reshaped_data (np.ndarray): inquiry data of shape (Inquiries, Channels, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
                 a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
                 `target_label` was not present.
