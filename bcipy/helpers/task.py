@@ -392,7 +392,7 @@ class InquiryReshaper(Reshaper):
             labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
-            reshaped_data (np.ndarray): inquiry data of shape (Inquiries, Channels, Samples)
+            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
                 a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
                 `target_label` was not present.
@@ -433,7 +433,7 @@ class InquiryReshaper(Reshaper):
 
             reshaped_data.append(eeg_data[:, first_trigger: last_trigger + trial_duration_samples])
 
-        return np.stack(reshaped_data), labels
+        return np.stack(reshaped_data, 1), labels
 
 
 class TrialReshaper(Reshaper):
@@ -489,19 +489,17 @@ class TrialReshaper(Reshaper):
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-        # shape (Channels, Trials, Samples)
-        reshaped_trials = np.zeros((len(eeg_data), len(triggers), num_samples))
-
         # Label for every trial
-        labels = np.zeros(len(triggers))
+        labels = np.zeros(len(triggers), dtype=np.long)
+        reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
             if trial_label == target_label:
                 labels[trial_idx] = 1
 
             # For every channel append filtered channel data to trials
-            reshaped_trials[:, trial_idx, :] = eeg_data[:, trigger:trigger + num_samples]
+            reshaped_trials.append(eeg_data[:, trigger: trigger + num_samples])
 
-        return reshaped_trials, labels
+        return np.stack(reshaped_trials, 1), labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):

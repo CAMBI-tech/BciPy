@@ -49,7 +49,7 @@ class TestAlphabet(unittest.TestCase):
 
 class TestTrialReshaper(unittest.TestCase):
     def setUp(self):
-        self.target_info = ['first_pres_target', 'fixation',
+        self.target_info = ['prompt', 'fixation',
                             'target', 'nontarget', 'nontarget']
         self.timing_info = [1.001, 1.2001, 1.4001, 1.6001, 1.8001]
         # make some fake eeg data
@@ -61,15 +61,17 @@ class TestTrialReshaper(unittest.TestCase):
         self.channel_map = [1] * self.channel_number
 
     def test_trial_reshaper(self):
-        reshaped_trials, _ = TrialReshaper()(
+        fs = 256
+        trial_length_s = 0.5
+        reshaped_trials, labels = TrialReshaper()(
             trial_labels=self.target_info,
             timing_info=self.timing_info, eeg_data=self.eeg,
-            fs=256, channel_map=self.channel_map)
+            fs=fs, channel_map=self.channel_map, trial_length=trial_length_s)
 
-        self.assertTrue(
-            len(reshaped_trials) == self.channel_number,
-            f'len is {len(reshaped_trials)} not {self.channel_number}')
-        self.assertEqual(len(reshaped_trials[0]), 3)
+        trial_length_samples = int(fs * trial_length_s)
+        expected_shape = (self.channel_number, 3, trial_length_samples)
+        self.assertTrue(np.all(labels == [1, 0, 0]))
+        self.assertTrue(reshaped_trials.shape == expected_shape)
 
 
 class TestInquiryReshaper(unittest.TestCase):
@@ -83,18 +85,20 @@ class TestInquiryReshaper(unittest.TestCase):
             "prompt", "fixation", "target", "nontarget", "nontarget",
             "prompt", "fixation", "nontarget", "nontarget", "nontarget",
             "prompt", "fixation", "nontarget", "target", "nontarget",
+            "prompt", "fixation", "nontarget", "nontarget", "target",
         ]
-        self.true_labels = [0, 3, 1]
+        self.true_labels = [0, 3, 1, 2]
         self.timing_info = [
             1.0, 1.2, 1.4, 1.6, 1.8,
             2.0, 2.2, 2.4, 2.6, 2.8,
             3.0, 3.2, 3.4, 3.6, 3.8,
+            4.0, 4.2, 4.4, 4.6, 4.8,
         ]
         # Inquiry lasts from onset of first trial, to onset of last trial + trial_length
         self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
 
         # total duration = 3.8s + final trial_length
-        self.eeg = np.random.randn(self.n_channel, int(self.fs * (3.8 + self.trial_length)))
+        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4.8 + self.trial_length)))
         self.channel_map = [1] * self.n_channel
 
     def test_inquiry_reshaper(self):
@@ -108,7 +112,7 @@ class TestInquiryReshaper(unittest.TestCase):
             trial_length=self.trial_length,
         )
         samples_per_inquiry = int(self.fs * self.inquiry_duration_s)
-        expected_shape = (self.trials_per_inquiry, self.n_channel, samples_per_inquiry)
+        expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
 
