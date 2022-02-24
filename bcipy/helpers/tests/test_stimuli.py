@@ -435,25 +435,21 @@ class TestStimuliGeneration(unittest.TestCase):
         num_target_inquiries = (int) (target_inquiries / stim_length)
         print(num_target_inquiries)
 
-        targets = distributed_target_positions(stim_number=stim_number, 
-            stim_length=stim_length, 
-            nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(stim_number=stim_number, stim_length=stim_length, nontarget_inquiries=nontarget_inquiries)
 
         self.assertEqual(
             len(targets), stim_number,
             'Should have produced the correct number of targets for inquiries.')
 
-        target_counts = np.zeros(stim_length + 1)
-        target_counts = target_counts.astype(int)
+        target_counts = np.zeros(stim_length + 1).astype(int)
 
         #count how many times each target position is used
         for pos in targets:
             target_counts[pos] = (target_counts[pos] + 1)
 
         #make sure position counts are equally distributed, and po
-        for i in (target_counts[0:stim_length]):
-            self.assertTrue(i >= num_target_inquiries)
-            self.assertTrue(i <= (num_target_inquiries + 1))
+        for i in (target_counts[0:stim_length - 1]):
+            self.assertTrue(i == 0)
 
         self.assertEqual(target_counts[stim_length], 100, 
             'Should have produced all non-target positions.')

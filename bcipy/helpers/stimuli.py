@@ -235,7 +235,7 @@ def calibration_inquiry_generator(
         stim_length: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
-        nontarget_inquiries: int = 10,
+        nontarget_inquiries: int = 0,
         is_txt: bool = True) -> InquirySchedule:
     """Random Calibration Inquiry Generator.
 
@@ -250,7 +250,7 @@ def calibration_inquiry_generator(
             stim_length(int): number of random stimuli to be created
             stim_order(StimuliOrder): ordering of stimuli in the inquiry
             target_positions(TargetPositions): positioning of targets to select for the inquiries
-            nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
+            nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
             is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
         Return:
             schedule_inq(tuple(
@@ -259,42 +259,39 @@ def calibration_inquiry_generator(
                 color(list(list[str])): list of colors)): scheduled inquiries
     """
 
+    # if StimuliOrder.ALPHABETICAL and TargetPositions.DISTRIBUTED consider erroring on input parameters that conflict
+
     len_alp = len(alp)
 
-    if(target_positions == target_positions.DISTRIBUTED):
+    if (target_positions == target_positions.DISTRIBUTED):
         targets = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
     else:
-        targets = [0]
+        targets = [0] * stim_number
 
     samples, times, colors = [], [], []
-    for _ in range(stim_number):
-        idx = np.random.permutation(np.array(list(range(len_alp))))
-        #take random sample of stim_length (+1 for no target inquiries)
-        rand_smp = (idx[0:stim_length + 1])
+    for i in range(stim_number):
+        shuffle_alp = np.random.permutation(np.array(list(range(len_alp))))
+        #take random sample of stim_length from our alphabet
+        rand_smp = (shuffle_alp[0:stim_length + 1])
+            #  [2, 4, 6, 15, 8, 9]
+        target_index = rand_smp[-1] # [9]
+        rand_smp = rand_smp[:-1]
+        target_selection = alp[target_index] # [I]
 
-        # define the target and fixation that come before an inquiry
-        if not is_txt:
-            sample = [
-                alp[rand_smp[0]],
-                get_fixation(is_txt=False)]
-        else:
-            #define target using distributed target indexes
-            sample = [alp[rand_smp[targets[0]]], '+']
-            #remove used target position
-            if(target_positions == target_positions.DISTRIBUTED):
-                targets = targets[1:]
+        # rand_smp = [2, 4, 6, 15, 8]
+        sample = [target_selection, get_fixation(is_txt=is_txt)]
 
-        if(target_positions == target_positions.RANDOM):
-            # shuffle the samples using the permutated random indexes
-            rand_smp = np.random.permutation(rand_smp)
-        
-        #cut off extra letter used for no target inquiries
-        rand_smp = rand_smp[0:stim_length]
-                
+        is_nontarget = (stim_length == targets[i])
+
+        # NOT 100% here. find and replace the index of interest (i).
+        if not is_nontarget:
+            rand_smp[targets[i]] = target_index
+
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
             inquiry = [alp[i] for i in rand_smp]
+
         sample.extend(inquiry)
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
@@ -311,12 +308,12 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
     Args:
         stim_number(int): Number of trials for the experiment
         stim_length(int): Number of stimuli in each inquiry
-        nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
+        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
     #find number of target and nontarget inquiries
-    num_nontarget_inquiries = int(stim_number*(nontarget_inquiries/100))
+    num_nontarget_inquiries = int(stim_number*(nontarget_inquiries/100)) # we can change nontarget_inquiry to a float and ask for 0.1
     num_target_inquiries = stim_number - num_nontarget_inquiries
 
     #find number each target position is repeated, and leftover
@@ -329,14 +326,15 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
         for _ in range(target_indexes):
             targets.append(i)
 
-    #pick leftover positions randomly
-    rem_pos = np.random.permutation(np.array(list(range(stim_length))))
-    rem_pos = rem_pos[0:num_rem_pos]
-    targets.extend(rem_pos)
+    # pick leftover positions randomly if even number of target positions not available
+    if num_rem_pos > 0:
+        rem_pos = np.random.permutation(np.array(list(range(stim_length))))
+        rem_pos = rem_pos[0:num_rem_pos]
+        targets.extend(rem_pos)
 
     #add nontarget positions
     rem_pos = (int(stim_length)) * (np.ones(num_nontarget_inquiries))
-    rem_pos =rem_pos.astype(int)
+    rem_pos = rem_pos.astype(int)
     targets.extend(rem_pos)
 
     #shuffle targets
