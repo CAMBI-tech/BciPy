@@ -10,9 +10,6 @@ from bcipy.helpers.task import alphabet
 from bcipy.language.uniform import UniformLanguageModel
 # flake8: noqa
 from bcipy.language.model.gpt2 import GPT2LanguageModel
-# TODO: remove this import: https://www.pivotaltracker.com/story/show/178695472
-# flake8: noqa
-from bcipy.language_model.prelm_language_model import PrelmLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
