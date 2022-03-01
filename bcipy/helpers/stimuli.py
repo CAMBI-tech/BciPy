@@ -8,6 +8,7 @@ from typing import Iterator, List, Tuple, NamedTuple
 
 import numpy as np
 from enum import Enum
+from sklearn.utils import shuffle
 
 import sounddevice as sd
 import soundfile as sf
@@ -36,10 +37,11 @@ class StimuliOrder(Enum):
         """Returns all enum values as a list"""
         return list(map(lambda c: c.value, cls))
 
+
 class TargetPositions(Enum):
     """Target Positions.
 
-    Enum to define the positions of targets for inquiry.
+    Enum to define the positions of targets within the inquiry.
     """
     RANDOM = 'random'
     DISTRIBUTED = 'distributed'
@@ -235,7 +237,7 @@ def calibration_inquiry_generator(
         stim_length: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
-        nontarget_inquiries: int = 0,
+        nontarget_inquiries: int = 10,
         is_txt: bool = True) -> InquirySchedule:
     """Random Calibration Inquiry Generator.
 
@@ -259,38 +261,37 @@ def calibration_inquiry_generator(
                 color(list(list[str])): list of colors)): scheduled inquiries
     """
 
-    # if StimuliOrder.ALPHABETICAL and TargetPositions.DISTRIBUTED consider erroring on input parameters that conflict
-
     len_alp = len(alp)
+    targets = []
 
     if (target_positions == target_positions.DISTRIBUTED):
         targets = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
     else:
-        targets = [0] * stim_number
+        # make list of random targets with correct number of non-target inquiries
+        num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
+        targets = [stim_length] * num_nontarget_inquiry
+        for _ in range(stim_number - num_nontarget_inquiry):
+            targets.append(random.randint(0, stim_length - 1))
+        targets = shuffle(targets)
 
     samples, times, colors = [], [], []
+
     for i in range(stim_number):
-        shuffle_alp = np.random.permutation(np.array(list(range(len_alp))))
-        #take random sample of stim_length from our alphabet
-        rand_smp = (shuffle_alp[0:stim_length + 1])
-            #  [2, 4, 6, 15, 8, 9]
-        target_index = rand_smp[-1] # [9]
-        rand_smp = rand_smp[:-1]
-        target_selection = alp[target_index] # [I]
-
-        # rand_smp = [2, 4, 6, 15, 8]
-        sample = [target_selection, get_fixation(is_txt=is_txt)]
-
-        is_nontarget = (stim_length == targets[i])
-
-        # NOT 100% here. find and replace the index of interest (i).
-        if not is_nontarget:
-            rand_smp[targets[i]] = target_index
+        # take random sample of alpahbet of stim_length (+1 for no target inquiries)
+        idx = np.random.permutation(np.array(list(range(len_alp))))
+        rand_smp = (idx[0:stim_length + 1])
 
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize([alp[i] for i in rand_smp])
         else:
             inquiry = [alp[i] for i in rand_smp]
+
+        # select target letter and fixation
+        target_selection = inquiry[targets[i]]
+        sample = [target_selection, get_fixation(is_txt=is_txt)]
+
+        # cut off non-target inqiury
+        inquiry = inquiry[0:stim_length]
 
         sample.extend(inquiry)
         samples.append(sample)
@@ -301,46 +302,48 @@ def calibration_inquiry_generator(
 
     return InquirySchedule(samples, times, colors)
 
-def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries:int) -> list:
+
+def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
     """Distributed Target Positions.
 
     Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
     Args:
-        stim_number(int): Number of trials for the experiment
+        stim_number(int): Number of trials in calibration
         stim_length(int): Number of stimuli in each inquiry
-        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+        nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
-    #find number of target and nontarget inquiries
-    num_nontarget_inquiries = int(stim_number*(nontarget_inquiries/100)) # we can change nontarget_inquiry to a float and ask for 0.1
+    # find number of target and nontarget inquiries
+    # we can change nontarget_inquiry to a float and ask for 0.1
+    num_nontarget_inquiries = int(stim_number * (nontarget_inquiries / 100))
     num_target_inquiries = stim_number - num_nontarget_inquiries
 
-    #find number each target position is repeated, and leftover
-    target_indexes = (int) (num_target_inquiries/stim_length)
-    num_rem_pos = (num_target_inquiries%stim_length)
+    # find number each target position is repeated, and remaining number
+    target_indexes = (int)(num_target_inquiries / stim_length)
+    num_rem_pos = (num_target_inquiries % stim_length)
     targets = []
 
-    #make even list of target positions
+    # make distributed list of target positions
     for i in range(stim_length):
         for _ in range(target_indexes):
             targets.append(i)
 
-    # pick leftover positions randomly if even number of target positions not available
-    if num_rem_pos > 0:
-        rem_pos = np.random.permutation(np.array(list(range(stim_length))))
-        rem_pos = rem_pos[0:num_rem_pos]
-        targets.extend(rem_pos)
+    # pick leftover positions randomly
+    rem_pos = np.random.permutation(np.array(list(range(stim_length))))
+    rem_pos = rem_pos[0:num_rem_pos]
+    targets.extend(rem_pos)
 
-    #add nontarget positions
+    # add nontarget positions
     rem_pos = (int(stim_length)) * (np.ones(num_nontarget_inquiries))
     rem_pos = rem_pos.astype(int)
     targets.extend(rem_pos)
 
-    #shuffle targets
+    # shuffle targets
     targets = np.random.permutation(targets)
 
     return targets
+
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.

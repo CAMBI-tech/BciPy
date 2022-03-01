@@ -376,7 +376,7 @@
     "value": "100",
     "section": "bci_config",
     "readableName": "Percentage of Nontarget Inquiries",
-    "helpTip": "Specifies the percentage of iquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
+    "helpTip": "Specifies the percentage (0-100) of iquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
     "recommended_values": "",
     "type": "int"
   },

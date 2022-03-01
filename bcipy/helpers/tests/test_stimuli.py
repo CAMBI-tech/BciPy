@@ -9,7 +9,6 @@ from psychopy import core
 import numpy as np
 
 from bcipy.helpers.stimuli import (
-    TargetPositions,
     alphabetize,
     best_case_rsvp_inq_gen,
     best_selection,
@@ -160,6 +159,7 @@ class TestStimuliGeneration(unittest.TestCase):
             stim_length=stim_length,
             stim_order=StimuliOrder.RANDOM,
             target_positions=TargetPositions.RANDOM,
+            nontarget_inquiries=0,
             is_txt=True)
 
         self.assertEqual(
@@ -202,6 +202,7 @@ class TestStimuliGeneration(unittest.TestCase):
             stim_length=stim_length,
             stim_order=StimuliOrder.ALPHABETICAL,
             target_positions=TargetPositions.RANDOM,
+            nontarget_inquiries=0,
             is_txt=True)
 
         self.assertEqual(
@@ -235,7 +236,7 @@ class TestStimuliGeneration(unittest.TestCase):
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_'
         ]
-        stim_number = 100
+        stim_number = 10
         stim_length = 10
         nontarget_inquiries = 10
         inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
@@ -272,23 +273,23 @@ class TestStimuliGeneration(unittest.TestCase):
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
 
-    def test_distributed_target_inquiry_gen_no_nontarget(self):
+    def test_distributed_alphabetical_target_inquiry_gen(self):
         """Test generation of inquiries with distributed target positions"""
         alp = [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_'
         ]
-        stim_number = 100
+        stim_number = 10
         stim_length = 10
-        nontarget_inquiries = 0
+        nontarget_inquiries = 20
         inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
             alp,
             timing=[0.5, 1, 0.2],
             color=['green', 'red', 'white'],
             stim_number=stim_number,
             stim_length=stim_length,
-            stim_order=StimuliOrder.RANDOM,
+            stim_order=StimuliOrder.ALPHABETICAL,
             target_positions=TargetPositions.DISTRIBUTED,
             nontarget_inquiries=nontarget_inquiries,
             is_txt=True)
@@ -315,17 +316,17 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual(
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
-    
-    def test_distributed_target_inquiry_gen_all_nontarget(self):
-        """Test generation of inquiries with distributed target positions"""
+
+    def test_distributed_target_inquiry_gen_no_nontarget(self):
+        """Test generation of inquiries with distributed target positions and no nontarget inquiries."""
         alp = [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
             '<', '_'
         ]
-        stim_number = 100
+        stim_number = 10
         stim_length = 10
-        nontarget_inquiries = 100
+        nontarget_inquiries = 0
         inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
             alp,
             timing=[0.5, 1, 0.2],
@@ -361,98 +362,129 @@ class TestStimuliGeneration(unittest.TestCase):
             'All inquiries should be different')
 
     def test_distributed_target_positions(self):
-        """Test generation of distributed target positions"""
+        """Test generation of distributed target positions with nontarget inquiries."""
 
         stim_number = 11
         stim_length = 10
         nontarget_inquiries = 10
 
         target_inquiries = stim_number - (stim_number * (nontarget_inquiries / 100))
-        num_target_inquiries = (int) (target_inquiries / stim_length)
+        num_target_inquiries = (int)(target_inquiries / stim_length)
 
-        targets = distributed_target_positions(stim_number=stim_number, 
-            stim_length=stim_length, 
-            nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(stim_number=stim_number,
+                                               stim_length=stim_length,
+                                               nontarget_inquiries=nontarget_inquiries)
 
         self.assertEqual(
             len(targets), stim_number,
             'Should have produced the correct number of targets for inquiries.')
 
-        target_counts = np.zeros(stim_length + 1)
-        target_counts = target_counts.astype(int)
-
-        #count how many times each target position is used
+        # count how many times each target position is used
+        target_counts = (np.zeros(stim_length + 1)).astype(int)
         for pos in targets:
             target_counts[pos] = (target_counts[pos] + 1)
 
-        #make sure position counts are equally distributed, including non-target
+        # make sure position counts are equally distributed, including non-target
         for i in target_counts:
             self.assertTrue(i >= num_target_inquiries)
             self.assertTrue(i <= (num_target_inquiries + 1))
 
-    def test_distributed_target_positions_no_nontarget_inquiries(self):
-        """Test generation of distributed target positions"""
+    def test_distributed_target_positions_half_nontarget(self):
+        """Test generation of distributed target positions with half being nontarget inquiries."""
 
-        stim_number = 50
-        stim_length = 10
-        nontarget_inquiries = 0
+        stim_number = 120
+        stim_length = 9
+        nontarget_inquiries = 50
 
         target_inquiries = stim_number - (stim_number * (nontarget_inquiries / 100))
-        num_target_inquiries = (int) (target_inquiries / stim_length)
+        num_target_inquiries = (int)(target_inquiries / stim_length)
 
-        targets = distributed_target_positions(stim_number=stim_number, 
-            stim_length=stim_length, 
-            nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(stim_number=stim_number,
+                                               stim_length=stim_length,
+                                               nontarget_inquiries=nontarget_inquiries)
 
         self.assertEqual(
             len(targets), stim_number,
             'Should have produced the correct number of targets for inquiries.')
 
-        target_counts = np.zeros(stim_length + 1)
-        target_counts = target_counts.astype(int)
-
-        #count how many times each target position is used
+        # count how many times each target position is used
+        target_counts = (np.zeros(stim_length + 1)).astype(int)
         for pos in targets:
             target_counts[pos] = (target_counts[pos] + 1)
 
-        #make sure position counts are equally distributed
+        # make sure position counts are equally distributed
+        for i in target_counts[0: stim_length]:
+            self.assertTrue(i >= num_target_inquiries)
+            self.assertTrue(i <= (num_target_inquiries + 1))
+
+        # make sure correct number of non-target inquiries
+        self.assertEqual(target_counts[stim_length], (stim_number * (nontarget_inquiries / 100)),
+                         'Should have produced 50 percent of 120 non-target positions.')
+
+    def test_distributed_target_positions_no_nontarget_inquiries(self):
+        """Test generation of distributed target positions with no nontarget inquiries."""
+
+        stim_number = 50
+        stim_length = 11
+        nontarget_inquiries = 0
+
+        target_inquiries = stim_number - (stim_number * (nontarget_inquiries / 100))
+        num_target_inquiries = (int)(target_inquiries / stim_length)
+
+        targets = distributed_target_positions(stim_number=stim_number,
+                                               stim_length=stim_length,
+                                               nontarget_inquiries=nontarget_inquiries)
+
+        self.assertEqual(
+            len(targets), stim_number,
+            'Should have produced the correct number of targets for inquiries.')
+
+        # count how many times each target position is used
+        target_counts = (np.zeros(stim_length + 1)).astype(int)
+        for pos in targets:
+            target_counts[pos] = (target_counts[pos] + 1)
+
+        # make sure position counts are equally distributed
         for i in (target_counts[0:stim_length]):
             self.assertTrue(i >= num_target_inquiries)
             self.assertTrue(i <= (num_target_inquiries + 1))
 
-        self.assertEqual(target_counts[stim_length], 0, 
-            'Should have produced no non-target positions.')
+        # make sure there are no non-target inquiries
+        self.assertEqual(target_counts[stim_length], 0,
+                         'Should have produced no non-target positions.')
 
     def test_distributed_target_positions_all_nontarget_inquiries(self):
-        """Test generation of distributed target positions"""
+        """Test generation of distributed target positions with all inquiries being non-target."""
 
         stim_number = 100
-        stim_length = 9
+        stim_length = 6
         nontarget_inquiries = 100
 
         target_inquiries = stim_number - (stim_number * (nontarget_inquiries / 100))
-        print(target_inquiries)
-        num_target_inquiries = (int) (target_inquiries / stim_length)
-        print(num_target_inquiries)
+        num_target_inquiries = (int)(target_inquiries / stim_length)
 
-        targets = distributed_target_positions(stim_number=stim_number, stim_length=stim_length, nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(
+            stim_number=stim_number,
+            stim_length=stim_length,
+            nontarget_inquiries=nontarget_inquiries)
 
         self.assertEqual(
             len(targets), stim_number,
             'Should have produced the correct number of targets for inquiries.')
 
         target_counts = np.zeros(stim_length + 1).astype(int)
-
-        #count how many times each target position is used
+        # count how many times each target position is used
+        target_counts = (np.zeros(stim_length + 1)).astype(int)
         for pos in targets:
             target_counts[pos] = (target_counts[pos] + 1)
 
-        #make sure position counts are equally distributed, and po
+        # make sure position counts are equally distributed
         for i in (target_counts[0:stim_length - 1]):
             self.assertTrue(i == 0)
 
-        self.assertEqual(target_counts[stim_length], 100, 
-            'Should have produced all non-target positions.')
+        # make sure all inquries are non-target inquiries
+        self.assertEqual(target_counts[stim_length], 100,
+                         'Should have produced all non-target positions.')
 
     def test_best_selection(self):
         """Test best_selection"""

@@ -38,10 +38,6 @@ class MatrixCalibrationTask(Task):
     def __init__(self, win, daq, parameters, file_save):
         super(MatrixCalibrationTask, self).__init__()
 
-        # TODO fix stimuli size for the matrix keyboard to present well
-        # Update stimuli generation for matrix
-        # fix triggers and create a write method to ensure they write correctly using
-
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
@@ -91,6 +87,7 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
+
         samples, timing, color = calibration_inquiry_generator(self.alp,
                                                                stim_number=self.stim_number,
                                                                stim_length=self.stim_length,
