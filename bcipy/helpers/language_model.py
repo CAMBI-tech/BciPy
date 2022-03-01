@@ -63,7 +63,8 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
     """Returns a new list of probabilities with the addition of a new symbol
     with the given probability for that symbol. Existing values are adjusted
     equally such that the sum of the probabilities in the resulting list sum
-    to approx. 1.0. Only adds the symbol if it is not already in the list.
+    to approx. 1.0. If the symbol already exists within the list its value
+    will be updated and the rest of the values will be adjusted.
 
     Used to add the backspace symbol to the LM output.
 
@@ -72,16 +73,17 @@ def sym_appended(symbol_probs: List[Tuple[str, float]],
         symbol_probs - list of symbol, probability pairs
         sym_prob - (symbol, probability) pair to append
     """
-    if sym_prob[0] in dict(symbol_probs):
-        return symbol_probs
+    new_sym, new_prob = sym_prob
 
-    # Slit out symbols and probabilities into separate lists
-    symbols = [prob[0] for prob in symbol_probs]
-    probabilities = np.array([prob[1] for prob in symbol_probs])
+    # Split out symbols and probabilities into separate lists, excluding the
+    # symbol to be adjusted.
+    filtered = [tup for tup in symbol_probs if tup[0] != new_sym]
+    symbols = [prob[0] for prob in filtered]
+    probabilities = np.array([prob[1] for prob in filtered])
 
     # Add new symbol and its probability
-    all_probs = np.append(probabilities, sym_prob[1] / (1 - sym_prob[1]))
-    all_symbols = symbols + [sym_prob[0]]
+    all_probs = np.append(probabilities, new_prob / (1 - new_prob))
+    all_symbols = symbols + [new_sym]
 
     normalized = all_probs / sum(all_probs)
 

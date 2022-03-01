@@ -94,16 +94,25 @@ class TestLanguageModelRelated(unittest.TestCase):
         """Test insertion of an additional symbol to a normalized list of
         symbols."""
 
-        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25)]
+        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25), ('E', 0.0)]
         self.assertEqual(1.0, sum([prob for _, prob in syms]))
 
-        new_list = sym_appended(syms, ('D', 0.25))
-        self.assertEqual(syms, new_list, "Value already present")
+        new_list = sym_appended(syms, ('E', 0.15))
+        expected = [('A', 0.2125), ('B', 0.2125), ('C', 0.2125), ('D', 0.2125),
+                    ('E', 0.15)]
+        self.assertEqual(new_list, expected, "Values should be adjusted.")
+        self.assertEqual(syms, [('A', 0.25), ('B', 0.25), ('C', 0.25),
+                                ('D', 0.25), ('E', 0.0)],
+                         "Original list should not be modified.")
 
-        new_list = sym_appended(syms, ('D', 0.2))
-        self.assertEqual(syms,
-                         new_list,
-                         msg="Changing the probability does not matter")
+        # inverse operation
+        new_list = sym_appended(expected, ('E', 0.0))
+        self.assertEqual(syms, new_list)
+
+    def test_insert_sym_on_empty_list(self):
+        """Test that it handles the edge case of an empty list."""
+        self.assertEqual(sym_appended([], ('A', 0.25)), [('A', 1.0)])
+        self.assertEqual(sym_appended([], ('A', 1.5)), [('A', 1.0)])
 
     def test_small_probs(self):
         """When very small values are returned from the LM, inserting a letter

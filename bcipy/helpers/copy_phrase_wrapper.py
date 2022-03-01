@@ -294,7 +294,7 @@ class CopyPhraseWrapper:
             lm_letter_prior = self.lmodel.predict(list(update))
 
             if BACKSPACE_CHAR in self.alp:
-                # Append backspace if missing.
+                # Apply configured backspace probability.
                 sym = (BACKSPACE_CHAR, self.backspace_prob)
                 lm_letter_prior = sym_appended(lm_letter_prior, sym)
 
