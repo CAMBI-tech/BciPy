@@ -230,7 +230,7 @@ class GPT2LanguageModel(LanguageModel):
 
         return list(sorted(rescaled_lm.items(), key=lambda item: item[1], reverse=True))
 
-    def predict(self, evidence: List[str], beam_width: int, search_depth: int) -> List[Tuple]:
+    def predict(self, evidence: List[str], beam_width: int = 20, search_depth: int = 2) -> List[Tuple]:
         """
         Given an evidence of typed string, predict the probability distribution of
         the next symbol
@@ -331,6 +331,6 @@ class GPT2LanguageModel(LanguageModel):
         Response:
             A list of symbol with probability
         """
-        next_char_pred = self.predict(evidence, beam_width=20, search_depth=2)
+        next_char_pred = self.predict(evidence)
 
         return next_char_pred
