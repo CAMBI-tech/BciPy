@@ -134,7 +134,7 @@ class RSVPCopyPhraseTask(Task):
         self.parameters.add_entry(
             'preview_only',
             {
-                'value': True if self.parameters['preview_inquiry_progress_method'] == 0 else False,
+                'value': 'true' if self.parameters['preview_inquiry_progress_method'] == 0 else 'false',
                 'section': '',
                 'readableName': '',
                 'helpTip': '',
