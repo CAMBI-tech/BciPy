@@ -183,6 +183,8 @@ class Parameters(dict):
             raise Exception(
                 f"Type not supported for key: {entry_name}, type: {entry['type']}"
             )
+        if entry['type'] == "bool" and entry['value'] not in ['true', 'false']:
+            raise Exception(f"Invalid value for key: {entry_name}. Must be either 'true' or 'false'")
 
     def source_location(self) -> Tuple[Path, str]:
         """Location of the source json data if source was provided.
