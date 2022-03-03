@@ -58,28 +58,43 @@ def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     return [(sym, math.exp(-prob)) for sym, prob in priors]
 
 
-def sym_appended(symbol_probs: List[Tuple[str, float]],
-                 sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
-    """Returns a new list of probabilities with the addition of a new symbol
-    with the given probability for that symbol. Existing values are adjusted
-    equally such that the sum of the probabilities in the resulting list sum
-    to approx. 1.0. If the symbol already exists within the list its value
-    will be updated and the rest of the values will be adjusted.
+def with_min_prob(symbol_probs: List[Tuple[str, float]],
+                  sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
+    """Returns a new list of symbol-probability pairs where the provided
+    symbol has a minimum probability given in the sym_prob.
 
-    Used to add the backspace symbol to the LM output.
+    If the provided symbol is already in the list with a greater probability,
+    the list of symbol_probs will be returned unmodified.
+
+    If the new probability is added or modified, existing values are adjusted
+    equally.
 
     Parameters:
     -----------
         symbol_probs - list of symbol, probability pairs
-        sym_prob - (symbol, probability) pair to append
+        sym_prob - (symbol, min_probability) defines the minimum probability
+            for the given symbol in the returned list.
+
+    Returns:
+    -------
+        list of (symbol, probability) pairs such that the sum of the
+        probabilities is approx. 1.0.
     """
     new_sym, new_prob = sym_prob
 
     # Split out symbols and probabilities into separate lists, excluding the
     # symbol to be adjusted.
-    filtered = [tup for tup in symbol_probs if tup[0] != new_sym]
-    symbols = [prob[0] for prob in filtered]
-    probabilities = np.array([prob[1] for prob in filtered])
+    symbols = []
+    probs = []
+    for sym, prob in symbol_probs:
+        if sym != new_sym:
+            symbols.append(sym)
+            probs.append(prob)
+        elif prob >= new_prob:
+            # symbol prob in list is larger than minimum.
+            return symbol_probs
+
+    probabilities = np.array(probs)
 
     # Add new symbol and its probability
     all_probs = np.append(probabilities, new_prob / (1 - new_prob))

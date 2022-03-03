@@ -7,7 +7,7 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
     histogram,
-    sym_appended,
+    with_min_prob,
 )
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import BACKSPACE_CHAR
@@ -296,7 +296,7 @@ class CopyPhraseWrapper:
             if BACKSPACE_CHAR in self.alp:
                 # Apply configured backspace probability.
                 sym = (BACKSPACE_CHAR, self.backspace_prob)
-                lm_letter_prior = sym_appended(lm_letter_prior, sym)
+                lm_letter_prior = with_min_prob(lm_letter_prior, sym)
 
             # convert to format needed for evidence fusion;
             # probability value only in alphabet order.
