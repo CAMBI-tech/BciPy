@@ -14,7 +14,7 @@ from bcipy.language.uniform import equally_probable
 class GPT2LanguageModel(LanguageModel):
     """Character language model based on GPT2."""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str=None):
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
         """
         Initialize instance variables and load the language model with given path
         Args:
@@ -96,7 +96,7 @@ class GPT2LanguageModel(LanguageModel):
 
         return predicted_logit
 
-    def __prefix_match(self, sorted_idx: List[float], evidence_str: str) -> Tuple[List[float], str]: 
+    def __prefix_match(self, sorted_idx: List[float], evidence_str: str) -> Tuple[List[float], str]:
         """
         Filter the sorted_idx, keep the indices whose tokens have
         prefix matches with the last wordpiece of evidence_str
@@ -125,8 +125,8 @@ class GPT2LanguageModel(LanguageModel):
 
         return matched_sorted_idx, new_evidence_str
 
-    def __populate_beam_candidates(self, evidence_str: str, 
-                                    beam: List[Tuple], all_beam_candidates: List[Tuple]) -> None:
+    def __populate_beam_candidates(self, evidence_str: str,
+                                   beam: List[Tuple], all_beam_candidates: List[Tuple]) -> None:
         """
         populate all_beam_candidates with candidates from beam
         Args:
