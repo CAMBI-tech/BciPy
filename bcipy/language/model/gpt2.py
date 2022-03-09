@@ -14,7 +14,7 @@ from bcipy.language.uniform import equally_probable
 class GPT2LanguageModel(LanguageModel):
     """Character language model based on GPT2."""
 
-    def __init__(self, response_type, symbol_set, lm_path=None):
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str=None):
         """
         Initialize instance variables and load the language model with given path
         Args:
@@ -96,12 +96,12 @@ class GPT2LanguageModel(LanguageModel):
 
         return predicted_logit
 
-    def __prefix_match(self, sorted_idx, evidence_str):
+    def __prefix_match(self, sorted_idx: List[float], evidence_str: str) -> Tuple[List[float], str]: 
         """
         Filter the sorted_idx, keep the indices whose tokens have
         prefix matches with the last wordpiece of evidence_str
         Args:
-            sorted_idx - indices of vocabulary returned by GPT2 languagd model
+            sorted_idx - indices of vocabulary returned by GPT2 language model
             sorted by log likelihood
             evidence_str - evidence input by user
         Response:
@@ -123,11 +123,10 @@ class GPT2LanguageModel(LanguageModel):
             if idx_token_text.startswith(evidence_str_last_token_text):
                 matched_sorted_idx.append(idx)
 
-        # print(new_evidence_str)
-
         return matched_sorted_idx, new_evidence_str
 
-    def __populate_beam_candidates(self, evidence_str, beam, all_beam_candidates) -> None:
+    def __populate_beam_candidates(self, evidence_str: str, 
+                                    beam: List[Tuple], all_beam_candidates: List[Tuple]) -> None:
         """
         populate all_beam_candidates with candidates from beam
         Args:
@@ -140,7 +139,7 @@ class GPT2LanguageModel(LanguageModel):
             candidate_log_prob = candidate[1]
             all_beam_candidates.append((candidate_text, candidate_log_prob))
 
-    def __get_char_predictions_beam_search(self, evidence_str, all_beam_candidates) -> List[Tuple]:
+    def __get_char_predictions_beam_search(self, evidence_str: str, all_beam_candidates: List[Tuple]) -> List[Tuple]:
         """
         marginalize the word probabilities to generate character level probability distribution
         Args:
@@ -183,7 +182,7 @@ class GPT2LanguageModel(LanguageModel):
 
         return char_prob_tuples
 
-    def __interpolate_language_models(self, lm1, lm2, coeff) -> List[Tuple]:
+    def __interpolate_language_models(self, lm1: Dict[str, float], lm2: Dict[str, float], coeff: float) -> List[Tuple]:
         """
         interpolate two language models
         Args:
@@ -207,7 +206,7 @@ class GPT2LanguageModel(LanguageModel):
 
         return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
 
-    def __rescale(self, lm, coeff):
+    def __rescale(self, lm: Dict[str, float], coeff: float):
         """
         rescale a languge model with exponential coefficient
         Args:
