@@ -202,8 +202,6 @@ class GPT2LanguageModel(LanguageModel):
             if char not in lm1:
                 combined_lm[char] = lm2[char] * (1 - coeff)
 
-        # print(sum(combined_lm.values()))
-
         return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
 
     def __rescale(self, lm: Dict[str, float], coeff: float):
@@ -290,8 +288,6 @@ class GPT2LanguageModel(LanguageModel):
             self.__populate_beam_candidates(new_evidence_str, beam, all_beam_candidates)
 
         all_beam_candidates = sorted(all_beam_candidates, key=lambda x: x[1], reverse=True)
-
-        # print(all_beam_candidates)
 
         # get marginalized characger-level probabilities from beam search results
         next_char_pred = self.__get_char_predictions_beam_search(evidence_str, all_beam_candidates)
