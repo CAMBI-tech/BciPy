@@ -98,7 +98,7 @@
     "type": "filepath"
   },
   "filter_high": {
-    "value": "45",
+    "value": "20",
     "section": "signal_config",
     "readableName": "High Frequency Filter Cutoff",
     "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 45",
@@ -109,7 +109,7 @@
     "type": "float"
   },
   "filter_low": {
-    "value": "2",
+    "value": "1",
     "section": "signal_config",
     "readableName": "Low Frequency Filter Cutoff",
     "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 2",
