@@ -106,16 +106,22 @@ class PcaRdaKdeModel(SignalModel):
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
-        # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
-        scores = np.exp(self.model.transform(data))
+        # # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
+        # scores = np.exp(self.model.transform(data))
 
-        # Evaluate likelihood ratios (positive class divided by negative class)
-        scores = scores[:, 1] / (scores[:, 0] + 1e-10) + 1e-10
+        # # Evaluate likelihood ratios (positive class divided by negative class)
+        # scores = scores[:, 1] / (scores[:, 0] + 1e-10) + 1e-10
+
+        # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
+        log_likelihoods = self.model.transform(data)
+        subset_likelihood_ratios = np.exp(log_likelihoods[:, 1] - log_likelihoods[:, 0])
+        # Restrict multiplicative updates to a reasonable range
+        subset_likelihood_ratios = np.clip(subset_likelihood_ratios, 1e-2, 1e2)
 
         # Apply likelihood ratios to entire symbol set.
         likelihood_ratios = np.ones(len(symbol_set))
-        for idx in range(len(scores)):
-            likelihood_ratios[symbol_set.index(inquiry[idx])] *= scores[idx]
+        for idx in range(len(subset_likelihood_ratios)):
+            likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
 
     def save(self, path: Path):
