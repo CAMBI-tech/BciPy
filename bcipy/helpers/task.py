@@ -5,6 +5,7 @@ import random
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from string import ascii_uppercase
+from turtle import position
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -151,40 +152,43 @@ def target_info(triggers: List[Tuple[str, float]],
 
 def get_data_for_decision(inquiry_timing,
                           daq,
-                          static_offset=0.0,
-                          buffer_length=0.0):
+                          offset=0.0,
+                          prestim=0.0,
+                          poststim=0.0):
     """Queries the acquisition client for a slice of data and processes the
     resulting raw data into a form that can be passed to signal processing and
     classifiers.
 
     Parameters
     ----------
-    - inquiry_timing(array): array of tuples containing stimulus timing and
-    text
-    - daq (object): data acquisition object
-    - static_offset (float): offset present in the system which should be accounted for when
-    creating data for classification; this is determined experimentally.
-    - buffer_length: length of data needed after the last sample in order to reshape correctly
+    - inquiry_timing(list): list of tuples containing stimuli timing and labels. We assume the list progresses in
+    - daq (DataAcquisitionClient): bcipy data acquisition client with a get_data method and device_info with fs defined
+    - offset (float): offset present in the system which should be accounted for when creating data for classification; this is determined experimentally.
+    - prestim (float): amount of of data needed before the first sample to reshape correctly
+    - poststim: length of data needed after the last sample in order to reshape correctly
 
     Returns
     -------
-    (raw_data, triggers, target_info) tuple
+    (raw_data, triggers) tuple
     """
     _, first_stim_time = inquiry_timing[0]
     _, last_stim_time = inquiry_timing[-1]
 
-    time1 = first_stim_time + static_offset
+    # adjust for offsets
+    time1 = first_stim_time + offset - prestim
+    time2 = last_stim_time + offset
 
-    # Construct triggers to send off for processing
+    if time2 < time1:
+        raise InsufficientDataException(
+            f'Invalid data query [{time1}-{time2}] with parameters:'
+            f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]')
+
+    # Construct triggers to send off for processing. This should not be zero anymore. it would be for prestim_len = 0
     triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in inquiry_timing]
 
-    # Assign labels for triggers
-    target_labels = ['nontarget'] * len(triggers)
-
     # Define the amount of data required for any processing to occur.
-    data_limit = round((last_stim_time - first_stim_time + buffer_length) *
-                       daq.device_info.fs)
+    data_limit = round((time2 - time1 + poststim) * daq.device_info.fs)
     log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
@@ -203,7 +207,7 @@ def get_data_for_decision(inquiry_timing,
     ],
         dtype=np.float64).transpose()
 
-    return raw_data, triggers, target_labels
+    return raw_data, triggers
 
 
 def _float_val(col: Any) -> float:

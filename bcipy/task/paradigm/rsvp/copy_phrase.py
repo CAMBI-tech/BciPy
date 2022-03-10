@@ -73,7 +73,7 @@ class RSVPCopyPhraseTask(Task):
     TASK_NAME = 'RSVP Copy Phrase Task'
     PARAMETERS_USED = [
         'backspace_always_shown', 'decision_threshold', 'down_sampling_rate',
-        'eeg_buffer_len', 'feedback_flash_time', 'feedback_font',
+        'prestim_length', 'feedback_flash_time', 'feedback_font',
         'feedback_color', 'feedback_pos_x',
         'feedback_pos_y', 'feedback_stim_height',
         'filter_high', 'filter_low', 'filter_order', 'fixation_color',
@@ -86,7 +86,7 @@ class RSVPCopyPhraseTask(Task):
         'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
         'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height',
         'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
-        'stim_space_char', 'target_color', 'task_buffer_len', 'task_color',
+        'stim_space_char', 'target_color', 'task_buffer_length', 'task_color',
         'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
         'time_fixation', 'time_flash', 'time_prompt', 'trial_complete_message',
         'trial_complete_message_color', 'trial_length', 'trigger_file_name',
@@ -247,9 +247,9 @@ class RSVPCopyPhraseTask(Task):
         Parameters
         ----------
         - seconds : duration of time to wait; if missing, defaults to the
-        value of the parameter `'task_buffer_len'`
+        value of the parameter `'task_buffer_length'`
         """
-        seconds = seconds or self.parameters['task_buffer_len']
+        seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
     def present_inquiry(self, inquiry_schedule: InquirySchedule
@@ -278,13 +278,13 @@ class RSVPCopyPhraseTask(Task):
         self.rsvp.draw_static()
         self.window.flip()
 
-        # Setup the new Stimuli
+        self.wait()
+
+        # Setup the new stimuli
         self.rsvp.stimuli_inquiry = inquiry_schedule.stimuli[0]
         if self.parameters['is_txt_stim']:
             self.rsvp.stimuli_colors = inquiry_schedule.colors[0]
         self.rsvp.stimuli_timing = inquiry_schedule.durations[0]
-
-        self.wait()
 
         if self.parameters['show_preview_inquiry']:
             stim_times, proceed = self.rsvp.preview_inquiry()
@@ -353,6 +353,8 @@ class RSVPCopyPhraseTask(Task):
         self.logger.debug('Starting Copy Phrase Task!')
         run = self.await_start()
 
+        self.wait() # buffer for data
+
         while run and self.user_wants_to_continue(
         ) and self.current_inquiry:
             target_stimuli = self.next_target()
@@ -395,7 +397,7 @@ class RSVPCopyPhraseTask(Task):
             self.trigger_handler.file_path).as_dict()
         self.write_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
-        self.wait(seconds=self.parameters['eeg_buffer_len'])
+        self.wait()
 
         return self.file_save
 
@@ -503,11 +505,15 @@ class RSVPCopyPhraseTask(Task):
         if not proceed or self.fake:
             return None
 
-        raw_data, triggers, labels = get_data_for_decision(
+        raw_data, triggers = get_data_for_decision(
             inquiry_timing=self.stims_for_decision(stim_times),
             daq=self.daq,
-            static_offset=self.parameters['static_trigger_offset'],
-            buffer_length=self.parameters['trial_length'])
+            offset=self.parameters['static_trigger_offset'],
+            prestim_length=self.parameters['prestim_length'],
+            poststim_length=self.parameters['task_buffer_length'] + self.parameters['trial_length'])
+
+        # we assume all are nontargets at this point
+        labels = ['nontarget'] * len(triggers)
 
         probs = self.copy_phrase_task.evaluate_eeg_evidence(
             raw_data, triggers, labels, self.parameters['trial_length'])

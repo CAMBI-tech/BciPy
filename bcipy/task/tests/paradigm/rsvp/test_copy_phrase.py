@@ -30,6 +30,7 @@ class TestCopyPhrase(unittest.TestCase):
             'decision_threshold': 0.8,
             'down_sampling_rate': 2,
             'eeg_buffer_len': 2.0,
+            'prestim_length': 1,
             'feedback_flash_time': 2.0,
             'feedback_font': 'Arial',
             'feedback_line_width': 1.0,
@@ -73,7 +74,7 @@ class TestCopyPhrase(unittest.TestCase):
             'stim_pos_y': 0.0,
             'stim_space_char': '–',
             'target_color': 'white',
-            'task_buffer_len': 0.75,
+            'task_buffer_length': 2,
             'task_color': 'white',
             'task_font': 'Arial',
             'task_height': 0.1,
@@ -596,12 +597,7 @@ def mock_process_data():
                 ('E', 1.552058998029679), ('B', 1.7685756811406463),
                 ('F', 1.9853776029776782), ('A', 2.202271921094507),
                 ('G', 2.4189279531128705)]
-    target_info = [
-        'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
-        'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
-        'nontarget'
-    ]
-    return (raw_data, triggers, target_info)
+    return (raw_data, triggers)
 
 
 if __name__ == '__main__':
