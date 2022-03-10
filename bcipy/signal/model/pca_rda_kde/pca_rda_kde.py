@@ -32,7 +32,7 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             trained likelihood model
         """
-        model = Pipeline([ChannelWisePrincipalComponentAnalysis(var_tol=1e-5, num_ch=train_data.shape[0]),
+        model = Pipeline([ChannelWisePrincipalComponentAnalysis(n_components=0.95, num_ch=train_data.shape[0]),
                           RegularizedDiscriminantAnalysis()])
 
         # Find the optimal gamma + lambda values

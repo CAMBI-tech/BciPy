@@ -31,6 +31,8 @@ class KernelDensityEstimate:
             bandwidth = 1.0
         else:
             bandwidth = self._compute_bandwidth(scores, num_channels)
+            # num_items = scores.shape[0]
+            # bandwidth = self._compute_bandwidth(scores, num_items)
         self.list_den_est = []
         self.num_cls = num_cls
         for _ in range(num_cls):
@@ -45,6 +47,7 @@ class KernelDensityEstimate:
                                                    metric_params=metric_params))
 
     def _compute_bandwidth(self, scores: np.array, num_channels: int):
+    # def _compute_bandwidth(self, scores: np.array, num_items: int):
         """Estimate bandwidth parameter
 
         Args:
@@ -54,7 +57,11 @@ class KernelDensityEstimate:
         Returns:
             float: rule-of-thumb bandwidth parameter for KDE
         """
-        return 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_channels, -0.2)
+        bandwidth = 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_channels, -0.2)
+        print(f"bandwidth: {bandwidth}")
+
+        # bandwidth = 0.9 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_items, -0.2)
+        return bandwidth
 
     def fit(self, x, y):
         """ Fits the kernel density estimates base on labelled data.

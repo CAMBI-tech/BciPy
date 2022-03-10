@@ -57,17 +57,17 @@ class ChannelWisePrincipalComponentAnalysis:
             var_tol(float): Threshold to remove lower variance dims.
         """
 
-        if var_tol:
-            self.var_tol = var_tol
+        # if var_tol:
+        #     self.var_tol = var_tol
 
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
-            max_sv = self.list_pca[i].singular_values_[0]
-            self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
-            try:
-                self.list_pca[i].fit(x[i, :, :], y)
-            except Exception as e:
-                raise e
+            # max_sv = self.list_pca[i].singular_values_[0]
+            # self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
+            # try:
+            #     self.list_pca[i].fit(x[i, :, :], y)
+            # except Exception as e:
+            #     raise e
 
     def transform(self, x, y=None):
         f_vector = []
