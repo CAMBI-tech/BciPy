@@ -1,12 +1,19 @@
+from operator import ge
 import unittest
+from urllib import response
+from typing import List
+from bcipy.acquisition.buffer_server import get_data
+from bcipy.task.exceptions import InsufficientDataException
 import numpy as np
 import psychopy
 from collections import Counter
-from mockito import unstub, mock, when, verifyStubbedInvocationsAreUsed
+from bcipy.acquisition.record import Record
+from mockito import unstub, mock, when, verify, verifyStubbedInvocationsAreUsed
 
 from bcipy.helpers.task import (
     alphabet,
     calculate_stimulation_freq,
+    get_data_for_decision,
     get_key_press,
     InquiryReshaper,
     TrialReshaper,
@@ -15,6 +22,8 @@ from bcipy.helpers.task import (
     construct_triggers,
     target_info
 )
+from bcipy.acquisition.client import DataAcquisitionClient
+from bcipy.acquisition.util import mock_data
 
 
 class TestAlphabet(unittest.TestCase):
@@ -56,7 +65,7 @@ class TestTrialReshaper(unittest.TestCase):
         self.channel_number = 21
         tmp_inp = np.array([range(4000)] * self.channel_number)
         # Add some channel info
-        tmp_inp[:, 0] = np.transpose(np.arange(1, 22, 1))
+        tmp_inp[:, 0] = np.transpose(np.arange(1, self.channel_number + 1, 1))
         self.eeg = tmp_inp
         self.channel_map = [1] * self.channel_number
 
@@ -289,6 +298,117 @@ class TestTriggers(unittest.TestCase):
         self.assertEqual(expected, target_info(triggers))
         self.assertEqual([], target_info([]))
 
+def mock_get_data_response(samples: int, high: float, low: float, channels: int) -> List[Record]:
+    """Mock DataAcquisitionClient Response.
+    
+    The data acquisition client returns a list of records that need to be looped through
+        to get the raw data without other items attached.
+    """
+    data = [np.random.uniform(low, high) for _ in range(channels)]
+    record_data = []
+    for i in range(samples):
+        record_data.append(Record(data, i, None))
+    return record_data
+
+
+class TestGetDataForDecision(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.inquiry_timing = [('A', 1), ('B', 2), ('C', 3)]
+        self.daq = mock(spec=DataAcquisitionClient)
+        self.daq.device_info = mock()
+        self.daq.device_info.fs = 10
+        self.mock_eeg = mock_get_data_response(samples=1000, high=1000, low=-1000, channels=4)
+
+    def tearDown(self) -> None:
+        unstub()
+
+    def test_get_data_for_decision_returns_tuple_of_eeg_data_and_triggers(self):
+        when(self.daq).get_data(start=any, limit=any).thenReturn(self.mock_eeg)
+
+        response = get_data_for_decision(self.inquiry_timing, self.daq)
+
+        self.assertIsInstance(response, tuple)
+
+        eeg_data, timing = response
+    
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertIsInstance(timing, list)
+
+    def test_get_data_for_decision_prestim(self):
+        prestim = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_start = first_stim_time - prestim
+        expected_stop = last_stim_time
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                for text, timing in self.inquiry_timing]
+        expected_data_limit = round((expected_stop - expected_start) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=expected_start, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            prestim=prestim)
+    
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=expected_start, limit=expected_data_limit)
+
+    def test_get_data_for_decision_poststim(self):
+        poststim = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                for text, timing in self.inquiry_timing]
+        expected_data_limit = round((last_stim_time - first_stim_time + poststim) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=first_stim_time, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            poststim=poststim)
+    
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=first_stim_time, limit=expected_data_limit)
+    
+    def test_get_data_for_decision_offset(self):
+        offset = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_start = first_stim_time + offset
+        expected_stop = last_stim_time + offset
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                for text, timing in self.inquiry_timing]
+        expected_data_limit = round((expected_stop - expected_start) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=expected_start, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            offset=offset)
+    
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=expected_start, limit=expected_data_limit)
+    
+    def test_get_data_for_decision_throws_insufficient_data_error_if_less_than_data_limit(self):
+
+        # return an empty list from the get data call
+        when(self.daq).get_data(start=any, limit=any).thenReturn([])
+
+        with self.assertRaises(InsufficientDataException):
+            get_data_for_decision(self.inquiry_timing, self.daq)
+
+    def test_get_data_for_decision_throws_insufficient_data_error_if_data_query_out_of_bounds(self):
+        inquiry_timing = [('A', 10), ('D', 1)]
+
+        with self.assertRaises(InsufficientDataException):
+            get_data_for_decision(inquiry_timing, self.daq)
 
 if __name__ == '__main__':
     unittest.main()

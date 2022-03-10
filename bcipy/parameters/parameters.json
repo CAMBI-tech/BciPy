@@ -46,14 +46,6 @@
     "recommended_values": "",
     "type": "int"
   },
-  "eeg_buffer_len": {
-    "value": "2",
-    "section": "bci_config",
-    "readableName": "End-of-file EEG Buffer Length",
-    "helpTip": "Specifies the number of seconds of data to add to the end of the EEG file. Default: 2",
-    "recommended_values": "",
-    "type": "float"
-  },
   "trigger_type": {
     "value": "text",
     "section": "bci_config",
@@ -86,6 +78,14 @@
     "section": "bci_config",
     "readableName": "Data Collection Window Length",
     "helpTip": "Specifies the length (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.5",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "prestim_length": {
+    "value": "1.0",
+    "section": "bci_config",
+    "readableName": "Prestimulus Window Length",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before stimulus presentation. Note: This is used for data querying only. Default: 1.0",
     "recommended_values": "",
     "type": "float"
   },
@@ -313,11 +313,11 @@
     "recommended_values": "",
     "type": "int"
   },
-  "task_buffer_len": {
-    "value": "0.75",
+  "task_buffer_length": {
+    "value": "2",
     "section": "bci_config",
     "readableName": "Inter-inquiry Interval",
-    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in an RSVP task. Default: 0.75",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 1",
     "recommended_values": "",
     "type": "float"
   },

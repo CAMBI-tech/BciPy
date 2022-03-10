@@ -46,14 +46,6 @@
     "recommended_values": "",
     "type": "int"
   },
-  "eeg_buffer_len": {
-    "value": "2.00",
-    "section": "bci_config",
-    "readableName": "End-of-file EEG Buffer Length",
-    "helpTip": "Specifies the number of seconds of data to add to the end of the EEG file. Default: 2",
-    "recommended_values": "",
-    "type": "float"
-  },
   "trigger_type": {
     "value": "image",
     "section": "bci_config",
@@ -313,7 +305,7 @@
     "recommended_values": "",
     "type": "int"
   },
-  "task_buffer_len": {
+  "task_buffer_length": {
     "value": "0.75",
     "section": "bci_config",
     "readableName": "Inter-inquiry Interval",
