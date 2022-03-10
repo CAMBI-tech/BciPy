@@ -18,3 +18,17 @@ Trying different model changes
     - exclude channel in `devices.json` - `lsl_timestamp`
 
 3. try changing rule for KDE bandwidth
+- using "0.9" and num_items and PCA(n_components=0.90) -> bandwidth 0.83, AUC 0.9108, runtime 55s
+- using "1.06" and otherwise same -> bandwidth 0.98
+
+
+WIP - "replay" evaluation
+- compare results while "replaying" previous experiments.
+- load models with different training setup (default 1.5.1, and each change above)
+
+Procedure:
+- load 
+- get inquiries
+- filter each inquiry
+- apply model, get likelihoods
+- check this gives same result with no code changes

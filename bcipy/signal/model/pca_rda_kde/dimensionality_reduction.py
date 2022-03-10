@@ -68,6 +68,7 @@ class ChannelWisePrincipalComponentAnalysis:
             #     self.list_pca[i].fit(x[i, :, :], y)
             # except Exception as e:
             #     raise e
+        # print(f"Num components kept for each channel: {[len(self.list_pca[i].components_) for i in range(self.num_ch)]}")
 
     def transform(self, x, y=None):
         f_vector = []
