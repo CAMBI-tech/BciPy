@@ -16,16 +16,19 @@ from loguru import logger
 
 def get_trials_from_inquiries(inquiries, samples_per_trial, next_trial_samples, trials_per_inquiry):
     new_trials = []
-    for i in range(len(inquiries[0])):
+    for i in range(len(inquiries[0])): # C x I x S
+
         x = 0
         y = samples_per_trial
+
         for _ in range(trials_per_inquiry):
             new_trials.append(inquiries[:,i,x:y])
             x += next_trial_samples
             y += next_trial_samples
     
     labels = ['nontarget'] * len(new_trials)
-    return np.stack(new_trials, 1), labels
+    # import pdb; pdb.set_trace()
+    return np.stack(new_trials, 1), labels # C x T x S
     
 
 
@@ -74,7 +77,6 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
     trigger_values, trigger_timing, _ = trigger_decoder(
         offset=static_offset, trigger_path=f"{data_folder}/{triggers_file}.txt"
     )
-
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, type_amp)
@@ -99,22 +101,44 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-    inquiries, fs = default_transform(inquiries, fs)
+    old_shape = inquiries.shape # (C, I, 699)
+    logger.info(f'Old Shape: {old_shape}')
+    # inq_flatten = inquiries.transpose(0, 2, 1) # 1, 3rd axis 
+    # logger.info(f'Inq Flatten I: {inq_flatten.shape}')
+    inq_flatten = inquiries.reshape(-1, old_shape[-1])
+    logger.info(f'Inq Flatten I: {inq_flatten.shape}')
+    inq_flatten_filtered, fs = default_transform(inq_flatten, fs)
+    logger.info(f'Inq Flatten Filtered: {inq_flatten_filtered.shape}')
+    inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
+    # inquiries = inquiries.transpose(0, 2, 1)
     trial_duration_samples = int(trial_length * fs)
     next_trial_samples = int(time_flash * fs)
     trials, trial_labels = get_trials_from_inquiries(
         inquiries, trial_duration_samples, next_trial_samples, trials_per_inquiry)
 
+    # import matplotlib.pyplot as plt
+    # plt.plot(trials.reshape(-1, trials.shape[-1]).T)
+    # plt.savefig("test_fig.png")
+    # plt.close()
+
+    # plt.plot(trials.reshape(-1, trials.shape[-1]).mean(0))
+    # plt.savefig("test_fig_mean.png")
+    # plt.close()
+            
+    logger.info(np.all(np.isfinite(trials)))
+    logger.info(f'Inquiries Final: {inquiries.shape}')
+    logger.info(f'Trials Extracted: {trials.shape}')
+
     # auc = model.evaluate(trials, trial_labels)
     # logger.info(f"AUC: {auc}")
 
-    likelihood_updates = []
-    for trial, label in zip(trials, trial_labels):
-        response = model.predict(trial, label, symbol_set=alphabet())
-        logger.info(f"Likelihood: {response}")
-        likelihood_updates.append(response)
+    # likelihood_updates = []
 
-    np.save(output_path, np.array(likelihood_updates))
+    response = model.predict(trials, trial_labels, symbol_set=alphabet())
+    logger.info(f"Likelihood: {response}")
+    # likelihood_updates.append(response)
+
+    # np.save(output_path, np.array(likelihood_updates))
 
     import pdb; pdb.set_trace()
 
