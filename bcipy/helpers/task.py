@@ -347,7 +347,7 @@ def get_key_press(
 class Reshaper(ABC):
     @abstractmethod
     def __call__(self,
-                 trial_labels: List[str],
+                 trial_targetness_label: List[str],
                  timing_info: List[float],
                  eeg_data: np.ndarray,
                  fs: int,
@@ -368,7 +368,8 @@ def grouper(iterable, n, fillvalue=None):
 
 class InquiryReshaper(Reshaper):
     def __call__(self,
-                 trial_labels: List[str],
+                 trial_targetness_label: List[str],
+                 trial_stimuli_label: List[str],
                  timing_info: List[float],
                  eeg_data: np.ndarray,
                  fs: int,
@@ -382,7 +383,8 @@ class InquiryReshaper(Reshaper):
         """Extract inquiry data and labels.
 
         Args:
-            trial_labels (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            trial_stimuli_label (List[str]): labels each trial  "A", "B", "_"
             timing_info (List[float]): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
             fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
@@ -407,11 +409,11 @@ class InquiryReshaper(Reshaper):
 
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
-        for label, timing in zip(trial_labels, timing_info):
+        for label, timing in zip(trial_targetness_label, timing_info):
             if label in labels_included and label not in labels_excluded:
                 tmp_labels.append(label)
                 tmp_timing.append(timing)
-        trial_labels = tmp_labels
+        trial_targetness_label = tmp_labels
         timing_info = tmp_timing
 
         n_inquiry = len(timing_info) // trials_per_inquiry
@@ -421,19 +423,23 @@ class InquiryReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
         # Label for every inquiry
-        labels = np.zeros(n_inquiry, dtype=np.long)
-        reshaped_data = []
+        labels = np.zeros(n_inquiry, dtype=np.long) # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
+        reshaped_data, reshaped_trigger_timing = [], []
         inquiry_legnth = None
-        for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
+        for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_targetness_label, triggers), trials_per_inquiry)):
             # label is the index of the "target", or else the length of the inquiry
             inquiry_label = trials_per_inquiry
-            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
-                if trial_label == target_label:
-                    inquiry_label = trial_idx
-
             # Inquiry lasts from first trial onset until final trial onset + trial_length
             first_trigger = trials_within_inquiry[0][1]
             last_trigger = trials_within_inquiry[-1][1]
+
+            trial_triggers = []
+            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
+                if trial_label == target_label:
+                    inquiry_label = trial_idx
+                trial_triggers.append((trial_label, ((trigger) - first_trigger)))
+            reshaped_trigger_timing.append(trial_triggers)
+
             labels[inquiry_idx] = inquiry_label
             
             current_inq_length = last_trigger - first_trigger + trial_duration_samples
@@ -443,12 +449,12 @@ class InquiryReshaper(Reshaper):
 
             reshaped_data.append(eeg_data[:, first_trigger: last_trigger + end_buffer])
 
-        return np.stack(reshaped_data, 1), labels
+        return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
 
 class TrialReshaper(Reshaper):
     def __call__(self,
-                 trial_labels: list,
+                 trial_targetness_label: list,
                  timing_info: list,
                  eeg_data: np.ndarray,
                  fs: int,
@@ -462,7 +468,7 @@ class TrialReshaper(Reshaper):
         """Extract trial data and labels.
 
         Args:
-            trial_labels (list): labels each trial as "target", "non-target", "first_pres_target", etc
+            trial_targetness_label (list): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (list): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
             fs (int): sample rate of preprocessed EEG data
@@ -489,27 +495,27 @@ class TrialReshaper(Reshaper):
 
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
-        for label, timing in zip(trial_labels, timing_info):
+        for label, timing in zip(trial_targetness_label, timing_info):
             if label in labels_included and label not in labels_excluded:
                 tmp_labels.append(label)
                 tmp_timing.append(timing)
-        trial_labels = tmp_labels
+        trial_targetness_label = tmp_labels
         timing_info = tmp_timing
 
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-        # Label for every trial
-        labels = np.zeros(len(triggers), dtype=np.long)
+        # Label for every trial in 0 or 1
+        targetness_labels = np.zeros(len(triggers), dtype=np.long)
         reshaped_trials = []
-        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
+        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
             if trial_label == target_label:
-                labels[trial_idx] = 1
+                targetness_labels[trial_idx] = 1
 
             # For every channel append filtered channel data to trials
             reshaped_trials.append(eeg_data[:, trigger: trigger + num_samples])
 
-        return np.stack(reshaped_trials, 1), labels
+        return np.stack(reshaped_trials, 1), targetness_labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):
