@@ -71,28 +71,6 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
     logger.info(f"Channels read from csv: {channels}")
     logger.info(f"Device type: {type_amp}")
 
-    data = raw_data.by_channel()
-
-    # Process triggers.txt
-    trigger_values, trigger_timing, _ = trigger_decoder(
-        offset=static_offset, trigger_path=f"{data_folder}/{triggers_file}.txt"
-    )
-    # Channel map can be checked from raw_data.csv file.
-    # The timestamp column is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
-
-    model = load_model(model_path, k_folds)
-
-    inquiries, inquiry_labels = InquiryReshaper()(
-        trial_labels=trigger_values,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        fs=fs,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        trial_length=trial_length,
-    )
-
     default_transform = get_default_transform(
         sample_rate_hz=fs,
         notch_freq_hz=notch_filter,
@@ -101,16 +79,48 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-    old_shape = inquiries.shape # (C, I, 699)
-    logger.info(f'Old Shape: {old_shape}')
-    # inq_flatten = inquiries.transpose(0, 2, 1) # 1, 3rd axis 
+    data, fs = default_transform(raw_data.by_channel(), fs)
+
+    # Process triggers.txt
+    trigger_targetness, trigger_timing, trigger_labels = trigger_decoder(
+        offset=static_offset, trigger_path=f"{data_folder}/{triggers_file}.txt"
+    )
+    # Channel map can be checked from raw_data.csv file.
+    # The timestamp column is already excluded.
+    channel_map = analysis_channels(channels, type_amp)
+
+    model = load_model(model_path, k_folds)
+
+    inquiries, inquiry_labels, inquiry_timing = InquiryReshaper()(
+        trial_targetness_label=trigger_targetness,
+        trial_stimuli_label=trigger_labels,
+        timing_info=trigger_timing,
+        eeg_data=data,
+        fs=fs,
+        trials_per_inquiry=trials_per_inquiry,
+        channel_map=channel_map,
+        trial_length=trial_length,
+    )
+    
+    # uncomment to filter by inquiry, assumes data.by_channel()
+    # default_transform = get_default_transform(
+    #     sample_rate_hz=fs,
+    #     notch_freq_hz=notch_filter,
+    #     bandpass_low=lp_filter,
+    #     bandpass_high=hp_filter,
+    #     bandpass_order=filter_order,
+    #     downsample_factor=downsample_rate,
+    # )
+    # old_shape = inquiries.shape # (C, I, 699)
+    # logger.info(f'Old Shape: {old_shape}')
+    # # inq_flatten = inquiries.transpose(0, 2, 1) # 1, 3rd axis 
+    # # logger.info(f'Inq Flatten I: {inq_flatten.shape}')
+    # inq_flatten = inquiries.reshape(-1, old_shape[-1])
     # logger.info(f'Inq Flatten I: {inq_flatten.shape}')
-    inq_flatten = inquiries.reshape(-1, old_shape[-1])
-    logger.info(f'Inq Flatten I: {inq_flatten.shape}')
-    inq_flatten_filtered, fs = default_transform(inq_flatten, fs)
-    logger.info(f'Inq Flatten Filtered: {inq_flatten_filtered.shape}')
-    inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
-    # inquiries = inquiries.transpose(0, 2, 1)
+    # inq_flatten_filtered, fs = default_transform(inq_flatten, fs)
+    # logger.info(f'Inq Flatten Filtered: {inq_flatten_filtered.shape}')
+    # inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
+    # # inquiries = inquiries.transpose(0, 2, 1)
     trial_duration_samples = int(trial_length * fs)
     next_trial_samples = int(time_flash * fs)
     trials, trial_labels = get_trials_from_inquiries(
@@ -133,12 +143,29 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
     # logger.info(f"AUC: {auc}")
 
     # likelihood_updates = []
-
-    response = model.predict(trials, trial_labels, symbol_set=alphabet())
-    logger.info(f"Likelihood: {response}")
+    try:
+        model.predict(trials[:][0], trigger_labels[:len(trials[:][0])])
+        response = model.predict(trials, trigger_labels, symbol_set=alphabet()) # Note the first trial is the same always!
+        logger.info(f"Likelihood: {response}")
     # likelihood_updates.append(response)
+    except Exception as e:
+        # because the reshapers can change timing with offsets, we should still return the timing that updated
+        new_trials, targetness_labels, _ = model.reshaper(
+                trial_targetness_label=trigger_targetness,
+                trial_stimuli_label=trigger_labels,
+                timing_info=trigger_timing,
+                eeg_data=data,
+                fs=fs,
+                trials_per_inquiry=trials_per_inquiry,
+                channel_map=channel_map,
+                trial_length=trial_length,
+            )
+        import pdb; pdb.set_trace()
+        model.evaluate(new_trials, targetness_labels)
+        # is labels part of the symbol set? YES. Needs to map to the symbol_set provided
+        response = model.predict(new_trials, trigger_labels, symbol_set=alphabet())
 
-    # np.save(output_path, np.array(likelihood_updates))
+    # np.save(output_path, np.array(response))
 
     import pdb; pdb.set_trace()
 
