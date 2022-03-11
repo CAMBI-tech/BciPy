@@ -164,8 +164,8 @@ def get_data_for_decision(inquiry_timing,
     - inquiry_timing(list): list of tuples containing stimuli timing and labels. We assume the list progresses in
     - daq (DataAcquisitionClient): bcipy data acquisition client with a get_data method and device_info with fs defined
     - offset (float): offset present in the system which should be accounted for when creating data for classification; this is determined experimentally.
-    - prestim (float): amount of of data needed before the first sample to reshape correctly
-    - poststim: length of data needed after the last sample in order to reshape correctly
+    - prestim (float): amount of of data needed before the first sample to reshape and apply transformations correctly
+    - poststim (float): length of data needed after the last sample in order to reshape and apply transformations correctly
 
     Returns
     -------
@@ -423,6 +423,7 @@ class InquiryReshaper(Reshaper):
         # Label for every inquiry
         labels = np.zeros(n_inquiry, dtype=np.long)
         reshaped_data = []
+        inquiry_legnth = None
         for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
             # label is the index of the "target", or else the length of the inquiry
             inquiry_label = trials_per_inquiry
@@ -434,8 +435,13 @@ class InquiryReshaper(Reshaper):
             first_trigger = trials_within_inquiry[0][1]
             last_trigger = trials_within_inquiry[-1][1]
             labels[inquiry_idx] = inquiry_label
+            
+            current_inq_length = last_trigger - first_trigger + trial_duration_samples
+            if not inquiry_legnth:
+                inquiry_legnth = current_inq_length
+            end_buffer = trial_duration_samples + (inquiry_legnth - current_inq_length)
 
-            reshaped_data.append(eeg_data[:, first_trigger: last_trigger + trial_duration_samples])
+            reshaped_data.append(eeg_data[:, first_trigger: last_trigger + end_buffer])
 
         return np.stack(reshaped_data, 1), labels
 
