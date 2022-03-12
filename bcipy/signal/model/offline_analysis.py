@@ -107,11 +107,11 @@ def offline_analysis(data_folder: str = None,
 
     log.info('Training model. This will take some time...')
     model.fit(data, labels)
-    model_performance = model.evaluate(data, labels)
+    # model_performance = model.evaluate(data, labels)
 
-    log.info(f'Training complete [AUC={model_performance.auc:0.4f}]. Saving data...')
+    log.info(f'Training complete [AUC={model.auc:0.4f}]. Saving data...')
 
-    model.save(data_folder + f'/model_{model_performance.auc:0.4f}.pkl')
+    model.save(data_folder + f'/model_{model.auc:0.4f}.pkl')
 
     figure_handles = visualize_erp(
         data,

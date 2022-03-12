@@ -19,6 +19,7 @@ class PcaRdaKdeModel(SignalModel):
     def __init__(self, k_folds: int):
         self.k_folds = k_folds
         self.model = None
+        self.auc = None
         self._ready_to_predict = False
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
@@ -44,10 +45,10 @@ class PcaRdaKdeModel(SignalModel):
         rda_index = 1  # the index in the pipeline
         model.pipeline[rda_index].lam = arg_cv[0]
         model.pipeline[rda_index].gam = arg_cv[1]
-        _, sc_cv, y_cv = cost_cross_validation_auc(
+        tmp, sc_cv, y_cv = cost_cross_validation_auc(
             model, rda_index, train_data, train_labels, arg_cv, k_folds=self.k_folds, split="uniform"
         )
-
+        self.auc = -tmp
         # After finding cross validation scores do one more round to learn the
         # final RDA model
         model.fit(train_data, train_labels)

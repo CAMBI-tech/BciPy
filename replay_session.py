@@ -1,6 +1,8 @@
+from asyncio import new_event_loop
 from random import sample
 import numpy as np
 from pathlib import Path
+from itertools import zip_longest
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
@@ -13,22 +15,33 @@ from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 from loguru import logger
 
+def grouper(iterable, n, *, incomplete='fill', fillvalue=None):
+    "Collect data into non-overlapping fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, fillvalue='x') --> ABC DEF Gxx
+    # grouper('ABCDEFG', 3, incomplete='strict') --> ABC DEF ValueError
+    # grouper('ABCDEFG', 3, incomplete='ignore') --> ABC DEF
+    args = [iter(iterable)] * n
+    if incomplete == 'fill':
+        return zip_longest(*args, fillvalue=fillvalue)
+    if incomplete == 'strict':
+        return zip(*args, strict=True)
+    if incomplete == 'ignore':
+        return zip(*args)
+    else:
+        raise ValueError('Expected fill, strict, or ignore')
 
-def get_trials_from_inquiries(inquiries, samples_per_trial, next_trial_samples, trials_per_inquiry):
+
+def get_trials_from_inquiries(inquiries, samples_per_trial, inquiry_timing, downsample_rate):
     new_trials = []
-    for i in range(len(inquiries[0])): # C x I x S
+    num_inquiries = inquiries.shape[1]
+    for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing): # C x I x S
 
-        x = 0
-        y = samples_per_trial
+        for time in timing:
+            time = time // downsample_rate
+            y = time + samples_per_trial
+            new_trials.append(inquiries[:,inquiry_idx,time:y])
+    return np.stack(new_trials, 1) # C x T x S
 
-        for _ in range(trials_per_inquiry):
-            new_trials.append(inquiries[:,i,x:y])
-            x += next_trial_samples
-            y += next_trial_samples
-    
-    labels = ['nontarget'] * len(new_trials)
-    # import pdb; pdb.set_trace()
-    return np.stack(new_trials, 1), labels # C x T x S
     
 
 
@@ -71,6 +84,7 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
     logger.info(f"Channels read from csv: {channels}")
     logger.info(f"Device type: {type_amp}")
 
+    # data = raw_data.by_channel()
     default_transform = get_default_transform(
         sample_rate_hz=fs,
         notch_freq_hz=notch_filter,
@@ -91,7 +105,9 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
 
     model = load_model(model_path, k_folds)
 
-    inquiries, inquiry_labels, inquiry_timing = InquiryReshaper()(
+    # data , [0: 1, 0, 1], [0, ... , n]
+    inquiries, inquiry_labels, inquiry_timing = q
+    ()(
         trial_targetness_label=trigger_targetness,
         trial_stimuli_label=trigger_labels,
         timing_info=trigger_timing,
@@ -102,38 +118,18 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
         trial_length=trial_length,
     )
     
-    # uncomment to filter by inquiry, assumes data.by_channel()
-    # default_transform = get_default_transform(
-    #     sample_rate_hz=fs,
-    #     notch_freq_hz=notch_filter,
-    #     bandpass_low=lp_filter,
-    #     bandpass_high=hp_filter,
-    #     bandpass_order=filter_order,
-    #     downsample_factor=downsample_rate,
-    # )
     # old_shape = inquiries.shape # (C, I, 699)
     # logger.info(f'Old Shape: {old_shape}')
-    # # inq_flatten = inquiries.transpose(0, 2, 1) # 1, 3rd axis 
-    # # logger.info(f'Inq Flatten I: {inq_flatten.shape}')
     # inq_flatten = inquiries.reshape(-1, old_shape[-1])
     # logger.info(f'Inq Flatten I: {inq_flatten.shape}')
     # inq_flatten_filtered, fs = default_transform(inq_flatten, fs)
     # logger.info(f'Inq Flatten Filtered: {inq_flatten_filtered.shape}')
     # inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
-    # # inquiries = inquiries.transpose(0, 2, 1)
     trial_duration_samples = int(trial_length * fs)
-    next_trial_samples = int(time_flash * fs)
-    trials, trial_labels = get_trials_from_inquiries(
-        inquiries, trial_duration_samples, next_trial_samples, trials_per_inquiry)
+    # next_trial_samples = int(time_flash * fs)
+    trials = get_trials_from_inquiries(
+        inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
 
-    # import matplotlib.pyplot as plt
-    # plt.plot(trials.reshape(-1, trials.shape[-1]).T)
-    # plt.savefig("test_fig.png")
-    # plt.close()
-
-    # plt.plot(trials.reshape(-1, trials.shape[-1]).mean(0))
-    # plt.savefig("test_fig_mean.png")
-    # plt.close()
             
     logger.info(np.all(np.isfinite(trials)))
     logger.info(f'Inquiries Final: {inquiries.shape}')
@@ -142,33 +138,62 @@ def main(data_folder, parameters, model_path: Path, output_path: Path):
     # auc = model.evaluate(trials, trial_labels)
     # logger.info(f"AUC: {auc}")
 
-    # likelihood_updates = []
-    try:
-        model.predict(trials[:][0], trigger_labels[:len(trials[:][0])])
-        response = model.predict(trials, trigger_labels, symbol_set=alphabet()) # Note the first trial is the same always!
-        logger.info(f"Likelihood: {response}")
-    # likelihood_updates.append(response)
-    except Exception as e:
-        # because the reshapers can change timing with offsets, we should still return the timing that updated
-        new_trials, targetness_labels, _ = model.reshaper(
-                trial_targetness_label=trigger_targetness,
-                trial_stimuli_label=trigger_labels,
-                timing_info=trigger_timing,
-                eeg_data=data,
-                fs=fs,
-                trials_per_inquiry=trials_per_inquiry,
-                channel_map=channel_map,
-                trial_length=trial_length,
-            )
+    likelihood_updates = []
+    inquiry_worth_of_trials = np.split(trials, inquiries.shape[1], 1)
+    inquiry_worth_of_labels = grouper(trigger_labels, trials_per_inquiry, incomplete='ignore')
+    
+    for inquiry_trials, inquiry_labels in zip(inquiry_worth_of_trials, inquiry_worth_of_labels):
+        # model.predict(trials[:][0], trigger_labels[:len(trials[:][0])])
         import pdb; pdb.set_trace()
-        model.evaluate(new_trials, targetness_labels)
-        # is labels part of the symbol set? YES. Needs to map to the symbol_set provided
-        response = model.predict(new_trials, trigger_labels, symbol_set=alphabet())
+        # inquiry_trials = np.array(inquiry_trials)
+        inquiry_labels = list(inquiry_labels)
+        response = model.predict(inquiry_trials, inquiry_labels, symbol_set=alphabet()) # Note the first trial is the same always!
+
+        import pdb; pdb.set_trace()
 
     # np.save(output_path, np.array(response))
 
-    import pdb; pdb.set_trace()
+    return
 
+"""
+Replay Full File Filter
+
+Replay Inquiry Based Filtering
+"""
+
+
+def validate_inquiry_based_trials_against_trial_reshaper(new_trials, trials):
+    """Add np.allclose(new_trials, trials)"""
+    pass
+
+
+def plot_eeg():
+    """TODO: use the MNE snippets?"""
+    pass
+
+"""
+
+# logger.info(f"Likelihood: {response}")
+        # import pdb; pdb.set_trace()
+    # likelihood_updates.append(response)
+    # except Exception as e:
+    #     data, fs = default_transform(raw_data.by_channel(), 300)
+    #     # because the reshapers can change timing with offsets, we should still return the timing that updated
+    #     new_trials, targetness_labels = model.reshaper(
+    #             trial_targetness_label=trigger_targetness,
+    #             # trial_stimuli_label=trigger_labels,
+    #             timing_info=trigger_timing,
+    #             eeg_data=data,
+    #             fs=fs,
+    #             trials_per_inquiry=trials_per_inquiry,
+    #             channel_map=channel_map,
+    #             trial_length=trial_length,
+    #         )
+    #     response = model.evaluate(new_trials, targetness_labels)
+    #     response_trials_from_inq = model.evaluate(trials, targetness_labels)
+    #     response = model.predict(new_trials, trigger_labels, symbol_set=alphabet())
+    #     response2 = model.predict(trials, trigger_labels, symbol_set=alphabet())
+"""
 
 if __name__ == "__main__":
     import argparse

@@ -403,6 +403,7 @@ class InquiryReshaper(Reshaper):
                 a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
                 `target_label` was not present.
         """
+        buffer = 5 # buffer to end of inquiry to allow for filtering
         # Remove the channels that we are not interested in
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
         eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
@@ -423,7 +424,7 @@ class InquiryReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
         # Label for every inquiry
-        labels = np.zeros(n_inquiry, dtype=np.long) # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
+        labels = np.zeros((n_inquiry, trials_per_inquiry), dtype=np.long) # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         inquiry_legnth = None
         for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_targetness_label, triggers), trials_per_inquiry)):
@@ -436,15 +437,17 @@ class InquiryReshaper(Reshaper):
             trial_triggers = []
             for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
                 if trial_label == target_label:
-                    inquiry_label = trial_idx
-                trial_triggers.append((trial_label, ((trigger) - first_trigger)))
+                    inquiry_label = 1
+                labels[inquiry_idx, trial_idx] = inquiry_label
+
+                trial_triggers.append((trigger - first_trigger))
             reshaped_trigger_timing.append(trial_triggers)
 
-            labels[inquiry_idx] = inquiry_label
+            # labels[inquiry_idx] = inquiry_label
             
             current_inq_length = last_trigger - first_trigger + trial_duration_samples
             if not inquiry_legnth:
-                inquiry_legnth = current_inq_length
+                inquiry_legnth = current_inq_length + buffer
             end_buffer = trial_duration_samples + (inquiry_legnth - current_inq_length)
 
             reshaped_data.append(eeg_data[:, first_trigger: last_trigger + end_buffer])
