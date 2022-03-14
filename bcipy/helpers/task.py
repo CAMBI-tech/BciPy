@@ -354,7 +354,7 @@ class Reshaper(ABC):
                  trials_per_inquiry: int,
                  offset: float = 0,
                  channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
+                 poststimulus_length: float = 0.5,
                  target_label: str = "target",
                  labels_included: Set[str] = set(["target", "nontarget"]),
                  labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
@@ -376,7 +376,9 @@ class InquiryReshaper(Reshaper):
                  trials_per_inquiry: int,
                  offset: float = 0,
                  channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
+                 poststimulus_length: float = 0.5,
+                 prestimulus_length: float = 0.0, # TODO account for prestimulus
+                 transformation_buffer: float = 5.0,
                  target_label: str = "target",
                  labels_included: Set[str] = set(["target", "nontarget"]),
                  labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
@@ -392,7 +394,9 @@ class InquiryReshaper(Reshaper):
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to DEFAULT_CHANNEL_MAP.
-            trial_length (float, optional): [description]. Defaults to 0.5.
+            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry . Defaults to 0.5.
+            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry. Defaults to 0.0.
+            transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
             target_label (str): label of target symbol. Defaults to "target"
             labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
             labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
@@ -403,7 +407,6 @@ class InquiryReshaper(Reshaper):
                 a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
                 `target_label` was not present.
         """
-        buffer = 5 # buffer to end of inquiry to allow for filtering
         # Remove the channels that we are not interested in
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
         eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
@@ -418,7 +421,7 @@ class InquiryReshaper(Reshaper):
         timing_info = tmp_timing
 
         n_inquiry = len(timing_info) // trials_per_inquiry
-        trial_duration_samples = int(trial_length * fs)
+        trial_duration_samples = int(poststimulus_length * fs)
 
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
@@ -430,7 +433,7 @@ class InquiryReshaper(Reshaper):
         for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_targetness_label, triggers), trials_per_inquiry)):
             # label is the index of the "target", or else the length of the inquiry
             inquiry_label = trials_per_inquiry
-            # Inquiry lasts from first trial onset until final trial onset + trial_length
+            # Inquiry lasts from first trial onset until final trial onset + poststimulus_length
             first_trigger = trials_within_inquiry[0][1]
             last_trigger = trials_within_inquiry[-1][1]
 
@@ -447,12 +450,31 @@ class InquiryReshaper(Reshaper):
             
             current_inq_length = last_trigger - first_trigger + trial_duration_samples
             if not inquiry_legnth:
-                inquiry_legnth = current_inq_length + buffer
+                inquiry_legnth = current_inq_length + transformation_buffer
             end_buffer = trial_duration_samples + (inquiry_legnth - current_inq_length)
 
             reshaped_data.append(eeg_data[:, first_trigger: last_trigger + end_buffer])
 
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
+
+    @staticmethod
+    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):
+        """Extract Trials.
+        
+        After using the InquiryReshaper, it may be necessary to futher trial the data for processing.
+        Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
+        Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
+        slicing parameters.
+        """
+        new_trials = []
+        num_inquiries = inquiries.shape[1]
+        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing): # C x I x S
+
+            for time in timing:
+                time = time // downsample_rate
+                y = time + samples_per_trial
+                new_trials.append(inquiries[:,inquiry_idx,time:y])
+        return np.stack(new_trials, 1) # C x T x S
 
 
 class TrialReshaper(Reshaper):
@@ -464,7 +486,7 @@ class TrialReshaper(Reshaper):
                  trials_per_inquiry: Optional[int] = None,
                  offset: float = 0,
                  channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
+                 poststimulus_length: float = 0.5,
                  target_label: str = "target",
                  labels_included: Set[str] = set(["target", "nontarget"]),
                  labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
@@ -480,7 +502,7 @@ class TrialReshaper(Reshaper):
                 Defaults to 0.
             channel_map (tuple, optional): Describes which channels to include or discard.
                 Defaults to DEFAULT_CHANNEL_MAP.
-            trial_length (float, optional): [description]. Defaults to 0.5.
+            poststimulus_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
             labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
             labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
@@ -494,7 +516,7 @@ class TrialReshaper(Reshaper):
         eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         # Number of samples we are interested per trial
-        num_samples = int(trial_length * fs)
+        num_samples = int(poststimulus_length * fs)
 
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
