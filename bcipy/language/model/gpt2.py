@@ -8,7 +8,6 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.language.uniform import equally_probable
 
 
 class GPT2LanguageModel(LanguageModel):
@@ -25,10 +24,8 @@ class GPT2LanguageModel(LanguageModel):
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
         self.tokenizer = None
-        self.is_start_of_word = True
         self.vocab_size = 0
         self.idx_to_word = None
-        self.curr_word_predicted_prob = None
         self.lm_path = lm_path or "gpt2"
 
         # Hard coding a unigram language model trained on ALS phrase dataset
@@ -41,8 +38,9 @@ class GPT2LanguageModel(LanguageModel):
                            'F': 0.0117, 'B': 0.0113, 'V': 0.0091, 'J': 0.0016,
                            'X': 0.0008, 'Z': 0.0005, 'Q': 0.0002, BACKSPACE_CHAR: 0.0}
 
-        # A uniform language model
-        self.uniform_lm = dict(zip(self.symbol_set, equally_probable(self.symbol_set, {BACKSPACE_CHAR: 0.0})))
+        # parameters for beam search
+        self.beam_width = 20
+        self.search_depth = 2
 
         self.load()
 
@@ -182,70 +180,15 @@ class GPT2LanguageModel(LanguageModel):
 
         return char_prob_tuples
 
-    def __interpolate_language_models(self, lm1: Dict[str, float], lm2: Dict[str, float], coeff: float) -> List[Tuple]:
+    def __beam_search(self, evidence_str: str, beam_width: int, search_depth: int) -> List[Tuple]:
         """
-        interpolate two language models
+        perform beam search to get candidate phrases that complete the typed text
         Args:
-            lm1 - the first language model (a dict with char as keys and prob as values)
-            lm2 - the second language model (same type as lm1)
-            coeff - rescale coefficient, lm1 will be scaled by coeff and lm2 will be
-            scaled by (1-coeff)
+        beam_width - size of the beam used for beam search (hyperparameter)
+        search_depth - max number of wordpieces to predict (hyperparameter)
         Response:
-            a list of (char, prob) tuples representing an interpolated language model
+        A list of beam candidates with candidate text and likelihood
         """
-        combined_lm = Counter()
-
-        for char in lm1:
-            combined_lm[char] = lm1[char] * coeff + lm2[char] * (1 - coeff)
-
-        for char in lm2:
-            if char not in lm1:
-                combined_lm[char] = lm2[char] * (1 - coeff)
-
-        return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
-
-    def __rescale(self, lm: Dict[str, float], coeff: float):
-        """
-        rescale a languge model with exponential coefficient
-        Args:
-            lm - the language model (a dict with char as keys and prob as values)
-            coeff - rescale coefficient
-        Response:
-            a list of (char, prob) tuples representing a rescaled language model
-        """
-
-        rescaled_lm = Counter()
-
-        # scale
-        for char in lm:
-            rescaled_lm[char] = lm[char] ** coeff
-
-        # normalize
-        sum_char_prob = sum(rescaled_lm.values())
-        for char in rescaled_lm:
-            rescaled_lm[char] /= sum_char_prob
-
-        return list(sorted(rescaled_lm.items(), key=lambda item: item[1], reverse=True))
-
-    def predict(self, evidence: List[str], beam_width: int = 20, search_depth: int = 2) -> List[Tuple]:
-        """
-        Given an evidence of typed string, predict the probability distribution of
-        the next symbol
-        Args:
-            evidence - a list of characters (typed by the user)
-            beam_width - size of the beam used for beam search (hyperparameter)
-            search_depth - max number of wordpieces to predict (hyperparameter)
-        Response:
-            A list of symbols with probability
-        """
-
-        assert self.model is not None, "language model does not exist!"
-
-        evidence_str = "".join(evidence)
-
-        evidence_str = evidence_str.replace(SPACE_CHAR, ' ')
-        evidence_str = evidence_str.lower()
-
         # infer the first wordpiece
         predicted_logit = self.__model_infer(evidence_str, True)
         sorted_idx = predicted_logit.argsort()[::-1]
@@ -289,15 +232,83 @@ class GPT2LanguageModel(LanguageModel):
 
         all_beam_candidates = sorted(all_beam_candidates, key=lambda x: x[1], reverse=True)
 
+        return all_beam_candidates
+
+    @staticmethod
+    def interpolate_language_models(lm1: Dict[str, float], lm2: Dict[str, float], coeff: float) -> List[Tuple]:
+        """
+        interpolate two language models
+        Args:
+            lm1 - the first language model (a dict with char as keys and prob as values)
+            lm2 - the second language model (same type as lm1)
+            coeff - rescale coefficient, lm1 will be scaled by coeff and lm2 will be
+            scaled by (1-coeff)
+        Response:
+            a list of (char, prob) tuples representing an interpolated language model
+        """
+        combined_lm = Counter()
+
+        for char in lm1:
+            combined_lm[char] = lm1[char] * coeff + lm2[char] * (1 - coeff)
+
+        for char in lm2:
+            if char not in lm1:
+                combined_lm[char] = lm2[char] * (1 - coeff)
+
+        return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
+
+    @staticmethod
+    def rescale(lm: Dict[str, float], coeff: float):
+        """
+        rescale a languge model with exponential coefficient
+        Args:
+            lm - the language model (a dict with char as keys and prob as values)
+            coeff - rescale coefficient
+        Response:
+            a list of (char, prob) tuples representing a rescaled language model
+        """
+        rescaled_lm = Counter()
+
+        # scale
+        for char in lm:
+            rescaled_lm[char] = lm[char] ** coeff
+
+        # normalize
+        sum_char_prob = sum(rescaled_lm.values())
+        for char in rescaled_lm:
+            rescaled_lm[char] /= sum_char_prob
+
+        return list(sorted(rescaled_lm.items(), key=lambda item: item[1], reverse=True))
+
+    def predict(self, evidence: List[str]) -> List[Tuple]:
+        """
+        Given an evidence of typed string, predict the probability distribution of
+        the next symbol
+        Args:
+            evidence - a list of characters (typed by the user)
+        Response:
+            A list of symbols with probability
+        """
+
+        assert self.model is not None, "language model does not exist!"
+
+        evidence_str = "".join(evidence)
+
+        evidence_str = evidence_str.replace(SPACE_CHAR, ' ')
+        evidence_str = evidence_str.lower()
+
+        # run beam search
+        all_beam_candidates = self.__beam_search(evidence_str, self.beam_width, self.search_depth)
+
         # get marginalized characger-level probabilities from beam search results
         next_char_pred = self.__get_char_predictions_beam_search(evidence_str, all_beam_candidates)
 
         # interpolate with unigram language model to smooth the probability distribution returned
         # by GPT2 language model
-        next_char_pred = self.__interpolate_language_models(dict(next_char_pred), self.unigram_lm, 0.8)
+        next_char_pred = GPT2LanguageModel.interpolate_language_models(dict(next_char_pred), self.unigram_lm, 0.8)
 
         # exponentially rescale the language model
-        next_char_pred = self.__rescale(dict(next_char_pred), 0.5)
+        next_char_pred = GPT2LanguageModel.rescale(dict(next_char_pred), 0.5)
 
         return next_char_pred
 
