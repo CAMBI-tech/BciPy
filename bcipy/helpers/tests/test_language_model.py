@@ -2,7 +2,7 @@
 import unittest
 
 from collections import Counter
-from bcipy.helpers.language_model import norm_domain, sym_appended, histogram
+from bcipy.helpers.language_model import norm_domain, with_min_prob, histogram
 
 
 class TestLanguageModelRelated(unittest.TestCase):
@@ -59,7 +59,7 @@ class TestLanguageModelRelated(unittest.TestCase):
 
         self.assertEqual(1.0, sum([prob for _, prob in syms]))
 
-        new_list = sym_appended(syms, ('<', 0.0))
+        new_list = with_min_prob(syms, ('<', 0.0))
         self.assertEqual(len(syms) + 1, len(new_list))
         self.assertEqual(1.0, sum([prob for _, prob in new_list]))
 
@@ -77,7 +77,7 @@ class TestLanguageModelRelated(unittest.TestCase):
 
         new_sym = ('<', 0.2)
 
-        new_list = sym_appended(syms, new_sym)
+        new_list = with_min_prob(syms, new_sym)
         self.assertEqual(len(syms) + 1, len(new_list))
         self.assertAlmostEqual(1.0, sum([prob for _, prob in new_list]))
 
@@ -94,16 +94,29 @@ class TestLanguageModelRelated(unittest.TestCase):
         """Test insertion of an additional symbol to a normalized list of
         symbols."""
 
-        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25)]
+        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25), ('E', 0.0)]
         self.assertEqual(1.0, sum([prob for _, prob in syms]))
 
-        new_list = sym_appended(syms, ('D', 0.25))
-        self.assertEqual(syms, new_list, "Value already present")
+        new_list = with_min_prob(syms, ('E', 0.15))
+        expected = [('A', 0.2125), ('B', 0.2125), ('C', 0.2125), ('D', 0.2125),
+                    ('E', 0.15)]
+        self.assertEqual(new_list, expected, "Values should be adjusted.")
+        self.assertEqual(syms, [('A', 0.25), ('B', 0.25), ('C', 0.25),
+                                ('D', 0.25), ('E', 0.0)],
+                         "Original list should not be modified.")
 
-        new_list = sym_appended(syms, ('D', 0.2))
-        self.assertEqual(syms,
-                         new_list,
-                         msg="Changing the probability does not matter")
+    def test_existing_sym_with_smaller_prob(self):
+        """Test inserting a symbol with a smaller probability than what is
+        already provided."""
+        syms = [('A', 0.2125), ('B', 0.2125), ('C', 0.2125), ('D', 0.2125),
+                ('E', 0.15)]
+        self.assertEqual(with_min_prob(syms, ('E', 0.05)), syms,
+                         "New probability should only be used if it's larger")
+
+    def test_insert_sym_on_empty_list(self):
+        """Test that it handles the edge case of an empty list."""
+        self.assertEqual(with_min_prob([], ('A', 0.25)), [('A', 1.0)])
+        self.assertEqual(with_min_prob([], ('A', 1.5)), [('A', 1.0)])
 
     def test_small_probs(self):
         """When very small values are returned from the LM, inserting a letter
@@ -123,7 +136,7 @@ class TestLanguageModelRelated(unittest.TestCase):
                  ('X', 1.904356496190087e-08), ('Q', 1.0477572781302604e-08),
                  ('G', 7.146978265955833e-09)]
 
-        syms = sym_appended(probs, ('<', 0.05))
+        syms = with_min_prob(probs, ('<', 0.05))
         self.assertAlmostEqual(1.0, sum([sym[1] for sym in syms]))
         for sym in syms:
             self.assertTrue(sym[1] >= 0)

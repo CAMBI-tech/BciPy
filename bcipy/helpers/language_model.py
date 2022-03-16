@@ -10,9 +10,6 @@ from bcipy.helpers.task import alphabet
 from bcipy.language.uniform import UniformLanguageModel
 # flake8: noqa
 from bcipy.language.model.gpt2 import GPT2LanguageModel
-# TODO: remove this import: https://www.pivotaltracker.com/story/show/178695472
-# flake8: noqa
-from bcipy.language_model.prelm_language_model import PrelmLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
@@ -61,30 +58,47 @@ def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     return [(sym, math.exp(-prob)) for sym, prob in priors]
 
 
-def sym_appended(symbol_probs: List[Tuple[str, float]],
-                 sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
-    """Returns a new list of probabilities with the addition of a new symbol
-    with the given probability for that symbol. Existing values are adjusted
-    equally such that the sum of the probabilities in the resulting list sum
-    to approx. 1.0. Only adds the symbol if it is not already in the list.
+def with_min_prob(symbol_probs: List[Tuple[str, float]],
+                  sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
+    """Returns a new list of symbol-probability pairs where the provided
+    symbol has a minimum probability given in the sym_prob.
 
-    Used to add the backspace symbol to the LM output.
+    If the provided symbol is already in the list with a greater probability,
+    the list of symbol_probs will be returned unmodified.
+
+    If the new probability is added or modified, existing values are adjusted
+    equally.
 
     Parameters:
     -----------
         symbol_probs - list of symbol, probability pairs
-        sym_prob - (symbol, probability) pair to append
-    """
-    if sym_prob[0] in dict(symbol_probs):
-        return symbol_probs
+        sym_prob - (symbol, min_probability) defines the minimum probability
+            for the given symbol in the returned list.
 
-    # Slit out symbols and probabilities into separate lists
-    symbols = [prob[0] for prob in symbol_probs]
-    probabilities = np.array([prob[1] for prob in symbol_probs])
+    Returns:
+    -------
+        list of (symbol, probability) pairs such that the sum of the
+        probabilities is approx. 1.0.
+    """
+    new_sym, new_prob = sym_prob
+
+    # Split out symbols and probabilities into separate lists, excluding the
+    # symbol to be adjusted.
+    symbols = []
+    probs = []
+    for sym, prob in symbol_probs:
+        if sym != new_sym:
+            symbols.append(sym)
+            probs.append(prob)
+        elif prob >= new_prob:
+            # symbol prob in list is larger than minimum.
+            return symbol_probs
+
+    probabilities = np.array(probs)
 
     # Add new symbol and its probability
-    all_probs = np.append(probabilities, sym_prob[1] / (1 - sym_prob[1]))
-    all_symbols = symbols + [sym_prob[0]]
+    all_probs = np.append(probabilities, new_prob / (1 - new_prob))
+    all_symbols = symbols + [new_sym]
 
     normalized = all_probs / sum(all_probs)
 
