@@ -261,39 +261,35 @@ def calibration_inquiry_generator(
                 color(list(list[str])): list of colors)): scheduled inquiries
     """
 
-    len_alp = len(alp)
-    targets = []
+    target_indexes = []
+    no_target = None
 
     if (target_positions == target_positions.DISTRIBUTED):
-        targets = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
+        target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
     else:
         # make list of random targets with correct number of non-target inquiries
         num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
-        targets = [stim_length] * num_nontarget_inquiry
-        for _ in range(stim_number - num_nontarget_inquiry):
-            targets.append(random.randint(0, stim_length - 1))
-        targets = shuffle(targets)
+        num_target_inquiry = stim_number - num_nontarget_inquiry
+        target_indexes = [no_target] * num_nontarget_inquiry
+        target_indexes.extend(random.choices(range(stim_length), k=num_target_inquiry))
+        random.shuffle(target_indexes)
 
     samples, times, colors = [], [], []
 
     for i in range(stim_number):
-        # take random sample of alpahbet of stim_length (+1 for no target inquiries)
-        idx = np.random.permutation(np.array(list(range(len_alp))))
-        rand_smp = (idx[0:stim_length + 1])
+        inquiry = random.sample(alp, k=stim_length)
 
         if stim_order == StimuliOrder.ALPHABETICAL:
-            inquiry = alphabetize([alp[i] for i in rand_smp])
+            inquiry = alphabetize(inquiry)
+
+        target_index = target_indexes[i]
+        if target_index is no_target:
+            target = random.choice(list(set(alp) - set(inquiry)))
         else:
-            inquiry = [alp[i] for i in rand_smp]
+            target = inquiry[target_index]
 
-        # select target letter and fixation
-        target_selection = inquiry[targets[i]]
-        sample = [target_selection, get_fixation(is_txt=is_txt)]
+        sample = [target, get_fixation(is_txt=is_txt), *inquiry]
 
-        # cut off non-target inqiury
-        inquiry = inquiry[0:stim_length]
-
-        sample.extend(inquiry)
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
@@ -314,29 +310,29 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
+
+    targets = []
+    no_target = None
+
     # find number of target and nontarget inquiries
-    # we can change nontarget_inquiry to a float and ask for 0.1
-    num_nontarget_inquiries = int(stim_number * (nontarget_inquiries / 100))
-    num_target_inquiries = stim_number - num_nontarget_inquiries
+    num_nontarget_inquiry = int(stim_number * (nontarget_inquiries / 100))
+    num_target_inquiry = stim_number - num_nontarget_inquiry
 
     # find number each target position is repeated, and remaining number
-    target_indexes = (int)(num_target_inquiries / stim_length)
-    num_rem_pos = (num_target_inquiries % stim_length)
-    targets = []
+    num_pos = (int)(num_target_inquiry / stim_length)
+    num_rem_pos = (num_target_inquiry % stim_length)
 
-    # make distributed list of target positions
+    # add correct number of None's for nontarget inquiries
+    targets = [no_target] * num_nontarget_inquiry
+
+    # add distributed list of target positions
     for i in range(stim_length):
-        for _ in range(target_indexes):
+        for _ in range(num_pos):
             targets.append(i)
 
     # pick leftover positions randomly
     rem_pos = np.random.permutation(np.array(list(range(stim_length))))
     rem_pos = rem_pos[0:num_rem_pos]
-    targets.extend(rem_pos)
-
-    # add nontarget positions
-    rem_pos = (int(stim_length)) * (np.ones(num_nontarget_inquiries))
-    rem_pos = rem_pos.astype(int)
     targets.extend(rem_pos)
 
     # shuffle targets
