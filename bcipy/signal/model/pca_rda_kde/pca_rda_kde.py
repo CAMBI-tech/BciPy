@@ -106,6 +106,19 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
+        # breakpoint()
+        # inv_reg_cov = self.model.pipeline[1].inv_reg_cov_i[1]
+        # indices = np.argwhere(~np.isfinite(inv_reg_cov))
+        # print(inv_reg_cov[indices])
+        # print(np.argwhere(~np.isfinite(self.model.pipeline[1].inv_reg_cov_i[1])))
+        # self.inv_reg_cov_i[1][np.argwhere(np.isfinite(self.inv_reg_cov_i[1]))]
+
+        # mat = self.model.pipeline[1].inv_reg_cov_i[1].flatten()
+        # bad_idx = np.argwhere(~np.isfinite(mat))
+        # good_idx = np.argwhere(np.isfinite(mat))
+        # print(np.min(np.abs(mat[good_idx])))
+
+
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 

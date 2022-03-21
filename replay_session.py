@@ -149,9 +149,10 @@ def comparison1(data_folder, parameters, model_path: Path, output_path: Path, wr
         trials,
     )
     logger.info(f"Inquiry trials == trial reshaper? {validate_response}")
+    assert validate_response
 
 
-def comparison2(data_folder, parameters, model_path: Path, output_path: Path, write_output: bool = False):
+def generate_replay_outputs(data_folder, parameters, model_path: Path, output_path: Path, write_output: bool = False):
     """Try running a previous model as follows. Shouldn't get errors.
 
     # 2a (real, online model): raw -> inquiries -> filter -> trials -> model preds
@@ -223,13 +224,12 @@ def comparison2(data_folder, parameters, model_path: Path, output_path: Path, wr
     trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
 
     alpha = alphabet()
-    outputs = []  ## TODO: we eventually want to output a list of likelihoods per inquiry!!
+    outputs = {}  ## TODO: we eventually want to output a list of likelihoods per inquiry!!
     # target_likelihood_updates, nontarget_likelihood_updates = [], []
     inquiry_worth_of_trials = np.split(trials, inquiries.shape[1], 1)
     inquiry_worth_of_letters = grouper(trigger_symbols, trials_per_inquiry, incomplete="ignore")
-    alphabet
-    for inquiry_trials, this_inquiry_letters, this_inquiry_labels in zip(
-        inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels
+    for i, (inquiry_trials, this_inquiry_letters, this_inquiry_labels) in enumerate(
+        zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
     ):
         response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=alpha)
         if np.any(this_inquiry_labels == 1):
@@ -242,13 +242,11 @@ def comparison2(data_folder, parameters, model_path: Path, output_path: Path, wr
             target_index_in_alphabet = None
             nontarget_idx_in_alphabet = [alpha.index(q) for q in this_inquiry_letters]
 
-        outputs.append(
-            {
-                "likelihood_updates": list(response),
-                "target_index": target_index_in_alphabet,
-                "nontarget_idx": nontarget_idx_in_alphabet,
-            }
-        )
+        outputs[i] = {
+            "eeg_evidence": list(response),
+            "target_idx": target_index_in_alphabet,
+            "nontarget_idx": nontarget_idx_in_alphabet,
+        }
 
     if write_output:
         with open(output_path / "replay_outputs.json", "w") as f:
@@ -355,5 +353,5 @@ if __name__ == "__main__":
     logger.info(f"Loading params from {params_file}")
     params = load_json_parameters(params_file, value_cast=True)
     comparison1(args.data_folder, params, args.model_file, args.data_folder)
-    comparison2(args.data_folder, params, args.model_file, args.data_folder, write_output=True)
+    generate_replay_outputs(args.data_folder, params, args.model_file, args.data_folder, write_output=True)
     logger.info("Offline Analysis complete.")
