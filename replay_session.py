@@ -8,28 +8,25 @@ TODO Mar 15:
 - Cleanup this script and refactor as needed.
 """
 import json
-import logging
-import sys
-from bcipy.helpers.triggers import TriggerType
 
 # from curses import raw
 from itertools import zip_longest
 from pathlib import Path
 
-# from loguru import logger
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
+from loguru import logger
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.task import InquiryReshaper, alphabet
-from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 
-logging.basicConfig(
-    stream=sys.stdout, level=logging.DEBUG, format="%(asctime)s - %(message)s", datefmt="%d-%b-%y %H:%M:%S"
-)
-logger = logging.getLogger(__name__)
+SYMBOLS = alphabet()
 
 
 def grouper(iterable, chunk_size, *, incomplete="fill", fillvalue=None):
@@ -55,7 +52,7 @@ def load_model(model_path: Path, k_folds: int):
     return model
 
 
-def comparison1(data_folder, parameters, model_path: Path, output_path: Path, write_output: bool = False):
+def comparison1(data_folder, parameters, model_path: Path):
     """Check that we get trials from correct positions"""
 
     # extract relevant session information from parameters file
@@ -152,7 +149,7 @@ def comparison1(data_folder, parameters, model_path: Path, output_path: Path, wr
     assert validate_response
 
 
-def generate_replay_outputs(data_folder, parameters, model_path: Path, output_path: Path, write_output: bool = False):
+def generate_replay_outputs(data_folder, parameters, model_path: Path, write_output=False):
     """Try running a previous model as follows. Shouldn't get errors.
 
     # 2a (real, online model): raw -> inquiries -> filter -> trials -> model preds
@@ -249,10 +246,40 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, output_pa
         }
 
     if write_output:
-        with open(output_path / "replay_outputs.json", "w") as f:
+        with open(data_folder / "replay_outputs.json", "w") as f:
             json.dump(outputs, f, indent=2)
 
-    return outputs
+    # Get values computed during actual experiment from session.json
+    session_json = data_folder / "session.json"
+    all_target_eeg, all_nontarget_eeg = load_from_session_json(session_json)
+
+    return outputs, all_target_eeg, all_nontarget_eeg
+
+
+def load_from_session_json(session_json) -> list:
+    with open(session_json, "r") as f:
+        contents = json.load(f)
+    series = contents["series"]
+
+    all_target_eeg = []
+    all_nontarget_eeg = []
+
+    for inquiries in series.values():
+        for inquiry in inquiries.values():
+            if len(inquiry["eeg_evidence"]) < 1:
+                continue
+            else:
+                stim_label = inquiry["stimuli"][0]  # name of symbols presented
+                stim_label.pop(0)
+                stim_indices = [SYMBOLS.index(sym) for sym in stim_label]
+                targetness = inquiry["target_info"]  # targetness of stimuli
+                # target_letter = inquiry['target_letter']
+                target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
+                nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
+                all_target_eeg.extend([inquiry["eeg_evidence"][pos] for pos in target])
+                all_nontarget_eeg.extend([inquiry["eeg_evidence"][pos] for pos in nontarget])
+
+    return all_target_eeg, all_nontarget_eeg
 
 
 def validate_inquiry_based_trials_against_trial_reshaper(
@@ -293,16 +320,6 @@ def validate_inquiry_based_trials_against_trial_reshaper(
     return is_allclose
 
 
-def plot_eeg():
-    """TODO: use the MNE snippets? See https://github.com/CAMBI-tech/BciPy/blob/ar_offline_analysis/bcipy/signal/model/ar_offline_analysis.py
-
-    I've never passed MNE already trialed data, but the trigger timing etc generated from the
-    various reshapers could be used after inputting the raw data to epoch and visualize. Sorry
-    I didn't get further on this!
-    """
-    pass
-
-
 def filter_inquiries(inquiries, transform, sample_rate):
     old_shape = inquiries.shape  # (C, I, 699)
     inq_flatten = inquiries.reshape(-1, old_shape[-1])  # (C*I, 699)
@@ -311,47 +328,103 @@ def filter_inquiries(inquiries, transform, sample_rate):
     return inquiries, transformed_sample_rate
 
 
-def get_trials_from_model_reshaper(
-    raw_data,
-    sample_rate,
-    model,
-    transform,
-    trigger_targetness,
-    trigger_timing,
-    trials_per_inquiry,
-    channel_map,
-    trial_length,
-):
-    data, sample_rate = transform(raw_data.by_channel(), sample_rate)
-    # because the reshapers can change timing with offsets, we should still return the timing that updated
-    trials, targetness_labels = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        # trial_stimuli_label=trigger_labels,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        fs=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=trial_length,
+def plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nontargets_with_old_model, outdir):
+    records = []
+    for output in outputs_with_new_model:  # each session
+        for inquiry_idx, inquiry_contents in output.items():  # each inquiry
+            target_idx = inquiry_contents["target_idx"]
+            if target_idx is not None:
+                records.append(
+                    {
+                        "which_model": "new_target",
+                        "response_value": inquiry_contents["eeg_evidence"][target_idx],
+                    }
+                )
+
+            nontarget_idx = inquiry_contents["nontarget_idx"]
+            for i in nontarget_idx:
+                records.append({"which_model": "new_nontarget", "response_value": inquiry_contents["eeg_evidence"][i]})
+
+    for target_response in targets_with_old_model:
+        records.append({"which_model": "old_target", "response_value": target_response})
+    for nontarget_response in nontargets_with_old_model:
+        records.append({"which_model": "old_nontarget", "response_value": nontarget_response})
+
+    df = pd.DataFrame.from_records(records)
+    logger.info(f"{df.describe()=}")
+    ax = sns.stripplot(
+        x="which_model",
+        y="response_value",
+        data=df,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
     )
-    # response = model.evaluate(new_trials, targetness_labels)
-    # # response_trials_from_inq = model.evaluate(trials, targetness_labels)
-    # response = model.predict(new_trials, trigger_labels, symbol_set=alphabet())
-    # # response2 = model.predict(trials, trigger_labels, symbol_set=alphabet())
-    return trials, targetness_labels, sample_rate
+    sns.boxplot(
+        showmeans=True,
+        meanline=True,
+        meanprops={"color": "k", "ls": "-", "lw": 2},
+        medianprops={"visible": False},
+        whiskerprops={"visible": False},
+        zorder=10,
+        x="which_model",
+        y="response_value",
+        data=df,
+        showfliers=False,
+        showbox=False,
+        showcaps=False,
+        ax=ax,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+
+    ax.set(yscale="log")
+    plt.savefig(outdir / "response_values.stripplot.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    ax = sns.violinplot(
+        x="which_model",
+        y="response_value",
+        data=df,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+    ax.set(yscale="log")
+    plt.savefig(outdir / "response_values.violinplot.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    ax = sns.boxplot(
+        x="which_model",
+        y="response_value",
+        data=df,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+    ax.set(yscale="log")
+    plt.savefig(outdir / "response_values.boxplot.png", dpi=150, bbox_inches="tight")
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data_folder", type=Path, default=None)
+    parser.add_argument("-d", "--data_folders", action="append", type=Path, default=None)
     parser.add_argument("-m", "--model_file", required=True)
+    outdir = Path(__file__).resolve().parent
+    logger.info(f"Outdir: {outdir}")
     args = parser.parse_args()
 
-    params_file = Path(args.data_folder, "parameters.json")
-    logger.info(f"Loading params from {params_file}")
-    params = load_json_parameters(params_file, value_cast=True)
-    comparison1(args.data_folder, params, args.model_file, args.data_folder)
-    generate_replay_outputs(args.data_folder, params, args.model_file, args.data_folder, write_output=True)
-    logger.info("Offline Analysis complete.")
+    assert len(set(args.data_folders)) == len(args.data_folders), "Duplicated data folders"
+
+    outputs_with_new_model = []
+    targets_with_old_model = []
+    nontargets_with_old_model = []
+    for data_folder in args.data_folders:
+        logger.info(f"Processing {data_folder}")
+        params_file = Path(data_folder, "parameters.json")
+        logger.info(f"Loading params from {params_file}")
+        params = load_json_parameters(params_file, value_cast=True)
+        comparison1(data_folder, params, args.model_file)
+        outputs, all_target_eeg, all_nontarget_eeg = generate_replay_outputs(
+            data_folder, params, args.model_file, write_output=True
+        )
+        outputs_with_new_model.append(outputs)
+        targets_with_old_model.extend(all_target_eeg)
+        nontargets_with_old_model.extend(all_nontarget_eeg)
+
+    plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nontargets_with_old_model, outdir)
+
+    logger.info("Replay complete.")
