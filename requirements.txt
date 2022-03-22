@@ -1,7 +1,6 @@
 wheel==0.30.0
 transformers==4.15.0
 torch==1.10.1
-docker==2.6.1
 construct==2.8.14
 mne==0.17.0
 PsychoPy==2020.2.10

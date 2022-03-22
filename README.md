@@ -31,7 +31,7 @@ Other guidelines:
 - Use informative names for functions and classes.
 - Document the input and output of your functions / classes in the code. eg in-line commenting and typing
 - Do not push IDE or other local configuration files.
-- All new modules or major functionality should be documented outside of the code with a README.md. 
+- All new modules or major functionality should be documented outside of the code with a README.md.
 	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
 
 See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
@@ -47,8 +47,6 @@ This project requires Python > 3.6.5 and other packages defined in the requireme
 #### BciPy Setup
 
 In order to run BciPy on your computer, first install **Python 3** [from here.](https://www.python.org/downloads/)
-
-You must install Docker and Docker-Machine to use the Language Model developed by CSLU. There are instructions in the language model directory for getting the image you need (think of it as a callable server). You'll also need to download and load the language model [images](https://drive.google.com/drive/folders/1OYpUYASAceb60b2c5obyYytEZ0AZrajY?usp=sharing). If not using or rolling your own, set fake_lm to true in the parameters.json file.
 
 To use all the goodies locally (including the GUI and demo scripts)
 1. Git clone https://github.com/BciPy/BciPy.git
@@ -113,10 +111,10 @@ This a list of the major modules and their functionality. Each module will conta
 
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
-- `signal`: eeg signal models, filters, processing, evaluators and viewers. 
+- `signal`: eeg signal models, filters, processing, evaluators and viewers.
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
-- `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization. 
-- `language_model`: gives probabilities of next letters during typing.
+- `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization.
+- `language`: gives probabilities of next symbols during typing.
 - `parameters`: location of json parameters.
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `task`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVP Calibration.

@@ -750,12 +750,12 @@
     "type": "bool"
   },
   "lang_model_type": {
-    "value": "PRELM",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: PRELM",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
-      "PRELM",
+      "GPT2",
       "UNIFORM"
     ],
     "type": "str"

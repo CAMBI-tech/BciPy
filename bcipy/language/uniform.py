@@ -3,7 +3,6 @@ from typing import Dict, List, Tuple, Union, Optional
 
 import numpy as np
 
-from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 
@@ -15,18 +14,12 @@ class UniformLanguageModel(LanguageModel):
     ----------
         response_type - SYMBOL only
         symbol_set - optional specify the symbol set, otherwise uses DEFAULT_SYMBOL_SET
-        backspace symbol. Probabilities for other symbols will be adjusted.
     """
 
     def __init__(self,
                  response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = None,
-                 lm_backspace_prob: float = None):
+                 symbol_set: Optional[List[str]] = None):
         super().__init__(response_type=response_type, symbol_set=symbol_set)
-        if lm_backspace_prob:
-            assert 0 <= lm_backspace_prob < 1, "Backspace probability must be between 0 and 1"
-
-        self.backspace_prob = lm_backspace_prob
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
@@ -44,10 +37,7 @@ class UniformLanguageModel(LanguageModel):
         -------
             list of (symbol, probability) tuples
         """
-        overrides = None
-        if self.backspace_prob:
-            overrides = {BACKSPACE_CHAR: self.backspace_prob}
-        probs = equally_probable(self.symbol_set, overrides)
+        probs = equally_probable(self.symbol_set)
         return list(zip(self.symbol_set, probs))
 
     def update(self) -> None:
