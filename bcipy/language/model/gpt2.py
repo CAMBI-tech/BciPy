@@ -42,6 +42,10 @@ class GPT2LanguageModel(LanguageModel):
         self.beam_width = 20
         self.search_depth = 2
 
+        # interpolate / reslace coefficients
+        self.interpolate_coeff = 0.8
+        self.rescale_coeff = 0.5
+
         self.load()
 
     def supported_response_types(self) -> List[ResponseType]:
@@ -305,10 +309,10 @@ class GPT2LanguageModel(LanguageModel):
 
         # interpolate with unigram language model to smooth the probability distribution returned
         # by GPT2 language model
-        next_char_pred = GPT2LanguageModel.interpolate_language_models(dict(next_char_pred), self.unigram_lm, 0.8)
+        next_char_pred = GPT2LanguageModel.interpolate_language_models(dict(next_char_pred), self.unigram_lm, self.interpolate_coeff)
 
         # exponentially rescale the language model
-        next_char_pred = GPT2LanguageModel.rescale(dict(next_char_pred), 0.5)
+        next_char_pred = GPT2LanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
 
         return next_char_pred
 
