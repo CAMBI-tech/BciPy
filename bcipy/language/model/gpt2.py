@@ -38,6 +38,8 @@ class GPT2LanguageModel(LanguageModel):
                            'F': 0.0117, 'B': 0.0113, 'V': 0.0091, 'J': 0.0016,
                            'X': 0.0008, 'Z': 0.0005, 'Q': 0.0002, BACKSPACE_CHAR: 0.0}
 
+        assert set(self.unigram_lm.keys()) == set(self.symbol_set), "invalid unigram model symbol set!"
+
         # parameters for beam search
         self.beam_width = 20
         self.search_depth = 2
