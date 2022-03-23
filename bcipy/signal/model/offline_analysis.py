@@ -97,13 +97,13 @@ def offline_analysis(data_folder: str = None,
 
     model = PcaRdaKdeModel(k_folds=k_folds)
     data, labels = model.reshaper(
-        trial_labels=trigger_values,
+        trial_targetness_label=trigger_values,
         timing_info=trigger_timing,
         eeg_data=data,
         fs=fs,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
-        trial_length=trial_length)
+        poststimulus_length=trial_length)
 
     log.info('Training model. This will take some time...')
     model.fit(data, labels)
@@ -128,6 +128,8 @@ def offline_analysis(data_folder: str = None,
         play_sound(offline_analysis_tone)
 
     return model, figure_handles
+
+
 
 
 if __name__ == "__main__":

@@ -21,29 +21,14 @@ from loguru import logger
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.task import InquiryReshaper, alphabet
+from bcipy.helpers.list import grouper
+from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper
+from bcipy.language.main import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 
 SYMBOLS = alphabet()
-
-
-def grouper(iterable, chunk_size, *, incomplete="fill", fillvalue=None):
-    "Collect data into non-overlapping fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, fillvalue='x') --> ABC DEF Gxx
-    # grouper('ABCDEFG', 3, incomplete='strict') --> ABC DEF ValueError
-    # grouper('ABCDEFG', 3, incomplete='ignore') --> ABC DEF
-    chunks = [iter(iterable)] * chunk_size
-    if incomplete == "fill":
-        return zip_longest(*chunks, fillvalue=fillvalue)
-    if incomplete == "strict":
-        return zip(*chunks, strict=True)
-    if incomplete == "ignore":
-        return zip(*chunks)
-
-    raise ValueError("Expected fill, strict, or ignore")
-
 
 def load_model(model_path: Path, k_folds: int):
     """Load the PcaRdaKdeModel model at the given path"""
@@ -106,14 +91,14 @@ def comparison1(data_folder, parameters, model_path: Path):
     # data , [0: 1, 0, 1], [0, ... , n]
     inquiries, _, inquiry_timing = InquiryReshaper()(
         trial_targetness_label=trigger_targetness,
-        trial_stimuli_label=trigger_labels,
         timing_info=trigger_timing,
         eeg_data=data,
         fs=transformed_sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
-        transformation_buffer=0,  # use this to add time to the end of the Inquiry for processing!
+        prestimulus_length=0,
+        transformation_buffer=trial_length,  # use this to add time to the end of the Inquiry for processing!
     )
 
     # NOTE -
@@ -129,7 +114,7 @@ def comparison1(data_folder, parameters, model_path: Path):
 
     # "Can we get the trials from exact same time windows"
     # 1a:   raw data -> filtered data -> TrialReshaper
-    # 1b:   raw data -> fitered -> InquiryReshaper -> TrialReshaper
+    # 1b:   raw data -> filtered -> InquiryReshaper -> TrialReshaper
     # Note that we're not doing the same kind of preprocessing
     # as we do "online".
     # uncomment to validate against the trial reshaper. Note: check reshape parameters are set correctly!
@@ -198,14 +183,14 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     # data , [0: 1, 0, 1], [0, ... , n]
     inquiries, inquiry_labels, inquiry_timing = InquiryReshaper()(
         trial_targetness_label=trigger_targetness,
-        trial_stimuli_label=trigger_symbols,
         timing_info=trigger_timing,
         eeg_data=raw_data.by_channel(),
         fs=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
-        transformation_buffer=0,  # use this to add time to the end of the Inquiry for processing!
+        prestimulus_length=0,
+        transformation_buffer=trial_length,  # use this to add time to the end of the Inquiry for processing!
     )
 
     default_transform = get_default_transform(
@@ -299,20 +284,13 @@ def validate_inquiry_based_trials_against_trial_reshaper(
     # because the reshapers can change timing with offsets, we should still return the timing that updated
     trials, _targetness_labels = model.reshaper(
         trial_targetness_label=trigger_targetness,
-        # trial_stimuli_label=trigger_labels,
         timing_info=trigger_timing,
         eeg_data=data,
         fs=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
     )
 
-    # uncomment to play around with model predictions
-    # response = model.evaluate(trials, targetness_labels)
-    # response_trials_from_inq = model.evaluate(inquiry_trials, targetness_labels)
-    # response = model.predict(new_trials, trigger_labels, symbol_set=alphabet())
-    # # response2 = model.predict(trials, trigger_labels, symbol_set=alphabet())
     logger.info(f"is finite (trials): {np.all(np.isfinite(trials))}")
     logger.info(f"is finite (inquiry_trials): {np.all(np.isfinite(inquiry_trials))}")
     is_allclose = np.allclose(trials, inquiry_trials)
