@@ -10,11 +10,11 @@ from bcipy.helpers.load import (
 from matplotlib.figure import Figure
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import report_execution_time
-from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.triggers import trigger_decoder, TriggerType
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.base_model import SignalModel
-from bcipy.signal.process import get_default_transform
+from bcipy.signal.process import get_default_transform, filter_inquiries
 
 
 log = logging.getLogger(__name__)
@@ -51,66 +51,79 @@ def offline_analysis(data_folder: str = None,
         data_folder = load_experimental_data()
 
     # extract relevant session information from parameters file
-    trial_length = parameters.get('trial_length')
-    trials_per_inquiry = parameters.get('stim_length')
-    triggers_file = parameters.get('trigger_file_name', 'triggers')
-    raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
+    trial_length = parameters.get("trial_length")
+    trials_per_inquiry = parameters.get("stim_length")
+    time_flash = parameters.get("time_flash")
+    triggers_file = parameters.get("trigger_file_name", "triggers")
+    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
     # get signal filtering information
-    downsample_rate = parameters.get('down_sampling_rate')
-    notch_filter = parameters.get('notch_filter_frequency')
-    hp_filter = parameters.get('filter_high')
-    lp_filter = parameters.get('filter_low')
-    filter_order = parameters.get('filter_order')
-
-    # get offset and k folds
-    static_offset = parameters.get('static_trigger_offset', 0.0)
-    k_folds = parameters.get('k_folds')
+    downsample_rate = parameters.get("down_sampling_rate")
+    notch_filter = parameters.get("notch_filter_frequency")
+    filter_high = parameters.get("filter_high")
+    filter_low = parameters.get("filter_low")
+    filter_order = parameters.get("filter_order")
+    static_offset = parameters.get("static_trigger_offset")
 
     # Load raw data
     raw_data = load_raw_data(Path(data_folder, raw_data_file))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
-    fs = raw_data.sample_rate
+    sample_rate = raw_data.sample_rate
 
-    log.info(f'Channels read from csv: {channels}')
-    log.info(f'Device type: {type_amp}')
-
+     # setup filtering
     default_transform = get_default_transform(
-        sample_rate_hz=fs,
+        sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
-        bandpass_low=lp_filter,
-        bandpass_high=hp_filter,
+        bandpass_low=filter_low,
+        bandpass_high=filter_high,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-    data, fs = default_transform(raw_data.by_channel(), fs)
+
+    log.info(f"Channels read from csv: {channels}")
+    log.info(f"Device type: {type_amp}")
+    log.info(
+        f"Data processing settings: [Filter=[{filter_low}-{filter_high}]; order=[{filter_order}], Notch=[{notch_filter}]],"
+        f"Downsample=[{downsample_rate}]]"
+    )
+
+    k_folds = parameters.get("k_folds")
+    model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt
-    trigger_values, trigger_timing, _ = trigger_decoder(
+    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
-        trigger_path=f'{data_folder}/{triggers_file}.txt')
-
+        trigger_path=f"{data_folder}/{triggers_file}.txt",
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
+    )
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, type_amp)
 
-    model = PcaRdaKdeModel(k_folds=k_folds)
-    data, labels = model.reshaper(
-        trial_targetness_label=trigger_values,
+    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+        trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
-        eeg_data=data,
-        fs=fs,
+        eeg_data=raw_data.by_channel(),
+        fs=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
-        poststimulus_length=trial_length)
+        poststimulus_length=trial_length,
+        prestimulus_length=0.5, #TODO pull from params
+        transformation_buffer=trial_length,
+    )
+
+    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+    trial_duration_samples = int(trial_length * fs)
+    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
+    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
+
+    model = PcaRdaKdeModel(k_folds=k_folds)
 
     log.info('Training model. This will take some time...')
     model.fit(data, labels)
-    # model_performance = model.evaluate(data, labels)
 
     log.info(f'Training complete [AUC={model.auc:0.4f}]. Saving data...')
-
     model.save(data_folder + f'/model_{model.auc:0.4f}.pkl')
 
     figure_handles = visualize_erp(
@@ -128,8 +141,6 @@ def offline_analysis(data_folder: str = None,
         play_sound(offline_analysis_tone)
 
     return model, figure_handles
-
-
 
 
 if __name__ == "__main__":
