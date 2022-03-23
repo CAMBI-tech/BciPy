@@ -6,7 +6,6 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
-import numpy as np
 import collections as cnt
 
 from bcipy.helpers.stimuli import (
@@ -388,8 +387,7 @@ class TestStimuliGeneration(unittest.TestCase):
 
         # make sure position counts are equally distributed, including non-target
         for i in count:
-            self.assertGreaterEqual(count[i], num_target_inquiries)
-            self.assertLessEqual(count[i], (num_target_inquiries + 1))
+            self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
 
     def test_distributed_target_positions_half_nontarget(self):
         """Test generation of distributed target positions with half being nontarget inquiries."""
@@ -418,8 +416,7 @@ class TestStimuliGeneration(unittest.TestCase):
         # make sure target position counts are equally distributed
         for i in count:
             if i is not None:
-                self.assertGreaterEqual(count[i], num_target_inquiries)
-                self.assertLessEqual(count[i], (num_target_inquiries + 1))
+                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
 
         # make sure correct number of non-target inquiries
         self.assertEqual(count[None], nontarget_inquiry,
@@ -452,8 +449,7 @@ class TestStimuliGeneration(unittest.TestCase):
         # make sure target position counts are equally distributed
         for i in count:
             if i is not None:
-                self.assertGreaterEqual(count[i], num_target_inquiries)
-                self.assertLessEqual(count[i], (num_target_inquiries + 1))
+                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
 
         # make sure there are no non-target inquiries
         self.assertEqual(count[None], 0,
@@ -487,8 +483,7 @@ class TestStimuliGeneration(unittest.TestCase):
         # make sure target position counts are equally distributed
         for i in count:
             if i is not None:
-                self.assertGreaterEqual(count[i], num_target_inquiries)
-                self.assertLessEqual(count[i], (num_target_inquiries + 1))
+                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
 
         # make sure all inquries are non-target inquiries
         self.assertEqual(count[None], stim_number,

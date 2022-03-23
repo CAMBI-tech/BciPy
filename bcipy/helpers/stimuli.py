@@ -8,7 +8,6 @@ from typing import Iterator, List, Tuple, NamedTuple
 
 import numpy as np
 from enum import Enum
-from sklearn.utils import shuffle
 
 import sounddevice as sd
 import soundfile as sf
@@ -326,17 +325,16 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
     targets = [no_target] * num_nontarget_inquiry
 
     # add distributed list of target positions
-    for i in range(stim_length):
-        for _ in range(num_pos):
-            targets.append(i)
+    targets.extend(list(range(stim_length)) * num_pos)
 
     # pick leftover positions randomly
-    rem_pos = np.random.permutation(np.array(list(range(stim_length))))
+    rem_pos = list(range(stim_length))
+    random.shuffle(rem_pos)
     rem_pos = rem_pos[0:num_rem_pos]
     targets.extend(rem_pos)
 
     # shuffle targets
-    targets = np.random.permutation(targets)
+    random.shuffle(targets)
 
     return targets
 
