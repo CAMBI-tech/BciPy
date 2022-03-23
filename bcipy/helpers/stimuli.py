@@ -72,22 +72,11 @@ class InquirySchedule(NamedTuple):
 class Reshaper(ABC):
     
     @abstractmethod
-    def __call__(self,
-                 trial_targetness_label: List[str],
-                 timing_info: List[float],
-                 eeg_data: np.ndarray,
-                 fs: int,
-                 trials_per_inquiry: int,
-                 offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 poststimulus_length: float = 0.5,
-                 target_label: str = "target",
-                 labels_included: Set[str] = set(["target", "nontarget"]),
-                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+    def __call__(self):
         ...
 
 
-class InquiryReshaper(Reshaper):
+class InquiryReshaper:
     def __call__(self,
                  trial_targetness_label: List[str],
                  timing_info: List[float],

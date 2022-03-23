@@ -10,11 +10,12 @@ from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstim
 from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
 from bcipy.signal.exceptions import SignalException
-from bcipy.helpers.stimuli import TrialReshaper
+from bcipy.helpers.stimuli import InquiryReshaper
 
 
 class PcaRdaKdeModel(SignalModel):
-    reshaper = TrialReshaper()
+
+    reshaper = InquiryReshaper()
 
     def __init__(self, k_folds: int):
         self.k_folds = k_folds
