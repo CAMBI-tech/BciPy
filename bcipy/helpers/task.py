@@ -2,8 +2,7 @@ import logging
 import os
 import random
 
-from abc import ABC, abstractmethod
-from itertools import zip_longest
+from typing import Any, List, Tuple, Union
 from string import ascii_uppercase
 from turtle import position
 from typing import Any, List, Optional, Set, Tuple, Union

@@ -1,5 +1,7 @@
 """Utility functions for list processing."""
 from typing import Callable, List
+from itertools import zip_longest
+
 
 
 def destutter(items: List, key: Callable = lambda x: x) -> List:
@@ -18,3 +20,19 @@ def destutter(items: List, key: Callable = lambda x: x) -> List:
         else:
             deduped[-1] = item
     return deduped
+
+
+def grouper(iterable, chunk_size, incomplete="fill", fillvalue=None):
+    "Collect data into non-overlapping fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, fillvalue='x') --> ABC DEF Gxx
+    # grouper('ABCDEFG', 3, incomplete='strict') --> ABC DEF ValueError
+    # grouper('ABCDEFG', 3, incomplete='ignore') --> ABC DEF
+    chunks = [iter(iterable)] * chunk_size
+    if incomplete == "fill":
+        return zip_longest(*chunks, fillvalue=fillvalue)
+    if incomplete == "strict":
+        return zip(*chunks, strict=True)
+    if incomplete == "ignore":
+        return zip(*chunks)
+
+    raise ValueError("Expected fill, strict, or ignore")
