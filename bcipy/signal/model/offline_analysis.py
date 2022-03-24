@@ -26,8 +26,7 @@ logging.basicConfig(
 @report_execution_time
 def offline_analysis(data_folder: str = None,
                      parameters: dict = {},
-                     alert_finished: bool = True,
-                     save_folder: str = None) -> Tuple[SignalModel, Figure]:
+                     alert_finished: bool = True) -> Tuple[SignalModel, Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -51,9 +50,6 @@ def offline_analysis(data_folder: str = None,
 
     if not data_folder:
         data_folder = load_experimental_data()
-
-    if not save_folder:
-        save_folder = data_folder
 
     # extract relevant session information from parameters file
     trial_length = parameters.get("trial_length")
