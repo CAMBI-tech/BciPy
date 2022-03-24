@@ -25,7 +25,9 @@ logging.basicConfig(
 
 @report_execution_time
 def offline_analysis(data_folder: str = None,
-                     parameters: dict = {}, alert_finished: bool = True) -> Tuple[SignalModel, Figure]:
+                     parameters: dict = {},
+                     alert_finished: bool = True,
+                     save_folder: str = None) -> Tuple[SignalModel, Figure]:
     """ Gets calibration data and trains the model in an offline fashion.
         pickle dumps the model into a .pkl folder
         Args:
@@ -50,10 +52,16 @@ def offline_analysis(data_folder: str = None,
     if not data_folder:
         data_folder = load_experimental_data()
 
+    if not save_folder:
+        save_folder = data_folder
+
     # extract relevant session information from parameters file
     trial_length = parameters.get("trial_length")
+    poststim_length = parameters.get("poststim_length")
     trials_per_inquiry = parameters.get("stim_length")
-    time_flash = parameters.get("time_flash")
+    # The task buffer length defines the min time between two inquiries
+    # We use half of that time here to buffer during transforms
+    buffer = int(parameters.get("task_buffer_length") / 2)
     triggers_file = parameters.get("trigger_file_name", "triggers")
     raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
@@ -91,14 +99,14 @@ def offline_analysis(data_folder: str = None,
     k_folds = parameters.get("k_folds")
     model = PcaRdaKdeModel(k_folds=k_folds)
 
-    # Process triggers.txt
+    # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{triggers_file}.txt",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
     )
-    # Channel map can be checked from raw_data.csv file.
-    # The timestamp column is already excluded.
+    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
+    # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, type_amp)
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
@@ -109,20 +117,21 @@ def offline_analysis(data_folder: str = None,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
-        prestimulus_length=0.5, #TODO pull from params
-        transformation_buffer=trial_length,
+        prestimulus_length=poststim_length,
+        transformation_buffer=buffer,
     )
 
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
     trial_duration_samples = int(trial_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
-    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
-    model = PcaRdaKdeModel(k_folds=k_folds)
+    # define the training classes using integers, where 0=nontargets/1=targets
+    labels = [1 if label == 'target' else 0 for label in trigger_targetness]
 
+    # train and save the model as a pkl file
     log.info('Training model. This will take some time...')
+    model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
-
     log.info(f'Training complete [AUC={model.auc:0.4f}]. Saving data...')
     model.save(data_folder + f'/model_{model.auc:0.4f}.pkl')
 
@@ -130,7 +139,7 @@ def offline_analysis(data_folder: str = None,
         data,
         labels,
         fs,
-        plot_average=False,  # set to True to see all channels target/nontarget
+        plot_average=False,  # set to True to see all channels target/nontarget averages
         save_path=data_folder,
         channel_names=analysis_channel_names_by_pos(channels, channel_map),
         show_figure=False,
