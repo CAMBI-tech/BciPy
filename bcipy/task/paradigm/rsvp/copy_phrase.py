@@ -509,8 +509,8 @@ class RSVPCopyPhraseTask(Task):
             inquiry_timing=self.stims_for_decision(stim_times),
             daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
-            prestim_length=self.parameters['prestim_length'],
-            poststim_length=self.parameters['task_buffer_length'] + self.parameters['trial_length'])
+            prestim=self.parameters['prestim_length'],
+            poststim=self.parameters['task_buffer_length'] + self.parameters['trial_length'])
 
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
