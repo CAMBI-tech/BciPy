@@ -1,25 +1,27 @@
 import glob
 import itertools
-import re
 import logging
-from itertools import zip_longest
-from enum import Enum
 import random
-from os import path, sep
+import re
+
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Set, Tuple, NamedTuple, Optional
+from enum import Enum
+from os import path, sep
+from typing import Iterator, List, Tuple, NamedTuple
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
+
+from PIL import Image
+# Prevents pillow from filling the console with debug info
+logging.getLogger('PIL').setLevel(logging.WARNING)
 
 from psychopy import core
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from PIL import Image
 
-# Prevents pillow from filling the console with debug info
-logging.getLogger('PIL').setLevel(logging.WARNING)
+
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
 DEFAULT_CHANNEL_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
@@ -70,7 +72,7 @@ class InquirySchedule(NamedTuple):
 
 
 class Reshaper(ABC):
-    
+
     @abstractmethod
     def __call__(self):
         ...
@@ -86,7 +88,7 @@ class InquiryReshaper:
                  offset: float = 0,
                  channel_map: List[int] = DEFAULT_CHANNEL_MAP,
                  poststimulus_length: float = 0.5,
-                 prestimulus_length: float = 0.0,  # TODO account for prestimulus
+                 prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
         """Extract inquiry data and labels.
@@ -100,12 +102,10 @@ class InquiryReshaper:
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to DEFAULT_CHANNEL_MAP.
-            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry . Defaults to 0.5.
-            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry. Defaults to 0.0.
+            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
+            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
             transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
             target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
@@ -135,7 +135,7 @@ class InquiryReshaper:
 
         # Label for every inquiry
         labels = np.zeros(
-            (n_inquiry, trials_per_inquiry), dtype=np.long
+            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
@@ -151,7 +151,10 @@ class InquiryReshaper:
 
                 trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
             reshaped_trigger_timing.append(trial_triggers)
-            reshaped_data.append(eeg_data[:, first_trigger - prestimulus_samples : first_trigger + num_samples_per_inq + buffer_samples])
+            reshaped_data.append(eeg_data[:, first_trigger -
+                                          prestimulus_samples: first_trigger +
+                                          num_samples_per_inq +
+                                          buffer_samples])
 
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
@@ -166,13 +169,13 @@ class InquiryReshaper:
         """
         new_trials = []
         num_inquiries = inquiries.shape[1]
-        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing): # C x I x S
+        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
 
             for time in timing:
                 time = time // downsample_rate
                 y = time + samples_per_trial
-                new_trials.append(inquiries[:,inquiry_idx,time:y])
-        return np.stack(new_trials, 1) # C x T x S
+                new_trials.append(inquiries[:, inquiry_idx, time:y])
+        return np.stack(new_trials, 1)  # C x T x S
 
 
 class TrialReshaper(Reshaper):
@@ -200,8 +203,6 @@ class TrialReshaper(Reshaper):
                 Defaults to DEFAULT_CHANNEL_MAP.
             poststimulus_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
 
         Returns:
             trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
@@ -219,7 +220,7 @@ class TrialReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
         # Label for every trial in 0 or 1
-        targetness_labels = np.zeros(len(triggers), dtype=np.long)
+        targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
         reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
             if trial_label == target_label:

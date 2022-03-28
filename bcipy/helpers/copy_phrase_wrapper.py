@@ -9,7 +9,7 @@ from bcipy.helpers.language_model import (
     histogram,
     with_min_prob,
 )
-from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder, TrialReshaper
 from bcipy.helpers.task import BACKSPACE_CHAR
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
@@ -144,7 +144,7 @@ class CopyPhraseWrapper:
 
     def evaluate_inquiry(
             self, raw_data: np.array, triggers: List[Tuple[str, float]],
-            target_info: List[str], window_length: int
+            target_info: List[str], window_length: float
     ) -> Tuple[bool, Tuple[List[str], List[float], List[str]]]:
         """Once data is collected, infers meaning from the data and attempt to
         make a decision.
@@ -172,7 +172,7 @@ class CopyPhraseWrapper:
     def evaluate_eeg_evidence(self, raw_data: np.array,
                               triggers: List[Tuple[str, float]],
                               target_info: List[str],
-                              window_length: int) -> np.array:
+                              window_length: float) -> np.array:
         """Once data is collected, infers meaning from the data and return the results.
 
         Parameters
@@ -198,16 +198,17 @@ class CopyPhraseWrapper:
             bandpass_order=self.filter_order,
             downsample_factor=self.downsample_rate,
         )
+
         data, transformed_sample_rate = default_transform(raw_data, self.sampling_rate)
 
-        data, _ = self.signal_model.reshaper(
-            trial_labels=target_info,
+        # The data from DAQ is assumed to have offsets applied
+        data, _ = TrialReshaper()(
+            trial_targetness_label=target_info,
             timing_info=times,
             eeg_data=data,
             fs=transformed_sample_rate,
-            trials_per_inquiry=self.stim_length,
             channel_map=self.channel_map,
-            trial_length=window_length)
+            poststimulus_length=window_length)
 
         return self.signal_model.predict(data, letters, self.alp)
 
