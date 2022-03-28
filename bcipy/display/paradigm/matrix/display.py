@@ -82,6 +82,8 @@ class MatrixDisplay(Display):
         assert self.is_txt_stim is True, "Matrix display is a text only display"
         self.stim_length = stimuli.stim_length
 
+        self.prompt_time = stimuli.prompt_time
+
         self.full_screen = full_screen
 
         self.symbol_set = symbol_set or alphabet()
@@ -141,9 +143,8 @@ class MatrixDisplay(Display):
         if self.first_run:
             self._trigger_pulse()
 
-        timing, target = self.prompt_target()
-
         if self.scp:
+            timing, target = self.prompt_target()
             timing.extend(self.animate_scp())
             return timing, target
 
@@ -204,7 +205,7 @@ class MatrixDisplay(Display):
         self.draw_static()
         self.window.flip()
 
-        core.wait(2)  # get first_pres_time and set on matrix display! What does RSVP use?
+        core.wait(self.prompt_time)
 
         # append timing information
         timing.append(self.trigger_callback.timing)

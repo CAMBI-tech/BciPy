@@ -250,7 +250,8 @@ def init_calibration_display_task(
                                 stim_inquiry=[''] * parameters['stim_length'],
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
-                                is_txt_stim=parameters['is_txt_stim'])
+                                is_txt_stim=parameters['is_txt_stim'],
+                                prompt_time=parameters["time_prompt"])
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
         task_pos=(-.8, .85),
