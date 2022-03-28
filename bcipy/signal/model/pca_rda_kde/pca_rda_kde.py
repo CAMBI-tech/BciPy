@@ -119,7 +119,6 @@ class PcaRdaKdeModel(SignalModel):
         # good_idx = np.argwhere(np.isfinite(mat))
         # print(np.min(np.abs(mat[good_idx])))
 
-
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 

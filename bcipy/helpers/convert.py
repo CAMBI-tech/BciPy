@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
+
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 

@@ -5,6 +5,11 @@ from typing import Dict, List, Tuple
 import numpy as np
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.helpers.task import alphabet
+# pylint: disable=unused-import
+# flake8: noqa
+from bcipy.language.uniform import UniformLanguageModel
+# flake8: noqa
+from bcipy.language.model.gpt2 import GPT2LanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:

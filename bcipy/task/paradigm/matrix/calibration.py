@@ -116,7 +116,7 @@ class MatrixCalibrationTask(Task):
                               self.wait_screen_message_color,
                               first_run=True):
             run = False
-        
+
         # Wait for a time
         core.wait(self.buffer_val)
 

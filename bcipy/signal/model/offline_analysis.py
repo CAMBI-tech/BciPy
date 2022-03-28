@@ -75,7 +75,7 @@ def offline_analysis(data_folder: str = None,
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
-     # setup filtering
+    # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
@@ -88,8 +88,8 @@ def offline_analysis(data_folder: str = None,
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}")
     log.info(
-        f"Data processing settings: [Filter=[{filter_low}-{filter_high}]; order=[{filter_order}], Notch=[{notch_filter}]],"
-        f"Downsample=[{downsample_rate}]]"
+        f"Data processing settings: [Filter=[{filter_low}-{filter_high}]; order=[{filter_order}], "
+        f"Notch=[{notch_filter}]], Downsample=[{downsample_rate}]]"
     )
 
     k_folds = parameters.get("k_folds")

@@ -1,21 +1,26 @@
 import glob
 import unittest
+
 from os import path
+from mockito import any, mock, unstub, verify, when
+
+from psychopy import core
+import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from mockito import any, mock, unstub, verify, when
-from psychopy import core
 
 from bcipy.helpers.stimuli import (
     alphabetize,
     best_case_rsvp_inq_gen,
     best_selection,
+    calibration_inquiry_generator,
     DEFAULT_FIXATION_PATH,
     get_fixation,
+    InquiryReshaper,
     play_sound,
-    calibration_inquiry_generator,
     soundfiles,
-    StimuliOrder
+    StimuliOrder,
+    TrialReshaper,
 )
 
 MOCK_FS = 44100
@@ -92,8 +97,7 @@ class TestStimuliGeneration(unittest.TestCase):
             experiment_clock=experiment_clock,
         )
 
-        # verify all the expected calls happended and the expected number of
-        # times
+        # verify all the expected calls happended and the expected number of times
         verify(sf, times=1).read(sound_file_path, dtype='float32')
         verify(sd, times=1).play('data', MOCK_FS)
         verify(core, times=2).wait(any())
@@ -381,6 +385,83 @@ class TestAlphabetize(unittest.TestCase):
         self.list_to_alphabetize.insert(1, character)
         response = alphabetize(self.list_to_alphabetize)
         self.assertEqual(expected, response)
+
+
+class TestTrialReshaper(unittest.TestCase):
+    def setUp(self):
+        self.target_info = ['target', 'nontarget', 'nontarget']
+        self.timing_info = [1.001, 1.2001, 1.4001]
+        # make some fake eeg data
+        self.channel_number = 21
+        tmp_inp = np.array([range(4000)] * self.channel_number)
+        # Add some channel info
+        tmp_inp[:, 0] = np.transpose(np.arange(1, self.channel_number + 1, 1))
+        self.eeg = tmp_inp
+        self.channel_map = [1] * self.channel_number
+
+    def test_trial_reshaper(self):
+        fs = 256
+        trial_length_s = 0.5
+        reshaped_trials, labels = TrialReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            fs=fs,
+            channel_map=self.channel_map,
+            poststimulus_length=trial_length_s)
+        trial_length_samples = int(fs * trial_length_s)
+        expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
+        self.assertTrue(np.all(labels == [1, 0, 0]))
+        self.assertTrue(reshaped_trials.shape == expected_shape)
+
+
+class TestInquiryReshaper(unittest.TestCase):
+    def setUp(self):
+        self.n_channel = 7
+        self.trial_length = 0.5
+        self.trials_per_inquiry = 3
+        self.n_inquiry = 4
+        self.fs = 10
+        self.target_info = [
+            "target", "nontarget", "nontarget",
+            "nontarget", "nontarget", "nontarget",
+            "nontarget", "target", "nontarget",
+            "nontarget", "nontarget", "target",
+        ]
+        self.true_labels = np.array([
+            [1, 0, 0],
+            [0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        self.timing_info = [
+            1.4, 1.6, 1.8,
+            2.4, 2.6, 2.8,
+            3.4, 3.6, 3.8,
+            4.4, 4.6, 4.8,
+        ]
+        # Inquiry lasts from onset of first trial, to onset of last trial + trial_length
+        self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
+
+        # total duration = 3.8s + final trial_length
+        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4.8 + self.trial_length)))
+        self.channel_map = [1] * self.n_channel
+
+    def test_inquiry_reshaper(self):
+        reshaped_data, labels, _ = InquiryReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            fs=self.fs,
+            trials_per_inquiry=self.trials_per_inquiry,
+            channel_map=self.channel_map,
+            poststimulus_length=self.trial_length,
+        )
+
+        samples_per_inquiry = int(self.fs * self.inquiry_duration_s)
+        expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
+        self.assertTrue(reshaped_data.shape == expected_shape)
+        self.assertTrue(np.all(labels == self.true_labels))
 
 
 if __name__ == '__main__':

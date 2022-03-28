@@ -353,7 +353,7 @@ class RSVPCopyPhraseTask(Task):
         self.logger.debug('Starting Copy Phrase Task!')
         run = self.await_start()
 
-        self.wait() # buffer for data
+        self.wait()  # buffer for data
 
         while run and self.user_wants_to_continue(
         ) and self.current_inquiry:

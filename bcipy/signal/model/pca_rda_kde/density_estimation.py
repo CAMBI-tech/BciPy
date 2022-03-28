@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
 

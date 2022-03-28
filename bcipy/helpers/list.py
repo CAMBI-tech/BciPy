@@ -3,7 +3,6 @@ from typing import Callable, List
 from itertools import zip_longest
 
 
-
 def destutter(items: List, key: Callable = lambda x: x) -> List:
     """Removes sequential duplicates from a list. Retains the last item in the
     sequence. Equality is determined using the provided key function.
