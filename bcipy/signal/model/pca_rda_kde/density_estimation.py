@@ -4,37 +4,35 @@ import numpy as np
 
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
+import logging
 
 
 class KernelDensityEstimate:
-    """ Kernel density estimate implementation using scikit learn
-    library. For further reference, please check scikit learn website.
-    Attr:
-        bandwidth(float): bandwidth of the kernel
-        scores(np.array): Shape (num_items, 2) - ratio of classification scores from RDA; used to compute bandwidth
-        num_channels(int): Number of channels in the original data; used to compute bandwidth
-        algorithm(string): algorithm type
-        kernel(string): element to form the actual fitted pdf.
-        metric(string): distance metric used by algorithm to insert kernels
-            onto samples in the given domain.
-        atol(float): absolute tolerance to fit a probability distribution
-        rtol(float): relative tolerance
-        breadth_first(bool): Flag to use breadth first search
-        leaf_size(int): Uses a tree model to fit probability density.
-        metric_params(dictionary): Used by tree model
-
-        """
-
-    def __init__(self, scores: Optional[np.array] = None, num_channels: Optional[int] = None,
+    def __init__(self, scores: Optional[np.array] = None,
                  algorithm='auto', kernel='gaussian', metric='euclidean', atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None, num_cls=2):
-        if scores is None or num_channels is None:
+        """ Kernel density estimate implementation using scikit learn
+        library. For further reference, please check scikit learn website.
+        Attr:
+            bandwidth(float): bandwidth of the kernel
+            scores(np.array): Shape (num_items, 2) - ratio of classification scores from RDA; used to compute bandwidth
+            algorithm(string): algorithm type
+            kernel(string): element to form the actual fitted pdf.
+            metric(string): distance metric used by algorithm to insert kernels
+                onto samples in the given domain.
+            atol(float): absolute tolerance to fit a probability distribution
+            rtol(float): relative tolerance
+            breadth_first(bool): Flag to use breadth first search
+            leaf_size(int): Uses a tree model to fit probability density.
+            metric_params(dictionary): Used by tree model
+        """
+        if scores is None:
             bandwidth = 1.0
         else:
-            # bandwidth = self._compute_bandwidth(scores, num_channels)
             num_items = scores.shape[0]
             bandwidth = self._compute_bandwidth(scores, num_items)
-        print(f"bandwidth: {bandwidth}")
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"bandwidth: {bandwidth}")
         self.list_den_est = []
         self.num_cls = num_cls
         for _ in range(num_cls):

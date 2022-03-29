@@ -30,11 +30,12 @@ class TestOfflineAnalysis(unittest.TestCase):
                 shutil.copyfileobj(f_source, f_dest)
 
         # copy the other required inputs into tmp_dir
-        for f in ["triggers.txt", "parameters.json"]:
-            shutil.copyfile(input_folder / f, cls.tmp_dir / f)
+        shutil.copyfile(input_folder / "triggers.txt", cls.tmp_dir / "triggers.txt")
 
-        cls.parameters = load_json_parameters(cls.tmp_dir / "parameters.json", value_cast=True)
+        params_path = pwd.parent.parent.parent / "parameters" / "parameters.json"
+        cls.parameters = load_json_parameters(params_path, value_cast=True)
         cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
+        breakpoint()
         cls.mean_erp_fig_handle = fig_handles
 
     @classmethod

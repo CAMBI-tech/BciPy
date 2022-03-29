@@ -53,7 +53,7 @@ def offline_analysis(data_folder: str = None,
 
     # extract relevant session information from parameters file
     trial_length = parameters.get("trial_length")
-    poststim_length = parameters.get("poststim_length")
+    prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
@@ -113,7 +113,7 @@ def offline_analysis(data_folder: str = None,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
-        prestimulus_length=poststim_length,
+        prestimulus_length=prestim_length,
         transformation_buffer=buffer,
     )
 

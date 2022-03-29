@@ -1,27 +1,36 @@
+import logging
 import pickle
 from pathlib import Path
 from typing import List
 
 import numpy as np
+from bcipy.helpers.stimuli import InquiryReshaper
+from bcipy.signal.exceptions import SignalException
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.pca_rda_kde.cross_validation import (
+    cost_cross_validation_auc,
+    cross_validation,
+)
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import (
+    ChannelWisePrincipalComponentAnalysis,
+)
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
-from bcipy.signal.exceptions import SignalException
-from bcipy.helpers.stimuli import InquiryReshaper
 
 
 class PcaRdaKdeModel(SignalModel):
 
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int):
+    def __init__(self, k_folds: int, pca_n_components=0.9):
         self.k_folds = k_folds
         self.model = None
         self.auc = None
         self._ready_to_predict = False
+        self.pca_n_components = pca_n_components
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"pca_n_components: {pca_n_components}")
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
         """
@@ -34,10 +43,13 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             trained likelihood model
         """
-        n_components = 0.90
-        print(f"PCA n_components: {n_components}")
-        model = Pipeline([ChannelWisePrincipalComponentAnalysis(n_components=n_components, num_ch=train_data.shape[0]),
-                          RegularizedDiscriminantAnalysis()])
+        num_ch = train_data.shape[0]
+        model = Pipeline(
+            [
+                ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=num_ch),
+                RegularizedDiscriminantAnalysis(),
+            ]
+        )
 
         # Find the optimal gamma + lambda values
         arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
@@ -57,7 +69,7 @@ class PcaRdaKdeModel(SignalModel):
         # Insert the density estimates to the model and train using the cross validated
         # scores to avoid over fitting. Observe that these scores are not obtained using
         # the final model
-        model.add(KernelDensityEstimate(scores=sc_cv, num_channels=train_data.shape[0]))
+        model.add(KernelDensityEstimate(scores=sc_cv))
         model.pipeline[-1].fit(sc_cv, y_cv)
 
         self.model = model

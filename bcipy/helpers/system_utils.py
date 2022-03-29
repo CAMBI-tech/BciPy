@@ -1,17 +1,18 @@
-import sys
+import importlib
+import logging
 import os
-
-from cpuinfo import get_cpu_info
-from typing import Optional, Tuple, Callable
-from pathlib import Path
-import pkg_resources
+import pkgutil
 import platform
+import sys
+import time
+from functools import wraps
+from pathlib import Path
+from typing import Callable, Optional, Tuple
+
+import pkg_resources
 import psutil
 import pyglet
-import importlib
-import pkgutil
-import time
-import logging
+from cpuinfo import get_cpu_info
 
 DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EXPERIMENT_ID = 'default'
@@ -232,6 +233,7 @@ def report_execution_time(func: Callable) -> Callable:
     """
     log = logging.getLogger()
 
+    @wraps(func)
     def wrap(*args, **kwargs):
         time1 = time.perf_counter()
         response = func(*args, **kwargs)
