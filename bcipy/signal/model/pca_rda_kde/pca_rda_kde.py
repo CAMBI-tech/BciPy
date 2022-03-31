@@ -17,10 +17,11 @@ class PcaRdaKdeModel(SignalModel):
 
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int):
+    def __init__(self, k_folds: int, prior_type="uniform"):
         self.k_folds = k_folds
         self.model = None
         self.auc = None
+        self.prior_type = prior_type
         self._ready_to_predict = False
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
@@ -36,8 +37,12 @@ class PcaRdaKdeModel(SignalModel):
         """
         n_components = 0.90
         print(f"PCA n_components: {n_components}")
-        model = Pipeline([ChannelWisePrincipalComponentAnalysis(n_components=n_components, num_ch=train_data.shape[0]),
-                          RegularizedDiscriminantAnalysis()])
+        model = Pipeline(
+            [
+                ChannelWisePrincipalComponentAnalysis(n_components=n_components, num_ch=train_data.shape[0]),
+                RegularizedDiscriminantAnalysis(),
+            ]
+        )
 
         # Find the optimal gamma + lambda values
         arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
@@ -61,6 +66,16 @@ class PcaRdaKdeModel(SignalModel):
         model.pipeline[-1].fit(sc_cv, y_cv)
 
         self.model = model
+
+        if self.prior_type == "uniform":
+            self.log_prior_class_1 = self.log_prior_class_0 = np.log(0.5)
+        elif self.prior_type == "empirical":
+            prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+            self.log_prior_class_1 = np.log(prior_class_1)
+            self.log_prior_class_0 = np.log(1 - prior_class_1)
+        else:
+            raise ValueError("prior_type must be 'empirical' or 'uniform'")
+
         self._ready_to_predict = True
         return self
 
@@ -107,26 +122,9 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
-        # breakpoint()
-        # inv_reg_cov = self.model.pipeline[1].inv_reg_cov_i[1]
-        # indices = np.argwhere(~np.isfinite(inv_reg_cov))
-        # print(inv_reg_cov[indices])
-        # print(np.argwhere(~np.isfinite(self.model.pipeline[1].inv_reg_cov_i[1])))
-        # self.inv_reg_cov_i[1][np.argwhere(np.isfinite(self.inv_reg_cov_i[1]))]
-
-        # mat = self.model.pipeline[1].inv_reg_cov_i[1].flatten()
-        # bad_idx = np.argwhere(~np.isfinite(mat))
-        # good_idx = np.argwhere(np.isfinite(mat))
-        # print(np.min(np.abs(mat[good_idx])))
 
         if not self._ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
-
-        # # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
-        # scores = np.exp(self.model.transform(data))
-
-        # # Evaluate likelihood ratios (positive class divided by negative class)
-        # scores = scores[:, 1] / (scores[:, 0] + 1e-10) + 1e-10
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
         log_likelihoods = self.model.transform(data)
@@ -139,6 +137,30 @@ class PcaRdaKdeModel(SignalModel):
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
+
+    def predict_proba(self, data: np.array) -> np.array:
+        """Converts log likelihoods from model into class probabilities.
+
+        Returns:
+            posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
+                probability for the two labels.
+        """
+        if not self._ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
+
+        # Model originally produces p(eeg | label). We want p(label | eeg):
+        #
+        # p(l=1 | e) = p(e | l=1) p(l=1) / p(e)
+        # log(p(l=1 | e)) = log(p(e | l=1)) + log(p(l=1)) - log(p(e))
+        log_scores_class_0 = self.model.transform(data)[:, 0]
+        log_scores_class_1 = self.model.transform(data)[:, 1]
+        log_post_0 = log_scores_class_0 + self.log_prior_class_0
+        log_post_1 = log_scores_class_1 + self.log_prior_class_1
+        denom = np.logaddexp(log_post_0, log_post_1)
+        log_post_0 -= denom
+        log_post_1 -= denom
+        posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
+        return posterior
 
     def save(self, path: Path):
         """Save model weights (e.g. after training) to `path`"""

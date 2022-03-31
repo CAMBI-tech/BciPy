@@ -90,7 +90,7 @@ class InquiryReshaper:
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
         """Extract inquiry data and labels.
 
         Args:
@@ -112,6 +112,8 @@ class InquiryReshaper:
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
                 a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
                 `target_label` was not present.
+            reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
+                begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
         """
         # Remove the channels that we are not interested in
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
@@ -141,7 +143,6 @@ class InquiryReshaper:
         for inquiry_idx, trials_within_inquiry in enumerate(
             grouper(zip(trial_targetness_label, triggers), trials_per_inquiry)
         ):
-            # Inquiry lasts from first trial onset until final trial onset + poststimulus_length
             first_trigger = trials_within_inquiry[0][1]
 
             trial_triggers = []
@@ -149,12 +150,13 @@ class InquiryReshaper:
                 if trial_label == target_label:
                     labels[inquiry_idx, trial_idx] = 1
 
+                # If presimulus buffer is used, we add it here so that trigger timings will
+                # still line up with trial onset
                 trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
             reshaped_trigger_timing.append(trial_triggers)
-            reshaped_data.append(eeg_data[:, first_trigger -
-                                          prestimulus_samples: first_trigger +
-                                          num_samples_per_inq +
-                                          buffer_samples])
+            start = first_trigger - prestimulus_samples
+            stop = first_trigger + num_samples_per_inq + buffer_samples
+            reshaped_data.append(eeg_data[:, start:stop])
 
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
