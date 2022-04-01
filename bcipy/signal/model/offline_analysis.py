@@ -16,7 +16,7 @@ from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import get_default_transform, filter_inquiries
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import balanced_accuracy_score
+# from sklearn.metrics import balanced_accuracy_score
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
