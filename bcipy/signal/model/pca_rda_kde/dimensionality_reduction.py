@@ -14,13 +14,11 @@ class ChannelWisePrincipalComponentAnalysis:
             Tolerance to the singular values of the matrix
         random_state(seed): Random state seed
         num_ch(int): number of channels in expected data
-        var_tol(float): Tolerance to the variance
     """
 
     def __init__(
         self,
         n_components=None,
-        var_tol=0,
         copy=True,
         whiten=False,
         svd_solver="auto",
@@ -29,9 +27,8 @@ class ChannelWisePrincipalComponentAnalysis:
         random_state=None,
         num_ch=1,
     ):
-
         self.list_pca = []
-        for idx in range(num_ch):
+        for _ in range(num_ch):
             self.list_pca.append(
                 PCA(
                     n_components=n_components,
@@ -43,10 +40,9 @@ class ChannelWisePrincipalComponentAnalysis:
                     random_state=random_state,
                 )
             )
-        self.var_tol = var_tol
         self.num_ch = num_ch
 
-    def fit(self, x, y=None, var_tol=None):
+    def fit(self, x, y=None):
         """Inherits PCA fit() function from scikit-learn. Fits the
         transformation matrix wrt. tolerance to each PCA.
         Args:
@@ -54,9 +50,7 @@ class ChannelWisePrincipalComponentAnalysis:
             y(ndarray[int]): N x k observation (class) array
                 N is number of samples k is dimensionality of features
                 C is number of channels
-            var_tol(float): Threshold to remove lower variance dims.
         """
-
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
 
@@ -67,7 +61,7 @@ class ChannelWisePrincipalComponentAnalysis:
 
         return np.concatenate(f_vector, axis=1)
 
-    def fit_transform(self, x, y=None, var_tol=None):
+    def fit_transform(self, x, y=None):
         """Fits parameters wrt. the input matrix and outputs corresponding
         reduced form feature vector.
         Args:
@@ -80,6 +74,5 @@ class ChannelWisePrincipalComponentAnalysis:
             y(ndarray(float)): N x ( sum_i (C x k')) data array
                 where k' is the new dimension for each PCA
         """
-
-        self.fit(x, var_tol=var_tol)
+        self.fit(x)
         return self.transform(x)

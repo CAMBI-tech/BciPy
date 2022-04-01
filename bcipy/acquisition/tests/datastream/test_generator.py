@@ -169,5 +169,6 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(1, next(gen4))
         self.assertEqual(3, next(gen4))
 
+
 if __name__ == "__main__":
     unittest.main()
