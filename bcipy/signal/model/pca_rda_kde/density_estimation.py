@@ -1,54 +1,26 @@
+import logging
 from typing import Optional
 
 import numpy as np
-
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
 
 
 class KernelDensityEstimate:
-    """ Kernel density estimate implementation using scikit learn
-    library. For further reference, please check scikit learn website.
+    """Kernel density estimate using scikit learn.
     Attr:
         bandwidth(float): bandwidth of the kernel
         scores(np.array): Shape (num_items, 2) - ratio of classification scores from RDA; used to compute bandwidth
-        num_channels(int): Number of channels in the original data; used to compute bandwidth
-        algorithm(string): algorithm type
         kernel(string): element to form the actual fitted pdf.
-        metric(string): distance metric used by algorithm to insert kernels
-            onto samples in the given domain.
-        atol(float): absolute tolerance to fit a probability distribution
-        rtol(float): relative tolerance
-        breadth_first(bool): Flag to use breadth first search
-        leaf_size(int): Uses a tree model to fit probability density.
-        metric_params(dictionary): Used by tree model
+    """
 
-        """
-
-    def __init__(self, scores: Optional[np.array] = None, num_channels: Optional[int] = None,
-                 algorithm='auto', kernel='gaussian', metric='euclidean', atol=0, rtol=0,
-                 breadth_first=True, leaf_size=40, metric_params=None, num_cls=2):
-        if scores is None or num_channels is None:
-            bandwidth = 1.0
-        else:
-            # bandwidth = self._compute_bandwidth(scores, num_channels)
-            num_items = scores.shape[0]
-            bandwidth = self._compute_bandwidth(scores, num_items)
-        print(f"bandwidth: {bandwidth}")
-        self.list_den_est = []
+    def __init__(self, scores: Optional[np.array] = None, kernel="gaussian", num_cls=2):
+        bandwidth = 1.0 if scores is None else self._compute_bandwidth(scores, scores.shape[0])
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"KDE. {bandwidth=}, {kernel=}")
         self.num_cls = num_cls
-        for _ in range(num_cls):
-            self.list_den_est.append(KernelDensity(bandwidth=bandwidth,
-                                                   algorithm=algorithm,
-                                                   kernel=kernel,
-                                                   metric=metric,
-                                                   atol=atol,
-                                                   rtol=rtol,
-                                                   breadth_first=breadth_first,
-                                                   leaf_size=leaf_size,
-                                                   metric_params=metric_params))
+        self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=kernel) for _ in range(self.num_cls)]
 
-    # def _compute_bandwidth(self, scores: np.array, num_channels: int):
     def _compute_bandwidth(self, scores: np.array, num_items: int):
         """Estimate bandwidth parameter
 
@@ -59,40 +31,34 @@ class KernelDensityEstimate:
         Returns:
             float: rule-of-thumb bandwidth parameter for KDE
         """
-        # bandwidth = 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_channels, -0.2)
-        bandwidth = 1.06 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_items, -0.2)
+        bandwidth = 0.9 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_items, -0.2)
         return bandwidth
 
     def fit(self, x, y):
-        """ Fits the kernel density estimates base on labelled data.
-            Attr:
-                x(ndarray[float]): N x 1 data array
-                y(ndarray[float]): N x 1 label array
-                Where N and c denotes number of samples and classes
-                respectively. """
+        """Fits the kernel density estimates base on labelled data.
 
-        classes = np.unique(y)
-
-        cls_dep_x = [x[np.where(y == classes[i])[0]] for i in
-                     range(self.num_cls)]
-
-        for i in range(self.num_cls):
+        Args:
+            x(ndarray[float]): shape (N) data array
+            y(ndarray[float]): shape (N) label array
+            Where N and c denotes number of samples and classes
+            respectively.
+        """
+        for i, c in enumerate(np.unique(y)):
+            dat = x[y == c]
             # Reshape is required, otherwise there's ambiguity if it's one
             # sample with N dims or N samples with 1 dims
-
-            dat = np.squeeze(cls_dep_x[i])
+            dat = np.squeeze(dat)
             dat = np.expand_dims(dat, axis=1)
-
             self.list_den_est[i].fit(dat)
 
     def transform(self, x):
-        """ Calculates likelihood ods of given data.
-            Attr:
-                x(ndarray[float]): N x 1 data array
-                Where N and c denotes number of samples and classes
-            Return:
-                 val(ndarray[float]): N x c  log-likelihood array
-             respectively. """
+        """Calculates likelihood ods of given data.
+        Args:
+            x(ndarray[float]): N x 1 data array
+            Where N and c denotes number of samples and classes
+        Returns:
+             val(ndarray[float]): N x c  log-likelihood array
+         respectively."""
 
         # Calculate likelihoods for each density estimate
         val = []
@@ -104,6 +70,5 @@ class KernelDensityEstimate:
         return np.transpose(np.array(val))
 
     def fit_transform(self, x, y):
-
         self.fit(x, y)
         return self.transform(x)

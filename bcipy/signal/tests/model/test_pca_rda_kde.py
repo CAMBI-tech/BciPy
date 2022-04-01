@@ -111,7 +111,7 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
 
         # try different kernels and show how the look like
         for kernel in ["gaussian", "tophat", "epanechnikov"]:
-            kde = KernelDensityEstimate(kernel=kernel, scores=x, num_channels=x.shape[0], num_cls=1)
+            kde = KernelDensityEstimate(kernel=kernel, scores=x, num_cls=1)
             kde.fit(x, y)
             log_dens = kde.list_den_est[0].score_samples(x_plot)
             ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
