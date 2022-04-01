@@ -14,14 +14,14 @@ from bcipy.helpers.stimuli import InquiryReshaper
 
 
 class PcaRdaKdeModel(SignalModel):
-
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int, prior_type="uniform"):
+    def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
         self.model = None
         self.auc = None
         self.prior_type = prior_type
+        self.pca_n_components = pca_n_components
         self._ready_to_predict = False
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
@@ -35,11 +35,9 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             trained likelihood model
         """
-        n_components = 0.90
-        print(f"PCA n_components: {n_components}")
         model = Pipeline(
             [
-                ChannelWisePrincipalComponentAnalysis(n_components=n_components, num_ch=train_data.shape[0]),
+                ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
                 RegularizedDiscriminantAnalysis(),
             ]
         )
@@ -62,7 +60,7 @@ class PcaRdaKdeModel(SignalModel):
         # Insert the density estimates to the model and train using the cross validated
         # scores to avoid over fitting. Observe that these scores are not obtained using
         # the final model
-        model.add(KernelDensityEstimate(scores=sc_cv, num_channels=train_data.shape[0]))
+        model.add(KernelDensityEstimate(scores=sc_cv))
         model.pipeline[-1].fit(sc_cv, y_cv)
 
         self.model = model

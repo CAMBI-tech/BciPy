@@ -16,13 +16,13 @@ from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import get_default_transform, filter_inquiries
 from sklearn.model_selection import train_test_split
-# from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
-def subset_data(data, labels, test_size=0.2, random_state=0):
+def subset_data(data, labels, test_size, random_state=0):
     data = data.swapaxes(0, 1)
     train_data, test_data, train_labels, test_labels = train_test_split(
         data, labels, test_size=test_size, random_state=random_state
@@ -34,7 +34,8 @@ def subset_data(data, labels, test_size=0.2, random_state=0):
 
 @report_execution_time
 def offline_analysis(
-    data_folder: str = None, parameters: dict = {}, alert_finished: bool = True
+    data_folder: str = None, parameters: dict = {}, alert_finished: bool = True,
+    estimate_balanced_acc: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -43,6 +44,8 @@ def offline_analysis(
             save all information and load all from this folder
         parameter(dict): parameters for running offline analysis
         alert_finished(bool): whether or not to alert the user offline analysis complete
+        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -131,7 +134,7 @@ def offline_analysis(
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    labels = [1 if label == "target" else 0 for label in trigger_targetness]
+    labels = inquiry_labels.flatten()
 
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
@@ -139,12 +142,16 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    # # Experimenting with an 80/20 split and checking balanced accuracy
-    # train_data, test_data, train_labels, test_labels = subset_data(data, labels)
-    # model.fit(train_data, train_labels)
-    # probs = model.predict_proba(test_data)
-    # preds = probs.argmax(-1)
-    # log.info(f"Balanced acc: {balanced_accuracy_score(test_labels, preds)}")
+    # Experimenting with an 80/20 split and checking balanced accuracy
+    # TODO - adjust estimator to match sklearn API and use cross_validate
+    if estimate_balanced_acc:
+        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.8)
+        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+        dummy_model.fit(train_data, train_labels)
+        probs = dummy_model.predict_proba(test_data)
+        preds = probs.argmax(-1)
+        log.info(f"Balanced acc with 80/20 split: {balanced_accuracy_score(test_labels, preds)}")
+        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
 
