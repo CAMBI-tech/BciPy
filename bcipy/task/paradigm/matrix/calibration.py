@@ -37,7 +37,6 @@ class MatrixCalibrationTask(Task):
 
     def __init__(self, win, daq, parameters, file_save):
         super(MatrixCalibrationTask, self).__init__()
-
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
@@ -65,6 +64,7 @@ class MatrixCalibrationTask(Task):
         self.target_positions = TargetPositions(parameters['target_positions'])
         self.nontarget_inquiries = parameters['nontarget_inquiries']
 
+
         self.timing = [parameters['time_flash']]
 
         self.color = [parameters['stim_color']]
@@ -87,7 +87,6 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-
         samples, timing, color = calibration_inquiry_generator(self.alp,
                                                                stim_number=self.stim_number,
                                                                stim_length=self.stim_length,
@@ -252,6 +251,7 @@ def init_calibration_display_task(
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters["time_prompt"])
+
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
         task_pos=(-.8, .85),

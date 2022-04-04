@@ -17,6 +17,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -32,7 +33,7 @@ class TestCopyPhrase(unittest.TestCase):
             'feedback_flash_time': 2.0,
             'feedback_font': 'Arial',
             'feedback_line_width': 1.0,
-            'feedback_message_color': 'white',
+            'feedback_color': 'white',
             'feedback_pos_x': -0.72,
             'feedback_pos_y': 0.0,
             'feedback_stim_height': 0.35,
@@ -115,11 +116,15 @@ class TestCopyPhrase(unittest.TestCase):
         self.display = mock()
         self.display.first_stim_time = 0.0
         when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_display(
-            self.parameters, self.win, any,
-            any).thenReturn(self.display)
+            self.parameters, self.win, any(),
+            any(), any()).thenReturn(self.display)
 
         when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
+        # mock data for initial series
+        series_gen = mock_inquiry_data()
+        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
+            next(series_gen))
         when(TriggerHandler).write().thenReturn()
         when(TriggerHandler).add_triggers(any()).thenReturn()
 
@@ -144,6 +149,7 @@ class TestCopyPhrase(unittest.TestCase):
     def test_execute_without_inquiry(self, message_mock,
                                      user_input_mock):
         """User should be able to exit the task without viewing any inquiries"""
+
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -153,10 +159,6 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         user_input_mock.return_value = False
-        # mock data for initial series
-        series_gen = mock_inquiry_data()
-        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
-            next(series_gen))
 
         result = task.execute()
 
@@ -169,7 +171,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(0, session.total_number_series)
 
@@ -179,6 +181,7 @@ class TestCopyPhrase(unittest.TestCase):
     def test_execute_fake_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
+
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -189,12 +192,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Execute a single inquiry then `escape` to stop
         user_input_mock.side_effect = [True, True, False]
-
-        # mock data for initial series
-        series_gen = mock_inquiry_data()
-
-        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
-            next(series_gen))
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -213,7 +210,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 
@@ -235,11 +232,6 @@ class TestCopyPhrase(unittest.TestCase):
         # Don't provide any `escape` input from the user
         user_input_mock.side_effect = [True, True, True, True, True, True]
 
-        # mock data for initial series
-        series_gen = mock_inquiry_data()
-        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
-            next(series_gen))
-
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
 
@@ -255,7 +247,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(2, session.total_number_series,
                              "In fake data a decision is made every time.")
@@ -269,6 +261,7 @@ class TestCopyPhrase(unittest.TestCase):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
         self.parameters['spelled_letters_count'] = 4
+
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -279,13 +272,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Don't provide any `escape` input from the user
         user_input_mock.side_effect = [True, True, True, True, True, True]
-
-        # TODO: do another test with real data; mock the decision_maker.displayed_state is the copy_phrase
-
-        # mock data for initial series
-        series_gen = mock_inquiry_data()
-        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
-            next(series_gen))
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -302,7 +288,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
             self.assertEqual(1, len(session.last_series()))
@@ -414,12 +400,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Execute a single inquiry then `escape` to stop
         user_input_mock.side_effect = [True, True, False]
-
-        # mock data for initial series
-        series_gen = mock_inquiry_data()
-
-        when(self.copy_phrase_wrapper).initialize_series().thenReturn(
-            next(series_gen))
         when(self.copy_phrase_wrapper).add_evidence(any, any).thenReturn([])
 
         timings_gen = mock_inquiry_timings()
@@ -444,16 +424,6 @@ class TestCopyPhrase(unittest.TestCase):
     def test_execute_real_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
-                                  file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
-                                  language_model=self.language_model,
-                                  fake=False)
-
-        # Execute a single inquiry then `escape` to stop
-        user_input_mock.side_effect = [True, True, False]
 
         conjugator_mock = mock({
             'latest_evidence': {
@@ -532,6 +502,17 @@ class TestCopyPhrase(unittest.TestCase):
              ['I', 6.258658453123644], ['B', 6.475744977127761],
              ['C', 6.692347120027989]])
 
+        task = RSVPCopyPhraseTask(win=self.win,
+                                  daq=self.daq,
+                                  parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_model=self.signal_model,
+                                  language_model=self.language_model,
+                                  fake=False)
+
+        # Execute a single inquiry then `escape` to stop
+        user_input_mock.side_effect = [True, True, False]
+
         # mock data for single inquiry
         process_data_mock.return_value = mock_process_data()
 
@@ -547,7 +528,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertTrue(
             Path(task.session_save_location).is_file(),
             'Session data should be written')
-        with open(Path(task.session_save_location), 'r') as json_file:
+        with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
 

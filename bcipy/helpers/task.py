@@ -91,21 +91,20 @@ def alphabet(parameters=None, include_path=True):
     -------
         array of letters.
     """
-    if parameters:
-        if not parameters['is_txt_stim']:
-            # construct an array of paths to images
-            path = parameters['path_to_presentation_images']
-            stimulus_array = []
-            for stimulus_filename in sorted(os.listdir(path)):
-                # PLUS.png is reserved for the fixation symbol
-                if stimulus_filename.endswith(
-                        '.png') and not stimulus_filename.endswith('PLUS.png'):
-                    if include_path:
-                        img = os.path.join(path, stimulus_filename)
-                    else:
-                        img = os.path.splitext(stimulus_filename)[0]
-                    stimulus_array.append(img)
-            return stimulus_array
+    if parameters and not parameters['is_txt_stim']:
+        # construct an array of paths to images
+        path = parameters['path_to_presentation_images']
+        stimulus_array = []
+        for stimulus_filename in sorted(os.listdir(path)):
+            # PLUS.png is reserved for the fixation symbol
+            if stimulus_filename.endswith(
+                    '.png') and not stimulus_filename.endswith('PLUS.png'):
+                if include_path:
+                    img = os.path.join(path, stimulus_filename)
+                else:
+                    img = os.path.splitext(stimulus_filename)[0]
+                stimulus_array.append(img)
+        return stimulus_array
 
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
@@ -402,9 +401,6 @@ class InquiryReshaper(Reshaper):
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
         eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
-        # Number of samples we are interested per inquiry
-        num_samples = int(trial_length * fs * trials_per_inquiry)
-
         # Remove unwanted elements from target info and timing info
         tmp_labels, tmp_timing = [], []
         for label, timing in zip(trial_labels, timing_info):
@@ -415,32 +411,29 @@ class InquiryReshaper(Reshaper):
         timing_info = tmp_timing
 
         n_inquiry = len(timing_info) // trials_per_inquiry
+        trial_duration_samples = int(trial_length * fs)
 
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-        # shape (Channels, Inquiries, Samples)
-        reshaped_data = np.zeros((len(eeg_data), n_inquiry, num_samples))
-
         # Label for every inquiry
-        labels = np.zeros(n_inquiry)
-        for inquiry_idx, chunk in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
+        labels = np.zeros(n_inquiry, dtype=np.long)
+        reshaped_data = []
+        for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
             # label is the index of the "target", or else the length of the inquiry
             inquiry_label = trials_per_inquiry
-            first_trigger = None
-            for trial_idx, (trial_label, trigger) in enumerate(chunk):
-                if first_trigger is None:
-                    first_trigger = trigger
-
+            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
                 if trial_label == target_label:
                     inquiry_label = trial_idx
 
+            # Inquiry lasts from first trial onset until final trial onset + trial_length
+            first_trigger = trials_within_inquiry[0][1]
+            last_trigger = trials_within_inquiry[-1][1]
             labels[inquiry_idx] = inquiry_label
 
-            # For every channel append filtered channel data to trials
-            reshaped_data[:, inquiry_idx, :] = eeg_data[:, first_trigger: first_trigger + num_samples]
+            reshaped_data.append(eeg_data[:, first_trigger: last_trigger + trial_duration_samples])
 
-        return reshaped_data, labels
+        return np.stack(reshaped_data, 1), labels
 
 
 class TrialReshaper(Reshaper):
@@ -496,19 +489,17 @@ class TrialReshaper(Reshaper):
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-        # shape (Channels, Trials, Samples)
-        reshaped_trials = np.zeros((len(eeg_data), len(triggers), num_samples))
-
         # Label for every trial
-        labels = np.zeros(len(triggers))
+        labels = np.zeros(len(triggers), dtype=np.long)
+        reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
             if trial_label == target_label:
                 labels[trial_idx] = 1
 
             # For every channel append filtered channel data to trials
-            reshaped_trials[:, trial_idx, :] = eeg_data[:, trigger:trigger + num_samples]
+            reshaped_trials.append(eeg_data[:, trigger: trigger + num_samples])
 
-        return reshaped_trials, labels
+        return np.stack(reshaped_trials, 1), labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):

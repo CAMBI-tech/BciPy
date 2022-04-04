@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from bcipy.signal.generator.generator import gen_random_data
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 TIMESTAMP_COLUMN = 'timestamp'
 
@@ -165,7 +166,7 @@ class RawDataReader:
         self.convert_data = convert_data
 
     def __enter__(self):
-        self._file_obj = open(self.file_path, mode="r")
+        self._file_obj = open(self.file_path, mode="r", encoding=DEFAULT_ENCODING)
         self.daq_type, self.sample_rate = read_metadata(self._file_obj)
         self._reader = csv.reader(self._file_obj)
         self.columns = next(self._reader)
@@ -219,7 +220,7 @@ class RawDataWriter:
         """Enter the context manager. Initializes the underlying data file."""
         self._file_obj = open(self.file_path,
                               mode='w',
-                              encoding='utf-8',
+                              encoding=DEFAULT_ENCODING,
                               newline='')
         # write metadata
         self._file_obj.write(f"daq_type,{self.daq_type}\n")
@@ -258,7 +259,7 @@ def load(filename: str) -> RawData:
     """
     # Loading all data from a csv is faster using pandas than using the
     # RawDataReader.
-    with open(filename, mode='r') as file_obj:
+    with open(filename, mode='r', encoding=DEFAULT_ENCODING) as file_obj:
         daq_type, sample_rate = read_metadata(file_obj)
         dataframe = pd.read_csv(file_obj)
         data = RawData(daq_type, sample_rate, list(dataframe.columns))

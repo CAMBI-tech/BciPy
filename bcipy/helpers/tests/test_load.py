@@ -19,7 +19,13 @@ from bcipy.helpers.load import (
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, FIELD_FILENAME, EXPERIMENT_FILENAME
+from bcipy.helpers.system_utils import (
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    FIELD_FILENAME,
+    EXPERIMENT_FILENAME
+)
 
 
 MOCK_EXPERIMENT = {
@@ -91,7 +97,7 @@ class TestExperimentLoad(unittest.TestCase):
     def test_load_experiments_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_experiments()
-            mock_file.assert_called_with(self.experiments_path, 'r')
+            mock_file.assert_called_with(self.experiments_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_experiments_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -114,7 +120,7 @@ class TestFieldLoad(unittest.TestCase):
     def test_load_fields_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_fields()
-            mock_file.assert_called_with(self.fields_path, 'r')
+            mock_file.assert_called_with(self.fields_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_fields_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -201,12 +207,6 @@ class TestExtractMode(unittest.TestCase):
     def test_extract_mode_copy_phrase(self):
         data_save_path = 'data/default/user/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
         expected_mode = 'copy_phrase'
-        response = extract_mode(data_save_path)
-        self.assertEqual(expected_mode, response)
-
-    def test_extract_mode_free_spell(self):
-        data_save_path = 'data/default/user/user_RSVP_Free_Spell_Mon_01_Mar_2021_11hr19min49sec_-0800'
-        expected_mode = 'free_spell'
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 

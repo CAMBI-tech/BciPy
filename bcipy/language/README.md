@@ -1,6 +1,6 @@
 # Language
 
-BciPy Language module provides an interface for word and character level predictions. 
+BciPy Language module provides an interface for word and character level predictions.
 
 The core methods of any `LanguageModel` include:
 
@@ -12,3 +12,8 @@ The core methods of any `LanguageModel` include:
 
 You may of course define other methods, however all integrated BciPy experiments using your model will require those to be defined!
 
+The pretrained GPT2 language model is saved in [this folder on Google Drive](https://drive.google.com/drive/folders/1pkvwHA8SR7awxf7fj7Ds4FhY6SGxeGtX?usp=sharing). Download the files in the folder and put them in a local directory. Then use the path to the local directory to load the model. (Alternatively, just pass in the model name like "gpt2" as the language model path and the pretrained language model will be downloaded and stored in local cache)
+
+## Uniform Model
+
+The UniformLanguageModel provides equal probabilities for all symbols in the symbol set. This model is useful for evaluating other aspects of the system, such as EEG signal quality, without strong influence from a language model.

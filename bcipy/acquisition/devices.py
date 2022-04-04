@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.helpers.system_utils import auto_str
-
+from bcipy.helpers.system_utils import auto_str, DEFAULT_ENCODING
 IRREGULAR_RATE = 0.0
 DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
 _SUPPORTED_DEVICES = {}
@@ -104,7 +103,7 @@ def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
     """Load the list of supported hardware for data acquisition from the given
     configuration file."""
     global _SUPPORTED_DEVICES
-    with open(config_path, 'r', encoding='utf-8') as json_file:
+    with open(config_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         specs = [make_device_spec(entry) for entry in json.load(json_file)]
         _SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
 

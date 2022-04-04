@@ -93,25 +93,23 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     """
     signal_model = None
     language_model = None
-    filename = None
 
     fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if not fake and task not in TaskType.calibration_tasks():
+    if task not in TaskType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
-        try:
-            signal_model, filename = load_signal_model(
-                model_class=PcaRdaKdeModel, model_kwargs={
-                    'k_folds': parameters['k_folds']})
-        except Exception as e:
-            log.exception(f'Cannot load signal model. Exiting. {e}')
-            raise e
+        if not fake:
+            try:
+                signal_model, _filename = load_signal_model(
+                    model_class=PcaRdaKdeModel, model_kwargs={
+                        'k_folds': parameters['k_folds']})
+            except Exception as e:
+                log.exception(f'Cannot load signal model. Exiting. {e}')
+                raise e
 
-        # if Language Model enabled init lm
-        if parameters['lang_model_enabled']:
-            language_model = init_language_model(parameters)
+        language_model = init_language_model(parameters)
 
     # Initialize DAQ
     daq, server = init_eeg_acquisition(

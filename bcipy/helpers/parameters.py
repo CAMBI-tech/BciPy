@@ -5,6 +5,8 @@ from json import dump, load
 from pathlib import Path
 from typing import Tuple
 
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
+
 DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
 
 Parameter = namedtuple('Parameter', [
@@ -152,7 +154,7 @@ class Parameters(dict):
     def load_from_source(self):
         """Load data from the configured JSON file."""
         if self.source:
-            with codecsopen(self.source, 'r', encoding='utf-8') as json_file:
+            with codecsopen(self.source, 'r', encoding=DEFAULT_ENCODING) as json_file:
                 data = load(json_file)
                 self.load(data)
 
@@ -181,6 +183,8 @@ class Parameters(dict):
             raise Exception(
                 f"Type not supported for key: {entry_name}, type: {entry['type']}"
             )
+        if entry['type'] == "bool" and entry['value'] not in ['true', 'false']:
+            raise Exception(f"Invalid value for key: {entry_name}. Must be either 'true' or 'false'")
 
     def source_location(self) -> Tuple[Path, str]:
         """Location of the source json data if source was provided.
@@ -207,7 +211,7 @@ class Parameters(dict):
         location = directory if directory else source_directory
         filename = name if name else source_name
         path = Path(location, filename)
-        with open(path, 'w', encoding='utf-8') as json_file:
+        with open(path, 'w', encoding=DEFAULT_ENCODING) as json_file:
             dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)
         return str(path)
 

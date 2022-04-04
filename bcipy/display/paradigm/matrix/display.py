@@ -96,6 +96,7 @@ class MatrixDisplay(Display):
         self.position_increment = self.grid_stimuli_height + .05
         self.max_grid_width = 0.7
         self.stim_registry = {}
+
         self.opacity = 0.15
 
         # Trigger handling

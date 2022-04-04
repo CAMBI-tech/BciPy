@@ -16,6 +16,8 @@ tools. User defined tasks can be added to the Registry."""
 from enum import Enum
 from typing import List
 
+from bcipy.helpers.exceptions import BciPyCoreException
+
 
 class TaskType(Enum):
     """Enum of the registered experiment types (Tasks), along with the label
@@ -52,6 +54,7 @@ class TaskType(Enum):
         # check if item present and return the index + 1 (which is the ENUM value for the task)
         if item in tasks:
             return cls(tasks.index(item) + 1)
+        raise BciPyCoreException(f'{item} not a registered TaskType={tasks}')
 
     @classmethod
     def calibration_tasks(cls) -> List['TaskType']:

@@ -74,8 +74,8 @@ class RSVPCopyPhraseTask(Task):
     PARAMETERS_USED = [
         'backspace_always_shown', 'decision_threshold', 'down_sampling_rate',
         'eeg_buffer_len', 'feedback_flash_time', 'feedback_font',
-        'feedback_line_width', 'feedback_message_color', 'feedback_pos_x',
-        'feedback_pos_y', 'feedback_stim_height', 'feedback_stim_width',
+        'feedback_color', 'feedback_pos_x',
+        'feedback_pos_y', 'feedback_stim_height',
         'filter_high', 'filter_low', 'filter_order', 'fixation_color',
         'info_color', 'info_font', 'info_height', 'info_text', 'is_txt_stim',
         'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series',
@@ -114,21 +114,7 @@ class RSVPCopyPhraseTask(Task):
         self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
         if self.parameters['show_preview_inquiry']:
             self.evidence_types.append(EvidenceType.BTN)
-        # set a preview_only parameter
-        self.parameters.add_entry(
-            'preview_only',
-            {
-                'value': True if self.parameters['preview_inquiry_progress_method'] == 0 else False,
-                'section': '',
-                'readableName': '',
-                'helpTip': '',
-                'recommended_values': '',
-                'type': 'bool'
-            }
-        )
 
-        self.rsvp = _init_copy_phrase_display(self.parameters, self.window,
-                                              self.static_clock, self.experiment_clock)
         self.file_save = file_save
 
         self.trigger_handler = TriggerHandler(self.file_save, parameters['trigger_file_name'], FlushFrequency.EVERY)
@@ -139,6 +125,30 @@ class RSVPCopyPhraseTask(Task):
         self.language_model = language_model
         self.signal_model = signal_model
         self.evidence_precision = 5
+        self.feedback = VisualFeedback(self.window, self.parameters,
+                                       self.experiment_clock)
+
+        self.setup()
+
+        # set a preview_only parameter
+        self.parameters.add_entry(
+            'preview_only',
+            {
+                'value': 'true' if self.parameters['preview_inquiry_progress_method'] == 0 else 'false',
+                'section': '',
+                'readableName': '',
+                'helpTip': '',
+                'recommended_values': '',
+                'type': 'bool'
+            }
+        )
+
+        self.rsvp = _init_copy_phrase_display(
+            self.parameters,
+            self.window,
+            self.static_clock,
+            self.experiment_clock,
+            self.spelled_text)
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -296,12 +306,7 @@ class RSVPCopyPhraseTask(Task):
         - correct : whether or not the correct stim was chosen
         """
         if self.parameters['show_feedback']:
-            feedback = VisualFeedback(self.window, self.parameters,
-                                      self.experiment_clock)
-            feedback.administer(
-                selection,
-                message='Selected:',
-                fill_color=self.parameters['feedback_message_color'])
+            self.feedback.administer(f'Selected: {selection}')
 
     def check_stop_criteria(self) -> bool:
         """Returns True if experiment is currently within params and the task
@@ -346,8 +351,6 @@ class RSVPCopyPhraseTask(Task):
         data save location (triggers.txt, session.json)
         """
         self.logger.debug('Starting Copy Phrase Task!')
-        self.setup()
-
         run = self.await_start()
 
         while run and self.user_wants_to_continue(
@@ -783,7 +786,7 @@ class TaskSummary:
         ]
 
 
-def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):
+def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, starting_spelled_text):
     preview_inquiry = PreviewInquiryProperties(
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
@@ -806,11 +809,13 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock):
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
+    padding = abs(len(parameters['task_text']) - len(starting_spelled_text))
+    starting_spelled_text += ' ' * padding
     task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
-                                         task_pos=(-.8, .85),
+                                         task_pos=(0, 1 - (2 * parameters['task_height'])),
                                          task_font=parameters['task_font'],
                                          task_height=parameters['task_height'],
-                                         task_text='*')
+                                         task_text=starting_spelled_text)
     return CopyPhraseDisplay(win,
                              static_clock,
                              experiment_clock,

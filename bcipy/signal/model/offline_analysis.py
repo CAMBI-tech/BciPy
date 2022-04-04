@@ -53,19 +53,19 @@ def offline_analysis(data_folder: str = None,
     # extract relevant session information from parameters file
     trial_length = parameters.get('trial_length')
     trials_per_inquiry = parameters.get('stim_length')
-    triggers_file = parameters.get('trigger_file_name', 'triggers.txt')
+    triggers_file = parameters.get('trigger_file_name', 'triggers')
     raw_data_file = parameters.get('raw_data_name', 'raw_data.csv')
 
     # get signal filtering information
-    downsample_rate = parameters.get('down_sampling_rate', 2)
-    notch_filter = parameters.get('notch_filter_frequency', 60)
-    hp_filter = parameters.get('filter_high', 45)
-    lp_filter = parameters.get('filter_low', 2)
-    filter_order = parameters.get('filter_order', 2)
+    downsample_rate = parameters.get('down_sampling_rate')
+    notch_filter = parameters.get('notch_filter_frequency')
+    hp_filter = parameters.get('filter_high')
+    lp_filter = parameters.get('filter_low')
+    filter_order = parameters.get('filter_order')
 
     # get offset and k folds
-    static_offset = parameters.get('static_trigger_offset', 0)
-    k_folds = parameters.get('k_folds', 10)
+    static_offset = parameters.get('static_trigger_offset', 0.0)
+    k_folds = parameters.get('k_folds')
 
     # Load raw data
     raw_data = load_raw_data(Path(data_folder, raw_data_file))

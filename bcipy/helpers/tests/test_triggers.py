@@ -172,13 +172,13 @@ class TestTriggerHandler(unittest.TestCase):
         self.file = f'{self.path_name}/{self.file_name}.txt'
         # with patch('builtins.open', mock_open(read_data='data')) as _:
         self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
-        self.mock_file.assert_called_once_with(self.file, 'w+')
+        self.mock_file.assert_called_once_with(self.file, 'w+', encoding=self.handler.encoding)
 
     def tearDown(self):
         unstub()
 
     def test_file_exist_exception(self):
-        with open(self.file, 'w+') as _:
+        with open(self.file, 'w+', encoding=self.handler.encoding) as _:
             with self.assertRaises(Exception):
                 TriggerHandler(self.path_name, self.file_name, FlushFrequency.END)
         os.remove(self.file)
@@ -296,6 +296,28 @@ class TestTriggerHandler(unittest.TestCase):
                 _trg, _ = TriggerHandler.read_text_file('triggers.txt')
 
             self.assertIn("line 2", ctx.exception.message)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_data_unicode(self, path_exists_mock):
+        """Test that trigger data is correctly read."""
+        trg_data = '''starting_offset offset 3.47
+                    ■ prompt 6.15
+                    + fixation 8.11
+                    F nontarget 8.58
+                    D nontarget 8.88
+                    ■ target 9.18
+                    T nontarget 9.49
+                    K nontarget 9.79
+                    _ nontarget 11.30'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            triggers, offset = TriggerHandler.read_text_file('triggers.txt')
+            self.assertEqual(len(triggers), 9)
+            self.assertEqual(triggers[1].label, '■')
+            self.assertEqual(triggers[1].type, TriggerType.PROMPT)
+            self.assertEqual(triggers[1].time, 6.15)
+            self.assertEqual(offset, 3.47)
 
 
 if __name__ == '__main__':

@@ -1,15 +1,13 @@
 """Defines the CopyPhraseWrapper."""
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
-import numpy as np
 import logging
+import numpy as np
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
-    equally_probable,
     histogram,
-    norm_domain,
-    sym_appended,
+    with_min_prob,
 )
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import BACKSPACE_CHAR
@@ -24,6 +22,7 @@ from bcipy.task.control.criteria import (
     ProbThresholdCriteria,
 )
 from bcipy.task.data import EvidenceType
+from bcipy.language.main import LanguageModel
 
 
 log = logging.getLogger(__name__)
@@ -73,6 +72,7 @@ class CopyPhraseWrapper:
     def __init__(self,
                  min_num_inq: int,
                  max_num_inq: int,
+                 lmodel: LanguageModel,
                  signal_model: SignalModel = None,
                  fs: int = 300,
                  k: int = 2,
@@ -82,7 +82,6 @@ class CopyPhraseWrapper:
                  ],
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
-                 lmodel: Any = None,
                  is_txt_stim: bool = True,
                  device_name: str = 'LSL',
                  device_channels: List[str] = None,
@@ -97,6 +96,7 @@ class CopyPhraseWrapper:
                  stim_length: int = 10,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
+        self.lmodel = lmodel
         self.conjugator = EvidenceFusion(evidence_names, len_dist=len(alp))
 
         inq_constants = []
@@ -139,7 +139,6 @@ class CopyPhraseWrapper:
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
-        self.lmodel = lmodel
         self.channel_map = analysis_channels(device_channels, device_name)
         self.backspace_prob = backspace_prob
 
@@ -281,65 +280,48 @@ class CopyPhraseWrapper:
 
     def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
+        assert self.lmodel, "Language model must be initialized."
 
         try:
             # First, reset the history for this new series
             self.conjugator.reset_history()
 
-            # If there is no language model specified, mock the LM prior
-            # TODO: is the probability domain correct? ERP evidence is in
-            # the log domain; LM by default returns negative log domain.
-            if not self.lmodel:
-                # mock probabilities to be equally likely for all letters.
-                overrides = {BACKSPACE_CHAR: self.backspace_prob}
-                prior = equally_probable(self.alp, overrides)
+            # Get the displayed state
+            update = self.decision_maker.displayed_state
+            log.info(f"Querying language model: '{update}'")
 
-            # Else, let's query the lmodel for priors
-            else:
-                # Get the displayed state
-                # TODO: for oclm this should be a list of (sym, prob)
-                update = self.decision_maker.displayed_state
+            # update the lmodel and get back the priors
+            lm_letter_prior = self.lmodel.predict(list(update))
 
-                # update the lmodel and get back the priors
-                lm_prior = self.lmodel.state_update(update)
+            if BACKSPACE_CHAR in self.alp:
+                # Apply configured backspace probability.
+                sym = (BACKSPACE_CHAR, self.backspace_prob)
+                lm_letter_prior = with_min_prob(lm_letter_prior, sym)
 
-                # normalize to probability domain if needed
-                if getattr(self.lmodel, 'normalized', False):
-                    lm_letter_prior = lm_prior['letter']
-                else:
-                    lm_letter_prior = norm_domain(lm_prior['letter'])
+            # convert to format needed for evidence fusion;
+            # probability value only in alphabet order.
+            prior = [
+                prior_prob for alp_letter in self.alp
+                for prior_sym, prior_prob in lm_letter_prior
+                if alp_letter == prior_sym
+            ]
 
-                if BACKSPACE_CHAR in self.alp:
-                    # Append backspace if missing.
-                    sym = (BACKSPACE_CHAR, self.backspace_prob)
-                    lm_letter_prior = sym_appended(lm_letter_prior, sym)
-
-                # convert to format needed for evidence fusion;
-                # probability value only in alphabet order.
-                # TODO: ensure that probabilities still add to 1.0
-                prior = [prior_prob
-                         for alp_letter in self.alp
-                         for prior_sym, prior_prob in lm_letter_prior
-                         if alp_letter == prior_sym]
-
-                # display histogram of LM probabilities
-                log.info(
-                    f"Printed letters: '{self.decision_maker.displayed_state}'")
-                log.debug(histogram(lm_letter_prior))
+            # display histogram of LM probabilities
+            log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
                     {EvidenceType.LM: np.array(prior)})
-            except Exception as e:
-                log.exception(f'Error updating language model!: {e}')
-                raise BciPyCoreException(e)
+            except Exception as fusion_error:
+                log.exception(f'Error fusing language model evidence!: {fusion_error}')
+                raise BciPyCoreException(fusion_error) from fusion_error
 
             # Get decision maker to give us back some decisions and stimuli
             is_accepted, sti = self.decision_maker.decide(prob_dist)
 
-        except Exception as e:
-            log.exception(f'Error in initialize_series: {e}')
-            raise BciPyCoreException(e)
+        except Exception as init_series_error:
+            log.exception(f'Error in initialize_series: {init_series_error}')
+            raise BciPyCoreException(init_series_error) from init_series_error
 
         return is_accepted, sti

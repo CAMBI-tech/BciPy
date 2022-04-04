@@ -11,6 +11,7 @@ from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -137,7 +138,7 @@ class LslDataServer(StoppableThread):
 def _settings(filename):
     """Read the daq settings from the given data file"""
 
-    with open(filename, 'r') as datafile:
+    with open(filename, 'r', encoding=DEFAULT_ENCODING) as datafile:
         daq_type = datafile.readline().strip().split(',')[1]
         sample_hz = int(datafile.readline().strip().split(',')[1])
         channels = datafile.readline().strip().split(',')

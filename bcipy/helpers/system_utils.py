@@ -13,7 +13,7 @@ import pkgutil
 import time
 import logging
 
-
+DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EXPERIMENT_ID = 'default'
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
@@ -50,14 +50,14 @@ def git_hash() -> Optional[str]:
 
     try:
         head_path = Path(os.path.join(git_path, 'HEAD'))
-        with open(head_path) as head_file:
+        with open(head_path, encoding=DEFAULT_ENCODING) as head_file:
             # First line contains a reference to the current branch.
             # ex. ref: refs/heads/branch_name
             ref = head_file.readline()
 
         ref_val = ref.split(':')[-1].strip()
         ref_path = Path(os.path.join(git_path, ref_val))
-        with open(ref_path) as ref_file:
+        with open(ref_path, encoding=DEFAULT_ENCODING) as ref_file:
             sha = ref_file.readline()
 
         # sha hash is 40 characters; use an abbreviated 7-char version which
@@ -166,7 +166,7 @@ def import_submodules(package, recursive=True):
     -------
         dict[str, types.ModuleType]
     """
-    if isinstance(package, str) or isinstance(package, unicode):
+    if isinstance(package, str):
         package = importlib.import_module(package)
     results = {}
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
