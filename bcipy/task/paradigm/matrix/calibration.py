@@ -64,7 +64,6 @@ class MatrixCalibrationTask(Task):
         self.target_positions = TargetPositions(parameters['target_positions'])
         self.nontarget_inquiries = parameters['nontarget_inquiries']
 
-
         self.timing = [parameters['time_flash']]
 
         self.color = [parameters['stim_color']]
