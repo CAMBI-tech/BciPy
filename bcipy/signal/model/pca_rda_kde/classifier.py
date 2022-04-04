@@ -1,4 +1,38 @@
 import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
+from sklearn.linear_model import LogisticRegression as LogR
+from sklearn.svm import SVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.covariance import OAS, LedoitWolf
+from sklearn.neural_network import MLPClassifier
+
+
+class Classifier:
+    def __init__(self):
+        # self.model = LDA()
+        self.model = LDA(shrinkage="auto", solver="lsqr")
+        # self.model = LDA(covariance_estimator=LedoitWolf(), solver="lsqr")
+        # self.model = QDA()
+        # self.model = LogR()
+        # self.model = SVC(probability=True)
+        # self.model = GaussianProcessClassifier()
+        # self.model = MLPClassifier()
+
+    def fit(self, x, y):
+        self.model.fit(x, y)
+
+    def transform(self, x):
+        log_probs = self.model.predict_log_proba(x)
+        # When model is 100% sure of one class, the likelihood ratio will be invalid
+        # (e.g. 1/0). In log space, 0 shows up as -np.inf
+        log_probs[log_probs == -np.inf] = -100.0
+        result = log_probs[:, 1] - log_probs[:, 0]
+        return result
+
+    def fit_transform(self, x, y):
+        self.fit(x, y)
+        return self.transform(x)
 
 
 class RegularizedDiscriminantAnalysis:
@@ -176,5 +210,4 @@ class RegularizedDiscriminantAnalysis:
         """
 
         self.fit(x, y, p)
-
         return self.transform(x)

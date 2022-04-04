@@ -138,7 +138,6 @@ def offline_analysis(
 
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
-    model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
@@ -150,8 +149,12 @@ def offline_analysis(
         dummy_model.fit(train_data, train_labels)
         probs = dummy_model.predict_proba(test_data)
         preds = probs.argmax(-1)
-        log.info(f"Balanced acc with 80/20 split: {balanced_accuracy_score(test_labels, preds)}")
+        balanced_acc = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {balanced_acc}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+        model.balanced_acc = balanced_acc
+    else:
+        model.balanced_acc = None
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
 

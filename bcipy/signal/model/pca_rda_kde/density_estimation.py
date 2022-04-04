@@ -16,10 +16,11 @@ class KernelDensityEstimate:
 
     def __init__(self, scores: Optional[np.array] = None, kernel="gaussian", num_cls=2):
         bandwidth = 1.0 if scores is None else self._compute_bandwidth(scores, scores.shape[0])
+        self.kernel = kernel
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"KDE. {bandwidth=}, {kernel=}")
         self.num_cls = num_cls
-        self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=kernel) for _ in range(self.num_cls)]
+        self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=self.kernel) for _ in range(self.num_cls)]
 
     def _compute_bandwidth(self, scores: np.array, num_items: int):
         """Estimate bandwidth parameter
@@ -32,6 +33,7 @@ class KernelDensityEstimate:
             float: rule-of-thumb bandwidth parameter for KDE
         """
         bandwidth = 0.9 * min(np.std(scores), iqr(scores) / 1.34) * np.power(num_items, -0.2)
+        print("Bandwidth", bandwidth)
         return bandwidth
 
     def fit(self, x, y):
@@ -43,6 +45,11 @@ class KernelDensityEstimate:
             Where N and c denotes number of samples and classes
             respectively.
         """
+        # In order to use this as part of the sklearn pipeline,
+        # We need to get the scores and choose bandwidth during fit()
+        # bandwidth = self._compute_bandwidth(x, x.shape[0])
+        # self.logger.info(f"KDE. {bandwidth=}")
+        # self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=self.kernel) for _ in range(self.num_cls)]
         for i, c in enumerate(np.unique(y)):
             dat = x[y == c]
             # Reshape is required, otherwise there's ambiguity if it's one

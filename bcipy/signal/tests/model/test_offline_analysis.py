@@ -34,7 +34,12 @@ class TestOfflineAnalysis(unittest.TestCase):
 
         params_path = pwd.parent.parent.parent / "parameters" / "parameters.json"
         cls.parameters = load_json_parameters(params_path, value_cast=True)
-        cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
+        cls.model, fig_handles = offline_analysis(
+            str(cls.tmp_dir), 
+            cls.parameters, 
+            alert_finished=False, 
+            estimate_balanced_acc=True
+        )
         cls.mean_erp_fig_handle = fig_handles
 
     @classmethod
@@ -48,7 +53,11 @@ class TestOfflineAnalysis(unittest.TestCase):
             raise ValueError()
         return float(match[1])
 
+    def test_model_balanced_acc(self):
+        print(f"Balanced acc: {self.model.balanced_acc}")
+
     def test_model_AUC(self):
+        # pass
         expected_auc = self.get_auc(list(expected_output_folder.glob("model_*.pkl"))[0].name)
         found_auc = self.get_auc(list(self.tmp_dir.glob("model_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)

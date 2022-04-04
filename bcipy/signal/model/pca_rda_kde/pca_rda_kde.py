@@ -4,11 +4,12 @@ from typing import List
 
 import numpy as np
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
-from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis, Classifier
 from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validation_auc, cross_validation
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
+from sklearn.pipeline import Pipeline as SKPipeline
 from bcipy.signal.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 
@@ -23,6 +24,127 @@ class PcaRdaKdeModel(SignalModel):
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
         self._ready_to_predict = False
+
+    def _fit_old_model_no_tuning(self, train_data: np.array, train_labels: np.array) -> SignalModel:
+        self.model = Pipeline(
+            [
+                ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
+                RegularizedDiscriminantAnalysis(),
+            ]
+        )
+
+        # Find the optimal gamma + lambda values
+        # arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
+
+        # Get the AUC using those optimized gamma + lambda
+        # rda_index = 1  # the index in the pipeline
+        # model.pipeline[rda_index].lam = arg_cv[0]
+        # model.pipeline[rda_index].gam = arg_cv[1]
+        # tmp, sc_cv, y_cv = cost_cross_validation_auc(
+        # model, rda_index, train_data, train_labels, arg_cv, k_folds=self.k_folds, split="uniform"
+        # )
+        # self.auc = -tmp
+        # After finding cross validation scores do one more round to learn the
+        # final RDA model
+        self.model.fit(train_data, train_labels)
+
+        # Insert the density estimates to the model and train using the cross validated
+        # scores to avoid over fitting. Observe that these scores are not obtained using
+        # the final model
+        scores = self.model.transform(train_data)
+        self.model.add(KernelDensityEstimate(scores=self.model.transform(train_data)))
+        self.model.pipeline[-1].fit(scores, train_labels)
+
+        if self.prior_type == "uniform":
+            self.log_prior_class_1 = self.log_prior_class_0 = np.log(0.5)
+        elif self.prior_type == "empirical":
+            prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+            self.log_prior_class_1 = np.log(prior_class_1)
+            self.log_prior_class_0 = np.log(1 - prior_class_1)
+        else:
+            raise ValueError("prior_type must be 'empirical' or 'uniform'")
+
+        self._ready_to_predict = True
+        return self
+
+    def _fit_new_model(self, train_data: np.array, train_labels: np.array) -> SignalModel:
+        self.model = SKPipeline(
+            steps=[
+                (
+                    "pca",
+                    ChannelWisePrincipalComponentAnalysis(
+                        n_components=self.pca_n_components, num_ch=train_data.shape[0]
+                    ),
+                ),
+                ("classifier", Classifier()),
+                ("kde", KernelDensityEstimate()),
+            ]
+        )
+
+        self.model.fit(train_data, train_labels)
+
+        if self.prior_type == "uniform":
+            self.log_prior_class_1 = self.log_prior_class_0 = np.log(0.5)
+        elif self.prior_type == "empirical":
+            prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+            self.log_prior_class_1 = np.log(prior_class_1)
+            self.log_prior_class_0 = np.log(1 - prior_class_1)
+        else:
+            raise ValueError("prior_type must be 'empirical' or 'uniform'")
+
+        self._ready_to_predict = True
+        return self
+
+    def _fit_new_model_with_kde_on_holdout(self, train_data: np.array, train_labels: np.array) -> SignalModel:
+        """
+        Train on provided data using K-fold cross validation and return self.
+
+        Parameters:
+            train_data: shape (Channels, Trials, Trial_length) preprocessed data
+            train_labels: shape (Trials,) binary labels
+
+        Returns:
+            trained likelihood model
+        """
+        self.model = SKPipeline(
+            steps=[
+                (
+                    "pca",
+                    ChannelWisePrincipalComponentAnalysis(
+                        n_components=self.pca_n_components, num_ch=train_data.shape[0]
+                    ),
+                ),
+                ("classifier", Classifier()),
+            ]
+        )
+
+        reshaped_data = train_data.swapaxes(0, 1)
+        kf = KFold(n_splits=10, random_state=0, shuffle=True)
+        cv_scores = []
+        for train_idx, test_idx in kf.split(reshaped_data):
+            tmp_train_data = train_data[:, train_idx, :]
+            tmp_train_labels = train_labels[train_idx]
+            self.model.fit(tmp_train_data, tmp_train_labels)
+            tmp_test_data = train_data[:, test_idx, :]
+            cv_scores.extend(self.model.transform(tmp_test_data))
+        cv_scores = np.array(cv_scores)
+
+        self.model.fit(train_data, train_labels)
+        kde = KernelDensityEstimate(scores=cv_scores)
+        kde.fit(cv_scores, train_labels)
+        self.model.steps.append(("kde", kde))
+
+        if self.prior_type == "uniform":
+            self.log_prior_class_1 = self.log_prior_class_0 = np.log(0.5)
+        elif self.prior_type == "empirical":
+            prior_class_1 = np.sum(train_labels == 1) / len(train_labels)
+            self.log_prior_class_1 = np.log(prior_class_1)
+            self.log_prior_class_0 = np.log(1 - prior_class_1)
+        else:
+            raise ValueError("prior_type must be 'empirical' or 'uniform'")
+
+        self._ready_to_predict = True
+        return self
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
         """
