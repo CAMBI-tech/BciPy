@@ -17,7 +17,7 @@ class KernelDensityEstimate:
     def __init__(self, scores: Optional[np.array] = None, kernel="gaussian", num_cls=2):
         bandwidth = 1.0 if scores is None else self._compute_bandwidth(scores, scores.shape[0])
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"KDE. {bandwidth=}, {kernel=}")
+        self.logger.info(f"KDE. bandwidth={bandwidth}, kernel={kernel}")
         self.num_cls = num_cls
         self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=kernel) for _ in range(self.num_cls)]
 

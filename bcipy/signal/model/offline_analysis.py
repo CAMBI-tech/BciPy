@@ -73,6 +73,8 @@ def offline_analysis(
     triggers_file = parameters.get("trigger_file_name", "triggers")
     raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
+    log.info(f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s")
+
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
@@ -98,10 +100,10 @@ def offline_analysis(
     )
 
     log.info(f"Channels read from csv: {channels}")
-    log.info(f"Device type: {type_amp}")
+    log.info(f"Device type: {type_amp}, fs={sample_rate}")
     log.info(
-        f"Data processing settings: [Filter=[{filter_low}-{filter_high}]; order=[{filter_order}], "
-        f"Notch=[{notch_filter}]], Downsample=[{downsample_rate}]]"
+        f"Data processing settings: Filter=[{filter_low}-{filter_high}], order=[{filter_order}], "
+        f"Notch=[{notch_filter}], Downsample=[{downsample_rate}]"
     )
 
     k_folds = parameters.get("k_folds")
@@ -142,6 +144,8 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
+    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+
     # Experimenting with an 80/20 split and checking balanced accuracy
     # TODO - adjust estimator to match sklearn API and use cross_validate
     if estimate_balanced_acc:
@@ -152,8 +156,6 @@ def offline_analysis(
         preds = probs.argmax(-1)
         log.info(f"Balanced acc with 80/20 split: {balanced_accuracy_score(test_labels, preds)}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-
-    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
 
     figure_handles = visualize_erp(
         data,
@@ -178,9 +180,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
+    parser.add_argument('--alert', dest='alert', action='store_true')
+    parser.add_argument('--balanced-acc', dest='balanced', action='store_true')
+    parser.set_defaults(alert=False)
+    parser.set_defaults(balanced=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
-    offline_analysis(args.data_folder, parameters, alert_finished=False)
+
+    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, balanced_accuracy_score=args.balanced)
     log.info("Offline Analysis complete.")
