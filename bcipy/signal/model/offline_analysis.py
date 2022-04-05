@@ -189,5 +189,5 @@ if __name__ == "__main__":
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, balanced_accuracy_score=args.balanced)
+    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, estimate_balanced_acc=args.balanced)
     log.info("Offline Analysis complete.")
