@@ -136,7 +136,8 @@ class StimuliProperties:
             stim_inquiry: List[str],
             stim_colors: List[str],
             stim_timing: List[float],
-            is_txt_stim: bool):
+            is_txt_stim: bool,
+            prompt_time: float = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
@@ -146,6 +147,7 @@ class StimuliProperties:
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
+        prompt_time(float): Time to display target prompt for at the beggining of inquiry
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
@@ -156,6 +158,7 @@ class StimuliProperties:
         self.is_txt_stim = is_txt_stim
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
+        self.prompt_time = prompt_time
 
     def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
         """"Build Initial Stimuli.

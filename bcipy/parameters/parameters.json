@@ -361,6 +361,25 @@
     ],
     "type": "str"
   },
+  "target_positions": {
+    "value": "distributed",
+    "section": "bci_config",
+    "readableName": "Target Positions",
+    "helpTip": "Specifies the positions of target stimuli in calibration task. Default is random.",
+    "recommended_values": [
+      "distributed",
+      "random"
+    ],
+    "type": "str"
+  },
+  "nontarget_inquiries": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Percentage of Nontarget Inquiries",
+    "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
+    "recommended_values": "",
+    "type": "int"
+  },
   "stim_length": {
     "value": "10",
     "section": "bci_config",

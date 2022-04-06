@@ -1,7 +1,6 @@
 from psychopy import visual
-from bcipy.display.paradigm.rsvp.display import RSVPDisplay, BCIPY_LOGO_PATH
+from bcipy.display.paradigm.rsvp.display import RSVPDisplay
 from bcipy.helpers.task import SPACE_CHAR
-from bcipy.helpers.stimuli import resize_image
 
 """Note:
 
@@ -37,14 +36,23 @@ class CopyPhraseDisplay(RSVPDisplay):
             preview_inquiry=None,
             full_screen=False):
         """ Initializes Copy Phrase Task Objects """
-        self.target_text = static_task_text
-        static_task_pos = (0, 1 - task_display.task_height)
+
+        tmp = visual.TextStim(win=window, font=task_display.task_font,
+                              text=static_task_text)
+        static_task_pos = (
+            tmp.boundingBox[0] / window.size[0] - 1, 1 - task_display.task_height)
 
         info.info_color.append(static_task_color)
         info.info_font.append(task_display.task_font)
         info.info_text.append(static_task_text)
-        info.info_pos.append(static_task_pos)
+        info.info_pos.append(task_display.task_pos)
         info.info_height.append(task_display.task_height)
+
+        # Adjust task position wrt. static task position. Definition of
+        # dummy texts are required. Place the task on bottom
+        tmp2 = visual.TextStim(win=window, font=task_display.task_font, text=task_display.task_text)
+        x_task_pos = tmp2.boundingBox[0] / window.size[0] - 1
+        task_display.task_pos = (x_task_pos, static_task_pos[1] - task_display.task_height)
 
         super(CopyPhraseDisplay, self).__init__(
             window, clock,
@@ -62,54 +70,12 @@ class CopyPhraseDisplay(RSVPDisplay):
             appending to the right.
             Args:
                 text(string): new text for task state
-                color_list(list[string]): list of colors for each
-        """
-        # Add padding to attempt aligning the task and information text. *Note:* this only works with monospaced fonts
-        padding = abs(len(self.target_text) - len(text))
-        text += ' ' * padding
-        task_pos = (0, self.info.info_pos[-1][1] - self.task.height)
+                color_list(list[string]): list of colors for each """
+        # An empty string will cause an error when we attempt to find its
+        # bounding box.
+        txt = text if len(text) > 0 else ' '
+        tmp2 = visual.TextStim(win=self.window, font=self.task.font, text=txt)
+        x_task_pos = tmp2.boundingBox[0] / self.window.size[0] - 1
+        task_pos = (x_task_pos, self.info.info_pos[-1][1] - self.task.height)
+
         self.update_task(text=text, color_list=color_list, pos=task_pos)
-
-    def wait_screen(self, message: str, message_color: str) -> None:
-        """Wait Screen.
-
-        Args:
-            message(string): message to be displayed while waiting
-            message_color(string): color of the message to be displayed
-        """
-
-        self.draw_static()
-
-        # Construct the wait message
-        wait_message = visual.TextStim(win=self.window,
-                                       font=self.stimuli_font,
-                                       text=message,
-                                       height=.1,
-                                       color=message_color,
-                                       pos=(0, -.55),
-                                       wrapWidth=2,
-                                       colorSpace='rgb',
-                                       opacity=1,
-                                       depth=-6.0)
-
-        # try adding the BciPy logo to the wait screen
-        try:
-            wait_logo = visual.ImageStim(
-                self.window,
-                image=BCIPY_LOGO_PATH,
-                pos=(0, 0),
-                mask=None,
-                ori=0.0)
-            wait_logo.size = resize_image(
-                BCIPY_LOGO_PATH,
-                self.window.size,
-                1)
-            wait_logo.draw()
-
-        except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
-            raise e
-
-        # Draw and flip the screen.
-        wait_message.draw()
-        self.window.flip()
