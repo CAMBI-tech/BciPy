@@ -18,6 +18,7 @@ from bcipy.helpers.stimuli import (
     calibration_inquiry_generator,
     DEFAULT_FIXATION_PATH,
     get_fixation,
+    TrialReshaper,
     InquiryReshaper,
     play_sound,
     distributed_target_positions,

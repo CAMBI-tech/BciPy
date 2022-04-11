@@ -103,6 +103,7 @@
     "readableName": "High Frequency Filter Cutoff",
     "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",
     "recommended_values": [
+      "20",
       "45",
       "50"
     ],
@@ -841,9 +842,10 @@
     "section": "bci_config",
     "readableName": "Preview Inquiry Display Key Input Method",
     "helpTip": "Defines the key used to engage with inquiry preview.",
-    "recommended_values":
-      ["space",
-       "escape"],
+    "recommended_values": [
+      "space",
+      "escape"
+    ],
     "type": "str"
   },
   "preview_inquiry_isi": {
