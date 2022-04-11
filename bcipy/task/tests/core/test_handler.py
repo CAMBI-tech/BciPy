@@ -5,7 +5,7 @@ from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
 from bcipy.task.control.criteria import CriteriaEvaluator, \
     MaxIterationsCriteria, MinIterationsCriteria, ProbThresholdCriteria
 from bcipy.task.control.query import NBestStimuliAgent
-from bcipy.language.main import alphabet
+from bcipy.helpers.task import alphabet
 
 
 class TestDecisionMaker(unittest.TestCase):

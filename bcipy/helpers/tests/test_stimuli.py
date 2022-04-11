@@ -20,7 +20,6 @@ from bcipy.helpers.stimuli import (
     get_fixation,
     InquiryReshaper,
     play_sound,
-    calibration_inquiry_generator,
     distributed_target_positions,
     soundfiles,
     StimuliOrder,

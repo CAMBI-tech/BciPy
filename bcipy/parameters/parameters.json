@@ -85,7 +85,7 @@
     "value": "1",
     "section": "bci_config",
     "readableName": "Prestimulus Window Length",
-    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before stimulus presentation. Default: 0.5",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before stimulus presentation. Default: 1",
     "recommended_values": "",
     "type": "float"
   },
@@ -101,7 +101,7 @@
     "value": "20",
     "section": "signal_config",
     "readableName": "High Frequency Filter Cutoff",
-    "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 45",
+    "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",
     "recommended_values": [
       "45",
       "50"
@@ -112,7 +112,7 @@
     "value": "1",
     "section": "signal_config",
     "readableName": "Low Frequency Filter Cutoff",
-    "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 2",
+    "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 1",
     "recommended_values": [
       "1",
       "2"
@@ -146,7 +146,7 @@
     "section": "signal_config",
     "readableName": "Downsampling Rate",
     "helpTip": "Specifies the decimation factor (integer only) for downsampling of EEG data. Default: 2",
-    "recommended_values": "[2]",
+    "recommended_values": "",
     "type": "int"
   },
   "artifact_rejection": {
@@ -317,7 +317,7 @@
     "value": "2",
     "section": "bci_config",
     "readableName": "Inter-inquiry Interval",
-    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 1",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
     "recommended_values": "",
     "type": "float"
   },

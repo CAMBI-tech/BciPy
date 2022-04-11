@@ -24,8 +24,6 @@ import soundfile as sf
 
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
-DEFAULT_CHANNEL_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0]
 
 
 class StimuliOrder(Enum):
@@ -86,7 +84,7 @@ class InquiryReshaper:
                  fs: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 channel_map: List[int] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
@@ -101,7 +99,7 @@ class InquiryReshaper:
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
-                Defaults to DEFAULT_CHANNEL_MAP.
+                 Defaults to None; all channels will be used.
             poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
             prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
             transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
@@ -115,9 +113,10 @@ class InquiryReshaper:
             reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
                 begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
         """
-        # Remove the channels that we are not interested in
-        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         n_inquiry = len(timing_info) // trials_per_inquiry
         trial_duration_samples = int(poststimulus_length * fs)
@@ -131,7 +130,7 @@ class InquiryReshaper:
         def get_inquiry_len(inq_trigs):
             return inq_trigs[-1] - inq_trigs[0]
 
-        longest_inquiry = max(grouper(triggers, trials_per_inquiry), key=lambda xy: get_inquiry_len(xy))
+        longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
         buffer_samples = int(transformation_buffer * fs)
 
@@ -141,7 +140,7 @@ class InquiryReshaper:
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
-            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry)
+            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
         ):
             first_trigger = trials_within_inquiry[0][1]
 
@@ -187,7 +186,7 @@ class TrialReshaper(Reshaper):
                  eeg_data: np.ndarray,
                  fs: int,
                  offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 channel_map: List[int] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
@@ -201,8 +200,8 @@ class TrialReshaper(Reshaper):
             trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
             offset (float, optional): Any calculated or hypothesized offsets in timings.
                 Defaults to 0.
-            channel_map (tuple, optional): Describes which channels to include or discard.
-                Defaults to DEFAULT_CHANNEL_MAP.
+            channel_map (List, optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
             poststimulus_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
 
@@ -211,8 +210,9 @@ class TrialReshaper(Reshaper):
             labels (np.ndarray): integer label for each trial
         """
         # Remove the channels that we are not interested in
-        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+        if channel_map:
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         # Number of samples we are interested per trial
         poststim_samples = int(poststimulus_length * fs)
