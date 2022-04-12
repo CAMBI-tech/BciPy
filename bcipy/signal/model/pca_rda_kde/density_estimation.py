@@ -22,7 +22,8 @@ class KernelDensityEstimate:
         self.list_den_est = [KernelDensity(bandwidth=bandwidth, kernel=kernel) for _ in range(self.num_cls)]
 
     def _compute_bandwidth(self, scores: np.array, num_items: int):
-        """Estimate bandwidth parameter
+        """Estimate bandwidth parameter using Silverman's rule of thumb.
+        See https://en.wikipedia.org/wiki/Kernel_density_estimation#A_rule-of-thumb_bandwidth_estimator
 
         Args:
             scores (np.array): Shape (num_items, 2) - positive and negative class probabilities from RDA

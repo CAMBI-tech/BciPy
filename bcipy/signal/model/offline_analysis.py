@@ -1,28 +1,45 @@
 import logging
 from pathlib import Path
 from typing import Tuple
+
+import numpy as np
 from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
-from matplotlib.figure import Figure
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import report_execution_time
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.base_model import SignalModel
-from bcipy.signal.process import get_default_transform, filter_inquiries
-from sklearn.model_selection import train_test_split
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.process import filter_inquiries, get_default_transform
+from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
+from sklearn.model_selection import train_test_split
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
-def subset_data(data, labels, test_size, random_state=0):
+def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
+    """Performs a train/test split on the provided data and labels, accounting for
+    the current shape convention (channel dimension in front, instead of batch dimension in front).
+
+    Args:
+        data (np.ndarray): Shape (channels, items, time)
+        labels (np.ndarray): Shape (items,)
+        test_size (float): fraction of data to be used for testing
+        random_state (int, optional): fixed random seed
+
+    Returns:
+        train_data (np.ndarray): Shape (channels, train_items, time)
+        test_data (np.ndarray): Shape (channels, test_items, time)
+        train_labels (np.ndarray): Shape (train_items,)
+        test_labels (np.ndarray): Shape (test_items,)
+    """
     data = data.swapaxes(0, 1)
     train_data, test_data, train_labels, test_labels = train_test_split(
         data, labels, test_size=test_size, random_state=random_state
@@ -34,7 +51,9 @@ def subset_data(data, labels, test_size, random_state=0):
 
 @report_execution_time
 def offline_analysis(
-    data_folder: str = None, parameters: dict = {}, alert_finished: bool = True,
+    data_folder: str = None,
+    parameters: dict = {},
+    alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
@@ -180,8 +199,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
-    parser.add_argument('--alert', dest='alert', action='store_true')
-    parser.add_argument('--balanced-acc', dest='balanced', action='store_true')
+    parser.add_argument("--alert", dest="alert", action="store_true")
+    parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
     args = parser.parse_args()
