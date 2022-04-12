@@ -165,8 +165,7 @@ def offline_analysis(
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
 
-    # Experimenting with an 80/20 split and checking balanced accuracy
-    # TODO - adjust estimator to match sklearn API and use cross_validate
+    # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
         train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.8)
         dummy_model = PcaRdaKdeModel(k_folds=k_folds)
