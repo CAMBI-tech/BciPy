@@ -1,36 +1,26 @@
-"""Script that will replay sessions and allow us to simulate new model predictions on that data.
-
-TODO Mar 15:
-- Try to re-create the same outputs as in "session.json", as closely as possible.
-  (load correct model, confirm using same filter params, confirm no changes about buffering window lengths, etc)
-  Come up with simple way to decide "matching" or not.
-- Load a "new" model trained with slightly modified code/parameters and replay.
-- Cleanup this script and refactor as needed.
-"""
+"""Script that will replay sessions and allow us to simulate new model predictions on that data."""
 import json
-
-# from curses import raw
-from itertools import zip_longest
+import logging as logger
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import logging as logger
-
-logger.getLogger()
 
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.list import grouper
+from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper
-from bcipy.language.main import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.language.main import alphabet
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 
+logger.getLogger()
+
 SYMBOLS = alphabet()
+
 
 def load_model(model_path: Path, k_folds: int):
     """Load the PcaRdaKdeModel model at the given path"""
@@ -359,15 +349,6 @@ def plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nonta
     ax.set(yscale="log")
     plt.savefig(outdir / "response_values.stripplot.png", dpi=150, bbox_inches="tight")
     plt.close()
-    # ax = sns.violinplot(
-    #     x="which_model",
-    #     y="response_value",
-    #     data=df,
-    #     order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
-    # )
-    # ax.set(yscale="log")
-    # plt.savefig(outdir / "response_values.violinplot.png", dpi=150, bbox_inches="tight")
-    # plt.close()
     ax = sns.boxplot(
         x="which_model",
         y="response_value",
