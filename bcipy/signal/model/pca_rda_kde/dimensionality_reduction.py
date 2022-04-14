@@ -5,14 +5,23 @@ from sklearn.decomposition import PCA
 
 
 class ChannelWisePrincipalComponentAnalysis:
-    """Channel wise PCA application. Creates PCA objects respective to the
-    number of channels.
-    Attr:
-        n_components(int): Number of components in PCA
-        random_state(seed): Random state seed
+    """Creates a PCA object for each channel.
+
+    Args:
+        n_components(int or float): Number of components in PCA
+            - If 0 < n_components < 1, keeps enough components to preserve the specified fraction of variance.
+            - If int, keeps the first n_components components.
+            - If None, keeps all components
+
+            NOTE - Keeping more components (or using a float closer to 1) preserves more structure; 
+            keeping fewer (or using a float closer to 0) achieves more compression and thus more speedup for 
+            downstream steps. The tradeoff between compression and performance is fundamentally arbitrary.
+            To choose number of components, try plotting the explained_variance_ratio_ attribute of the PCA object 
+            on a representative dataset, and check the effect on runtime and task performance.
+
+        random_state(int): Random state seed
         num_ch(int): number of channels in expected data
     """
-
     def __init__(self, n_components=None, random_state=None, num_ch=1):
         self.num_ch = num_ch
         self.list_pca = [PCA(n_components=n_components, random_state=random_state) for _ in range(self.num_ch)]
@@ -21,6 +30,7 @@ class ChannelWisePrincipalComponentAnalysis:
 
     def fit(self, x, y=None):
         """Fit PCA to each channel of data.
+        
         Args:
             x(ndarray[float]): C x N x k data array
             y(ndarray[int]): N x k observation (class) array
@@ -32,6 +42,7 @@ class ChannelWisePrincipalComponentAnalysis:
 
     def transform(self, x, y=None):
         """Apply fitted PCA to each channel.
+        
         Args:
             x: data, with shape (channels, items, samples)
             y: labels (ignored)
