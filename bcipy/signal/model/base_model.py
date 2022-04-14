@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List
 import numpy as np
-from bcipy.helpers.task import Reshaper
+from bcipy.helpers.stimuli import Reshaper
 
 
 class SignalModel(ABC):

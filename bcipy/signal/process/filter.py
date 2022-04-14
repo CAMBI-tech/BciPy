@@ -25,3 +25,20 @@ class Bandpass:
 
     def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
         return sosfilt(self.sos, data), fs
+
+
+def filter_inquiries(inquiries, transform, sample_rate) -> Tuple[np.ndarray, float]:
+    """Filter Inquiries.
+
+    The shape of data after reshaping into inquiries requires a bit of pre-processing to apply the
+        transforms and filters defined in BciPy without looping. Here we flatten the inquires, filter,
+        and return them in the correct shape for continued processing.
+    """
+    # (Channels, Inquiries, Samples)
+    old_shape = inquiries.shape
+    # (Channels*Inquiry, Samples)
+    inq_flatten = inquiries.reshape(-1, old_shape[-1])
+    inq_flatten_filtered, transformed_sample_rate = transform(inq_flatten, sample_rate)
+    # (Channels, Inquiries, Samples)
+    inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
+    return inquiries, transformed_sample_rate

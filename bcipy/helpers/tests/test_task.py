@@ -1,18 +1,24 @@
 import unittest
+
+from typing import List
+from collections import Counter
+from mockito import unstub, mock, when, verify, verifyStubbedInvocationsAreUsed
+
 import numpy as np
 import psychopy
-from collections import Counter
-from mockito import unstub, mock, when, verifyStubbedInvocationsAreUsed
+
+from bcipy.acquisition.client import DataAcquisitionClient
+from bcipy.acquisition.record import Record
+from bcipy.task.exceptions import InsufficientDataException
 
 from bcipy.helpers.task import (
+    _float_val,
     alphabet,
     calculate_stimulation_freq,
-    get_key_press,
-    InquiryReshaper,
-    TrialReshaper,
-    _float_val,
-    generate_targets,
     construct_triggers,
+    generate_targets,
+    get_data_for_decision,
+    get_key_press,
     target_info
 )
 
@@ -45,76 +51,6 @@ class TestAlphabet(unittest.TestCase):
             ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
              'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<',
              '_'])
-
-
-class TestTrialReshaper(unittest.TestCase):
-    def setUp(self):
-        self.target_info = ['prompt', 'fixation',
-                            'target', 'nontarget', 'nontarget']
-        self.timing_info = [1.001, 1.2001, 1.4001, 1.6001, 1.8001]
-        # make some fake eeg data
-        self.channel_number = 21
-        tmp_inp = np.array([range(4000)] * self.channel_number)
-        # Add some channel info
-        tmp_inp[:, 0] = np.transpose(np.arange(1, 22, 1))
-        self.eeg = tmp_inp
-        self.channel_map = [1] * self.channel_number
-
-    def test_trial_reshaper(self):
-        fs = 256
-        trial_length_s = 0.5
-        reshaped_trials, labels = TrialReshaper()(
-            trial_labels=self.target_info,
-            timing_info=self.timing_info, eeg_data=self.eeg,
-            fs=fs, channel_map=self.channel_map, trial_length=trial_length_s)
-
-        trial_length_samples = int(fs * trial_length_s)
-        expected_shape = (self.channel_number, 3, trial_length_samples)
-        self.assertTrue(np.all(labels == [1, 0, 0]))
-        self.assertTrue(reshaped_trials.shape == expected_shape)
-
-
-class TestInquiryReshaper(unittest.TestCase):
-    def setUp(self):
-        self.n_channel = 7
-        self.trial_length = 0.5
-        self.trials_per_inquiry = 3
-        self.n_inquiry = 4
-        self.fs = 10
-        self.target_info = [
-            "prompt", "fixation", "target", "nontarget", "nontarget",
-            "prompt", "fixation", "nontarget", "nontarget", "nontarget",
-            "prompt", "fixation", "nontarget", "target", "nontarget",
-            "prompt", "fixation", "nontarget", "nontarget", "target",
-        ]
-        self.true_labels = [0, 3, 1, 2]
-        self.timing_info = [
-            1.0, 1.2, 1.4, 1.6, 1.8,
-            2.0, 2.2, 2.4, 2.6, 2.8,
-            3.0, 3.2, 3.4, 3.6, 3.8,
-            4.0, 4.2, 4.4, 4.6, 4.8,
-        ]
-        # Inquiry lasts from onset of first trial, to onset of last trial + trial_length
-        self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
-
-        # total duration = 3.8s + final trial_length
-        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4.8 + self.trial_length)))
-        self.channel_map = [1] * self.n_channel
-
-    def test_inquiry_reshaper(self):
-        reshaped_data, labels = InquiryReshaper()(
-            trial_labels=self.target_info,
-            timing_info=self.timing_info,
-            eeg_data=self.eeg,
-            fs=self.fs,
-            trials_per_inquiry=self.trials_per_inquiry,
-            channel_map=self.channel_map,
-            trial_length=self.trial_length,
-        )
-        samples_per_inquiry = int(self.fs * self.inquiry_duration_s)
-        expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
-        self.assertTrue(reshaped_data.shape == expected_shape)
-        self.assertTrue(np.all(labels == self.true_labels))
 
 
 class TestCalculateStimulationFreq(unittest.TestCase):
@@ -288,6 +224,119 @@ class TestTriggers(unittest.TestCase):
         ]
         self.assertEqual(expected, target_info(triggers))
         self.assertEqual([], target_info([]))
+
+
+def mock_get_data_response(samples: int, high: float, low: float, channels: int) -> List[Record]:
+    """Mock DataAcquisitionClient Response.
+
+    The data acquisition client returns a list of records that need to be looped through
+        to get the raw data without other items attached.
+    """
+    data = [np.random.uniform(low, high) for _ in range(channels)]
+    record_data = []
+    for i in range(samples):
+        record_data.append(Record(data, i, None))
+    return record_data
+
+
+class TestGetDataForDecision(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.inquiry_timing = [('A', 1), ('B', 2), ('C', 3)]
+        self.daq = mock(spec=DataAcquisitionClient)
+        self.daq.device_info = mock()
+        self.daq.device_info.fs = 10
+        self.mock_eeg = mock_get_data_response(samples=1000, high=1000, low=-1000, channels=4)
+
+    def tearDown(self) -> None:
+        unstub()
+
+    def test_get_data_for_decision_returns_tuple_of_eeg_data_and_triggers(self):
+        when(self.daq).get_data(start=any, limit=any).thenReturn(self.mock_eeg)
+
+        response = get_data_for_decision(self.inquiry_timing, self.daq)
+
+        self.assertIsInstance(response, tuple)
+
+        eeg_data, timing = response
+
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertIsInstance(timing, list)
+
+    def test_get_data_for_decision_prestim(self):
+        prestim = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_start = first_stim_time - prestim
+        expected_stop = last_stim_time
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                             for text, timing in self.inquiry_timing]
+        expected_data_limit = round((expected_stop - expected_start) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=expected_start, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            prestim=prestim)
+
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=expected_start, limit=expected_data_limit)
+
+    def test_get_data_for_decision_poststim(self):
+        poststim = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                             for text, timing in self.inquiry_timing]
+        expected_data_limit = round((last_stim_time - first_stim_time + poststim) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=first_stim_time, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            poststim=poststim)
+
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=first_stim_time, limit=expected_data_limit)
+
+    def test_get_data_for_decision_offset(self):
+        offset = 1
+        first_stim_time = self.inquiry_timing[0][1]
+        last_stim_time = self.inquiry_timing[-1][1]
+
+        expected_start = first_stim_time + offset
+        expected_stop = last_stim_time + offset
+        expected_triggers = [(text, ((timing) - first_stim_time))
+                             for text, timing in self.inquiry_timing]
+        expected_data_limit = round((expected_stop - expected_start) * self.daq.device_info.fs)
+
+        when(self.daq).get_data(start=expected_start, limit=expected_data_limit).thenReturn(self.mock_eeg)
+        _, timing = get_data_for_decision(
+            self.inquiry_timing,
+            self.daq,
+            offset=offset)
+
+        # self.assertEqual(eeg_data[:1][0], self.mock_eeg[0].data[0])
+        self.assertEqual(timing, expected_triggers)
+        verify(self.daq, times=1).get_data(start=expected_start, limit=expected_data_limit)
+
+    def test_get_data_for_decision_throws_insufficient_data_error_if_less_than_data_limit(self):
+
+        # return an empty list from the get data call
+        when(self.daq).get_data(start=any, limit=any).thenReturn([])
+
+        with self.assertRaises(InsufficientDataException):
+            get_data_for_decision(self.inquiry_timing, self.daq)
+
+    def test_get_data_for_decision_throws_insufficient_data_error_if_data_query_out_of_bounds(self):
+        inquiry_timing = [('A', 10), ('D', 1)]
+
+        with self.assertRaises(InsufficientDataException):
+            get_data_for_decision(inquiry_timing, self.daq)
 
 
 if __name__ == '__main__':

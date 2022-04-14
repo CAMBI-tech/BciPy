@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
 from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.pca_rda_kde.cross_validation import cross_validation
@@ -72,13 +72,11 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
         np.random.seed(0)
 
     def test_pca(self):
-        var_tol = 0.95
-
         # .fit() then .transform() should match .fit_transform()
-        pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel)
-        pca.fit(self.x, var_tol=var_tol)
+        pca = ChannelWisePrincipalComponentAnalysis(n_components=0.9, num_ch=self.num_channel)
+        pca.fit(self.x)
         x_reduced = pca.transform(self.x)
-        x_reduced_2 = pca.fit_transform(self.x, var_tol=var_tol)
+        x_reduced_2 = pca.fit_transform(self.x)
         self.assertTrue(np.allclose(x_reduced, x_reduced_2))
 
         # Output values should be correct
@@ -113,12 +111,11 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
 
         # try different kernels and show how the look like
         for kernel in ["gaussian", "tophat", "epanechnikov"]:
-            kde = KernelDensityEstimate(kernel=kernel, scores=x, num_channels=x.shape[0], num_cls=1)
+            kde = KernelDensityEstimate(kernel=kernel, scores=x, num_cls=1)
             kde.fit(x, y)
             log_dens = kde.list_den_est[0].score_samples(x_plot)
             ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
 
-        ax.legend(loc="upper left")
         ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), "+k")
 
         ax.set_xlim(-4, 9)
@@ -126,7 +123,7 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
         return fig
 
     def test_kde_values(self):
-        pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
+        pca = ChannelWisePrincipalComponentAnalysis(n_components=0.9, num_ch=self.num_channel)
         rda = RegularizedDiscriminantAnalysis()
         kde = KernelDensityEstimate()
 
@@ -150,7 +147,7 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
           before fitting it - it is not clear how sensitive this test is to changes in the code
           or input data, so this may be a weak test of cross_validation().
         """
-        pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
+        pca = ChannelWisePrincipalComponentAnalysis(n_components=0.9, num_ch=self.num_channel)
         rda = RegularizedDiscriminantAnalysis()
 
         pipeline = Pipeline([pca, rda])
@@ -160,7 +157,7 @@ class TestPcaRdaKdeModelInternals(ModelSetup):
         self.assertAlmostEqual(gam, 0.1)
 
     def test_rda(self):
-        pca = ChannelWisePrincipalComponentAnalysis(num_ch=self.num_channel, var_tol=0.5)
+        pca = ChannelWisePrincipalComponentAnalysis(n_components=0.9, num_ch=self.num_channel)
         rda = RegularizedDiscriminantAnalysis()
 
         pipeline = Pipeline([pca, rda])

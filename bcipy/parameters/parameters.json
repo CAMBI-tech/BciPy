@@ -46,14 +46,6 @@
     "recommended_values": "",
     "type": "int"
   },
-  "eeg_buffer_len": {
-    "value": "2",
-    "section": "bci_config",
-    "readableName": "End-of-file EEG Buffer Length",
-    "helpTip": "Specifies the number of seconds of data to add to the end of the EEG file. Default: 2",
-    "recommended_values": "",
-    "type": "float"
-  },
   "trigger_type": {
     "value": "text",
     "section": "bci_config",
@@ -89,6 +81,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "prestim_length": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Prestimulus Window Length",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before stimulus presentation. Default: 1",
+    "recommended_values": "",
+    "type": "float"
+  },
   "offline_analysis_tone": {
     "value": "bcipy/static/sounds/beep.wav",
     "section": "bci_config",
@@ -98,21 +98,22 @@
     "type": "filepath"
   },
   "filter_high": {
-    "value": "45",
+    "value": "20",
     "section": "signal_config",
     "readableName": "High Frequency Filter Cutoff",
-    "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 45",
+    "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",
     "recommended_values": [
+      "20",
       "45",
       "50"
     ],
     "type": "float"
   },
   "filter_low": {
-    "value": "2",
+    "value": "1",
     "section": "signal_config",
     "readableName": "Low Frequency Filter Cutoff",
-    "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 2",
+    "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 1",
     "recommended_values": [
       "1",
       "2"
@@ -146,7 +147,7 @@
     "section": "signal_config",
     "readableName": "Downsampling Rate",
     "helpTip": "Specifies the decimation factor (integer only) for downsampling of EEG data. Default: 2",
-    "recommended_values": "[2]",
+    "recommended_values": "",
     "type": "int"
   },
   "artifact_rejection": {
@@ -313,11 +314,11 @@
     "recommended_values": "",
     "type": "int"
   },
-  "task_buffer_len": {
-    "value": "0.75",
+  "task_buffer_length": {
+    "value": "2",
     "section": "bci_config",
     "readableName": "Inter-inquiry Interval",
-    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in an RSVP task. Default: 0.75",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
     "recommended_values": "",
     "type": "float"
   },
@@ -841,9 +842,10 @@
     "section": "bci_config",
     "readableName": "Preview Inquiry Display Key Input Method",
     "helpTip": "Defines the key used to engage with inquiry preview.",
-    "recommended_values":
-      ["space",
-       "escape"],
+    "recommended_values": [
+      "space",
+      "escape"
+    ],
     "type": "str"
   },
   "preview_inquiry_isi": {

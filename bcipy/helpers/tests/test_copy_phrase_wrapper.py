@@ -2,6 +2,7 @@ import random
 import shutil
 import tempfile
 import unittest
+
 from pathlib import Path
 
 import numpy as np
@@ -10,9 +11,9 @@ from bcipy.acquisition.devices import DeviceSpec, register
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.task import alphabet
+from bcipy.language.uniform import UniformLanguageModel
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task.data import EvidenceType
-from bcipy.language.uniform import UniformLanguageModel
 
 
 class TestCopyPhraseWrapper(unittest.TestCase):
@@ -204,6 +205,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             ("I", 2.583265081048012),
             ("E", 2.833274284028448),
         ]
+        stimuli = [label for (label, _) in triggers]
         target_info = [
             "nontarget",
             "nontarget",
@@ -218,15 +220,16 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             "nontarget",
         ]
 
-        new_series, sti = copy_phrase_task.evaluate_inquiry(
+        new_series, inquiry = copy_phrase_task.evaluate_inquiry(
             response_eeg, triggers, target_info, self.params["trial_length"]
         )
         self.assertFalse(new_series)
-        self.assertEqual(
-            sti,
-            (
-                [["+", "I", "F", "B", "G", "C", "D", "J", "A", "E", "H"]],
-                [[self.params["time_fixation"]] + [self.params["time_flash"]] * self.params["stim_length"]],
-                [[self.params["fixation_color"]] + [self.params["stim_color"]] * self.params["stim_length"]],
-            ),
-        )
+        self.assertEqual(sorted(inquiry.stimuli[0]), sorted(stimuli))
+        self.assertEqual(inquiry.durations[0], [self.params["time_fixation"]] +
+                         [self.params["time_flash"]] * self.params["stim_length"])
+        self.assertEqual(inquiry.colors[0], [self.params["fixation_color"]] +
+                         [self.params["stim_color"]] * self.params["stim_length"])
+
+
+if __name__ == '__main__':
+    unittest.main()

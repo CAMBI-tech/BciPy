@@ -42,7 +42,7 @@ class RSVPCalibrationTask(Task):
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
-        self.buffer_val = parameters['task_buffer_len']
+        self.buffer_val = parameters['task_buffer_length']
         self.alp = alphabet(parameters)
         self.rsvp = init_calibration_display_task(
             self.parameters, self.window,
@@ -76,7 +76,6 @@ class RSVPCalibrationTask(Task):
         self.stimuli_height = parameters['stim_height']
 
         self.is_txt_stim = parameters['is_txt_stim']
-        self.eeg_buffer = parameters['eeg_buffer_len']
 
         self.enable_breaks = parameters['enable_breaks']
 
@@ -183,7 +182,7 @@ class RSVPCalibrationTask(Task):
         self.write_offset_trigger()
 
         # Wait some time before exiting so there is trailing eeg data saved
-        core.wait(self.eeg_buffer)
+        core.wait(self.buffer_val)
 
         return self.file_save
 
