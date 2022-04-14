@@ -1,18 +1,24 @@
-import os
-from typing import Any
 import logging
+import os
 import random
+
+from abc import ABC, abstractmethod
+from itertools import zip_longest
+from string import ascii_uppercase
+from typing import Any, List, Optional, Set, Tuple, Union
+
 import numpy as np
 from psychopy import core, event, visual
 
-from bcipy.tasks.exceptions import InsufficientDataException
+from bcipy.helpers.clock import Clock
+from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
-DEFAULT_CHANNEL_MAP = (1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0)
+DEFAULT_CHANNEL_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
+                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0]
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -63,7 +69,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
 
     In an RSVP paradigm, the inquiry itself will produce an
         SSVEP response to the stimulation. Here we calculate
-        what that frequency should be based in the presentation
+        what that frequency should be based on the presentation
         time.
 
     PARAMETERS
@@ -85,123 +91,119 @@ def alphabet(parameters=None, include_path=True):
     -------
         array of letters.
     """
-    if parameters:
-        if not parameters['is_txt_stim']:
-            # construct an array of paths to images
-            path = parameters['path_to_presentation_images']
-            stimulus_array = []
-            for stimulus_filename in sorted(os.listdir(path)):
-                # PLUS.png is reserved for the fixation symbol
-                if stimulus_filename.endswith(
-                        '.png') and not stimulus_filename.endswith('PLUS.png'):
-                    if include_path:
-                        img = os.path.join(path, stimulus_filename)
-                    else:
-                        img = os.path.splitext(stimulus_filename)[0]
-                    stimulus_array.append(img)
-            return stimulus_array
+    if parameters and not parameters['is_txt_stim']:
+        # construct an array of paths to images
+        path = parameters['path_to_presentation_images']
+        stimulus_array = []
+        for stimulus_filename in sorted(os.listdir(path)):
+            # PLUS.png is reserved for the fixation symbol
+            if stimulus_filename.endswith(
+                    '.png') and not stimulus_filename.endswith('PLUS.png'):
+                if include_path:
+                    img = os.path.join(path, stimulus_filename)
+                else:
+                    img = os.path.splitext(stimulus_filename)[0]
+                stimulus_array.append(img)
+        return stimulus_array
 
-    return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            BACKSPACE_CHAR, SPACE_CHAR]
+    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 
-def process_data_for_decision(
-        inquiry_timing,
-        daq,
-        window,
-        parameters,
-        first_session_stim_time,
-        static_offset=None,
-        buf_length=None):
-    """Process Data for Decision.
-
-    Processes the raw data (triggers and EEG) into a form that can be passed to
-    signal processing and classifiers.
+def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
+    """Construct triggers from inquiry_timing data.
 
     Parameters
     ----------
-        inquiry_timing(array): array of tuples containing stimulus timing and
-            text
-        daq (object): data acquisition object
-        window: window to reactivate if deactivated by windows
-        parameters: parameters dictionary
-        first_session_stim_time (float): time that the first stimuli was presented
-            for the session. Used to calculate offsets.
-        static_offset (float): offset present in the system which should be accounted for when
-            creating data for classification
-        buf_length: length of data needed after the last sample in order to reshape correctly
+    - inquiry_timing: list of tuples containing stimulus timing and text
 
     Returns
     -------
-        (raw_data, triggers, target_info) tuple
+    list of (stim, offset) tuples, where offset is calculated relative to the
+    first stim time.
     """
+    if inquiry_timing:
+        _, first_stim_time = inquiry_timing[0]
+        return [(stim, ((timing) - first_stim_time))
+                for stim, timing in inquiry_timing]
+    return []
 
-    # Get timing of the first and last stimuli
+
+def target_info(triggers: List[Tuple[str, float]],
+                target_letter: str = None) -> List[str]:
+    """Targetness for each item in triggers.
+
+    Parameters
+    ----------
+    - triggers : list of (stim, offset)
+    - target_letter : letter the user is attempting to spell
+
+    Returns
+    -------
+    list of ('target' | 'nontarget') for each trigger.
+    """
+    if target_letter:
+        return [
+            'target' if trg[0] == target_letter else 'nontarget'
+            for trg in triggers
+        ]
+    return ['nontarget'] * len(triggers)
+
+
+def get_data_for_decision(inquiry_timing,
+                          daq,
+                          static_offset=0.0,
+                          buffer_length=0.0):
+    """Queries the acquisition client for a slice of data and processes the
+    resulting raw data into a form that can be passed to signal processing and
+    classifiers.
+
+    Parameters
+    ----------
+    - inquiry_timing(array): array of tuples containing stimulus timing and
+    text
+    - daq (object): data acquisition object
+    - static_offset (float): offset present in the system which should be accounted for when
+    creating data for classification; this is determined experimentally.
+    - buffer_length: length of data needed after the last sample in order to reshape correctly
+
+    Returns
+    -------
+    (raw_data, triggers, target_info) tuple
+    """
     _, first_stim_time = inquiry_timing[0]
     _, last_stim_time = inquiry_timing[-1]
 
-    static_offset = static_offset or parameters['static_trigger_offset']
-    # if there is an argument supplied for buffer length use that
-    if buf_length:
-        buffer_length = buf_length
-    else:
-        buffer_length = parameters['trial_length']
-
-    # get any offset calculated from the daq
-    daq_offset = daq.offset
-
-    if daq_offset:
-        offset = daq_offset - first_session_stim_time + static_offset
-        time1 = (first_stim_time + offset) * daq.device_info.fs
-        time2 = (last_stim_time + offset + buffer_length) * daq.device_info.fs
-    else:
-        time1 = (first_stim_time + static_offset) * daq.device_info.fs
-        time2 = (last_stim_time + static_offset +
-                 buffer_length) * daq.device_info.fs
+    time1 = first_stim_time + static_offset
 
     # Construct triggers to send off for processing
     triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in inquiry_timing]
 
     # Assign labels for triggers
-    # TODO: This doesn't seem useful and is misleading
-    target_info = ['nontarget'] * len(triggers)
+    target_labels = ['nontarget'] * len(triggers)
 
     # Define the amount of data required for any processing to occur.
-    data_limit = (last_stim_time - first_stim_time +
-                  buffer_length) * daq.device_info.fs
+    data_limit = round((last_stim_time - first_stim_time + buffer_length) *
+                       daq.device_info.fs)
+    log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
-    try:
-        # Call get_data method on daq with start/end
-        raw_data = daq.get_data(start=time1, end=time2)
+    raw_data = daq.get_data(start=time1, limit=data_limit)
 
-        # If not enough raw_data returned in the first query, let's try again
-        #  using only the start param. This is known issue on Windows.
-        #  #windowsbug
-        if len(raw_data) < data_limit:
+    if len(raw_data) < data_limit:
+        message = f'Process Data Error: Not enough data received to process. ' \
+            f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
+        log.error(message)
+        raise InsufficientDataException(message)
 
-            # Call get_data method on daq with just start
-            raw_data = daq.get_data(start=time1)
+    # Take only the sensor data from raw data and transpose it
+    raw_data = np.array([
+        np.array([_float_val(col) for col in record.data])
+        for record in raw_data
+    ],
+        dtype=np.float64).transpose()
 
-            # If there is still insufficient data returned, throw an error
-            if len(raw_data) < data_limit:
-                message = f'Process Data Error: Not enough data received to process. ' \
-                          f'Data Limit = {data_limit}. Data received = {len(raw_data)}'
-                log.error(message)
-                raise InsufficientDataException(message)
-
-        # Take only the sensor data from raw data and transpose it
-        raw_data = np.array([np.array([_float_val(col) for col in record.data])
-                             for record in raw_data],
-                            dtype=np.float64).transpose()
-
-    except Exception as e:
-        log.error(f'Uncaught Error in Process Data for Decision: {e}')
-        raise e
-
-    return raw_data, triggers, target_info
+    return raw_data, triggers, target_labels
 
 
 def _float_val(col: Any) -> float:
@@ -213,10 +215,10 @@ def _float_val(col: Any) -> float:
     return float(col)
 
 
-def trial_complete_message(win, parameters):
+def trial_complete_message(win, parameters) -> List[visual.TextStim]:
     """Trial Complete Message.
 
-    Function return a TextStim Object (see Psycopy) to complete the trial.
+    Function return a TextStim Object (see Psychopy) to complete the trial.
 
     Parameters
     ----------
@@ -231,11 +233,11 @@ def trial_complete_message(win, parameters):
     """
     message_stim = visual.TextStim(
         win=win,
-        height=parameters['task_height'],
+        height=parameters['info_height'],
         text=parameters['trial_complete_message'],
-        font=parameters['task_font'],
-        pos=(float(parameters['text_pos_x']),
-             float(parameters['text_pos_y'])),
+        font=parameters['info_font'],
+        pos=(parameters['info_pos_x'],
+             parameters['info_pos_y']),
         wrapWidth=None,
         color=parameters['trial_complete_message_color'],
         colorSpace='rgb',
@@ -306,186 +308,198 @@ def get_user_input(window, message, color, first_run=False):
     return True
 
 
-def trial_reshaper(trial_target_info: list,
-                   timing_info: list,
-                   eeg_data: np.array,
-                   fs: int, k: int, mode: str,
-                   offset: float = 0,
-                   channel_map: tuple = DEFAULT_CHANNEL_MAP,
-                   trial_length: float = 0.5) -> tuple:
-    """Trial Reshaper.
+def get_key_press(
+        key_list: List[str],
+        clock: Clock,
+        stamp_label: str = 'bcipy_key_press') -> Union[list, None]:
+    """Get Key Press.
 
-    Trail reshaper is used to reshape trials, based on trial target info (target, non-target),
-        timing information (sec), eeg_data, sampling rate (fs), down-sampling rate (k),
-        mode of operation (ex. 'calibration'),
-        offset (any calculated or hypothesized offsets in timings),
-        channel map (which channels to include in reshaping) and
-        trial length (length of reshaped trials in secs)
+    A method to retrieve keys pressed of interest and get back a timestamp with
+        a custom label
 
-    In all modes > calibration, we assume the timing info is given in samples not seconds.
 
-    :return (reshaped_trials, labels, num_of_inquiries, trials_per_inq)
+    Parameters
+    ----------
+        key_list(List[str]): list of keys to look for being pressed. Ex. ['space']
+        clock(Clock): clock to use for timestamping any key press
+        stamp_label(str): custom label to use for timstamping along with the key itself
 
-        reshaped_trials is a 3 dimensional np array where the first dimension
-            is the channel, second dimension the trial/letter, and third
-            dimension is time samples. So at 300hz and a presentation time of
-            0.2 seconds per letter, the third dimension would have about 60
-            samples.
-            If this were a json structure it might look like:
-                {
-                    'ch1': {
-                        'B' : [-647.123, -93.124, ...],
-                        'T' : [...],
-                        ...
-                    },
-                    'ch2': {
-                        'B' : [39.60, -224.124, ...],
-                        'T' : [...],
-                        ...
-                    },
-                    ...
-                }
+    Returns
+    -------
+        Key Press Timing(List[stamp_label, timestamp])
     """
-    try:
+    response = event.getKeys(keyList=key_list, timeStamped=True)
+    if response:
+        # The timestamp from the response uses the psychopy.core.monotonicClock
+        # which records the number of seconds since the experiment start (core
+        # was imported).
+        key, stamp = response[0]
+        offset = clock.getTime() - core.getTime()
+        timestamp = stamp + offset
+        return [f'{stamp_label}_{key}', timestamp]
+    return None
+
+
+class Reshaper(ABC):
+    @abstractmethod
+    def __call__(self,
+                 trial_labels: List[str],
+                 timing_info: List[float],
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        ...
+
+
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+
+class InquiryReshaper(Reshaper):
+    def __call__(self,
+                 trial_labels: List[str],
+                 timing_info: List[float],
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract inquiry data and labels.
+
+        Args:
+            trial_labels (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (List[float]): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
+            trials_per_inquiry (int): number of trials in each inquiry
+            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
+            trial_length (float, optional): [description]. Defaults to 0.5.
+            target_label (str): label of target symbol. Defaults to "target"
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
+
+        Returns:
+            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
+                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                `target_label` was not present.
+        """
         # Remove the channels that we are not interested in
-        channel_indexes_to_remove = []
-        for channel_index in range(len(eeg_data)):
-            if channel_map[channel_index] == 0:
-                channel_indexes_to_remove.append(channel_index)
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
-        eeg_data = np.delete(eeg_data,
-                             channel_indexes_to_remove,
-                             axis=0)
-        after_filter_frequency = fs / k
+        # Remove unwanted elements from target info and timing info
+        tmp_labels, tmp_timing = [], []
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
+                tmp_timing.append(timing)
+        trial_labels = tmp_labels
+        timing_info = tmp_timing
+
+        n_inquiry = len(timing_info) // trials_per_inquiry
+        trial_duration_samples = int(trial_length * fs)
+
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+
+        # Label for every inquiry
+        labels = np.zeros(n_inquiry, dtype=np.long)
+        reshaped_data = []
+        for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
+            # label is the index of the "target", or else the length of the inquiry
+            inquiry_label = trials_per_inquiry
+            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
+                if trial_label == target_label:
+                    inquiry_label = trial_idx
+
+            # Inquiry lasts from first trial onset until final trial onset + trial_length
+            first_trigger = trials_within_inquiry[0][1]
+            last_trigger = trials_within_inquiry[-1][1]
+            labels[inquiry_idx] = inquiry_label
+
+            reshaped_data.append(eeg_data[:, first_trigger: last_trigger + trial_duration_samples])
+
+        return np.stack(reshaped_data, 1), labels
+
+
+class TrialReshaper(Reshaper):
+    def __call__(self,
+                 trial_labels: list,
+                 timing_info: list,
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: Optional[int] = None,
+                 offset: float = 0,
+                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
+                 trial_length: float = 0.5,
+                 target_label: str = "target",
+                 labels_included: Set[str] = set(["target", "nontarget"]),
+                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract trial data and labels.
+
+        Args:
+            trial_labels (list): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (list): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of preprocessed EEG data
+            trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
+            offset (float, optional): Any calculated or hypothesized offsets in timings.
+                Defaults to 0.
+            channel_map (tuple, optional): Describes which channels to include or discard.
+                Defaults to DEFAULT_CHANNEL_MAP.
+            trial_length (float, optional): [description]. Defaults to 0.5.
+            target_label (str): label of target symbol. Defaults to "target"
+            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
+            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
+
+        Returns:
+            trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
+            labels (np.ndarray): integer label for each trial
+        """
+        # Remove the channels that we are not interested in
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
         # Number of samples we are interested per trial
-        num_samples = int(trial_length * after_filter_frequency)
+        num_samples = int(trial_length * fs)
 
-        # MODE CALIBRATION
-        if mode == 'calibration':
-            trials_per_inq = []
-            count = 0
-            # Count every inquiries trials
-            for symbol_info in trial_target_info:
-                if symbol_info == 'first_pres_target':
-                    trials_per_inq.append(count)
-                    count = 0
-                elif symbol_info == 'nontarget' or 'target':
-                    count += 1
-                else:
-                    raise Exception('Incorrectly formatted trigger file. \
-                    See trial_reshaper documentation for expected input.')
+        # Remove unwanted elements from target info and timing info
+        tmp_labels, tmp_timing = [], []
+        for label, timing in zip(trial_labels, timing_info):
+            if label in labels_included and label not in labels_excluded:
+                tmp_labels.append(label)
+                tmp_timing.append(timing)
+        trial_labels = tmp_labels
+        timing_info = tmp_timing
 
-            # The first element is garbage. Get rid of it.
-            trials_per_inq = trials_per_inq[1:]
-            # Append the last inquiries trial number
-            trials_per_inq.append(count)
-            # Make the list a numpy array.
-            trials_per_inq = np.array(trials_per_inq)
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
 
-            # Mark every element in timing_info if 'first_pres_target'
-            for symbol_info_index in range(len(trial_target_info)):
-                if trial_target_info[symbol_info_index] == 'first_pres_target':
-                    timing_info[symbol_info_index] = -1
+        # Label for every trial
+        labels = np.zeros(len(triggers), dtype=np.long)
+        reshaped_trials = []
+        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
+            if trial_label == target_label:
+                labels[trial_idx] = 1
 
-            # Get rid of 'first_pres_target' trials information
-            trial_target_info = list(filter(lambda x: x != 'first_pres_target',
-                                            trial_target_info))
-            timing_info = list(filter(lambda x: x != -1, timing_info))
+            # For every channel append filtered channel data to trials
+            reshaped_trials.append(eeg_data[:, trigger: trigger + num_samples])
 
-            # triggers in seconds are mapped to triggers in number of samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
-
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            # Label for every trial
-            labels = np.zeros(len(triggers))
-
-            for trial in range(len(triggers)):
-                # Assign targetness to labels for each trial
-                if trial_target_info[trial] == 'target':
-                    labels[trial] = 1
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][triggers[trial]:triggers[trial] + num_samples]
-
-            num_of_inquiries = int(sum(labels))
-
-        # MODE COPY PHRASE
-        elif mode == 'copy_phrase':
-
-            # triggers in samples are mapped to triggers in number of filtered
-            # samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
-
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            # Label for every trial
-            labels = np.zeros(len(triggers))
-
-            for trial in range(len(triggers)):
-                # Assign targetness to labels for each trial
-                if trial_target_info[trial] == 'target':
-                    labels[trial] = 1
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
-
-            # In copy phrase, num of inquiry is assumed to be 1.
-            num_of_inquiries = 1
-            # Since there is only one inquiry, all trials are in the inquiry
-            trials_per_inq = len(triggers)
-
-        # MODE FREE SPELL
-        elif mode == 'free_spell':
-
-            # triggers in sample are mapped to triggers in number of filtered
-            # samples.
-            triggers = list(
-                map(lambda x: int((x + offset) * after_filter_frequency), timing_info))
-
-            # 3 dimensional np array first dimension is channels
-            # second dimension is trials and third dimension is time samples.
-            reshaped_trials = np.zeros(
-                (len(eeg_data), len(triggers), num_samples))
-
-            labels = None
-
-            for trial in range(len(triggers)):
-
-                # For every channel append filtered channel data to trials
-                for channel in range(len(eeg_data)):
-                    reshaped_trials[channel][trial] = \
-                        eeg_data[channel][
-                        triggers[trial]:triggers[trial] + num_samples]
-
-            # In copy phrase, num of inquiry is assumed to be 1.
-            num_of_inquiries = 1
-            # Since there is only one inquiry, all trials are in the inquiry
-            trials_per_inq = len(triggers)
-        else:
-            raise Exception(
-                'Trial_reshaper does not work in this operating mode.')
-
-        # Return our trials, labels and some useful information about the
-        # arrays
-        return reshaped_trials, labels, num_of_inquiries, trials_per_inq
-
-    except Exception as e:
-        raise Exception(
-            f'Could not reshape trial for mode: {mode}, {fs}, {k}. Error: {e}')
+        return np.stack(reshaped_trials, 1), labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):

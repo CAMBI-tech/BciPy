@@ -3,7 +3,9 @@
 import logging
 from typing import Generator, Callable
 from past.builtins import range
+
 from bcipy.signal.generator.generator import gen_random_data
+from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), chann
             of channels.
     """
 
-    with open(filename, 'r') as infile:
+    with open(filename, 'r', encoding=DEFAULT_ENCODING) as infile:
         # advance to first data row, since channel names are unused.
         advance_to_row(infile, header_row + 1)
 

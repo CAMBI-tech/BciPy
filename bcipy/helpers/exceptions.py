@@ -1,24 +1,39 @@
 
-class UnregisteredExperimentException(Exception):
+class BciPyCoreException(Exception):
+    """BciPy Core Exception.
+
+    Thrown when an error occurs specific to BciPy core concepts.
+    """
+
+    def __init__(self, message, errors=None):
+        super().__init__(message)
+        self.message = message
+        self.errors = errors
+
+
+class FieldException(BciPyCoreException):
+    """Field Exception.
+
+    Thrown when there is an exception relating to experimental fields.
+    """
+    ...
+
+
+class ExperimentException(BciPyCoreException):
+    """Experiment Exception.
+
+    Thrown when there is an exception relating to experiments.
+    """
+    ...
+
+
+class UnregisteredExperimentException(ExperimentException):
     """Unregistered Experiment.
 
     Thrown when experiment is not registered in the provided experiment path.
     """
 
-    def __init__(self, message, errors=None):
-        super().__init__(message)
-        self.errors = errors
-
-
-class FieldException(Exception):
-    """Field Exception.
-
-    Thrown when there is an exception relating to experimental fields.
-    """
-
-    def __init__(self, message, errors=None):
-        super().__init__(message)
-        self.errors = errors
+    ...
 
 
 class UnregisteredFieldException(FieldException):
@@ -27,17 +42,29 @@ class UnregisteredFieldException(FieldException):
     Thrown when field is not registered in the provided field path.
     """
 
-    def __init__(self, message, errors=None):
-        super().__init__(message)
-        self.errors = errors
+    ...
 
 
-class InvalidExperimentException(Exception):
+class InvalidExperimentException(ExperimentException):
     """Invalid Experiment Exception.
 
     Thrown when providing experiment data in the incorrect format.
     """
 
-    def __init__(self, message, errors=None):
-        super().__init__(message)
-        self.errors = errors
+    ...
+
+
+class InvalidFieldException(FieldException):
+    """Invalid Field Exception.
+
+    Thrown when providing field data in the incorrect format.
+    """
+
+    ...
+
+
+class UnsupportedResponseType(BciPyCoreException):
+    """Unsupported ResponseType
+
+    Thrown when attempting to set the response type of a language model to an
+    unsupported value."""

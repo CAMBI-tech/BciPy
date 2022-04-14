@@ -8,6 +8,7 @@
 data/
 # Virtualenv
 venv/
+venv*/
 __pycache__/
 .cache/
 
@@ -23,6 +24,5 @@ htmlcov/
 bcipy.egg-info/
 build/
 dist/
-.bcipy/*
 
 bcipy/parameters/parameters_*

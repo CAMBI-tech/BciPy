@@ -19,7 +19,7 @@ experiments/FieldRegistry.py | GUI for creating new fields for experiment data c
 experiments/ExperimentField.py | GUI for collecting a registered experiment's field data.
 
 
-The folder 'bcipy/static/images/gui_images' contains images for the GUI.
+The folder 'bcipy/static/images/gui' contains images for the GUI.
 Parameters loaded by BCInterface parameter definition form can be found in 'bcipy/parameters/parameters.json'.
 
 To run the GUI, do so from the root, as follows:  

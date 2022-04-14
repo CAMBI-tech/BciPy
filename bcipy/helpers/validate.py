@@ -1,19 +1,20 @@
 import os
 
-from bcipy.helpers.load import load_experiments, load_fields, load_experiment_fields
+from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
 from bcipy.helpers.exceptions import (
-    FieldException,
+    InvalidFieldException,
+    InvalidExperimentException,
     UnregisteredExperimentException,
     UnregisteredFieldException
 )
 
 
 def validate_experiment(
-        experiment_name,
-        experiment_path=f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
-        field_path=f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}',
-        fail_silent=False) -> bool:
+        experiment_name: str,
+        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
+        field_path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'
+) -> bool:
     """Validate Experiment.
 
     Validate the experiment is in the correct format and the fields are properly registered.
@@ -28,17 +29,30 @@ def validate_experiment(
         raise UnregisteredExperimentException(
             f'Experiment [{experiment_name}] is not registered at path [{experiment_path}]')
 
-    # grab all field names as a list of strings. This call will raise exceptions if formatted incorrectly.
-    experiment_fields = load_experiment_fields(experiment)
-
-    # loop over the experiment fields and attempt to load them by name
-    for field in experiment_fields:
-        try:
-            fields[field]
-        except KeyError:
-            raise UnregisteredFieldException(f'Field [{field}] is not registered at path [{field_path}]')
+    # attempt to load the experiment by name
+    _validate_experiment_format(experiment, experiment_name)
+    _validate_experiment_fields(experiment['fields'], fields)
 
     return True
+
+
+def _validate_experiment_fields(experiment_fields, fields):
+    # loop over the experiment fields and attempt to load them by name
+    for field in experiment_fields:
+        # field is a dictionary with one key another dictionary as its' value
+        # {'field_name': {require: bool, anonymize: bool}}
+        field_name = list(field.keys())[0]
+        try:
+            fields[field_name]
+        except KeyError:
+            raise UnregisteredFieldException(f'Field [{field}] is not registered in [{fields}]')
+
+        try:
+            field[field_name]['required']
+            field[field_name]['anonymize']
+        except KeyError:
+            raise InvalidFieldException(
+                f'Experiment Field [{field}] incorrectly formatted. It should contain: required and anonymize')
 
 
 def validate_field_data_written(path: str, file_name: str) -> bool:
@@ -49,4 +63,32 @@ def validate_field_data_written(path: str, file_name: str) -> bool:
     experiment_data_path = f'{path}/{file_name}'
     if os.path.isfile(experiment_data_path):
         return True
-    raise FieldException(f'Experimental field data expected at path=[{experiment_data_path}] but not found.')
+    raise InvalidFieldException(f'Experimental field data expected at path=[{experiment_data_path}] but not found.')
+
+
+def validate_experiments(experiments, fields) -> bool:
+    """Validate Experiments.
+
+    Validate all experiments are in the correct format and the fields are properly registered.
+    """
+    for experiment_name in experiments:
+        experiment = experiments[experiment_name]
+
+        _validate_experiment_format(experiment, experiment_name)
+        _validate_experiment_fields(experiment['fields'], fields)
+
+    return True
+
+
+def _validate_experiment_format(experiment, name):
+    try:
+        exp_summary = experiment['summary']
+        assert isinstance(exp_summary, str)
+        experiment_fields = experiment['fields']
+        assert isinstance(experiment_fields, list)
+    except KeyError:
+        raise InvalidExperimentException(
+            f'Experiment [{name}] is formatted incorrectly. It should contain the keys: summary and fields.')
+    except AssertionError:
+        raise InvalidExperimentException(
+            f'Experiment [{name}] is formatted incorrectly. Unexpected type on summary(string) or fields(List[dict]).')

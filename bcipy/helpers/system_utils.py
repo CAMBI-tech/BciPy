@@ -2,7 +2,7 @@ import sys
 import os
 
 from cpuinfo import get_cpu_info
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 from pathlib import Path
 import pkg_resources
 import platform
@@ -10,9 +10,10 @@ import psutil
 import pyglet
 import importlib
 import pkgutil
+import time
 import logging
 
-
+DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EXPERIMENT_ID = 'default'
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
@@ -49,14 +50,14 @@ def git_hash() -> Optional[str]:
 
     try:
         head_path = Path(os.path.join(git_path, 'HEAD'))
-        with open(head_path) as head_file:
+        with open(head_path, encoding=DEFAULT_ENCODING) as head_file:
             # First line contains a reference to the current branch.
             # ex. ref: refs/heads/branch_name
             ref = head_file.readline()
 
         ref_val = ref.split(':')[-1].strip()
         ref_path = Path(os.path.join(git_path, ref_val))
-        with open(ref_path) as ref_file:
+        with open(ref_path, encoding=DEFAULT_ENCODING) as ref_file:
             sha = ref_file.readline()
 
         # sha hash is 40 characters; use an abbreviated 7-char version which
@@ -139,7 +140,8 @@ def configure_logger(
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
     handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
-    handler.setFormatter(logging.Formatter('(%(threadName)-9s) %(message)s'))
+    handler.setFormatter(logging.Formatter(
+        '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
     root_logger.addHandler(handler)
 
     print(f'Printing all BciPy logs to: {logfile}')
@@ -164,7 +166,7 @@ def import_submodules(package, recursive=True):
     -------
         dict[str, types.ModuleType]
     """
-    if isinstance(package, str) or isinstance(package, unicode):
+    if isinstance(package, str):
         package = importlib.import_module(package)
     results = {}
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
@@ -217,6 +219,23 @@ def log_to_stdout():
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
+
+
+def report_execution_time(func: Callable) -> Callable:
+    """Report execution time.
+
+    A decorator to log execution time of methods in seconds. To use,
+        decorate your method with @report_execution_time.
+    """
+    log = logging.getLogger()
+
+    def wrap(*args, **kwargs):
+        time1 = time.perf_counter()
+        response = func(*args, **kwargs)
+        time2 = time.perf_counter()
+        log.info('{:s} method took {:0.4f}s to execute'.format(func.__name__, (time2 - time1)))
+        return response
+    return wrap

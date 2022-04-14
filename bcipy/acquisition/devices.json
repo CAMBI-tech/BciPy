@@ -6,7 +6,8 @@
             "T5", "O1", "O2", "X3", "X2", "F7", "F8", "X1", "A2", "T6", "T4", "TRG" ],
         "connection_methods": [ "TCP", "LSL" ],
         "sample_rate": 300.0,
-        "description": "Wearable Sensing DSI-24"
+        "description": "Wearable Sensing DSI-24",
+        "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
     },
     {
         "name": "DSI-VR300",
@@ -14,7 +15,8 @@
         "channels": [ "P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG" ],
         "sample_rate": 300.0,
         "connection_methods": ["TCP", "LSL"],
-        "description": "Wearable Sensing DSI-VR300"
+        "description": "Wearable Sensing DSI-VR300",
+        "excluded_from_analysis": ["TRG"]
     },
     {
         "name": "g.USBamp-1",
@@ -28,11 +30,12 @@
     {
         "name": "DSI",
         "content_type": "EEG",
-        "channels": [ "P3", "C3", "F3", "Fz", "F4", "C4", "P4",  "Cz", "A1", "Fp1", "Fp2", "T3",
-            "T5", "O1", "O2", "F7", "F8", "A2", "T6", "T4", "TRG" ],
+        "channels": [ "P3", "C3", "F3", "Fz", "F4", "C4", "P4", "Cz", "Pz", "Fp1", "Fp2", "T3",
+            "T5", "O1", "O2", "X3", "X2", "F7", "F8", "X1", "A2", "T6", "T4", "TRG" ],
         "connection_methods": [ "TCP", "LSL" ],
         "sample_rate": 300.0,
-        "description": "Alias to DSI-24 for backwards compatibility and demos."
+        "description": "Alias to DSI-24 for backwards compatibility and demos.",
+        "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
     },
     {
         "name": "LSL",
@@ -49,6 +52,7 @@
         "channels": [ "P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG" ],
         "sample_rate": 300.0,
         "connection_methods": ["TCP", "LSL"],
-        "description": "Alias to DSI-VR300 for backwards compatibility."
+        "description": "Alias to DSI-VR300 for backwards compatibility.",
+        "excluded_from_analysis": ["TRG"]
     }
 ]
