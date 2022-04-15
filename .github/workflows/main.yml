@@ -43,6 +43,7 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
     - name: Unit test
+      if: always()
       shell: |
         xvfb-run coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
         if [ $? -eq 0 ]
@@ -80,6 +81,7 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
     - name: Unit test
+      if: always()
       run: |
         coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 
@@ -107,5 +109,6 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 bcipy
     - name: Unit test
+      if: always()
       run: |
         coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
