@@ -44,7 +44,7 @@ jobs:
         flake8 bcipy
     - name: Unit test
       if: always()
-      shell: |
+      run: |
         xvfb-run coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
         if [ $? -eq 0 ]
         then 
