@@ -71,7 +71,7 @@ class TestAcquisition(unittest.TestCase):
             'time_prompt': 1,
             'stim_length': 10,
             'time_flash': 0.25,
-            'task_buffer_len': 0.75
+            'task_buffer_length': 0.75
         }
 
         self.assertEqual(4.75, max_inquiry_duration(params))

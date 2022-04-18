@@ -8,7 +8,7 @@ from typing import Dict, List
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str, DEFAULT_ENCODING
 IRREGULAR_RATE = 0.0
-DEFAULT_CONFIG = 'bcipy/acquisition/devices.json'
+DEFAULT_CONFIG = Path(__file__).resolve().parent / 'devices.json'
 _SUPPORTED_DEVICES = {}
 # see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
 SUPPORTED_DATA_TYPES = [

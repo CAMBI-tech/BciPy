@@ -2,23 +2,19 @@ import logging
 import os
 import random
 
-from abc import ABC, abstractmethod
-from itertools import zip_longest
 from string import ascii_uppercase
-from typing import Any, List, Optional, Set, Tuple, Union
-
-import numpy as np
-from psychopy import core, event, visual
+from typing import Any, List, Tuple, Union
 
 from bcipy.helpers.clock import Clock
 from bcipy.task.exceptions import InsufficientDataException
+
+import numpy as np
+from psychopy import core, event, visual
 
 log = logging.getLogger(__name__)
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
-DEFAULT_CHANNEL_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1,
-                       1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0]
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -151,40 +147,44 @@ def target_info(triggers: List[Tuple[str, float]],
 
 def get_data_for_decision(inquiry_timing,
                           daq,
-                          static_offset=0.0,
-                          buffer_length=0.0):
+                          offset=0.0,
+                          prestim=0.0,
+                          poststim=0.0):
     """Queries the acquisition client for a slice of data and processes the
     resulting raw data into a form that can be passed to signal processing and
     classifiers.
 
     Parameters
     ----------
-    - inquiry_timing(array): array of tuples containing stimulus timing and
-    text
-    - daq (object): data acquisition object
-    - static_offset (float): offset present in the system which should be accounted for when
-    creating data for classification; this is determined experimentally.
-    - buffer_length: length of data needed after the last sample in order to reshape correctly
+    - inquiry_timing(list): list of tuples containing stimuli timing and labels. We assume the list progresses in
+    - daq (DataAcquisitionClient): bcipy data acquisition client with a get_data method and device_info with fs defined
+    - offset (float): offset present in the system which should be accounted for when creating data for classification.
+        This is determined experimentally.
+    - prestim (float): length of data needed before the first sample to reshape and apply transformations
+    - poststim (float): length of data needed after the last sample in order to reshape and apply transformations
 
     Returns
     -------
-    (raw_data, triggers, target_info) tuple
+    (raw_data, triggers) tuple
     """
     _, first_stim_time = inquiry_timing[0]
     _, last_stim_time = inquiry_timing[-1]
 
-    time1 = first_stim_time + static_offset
+    # adjust for offsets
+    time1 = first_stim_time + offset - prestim
+    time2 = last_stim_time + offset
 
-    # Construct triggers to send off for processing
+    if time2 < time1:
+        raise InsufficientDataException(
+            f'Invalid data query [{time1}-{time2}] with parameters:'
+            f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]')
+
+    # Construct triggers to send off for processing. This should not be zero anymore. it would be for prestim_len = 0
     triggers = [(text, ((timing) - first_stim_time))
                 for text, timing in inquiry_timing]
 
-    # Assign labels for triggers
-    target_labels = ['nontarget'] * len(triggers)
-
     # Define the amount of data required for any processing to occur.
-    data_limit = round((last_stim_time - first_stim_time + buffer_length) *
-                       daq.device_info.fs)
+    data_limit = round((time2 - time1 + poststim) * daq.device_info.fs)
     log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
@@ -203,7 +203,7 @@ def get_data_for_decision(inquiry_timing,
     ],
         dtype=np.float64).transpose()
 
-    return raw_data, triggers, target_labels
+    return raw_data, triggers
 
 
 def _float_val(col: Any) -> float:
@@ -338,168 +338,6 @@ def get_key_press(
         timestamp = stamp + offset
         return [f'{stamp_label}_{key}', timestamp]
     return None
-
-
-class Reshaper(ABC):
-    @abstractmethod
-    def __call__(self,
-                 trial_labels: List[str],
-                 timing_info: List[float],
-                 eeg_data: np.ndarray,
-                 fs: int,
-                 trials_per_inquiry: int,
-                 offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
-                 target_label: str = "target",
-                 labels_included: Set[str] = set(["target", "nontarget"]),
-                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
-        ...
-
-
-def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-
-class InquiryReshaper(Reshaper):
-    def __call__(self,
-                 trial_labels: List[str],
-                 timing_info: List[float],
-                 eeg_data: np.ndarray,
-                 fs: int,
-                 trials_per_inquiry: int,
-                 offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
-                 target_label: str = "target",
-                 labels_included: Set[str] = set(["target", "nontarget"]),
-                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
-        """Extract inquiry data and labels.
-
-        Args:
-            trial_labels (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
-            timing_info (List[float]): Timestamp of each event in seconds
-            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
-            trials_per_inquiry (int): number of trials in each inquiry
-            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
-            channel_map (List[int], optional): Describes which channels to include or discard.
-                Defaults to DEFAULT_CHANNEL_MAP.
-            trial_length (float, optional): [description]. Defaults to 0.5.
-            target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
-
-        Returns:
-            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
-            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
-                `target_label` was not present.
-        """
-        # Remove the channels that we are not interested in
-        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
-
-        # Remove unwanted elements from target info and timing info
-        tmp_labels, tmp_timing = [], []
-        for label, timing in zip(trial_labels, timing_info):
-            if label in labels_included and label not in labels_excluded:
-                tmp_labels.append(label)
-                tmp_timing.append(timing)
-        trial_labels = tmp_labels
-        timing_info = tmp_timing
-
-        n_inquiry = len(timing_info) // trials_per_inquiry
-        trial_duration_samples = int(trial_length * fs)
-
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
-
-        # Label for every inquiry
-        labels = np.zeros(n_inquiry, dtype=np.long)
-        reshaped_data = []
-        for inquiry_idx, trials_within_inquiry in enumerate(grouper(zip(trial_labels, triggers), trials_per_inquiry)):
-            # label is the index of the "target", or else the length of the inquiry
-            inquiry_label = trials_per_inquiry
-            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
-                if trial_label == target_label:
-                    inquiry_label = trial_idx
-
-            # Inquiry lasts from first trial onset until final trial onset + trial_length
-            first_trigger = trials_within_inquiry[0][1]
-            last_trigger = trials_within_inquiry[-1][1]
-            labels[inquiry_idx] = inquiry_label
-
-            reshaped_data.append(eeg_data[:, first_trigger: last_trigger + trial_duration_samples])
-
-        return np.stack(reshaped_data, 1), labels
-
-
-class TrialReshaper(Reshaper):
-    def __call__(self,
-                 trial_labels: list,
-                 timing_info: list,
-                 eeg_data: np.ndarray,
-                 fs: int,
-                 trials_per_inquiry: Optional[int] = None,
-                 offset: float = 0,
-                 channel_map: List[int] = DEFAULT_CHANNEL_MAP,
-                 trial_length: float = 0.5,
-                 target_label: str = "target",
-                 labels_included: Set[str] = set(["target", "nontarget"]),
-                 labels_excluded: Set[str] = set([])) -> Tuple[np.ndarray, np.ndarray]:
-        """Extract trial data and labels.
-
-        Args:
-            trial_labels (list): labels each trial as "target", "non-target", "first_pres_target", etc
-            timing_info (list): Timestamp of each event in seconds
-            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of preprocessed EEG data
-            trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
-            offset (float, optional): Any calculated or hypothesized offsets in timings.
-                Defaults to 0.
-            channel_map (tuple, optional): Describes which channels to include or discard.
-                Defaults to DEFAULT_CHANNEL_MAP.
-            trial_length (float, optional): [description]. Defaults to 0.5.
-            target_label (str): label of target symbol. Defaults to "target"
-            labels_included (Set[str]): labels to include. Defaults to "target" and "nontarget"
-            labels_excluded (Set[str]): labels to exclude. Defaults to empty set.
-
-        Returns:
-            trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
-            labels (np.ndarray): integer label for each trial
-        """
-        # Remove the channels that we are not interested in
-        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-        eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
-
-        # Number of samples we are interested per trial
-        num_samples = int(trial_length * fs)
-
-        # Remove unwanted elements from target info and timing info
-        tmp_labels, tmp_timing = [], []
-        for label, timing in zip(trial_labels, timing_info):
-            if label in labels_included and label not in labels_excluded:
-                tmp_labels.append(label)
-                tmp_timing.append(timing)
-        trial_labels = tmp_labels
-        timing_info = tmp_timing
-
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
-
-        # Label for every trial
-        labels = np.zeros(len(triggers), dtype=np.long)
-        reshaped_trials = []
-        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_labels, triggers)):
-            if trial_label == target_label:
-                labels[trial_idx] = 1
-
-            # For every channel append filtered channel data to trials
-            reshaped_trials.append(eeg_data[:, trigger: trigger + num_samples])
-
-        return np.stack(reshaped_trials, 1), labels
 
 
 def pause_calibration(window, display, current_index: int, parameters: dict):

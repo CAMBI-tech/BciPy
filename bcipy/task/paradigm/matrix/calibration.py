@@ -43,11 +43,13 @@ class MatrixCalibrationTask(Task):
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
-        self.buffer_val = parameters['task_buffer_len']
+        self.buffer_val = parameters['task_buffer_length']
         self.alp = alphabet(parameters)
+
         self.matrix = init_calibration_display_task(
             self.parameters, self.window,
             self.static_clock, self.experiment_clock)
+
         self.file_save = file_save
         self.trigger_handler = TriggerHandler(
             self.file_save,
@@ -65,16 +67,10 @@ class MatrixCalibrationTask(Task):
         self.nontarget_inquiries = parameters['nontarget_inquiries']
 
         self.timing = [parameters['time_flash']]
-
         self.color = [parameters['stim_color']]
-
         self.task_info_color = parameters['task_color']
-
         self.stimuli_height = parameters['stim_height']
-
         self.is_txt_stim = parameters['is_txt_stim']
-        self.eeg_buffer = parameters['eeg_buffer_len']
-
         self.enable_breaks = parameters['enable_breaks']
 
     def generate_stimuli(self):
@@ -119,6 +115,9 @@ class MatrixCalibrationTask(Task):
                               self.wait_screen_message_color,
                               first_run=True):
             run = False
+
+        # Wait for a time
+        core.wait(self.buffer_val)
 
         # Begin the Experiment
         while run:
@@ -179,13 +178,10 @@ class MatrixCalibrationTask(Task):
         self.matrix.draw_static()
         self.window.flip()
 
-        # Give the system time to process
+        # Allow for some training data to be collected
         core.wait(self.buffer_val)
 
         self.write_offset_trigger()
-
-        # Wait some time before exiting so there is trailing eeg data saved
-        core.wait(self.eeg_buffer)
 
         return self.file_save
 

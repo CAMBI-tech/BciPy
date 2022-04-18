@@ -392,7 +392,7 @@ class BCInterface(BCIGui):
 
         Run offline analysis as a script in a new process.
         """
-        cmd = 'python bcipy/signal/model/offline_analysis.py'
+        cmd = 'python bcipy/signal/model/offline_analysis.py --alert'
         subprocess.Popen(cmd, shell=True)
 
 

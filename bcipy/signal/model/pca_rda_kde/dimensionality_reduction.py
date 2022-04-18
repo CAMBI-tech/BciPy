@@ -1,95 +1,61 @@
+import logging
+
 import numpy as np
 from sklearn.decomposition import PCA
 
 
 class ChannelWisePrincipalComponentAnalysis:
-    """Channel wise PCA application. Creates PCA objects respective to the
-    number of channels.
-    Attr:
-        n_components(int): Number of components in PCA
-        copy(bool): Saves the matrix if  True and updates on each fit()
-        whiten(bool): Whitens the PCA matrix to form a tight frame
-        svd_solver(string): SV Decomposition solver method
-        tol=var_tol(float): Unfortunately I re-implemented it
-            Tolerance to the singular values of the matrix
-        random_state(seed): Random state seed
+    """Creates a PCA object for each channel.
+
+    Args:
+        n_components(int or float): Number of components in PCA
+            - If 0 < n_components < 1, keeps enough components to preserve the specified fraction of variance.
+            - If int, keeps the first n_components components.
+            - If None, keeps all components
+
+            NOTE - Keeping more components (or using a float closer to 1) preserves more structure;
+            keeping fewer (or using a float closer to 0) achieves more compression and thus more speedup for
+            downstream steps. The tradeoff between compression and performance is fundamentally arbitrary.
+            To choose number of components, try plotting the explained_variance_ratio_ attribute of the PCA object
+            on a representative dataset, and check the effect on runtime and task performance.
+
+        random_state(int): Random state seed
         num_ch(int): number of channels in expected data
-        var_tol(float): Tolerance to the variance
     """
 
-    def __init__(
-        self,
-        n_components=None,
-        var_tol=0,
-        copy=True,
-        whiten=False,
-        svd_solver="auto",
-        tol=0.0,
-        iterated_power="auto",
-        random_state=None,
-        num_ch=1,
-    ):
-
-        self.list_pca = []
-        for idx in range(num_ch):
-            self.list_pca.append(
-                PCA(
-                    n_components=n_components,
-                    copy=copy,
-                    whiten=whiten,
-                    svd_solver=svd_solver,
-                    tol=tol,
-                    iterated_power=iterated_power,
-                    random_state=random_state,
-                )
-            )
-        self.var_tol = var_tol
+    def __init__(self, n_components=None, random_state=None, num_ch=1):
         self.num_ch = num_ch
+        self.list_pca = [PCA(n_components=n_components, random_state=random_state) for _ in range(self.num_ch)]
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"PCA. n_components={n_components}, random_state={random_state}, num_ch={num_ch}")
 
-    def fit(self, x, y=None, var_tol=None):
-        """Inherits PCA fit() function from scikit-learn. Fits the
-        transformation matrix wrt. tolerance to each PCA.
+    def fit(self, x, y=None):
+        """Fit PCA to each channel of data.
+
         Args:
             x(ndarray[float]): C x N x k data array
             y(ndarray[int]): N x k observation (class) array
                 N is number of samples k is dimensionality of features
                 C is number of channels
-            var_tol(float): Threshold to remove lower variance dims.
         """
-
-        if var_tol:
-            self.var_tol = var_tol
-
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
-            max_sv = self.list_pca[i].singular_values_[0]
-            self.list_pca[i].n_components = np.sum(self.list_pca[i].singular_values_ >= max_sv * self.var_tol)
-            try:
-                self.list_pca[i].fit(x[i, :, :], y)
-            except Exception as e:
-                raise e
 
     def transform(self, x, y=None):
+        """Apply fitted PCA to each channel.
+
+        Args:
+            x: data, with shape (channels, items, samples)
+            y: labels (ignored)
+
+        Returns:
+            reduced dim data, shape (items, K), where K is the size after reducing and concatenating all channels
+        """
         f_vector = []
         for i in range(self.num_ch):
-            # TODO: Observe that scikit learn PCA does not accept y
             f_vector.append(self.list_pca[i].transform(x[i, :, :]))
-
         return np.concatenate(f_vector, axis=1)
 
-    def fit_transform(self, x, y=None, var_tol=None):
-        """Fits parameters wrt. the input matrix and outputs corresponding
-        reduced form feature vector.
-        Args:
-            x(ndarray[float]): C x N x k data array
-            y(ndarray[int]): N x k observation (class) array
-                N is number of samples k is dimensionality of features
-                C is number of channels
-            var_tol(float): Threshold to remove lower variance dims.
-        Return:
-            y(ndarray(float)): N x ( sum_i (C x k')) data array
-                where k' is the new dimension for each PCA
-        """
-
-        self.fit(x, var_tol=var_tol)
+    def fit_transform(self, x, y=None):
+        self.fit(x)
         return self.transform(x)
