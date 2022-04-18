@@ -85,7 +85,7 @@
     "value": "1",
     "section": "bci_config",
     "readableName": "Prestimulus Window Length",
-    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before stimulus presentation. Default: 1",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before inquiry presentation. Default: 1",
     "recommended_values": "",
     "type": "float"
   },
