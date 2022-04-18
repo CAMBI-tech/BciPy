@@ -319,7 +319,7 @@ class RSVPDisplay(Display):
                     mode='image',
                     height=this_stimuli_size,
                     stimulus=self.stimuli_inquiry[idx]
-                    )
+                )
                 current_stim['sti'].size = resize_image(
                     current_stim['sti'].image, current_stim['sti'].win.size, this_stimuli_size)
                 current_stim['sti_label'] = path.splitext(
