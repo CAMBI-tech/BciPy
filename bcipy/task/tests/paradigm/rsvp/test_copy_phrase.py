@@ -10,6 +10,7 @@ from mockito import any, mock, unstub, verify, when
 
 import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
+from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -144,6 +145,57 @@ class TestCopyPhrase(unittest.TestCase):
             signal_model=self.signal_model,
             language_model=self.language_model,
             fake=True)
+    
+    def test_validate(self):
+        task = RSVPCopyPhraseTask(
+            win=self.win,
+            daq=self.daq,
+            parameters=self.parameters,
+            file_save=self.temp_dir,
+            signal_model=self.signal_model,
+            language_model=self.language_model,
+            fake=True)
+
+        task.validate()
+    
+    def test_validate_throws_task_exception_missing_parameter(self):
+        parameters = {}
+
+        with self.assertRaises(TaskConfigurationException):
+            RSVPCopyPhraseTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=parameters,
+                file_save=self.temp_dir,
+                signal_model=self.signal_model,
+                language_model=self.language_model,
+                fake=True)
+
+    def test_validate_throws_task_exception_excess_prestim_length(self):
+        self.parameters['prestim_length'] = 1000
+
+        with self.assertRaises(TaskConfigurationException):
+            RSVPCopyPhraseTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir,
+                signal_model=self.signal_model,
+                language_model=self.language_model,
+                fake=True)
+
+    def test_validate_throws_task_exception_excess_trial_length(self):
+        self.parameters['trial_length'] = 1000
+
+        with self.assertRaises(TaskConfigurationException):
+            RSVPCopyPhraseTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir,
+                signal_model=self.signal_model,
+                language_model=self.language_model,
+                fake=True)
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
@@ -535,7 +587,6 @@ class TestCopyPhrase(unittest.TestCase):
 
     # TODO: test feedback; patch VisualFeedback constructor, returning a mock; verify(feedback, times=1).administer(...)
 
-
 def mock_inquiry_data():
     """Generator that yields data mocking the copy_phrase_wrapper initialize_series method"""
     timings = [[
@@ -554,7 +605,6 @@ def mock_inquiry_data():
 
     for tup in [InquirySchedule([stim], timings, colors) for stim in stims]:
         yield (False, tup)
-
 
 def mock_inquiry_timings():
     """Generator that yields data mocking the rsvp display do_inquiry() method, in response
