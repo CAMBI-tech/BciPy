@@ -782,33 +782,6 @@
     "recommended_values": "",
     "type": "float"
   },
-  "path_to_fst": {
-    "value": "language_model/fst/brown_closure.n5.kn.fst",
-    "section": "lang_model_config",
-    "readableName": "Language Model Corpus",
-    "helpTip": "Specifies the FST file for the language model corpus. Default: language_model/fst/brown_closure.n5.kn.fst",
-    "recommended_values": "",
-    "type": "filepath"
-  },
-  "lang_model_server_host": {
-    "value": "127.0.0.1",
-    "section": "lang_model_config",
-    "readableName": "Language Model Host",
-    "helpTip": "Specifies the host for language model server integration. Default: 127.0.0.1",
-    "recommended_values": [
-      "127.0.0.1",
-      "0.0.0.0"
-    ],
-    "type": "str"
-  },
-  "lang_model_server_port": {
-    "value": "5000",
-    "section": "lang_model_config",
-    "readableName": "Language Model Port",
-    "helpTip": "Specifies the port for language model server integration. Default: 5000",
-    "recommended_values": "",
-    "type": "int"
-  },
   "show_preview_inquiry": {
     "value": "false",
     "section": "bci_config",
