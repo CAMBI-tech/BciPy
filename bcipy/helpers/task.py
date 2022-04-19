@@ -180,7 +180,7 @@ def get_data_for_decision(inquiry_timing,
             f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]')
 
     # Construct triggers to send off for processing. This should not be zero anymore. it would be for prestim_len = 0
-    triggers = [(text, ((timing) - first_stim_time))
+    triggers = [(text, ((timing - first_stim_time) + prestim))
                 for text, timing in inquiry_timing]
 
     # Define the amount of data required for any processing to occur.
