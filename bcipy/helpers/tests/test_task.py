@@ -270,7 +270,7 @@ class TestGetDataForDecision(unittest.TestCase):
 
         expected_start = first_stim_time - prestim
         expected_stop = last_stim_time
-        expected_triggers = [(text, ((timing) - first_stim_time))
+        expected_triggers = [(text, ((timing - first_stim_time) + prestim))
                              for text, timing in self.inquiry_timing]
         expected_data_limit = round((expected_stop - expected_start) * self.daq.device_info.fs)
 
