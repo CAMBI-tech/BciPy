@@ -1,15 +1,15 @@
 import logging
 import os
 import random
-
 from string import ascii_uppercase
 from typing import Any, List, Tuple, Union
 
-from bcipy.helpers.clock import Clock
-from bcipy.task.exceptions import InsufficientDataException
-
 import numpy as np
 from psychopy import core, event, visual
+
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import get_fixation
+from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(__name__)
 
@@ -125,24 +125,23 @@ def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
 
 
 def target_info(triggers: List[Tuple[str, float]],
-                target_letter: str = None) -> List[str]:
+                target_letter: str = None,
+                is_txt: bool = True) -> List[str]:
     """Targetness for each item in triggers.
 
     Parameters
     ----------
     - triggers : list of (stim, offset)
     - target_letter : letter the user is attempting to spell
+    - is_txt : bool indicating whether the triggers are text stimuli
 
     Returns
     -------
     list of ('target' | 'nontarget') for each trigger.
     """
-    if target_letter:
-        return [
-            'target' if trg[0] == target_letter else 'nontarget'
-            for trg in triggers
-        ]
-    return ['nontarget'] * len(triggers)
+    fixation = get_fixation(is_txt)
+    labels = {target_letter: 'target', fixation: 'fixation'}
+    return [labels.get(trg[0], 'nontarget') for trg in triggers]
 
 
 def get_data_for_decision(inquiry_timing,

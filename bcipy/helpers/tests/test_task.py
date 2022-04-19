@@ -211,14 +211,14 @@ class TestTriggers(unittest.TestCase):
                     ('X', 1.9859995969745796), ('Y', 2.203130029985914),
                     ('W', 2.4198898100003134)]
         expected = [
-            'nontarget', 'nontarget', 'nontarget', 'target', 'nontarget',
+            'fixation', 'nontarget', 'nontarget', 'target', 'nontarget',
             'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
             'nontarget'
         ]
         self.assertEqual(expected, target_info(triggers, target_letter='Z'))
 
         expected = [
-            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'fixation', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
             'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
             'nontarget'
         ]

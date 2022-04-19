@@ -542,7 +542,7 @@ class RSVPCopyPhraseTask(Task):
                         target_stimuli: str,
                         current_text: str,
                         decision: Decision,
-                        evidence_types: List[EvidenceType] = []) -> Inquiry:
+                        evidence_types: List[EvidenceType] = None) -> Inquiry:
         """Construct a new inquiry data record.
 
         Parameters
@@ -560,11 +560,13 @@ class RSVPCopyPhraseTask(Task):
         evidence for the provided evidence_types, leaving the other types empty
         """
         assert self.current_inquiry, "Current inquiry is required"
+        evidence_types = evidence_types or []
         triggers = construct_triggers(self.stims_for_decision(stim_times))
         data = Inquiry(stimuli=self.current_inquiry.stimuli,
                        timing=self.current_inquiry.durations,
                        triggers=triggers,
-                       target_info=target_info(triggers, target_stimuli),
+                       target_info=target_info(triggers, target_stimuli,
+                                               self.parameters['is_txt_stim']),
                        target_letter=target_stimuli,
                        current_text=current_text,
                        target_text=self.copy_phrase,
