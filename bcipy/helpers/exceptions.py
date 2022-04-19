@@ -70,8 +70,9 @@ class UnsupportedResponseType(BciPyCoreException):
     unsupported value."""
     ...
 
+
 class TaskConfigurationException(BciPyCoreException):
     """Task Configuration Exception.
-    
+
     Thrown when attempting to run a task with invalid configurations"""
     ...

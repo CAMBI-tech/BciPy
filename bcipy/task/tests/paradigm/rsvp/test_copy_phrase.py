@@ -145,7 +145,7 @@ class TestCopyPhrase(unittest.TestCase):
             signal_model=self.signal_model,
             language_model=self.language_model,
             fake=True)
-    
+
     def test_validate(self):
         task = RSVPCopyPhraseTask(
             win=self.win,
@@ -157,7 +157,7 @@ class TestCopyPhrase(unittest.TestCase):
             fake=True)
 
         task.validate()
-    
+
     def test_validate_throws_task_exception_missing_parameter(self):
         parameters = {}
 
@@ -587,6 +587,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     # TODO: test feedback; patch VisualFeedback constructor, returning a mock; verify(feedback, times=1).administer(...)
 
+
 def mock_inquiry_data():
     """Generator that yields data mocking the copy_phrase_wrapper initialize_series method"""
     timings = [[
@@ -605,6 +606,7 @@ def mock_inquiry_data():
 
     for tup in [InquirySchedule([stim], timings, colors) for stim in stims]:
         yield (False, tup)
+
 
 def mock_inquiry_timings():
     """Generator that yields data mocking the rsvp display do_inquiry() method, in response

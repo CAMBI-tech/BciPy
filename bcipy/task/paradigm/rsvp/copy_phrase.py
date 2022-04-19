@@ -168,7 +168,7 @@ class RSVPCopyPhraseTask(Task):
 
     def validate(self) -> None:
         """Validate.
-        
+
         Confirm Task is configurated with correct parameters and within operating limits.
         """
 
