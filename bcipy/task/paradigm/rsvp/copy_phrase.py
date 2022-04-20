@@ -102,7 +102,7 @@ class RSVPCopyPhraseTask(Task):
         self.daq = daq
         self.parameters = parameters
 
-        self.validate()
+        self.validate_parameters()
 
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
@@ -166,7 +166,7 @@ class RSVPCopyPhraseTask(Task):
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
 
-    def validate(self) -> None:
+    def validate_parameters(self) -> None:
         """Validate.
 
         Confirm Task is configurated with correct parameters and within operating limits.

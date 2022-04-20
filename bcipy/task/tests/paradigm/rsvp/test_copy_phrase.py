@@ -146,7 +146,7 @@ class TestCopyPhrase(unittest.TestCase):
             language_model=self.language_model,
             fake=True)
 
-    def test_validate(self):
+    def test_validate_parameters(self):
         task = RSVPCopyPhraseTask(
             win=self.win,
             daq=self.daq,
@@ -156,9 +156,9 @@ class TestCopyPhrase(unittest.TestCase):
             language_model=self.language_model,
             fake=True)
 
-        task.validate()
+        task.validate_parameters()
 
-    def test_validate_throws_task_exception_missing_parameter(self):
+    def test_validate_parameters_throws_task_exception_missing_parameter(self):
         parameters = {}
 
         with self.assertRaises(TaskConfigurationException):
@@ -171,7 +171,7 @@ class TestCopyPhrase(unittest.TestCase):
                 language_model=self.language_model,
                 fake=True)
 
-    def test_validate_throws_task_exception_excess_prestim_length(self):
+    def test_validate_parameters_throws_task_exception_excess_prestim_length(self):
         self.parameters['prestim_length'] = 1000
 
         with self.assertRaises(TaskConfigurationException):
@@ -184,7 +184,7 @@ class TestCopyPhrase(unittest.TestCase):
                 language_model=self.language_model,
                 fake=True)
 
-    def test_validate_throws_task_exception_excess_trial_length(self):
+    def test_validate_parameters_throws_task_exception_excess_trial_length(self):
         self.parameters['trial_length'] = 1000
 
         with self.assertRaises(TaskConfigurationException):
