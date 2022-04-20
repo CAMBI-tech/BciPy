@@ -68,3 +68,11 @@ class UnsupportedResponseType(BciPyCoreException):
 
     Thrown when attempting to set the response type of a language model to an
     unsupported value."""
+    ...
+
+
+class TaskConfigurationException(BciPyCoreException):
+    """Task Configuration Exception.
+
+    Thrown when attempting to run a task with invalid configurations"""
+    ...

@@ -9,6 +9,7 @@ from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -100,8 +101,8 @@ class RSVPCopyPhraseTask(Task):
         self.window = win
         self.daq = daq
         self.parameters = parameters
-        for param in RSVPCopyPhraseTask.PARAMETERS_USED:
-            assert param in self.parameters, f"parameter '{param}' is required"
+
+        self.validate_parameters()
 
         self.static_clock = core.StaticPeriod(
             screenHz=self.window.getActualFrameRate())
@@ -164,6 +165,29 @@ class RSVPCopyPhraseTask(Task):
 
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
+
+    def validate_parameters(self) -> None:
+        """Validate.
+
+        Confirm Task is configurated with correct parameters and within operating limits.
+        """
+
+        # ensure all required parameters are provided
+        for param in RSVPCopyPhraseTask.PARAMETERS_USED:
+            if param not in self.parameters:
+                raise TaskConfigurationException(f"parameter '{param}' is required")
+
+        # ensure data / query parameters are set correctly
+        buffer_len = self.parameters['task_buffer_length']
+        prestim = self.parameters['prestim_length']
+        poststim = self.parameters['trial_length']
+        if buffer_len < prestim:
+            raise TaskConfigurationException(
+                f'task_buffer_length=[{buffer_len}] must be greater than prestim_length=[{prestim}]')
+
+        if buffer_len < poststim:
+            raise TaskConfigurationException(
+                f'task_buffer_length=[{buffer_len}] must be greater than trial_length=[{poststim}]')
 
     def starting_spelled_letters(self) -> int:
         """Number of letters already spelled at the start of the task."""
@@ -505,12 +529,14 @@ class RSVPCopyPhraseTask(Task):
         if not proceed or self.fake:
             return None
 
+        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
+        post_stim_buffer = self.parameters['prestim_length']
         raw_data, triggers = get_data_for_decision(
             inquiry_timing=self.stims_for_decision(stim_times),
             daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
             prestim=self.parameters['prestim_length'],
-            poststim=self.parameters['task_buffer_length'] + self.parameters['trial_length'])
+            poststim=post_stim_buffer + self.parameters['trial_length'])
 
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
@@ -621,8 +647,10 @@ class RSVPCopyPhraseTask(Task):
     def write_session_data(self) -> None:
         """Save session data to disk."""
         if self.session:
-            _save_session_related_data(self.session_save_location,
-                                       self.session.as_dict())
+            session_file = _save_session_related_data(
+                self.session_save_location,
+                self.session.as_dict())
+            session_file.close()
 
     def write_offset_trigger(self) -> None:
         """Append the offset to the end of the triggers file.
