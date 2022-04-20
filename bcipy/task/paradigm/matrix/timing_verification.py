@@ -6,7 +6,7 @@ from bcipy.helpers.stimuli import PhotoDiodeStimuli
 
 class MatrixTimingVerificationCalibration(Task):
     """Matrix Calibration Task.
-    
+
     This task is used for verifying display timing by alternating solid and empty boxes. These
         stimuli can be used with a photodiode to ensure accurate presentations.
 
@@ -23,7 +23,7 @@ class MatrixTimingVerificationCalibration(Task):
 
     def __init__(self, win, daq, parameters, file_save):
         super(MatrixTimingVerificationCalibration, self).__init__()
-        self._task = MatrixCalibrationTask(win, daq, parameters, file_save) 
+        self._task = MatrixCalibrationTask(win, daq, parameters, file_save)
         self.stimuli = PhotoDiodeStimuli.list()
         self.create_testing_grid()
         self._task.matrix.start_opacity = 0
@@ -32,11 +32,11 @@ class MatrixTimingVerificationCalibration(Task):
 
     def create_testing_grid(self):
         """Create Testing Grid.
-        
+
         To test timing, we require the photodiode stimuli to flicker at the rate used in the execute method. The middle
             of the existing grid is replaced with the necessary stimuli.
         """
-        mid = int(len(self._task.matrix.symbol_set)  / 2)
+        mid = int(len(self._task.matrix.symbol_set) / 2)
 
         for i, stim in enumerate(self.stimuli):
             self._task.matrix.symbol_set[mid + i] = stim

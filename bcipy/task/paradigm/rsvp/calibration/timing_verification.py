@@ -39,7 +39,7 @@ class RSVPTimingVerificationCalibration(Task):
                 color(list(list[str])): list of colors)
         """
         samples, times, colors = [], [], []
-        
+
         # alternate between solid and empty boxes
         letters = cycle(self.stimuli)
         time_prompt, time_fixation, time_stim = self._task.timing
