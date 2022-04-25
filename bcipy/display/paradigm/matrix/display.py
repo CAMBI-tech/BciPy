@@ -97,7 +97,8 @@ class MatrixDisplay(Display):
         self.max_grid_width = 0.7
         self.stim_registry = {}
 
-        self.opacity = 0.15
+        self.start_opacity = 0.15
+        self.highlight_opacity = 1
 
         # Trigger handling
         self.first_run = True
@@ -161,7 +162,7 @@ class MatrixDisplay(Display):
             text_stim = visual.TextStim(
                 win=self.window,
                 text=sym,
-                opacity=self.opacity,
+                opacity=self.start_opacity,
                 pos=pos,
                 height=self.grid_stimuli_height)
             self.stim_registry[sym] = text_stim
@@ -243,7 +244,7 @@ class MatrixDisplay(Display):
             self.draw_static()
 
             # highlight a stimuli
-            self.stim_registry[sym].opacity = 1
+            self.stim_registry[sym].opacity = self.highlight_opacity
             self.stim_registry[sym].draw()
             # present stimuli and wait for self.stimuli_timing
 

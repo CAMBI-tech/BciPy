@@ -54,6 +54,21 @@ class TargetPositions(Enum):
         return list(map(lambda c: c.value, cls))
 
 
+class PhotoDiodeStimuli(Enum):
+    """Photodiode Stimuli.
+
+    Enum to define unicode stimuli needed for testing system timing.
+    """
+
+    EMPTY = '\u25A1'  # box with a white border, no fill
+    SOLID = '\u25A0'  # solid white box
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+
 class InquirySchedule(NamedTuple):
     """Schedule for the next inquiries to present, where each inquiry specifies
     the stimulus, duration, and color information.

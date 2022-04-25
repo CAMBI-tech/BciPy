@@ -16,15 +16,19 @@ Currently, these are the supported paradigms and modes:
 
 > Calibration
 
-> Alert Tone Calibration
-
-> Inter-Inquiry Feedback Calibration
-
-> Timing Verification Calibration
+> Time Test Calibration
 
 ##### Mode: Copy Phrase
 
 > Copy Phrase
+
+### *Paradigm: Matrix* 
+
+##### Mode: Calibration
+
+> Calibration
+
+> Time Test Calibration
 
 
 ## Start Task
