@@ -4,10 +4,15 @@ import os
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import normaltest, describe
 from textwrap import wrap
 from bcipy.acquisition.device_info import DeviceInfo
 
-ALLOWABLE_TOLERANCE = .02
+ALLOWABLE_TOLERANCE = 0.01
+RECOMMEND = True # set static to 0.0 to get good base recommendations
+STATIC = 0.0
+RSVP = False
+PLOT = True if not RECOMMEND else False
 
 
 def channel_data(raw_data, device_info, channel_name, n_records=None):
@@ -36,7 +41,7 @@ def clock_seconds(device_info: DeviceInfo, sample: int) -> float:
     return sample / device_info.fs
 
 
-def plot_triggers(raw_data, device_info, triggers, title=""):
+def calculate_latency(raw_data, device_info, triggers, title="", recommend_static=False, plot=False):
     """Plot raw_data triggers, including the TRG_device_stream data
     (channel streamed from the device; usually populated from a trigger box),
     as well as TRG data populated from the LSL Marker Stream. Also plots data
@@ -101,15 +106,47 @@ def plot_triggers(raw_data, device_info, triggers, title=""):
                    linewidth=0.5, color='cyan')
 
     errors = []
+    diffs = []
+    x = 0
+    # starts.pop(0)
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
-        if abs(diff) > ALLOWABLE_TOLERANCE:
-            errors.append(f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
-    
-    if errors:
-        print(f'RESULTS: Allowable tolerance between triggers and photodiode exceeded. {errors}')
+
+        # rsvp bug with fixation
+        if RSVP:
+            if x > 0:
+                if abs(diff) > ALLOWABLE_TOLERANCE:
+                    errors.append(f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
+                diffs.append(diff)
+            if x == 4:
+                x = 0
+            else:
+                x+=1
+        else:
+            if abs(diff) > ALLOWABLE_TOLERANCE:
+                errors.append(f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
+            diffs.append(diff)
+
+    if recommend_static:
+        # test for normality
+        _, p_value = normaltest(diffs)
+        print(f'{describe(diffs)}')
+
+        # if it's not normal, take the median
+        if p_value < 0.05:
+            print('Non-normal distribution')
+        recommended_static = abs(np.median(diffs))
+        print(f'System recommended static offset median=[{recommended_static}]')
+        recommended_static = abs(np.mean(diffs))
+        print(f'System recommended static offset mean=[{recommended_static}]')
+
     else:
-        print(f'RESULTS: Triggers and photodiode timestamps within limit of [{ALLOWABLE_TOLERANCE}s]!')
+        if errors:
+            num_errors = len(errors)
+            print(f'RESULTS: Allowable tolerance between triggers and photodiode exceeded. {errors}'
+                  f'Number of violations: {num_errors}')
+        else:
+            print(f'RESULTS: Triggers and photodiode timestamps within limit of [{ALLOWABLE_TOLERANCE}s]!')
 
 
     # Add labels for TRGs
@@ -122,7 +159,8 @@ def plot_triggers(raw_data, device_info, triggers, title=""):
     ax.grid(axis='x', linestyle='--', color="0.5", linewidth=0.4)
     plt.legend(loc='lower left', fontsize='small')
     # display the plot
-    plt.show()
+    if plot:
+        plt.show()
 
 
 def file_data(path):
@@ -156,8 +194,9 @@ def read_triggers(triggers_file):
     with open(triggers_file) as trgfile:
         records = [line.split(' ') for line in trgfile.readlines()]
         (_cname, _ctype, cstamp) = records[0]
+        records.pop(0)
         # (_acq_name, _acq_type, acq_stamp) = records[-1]
-        static_offset = 0.1
+        static_offset = STATIC
         offset = float(cstamp) + static_offset
 
         corrected = []
@@ -182,7 +221,13 @@ def main(path: str):
     data, device_info = file_data(data_file)
     triggers = read_triggers(trg_file)
 
-    plot_triggers(data, device_info, triggers, title=pathlib.Path(path).name)
+    calculate_latency(
+        data,
+        device_info,
+        triggers,
+        title=pathlib.Path(path).name,
+        recommend_static=RECOMMEND,
+        plot=PLOT)
 
 
 if __name__ == "__main__":
