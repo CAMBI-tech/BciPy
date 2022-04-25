@@ -60,8 +60,8 @@ class PhotoDiodeStimuli(Enum):
     Enum to define unicode stimuli needed for testing system timing.
     """
 
-    EMPTY = '\u25A1' # box with a white border, no fill
-    SOLID = '\u25A0' # solid white box
+    EMPTY = '\u25A1'  # box with a white border, no fill
+    SOLID = '\u25A0'  # solid white box
 
     @classmethod
     def list(cls):
