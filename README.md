@@ -8,7 +8,7 @@
 
 BciPy is a library for conducting Brain-Computer Interface experiments in Python. It functions as a standalone application for experimental data collection or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/) (in progress).
 
-It will run on the latest windows, linux and macos. Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
+It will run on the latest windows (7, 10, 11), linux (ubuntu 22.04) and macos (Big Sur). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
 
 *Please cite us when using!*
 
@@ -18,7 +18,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python > 3.6.5 and other packages defined in the requirements.txt.
+This project requires Python 3.7 or 3.8. All other dependancies defined in the requirements.txt.
 
 
 ## Installation
@@ -213,11 +213,11 @@ If you want to be added to the development team slack or have additional questio
 We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
 Other guidelines:
-- All added features require tests and a demo.
+- All features require tests and a demo.
 - All tests must pass to merge, even if they are seemingly unrelated to your work.
 - Use Spaces, not Tabs.
 - Use informative names for functions and classes.
-- Document the input and output of your functions / classes in the code. eg in-line commenting and typing
+- Document the input and output of your functions / classes in the code. eg in-line commenting and typing.
 - Do not push IDE or other local configuration files.
 - All new modules or major functionality should be documented outside of the code with a README.md.
 	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
