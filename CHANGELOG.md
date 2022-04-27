@@ -2,7 +2,9 @@
 
 ## Contributions
 
-This version contains major refactoring efforts and features. The highlights: 
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #215 represent the 2.0.0-rc.1 work. 
+
+The highlights: 
 
 - `Acquisition Enhancements`: multi-modal support and better performance overall! #171, #174
 - `Language Model Refactor`: deprecation of docker base models. Addition of `LanguageModel` base class, `UniformLanguageModel` and a hugggingface model `GPT2LanguageModel`. #207
@@ -13,7 +15,7 @@ This version contains major refactoring efforts and features. The highlights:
 - `Linux compatibility`: with the upgrading of dependencies and a helpful shell script (see `scripts/shell/linux_requirements.sh`) for setting up new machines, we are linux compatible. See below for more details.
 - `Prestimulus buffer and Inquiry Based Training` - support to add prestimulus data to reshaping and data queries to permit better filter application. Additionally, use this buffer and the inquiry reshaper to mimic data experienced in real time during training in offline_analysis.py #208
 
-We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #215 represent the 2.0.0-rc.1 work. We do are best to describe the major ones below: 
+The details (incomplete, our apologies!):
 
 ### Added
 
