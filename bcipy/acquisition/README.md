@@ -4,7 +4,7 @@ The data acquisition module is responsible for interfacing with hardware to obta
 
 ## Supported Devices
 
-The acquisition module connects with hardware devices using the Lab Streaming Layer (LSL) library. Each device should provide its own LSL driver / application to use for streaming data. The streamer should be started prior to running the `bcipy` application.
+The acquisition module connects with hardware devices using the [Lab Streaming Layer (LSL)](https://labstreaminglayer.readthedocs.io/index.html) library. Each device should provide its own LSL driver / application to use for streaming data. The LSL website maintains a list of [available apps](https://labstreaminglayer.readthedocs.io/info/supported_devices.html). If your device does not have a supported app see [https://labstreaminglayer.readthedocs.io/dev/app_build.html](https://labstreaminglayer.readthedocs.io/dev/app_build.html). The streamer should be started prior to running the `bcipy` application.
 
 Within BciPy users must specify the details of the device they wish to use by providing a `DeviceSpec`. A list of preconfigured devices is defined in `devices.json`. A new device can be added to that file manually, or programmatically registered with the `device_info` module.
 
