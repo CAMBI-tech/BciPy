@@ -2,7 +2,7 @@ import logging
 import os.path as path
 from typing import List, Optional, Tuple
 
-from psychopy import core, visual
+from psychopy import core, visual, event
 
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.task import SPACE_CHAR, get_key_press
@@ -243,6 +243,7 @@ class RSVPDisplay(Display):
         timer = core.CountdownTimer(self._preview_inquiry.preview_inquiry_length)
         response = False
 
+        event.clearEvents(eventType='keyboard')
         while timer.getTime() > 0:
             # wait for a key press event
             response = get_key_press(

@@ -286,7 +286,7 @@
     "value": "500",
     "section": "bci_config",
     "readableName": "Task Window Height",
-    "helpTip": "Specifies the height (in pixels) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). Default: 500",
+    "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended_values": "",
     "type": "int"
   },
@@ -294,7 +294,7 @@
     "value": "500",
     "section": "bci_config",
     "readableName": "Task Window Width",
-    "helpTip": "Specifies the width (in pixels) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). Default: 500",
+    "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended_values": "",
     "type": "int"
   },
@@ -442,10 +442,10 @@
     "type": "str"
   },
   "stim_height": {
-    "value": "0.6",
+    "value": "0.5",
     "section": "bci_config",
     "readableName": "Stimulus Size",
-    "helpTip": "Specifies the height (in ???) of text stimuli. Possible values range from X to X. Default: 0.6",
+    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
     "recommended_values": "",
     "type": "float"
   },
@@ -532,8 +532,8 @@
   "info_height": {
     "value": "0.1",
     "section": "bci_config",
-    "readableName": "Text Height",
-    "helpTip": "Text Height",
+    "readableName": "Text below main presentation height",
+    "helpTip": "Specifies the height of info text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended_values": [
       "0.1"
     ],
@@ -603,7 +603,7 @@
     "value": "0.1",
     "section": "bci_config",
     "readableName": "Task Text Size",
-    "helpTip": "Specifies the height (in ???) of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Possible values range from 0 to 1. Default: 0.1",
+    "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended_values": [
       "0.1"
     ],
@@ -811,13 +811,14 @@
     "type": "float"
   },
   "preview_inquiry_key_input": {
-    "value": "space",
+    "value": "return",
     "section": "bci_config",
     "readableName": "Preview Inquiry Display Key Input Method",
     "helpTip": "Defines the key used to engage with inquiry preview.",
     "recommended_values": [
       "space",
-      "escape"
+      "escape",
+      "return"
     ],
     "type": "str"
   },
@@ -873,7 +874,7 @@
     "value": "0.2",
     "section": "feedback_config",
     "readableName": "Feedback Stimuli Height",
-    "helpTip": "Specifies the height of the feedback stimuli. Default: 0.2",
+    "helpTip": "Specifies the height of the feedback stimuli. See https://www.psychopy.org/general/units.html. Default: 0.2",
     "recommended_values": "",
     "type": "float"
   },

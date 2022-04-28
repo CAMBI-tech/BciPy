@@ -42,7 +42,7 @@ The details (incomplete, our apologies!):
 - `CODE_OF_CONDUCT.md`: to latest version of the Contributor Covenant
 - `README.md`: Add new glossary terms: mode, session and task #126 #127 and cleanup #129
 - `bcipy/main.py`: formally, `bci_main.py`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py` 
-- `parameters.json`: add stim_order #153 add max selections #175 remove max_inq_per_trial in favor of max_inq_per_series #176 add inquiry preview #177
+- `parameters.json`: add stim_order #153 add max selections #175 remove max_inq_per_trial in favor of max_inq_per_series #176 add inquiry preview #177 with relevant stimuli units in help text, better starting stim_height, and inquiry preview keys #216
 - `demo_stimuli_generation.py`: update imports and add a case showing the new ordering functionality. #153
 - `copy_phrase_wrapper`: update logging and exception handling. add stim order. #153 BUGFIX: return transformed sampling rate #159
 - `random_rsvp_calibration_inq_gen`: rename to `calibration_inquiry_generator` #153
