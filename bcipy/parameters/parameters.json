@@ -533,7 +533,7 @@
     "value": "0.1",
     "section": "bci_config",
     "readableName": "Text below main presentation height",
-    "helpTip": "Specifies the height of iinfo text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "helpTip": "Specifies the height of info text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended_values": [
       "0.1"
     ],
