@@ -1,12 +1,66 @@
 # Data Acquisition Module (daq)
 
-The Data Acquisition module is intended to be used within the Brain Computer Interface (BCI) systems. This module streams data from the EEG hardware, persists it in csv files, and makes it available to other systems.
+The data acquisition module is responsible for interfacing with hardware to obtain device data (EEG, eye tracking, etc). It supports multi-modal recording, real-time querying, and functionality to mock device data for testing.
+
+## Supported Devices
+
+The acquisition module connects with hardware devices using the Lab Streaming Layer (LSL) library. Each device should provide its own LSL driver / application to use for streaming data. The streamer should be started prior to running the `bcipy` application.
+
+Within BciPy users must specify the details of the device they wish to use by providing a `DeviceSpec`. A list of preconfigured devices is defined in `devices.json`. A new device can be added to that file manually, or programmatically registered with the `device_info` module.
+
+    from bcipy.acquisition.devices import DeviceSpec, register
+    my_device = DeviceSpec(name="DSI-VR300",
+                           channels=["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG"],
+                           sample_rate=300.0,
+                           content_type="EEG")
+    register(my_device)
 
 ## Client
 
-The `client` is the primary module for receiving data from the EEG hardware, persisting it to disk, and optionally performing some processing per record.
+The `lsl_client` module provides the primary interface for interacting with device data and may be used to dynamically query streaming data in real-time. An instance of the `LslClient` class is parameterized with the `DeviceSpec` of interest, as well as the number of seconds of data that should be available for querying. If the `save_directory` and `filename` parameters are provided it also records the data to disk for later offline analysis. If no device is specified the client will attempt to connect to an EEG stream by default. A separate `LslClient` should be constructed for each device of interest.
 
-### Examples
+    from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+    eeg_client = LslAcquisitionClient(max_buflen=1, device_spec=my_device)
+    eeg_client.start_acquisition()
+
+### Data queries
+
+Instances of the `'LslClient` can be queried using the `get_data` method. The timestamp parameters passed to this method must be in the same units as the acquisition clock, which uses the pylsl local_clock. If the experiment clock is different that the acquisition clock, the `convert_time` method can be used to get the appropriate value. Only records that are currently buffered are available for return. The buffer size should be set according to the specific needs of an experiment. The entire contents of the buffer can be retrieved using the `get_latest_data` method.
+
+    seconds = 3
+    time.sleep(seconds)
+    # Get all data currently buffered.
+    samples = eeg_client.get_latest_data()
+    eeg_client.stop_acquisition()
+
+
+## Recording Data
+
+The `lsl_recorder` module contains classes for persisting streaming device data to disk. These classes can be used directly if an experiment does not require real-time queries but would still like to record data. The `LslRecorder` listens for all devices streamed by Lab Streaming Layer. To listen to specific devices, an `LslRecordingThread` can be instantiated with a specific device stream name.
+
+
+## Mock Device Data
+
+The acquisition `datastream` module provides functionality for mocking device data. This is useful for testing and development. The server is initialized with the `DeviceSpec` to mock and an optional generator and writes data to an LSL stream at the sample rate specified in the spec. As with a real device, the `lsl_server` must be started prior to running `bcipy`.
+
+    from bcipy.acquisition.datastream.lsl_server import LslDataServer
+    from bcipy.acquisition.devices import preconfigured_device
+    server = LslDataServer(device_spec=preconfigured_device('DSI-24'))
+    server.start()
+
+If using a preconfigured device the server can be run directly from the command line:
+
+    python bcipy/acquisition/datastream/lsl_server.py --name='DSI-24'
+
+The default settings generate random data, but if a data collection session has been previously recorded the `file_generator` can be used to replay this data. See the `datastream.generator` module for options.
+
+    python bcipy/acquisition/datastream/lsl_server.py --filename='raw_data.csv'
+
+## Alternate DataAcquisitionClient
+
+The `LslClient` is the preferred method for interacting with devices, however, BciPy also provides a more generic client for instances where this may not work, such as connecting to a device through via a TCP interface. This client is more general, but requires more configuration and is not currently supported.
+
+### Example
 
     import time
     from acquisition.client import DataAcquisitionClient
@@ -26,9 +80,9 @@ The `client` is the primary module for receiving data from the EEG hardware, per
         print("Number of samples: {0}".format(client.get_data_len()))
         client.stop_acquisition()
 
-The daq/tests/client_test.py file also demonstrates how the various components interact and can be mocked.
+The demo folder contains additional examples of how the various components interact and can be mocked.
 
-### Client Architecture
+### Architecture
 
 A `DataAcquisitionClient` is initialized with a `Connector`  and optionally a `Processor`, `Buffer`, and `Clock`. A connector is a driver that knows how to connect to and communicate with specific EEG hardware/software, as well as decode the sensor data. Supported connectors can be queried through the `registry`.
 
@@ -39,7 +93,7 @@ A `DataAcquisitionClient` manages two threads, one for acquisition and one for p
 The registry has a list of supported connectors, which can be queried by device and connection method.
 
     import daq.protocols.registry as registry
-    registry.find_connector(device_spec=supported_device('DSI'), 
+    registry.find_connector(device_spec=supported_device('DSI'),
                             connection_method=ConnectionMethod.TCP)
 
 
@@ -55,30 +109,18 @@ BciPy currently has Connectors for reading Wearable Sensing Headsets over TCP (D
 
 `ConnectionMethod` is an enumeration of the currently supported connection methods. The currently supported methods are TCP and LabStreamingLayer (LSL).
 
-#### Devices
-
-The `devices` module contains functionality for loading and querying the list of supported hardware devices. A `DeviceSpec` provides the specification for a hardware device used in data acquisition, including the device name, list of channels, sample rate, content_type, and supported connection methods.
-
-#### Processor
-
-Processors extend the daq.processor `Processor` base class. The default processor is the `FileWriter`, which writes each record to a csv file. There is also an `LslProcessor`, which creates an pylsl output stream and writes records to the stream.
-
 #### Buffer
 
-The `Buffer` is used by the `Client` internally to store data so it can be queried again. The default buffer uses a Sqlite3 database to store data. By default it writes to a file called `buffer.db`, but this can be configured by using the class builder methods. See the client.py main method for an example.
+The `Buffer` is used by the `DataAcquisitionClient` internally to store data so it can be queried again. The default buffer uses a Sqlite3 database to store data. By default it writes to a file called `buffer.db`, but this can be configured by using the class builder methods. See the client.py main method for an example.
 
 #### Clock
 
 The `Clock` is used to timestamp data as it is received from the device. Data is timestamped immediately before it gets written to the process queue for processing, therefore long-running process steps will not affect subsequent timestamps. A clock must implement the `getTime` method.
 
 
-## Data Server
+## TCP Data Server
 
-The `datastream` module is primarily used for testing and development. The main entry point is the `server` module.
-
-### Server Architecture
-
-A Server takes a data `generator` and a `Protocol` and streams generated data  through a socket connection at the frequency specified in the protocol. Internally a server uses a `Producer` to manage the interval at which data is sent.
+A `TcpDataServer` takes a data `generator` and a `Protocol` and streams generated data through a socket connection at the frequency specified in the protocol. Internally a server uses a `Producer` to manage the interval at which data is sent.
 
 ### Example
 
@@ -104,7 +146,7 @@ A Server takes a data `generator` and a `Protocol` and streams generated data  t
 
 #### Generator
 
-Generators are Python functions that yield encoded data. They have a parameter for an 
+Generators are Python functions that yield encoded data. They have a parameter for an
 `Encoder`, and may include other parameters. Currently there is a `random_data_generator`, which generates random data, and a `file_data_generator`, which reads through a provided file (ex. a calibration file), and yields one row at a time. The `file_data_generator` is useful for repeatable tests with known data.
 
 #### Protocol
