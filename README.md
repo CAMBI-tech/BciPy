@@ -8,7 +8,7 @@
 
 BciPy is a library for conducting Brain-Computer Interface experiments in Python. It functions as a standalone application for experimental data collection or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/) (in progress).
 
-It will run on the latest windows, linux and macos. Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
+It will run on the latest windows (7, 10, 11), linux (ubuntu 22.04) and macos (Big Sur). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
 
 *Please cite us when using!*
 
@@ -16,29 +16,9 @@ It will run on the latest windows, linux and macos. Other versions may work as w
 Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken, M., & Oken, B. (2021). BciPy: brain–computer interface software in Python. Brain-Computer Interfaces, 1-18.
 ```
 
-### Contributions Welcome!
-
-If you want to be added to the development team, reach out to us and we'll add you to the team slack!
-
-### Contribution Guidelines
-
-We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
-
-Other guidelines:
-- All added features require tests and a demo.
-- All tests must pass to merge, even if they are seemingly unrelated to your work.
-- Use Spaces, not Tabs.
-- Use informative names for functions and classes.
-- Document the input and output of your functions / classes in the code. eg in-line commenting and typing
-- Do not push IDE or other local configuration files.
-- All new modules or major functionality should be documented outside of the code with a README.md.
-	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
-
-See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
-
 ## Dependencies
 ---------------
-This project requires Python > 3.6.5 and other packages defined in the requirements.txt.
+This project requires Python 3.7 or 3.8. All other dependencies defined in the requirements.txt.
 
 
 ## Installation
@@ -130,13 +110,25 @@ This a list of the major modules and their functionality. Each module will conta
 
 
 ```
-*RSVP KeyboardTM* is an EEG (electroencephalography) based BCI (brain
-	computer interface) typing system. It utilizes a visual presentation technique
-	called rapid serial visual presentation (RSVP). In RSVP, the options are
-	presented rapidly at a single location with a temporal separation. Similarly
-	in RSVP KeyboardTM, the symbols (the letters and additional symbols) are
-	shown at the center of screen. When the subject wants to select a symbol,
-	they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
+*RSVP KeyboardTM* is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called rapid serial visual presentation (RSVP). In RSVP, the options are presented rapidly at a single location with a temporal separation. Similarly in RSVP KeyboardTM, the symbols (the letters and additional symbols) are shown at the center of screen. When the subject wants to select a symbol, they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
+```
+
+Citation: 
+```
+Orhan, U., Hild, K. E., 2nd, Erdogmus, D., Roark, B., Oken, B., & Fried-Oken, M. (2012). RSVP Keyboard: An EEG Based Typing Interface. Proceedings of the ... IEEE International Conference on Acoustics, Speech, and Signal Processing. ICASSP (Conference), 10.1109/ICASSP.2012.6287966. https://doi.org/10.1109/ICASSP.2012.6287966
+```
+
+> Matrix Speller
+
+```
+Matrix Speller is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called Single Character Presentation (SCP).
+```
+
+Citation:
+```
+Farwell, L. A., & Donchin, E. (1988). Talking off the top of your head: toward a mental prosthesis utilizing event-related brain potentials. Electroencephalography and clinical Neurophysiology, 70(6), 510-523.
+
+Ahani A, Moghadamfalahi M, Erdogmus D. Language-Model Assisted And Icon-based Communication Through a Brain Computer Interface With Different Presentation Paradigms. IEEE Trans Neural Syst Rehabil Eng. 2018 Jul 25. doi: 10.1109/TNSRE.2018.2859432.
 ```
 
 ## Demo
@@ -211,6 +203,26 @@ Alternately, if Make is installed, you may run the follow command to run autopep
 ```sh
 make lint
 ```
+
+### Contributions Welcome!
+
+If you want to be added to the development team slack or have additional questions, please reach out to us at support@cambi.tech!
+
+### Contribution Guidelines
+
+We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
+
+Other guidelines:
+- All features require tests and a demo.
+- All tests must pass to merge, even if they are seemingly unrelated to your work.
+- Use Spaces, not Tabs.
+- Use informative names for functions and classes.
+- Document the input and output of your functions / classes in the code. eg in-line commenting and typing.
+- Do not push IDE or other local configuration files.
+- All new modules or major functionality should be documented outside of the code with a README.md.
+	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
+
+See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
 ## Contributors
 ---------------
