@@ -58,7 +58,7 @@ The default settings generate random data, but if a data collection session has 
 
 ## Alternate DataAcquisitionClient
 
-The `LslClient` is the preferred method for interacting with devices, however, BciPy also provides a more generic client for instances where this may not work, such as connecting to a device through via a TCP interface. This client is more general, but requires more configuration and is not currently supported.
+The `LslClient` is the preferred method for interacting with devices, however, BciPy also provides a more generic client for instances where this may not work, such as connecting to a device through via a TCP interface. This client is more general, but requires more configuration and is not currently supported. Note also that this client was not designed for multi-modal acquisition.
 
 ### Example
 
