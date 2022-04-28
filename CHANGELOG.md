@@ -62,7 +62,7 @@ The details (incomplete, our apologies!):
 - `task/paradigm/rsvp/copy_phrase.py`: refactored overall #146 to use new Session classes #127 and updated to use new reshapers and transforms #147 implements current state of inquiry preview #129 #177 to account for max selection parameter #175 fix targetness #179
 - `bcipy/task/data.py`: to track number of decisions made #175
 - `task/control/handler.py`: added the ability to set constants in defined stimuli agent #178
-- `task/control/query.py`: emove redundant best_selection in favor of one with constants. Implemented constants in return_stimuli methods. #178
+- `task/control/query.py`: remove redundant best_selection in favor of one with constants. Implemented constants in return_stimuli methods. #178
 - `display/rsvp/display.py`: refactored to use new trigger pulse and ensure it occurs only on first display call (whether that be `do_inquiry` or `preview_inquiry`) #149 Overall refactoring of properties into `StimuliProperties`, `InformationProperties`, `TaskDisplayProperties`. Added `PreviewInquiryProperties` and `preview_inquiry` kwarg. Add full-screen parameter to help with scaling stimuli. Add textbox to self.`_create_stimulus`. Add `preview_inquiry` and `_generate_inquiry_preview` methods. #129
 - `static/images/gui_images`: updated to `gui` and refactored where defined #149
 - `bcipy/display/main.py`: move `StimuliProperties`, `InformationProperties`, `TaskDisplayProperties` and `PreviewInquiryProperties` to higher level #180

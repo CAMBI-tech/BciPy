@@ -18,7 +18,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python 3.7 or 3.8. All other dependancies defined in the requirements.txt.
+This project requires Python 3.7 or 3.8. All other dependencies defined in the requirements.txt.
 
 
 ## Installation
