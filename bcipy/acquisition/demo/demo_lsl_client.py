@@ -23,11 +23,11 @@ def main():
 
     from bcipy.acquisition.client import DataAcquisitionClient
     from bcipy.acquisition.protocols import registry
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
     from bcipy.acquisition.connection_method import ConnectionMethod
 
     # pylint: disable=invalid-name
-    device_spec = supported_device('LSL')
+    device_spec = preconfigured_device('LSL')
     print(f"\nAcquiring data from device {device_spec}")
 
     Connector = registry.find_connector(device_spec, ConnectionMethod.LSL)

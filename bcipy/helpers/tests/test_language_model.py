@@ -1,11 +1,13 @@
+"""Unit test for language model helper"""
 import unittest
 
 from collections import Counter
-from bcipy.helpers.language_model import norm_domain, sym_appended, \
-    equally_probable, histogram
+from bcipy.helpers.language_model import norm_domain, with_min_prob, histogram
 
 
 class TestLanguageModelRelated(unittest.TestCase):
+    """Tests for language model helper"""
+
     def test_norm_domain(self):
         """Test conversion from negative log likelihood to prob."""
         letters = [('S', 0.25179717717251715), ('U', 1.656395297172517),
@@ -57,7 +59,7 @@ class TestLanguageModelRelated(unittest.TestCase):
 
         self.assertEqual(1.0, sum([prob for _, prob in syms]))
 
-        new_list = sym_appended(syms, ('<', 0.0))
+        new_list = with_min_prob(syms, ('<', 0.0))
         self.assertEqual(len(syms) + 1, len(new_list))
         self.assertEqual(1.0, sum([prob for _, prob in new_list]))
 
@@ -75,16 +77,16 @@ class TestLanguageModelRelated(unittest.TestCase):
 
         new_sym = ('<', 0.2)
 
-        new_list = sym_appended(syms, new_sym)
+        new_list = with_min_prob(syms, new_sym)
         self.assertEqual(len(syms) + 1, len(new_list))
         self.assertAlmostEqual(1.0, sum([prob for _, prob in new_list]))
 
         new_list_dict = dict(new_list)
         prev_list_dict = dict(syms)
-        for s, _ in syms:
-            self.assertTrue(s in new_list_dict)
-            self.assertTrue(new_list_dict[s] < prev_list_dict[s])
-            self.assertEqual(0.2, new_list_dict[s])
+        for sym, _ in syms:
+            self.assertTrue(sym in new_list_dict)
+            self.assertTrue(new_list_dict[sym] < prev_list_dict[sym])
+            self.assertEqual(0.2, new_list_dict[sym])
         self.assertTrue(new_sym[0] in new_list_dict)
         self.assertEqual(new_sym[1], new_list_dict[new_sym[0]])
 
@@ -92,64 +94,29 @@ class TestLanguageModelRelated(unittest.TestCase):
         """Test insertion of an additional symbol to a normalized list of
         symbols."""
 
-        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25)]
+        syms = [('A', 0.25), ('B', 0.25), ('C', 0.25), ('D', 0.25), ('E', 0.0)]
         self.assertEqual(1.0, sum([prob for _, prob in syms]))
 
-        new_list = sym_appended(syms, ('D', 0.25))
-        self.assertEqual(syms, new_list, "Value already present")
+        new_list = with_min_prob(syms, ('E', 0.15))
+        expected = [('A', 0.2125), ('B', 0.2125), ('C', 0.2125), ('D', 0.2125),
+                    ('E', 0.15)]
+        self.assertEqual(new_list, expected, "Values should be adjusted.")
+        self.assertEqual(syms, [('A', 0.25), ('B', 0.25), ('C', 0.25),
+                                ('D', 0.25), ('E', 0.0)],
+                         "Original list should not be modified.")
 
-        new_list = sym_appended(syms, ('D', 0.2))
-        self.assertEqual(
-            syms, new_list, msg="Changing the probability does not matter")
+    def test_existing_sym_with_smaller_prob(self):
+        """Test inserting a symbol with a smaller probability than what is
+        already provided."""
+        syms = [('A', 0.2125), ('B', 0.2125), ('C', 0.2125), ('D', 0.2125),
+                ('E', 0.15)]
+        self.assertEqual(with_min_prob(syms, ('E', 0.05)), syms,
+                         "New probability should only be used if it's larger")
 
-    def test_equally_probable(self):
-        """Test generation of equally probable values."""
-
-        # no overrides
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp)
-        self.assertEqual(len(alp), len(probs))
-        for prob in probs:
-            self.assertEqual(0.25, prob)
-
-        # test with override
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'A': 0.4})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.4)
-        self.assertAlmostEqual(probs[1], 0.2)
-        self.assertAlmostEqual(probs[2], 0.2)
-        self.assertAlmostEqual(probs[3], 0.2)
-
-        # test with 0.0 override
-        alp = ['A', 'B', 'C', 'D', 'E']
-        probs = equally_probable(alp, {'E': 0.0})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.25)
-        self.assertAlmostEqual(probs[1], 0.25)
-        self.assertAlmostEqual(probs[2], 0.25)
-        self.assertAlmostEqual(probs[3], 0.25)
-        self.assertAlmostEqual(probs[4], 0.0)
-
-        # test with multiple overrides
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'B': 0.2, 'D': 0.3})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        self.assertEqual(probs[0], 0.25)
-        self.assertAlmostEqual(probs[1], 0.2)
-        self.assertAlmostEqual(probs[2], 0.25)
-        self.assertAlmostEqual(probs[3], 0.3)
-
-        # test with override that's not in the alphabet
-        alp = ['A', 'B', 'C', 'D']
-        probs = equally_probable(alp, {'F': 0.4})
-        self.assertEqual(len(alp), len(probs))
-        self.assertAlmostEqual(1.0, sum(probs))
-        for prob in probs:
-            self.assertEqual(0.25, prob)
+    def test_insert_sym_on_empty_list(self):
+        """Test that it handles the edge case of an empty list."""
+        self.assertEqual(with_min_prob([], ('A', 0.25)), [('A', 1.0)])
+        self.assertEqual(with_min_prob([], ('A', 1.5)), [('A', 1.0)])
 
     def test_small_probs(self):
         """When very small values are returned from the LM, inserting a letter
@@ -169,7 +136,7 @@ class TestLanguageModelRelated(unittest.TestCase):
                  ('X', 1.904356496190087e-08), ('Q', 1.0477572781302604e-08),
                  ('G', 7.146978265955833e-09)]
 
-        syms = sym_appended(probs, ('<', 0.05))
+        syms = with_min_prob(probs, ('<', 0.05))
         self.assertAlmostEqual(1.0, sum([sym[1] for sym in syms]))
         for sym in syms:
             self.assertTrue(sym[1] >= 0)
@@ -200,8 +167,8 @@ class TestLanguageModelRelated(unittest.TestCase):
             "Should be sorted")
 
         self.assertTrue(lines[-1].startswith('_'))
-        c = Counter(lines[-1])
-        self.assertEqual(81, c['*'],
+        counter = Counter(lines[-1])
+        self.assertEqual(81, counter['*'],
                          "Should be 81 stars, indicating the percentage")
 
         total_stars = Counter(hist)['*']

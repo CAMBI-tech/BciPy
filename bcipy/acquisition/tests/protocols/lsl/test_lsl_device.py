@@ -149,7 +149,7 @@ class TestLslChannelConfig(TestLslDevice):
 
         device.connect()
         device.acquisition_init()
-        self.assertEquals(self.channels, device.channels)
+        self.assertEqual(self.channels, device.channels)
 
     def test_with_marker_stream(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
@@ -158,8 +158,8 @@ class TestLslChannelConfig(TestLslDevice):
 
         device.connect()
         device.acquisition_init()
-        self.assertEquals(self.channels, device.channels)
-        self.assertEquals(len(self.channels), len(device.read_data()))
+        self.assertEqual(self.channels, device.channels)
+        self.assertEqual(len(self.channels), len(device.read_data()))
 
     def test_with_marker_stream_included(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
@@ -170,9 +170,9 @@ class TestLslChannelConfig(TestLslDevice):
 
         device.connect()
         device.acquisition_init()
-        self.assertEquals(self.channels + [MARKER_STREAM_NAME],
-                          device.channels)
-        self.assertEquals(len(self.channels) + 1, len(device.read_data()))
+        self.assertEqual(self.channels + [MARKER_STREAM_NAME],
+                         device.channels)
+        self.assertEqual(len(self.channels) + 1, len(device.read_data()))
 
     def test_with_marker_stream_and_timestamp(self):
         server = LslDataServer(device_spec=self.device_spec, add_markers=True)
@@ -184,9 +184,9 @@ class TestLslChannelConfig(TestLslDevice):
 
         device.connect()
         device.acquisition_init()
-        self.assertEquals(self.channels + [LSL_TIMESTAMP, MARKER_STREAM_NAME],
-                          device.channels)
-        self.assertEquals(len(self.channels) + 2, len(device.read_data()))
+        self.assertEqual(self.channels + [LSL_TIMESTAMP, MARKER_STREAM_NAME],
+                         device.channels)
+        self.assertEqual(len(self.channels) + 2, len(device.read_data()))
 
     def test_renaming_columns(self):
         server = LslDataServer(device_spec=self.device_spec,
@@ -205,8 +205,8 @@ class TestLslChannelConfig(TestLslDevice):
             'C3', 'C4', 'Cz', 'FPz', 'POz', 'CPz', 'O1', 'O2',
             'TRG_device_stream', 'TRG'
         ]
-        self.assertEquals(expected, device.channels)
-        self.assertEquals(expected, device.device_info.channels)
+        self.assertEqual(expected, device.channels)
+        self.assertEqual(expected, device.device_info.channels)
 
 
 if __name__ == '__main__':

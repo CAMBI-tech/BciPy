@@ -2,27 +2,267 @@ import glob
 import itertools
 import logging
 import random
+import re
+
+from abc import ABC, abstractmethod
+from enum import Enum
 from os import path, sep
+from typing import Iterator, List, Tuple, NamedTuple
 
-from typing import Iterator
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.list import grouper
 
+from PIL import Image
+# Prevents pillow from filling the console with debug info
+logging.getLogger('PIL').setLevel(logging.WARNING)
+
+from psychopy import core
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from PIL import Image
-from psychopy import core
-
-# Prevents pillow from filling the console with debug info
-logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
-# TODO: since we have a querying this should replace the other generators
-def rsvp_inq_generator(query: list,
-                       timing=[1, 0.2],
-                       color=['red', 'white'],
-                       stim_number=1,
-                       is_txt=True,
-                       inq_constants=None) -> tuple:
+log = logging.getLogger(__name__)
+DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
+
+
+class StimuliOrder(Enum):
+    """Stimuli Order.
+
+    Enum to define the ordering of stimuli for inquiry.
+    """
+    RANDOM = 'random'
+    ALPHABETICAL = 'alphabetical'
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+
+class TargetPositions(Enum):
+    """Target Positions.
+
+    Enum to define the positions of targets within the inquiry.
+    """
+    RANDOM = 'random'
+    DISTRIBUTED = 'distributed'
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+
+class PhotoDiodeStimuli(Enum):
+    """Photodiode Stimuli.
+
+    Enum to define unicode stimuli needed for testing system timing.
+    """
+
+    EMPTY = '\u25A1'  # box with a white border, no fill
+    SOLID = '\u25A0'  # solid white box
+
+    @classmethod
+    def list(cls):
+        """Returns all enum values as a list"""
+        return list(map(lambda c: c.value, cls))
+
+
+class InquirySchedule(NamedTuple):
+    """Schedule for the next inquiries to present, where each inquiry specifies
+    the stimulus, duration, and color information.
+
+    Attributes
+    ----------
+    - stimuli: `List[List[str]]`
+    - durations: `List[List[float]]`
+    - colors: `List[List[str]]`
+    """
+    stimuli: List[List[str]]
+    durations: List[List[float]]
+    colors: List[List[str]]
+
+
+class Reshaper(ABC):
+
+    @abstractmethod
+    def __call__(self):
+        ...
+
+
+class InquiryReshaper:
+    def __call__(self,
+                 trial_targetness_label: List[str],
+                 timing_info: List[float],
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = None,
+                 poststimulus_length: float = 0.5,
+                 prestimulus_length: float = 0.0,
+                 transformation_buffer: float = 0.0,
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+        """Extract inquiry data and labels.
+
+        Args:
+            trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (List[float]): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
+            trials_per_inquiry (int): number of trials in each inquiry
+            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                 Defaults to None; all channels will be used.
+            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
+            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
+            transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
+            target_label (str): label of target symbol. Defaults to "target"
+
+        Returns:
+            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
+                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                `target_label` was not present.
+            reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
+                begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
+        """
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
+        n_inquiry = len(timing_info) // trials_per_inquiry
+        trial_duration_samples = int(poststimulus_length * fs)
+        prestimulus_samples = int(prestimulus_length * fs)
+
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+
+        # First, find the longest inquiry in this experiment
+        # We'll add or remove a few samples from all other inquiries, to match this length
+        def get_inquiry_len(inq_trigs):
+            return inq_trigs[-1] - inq_trigs[0]
+
+        longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+        num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
+        buffer_samples = int(transformation_buffer * fs)
+
+        # Label for every inquiry
+        labels = np.zeros(
+            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
+        )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
+        reshaped_data, reshaped_trigger_timing = [], []
+        for inquiry_idx, trials_within_inquiry in enumerate(
+            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
+        ):
+            first_trigger = trials_within_inquiry[0][1]
+
+            trial_triggers = []
+            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
+                if trial_label == target_label:
+                    labels[inquiry_idx, trial_idx] = 1
+
+                # If presimulus buffer is used, we add it here so that trigger timings will
+                # still line up with trial onset
+                trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
+            reshaped_trigger_timing.append(trial_triggers)
+            start = first_trigger - prestimulus_samples
+            stop = first_trigger + num_samples_per_inq + buffer_samples
+            reshaped_data.append(eeg_data[:, start:stop])
+
+        return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
+
+    @staticmethod
+    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):
+        """Extract Trials.
+
+        After using the InquiryReshaper, it may be necessary to futher trial the data for processing.
+        Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
+        Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
+        slicing parameters.
+        """
+        new_trials = []
+        num_inquiries = inquiries.shape[1]
+        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
+
+            for time in timing:
+                time = time // downsample_rate
+                y = time + samples_per_trial
+                new_trials.append(inquiries[:, inquiry_idx, time:y])
+        return np.stack(new_trials, 1)  # C x T x S
+
+
+class TrialReshaper(Reshaper):
+    def __call__(self,
+                 trial_targetness_label: list,
+                 timing_info: list,
+                 eeg_data: np.ndarray,
+                 fs: int,
+                 offset: float = 0,
+                 channel_map: List[int] = None,
+                 poststimulus_length: float = 0.5,
+                 prestimulus_length: float = 0.0,
+                 target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
+        """Extract trial data and labels.
+
+        Args:
+            trial_targetness_label (list): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (list): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            fs (int): sample rate of preprocessed EEG data
+            trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
+            offset (float, optional): Any calculated or hypothesized offsets in timings.
+                Defaults to 0.
+            channel_map (List, optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
+            poststimulus_length (float, optional): [description]. Defaults to 0.5.
+            target_label (str): label of target symbol. Defaults to "target"
+
+        Returns:
+            trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
+            labels (np.ndarray): integer label for each trial
+        """
+        # Remove the channels that we are not interested in
+        if channel_map:
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
+        # Number of samples we are interested per trial
+        poststim_samples = int(poststimulus_length * fs)
+        prestim_samples = int(prestimulus_length * fs)
+
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+
+        # Label for every trial in 0 or 1
+        targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
+        reshaped_trials = []
+        for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
+            if trial_label == target_label:
+                targetness_labels[trial_idx] = 1
+
+            # For every channel append filtered channel data to trials
+            reshaped_trials.append(eeg_data[:, trigger - prestim_samples: trigger + poststim_samples])
+
+        return np.stack(reshaped_trials, 1), targetness_labels
+
+
+def alphabetize(stimuli: List[str]) -> List[str]:
+    """Alphabetize.
+
+    Given a list of string stimuli, return a list of sorted stimuli by alphabet.
+    """
+    return sorted(stimuli, key=lambda x: re.sub(r'[^a-zA-Z0-9 \n\.]', 'ZZ', x).lower())
+
+
+def inq_generator(query: List[str],
+                  timing: List[float] = [1, 0.2],
+                  color: List[str] = ['red', 'white'],
+                  inquiry_count: int = 1,
+                  stim_order: StimuliOrder = StimuliOrder.RANDOM,
+                  is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
         Args:
             query(list[str]): list of queries to be shown
@@ -30,8 +270,6 @@ def rsvp_inq_generator(query: list,
             color(list[str]): Task specific color for generator
                 First element is the target, second element is the fixation
                 Observe that [-1] element represents the trial information
-            inq_constants(list[str]): list of letters that should always be
-                included in every inquiry. If provided, must be alp items.
         Return:
             schedule_inq(tuple(
                 samples[list[list[str]]]: list of inquiries
@@ -39,20 +277,19 @@ def rsvp_inq_generator(query: list,
                 color(list(list[str])): list of colors)): scheduled inquiries
             """
 
-    # shuffle the returned values
-    random.shuffle(query)
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        query = alphabetize(query)
+    else:
+        random.shuffle(query)
 
     stim_length = len(query)
 
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
+    for _ in range(inquiry_count):
 
         # append a fixation cross. if not text, append path to image fixation
-        if is_txt:
-            sample = ['+']
-        else:
-            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+        sample = [get_fixation(is_txt)]
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -65,13 +302,13 @@ def rsvp_inq_generator(query: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
-    return (samples, times, colors)
+    return InquirySchedule(samples, times, colors)
 
 
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
-                   always_included=None) -> list:
+                   always_included: List[str] = None) -> list:
     """Best Selection.
 
      given set of elements and a value function over the set, picks the len_query
@@ -87,15 +324,14 @@ def best_selection(selection_elements: list,
             best_selection(list[str]): elements from selection_elements with the best values """
 
     always_included = always_included or []
-    n = len_query
     # pick the top n items sorted by value in decreasing order
     elem_val = dict(zip(selection_elements, val))
-    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:n]
+    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:len_query]
 
     replacements = [
         item for item in always_included
         if item not in best and item in selection_elements
-    ][0:n]
+    ][0:len_query]
 
     if replacements:
         best[-len(replacements):] = replacements
@@ -103,13 +339,14 @@ def best_selection(selection_elements: list,
 
 
 def best_case_rsvp_inq_gen(alp: list,
-                           session_stimuli: list,
-                           timing=[1, 0.2],
-                           color=['red', 'white'],
-                           stim_number=1,
-                           stim_length=10,
-                           is_txt=True,
-                           inq_constants=None) -> tuple:
+                           session_stimuli: np.ndarray,
+                           timing: List[float] = [1, 0.2],
+                           color: List[str] = ['red', 'white'],
+                           stim_number: int = 1,
+                           stim_length: int = 10,
+                           stim_order: StimuliOrder = StimuliOrder.RANDOM,
+                           is_txt: bool = True,
+                           inq_constants: List[str] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
     generates RSVPKeyboard inquiry by picking n-most likely letters.
@@ -123,6 +360,7 @@ def best_case_rsvp_inq_gen(alp: list,
                 Observe that [-1] element represents the trial information
             stim_number(int): number of random stimuli to be created
             stim_length(int): number of trials in a inquiry
+            stim_order(StimuliOrder): ordering of stimuli in the inquiry
             inq_constants(list[str]): list of letters that should always be
                 included in every inquiry. If provided, must be alp items.
         Return:
@@ -133,35 +371,31 @@ def best_case_rsvp_inq_gen(alp: list,
             """
 
     if len(alp) != len(session_stimuli):
-        raise Exception('Missing information about alphabet. len(alp):{}, '
-                        'len(session_stimuli):{}, should be same!'.format(
-                            len(alp), len(session_stimuli)))
+        raise BciPyCoreException((
+            f'Missing information about alphabet.'
+            f'len(alp):{len(alp)} and len(session_stimuli):{len(session_stimuli)} should be same!'))
 
     if inq_constants and not set(inq_constants).issubset(alp):
-        raise Exception('Inquiry constants must be alphabet items.')
-
-    # create a list of alphabet letters
-    alphabet = [i for i in alp]
+        raise BciPyCoreException('Inquiry constants must be alphabet items.')
 
     # query for the best selection
     query = best_selection(
-        alphabet,
+        alp,
         session_stimuli,
         stim_length,
         inq_constants)
 
-    # shuffle the returned values
-    random.shuffle(query)
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        query = alphabetize(query)
+    else:
+        random.shuffle(query)
 
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
+    for _ in range(stim_number):
 
         # append a fixation cross. if not text, append path to image fixation
-        if is_txt:
-            sample = ['+']
-        else:
-            sample = ['bcipy/static/images/bci_main_images/PLUS.png']
+        sample = [get_fixation(is_txt)]
 
         # construct the sample from the query
         sample += [i for i in query]
@@ -174,24 +408,34 @@ def best_case_rsvp_inq_gen(alp: list,
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
-    return (samples, times, colors)
+    return InquirySchedule(samples, times, colors)
 
 
-def random_rsvp_calibration_inq_gen(alp, timing=[0.5, 1, 0.2],
-                                    color=['green', 'red', 'white'],
-                                    stim_number=10,
-                                    stim_length=10, is_txt=True):
-    """Random RSVP Calibration Inquiry Generator.
+def calibration_inquiry_generator(
+        alp: List[str],
+        timing: List[float] = [0.5, 1, 0.2],
+        color: List[str] = ['green', 'red', 'white'],
+        stim_number: int = 10,
+        stim_length: int = 10,
+        stim_order: StimuliOrder = StimuliOrder.RANDOM,
+        target_positions: TargetPositions = TargetPositions.RANDOM,
+        nontarget_inquiries: int = 10,
+        is_txt: bool = True) -> InquirySchedule:
+    """Random Calibration Inquiry Generator.
 
-    Generates random RSVPKeyboard inquiries.
+    Generates random inquiries with target letters in all possible positions.
         Args:
-            alp(list[str]): alphabet (can be arbitrary)
-            timing(list[float]): Task specific timing for generator
+            alp(list[str]): stimuli
+            timing(list[float]): Task specific timing for generator.
+                [target, fixation, stimuli]
             color(list[str]): Task specific color for generator
-                First element is the target, second element is the fixation
-                Observe that [-1] element represents the trial information
-            stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a inquiry
+                [target, fixation, stimuli]
+            stim_number(int): number of trials in a inquiry
+            stim_length(int): number of random stimuli to be created
+            stim_order(StimuliOrder): ordering of stimuli in the inquiry
+            target_positions(TargetPositions): positioning of targets to select for the inquiries
+            nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+            is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
         Return:
             schedule_inq(tuple(
                 samples[list[list[str]]]: list of inquiries
@@ -199,90 +443,86 @@ def random_rsvp_calibration_inq_gen(alp, timing=[0.5, 1, 0.2],
                 color(list(list[str])): list of colors)): scheduled inquiries
     """
 
-    len_alp = len(alp)
+    target_indexes = []
+    no_target = None
+
+    if (target_positions == target_positions.DISTRIBUTED):
+        target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
+    else:
+        # make list of random targets with correct number of non-target inquiries
+        num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
+        num_target_inquiry = stim_number - num_nontarget_inquiry
+        target_indexes = [no_target] * num_nontarget_inquiry
+        target_indexes.extend(random.choices(range(stim_length), k=num_target_inquiry))
+        random.shuffle(target_indexes)
 
     samples, times, colors = [], [], []
-    for idx_num in range(stim_number):
-        idx = np.random.permutation(np.array(list(range(len_alp))))
-        rand_smp = (idx[0:stim_length])
-        if not is_txt:
-            sample = [
-                alp[rand_smp[0]],
-                'bcipy/static/images/bci_main_images/PLUS.png']
+
+    for i in range(stim_number):
+        inquiry = random.sample(alp, k=stim_length)
+
+        if stim_order == StimuliOrder.ALPHABETICAL:
+            inquiry = alphabetize(inquiry)
+
+        target_index = target_indexes[i]
+        if target_index is no_target:
+            target = random.choice(list(set(alp) - set(inquiry)))
         else:
-            sample = [alp[rand_smp[0]], '+']
-        rand_smp = np.random.permutation(rand_smp)
-        sample += [alp[i] for i in rand_smp]
+            target = inquiry[target_index]
+
+        sample = [target, get_fixation(is_txt=is_txt), *inquiry]
+
         samples.append(sample)
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
-    schedule_inq = (samples, times, colors)
-
-    return schedule_inq
+    return InquirySchedule(samples, times, colors)
 
 
-def target_rsvp_inquiry_generator(alp, target_letter, parameters,
-                                  timing=[0.5, 1, 0.2],
-                                  color=['green', 'white', 'white'],
-                                  stim_length=10, is_txt=True):
-    """Target RSVP Inquiry Generator.
+def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
+    """Distributed Target Positions.
 
-    Generate target RSVPKeyboard inquiries.
+    Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
+    Args:
+        stim_number(int): Number of trials in calibration
+        stim_length(int): Number of stimuli in each inquiry
+        nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
 
-        Args:
-            alp(list[str]): alphabet (can be arbitrary)
-            target_letter([str]): letter to be copied
-            timing(list[float]): Task specific timing for generator
-            color(list[str]): Task specific color for generator
-                First element is the target, second element is the fixation
-                Observe that [-1] element represents the trial information
-            stim_length(int): number of trials in a inquiry
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
+    Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
 
-    len_alp = len(alp)
+    targets = []
+    no_target = None
 
-    # intialize our arrays
-    samples, times, colors = [], [], []
-    rand_smp = random.sample(range(len_alp), stim_length)
-    if is_txt:
-        sample = ['+']
-    else:
-        sample = ['bcipy/static/images/bci_main_images/PLUS.png']
-        target_letter = parameters['path_to_presentation_images'] + \
-            target_letter + '.png'
-    sample += [alp[i] for i in rand_smp]
+    # find number of target and nontarget inquiries
+    num_nontarget_inquiry = int(stim_number * (nontarget_inquiries / 100))
+    num_target_inquiry = stim_number - num_nontarget_inquiry
 
-    # if the target isn't in the array, replace it with some random index that
-    #  is not fixation
-    if target_letter not in sample:
-        random_index = np.random.randint(0, stim_length - 1)
-        sample[random_index + 1] = target_letter
+    # find number each target position is repeated, and remaining number
+    num_pos = (int)(num_target_inquiry / stim_length)
+    num_rem_pos = (num_target_inquiry % stim_length)
 
-    # add target letter to start
-    sample = [target_letter] + sample
+    # add correct number of None's for nontarget inquiries
+    targets = [no_target] * num_nontarget_inquiry
 
-    # to-do shuffle the target letter
+    # add distributed list of target positions
+    targets.extend(list(range(stim_length)) * num_pos)
 
-    samples.append(sample)
-    times.append([timing[i] for i in range(len(timing) - 1)] +
-                 [timing[-1]] * stim_length)
-    colors.append([color[i] for i in range(len(color) - 1)] +
-                  [color[-1]] * stim_length)
+    # pick leftover positions randomly
+    rem_pos = list(range(stim_length))
+    random.shuffle(rem_pos)
+    rem_pos = rem_pos[0:num_rem_pos]
+    targets.extend(rem_pos)
 
-    schedule_inq = (samples, times, colors)
+    # shuffle targets
+    random.shuffle(targets)
 
-    return schedule_inq
+    return targets
 
 
-def get_task_info(experiment_length, task_color):
+def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.
 
     Generates fixed RSVPKeyboard task text and color information for
@@ -297,7 +537,6 @@ def get_task_info(experiment_length, task_color):
     """
 
     # Do list comprehensions to get the arrays for the task we need.
-
     task_text = ['%s/%s' % (stim + 1, experiment_length)
                  for stim in range(experiment_length)]
     task_color = [[str(task_color)] for stim in range(experiment_length)]
@@ -305,125 +544,7 @@ def get_task_info(experiment_length, task_color):
     return (task_text, task_color)
 
 
-def rsvp_copy_phrase_inq_generator(alp, target_letter, timing=[0.5, 1, 0.2],
-                                   color=['green', 'white', 'white'],
-                                   stim_length=10):
-    """Generate copy phrase RSVPKeyboard inquiries.
-
-        Args:
-            alp(list[str]): alphabet (can be arbitrary)
-            target_letter([str]): letter to be copied
-            timing(list[float]): Task specific timing for generator
-            color(list[str]): Task specific color for generator
-                First element is the target, second element is the fixation
-                Observe that [-1] element represents the trial information
-            stim_length(int): number of trials in an inquiry
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
-    """
-
-    len_alp = len(alp)
-
-    # initialize our arrays
-    samples, times, colors = [], [], []
-    rand_smp = np.random.randint(0, len_alp, stim_length)
-    sample = ['+']
-    sample += [alp[i] for i in rand_smp]
-
-    # if the target isn't in the array, replace it with some random index that
-    #  is not fixation
-    if target_letter not in sample:
-        random_index = np.random.randint(0, stim_length - 1)
-        sample[random_index + 1] = target_letter
-
-    # to-do shuffle the target letter
-
-    samples.append(sample)
-    times.append([timing[i] for i in range(len(timing) - 1)] +
-                 [timing[-1]] * stim_length)
-    colors.append([color[i] for i in range(len(color) - 1)] +
-                  [color[-1]] * stim_length)
-
-    schedule_inq = (samples, times, colors)
-
-    return schedule_inq
-
-
-def generate_icon_match_images(
-        experiment_length, image_path, number_of_inquiries, timing, is_word):
-    """Generate Image Icon Matches.
-
-    Generates an array of images to use for the icon matching task.
-    Args:
-        experiment_length(int): Number of images per inquiry
-        image_path(str): Path to image files
-        number_of_inquiries(int): Number of inquiries to generate
-        timing(list): List of timings; [parameters['time_target'],
-                       parameters['time_cross'],
-                       parameters['time_flash']]
-        is_word(bool): Whether or not this is an icon to word matching task
-    Return generate_icon_match_images(arrays of tuples of paths to images to
-    display, and timings)
-    """
-    # Get all png images in image path
-    image_array = [
-        img for img in glob.glob(image_path + "*.png")
-        if not img.endswith("PLUS.png")
-    ]
-
-    if experiment_length > len(image_array) - 1:
-        raise Exception(
-            'Number of images to be displayed on screen is longer than number of images available')
-
-    # Generate indexes of target images
-    target_image_numbers = np.random.randint(
-        0, len(image_array), number_of_inquiries)
-
-    # Array of images to return
-    return_array = []
-
-    # Array of timings to return
-    return_timing = []
-    for specific_time in range(len(timing) - 1):
-        return_timing.append(timing[specific_time])
-    for item_without_timing in range(len(return_timing), experiment_length):
-        return_timing.append(timing[-1])
-
-    for inquiry in range(number_of_inquiries):
-        return_array.append([])
-        # Generate random permutation of image indexes
-        random_number_array = np.random.permutation(len(image_array))
-        if is_word:
-            # Add name of target image to array
-            image_path = path.basename(
-                image_array[target_image_numbers[inquiry]])
-            return_array[inquiry].append(image_path.replace('.png', ''))
-        else:
-            # Add target image to image array
-            return_array[inquiry].append(
-                image_array[target_image_numbers[inquiry]])
-        # Add PLUS.png to image array
-        return_array[inquiry].append(
-            'bcipy/static/images/bci_main_images/PLUS.png')
-
-        # Add target image to inquiry, if it is not already there
-        if not target_image_numbers[inquiry] in random_number_array[
-                2:experiment_length]:
-            random_number_array[np.random.randint(
-                2, experiment_length)] = target_image_numbers[inquiry]
-
-        # Fill the rest of the image array with random images
-        for item in range(2, experiment_length):
-            return_array[inquiry].append(
-                image_array[random_number_array[item]])
-
-    return (return_array, return_timing)
-
-
-def resize_image(image_path: str, screen_size: tuple, sti_height: int):
+def resize_image(image_path: str, screen_size: tuple, sti_height: int) -> Tuple[float, float]:
     """Resize Image.
 
     Returns the width and height that a given image should be displayed at
@@ -485,23 +606,20 @@ def play_sound(sound_file_path: str,
 
     try:
         # load in the sound file and wait some time before playing
-        data, fs = sf.read(
-            sound_file_path, dtype=dtype)
+        data, fs = sf.read(sound_file_path, dtype=dtype)
         core.wait(sound_load_buffer_time)
 
-    except Exception:
-        raise Exception(
-            'StimGenPlaySoundError: sound file could not be found or initialized.')
+    except Exception as e:
+        error_message = f'Sound file could not be found or initialized. \n Exception={e}'
+        log.exception(error_message)
+        raise BciPyCoreException(error_message)
 
     #  if timing is wanted, get trigger timing for this sound stimuli
     if track_timing:
-        timing.append(trigger_name)
-        timing.append(experiment_clock.getTime())
-
-        # if there is a timing callback for sound, evoke it with the timing
-        # list
+        # if there is a timing callback for sound, evoke it
         if sound_callback is not None:
-            sound_callback(timing)
+            sound_callback(experiment_clock, trigger_name)
+        timing.append([trigger_name, experiment_clock.getTime()])
 
     # play our loaded sound and wait for some time before it's finished
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
@@ -527,8 +645,20 @@ def soundfiles(directory: str) -> Iterator[str]:
         iterator that infinitely cycles through the filenames.
     """
     if not path.isdir(directory):
-        raise Exception(('Invalid directory for sound files. Please check '
-                         'your configuration.'))
+        error_message = f'Invalid directory=[{directory}] for sound files.'
+        log.error(error_message)
+        raise BciPyCoreException(error_message)
     if not directory.endswith(sep):
         directory += sep
     return itertools.cycle(glob.glob(directory + '*.wav'))
+
+
+def get_fixation(is_txt: bool) -> str:
+    """Get Fixation.
+
+    Return the correct stimulus fixation given the type (text or image).
+    """
+    if is_txt:
+        return '+'
+    else:
+        return DEFAULT_FIXATION_PATH

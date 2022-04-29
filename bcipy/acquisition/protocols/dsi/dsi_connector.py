@@ -36,6 +36,10 @@ class DsiConnector(Connector):
         return device_spec.name.startswith(
             'DSI') and connection_method == ConnectionMethod.TCP
 
+    @classmethod
+    def connection_method(cls) -> ConnectionMethod:
+        return ConnectionMethod.TCP
+
     @property
     def name(self):
         """DSI Name."""

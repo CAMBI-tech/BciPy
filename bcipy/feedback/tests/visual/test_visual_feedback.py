@@ -1,111 +1,113 @@
-from psychopy import core
-from psychopy import visual
-import psychopy
 import unittest
 
-from mockito import any, mock, when, unstub
+import psychopy
+from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+                     verifyStubbedInvocationsAreUsed, when)
 
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.load import load_json_parameters
+from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
+from bcipy.helpers.clock import Clock
 
 
 class TestVisualFeedback(unittest.TestCase):
 
     def setUp(self):
-        """set up the needed path for load functions."""
+        self.parameters = {
+            'feedback_font': 'Arial',
+            'feedback_stim_height': 1,
+            'feedback_stim_width': 1,
+            'feedback_color': 'white',
+            'feedback_pos_x': 0,
+            'feedback_pos_y': 0,
+            'feedback_flash_time': 2,
+            'feedback_line_width': 1
+        }
 
-        self.parameters_used = 'bcipy/parameters/parameters.json'
-        self.parameters = load_json_parameters(
-            self.parameters_used,
-            value_cast=True)
-
-        self.display = visual.Window(
-            size=[1, 1],
-            screen=0,
-            allowGUI=False, useFBO=False, fullscr=False,
-            allowStencil=False, monitor='mainMonitor',
-            winType='pyglet', units='norm', waitBlanking=False,
-            color='black')
+        self.display = mock()
         self.text_mock = mock()
         self.image_mock = mock()
-        self.rect_mock = mock()
 
-        self.clock = core.Clock()
+        self.clock = Clock()
 
         self.visual_feedback = VisualFeedback(
             display=self.display, parameters=self.parameters,
             clock=self.clock)
 
-        when(psychopy.visual).TextStim(
-            win=self.display,
-            font=any(),
-            text=any(),
-            height=any(),
-            pos=any(),
-            color=any()).thenReturn(self.text_mock)
+    def tearDown(self):
+        verifyStubbedInvocationsAreUsed()
+        verifyNoUnwantedInteractions()
+        unstub()
 
-        when(psychopy.visual).TextStim(
-            win=self.display,
-            font=any(),
-            text=any(),
-            height=any(),
-            pos=any()).thenReturn(self.text_mock)
+    def test_feedback_type(self):
+        feedback_type = self.visual_feedback._type()
+        self.assertEqual(feedback_type, 'Visual Feedback')
 
+    def test_construct_stimulus_image(self):
+        image_mock = mock()
+        image_mock.size = 0
         when(psychopy.visual).ImageStim(
             win=self.display,
             image=any(),
             mask=None,
             pos=any(),
             ori=any()
-        ).thenReturn(self.image_mock)
+        ).thenReturn(image_mock)
+        # mock the resize behavior for the image
+        when(self.visual_feedback)._resize_image(any(), any(), any()).thenReturn()
 
-        when(psychopy.visual).Rect(
+        response = self.visual_feedback._construct_stimulus(
+            'test_stim.png',
+            (0, 0),
+            None,
+            FeedbackType.IMAGE,
+        )
+
+        self.assertEqual(response, image_mock)
+
+    def test_construct_stimulus_text(self):
+        text_mock = mock()
+        stimulus = 'test'
+        when(psychopy.visual).TextStim(
             win=self.display,
-            width=any(),
-            height=any(),
-            lineColor=any(),
+            font=self.visual_feedback.font_stim,
+            text=stimulus,
+            height=self.visual_feedback.height_stim,
             pos=any(),
-            lineWidth=any(),
-            ori=any()
-        ).thenReturn(self.rect_mock)
+            color=any()).thenReturn(text_mock)
 
-    def tearDown(self):
-        # clean up by removing the data folder we used for testing
-        self.display.close()
-        unstub()
-
-    def test_feedback_type(self):
-
-        feedback_type = self.visual_feedback._type()
-        self.assertEqual(feedback_type, 'Visual Feedback')
-
-    def test_feedback_administer_text(self):
-        test_stimulus = 'A'
-        resp = self.visual_feedback.administer(
-            test_stimulus, message='Correct:')
-
-        self.assertTrue(isinstance(resp, list))
-
-    def test_feedback_assertion_text(self):
-        stimulus = 'B'
-        assertion = 'A'
-        self.visual_feedback.message_color = 'red'
-        resp = self.visual_feedback.administer(
+        response = self.visual_feedback._construct_stimulus(
             stimulus,
-            message='Incorrect:', compare_assertion=assertion)
-        self.assertTrue(isinstance(resp, list))
+            (0, 0),
+            None,
+            FeedbackType.TEXT,
+        )
 
-    def test_feedback_administer_image(self):
-        test_stimulus = 'bcipy/static/images/testing_images/white.png'
-        resp = self.visual_feedback.administer(
-            test_stimulus, message='Correct:')
+        self.assertEqual(response, text_mock)
 
-        self.assertTrue(isinstance(resp, list))
+    def test_show_stimuli(self):
+        stimuli_mock = mock()
+        when(stimuli_mock).draw().thenReturn(None)
+        when(self.display).flip().thenReturn(None)
 
-    def test_feedback_assertion_images(self):
-        test_stimulus = 'bcipy/static/images/testing_images/white.png'
-        assertion = 'bcipy/static/images/testing_images/white.png'
-        resp = self.visual_feedback.administer(
-            test_stimulus, message='Correct:', compare_assertion=assertion)
+        response = self.visual_feedback._show_stimuli(stimuli_mock)  # TODO assertion
 
-        self.assertTrue(isinstance(resp, list))
+        verify(stimuli_mock, times=1).draw()
+        verify(self.display, times=1).flip()
+
+    def test_administer_default(self):
+        stimulus = mock()
+        timestamp = [self.visual_feedback.feedback_timestamp_label, 1000]
+        when(self.visual_feedback)._construct_stimulus(
+            stimulus,
+            self.visual_feedback.pos_stim,
+            self.visual_feedback.color,
+            FeedbackType.TEXT
+        ).thenReturn(stimulus)
+        when(self.visual_feedback)._show_stimuli(stimulus).thenReturn(timestamp)
+        when(psychopy.core).wait(self.visual_feedback.feedback_length).thenReturn()
+        response = self.visual_feedback.administer(stimulus)
+        expected = [timestamp]
+        self.assertEqual(response, expected)
+
+
+if __name__ == '__main__':
+    unittest.main()

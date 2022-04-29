@@ -1,23 +1,11 @@
-"""Demonstrates converting raw_data output to other EEG formats"""
+"""Demonstrates converting BciPy data output to other EEG formats.
+
+To use at bcipy root,
+
+    `python bcipy/helpers/demo/demo_convert.py -p "path://to/bcipy/data/folder"`
+"""
 from bcipy.helpers.convert import convert_to_edf
-from mne.io import read_raw_edf
-
-
-def plot_edf(edf_path: str, auto_scale: bool = False):
-    """Plot data from the raw edf file. Note: this works from an iPython
-    session but seems to throw errors when provided in a script.
-
-    Parameters
-    ----------
-        edf_path - full path to the generated edf file
-        auto_scale - optional; if True will scale the EEG data; this is
-            useful for fake (random) data but makes real data hard to read.
-    """
-    edf = read_raw_edf(edf_path, preload=True)
-    if auto_scale:
-        edf.plot(scalings='auto')
-    else:
-        edf.plot()
+from bcipy.helpers.visualization import plot_edf
 
 
 if __name__ == '__main__':
@@ -30,5 +18,13 @@ if __name__ == '__main__':
         help='Path to the directory with raw_data to be converted',
         required=True)
     args = parser.parse_args()
-    edf_path = convert_to_edf(args.path)
+
+    path = args.path
+    edf_path = convert_to_edf(
+        path,
+        use_event_durations=True,
+        write_targetness=False,
+        overwrite=True,
+        annotation_channels=None)
+    plot_edf(edf_path)  # comment if not in an iPython notebook to plot using MNE
     print(f"\nWrote edf file to {edf_path}")

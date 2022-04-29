@@ -1,18 +1,25 @@
 """Helper functions for language model use."""
 import math
+import inspect
 from typing import Dict, List, Tuple
 import numpy as np
-from bcipy.language_model.lm_modes import LangModel, LmType
+from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.helpers.task import alphabet
+# pylint: disable=unused-import
+# flake8: noqa
+from bcipy.language.uniform import UniformLanguageModel
+# flake8: noqa
+from bcipy.language.model.gpt2 import GPT2LanguageModel
 
 
-def init_language_model(parameters):
+def language_models_by_name() -> Dict[str, LanguageModel]:
+    """Returns available language models indexed by name."""
+    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
+
+
+def init_language_model(parameters: dict) -> LanguageModel:
     """
-    Init Language Model.
-
-    Function to Initialize remote language model and get an instance of
-        LangModel wrapper. Assumes a docker image is already loaded.
-
-    See language_model/demo/ for more information of how it works.
+    Init Language Model configured in the parameters.
 
     Parameters
     ----------
@@ -21,15 +28,19 @@ def init_language_model(parameters):
 
     Returns
     -------
-        lmodel: instance
-            instance of lmodel wrapper with connections to docker server
+        instance of a LanguageModel
     """
-    lmtype = LmType[parameters.get("lang_model_type", "PRELM")]
+    language_models = language_models_by_name()
+    model = language_models[parameters.get("lang_model_type", "UNIFORM")]
 
-    port = int(parameters['lang_model_server_port'])
-    lmodel = LangModel(lmtype, logfile="lmwrap.log", port=port)
-    lmodel.init()
-    return lmodel
+    # introspect the model arguments to determine what parameters to pass.
+    args = inspect.signature(model).parameters.keys()
+
+    # select the relevant parameters into a dict.
+    params = {key: parameters[key] for key in args & parameters.keys()}
+    return model(response_type=ResponseType.SYMBOL,
+                 symbol_set=alphabet(parameters),
+                 **params)
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
@@ -47,61 +58,51 @@ def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     return [(sym, math.exp(-prob)) for sym, prob in priors]
 
 
-def sym_appended(symbol_probs: List[Tuple[str, float]],
-                 sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
-    """Returns a new list of probabilities with the addition of a new symbol
-    with the given probability for that symbol. Existing values are adjusted
-    equally such that the sum of the probabilities in the resulting list sum
-    to approx. 1.0. Only adds the symbol if it is not already in the list.
+def with_min_prob(symbol_probs: List[Tuple[str, float]],
+                  sym_prob: Tuple[str, float]) -> List[Tuple[str, float]]:
+    """Returns a new list of symbol-probability pairs where the provided
+    symbol has a minimum probability given in the sym_prob.
 
-    Used to add the backspace symbol to the LM output.
+    If the provided symbol is already in the list with a greater probability,
+    the list of symbol_probs will be returned unmodified.
+
+    If the new probability is added or modified, existing values are adjusted
+    equally.
 
     Parameters:
     -----------
         symbol_probs - list of symbol, probability pairs
-        sym_prob - (symbol, probability) pair to append
-    """
-    if sym_prob[0] in dict(symbol_probs):
-        return symbol_probs
+        sym_prob - (symbol, min_probability) defines the minimum probability
+            for the given symbol in the returned list.
 
-    # Slit out symbols and probabilities into separate lists
-    symbols = [prob[0] for prob in symbol_probs]
-    probabilities = np.array([prob[1] for prob in symbol_probs])
+    Returns:
+    -------
+        list of (symbol, probability) pairs such that the sum of the
+        probabilities is approx. 1.0.
+    """
+    new_sym, new_prob = sym_prob
+
+    # Split out symbols and probabilities into separate lists, excluding the
+    # symbol to be adjusted.
+    symbols = []
+    probs = []
+    for sym, prob in symbol_probs:
+        if sym != new_sym:
+            symbols.append(sym)
+            probs.append(prob)
+        elif prob >= new_prob:
+            # symbol prob in list is larger than minimum.
+            return symbol_probs
+
+    probabilities = np.array(probs)
 
     # Add new symbol and its probability
-    all_probs = np.append(probabilities, sym_prob[1] / (1 - sym_prob[1]))
-    all_symbols = symbols + [sym_prob[0]]
+    all_probs = np.append(probabilities, new_prob / (1 - new_prob))
+    all_symbols = symbols + [new_sym]
 
     normalized = all_probs / sum(all_probs)
 
     return list(zip(all_symbols, normalized))
-
-
-def equally_probable(alphabet: List[str],
-                     specified: Dict[str, float] = None) -> List[float]:
-    """Returns a list of probabilities which correspond to the provided
-    alphabet. Unless overridden by the specified values, all items will
-    have the same probability. All probabilities sum to 1.0.
-
-    Parameters:
-    ----------
-        alphabet - list of symbols; a probability will be generated for each.
-        specified - dict of symbol => probability values for which we want to
-            override the default probability.
-    Returns:
-    --------
-        list of probabilities (floats)
-    """
-    n_letters = len(alphabet)
-    if not specified:
-        return np.full(n_letters, 1 / n_letters)
-
-    # copy specified dict ignoring non-alphabet items
-    overrides = {k: specified[k] for k in alphabet if k in specified}
-
-    prob = (1 - sum(overrides.values())) / (n_letters - len(overrides))
-    # override specified values
-    return [overrides[sym] if sym in overrides else prob for sym in alphabet]
 
 
 def histogram(letter_prior: List[Tuple[str, float]]) -> str:
@@ -120,5 +121,6 @@ def histogram(letter_prior: List[Tuple[str, float]]) -> str:
     lines = []
     for letter, prob in sorted(letter_prior):
         units = int(round(prob * 100))
-        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin + (units * star))
+        lines.append(letter + ' (' + "%03.2f" % (prob) + ") :" + margin +
+                     (units * star))
     return '\n'.join(lines)
