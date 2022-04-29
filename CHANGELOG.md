@@ -2,7 +2,7 @@
 
 ## Contributions
 
-This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #215 represent the 2.0.0-rc.1 work. 
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #217 represent the 2.0.0-rc.1 work. 
 
 The highlights: 
 

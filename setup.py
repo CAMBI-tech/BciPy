@@ -11,7 +11,7 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '~=3.6'
+REQUIRES_PYTHON = '>3.6,<3.9'
 
 VERSION = '2.0.0rc1'
 

@@ -11,10 +11,10 @@ test-all:
 	flake8 bcipy
 
 unit-test:
-	pytest -k "not slow"
+	pytest --mpl -k "not slow"
 
 integration-test:
-	pytest -k "slow"
+	pytest --mpl -k "slow"
 
 coverage-html:
 	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
@@ -34,6 +34,3 @@ bci-gui:
 
 viewer:
 	python bcipy/gui/viewer/data_viewer.py --file $(filepath)
-
-run-with-defaults:
-	bcipy
