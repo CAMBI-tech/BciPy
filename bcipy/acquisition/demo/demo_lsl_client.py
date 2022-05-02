@@ -27,7 +27,7 @@ def main():
     from bcipy.acquisition.connection_method import ConnectionMethod
 
     # pylint: disable=invalid-name
-    device_spec = preconfigured_device('LSL')
+    device_spec = preconfigured_device('actiCHamp')
     print(f"\nAcquiring data from device {device_spec}")
 
     Connector = registry.find_connector(device_spec, ConnectionMethod.LSL)
