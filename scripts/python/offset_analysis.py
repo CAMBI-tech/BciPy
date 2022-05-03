@@ -8,11 +8,11 @@ from scipy.stats import normaltest, describe
 from textwrap import wrap
 from bcipy.acquisition.device_info import DeviceInfo
 
-ALLOWABLE_TOLERANCE = 0.01
+ALLOWABLE_TOLERANCE = 0.001
 RECOMMEND = True # set static to 0.0 to get good base recommendations
-STATIC = 0.0
-RSVP = False
-PLOT = True if not RECOMMEND else False
+STATIC = 0.1415
+RSVP = True
+PLOT = True if not RECOMMEND else True
 
 
 def channel_data(raw_data, device_info, channel_name, n_records=None):
