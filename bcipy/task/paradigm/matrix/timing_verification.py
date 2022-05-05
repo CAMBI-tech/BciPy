@@ -27,6 +27,7 @@ class MatrixTimingVerificationCalibration(Task):
         self.stimuli = PhotoDiodeStimuli.list()
         self.create_testing_grid()
         self._task.matrix.start_opacity = 0
+        self._task.matrix.full_grid_opacity = 0
         self._task.matrix.grid_stimuli_height = 0.8
         self._task.generate_stimuli = self.generate_stimuli
 

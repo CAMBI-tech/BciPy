@@ -99,6 +99,7 @@ class MatrixDisplay(Display):
 
         self.start_opacity = 0.15
         self.highlight_opacity = 1
+        self.full_grid_opacity = 1
 
         # Trigger handling
         self.first_run = True
@@ -152,7 +153,7 @@ class MatrixDisplay(Display):
 
         raise BciPyCoreException('Only SCP Matrix is available.')
 
-    def build_grid(self) -> None:
+    def build_grid(self, opacity=None) -> None:
         """Build grid.
 
         Builds and displays a 7x4 matrix of stimuli.
@@ -162,7 +163,7 @@ class MatrixDisplay(Display):
             text_stim = visual.TextStim(
                 win=self.window,
                 text=sym,
-                opacity=self.start_opacity,
+                opacity=opacity if opacity else self.start_opacity,
                 pos=pos,
                 height=self.grid_stimuli_height)
             self.stim_registry[sym] = text_stim
@@ -223,11 +224,14 @@ class MatrixDisplay(Display):
         """
         timing = []
         # build grid and static
+        self.build_grid(opacity=self.full_grid_opacity)
+        self.draw_static()
+        self.window.flip()
+        core.wait(self.buffer_time)
+
         self.build_grid()
         self.draw_static()
-
         self.window.flip()
-
         core.wait(self.buffer_time)
 
         for i, sym in enumerate(self.stimuli_inquiry):
@@ -258,6 +262,10 @@ class MatrixDisplay(Display):
             # append timing information
             timing.append(self.trigger_callback.timing)
             self.trigger_callback.reset()
+
+        self.build_grid()
+        self.draw_static()
+        self.window.flip()
 
         return timing
 
