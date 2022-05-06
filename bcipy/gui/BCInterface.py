@@ -28,8 +28,8 @@ class BCInterface(BCIGui):
     tasks = TaskType.list()
 
     default_text = '...'
-    padding = 30
-    btn_height = 40
+    padding = 35
+    btn_height = 50
     max_length = 25
     min_length = 1
     timeout = 3
@@ -189,11 +189,11 @@ class BCInterface(BCIGui):
         """
         self.add_static_textbox(
             text='BCInterface',
-            position=[275, 0],
-            size=[200, 50],
+            position=[225, 0],
+            size=[250, 50],
             background_color='black',
             text_color='white',
-            font_size=30)
+            font_size=25)
 
         text_x = 145
         self.add_static_textbox(
@@ -202,21 +202,21 @@ class BCInterface(BCIGui):
             size=[200, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=20)
         self.add_static_textbox(
             text='Experiment',
             position=[text_x, 205],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=20)
         self.add_static_textbox(
             text='Task',
             position=[text_x, 305],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=20)
 
     def build_images(self) -> None:
         """Build Images.

@@ -446,14 +446,17 @@
     "type": "float"
   },
   "stim_font": {
-    "value": "Consolas",
+    "value": "Catamaran",
     "section": "bci_config",
     "readableName": "Stimulus Font",
     "helpTip": "Specifies the font used for text stimuli. Default: Arial",
     "recommended_values": [
       "Courier New",
       "Lucida Sans",
-      "Consolas"
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
     ],
     "type": "str"
   },
@@ -568,14 +571,17 @@
     "type": "str"
   },
   "info_font": {
-    "value": "Consolas",
+    "value": "Catamaran",
     "section": "bci_config",
     "readableName": "Font Text",
     "helpTip": "Font Text",
     "recommended_values": [
       "Courier New",
       "Lucida Sans",
-      "Consolas"
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
     ],
     "type": "str"
   },
@@ -596,14 +602,17 @@
     "type": "str"
   },
   "task_font": {
-    "value": "Consolas",
+    "value": "Catamaran",
     "section": "bci_config",
     "readableName": "Task Text Font",
     "helpTip": "Specifies the font used for task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: Arial",
     "recommended_values": [
       "Courier New",
       "Lucida Sans",
-      "Consolas"
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
     ],
     "type": "str"
   },
@@ -895,14 +904,17 @@
     "type": "float"
   },
   "feedback_font": {
-    "value": "Consolas",
+    "value": "Catamaran",
     "section": "feedback_config",
     "readableName": "feedback_font",
     "helpTip": "feedback_font",
     "recommended_values": [
       "Courier New",
       "Lucida Sans",
-      "Consolas"
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
     ],
     "type": "str"
   },
