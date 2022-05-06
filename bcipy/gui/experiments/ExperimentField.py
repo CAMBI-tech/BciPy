@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from bcipy.gui.gui_main import (
+from bcipy.gui.main import (
     AlertMessageType,
     AlertMessageResponse,
     AlertResponse,
