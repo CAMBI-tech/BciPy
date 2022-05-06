@@ -2,5 +2,16 @@
   "default": {
     "fields": [],
     "summary": "Default experiment to test various BciPy features without registering a full experiment."
+  },
+  "InquiryPreview": {
+    "fields": [
+      {
+        "Condition": {
+          "required": "true",
+          "anonymize": "false"
+        }
+      }
+    ],
+    "summary": "To do"
   }
 }

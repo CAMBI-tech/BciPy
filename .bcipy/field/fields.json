@@ -2,5 +2,9 @@
   "age": {
     "help_text": "Age (in years) of user.",
     "type": "int"
+  },
+  "Condition": {
+    "help_text": "Name of current condition",
+    "type": "str"
   }
 }
