@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
 
 from bcipy.acquisition.device_info import DeviceInfo
 from bcipy.acquisition.util import StoppableProcess
-from bcipy.gui.gui_main import static_text_control
+from bcipy.gui.main import static_text_control
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer

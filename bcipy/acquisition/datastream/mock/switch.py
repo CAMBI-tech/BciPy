@@ -5,7 +5,7 @@ import sys
 from pylsl import StreamInfo, StreamOutlet
 
 from bcipy.acquisition.devices import DeviceSpec, IRREGULAR_RATE
-from bcipy.gui.gui_main import BCIGui, app
+from bcipy.gui.main import BCIGui, app
 
 log = logging.getLogger(__name__)
 

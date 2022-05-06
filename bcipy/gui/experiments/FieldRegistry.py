@@ -1,5 +1,5 @@
 import sys
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertMessageResponse
+from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse
 
 from bcipy.helpers.load import load_fields
 from bcipy.helpers.save import save_field_data

@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from bcipy.gui.gui_main import (
+from bcipy.gui.main import (
     BoolInput,
     DirectoryInput,
     FileInput,
