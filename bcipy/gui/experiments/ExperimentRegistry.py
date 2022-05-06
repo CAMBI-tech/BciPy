@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
+from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
 
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data

@@ -541,6 +541,8 @@ class BCIGui(QWidget):
         self.vbox = QVBoxLayout()
         self.setStyleSheet(f'background-color: {self.background_color};')
 
+        self.timer = QTimer()
+
         self.title = title
 
         # determines height/width of window

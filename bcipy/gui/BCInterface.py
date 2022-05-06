@@ -3,7 +3,7 @@ import sys
 
 from typing import List
 
-from bcipy.gui.gui_main import (
+from bcipy.gui.main import (
     AlertMessageResponse,
     AlertMessageType,
     AlertResponse,
@@ -32,7 +32,7 @@ class BCInterface(BCIGui):
     btn_height = 40
     max_length = 25
     min_length = 1
-    task_start_timeout = 2
+    timeout = 10
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -50,11 +50,18 @@ class BCInterface(BCIGui):
         self.experiment = None
         self.task = None
 
-        self.autoclose = True
+        # setup a timer to prevent double clicking in gui
+        self.disable = False
+        self.timer.timeout.connect(self._disable_action)
+
+        self.task_start_timeout = self.timeout
+        self.button_timeout = self.timeout
+
+        self.autoclose = False
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
-                f'User ID must contain between {self.min_length} and {self.max_length} alphanumeric characters.'),
+             f'User ID must contain between {self.min_length} and {self.max_length} alphanumeric characters.'),
             (contains_whitespaces, 'User ID cannot contain white spaces'),
             (contains_special_characters, 'User ID cannot contain special characters')
         ]
@@ -83,7 +90,6 @@ class BCInterface(BCIGui):
 
         btn_start_width = 200
         btn_start_x = self.width - (self.padding + btn_start_width)
-        btn_start_y = 450
         self.add_button(
             message='Start Experiment Session', position=[btn_start_x, 450],
             size=[btn_start_width, self.btn_height],
@@ -105,11 +111,12 @@ class BCInterface(BCIGui):
 
         Launch the experiment registry which will be used to add new experiments for selection in the GUI.
         """
-        subprocess.call(
-            'python bcipy/gui/experiments/ExperimentRegistry.py',
-            shell=True)
+        if not self.action_disabled():
+            subprocess.call(
+                'python bcipy/gui/experiments/ExperimentRegistry.py',
+                shell=True)
 
-        self.update_experiment_list()
+            self.update_experiment_list()
 
     def update_user_list(self) -> None:
         """Updates the user_input combo box with a list of user ids based on the
@@ -272,22 +279,23 @@ class BCInterface(BCIGui):
         Note that any edits to the parameters file will not be applied to this GUI until the parameters
         are reloaded.
         """
-        if self.parameter_location == DEFAULT_PARAMETERS_PATH:
-            # Don't allow the user to overwrite the defaults
-            response = self.throw_alert_message(
-                title='BciPy Alert',
-                message='The default parameters.json cannot be overridden. A copy will be used.',
-                message_type=AlertMessageType.INFO,
-                message_response=AlertMessageResponse.OCE)
+        if not self.action_disabled():
+            if self.parameter_location == DEFAULT_PARAMETERS_PATH:
+                # Don't allow the user to overwrite the defaults
+                response = self.throw_alert_message(
+                    title='BciPy Alert',
+                    message='The default parameters.json cannot be overridden. A copy will be used.',
+                    message_type=AlertMessageType.INFO,
+                    message_response=AlertMessageResponse.OCE)
 
-            if response == AlertResponse.OK.value:
-                self.parameter_location = copy_parameters()
-            else:
-                return None
+                if response == AlertResponse.OK.value:
+                    self.parameter_location = copy_parameters()
+                else:
+                    return None
 
-        subprocess.call(
-            f'python bcipy/gui/parameters/params_form.py -p {self.parameter_location}',
-            shell=True)
+            subprocess.call(
+                f'python bcipy/gui/parameters/params_form.py -p {self.parameter_location}',
+                shell=True)
 
     def check_input(self) -> bool:
         """Check Input.
@@ -371,7 +379,7 @@ class BCInterface(BCIGui):
         Using the inputs gathers, check for validity using the check_input method, then launch the experiment using a
             command to bcipy main and subprocess.
         """
-        if self.check_input():
+        if self.check_input() and not self.action_disabled():
             self.throw_alert_message(
                 title='BciPy Alert',
                 message='Task Starting ...',
@@ -392,8 +400,41 @@ class BCInterface(BCIGui):
 
         Run offline analysis as a script in a new process.
         """
-        cmd = 'python bcipy/signal/model/offline_analysis.py --alert'
-        subprocess.Popen(cmd, shell=True)
+        if not self.action_disabled():
+            cmd = 'python bcipy/signal/model/offline_analysis.py --alert'
+            subprocess.Popen(cmd, shell=True)
+
+    def action_disabled(self) -> bool:
+        """Action Disabled.
+
+        Method to check whether another action can take place. If not disabled, it will allow the action and
+        start a timer that will disable actions until self.timeout (seconds) has occured.
+
+        Note: the timer is registed with the private method self._disable_action, which when self.timeout has
+        been reached, resets self.disable and corresponding timeouts.
+        """
+        if self.disable:
+            return True
+        else:
+            self.disable = True
+            # set the update time to every 1000ms
+            self.timer.start(1000)
+            return False
+
+    def _disable_action(self) -> bool:
+        """Disable Action.
+
+        A private method to register with a BCIGui.timer after setting self.button_timeout.
+        """
+        if self.button_timeout > 0:
+            self.disable = True
+            self.button_timeout -= 1
+            return self.disable
+
+        self.timer.stop()
+        self.disable = False
+        self.button_timeout = self.timeout
+        return self.disable
 
 
 def start_app() -> None:
