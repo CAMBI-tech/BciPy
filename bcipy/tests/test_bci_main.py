@@ -25,7 +25,8 @@ class TestBciMain(unittest.TestCase):
     save_location = '/'
     parameters = {
         'data_save_loc': data_save_location,
-        'log_name': 'test_log'
+        'log_name': 'test_log',
+        'fake_data': False
     }
     system_info = {
         'bcipy_version': 'test_version'
