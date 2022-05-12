@@ -24,7 +24,6 @@ if __name__ == '__main__':
         path,
         use_event_durations=True,
         write_targetness=False,
-        overwrite=True,
-        annotation_channels=None)
+        overwrite=True)
     plot_edf(edf_path)  # comment if not in an iPython notebook to plot using MNE
     print(f"\nWrote edf file to {edf_path}")

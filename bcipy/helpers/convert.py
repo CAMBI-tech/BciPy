@@ -24,9 +24,7 @@ def convert_to_edf(data_dir: str,
                    edf_path: str = None,
                    overwrite=False,
                    write_targetness=False,
-                   use_event_durations=False,
-                   mode=False,
-                   annotation_channels=None) -> Path:
+                   use_event_durations=False) -> Path:
     """ Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
 
     See https://www.edfplus.info/ for the official EDF+ spec for more detailed
@@ -43,12 +41,7 @@ def convert_to_edf(data_dir: str,
         If False (default), an error will be raised if the file exists.
     write_targetness - If True, and targetness information is available, write
         that instead of the stimuli markers. False by default.
-    mode - optional; for a given task, define the task mode. Ex. 'calibration', 'copy_phrase'.
-        If not provided, it will be extracted from the data_dir.
     use_event_durations - optional; if True assigns a duration to each event.
-    annotation_channels - optional; integer between 2-64 that will extend the number of
-        annotations available to export. Use in cases where annotations are
-        cut off.
 
     Returns
     -------
@@ -60,7 +53,7 @@ def convert_to_edf(data_dir: str,
     params = load_json_parameters(Path(data_dir, 'parameters.json'),
                                   value_cast=True)
     data = load_raw_data(Path(data_dir, params['raw_data_name']))
-    raw_data = data.by_channel()
+    raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
     trigger_file = params.get('trigger_file_name', 'triggers')
 
@@ -68,29 +61,27 @@ def convert_to_edf(data_dir: str,
         str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False)
 
     # validate annotation parameters given data length and trigger count
-    validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type), annotation_channels)
+    validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))
 
     triggers = compile_triggers(
         trigger_label, trigger_type, trigger_timing, write_targetness)
 
     events = edf_annotations(triggers, durations)
 
-    return write_edf(edf_path, raw_data, data.channels, data.sample_rate, events, overwrite, annotation_channels)
+    return write_edf(edf_path, raw_data, data.channels, data.sample_rate, events, overwrite)
 
 
-def validate_annotations(record_time: float, trigger_count: int, annotation_channels: bool) -> None:
+def validate_annotations(record_time: float, trigger_count: int) -> None:
     """Validate Annotations.
 
     Using the pyedflib library, it is recommended the number of triggers (or annotations) not exceed the recording
-        time in seconds. This may not result in an unsuccessful export, therefore, we advise users to increase
-        annotation channels incrementally as needed to avoid losing information. If the number of annotation
-        channels is too high and no annotations are written to all channels created, a read error may result.
+        time in seconds. This may not result in an unsuccessful export.
     """
-    if trigger_count > record_time and not annotation_channels:
+    if trigger_count > record_time:
         logger.warning(
             f'\n*Warning* The number of triggers [{trigger_count}] exceeds recording time [{record_time}]. '
             'Not all triggers may be written. '
-            'Validate export carefully and increase annotation_channels incrementally to add missing triggers.')
+            'Validate export carefully.')
 
 
 def compile_triggers(labels: List[str], targetness: List[str], timing: List[float],
@@ -117,8 +108,7 @@ def write_edf(output_path: str,
               ch_names: List[str],
               sample_rate: float,
               events: List[Tuple[float, float, str]],
-              overwrite=False,
-              annotation_channels=None) -> Path:
+              overwrite=False) -> Path:
     """
     Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
 
@@ -134,10 +124,6 @@ def write_edf(output_path: str,
     events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
-    annotation_channels - integer between 2-64 that will extend the number of
-        annotations available to export. Use in cases where annotations are
-        cut off. In some viewers, as the number of these channels increase, it
-        may cause other data to be trimmed. Please use with caution and examine the exports.
 
     Returns
     -------
@@ -156,8 +142,7 @@ def write_edf(output_path: str,
         writer = EdfWriter(str(output_path),
                            n_channels=n_channels,
                            file_type=FILETYPE_EDFPLUS)
-        if annotation_channels:
-            writer.set_number_of_annotation_signals(annotation_channels)
+
         channel_info = []
         data_list = []
 
