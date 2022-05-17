@@ -167,6 +167,38 @@ class AlertMessageResponse(Enum):
     OCE = "Okay or Cancel Exit"
 
 
+def alert_message(
+        message: str,
+        title: str = None,
+        message_type: AlertMessageType = AlertMessageType.INFO,
+        message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+        message_timeout: float = 0) -> MessageBox:
+    """Constructs an Alert Message.
+
+    Parameters
+    ----------
+        message - text to display
+        title - optional title of the GUI window
+        message_type - type of icon that is displayed
+        message_response - response buttons available to the user
+        message_time - optional timeout for displaying the alert
+    """
+
+    msg = MessageBox()
+    if title:
+        msg.setWindowTitle(title)
+    msg.setText(message)
+    msg.setIcon(message_type.value)
+    msg.setTimeout(message_timeout)
+
+    if message_response is AlertMessageResponse.OTE:
+        msg.setStandardButtons(AlertResponse.OK.value)
+    elif message_response is AlertMessageResponse.OCE:
+        msg.setStandardButtons(AlertResponse.OK.value |
+                               AlertResponse.CANCEL.value)
+    return msg
+
+
 class FormInput(QWidget):
     """A form element with a label, help tip, and input control. The default control is a text
     input. This object may be subclassed to specialize the input control or the arrangement of
@@ -748,18 +780,11 @@ class BCIGui(QWidget):
                             message_response: AlertMessageResponse = AlertMessageResponse.OTE,
                             message_timeout: float = 0) -> MessageBox:
         """Throw Alert Message."""
-
-        msg = MessageBox()
-        msg.setWindowTitle(title)
-        msg.setText(message)
-        msg.setIcon(message_type.value)
-        msg.setTimeout(message_timeout)
-
-        if message_response is AlertMessageResponse.OTE:
-            msg.setStandardButtons(AlertResponse.OK.value)
-        elif message_response is AlertMessageResponse.OCE:
-            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
-
+        msg = alert_message(message,
+                            title=title,
+                            message_type=message_type,
+                            message_response=message_response,
+                            message_timeout=message_timeout)
         return msg.exec_()
 
     def get_filename_dialog(self,
