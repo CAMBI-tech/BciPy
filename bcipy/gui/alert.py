@@ -1,7 +1,8 @@
 """GUI alert messages"""
 # pylint: disable=no-name-in-module
 import sys
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication
+from bcipy.gui.main import alert_message, AlertMessageType, AlertResponse, AlertMessageResponse
 
 
 def confirm(message: str) -> bool:
@@ -12,15 +13,14 @@ def confirm(message: str) -> bool:
         message - alert to display
     Returns
     -------
-        users selection
+        users selection : True for selecting Ok, False for Cancel.
     """
     app = QApplication(sys.argv)
-    dialog = QMessageBox()
-    dialog.setText(message)
-    dialog.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    dialog.setIcon(QMessageBox.Information)
+    dialog = alert_message(message,
+                           message_type=AlertMessageType.INFO,
+                           message_response=AlertMessageResponse.OCE)
     button = dialog.exec()
 
-    result = bool(button == QMessageBox.Ok)
+    result = bool(button == AlertResponse.OK.value)
     app.quit()
     return result

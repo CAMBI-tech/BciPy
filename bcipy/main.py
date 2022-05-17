@@ -100,7 +100,6 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     language_model = None
 
     fake = parameters['fake_data']
-    log.info(f"fake data is {'on' if fake else 'off'}")
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
