@@ -1,4 +1,5 @@
 """Helper functions for working with the acquisition module"""
+import logging
 import subprocess
 import time
 from pathlib import Path
@@ -13,6 +14,8 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+
+log = logging.getLogger(__name__)
 
 
 def init_eeg_acquisition(parameters: dict,
@@ -44,15 +47,17 @@ def init_eeg_acquisition(parameters: dict,
     -------
         (client, server) tuple
     """
-
     # TODO: parameter for loading devices; path to devices.json?
     # devices.load(devices_path)
     device_spec = preconfigured_device(parameters['acq_device'])
 
     dataserver = False
     if server:
+        log.info(f"fake data is on. Generating mock device data for {device_spec.name}")
         dataserver = LslDataServer(device_spec=device_spec)
         await_start(dataserver)
+    else:
+        log.info(f"fake data is off. Connecting to {device_spec.name}...")
 
     client = init_lsl_client(parameters, device_spec, save_folder)
     client.start_acquisition()

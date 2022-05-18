@@ -3,19 +3,21 @@ import logging
 import multiprocessing
 
 from bcipy.display import init_display_window
+from bcipy.gui.alert import confirm
 from bcipy.helpers.acquisition import init_eeg_acquisition
-from bcipy.helpers.task import print_message
-from bcipy.helpers.session import collect_experiment_field_data
-from bcipy.helpers.system_utils import get_system_info, configure_logger, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_json_parameters, load_experiments, load_signal_model
-from bcipy.helpers.validate import validate_experiment
+from bcipy.helpers.load import (load_experiments, load_json_parameters,
+                                load_signal_model)
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
+from bcipy.helpers.session import collect_experiment_field_data
+from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_ID,
+                                        configure_logger, get_system_info)
+from bcipy.helpers.task import print_message
+from bcipy.helpers.validate import validate_experiment
+from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
-from bcipy.signal.model import PcaRdaKdeModel
-
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +46,9 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
     validate_experiment(experiment)
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
+
+    if parameters['fake_data'] and not confirm("Fake data is on.  Do you want to continue?"):
+        return False
 
     # Update property to reflect the parameter source
     parameters['parameter_location'] = parameter_location

@@ -1,10 +1,14 @@
+# 2.0.0-rc.2
+
+- Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode.
+
 # 2.0.0-rc.1
 
 ## Contributions
 
-This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #217 represent the 2.0.0-rc.1 work. 
+This version contains major refactoring efforts and features. We anticipate a few additional refactor efforts in the near term based on feature requests from the community and (CAMBI)[cambi.tech]. These will support multi-modality, data sharing, and more complex language modeling. We are utilizing a release candidate to make features and bugfixes available sooner despite the full second version being in-progress. Thank you for your understanding and continued support! All pull requests in Github from #123 until #217 represent the 2.0.0-rc.1 work.
 
-The highlights: 
+The highlights:
 
 - `Acquisition Enhancements`: multi-modal support and better performance overall! #171, #174
 - `Language Model Refactor`: deprecation of docker base models. Addition of `LanguageModel` base class, `UniformLanguageModel` and a hugggingface model `GPT2LanguageModel`. #207
@@ -26,8 +30,8 @@ The details (incomplete, our apologies!):
 - `helpers/visualization.py`: moved plot_edf function from demo to this module #126
 - `helpers/raw_data.py`: module for raw data format support in BciPy #160
 - `helpers/load.py`: add `load_users` method for extracting user names from data save location #125 add extract_mode method for determining the mode #126
-- `helpers/task/`: add `Reshaper`, refactor trial reshaper and add inquiry reshaper #147 add `get_key_press` method with custom stamp argument. #129 
-- `helpers/stimuli.StimuliOrder`: defined ordering of inquiry stimuli. The current approach is to randomize. This adds an alphabetical option. #153 
+- `helpers/task/`: add `Reshaper`, refactor trial reshaper and add inquiry reshaper #147 add `get_key_press` method with custom stamp argument. #129
+- `helpers/stimuli.StimuliOrder`: defined ordering of inquiry stimuli. The current approach is to randomize. This adds an alphabetical option. #153
 - `helpers/stimuli.alphabetize`: method for taking a list of strings and returning them in alphabetical order with characters last in the list. #153
 - `helpers/validate`: `_validate_experiment_fields` and `validate_experiments`: validates experiments and fields in the correct format #156
 - `bcipy/helpers/system_utils`: add report execution decorator #163
@@ -41,7 +45,7 @@ The details (incomplete, our apologies!):
 - `LICENSE.md`: to used the Hippocratic license 2.1
 - `CODE_OF_CONDUCT.md`: to latest version of the Contributor Covenant
 - `README.md`: Add new glossary terms: mode, session and task #126 #127 and cleanup #129
-- `bcipy/main.py`: formally, `bci_main.py`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py` 
+- `bcipy/main.py`: formally, `bci_main.py`. To give a better console entry point and infrastructure for integration testing. In the terminal, you can now run `bcipy` instead of `python bci_main.py`
 - `parameters.json`: add stim_order #153 add max selections #175 remove max_inq_per_trial in favor of max_inq_per_series #176 add inquiry preview #177 with relevant stimuli units in help text, better starting stim_height, and inquiry preview keys #216
 - `demo_stimuli_generation.py`: update imports and add a case showing the new ordering functionality. #153
 - `copy_phrase_wrapper`: update logging and exception handling. add stim order. #153 BUGFIX: return transformed sampling rate #159
@@ -51,7 +55,7 @@ The details (incomplete, our apologies!):
 - `FieldRegistry.py`: updated to use new alert types with timeout #156
 - `gui/BCInterface.py`: use `load_users` method to populate user dropdown and remove internal BCInterface load method #125
 - `gui/gui_main.py`: update to return a value in FormInput, set a value for IntegerInput only if provided #156
-- `gui/viewer/data_viewer.py`: Replaced the original WxPython version of the signal data viewer with the new PyQt version #157. Use signal process filters instead of duplicating logic #147. 
+- `gui/viewer/data_viewer.py`: Replaced the original WxPython version of the signal data viewer with the new PyQt version #157. Use signal process filters instead of duplicating logic #147.
 - `gui/viewer/file_viewer.py`: to use new raw data format #160
 - `bcipy/acquisition`: refactored acquisition to support multi-modal acquisition and more performant real-time acquisition. These changes were significant and across multiple PRs. Support for new raw data format #160
 - `ring_buffer_test.py` -> `test_ring_buffer.py`: to comply with naming conventions #156
@@ -78,7 +82,7 @@ The details (incomplete, our apologies!):
 - `feedback/visual_feedback`: deprecate shape feedback type, line_color (in the administer method), and compare assertion as both were unused and added unneeded complexity. Set hard-coded values on the class instance for easier changing later. #128
 
 ### Removed
- 
+
 - `target_rsvp_inquiry_generator`: #153 unused
 - `rsvp_copy_phrase_inq_generator`: #153 unused
 - `tasks/rsvp/icon_to_icon.py`: #129 unused
@@ -94,31 +98,31 @@ The details (incomplete, our apologies!):
 
 ## Contributions
 
-This version contains major refactoring and tooling improvements across the codebase. In addition, it introduces the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable. 
+This version contains major refactoring and tooling improvements across the codebase. In addition, it introduces the concept of BciPy Experiments and Fields. Below we describe the major changes along with a PR# in github where applicable.
 
 ### Added
-- Language model histogram #91 
-- BciPy official glossary (Sequence -> Inquiry & Epoch -> Series) #121 
-- System information to `system_utils` (cpu, platform, etc) #98 
+- Language model histogram #91
+- BciPy official glossary (Sequence -> Inquiry & Epoch -> Series) #121
+- System information to `system_utils` (cpu, platform, etc) #98
 - BciPy Experiments and Fields: See PRs #113 #111, #114 for more information on the additions!
-- `.bcipy` system directory to support experiment and fields #100 
+- `.bcipy` system directory to support experiment and fields #100
 - support for python 3.7
-- `rsvp/query_mechanisms`: to model the way we build inquiries #108 
+- `rsvp/query_mechanisms`: to model the way we build inquiries #108
 - `Makefile`: contains useful install and development commands
-- `convert`: a module for data conversions that will be useful for data sharing. Implemented a conversion function to the EDF format. #104 
+- `convert`: a module for data conversions that will be useful for data sharing. Implemented a conversion function to the EDF format. #104
 - `exceptions`: a module for BciPy core exceptions
 
 ### Updated
-- `acquisition`: refactored the acquisition module to separate the concept of a device (ex. DSI-24 headset) and a connection method to that device (TCP or LSL). #122 
-- `setup.py`: with new repo location and CAMBI official support email 
-- `offline_analysis`: to pull parameters from session file #90 
-- `requirements.txt`: to the latest available #99 #107 
-- `Parameters` (added help text, removed redundant parameters). Refactored to make them immutable. #101 
-- `gui_main `: to use PyQt5. We will refactor all GUI code to use this in the future. After this PR, the signal viewer (WxPython) and a couple of loading functions will remain (Tk). #102 
-- `BCInterface` : updated to use new gui_main methods. Added user if validations. #102  #120 
-- `params_form`: moved into a parameters modules within GUI and updated to use PyQt5. #109 
-- `dev_requirements`: used to be called test_requirements. It contains more than that, so we updated the name! #99 
-- `README`: with relevant updates and contributors 
+- `acquisition`: refactored the acquisition module to separate the concept of a device (ex. DSI-24 headset) and a connection method to that device (TCP or LSL). #122
+- `setup.py`: with new repo location and CAMBI official support email
+- `offline_analysis`: to pull parameters from session file #90
+- `requirements.txt`: to the latest available #99 #107
+- `Parameters` (added help text, removed redundant parameters). Refactored to make them immutable. #101
+- `gui_main `: to use PyQt5. We will refactor all GUI code to use this in the future. After this PR, the signal viewer (WxPython) and a couple of loading functions will remain (Tk). #102
+- `BCInterface` : updated to use new gui_main methods. Added user if validations. #102  #120
+- `params_form`: moved into a parameters modules within GUI and updated to use PyQt5. #109
+- `dev_requirements`: used to be called test_requirements. It contains more than that, so we updated the name! #99
+- `README`: with relevant updates and contributors
 
 ### Removed
 - `RSVPKeyboard.py`
@@ -145,8 +149,8 @@ This version contains major refactoring and tooling improvements across the code
 ### Updated
 
 - DAQ file writing. Instead of writing to `raw_data.csv` during task executions, optionally write `raw_data.csv` on call to `stop_acquisition`, and only write to SQLite database during task.
-- `get_data` queries in `buffer_server` to increase speed on Windows machines. 
-- RSVP sequence stimuli presentation. Reduces reported timing slips on Windows and Linux machines. 
+- `get_data` queries in `buffer_server` to increase speed on Windows machines.
+- RSVP sequence stimuli presentation. Reduces reported timing slips on Windows and Linux machines.
     - List of stimuli to be presented is now generated before each sequence is presented, rather than generating stimuli during the sequence.
     - The screen is now only drawn once per stimulus, rather than redrawing the screen every frame.
 - Signal viewer to shut down when data is no longer streaming
@@ -165,7 +169,7 @@ Patch for gui.viewer module. Missing init file.
 
 # 1.4.0
 
-This release focused on bug fixes, exposing parameters, and refactoring. Further dual screen configuration and testing was done to allow for simultaneous signal viewing and task operation. 
+This release focused on bug fixes, exposing parameters, and refactoring. Further dual screen configuration and testing was done to allow for simultaneous signal viewing and task operation.
 
 ## Added
 
@@ -173,10 +177,10 @@ This release focused on bug fixes, exposing parameters, and refactoring. Further
     - Parameters:
             - Copy phrase decision thresholds
             - Inter-sequence Feedback level thresholds
-   
+
 
 ## Updated
-    - RSVP Display: refactor 
+    - RSVP Display: refactor
     - Decision Maker / Evidence Fusion: refactor
     - Signal Viewer: more distinct channel names
     - bci_main: shutdown handling and bug fix
@@ -189,7 +193,7 @@ This release focused on bug fixes, exposing parameters, and refactoring. Further
 
 # 1.3.0
 
-This release focused on the addition of a Signal Viewer, Inter-sequence Feedback Task, Signal Processing / Decomposition Methods, and miscellaneous cleanup. 
+This release focused on the addition of a Signal Viewer, Inter-sequence Feedback Task, Signal Processing / Decomposition Methods, and miscellaneous cleanup.
 
 ## Added
 
@@ -201,7 +205,7 @@ This release focused on the addition of a Signal Viewer, Inter-sequence Feedback
     - Backspace frequency parameterization and implementation
     - Bandpass and Notch Filter implementation
     - Custom Exceptions
-   
+
 
 ## Updated
     - Refactor RSVP Task: Icon-to-Icon (WIP)
