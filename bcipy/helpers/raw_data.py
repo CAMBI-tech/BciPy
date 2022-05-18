@@ -11,9 +11,6 @@ from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 TIMESTAMP_COLUMN = 'timestamp'
 
-import mne
-from mne.io import RawArray
-
 
 class RawData:
     """Represents the raw data format used by BciPy. Used primarily for loading
@@ -92,27 +89,6 @@ class RawData:
             data, fs = self.apply_transform(data, transform)
 
         return data, fs
-
-    def to_mne(
-            self,
-            channel_map: Optional[List[int]],
-            transform: Optional[Composition] = None,
-            montage: Optional[str] = 'standard_1020') -> RawArray:
-        """To MNE.
-
-        Returns BciPy RawData as an MNE RawArray. This assumes all data channels are eeg and channel names
-        are reflective of standard 1020 locations.
-        See https://mne.tools/dev/generated/mne.channels.make_standard_montage.html
-        """
-        data, channels, fs = self.by_channel_map(channel_map, transform)
-        channel_types = ['eeg' for _ in channels]
-
-        info = mne.create_info(channels, fs, channel_types)
-        mne_data = RawArray(data, info)
-        ten_twenty_montage = mne.channels.make_standard_montage(montage)
-        mne_data.set_montage(ten_twenty_montage)
-
-        return mne_data
 
     def by_channel_map(
             self,

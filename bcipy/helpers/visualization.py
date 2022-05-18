@@ -3,14 +3,16 @@ from typing import List, Optional, Tuple
 
 from matplotlib.figure import Figure
 from bcipy.helpers.raw_data import RawData
-from mne.io import read_raw_edf
-import mne
 import matplotlib.pyplot as plt
 
+from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.signal.process import Composition
+
+import mne
 from mne import Epochs
+from mne.io import read_raw_edf
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ def visualize_erp(
     show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
     """
-    mne_data = raw_data.to_mne(channel_map=channel_map, transform=transform)
+    mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
     epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
     epochs = (epochs['1'], epochs['2'])
     figs = []

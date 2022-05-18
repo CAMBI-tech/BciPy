@@ -4,7 +4,7 @@ import logging
 import os
 import tarfile
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
@@ -12,7 +12,12 @@ from pyedflib import FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
 from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.raw_data import RawData
+from bcipy.signal.process import Composition
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
+
+import mne
+from mne.io import RawArray
 
 
 logger = logging.getLogger(__name__)
@@ -337,3 +342,25 @@ def tar_name_checker(tar_file_name: str) -> str:
     if tar_file_name.endswith('.tar.gz'):
         return tar_file_name
     return f'{tar_file_name}.tar.gz'
+
+
+def convert_to_mne(
+        raw_data: RawData,
+        channel_map: Optional[List[int]],
+        transform: Optional[Composition] = None,
+        montage: Optional[str] = 'standard_1020') -> RawArray:
+    """Convert to MNE.
+
+    Returns BciPy RawData as an MNE RawArray. This assumes all data channels are eeg and channel names
+    are reflective of standard 1020 locations.
+    See https://mne.tools/dev/generated/mne.channels.make_standard_montage.html
+    """
+    data, channels, fs = raw_data.by_channel_map(channel_map, transform)
+    channel_types = ['eeg' for _ in channels]
+
+    info = mne.create_info(channels, fs, channel_types)
+    mne_data = RawArray(data, info)
+    ten_twenty_montage = mne.channels.make_standard_montage(montage)
+    mne_data.set_montage(ten_twenty_montage)
+
+    return mne_data
