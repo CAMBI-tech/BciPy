@@ -4,44 +4,35 @@ import itertools
 import json
 import os
 import sqlite3
+import subprocess
 from collections import namedtuple
 
-import subprocess
-
 import openpyxl
-import pandas as pd
 from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
-from bcipy.helpers.load import load_json_parameters, load_experiment_fields, load_experiments
+from bcipy.helpers.load import (load_experiment_fields, load_experiments,
+                                load_json_parameters)
 from bcipy.helpers.system_utils import DEFAULT_ENCODING
-from bcipy.helpers.task import alphabet
 from bcipy.helpers.validate import validate_field_data_written
-from bcipy.task.data import Session, Inquiry
+from bcipy.task.data import Inquiry, Session
 
 
-def session_data(data_dir: str, alp=None):
+def session_data(data_dir: str):
     """Returns a dict of session data transformed to map the alphabet letter
     to the likelihood when presenting the evidence. Also removes attributes
     not useful for debugging."""
 
-    # TODO: Better error handling for missing parameters.
-    # Get the alphabet based on the provided parameters (txt or icon).
     parameters = load_json_parameters(os.path.join(data_dir,
                                                    "parameters.json"),
                                       value_cast=True)
-    if parameters.get('is_txt_sti', False):
-        parameters['is_txt_stim'] = parameters['is_txt_sti']
-
-    if not alp:
-        alp = alphabet(parameters=parameters)
 
     session_path = os.path.join(data_dir, "session.json")
     with open(session_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         session = Session.from_dict(json.load(json_file))
-        data = session.as_dict(alphabet=alp, evidence_only=True)
+        data = session.as_dict(evidence_only=True)
         data['target_text'] = parameters['task_text']
         return data
 
@@ -71,12 +62,92 @@ def get_target(task_type, inquiry: Inquiry):
 
 # Database record
 EvidenceRecord = namedtuple('EvidenceRecord', [
-    'series', 'inquiry', 'stim', 'lm', 'eeg', 'btn', 'cumulative', 'inq_position',
-    'is_target', 'presented', 'above_threshold'
+    'series', 'inquiry', 'stim', 'lm', 'eeg', 'btn', 'cumulative',
+    'inq_position', 'is_target', 'presented', 'above_threshold'
 ])
 
 
-def session_db(data_dir: str, db_name='session.db', alp=None):
+def create_session_db(session: Session, db_name: str = 'session.db'):
+    """Creates a sqlite database from the given session data.
+
+    Parameters
+    ----------
+        session - task data (evidence values, stim times, etc.)
+        db_name - path  of database to write; defaults to session.db
+
+    Database Schema
+    ---------------
+    trial:
+    - id: int
+    - target: str
+
+    evidence:
+    - trial integer (0-based)
+    - inquiry integer (0-based)
+    - letter text (letter or icon)
+    - lm real (language model probability for the trial; same for every
+        inquiry and only considered in the cumulative value during the
+        first inquiry)
+    - eeg real (likelihood for the given inquiry; a value of 1.0 indicates
+        that the letter was not presented)
+    - cumulative real (cumulative likelihood for the trial thus far)
+    - inq_position integer (inquiry position; null if not presented)
+    - is_target integer (boolean; true(1) if this letter is the target)
+    - presented integer (boolean; true if the letter was presented in
+        this inquiry)
+    - above_threshold (boolean; true if cumulative likelihood was above
+        the configured threshold)
+    """
+    assert session.has_evidence(), "There is no evidence in the provided session"
+    assert session.symbol_set, "Session must define a symbol_set"
+    # Create database
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+
+    cursor.execute('CREATE TABLE trial (id integer, target text)')
+    cursor.execute(
+        'CREATE TABLE evidence (series integer, inquiry integer, '
+        'stim text, lm real, eeg real, btn real, cumulative real, inq_position '
+        'integer, is_target integer, presented integer, above_threshold)')
+    conn.commit()
+
+    for series_index, inquiry_list in enumerate(session.series):
+        for inq_index, inquiry in enumerate(inquiry_list):
+
+            target = get_target(session.task, inquiry)
+
+            if inq_index == 0:
+                # create record for the trial
+                conn.executemany('INSERT INTO trial VALUES (?,?)',
+                                 [(int(series_index + 1), target)])
+
+            evidence = inquiry.stim_evidence(symbol_set=session.symbol_set)
+
+            ev_rows = [
+                EvidenceRecord(series=series_index + 1,
+                               inquiry=inq_index,
+                               stim=stim,
+                               lm=evidence['lm_evidence'].get(stim, ''),
+                               eeg=evidence['eeg_evidence'].get(stim, ''),
+                               btn=evidence.get('btn_evidence',
+                                                {}).get(stim, ''),
+                               cumulative=evidence['likelihood'][stim],
+                               inq_position=inquiry.stimuli.index(stim)
+                               if stim in inquiry.stimuli else None,
+                               is_target=(target == stim) if target else None,
+                               presented=stim in inquiry.stimuli,
+                               above_threshold=evidence['likelihood'][stim] >
+                               session.decision_threshold)
+                for stim, _likelihood_ev in evidence['likelihood'].items()
+            ]
+
+            conn.executemany(
+                'INSERT INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?)', ev_rows)
+            conn.commit()
+    conn.close()
+
+
+def session_db(data_dir: str, db_name='session.db'):
     """Writes a relational database (sqlite3) of session data that can
     be used for exploratory analysis.
 
@@ -84,98 +155,12 @@ def session_db(data_dir: str, db_name='session.db', alp=None):
     -----------
         data_dir - directory with the session.json data (and parameters.json)
         db_name - name of database to write; defaults to session.db
-        alp - optional alphabet to use; may be required if using icons that do
-            not exist on the current machine.
-
-    Returns:
-    --------
-        Creates a sqlite3 database and returns a pandas dataframe of the
-        evidence table for use within a repl.
-
-    Schema:
-    ------
-    trial:
-        - id: int
-        - target: str
-
-    evidence:
-        - trial integer (0-based)
-        - inquiry integer (0-based)
-        - letter text (letter or icon)
-        - lm real (language model probability for the trial; same for every
-            inquiry and only considered in the cumulative value during the
-            first inquiry)
-        - eeg real (likelihood for the given inquiry; a value of 1.0 indicates
-            that the letter was not presented)
-        - cumulative real (cumulative likelihood for the trial thus far)
-        - inq_position integer (inquiry position; null if not presented)
-        - is_target integer (boolean; true(1) if this letter is the target)
-        - presented integer (boolean; true if the letter was presented in
-            this inquiry)
-        - above_threshold (boolean; true if cumulative likelihood was above
-            the configured threshold)
     """
-    # Get the alphabet based on the provided parameters (txt or icon).
-    parameters = load_json_parameters(os.path.join(data_dir,
-                                                   "parameters.json"),
-                                      value_cast=True)
-    if parameters.get('is_txt_sti', False):
-        parameters['is_txt_stim'] = parameters['is_txt_sti']
-    if not alp:
-        alp = alphabet(parameters=parameters)
-    threshold = parameters['decision_threshold']
-
-    with open(os.path.join(data_dir, "session.json"), 'r', encoding=DEFAULT_ENCODING) as json_file:
+    with open(os.path.join(data_dir, "session.json"),
+              'r',
+              encoding=DEFAULT_ENCODING) as json_file:
         session = Session.from_dict(json.load(json_file))
-        # Create database
-        conn = sqlite3.connect(db_name)
-        cursor = conn.cursor()
-
-        cursor.execute('CREATE TABLE trial (id integer, target text)')
-        cursor.execute(
-            'CREATE TABLE evidence (series integer, inquiry integer, '
-            'stim text, lm real, eeg real, btn real, cumulative real, inq_position '
-            'integer, is_target integer, presented integer, above_threshold)')
-        conn.commit()
-
-        for series_index, inquiry_list in enumerate(session.series):
-            for inq_index, inquiry in enumerate(inquiry_list):
-
-                target = get_target(session.task, inquiry)
-
-                if inq_index == 0:
-                    # create record for the trial
-                    conn.executemany('INSERT INTO trial VALUES (?,?)',
-                                     [(int(series_index + 1), target)])
-
-                evidence = inquiry.stim_evidence(alphabet=alp)
-
-                # TODO: this assumes that eeg evidence is present in every inquiry
-                ev_rows = [
-                    EvidenceRecord(
-                        series=series_index + 1,
-                        inquiry=inq_index,
-                        stim=stim,
-                        lm=evidence['lm_evidence'].get(stim, ''),
-                        eeg=evidence['eeg_evidence'].get(stim, ''),
-                        btn=evidence.get('btn_evidence', {}).get(stim, ''),
-                        cumulative=evidence['likelihood'][stim],
-                        inq_position=inquiry.stimuli.index(stim)
-                        if stim in inquiry.stimuli else None,
-                        is_target=(target == stim) if target else None,
-                        presented=stim in inquiry.stimuli,
-                        above_threshold=evidence['likelihood'][stim] >
-                        threshold)
-                    for stim, _likelihood_ev in evidence['likelihood'].items()
-                ]
-
-                conn.executemany(
-                    'INSERT INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                    ev_rows)
-                conn.commit()
-        dataframe = pd.read_sql_query("SELECT * FROM evidence", conn)
-        conn.close()
-        return dataframe
+        create_session_db(session, db_name)
 
 
 def session_csv(db_name='session.db', csv_name='session.csv'):
@@ -310,8 +295,7 @@ def session_excel(db_name='session.db',
             chart.add_data(data, titles_from_data=False)
             chart.series[0].title = openpyxl.chart.series.SeriesLabel(v="lm")
             chart.series[1].title = openpyxl.chart.series.SeriesLabel(v="eeg")
-            chart.series[2].title = openpyxl.chart.series.SeriesLabel(
-                v="btn")
+            chart.series[2].title = openpyxl.chart.series.SeriesLabel(v="btn")
             chart.series[3].title = openpyxl.chart.series.SeriesLabel(
                 v="combined")
 

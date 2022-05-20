@@ -1,6 +1,7 @@
 # 2.0.0-rc.2
 
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode.
+- Session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used. There is also an additional option to output richer session summaries which chart the evidence values for each symbol. The `summarize_session` parameter is used to enable this behavior.
 
 # 2.0.0-rc.1
 
