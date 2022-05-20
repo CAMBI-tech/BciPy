@@ -12,12 +12,14 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
+from bcipy.helpers.session import session_db, session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
-from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, TriggerType, Trigger, convert_timing_triggers
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
 from bcipy.task.data import EvidenceType, Inquiry, Session
@@ -158,9 +160,12 @@ class RSVPCopyPhraseTask(Task):
             self.copy_phrase[0:self.starting_spelled_letters()])
         self.last_selection = ''
         self.inq_counter = 0
-        self.session = Session(save_location=self.file_save,
-                               task='Copy Phrase',
-                               mode='RSVP')
+        self.session = Session(
+            save_location=self.file_save,
+            task='Copy Phrase',
+            mode='RSVP',
+            symbol_set=self.alp,
+            decision_threshold=self.parameters['decision_threshold'])
         self.write_session_data()
 
         self.init_copy_phrase_task()
@@ -420,6 +425,14 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['preview_inquiry_progress_method'],
             self.trigger_handler.file_path).as_dict()
         self.write_session_data()
+
+        # Evidence is not recorded in the session when using fake decisions.
+        if self.parameters['summarize_session'] and self.session.has_evidence():
+            session_db(data_dir=self.file_save,
+                       db_name=f"{self.file_save}/session.db")
+            session_excel(db_name=f"{self.file_save}/session.db",
+                          excel_name=f"{self.file_save}/session.xlsx")
+
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait()
 

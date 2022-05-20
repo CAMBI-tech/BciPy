@@ -74,6 +74,7 @@ class TestCopyPhrase(unittest.TestCase):
             'stim_pos_x': 0.0,
             'stim_pos_y': 0.0,
             'stim_space_char': '–',
+            'summarize_session': False,
             'target_color': 'white',
             'task_buffer_length': 2,
             'task_color': 'white',

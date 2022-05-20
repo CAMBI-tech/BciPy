@@ -159,6 +159,7 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(0, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
         self.assertIsNone(session.inquiries_per_selection)
+        self.assertFalse(session.has_evidence())
         serialized = session.as_dict()
 
         self.assertEqual(0, serialized['total_time_spent'])
@@ -183,6 +184,7 @@ class TestSessionData(unittest.TestCase):
 
         serialized = session.as_dict()
 
+        self.assertFalse(session.has_evidence())
         self.assertEqual(dict, type(serialized))
         self.assertEqual(2, serialized['total_number_series'])
         self.assertEqual(3, serialized['total_inquiries'])
@@ -258,6 +260,13 @@ class TestSessionData(unittest.TestCase):
         serialized = session.as_dict()
         self.assertTrue('task_summary' in serialized.keys())
         self.assertEqual(serialized['task_summary']['typing_accuracy'], 22)
+
+    def test_has_evidence(self):
+        """Test that a Session has evidence"""
+        session = Session(save_location=".")
+        session.add_sequence(sample_stim_seq())
+        session.add_sequence(sample_stim_seq(include_evidence=True))
+        self.assertTrue(session.has_evidence())
 
 
 if __name__ == '__main__':

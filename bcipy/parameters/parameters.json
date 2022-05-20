@@ -230,6 +230,14 @@
     "recommended_values": "",
     "type": "str"
   },
+  "summarize_session": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Summarize Session Data",
+    "helpTip": "If 'true', writes an Excel file which summarizes the session data by charting evidence per inquiry.",
+    "recommended_values": "",
+    "type": "bool"
+  },
   "log_name": {
     "value": "bcipy_system_log.txt",
     "section": "bci_config",
