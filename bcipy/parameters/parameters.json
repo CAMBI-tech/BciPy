@@ -8,14 +8,15 @@
     "type": "bool"
   },
   "acq_device": {
-    "value": "DSI-24",
+    "value": "actiCHamp",
     "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Specifies the hardware used for EEG data collection.",
     "recommended_values": [
       "DSI-24",
       "DSI-VR300",
-      "g.USBamp-1"
+      "g.USBamp-1",
+      "actiCHamp"
     ],
     "type": "str"
   },
