@@ -2,7 +2,7 @@
 
 To use at bcipy root,
 
-    - `python bcipy/helpers/demo/demo_visualization.py"`: 
+    - `python bcipy/helpers/demo/demo_visualization.py"`:
         this will prompt for a BciPy data folder with raw_data.csv, parameters.json and triggers.txt
 
     - `python bcipy/helpers/demo/demo_visualization.py -p "path://to/bcipy/data/folder"`

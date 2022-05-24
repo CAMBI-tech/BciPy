@@ -113,7 +113,7 @@ class InquiryReshaper:
             trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (List[float]): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            sample_rate (int): sample rate of data. If data is downsampled, the sample rate should be also be downsampled.
+            sample_rate (int): sample rate of data provided in eeg_data
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
