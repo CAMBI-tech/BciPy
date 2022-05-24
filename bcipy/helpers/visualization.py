@@ -51,6 +51,9 @@ def visualize_erp(
     """
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
     epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
+    # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
+    # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
+    # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
     epochs = (epochs['1'], epochs['2'])
     figs = []
     if plot_average:
@@ -126,7 +129,7 @@ def visualize_joint_average(
 
     See: https://mne.tools/dev/generated/mne.Evoked.html#mne.Evoked.plot_joint
 
-    Note: assumes the number of Epochs (passed as a tuple)
+    Note: assumes the number of Epochs (passed as a tuple) is equal to the number of labels provided
     """
     assert len(epochs) == len(labels), "The number of epochs must match labels in Visualize Joint Average"
 

@@ -346,9 +346,9 @@ def tar_name_checker(tar_file_name: str) -> str:
 
 def convert_to_mne(
         raw_data: RawData,
-        channel_map: Optional[List[int]],
+        channel_map: List[int],
         transform: Optional[Composition] = None,
-        montage: Optional[str] = 'standard_1020') -> RawArray:
+        montage: str = 'standard_1020') -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all data channels are eeg and channel names

@@ -144,7 +144,7 @@ def offline_analysis(
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
         eeg_data=data,
-        fs=sample_rate,
+        sample_rate=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=poststim_length,

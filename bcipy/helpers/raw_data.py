@@ -17,10 +17,10 @@ class RawData:
     a raw data file into memory."""
 
     def __init__(self,
-                 daq_type: str = None,
-                 sample_rate: int = None,
-                 columns: List[str] = None,
-                 column_types: List[str] = None):
+                 daq_type: Optional[str] = None,
+                 sample_rate: Optional[int] = None,
+                 columns: Optional[List[str]] = None,
+                 column_types: Optional[List[str]] = None):
         self.daq_type = daq_type
         self.sample_rate = sample_rate
         self.columns = columns or []
@@ -65,6 +65,16 @@ class RawData:
         timestamp column and device channels, excluding string triggers."""
         return self.dataframe.select_dtypes(exclude=['object'])
 
+    @property
+    def channel_data(self):
+        """Data for columns with numeric data, excluding the timestamp column."""
+        numeric_data = self.numeric_data
+
+        numeric_vals = numeric_data.values
+        numeric_column_count = numeric_vals.shape[1]
+        # Start data slice at 1 to remove the timestamp column.
+        return numeric_vals[:, 1:numeric_column_count].transpose()
+
     def by_channel(self, transform: Optional[Composition] = None) -> np.ndarray:
         """Data organized by channel.
 
@@ -78,11 +88,7 @@ class RawData:
         is number of time samples
         fs: resulting sample rate if any transformations applied"""
 
-        numeric_data = self.numeric_data
-
-        numeric_vals = numeric_data.values
-        numeric_column_count = numeric_vals.shape[1]
-        data = numeric_vals[:, 1:numeric_column_count].transpose()
+        data = self.channel_data
         fs = self.sample_rate
 
         if transform:
@@ -142,8 +148,8 @@ class RawData:
         return int(self.dataframe.iloc[-1]['timestamp'])
 
     def query(self,
-              start: float = None,
-              stop: float = None,
+              start: Optional[float] = None,
+              stop: Optional[float] = None,
               column: str = 'lsl_timestamp') -> pd.DataFrame:
         """Query for a subset of data.
 
