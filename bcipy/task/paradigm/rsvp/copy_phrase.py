@@ -12,7 +12,7 @@ from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.session import session_db, session_excel
+from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
@@ -428,10 +428,8 @@ class RSVPCopyPhraseTask(Task):
 
         # Evidence is not recorded in the session when using fake decisions.
         if self.parameters['summarize_session'] and self.session.has_evidence():
-            session_db(data_dir=self.file_save,
-                       db_name=f"{self.file_save}/session.db")
-            session_excel(db_name=f"{self.file_save}/session.db",
-                          excel_name=f"{self.file_save}/session.xlsx")
+            session_excel(session=self.session,
+                          excel_file=f"{self.file_save}/session.xlsx")
 
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait()

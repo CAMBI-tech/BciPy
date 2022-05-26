@@ -2,8 +2,10 @@
 # pylint: disable=invalid-name
 import json
 from pathlib import Path
-from bcipy.helpers.session import session_data, session_db, session_csv, session_excel
+
 from bcipy.gui.file_dialog import ask_directory
+from bcipy.helpers.session import (read_session, session_csv, session_data,
+                                   session_db, session_excel)
 
 
 def main(data_dir: str):
@@ -14,12 +16,10 @@ def main(data_dir: str):
 
 if __name__ == "__main__":
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(
         description="Opens session.json file for analysis. "
-        "Optionally creates a sqlite database summarizing the data."
-    )
+        "Optionally creates a sqlite database summarizing the data.")
 
     parser.add_argument('-p',
                         '--path',
@@ -41,14 +41,12 @@ if __name__ == "__main__":
         path = ask_directory()
 
     if args.db or args.csv or args.charts:
-        db_name = str(Path(path, "session.db"))
-        session_db(path, db_name=db_name)
+        session = read_session(Path(path, "session.json"))
+        if args.db:
+            session_db(session, db_file=str(Path(path, "session.db")))
         if args.csv:
-            session_csv(db_name=db_name, csv_name=str(Path(path, "session.csv")))
+            session_csv(session, csv_file=str(Path(path, "session.csv")))
         if args.charts:
-            session_excel(db_name=db_name,
-                          excel_name=str(Path(path, "session.xlsx")))
-        if not args.db:
-            os.remove(db_name)
+            session_excel(session, excel_file=str(Path(path, "session.xlsx")))
     else:
         main(path)

@@ -5,7 +5,8 @@ import json
 import os
 import sqlite3
 import subprocess
-from collections import namedtuple
+from dataclasses import dataclass, fields
+from typing import Any, Dict, List
 
 import openpyxl
 from openpyxl.chart import BarChart, Reference
@@ -17,10 +18,16 @@ from bcipy.helpers.load import (load_experiment_fields, load_experiments,
                                 load_json_parameters)
 from bcipy.helpers.system_utils import DEFAULT_ENCODING
 from bcipy.helpers.validate import validate_field_data_written
-from bcipy.task.data import Inquiry, Session
+from bcipy.task.data import Session
 
 
-def session_data(data_dir: str):
+def read_session(file_name='session.json') -> Session:
+    """Read the session data from the given file."""
+    with open(file_name, 'r', encoding=DEFAULT_ENCODING) as json_file:
+        return Session.from_dict(json.load(json_file))
+
+
+def session_data(data_dir: str) -> Dict:
     """Returns a dict of session data transformed to map the alphabet letter
     to the likelihood when presenting the evidence. Also removes attributes
     not useful for debugging."""
@@ -28,13 +35,10 @@ def session_data(data_dir: str):
     parameters = load_json_parameters(os.path.join(data_dir,
                                                    "parameters.json"),
                                       value_cast=True)
-
-    session_path = os.path.join(data_dir, "session.json")
-    with open(session_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
-        session = Session.from_dict(json.load(json_file))
-        data = session.as_dict(evidence_only=True)
-        data['target_text'] = parameters['task_text']
-        return data
+    session = read_session(os.path.join(data_dir, "session.json"))
+    data = session.as_dict(evidence_only=True)
+    data['target_text'] = parameters['task_text']
+    return data
 
 
 def collect_experiment_field_data(experiment_name,
@@ -52,35 +56,82 @@ def collect_experiment_field_data(experiment_name,
             raise Exception('Field data not collected!')
 
 
-def get_target(task_type, inquiry: Inquiry):
-    """Returns the target for the given inquiry. For icon tasks this information
-    is in the inquiry, but for Copy Phrase it must be computed."""
-    if task_type == 'Copy Phrase':
-        return copy_phrase_target(inquiry.target_text, inquiry.current_text)
-    return inquiry.target_letter
+@dataclass(frozen=True)
+class EvidenceRecord:
+    """Record summarizing Inquiry evidence."""
+    series: int
+    inquiry: int
+    stim: str
+    lm: float
+    eeg: float
+    btn: float
+    cumulative: float
+    inq_position: int
+    is_target: int
+    presented: int
+    above_threshold: int
+
+    def __iter__(self):
+        return iter([getattr(self, field.name) for field in fields(self)])
 
 
-# Database record
-EvidenceRecord = namedtuple('EvidenceRecord', [
-    'series', 'inquiry', 'stim', 'lm', 'eeg', 'btn', 'cumulative',
-    'inq_position', 'is_target', 'presented', 'above_threshold'
-])
+def sqlite_ddl(cls: Any, table_name: str) -> str:
+    """Sqlite create table statement for the given dataclass"""
+    conversions = {int: 'integer', str: 'text', float: 'real'}
+
+    column_defs = [
+        f'{field.name} {conversions.get(field.type, field.type)}'
+        for field in fields(cls)
+    ]
+    return f"CREATE TABLE {table_name} ({', '.join(column_defs)})"
 
 
-def create_session_db(session: Session, db_name: str = 'session.db'):
+def sqlite_insert(cls: Any, table_name: str) -> str:
+    """sqlite INSERT statement for the given dataclass."""
+    placeholders = ['?' for _ in fields(cls)]
+    return f"INSERT INTO {table_name} VALUES ({','.join(placeholders)})"
+
+
+def evidence_records(session: Session) -> List[EvidenceRecord]:
+    """Summarize the session evidence data."""
+    assert session.has_evidence(
+    ), "There is no evidence in the provided session"
+    assert session.symbol_set, "Session must define a symbol_set"
+
+    records = []
+    for series_index, inquiry_list in enumerate(session.series):
+        for inq_index, inquiry in enumerate(inquiry_list):
+            evidence = inquiry.stim_evidence(symbol_set=session.symbol_set)
+
+            for stim, _likelihood_ev in evidence['likelihood'].items():
+                records.append(
+                    EvidenceRecord(
+                        series=series_index + 1,
+                        inquiry=inq_index,
+                        stim=stim,
+                        lm=evidence['lm_evidence'].get(stim, ''),
+                        eeg=evidence['eeg_evidence'].get(stim, ''),
+                        btn=evidence.get('btn_evidence', {}).get(stim, ''),
+                        cumulative=evidence['likelihood'][stim],
+                        inq_position=inquiry.stimuli.index(stim)
+                        if stim in inquiry.stimuli else None,
+                        is_target=int(inquiry.target_letter == stim),
+                        presented=int(stim in inquiry.stimuli),
+                        above_threshold=int(evidence['likelihood'][stim] >
+                                            session.decision_threshold)))
+    return records
+
+
+def session_db(session: Session, db_file: str = 'session.db'):
     """Creates a sqlite database from the given session data.
 
     Parameters
     ----------
         session - task data (evidence values, stim times, etc.)
-        db_name - path  of database to write; defaults to session.db
+        db_file - path  of database to write; defaults to session.db
 
     Database Schema
     ---------------
-    trial:
-    - id: int
-    - target: str
-
     evidence:
     - trial integer (0-based)
     - inquiry integer (0-based)
@@ -98,85 +149,27 @@ def create_session_db(session: Session, db_name: str = 'session.db'):
     - above_threshold (boolean; true if cumulative likelihood was above
         the configured threshold)
     """
-    assert session.has_evidence(), "There is no evidence in the provided session"
-    assert session.symbol_set, "Session must define a symbol_set"
     # Create database
-    conn = sqlite3.connect(db_name)
+    conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
-
-    cursor.execute('CREATE TABLE trial (id integer, target text)')
-    cursor.execute(
-        'CREATE TABLE evidence (series integer, inquiry integer, '
-        'stim text, lm real, eeg real, btn real, cumulative real, inq_position '
-        'integer, is_target integer, presented integer, above_threshold)')
+    table_name = 'evidence'
+    cursor.execute(sqlite_ddl(EvidenceRecord, table_name))
     conn.commit()
 
-    for series_index, inquiry_list in enumerate(session.series):
-        for inq_index, inquiry in enumerate(inquiry_list):
-
-            target = get_target(session.task, inquiry)
-
-            if inq_index == 0:
-                # create record for the trial
-                conn.executemany('INSERT INTO trial VALUES (?,?)',
-                                 [(int(series_index + 1), target)])
-
-            evidence = inquiry.stim_evidence(symbol_set=session.symbol_set)
-
-            ev_rows = [
-                EvidenceRecord(series=series_index + 1,
-                               inquiry=inq_index,
-                               stim=stim,
-                               lm=evidence['lm_evidence'].get(stim, ''),
-                               eeg=evidence['eeg_evidence'].get(stim, ''),
-                               btn=evidence.get('btn_evidence',
-                                                {}).get(stim, ''),
-                               cumulative=evidence['likelihood'][stim],
-                               inq_position=inquiry.stimuli.index(stim)
-                               if stim in inquiry.stimuli else None,
-                               is_target=(target == stim) if target else None,
-                               presented=stim in inquiry.stimuli,
-                               above_threshold=evidence['likelihood'][stim] >
-                               session.decision_threshold)
-                for stim, _likelihood_ev in evidence['likelihood'].items()
-            ]
-
-            conn.executemany(
-                'INSERT INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?)', ev_rows)
-            conn.commit()
-    conn.close()
+    conn.executemany(sqlite_insert(EvidenceRecord, table_name),
+                     map(tuple, evidence_records(session)))
+    conn.commit()
 
 
-def session_db(data_dir: str, db_name='session.db'):
-    """Writes a relational database (sqlite3) of session data that can
-    be used for exploratory analysis.
-
-    Parameters:
-    -----------
-        data_dir - directory with the session.json data (and parameters.json)
-        db_name - name of database to write; defaults to session.db
-    """
-    with open(os.path.join(data_dir, "session.json"),
-              'r',
-              encoding=DEFAULT_ENCODING) as json_file:
-        session = Session.from_dict(json.load(json_file))
-        create_session_db(session, db_name)
-
-
-def session_csv(db_name='session.db', csv_name='session.csv'):
-    """Converts the sqlite3 db generated from session.json to a csv file,
-    outputing the evidence table.
-    """
-
-    with open(csv_name, "w", encoding=DEFAULT_ENCODING, newline='') as output:
-        cursor = sqlite3.connect(db_name).cursor()
-        cursor.execute("select * from evidence;")
-        columns = [description[0] for description in cursor.description]
-
+def session_csv(session: Session, csv_file='session.csv'):
+    """Create a csv file summarizing the evidence data for the given session."""
+    with open(csv_file, "w", encoding=DEFAULT_ENCODING, newline='') as output:
         csv_writer = csv.writer(output, delimiter=',')
+
+        columns = [field.name for field in fields(EvidenceRecord)]
         csv_writer.writerow(columns)
-        for row in cursor:
-            csv_writer.writerow(row)
+        for record in evidence_records(session):
+            csv_writer.writerow(record)
 
 
 def write_row(excel_sheet, rownum, data, background=None, border=None):
@@ -190,11 +183,10 @@ def write_row(excel_sheet, rownum, data, background=None, border=None):
             cell.border = border
 
 
-def session_excel(db_name='session.db',
-                  excel_name='session.xlsx',
+def session_excel(session: Session,
+                  excel_file='session.xlsx',
                   include_charts=True):
-    """Converts the sqlite3 db generated from session.json to an
-    Excel spreadsheet"""
+    """Create an Excel spreadsheet summarizing the evidence data for the given session."""
 
     # Define styles and borders to use within the spreadsheet.
     gray_background = PatternFill(start_color='ededed', fill_type='solid')
@@ -216,19 +208,12 @@ def session_excel(db_name='session.db',
                                bottom=thin_gray)
 
     # Create the workbook
-    wb = openpyxl.Workbook()
-    sheet = wb.active
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
     sheet.title = 'session'
 
-    # Get the data from the generated sqlite3 database.
-    cursor = sqlite3.connect(db_name).cursor()
-    cursor.execute("select * from evidence;")
-    columns = [description[0] for description in cursor.description]
-
-    series_column = columns.index('series')
-    inquiry_column = columns.index('inquiry')
-    is_target_column = columns.index('is_target')
-    series, inquiry, is_target = None, None, None
+    columns = [field.name for field in fields(EvidenceRecord)]
+    series, inquiry = None, None
 
     # Write header
     write_row(sheet, 1, columns)
@@ -239,19 +224,18 @@ def session_excel(db_name='session.db',
     # Write rows
     inq_background = next(backgrounds_iter)
     alp_len = None
-    for i, row in enumerate(cursor):
+    for i, record in enumerate(evidence_records(session)):
         rownum = i + 2  # Excel is 1-indexed; also account for column row.
-        is_target = int(row[is_target_column]) == 1
         border = default_border
 
-        if row[series_column] != series:
+        if record.series != series:
             # Place a thick top border before each new series to make it
             # easier to visually scan the spreadsheet.
-            series = row[series_column]
+            series = record.series
             border = new_series_border
 
-        if row[inquiry_column] != inquiry:
-            inquiry = row[inquiry_column]
+        if record.inquiry != inquiry:
+            inquiry = record.inquiry
 
             # Set the alphabet length used for chart data ranges.
             if not alp_len and i > 0:
@@ -262,12 +246,12 @@ def session_excel(db_name='session.db',
             inq_background = next(backgrounds_iter)
 
         # write to spreadsheet
-        write_row(
-            sheet,
-            rownum,
-            row,
-            background=highlighted_background if is_target else inq_background,
-            border=border)
+        write_row(sheet,
+                  rownum,
+                  record,
+                  background=highlighted_background
+                  if bool(record.is_target) else inq_background,
+                  border=border)
 
     # Add chart for each inquiry
     if include_charts:
@@ -304,31 +288,8 @@ def session_excel(db_name='session.db',
 
     # Freeze header row
     sheet.freeze_panes = 'A2'
-    wb.save(excel_name)
-    print("Wrote output to " + excel_name)
-
-
-def copy_phrase_target(phrase: str, current_text: str, backspace='<'):
-    """Determine the target for the current CopyPhrase inquiry.
-
-    >>> copy_phrase_target("HELLO_WORLD", "")
-    'H'
-    >>> copy_phrase_target("HELLO_WORLD", "HE")
-    'L'
-    >>> copy_phrase_target("HELLO_WORLD", "HELLO_WORL")
-    'D'
-    >>> copy_phrase_target("HELLO_WORLD", "HEA")
-    '<'
-    >>> copy_phrase_target("HELLO_WORLD", "HEAL")
-    '<'
-    """
-    try:
-        # if the current_display is not a substring of phrase, there is a mistake
-        # and the backspace should be the next target.
-        phrase.index(current_text)
-        return phrase[len(current_text)]
-    except ValueError:
-        return backspace
+    workbook.save(excel_file)
+    print("Wrote output to " + excel_file)
 
 
 if __name__ == "__main__":
