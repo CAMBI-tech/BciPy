@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bcipy.helpers.session import session_csv, session_data, session_db
+from bcipy.helpers.session import read_session, session_csv, session_data
 
 
 class TestSessionHelper(unittest.TestCase):
@@ -29,15 +29,19 @@ class TestSessionHelper(unittest.TestCase):
         self.assertTrue("A" in data["series"]["1"]["0"]["likelihood"])
         self.assertTrue("B" in data["series"]["1"]["0"]["likelihood"])
 
-    def test_session_evidence(self):
+    def test_read_session(self):
+        """Test reading data from json."""
+        session = read_session(Path(self.data_dir, 'session.json'))
+        self.assertEqual(session.total_number_series, 2)
+
+    def test_session_csv(self):
         """Test functionality to transform session.json file to a csv
         summarizing the evidence."""
 
-        db_name = str(Path(self.temp_dir, 'mock_session.db'))
+        session = read_session(Path(self.data_dir, 'session.json'))
         csv_name = str(Path(self.temp_dir, 'mock_session.csv'))
 
-        session_db(data_dir=self.data_dir, db_name=db_name)
-        session_csv(db_name=db_name, csv_name=csv_name)
+        session_csv(session, csv_file=csv_name)
 
         generated = Path(self.temp_dir, 'mock_session.csv')
         expected = Path(self.data_dir, "session.csv")
