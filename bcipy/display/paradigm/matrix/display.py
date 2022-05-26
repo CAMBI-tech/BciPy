@@ -17,36 +17,31 @@ class MatrixDisplay(Display):
 
     Animates display objects in matrix grid common to any Matrix task.
 
-    Initialize Matrix display parameters and objects.
 
-        PARAMETERS:
-        ----------
-        # Experiment
-        window(visual.Window): PsychoPy Window
-        static_clock(core.Clock): Used to schedule static periods of display time
-        experiment_clock(core.Clock): Clock used to timestamp display onsets
+    PARAMETERS:
+    ----------
+    # Experiment
+    window(visual.Window): PsychoPy Window
+    static_clock(core.Clock): Used to schedule static periods of display time
+    experiment_clock(core.Clock): Clock used to timestamp display onsets
 
-        # Stimuli
-        stimuli(StimuliProperties): attributes used for inquiries
+    # Stimuli
+    stimuli(StimuliProperties): attributes used for inquiries
 
-        # Task
-        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+    # Task
+    task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
 
-        # Info
-        info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
+    # Info
+    info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
 
-        # Preview Inquiry
-        preview_inquiry(PreviewInquiryProperties) Optional: attributes to display a preview of upcoming stimuli defined
-            via self.stimuli(StimuliProperties).
-
-        marker_writer(MarkerWriter) Optional: object used to write triggers to
-            a acquisition stream.
-        trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
-            task. This will be used to reconcile timing differences between acquisition and the display.
-        space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
-        full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
-            scaling display items as needed.
-        symbol_set default = none : set of stimuli to be flashed during an inquiry
+    marker_writer(MarkerWriter) Optional: object used to write triggers to
+        a acquisition stream.
+    trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
+        task. This will be used to reconcile timing differences between acquisition and the display.
+    space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
+    full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
+        scaling display items as needed.
+    symbol_set default = none : set of stimuli to be flashed during an inquiry
 
     """
 
@@ -62,7 +57,7 @@ class MatrixDisplay(Display):
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
-            symbol_set=None):
+            symbol_set: Optional[List[str]] = None):
 
         self.window = window
         self.window_size = self.window.size  # [w, h]
@@ -99,6 +94,7 @@ class MatrixDisplay(Display):
 
         self.start_opacity = 0.15
         self.highlight_opacity = 1
+        self.full_grid_opacity = 1
 
         # Trigger handling
         self.first_run = True
@@ -112,8 +108,8 @@ class MatrixDisplay(Display):
 
         # Callback used on presentation of first stimulus.
         self.first_stim_callback = lambda _sti: None
-        self.size_list_sti = []  # TODO force initial size definition
-        self.space_char = space_char  # TODO remove and force task to define
+        self.size_list_sti = []
+        self.space_char = space_char
         self.task_display = task_display
         self.task = task_display.build_task(self.window)
 
@@ -152,7 +148,7 @@ class MatrixDisplay(Display):
 
         raise BciPyCoreException('Only SCP Matrix is available.')
 
-    def build_grid(self) -> None:
+    def build_grid(self, opacity: Optional[float] = None) -> None:
         """Build grid.
 
         Builds and displays a 7x4 matrix of stimuli.
@@ -162,7 +158,7 @@ class MatrixDisplay(Display):
             text_stim = visual.TextStim(
                 win=self.window,
                 text=sym,
-                opacity=self.start_opacity,
+                opacity=opacity if opacity is not None else self.start_opacity,
                 pos=pos,
                 height=self.grid_stimuli_height)
             self.stim_registry[sym] = text_stim
@@ -223,11 +219,14 @@ class MatrixDisplay(Display):
         """
         timing = []
         # build grid and static
+        self.build_grid(opacity=self.full_grid_opacity)
+        self.draw_static()
+        self.window.flip()
+        core.wait(self.buffer_time)
+
         self.build_grid()
         self.draw_static()
-
         self.window.flip()
-
         core.wait(self.buffer_time)
 
         for i, sym in enumerate(self.stimuli_inquiry):
@@ -258,6 +257,10 @@ class MatrixDisplay(Display):
             # append timing information
             timing.append(self.trigger_callback.timing)
             self.trigger_callback.reset()
+
+        self.build_grid()
+        self.draw_static()
+        self.window.flip()
 
         return timing
 
@@ -316,7 +319,7 @@ class MatrixDisplay(Display):
         PARAMETERS:
 
         text: text for task
-        color_list: list of the colors for each char
+        color_list: list of the colors for each stimuli
         pos: position of task
         """
         self.task.text = text
@@ -329,7 +332,7 @@ class MatrixDisplay(Display):
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
-                color_list(list[string]): list of colors for each
+                color_list(list[string]): list of colors for each stimuli
         """
         self.update_task(text=text, color_list=color_list, pos=self.task.pos)
 
