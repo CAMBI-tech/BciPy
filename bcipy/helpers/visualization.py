@@ -1,121 +1,70 @@
 import logging
-from os import path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from matplotlib.figure import Figure
-from mne.io import read_raw_edf
+from bcipy.helpers.raw_data import RawData
 import matplotlib.pyplot as plt
-import numpy as np
 
+from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
+from bcipy.helpers.stimuli import mne_epochs
+from bcipy.signal.process import Composition
+
+import mne
+from mne import Epochs
+from mne.io import read_raw_edf
 
 log = logging.getLogger(__name__)
 
 
 def visualize_erp(
-        data,
-        labels,
-        fs,
-        class_labels: List[str] = ['Non-Target', 'Target'],
-        plot_average: bool = False,
-        show_figure: bool = False,
-        save_path: Optional[str] = None,
-        figure_name: str = 'mean_erp.pdf',
-        channel_names: Optional[dict] = None) -> Figure:
+        raw_data: RawData,
+        channel_map: List[int],
+        trigger_timing: List[float],
+        trigger_labels: List[int],
+        trial_length: float,
+        transform: Optional[Composition] = None,
+        plot_average: Optional[bool] = True,
+        plot_topomaps: Optional[bool] = True,
+        show: Optional[bool] = False,
+        save_path: Optional[bool] = None) -> List[Figure]:
     """ Visualize ERP.
 
     Generates a comparative ERP figure following a task execution. Given a set of trailed data,
-    and labels describing two classes, they are plotted and may be saved or shown in a window.
+    and labels describing two classes (Nontarget=0 and Target=1), they are plotted and may be saved
+    or shown in a window.
 
     Returns a list of the figure handles created.
 
     PARAMETERS
     ----------
-    N: samples
-    k: features
-    C: channels
-
-    data(ndarray[float]): C x N x k data array
-    labels(ndarray[int]): N x k observation (class) array. Assumed to be two classes [0, 1]
-    fs (sampling_rate): sampling rate of the current data signal
-    class_labels: list of legend names for the respective classes for plotting (0 ,1).
-    plot_average: boolean: whether or not to average over all channels
-    show_figure: boolean: whether or not to show the figures generated
+    raw_data(RawData): BciPy RawData
+    channel_map(List[int]): Map of channels to remove (0) or keep (1)
+    trigger_timing: list of trigger timing
+    trigger_labels: list of trigger labels
+    trial_length: length of trials described in trigger_timing / labels in seconds
+    transform(Composition): Optional BciPy composition to apply to data before visualization
+    plot_average: Optional[boolean]: whether or not to average over all channels. Default: True
+    plot_topomap: Optional[boolean]: whether or not to plot all channels across target/nontarget. Default: True
+    show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
-    figure_name: name of the figure to be used when save_path provided
-    channel_names: dict of channel names keyed by their position.
     """
-    channel_names = channel_names or {}
-    classes = np.unique(labels)
-
-    means = [np.squeeze(np.mean(data[:, np.where(labels == label), :], 2))
-             for label in classes]
-
-    data_length = len(means[0][1, :])
-
-    # set upper and lower bounds of figure legend
-    lower = 0
-    upper = data_length / fs * 1000  # convert to seconds
-
-    fig = plt.figure(figsize=(20, 10))
-    ax1 = fig.add_subplot(211)
-
+    mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
+    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
+    # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
+    # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
+    # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
+    epochs = (epochs['1'], epochs['2'])
+    figs = []
     if plot_average:
-        # find the mean across rows for non target and target
-        class_one_mean = np.mean(means[0], axis=0)
-        class_two_mean = np.mean(means[1], axis=0)
+        figs.extend(visualize_evokeds(epochs, save_path=save_path, show=show))
+    if plot_topomaps:
+        figs.extend(visualize_joint_average(epochs, ['Non-Target', 'Target'], save_path=save_path, show=show))
 
-        # plot the means
-        ax1.plot(class_one_mean, label=class_labels[0])
-        ax1.plot(class_two_mean, label=class_labels[1])
-        ax1.legend(loc='upper left', prop={'size': 8})
-
-    else:
-        ax2 = fig.add_subplot(212)
-        count = 0
-        # Loop through all the channels and plot each on the non target/target
-        # subplots
-        while count < means[0].shape[0]:
-            lbl = channel_names.get(count, count)
-            ax1.plot(means[0][count, :], label=lbl)
-            ax2.plot(means[1][count, :], label=lbl)
-            count += 1
-        ax1.legend(loc='upper left', prop={'size': 8})
-        ax2.legend(loc='upper left', prop={'size': 8})
-
-    # make the labels
-    figure_labels = np.linspace(lower, upper, num=8).astype(int).tolist()
-    figure_labels.insert(0, 0)  # needed to force a 0 starting tick
-
-    ax1.set_xticklabels(figure_labels)
-
-    if not plot_average:
-        ax2.set_xticklabels(figure_labels)
-        ax1.set_title(class_labels[0])
-        ax2.set_title(class_labels[1])
-    else:
-        ax1.set_title(f'Average {class_labels[0]} vs. {class_labels[1]}')
-
-    # Set common figure labels
-    fig.text(0.5, 0.04, 'Time (Seconds)', ha='center', va='center')
-    fig.text(0.06, 0.5, r'$\mu V$', ha='center', va='center',
-             rotation='vertical')
-
-    if show_figure:
-        plt.show()
-
-    if save_path:
-        fig.savefig(
-            path.join(
-                save_path,
-                figure_name),
-            bbox_inches='tight',
-            format='pdf')
-
-    return fig
+    return figs
 
 
-def plot_edf(edf_path: str, auto_scale: bool = False):
+def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):
     """Plot data from the raw edf file. Note: this works from an iPython
     session but seems to throw errors when provided in a script.
 
@@ -132,7 +81,7 @@ def plot_edf(edf_path: str, auto_scale: bool = False):
         edf.plot()
 
 
-def visualize_csv_eeg_triggers(trigger_col=None):
+def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     """Visualize CSV EEG Triggers.
 
     This function is used to load in CSV data and visualize device generated triggers.
@@ -168,47 +117,48 @@ def visualize_csv_eeg_triggers(trigger_col=None):
     plt.show()
 
 
-if __name__ == '__main__':
-    import pickle
+def visualize_joint_average(
+        epochs: Tuple[Epochs],
+        labels: List[str],
+        plot_joint_times: Optional[List[float]] = [-0.1, 0, 0.2, 0.3, 0.35, 0.4, 0.5],
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False) -> List[Figure]:
+    """Visualize Joint Average.
 
-    # load some x, y data from test files
-    x = pickle.load(
-        open(
-            'bcipy/helpers/tests/resources/mock_x_generate_erp.pkl',
-            'rb'))
-    y = pickle.load(
-        open(
-            'bcipy/helpers/tests/resources/mock_y_generate_erp.pkl',
-            'rb'))
+    Plots channel average for each condition and provides corresponding topomaps for times defined in plot_joint_times.
 
-    names = {
-        0: 'P3',
-        1: 'C3',
-        2: 'F3',
-        3: 'Fz',
-        4: 'F4',
-        5: 'C4',
-        6: 'P4',
-        7: 'Cz',
-        8: 'A1',
-        9: 'Fp1',
-        10: 'Fp2',
-        11: 'T3',
-        12: 'T5',
-        13: 'O1',
-        14: 'O2',
-        15: 'F7',
-        16: 'F8',
-        17: 'A2',
-        18: 'T6',
-        19: 'T4'
-    }
-    # generate the offline analysis screen. show figure at the end
-    visualize_erp(
-        x,
-        y,
-        150,
-        # save_path='.', # uncomment to save to current working directory
-        show_figure=True,
-        plot_average=False,
-        channel_names=names)
+    See: https://mne.tools/dev/generated/mne.Evoked.html#mne.Evoked.plot_joint
+
+    Note: assumes the number of Epochs (passed as a tuple) is equal to the number of labels provided
+    """
+    assert len(epochs) == len(labels), "The number of epochs must match labels in Visualize Joint Average"
+
+    figs = []
+    for i, label in enumerate(labels):
+        avg = epochs[i].average()
+        fig = avg.plot_joint(times=plot_joint_times, title=label, show=show)
+        if save_path:
+            fig.savefig(
+                f'{save_path}/{label.lower()}_topomap.png'
+            )
+        figs.append(fig)
+    return figs
+
+
+def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
+                      = None, show: Optional[bool] = False) -> List[Figure]:
+    """Visualize Evokeds.
+
+    Using MNE Epochs, generate a compare evokeds plot using the mean and showing parametric confidence
+    interval in shaded region.
+
+    See: https://mne.tools/stable/generated/mne.viz.plot_compare_evokeds.html
+
+    Note: Assumes first epoch is nontarget and second is target."""
+    evokeds = dict(nontarget=list(epochs[0].iter_evoked()),
+                   target=list(epochs[1].iter_evoked()))
+    fig = mne.viz.plot_compare_evokeds(evokeds, combine='mean', show=show)
+    if save_path:
+        fig[0].savefig(f'{save_path}/average_erp.png')
+
+    return fig

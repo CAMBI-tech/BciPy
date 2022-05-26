@@ -20,6 +20,9 @@ from psychopy import core
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+from mne import Annotations, Epochs
+from mne.io import RawArray
+import mne
 
 
 log = logging.getLogger(__name__)
@@ -96,7 +99,7 @@ class InquiryReshaper:
                  trial_targetness_label: List[str],
                  timing_info: List[float],
                  eeg_data: np.ndarray,
-                 fs: int,
+                 sample_rate: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
                  channel_map: List[int] = None,
@@ -110,7 +113,7 @@ class InquiryReshaper:
             trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (List[float]): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
+            sample_rate (int): sample rate of data provided in eeg_data
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
@@ -134,11 +137,11 @@ class InquiryReshaper:
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         n_inquiry = len(timing_info) // trials_per_inquiry
-        trial_duration_samples = int(poststimulus_length * fs)
-        prestimulus_samples = int(prestimulus_length * fs)
+        trial_duration_samples = int(poststimulus_length * sample_rate)
+        prestimulus_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # First, find the longest inquiry in this experiment
         # We'll add or remove a few samples from all other inquiries, to match this length
@@ -147,7 +150,7 @@ class InquiryReshaper:
 
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
-        buffer_samples = int(transformation_buffer * fs)
+        buffer_samples = int(transformation_buffer * sample_rate)
 
         # Label for every inquiry
         labels = np.zeros(
@@ -199,7 +202,7 @@ class TrialReshaper(Reshaper):
                  trial_targetness_label: list,
                  timing_info: list,
                  eeg_data: np.ndarray,
-                 fs: int,
+                 sample_rate: int,
                  offset: float = 0,
                  channel_map: List[int] = None,
                  poststimulus_length: float = 0.5,
@@ -211,7 +214,7 @@ class TrialReshaper(Reshaper):
             trial_targetness_label (list): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (list): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of preprocessed EEG data
+            sample_rate (int): sample rate of preprocessed EEG data
             trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
             offset (float, optional): Any calculated or hypothesized offsets in timings.
                 Defaults to 0.
@@ -230,11 +233,11 @@ class TrialReshaper(Reshaper):
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         # Number of samples we are interested per trial
-        poststim_samples = int(poststimulus_length * fs)
-        prestim_samples = int(prestimulus_length * fs)
+        poststim_samples = int(poststimulus_length * sample_rate)
+        prestim_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
         targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
@@ -247,6 +250,20 @@ class TrialReshaper(Reshaper):
             reshaped_trials.append(eeg_data[:, trigger - prestim_samples: trigger + poststim_samples])
 
         return np.stack(reshaped_trials, 1), targetness_labels
+
+
+def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
+               trial_length: float, trigger_labels: List[int]) -> Epochs:
+    """MNE Epochs.
+
+    Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
+    each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
+    """
+    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+    mne_data.set_annotations(annotations)
+
+    events_from_annot, _ = mne.events_from_annotations(mne_data)
+    return Epochs(mne_data, events_from_annot)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:
