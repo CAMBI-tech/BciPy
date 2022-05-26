@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-from bcipy.helpers.acquisition import analysis_channel_names_by_pos, analysis_channels
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
@@ -55,6 +55,7 @@ def offline_analysis(
     parameters: dict = {},
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
+    show_figures: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -137,12 +138,13 @@ def offline_analysis(
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, type_amp)
+    data, fs = raw_data.by_channel()
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
-        eeg_data=raw_data.by_channel(),
-        fs=sample_rate,
+        eeg_data=data,
+        sample_rate=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=poststim_length,
@@ -176,19 +178,20 @@ def offline_analysis(
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     figure_handles = visualize_erp(
-        data,
+        raw_data,
+        channel_map,
+        trigger_timing,
         labels,
-        fs,
-        plot_average=False,  # set to True to see all channels target/nontarget averages
+        poststim_length,
+        transform=default_transform,
+        plot_average=True,
+        plot_topomaps=True,
         save_path=data_folder,
-        channel_names=analysis_channel_names_by_pos(channels, channel_map),
-        show_figure=False,
-        figure_name="average_erp.pdf",
+        show=show_figures
     )
     if alert_finished:
         offline_analysis_tone = parameters.get("offline_analysis_tone")
         play_sound(offline_analysis_tone)
-
     return model, figure_handles
 
 

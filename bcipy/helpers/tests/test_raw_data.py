@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from mockito import any, mock, when, verify, unstub
+
 from bcipy.helpers.raw_data import (RawData, RawDataReader, RawDataWriter,
                                     load, sample_data, settings, write)
 
@@ -30,6 +32,7 @@ class TestRawData(unittest.TestCase):
     def tearDown(self):
         """Override"""
         shutil.rmtree(self.temp_dir)
+        unstub()
 
     def _write_raw_data(self, include_rows=False) -> RawData:
         """Helper function to write a sample raw data file to disk using the
@@ -280,7 +283,7 @@ class TestRawData(unittest.TestCase):
         data.append([2, 4.0, 5.0, 'A'])
         data.append([3, 7.0, 8.0, '0.0'])
 
-        arr = data.by_channel()
+        arr, _ = data.by_channel()
         self.assertEqual((2, 3), arr.shape)
 
         self.assertTrue(len(data.channels), len(arr))
@@ -288,3 +291,84 @@ class TestRawData(unittest.TestCase):
                         "Should have ch1 data")
         self.assertTrue(np.all(arr[1] == [2.0, 5.0, 8.0]),
                         "Should have ch2 data")
+
+    def test_data_by_channel_applies_transformation(self):
+        """Tests that data correctly structured, can have a transformation applied to it."""
+        columns = ['timestamp', 'ch1', 'ch2', 'TRG']
+        data = RawData(daq_type=self.daq_type,
+                       sample_rate=self.sample_rate,
+                       columns=columns)
+
+        data.append([1, 1.0, 2.0, '0.0'])
+        data.append([2, 4.0, 5.0, 'A'])
+        data.append([3, 7.0, 8.0, '0.0'])
+
+        transform = mock()
+        # note data here should be returned as a nd.array. for mocking we don't care as much
+        when(RawData).apply_transform(any(), transform).thenReturn((data, self.sample_rate))
+        resp, fs = data.by_channel(transform=transform)
+
+        self.assertEqual(self.sample_rate, fs)
+        self.assertEqual(resp, data)
+        verify(RawData, times=1).apply_transform(any(), transform)
+
+    def test_data_by_channel_map(self):
+        """Tests that when given a channel map, it will filter the numeric columns.
+
+        We assume most trigger columns will be removed (due to being read in as a string or object),
+        however some are numeric trigger channels and may require filtering with a channel map.
+        Other cases could be dropping bad channels.
+        """
+        columns = ['timestamp', 'ch1', 'ch2', 'TRG']
+        channel_map = [1, 1, 0]
+        expected_channels = ['ch1', 'ch2']
+        data = RawData(daq_type=self.daq_type,
+                       sample_rate=self.sample_rate,
+                       columns=columns)
+
+        data.append([1, 1.0, 2.0, 0.0])
+        data.append([2, 4.0, 5.0, 0.0])
+        data.append([3, 7.0, 8.0, 0.0])
+
+        arr, channels, _ = data.by_channel_map(channel_map=channel_map)
+
+        self.assertEqual((2, 3), arr.shape)
+
+        self.assertTrue(len(data.channels), len(arr))
+        self.assertTrue(np.all(arr[0] == [1.0, 4.0, 7.0]),
+                        "Should have ch1 data")
+        self.assertTrue(np.all(arr[1] == [2.0, 5.0, 8.0]),
+                        "Should have ch2 data")
+        self.assertEqual(channels, expected_channels)
+
+    def test_data_by_channel_map_applies_transformation(self):
+        """Tests that when given a channel map, it will filter the numeric columns.
+
+        We assume most trigger columns will be removed (due to being read in as a string or object),
+        however some are numeric trigger channels and may require filtering with a channel map.
+        Other cases could be dropping bad channels.
+        """
+        columns = ['timestamp', 'ch1', 'ch2', 'TRG']
+        channel_map = [1, 1, 1]
+        expected_channels = ['ch1', 'ch2', 'TRG']
+        data = RawData(daq_type=self.daq_type,
+                       sample_rate=self.sample_rate,
+                       columns=columns)
+
+        data.append([1, 1.0, 2.0, 0.0])
+        data.append([2, 4.0, 5.0, 0.0])
+        data.append([3, 7.0, 8.0, 0.0])
+
+        transform = mock()
+        expected_output, expected_fs = data.by_channel()
+        # note data here should be returned as a nd.array. for mocking we don't care as much
+        when(RawData).by_channel(transform).thenReturn((expected_output, expected_fs))
+        _, channels, fs = data.by_channel_map(channel_map=channel_map, transform=transform)
+
+        self.assertEqual(expected_fs, fs)
+        self.assertEqual(expected_channels, channels)
+        verify(RawData, times=1).by_channel(transform)
+
+
+if __name__ == '__main__':
+    unittest.main()

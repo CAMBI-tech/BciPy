@@ -86,7 +86,7 @@ def comparison1(data_folder, parameters, model_path: Path):
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
         eeg_data=data,
-        fs=transformed_sample_rate,
+        sample_rate=transformed_sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
@@ -279,7 +279,7 @@ def validate_inquiry_based_trials_against_trial_reshaper(
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
         eeg_data=data,
-        fs=sample_rate,
+        sample_rate=sample_rate,
         channel_map=channel_map,
         poststimulus_length=trial_length,
     )
