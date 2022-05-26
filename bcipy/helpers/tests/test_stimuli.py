@@ -668,16 +668,16 @@ class TestTrialReshaper(unittest.TestCase):
         self.channel_map = [1] * self.channel_number
 
     def test_trial_reshaper(self):
-        fs = 256
+        sample_rate = 256
         trial_length_s = 0.5
         reshaped_trials, labels = TrialReshaper()(
             trial_targetness_label=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=fs,
+            sample_rate=sample_rate,
             channel_map=self.channel_map,
             poststimulus_length=trial_length_s)
-        trial_length_samples = int(fs * trial_length_s)
+        trial_length_samples = int(sample_rate * trial_length_s)
         expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
         self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
@@ -689,7 +689,7 @@ class TestInquiryReshaper(unittest.TestCase):
         self.trial_length = 0.5
         self.trials_per_inquiry = 3
         self.n_inquiry = 4
-        self.fs = 10
+        self.sample_rate = 10
         self.target_info = [
             "target", "nontarget", "nontarget",
             "nontarget", "nontarget", "nontarget",
@@ -712,7 +712,7 @@ class TestInquiryReshaper(unittest.TestCase):
         self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
 
         # total duration = 3.8s + final trial_length
-        self.eeg = np.random.randn(self.n_channel, int(self.fs * (4.8 + self.trial_length)))
+        self.eeg = np.random.randn(self.n_channel, int(self.sample_rate * (4.8 + self.trial_length)))
         self.channel_map = [1] * self.n_channel
 
     def test_inquiry_reshaper(self):
@@ -720,13 +720,13 @@ class TestInquiryReshaper(unittest.TestCase):
             trial_targetness_label=self.target_info,
             timing_info=self.timing_info,
             eeg_data=self.eeg,
-            fs=self.fs,
+            sample_rate=self.sample_rate,
             trials_per_inquiry=self.trials_per_inquiry,
             channel_map=self.channel_map,
             poststimulus_length=self.trial_length,
         )
 
-        samples_per_inquiry = int(self.fs * self.inquiry_duration_s)
+        samples_per_inquiry = int(self.sample_rate * self.inquiry_duration_s)
         expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))

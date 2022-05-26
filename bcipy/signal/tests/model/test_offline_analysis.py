@@ -35,7 +35,9 @@ class TestOfflineAnalysis(unittest.TestCase):
         params_path = pwd.parent.parent.parent / "parameters" / "parameters.json"
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         cls.model, fig_handles = offline_analysis(str(cls.tmp_dir), cls.parameters, alert_finished=False)
-        cls.mean_erp_fig_handle = fig_handles
+        cls.mean_erp_fig_handle = fig_handles[0]
+        cls.mean_nontarget_topomap_handle = fig_handles[1]
+        cls.mean_target_topomap_handle = fig_handles[2]
 
     @classmethod
     def tearDownClass(cls):
@@ -56,6 +58,16 @@ class TestOfflineAnalysis(unittest.TestCase):
     @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png", remove_text=True)
     def test_mean_erp(self):
         return self.mean_erp_fig_handle
+
+    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder,
+                                   filename="test_target_topomap.png", remove_text=False)
+    def test_target_topomap(self):
+        return self.mean_target_topomap_handle
+
+    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder,
+                                   filename="test_nontarget_topomap.png", remove_text=False)
+    def test_nontarget_topomap(self):
+        return self.mean_nontarget_topomap_handle
 
 
 if __name__ == "__main__":

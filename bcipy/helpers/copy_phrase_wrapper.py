@@ -206,7 +206,7 @@ class CopyPhraseWrapper:
             trial_targetness_label=target_info,
             timing_info=times,
             eeg_data=data,
-            fs=transformed_sample_rate,
+            sample_rate=transformed_sample_rate,
             channel_map=self.channel_map,
             poststimulus_length=window_length)
 
