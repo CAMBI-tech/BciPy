@@ -108,8 +108,9 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         if not fake:
             try:
                 signal_model, _filename = load_signal_model(
-                    model_class=PcaRdaKdeModel, model_kwargs={
-                        'k_folds': parameters['k_folds']})
+                    model_class=PcaRdaKdeModel,
+                    model_kwargs={'k_folds': parameters['k_folds']},
+                    filename=parameters['signal_model_path'])
             except Exception as e:
                 log.exception(f'Cannot load signal model. Exiting. {e}')
                 raise e

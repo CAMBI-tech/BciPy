@@ -25,7 +25,7 @@ class FileDialog(QWidget):
         self.options = QFileDialog.Options()
         self.options |= QFileDialog.DontUseNativeDialog
 
-    def ask_file(self, file_types: str = DEFAULT_FILE_TYPES) -> str:
+    def ask_file(self, file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
         """Opens a file dialog window.
         Returns
         -------
@@ -33,7 +33,7 @@ class FileDialog(QWidget):
         """
         filename, _ = QFileDialog.getOpenFileName(self,
                                                   "Select File",
-                                                  "",
+                                                  directory,
                                                   file_types,
                                                   options=self.options)
         return filename
@@ -50,13 +50,14 @@ class FileDialog(QWidget):
                                                 options=self.options)
 
 
-def ask_filename(file_types: str = DEFAULT_FILE_TYPES) -> str:
+def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
     """Prompt for a file.
 
     Parameters
     ----------
     - file_types : optional file type filters; Examples: 'Text files (*.txt)'
     or 'Image files (*.jpg *.gif)' or '*.csv;;*.pkl'
+    - directory : optional directory
 
     Returns
     -------
@@ -64,7 +65,7 @@ def ask_filename(file_types: str = DEFAULT_FILE_TYPES) -> str:
     """
     app = QApplication(sys.argv)
     dialog = FileDialog()
-    filename = dialog.ask_file(file_types)
+    filename = dialog.ask_file(file_types, directory)
 
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
