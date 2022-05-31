@@ -3,7 +3,7 @@ import shutil
 import time
 import unittest
 
-from bcipy.helpers.acquisition import init_eeg_acquisition
+from bcipy.helpers.acquisition import init_eeg_acquisition, max_inquiry_duration
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
 
@@ -22,8 +22,7 @@ class TestAcquisition(unittest.TestCase):
 
         self.save = init_save_data_structure(self.data_save_path,
                                              self.user_information,
-                                             self.parameters_used,
-                                             self.task)
+                                             self.parameters_used, self.task)
 
     def tearDown(self):
         """Override; teardown test"""
@@ -32,6 +31,7 @@ class TestAcquisition(unittest.TestCase):
     def test_default_values(self):
         """Test default values."""
         self.parameters['acq_device'] = 'DSI'
+        self.parameters['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(self.parameters,
                                               self.save,
@@ -47,13 +47,12 @@ class TestAcquisition(unittest.TestCase):
                          self.parameters['acq_device'])
         self.assertEqual(client.device_info.fs, 300)
 
-    def test_allows_customization(self):
-        """Test init_eeg_acquisition with custom values."""
+    def test_lsl_client(self):
+        """Test init_eeg_acquisition with LSL client."""
 
         params = self.parameters
-        params['raw_data_name'] = 'foo.csv'
-        params['acq_port'] = 9000
-        params['acq_device'] = 'DSI'
+        params['acq_device'] = 'DSI-24'
+        params['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 
@@ -62,24 +61,21 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertEqual(client.device_info.name, params['acq_device'])
+        self.assertEqual(client.device_info.name, 'DSI-24')
         self.assertEqual(client.device_info.fs, 300)
 
-    def test_can_use_lsl(self):
-        """Test init_eeg_acquisition with LSL device"""
+    def test_max_inquiry_duration(self):
+        """Test the max inquiry duration function"""
+        params = {
+            'time_fixation': 0.5,
+            'time_prompt': 1,
+            'stim_length': 10,
+            'time_flash': 0.25,
+            'task_buffer_length': 0.75,
+            'prestim_length': 0
+        }
 
-        params = self.parameters
-        params['acq_device'] = 'LSL'
-
-        client, server = init_eeg_acquisition(params, self.save, server=True)
-
-        with client:
-            time.sleep(0.1)
-        client.cleanup()
-        server.stop()
-
-        self.assertEqual(client.device_info.name, 'LSL')
-        self.assertEqual(client.device_info.fs, 256)
+        self.assertEqual(4.75, max_inquiry_duration(params))
 
 
 if __name__ == '__main__':

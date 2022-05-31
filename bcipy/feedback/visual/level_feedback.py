@@ -1,14 +1,16 @@
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from psychopy import visual, core
-
 from typing import Tuple
+
+from psychopy import core, visual
+
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.helpers.clock import Clock
 
 
 class LevelFeedback(VisualFeedback):
     """Level Feedback.
 
     A progress bar like feedback to indicate current abilities in a BCI task. This could
-        be atteniveness, muscle or eye activity, etc.
+        be attentiveness, muscle or eye activity, etc.
 
     It does not return stimuli timing or allow for parameterized configuration of levels / color gradient
     at this time.
@@ -131,14 +133,14 @@ class LevelFeedback(VisualFeedback):
 
 if __name__ == '__main__':
     from bcipy.helpers.load import load_json_parameters
-    from bcipy.display.display_main import init_display_window
+    from bcipy.display import init_display_window
 
     # Load a parameters file
     parameters = load_json_parameters(
         'bcipy/parameters/parameters.json',
         value_cast=True)
     display = init_display_window(parameters)
-    clock = core.Clock()
+    clock = Clock()
     feedback = LevelFeedback(display, parameters, clock)
 
     for index, _ in enumerate(feedback.level_colors):

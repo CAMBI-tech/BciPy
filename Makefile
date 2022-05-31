@@ -6,12 +6,18 @@ dev-install:
 	pip install -e .
 
 test-all:
-	coverage run --branch --source=bcipy -m pytest
-	flake8 bcipy
+	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 	coverage report
+	flake8 bcipy
+
+unit-test:
+	pytest --mpl -k "not slow"
+
+integration-test:
+	pytest --mpl -k "slow"
 
 coverage-html:
-	coverage run --branch --source=bcipy -m pytest
+	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
 	coverage html
 
 lint:
@@ -25,3 +31,6 @@ clean:
 
 bci-gui:
 	python bcipy/gui/BCInterface.py
+
+viewer:
+	python bcipy/gui/viewer/data_viewer.py --file $(filepath)

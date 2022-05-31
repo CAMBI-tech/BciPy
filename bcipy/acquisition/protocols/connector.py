@@ -33,6 +33,10 @@ class Connector:
                  connection_method: ConnectionMethod) -> bool:
         return False
 
+    @classmethod
+    def connection_method(cls) -> ConnectionMethod:
+        return None
+
     @property
     def name(self):
         """Device name to be written to the output."""

@@ -1,10 +1,8 @@
-from psychopy import core
 import unittest
 
 from mockito import mock, when, unstub
 
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
-from bcipy.helpers.load import load_json_parameters
 
 import sounddevice as sd
 
@@ -13,13 +11,11 @@ class TestSoundFeedback(unittest.TestCase):
 
     def setUp(self):
         """set up the needed path for load functions."""
-
-        self.parameters_used = 'bcipy/parameters/parameters.json'
-        self.parameters = load_json_parameters(self.parameters_used)
+        self.parameters = {}
         self.data_save_path = 'data/'
         self.user_information = 'test_user_0010'
 
-        self.clock = core.Clock()
+        self.clock = mock()
         self.sound = mock()
         self.fs = mock()
         when(sd).play(self.sound, self.fs, blocking=True).thenReturn(None)
@@ -38,7 +34,14 @@ class TestSoundFeedback(unittest.TestCase):
         self.assertEqual(feedback_type, 'Auditory Feedback')
 
     def test_feedback_administer_sound(self):
+        timestamp = 100
+        when(self.clock).getTime().thenReturn(timestamp)
         resp = self.auditory_feedback.administer(
             self.sound, self.fs)
 
         self.assertTrue(isinstance(resp, list))
+        self.assertEqual(resp[0], [self.auditory_feedback.feedback_timestamp_label, timestamp])
+
+
+if __name__ == '__main__':
+    unittest.main()

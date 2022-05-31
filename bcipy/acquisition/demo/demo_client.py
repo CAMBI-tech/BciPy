@@ -11,7 +11,6 @@ def main():
 
     import time
     import sys
-    from psychopy import clock
 
     # Allow the script to be run from the bci root, acquisition dir, or
     # demo dir.
@@ -20,18 +19,19 @@ def main():
     sys.path.append('../..')
 
     from bcipy.acquisition.client import DataAcquisitionClient
-    from bcipy.acquisition.devices import supported_device
+    from bcipy.acquisition.devices import preconfigured_device
     from bcipy.acquisition.protocols.dsi.dsi_connector import DsiConnector
+    from bcipy.helpers.clock import Clock
 
     # Start the server with the command:
     # python bcipy/acquisition/datastream/tcp_server.py --name DSI --port 9000
-    device_spec = supported_device('DSI')
+    device_spec = preconfigured_device('DSI')
     connection_params = {'host': '127.0.0.1', 'port': 9000}
     connector = DsiConnector(connection_params=connection_params,
                              device_spec=device_spec)
 
     # Use default processor (FileWriter), buffer, and clock.
-    client = DataAcquisitionClient(connector=connector, clock=clock.Clock())
+    client = DataAcquisitionClient(connector=connector, clock=Clock())
 
     try:
         client.start_acquisition()

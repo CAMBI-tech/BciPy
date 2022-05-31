@@ -427,6 +427,20 @@ class TestParameters(unittest.TestCase):
         with self.assertRaises(Exception):
             parameters.check_valid_entry("fake_data", True)
 
+    def test_check_entry_bool_type(self):
+        """Test that invalid bool types are rejected"""
+        parameters = Parameters(source=None, cast_values=False)
+        with self.assertRaises(Exception):
+            parameters.check_valid_entry(
+                "fake_data", {
+                    "value": True,
+                    "section": "bci_config",
+                    "readableName": "Fake Data Sessions",
+                    "helpTip": "If true, fake data server used",
+                    "recommended_values": "",
+                    "type": "bool"
+                })
+
     def test_alternate_constructor(self):
         """Test alternate constructor from cast values"""
         parameters = Parameters.from_cast_values(myint=1,

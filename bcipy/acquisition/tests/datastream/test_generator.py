@@ -112,7 +112,7 @@ class TestGenerator(unittest.TestCase):
             for _ in range(row_count):
                 next(gen)
 
-            with self.assertRaises(StopIteration):
+            with self.assertRaises((StopIteration, RuntimeError)):
                 data.append(next(gen))
 
     def test_file_with_custom_encoder(self):
@@ -168,3 +168,7 @@ class TestGenerator(unittest.TestCase):
         gen4 = new_generator(step=2)
         self.assertEqual(1, next(gen4))
         self.assertEqual(3, next(gen4))
+
+
+if __name__ == "__main__":
+    unittest.main()
