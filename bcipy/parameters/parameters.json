@@ -291,7 +291,7 @@
     "type": "directorypath"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen Mode On/Off",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
@@ -608,7 +608,7 @@
     "type": "str"
   },
   "task_text": {
-    "value": "HELLO_WORLD",
+    "value": "DO_WE_HAVE_ANY_CHIPS",
     "section": "bci_config",
     "readableName": "Target Phrase",
     "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
@@ -764,7 +764,7 @@
     "type": "bool"
   },
   "spelled_letters_count": {
-    "value": "0",
+    "value": "15",
     "section": "bci_config",
     "readableName": "Pre-Selected Letters Count",
     "helpTip": "Specifies the number of letters in the target phrase that are already typed when the task begins, e.g. if the target phrase is “THE_DOG”, setting this parameter to ‘4’ would display “THE_” as the typed string, and the user would begin typing with D. If ‘0’, the typed string will be blank.",
@@ -799,7 +799,7 @@
     "type": "float"
   },
   "show_preview_inquiry": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Preview Inquiry On/Off",
     "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
@@ -807,7 +807,7 @@
     "type": "bool"
   },
   "preview_inquiry_progress_method": {
-    "value": "0",
+    "value": "1",
     "section": "bci_config",
     "readableName": "Preview Inquiry Progression Method",
     "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 0 = preview only; 1 = press to confirm; 2 = press to skip to another inquiry",

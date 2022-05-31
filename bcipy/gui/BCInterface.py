@@ -32,7 +32,7 @@ class BCInterface(BCIGui):
     btn_height = 40
     max_length = 25
     min_length = 1
-    timeout = 10
+    timeout = 3
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
