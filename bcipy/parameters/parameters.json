@@ -284,7 +284,7 @@
     "type": "directorypath"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen Mode On/Off",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
@@ -383,7 +383,7 @@
     "type": "str"
   },
   "nontarget_inquiries": {
-    "value": "10",
+    "value": "0",
     "section": "bci_config",
     "readableName": "Percentage of Nontarget Inquiries",
     "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",

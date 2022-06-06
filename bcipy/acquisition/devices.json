@@ -17,11 +17,11 @@
             "tEEG_11","tEEG_12","tEEG_13","tEEG_14","tEEG_15","tEEG_16","tEEG_17","tEEG_18","tEEG_19","tEEG_20","REF_copy",
             "eEEG_1","eEEG_2","eEEG_3","eEEG_4","eEEG_5","eEEG_6","eEEG_7","eEEG_8","eEEG_9","eEEG_10",
             "eEEG_11","eEEG_12","eEEG_13","eEEG_14","eEEG_15","eEEG_16","eEEG_17","eEEG_18","eEEG_19","eEEG_20",
-            "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","photodiode"],
+            "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","AUX_1"],
       "connection_methods": [ "LSL" ],
       "sample_rate": 500.0,
       "description": "Brain Products actiCHamp",
-      "excluded_from_analysis": ["REF", "photodiode", "IMP_0", "IMP_M", "IMP_C", "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64"]
+      "excluded_from_analysis": ["REF", "AUX_1", "IMP_0", "IMP_M", "IMP_C", "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64"]
   },
     {
         "name": "DSI-VR300",
