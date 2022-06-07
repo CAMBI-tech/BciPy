@@ -8,7 +8,7 @@
     "type": "bool"
   },
   "acq_device": {
-    "value": "actiCHamp",
+    "value": "actiCHamp-21030529",
     "section": "acq_config",
     "readableName": "Acquisition Device",
     "helpTip": "Specifies the hardware used for EEG data collection.",
@@ -99,7 +99,7 @@
     "type": "filepath"
   },
   "filter_high": {
-    "value": "20",
+    "value": "70",
     "section": "signal_config",
     "readableName": "High Frequency Filter Cutoff",
     "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",

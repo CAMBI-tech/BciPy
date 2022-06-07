@@ -61,9 +61,10 @@ def convert_to_edf(data_dir: str,
     raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
     trigger_file = params.get('trigger_file_name', 'triggers')
+    static_offset = params.get("static_trigger_offset")
 
     trigger_type, trigger_timing, trigger_label = trigger_decoder(
-        str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False)
+        str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False, offset=static_offset)
 
     # validate annotation parameters given data length and trigger count
     validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))
@@ -361,6 +362,6 @@ def convert_to_mne(
     info = mne.create_info(channels, fs, channel_types)
     mne_data = RawArray(data, info)
     ten_twenty_montage = mne.channels.make_standard_montage(montage)
-    mne_data.set_montage(ten_twenty_montage)
+    mne_data.set_montage(ten_twenty_montage, on_missing='ignore')
 
     return mne_data

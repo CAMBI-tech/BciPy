@@ -16,6 +16,46 @@ from mne.io import read_raw_edf
 
 log = logging.getLogger(__name__)
 
+mapping = {
+    "tEEG_1": "Fp1",
+    "tEEG_2": "F3",
+    "tEEG_3": "C3",
+    "tEEG_4": "P7",
+    "tEEG_5": "P3",
+    "tEEG_6": "O1",
+    "tEEG_7": "Fp2",
+    "tEEG_8": "F4",
+    "tEEG_9": "C4",
+    "tEEG_10": "P8",
+    "tEEG_11": "P4",
+    "tEEG_12": "O2",
+    "tEEG_13": "Fz",
+    "tEEG_14": "Cz",
+    "tEEG_15": "CPz",
+    "tEEG_16": "Pz",
+    "tEEG_17": "POz",
+}
+
+# mapping = {
+#     "eEEG_1": "Fp1",
+#     "eEEG_2": "F3",
+#     "eEEG_3": "C3",
+#     "eEEG_4": "P7",
+#     "eEEG_5": "P3",
+#     "eEEG_6": "O1",
+#     "eEEG_7": "Fp2",
+#     "eEEG_8": "F4",
+#     "eEEG_9": "C4",
+#     "eEEG_10": "P8",
+#     "eEEG_11": "P4",
+#     "eEEG_12": "O2",
+#     "eEEG_13": "Fz",
+#     "eEEG_14": "Cz",
+#     "eEEG_15": "CPz",
+#     "eEEG_16": "Pz",
+#     "eEEG_17": "POz",
+# }
+
 
 def visualize_erp(
         raw_data: RawData,
@@ -50,6 +90,9 @@ def visualize_erp(
     save_path: optional path to a save location of the figure generated
     """
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
+    mne_data.rename_channels(mapping)
+    ten_twenty_montage = mne.channels.make_standard_montage('standard_1020') 
+    mne_data.set_montage(ten_twenty_montage, on_missing='ignore')
     epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
