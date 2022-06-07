@@ -174,7 +174,7 @@ class RSVPCopyPhraseTask(Task):
     def validate_parameters(self) -> None:
         """Validate.
 
-        Confirm Task is configurated with correct parameters and within operating limits.
+        Confirm Task is configured with correct parameters and within operating limits.
         """
 
         # ensure all required parameters are provided
@@ -370,10 +370,10 @@ class RSVPCopyPhraseTask(Task):
         data save location (triggers.txt, session.json)
         """
         self.logger.debug('Starting Copy Phrase Task!')
-
+        run = True
         self.wait()  # buffer for data processing
 
-        while self.user_wants_to_continue() and self.current_inquiry:
+        while run and self.user_wants_to_continue() and self.current_inquiry:
             target_stimuli = self.next_target()
             stim_times, proceed = self.present_inquiry(
                 self.current_inquiry)
