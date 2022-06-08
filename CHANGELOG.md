@@ -15,6 +15,7 @@
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
 - `parameters/parameters.json`: added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task.
+- `parameters/parameters.json`: added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
 
 
 ### Updated

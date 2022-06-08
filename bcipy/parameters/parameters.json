@@ -97,6 +97,14 @@
     "recommended_values": "",
     "type": "filepath"
   },
+  "signal_model_path": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Signal Model Path",
+    "helpTip": "Directory of the pre-trained signal model. This is often the the calibration session directory.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
   "filter_high": {
     "value": "20",
     "section": "signal_config",
