@@ -5,6 +5,7 @@
 - New MNE based plotting for EEG data #220
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
+- Bug fixes #225
 
 ### Added
 
@@ -26,6 +27,7 @@
 
 ### Removed
 
+- `task/paradigm/rsvp/copy_phrase.py`: removed await_start to prevent two space hits for the task to start #225
 
 
 # 2.0.0-rc.1
