@@ -102,7 +102,9 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
     for series_index, inquiry_list in enumerate(session.series):
         for inq_index, inquiry in enumerate(inquiry_list):
             evidence = inquiry.stim_evidence(symbol_set=session.symbol_set)
-
+            stimuli = inquiry.stimuli
+            if len(stimuli) == 1 and isinstance(stimuli[0], list):
+                stimuli = stimuli[0]
             for stim, _likelihood_ev in evidence['likelihood'].items():
                 records.append(
                     EvidenceRecord(
@@ -113,10 +115,10 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
                         eeg=evidence['eeg_evidence'].get(stim, ''),
                         btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
-                        inq_position=inquiry.stimuli.index(stim)
-                        if stim in inquiry.stimuli else None,
+                        inq_position=stimuli.index(stim)
+                        if stim in stimuli else None,
                         is_target=int(inquiry.target_letter == stim),
-                        presented=int(stim in inquiry.stimuli),
+                        presented=int(stim in stimuli),
                         above_threshold=int(evidence['likelihood'][stim] >
                                             session.decision_threshold)))
     return records
