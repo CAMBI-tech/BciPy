@@ -446,7 +446,7 @@
     "type": "float"
   },
   "stim_font": {
-    "value": "Catamaran",
+    "value": "Overpass Mono Medium",
     "section": "bci_config",
     "readableName": "Stimulus Font",
     "helpTip": "Specifies the font used for text stimuli. Default: Arial",
@@ -461,7 +461,7 @@
     "type": "str"
   },
   "stim_height": {
-    "value": "0.5",
+    "value": "0.55",
     "section": "bci_config",
     "readableName": "Stimulus Size",
     "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
@@ -571,7 +571,7 @@
     "type": "str"
   },
   "info_font": {
-    "value": "Catamaran",
+    "value": "Overpass Mono Medium",
     "section": "bci_config",
     "readableName": "Font Text",
     "helpTip": "Font Text",
@@ -602,7 +602,7 @@
     "type": "str"
   },
   "task_font": {
-    "value": "Catamaran",
+    "value": "Overpass Mono Medium",
     "section": "bci_config",
     "readableName": "Task Text Font",
     "helpTip": "Specifies the font used for task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: Arial",
@@ -904,7 +904,7 @@
     "type": "float"
   },
   "feedback_font": {
-    "value": "Catamaran",
+    "value": "Overpass Mono Medium",
     "section": "feedback_config",
     "readableName": "feedback_font",
     "helpTip": "feedback_font",
