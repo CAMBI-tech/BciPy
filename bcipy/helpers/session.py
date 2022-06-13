@@ -103,6 +103,7 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
         for inq_index, inquiry in enumerate(inquiry_list):
             evidence = inquiry.stim_evidence(symbol_set=session.symbol_set)
             stimuli = inquiry.stimuli
+            # Flatten if stimuli is structured as a nested list.
             if len(stimuli) == 1 and isinstance(stimuli[0], list):
                 stimuli = stimuli[0]
             for stim, _likelihood_ev in evidence['likelihood'].items():
@@ -115,8 +116,7 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
                         eeg=evidence['eeg_evidence'].get(stim, ''),
                         btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
-                        inq_position=stimuli.index(stim)
-                        if stim in stimuli else None,
+                        inq_position=stimuli.index(stim) if stim in stimuli else None,
                         is_target=int(inquiry.target_letter == stim),
                         presented=int(stim in stimuli),
                         above_threshold=int(evidence['likelihood'][stim] >
