@@ -174,7 +174,7 @@ class RSVPCopyPhraseTask(Task):
     def validate_parameters(self) -> None:
         """Validate.
 
-        Confirm Task is configurated with correct parameters and within operating limits.
+        Confirm Task is configured with correct parameters and within operating limits.
         """
 
         # ensure all required parameters are provided
@@ -242,16 +242,6 @@ class RSVPCopyPhraseTask(Task):
             notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
             stim_order=StimuliOrder(self.parameters['stim_order']))
-
-    def await_start(self) -> bool:
-        """Wait on the splash screen for the user to either exit or start."""
-        self.logger.debug('Awaiting user start.')
-        should_continue = get_user_input(
-            self.rsvp,
-            self.parameters['wait_screen_message'],
-            self.parameters['wait_screen_message_color'],
-            first_run=self.first_run)
-        return should_continue
 
     def user_wants_to_continue(self) -> bool:
         """Check if user wants to continue or terminate.
@@ -380,12 +370,10 @@ class RSVPCopyPhraseTask(Task):
         data save location (triggers.txt, session.json)
         """
         self.logger.debug('Starting Copy Phrase Task!')
-        run = self.await_start()
+        run = True
+        self.wait()  # buffer for data processing
 
-        self.wait()  # buffer for data
-
-        while run and self.user_wants_to_continue(
-        ) and self.current_inquiry:
+        while run and self.user_wants_to_continue() and self.current_inquiry:
             target_stimuli = self.next_target()
             stim_times, proceed = self.present_inquiry(
                 self.current_inquiry)
