@@ -8,8 +8,9 @@ import platform
 import socket
 import sys
 import time
+import torch
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import pkg_resources
 import psutil
@@ -114,6 +115,14 @@ def get_screen_resolution() -> Tuple[int, int]:
     screen = pyglet.canvas.get_display().get_default_screen()
     return (screen.width, screen.height)
 
+def get_gpu_info() -> List[dict]:
+    """Information about GPUs available for processing."""
+    properties = []
+    for idx in range(torch.cuda.device_count()):
+        prop = torch.get_device_properties(idx)
+        properties.append(dict(name=prop.name, total_memory=prop.total_memory))
+    return properties
+
 
 def get_system_info() -> dict:
     """Get System Information.
@@ -127,6 +136,7 @@ def get_system_info() -> dict:
     """
     screen_width, screen_height = get_screen_resolution()
     info = get_cpu_info()
+    gpu_info = get_gpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -140,6 +150,9 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
+        'gpu_available': torch.cuda.is_available(),
+        'gpu_count': len(gpu_info),
+        'gpu_details': gpu_info,
         'hz': info['hz_actual_friendly'],
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
