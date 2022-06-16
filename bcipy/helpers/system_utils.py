@@ -23,7 +23,7 @@ EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
 DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
 DEFAULT_FIELD_PATH = '.bcipy/field/'
-REMOTE_SERVER="https://github.com/CAMBI-tech/BciPy/"
+REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"
 
 
 def is_connected(hostname: str = "one.one.one.one", port=80) -> bool:
@@ -114,6 +114,7 @@ def get_screen_resolution() -> Tuple[int, int]:
      """
     screen = pyglet.canvas.get_display().get_default_screen()
     return (screen.width, screen.height)
+
 
 def get_gpu_info() -> List[dict]:
     """Information about GPUs available for processing."""
@@ -244,7 +245,6 @@ def log_to_stdout():
     """Set logging to stdout. Useful for demo scripts.
     https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log-file
     """
-
 
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
