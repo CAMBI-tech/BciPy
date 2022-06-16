@@ -6,6 +6,7 @@
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
 - Bug fixes #225
+- Alerting for conditions that may affect system performance
 
 ### Added
 
