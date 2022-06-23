@@ -26,7 +26,7 @@ DEFAULT_FIELD_PATH = '.bcipy/field/'
 REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"
 
 
-def is_connected(hostname: str = "one.one.one.one", port=80) -> bool:
+def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
     """Test for internet connectivity.
 
     Parameters
