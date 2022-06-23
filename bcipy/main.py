@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 
 from bcipy.display import init_display_window
-from bcipy.gui.alert import confirm
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
@@ -11,40 +10,15 @@ from bcipy.helpers.load import (load_experiments, load_json_parameters,
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.session import collect_experiment_field_data
-from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_ID, REMOTE_SERVER,
-                                        configure_logger, get_system_info, is_connected)
+from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_ID,
+                                        configure_logger, get_system_info)
 from bcipy.helpers.task import print_message
-from bcipy.helpers.validate import validate_experiment
+from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
 
 log = logging.getLogger(__name__)
-
-
-def preconditions_ok(parameters) -> bool:
-    """If any possible problems are detected, alert the user and prompt to continue.
-
-    Parameters
-    ----------
-    parameters - configuration used to check for issues
-
-    Returns
-    -------
-    True if it's okay to continue, otherwise False
-    """
-    possible_alerts = [(parameters['fake_data'], '* Fake data is on.'),
-                       (is_connected(REMOTE_SERVER), '* Internet is on.')]
-    alert_messages = [
-        message for (condition, message) in possible_alerts if condition
-    ]
-    if alert_messages:
-        lines = [
-            "The following conditions may affect system behavior:\n",
-            *alert_messages, "\nDo you want to continue?"
-        ]
-        return confirm("\n".join(lines))
-    return True
 
 
 def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
@@ -72,7 +46,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
 
-    if not preconditions_ok(parameters):
+    if not validate_bcipy_session(parameters):
         return False
 
     # Update property to reflect the parameter source
