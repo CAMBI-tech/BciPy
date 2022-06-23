@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 
 from bcipy.display import init_display_window
-from bcipy.gui.alert import confirm
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
@@ -14,7 +13,7 @@ from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_ID,
                                         configure_logger, get_system_info)
 from bcipy.helpers.task import print_message
-from bcipy.helpers.validate import validate_experiment
+from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
@@ -47,7 +46,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
 
-    if parameters['fake_data'] and not confirm("Fake data is on.  Do you want to continue?"):
+    if not validate_bcipy_session(parameters):
         return False
 
     # Update property to reflect the parameter source
