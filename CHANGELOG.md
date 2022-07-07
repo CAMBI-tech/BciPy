@@ -6,6 +6,8 @@
 - New MNE based plotting for EEG data #220
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
+- Bug fixes #225
+- Alerting for conditions that may affect system performance
 
 ### Added
 
@@ -15,6 +17,7 @@
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
 - `parameters/parameters.json`: added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task.
+- `parameters/parameters.json`: added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
 
 
 ### Updated
@@ -26,6 +29,7 @@
 
 ### Removed
 
+- `task/paradigm/rsvp/copy_phrase.py`: removed await_start to prevent two space hits for the task to start #225
 
 
 # 2.0.0-rc.1

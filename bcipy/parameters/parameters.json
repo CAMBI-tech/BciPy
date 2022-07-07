@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -97,6 +97,14 @@
     "helpTip": "Specifies the path to an audio file to be played as an alert tone when offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
     "recommended_values": "",
     "type": "filepath"
+  },
+  "signal_model_path": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Signal Model Path",
+    "helpTip": "Directory of the pre-trained signal model. This is often the the calibration session directory.",
+    "recommended_values": "",
+    "type": "directorypath"
   },
   "filter_high": {
     "value": "70",
@@ -419,6 +427,14 @@
     "section": "bci_config",
     "readableName": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_jitter": {
+    "value": ".1",
+    "section": "bci_config",
+    "readableName": "Stimulus Position Horizontal",
+    "helpTip": "Specifies the time (ms) to jitter presentation rates. Default: 0",
     "recommended_values": "",
     "type": "float"
   },

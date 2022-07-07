@@ -1,17 +1,21 @@
-import sys
+"""Utilities for system information and general functionality that may be
+shared across modules."""
+import importlib
+import logging
 import os
-
-from cpuinfo import get_cpu_info
-from typing import Optional, Tuple, Callable
-from pathlib import Path
-import pkg_resources
+import pkgutil
 import platform
+import socket
+import sys
+import time
+import torch
+from pathlib import Path
+from typing import Callable, List, Optional, Tuple
+
+import pkg_resources
 import psutil
 import pyglet
-import importlib
-import pkgutil
-import time
-import logging
+from cpuinfo import get_cpu_info
 
 DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EXPERIMENT_ID = 'default'
@@ -19,6 +23,24 @@ EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
 DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
 DEFAULT_FIELD_PATH = '.bcipy/field/'
+REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"
+
+
+def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
+    """Test for internet connectivity.
+
+    Parameters
+    ----------
+        hostname - name of host for attempted connection
+        port - port on host to which to connect
+    """
+    try:
+        conn = socket.create_connection(address=(hostname, port), timeout=2)
+        conn.close()
+        return True
+    except OSError:
+        pass
+    return False
 
 
 def git_dir() -> str:
@@ -63,8 +85,8 @@ def git_hash() -> Optional[str]:
         # sha hash is 40 characters; use an abbreviated 7-char version which
         # is displayed in github.
         return sha[0:7]
-    except Exception as e:
-        print(f'Error reading git version: {e}')
+    except Exception as error:
+        print(f'Error reading git version: {error}')
         return None
 
 
@@ -94,6 +116,15 @@ def get_screen_resolution() -> Tuple[int, int]:
     return (screen.width, screen.height)
 
 
+def get_gpu_info() -> List[dict]:
+    """Information about GPUs available for processing."""
+    properties = []
+    for idx in range(torch.cuda.device_count()):
+        prop = torch.get_device_properties(idx)
+        properties.append(dict(name=prop.name, total_memory=prop.total_memory))
+    return properties
+
+
 def get_system_info() -> dict:
     """Get System Information.
     See: https://stackoverflow.com/questions/3103178/how-to-get-the-system-info-with-python
@@ -106,6 +137,7 @@ def get_system_info() -> dict:
     """
     screen_width, screen_height = get_screen_resolution()
     info = get_cpu_info()
+    gpu_info = get_gpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -119,6 +151,9 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
+        'gpu_available': torch.cuda.is_available(),
+        'gpu_count': len(gpu_info),
+        'gpu_details': gpu_info,
         'hz': info['hz_actual_friendly'],
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
@@ -169,7 +204,7 @@ def import_submodules(package, recursive=True):
     if isinstance(package, str):
         package = importlib.import_module(package)
     results = {}
-    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
+    for _loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
         full_name = package.__name__ + '.' + name
         if name.startswith('test'):
             continue
@@ -210,8 +245,6 @@ def log_to_stdout():
     """Set logging to stdout. Useful for demo scripts.
     https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log-file
     """
-    import logging
-    import sys
 
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)

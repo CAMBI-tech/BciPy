@@ -245,7 +245,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         # Execute a single inquiry then `escape` to stop
-        user_input_mock.side_effect = [True, True, False]
+        user_input_mock.side_effect = [True, False]
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -284,7 +284,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         # Don't provide any `escape` input from the user
-        user_input_mock.side_effect = [True, True, True, True, True, True]
+        user_input_mock.return_value = True
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -325,7 +325,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         # Don't provide any `escape` input from the user
-        user_input_mock.side_effect = [True, True, True, True, True, True]
+        user_input_mock.return_value = True
 
         timings_gen = mock_inquiry_timings()
         when(self.display).do_inquiry().thenReturn(next(timings_gen))
@@ -453,7 +453,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=True)
 
         # Execute a single inquiry then `escape` to stop
-        user_input_mock.side_effect = [True, True, False]
+        user_input_mock.side_effect = [True, False]
         when(self.copy_phrase_wrapper).add_evidence(any, any).thenReturn([])
 
         timings_gen = mock_inquiry_timings()
@@ -565,7 +565,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   fake=False)
 
         # Execute a single inquiry then `escape` to stop
-        user_input_mock.side_effect = [True, True, False]
+        user_input_mock.side_effect = [True, False]
 
         # mock data for single inquiry
         process_data_mock.return_value = mock_process_data()
@@ -585,8 +585,6 @@ class TestCopyPhrase(unittest.TestCase):
         with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
-
-    # TODO: test feedback; patch VisualFeedback constructor, returning a mock; verify(feedback, times=1).administer(...)
 
 
 def mock_inquiry_data():

@@ -171,9 +171,8 @@ def load_signal_model(model_class: SignalModel,
         SignalModel: Model after loading pretrained parameters.
     """
     # use python's internal gui to call file explorers and get the filename
-
-    if not filename:
-        filename = ask_filename('*.pkl')
+    if not filename or Path(filename).is_dir():
+        filename = ask_filename('*.pkl', filename)
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)

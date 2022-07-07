@@ -7,7 +7,8 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple
+from sys import intern
+from typing import Iterator, List, Tuple, NamedTuple, Optional
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
@@ -278,6 +279,7 @@ def inq_generator(query: List[str],
                   timing: List[float] = [1, 0.2],
                   color: List[str] = ['red', 'white'],
                   inquiry_count: int = 1,
+                  stim_jitter: float = 0,
                   stim_order: StimuliOrder = StimuliOrder.RANDOM,
                   is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
@@ -312,6 +314,7 @@ def inq_generator(query: List[str],
         sample += [i for i in query]
         samples.append(sample)
 
+        #TODO
         # append timing
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
@@ -431,6 +434,7 @@ def best_case_rsvp_inq_gen(alp: list,
 def calibration_inquiry_generator(
         alp: List[str],
         timing: List[float] = [0.5, 1, 0.2],
+        jitter: Optional[int] = None,
         color: List[str] = ['green', 'red', 'white'],
         stim_number: int = 10,
         stim_length: int = 10,
@@ -490,12 +494,28 @@ def calibration_inquiry_generator(
         sample = [target, get_fixation(is_txt=is_txt), *inquiry]
 
         samples.append(sample)
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
+
+        # timing for fixation and prompt
+        init_timing = [timing[i] for i in range(len(timing) - 1)]
+        # pull out timing for the inquiry stimuli 
+        stim_time = timing[-1]
+        if jitter:
+            assert stim_time > jitter, (
+                f'Jitter timing [{jitter}] must be less than stimuli timing =[{stim_time}] in the inquiry.')
+            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
+            inq_timing = init_timing + _inq_timing
+        else:
+            inq_timing = init_timing + [stim_time] * stim_length
+        times.append(inq_timing)
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
     return InquirySchedule(samples, times, colors)
+
+
+def jittered_timing(time: float, jitter: float, stim_count: int) -> list:
+    """jittered timing."""
+    return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
 
 def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:

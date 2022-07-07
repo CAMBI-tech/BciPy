@@ -285,5 +285,6 @@ class DecisionMaker:
                                 inquiry_count=1,
                                 is_txt=self.is_txt_stim,
                                 timing=self.stimuli_timing,
-                                stim_order=self.stimuli_order)
+                                stim_order=self.stimuli_order,
+                                stim_jitter=self.stim_jitter)
         return stimuli

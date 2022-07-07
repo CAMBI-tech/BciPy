@@ -66,6 +66,7 @@ class RSVPCalibrationTask(Task):
         self.timing = [parameters['time_prompt'],
                        parameters['time_fixation'],
                        parameters['time_flash']]
+        self.jitter = parameters['stim_jitter']
 
         self.color = [parameters['target_color'],
                       parameters['fixation_color'],
@@ -95,6 +96,7 @@ class RSVPCalibrationTask(Task):
                                              target_positions=self.target_positions,
                                              nontarget_inquiries=self.nontarget_inquiries,
                                              timing=self.timing,
+                                             jitter=self.jitter,
                                              is_txt=self.rsvp.is_txt_stim,
                                              color=self.color)
 

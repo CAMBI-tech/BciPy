@@ -20,6 +20,7 @@ from bcipy.helpers.stimuli import (
     get_fixation,
     TrialReshaper,
     InquiryReshaper,
+    jittered_timing,
     play_sound,
     distributed_target_positions,
     soundfiles,
@@ -616,6 +617,28 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
+
+#     def test_inquiry_generation_with_jitter(self):
+#         pass
+
+#     def test_inquiry_generation_with_jitter_throws_exception_when_greater_than_flash_rate(self):
+#         pass
+
+
+# class TestJitteredTiming(unittest.TestCase):
+
+#     def test_jittered_timing(self):
+#         time = 1
+#         jitter = 0.24
+#         stim_number = 10
+
+#         expected_max = time + jitter
+#         expected_min = time - jitter
+
+#         resp = jittered_timing(time, jitter, stim_number)
+
+#         self.assertEqual(stim_number, len(resp))
+#         self.assertEqual()
 
 
 class TestGetFixation(unittest.TestCase):
