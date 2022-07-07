@@ -10,7 +10,7 @@
         "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
     },
     {
-      "name": "actiCHamp-21030529",
+      "name": "actiCHamp-22020727",
       "content_type": "EEG",
       "channels": ["REF", "IMP_0", "IMP_M","IMP_C","tEEG_1",
             "tEEG_2","tEEG_3","tEEG_4","tEEG_5","tEEG_6","tEEG_7","tEEG_8","tEEG_9","tEEG_10",
@@ -24,9 +24,10 @@
       "description": "Brain Products actiCHamp",
       "excluded_from_analysis": ["REF", "REF_copy", "IMP_0", "IMP_M", "IMP_C",
         "54","55","56","57","58","59","60","61","62","63","64", "25", "26", "27", "28", "29", "30", "31", "32",
-        "eEEG_1","eEEG_2","eEEG_3","eEEG_4","eEEG_5","eEEG_6","eEEG_7","eEEG_8","eEEG_9","eEEG_10",
-        "eEEG_11","eEEG_12","eEEG_13","eEEG_14","eEEG_15","eEEG_16","eEEG_17",
-        "tEEG_18","tEEG_19","tEEG_20", "eEEG_18","eEEG_19","eEEG_20"
+        "tEEG_1", "tEEG_2","tEEG_3","tEEG_4","tEEG_5","tEEG_6","tEEG_7","tEEG_8","tEEG_9","tEEG_10", 
+        "tEEG_11","tEEG_12","tEEG_13","tEEG_14","tEEG_15","tEEG_16",
+        "eEEG_16","eEEG_17",
+        "tEEG17", "tEEG_18","tEEG_19","tEEG_20", "eEEG_18","eEEG_19","eEEG_20"
     ]
   },
     {

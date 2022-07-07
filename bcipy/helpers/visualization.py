@@ -16,45 +16,41 @@ from mne.io import read_raw_edf
 
 log = logging.getLogger(__name__)
 
-mapping = {
-    "tEEG_1": "Fp1",
-    "tEEG_2": "F3",
-    "tEEG_3": "C3",
-    "tEEG_4": "P7",
-    "tEEG_5": "P3",
-    "tEEG_6": "O1",
-    "tEEG_7": "Fp2",
-    "tEEG_8": "F4",
-    "tEEG_9": "C4",
-    "tEEG_10": "P8",
-    "tEEG_11": "P4",
-    "tEEG_12": "O2",
-    "tEEG_13": "Fz",
-    "tEEG_14": "Cz",
-    "tEEG_15": "CPz",
-    "tEEG_16": "Pz",
-    "tEEG_17": "POz",
-}
-
 # mapping = {
-#     "eEEG_1": "Fp1",
-#     "eEEG_2": "F3",
-#     "eEEG_3": "C3",
-#     "eEEG_4": "P7",
-#     "eEEG_5": "P3",
-#     "eEEG_6": "O1",
-#     "eEEG_7": "Fp2",
-#     "eEEG_8": "F4",
-#     "eEEG_9": "C4",
-#     "eEEG_10": "P8",
-#     "eEEG_11": "P4",
-#     "eEEG_12": "O2",
-#     "eEEG_13": "Fz",
-#     "eEEG_14": "Cz",
-#     "eEEG_15": "CPz",
-#     "eEEG_16": "Pz",
-#     "eEEG_17": "POz",
+#     "tEEG_1": "Fp1",
+#     "tEEG_2": "F3",
+#     "tEEG_3": "C3",
+#     "tEEG_4": "P7",
+#     "tEEG_5": "P3",
+#     "tEEG_6": "O1",
+#     "tEEG_7": "Fp2",
+#     "tEEG_8": "F4",
+#     "tEEG_9": "C4",
+#     "tEEG_10": "P8",
+#     "tEEG_11": "P4",
+#     "tEEG_12": "O2",
+#     "tEEG_13": "Fz",
+#     "tEEG_14": "Cz",
+#     "tEEG_15": "Pz",
 # }
+
+mapping = {
+    "eEEG_1": "Fp1",
+    "eEEG_2": "F3",
+    "eEEG_3": "C3",
+    "eEEG_4": "P7",
+    "eEEG_5": "P3",
+    "eEEG_6": "O1",
+    "eEEG_7": "Fp2",
+    "eEEG_8": "F4",
+    "eEEG_9": "C4",
+    "eEEG_10": "P8",
+    "eEEG_11": "P4",
+    "eEEG_12": "O2",
+    "eEEG_13": "Fz",
+    "eEEG_14": "Cz",
+    "eEEG_15": "Pz",
+}
 
 
 def visualize_erp(
