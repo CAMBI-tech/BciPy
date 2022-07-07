@@ -94,6 +94,7 @@ class CopyPhraseWrapper:
                  filter_order: int = 2,
                  notch_filter_frequency: int = 60,
                  stim_length: int = 10,
+                 stim_jitter: float = 0,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
         self.lmodel = lmodel

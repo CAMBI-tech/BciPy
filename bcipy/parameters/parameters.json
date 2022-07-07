@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -426,6 +426,14 @@
     "section": "bci_config",
     "readableName": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_jitter": {
+    "value": ".1",
+    "section": "bci_config",
+    "readableName": "Stimulus Position Horizontal",
+    "helpTip": "Specifies the time (ms) to jitter presentation rates. Default: 0",
     "recommended_values": "",
     "type": "float"
   },
