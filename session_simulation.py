@@ -9,7 +9,7 @@ import numpy as np
 SYMBOLS = alphabet()
 DECISION_THRESHOLD = 0.8 # .60, .65 , .70, .75, .80, .85, .90, .95
 MAX_INQUIRIES = 11 # 3-11
-INQUIRY_LENTH = 3
+INQUIRY_LENGTH = 3  # seconds #TODO: don't use constants, calculate it from time_flash parameter
 
 def session_simulation(data) -> list:
     series = data['series']
@@ -34,7 +34,7 @@ def session_simulation(data) -> list:
             most_likely_letter = SYMBOLS[max_idx]
             # Calculate the end time for series
             if inq_count >= MAX_INQUIRIES:
-                _series[series_count]['time_to_series'] = INQUIRY_LENTH * inq_count
+                _series[series_count]['time_to_series'] = INQUIRY_LENGTH * inq_count
                 _series[series_count]['inq_count'] = inq_count
                 if target_letter == most_likely_letter:
                     _series[series_count]['correct_selection'] = True
@@ -43,7 +43,7 @@ def session_simulation(data) -> list:
                 break
             
             if max_likelihood >= DECISION_THRESHOLD:
-                _series[series_count]['time_to_series'] = INQUIRY_LENTH * inq_count
+                _series[series_count]['time_to_series'] = INQUIRY_LENGTH * inq_count
                 _series[series_count]['inq_count'] = inq_count
                 if target_letter == most_likely_letter:
                     _series[series_count]['correct_selection'] = True
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', default=None)
     args = parser.parse_args()
-    data_folder = args.data_folder
+    data_folder = args.data_folder   #TODO: add all IP copy phrase into the same folder
     all_data = []
     for _data in fast_scandir(data_folder):
         print(_data)
