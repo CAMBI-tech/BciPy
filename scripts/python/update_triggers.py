@@ -4,6 +4,9 @@ from bcipy.helpers.load import fast_scandir
 from bcipy.helpers.convert import convert_to_edf
 
 
+static_offset = 0.62
+
+
 @click.command()
 @click.option('--directory', prompt='Provide a path to a collection of data folders to be updated to BciPy 2.0',
               help='The path to data')
