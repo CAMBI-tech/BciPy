@@ -6,8 +6,10 @@ from bcipy.helpers.load import load_json_parameters
 import random
 import pdb
 import numpy as np
+import pandas as pd
 from rich.console import Console
 from rich.table import Table
+from tabulate import tabulate
 
 SYMBOLS = alphabet()
 DECISION_THRESHOLD_RANGE = [.60, .65 , .70, .75, .80, .85, .90, .95]
@@ -96,13 +98,17 @@ if __name__ == "__main__":
                     correct_selection = correct_selection + int(series_info[series_idx+1]['correct_selection'])
 
                 accuracy = correct_selection / len(series_info) * 100  # percentage
+                accuracy = round(accuracy, 1)
                 # print(f'Phrase completion time: {phrase_completion_time} seconds')
                 # print(f'Accuracy: {accuracy}%')
-                all_data[max_inquiries][decision_threshold] = [str(phrase_completion_time)+"sec, "+str(accuracy)+"%"]
-        print(all_data)
+                all_data[max_inquiries][decision_threshold] = str(phrase_completion_time)+"s, "+str(accuracy)+"%"
+        # print(all_data)
         # pdb.set_trace()
 
         # Create a table to display the results
+        df = pd.DataFrame(all_data)
+        print(tabulate(df, headers='keys'))
+        print("\n")
 
 
 
