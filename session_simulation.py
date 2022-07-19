@@ -10,11 +10,10 @@ from rich.console import Console
 from rich.table import Table
 
 SYMBOLS = alphabet()
-DECISION_THRESHOLD = 0.8 # .60, .65 , .70, .75, .80, .85, .90, .95
-MAX_INQUIRIES = 11 # 3-11
-# INQUIRY_LENGTH = 3  # seconds
+DECISION_THRESHOLD_RANGE = [.60, .65 , .70, .75, .80, .85, .90, .95]
+MAX_INQUIRIES_RANGE = [3, 4, 5, 6, 7, 8, 9, 10, 11]   # max inquiries per series
 
-def session_simulation(data, inquiry_length) -> list:
+def session_simulation(data, inquiry_length, max_inquiries, decision_threshold) -> list:
     series = data['series']
 
     _series = {
@@ -36,7 +35,7 @@ def session_simulation(data, inquiry_length) -> list:
             max_likelihood = likelihood[max_idx]
             most_likely_letter = SYMBOLS[max_idx]
             # Calculate the end time for series
-            if inq_count >= MAX_INQUIRIES:
+            if inq_count >= max_inquiries:
                 _series[series_count]['time_to_series'] = inquiry_length * inq_count
                 _series[series_count]['inq_count'] = inq_count
                 if target_letter == most_likely_letter:
@@ -45,7 +44,7 @@ def session_simulation(data, inquiry_length) -> list:
                     _series[series_count]['correct_selection'] = False
                 break
             
-            if max_likelihood >= DECISION_THRESHOLD:
+            if max_likelihood >= decision_threshold:
                 _series[series_count]['time_to_series'] = inquiry_length * inq_count
                 _series[series_count]['inq_count'] = inq_count
                 if target_letter == most_likely_letter:
@@ -53,6 +52,11 @@ def session_simulation(data, inquiry_length) -> list:
                 else:
                     _series[series_count]['correct_selection'] = False
                 break
+            
+            if max_likelihood < decision_threshold:
+                _series[series_count]['time_to_series'] = inquiry_length * inq_count
+                _series[series_count]['inq_count'] = inq_count
+                _series[series_count]['correct_selection'] = False
             
     return _series
 
@@ -65,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--data_folder', default=None)
     args = parser.parse_args()
     data_folder = args.data_folder   #TODO: add all IP copy phrase for the same person into the same folder
-    all_data = []
+    all_data = {}
     for _data in fast_scandir(data_folder):
         print(_data)
         # retrieve target and nontarget likelihoods from EEG for a singe sessions
@@ -75,12 +79,30 @@ if __name__ == "__main__":
         time_fixation = float(CP_params["time_fixation"]["value"])
         stim_length = float(CP_params["stim_length"]["value"])
         inquiry_length = time_fixation + stim_length*time_flash   # seconds
-        print(inquiry_length)
-        series_info = session_simulation(data, inquiry_length)
-        print(series_info)
-        all_data.append(series_info)
-    
-    pdb.set_trace()
+        # print(f'Inquiry length: {inquiry_length} seconds')
+
+        # Simulate the session with different IP parameters
+        for max_inquiries in MAX_INQUIRIES_RANGE:
+            all_data[max_inquiries] = {}
+            for decision_threshold in DECISION_THRESHOLD_RANGE:
+                # print(max_inquiries, decision_threshold)
+                series_info = session_simulation(data, inquiry_length, max_inquiries, decision_threshold)
+                # print(series_info)
+
+                phrase_completion_time = 0  # seconds
+                correct_selection = 0
+                for series_idx in range(len(series_info)):
+                    phrase_completion_time = phrase_completion_time + float(series_info[series_idx+1]['time_to_series'])
+                    correct_selection = correct_selection + int(series_info[series_idx+1]['correct_selection'])
+
+                accuracy = correct_selection / len(series_info) * 100  # percentage
+                # print(f'Phrase completion time: {phrase_completion_time} seconds')
+                # print(f'Accuracy: {accuracy}%')
+                all_data[max_inquiries][decision_threshold] = [str(phrase_completion_time)+"sec, "+str(accuracy)+"%"]
+        print(all_data)
+        # pdb.set_trace()
+
+        # Create a table to display the results
 
 
 
