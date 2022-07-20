@@ -11,7 +11,7 @@ from rich.table import Table
 from tabulate import tabulate
 
 SYMBOLS = alphabet()
-DECISION_THRESHOLD_RANGE = [.60, .65 , .70, .75, .80, .85, .90, .95]
+DECISION_THRESHOLD_RANGE = [.60, .65, .70, .75, .80]
 MAX_INQUIRIES_RANGE = [3, 4, 5, 6, 7, 8, 9, 10, 11]   # max inquiries per series
 
 def session_simulation(data, inquiry_length, max_inquiries, decision_threshold) -> list:

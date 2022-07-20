@@ -77,6 +77,7 @@ if __name__ == "__main__":
     # all_data = {}
     all_data = []
     optimal_idx = []
+    high_accuracy_idx = []
     for _data in fast_scandir(data_folder):
         # print(_data)
         # retrieve target and nontarget likelihoods from EEG for a singe sessions
@@ -104,25 +105,24 @@ if __name__ == "__main__":
                 new_list.append(accuracy)
             
         all_data.append(new_list)
-        optimal_idx.append(np.argmax(new_list))
-        # (optimal_idx+1) // len(DECISION_THRESHOLD_RANGE)
+        ### Optimal index gives the index where the maximum accuracy appeared first
+        # optimal_idx.append(np.argmax(new_list))
 
-            # [[.4, .5, .6 ... ][]]
-
-
-                # all_data[max_inquiries][decision_threshold] = str(phrase_completion_time)+"s, "+str(accuracy)+"%"
-                # all_data[max_inquiries][decision_threshold] = [phrase_completion_time, accuracy]
-
+        ### High accuracy index gives the index where the accuracy >= 0.8 appeared first.
+        ### This way we can exclude the cases where the accuracy is less than 0.8 throughout the session.
+        high_accuracy = np.where(np.array(new_list) >= 80)[0]
+        if len(high_accuracy) > 0:
+            high_accuracy_idx.append(high_accuracy[0])
 
         # Create a table to display the results
-        df = pd.DataFrame(all_data)
+        # df = pd.DataFrame(all_data)
         # print(tabulate(df, headers='keys'))
         # print("\n")
 
-    print('Optimal Indexes: ', optimal_idx)
-    new_array = np.array(optimal_idx)
-    print(stats.describe(new_array))
-    pdb.set_trace()
+    # print('Optimal Indexes: ', optimal_idx)
+    print('High Accuracy Indexes: ', high_accuracy_idx)
+    print(stats.describe(np.array(high_accuracy_idx)))
+
 
 
 
