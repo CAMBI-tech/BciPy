@@ -3,10 +3,11 @@ devices."""
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, NamedTuple, Union
 
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str, DEFAULT_ENCODING
+
 IRREGULAR_RATE = 0.0
 DEFAULT_CONFIG = Path(__file__).resolve().parent / 'devices.json'
 _SUPPORTED_DEVICES = {}
@@ -19,6 +20,31 @@ DEFAULT_DEVICE_TYPE = 'EEG'
 log = logging.getLogger(__name__)
 
 
+class ChannelSpec(NamedTuple):
+    """Represents metadata about a channel."""
+    name: str  # Label in the LSL metadata
+    label: str  # Label used within BciPy (raw_data, etc.)
+    type: str = None
+    units: str = None
+
+
+def channel_spec(channel: Union[str, dict, ChannelSpec]) -> ChannelSpec:
+    """Creates a ChannelSpec from the given channel.
+
+    Parameters
+    ----------
+        channel - acquisition channel information specified as either just the
+          label or with additional data represented by a dict or ChannelSpec.
+    """
+    if isinstance(channel, str):
+        return ChannelSpec(name=channel, label=channel)
+    if isinstance(channel, ChannelSpec):
+        return channel
+    if isinstance(channel, dict):
+        return ChannelSpec(**channel)
+    raise Exception("Unexpected channel type")
+
+
 @auto_str
 class DeviceSpec:
     """Specification for a hardware device used in data acquisition.
@@ -27,7 +53,8 @@ class DeviceSpec:
     ----------
         name - device short name; ex. DSI-24
         channels - list of data collection channels; devices must have at least
-            one channel.
+            one channel. Channels may be provided as a list of names or list of
+            ChannelSpecs.
         sample_rate - sample frequency in Hz.
         content_type - type of device; likely one of ['EEG', 'MoCap', 'Gaze',
             'Audio', 'Markers']; see https://github.com/sccn/xdf/wiki/Meta-Data.
@@ -36,35 +63,46 @@ class DeviceSpec:
             ex. 'Wearable Sensing DSI-24 dry electrode EEG headset'
         data_type - data format of a channel; all channels must have the same type;
             see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
-        excluded_from_analysis - list of channels to exclude from analysis.
+        excluded_from_analysis - list of channels (label) to exclude from analysis.
     """
 
     def __init__(self,
                  name: str,
-                 channels: List[str],
+                 channels: Union[List[str], List[ChannelSpec], List[dict]],
                  sample_rate: float,
                  content_type: str = DEFAULT_DEVICE_TYPE,
                  connection_methods: List[ConnectionMethod] = None,
                  description: str = None,
-                 excluded_from_analysis: List[str] = [],
+                 excluded_from_analysis: List[str] = None,
                  data_type='float32'):
 
         assert sample_rate >= 0, "Sample rate can't be negative."
         assert data_type in SUPPORTED_DATA_TYPES
 
         self.name = name
-        self.channels = channels
+        self.channel_specs = [channel_spec(ch) for ch in channels]
         self.sample_rate = sample_rate
         self.content_type = content_type
         self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
         self.data_type = data_type
-        self.excluded_from_analysis = excluded_from_analysis
+        self.excluded_from_analysis = excluded_from_analysis or []
         self._validate_excluded_channels()
 
     @property
     def channel_count(self) -> int:
-        return len(self.channels)
+        """Number of channels"""
+        return len(self.channel_specs)
+
+    @property
+    def channels(self) -> List[str]:
+        """List of channel labels. These may be customized for BciPy."""
+        return [ch.label for ch in self.channel_specs]
+
+    @property
+    def channel_names(self) -> List[str]:
+        """List of channel names from the device."""
+        return [ch.name for ch in self.channel_specs]
 
     @property
     def analysis_channels(self) -> List[str]:
@@ -82,7 +120,9 @@ class DeviceSpec:
         """Warn if excluded channels are not in the list of channels"""
         for channel in self.excluded_from_analysis:
             if channel not in self.channels:
-                log.warn(f"Excluded channel {channel} not found in spec for {self.name}")
+                log.warning(
+                    f"Excluded channel {channel} not found in spec for {self.name}"
+                )
 
 
 def make_device_spec(config: dict) -> DeviceSpec:
@@ -96,7 +136,8 @@ def make_device_spec(config: dict) -> DeviceSpec:
                       connection_methods=connection_methods,
                       sample_rate=config['sample_rate'],
                       description=config['description'],
-                      excluded_from_analysis=config.get('excluded_from_analysis', []))
+                      excluded_from_analysis=config.get(
+                          'excluded_from_analysis', []))
 
 
 def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
@@ -106,6 +147,7 @@ def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
     with open(config_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         specs = [make_device_spec(entry) for entry in json.load(json_file)]
         _SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
+        return _SUPPORTED_DEVICES
 
 
 def preconfigured_devices() -> Dict[str, DeviceSpec]:

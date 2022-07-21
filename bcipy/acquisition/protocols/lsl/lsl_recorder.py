@@ -6,7 +6,8 @@ from typing import List, Tuple
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
-from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names, check_device
 from bcipy.acquisition.util import StoppableThread
 from bcipy.helpers.raw_data import RawDataWriter
 
@@ -70,15 +71,19 @@ class LslRecordingThread(StoppableThread):
     - stream : information about the stream of interest
     - directory : location to store the recording
     - filename : optional, name of the data file.
+    - device_spec : optional DeviceSpec ; if provided channel labels will come
+        from here.
     """
 
     def __init__(self,
                  stream_info: StreamInfo,
                  directory: str,
-                 filename: str = None):
+                 filename: str = None,
+                 device_spec: DeviceSpec = None):
         super().__init__()
         self.stream_info = stream_info
         self.directory = directory
+        self.device_spec = device_spec
 
         self.sample_count = 0
         # see: https://labstreaminglayer.readthedocs.io/info/faqs.html#chunk-sizes
@@ -105,14 +110,21 @@ class LslRecordingThread(StoppableThread):
             return self.last_sample_time - self.first_sample_time
         return 0.0
 
-    def _init_data_writer(self, channels: List[str]) -> None:
+    def _init_data_writer(self, stream_info: StreamInfo) -> None:
         """Initializes the raw data writer.
 
         Parameters:
         ----------
-        - channels : list of channel names provided for each sample.
+        - metadata : metadata about the data stream.
         """
         assert self.writer is None, "Data store has already been initialized."
+
+        channels = channel_names(stream_info)
+        # Use the device_spec channels labels if provided.
+        if self.device_spec:
+            check_device(self.device_spec, stream_info)
+            channels = self.device_spec.channels
+
         path = Path(self.directory, self.filename)
         log.debug(f"Writing data to {path}")
         self.writer = RawDataWriter(
@@ -187,7 +199,7 @@ class LslRecordingThread(StoppableThread):
         log.debug(full_metadata.as_xml())
 
         self._reset()
-        self._init_data_writer(channel_names(full_metadata))
+        self._init_data_writer(full_metadata)
 
         # TODO: account for remote acquisition by recording remote clock offsets
         # so we can map from remote timestamp to local lsl clock for comparing
