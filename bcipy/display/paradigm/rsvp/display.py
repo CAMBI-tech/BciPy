@@ -285,7 +285,7 @@ class RSVPDisplay(Display):
             reduce_factor = 4.85
             wrap_width = 1.1
         else:
-            reduce_factor = 4.75
+            reduce_factor = 4.85
             wrap_width = .9
         text = ' '.join(self.stimuli_inquiry).split('+ ')[1]
 
@@ -458,7 +458,7 @@ class RSVPDisplay(Display):
                 units=units,
                 font=self.stimuli_font,
                 letterHeight=height,
-                size=[.5, .5],
+                size=[.55, .55],
                 pos=stimuli_position,
                 anchor=align_text,
                 alignment=align_text,
