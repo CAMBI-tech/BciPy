@@ -446,7 +446,7 @@
     "type": "float"
   },
   "stim_font": {
-    "value": "Overpass Mono Medium",
+    "value": "Overpass Mono",
     "section": "bci_config",
     "readableName": "Stimulus Font",
     "helpTip": "Specifies the font used for text stimuli. Default: Arial",
