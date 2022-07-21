@@ -85,7 +85,8 @@ class LslAcquisitionClient:
         if self.save_directory:
             self.recorder = LslRecordingThread(stream_info,
                                                self.save_directory,
-                                               self.raw_data_file_name)
+                                               self.raw_data_file_name,
+                                               self.device_spec)
             self.recorder.start()
 
         self.buffer = RingBuffer(size_max=self.max_samples)
