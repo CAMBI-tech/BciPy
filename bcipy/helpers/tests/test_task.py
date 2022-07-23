@@ -7,7 +7,7 @@ from mockito import unstub, mock, when, verify, verifyStubbedInvocationsAreUsed
 import numpy as np
 import psychopy
 
-from bcipy.acquisition.client import DataAcquisitionClient
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.task.exceptions import InsufficientDataException
 
@@ -243,7 +243,7 @@ class TestGetDataForDecision(unittest.TestCase):
 
     def setUp(self) -> None:
         self.inquiry_timing = [('A', 1), ('B', 2), ('C', 3)]
-        self.daq = mock(spec=DataAcquisitionClient)
+        self.daq = mock(spec=LslAcquisitionClient)
         self.daq.device_info = mock()
         self.daq.device_info.fs = 10
         self.mock_eeg = mock_get_data_response(samples=1000, high=1000, low=-1000, channels=4)
