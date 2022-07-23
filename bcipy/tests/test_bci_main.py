@@ -45,6 +45,7 @@ class TestBciMain(unittest.TestCase):
     def test_bci_main_default_experiment(self) -> None:
         mock_execute_response = mock()
         when(main).validate_experiment(self.experiment).thenReturn(True)
+        when(main).validate_bcipy_session(self.parameters).thenReturn(True)
         when(main).load_json_parameters(self.parameter_location, value_cast=True).thenReturn(
             self.parameters
         )
