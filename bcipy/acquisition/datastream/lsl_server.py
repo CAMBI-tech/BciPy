@@ -69,11 +69,11 @@ class LslDataServer(StoppableThread):
                 unit = 'microvolts'
                 channel_type = 'EEG'
             meta_channels = info.desc().append_child('channels')
-            for channel in device_spec.channels:
+            for channel in device_spec.channel_specs:
                 meta_channels.append_child('channel') \
-                    .append_child_value('label', channel) \
-                    .append_child_value('unit', unit) \
-                    .append_child_value('type', channel_type)
+                    .append_child_value('label', channel.name) \
+                    .append_child_value('unit', channel.units or unit) \
+                    .append_child_value('type', channel.type or channel_type)
 
         self.outlet = StreamOutlet(info)
 

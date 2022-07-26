@@ -73,12 +73,12 @@ def check_device(device_spec: DeviceSpec, metadata: pylsl.StreamInfo):
     acquired from the device."""
     channels = channel_names(metadata)
     # Confirm that provided channels match metadata, or meta is empty.
-    if channels and device_spec.channels != channels:
+    if channels and device_spec.channel_names != channels:
         print(f"device channels: {channels}")
-        print(device_spec.channels)
+        print(device_spec.channel_names)
         raise Exception("Channels read from the device do not match "
                         "the provided parameters.")
-    assert len(device_spec.channels) == metadata.channel_count(
+    assert device_spec.channel_count == metadata.channel_count(
     ), "Channel count error"
 
     if device_spec.sample_rate != metadata.nominal_srate():

@@ -6,7 +6,7 @@ The data acquisition module is responsible for interfacing with hardware to obta
 
 The acquisition module connects with hardware devices using the [Lab Streaming Layer (LSL)](https://labstreaminglayer.readthedocs.io/index.html) library. Each device should provide its own LSL driver / application to use for streaming data. The LSL website maintains a list of [available apps](https://labstreaminglayer.readthedocs.io/info/supported_devices.html). If your device does not have a supported app see [https://labstreaminglayer.readthedocs.io/dev/app_build.html](https://labstreaminglayer.readthedocs.io/dev/app_build.html). The streamer should be started prior to running the `bcipy` application.
 
-Within BciPy users must specify the details of the device they wish to use by providing a `DeviceSpec`. A list of preconfigured devices is defined in `devices.json`. A new device can be added to that file manually, or programmatically registered with the `device_info` module.
+Within BciPy users must specify the details of the device they wish to use by providing a `DeviceSpec`. A list of preconfigured devices is defined in `devices.json`. A new device can be added to that file manually, or programmatically registered with the `devices` module.
 
     from bcipy.acquisition.devices import DeviceSpec, register
     my_device = DeviceSpec(name="DSI-VR300",
@@ -14,6 +14,8 @@ Within BciPy users must specify the details of the device they wish to use by pr
                            sample_rate=300.0,
                            content_type="EEG")
     register(my_device)
+
+`DeviceSpec` channel data can be provided as a list of channel names or specified as a list of `ChannelSpec` entries. These will be validated against the metadata from the LSL data stream. If provided, `ChannelSpecs` allow users to customize the channel labels and override the values provided by the LSL metadata.
 
 ## Client
 

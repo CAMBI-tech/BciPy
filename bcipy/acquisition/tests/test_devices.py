@@ -61,6 +61,45 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(spec, devices.preconfigured_device('DSI-VR300'))
         shutil.rmtree(temp_dir)
 
+    def test_load_channel_specs_from_config(self):
+        """Channel specs should be loaded correctly from a configuration file."""
+
+        # create a config file in a temp location.
+        temp_dir = tempfile.mkdtemp()
+        my_devices = [
+            dict(name="Custom-Device",
+                 content_type="EEG",
+                 channels=[{
+                     "name": "ch1",
+                     "label": "Fz",
+                     "units": "microvolts",
+                     "type": "EEG"
+                 }, {
+                     "name": "ch2",
+                     "label": "Pz",
+                     "units": "microvolts",
+                     "type": "EEG"
+                 }, {
+                     "name": "ch3",
+                     "label": "F7"
+                 }],
+                 sample_rate=300.0,
+                 connection_methods=["TCP", "LSL"],
+                 description="My custom device")
+        ]
+        config_path = Path(temp_dir, 'my_devices.json')
+        with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
+            json.dump(my_devices, config_file)
+
+        devices.load(config_path)
+        supported = devices.preconfigured_devices()
+
+        spec = supported["Custom-Device"]
+        self.assertEqual(spec.channels, ['Fz', 'Pz', 'F7'])
+        self.assertEqual(spec.channel_names, ['ch1', 'ch2', 'ch3'])
+
+        shutil.rmtree(temp_dir)
+
     def test_device_registration(self):
         """Should be able to register a new device spec"""
 
@@ -106,14 +145,31 @@ class TestDeviceSpecs(unittest.TestCase):
 
         self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
         spec.excluded_from_analysis = []
-        self.assertEqual(['C1', 'C2', 'C3', 'TRG'],
-                         spec.analysis_channels)
+        self.assertEqual(['C1', 'C2', 'C3', 'TRG'], spec.analysis_channels)
 
         spec2 = devices.DeviceSpec(name='Device2',
                                    channels=['C1', 'C2', 'C3', 'TRG'],
                                    sample_rate=256.0,
                                    excluded_from_analysis=['C1', 'TRG'])
         self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
+
+        spec3 = devices.DeviceSpec(name='Device3',
+                                   channels=[{
+                                       'name': 'C1',
+                                       'label': 'ch1'
+                                   }, {
+                                       'name': 'C2',
+                                       'label': 'ch2'
+                                   }, {
+                                       'name': 'C3',
+                                       'label': 'ch3'
+                                   }, {
+                                       'name': 'C4',
+                                       'label': 'TRG'
+                                   }],
+                                   sample_rate=256.0,
+                                   excluded_from_analysis=['ch1', 'TRG'])
+        self.assertEqual(['ch2', 'ch3'], spec3.analysis_channels)
 
     def test_irregular_sample_rate(self):
         """Test that DeviceSpec supports an IRREGULAR sample rate."""
