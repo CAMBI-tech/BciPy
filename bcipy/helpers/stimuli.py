@@ -703,3 +703,25 @@ def get_fixation(is_txt: bool) -> str:
         return '+'
     else:
         return DEFAULT_FIXATION_PATH
+
+
+def ssvep_to_cvep(refresh_rate: int = 60, flicker_rate: float = 10.0):
+    if flicker_rate > refresh_rate:
+        raise Exception("flicker rate cannot be greater than refresh rate")
+
+    length_flicker = refresh_rate / flicker_rate
+
+    # determine if lenth_flickerr is an integer using .is_integer()
+    if not length_flicker.is_integer():
+        raise Exception("Provided flicker rate must divide into refresh rate.")
+
+    t = 0
+    test_array = []
+    for _ in range(int(length_flicker)):
+        for _ in range(int(length_flicker)):
+            test_array.append(t)
+        if t > 0:
+            t = 0
+        else:
+            t = 1
+    return test_array

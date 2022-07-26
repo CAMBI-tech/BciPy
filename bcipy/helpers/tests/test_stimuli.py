@@ -26,6 +26,7 @@ from bcipy.helpers.stimuli import (
     distributed_target_positions,
     soundfiles,
     StimuliOrder,
+    ssvep_to_cvep,
     TargetPositions
 )
 
@@ -697,6 +698,37 @@ class TestInquiryReshaper(unittest.TestCase):
         expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
+
+
+class SSVEPStimuli(unittest.TestCase):
+
+    def test_default_flicker_and_refresh_rate_return_codes(self):
+        response = ssvep_to_cvep()
+        self.assertIsInstance(response, list)
+        self.assertEqual(response[0], 0)
+
+    def test_ssvep_to_cvep_raises_exception_when_refresh_rate_less_than_flicker_rate(self):
+        flicker_rate = 300
+        refresh_rate = 1
+
+        with self.assertRaises(Exception):
+            ssvep_to_cvep(refresh_rate, flicker_rate)
+
+    def test_when_division_of_refresh_rate_by_flicker_rate_raise_exception_if_noninteger(self):
+        # flicker_rate = 11.43 refresh_rate = 60
+        flicker_rate = 11.43
+        refresh_rate = 60
+
+        with self.assertRaises(Exception):
+            ssvep_to_cvep(refresh_rate, flicker_rate)
+
+    def test_ssvep_to_cvep_returns_expected_codes(self):
+        flicker_rate = 2
+        refresh_rate = 4
+        response = ssvep_to_cvep(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
+        expected_output = [0, 0, 1, 1]
+        self.assertEqual(response, expected_output)
+
 
 
 class TestSoundStimuli(unittest.TestCase):
