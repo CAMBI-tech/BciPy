@@ -15,7 +15,8 @@
     "recommended_values": [
       "DSI-24",
       "DSI-VR300",
-      "g.USBamp-1"
+      "g.USBamp-1",
+      "Tobii Nano"
     ],
     "type": "str"
   },
