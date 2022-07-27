@@ -77,7 +77,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
-            stimuli_timing=[0.5, 0.25],
+            stim_timing=[0.5, 0.25],
         )
 
         triggers = [
@@ -182,7 +182,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
-            stimuli_timing=[0.5, 0.25],
+            stim_timing=[0.5, 0.25],
             notch_filter_frequency=4.0,
             filter_low=1.0,
             filter_high=4.0,

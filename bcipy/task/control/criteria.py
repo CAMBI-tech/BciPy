@@ -6,7 +6,6 @@ from copy import copy
 log = logging.getLogger(__name__)
 
 
-# Criteria
 class DecisionCriteria:
     """Abstract class for Criteria which can be applied to evaluate a inquiry
     """

@@ -1,18 +1,18 @@
 import logging
 import string
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
 from bcipy.helpers.stimuli import InquirySchedule, inq_generator, StimuliOrder
 from bcipy.helpers.task import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.task.control.query import RandomStimuliAgent
+from bcipy.task.control.query import RandomStimuliAgent, StimuliAgent
 from bcipy.task.control.criteria import CriteriaEvaluator
 
 log = logging.getLogger(__name__)
 
 
-class EvidenceFusion(object):
+class EvidenceFusion():
     """ Fuses likelihood evidences provided by the inference
         Attr:
             evidence_history(dict{list[ndarray]}): Dictionary of difference
@@ -80,37 +80,23 @@ class EvidenceFusion(object):
 class DecisionMaker:
     """ Scheduler of the entire framework
         Attr:
-            decision_threshold: Minimum combined likelihood required for a
-                decision
             state(str): state of the framework, which increases in size
                 by 1 after each inquiry. Elements are alphabet, ".,_,<"
                 where ".": null_inquiry(no decision made)
                       "_": space bar
                       "<": back space
-            displayed_state(str): visualization of the state to the user
-                only includes the alphabet and "_"
             alphabet(list[str]): list of symbols used by the framework. Can
                 be switched with location of images or one hot encoded images.
-            time(float): system time
-            evidence(list[str]): list of evidences used in the framework
-            list_priority_evidence(list[]): priority list for the evidences
-            inquiry_counter(dict[str(val=float)]): number of inquiries
-                passed for each particular evidence
-            list_series(list[series]): List of stimuli in each inquiry
-                series(dict{items}):
-                    - target(str): target of the series
-                    - time_spent(ndarray[float]): |num_trials|x1
-                      time spent on the inquiry
-                    - list_sti(list[list[str]]): presented symbols in each
-                      inquiry
-                    - list_distribution(list[ndarray[float]]): list of |alp|x1
-                        arrays with prob. dist. over alp
-            inq_constants(list[str]): list of letters which should appear in
+            is_txt_stim(bool): whether the stimuli are text or images
+            inq_constants(list[str]): optional list of letters which should appear in
                 every inquiry.
             stopping_evaluator: CriteriaEvaluator - optional parameter to
                 provide alternative rules for committing to a decision.
             stimuli_agent(StimuliAgent): the query selection mechanism of the
                 system
+            stimuli_timing(list[float]): list of timings for the stimuli ([fixation_time, stimuli_flash_time])
+            stimuli_order(StimuliOrder): ordering of the stimuli (random, distributed)
+            stimuli_jitter(float): jitter of the inquiry stimuli in seconds
 
         Functions:
             decide():
@@ -132,22 +118,23 @@ class DecisionMaker:
         """
 
     def __init__(self,
-                 state='',
-                 alphabet=list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR],
-                 is_txt_stim=True,
-                 stimuli_timing=[1, .2],
+                 state: str = '',
+                 alphabet: List[str] = list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR],
+                 is_txt_stim: bool = True,
+                 stimuli_timing: List[float] = [1, .2],
+                 stimuli_jitter: float = 0,
                  stimuli_order: StimuliOrder = StimuliOrder.RANDOM,
-                 inq_constants=None,
-                 stopping_evaluator=CriteriaEvaluator.default(min_num_inq=2,
-                                                              max_num_inq=10,
-                                                              threshold=0.8),
-                 stimuli_agent=None):
+                 inq_constants: Optional[List[str]] = None,
+                 stopping_evaluator: CriteriaEvaluator = CriteriaEvaluator.default(min_num_inq=2,
+                                                                                   max_num_inq=10,
+                                                                                   threshold=0.8),
+                 stimuli_agent: Optional[StimuliAgent] = None):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
         self.stimuli_order = stimuli_order
+        self.stimuli_jitter = stimuli_jitter
 
-        # TODO: read from parameters file
         self.alphabet = alphabet
         self.is_txt_stim = is_txt_stim
 
@@ -157,12 +144,8 @@ class DecisionMaker:
         self.time = 0
         self.inquiry_counter = 0
 
-        # Stopping Criteria
         self.stopping_evaluator = stopping_evaluator
-
-        # Stimuli Agent
         self.stimuli_agent = stimuli_agent or RandomStimuliAgent(alphabet=self.alphabet)
-
         self.last_selection = ''
 
         # Items shown in every inquiry
@@ -285,5 +268,6 @@ class DecisionMaker:
                                 inquiry_count=1,
                                 is_txt=self.is_txt_stim,
                                 timing=self.stimuli_timing,
-                                stim_order=self.stimuli_order)
+                                stim_order=self.stimuli_order,
+                                stim_jitter=self.stimuli_jitter)
         return stimuli
