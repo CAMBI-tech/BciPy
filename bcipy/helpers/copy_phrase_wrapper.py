@@ -55,8 +55,6 @@ class CopyPhraseWrapper:
     - is_txt_stim: Whether or not the stimuli are text objects
     - device_name: name of the EEG device
     - device_channels: list of device channel names
-    - stimuli_timing: seconds each stimuli is displayed; used for inquiry
-    generation
     - decision_threshold: Minimum likelihood value required for a decision
     - backspace_prob: default language model probability for the
     backspace character.
@@ -67,6 +65,9 @@ class CopyPhraseWrapper:
     - filter_order: filter setting used when evaluating EEG data
     - notch_filter_frequency: filter setting used when evaluating EEG data
     - stim_length(int): the number of stimuli to present in each inquiry
+    - stim_timing: seconds each stimuli is displayed; used for inquiry
+    generation
+    - stim_jitter: seconds that inquiry stimuli should be jittered (-/+ stim_timing[-1])
     """
 
     def __init__(self,
@@ -85,7 +86,6 @@ class CopyPhraseWrapper:
                  is_txt_stim: bool = True,
                  device_name: str = 'LSL',
                  device_channels: List[str] = None,
-                 stimuli_timing: List[float] = [1, .2],
                  decision_threshold: float = 0.8,
                  backspace_prob: float = 0.05,
                  backspace_always_shown: bool = False,
@@ -93,7 +93,9 @@ class CopyPhraseWrapper:
                  filter_low: int = 2,
                  filter_order: int = 2,
                  notch_filter_frequency: int = 60,
+                 stim_timing: List[float] = [1, .2],
                  stim_length: int = 10,
+                 stim_jitter: float = 0,
                  stim_order: StimuliOrder = StimuliOrder.RANDOM):
 
         self.lmodel = lmodel
@@ -120,7 +122,8 @@ class CopyPhraseWrapper:
             state=task_list[0][1],
             alphabet=alp,
             is_txt_stim=is_txt_stim,
-            stimuli_timing=stimuli_timing,
+            stimuli_jitter=stim_jitter,
+            stimuli_timing=stim_timing,
             stimuli_order=self.stim_order,
             inq_constants=inq_constants)
 

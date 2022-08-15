@@ -429,6 +429,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "stim_jitter": {
+    "value": "0.0",
+    "section": "bci_config",
+    "readableName": "Stimulus Presentation Jitter (sec)",
+    "helpTip": "Specifies the time (sec) to jitter presentation rates. Default: 0.0",
+    "recommended_values": "",
+    "type": "float"
+  },
   "stim_pos_x": {
     "value": "0",
     "section": "bci_config",
