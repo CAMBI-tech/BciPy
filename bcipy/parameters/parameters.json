@@ -89,11 +89,11 @@
     "recommended_values": "",
     "type": "float"
   },
-  "offline_analysis_tone": {
+  "alert_sound_file": {
     "value": "bcipy/static/sounds/beep.wav",
     "section": "bci_config",
-    "readableName": "Offline Analysis Alert Tone",
-    "helpTip": "Specifies the path to an audio file to be played as an alert tone when offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
+    "readableName": "Alert Tone",
+    "helpTip": "Specifies the path to an audio file to be played as an alert tone when experiments or offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
     "recommended_values": "",
     "type": "filepath"
   },
@@ -409,7 +409,7 @@
     "value": "0.25",
     "section": "bci_config",
     "readableName": "Stimulus Presentation Duration",
-    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in the RSVP stream.",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
     "recommended_values": "",
     "type": "float"
   },
@@ -426,6 +426,14 @@
     "section": "bci_config",
     "readableName": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_jitter": {
+    "value": "0.0",
+    "section": "bci_config",
+    "readableName": "Stimulus Presentation Jitter (sec)",
+    "helpTip": "Specifies the time (sec) to jitter presentation rates. Default: 0.0",
     "recommended_values": "",
     "type": "float"
   },

@@ -15,6 +15,7 @@ from bcipy.gui.main import (
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
+from bcipy.helpers.stimuli import play_sound
 from bcipy.task import TaskType
 
 
@@ -46,9 +47,13 @@ class BCInterface(BCIGui):
         self.experiment_input = None
         self.task_input = None
 
+        # These represent the current user, experiment, and task selected in the gui
         self.user = None
         self.experiment = None
         self.task = None
+
+        # user names available in the dropdown menu
+        self.users = []
 
         # setup a timer to prevent double clicking in gui
         self.disable = False
@@ -58,6 +63,8 @@ class BCInterface(BCIGui):
         self.button_timeout = self.timeout
 
         self.autoclose = False
+        self.alert = True
+        self.static_font_size = 24
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
@@ -118,13 +125,20 @@ class BCInterface(BCIGui):
 
             self.update_experiment_list()
 
-    def update_user_list(self) -> None:
+    def update_user_list(self, refresh=True) -> None:
         """Updates the user_input combo box with a list of user ids based on the
         data directory configured in the current parameters."""
+        # if refresh is True, then we need to clear the list and add the default text
+        if refresh:
+            self.user_input.clear()
+            self.user_input.addItem(BCInterface.default_text)
 
-        self.user_input.clear()
-        self.user_input.addItem(BCInterface.default_text)
-        self.user_input.addItems(load_users(self.parameters['data_save_loc']))
+        # load the users from the data directory and check if they have already been added to the dropdown
+        users = load_users(self.parameters['data_save_loc'])
+        for user in users:
+            if user not in self.users:
+                self.user_input.addItem(user)
+                self.users.append(user)
 
     def update_experiment_list(self) -> None:
         """Updates the experiment_input combo box with a list of experiments based on the
@@ -202,21 +216,21 @@ class BCInterface(BCIGui):
             size=[200, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
         self.add_static_textbox(
             text='Experiment',
             position=[text_x, 205],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
         self.add_static_textbox(
             text='Task',
             position=[text_x, 305],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
 
     def build_images(self) -> None:
         """Build Images.
@@ -244,9 +258,7 @@ class BCInterface(BCIGui):
         self.parameter_location = path
         self.parameters = load_json_parameters(self.parameter_location,
                                                value_cast=True)
-        # update GUI options
-        if self.user_input:
-            self.update_user_list()
+        self.update_user_list(refresh=False)
 
     def select_parameters(self) -> None:
         """Select Parameters.
@@ -392,6 +404,9 @@ class BCInterface(BCIGui):
             )
             subprocess.Popen(cmd, shell=True)
 
+            if self.alert:
+                play_sound(self.parameters['alert_sound_file'])
+
             if self.autoclose:
                 self.close()
 
@@ -401,7 +416,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = 'python bcipy/signal/model/offline_analysis.py --alert'
+            cmd = f'python bcipy/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:

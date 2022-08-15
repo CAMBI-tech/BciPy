@@ -87,7 +87,7 @@ class RSVPCopyPhraseTask(Task):
         'preview_inquiry_key_input', 'preview_inquiry_length',
         'preview_inquiry_progress_method', 'session_file_name',
         'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
-        'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height',
+        'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height', 'stim_jitter',
         'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
         'stim_space_char', 'target_color', 'task_buffer_length', 'task_color',
         'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
@@ -230,7 +230,7 @@ class RSVPCopyPhraseTask(Task):
             is_txt_stim=self.parameters['is_txt_stim'],
             device_name=self.daq.device_info.name,
             device_channels=self.daq.device_info.channels,
-            stimuli_timing=[
+            stim_timing=[
                 self.parameters['time_fixation'], self.parameters['time_flash']
             ],
             decision_threshold=self.parameters['decision_threshold'],
@@ -241,6 +241,7 @@ class RSVPCopyPhraseTask(Task):
             filter_order=self.parameters['filter_order'],
             notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
+            stim_jitter=self.parameters['stim_jitter'],
             stim_order=StimuliOrder(self.parameters['stim_order']))
 
     def user_wants_to_continue(self) -> bool:
@@ -867,10 +868,10 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
 def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
                               alp, evidence_names, task_list, lmodel,
                               is_txt_stim, device_name, device_channels,
-                              stimuli_timing, decision_threshold,
+                              stim_timing, decision_threshold,
                               backspace_prob, backspace_always_shown,
                               filter_high, filter_low, filter_order,
-                              notch_filter_frequency, stim_length, stim_order):
+                              notch_filter_frequency, stim_length, stim_jitter, stim_order):
     return CopyPhraseWrapper(min_num_inq,
                              max_num_inq,
                              signal_model=signal_model,
@@ -883,7 +884,7 @@ def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
                              is_txt_stim=is_txt_stim,
                              device_name=device_name,
                              device_channels=device_channels,
-                             stimuli_timing=stimuli_timing,
+                             stim_timing=stim_timing,
                              decision_threshold=decision_threshold,
                              backspace_prob=backspace_prob,
                              backspace_always_shown=backspace_always_shown,
@@ -892,4 +893,5 @@ def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
                              filter_order=filter_order,
                              notch_filter_frequency=notch_filter_frequency,
                              stim_length=stim_length,
+                             stim_jitter=stim_jitter,
                              stim_order=stim_order)
