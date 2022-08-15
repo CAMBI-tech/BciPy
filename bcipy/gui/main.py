@@ -4,7 +4,7 @@ import os
 import sys
 import re
 from enum import Enum
-from typing import Any, List
+from typing import Any, Callable, List, Optional
 
 from PyQt5.QtCore import pyqtSlot, Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap, QShowEvent
@@ -669,11 +669,14 @@ class BCIGui(QWidget):
         self.logger.debug(sender.text() + ' was pressed')
         self.logger.debug(sender.get_id())
 
-    def add_button(self, message: str, position: list, size: list, id=-1,
+    def add_button(self,
+                   message: str,
+                   position: list,
+                   size: list,
+                   id: int = -1,
                    background_color: str = 'white',
                    text_color: str = 'default',
-                   button_type: str = None,
-                   action=None) -> PushButton:
+                   action: Optional[Callable] = None) -> PushButton:
         """Add Button."""
         btn = PushButton(message, self.window)
         btn.id = id
@@ -744,7 +747,7 @@ class BCIGui(QWidget):
                            background_color: str = 'white',
                            text_color: str = 'default',
                            size: list = None,
-                           font_family="Times",
+                           font_family='Times',
                            font_size=12,
                            wrap_text=False) -> QLabel:
         """Add Static Text."""

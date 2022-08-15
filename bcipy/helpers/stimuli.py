@@ -623,7 +623,6 @@ def play_sound(sound_file_path: str,
                track_timing: bool = False,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
-               sound_post_buffer_time: float = 1,
                experiment_clock=None,
                trigger_name: str = None,
                timing: list = []) -> list:
@@ -669,11 +668,9 @@ def play_sound(sound_file_path: str,
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
     # which I believe happens prior to the sound playing).
     sd.play(data, fs)
-    if sound_post_buffer_time:
-        # sd.play returns immediately (according to the docs); calculate offset
-        # so the sound_post_buffer_time accounts for the duration of the sound.
-        duration = len(data) / fs
-        core.wait(sound_post_buffer_time + duration)
+    # sd.play returns immediately (according to the docs); wait for the duration of the sound
+    duration = len(data) / fs
+    core.wait(duration)
     return timing
 
 

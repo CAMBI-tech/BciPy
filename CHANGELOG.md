@@ -6,7 +6,7 @@
 - New MNE based plotting for EEG data #220
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
-- Bug fixes #225, #228
+- Bug fixes #225, #228, #235
 - Alerting for conditions that may affect system performance #227, #219
 - Flash time jitter parameter #233
 
@@ -17,8 +17,7 @@
 - `helpers/convert.py`: added a convert to mne method that returns an MNE RawArray. Assumes standard_1020 eeg montage by default.#220
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
-- `parameters/parameters.json`: added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task.
-- `parameters/parameters.json`: added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
+- `parameters/parameters.json`: Added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task. Added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
 
 
 ### Updated
@@ -26,7 +25,7 @@
 - `helpers/visualization.py`: `visualize_erp` updated to use MNE for average ERP plots + topomaps. #220
 - `helpers/raw_data.py`: updated channel methods to accept transformation argument and return sampling rate. Add by_channel map method to call by_channel and remove channels by map ([0, 1, 1]). #220
 - `gui.main.py`--> `gui/main.py`: refactor to follow rest of codebase convention. #218
-- `bcipy/gui/BCInterface.py`: to include timeouts on buttons creating subprocess- this prevents multiple unintended windows or functionality from occurring after double clicks. #218
+- `bcipy/gui/BCInterface.py`: to include timeouts on buttons creating subprocess- this prevents multiple unintended windows or functionality from occurring after double clicks. #218 added alert to let experimenter know when a session has completed. Allow for custom paramter setting in GUI for offline_analysis (defaults to same as current, `bcipy/parameters.json`) #235
 
 ### Removed
 

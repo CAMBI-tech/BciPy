@@ -190,8 +190,7 @@ def offline_analysis(
         show=show_figures
     )
     if alert_finished:
-        offline_analysis_tone = parameters.get("offline_analysis_tone")
-        play_sound(offline_analysis_tone)
+        play_sound(parameters.get("alert_sound_file"))
     return model, figure_handles
 
 
