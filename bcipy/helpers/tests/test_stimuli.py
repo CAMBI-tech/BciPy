@@ -26,7 +26,7 @@ from bcipy.helpers.stimuli import (
     distributed_target_positions,
     soundfiles,
     StimuliOrder,
-    ssvep_to_cvep,
+    ssvep_to_code,
     TargetPositions
 )
 
@@ -703,32 +703,49 @@ class TestInquiryReshaper(unittest.TestCase):
 class SSVEPStimuli(unittest.TestCase):
 
     def test_default_flicker_and_refresh_rate_return_codes(self):
-        response = ssvep_to_cvep()
+        response = ssvep_to_code()
         self.assertIsInstance(response, list)
         self.assertEqual(response[0], 0)
 
-    def test_ssvep_to_cvep_raises_exception_when_refresh_rate_less_than_flicker_rate(self):
+    def test_ssvep_to_codes_returns_the_length_of_refresh_rate(self):
+        refresh_rate = 40
+        flicker_rate = 2
+        response = ssvep_to_code(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
+        self.assertTrue(len(response) == refresh_rate)
+        self.assertEqual(response[0], 0)
+        self.assertEqual(response[-1], 1)
+
+    def test_ssvep_to_code_raises_exception_when_refresh_rate_less_than_flicker_rate(self):
         flicker_rate = 300
         refresh_rate = 1
 
-        with self.assertRaises(Exception):
-            ssvep_to_cvep(refresh_rate, flicker_rate)
+        with self.assertRaises(BciPyCoreException):
+            ssvep_to_code(refresh_rate, flicker_rate)
 
     def test_when_division_of_refresh_rate_by_flicker_rate_raise_exception_if_noninteger(self):
-        # flicker_rate = 11.43 refresh_rate = 60
-        flicker_rate = 11.43
+        flicker_rate = 11
         refresh_rate = 60
 
-        with self.assertRaises(Exception):
-            ssvep_to_cvep(refresh_rate, flicker_rate)
+        with self.assertRaises(BciPyCoreException):
+            ssvep_to_code(refresh_rate, flicker_rate)
 
-    def test_ssvep_to_cvep_returns_expected_codes(self):
+    def test_ssvep_to_code_returns_expected_codes(self):
         flicker_rate = 2
         refresh_rate = 4
-        response = ssvep_to_cvep(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
+        response = ssvep_to_code(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
         expected_output = [0, 0, 1, 1]
         self.assertEqual(response, expected_output)
 
+    def test_ssvep_to_code_raises_exception_when_flicker_rate_one_or_less(self):
+        flicker_rate = 1
+        refresh_rate = 2
+        with self.assertRaises(BciPyCoreException):
+            ssvep_to_code(refresh_rate, flicker_rate)
+
+        flicker_rate = 0
+        refresh_rate = 2
+        with self.assertRaises(BciPyCoreException):
+            ssvep_to_code(refresh_rate, flicker_rate)
 
 
 class TestSoundStimuli(unittest.TestCase):
