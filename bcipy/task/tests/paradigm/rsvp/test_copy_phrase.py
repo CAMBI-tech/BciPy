@@ -70,6 +70,7 @@ class TestCopyPhrase(unittest.TestCase):
             'stim_height': 0.6,
             'stim_length': 10,
             'stim_number': 100,
+            'stim_jitter': 0.0,
             'stim_order': 'random',
             'stim_pos_x': 0.0,
             'stim_pos_y': 0.0,
