@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from typing import Any, Callable, List, Optional
 
-from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer
 from PyQt5.QtGui import QFont, QPixmap, QShowEvent
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
@@ -230,8 +230,14 @@ class FormInput(QWidget):
         self.label_widget = self.init_label()
         self.help_tip_widget = self.init_help(help_size, help_color)
         self.control = self.init_control(value)
-
+        self.control.installEventFilter(self)
         self.init_layout()
+
+    def eventFilter(self, source, event):
+        """Event filter that suppresses the scroll wheel event."""
+        if (event.type() == QEvent.Wheel and source is self.control):
+            return True
+        return False
 
     def init_label(self) -> QWidget:
         """Initialize the label widget."""
@@ -319,7 +325,6 @@ class IntegerInput(FormInput):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
         spin_box.setMaximum(100000)
-
         if value:
             spin_box.setValue(int(value))
         return spin_box
