@@ -7,7 +7,7 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple
+from typing import Iterator, List, Tuple, NamedTuple, Optional
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
@@ -278,6 +278,7 @@ def inq_generator(query: List[str],
                   timing: List[float] = [1, 0.2],
                   color: List[str] = ['red', 'white'],
                   inquiry_count: int = 1,
+                  stim_jitter: float = 0,
                   stim_order: StimuliOrder = StimuliOrder.RANDOM,
                   is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
@@ -312,9 +313,9 @@ def inq_generator(query: List[str],
         sample += [i for i in query]
         samples.append(sample)
 
-        # append timing
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
+        times.append([timing[i] for i in range(len(timing) - 1)])
+        base_timing = timing[-1]
+        times[-1] += jittered_timing(base_timing, stim_jitter, stim_length)
 
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
@@ -431,6 +432,7 @@ def best_case_rsvp_inq_gen(alp: list,
 def calibration_inquiry_generator(
         alp: List[str],
         timing: List[float] = [0.5, 1, 0.2],
+        jitter: Optional[int] = None,
         color: List[str] = ['green', 'red', 'white'],
         stim_number: int = 10,
         stim_length: int = 10,
@@ -438,13 +440,14 @@ def calibration_inquiry_generator(
         target_positions: TargetPositions = TargetPositions.RANDOM,
         nontarget_inquiries: int = 10,
         is_txt: bool = True) -> InquirySchedule:
-    """Random Calibration Inquiry Generator.
+    """Calibration Inquiry Generator.
 
-    Generates random inquiries with target letters in all possible positions.
+    Generates inquiries with target letters in all possible positions.
         Args:
             alp(list[str]): stimuli
             timing(list[float]): Task specific timing for generator.
                 [target, fixation, stimuli]
+            jitter(int): jitter for stimuli timing. If None, no jitter is applied.
             color(list[str]): Task specific color for generator
                 [target, fixation, stimuli]
             stim_number(int): number of trials in a inquiry
@@ -462,6 +465,11 @@ def calibration_inquiry_generator(
 
     target_indexes = []
     no_target = None
+
+    if len(timing) != 3 or len(color) != 3:
+        raise BciPyCoreException(
+            'Calibration Inquiry Generation Error: \n'
+            'Timing and Color must be a list of length three: [target, fixation, stimuli]')
 
     if (target_positions == target_positions.DISTRIBUTED):
         target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
@@ -490,12 +498,31 @@ def calibration_inquiry_generator(
         sample = [target, get_fixation(is_txt=is_txt), *inquiry]
 
         samples.append(sample)
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
+
+        # timing for fixation and prompt
+        init_timing = [timing[i] for i in range(len(timing) - 1)]
+        # pull out timing for the inquiry stimuli
+        stim_time = timing[-1]
+        if jitter:
+            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
+            inq_timing = init_timing + _inq_timing
+        else:
+            inq_timing = init_timing + [stim_time] * stim_length
+        times.append(inq_timing)
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
     return InquirySchedule(samples, times, colors)
+
+
+def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
+    """Jittered timing.
+
+    Using a base time and a jitter, generate a list (with length stim_count) of timing that is uniformly distributed.
+    """
+    assert time > jitter, (
+        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
+    return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
 
 def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
@@ -596,7 +623,6 @@ def play_sound(sound_file_path: str,
                track_timing: bool = False,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
-               sound_post_buffer_time: float = 1,
                experiment_clock=None,
                trigger_name: str = None,
                timing: list = []) -> list:
@@ -642,11 +668,9 @@ def play_sound(sound_file_path: str,
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
     # which I believe happens prior to the sound playing).
     sd.play(data, fs)
-    if sound_post_buffer_time:
-        # sd.play returns immediately (according to the docs); calculate offset
-        # so the sound_post_buffer_time accounts for the duration of the sound.
-        duration = len(data) / fs
-        core.wait(sound_post_buffer_time + duration)
+    # sd.play returns immediately (according to the docs); wait for the duration of the sound
+    duration = len(data) / fs
+    core.wait(duration)
     return timing
 
 
