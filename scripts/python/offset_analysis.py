@@ -8,11 +8,12 @@ from scipy.stats import normaltest, describe
 from textwrap import wrap
 from bcipy.acquisition.device_info import DeviceInfo
 
-ALLOWABLE_TOLERANCE = 0.001
+ALLOWABLE_TOLERANCE = 0.0001
 RECOMMEND = True # set static to 0.0 to get good base recommendations
-STATIC = 0.1415
+STATIC = 0.00
 RSVP = True
-PLOT = True if not RECOMMEND else True
+PLOT = True if RECOMMEND else False
+TARGET_CHAR = 'â–\xa0'
 
 
 def channel_data(raw_data, device_info, channel_name, n_records=None):
@@ -76,6 +77,7 @@ def calculate_latency(raw_data, device_info, triggers, title="", recommend_stati
     lengths = []
     length = 0
 
+    # here we loop over the TRG data from raw_data.csv and define the diode start times & lengths
     for i, val in enumerate(trg_box_channel):
         timestamp = clock_seconds(device_info, i + 1)
         value = int(float(val))
@@ -87,28 +89,31 @@ def calculate_latency(raw_data, device_info, triggers, title="", recommend_stati
             starts.append(timestamp)
 
         if value > 0 and diode_enc:
-            length += 0
+            length += 1
 
         if value < 1 and diode_enc:
             diode_enc = False
             lengths.append(length)
             length = 0
-        # else:
-        #     print('Fail')
 
     ax.plot(trg_box_x, trg_box_y, label='TRG (trigger box)')
 
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
-        trigger_diodes_timestamps = [stamp for (_name, _trgtype, stamp) in triggers if _name == '\u25A0']
+        trigger_diodes_timestamps = [stamp for (_name, _trgtype, stamp) in triggers if _name == TARGET_CHAR]
         plt.vlines(trigger_diodes_timestamps,
-                   ymin=-1.0, ymax=trg_ymax, label='triggers.txt (adjusted)',
+                   ymin=-1.0, ymax=trg_ymax, label='triggers.txt',
                    linewidth=0.5, color='cyan')
 
     errors = []
     diffs = []
     x = 0
-    # starts.pop(0)
+
+    # the first start in RSVP is the waiting screen, remove it from the analysis of latency
+    if RSVP:
+        starts.pop(0)
+
+    # loop over the trigger data from system and diode and determine offset
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
 
