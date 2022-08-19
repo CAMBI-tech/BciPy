@@ -4,18 +4,19 @@ from bcipy.helpers.load import (
 from pathlib import Path
 
 
-def main(data_folder):
-    raw_data_file = 'raw_data.csv'
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+def main(data_folder, file_name):
+    """Load BciPy raw data, print info to console, and return data to caller."""
+    raw_data = load_raw_data(Path(data_folder, file_name))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
     # access data using raw_data.channel_data or raw_data.numerical_data
-    print('Successfully loaded raw data from {}'.format(raw_data_file))
-    print('Channels: {}'.format(channels))
-    print('Type: {}'.format(type_amp))
-    print('Sample rate: {}'.format(sample_rate))
-    print('Data shape: {}'.format(raw_data.channel_data.shape))
+    print(f'Successfully loaded raw data from {file_name}')
+    print(f'Channels: {channels}')
+    print(f'Type: {type_amp}')
+    print(f'Sample rate: {sample_rate}')
+    print(f'Data shape: {raw_data.channel_data.shape}')
+    return raw_data
 
 
 if __name__ == "__main__":
@@ -25,4 +26,4 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--data_folder', required=True, help='Path to data folder')
     args = parser.parse_args()
 
-    main(args.data_folder)
+    raw_data = main(args.data_folder, file_name='raw_data.csv')
