@@ -47,6 +47,14 @@
         "description": "Alias to GTec g.USBamp for backwards compatibility and demos."
     },
     {
+        "name": "Tobii Nano",
+        "content_type": "Eyetracker",
+        "channels": ["device_ts", "system_ts", "left_x", "left_y", "left_pupil", "right_x" , "right_y", "right_pupil" ],
+        "sample_rate": 60.0,
+        "connection_methods": [ "LSL" ],
+        "description": "Tobii Nano. For use with the Tobii Pro SDK."
+    },
+    {
         "name": "DSI_VR300",
         "content_type": "EEG",
         "channels": [ "P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG" ],
