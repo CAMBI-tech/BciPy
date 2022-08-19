@@ -14,7 +14,7 @@
 ### Added
 
 - `helpers/visualization.py`: added methods for visualized MNE Epochs and better visualizing EEG data in BciPy. #220 `visualize_joint_average` and `visualize_evokeds`.
-- `helpers/stimuli.py`: added a method for converting MNE RawArray to Epochs. #220 Added stimuli flash time jitter to calibration and inq_generation methods #233
+- `helpers/stimuli.py`: added a method for converting MNE RawArray to Epochs. #220 Added stimuli flash time jitter to calibration and inq_generation methods #233 Added ssvep_to_code method #232
 - `helpers/convert.py`: added a convert to mne method that returns an MNE RawArray. Assumes standard_1020 eeg montage by default.#220
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
