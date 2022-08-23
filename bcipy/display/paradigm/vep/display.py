@@ -332,8 +332,6 @@ class VEPDisplay(Display):
         self.text_boxes = []
         size = self.vep_box_size * self.vep_type
         for box_content, pos, color in zip(self.stimuli_inquiry, self.stimuli_pos, self.stimuli_colors):
-            self.text_boxes += visual.TextBox2(
-                win=self.window, text=box_content[0], font=self.stimuli_font, pos=pos, color=color,
-                size=[size, size], alignment='center', borderWidth=1, borderColor='white',
-                letterHeight=self.stimuli_height)
+            text = ' '.join(box_content)
+            self.text_boxes += visual.TextBox2(win=self.window, text=text, font=self.stimuli_font, pos=pos, color=color[0], size=[size, size], alignment='center', anchor='center', borderWidth=1, borderColor='white', letterHeight=self.stimuli_height)
         return self.text_boxes
