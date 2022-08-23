@@ -24,7 +24,7 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 num_boxes = 4
 start_positions_for_boxes = [(-.3, -.3), (.3, -.3), (.3, .3), (-.3, .3)]
 
-win = visual.Window(size=[700, 500], fullscr=False, screen=1, allowGUI=False,
+win = visual.Window(size=[700, 700], fullscr=False, screen=1, allowGUI=False,
                     allowStencil=False, monitor='testMonitor', color='black',
                     colorSpace='rgb', blendMode='avg',
                     waitBlanking=False,
@@ -32,30 +32,32 @@ win = visual.Window(size=[700, 500], fullscr=False, screen=1, allowGUI=False,
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
-print(frameRate)
+print(f'Monitor refresh rate: {frameRate} Hz')
 
-# Initialize Clock
 clock = core.Clock()
 experiment_clock = Clock()
 len_stimuli = 10
 stimuli = VEPStimuliProperties(
-    stim_color= [['white'] * num_boxes],
+    stim_color=[['white'] * num_boxes],
     stim_pos=start_positions_for_boxes,
     stim_height=0.1,
     stim_font='Consolas',
-    timing=(1, 0.5, 4), # prompt, fixation, stimuli
-    stim_length=1, # how many times to stimuli
+    timing=(1, 0.5, 4),  # prompt, fixation, stimuli
+    stim_length=1,  # how many times to stimuli
 )
 vep = VEPDisplay(win, experiment_clock, stimuli, task_display, info)
-
+timing = []
+t = 2
 for i in range(len(task_text)):
     vep.update_task(task_text[i], task_color[i][0])
+    vep.schedule_to([['A', 'B'], ['Z'], ['P'], ['R', 'W']], [1, 0.5, 5], [['blue'], ['purple'], ['red'], ['white']])
+    timing += vep.do_inquiry()
 
-    vep.do_inquiry()
+    # show the wait screen, this will only happen once
+    while t > 0:
+        t -= 1
+        vep.wait_screen(f"Waiting for {t}s", color='white')
+        core.wait(1)
 
-    vep.schedule_to([['A', 'B'], ['Z'], ['P'], []], [1, 0.5, 5], [['white'], ['white'], ['white'], ['white']])
-    # import pdb; pdb.set_trace()
-    vep._generate_inquiry()
-    import pdb; pdb.set_trace()
-
+print(timing)
 win.close()

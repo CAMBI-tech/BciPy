@@ -327,22 +327,16 @@ class VEPStimuliProperties(StimuliProperties):
         self.stim_font = stim_font
         self.stim_height = stim_height
         self.is_txt_stim = True
-        self.stim_length = stim_length # how many times to flicker
+        self.stim_length = stim_length  # how many times to flicker
         self.stim_pos = stim_pos
 
         # dynamic property. List of length 3. 1. prompt; 2. fixation; 3. inquiry
         self.stim_timing = timing
-        
+
         # dynamic properties, must be a a list of lists where each list is a different box
         self.stim_colors = stim_color
         self.stim_inquiry = inquiry
 
-    def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
-        """"Build Initial Stimuli.
-
-        This method constructs the stimuli object which can be updated later. This is more
-            performant than creating a new stimuli each call. It can create either an image or text stimuli
-            based on the boolean self.is_txt_stim.
-        """
-        return None
-
+    def build_init_stimuli(self, window: visual.Window) -> None:
+        """"Build Initial Stimuli."""
+        ...
