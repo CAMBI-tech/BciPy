@@ -4,6 +4,7 @@ from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_PATH,
                                         DEFAULT_FIELD_PATH,
                                         EXPERIMENT_FILENAME, FIELD_FILENAME,
+                                        is_battery_powered,
                                         is_connected)
 from bcipy.helpers.exceptions import (InvalidFieldException,
                                       InvalidExperimentException,
@@ -25,7 +26,8 @@ def validate_bcipy_session(parameters: dict) -> bool:
     True if it's okay to continue, otherwise False
     """
     possible_alerts = [(parameters['fake_data'], '* Fake data is on.'),
-                       (is_connected(), '* Internet is on.')]
+                       (is_connected(), '* Internet is on.'),
+                       (is_battery_powered(), '* Operating on battery power')]
     alert_messages = [
         message for (condition, message) in possible_alerts if condition
     ]
