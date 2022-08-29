@@ -43,6 +43,18 @@ def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
     return False
 
 
+def is_battery_powered() -> bool:
+    """Check if this current computer is a laptop currently using its battery.
+
+    Returns
+    -------
+    True if the computer is currently running on battery power. This can impact
+    the performance of hardware (ex. GPU) needed for BciPy operation by entering
+    power saving operations."""
+    return psutil.sensors_battery(
+    ) and not psutil.sensors_battery().power_plugged
+
+
 def git_dir() -> str:
     """Git Directory.
 
