@@ -48,8 +48,10 @@ stimuli = VEPStimuliProperties(
 vep = VEPDisplay(win, experiment_clock, stimuli, task_display, info)
 timing = []
 t = 2
-for i in range(len(task_text)):
-    vep.update_task(task_text[i], task_color[i][0])
+
+# loop over the text and colors, present the stimuli and record the timing
+for (txt, color) in zip(task_text, task_color):
+    vep.update_task(txt, color[0])
     vep.schedule_to([['A', 'B'], ['Z'], ['P'], ['R', 'W']], [1, 0.5, 5], [['blue'], ['purple'], ['red'], ['white']])
     timing += vep.do_inquiry()
 
