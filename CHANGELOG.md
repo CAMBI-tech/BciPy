@@ -2,16 +2,19 @@
 
 ## Contributions
 
+- New Display Paradigm: VEP Display #237
+- Write session summary after Copy Phrase task #222
 - New MNE based plotting for EEG data #220
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
-- Alerting for conditions that may affect system performance #227, #219
+- Alerting for conditions that may affect system performance #227, #219, #238
 - Flash time jitter parameter #233
 - New Supported Devices: Tobii-Nano #234
 - Bug fixes #225, #228, #235
 
 ### Added
 
+- `display/paradigm/vep`: added create_vep_codes for generating random flicker patterns, VEPBox to encapsulate each flickering box stimuli, and a working VEPDisplay for later task development. #237
 - `helpers/visualization.py`: added methods for visualized MNE Epochs and better visualizing EEG data in BciPy. #220 `visualize_joint_average` and `visualize_evokeds`.
 - `helpers/stimuli.py`: added a method for converting MNE RawArray to Epochs. #220 Added stimuli flash time jitter to calibration and inq_generation methods #233 Added ssvep_to_code method #232
 - `helpers/convert.py`: added a convert to mne method that returns an MNE RawArray. Assumes standard_1020 eeg montage by default.#220
