@@ -7,7 +7,7 @@
 - New MNE based plotting for EEG data #220
 - Prevent GUI double clicks #218
 - Better Fake Data Handling #219
-- Alerting for conditions that may affect system performance #227, #219
+- Alerting for conditions that may affect system performance #227, #219, #238
 - Flash time jitter parameter #233
 - New Supported Devices: Tobii-Nano #234
 - Bug fixes #225, #228, #235
