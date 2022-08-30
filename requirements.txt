@@ -2,7 +2,7 @@ transformers==4.15.0
 torch==1.10.1
 construct==2.8.14
 mne==1.0.2
-PsychoPy==2020.2.10
+PsychoPy==2022.2.4
 openpyxl==2.6.3
 pyglet==1.5.23
 numpy==1.20.3
