@@ -125,7 +125,7 @@ def init_display_window(parameters):
 class StimuliProperties:
     """"Stimuli Properties.
 
-    An encapsulation of properties relevant to core stimuli presentation in an RSVP paradigm.
+    An encapsulation of properties relevant to core stimuli presentation in an RSVP or Matrix paradigm.
     """
 
     def __init__(
@@ -304,3 +304,39 @@ class PreviewInquiryProperties:
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
         self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
+
+
+class VEPStimuliProperties(StimuliProperties):
+
+    def __init__(
+            self,
+            stim_font: str,
+            stim_pos: List[Tuple[float, float]],
+            stim_height: float,
+            timing: Tuple[float, float, float] = None,
+            stim_color: List[List[str]] = None,
+            inquiry: List[List[str]] = None,
+            stim_length: int = 1):
+        """Initialize VEP Stimuli Parameters.
+        stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
+        stim_font(str): Font to apply to all VEP stimuli
+        stim_pos(List[Tuple[float, float]]): Position on the screen where to present to VEP text
+        stim_height(float): Height of all VEP text stimuli
+        """
+        # static properties
+        self.stim_font = stim_font
+        self.stim_height = stim_height
+        self.is_txt_stim = True
+        self.stim_length = stim_length  # how many times to flicker
+        self.stim_pos = stim_pos
+
+        # dynamic property. List of length 3. 1. prompt; 2. fixation; 3. inquiry
+        self.stim_timing = timing
+
+        # dynamic properties, must be a a list of lists where each list is a different box
+        self.stim_colors = stim_color
+        self.stim_inquiry = inquiry
+
+    def build_init_stimuli(self, window: visual.Window) -> None:
+        """"Build Initial Stimuli."""
+        ...

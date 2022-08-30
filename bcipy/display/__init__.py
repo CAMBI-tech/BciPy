@@ -10,6 +10,7 @@ from .main import (
     init_display_window,
     PreviewInquiryProperties,
     StimuliProperties,
+    VEPStimuliProperties,
     TaskDisplayProperties,
 )
 
@@ -18,6 +19,7 @@ __all__ = [
     'init_display_window',
     'BCIPY_LOGO_PATH',
     'StimuliProperties',
+    'VEPStimuliProperties',
     'InformationProperties',
     'TaskDisplayProperties',
     'PreviewInquiryProperties'
