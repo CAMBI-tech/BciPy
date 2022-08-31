@@ -237,7 +237,7 @@ def main(json_file, title='BCI Parameters', size=(450, 550)):
 if __name__ == '__main__':
 
     import argparse
-    from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
+    from bcipy.config import DEFAULT_PARAMETERS_PATH
 
     parser = argparse.ArgumentParser()
 

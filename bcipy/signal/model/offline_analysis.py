@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -90,8 +91,7 @@ def offline_analysis(
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
-    triggers_file = parameters.get("trigger_file_name", "triggers")
-    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
+    raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
     log.info(f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s")
 
@@ -132,7 +132,7 @@ def offline_analysis(
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
-        trigger_path=f"{data_folder}/{triggers_file}.txt",
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
-    parser.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
+    parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)

@@ -3,15 +3,14 @@ import logging
 import multiprocessing
 
 from bcipy.display import init_display_window
+from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
                                 load_signal_model)
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.session import collect_experiment_field_data
-from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_ID,
-                                        configure_logger, get_system_info)
+from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
 from bcipy.signal.model import PcaRdaKdeModel
@@ -72,7 +71,6 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
 
     # configure bcipy session logging
     configure_logger(save_folder,
-                     log_name=parameters['log_name'],
                      version=sys_info['bcipy_version'])
 
     log.info(sys_info)

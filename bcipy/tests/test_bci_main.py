@@ -7,8 +7,8 @@ from bcipy.main import (
     _clean_up_session,
     execute_task
 )
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
+from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID
+
 from bcipy.helpers.exceptions import (
     UnregisteredExperimentException,
 )
@@ -59,7 +59,6 @@ class TestBciMain(unittest.TestCase):
         ).thenReturn(self.save_location)
         when(main).configure_logger(
             self.save_location,
-            log_name=self.parameters['log_name'],
             version=self.system_info['bcipy_version']
         )
         when(main).collect_experiment_field_data(self.experiment, self.save_location)
@@ -80,7 +79,6 @@ class TestBciMain(unittest.TestCase):
             experiment_id=self.experiment)
         verify(main, times=1).configure_logger(
             self.save_location,
-            log_name=self.parameters['log_name'],
             version=self.system_info['bcipy_version'])
         verify(main, times=1).collect_experiment_field_data(self.experiment, self.save_location)
         verify(main, times=1).execute_task(self.task, self.parameters, self.save_location)

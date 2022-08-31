@@ -220,7 +220,9 @@ class TriggerHandler:
                  file_name: str,
                  flush: FlushFrequency):
         self.path = path
-        self.file_name = f'{file_name}.txt'
+        self.file_name = f'{file_name}.txt' if not file_name.endswith('.txt') else file_name
+        self.flush = flush
+        self.triggers = []
         self.file_path = f'{self.path}/{self.file_name}'
         self.flush = flush
         self.triggers = []

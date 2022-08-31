@@ -14,6 +14,8 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
+from bcipy.helpers.system_utils import (
+    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
@@ -75,25 +77,19 @@ class RSVPCopyPhraseTask(Task):
 
     TASK_NAME = 'RSVP Copy Phrase Task'
     PARAMETERS_USED = [
-        'backspace_always_shown', 'decision_threshold', 'down_sampling_rate',
-        'prestim_length', 'feedback_flash_time', 'feedback_font',
-        'feedback_color', 'feedback_pos_x',
-        'feedback_pos_y', 'feedback_stim_height',
-        'filter_high', 'filter_low', 'filter_order', 'fixation_color',
-        'info_color', 'info_font', 'info_height', 'info_text', 'is_txt_stim',
-        'lm_backspace_prob', 'max_inq_len', 'max_inq_per_series',
-        'max_minutes', 'max_selections', 'min_inq_len',
-        'notch_filter_frequency', 'preview_inquiry_isi',
-        'preview_inquiry_key_input', 'preview_inquiry_length',
-        'preview_inquiry_progress_method', 'session_file_name',
-        'show_feedback', 'show_preview_inquiry', 'spelled_letters_count',
-        'static_trigger_offset', 'stim_color', 'stim_font', 'stim_height', 'stim_jitter',
-        'stim_length', 'stim_number', 'stim_order', 'stim_pos_x', 'stim_pos_y',
-        'stim_space_char', 'target_color', 'task_buffer_length', 'task_color',
-        'task_font', 'task_height', 'task_text', 'info_pos_x', 'info_pos_y',
-        'time_fixation', 'time_flash', 'time_prompt', 'trial_complete_message',
-        'trial_complete_message_color', 'trial_length', 'trigger_file_name',
-        'trigger_type', 'wait_screen_message', 'wait_screen_message_color'
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
+        'font', 'fixation_color', 'trigger_type',
+        'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
+        'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
+        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'min_inq_len',
+        'show_feedback', 'feedback_duration',
+        'show_preview_inquiry', 'preview_inquiry_isi',
+        'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
+        'spelled_letters_count', 'static_trigger_offset',
+        'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
+        'stim_order', 'stim_pos_x', 'stim_pos_y', 'stim_space_char', 'target_color',
+        'task_buffer_length', 'task_color', 'task_height', 'task_text',
+        'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
     def __init__(self, win, daq, parameters, file_save, signal_model,
@@ -120,16 +116,24 @@ class RSVPCopyPhraseTask(Task):
 
         self.file_save = file_save
 
-        self.trigger_handler = TriggerHandler(self.file_save, parameters['trigger_file_name'], FlushFrequency.EVERY)
-        self.session_save_location = f"{self.file_save}/{parameters['session_file_name']}"
+        self.trigger_handler = TriggerHandler(self.file_save, TRIGGER_FILENAME, FlushFrequency.EVERY)
+        self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters['task_text']
 
         self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_model
         self.evidence_precision = 5
-        self.feedback = VisualFeedback(self.window, self.parameters,
-                                       self.experiment_clock)
+
+        self.feedback = VisualFeedback(
+            self.window,
+            {'feedback_font': self.parameters['font'],
+             'feedback_color': self.parameters['info_color'],
+             'feedback_pos_x': self.parameters['info_pos_x'],
+             'feedback_pos_y': self.parameters['info_pos_y'],
+             'feedback_stim_height': self.parameters['info_height'],
+             'feedback_duration': self.parameters['feedback_duration']},
+            self.experiment_clock)
 
         self.setup()
 
@@ -254,8 +258,8 @@ class RSVPCopyPhraseTask(Task):
         """
         should_continue = get_user_input(
             self.rsvp,
-            self.parameters['wait_screen_message'],
-            self.parameters['wait_screen_message_color'],
+            WAIT_SCREEN_MESSAGE,
+            self.parameters['stim_color'],
             first_run=self.first_run)
         if not should_continue:
             self.logger.debug('User wants to exit.')
@@ -418,7 +422,7 @@ class RSVPCopyPhraseTask(Task):
         # Evidence is not recorded in the session when using fake decisions.
         if self.parameters['summarize_session'] and self.session.has_evidence():
             session_excel(session=self.session,
-                          excel_file=f"{self.file_save}/session.xlsx")
+                          excel_file=f"{self.file_save}/{SESSION_SUMMARY_FILENAME}")
 
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait()
@@ -834,10 +838,10 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],
         info_height=[parameters['info_height']],
-        info_font=[parameters['info_font']],
+        info_font=[parameters['font']],
         info_text=[parameters['info_text']],
     )
-    stimuli = StimuliProperties(stim_font=parameters['stim_font'],
+    stimuli = StimuliProperties(stim_font=parameters['font'],
                                 stim_pos=(parameters['stim_pos_x'],
                                           parameters['stim_pos_y']),
                                 stim_height=parameters['stim_height'],
@@ -849,7 +853,7 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
     starting_spelled_text += ' ' * padding
     task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
                                          task_pos=(0, 1 - (2 * parameters['task_height'])),
-                                         task_font=parameters['task_font'],
+                                         task_font=parameters['font'],
                                          task_height=parameters['task_height'],
                                          task_text=starting_spelled_text)
     return CopyPhraseDisplay(win,

@@ -7,6 +7,7 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 from psychopy import core, event, visual
 
+from bcipy.config import SESSION_COMPLETE_MESSAGE
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
@@ -233,12 +234,12 @@ def trial_complete_message(win, parameters) -> List[visual.TextStim]:
     message_stim = visual.TextStim(
         win=win,
         height=parameters['info_height'],
-        text=parameters['trial_complete_message'],
-        font=parameters['info_font'],
+        text=SESSION_COMPLETE_MESSAGE,
+        font=parameters['font'],
         pos=(parameters['info_pos_x'],
              parameters['info_pos_y']),
         wrapWidth=None,
-        color=parameters['trial_complete_message_color'],
+        color=parameters['info_color'],
         colorSpace='rgb',
         opacity=1, depth=-6.0)
     return [message_stim]

@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
+from bcipy.helpers.system_utils import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.signal.process import Composition
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 
@@ -53,17 +54,16 @@ def convert_to_edf(data_dir: str,
         Path to new edf file
     """
     if not edf_path:
-        edf_path = Path(data_dir, 'raw.edf')
+        edf_path = Path(data_dir, f'{RAW_DATA_FILENAME}.edf')
 
-    params = load_json_parameters(Path(data_dir, 'parameters.json'),
+    params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
                                   value_cast=True)
-    data = load_raw_data(Path(data_dir, params['raw_data_name']))
+    data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
     raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
-    trigger_file = params.get('trigger_file_name', 'triggers')
 
     trigger_type, trigger_timing, trigger_label = trigger_decoder(
-        str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False)
+        str(Path(data_dir, TRIGGER_FILENAME)), remove_pre_fixation=False)
 
     # validate annotation parameters given data length and trigger count
     validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))

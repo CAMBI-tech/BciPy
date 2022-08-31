@@ -5,9 +5,7 @@ from json import dump, load
 from pathlib import Path
 from typing import Tuple
 
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
-
-DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
+from bcipy.config import DEFAULT_ENCODING
 
 Parameter = namedtuple('Parameter', [
     'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
