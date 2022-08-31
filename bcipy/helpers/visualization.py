@@ -27,7 +27,7 @@ def visualize_erp(
         plot_average: Optional[bool] = True,
         plot_topomaps: Optional[bool] = True,
         show: Optional[bool] = False,
-        save_path: Optional[bool] = None) -> List[Figure]:
+        save_path: Optional[str] = None) -> List[Figure]:
     """ Visualize ERP.
 
     Generates a comparative ERP figure following a task execution. Given a set of trailed data,

@@ -85,6 +85,8 @@ if __name__ == '__main__':
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     channel_map = analysis_channels(channels, type_amp)
 
+    save_path = None if not args.save else path
+
     figure_handles = visualize_erp(
         raw_data,
         channel_map,
@@ -94,6 +96,6 @@ if __name__ == '__main__':
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=args.save,
+        save_path=save_path,
         show=args.show
     )
