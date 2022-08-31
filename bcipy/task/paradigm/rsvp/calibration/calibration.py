@@ -7,7 +7,6 @@ from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
                                    get_task_info)
-from bcipy.helpers.system_utils import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
