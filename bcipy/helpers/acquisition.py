@@ -14,7 +14,7 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.helpers.system_utils import RAW_DATA_FILENAME
+from bcipy.config import RAW_DATA_FILENAME
 
 log = logging.getLogger(__name__)
 

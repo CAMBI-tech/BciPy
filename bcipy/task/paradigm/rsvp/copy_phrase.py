@@ -3,6 +3,8 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
+from bcipy.config import (
+    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties, TaskDisplayProperties)
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
@@ -14,8 +16,6 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.system_utils import (
-    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,

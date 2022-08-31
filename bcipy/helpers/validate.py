@@ -1,11 +1,12 @@
 import os
 
+from bcipy.config import (
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME)
 from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.system_utils import (DEFAULT_EXPERIMENT_PATH,
-                                        DEFAULT_FIELD_PATH,
-                                        EXPERIMENT_FILENAME, FIELD_FILENAME,
-                                        is_battery_powered,
-                                        is_connected)
+from bcipy.helpers.system_utils import is_battery_powered, is_connected
 from bcipy.helpers.exceptions import (InvalidFieldException,
                                       InvalidExperimentException,
                                       UnregisteredExperimentException,

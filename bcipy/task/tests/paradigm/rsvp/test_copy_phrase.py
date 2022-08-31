@@ -8,6 +8,7 @@ import numpy as np
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
+from bcipy.config import DEFAULT_ENCODING
 import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
 from bcipy.helpers.exceptions import TaskConfigurationException
@@ -18,7 +19,6 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 
 class TestCopyPhrase(unittest.TestCase):

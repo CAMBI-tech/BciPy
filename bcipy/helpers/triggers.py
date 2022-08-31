@@ -6,11 +6,11 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from psychopy import core, visual
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 

@@ -7,10 +7,10 @@ import warnings
 
 from pathlib import Path
 
+from bcipy.config import DEFAULT_ENCODING, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
-from bcipy.helpers.system_utils import DEFAULT_ENCODING, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 
 from mne.io import read_raw_edf

@@ -11,9 +11,9 @@ import numpy as np
 from pyedflib import FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
+from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.system_utils import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.signal.process import Composition
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 

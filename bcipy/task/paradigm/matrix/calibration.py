@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 from psychopy import core
 
+from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
@@ -10,7 +11,6 @@ from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_in
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
-from bcipy.helpers.system_utils import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.task import Task
 
 
