@@ -10,7 +10,7 @@
 - Alerting for conditions that may affect system performance #227, #219, #238
 - Flash time jitter parameter #233
 - New Supported Devices: Tobii-Nano #234
-- Bug fixes #225, #228, #235
+- Bug fixes #225, #228, #235, #240
 
 ### Added
 
@@ -25,7 +25,7 @@
 
 ### Updated
 
-- `helpers/visualization.py`: `visualize_erp` updated to use MNE for average ERP plots + topomaps. #220
+- `helpers/visualization.py`: `visualize_erp` updated to use MNE for average ERP plots + topomaps. #220 fix to demo #240
 - `helpers/raw_data.py`: updated channel methods to accept transformation argument and return sampling rate. Add by_channel map method to call by_channel and remove channels by map ([0, 1, 1]). #220
 - `gui.main.py`--> `gui/main.py`: refactor to follow rest of codebase convention. #218
 - `bcipy/gui/BCInterface.py`: to include timeouts on buttons creating subprocess- this prevents multiple unintended windows or functionality from occurring after double clicks. #218 added alert to let experimenter know when a session has completed. Allow for custom paramter setting in GUI for offline_analysis (defaults to same as current, `bcipy/parameters.json`) #235
