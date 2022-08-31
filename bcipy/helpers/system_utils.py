@@ -17,22 +17,7 @@ import psutil
 import pyglet
 from cpuinfo import get_cpu_info
 
-DEFAULT_ENCODING = 'utf-8'
-DEFAULT_EXPERIMENT_ID = 'default'
-DEFAULT_PARAMETER_FILENAME = 'parameters.json'
-EXPERIMENT_FILENAME = 'experiments.json'
-FIELD_FILENAME = 'fields.json'
-EXPERIMENT_DATA_FILENAME = 'experiment_data.jsom'
-DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
-DEFAULT_FIELD_PATH = '.bcipy/field/'
-RAW_DATA_FILENAME = 'raw_data'
-TRIGGER_FILENAME = 'triggers.txt'
-SESSION_DATA_FILENAME = 'session_data.json'
-SESSION_SUMMARY_FILENAME = 'session.xlsx'
-LOG_FILENAME = 'bcipy_system_log.txt'
-WAIT_SCREEN_MESSAGE = 'Press Space to start or Esc to exit'
-
-REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"
+from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
 
 
 def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
