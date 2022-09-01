@@ -4,7 +4,7 @@ DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EXPERIMENT_ID = 'default'
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
-EXPERIMENT_DATA_FILENAME = 'experiment_data.jsom'
+EXPERIMENT_DATA_FILENAME = 'experiment_data.json'
 DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
 DEFAULT_FIELD_PATH = '.bcipy/field/'
 
