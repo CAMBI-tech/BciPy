@@ -119,6 +119,8 @@ def offline_analysis(
         downsample_factor=downsample_rate,
     )
 
+    log.info(f"Static Offset: {static_offset}s")
+
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
     log.info(

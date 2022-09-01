@@ -6,6 +6,7 @@ To use at bcipy root,
 """
 from bcipy.helpers.convert import convert_to_edf
 from bcipy.helpers.visualization import plot_edf
+from bcipy.helpers.load import load_experimental_data
 
 
 if __name__ == '__main__':
@@ -16,10 +17,14 @@ if __name__ == '__main__':
         '-p',
         '--path',
         help='Path to the directory with raw_data to be converted',
-        required=True)
+        required=False)
     args = parser.parse_args()
 
     path = args.path
+
+    if not path:
+        path = load_experimental_data()
+
     edf_path = convert_to_edf(
         path,
         use_event_durations=True,

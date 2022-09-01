@@ -63,7 +63,9 @@ def convert_to_edf(data_dir: str,
     trigger_file = params.get('trigger_file_name', 'triggers')
 
     trigger_type, trigger_timing, trigger_label = trigger_decoder(
-        str(Path(data_dir, f'{trigger_file}.txt')), remove_pre_fixation=False)
+        str(Path(data_dir, f'{trigger_file}.txt')),
+        remove_pre_fixation=False,
+        offset=params['static_trigger_offset'])
 
     # validate annotation parameters given data length and trigger count
     validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))
