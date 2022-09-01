@@ -91,7 +91,7 @@
     "type": "float"
   },
   "alert_sound_file": {
-    "value": "bcipy/static/sounds/beep.wav",
+    "value": "beep.wav",
     "section": "bci_config",
     "readableName": "Alert Tone",
     "helpTip": "Specifies the path to an audio file to be played as an alert tone when experiments or offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
@@ -208,7 +208,7 @@
     "type": "bool"
   },
   "parameter_location": {
-    "value": "bcipy/parameters/parameters.json",
+    "value": "C:\\Users\\tabme\\work\\bci\\BciPy\\bcipy\\parameters\\parameters.json",
     "section": "bci_config",
     "readableName": "Parameter File",
     "helpTip": "Specifies the file containing the current system parameters. Default: bcipy/parameters/parameters.json",

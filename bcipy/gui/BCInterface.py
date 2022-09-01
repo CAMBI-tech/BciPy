@@ -3,7 +3,7 @@ import sys
 
 from typing import List
 
-from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH, STATIC_IMAGES_PATH
 from bcipy.gui.main import (
     AlertMessageResponse,
     AlertMessageType,
@@ -120,7 +120,7 @@ class BCInterface(BCIGui):
         """
         if not self.action_disabled():
             subprocess.call(
-                'python bcipy/gui/experiments/ExperimentRegistry.py',
+                f'python {BCIPY_ROOT}//gui/experiments/ExperimentRegistry.py',
                 shell=True)
 
             self.update_experiment_list()
@@ -238,9 +238,9 @@ class BCInterface(BCIGui):
         Build add images needed for the UI. In this case, the OHSU and NEU logos.
         """
         self.add_image(
-            path='bcipy/static/images/gui/ohsu.png', position=[self.padding, 0], size=100)
+            path=f'{STATIC_IMAGES_PATH}/gui/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
+            path=f'{STATIC_IMAGES_PATH}/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -306,7 +306,7 @@ class BCInterface(BCIGui):
                     return None
 
             subprocess.call(
-                f'python bcipy/gui/parameters/params_form.py -p {self.parameter_location}',
+                f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
                 shell=True)
 
     def check_input(self) -> bool:
@@ -405,7 +405,7 @@ class BCInterface(BCIGui):
             subprocess.Popen(cmd, shell=True)
 
             if self.alert:
-                play_sound(self.parameters['alert_sound_file'])
+                play_sound(f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")
 
             if self.autoclose:
                 self.close()
@@ -416,7 +416,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = f'python bcipy/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
+            cmd = f'python {BCIPY_ROOT}/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:

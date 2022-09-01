@@ -43,8 +43,8 @@ def validate_bcipy_session(parameters: dict) -> bool:
 
 def validate_experiment(
         experiment_name: str,
-        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
-        field_path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'
+        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}',
+        field_path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}'
 ) -> bool:
     """Validate Experiment.
 

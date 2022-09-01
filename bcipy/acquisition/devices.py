@@ -5,12 +5,12 @@ import logging
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Union
 
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
 from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
 IRREGULAR_RATE = 0.0
-DEFAULT_CONFIG = Path(__file__).resolve().parent / 'devices.json'
+DEFAULT_CONFIG = DEVICE_SPEC_PATH
 _SUPPORTED_DEVICES = {}
 # see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
 SUPPORTED_DATA_TYPES = [

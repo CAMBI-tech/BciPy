@@ -7,8 +7,6 @@ from psychopy import visual
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_resolution
 
-BCIPY_LOGO_PATH = 'bcipy/static/images/gui/cambi.png'
-
 
 class Display(ABC):
     """Display.
