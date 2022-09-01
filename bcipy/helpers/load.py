@@ -178,6 +178,8 @@ def load_signal_model(model_class: SignalModel,
     signal_model = model_class(**model_kwargs)
     signal_model.load(filename)
 
+    log.info(f'Loaded signal model from {filename}')
+
     return signal_model, filename
 
 
