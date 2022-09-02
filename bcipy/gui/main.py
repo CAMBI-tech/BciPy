@@ -3,8 +3,9 @@ import logging
 import os
 import sys
 import re
+from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, NamedTuple, Optional
 
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer
 from PyQt5.QtGui import QFont, QPixmap, QShowEvent
@@ -324,6 +325,8 @@ class IntegerInput(FormInput):
     def init_control(self, value):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
+        # See https://www.pivotaltracker.com/story/show/183134720
+        spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
         if value:
             spin_box.setValue(int(value))
@@ -334,6 +337,29 @@ class IntegerInput(FormInput):
         if self.control:
             return int(self.control.text())
         return None
+
+
+class FloatInputProperties(NamedTuple):
+    """Properties used when constructing a FloatInput component. Default values
+    originate from the pyqt5 QDoubleSpinBox component defaults."""
+
+    min: float = -sys.float_info.max  # 0.0 is the component default
+    max: float = sys.float_info.max  # 99.99 is the component default
+    decimals: int = 1
+    step: float = 0.1
+
+
+def float_input_properties(value: str) -> FloatInputProperties:
+    """Given a string representation of a float value, determine suitable
+    properties for the float component used to input or update this value.
+    """
+    # See https://www.pivotaltracker.com/story/show/183134720
+    # Determine from the component if there is a reasonable min or max constraint
+    dec = Decimal(str(value))
+    _sign, _digits, exponent = dec.as_tuple()
+    if exponent > 0:
+        return FloatInputProperties()
+    return FloatInputProperties(decimals=abs(exponent), step=10**exponent)
 
 
 class FloatInput(FormInput):
@@ -352,7 +378,14 @@ class FloatInput(FormInput):
     def init_control(self, value):
         """Override FormInput to create a spinbox."""
         spin_box = QDoubleSpinBox()
-        spin_box.setMaximum(100000)
+
+        # Make a reasonable guess about precision and step size based on the initial value.
+        props = float_input_properties(value)
+
+        spin_box.setMinimum(props.min)
+        spin_box.setMaximum(props.max)
+        spin_box.setDecimals(props.decimals)
+        spin_box.setSingleStep(props.step)
         spin_box.setValue(float(value))
         return spin_box
 
