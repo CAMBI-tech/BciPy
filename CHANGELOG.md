@@ -3,14 +3,15 @@
 ## Contributions
 
 - New Display Paradigm: VEP Display #237
-- Write session summary after Copy Phrase task #222
+- New BciPy Session Features: 
+    - Write session summary after Copy Phrase task #222
+    - Better Fake Data Handling #219
+    - Alerting for conditions that may affect system performance #227, #219, #238
+    - Logging improvements #244
+- Device configuratio moved to bcipy/parameters #242
 - New MNE based plotting for EEG data #220
-- Prevent GUI double clicks #218
-- Better Fake Data Handling #219
-- Alerting for conditions that may affect system performance #227, #219, #238
-- Flash time jitter parameter #233
 - New Supported Devices: Tobii-Nano #234
-- Bug fixes #225, #228, #235, #240
+- Bug fixes #218, #225, #228, #235, #240
 
 ### Added
 
@@ -21,6 +22,7 @@
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
 - `parameters/parameters.json`: Added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task. Added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
+- `config.py`: Added a config file for static paths and other constants #241 enabling bcipy to be called as a package outside of root #242
 
 
 ### Updated
