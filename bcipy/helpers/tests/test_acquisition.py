@@ -3,6 +3,7 @@ import shutil
 import time
 import unittest
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition, max_inquiry_duration
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
@@ -13,7 +14,7 @@ class TestAcquisition(unittest.TestCase):
 
     def setUp(self):
         """set up the needed path for load functions."""
-        self.parameters_used = 'bcipy/parameters/parameters.json'
+        self.parameters_used = DEFAULT_PARAMETERS_PATH
         self.parameters = load_json_parameters(self.parameters_used,
                                                value_cast=True)
         self.data_save_path = 'data/'

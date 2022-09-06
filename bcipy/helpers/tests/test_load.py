@@ -9,6 +9,14 @@ import json
 
 from mockito import any, expect, unstub, when
 
+from bcipy.config import (
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_PARAMETERS_PATH,
+    DEFAULT_FIELD_PATH,
+    FIELD_FILENAME,
+    EXPERIMENT_FILENAME
+)
 from bcipy.helpers.load import (
     extract_mode,
     load_json_parameters,
@@ -19,13 +27,6 @@ from bcipy.helpers.load import (
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-from bcipy.helpers.system_utils import (
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_FIELD_PATH,
-    FIELD_FILENAME,
-    EXPERIMENT_FILENAME
-)
 
 
 MOCK_EXPERIMENT = {
@@ -49,7 +50,7 @@ class TestParameterLoad(unittest.TestCase):
     def setUp(self):
         """set up the needed path for load functions."""
 
-        self.parameters = 'bcipy/parameters/parameters.json'
+        self.parameters = DEFAULT_PARAMETERS_PATH
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):

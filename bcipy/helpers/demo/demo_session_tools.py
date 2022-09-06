@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from bcipy.config import SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.session import (read_session, session_csv, session_data,
                                    session_db, session_excel)
@@ -41,12 +42,12 @@ if __name__ == "__main__":
         path = ask_directory()
 
     if args.db or args.csv or args.charts:
-        session = read_session(Path(path, "session.json"))
+        session = read_session(Path(path, SESSION_DATA_FILENAME))
         if args.db:
             session_db(session, db_file=str(Path(path, "session.db")))
         if args.csv:
             session_csv(session, csv_file=str(Path(path, "session.csv")))
         if args.charts:
-            session_excel(session, excel_file=str(Path(path, "session.xlsx")))
+            session_excel(session, excel_file=str(Path(path, SESSION_SUMMARY_FILENAME)))
     else:
         main(path)

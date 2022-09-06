@@ -5,6 +5,7 @@ import unittest
 from collections import abc
 from pathlib import Path
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.parameters import Parameters
 
 
@@ -14,7 +15,7 @@ class TestParameters(unittest.TestCase):
     def setUp(self):
         """Override; set up the needed path for load functions."""
 
-        self.parameters_location = 'bcipy/parameters/parameters.json'
+        self.parameters_location = DEFAULT_PARAMETERS_PATH
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):

@@ -4,8 +4,8 @@ import logging
 from typing import Generator, Callable
 from past.builtins import range
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.signal.generator.generator import gen_random_data
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 

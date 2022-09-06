@@ -7,10 +7,10 @@ import warnings
 
 from pathlib import Path
 
+from bcipy.config import DEFAULT_ENCODING, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 
 from mne.io import read_raw_edf
@@ -31,14 +31,14 @@ class TestConvert(unittest.TestCase):
 
         self.temp_dir = tempfile.mkdtemp()
 
-        with open(Path(self.temp_dir, 'triggers.txt'), 'w', encoding=DEFAULT_ENCODING) as trg_file:
+        with open(Path(self.temp_dir, TRIGGER_FILENAME), 'w', encoding=DEFAULT_ENCODING) as trg_file:
             trg_file.write(self.__class__.trg_data)
 
-        write(self.__class__.sample_data, Path(self.temp_dir, 'raw_data.csv'))
+        write(self.__class__.sample_data, Path(self.temp_dir, f'{RAW_DATA_FILENAME}.csv'))
 
-        params = Parameters.from_cast_values(raw_data_name='raw_data.csv',
-                                             trigger_file_name='triggers')
-        params.save(self.temp_dir, 'parameters.json')
+        params = Parameters.from_cast_values(raw_data_name=f'{RAW_DATA_FILENAME}.csv',
+                                             trigger_file_name=TRIGGER_FILENAME)
+        params.save(self.temp_dir, DEFAULT_PARAMETER_FILENAME)
 
     def tearDown(self):
         """Override"""

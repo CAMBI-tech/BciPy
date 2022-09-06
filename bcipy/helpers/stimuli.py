@@ -466,11 +466,6 @@ def calibration_inquiry_generator(
     target_indexes = []
     no_target = None
 
-    if len(timing) != 3 or len(color) != 3:
-        raise BciPyCoreException(
-            'Calibration Inquiry Generation Error: \n'
-            'Timing and Color must be a list of length three: [target, fixation, stimuli]')
-
     if (target_positions == target_positions.DISTRIBUTED):
         target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
     else:

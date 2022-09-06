@@ -3,7 +3,6 @@ from typing import Tuple
 from psychopy import core, visual
 
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.clock import Clock
 
 
 class LevelFeedback(VisualFeedback):
@@ -23,11 +22,11 @@ class LevelFeedback(VisualFeedback):
         self.clock = clock
         self.display = display
         self.parameters = parameters
-        self.presentation_time = parameters['feedback_flash_time']
+        self.presentation_time = parameters['feedback_duration']
 
         # set stylistic elements
-        self.default_message_color = parameters['feedback_message_color']
-        self.feedback_indicator_color = parameters['feedback_message_color']
+        self.default_message_color = parameters['feedback_color']
+        self.feedback_indicator_color = parameters['feedback_color']
         self.position_x = parameters['feedback_pos_x']
         self.position_y = parameters['feedback_pos_y']
         self.padding = parameters['feedback_padding']
@@ -82,7 +81,7 @@ class LevelFeedback(VisualFeedback):
             resets the position_x and stimuli variables on first call.
         """
         self._reset_stimuli()
-        height, width = self._determine_height_and_width()
+        width, height = self._determine_height_and_width()
 
         # construct the rectangular level shapes and append to stimuli array
         for level in self.level_colors:
@@ -129,21 +128,3 @@ class LevelFeedback(VisualFeedback):
         # reset stimuli
         self.stimuli = []
         self.position_x = self.parameters['feedback_pos_x']
-
-
-if __name__ == '__main__':
-    from bcipy.helpers.load import load_json_parameters
-    from bcipy.display import init_display_window
-
-    # Load a parameters file
-    parameters = load_json_parameters(
-        'bcipy/parameters/parameters.json',
-        value_cast=True)
-    display = init_display_window(parameters)
-    clock = Clock()
-    feedback = LevelFeedback(display, parameters, clock)
-
-    for index, _ in enumerate(feedback.level_colors):
-        # the position argument is based on index starting at 1
-        index += 1
-        feedback.administer(position=index)
