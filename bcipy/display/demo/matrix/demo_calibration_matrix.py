@@ -65,9 +65,3 @@ matrix_display.do_inquiry()
 matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
 matrix_display.update_task_state(text='4/100', color_list=['White'])
 matrix_display.do_inquiry()
-
-#  TODO
-# Clean-up and make final hardcoded decisions on position etc
-# Test in full screen
-# Unit Tests
-# Typing / documentation

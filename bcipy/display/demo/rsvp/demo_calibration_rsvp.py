@@ -1,8 +1,8 @@
-from psychopy import core, visual
+from psychopy import core
 
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
+from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties, init_display_window
 
 info = InformationProperties(
     info_color=['White'],
@@ -45,12 +45,15 @@ task_color = [['white'], ['white'], ['white'], ['white']]
 # Initialize decision
 ele_list_dec = [['[<]'], ['[R]']]
 
-# Initialize Window TODO use initialize_display_window
-win = visual.Window(size=[500, 500], fullscr=False, screen=1, allowGUI=False,
-                    allowStencil=False, monitor='testMonitor', color='black',
-                    colorSpace='rgb', blendMode='avg',
-                    waitBlanking=True,
-                    winType='pyglet')
+
+window_parameters = {
+    'full_screen': False,
+    'window_height': 500,
+    'window_width': 500,
+    'stim_screen': 1,
+    'background_color': 'black'
+}
+win = init_display_window(window_parameters)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 

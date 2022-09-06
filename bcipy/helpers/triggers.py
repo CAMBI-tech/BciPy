@@ -6,11 +6,11 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from psychopy import core, visual
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -220,7 +220,9 @@ class TriggerHandler:
                  file_name: str,
                  flush: FlushFrequency):
         self.path = path
-        self.file_name = f'{file_name}.txt'
+        self.file_name = f'{file_name}.txt' if not file_name.endswith('.txt') else file_name
+        self.flush = flush
+        self.triggers = []
         self.file_path = f'{self.path}/{self.file_name}'
         self.flush = flush
         self.triggers = []

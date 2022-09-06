@@ -199,46 +199,6 @@
     "recommended_values": "",
     "type": "float"
   },
-  "buffer_name": {
-    "value": "raw_data.db",
-    "section": "bci_config",
-    "readableName": "Buffer Database Filename",
-    "helpTip": "Specifies the filename for EEG buffer database storage. Default: raw_data.db",
-    "recommended_values": "",
-    "type": "filepath"
-  },
-  "raw_data_name": {
-    "value": "raw_data.csv",
-    "section": "bci_config",
-    "readableName": "Raw Data Filename",
-    "helpTip": "Specifies the filename for EEG data storage in a CSV. Default: raw_data.csv",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "experiment_data_name": {
-    "value": "experiment_data.json",
-    "section": "bci_config",
-    "readableName": "Experiment Data Filename",
-    "helpTip": "Specifies the filename for field data collected for your experiment",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "trigger_file_name": {
-    "value": "triggers",
-    "section": "bci_config",
-    "readableName": "Triggers Filename",
-    "helpTip": "Specifies the filename for an output file with trigger timing information. Default: triggers",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "session_file_name": {
-    "value": "session.json",
-    "section": "bci_config",
-    "readableName": "Session Data Filename",
-    "helpTip": "Specifies the filename for session data from a typing task or other non-calibration task. Default: session.json",
-    "recommended_values": "",
-    "type": "str"
-  },
   "summarize_session": {
     "value": "true",
     "section": "bci_config",
@@ -246,30 +206,6 @@
     "helpTip": "If 'true', writes an Excel file which summarizes the session data by charting evidence per inquiry.",
     "recommended_values": "",
     "type": "bool"
-  },
-  "log_name": {
-    "value": "bcipy_system_log.txt",
-    "section": "bci_config",
-    "readableName": "System Log Filename",
-    "helpTip": "Specifies the name of the main log file for each BciPy session. Default: bcipy_system_log.txt",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "trial_complete_message_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Trail Complete Message Color",
-    "helpTip": "Trail Complete Message Color",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "trial_complete_message": {
-    "value": "Complete! Saving data...",
-    "section": "bci_config",
-    "readableName": "Trial Complete Message",
-    "helpTip": "Message that displays at the end of trial",
-    "recommended_values": "",
-    "type": "str"
   },
   "parameter_location": {
     "value": "bcipy/parameters/parameters.json",
@@ -454,11 +390,11 @@
     "recommended_values": "",
     "type": "float"
   },
-  "stim_font": {
+  "font": {
     "value": "Consolas",
     "section": "bci_config",
-    "readableName": "Stimulus Font",
-    "helpTip": "Specifies the font used for text stimuli. Default: Arial",
+    "readableName": "Font",
+    "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
     "recommended_values": [
       "Courier New",
       "Lucida Sans",
@@ -497,22 +433,6 @@
     "helpTip": "Specifies the color of the fixation cross that appears before each inquiry. Default: red",
     "recommended_values": "",
     "type": "str"
-  },
-  "alert_sounds_path": {
-    "value": "bcipy/static/sounds/rsvp/",
-    "section": "bci_config",
-    "readableName": "Alert sounds directory",
-    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp/",
-    "recommended_values": "",
-    "type": "directorypath"
-  },
-  "alert_sound_delay": {
-    "value": "0.4",
-    "section": "bci_config",
-    "readableName": "Alert Sound Delay",
-    "helpTip": "Delay (in seconds) between playing an alert tone and presenting the target during the Alert Tone Calibration Task. Default: 0.4",
-    "recommended_values": "",
-    "type": "float"
   },
   "background_color": {
     "value": "black",
@@ -576,46 +496,6 @@
     ],
     "type": "str"
   },
-  "info_font": {
-    "value": "Consolas",
-    "section": "bci_config",
-    "readableName": "Font Text",
-    "helpTip": "Font Text",
-    "recommended_values": [
-      "Courier New",
-      "Lucida Sans",
-      "Consolas"
-    ],
-    "type": "str"
-  },
-  "session_complete_message": {
-    "value": "Complete! Saving data...",
-    "section": "bci_config",
-    "readableName": "Session Complete Message",
-    "helpTip": "Specifies the message displayed at the end of an RSVP session.",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "session_complete_message_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Session Complete Message Color",
-    "helpTip": "Specifies the text color for the message displayed at the end of an RSVP session. Default: white",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "task_font": {
-    "value": "Consolas",
-    "section": "bci_config",
-    "readableName": "Task Text Font",
-    "helpTip": "Specifies the font used for task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: Arial",
-    "recommended_values": [
-      "Courier New",
-      "Lucida Sans",
-      "Consolas"
-    ],
-    "type": "str"
-  },
   "task_text": {
     "value": "HELLO_WORLD",
     "section": "bci_config",
@@ -639,22 +519,6 @@
     "section": "bci_config",
     "readableName": "Task Text Color",
     "helpTip": "Specifies the color of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: white",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "wait_screen_message": {
-    "value": "Press Space to start or Esc to exit",
-    "section": "bci_config",
-    "readableName": "Wait Screen Message",
-    "helpTip": "Specifies the message displayed before starting a session and during pauses. Default: Press Space to start or Esc to exit",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "wait_screen_message_color": {
-    "value": "white",
-    "section": "bci_config",
-    "readableName": "Wait Screen Message Color",
-    "helpTip": "Specifies the text color of the message displayed before starting a session and during pauses. Default: white",
     "recommended_values": "",
     "type": "str"
   },
@@ -857,111 +721,19 @@
   },
   "show_feedback": {
     "value": "true",
-    "section": "feedback_config",
-    "readableName": "Task Feedback On/Off",
-    "helpTip": "If ‘true’, feedback in tasks that support it.",
+    "section": "bci_config",
+    "readableName": "Feedback On/Off",
+    "helpTip": "If ‘true’, feedback will be shown after each inquiry.",
     "recommended_values": "",
     "type": "bool"
   },
-  "feedback_buffer_time": {
-    "value": "1",
-    "section": "feedback_config",
-    "readableName": "Feedback Delay Time",
-    "helpTip": "Specifies the length of time (in seconds) between the end of a inquiry and the onset of feedback display in the feedback calibration task. Default: 1",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_flash_time": {
+  "feedback_duration": {
     "value": "2",
-    "section": "feedback_config",
-    "readableName": "Feedback Display Time",
-    "helpTip": "Specifies the length of time (in seconds) feedback will be displayed after each inquiry in the feedback calibration task. Default: 2",
+    "section": "bci_config",
+    "readableName": "Feedback Time (seconds)",
+    "helpTip": "Specifies the length in time (seconds) feedback will be displayed after each inquiry in registered tasks (ex. RSVP Copy Phrase). Default: 2",
     "recommended_values": "",
     "type": "float"
-  },
-  "feedback_pos_x": {
-    "value": "0",
-    "section": "feedback_config",
-    "readableName": "Feedback Position Horizontal",
-    "helpTip": "Specifies the position of the left edge of the feedback display on the screen. Possible values range from -1 to 1, with 0 representing the center. Default: -0.72",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_pos_y": {
-    "value": "0",
-    "section": "feedback_config",
-    "readableName": "Feedback Position Vertical",
-    "helpTip": "Specifies the position of the upper edge of the feedback display on the screen. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_stim_height": {
-    "value": "0.2",
-    "section": "feedback_config",
-    "readableName": "Feedback Stimuli Height",
-    "helpTip": "Specifies the height of the feedback stimuli. See https://www.psychopy.org/general/units.html. Default: 0.2",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_font": {
-    "value": "Consolas",
-    "section": "feedback_config",
-    "readableName": "feedback_font",
-    "helpTip": "feedback_font",
-    "recommended_values": [
-      "Courier New",
-      "Lucida Sans",
-      "Consolas"
-    ],
-    "type": "str"
-  },
-  "feedback_color": {
-    "value": "white",
-    "section": "feedback_config",
-    "readableName": "feedback_color",
-    "helpTip": "feedback_color",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "feedback_stim_width": {
-    "value": "0.35",
-    "section": "feedback_config",
-    "readableName": "Feedback Box Width",
-    "helpTip": "Specifies the width of the LevelFeedback boxes in pixels. Default: 0.35",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_line_width": {
-    "value": "1",
-    "section": "feedback_config",
-    "readableName": "Feedback Box Outline Width",
-    "helpTip": "Specifies the stroke width of the LevelFeedback box outline. Default: 1",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_line_color": {
-    "value": "white",
-    "section": "feedback_config",
-    "readableName": "Feedback Box Outline Color",
-    "helpTip": " Specifies the color of the LevelFeedback box outline. Default: white",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "feedback_padding": {
-    "value": "0.37",
-    "section": "feedback_config",
-    "readableName": "Feedback Box Spacing",
-    "helpTip": "Specifies the distance between LevelFeedback boxes. Default: 0.37",
-    "recommended_values": "",
-    "type": "float"
-  },
-  "feedback_target_line_width": {
-    "value": "100",
-    "section": "feedback_config",
-    "readableName": "Feedback Target Outline Width",
-    "helpTip": "Specifies the stroke width of the target feedback box outline using LevelFeedback. Default: 100",
-    "recommended_values": "",
-    "type": "int"
   },
   "psd_method": {
     "value": "Welch",

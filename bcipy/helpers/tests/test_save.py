@@ -2,8 +2,10 @@ import os
 import shutil
 import unittest
 import tempfile
+
+from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_PARAMETER_FILENAME, DEFAULT_EXPERIMENT_ID
 from bcipy.helpers import save
-from bcipy.helpers.save import init_save_data_structure, DEFAULT_EXPERIMENT_ID
+from bcipy.helpers.save import init_save_data_structure
 from mockito import any, unstub, when
 
 
@@ -15,7 +17,7 @@ class TestSave(unittest.TestCase):
 
         self.data_save_path = tempfile.mkdtemp()
         self.user_information = 'test_user_002'
-        self.parameters_used = 'bcipy/parameters/parameters.json'
+        self.parameters_used = DEFAULT_PARAMETERS_PATH
         self.task = 'RSVP Calibration'
         self.experiment = DEFAULT_EXPERIMENT_ID
 
@@ -43,7 +45,7 @@ class TestSave(unittest.TestCase):
     def test_parameter_file_copies(self):
 
         # construct the path of the parameters
-        param_path = self.save_folder_name + '/parameters.json'
+        param_path = self.save_folder_name + f'/{DEFAULT_PARAMETER_FILENAME}'
 
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))

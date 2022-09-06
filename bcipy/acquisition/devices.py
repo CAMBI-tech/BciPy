@@ -5,8 +5,9 @@ import logging
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Union
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.helpers.system_utils import auto_str, DEFAULT_ENCODING
+from bcipy.helpers.system_utils import auto_str
 
 IRREGULAR_RATE = 0.0
 DEFAULT_CONFIG = Path(__file__).resolve().parent / 'devices.json'

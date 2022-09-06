@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from bcipy.config import SESSION_DATA_FILENAME
 from bcipy.helpers.session import read_session, session_csv, session_data
 
 
@@ -31,14 +32,14 @@ class TestSessionHelper(unittest.TestCase):
 
     def test_read_session(self):
         """Test reading data from json."""
-        session = read_session(Path(self.data_dir, 'session.json'))
+        session = read_session(Path(self.data_dir, SESSION_DATA_FILENAME))
         self.assertEqual(session.total_number_series, 2)
 
     def test_session_csv(self):
         """Test functionality to transform session.json file to a csv
         summarizing the evidence."""
 
-        session = read_session(Path(self.data_dir, 'session.json'))
+        session = read_session(Path(self.data_dir, SESSION_DATA_FILENAME))
         csv_name = str(Path(self.temp_dir, 'mock_session.csv'))
 
         session_csv(session, csv_file=csv_name)

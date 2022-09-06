@@ -14,6 +14,7 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.config import RAW_DATA_FILENAME
 
 log = logging.getLogger(__name__)
 
@@ -36,8 +37,6 @@ def init_eeg_acquisition(parameters: dict,
                "acq_connection_method": str,
                "acq_host": str,
                "acq_port": int,
-               "buffer_name": str,
-               "raw_data_name": str
              }
         clock : Clock, optional
             optional clock used in the client; see client for details.
@@ -79,10 +78,10 @@ def init_client(parameters: dict, device_spec: DeviceSpec,
     return DataAcquisitionClient(
         connector=connector,
         buffer_name=str(
-            Path(save_folder, parameters.get('buffer_name', 'raw_data.db'))),
+            Path(save_folder, f'{RAW_DATA_FILENAME}.db')),
         delete_archive=False,
         raw_data_file_name=Path(
-            save_folder, parameters.get('raw_data_name', 'raw_data.csv')))
+            save_folder, f'{RAW_DATA_FILENAME}.csv'))
 
 
 def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
@@ -94,8 +93,7 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
     return LslAcquisitionClient(max_buflen=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
-                                raw_data_file_name=parameters.get(
-                                    'raw_data_name', None))
+                                raw_data_file_name=f'{RAW_DATA_FILENAME}.csv')
 
 
 def max_inquiry_duration(parameters: dict) -> float:

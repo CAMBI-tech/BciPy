@@ -5,10 +5,11 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Dict, NamedTuple, Tuple
 
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING
 
-DEFAULT_PARAMETERS_PATH = 'bcipy/parameters/parameters.json'
-
+Parameter = namedtuple('Parameter', [
+    'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
+])
 
 class Parameter(NamedTuple):
     """Represents a single parameter"""
