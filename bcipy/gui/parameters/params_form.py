@@ -23,6 +23,9 @@ from bcipy.gui.main import (
     TextInput,
 )
 
+HELP_SIZE = 12
+HELP_COLOR = 'darkgray'
+
 
 class ParamsForm(QWidget):
     """The ParamsForm class is a QWidget that creates controls/inputs for each parameter in the
@@ -155,47 +158,24 @@ def hide_all(layout):
     do_to_widgets(layout, lambda widget: widget.setVisible(False))
 
 
-class ParamsChanges(QWidget):
-    """Lists customizations from the default parameters."""
+class ChangeItems(QWidget):
+    """Line items showing parameter changes."""
 
     def __init__(self, json_file: str):
         super().__init__()
-        self.json_file = json_file
-        self.changes = changes_from_default(self.json_file)
-
-        self.help_size = 12
-        self.help_color = 'darkgray'
-
-        self.show_label = '[+]'
-        self.hide_label = '[-]'
-
+        self.changes = changes_from_default(json_file)
         self.layout = QVBoxLayout()
-        self.changes_container = QVBoxLayout()
-
-        control_box = QHBoxLayout()
-        control_box.addWidget(
-            static_text_control(None, label='Changed Parameters:'))
-        self.toggle_button = QPushButton(self.hide_label)
-        self.toggle_button.setFlat(True)
-        self.toggle_button.setFixedWidth(40)
-        self.toggle_button.clicked.connect(self.toggle)
-        control_box.addWidget(self.toggle_button)
-
-        self.layout.addLayout(control_box)
-        self.layout.addLayout(self.changes_container)
-        self.setLayout(self.layout)
-
         self._init_changes()
-        self._visible = True
+        self.setLayout(self.layout)
 
     def _init_changes(self):
         """Initialize the line items for changes."""
         if not self.changes:
-            self.changes_container.addWidget(
+            self.layout.addWidget(
                 static_text_control(None,
                                     label="None",
-                                    size=self.help_size,
-                                    color=self.help_color))
+                                    size=HELP_SIZE,
+                                    color=HELP_COLOR))
 
         for _key, param_change in self.changes.items():
             param = param_change.parameter
@@ -210,20 +190,68 @@ class ParamsChanges(QWidget):
             original_value = static_text_control(
                 None,
                 label=f"(original value: {param_change.original_value})",
-                color=self.help_color,
-                size=self.help_size)
+                color=HELP_COLOR,
+                size=HELP_SIZE)
             hbox.addWidget(lbl)
             hbox.addWidget(original_value)
-            self.changes_container.addLayout(hbox)
+            self.layout.addLayout(hbox)
 
     def update_changes(self, json_file: str):
         """Update the changed items"""
         self.clear()
-        self.json_file = json_file
-        self.changes = changes_from_default(self.json_file)
+        self.changes = changes_from_default(json_file)
         self._init_changes()
-        if not self._visible:
-            self.hide()
+
+    def show(self):
+        """Show the changes"""
+        show_all(self.layout)
+
+    def hide(self):
+        """Hide the changes"""
+        hide_all(self.layout)
+
+    def clear(self):
+        """Clear items"""
+        clear_layout(self.layout)
+
+
+class ParamsChanges(QWidget):
+    """Displays customizations from the default parameters in a scroll area
+    with buttons to show / hide the list of items."""
+
+    def __init__(self, json_file: str):
+        super().__init__()
+        self.change_items = ChangeItems(json_file)
+        self.show_label = '[+]'
+        self.hide_label = '[-]'
+
+        self.layout = QVBoxLayout()
+
+        self.changes_area = QScrollArea()
+        self.changes_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.changes_area.setWidgetResizable(True)
+        self.changes_area.setWidget(self.change_items)
+
+        control_box = QHBoxLayout()
+        control_box.addWidget(
+            static_text_control(None, label='Changed Parameters:'))
+        self.toggle_button = QPushButton(self.hide_label)
+        self.toggle_button.setFlat(True)
+        self.toggle_button.setFixedWidth(40)
+        self.toggle_button.clicked.connect(self.toggle)
+        control_box.addWidget(self.toggle_button)
+
+        self.layout.addLayout(control_box)
+        self.layout.addWidget(self.changes_area)
+        self.setLayout(self.layout)
+
+        self._visible = True
+
+    def update_changes(self, json_file: str):
+        """Update the changed items"""
+        self.change_items.update_changes(json_file)
+        self.changes_area.repaint()
 
     def toggle(self):
         """Toggle visibility of items"""
@@ -235,17 +263,13 @@ class ParamsChanges(QWidget):
 
     def show(self):
         """Show the changes"""
-        show_all(self.changes_container)
+        self.changes_area.setVisible(True)
         self.toggle_button.setText(self.hide_label)
 
     def hide(self):
         """Hide the changes"""
-        hide_all(self.changes_container)
+        self.changes_area.setVisible(False)
         self.toggle_button.setText(self.show_label)
-
-    def clear(self):
-        """Clear items"""
-        clear_layout(self.changes_container)
 
 
 class MainPanel(QWidget):
