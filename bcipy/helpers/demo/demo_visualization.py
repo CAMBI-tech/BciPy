@@ -13,6 +13,7 @@ To use at bcipy root,
     - - `python bcipy/helpers/demo/demo_visualization.py --save"`
         this will save the visualizations generated to the provided or selected path
 """
+from bcipy.config import TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.load import (
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     if not path:
         path = load_experimental_data()
 
-    parameters = load_json_parameters(f'{path}/parameters.json', value_cast=True)
+    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
     poststim_length = parameters.get("trial_length")
@@ -53,8 +54,6 @@ if __name__ == '__main__':
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
-    triggers_file = parameters.get("trigger_file_name", "triggers")
-    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
@@ -62,7 +61,7 @@ if __name__ == '__main__':
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
-    raw_data = load_raw_data(Path(path, raw_data_file))
+    raw_data = load_raw_data(Path(path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
@@ -79,11 +78,13 @@ if __name__ == '__main__':
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
-        trigger_path=f"{path}/{triggers_file}.txt",
+        trigger_path=f"{path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     channel_map = analysis_channels(channels, type_amp)
+
+    save_path = None if not args.save else path
 
     figure_handles = visualize_erp(
         raw_data,
@@ -94,6 +95,6 @@ if __name__ == '__main__':
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=args.save,
+        save_path=save_path,
         show=args.show
     )

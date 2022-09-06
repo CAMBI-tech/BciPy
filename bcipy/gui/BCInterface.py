@@ -3,6 +3,7 @@ import sys
 
 from typing import List
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.gui.main import (
     AlertMessageResponse,
     AlertMessageType,
@@ -14,7 +15,6 @@ from bcipy.gui.main import (
     invalid_length,
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.stimuli import play_sound
 from bcipy.task import TaskType
 

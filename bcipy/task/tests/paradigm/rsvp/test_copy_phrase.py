@@ -8,6 +8,7 @@ import numpy as np
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
+from bcipy.config import DEFAULT_ENCODING
 import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
 from bcipy.helpers.exceptions import TaskConfigurationException
@@ -18,7 +19,6 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -30,14 +30,8 @@ class TestCopyPhrase(unittest.TestCase):
             'backspace_always_shown': True,
             'decision_threshold': 0.8,
             'down_sampling_rate': 2,
-            'eeg_buffer_len': 2.0,
             'prestim_length': 1,
-            'feedback_flash_time': 2.0,
-            'feedback_font': 'Arial',
-            'feedback_line_width': 1.0,
-            'feedback_color': 'white',
-            'feedback_pos_x': -0.72,
-            'feedback_pos_y': 0.0,
+            'feedback_duration': 2.0,
             'feedback_stim_height': 0.35,
             'feedback_stim_width': 0.35,
             'filter_high': 45.0,
@@ -45,7 +39,7 @@ class TestCopyPhrase(unittest.TestCase):
             'filter_order': 2.0,
             'fixation_color': 'red',
             'info_color': 'white',
-            'info_font': 'Arial',
+            'font': 'Arial',
             'info_height': 0.1,
             'info_text': '',
             'is_txt_stim': True,
@@ -60,13 +54,11 @@ class TestCopyPhrase(unittest.TestCase):
             'preview_inquiry_key_input': 'space',
             'preview_inquiry_length': 5.0,
             'preview_inquiry_progress_method': 1,
-            'session_file_name': 'session.json',
             'show_feedback': False,
             'show_preview_inquiry': False,
             'spelled_letters_count': 0,
             'static_trigger_offset': 0.1,
             'stim_color': 'white',
-            'stim_font': 'Arial',
             'stim_height': 0.6,
             'stim_length': 10,
             'stim_number': 100,
@@ -79,7 +71,6 @@ class TestCopyPhrase(unittest.TestCase):
             'target_color': 'white',
             'task_buffer_length': 2,
             'task_color': 'white',
-            'task_font': 'Arial',
             'task_height': 0.1,
             'task_text': 'HELLO_WORLD',
             'info_pos_x': 0.0,
@@ -87,13 +78,8 @@ class TestCopyPhrase(unittest.TestCase):
             'time_fixation': 0.5,
             'time_flash': 0.25,
             'time_prompt': 1.0,
-            'trial_complete_message': 'Complete! Saving data...',
-            'trial_complete_message_color': 'white',
             'trial_length': 0.5,
-            'trigger_file_name': 'triggers',
             'trigger_type': 'image',
-            'wait_screen_message': 'Press Space to start or Esc to exit',
-            'wait_screen_message_color': 'white'
         }
         self.parameters = Parameters.from_cast_values(**parameters)
 

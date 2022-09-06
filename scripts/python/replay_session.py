@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME
 
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.list import grouper
@@ -37,8 +38,6 @@ def comparison1(data_folder, parameters, model_path: Path):
     trials_per_inquiry = parameters.get("stim_length")
     prestim_length = parameters.get("prestim_length", trial_length)
     # time_flash = parameters.get("time_flash")
-    triggers_file = parameters.get("trigger_file_name", "triggers")
-    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
@@ -50,7 +49,7 @@ def comparison1(data_folder, parameters, model_path: Path):
     k_folds = parameters.get("k_folds")
 
     # Load raw data
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    raw_data = load_raw_data(Path(data_folder, f"{RAW_DATA_FILENAME}.csv"))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
@@ -72,7 +71,7 @@ def comparison1(data_folder, parameters, model_path: Path):
     # Process triggers.txt
     trigger_targetness, trigger_timing, trigger_labels = trigger_decoder(
         offset=static_offset,
-        trigger_path=f"{data_folder}/{triggers_file}.txt",
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
     )
     # Channel map can be checked from raw_data.csv file.
@@ -141,8 +140,6 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     trials_per_inquiry = parameters.get("stim_length")
     prestim_length = parameters.get("prestim_length", trial_length)
     # time_flash = parameters.get("time_flash")
-    triggers_file = parameters.get("trigger_file_name", "triggers")
-    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
 
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
@@ -154,7 +151,7 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     k_folds = parameters.get("k_folds")
 
     # Load raw data
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    raw_data = load_raw_data(Path(data_folder, f"{RAW_DATA_FILENAME}.csv"))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
@@ -165,7 +162,7 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     # Process triggers.txt
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
-        trigger_path=f"{data_folder}/{triggers_file}.txt",
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
     )
     # Channel map can be checked from raw_data.csv file.
@@ -228,7 +225,7 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
             json.dump(outputs, f, indent=2)
 
     # Get values computed during actual experiment from session.json
-    session_json = data_folder / "session.json"
+    session_json = data_folder / SESSION_DATA_FILENAME
     all_target_eeg, all_nontarget_eeg = load_from_session_json(session_json)
 
     return outputs, all_target_eeg, all_nontarget_eeg
@@ -376,7 +373,7 @@ if __name__ == "__main__":
     nontargets_with_old_model = []
     for data_folder in args.data_folders:
         logger.info(f"Processing {data_folder}")
-        params_file = Path(data_folder, "parameters.json")
+        params_file = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
         logger.info(f"Loading params from {params_file}")
         params = load_json_parameters(params_file, value_cast=True)
         comparison1(data_folder, params, args.model_file)

@@ -21,9 +21,10 @@ def main(data_folder, file_name):
 
 if __name__ == "__main__":
     import argparse
+    from bcipy.config import RAW_DATA_FILENAME
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data_folder', required=True, help='Path to data folder')
     args = parser.parse_args()
 
-    raw_data = main(args.data_folder, file_name='raw_data.csv')
+    raw_data = main(args.data_folder, file_name=f'{RAW_DATA_FILENAME}.csv')

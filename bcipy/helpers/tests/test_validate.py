@@ -1,5 +1,6 @@
 import unittest
 
+from bcipy.config import DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.validate import validate_experiment, validate_experiments
 from bcipy.helpers.save import save_experiment_data
 from bcipy.helpers.exceptions import (
@@ -8,7 +9,6 @@ from bcipy.helpers.exceptions import (
     UnregisteredExperimentException,
     UnregisteredFieldException,
 )
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
 
 
 class TestValidateExperiment(unittest.TestCase):

@@ -13,7 +13,7 @@ EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '>3.6,<3.9'
 
-VERSION = '2.0.0rc1'
+VERSION = '2.0.0rc2'
 
 
 # What packages are required for this module to be executed?

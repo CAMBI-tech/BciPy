@@ -5,9 +5,9 @@ from typing import List, Optional, TextIO, Tuple
 import numpy as np
 import pandas as pd
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.signal.generator.generator import gen_random_data
 from bcipy.signal.process import Composition
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 TIMESTAMP_COLUMN = 'timestamp'
 

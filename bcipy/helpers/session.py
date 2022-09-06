@@ -14,14 +14,20 @@ from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
+from bcipy.config import (
+    DEFAULT_ENCODING,
+    DEFAULT_PARAMETER_FILENAME,
+    EXPERIMENT_DATA_FILENAME,
+    SESSION_DATA_FILENAME,
+    SESSION_SUMMARY_FILENAME,
+)
 from bcipy.helpers.load import (load_experiment_fields, load_experiments,
                                 load_json_parameters)
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 from bcipy.helpers.validate import validate_field_data_written
 from bcipy.task.data import Session
 
 
-def read_session(file_name='session.json') -> Session:
+def read_session(file_name=SESSION_DATA_FILENAME) -> Session:
     """Read the session data from the given file."""
     with open(file_name, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return Session.from_dict(json.load(json_file))
@@ -33,9 +39,9 @@ def session_data(data_dir: str) -> Dict:
     not useful for debugging."""
 
     parameters = load_json_parameters(os.path.join(data_dir,
-                                                   "parameters.json"),
+                                                   DEFAULT_PARAMETER_FILENAME),
                                       value_cast=True)
-    session = read_session(os.path.join(data_dir, "session.json"))
+    session = read_session(os.path.join(data_dir, SESSION_DATA_FILENAME))
     data = session.as_dict(evidence_only=True)
     data['target_text'] = parameters['task_text']
     return data
@@ -43,7 +49,7 @@ def session_data(data_dir: str) -> Dict:
 
 def collect_experiment_field_data(experiment_name,
                                   save_path,
-                                  file_name='experiment_data.json') -> None:
+                                  file_name=EXPERIMENT_DATA_FILENAME) -> None:
     experiment = load_experiments()[experiment_name]
     experiment_fields = load_experiment_fields(experiment)
 
@@ -186,7 +192,7 @@ def write_row(excel_sheet, rownum, data, background=None, border=None):
 
 
 def session_excel(session: Session,
-                  excel_file='session.xlsx',
+                  excel_file=SESSION_SUMMARY_FILENAME,
                   include_charts=True):
     """Create an Excel spreadsheet summarizing the evidence data for the given session."""
 

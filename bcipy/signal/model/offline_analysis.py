@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -90,10 +91,7 @@ def offline_analysis(
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
-    triggers_file = parameters.get("trigger_file_name", "triggers")
-    raw_data_file = parameters.get("raw_data_name", "raw_data.csv")
-
-    log.info(f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s")
+    raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
@@ -102,6 +100,14 @@ def offline_analysis(
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
+
+    log.info(
+        f"\nData processing settings: \n"
+        f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
+        f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
+        f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s \n"
+        f"Static offset: {static_offset}"
+    )
 
     # Load raw data
     raw_data = load_raw_data(Path(data_folder, raw_data_file))
@@ -121,10 +127,6 @@ def offline_analysis(
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
-    log.info(
-        f"Data processing settings: Filter=[{filter_low}-{filter_high}], order=[{filter_order}], "
-        f"Notch=[{notch_filter}], Downsample=[{downsample_rate}]"
-    )
 
     k_folds = parameters.get("k_folds")
     model = PcaRdaKdeModel(k_folds=k_folds)
@@ -132,7 +134,7 @@ def offline_analysis(
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
-        trigger_path=f"{data_folder}/{triggers_file}.txt",
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
@@ -199,7 +201,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
-    parser.add_argument("-p", "--parameters_file", default="bcipy/parameters/parameters.json")
+    parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)

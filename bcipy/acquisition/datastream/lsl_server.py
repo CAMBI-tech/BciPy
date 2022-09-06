@@ -7,11 +7,11 @@ import uuid
 
 from pylsl import StreamInfo, StreamOutlet
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 

@@ -93,36 +93,6 @@ class TestStimuliGeneration(unittest.TestCase):
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
 
-    def test_calibration_inquiry_generator_raises_error_with_invalid_timing_array(self):
-        stim_timing = [0.5, 1]
-
-        with self.assertRaises(BciPyCoreException):
-            calibration_inquiry_generator(
-                self.alp,
-                timing=stim_timing)
-
-        stim_timing = [0.5, 1, 2, 3]
-
-        with self.assertRaises(BciPyCoreException):
-            calibration_inquiry_generator(
-                self.alp,
-                timing=stim_timing)
-
-    def test_calibration_inquiry_generator_raises_error_with_invalid_color_array(self):
-        color = ['red', 'blue']
-
-        with self.assertRaises(BciPyCoreException):
-            calibration_inquiry_generator(
-                self.alp,
-                color=color)
-
-        color = ['red', 'blue', 'green', 'yellow']
-
-        with self.assertRaises(BciPyCoreException):
-            calibration_inquiry_generator(
-                self.alp,
-                color=color)
-
     def test_calibration_inquiry_generator_random_order(self):
         """Test generation of random inquiries"""
         stim_number = 10

@@ -251,7 +251,7 @@ class MatrixDisplay(Display):
             core.wait(self.stimuli_timing[i])
 
             # reset the highlighted symbol and continue
-            self.stim_registry[sym].opacity = 0.0
+            self.stim_registry[sym].opacity = self.start_opacity
             self.stim_registry[sym].draw()
 
             # append timing information

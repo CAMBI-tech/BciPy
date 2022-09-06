@@ -18,7 +18,7 @@ class TestVisualFeedback(unittest.TestCase):
             'feedback_color': 'white',
             'feedback_pos_x': 0,
             'feedback_pos_y': 0,
-            'feedback_flash_time': 2,
+            'feedback_duration': 2,
             'feedback_line_width': 1
         }
 

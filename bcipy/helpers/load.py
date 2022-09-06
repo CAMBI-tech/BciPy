@@ -6,16 +6,18 @@ from shutil import copyfile
 from time import localtime, strftime
 from typing import Any, Dict, List, Tuple
 
+from bcipy.config import (
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_PARAMETERS_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.system_utils import (DEFAULT_ENCODING,
-                                        DEFAULT_EXPERIMENT_PATH,
-                                        DEFAULT_FIELD_PATH,
-                                        EXPERIMENT_FILENAME,
-                                        FIELD_FILENAME)
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -177,6 +179,8 @@ def load_signal_model(model_class: SignalModel,
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)
     signal_model.load(filename)
+
+    log.info(f'Loaded signal model from {filename}')
 
     return signal_model, filename
 

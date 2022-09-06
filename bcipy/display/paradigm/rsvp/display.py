@@ -126,7 +126,7 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing
         self.stimuli_colors = colors
 
-    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple]):
+    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
         """Update Task Object.
 
         PARAMETERS:

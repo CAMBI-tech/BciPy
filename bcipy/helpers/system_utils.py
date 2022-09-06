@@ -17,13 +17,7 @@ import psutil
 import pyglet
 from cpuinfo import get_cpu_info
 
-DEFAULT_ENCODING = 'utf-8'
-DEFAULT_EXPERIMENT_ID = 'default'
-EXPERIMENT_FILENAME = 'experiments.json'
-FIELD_FILENAME = 'fields.json'
-DEFAULT_EXPERIMENT_PATH = '.bcipy/experiment/'
-DEFAULT_FIELD_PATH = '.bcipy/field/'
-REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"
+from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
 
 
 def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
@@ -173,7 +167,7 @@ def get_system_info() -> dict:
 
 def configure_logger(
         save_folder: str,
-        log_name='bcipy_session.txt',
+        log_name=LOG_FILENAME,
         log_level=logging.DEBUG,
         version=None) -> None:
     """Configure Logger.

@@ -8,7 +8,7 @@ from pathlib import Path
 from bcipy.acquisition import devices
 from bcipy.acquisition.connection_method import ConnectionMethod
 
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING
 
 
 class TestDeviceSpecs(unittest.TestCase):

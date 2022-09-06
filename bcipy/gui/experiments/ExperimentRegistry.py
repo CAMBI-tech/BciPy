@@ -3,9 +3,9 @@ import subprocess
 
 from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
 
+from bcipy.config import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 
 
 class ExperimentRegistry(BCIGui):
