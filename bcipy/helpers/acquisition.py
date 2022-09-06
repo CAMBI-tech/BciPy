@@ -14,7 +14,7 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.config import RAW_DATA_FILENAME
+from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME
 
 log = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def start_viewer(display_screen: int, parameter_location: str) -> None:
     - display_screen : which monitor to use for display; usually 0 or 1.
     - parameter_location : path to parameters.json config file.
     """
-    viewer = 'bcipy/gui/viewer/data_viewer.py'
+    viewer = f'{BCIPY_ROOT}/gui/viewer/data_viewer.py'
     cmd = f'python {viewer} -m {display_screen} -p {parameter_location}'
     subprocess.Popen(cmd, shell=True)
 

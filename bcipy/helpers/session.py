@@ -15,6 +15,7 @@ from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import BLACK, WHITE, YELLOW
 
 from bcipy.config import (
+    BCIPY_ROOT,
     DEFAULT_ENCODING,
     DEFAULT_PARAMETER_FILENAME,
     EXPERIMENT_DATA_FILENAME,
@@ -54,7 +55,7 @@ def collect_experiment_field_data(experiment_name,
     experiment_fields = load_experiment_fields(experiment)
 
     if experiment_fields:
-        cmd = ('python bcipy/gui/experiments/ExperimentField.py -e'
+        cmd = (f'python {BCIPY_ROOT}/gui/experiments/ExperimentField.py -e'
                f' "{experiment_name}" -p "{save_path}" -f "{file_name}"')
         subprocess.check_call(cmd, shell=True)
         # verify data was written before moving on

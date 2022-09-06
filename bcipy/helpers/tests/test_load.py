@@ -89,7 +89,7 @@ class TestParameterLoad(unittest.TestCase):
 class TestExperimentLoad(unittest.TestCase):
 
     def setUp(self):
-        self.experiments_path = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}'
+        self.experiments_path = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}'
         when(json).load(any()).thenReturn()
 
     def tearDown(self):
@@ -112,7 +112,7 @@ class TestExperimentLoad(unittest.TestCase):
 
 class TestFieldLoad(unittest.TestCase):
     def setUp(self):
-        self.fields_path = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'
+        self.fields_path = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}'
         when(json).load(any()).thenReturn()
 
     def tearDown(self):
