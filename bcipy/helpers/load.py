@@ -7,6 +7,7 @@ from time import localtime, strftime
 from typing import Any, Dict, List, Tuple
 
 from bcipy.config import (
+    ROOT,
     DEFAULT_ENCODING,
     DEFAULT_EXPERIMENT_PATH,
     DEFAULT_PARAMETERS_PATH,
@@ -47,7 +48,7 @@ def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
     return path
 
 
-def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
+def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}') -> dict:
     """Load Experiments.
 
     PARAMETERS
@@ -85,7 +86,7 @@ def extract_mode(bcipy_data_directory: str) -> str:
     raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
 
 
-def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
+def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
     """Load Fields.
 
     PARAMETERS
@@ -249,8 +250,8 @@ def load_users(data_save_loc) -> List[str]:
         path = data_save_loc
 
     # check the directory is valid after adding bcipy, if it is, set path as data save location
-    elif os.path.isdir(f'bcipy/{data_save_loc}'):
-        path = f'bcipy/{data_save_loc}'
+    elif os.path.isdir(f'{ROOT}/{data_save_loc}'):
+        path = f'{ROOT}/{data_save_loc}'
 
     else:
         log.info(f'User save data location not found at [{data_save_loc}]! Returning empty user list.')
