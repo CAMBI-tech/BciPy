@@ -93,8 +93,6 @@ def offline_analysis(
     buffer = int(parameters.get("task_buffer_length") / 2)
     raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
-    log.info(f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s")
-
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
@@ -102,6 +100,14 @@ def offline_analysis(
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
+
+    log.info(
+        f"\nData processing settings: \n"
+        f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
+        f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
+        f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s \n"
+        f"Static offset: {static_offset}"
+    )
 
     # Load raw data
     raw_data = load_raw_data(Path(data_folder, raw_data_file))
@@ -121,10 +127,6 @@ def offline_analysis(
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
-    log.info(
-        f"Data processing settings: Filter=[{filter_low}-{filter_high}], order=[{filter_order}], "
-        f"Notch=[{notch_filter}], Downsample=[{downsample_rate}]"
-    )
 
     k_folds = parameters.get("k_folds")
     model = PcaRdaKdeModel(k_folds=k_folds)
