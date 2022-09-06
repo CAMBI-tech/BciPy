@@ -120,7 +120,7 @@ class BCInterface(BCIGui):
         """
         if not self.action_disabled():
             subprocess.call(
-                f'python {BCIPY_ROOT}//gui/experiments/ExperimentRegistry.py',
+                f'python {BCIPY_ROOT}/gui/experiments/ExperimentRegistry.py',
                 shell=True)
 
             self.update_experiment_list()
