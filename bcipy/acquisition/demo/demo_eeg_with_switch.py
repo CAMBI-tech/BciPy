@@ -2,6 +2,7 @@
 import subprocess
 import time
 
+from bcipy.config import BCIPY_ROOT
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.datastream.mock.switch import switch_device
@@ -12,7 +13,7 @@ from bcipy.helpers.system_utils import log_to_stdout
 
 def start_switch():
     """Start the demo switch"""
-    return subprocess.Popen('python bcipy/acquisition/datastream/mock/switch.py',
+    return subprocess.Popen(f'python {BCIPY_ROOT}/acquisition/datastream/mock/switch.py',
                             shell=True)
 
 

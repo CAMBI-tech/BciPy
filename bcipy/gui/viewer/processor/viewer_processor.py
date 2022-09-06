@@ -5,6 +5,7 @@ import subprocess
 import time
 
 from bcipy.acquisition.processor import Processor
+from bcipy.config import BCIPY_ROOT
 
 
 class ViewerProcessor(Processor):
@@ -19,7 +20,7 @@ class ViewerProcessor(Processor):
     def __init__(self, display_screen: int = 1):
         super(ViewerProcessor, self).__init__()
         self.display_screen = display_screen
-        self.viewer = 'bcipy/gui/viewer/data_viewer.py'
+        self.viewer = f'{BCIPY_ROOT}/gui/viewer/data_viewer.py'
         self.started = False
 
     # @override ; context manager

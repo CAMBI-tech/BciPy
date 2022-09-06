@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME
+from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -192,7 +192,7 @@ def offline_analysis(
         show=show_figures
     )
     if alert_finished:
-        play_sound(parameters.get("alert_sound_file"))
+        play_sound(f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")
     return model, figure_handles
 
 
