@@ -8,6 +8,7 @@ from typing import Dict, Tuple
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
+from bcipy.helpers.parameters import Parameters, changes_from_default
 
 from bcipy.gui.main import (
     BoolInput,
@@ -21,7 +22,6 @@ from bcipy.gui.main import (
     static_text_control,
     TextInput,
 )
-from bcipy.helpers.parameters import Parameters
 
 
 class ParamsForm(QWidget):
@@ -122,6 +122,160 @@ class ParamsForm(QWidget):
                 self.params[param_name]['value'] = value
 
 
+def clear_layout(layout):
+    """Clear all items from a layout.
+    https://stackoverflow.com/questions/9374063/remove-all-items-from-a-layout
+    """
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            clear_layout(child.layout())
+
+
+def do_to_widgets(layout, action):
+    """Perform some action on all widgets, including those nested in
+    child layouts."""
+    for i in range(layout.count()):
+        child = layout.itemAt(i)
+        if child.widget() is not None:
+            action(child.widget())
+        elif child.layout() is not None:
+            do_to_widgets(child.layout(), action)
+
+
+def show_all(layout):
+    """Show all items in a layout"""
+    do_to_widgets(layout, lambda widget: widget.setVisible(True))
+
+
+def hide_all(layout):
+    """Hide all items in a layout"""
+    do_to_widgets(layout, lambda widget: widget.setVisible(False))
+
+
+class ChangeItems(QWidget):
+    """Line items showing parameter changes."""
+
+    def __init__(self, json_file: str):
+        super().__init__()
+        self.changes = changes_from_default(json_file)
+        self.layout = QVBoxLayout()
+        self._init_changes()
+        self.setLayout(self.layout)
+
+    def _init_changes(self):
+        """Initialize the line items for changes."""
+        if not self.changes:
+            self.layout.addWidget(
+                static_text_control(None,
+                                    label="None",
+                                    size=12,
+                                    color='darkgray'))
+
+        for _key, param_change in self.changes.items():
+            param = param_change.parameter
+            hbox = QHBoxLayout()
+
+            lbl = static_text_control(
+                None,
+                label=f"* {param['readableName']}: {param['value']}",
+                size=13,
+                color="darkgreen")
+
+            original_value = static_text_control(
+                None,
+                label=f"(default: {param_change.original_value})",
+                color='darkgray',
+                size=12)
+            hbox.addWidget(lbl)
+            hbox.addWidget(original_value)
+            self.layout.addLayout(hbox)
+
+    @property
+    def is_empty(self) -> bool:
+        """Boolean indicating whether there are any changes"""
+        return not bool(self.changes)
+
+    def update_changes(self, json_file: str):
+        """Update the changed items"""
+        self.clear()
+        self.changes = changes_from_default(json_file)
+        self._init_changes()
+
+    def show(self):
+        """Show the changes"""
+        show_all(self.layout)
+
+    def hide(self):
+        """Hide the changes"""
+        hide_all(self.layout)
+
+    def clear(self):
+        """Clear items"""
+        clear_layout(self.layout)
+
+
+class ParamsChanges(QWidget):
+    """Displays customizations from the default parameters in a scroll area
+    with buttons to show / hide the list of items."""
+
+    def __init__(self, json_file: str):
+        super().__init__()
+        self.change_items = ChangeItems(json_file)
+        self.collapsed = self.change_items.is_empty
+
+        self.show_label = '[+]'
+        self.hide_label = '[-]'
+
+        self.layout = QVBoxLayout()
+
+        self.changes_area = QScrollArea()
+        self.changes_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.changes_area.setWidgetResizable(True)
+        self.changes_area.setWidget(self.change_items)
+        self.changes_area.setVisible(not self.collapsed)
+
+        control_box = QHBoxLayout()
+        control_box.addWidget(
+            static_text_control(None, label='Changed Parameters:'))
+        self.toggle_button = QPushButton(
+            self.show_label if self.collapsed else self.hide_label)
+        self.toggle_button.setFlat(True)
+        self.toggle_button.setFixedWidth(40)
+        self.toggle_button.clicked.connect(self.toggle)
+        control_box.addWidget(self.toggle_button)
+
+        self.layout.addLayout(control_box)
+        self.layout.addWidget(self.changes_area)
+        self.setLayout(self.layout)
+
+    def update_changes(self, json_file: str):
+        """Update the changed items"""
+        self.change_items.update_changes(json_file)
+        self.changes_area.repaint()
+
+    def toggle(self):
+        """Toggle visibility of items"""
+        if self.collapsed:
+            self.show()
+        else:
+            self.collapse()
+        self.collapsed = not self.collapsed
+
+    def show(self):
+        """Show the changes"""
+        self.changes_area.setVisible(True)
+        self.toggle_button.setText(self.hide_label)
+
+    def collapse(self):
+        """Hide the changes"""
+        self.changes_area.setVisible(False)
+        self.toggle_button.setText(self.show_label)
+
+
 class MainPanel(QWidget):
     """Main GUI window.
     Parameters:
@@ -138,6 +292,7 @@ class MainPanel(QWidget):
         self.size = size
 
         self.form = ParamsForm(json_file, width=self.size[0])
+        self.changes = ParamsChanges(self.json_file)
         self.flash_msg = ''
         self.initUI()
 
@@ -161,6 +316,10 @@ class MainPanel(QWidget):
         vbox.addWidget(self.load_msg)
         self.load_msg.setVisible(False)
         vbox.addWidget(SearchInput(self.search_form))
+
+        self.changes_panel = QHBoxLayout()
+        self.changes_panel.addWidget(self.changes)
+        vbox.addLayout(self.changes_panel)
 
         self.form_panel = QScrollArea()
         self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -225,6 +384,9 @@ class MainPanel(QWidget):
         if self.form.save():
             self.save_msg.setText(f'Last saved: {datetime.now()}')
             self.save_msg.repaint()
+
+            self.changes.update_changes(self.json_file)
+            self.changes.repaint()
 
 
 def main(json_file, title='BCI Parameters', size=(450, 550)):

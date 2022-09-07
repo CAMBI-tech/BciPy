@@ -1,15 +1,27 @@
 """Module for functionality related to system configuration"""
 from codecs import open as codecsopen
-from collections import abc, namedtuple
+from collections import abc
 from json import dump, load
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Dict, NamedTuple, Tuple
 
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
-Parameter = namedtuple('Parameter', [
-    'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
-])
+
+class Parameter(NamedTuple):
+    """Represents a single parameter"""
+    value: Any
+    section: str
+    readableName: str
+    helpTip: str
+    recommended_values: list
+    type: str
+
+
+class ParameterChange(NamedTuple):
+    """Represents a Parameter that has been modified from a different value."""
+    parameter: Parameter
+    original_value: Any
 
 
 class Parameters(dict):
@@ -34,7 +46,7 @@ class Parameters(dict):
         self.conversions = {
             'int': int,
             'float': float,
-            'bool': lambda val: val == 'true',
+            'bool': lambda val: val == 'true' or val is True,
             'str': str,
             'directorypath': str,
             'filepath': str
@@ -228,3 +240,39 @@ class Parameters(dict):
                 self.add_entry(key, val)
                 updated = True
         return updated
+
+    def diff(self, parameters) -> Dict[str, ParameterChange]:
+        """Lists the differences between this and another set of parameters.
+        A None original_value indicates a new parameter.
+
+        Parameters
+        ----------
+            parameters : Parameters - set of parameters for comparison; these
+                are considered the original values and the current set the
+                changed values.
+        """
+        diffs = {}
+
+        for key, param in self.entries():
+            if key in parameters.keys():
+                original = parameters.get_entry(key)
+                if self.cast_value(original) != self.cast_value(param):
+                    diffs[key] = ParameterChange(
+                        parameter=param, original_value=original['value'])
+            else:
+                diffs[key] = ParameterChange(parameter=param,
+                                             original_value=None)
+        return diffs
+
+
+def changes_from_default(source: str) -> Dict[str, ParameterChange]:
+    """Determines which parameters have changed from the default params.
+
+    Parameters
+    ----------
+        source - path to the parameters json file that will be compared with
+            the default parameters.
+    """
+    default = Parameters(source=DEFAULT_PARAMETERS_PATH, cast_values=True)
+    params = Parameters(source=source, cast_values=True)
+    return params.diff(default)
