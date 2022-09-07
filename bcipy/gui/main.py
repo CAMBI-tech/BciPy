@@ -325,7 +325,6 @@ class IntegerInput(FormInput):
     def init_control(self, value):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
-        # See https://www.pivotaltracker.com/story/show/183134720
         spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
         if value:
@@ -353,7 +352,6 @@ def float_input_properties(value: str) -> FloatInputProperties:
     """Given a string representation of a float value, determine suitable
     properties for the float component used to input or update this value.
     """
-    # See https://www.pivotaltracker.com/story/show/183134720
     # Determine from the component if there is a reasonable min or max constraint
     dec = Decimal(str(value))
     _sign, _digits, exponent = dec.as_tuple()
