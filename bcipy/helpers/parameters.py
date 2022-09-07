@@ -241,14 +241,15 @@ class Parameters(dict):
                 updated = True
         return updated
 
-    def changes_from(self, parameters) -> Dict[str, ParameterChange]:
+    def diff(self, parameters) -> Dict[str, ParameterChange]:
         """Lists the differences between this and another set of parameters.
         A None original_value indicates a new parameter.
 
         Parameters
         ----------
-            parameters - set of parameters for comparison; these are considered
-                the original values and the current set the changed values.
+            parameters : Parameters - set of parameters for comparison; these
+                are considered the original values and the current set the
+                changed values.
         """
         diffs = {}
 
@@ -274,4 +275,4 @@ def changes_from_default(source: str) -> Dict[str, ParameterChange]:
     """
     default = Parameters(source=DEFAULT_PARAMETERS_PATH, cast_values=True)
     params = Parameters(source=source, cast_values=True)
-    return params.changes_from(default)
+    return params.diff(default)

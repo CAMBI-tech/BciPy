@@ -544,7 +544,7 @@ class TestParameters(unittest.TestCase):
             "entry_2": entry2_same,
             "entry_3": entry3_modified
         })
-        changes = new_params.changes_from(parameters)
+        changes = new_params.diff(parameters)
 
         self.assertEqual(len(changes.keys()), 1)
         self.assertTrue("entry_3" in changes.keys())

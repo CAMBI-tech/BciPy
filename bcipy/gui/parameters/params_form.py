@@ -23,9 +23,6 @@ from bcipy.gui.main import (
     TextInput,
 )
 
-HELP_SIZE = 12
-HELP_COLOR = 'darkgray'
-
 
 class ParamsForm(QWidget):
     """The ParamsForm class is a QWidget that creates controls/inputs for each parameter in the
@@ -174,8 +171,8 @@ class ChangeItems(QWidget):
             self.layout.addWidget(
                 static_text_control(None,
                                     label="None",
-                                    size=HELP_SIZE,
-                                    color=HELP_COLOR))
+                                    size=12,
+                                    color='darkgray'))
 
         for _key, param_change in self.changes.items():
             param = param_change.parameter
@@ -189,12 +186,17 @@ class ChangeItems(QWidget):
 
             original_value = static_text_control(
                 None,
-                label=f"(original value: {param_change.original_value})",
-                color=HELP_COLOR,
-                size=HELP_SIZE)
+                label=f"(default: {param_change.original_value})",
+                color='darkgray',
+                size=12)
             hbox.addWidget(lbl)
             hbox.addWidget(original_value)
             self.layout.addLayout(hbox)
+
+    @property
+    def is_empty(self) -> bool:
+        """Boolean indicating whether there are any changes"""
+        return not bool(self.changes)
 
     def update_changes(self, json_file: str):
         """Update the changed items"""
@@ -222,6 +224,8 @@ class ParamsChanges(QWidget):
     def __init__(self, json_file: str):
         super().__init__()
         self.change_items = ChangeItems(json_file)
+        self.collapsed = self.change_items.is_empty
+
         self.show_label = '[+]'
         self.hide_label = '[-]'
 
@@ -232,11 +236,13 @@ class ParamsChanges(QWidget):
         self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.changes_area.setWidgetResizable(True)
         self.changes_area.setWidget(self.change_items)
+        self.changes_area.setVisible(not self.collapsed)
 
         control_box = QHBoxLayout()
         control_box.addWidget(
             static_text_control(None, label='Changed Parameters:'))
-        self.toggle_button = QPushButton(self.hide_label)
+        self.toggle_button = QPushButton(
+            self.show_label if self.collapsed else self.hide_label)
         self.toggle_button.setFlat(True)
         self.toggle_button.setFixedWidth(40)
         self.toggle_button.clicked.connect(self.toggle)
@@ -246,8 +252,6 @@ class ParamsChanges(QWidget):
         self.layout.addWidget(self.changes_area)
         self.setLayout(self.layout)
 
-        self._visible = True
-
     def update_changes(self, json_file: str):
         """Update the changed items"""
         self.change_items.update_changes(json_file)
@@ -255,18 +259,18 @@ class ParamsChanges(QWidget):
 
     def toggle(self):
         """Toggle visibility of items"""
-        if self._visible:
-            self.hide()
-        else:
+        if self.collapsed:
             self.show()
-        self._visible = not self._visible
+        else:
+            self.collapse()
+        self.collapsed = not self.collapsed
 
     def show(self):
         """Show the changes"""
         self.changes_area.setVisible(True)
         self.toggle_button.setText(self.hide_label)
 
-    def hide(self):
+    def collapse(self):
         """Hide the changes"""
         self.changes_area.setVisible(False)
         self.toggle_button.setText(self.show_label)
