@@ -7,17 +7,20 @@ import warnings
 
 from pathlib import Path
 
+from mockito import mock, when, unstub, verify, verifyNoMoreInteractions, any as any_value
+
 from bcipy.config import DEFAULT_ENCODING, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
-from bcipy.helpers.convert import convert_to_edf, compress, decompress, archive_list
+from bcipy.helpers import convert
+from bcipy.helpers.convert import convert_to_edf, convert_to_bdf, compress, decompress, archive_list
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write
 from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 
-from mne.io import read_raw_edf
+from mne.io import read_raw_edf, read_raw_bdf
 
 
-class TestConvert(unittest.TestCase):
-    """Tests for data format conversions."""
+class TestEDFConvert(unittest.TestCase):
+    """Tests for EDF data format conversions."""
 
     @classmethod
     def setUpClass(cls):
@@ -37,14 +40,17 @@ class TestConvert(unittest.TestCase):
         write(self.__class__.sample_data, Path(self.temp_dir, f'{RAW_DATA_FILENAME}.csv'))
 
         params = Parameters.from_cast_values(raw_data_name=f'{RAW_DATA_FILENAME}.csv',
-                                             trigger_file_name=TRIGGER_FILENAME)
+                                             trigger_file_name=TRIGGER_FILENAME,
+                                             static_trigger_offset=0)
         params.save(self.temp_dir, DEFAULT_PARAMETER_FILENAME)
 
     def tearDown(self):
         """Override"""
         shutil.rmtree(self.temp_dir)
+        verifyNoMoreInteractions()
+        unstub()
 
-    def test_convert_defaults(self):
+    def test_convert_to_edf_defaults(self):
         """Test default behavior"""
         path = convert_to_edf(self.temp_dir)
         self.assertTrue(os.path.exists(path))
@@ -58,31 +64,30 @@ class TestConvert(unittest.TestCase):
         for ch_name in self.channels:
             self.assertTrue(ch_name in edf.ch_names)
 
-    def test_overwrite_false(self):
+    def test_convert_to_edf_overwrite_false(self):
         """Test overwriting fails"""
 
         convert_to_edf(self.temp_dir)
         with self.assertRaises(OSError):
             convert_to_edf(self.temp_dir, overwrite=False)
 
-    def test_overwrite_true(self):
+    def test_convert_to_edf_overwrite_true(self):
         """Test that overwriting can be configured"""
 
         convert_to_edf(self.temp_dir)
         convert_to_edf(self.temp_dir, overwrite=True)
 
-    def test_with_custom_path(self):
+    def test_convert_to_edf_with_custom_path(self):
         """Test creating the EDF using a custom edf path"""
         path = convert_to_edf(self.temp_dir,
-                              edf_path=Path(self.temp_dir, 'mydata.edf'))
+                              edf_path=str(Path(self.temp_dir, 'mydata.edf').resolve()))
 
         self.assertEqual(Path(path).name, 'mydata.edf')
 
-    def test_with_write_targetness(self):
+    def test_convert_to_edf_with_write_targetness(self):
         """Test creating the EDF using targetness for event annotations"""
         path = convert_to_edf(self.temp_dir,
-                              write_targetness=True,
-                              edf_path=Path(self.temp_dir, 'mydata.edf'))
+                              write_targetness=True)
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
@@ -91,11 +96,10 @@ class TestConvert(unittest.TestCase):
         self.assertIn('target', edf.annotations.description)
         self.assertIn('nontarget', edf.annotations.description)
 
-    def test_without_write_targetness(self):
+    def test_convert_to_edf_without_write_targetness(self):
         """Test creating the EDF with labels as event annotations"""
         path = convert_to_edf(self.temp_dir,
-                              write_targetness=False,
-                              edf_path=Path(self.temp_dir, 'mydata.edf'))
+                              write_targetness=False)
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
@@ -104,6 +108,197 @@ class TestConvert(unittest.TestCase):
         self.assertNotIn('target', edf.annotations.description)
         self.assertNotIn('nontarget', edf.annotations.description)
         self.assertIn('+', edf.annotations.description)
+
+    def test_convert_to_edf_with_pre_filter(self):
+        """Test creating the EDF with pre-filtering"""
+
+        data = mock()
+        channels = mock()
+        fs = 100
+        events = mock()
+        annotation_channels = 1
+        return_path = mock()
+        when(convert).pyedf_convert(
+            any_value(str),
+            write_targetness=any_value(bool),
+            use_event_durations=any_value(bool),
+            remove_pre_fixation=any_value(bool),
+            pre_filter=True,
+        ).thenReturn((
+            data,
+            channels,
+            fs,
+            events,
+            annotation_channels
+        ))
+        when(convert).write_edf(
+            any_value(str),
+            data,
+            channels,
+            fs,
+            events,
+            any_value(bool),
+            annotation_channels).thenReturn(return_path)
+        path = convert_to_edf(self.temp_dir,
+                              pre_filter=True)
+
+        verify(convert, times=1).pyedf_convert(
+            any_value(str),
+            write_targetness=any_value(bool),
+            use_event_durations=any_value(bool),
+            remove_pre_fixation=any_value(bool),
+            pre_filter=True,
+        )
+        verify(convert, times=1).write_edf(
+            any_value(str),
+            data,
+            channels,
+            fs,
+            events,
+            any_value(bool),
+            annotation_channels)
+        self.assertEqual(path, return_path)
+
+
+class TestBDFConvert(unittest.TestCase):
+    """Tests for BDF data format conversions."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Initialize data once"""
+        cls.trg_data = MOCK_TRIGGER_DATA
+        cls.channels = ['ch1', 'ch2', 'ch3']
+        cls.sample_data = sample_data(rows=3000, ch_names=cls.channels)
+
+    def setUp(self):
+        """Override; set up the needed path for load functions."""
+
+        self.temp_dir = tempfile.mkdtemp()
+
+        with open(Path(self.temp_dir, TRIGGER_FILENAME), 'w', encoding=DEFAULT_ENCODING) as trg_file:
+            trg_file.write(self.__class__.trg_data)
+
+        write(self.__class__.sample_data, Path(self.temp_dir, f'{RAW_DATA_FILENAME}.csv'))
+
+        params = Parameters.from_cast_values(raw_data_name=f'{RAW_DATA_FILENAME}.csv',
+                                             trigger_file_name=TRIGGER_FILENAME,
+                                             static_trigger_offset=0)
+        params.save(self.temp_dir, DEFAULT_PARAMETER_FILENAME)
+
+    def tearDown(self):
+        """Override"""
+        shutil.rmtree(self.temp_dir)
+        verifyNoMoreInteractions()
+        unstub()
+
+    def test_convert_to_bdf_defaults(self):
+        """Test default convert to bdf behavior"""
+        path = convert_to_bdf(self.temp_dir)
+        self.assertTrue(os.path.exists(path))
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            edf = read_raw_bdf(path, preload=True)
+
+        self.assertTrue(len(edf.get_data()) > 0)
+
+        for ch_name in self.channels:
+            self.assertTrue(ch_name in edf.ch_names)
+
+    def test_convert_to_bdf_overwrite_false(self):
+        """Test overwriting fails if not configured"""
+
+        convert_to_bdf(self.temp_dir)
+        with self.assertRaises(OSError):
+            convert_to_bdf(self.temp_dir, overwrite=False)
+
+    def test_convert_to_bdf_overwrite_true(self):
+        """Test that overwriting can be configured"""
+
+        convert_to_bdf(self.temp_dir)
+        convert_to_bdf(self.temp_dir, overwrite=True)
+
+    def test_convert_to_bdf_with_custom_path(self):
+        """Test creating the EDF using a custom edf path"""
+        path = convert_to_bdf(self.temp_dir,
+                              bdf_path=str(Path(self.temp_dir, 'mydata.bdf').resolve()))
+
+        self.assertEqual(Path(path).name, 'mydata.bdf')
+
+    def test_convert_to_bdf_with_write_targetness(self):
+        """Test creating the EDF using targetness for event annotations"""
+        path = convert_to_bdf(self.temp_dir,
+                              write_targetness=True)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            edf = read_raw_bdf(path, preload=True)
+
+        self.assertIn('target', edf.annotations.description)
+        self.assertIn('nontarget', edf.annotations.description)
+
+    def test_convert_to_bdf_without_write_targetness(self):
+        """Test creating the EDF with labels as event annotations"""
+        path = convert_to_bdf(self.temp_dir,
+                              write_targetness=False)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            edf = read_raw_bdf(path, preload=True)
+
+        self.assertNotIn('target', edf.annotations.description)
+        self.assertNotIn('nontarget', edf.annotations.description)
+        self.assertIn('+', edf.annotations.description)
+
+    def test_convert_to_bdf_with_pre_filter(self):
+        """Test creating the BDF with pre-filtering"""
+
+        data = mock()
+        channels = mock()
+        fs = 100
+        events = mock()
+        annotation_channels = 1
+        return_path = mock()
+        when(convert).pyedf_convert(
+            any_value(str),
+            write_targetness=any_value(bool),
+            use_event_durations=any_value(bool),
+            remove_pre_fixation=any_value(bool),
+            pre_filter=True,
+        ).thenReturn((
+            data,
+            channels,
+            fs,
+            events,
+            annotation_channels
+        ))
+        when(convert).write_bdf(
+            any_value(str),
+            data,
+            channels,
+            fs,
+            events,
+            any_value(bool),
+            annotation_channels).thenReturn(return_path)
+        path = convert_to_bdf(self.temp_dir,
+                              pre_filter=True)
+
+        verify(convert, times=1).pyedf_convert(
+            any_value(str),
+            write_targetness=any_value(bool),
+            use_event_durations=any_value(bool),
+            remove_pre_fixation=any_value(bool),
+            pre_filter=True,
+        )
+        verify(convert, times=1).write_bdf(
+            any_value(str),
+            data,
+            channels,
+            fs,
+            events,
+            any_value(bool),
+            annotation_channels)
+        self.assertEqual(path, return_path)
 
 
 class TestCompressionSupport(unittest.TestCase):
