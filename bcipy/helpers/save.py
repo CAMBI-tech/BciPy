@@ -85,7 +85,7 @@ def init_save_data_structure(data_save_path: str,
 def save_device_spec(device_spec: DeviceSpec, location: str, name: str) -> str:
     """
     Save device spec to a json file.
-    
+
     Parameters:
         device_spec (DeviceSpec): device spec to save
         location (str): location to save the file
@@ -95,6 +95,7 @@ def save_device_spec(device_spec: DeviceSpec, location: str, name: str) -> str:
         str: path to the saved file
     """
     return save_json_data(device_spec.to_dict(), location, name)
+
 
 def _save_session_related_data(file, session_dictionary):
     """

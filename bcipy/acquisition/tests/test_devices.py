@@ -226,7 +226,8 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(content_type, spec_dict['content_type'])
         self.assertEqual(expected_channel_output, spec_dict['channels'])
         self.assertEqual(sample_rate, spec_dict['sample_rate'])
-        self.assertEqual(['LSL'], spec_dict['connection_methods']) # the default
+        self.assertEqual(['LSL'], spec_dict['connection_methods'])  # the default
+
 
 if __name__ == '__main__':
     unittest.main()
