@@ -117,6 +117,18 @@ class DeviceSpec:
             filter(lambda channel: channel not in self.excluded_from_analysis,
                    self.channels))
 
+    def to_dict(self) -> dict:
+        """Converts the DeviceSpec to a dict."""
+        return {
+            'name': self.name,
+            'content_type': self.content_type,
+            'channels': [ch._asdict() for ch in self.channel_specs],
+            'connection_methods': [cm.name for cm in self.connection_methods],
+            'sample_rate': self.sample_rate,
+            'description': self.description,
+            'excluded_from_analysis': self.excluded_from_analysis
+        }
+
     def _validate_excluded_channels(self):
         """Warn if excluded channels are not in the list of channels"""
         for channel in self.excluded_from_analysis:

@@ -207,3 +207,26 @@ class TestDeviceSpecs(unittest.TestCase):
                                sample_rate=devices.IRREGULAR_RATE,
                                content_type='Markers',
                                data_type='Whatever')
+
+    def test_device_spec_to_dict(self):
+        """DeviceSpec should be able to be converted to a dictionary."""
+        device_name = 'TestDevice'
+        channels = ['C1', 'C2', 'C3']
+        expected_channel_output = [{'label': 'C1', 'name': 'C1', 'type': None, 'units': None},
+                                   {'label': 'C2', 'name': 'C2', 'type': None, 'units': None},
+                                   {'label': 'C3', 'name': 'C3', 'type': None, 'units': None}]
+        sample_rate = 256.0
+        content_type = 'EEG'
+        spec = devices.DeviceSpec(name=device_name,
+                                  channels=channels,
+                                  sample_rate=sample_rate,
+                                  content_type=content_type)
+        spec_dict = spec.to_dict()
+        self.assertEqual(device_name, spec_dict['name'])
+        self.assertEqual(content_type, spec_dict['content_type'])
+        self.assertEqual(expected_channel_output, spec_dict['channels'])
+        self.assertEqual(sample_rate, spec_dict['sample_rate'])
+        self.assertEqual(['LSL'], spec_dict['connection_methods']) # the default
+
+if __name__ == '__main__':
+    unittest.main()
