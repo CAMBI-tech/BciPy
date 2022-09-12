@@ -24,7 +24,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker = DecisionMaker(
             stimuli_agent=stimuli_agent,
             stopping_evaluator=stopping_criteria,
-            state='',
+            state='HE',
             alphabet=alp,
             is_txt_stim=True,
             stimuli_timing=[1, .2],
@@ -82,30 +82,22 @@ class TestDecisionMaker(unittest.TestCase):
         # TODO: Update that test part
         # self.assertEqual(self.decision_maker.min_num_inq, 1)
         # self.assertEqual(self.decision_maker.max_num_inq, 3)
-        self.assertEqual(self.decision_maker.state, '')
-        self.assertEqual(self.decision_maker.displayed_state, '')
+        self.assertEqual(self.decision_maker.state, 'HE')
+        self.assertEqual(self.decision_maker.displayed_state, 'HE')
 
     def test_update_with_letter(self):
         """Test update method with letter being the new state"""
-        old_displayed_state = self.decision_maker.displayed_state
-        old_state = self.decision_maker.state
         new_state = 'E'
         self.decision_maker.update(state=new_state)
-        self.assertEqual(self.decision_maker.state, old_state + new_state)
-        self.assertEqual(self.decision_maker.displayed_state,
-                         old_displayed_state + 'E')
+        self.assertEqual(self.decision_maker.state, new_state)
+        self.assertEqual(self.decision_maker.displayed_state, new_state)
 
     def test_update_with_backspace(self):
         """Test update method with backspace being the new state"""
-        old_displayed_state = self.decision_maker.displayed_state
-        old_state = self.decision_maker.state
         new_state = '<'
         self.decision_maker.update(state=new_state)
-        self.assertEqual(self.decision_maker.state, old_state + new_state)
-        self.assertEqual(self.decision_maker.displayed_state,
-                         old_displayed_state[0:-1])
-        self.assertLess(len(self.decision_maker.displayed_state),
-                        len(self.decision_maker.state))
+        self.assertEqual(self.decision_maker.state, new_state)
+        self.assertEqual(self.decision_maker.displayed_state, '')
 
     def test_reset(self):
         """Test reset of decision maker state"""
@@ -146,7 +138,7 @@ class TestDecisionMaker(unittest.TestCase):
         self.decision_maker.list_series[-1]['list_distribution'].append(
             probability_distribution)
         stimuli = self.decision_maker.schedule_inquiry()
-        self.assertEqual(self.decision_maker.state, '.')
+        self.assertEqual(self.decision_maker.state, 'HE.')
         self.assertEqual(stimuli[0],
                          self.decision_maker.list_series[-1]['list_sti'][-1])
         self.assertLess(old_counter, self.decision_maker.inquiry_counter)
