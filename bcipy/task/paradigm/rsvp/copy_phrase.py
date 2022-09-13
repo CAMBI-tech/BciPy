@@ -443,6 +443,9 @@ class RSVPCopyPhraseTask(Task):
                                                       self.spelled_text)
             # Reset the stoppage criteria by forcing the commit to a decision.
             self.copy_phrase_task.decision_maker.do_series()
+            # In fake mode, only the LM is providing evidence, so the decision
+            # made is the highest symbol predicted. Override this state
+            self.copy_phrase_task.decision_maker.update(spelled)
 
             # In fake mode, all inquiries result in a selection.
             return Decision(decision_made=True,
