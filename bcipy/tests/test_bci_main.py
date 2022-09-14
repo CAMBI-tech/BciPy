@@ -169,7 +169,8 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data']
+            server=self.parameters['fake_data'],
+            export_spec=True
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -190,7 +191,8 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data'])
+            server=self.parameters['fake_data'],
+            export_spec=True)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
@@ -211,7 +213,8 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data']
+            server=self.parameters['fake_data'],
+            export_spec=True
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -232,7 +235,8 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data'])
+            server=self.parameters['fake_data'],
+            export_spec=True)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
@@ -260,7 +264,8 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data']
+            server=self.parameters['fake_data'],
+            export_spec=True
         ).thenReturn(eeg_response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -285,7 +290,8 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data'])
+            server=self.parameters['fake_data'],
+            export_spec=True)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
@@ -309,7 +315,8 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data']
+            server=self.parameters['fake_data'],
+            export_spec=True
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -321,7 +328,8 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data'])
+            server=self.parameters['fake_data'],
+            export_spec=True)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -341,7 +349,8 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data']
+            server=self.parameters['fake_data'],
+            export_spec=True
         ).thenReturn(eeg_response)
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
@@ -366,7 +375,8 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.parameters['fake_data'])
+            server=self.parameters['fake_data'],
+            export_spec=True)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(

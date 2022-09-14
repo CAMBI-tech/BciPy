@@ -114,9 +114,9 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
 
         language_model = init_language_model(parameters)
 
-    # Initialize DAQ
+    # Initialize DAQ and export the device configuration
     daq, server = init_eeg_acquisition(
-        parameters, save_folder, server=fake)
+        parameters, save_folder, export_spec=True, server=fake)
 
     # Initialize Display Window
     # We have to wait until after the prompt to load the signal model before

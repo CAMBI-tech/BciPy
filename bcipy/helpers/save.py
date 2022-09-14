@@ -1,3 +1,4 @@
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.validate import validate_experiments
 import errno
 import os
@@ -81,10 +82,24 @@ def init_save_data_structure(data_save_path: str,
     return save_directory
 
 
+def save_device_spec(device_spec: DeviceSpec, location: str, name: str) -> str:
+    """
+    Save device spec to a json file.
+
+    Parameters:
+        device_spec (DeviceSpec): device spec to save
+        location (str): location to save the file
+        name (str): name of the file to be saved
+
+    Returns:
+        str: path to the saved file
+    """
+    return save_json_data(device_spec.to_dict(), location, name)
+
+
 def _save_session_related_data(file, session_dictionary):
     """
     Save Session Related Data.
-
     Parameters
     ----------
         file[str]: string of path to save our data in
@@ -116,7 +131,6 @@ def _save_session_related_data(file, session_dictionary):
     Returns
     -------
         file, session data file (json file)
-
     """
     # Try opening as json, if not able to use open() to create first
     try:
