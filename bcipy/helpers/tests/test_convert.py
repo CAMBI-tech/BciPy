@@ -168,16 +168,19 @@ class TestEDFConvert(unittest.TestCase):
             channels,
             fs,
             events,
-            annotation_channels
+            annotation_channels,
+            'filter_settings'
         ))
-        when(convert).write_edf(
+        when(convert).write_pyedf(
             any_value(str),
             data,
             channels,
             fs,
             events,
+            any_value(int),
             any_value(bool),
-            annotation_channels).thenReturn(return_path)
+            annotation_channels,
+            any_value(str)).thenReturn(return_path)
         path = convert_to_edf(self.temp_dir,
                               pre_filter=True)
 
@@ -188,14 +191,16 @@ class TestEDFConvert(unittest.TestCase):
             remove_pre_fixation=any_value(bool),
             pre_filter=True,
         )
-        verify(convert, times=1).write_edf(
+        verify(convert, times=1).write_pyedf(
             any_value(str),
             data,
             channels,
             fs,
             events,
+            any_value(int),
             any_value(bool),
-            annotation_channels)
+            annotation_channels,
+            any_value(str))
         self.assertEqual(path, return_path)
 
 
@@ -300,16 +305,19 @@ class TestBDFConvert(unittest.TestCase):
             channels,
             fs,
             events,
-            annotation_channels
+            annotation_channels,
+            'filter_settings'
         ))
-        when(convert).write_bdf(
+        when(convert).write_pyedf(
             any_value(str),
             data,
             channels,
             fs,
             events,
+            any_value(int),
             any_value(bool),
-            annotation_channels).thenReturn(return_path)
+            annotation_channels,
+            any_value(str)).thenReturn(return_path)
         path = convert_to_bdf(self.temp_dir,
                               pre_filter=True)
 
@@ -320,14 +328,16 @@ class TestBDFConvert(unittest.TestCase):
             remove_pre_fixation=any_value(bool),
             pre_filter=True,
         )
-        verify(convert, times=1).write_bdf(
+        verify(convert, times=1).write_pyedf(
             any_value(str),
             data,
             channels,
             fs,
             events,
+            any_value(int),
             any_value(bool),
-            annotation_channels)
+            annotation_channels,
+            any_value(str))
         self.assertEqual(path, return_path)
 
 
@@ -357,7 +367,7 @@ class TestPyedfconvert(unittest.TestCase):
 
     def test_pyedf_convert_defaults(self):
         """Test the pyedf_convert function"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
             self.temp_dir)
 
         self.assertTrue(len(data) > 0)
@@ -366,10 +376,11 @@ class TestPyedfconvert(unittest.TestCase):
         self.assertTrue(len(events) > 2)
         # see the validate_annotations function for details on how this is calculated
         self.assertEqual(annotation_channels, 1)
+        self.assertFalse(pre_filter)
 
     def test_pyedf_convert_with_pre_filter(self):
         """Test the pyedf_convert function with pre-filtering"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
             self.temp_dir, pre_filter=True)
 
         self.assertTrue(len(data) > 0)
@@ -379,10 +390,11 @@ class TestPyedfconvert(unittest.TestCase):
         # see the validate_annotations function for details on how this is calculated
         #  with less samples, the number of annotation channels increases
         self.assertEqual(annotation_channels, 2)
+        self.assertIsInstance(pre_filter, str)
 
     def test_pyedf_convert_with_write_targetness(self):
         """Test the pyedf_convert function with targetness for event annotations"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, _ = pyedf_convert(
             self.temp_dir, write_targetness=True)
 
         self.assertTrue(len(data) > 0)
@@ -398,7 +410,7 @@ class TestPyedfconvert(unittest.TestCase):
 
     def test_pyedf_convert_without_write_targetness(self):
         """Test the pyedf_convert function with labels as event annotations"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, _ = pyedf_convert(
             self.temp_dir, write_targetness=False)
 
         self.assertTrue(len(data) > 0)
@@ -413,7 +425,7 @@ class TestPyedfconvert(unittest.TestCase):
 
     def test_pyedf_convert_with_use_event_durations(self):
         """Test the pyedf_convert function with event durations"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, _ = pyedf_convert(
             self.temp_dir, use_event_durations=True)
 
         self.assertTrue(len(data) > 0)
@@ -427,7 +439,7 @@ class TestPyedfconvert(unittest.TestCase):
 
     def test_pyedf_convert_without_use_event_durations(self):
         """Test the pyedf_convert function without event durations"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, _ = pyedf_convert(
             self.temp_dir, use_event_durations=False)
 
         self.assertTrue(len(data) > 0)
@@ -441,7 +453,7 @@ class TestPyedfconvert(unittest.TestCase):
 
     def test_pyedf_convert_with_remove_pre_fixation(self):
         """Test the pyedf_convert function with pre-fixation removal"""
-        data, channels, fs, events, annotation_channels = pyedf_convert(
+        data, channels, fs, events, annotation_channels, _ = pyedf_convert(
             self.temp_dir, remove_pre_fixation=True)
 
         self.assertTrue(len(data) > 0)

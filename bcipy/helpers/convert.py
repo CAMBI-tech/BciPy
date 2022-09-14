@@ -62,14 +62,23 @@ def convert_to_edf(data_dir: str,
     if not edf_path.endswith('.edf'):
         raise ValueError(f'edf_path=[{edf_path}] must end in .edf')
 
-    data, channels, fs, events, annotation_channels = pyedf_convert(
+    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
         data_dir,
         write_targetness=write_targetness,
         use_event_durations=use_event_durations,
         remove_pre_fixation=remove_pre_fixation,
         pre_filter=pre_filter)
 
-    return write_pyedf(edf_path, data, channels, fs, events, FILETYPE_EDFPLUS, overwrite, annotation_channels)
+    return write_pyedf(
+        edf_path,
+        data,
+        channels,
+        fs,
+        events,
+        FILETYPE_EDFPLUS,
+        overwrite,
+        annotation_channels,
+        pre_filter)
 
 
 def convert_to_bdf(data_dir: str,
@@ -109,21 +118,30 @@ def convert_to_bdf(data_dir: str,
     if not bdf_path.endswith('.bdf'):
         raise ValueError(f'bdf_path=[{bdf_path}] must end in .bdf')
 
-    data, channels, fs, events, annotation_channels = pyedf_convert(
+    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
         data_dir,
         write_targetness=write_targetness,
         use_event_durations=use_event_durations,
         remove_pre_fixation=remove_pre_fixation,
         pre_filter=pre_filter)
 
-    return write_pyedf(bdf_path, data, channels, fs, events, FILETYPE_BDFPLUS, overwrite, annotation_channels)
+    return write_pyedf(
+        bdf_path,
+        data,
+        channels,
+        fs,
+        events,
+        FILETYPE_BDFPLUS,
+        overwrite,
+        annotation_channels,
+        pre_filter)
 
 
 def pyedf_convert(data_dir: str,
-                  write_targetness=False,
-                  use_event_durations=False,
-                  remove_pre_fixation=False,
-                  pre_filter=False) -> Tuple[RawData, List[str], int, List[Tuple[str, int, int]], int]:
+                  write_targetness: bool = False,
+                  use_event_durations: bool = False,
+                  remove_pre_fixation: bool = False,
+                  pre_filter: bool = False) -> Tuple[RawData, List[str], int, List[Tuple[str, int, int]], int]:
     """ Converts BciPy data to formats that can be used by pyEDFlib.
 
     Parameters
@@ -146,6 +164,8 @@ def pyedf_convert(data_dir: str,
         fs - sampling rate
         events - list of events
         annotation_channels - number of annotation channels
+        pre_filter - False if no filter was applied,
+            otherwise a string of the filter parameters used to filter the data
     """
 
     params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
@@ -162,6 +182,9 @@ def pyedf_convert(data_dir: str,
             downsample_factor=params.get("down_sampling_rate"),
         )
         raw_data, fs = data.by_channel(transform=default_transform)
+        pre_filter = (f"HP:{params.get('filter_low')} LP:{params.get('filter_high')}"
+                      f"N:{params.get('notch_filter_frequency')} D:{params.get('down_sampling_rate')} "
+                      f"O:{params.get('filter_order')}")
     else:
         raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
@@ -182,10 +205,10 @@ def pyedf_convert(data_dir: str,
 
     events = compile_annotations(triggers, durations)
 
-    return raw_data, data.channels, fs, events, annotation_channels
+    return raw_data, data.channels, fs, events, annotation_channels, pre_filter
 
 
-def validate_annotations(record_time: float, trigger_count: int) -> bool:
+def validate_annotations(record_time: float, trigger_count: int) -> int:
     """Validate Annotations.
 
     Using the pyedflib library, it is recommended the number of triggers (or annotations) not exceed the recording
@@ -231,7 +254,8 @@ def write_pyedf(output_path: str,
                 events: List[Tuple[float, float, str]],
                 file_type: str = FILETYPE_EDFPLUS,
                 overwrite: bool = False,
-                annotation_channels: int = 1) -> Path:
+                annotation_channels: int = 1,
+                pre_filter: Optional[str] = None) -> Path:
     """
     Converts BciPy raw_data to the EDF+ or BDF+ filetype using pyEDFlib.
 
@@ -248,6 +272,7 @@ def write_pyedf(output_path: str,
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
     annotation_channels - number of annotation channels to use
+    pre_filter - optional; if provided, add string of filters applied to channel data
 
     Returns
     -------
@@ -272,8 +297,10 @@ def write_pyedf(output_path: str,
                 'sample_frequency': sample_rate,
                 'physical_min': physical_min,
                 'physical_max': physical_max,
-                'prefilter': '' #TODO - add prefilter information
             }
+
+            if pre_filter:
+                ch_dict['prefilter'] = pre_filter
 
             channel_info.append(ch_dict)
             data_list.append(raw_data[i])
