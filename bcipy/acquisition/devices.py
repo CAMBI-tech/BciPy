@@ -123,7 +123,6 @@ class DeviceSpec:
             'name': self.name,
             'content_type': self.content_type,
             'channels': [ch._asdict() for ch in self.channel_specs],
-            'connection_methods': [cm.name for cm in self.connection_methods],
             'sample_rate': self.sample_rate,
             'description': self.description,
             'excluded_from_analysis': self.excluded_from_analysis
