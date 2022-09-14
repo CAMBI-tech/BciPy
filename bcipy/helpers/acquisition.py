@@ -14,13 +14,15 @@ from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME
+from bcipy.helpers.save import save_device_spec
+from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
 log = logging.getLogger(__name__)
 
 
 def init_eeg_acquisition(parameters: dict,
                          save_folder: str,
+                         export_spec: bool = False,
                          server: bool = False) -> tuple:
     """Initialize EEG Acquisition.
 
@@ -38,16 +40,17 @@ def init_eeg_acquisition(parameters: dict,
                "acq_host": str,
                "acq_port": int,
              }
-        clock : Clock, optional
-            optional clock used in the client; see client for details.
+        save_folder : str
+            path to the folder where data should be saved.
+        export_spec : bool, optional
+            if True, the device spec will be exported to the save folder.
         server : bool, optional
             optionally start a mock data server that streams random data.
     Returns
     -------
         (client, server) tuple
     """
-    # TODO: parameter for loading devices; path to devices.json?
-    # devices.load(devices_path)
+    # devices.load(devices_path) can be used in the future to load devices and match
     device_spec = preconfigured_device(parameters['acq_device'])
 
     dataserver = False
@@ -65,6 +68,9 @@ def init_eeg_acquisition(parameters: dict,
         viewer_screen = 1 if int(parameters['stim_screen']) == 0 else 0
         start_viewer(display_screen=viewer_screen,
                      parameter_location=parameters['parameter_location'])
+
+    if export_spec:
+        save_device_spec(device_spec, save_folder, spec_name)
 
     return (client, dataserver)
 
