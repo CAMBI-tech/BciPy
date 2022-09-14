@@ -69,7 +69,7 @@ def convert_to_edf(data_dir: str,
         remove_pre_fixation=remove_pre_fixation,
         pre_filter=pre_filter)
 
-    return write_edf(edf_path, data, channels, fs, events, overwrite, annotation_channels)
+    return write_pyedf(edf_path, data, channels, fs, events, FILETYPE_EDFPLUS, overwrite, annotation_channels)
 
 
 def convert_to_bdf(data_dir: str,
@@ -90,7 +90,7 @@ def convert_to_bdf(data_dir: str,
         1. a parameter file.
         2. a raw_data.csv file.
         3. a trigger.txt file.
-    edf_path - optional; path to write converted data; defaults to writing a file named raw_data.edf in the data_dir.
+    bdf_path - optional; path to write converted data; defaults to writing a file named raw_data.edf in the data_dir.
         Must end in .edf.
     overwrite - If True, the destination file (if it exists) will be overwritten. If False (default), an error will
         be raised if the file exists.
@@ -116,7 +116,7 @@ def convert_to_bdf(data_dir: str,
         remove_pre_fixation=remove_pre_fixation,
         pre_filter=pre_filter)
 
-    return write_bdf(bdf_path, data, channels, fs, events, overwrite, annotation_channels)
+    return write_pyedf(bdf_path, data, channels, fs, events, FILETYPE_BDFPLUS, overwrite, annotation_channels)
 
 
 def pyedf_convert(data_dir: str,
@@ -224,15 +224,16 @@ def compile_triggers(labels: List[str], targetness: List[str], timing: List[floa
     return triggers
 
 
-def write_edf(output_path: str,
-              raw_data: np.array,
-              ch_names: List[str],
-              sample_rate: float,
-              events: List[Tuple[float, float, str]],
-              overwrite: bool = False,
-              annotation_channels: int = 1) -> Path:
+def write_pyedf(output_path: str,
+                raw_data: np.array,
+                ch_names: List[str],
+                sample_rate: float,
+                events: List[Tuple[float, float, str]],
+                file_type: str = FILETYPE_EDFPLUS,
+                overwrite: bool = False,
+                annotation_channels: int = 1) -> Path:
     """
-    Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
+    Converts BciPy raw_data to the EDF+ or BDF+ filetype using pyEDFlib.
 
     Adapted from: https://github.com/holgern/pyedflib
 
@@ -250,21 +251,16 @@ def write_edf(output_path: str,
 
     Returns
     -------
-        Path to new edf file
+        Path to new edf or bdf file
     """
     if not overwrite and os.path.exists(output_path):
-        raise OSError('EDF file already exists.')
+        raise OSError(f'{output_path} already exists.')
 
-    # set conversion parameters
-    digital_min, digital_max = [-32768, 32767]
     physical_min, physical_max = [raw_data.min(), raw_data.max()]
-
     n_channels = len(raw_data)
 
     try:
-        writer = EdfWriter(str(output_path),
-                           n_channels=n_channels,
-                           file_type=FILETYPE_EDFPLUS)
+        writer = EdfWriter(output_path, n_channels=n_channels, file_type=file_type)
 
         channel_info = []
         data_list = []
@@ -276,88 +272,7 @@ def write_edf(output_path: str,
                 'sample_frequency': sample_rate,
                 'physical_min': physical_min,
                 'physical_max': physical_max,
-                'digital_min': digital_min,
-                'digital_max': digital_max,
-                'transducer': '',
-                'prefilter': ''
-            }
-
-            channel_info.append(ch_dict)
-            data_list.append(raw_data[i])
-
-        if events:
-            writer.set_number_of_annotation_signals(annotation_channels)
-            for onset, duration, label in events:
-                writer.writeAnnotation(onset, duration, label)
-
-        writer.setSignalHeaders(channel_info)
-        writer.writeSamples(data_list)
-
-    except Exception as error:
-        logger.info(error)
-        raise error
-    finally:
-        writer.close()
-    return output_path
-
-
-def write_bdf(output_path: str,
-              raw_data: np.array,
-              ch_names: List[str],
-              sample_rate: float,
-              events: List[Tuple[float, float, str]],
-              overwrite: bool = False,
-              annotation_channels: int = 1) -> Path:
-    """
-    Converts BciPy raw_data to the BDF+ filetype using pyEDFlib.
-
-    Adapted from: https://github.com/holgern/pyedflib
-
-    Parameters
-    ----------
-    output_path - optional path to write converted data; defaults to writing
-        a file named raw.bdf in the raw_data_dir.
-    raw_data - raw data with a row for each channel
-    ch_names - names of the channels
-    sample_rate - sample frequency
-    events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
-    overwrite - If True, the destination file (if it exists) will be overwritten.
-        If False (default), an error will be raised if the file exists.
-    annotation_channels - number of annotation channels to use for writing triggers
-
-    Returns
-    -------
-        Path to new bdf file
-    """
-    if not overwrite and os.path.exists(output_path):
-        raise OSError('BDF file already exists.')
-
-    # set conversion parameters. The digital min/max are specific to BDF and much higher than EDF.
-    digital_min, digital_max = [-8388607, 8388607]
-    physical_min, physical_max = [raw_data.min(), raw_data.max()]
-
-    n_channels = len(raw_data)
-
-    try:
-        # even though we are writing a BDF file, we need to use the EDF writer and set the file type to BDF
-        writer = EdfWriter(str(output_path),
-                           n_channels=n_channels,
-                           file_type=FILETYPE_BDFPLUS)
-
-        channel_info = []
-        data_list = []
-
-        for i in range(n_channels):
-            ch_dict = {
-                'label': ch_names[i],
-                'dimension': 'uV',
-                'sample_frequency': sample_rate,
-                'physical_min': physical_min,
-                'physical_max': physical_max,
-                'digital_min': digital_min,
-                'digital_max': digital_max,
-                'transducer': '',
-                'prefilter': ''
+                'prefilter': '' #TODO - add prefilter information
             }
 
             channel_info.append(ch_dict)
