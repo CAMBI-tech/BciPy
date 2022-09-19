@@ -90,7 +90,7 @@ def convert_to_bdf(data_dir: str,
                    pre_filter: bool = False) -> Path:
     """ Converts BciPy data to the BDF+ filetype using pyEDFlib.
 
-    See https://www.biosemi.com/faq/file_format.html for more detailed information about the BDF specification.
+    See https://www.biosemi.com/faq/file_format.htm for more detailed information about the BDF specification.
     See https://www.teuniz.net/edfbrowser/ for a free EDF/BDF viewer.
 
     Parameters
