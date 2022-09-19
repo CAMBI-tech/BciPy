@@ -1,5 +1,4 @@
 """Functionality for converting the bcipy raw data output to other formats"""
-
 import logging
 import os
 import tarfile
@@ -8,13 +7,13 @@ from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
-from pyedflib import FILETYPE_EDFPLUS, EdfWriter
+from pyedflib import FILETYPE_EDFPLUS, EdfWriter, FILETYPE_BDFPLUS
 from tqdm import tqdm
 
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
-from bcipy.signal.process import Composition
+from bcipy.signal.process import Composition, get_default_transform
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 
 import mne
@@ -28,65 +27,205 @@ FILE_LENGTH_LIMIT = 150
 
 def convert_to_edf(data_dir: str,
                    edf_path: str = None,
-                   overwrite=False,
-                   write_targetness=False,
-                   use_event_durations=False) -> Path:
-    """ Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
+                   overwrite: bool = False,
+                   write_targetness: bool = False,
+                   use_event_durations: bool = False,
+                   remove_pre_fixation: bool = False,
+                   pre_filter: bool = False) -> Path:
+    """ Converts BciPy data to the EDF+ filetype using pyEDFlib.
 
-    See https://www.edfplus.info/ for the official EDF+ spec for more detailed
-        information.
-    See https://www.teuniz.net/edflib_python/index.html for a free EDF viewer.
+    See https://www.edfplus.info/ for more detailed information about the edf specification.
+    See https://www.teuniz.net/edfbrowser/ for a free EDF/BDF viewer.
 
     Parameters
     ----------
-    data_dir - directory which contains the data to be converted. This
-        location must also contain a parameters.json configuration file.
-    edf_path - optional path to write converted data; defaults to writing
-        a file named raw.edf in the data_dir.
-    overwrite - If True, the destination file (if it exists) will be overwritten.
-        If False (default), an error will be raised if the file exists.
-    write_targetness - If True, and targetness information is available, write
-        that instead of the stimuli markers. False by default.
+    data_dir - directory which contains the data to be converted. This location must contain:
+        1. a parameter file.
+        2. a raw_data.csv file.
+        3. a trigger.txt file.
+    edf_path - optional; path to write converted data; defaults to writing a file named raw_data.edf in the data_dir.
+        Must end in .edf.
+    overwrite - If True, the destination file (if it exists) will be overwritten. If False (default), an error will
+        be raised if the file exists.
+    write_targetness - If True, and targetness information is available, write that instead of the stimuli markers.
+        False by default.
     use_event_durations - optional; if True assigns a duration to each event.
+    remove_pre_fixation - optional; if True removes the non-inquiry based markers from the trigger data.
+    pre_filter - optional; if True, apply the default filter to the data using to loaded parameters file.
 
     Returns
     -------
         Path to new edf file
     """
     if not edf_path:
-        edf_path = Path(data_dir, f'{RAW_DATA_FILENAME}.edf')
+        edf_path = str(Path(data_dir, f'{RAW_DATA_FILENAME}.edf').resolve())
+    if not edf_path.endswith('.edf'):
+        raise ValueError(f'edf_path=[{edf_path}] must end in .edf')
+
+    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
+        data_dir,
+        write_targetness=write_targetness,
+        use_event_durations=use_event_durations,
+        remove_pre_fixation=remove_pre_fixation,
+        pre_filter=pre_filter)
+
+    return write_pyedf(
+        edf_path,
+        data,
+        channels,
+        fs,
+        events,
+        FILETYPE_EDFPLUS,
+        overwrite,
+        annotation_channels,
+        pre_filter)
+
+
+def convert_to_bdf(data_dir: str,
+                   bdf_path: str = None,
+                   overwrite: bool = False,
+                   write_targetness: bool = False,
+                   use_event_durations: bool = False,
+                   remove_pre_fixation: bool = False,
+                   pre_filter: bool = False) -> Path:
+    """ Converts BciPy data to the BDF+ filetype using pyEDFlib.
+
+    See https://www.biosemi.com/faq/file_format.htm for more detailed information about the BDF specification.
+    See https://www.teuniz.net/edfbrowser/ for a free EDF/BDF viewer.
+
+    Parameters
+    ----------
+    data_dir - directory which contains the data to be converted. This location must contain:
+        1. a parameter file.
+        2. a raw_data.csv file.
+        3. a trigger.txt file.
+    bdf_path - optional; path to write converted data; defaults to writing a file named raw_data.edf in the data_dir.
+        Must end in .edf.
+    overwrite - If True, the destination file (if it exists) will be overwritten. If False (default), an error will
+        be raised if the file exists.
+    write_targetness - If True, and targetness information is available, write that instead of the stimuli markers.
+        False by default.
+    use_event_durations - optional; if True assigns a duration to each event.
+    remove_pre_fixation - optional; if True removes the non-inquiry based markers from the trigger data.
+    pre_filter - optional; if True, apply the default filter to the data using to loaded parameters file.
+
+    Returns
+    -------
+        Path to new bdf file
+    """
+    if not bdf_path:
+        bdf_path = str(Path(data_dir, f'{RAW_DATA_FILENAME}.bdf').resolve())
+    if not bdf_path.endswith('.bdf'):
+        raise ValueError(f'bdf_path=[{bdf_path}] must end in .bdf')
+
+    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
+        data_dir,
+        write_targetness=write_targetness,
+        use_event_durations=use_event_durations,
+        remove_pre_fixation=remove_pre_fixation,
+        pre_filter=pre_filter)
+
+    return write_pyedf(
+        bdf_path,
+        data,
+        channels,
+        fs,
+        events,
+        FILETYPE_BDFPLUS,
+        overwrite,
+        annotation_channels,
+        pre_filter)
+
+
+def pyedf_convert(data_dir: str,
+                  write_targetness: bool = False,
+                  use_event_durations: bool = False,
+                  remove_pre_fixation: bool = False,
+                  pre_filter: bool = False) -> Tuple[RawData, List[str], int, List[Tuple[str, int, int]], int]:
+    """ Converts BciPy data to formats that can be used by pyEDFlib.
+
+    Parameters
+    ----------
+
+    data_dir - directory which contains the data to be converted. This location must contain:
+        1. a parameter file.
+        2. a raw_data.csv file.
+        3. a trigger.txt file.
+    write_targetness - If True, and targetness information is available, write that instead of the stimuli markers.
+        False by default.
+    use_event_durations - optional; if True assigns a duration to each event.
+    remove_pre_fixation - optional; if True removes the non-inquiry based markers from the trigger data.
+    pre_filter - optional; if True, apply the default filter to the data using to loaded parameters file.
+
+    Returns
+    -------
+        data - raw data
+        channels - list of channel names
+        fs - sampling rate
+        events - list of events
+        annotation_channels - number of annotation channels
+        pre_filter - False if no filter was applied,
+            otherwise a string of the filter parameters used to filter the data
+    """
 
     params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
                                   value_cast=True)
     data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
-    raw_data, _ = data.by_channel()
+    fs = data.sample_rate
+    if pre_filter:
+        default_transform = get_default_transform(
+            sample_rate_hz=data.sample_rate,
+            notch_freq_hz=params.get("notch_filter_frequency"),
+            bandpass_low=params.get("filter_low"),
+            bandpass_high=params.get("filter_high"),
+            bandpass_order=params.get("filter_order"),
+            downsample_factor=params.get("down_sampling_rate"),
+        )
+        raw_data, fs = data.by_channel(transform=default_transform)
+        pre_filter = (f"HP:{params.get('filter_low')} LP:{params.get('filter_high')}"
+                      f"N:{params.get('notch_filter_frequency')} D:{params.get('down_sampling_rate')} "
+                      f"O:{params.get('filter_order')}")
+    else:
+        raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
+    static_offset = params['static_trigger_offset']
+    logger.info(f'Static offset: {static_offset}')
 
     trigger_type, trigger_timing, trigger_label = trigger_decoder(
-        str(Path(data_dir, TRIGGER_FILENAME)), remove_pre_fixation=False)
+        str(Path(data_dir, TRIGGER_FILENAME)),
+        remove_pre_fixation=remove_pre_fixation,
+        offset=static_offset)
 
-    # validate annotation parameters given data length and trigger count
-    validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))
+    # validate annotation parameters given data length and trigger count, up the annotation limit byt increasing
+    # annotation_channels if needed
+    annotation_channels = validate_annotations(len(raw_data[0]) / data.sample_rate, len(trigger_type))
 
     triggers = compile_triggers(
         trigger_label, trigger_type, trigger_timing, write_targetness)
 
-    events = edf_annotations(triggers, durations)
+    events = compile_annotations(triggers, durations)
 
-    return write_edf(edf_path, raw_data, data.channels, data.sample_rate, events, overwrite)
+    return raw_data, data.channels, fs, events, annotation_channels, pre_filter
 
 
-def validate_annotations(record_time: float, trigger_count: int) -> None:
+def validate_annotations(record_time: float, trigger_count: int) -> int:
     """Validate Annotations.
 
     Using the pyedflib library, it is recommended the number of triggers (or annotations) not exceed the recording
-        time in seconds. This may not result in an unsuccessful export.
+        time in seconds. This may result in an unsuccessful export. The best workaround is to increase the number of
+        annotation channels. This function will return the number of annotation channels needed to export the triggers
+        successfully. The maximum number of annotation channels is 64 and it is not advised to use more than required
+        due to fize size restrictions.
+
+    See https://github.com/holgern/pyedflib/issues/34 for more information.
     """
     if trigger_count > record_time:
         logger.warning(
-            f'\n*Warning* The number of triggers [{trigger_count}] exceeds recording time [{record_time}]. '
-            'Not all triggers may be written. '
-            'Validate export carefully.')
+            f'\n*Warning* The number of triggers [{trigger_count}] exceeds recording time [{record_time}]. ')
+        annotation_channels = round(trigger_count / record_time) + 1
+        logger.warning(f'\nIncreasing annotation channels to {annotation_channels} to compensate.')
+        return annotation_channels
+    return 1
 
 
 def compile_triggers(labels: List[str], targetness: List[str], timing: List[float],
@@ -108,14 +247,17 @@ def compile_triggers(labels: List[str], targetness: List[str], timing: List[floa
     return triggers
 
 
-def write_edf(output_path: str,
-              raw_data: np.array,
-              ch_names: List[str],
-              sample_rate: float,
-              events: List[Tuple[float, float, str]],
-              overwrite=False) -> Path:
+def write_pyedf(output_path: str,
+                raw_data: np.array,
+                ch_names: List[str],
+                sample_rate: float,
+                events: List[Tuple[float, float, str]],
+                file_type: str = FILETYPE_EDFPLUS,
+                overwrite: bool = False,
+                annotation_channels: int = 1,
+                pre_filter: Optional[str] = None) -> Path:
     """
-    Converts BciPy raw_data to the EDF+ filetype using pyEDFlib.
+    Converts BciPy raw_data to the EDF+ or BDF+ filetype using pyEDFlib.
 
     Adapted from: https://github.com/holgern/pyedflib
 
@@ -129,24 +271,21 @@ def write_edf(output_path: str,
     events - List[Tuple(onset_in_seconds: float, duration_in_seconds: float, description: str)]
     overwrite - If True, the destination file (if it exists) will be overwritten.
         If False (default), an error will be raised if the file exists.
+    annotation_channels - number of annotation channels to use
+    pre_filter - optional; if provided, add string of filters applied to channel data
 
     Returns
     -------
-        Path to new edf file
+        Path to new edf or bdf file
     """
     if not overwrite and os.path.exists(output_path):
-        raise OSError('EDF file already exists.')
+        raise OSError(f'{output_path} already exists.')
 
-    # set conversion parameters
-    digital_min, digital_max = [-32768, 32767]
     physical_min, physical_max = [raw_data.min(), raw_data.max()]
-
     n_channels = len(raw_data)
 
     try:
-        writer = EdfWriter(str(output_path),
-                           n_channels=n_channels,
-                           file_type=FILETYPE_EDFPLUS)
+        writer = EdfWriter(output_path, n_channels=n_channels, file_type=file_type)
 
         channel_info = []
         data_list = []
@@ -158,32 +297,33 @@ def write_edf(output_path: str,
                 'sample_frequency': sample_rate,
                 'physical_min': physical_min,
                 'physical_max': physical_max,
-                'digital_min': digital_min,
-                'digital_max': digital_max,
-                'transducer': '',
-                'prefilter': ''
             }
+
+            if pre_filter:
+                ch_dict['prefilter'] = pre_filter
 
             channel_info.append(ch_dict)
             data_list.append(raw_data[i])
 
+        if events:
+            writer.set_number_of_annotation_signals(annotation_channels)
+            for onset, duration, label in events:
+                writer.writeAnnotation(onset, duration, label)
+
         writer.setSignalHeaders(channel_info)
         writer.writeSamples(data_list)
 
-        if events:
-            for onset, duration, label in events:
-                writer.writeAnnotation(onset, duration, label)
     except Exception as error:
-        logging.getLogger(__name__).info(error)
-        return None
+        logger.info(error)
+        raise error
     finally:
         writer.close()
     return output_path
 
 
-def edf_annotations(triggers: List[Tuple[str, str, float]],
-                    durations: Dict[str, float] = {}
-                    ) -> List[Tuple[float, float, str]]:
+def compile_annotations(triggers: List[Tuple[str, str, float]],
+                        durations: Dict[str, float] = {}
+                        ) -> List[Tuple[float, float, str]]:
     """Convert bcipy triggers to the format expected by pyedflib for writing annotations.
 
     Parameters

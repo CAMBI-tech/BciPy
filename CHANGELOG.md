@@ -10,15 +10,16 @@
     - Logging improvements #244
 - Device configuratio moved to bcipy/parameters #242
 - New MNE based plotting for EEG data #220
+- New file export features for BciPy data, including .bdf format and prefiltering #246
 - New Supported Devices: Tobii-Nano #234
-- Bug fixes #218, #225, #228, #235, #240
+- Bug fixes #218, #225, #228, #235, #240, #246
 
 ### Added
 
 - `display/paradigm/vep`: added create_vep_codes for generating random flicker patterns, VEPBox to encapsulate each flickering box stimuli, and a working VEPDisplay for later task development. #237
 - `helpers/visualization.py`: added methods for visualized MNE Epochs and better visualizing EEG data in BciPy. #220 `visualize_joint_average` and `visualize_evokeds`.
 - `helpers/stimuli.py`: added a method for converting MNE RawArray to Epochs. #220 Added stimuli flash time jitter to calibration and inq_generation methods #233 Added ssvep_to_code method #232
-- `helpers/convert.py`: added a convert to mne method that returns an MNE RawArray. Assumes standard_1020 eeg montage by default.#220
+- `helpers/convert.py`: added a convert to mne method that returns an MNE RawArray. Assumes standard_1020 eeg montage by default.#220 Refactored the convert to edf method. Add convert to bdf method for better export resolution. Ensured the static offset output in the parameters file is accounted for. Add a pre-filter option. Fix annotations. #246
 - Better handling of the `fake_data` parameter to avoid erroneous recordings. Added a confirmation dialog when the `fake_data` parameter is set to `True` to alert users that they are in a system test mode. #219
 - `task/data.py`: session data contains more contextual data for interpreting the results, including the `symbol_set` and the `decision_threshold` used.
 - `parameters/parameters.json`: Added `summarize_session` parameter is used to output richer session summaries after a Copy Phrase task. Added the `signal_model_path` parameter. When set this can be used for loading the pre-trained signal model during typing sessions.
