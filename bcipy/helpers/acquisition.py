@@ -83,8 +83,23 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
 
 def max_inquiry_duration(parameters: dict) -> float:
     """Computes the maximum duration of an inquiry based on the configured
-    parameters. Modes which don't use all of the settings may have shorter
-    durations.
+    parameters. Paradigms which don't use all of the settings may have shorter
+    durations. This can be used to determine the size of the data buffer.
+
+    Parameters
+    ----------
+    - parameters : dict
+        configuration details regarding the task and other relevant information.
+         {
+            "time_fixation": float,
+            "time_prompt": float,
+            "prestim_length": float,
+            "stim_length": float,
+            "stim_jitter": float,
+            "task_buffer_length": float,
+            "time_flash": float,
+
+         }
 
     Returns
     -------
@@ -96,8 +111,9 @@ def max_inquiry_duration(parameters: dict) -> float:
     stim_count = parameters['stim_length']
     stim_duration = parameters['time_flash']
     interval_duration = parameters['task_buffer_length']
+    jitter = parameters['stim_jitter']
 
-    return prestimulus_duration + target_duration + fixation_duration + (
+    return prestimulus_duration + jitter + target_duration + fixation_duration + (
         stim_count * stim_duration) + interval_duration
 
 
