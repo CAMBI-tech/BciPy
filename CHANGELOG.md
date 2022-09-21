@@ -3,12 +3,12 @@
 ## Contributions
 
 - New Display Paradigm: VEP Display #237
-- New BciPy Session Features: 
+- New BciPy Session Features:
     - Write session summary after Copy Phrase task #222
     - Better Fake Data Handling #219
     - Alerting for conditions that may affect system performance #227, #219, #238
     - Logging improvements #244
-- Device configuratio moved to bcipy/parameters #242
+- Device configuration moved to bcipy/parameters #242
 - New MNE based plotting for EEG data #220
 - New Supported Devices: Tobii-Nano #234
 - Bug fixes #218, #225, #228, #235, #240
@@ -35,6 +35,7 @@
 ### Removed
 
 - `task/paradigm/rsvp/copy_phrase.py`: removed await_start to prevent two space hits for the task to start #225
+- TCP-based data acquisition modules were removed
 
 
 # 2.0.0-rc.1

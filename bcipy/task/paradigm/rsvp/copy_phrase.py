@@ -225,15 +225,15 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
             signal_model=self.signal_model,
-            fs=self.daq.device_info.fs,
+            fs=self.daq.device_spec.sample_rate,
             k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
             lmodel=self.language_model,
             is_txt_stim=self.parameters['is_txt_stim'],
-            device_name=self.daq.device_info.name,
-            device_channels=self.daq.device_info.channels,
+            device_name=self.daq.device_spec.name,
+            device_channels=self.daq.device_spec.channels,
             stim_timing=[
                 self.parameters['time_fixation'], self.parameters['time_flash']
             ],

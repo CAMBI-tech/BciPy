@@ -3,6 +3,7 @@ using pylsl."""
 import logging
 from queue import Empty, Queue
 from typing import Generator
+import time
 import uuid
 
 from pylsl import StreamInfo, StreamOutlet
@@ -143,6 +144,21 @@ def _settings(filename):
         sample_hz = int(datafile.readline().strip().split(',')[1])
         channels = datafile.readline().strip().split(',')
         return (daq_type, sample_hz, channels)
+
+
+def await_start(dataserver, max_wait=2):
+    """Blocks until server is started. Raises if max_wait is exceeded before
+    server is started."""
+
+    dataserver.start()
+    wait = 0
+    wait_interval = 0.01
+    while not dataserver.started:
+        time.sleep(wait_interval)
+        wait += wait_interval
+        if wait >= max_wait:
+            dataserver.stop()
+            raise Exception("Server couldn't start up in time.")
 
 
 def main():

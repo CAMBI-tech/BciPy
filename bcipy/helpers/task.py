@@ -157,7 +157,7 @@ def get_data_for_decision(inquiry_timing,
     Parameters
     ----------
     - inquiry_timing(list): list of tuples containing stimuli timing and labels. We assume the list progresses in
-    - daq (DataAcquisitionClient): bcipy data acquisition client with a get_data method and device_info with fs defined
+    - daq (DataAcquisitionClient): bcipy data acquisition client
     - offset (float): offset present in the system which should be accounted for when creating data for classification.
         This is determined experimentally.
     - prestim (float): length of data needed before the first sample to reshape and apply transformations
@@ -184,7 +184,7 @@ def get_data_for_decision(inquiry_timing,
                 for text, timing in inquiry_timing]
 
     # Define the amount of data required for any processing to occur.
-    data_limit = round((time2 - time1 + poststim) * daq.device_info.fs)
+    data_limit = round((time2 - time1 + poststim) * daq.device_spec.sample_rate)
     log.debug(f'Need {data_limit} records for processing')
 
     # Query for raw data
@@ -382,7 +382,7 @@ def pause_calibration(window, display, current_index: int, parameters: dict):
 
 def generate_targets(alp, stim_number):
     """Generate a list of targets for each trial, minimizing duplication."""
-    if (stim_number <= len(alp)):
+    if stim_number <= len(alp):
         return random.sample(alp, stim_number)
 
     # minimize duplicates

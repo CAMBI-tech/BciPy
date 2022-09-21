@@ -13,7 +13,7 @@ import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.parameters import Parameters
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
@@ -85,10 +85,12 @@ class TestCopyPhrase(unittest.TestCase):
 
         self.win = mock({'size': [500, 500], 'units': 'height'})
 
-        device_info = DeviceInfo(300, ['a', 'b', 'c'], 'Testing')
+        device_spec = DeviceSpec(name='Testing',
+                                 channels=['a', 'b', 'c'],
+                                 sample_rate=300.0)
         self.daq = mock(
             {
-                'device_info': device_info,
+                'device_spec': device_spec,
                 'is_calibrated': True,
                 'offset': lambda x: 0.0
             },

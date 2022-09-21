@@ -20,33 +20,6 @@
     ],
     "type": "str"
   },
-  "acq_connection_method": {
-    "value": "LSL",
-    "section": "acq_connection_method",
-    "readableName": "Acquisition Connection Method",
-    "helpTip": "Specifies the method used to connect to the data acquisition device (LSL or TCP). Default: LSL",
-    "recommended_values": [
-      "LSL",
-      "TCP"
-    ],
-    "type": "str"
-  },
-  "acq_host": {
-    "value": "127.0.0.1",
-    "section": "acq_config",
-    "readableName": "TCP Connection Host",
-    "helpTip": "Specifies the host for a TCP connection (used when Acquisition Connection Method is set to 'TCP'). Default: 127.0.0.1",
-    "recommended_values": "",
-    "type": "str"
-  },
-  "acq_port": {
-    "value": "9000",
-    "section": "acq_config",
-    "readableName": "TCP Connection Port",
-    "helpTip": "Specifies the port for a TCP connection (used when Acquisition Connection Method is set to ‘TCP’). Default: 9000",
-    "recommended_values": "",
-    "type": "int"
-  },
   "trigger_type": {
     "value": "text",
     "section": "bci_config",

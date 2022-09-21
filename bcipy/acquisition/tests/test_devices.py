@@ -6,7 +6,6 @@ import unittest
 from pathlib import Path
 
 from bcipy.acquisition import devices
-from bcipy.acquisition.connection_method import ConnectionMethod
 
 from bcipy.config import DEFAULT_ENCODING
 
@@ -132,7 +131,6 @@ class TestDeviceSpecs(unittest.TestCase):
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3'],
                                   sample_rate=256.0)
-        self.assertTrue(ConnectionMethod.LSL in spec.connection_methods)
         self.assertEqual(3, spec.channel_count)
         self.assertEqual('EEG', spec.content_type)
 

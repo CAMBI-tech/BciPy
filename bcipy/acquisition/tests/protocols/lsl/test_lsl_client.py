@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
                                        preconfigured_device)
@@ -38,13 +37,16 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_with_specified_device(self):
         """Test functionality with a provided device_spec"""
         client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        self.assertEqual(client.max_samples, DEVICE.sample_rate)
         client.start_acquisition()
         time.sleep(1)
         samples = client.get_latest_data()
         client.stop_acquisition()
         # Delta values are usually much closer locally (1.0) but can vary
         # widely in continuous integration.
-        self.assertAlmostEqual(int(DEVICE.sample_rate), len(samples), delta=5.0)
+        self.assertAlmostEqual(int(DEVICE.sample_rate),
+                               len(samples),
+                               delta=5.0)
 
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
@@ -60,22 +62,10 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             channels=DEVICE.channels,
                             sample_rate=DEVICE.sample_rate + 100,
                             content_type=DEVICE.content_type,
-                            data_type=DEVICE.data_type,
-                            connection_methods=DEVICE.connection_methods)
+                            data_type=DEVICE.data_type)
         client = LslAcquisitionClient(max_buflen=1, device_spec=device)
         with self.assertRaises(Exception):
             client.start_acquisition()
-
-    def test_specified_device_wrong_connection_type(self):
-        """Should only allow devices that can connect to LSL"""
-        device = DeviceSpec(name=DEVICE.name,
-                            channels=DEVICE.channels,
-                            sample_rate=DEVICE.sample_rate,
-                            content_type=DEVICE.content_type,
-                            data_type=DEVICE.data_type,
-                            connection_methods=[ConnectionMethod.TCP])
-        with self.assertRaises(Exception):
-            LslAcquisitionClient(max_buflen=1, device_spec=device)
 
     def test_specified_device_for_markers(self):
         """Should allow a device_spec for a Marker stream."""
@@ -85,7 +75,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             content_type='Markers',
                             data_type='string')
 
-        LslAcquisitionClient(max_buflen=1, device_spec=device)
+        client = LslAcquisitionClient(max_buflen=1024, device_spec=device)
+        self.assertEqual(1024, client.max_samples)
 
     def test_with_unspecified_device(self):
         """Test with unspecified device."""
