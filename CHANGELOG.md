@@ -35,7 +35,7 @@
 ### Removed
 
 - `task/paradigm/rsvp/copy_phrase.py`: removed await_start to prevent two space hits for the task to start #225
-- TCP-based data acquisition modules were removed
+- TCP-based data acquisition modules were removed #249
 
 
 # 2.0.0-rc.1
