@@ -4,9 +4,7 @@ from typing import List
 
 from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream
 
-from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.acquisition.device_info import DeviceInfo
-from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec
+from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec, IRREGULAR_RATE
 from bcipy.acquisition.exceptions import InvalidClockError
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
@@ -26,9 +24,11 @@ class LslAcquisitionClient:
 
     Parameters
     ----------
-        max_buflen: the maximum length, in seconds, of data to be queried.
-            For the RSVP paradigm, this should be calculated based on the total
-            inquiry length.
+        max_buflen: the maximum length of data to be queried. For continuously
+            streaming data this is the number of seconds of data to retain. For
+            irregular data, specify the number of samples. When using the RSVP
+            paradigm, the max_buflen should be large enough to store data for
+            the entire inquiry.
         device_spec: spec for the device from which to query data; if missing,
             this class will attempt to find the first EEG stream.
         save_directory: if present, persists the data to the given location.
@@ -36,14 +36,11 @@ class LslAcquisitionClient:
     """
 
     def __init__(self,
-                 max_buflen: int = 1,
+                 max_buflen: float = 1,
                  device_spec: DeviceSpec = None,
                  save_directory: str = None,
                  raw_data_file_name: str = None):
         super().__init__()
-        if device_spec:
-            ok_device = ConnectionMethod.LSL in device_spec.connection_methods
-            assert ok_device, "Only LSL devices allowed."
         self.device_spec = device_spec
         self.max_buflen = max_buflen
 
@@ -89,7 +86,8 @@ class LslAcquisitionClient:
                                                self.device_spec)
             self.recorder.start()
 
-        self.buffer = RingBuffer(size_max=self.max_samples)
+        if self.max_buflen and self.max_buflen > 0:
+            self.buffer = RingBuffer(size_max=self.max_samples)
         _, self._first_sample_time = self.inlet.pull_sample()
         return True
 
@@ -167,6 +165,8 @@ class LslAcquisitionClient:
     @property
     def max_samples(self) -> int:
         """Maximum number of samples available at any given time."""
+        if self.device_spec.sample_rate == IRREGULAR_RATE:
+            return int(self.max_buflen)
         return int(self.max_buflen * self.device_spec.sample_rate)
 
     def get_latest_data(self) -> List[Record]:
@@ -174,7 +174,8 @@ class LslAcquisitionClient:
 
         The number of items returned depends on the size of the configured
         max_buflen and the amount of data available in the inlet."""
-
+        if not self.buffer:
+            return []
         samples, timestamps = self.inlet.pull_chunk(
             max_samples=self.max_samples)
 
@@ -212,12 +213,6 @@ class LslAcquisitionClient:
         start_index = 0 if len(
             records) > sample_count else len(records) - sample_count
         return records[start_index:]
-
-    @property
-    def device_info(self):
-        """Get the latest device_info."""
-        return DeviceInfo(self.device_spec.sample_rate,
-                          self.device_spec.channels, self.device_spec.name)
 
     @property
     def is_calibrated(self):

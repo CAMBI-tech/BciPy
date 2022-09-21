@@ -32,7 +32,6 @@ class TestAcquisition(unittest.TestCase):
     def test_default_values(self):
         """Test default values."""
         self.parameters['acq_device'] = 'DSI'
-        self.parameters['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(self.parameters,
                                               self.save,
@@ -44,16 +43,15 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertEqual(client.device_info.name,
+        self.assertEqual(client.device_spec.name,
                          self.parameters['acq_device'])
-        self.assertEqual(client.device_info.fs, 300)
+        self.assertEqual(client.device_spec.sample_rate, 300)
 
     def test_lsl_client(self):
         """Test init_eeg_acquisition with LSL client."""
 
         params = self.parameters
         params['acq_device'] = 'DSI-24'
-        params['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 
@@ -62,8 +60,8 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertEqual(client.device_info.name, 'DSI-24')
-        self.assertEqual(client.device_info.fs, 300)
+        self.assertEqual(client.device_spec.name, 'DSI-24')
+        self.assertEqual(client.device_spec.sample_rate, 300)
 
     def test_max_inquiry_duration(self):
         """Test the max inquiry duration function"""

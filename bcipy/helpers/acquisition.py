@@ -2,16 +2,11 @@
 import logging
 import subprocess
 import time
-from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
-import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import DataAcquisitionClient
-from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.tcp_server import await_start
+from bcipy.acquisition.datastream.lsl_server import await_start, LslDataServer
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.helpers.save import save_device_spec
@@ -35,10 +30,7 @@ def init_eeg_acquisition(parameters: dict,
             configuration details regarding the device type and other relevant
             connection information.
              {
-               "acq_device": str,
-               "acq_connection_method": str,
-               "acq_host": str,
-               "acq_port": int,
+               "acq_device": str
              }
         save_folder : str
             path to the folder where data should be saved.
@@ -55,7 +47,9 @@ def init_eeg_acquisition(parameters: dict,
 
     dataserver = False
     if server:
-        log.info(f"fake data is on. Generating mock device data for {device_spec.name}")
+        log.info(
+            f"fake data is on. Generating mock device data for {device_spec.name}"
+        )
         dataserver = LslDataServer(device_spec=device_spec)
         await_start(dataserver)
     else:
@@ -73,21 +67,6 @@ def init_eeg_acquisition(parameters: dict,
         save_device_spec(device_spec, save_folder, spec_name)
 
     return (client, dataserver)
-
-
-def init_client(parameters: dict, device_spec: DeviceSpec,
-                save_folder: str) -> DataAcquisitionClient:
-    """Initialize the original client."""
-
-    connector = registry.make_connector(device_spec, ConnectionMethod.LSL, {})
-
-    return DataAcquisitionClient(
-        connector=connector,
-        buffer_name=str(
-            Path(save_folder, f'{RAW_DATA_FILENAME}.db')),
-        delete_archive=False,
-        raw_data_file_name=Path(
-            save_folder, f'{RAW_DATA_FILENAME}.csv'))
 
 
 def init_lsl_client(parameters: dict, device_spec: DeviceSpec,

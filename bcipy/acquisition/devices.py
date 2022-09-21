@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict, List, NamedTuple, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
-from bcipy.acquisition.connection_method import ConnectionMethod
 from bcipy.helpers.system_utils import auto_str
 
 IRREGULAR_RATE = 0.0
@@ -59,7 +58,6 @@ class DeviceSpec:
         sample_rate - sample frequency in Hz.
         content_type - type of device; likely one of ['EEG', 'MoCap', 'Gaze',
             'Audio', 'Markers']; see https://github.com/sccn/xdf/wiki/Meta-Data.
-        connection_methods - list of methods for connecting to the device
         description - device description
             ex. 'Wearable Sensing DSI-24 dry electrode EEG headset'
         data_type - data format of a channel; all channels must have the same type;
@@ -72,7 +70,6 @@ class DeviceSpec:
                  channels: Union[List[str], List[ChannelSpec], List[dict]],
                  sample_rate: float,
                  content_type: str = DEFAULT_DEVICE_TYPE,
-                 connection_methods: List[ConnectionMethod] = None,
                  description: str = None,
                  excluded_from_analysis: List[str] = None,
                  data_type='float32'):
@@ -84,7 +81,6 @@ class DeviceSpec:
         self.channel_specs = [channel_spec(ch) for ch in channels]
         self.sample_rate = sample_rate
         self.content_type = content_type
-        self.connection_methods = connection_methods or [ConnectionMethod.LSL]
         self.description = description or name
         self.data_type = data_type
         self.excluded_from_analysis = excluded_from_analysis or []
@@ -140,12 +136,9 @@ class DeviceSpec:
 def make_device_spec(config: dict) -> DeviceSpec:
     """Constructs a DeviceSpec from a dict. Throws a KeyError if any fields
     are missing."""
-    connection_methods = list(
-        map(ConnectionMethod.by_name, config.get('connection_methods', [])))
     return DeviceSpec(name=config['name'],
                       content_type=config['content_type'],
                       channels=config['channels'],
-                      connection_methods=connection_methods,
                       sample_rate=config['sample_rate'],
                       description=config['description'],
                       excluded_from_analysis=config.get(
