@@ -40,7 +40,6 @@ class TestDeviceSpecs(unittest.TestCase):
                  content_type="EEG",
                  channels=channels,
                  sample_rate=300.0,
-                 connection_methods=["TCP", "LSL"],
                  description="Wearable Sensing DSI-VR300")
         ]
         config_path = Path(temp_dir, 'my_devices.json')
@@ -83,7 +82,6 @@ class TestDeviceSpecs(unittest.TestCase):
                      "label": "F7"
                  }],
                  sample_rate=300.0,
-                 connection_methods=["TCP", "LSL"],
                  description="My custom device")
         ]
         config_path = Path(temp_dir, 'my_devices.json')
@@ -107,7 +105,6 @@ class TestDeviceSpecs(unittest.TestCase):
             content_type="EEG",
             channels=["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG"],
             sample_rate=300.0,
-            connection_methods=["TCP", "LSL"],
             description="Custom built device")
         supported = devices.preconfigured_devices()
         device_count = len(supported.keys())

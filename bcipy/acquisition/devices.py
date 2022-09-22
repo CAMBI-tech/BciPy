@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict, List, NamedTuple, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
-from bcipy.helpers.system_utils import auto_str
 
 IRREGULAR_RATE = 0.0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH
@@ -27,6 +26,12 @@ class ChannelSpec(NamedTuple):
     type: str = None
     units: str = None
 
+    def __repr__(self):
+        fields = ['name', 'label', 'type', 'units']
+        items = [(field, self.__getattribute__(field)) for field in fields]
+        props = [f"{key}='{val}'" for key, val in items if val]
+        return f"ChannelSpec({', '.join(props)})"
+
 
 def channel_spec(channel: Union[str, dict, ChannelSpec]) -> ChannelSpec:
     """Creates a ChannelSpec from the given channel.
@@ -45,7 +50,6 @@ def channel_spec(channel: Union[str, dict, ChannelSpec]) -> ChannelSpec:
     raise Exception("Unexpected channel type")
 
 
-@auto_str
 class DeviceSpec:
     """Specification for a hardware device used in data acquisition.
 
@@ -123,6 +127,19 @@ class DeviceSpec:
             'description': self.description,
             'excluded_from_analysis': self.excluded_from_analysis
         }
+
+    def __str__(self):
+        """Custom str representation."""
+        names = [
+            'name', 'content_type', 'channels', 'sample_rate', 'description'
+        ]
+
+        def quoted_value(name):
+            value = self.__getattribute__(name)
+            return f"'{value}'" if isinstance(value, str) else value
+
+        props = [f"{name}={quoted_value(name)}" for name in names]
+        return f"DeviceSpec({', '.join(props)})"
 
     def _validate_excluded_channels(self):
         """Warn if excluded channels are not in the list of channels"""
