@@ -146,9 +146,16 @@ def _settings(filename):
         return (daq_type, sample_hz, channels)
 
 
-def await_start(dataserver, max_wait=2):
+def await_start(dataserver: LslDataServer, max_wait: float = 2):
     """Blocks until server is started. Raises if max_wait is exceeded before
-    server is started."""
+    server is started.
+
+    Parameters
+    ----------
+        dataserver - instantiated (unstarted) server on which to wait.
+        max_wait - the max number of seconds to wait. After this period if the
+            server has not succesfully started an exception is thrown.
+    """
 
     dataserver.start()
     wait = 0
