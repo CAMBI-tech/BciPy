@@ -22,7 +22,7 @@ Within BciPy users must specify the details of the device they wish to use by pr
 The `lsl_client` module provides the primary interface for interacting with device data and may be used to dynamically query streaming data in real-time. An instance of the `LslClient` class is parameterized with the `DeviceSpec` of interest, as well as the number of seconds of data that should be available for querying. If the `save_directory` and `filename` parameters are provided it also records the data to disk for later offline analysis. If no device is specified the client will attempt to connect to an EEG stream by default. A separate `LslClient` should be constructed for each device of interest.
 
     from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-    eeg_client = LslAcquisitionClient(max_buflen=1, device_spec=my_device)
+    eeg_client = LslAcquisitionClient(max_buffer_len=1, device_spec=my_device)
     eeg_client.start_acquisition()
 
 ### Data queries

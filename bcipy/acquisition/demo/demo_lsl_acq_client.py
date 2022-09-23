@@ -14,7 +14,7 @@ def main():
     # Start the server with the command:
     # python bcipy/acquisition/datastream/lsl_server.py --name LSL
 
-    client = LslAcquisitionClient(max_buflen=1, save_directory='.')
+    client = LslAcquisitionClient(max_buffer_len=1, save_directory='.')
 
     try:
         seconds = 3
