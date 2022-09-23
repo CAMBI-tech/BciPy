@@ -24,10 +24,10 @@ class LslAcquisitionClient:
 
     Parameters
     ----------
-        max_buflen: the maximum length of data to be queried. For continuously
+        max_buffer_len: the maximum length of data to be queried. For continuously
             streaming data this is the number of seconds of data to retain. For
             irregular data, specify the number of samples. When using the RSVP
-            paradigm, the max_buflen should be large enough to store data for
+            paradigm, the max_buffer_len should be large enough to store data for
             the entire inquiry.
         device_spec: spec for the device from which to query data; if missing,
             this class will attempt to find the first EEG stream.
@@ -36,13 +36,13 @@ class LslAcquisitionClient:
     """
 
     def __init__(self,
-                 max_buflen: float = 1,
+                 max_buffer_len: float = 1,
                  device_spec: DeviceSpec = None,
                  save_directory: str = None,
                  raw_data_file_name: str = None):
         super().__init__()
         self.device_spec = device_spec
-        self.max_buflen = max_buflen
+        self.max_buffer_len = max_buffer_len
 
         self.experiment_clock = None
 
@@ -72,7 +72,7 @@ class LslAcquisitionClient:
                 f'LSL Stream not found for content type {content_type}')
         stream_info = streams[0]
 
-        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buflen)
+        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buffer_len)
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -86,7 +86,7 @@ class LslAcquisitionClient:
                                                self.device_spec)
             self.recorder.start()
 
-        if self.max_buflen and self.max_buflen > 0:
+        if self.max_buffer_len and self.max_buffer_len > 0:
             self.buffer = RingBuffer(size_max=self.max_samples)
         _, self._first_sample_time = self.inlet.pull_sample()
         return True
@@ -140,7 +140,7 @@ class LslAcquisitionClient:
 
         # Only data in the current buffer is available to query;
         # requests for data outside of this will fail. Buffer size is
-        # set using the max_buflen parameter.
+        # set using the max_buffer_len parameter.
         data = self.get_latest_data()
 
         if not data:
@@ -166,14 +166,14 @@ class LslAcquisitionClient:
     def max_samples(self) -> int:
         """Maximum number of samples available at any given time."""
         if self.device_spec.sample_rate == IRREGULAR_RATE:
-            return int(self.max_buflen)
-        return int(self.max_buflen * self.device_spec.sample_rate)
+            return int(self.max_buffer_len)
+        return int(self.max_buffer_len * self.device_spec.sample_rate)
 
     def get_latest_data(self) -> List[Record]:
         """Add all available samples in the inlet to the buffer.
 
         The number of items returned depends on the size of the configured
-        max_buflen and the amount of data available in the inlet."""
+        max_buffer_len and the amount of data available in the inlet."""
         if not self.buffer:
             return []
         samples, timestamps = self.inlet.pull_chunk(
@@ -205,7 +205,7 @@ class LslAcquisitionClient:
 
     def get_data_seconds(self, seconds: int) -> List[Record]:
         """Returns the last n second of data"""
-        assert seconds <= self.max_buflen, f"Seconds can't exceed {self.max_buflen}"
+        assert seconds <= self.max_buffer_len, f"Seconds can't exceed {self.max_buffer_len}"
 
         sample_count = seconds * self.device_spec.sample_rate
         records = self.get_latest_data()

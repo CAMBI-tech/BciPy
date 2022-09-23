@@ -15,7 +15,7 @@ def main():
     device_spec = eye_tracker_device()
 
     raw_data_name = 'demo_eye_tracking_raw_data.csv'
-    client = LslAcquisitionClient(max_buflen=1,
+    client = LslAcquisitionClient(max_buffer_len=1,
                                   device_spec=device_spec,
                                   save_directory='.',
                                   raw_data_file_name=raw_data_name)

@@ -31,7 +31,7 @@ def main(debug: bool = False):
 
     eeg_client = LslAcquisitionClient(device_spec=eeg_device,
                                       save_directory='.')
-    switch_client = LslAcquisitionClient(max_buflen=1024,
+    switch_client = LslAcquisitionClient(max_buffer_len=1024,
                                          device_spec=switch_device(),
                                          save_directory='.')
     await_start(eeg_server)

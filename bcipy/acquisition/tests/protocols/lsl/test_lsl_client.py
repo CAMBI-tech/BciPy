@@ -36,7 +36,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_with_specified_device(self):
         """Test functionality with a provided device_spec"""
-        client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         self.assertEqual(client.max_samples, DEVICE.sample_rate)
         client.start_acquisition()
         time.sleep(1)
@@ -50,7 +50,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
-        client = LslAcquisitionClient(max_buflen=1,
+        client = LslAcquisitionClient(max_buffer_len=1,
                                       device_spec=preconfigured_device('LSL'))
 
         with self.assertRaises(Exception):
@@ -63,7 +63,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             sample_rate=DEVICE.sample_rate + 100,
                             content_type=DEVICE.content_type,
                             data_type=DEVICE.data_type)
-        client = LslAcquisitionClient(max_buflen=1, device_spec=device)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=device)
         with self.assertRaises(Exception):
             client.start_acquisition()
 
@@ -75,12 +75,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             content_type='Markers',
                             data_type='string')
 
-        client = LslAcquisitionClient(max_buflen=1024, device_spec=device)
+        client = LslAcquisitionClient(max_buffer_len=1024, device_spec=device)
         self.assertEqual(1024, client.max_samples)
 
     def test_with_unspecified_device(self):
         """Test with unspecified device."""
-        client = LslAcquisitionClient(max_buflen=1)
+        client = LslAcquisitionClient(max_buffer_len=1)
         client.start_acquisition()
 
         self.assertEqual(DEVICE.name, client.device_spec.name)
@@ -93,7 +93,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
-        client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         client.start_acquisition()
 
         experiment_clock = Clock(start_at_zero=True)
@@ -119,7 +119,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_event_offset(self):
         """Test the offset in seconds of a given event relative to the first
         sample time."""
-        client = LslAcquisitionClient(max_buflen=1, device_spec=DEVICE)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         experiment_clock = Clock(start_at_zero=True)
 
         client.start_acquisition()
@@ -144,7 +144,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         self.assertFalse(path.exists())
 
-        client = LslAcquisitionClient(max_buflen=1, save_directory=temp_dir)
+        client = LslAcquisitionClient(max_buffer_len=1, save_directory=temp_dir)
         client.start_acquisition()
         time.sleep(0.1)
         client.stop_acquisition()

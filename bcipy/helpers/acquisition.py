@@ -75,7 +75,7 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
 
-    return LslAcquisitionClient(max_buflen=data_buffer_seconds,
+    return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
                                 raw_data_file_name=f'{RAW_DATA_FILENAME}.csv')
