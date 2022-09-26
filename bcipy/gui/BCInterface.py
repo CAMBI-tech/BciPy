@@ -3,7 +3,7 @@ import sys
 
 from typing import List
 
-from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH, STATIC_IMAGES_PATH
+from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_IMAGES_PATH
 from bcipy.gui.main import (
     AlertMessageResponse,
     AlertMessageType,
@@ -15,7 +15,6 @@ from bcipy.gui.main import (
     invalid_length,
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
-from bcipy.helpers.stimuli import play_sound
 from bcipy.task import TaskType
 
 
@@ -402,10 +401,9 @@ class BCInterface(BCIGui):
                 f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
-            subprocess.Popen(cmd, shell=True)
-
             if self.alert:
-                play_sound(f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")
+                cmd += ' -a'
+            subprocess.Popen(cmd, shell=True)
 
             if self.autoclose:
                 self.close()
