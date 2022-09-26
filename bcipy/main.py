@@ -2,14 +2,20 @@ import argparse
 import logging
 import multiprocessing
 
+from typing import Optional
+
+from psychopy import visual
+
+from bcipy.acquisition import LslAcquisitionClient, LslDataServer
 from bcipy.display import init_display_window
-from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID
+from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
                                 load_signal_model)
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.session import collect_experiment_field_data
+from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
@@ -20,7 +26,12 @@ from bcipy.task.start_task import start_task
 log = logging.getLogger(__name__)
 
 
-def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str = DEFAULT_EXPERIMENT_ID) -> bool:
+def bci_main(
+        parameter_location: str,
+        user: str,
+        task: TaskType,
+        experiment: str = DEFAULT_EXPERIMENT_ID,
+        alert: bool = False) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -38,8 +49,7 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
         user (str): name of the user
         task (TaskType): registered bcipy TaskType
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
-
-
+        alert (bool): whether to alert the user when the task is complete
     """
     validate_experiment(experiment)
     # Load parameters
@@ -78,10 +88,14 @@ def bci_main(parameter_location: str, user: str, task: TaskType, experiment: str
     # Collect experiment field data
     collect_experiment_field_data(experiment, save_folder)
 
-    return execute_task(task, parameters, save_folder)
+    return execute_task(task, parameters, save_folder, alert)
 
 
-def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
+def execute_task(
+        task: TaskType,
+        parameters: dict,
+        save_folder: str,
+        alert: bool) -> bool:
     """Execute Task.
 
     Executes the desired task by setting up the display window and
@@ -89,9 +103,10 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
         which will initialize experiment.
 
     Input:
-        task(str): registered bcipy TaskType
+        (str): registered bcipy TaskType
         parameters (dict): parameter dictionary
         save_folder (str): path to save folder
+        alert (bool): whether to alert the user when the task is complete
     """
     signal_model = None
     language_model = None
@@ -122,7 +137,7 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     # We have to wait until after the prompt to load the signal model before
     # displaying the window, otherwise in fullscreen mode this throws an error
     display = init_display_window(parameters)
-    print_message(display, 'Initializing...')
+    print_message(display, f'Initializing {task}...')
 
     # Start Task
     try:
@@ -134,29 +149,43 @@ def execute_task(task: TaskType, parameters: dict, save_folder: str) -> bool:
     # If exception, close all display and acquisition objects
     except Exception as e:
         log.exception(str(e))
-        _clean_up_session(display, daq, server)
-        raise e
+
+    if alert:
+        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
 
     return _clean_up_session(display, daq, server)
 
 
-def _clean_up_session(display, daq, server):
-    """Clean up session."""
+def _clean_up_session(
+        display: visual.Window,
+        daq: LslAcquisitionClient,
+        server: Optional[LslDataServer] = None) -> bool:
+    """Clean up session.
 
-    # Stop Acquisition
-    daq.stop_acquisition()
-    daq.cleanup()
+    Closes the display window and data acquisition objects. Returns True if the session was closed successfully.
 
-    if server:
-        server.stop()
+    Input:
+        display (visual.Window): display window
+        daq (LslAcquisitionClient): data acquisition client
+        server (LslDataServer): data server
+    """
+    try:
+        # Stop Acquisition
+        daq.stop_acquisition()
+        daq.cleanup()
 
-    # Close the display window
-    # NOTE: There is currently a bug in psychopy when attempting to shutdown
-    # windows when using a USB-C monitor. Putting the display close last in
-    # the inquiry allows acquisition to properly shutdown.
-    display.close()
+        if server:
+            server.stop()
 
-    return True
+        # Close the display window
+        # NOTE: There is currently a bug in psychopy when attempting to shutdown
+        # windows when using a USB-C monitor. Putting the display close last in
+        # the inquiry allows acquisition to properly shutdown.
+        display.close()
+        return True
+    except Exception as e:
+        log.exception(str(e))
+        return False
 
 
 def bcipy_main() -> None:
@@ -183,10 +212,16 @@ def bcipy_main() -> None:
         '--experiment',
         default=DEFAULT_EXPERIMENT_ID,
         help=f'Select a valid experiment to run the task for this user. Available options: {experiment_options}')
+    parser.add_argument(
+        '-a',
+        '--alert',
+        default=False,
+        action='store_true',
+        help='Alert the user when the task is complete.')
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)), str(args.experiment))
+    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)), str(args.experiment), args.alert)
 
 
 if __name__ == '__main__':

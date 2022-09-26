@@ -6,9 +6,8 @@ from typing import Dict, List
 
 import numpy as np
 
-from bcipy.acquisition.datastream.lsl_server import await_start, LslDataServer
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient, await_start, LslDataServer
 from bcipy.helpers.save import save_device_spec
 from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
@@ -83,8 +82,23 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
 
 def max_inquiry_duration(parameters: dict) -> float:
     """Computes the maximum duration of an inquiry based on the configured
-    parameters. Modes which don't use all of the settings may have shorter
-    durations.
+    parameters. Paradigms which don't use all of the settings may have shorter
+    durations. This can be used to determine the size of the data buffer.
+
+    Parameters
+    ----------
+    - parameters : dict
+        configuration details regarding the task and other relevant information.
+         {
+            "time_fixation": float,
+            "time_prompt": float,
+            "prestim_length": float,
+            "stim_length": float,
+            "stim_jitter": float,
+            "task_buffer_length": float,
+            "time_flash": float,
+
+         }
 
     Returns
     -------
@@ -96,8 +110,9 @@ def max_inquiry_duration(parameters: dict) -> float:
     stim_count = parameters['stim_length']
     stim_duration = parameters['time_flash']
     interval_duration = parameters['task_buffer_length']
+    jitter = parameters['stim_jitter']
 
-    return prestimulus_duration + target_duration + fixation_duration + (
+    return prestimulus_duration + jitter + target_duration + fixation_duration + (
         stim_count * stim_duration) + interval_duration
 
 

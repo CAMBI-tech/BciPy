@@ -635,7 +635,6 @@ def play_sound(sound_file_path: str,
     :param: track_timing: whether or not to track timing of sound playin
     :param: sound_callback: trigger based callback (see MarkerWriter and NullMarkerWriter)
     :param: sound_load_buffer_time: time to wait after loading file before playing
-    :param: sound_post_buffer_time: time to wait after playing sound before returning
     :param: experiment_clock: psychopy clock to get time of sound stimuli
     :param: trigger_name: name of the sound trigger
     :param: timing: list of triggers in the form of trigger name, trigger timing

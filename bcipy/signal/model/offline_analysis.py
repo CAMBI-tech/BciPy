@@ -192,7 +192,7 @@ def offline_analysis(
         show=show_figures
     )
     if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")
+        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
     return model, figure_handles
 
 

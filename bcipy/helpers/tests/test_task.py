@@ -7,7 +7,7 @@ from mockito import unstub, mock, when, verify, verifyStubbedInvocationsAreUsed
 import numpy as np
 import psychopy
 
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.task.exceptions import InsufficientDataException
 

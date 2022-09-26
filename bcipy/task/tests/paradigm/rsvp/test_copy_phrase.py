@@ -12,7 +12,7 @@ from bcipy.config import DEFAULT_ENCODING
 import bcipy.display.paradigm.rsvp.mode.copy_phrase
 from bcipy.helpers.triggers import TriggerHandler
 from bcipy.helpers.exceptions import TaskConfigurationException
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.parameters import Parameters

@@ -1,8 +1,7 @@
 """Sample script to demonstrate usage of the LSL DataAcquisitionClient."""
 import time
 
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
-from bcipy.acquisition.datastream.lsl_server import await_start
+from bcipy.acquisition import LslAcquisitionClient, await_start
 from bcipy.acquisition.datastream.mock.eye_tracker_server import (eye_tracker_device,
                                                                   eye_tracker_server)
 
