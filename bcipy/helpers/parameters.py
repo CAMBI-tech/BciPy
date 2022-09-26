@@ -7,9 +7,6 @@ from typing import Any, Dict, NamedTuple, Tuple
 
 from bcipy.config import DEFAULT_ENCODING
 
-Parameter = namedtuple('Parameter', [
-    'value', 'section', 'readableName', 'helpTip', 'recommended_values', 'type'
-])
 
 class Parameter(NamedTuple):
     """Represents a single parameter"""
