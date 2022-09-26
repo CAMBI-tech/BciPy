@@ -6,8 +6,7 @@ from typing import Optional
 
 from psychopy import visual
 
-from bcipy.acquisition.client import DataAcquisitionClient
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
+from bcipy.acquisition import LslAcquisitionClient, LslDataServer
 from bcipy.display import init_display_window
 from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition
@@ -159,7 +158,7 @@ def execute_task(
 
 def _clean_up_session(
         display: visual.Window,
-        daq: DataAcquisitionClient,
+        daq: LslAcquisitionClient,
         server: Optional[LslDataServer] = None) -> bool:
     """Clean up session.
 
@@ -167,7 +166,7 @@ def _clean_up_session(
 
     Input:
         display (visual.Window): display window
-        daq (DataAcquisitionClient): data acquisition client
+        daq (LslAcquisitionClient): data acquisition client
         server (LslDataServer): data server
     """
     try:

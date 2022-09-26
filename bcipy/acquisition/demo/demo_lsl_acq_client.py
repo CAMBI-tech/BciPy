@@ -2,7 +2,7 @@
 
 import time
 
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient
 
 
 def main():

@@ -6,9 +6,8 @@ from typing import Dict, List
 
 import numpy as np
 
-from bcipy.acquisition.datastream.lsl_server import await_start, LslDataServer
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient, await_start, LslDataServer
 from bcipy.helpers.save import save_device_spec
 from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
