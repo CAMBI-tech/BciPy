@@ -93,8 +93,8 @@ class MatrixDisplay(Display):
         self.stim_registry = {}
 
         self.start_opacity = 0.15
-        self.highlight_opacity = 1
-        self.full_grid_opacity = 1
+        self.highlight_opacity = 0.95
+        self.full_grid_opacity = 0.95
 
         # Trigger handling
         self.first_run = True
@@ -162,7 +162,7 @@ class MatrixDisplay(Display):
                 pos=pos,
                 height=self.grid_stimuli_height)
             self.stim_registry[sym] = text_stim
-            text_stim.draw()
+            self.stim_registry[sym].draw()
 
             pos = self.increment_position(pos)
 
@@ -243,7 +243,7 @@ class MatrixDisplay(Display):
             self.draw_static()
 
             # highlight a stimuli
-            self.stim_registry[sym].opacity = self.highlight_opacity
+            self.stim_registry[sym].setOpacity(self.highlight_opacity)
             self.stim_registry[sym].draw()
             # present stimuli and wait for self.stimuli_timing
 
@@ -251,7 +251,7 @@ class MatrixDisplay(Display):
             core.wait(self.stimuli_timing[i])
 
             # reset the highlighted symbol and continue
-            self.stim_registry[sym].opacity = self.start_opacity
+            self.stim_registry[sym].setOpacity(self.start_opacity)
             self.stim_registry[sym].draw()
 
             # append timing information
