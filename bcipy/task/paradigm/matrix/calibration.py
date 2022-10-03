@@ -18,8 +18,8 @@ class MatrixCalibrationTask(Task):
     """Matrix Calibration Task.
 
     Calibration task performs an Matrix stimulus inquiry
-        to elicit an ERP. Parameters change the number of stimuli 
-        (i.e. the subset of matrix) and for how long they will highlight. 
+        to elicit an ERP. Parameters change the number of stimuli
+        (i.e. the subset of matrix) and for how long they will highlight.
         Parameters also change color and text / image inputs.
 
     A task begins setting up variables --> initializing eeg -->

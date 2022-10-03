@@ -32,7 +32,7 @@ class MatrixDisplay(Display):
             full_screen: bool = False,
             symbol_set: Optional[List[str]] = None):
         """Initialize Matrix display parameters and objects.
-        
+
         PARAMETERS:
         ----------
         # Experiment
