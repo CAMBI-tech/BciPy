@@ -13,6 +13,7 @@
 - New file export features for BciPy data, including .bdf format and prefiltering #246
 - New Supported Devices: Tobii-Nano #234
 - Bug fixes #218, #225, #228, #235, #240, #246
+- Documentation for Matrix Speller and AUC calculation #253
 
 ### Added
 

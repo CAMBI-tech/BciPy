@@ -16,33 +16,6 @@ class MatrixDisplay(Display):
     """Matrix Display Object for Inquiry Presentation.
 
     Animates display objects in matrix grid common to any Matrix task.
-
-
-    PARAMETERS:
-    ----------
-    # Experiment
-    window(visual.Window): PsychoPy Window
-    static_clock(core.Clock): Used to schedule static periods of display time
-    experiment_clock(core.Clock): Clock used to timestamp display onsets
-
-    # Stimuli
-    stimuli(StimuliProperties): attributes used for inquiries
-
-    # Task
-    task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
-
-    # Info
-    info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
-
-    marker_writer(MarkerWriter) Optional: object used to write triggers to
-        a acquisition stream.
-    trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
-        task. This will be used to reconcile timing differences between acquisition and the display.
-    space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
-    full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
-        scaling display items as needed.
-    symbol_set default = none : set of stimuli to be flashed during an inquiry
-
     """
 
     def __init__(
@@ -58,7 +31,32 @@ class MatrixDisplay(Display):
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
             symbol_set: Optional[List[str]] = None):
+        """Initialize Matrix display parameters and objects.
 
+        PARAMETERS:
+        ----------
+        # Experiment
+        window(visual.Window): PsychoPy Window
+        static_clock(core.Clock): Used to schedule static periods of display time
+        experiment_clock(core.Clock): Clock used to timestamp display onsets
+
+        # Stimuli
+        stimuli(StimuliProperties): attributes used for inquiries
+
+        # Task
+        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+
+        # Info
+        info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
+
+        marker_writer(MarkerWriter) Optional: object used to write triggers to an acquisition stream.
+        trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
+            task. This will be used to reconcile timing differences between acquisition and the display.
+        space_char(str) default SPACE_CHAR: defines the space character to use in the Matrix inquiry.
+        full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
+            scaling display items as needed.
+        symbol_set default = none : subset of stimuli to be highlighted during an inquiry
+        """
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = window.getActualFrameRate()
@@ -66,7 +64,7 @@ class MatrixDisplay(Display):
         self.logger = logging.getLogger(__name__)
 
         # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after defintion
+        # easy updating after definition
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
