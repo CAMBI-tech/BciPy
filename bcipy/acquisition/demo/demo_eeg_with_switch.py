@@ -2,23 +2,22 @@
 import subprocess
 import time
 
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.tcp_server import await_start
+from bcipy.config import BCIPY_ROOT
 from bcipy.acquisition.datastream.mock.switch import switch_device
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient, LslDataServer, await_start
 from bcipy.helpers.system_utils import log_to_stdout
 
 
 def start_switch():
     """Start the demo switch"""
-    return subprocess.Popen('python bcipy/acquisition/datastream/mock/switch.py',
+    return subprocess.Popen(f'python {BCIPY_ROOT}/acquisition/datastream/mock/switch.py',
                             shell=True)
 
 
 def main(debug: bool = False):
     # pylint: disable=too-many-locals
-    """Creates a sample lsl client that reads data from a sample TCP server
+    """Creates a sample lsl client that reads data from a sample LSL server
     (see demo/server.py).
 
     The client/server can be stopped with a Keyboard Interrupt (Ctl-C)."""
@@ -28,9 +27,11 @@ def main(debug: bool = False):
 
     eeg_device = preconfigured_device('DSI-24')
     eeg_server = LslDataServer(device_spec=eeg_device)
+
     eeg_client = LslAcquisitionClient(device_spec=eeg_device,
                                       save_directory='.')
-    switch_client = LslAcquisitionClient(device_spec=switch_device(),
+    switch_client = LslAcquisitionClient(max_buffer_len=1024,
+                                         device_spec=switch_device(),
                                          save_directory='.')
     await_start(eeg_server)
 

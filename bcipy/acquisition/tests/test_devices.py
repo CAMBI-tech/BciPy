@@ -6,9 +6,8 @@ import unittest
 from pathlib import Path
 
 from bcipy.acquisition import devices
-from bcipy.acquisition.connection_method import ConnectionMethod
 
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING
 
 
 class TestDeviceSpecs(unittest.TestCase):
@@ -41,7 +40,6 @@ class TestDeviceSpecs(unittest.TestCase):
                  content_type="EEG",
                  channels=channels,
                  sample_rate=300.0,
-                 connection_methods=["TCP", "LSL"],
                  description="Wearable Sensing DSI-VR300")
         ]
         config_path = Path(temp_dir, 'my_devices.json')
@@ -61,6 +59,44 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(spec, devices.preconfigured_device('DSI-VR300'))
         shutil.rmtree(temp_dir)
 
+    def test_load_channel_specs_from_config(self):
+        """Channel specs should be loaded correctly from a configuration file."""
+
+        # create a config file in a temp location.
+        temp_dir = tempfile.mkdtemp()
+        my_devices = [
+            dict(name="Custom-Device",
+                 content_type="EEG",
+                 channels=[{
+                     "name": "ch1",
+                     "label": "Fz",
+                     "units": "microvolts",
+                     "type": "EEG"
+                 }, {
+                     "name": "ch2",
+                     "label": "Pz",
+                     "units": "microvolts",
+                     "type": "EEG"
+                 }, {
+                     "name": "ch3",
+                     "label": "F7"
+                 }],
+                 sample_rate=300.0,
+                 description="My custom device")
+        ]
+        config_path = Path(temp_dir, 'my_devices.json')
+        with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
+            json.dump(my_devices, config_file)
+
+        devices.load(config_path)
+        supported = devices.preconfigured_devices()
+
+        spec = supported["Custom-Device"]
+        self.assertEqual(spec.channels, ['Fz', 'Pz', 'F7'])
+        self.assertEqual(spec.channel_names, ['ch1', 'ch2', 'ch3'])
+
+        shutil.rmtree(temp_dir)
+
     def test_device_registration(self):
         """Should be able to register a new device spec"""
 
@@ -69,7 +105,6 @@ class TestDeviceSpecs(unittest.TestCase):
             content_type="EEG",
             channels=["P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG"],
             sample_rate=300.0,
-            connection_methods=["TCP", "LSL"],
             description="Custom built device")
         supported = devices.preconfigured_devices()
         device_count = len(supported.keys())
@@ -93,7 +128,6 @@ class TestDeviceSpecs(unittest.TestCase):
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3'],
                                   sample_rate=256.0)
-        self.assertTrue(ConnectionMethod.LSL in spec.connection_methods)
         self.assertEqual(3, spec.channel_count)
         self.assertEqual('EEG', spec.content_type)
 
@@ -106,14 +140,31 @@ class TestDeviceSpecs(unittest.TestCase):
 
         self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
         spec.excluded_from_analysis = []
-        self.assertEqual(['C1', 'C2', 'C3', 'TRG'],
-                         spec.analysis_channels)
+        self.assertEqual(['C1', 'C2', 'C3', 'TRG'], spec.analysis_channels)
 
         spec2 = devices.DeviceSpec(name='Device2',
                                    channels=['C1', 'C2', 'C3', 'TRG'],
                                    sample_rate=256.0,
                                    excluded_from_analysis=['C1', 'TRG'])
         self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
+
+        spec3 = devices.DeviceSpec(name='Device3',
+                                   channels=[{
+                                       'name': 'C1',
+                                       'label': 'ch1'
+                                   }, {
+                                       'name': 'C2',
+                                       'label': 'ch2'
+                                   }, {
+                                       'name': 'C3',
+                                       'label': 'ch3'
+                                   }, {
+                                       'name': 'C4',
+                                       'label': 'TRG'
+                                   }],
+                                   sample_rate=256.0,
+                                   excluded_from_analysis=['ch1', 'TRG'])
+        self.assertEqual(['ch2', 'ch3'], spec3.analysis_channels)
 
     def test_irregular_sample_rate(self):
         """Test that DeviceSpec supports an IRREGULAR sample rate."""
@@ -151,3 +202,26 @@ class TestDeviceSpecs(unittest.TestCase):
                                sample_rate=devices.IRREGULAR_RATE,
                                content_type='Markers',
                                data_type='Whatever')
+
+    def test_device_spec_to_dict(self):
+        """DeviceSpec should be able to be converted to a dictionary."""
+        device_name = 'TestDevice'
+        channels = ['C1', 'C2', 'C3']
+        expected_channel_output = [{'label': 'C1', 'name': 'C1', 'type': None, 'units': None},
+                                   {'label': 'C2', 'name': 'C2', 'type': None, 'units': None},
+                                   {'label': 'C3', 'name': 'C3', 'type': None, 'units': None}]
+        sample_rate = 256.0
+        content_type = 'EEG'
+        spec = devices.DeviceSpec(name=device_name,
+                                  channels=channels,
+                                  sample_rate=sample_rate,
+                                  content_type=content_type)
+        spec_dict = spec.to_dict()
+        self.assertEqual(device_name, spec_dict['name'])
+        self.assertEqual(content_type, spec_dict['content_type'])
+        self.assertEqual(expected_channel_output, spec_dict['channels'])
+        self.assertEqual(sample_rate, spec_dict['sample_rate'])
+
+
+if __name__ == '__main__':
+    unittest.main()

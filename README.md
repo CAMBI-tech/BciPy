@@ -95,11 +95,12 @@ This a list of the major modules and their functionality. Each module will conta
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization.
 - `language`: gives probabilities of next symbols during typing.
-- `parameters`: location of json parameters.
+- `parameters`: location of json parameters. This includes parameters.json (main experiment / app configuration) and device.json (device registry and configuration).
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `task`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVP Calibration.
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `main`: executor of experiments. Main entry point into the application
+- `config`: configuration parameters for the application, including paths and data filenames.
 
 
 ## Paradigms
@@ -121,7 +122,7 @@ Orhan, U., Hild, K. E., 2nd, Erdogmus, D., Roark, B., Oken, B., & Fried-Oken, M.
 > Matrix Speller
 
 ```
-Matrix Speller is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called Single Character Presentation (SCP).
+Matrix Speller is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called Single Character Presentation (SCP). In matrix speller, the symbols are arranged in a matrix with fixed number of rows and columns. Using SCP, subsets of these symbols are intensified (i.e. highlighted) usually in pseudorandom order to produce an odd ball paradigm to induce p300 responses. 
 ```
 
 Citation:

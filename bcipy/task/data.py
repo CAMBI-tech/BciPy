@@ -164,25 +164,25 @@ class Inquiry:
         return data
 
     def stim_evidence(self,
-                      alphabet: List[str],
+                      symbol_set: List[str],
                       n_most_likely: int = 5) -> Dict[str, Any]:
         """Returns a dict of stim sequence data useful for debugging. Evidences
-        are paired with the appropriate alphabet letter for easier visual
+        are paired with the appropriate symbol for easier visual
         scanning. Also, an additional attribute is provided to display the
-        top n most likely letters based on the current evidence.
+        top n most likely symbols based on the current evidence.
 
         Parameters:
         -----------
-            alphabet - list of stim in the same order as the evidences.
+            symbol_set - list of stim in the same order as the evidences.
             n_most_likely - number of most likely elements to include
         """
-        likelihood = dict(zip(alphabet, self.format(self.likelihood)))
+        likelihood = dict(zip(symbol_set, self.format(self.likelihood)))
         data: Dict[str, Any] = {
             'stimuli': self.stimuli,
         }
         for evidence_type, evidence in self.evidences.items():
             data[evidence_type.serialized] = dict(
-                zip(alphabet, self.format(evidence)))
+                zip(symbol_set, self.format(evidence)))
         data['likelihood'] = likelihood
         data['most_likely'] = dict(
             Counter(likelihood).most_common(n_most_likely))
@@ -206,7 +206,9 @@ class Session:
     def __init__(self,
                  save_location: str,
                  task: str = 'Copy Phrase',
-                 mode: str = 'RSVP'):
+                 mode: str = 'RSVP',
+                 symbol_set: List[str] = None,
+                 decision_threshold: float = None):
         super().__init__()
         self.save_location = save_location
         self.task = task
@@ -215,6 +217,8 @@ class Session:
         self.total_time_spent = 0
         self.time_spent_precision = 2
         self.task_summary = {}
+        self.symbol_set = symbol_set
+        self.decision_threshold = decision_threshold
 
     @property
     def total_number_series(self) -> int:
@@ -245,6 +249,10 @@ class Session:
     def all_inquiries(self) -> List[Inquiry]:
         """List of all Inquiries for the whole session"""
         return [inq for inquiries in self.series for inq in inquiries if inquiries]
+
+    def has_evidence(self) -> bool:
+        """Tests whether any inquiries have evidence."""
+        return any(inq.evidences for inq in self.all_inquiries)
 
     def add_series(self):
         """Add another series unless the last one is empty"""
@@ -280,7 +288,6 @@ class Session:
         return len(self.last_series()) == 0
 
     def as_dict(self,
-                alphabet=None,
                 evidence_only: bool = False) -> Dict[str, Any]:
         """Dict representation"""
         series_dict: Dict[str, Any] = {}
@@ -289,8 +296,8 @@ class Session:
                 series_counter = str(i + 1)
                 series_dict[series_counter] = {}
                 for series_index, stim in enumerate(series):
-                    if evidence_only and alphabet:
-                        stim_dict = stim.stim_evidence(alphabet)
+                    if evidence_only and self.symbol_set:
+                        stim_dict = stim.stim_evidence(self.symbol_set)
                     else:
                         stim_dict = stim.as_dict()
                     series_dict[series_counter][str(series_index)] = stim_dict
@@ -299,6 +306,8 @@ class Session:
             'session': self.save_location,
             'task': self.task,
             'mode': self.mode,
+            'symbol_set': self.symbol_set,
+            'decision_threshold': self.decision_threshold,
             'series': series_dict,
             'total_time_spent': round(self.total_time_spent,
                                       self.time_spent_precision),
@@ -324,7 +333,9 @@ class Session:
         """
         session = cls(save_location=data['session'],
                       task=data['task'],
-                      mode=data['mode'])
+                      mode=data['mode'],
+                      symbol_set=data['symbol_set'],
+                      decision_threshold=data['decision_threshold'])
         session.total_time_spent = data['total_time_spent']
 
         if data['series']:

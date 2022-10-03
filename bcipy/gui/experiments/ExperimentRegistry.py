@@ -1,11 +1,11 @@
 import sys
 import subprocess
 
-from bcipy.gui.gui_main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
+from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
 
+from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 
 
 class ExperimentRegistry(BCIGui):
@@ -350,7 +350,7 @@ class ExperimentRegistry(BCIGui):
         Launch to FieldRegistry to create a new field for experiments.
         """
         subprocess.call(
-            'python bcipy/gui/experiments/FieldRegistry.py',
+            f'python {BCIPY_ROOT}/gui/experiments/FieldRegistry.py',
             shell=True)
 
         self.update_field_list()

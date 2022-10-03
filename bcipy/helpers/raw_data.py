@@ -1,12 +1,13 @@
 """Functionality for reading and writing raw signal data."""
 import csv
-from typing import List, TextIO, Tuple
+from typing import List, Optional, TextIO, Tuple
 
 import numpy as np
 import pandas as pd
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.signal.generator.generator import gen_random_data
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
+from bcipy.signal.process import Composition
 
 TIMESTAMP_COLUMN = 'timestamp'
 
@@ -16,12 +17,15 @@ class RawData:
     a raw data file into memory."""
 
     def __init__(self,
-                 daq_type: str = None,
-                 sample_rate: int = None,
-                 columns: List[str] = None):
+                 daq_type: Optional[str] = None,
+                 sample_rate: Optional[int] = None,
+                 columns: Optional[List[str]] = None,
+                 column_types: Optional[List[str]] = None):
         self.daq_type = daq_type
         self.sample_rate = sample_rate
         self.columns = columns or []
+        # accept a custom column type definition or default to all eeg type
+        self.column_types = column_types
         self._rows = []
         self._dataframe = None
 
@@ -58,22 +62,69 @@ class RawData:
     @property
     def numeric_data(self) -> pd.DataFrame:
         """Data for columns with numeric data. This is usually comprised of the
-        timestamp column and device channels, excluding triggers."""
+        timestamp column and device channels, excluding string triggers."""
         return self.dataframe.select_dtypes(exclude=['object'])
 
-    def by_channel(self) -> np.ndarray:
-        """Data organized by channel.
-
-        Returns
-        ----------
-        C x N numpy array with samples where C is the number of channels and N
-        is number of time samples."""
-
+    @property
+    def channel_data(self):
+        """Data for columns with numeric data, excluding the timestamp column."""
         numeric_data = self.numeric_data
 
         numeric_vals = numeric_data.values
         numeric_column_count = numeric_vals.shape[1]
+        # Start data slice at 1 to remove the timestamp column.
         return numeric_vals[:, 1:numeric_column_count].transpose()
+
+    def by_channel(self, transform: Optional[Composition] = None) -> np.ndarray:
+        """Data organized by channel.
+
+        Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
+        This will apply n tranformations to the data before returning. For an example Composition with
+        EEG preprocessing, see bcipy.signal.get_default_transform().
+
+        Returns
+        ----------
+        data: C x N numpy array with samples where C is the number of channels and N
+        is number of time samples
+        fs: resulting sample rate if any transformations applied"""
+
+        data = self.channel_data
+        fs = self.sample_rate
+
+        if transform:
+            data, fs = self.apply_transform(data, transform)
+
+        return data, fs
+
+    def by_channel_map(
+            self,
+            channel_map: List[int],
+            transform: Optional[Composition] = None) -> Tuple[np.ndarray, List[str], List[str]]:
+        """By Channel Map.
+
+        Returns channels with columns removed if index in list (channel_map) is zero. The channel map must align
+        with the numeric channels read in as self.channels. We assume most trigger or other string columns are
+        removed, however some are numeric trigger columns from devices that will require filtering before returning
+        data. Other cases could be dropping bad channels before running further analyses.
+
+        Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
+        This will apply n tranformations to the data before returning. For an example Composition with
+        EEG preprocessing, see bcipy.signal.get_default_transform().
+        """
+        data, fs = self.by_channel(transform)
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        data = np.delete(data, channels_to_remove, axis=0)
+        channels = np.delete(self.channels, channels_to_remove, axis=0).tolist()
+
+        return data, channels, fs
+
+    def apply_transform(self, data: np.ndarray, transform: Composition) -> Tuple[np.ndarray, float]:
+        """Apply Transform.
+
+        Using data provided as an np.ndarray, call the Composition with self.sample_rate to apply
+            transformations to the data. This will return the transformed data and resulting sample rate.
+        """
+        return transform(data, self.sample_rate)
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -97,8 +148,8 @@ class RawData:
         return int(self.dataframe.iloc[-1]['timestamp'])
 
     def query(self,
-              start: float = None,
-              stop: float = None,
+              start: Optional[float] = None,
+              stop: Optional[float] = None,
               column: str = 'lsl_timestamp') -> pd.DataFrame:
         """Query for a subset of data.
 

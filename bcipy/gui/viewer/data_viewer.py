@@ -14,10 +14,11 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
 
-from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableProcess
-from bcipy.gui.gui_main import static_text_control
+from bcipy.gui.main import static_text_control
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
+from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
@@ -165,7 +166,7 @@ class EEGPanel(QWidget):
     Parameters:
     -----------
     - data_source : object that implements the viewer DataSource interface.
-    - device_info : metadata about the data.
+    - device_spec : metadata about the data.
     - parameters : configuration for filters, etc.
     - seconds : how many seconds worth of data to display.
     - refresh : time in milliseconds; how often to refresh the plots
@@ -182,7 +183,7 @@ class EEGPanel(QWidget):
 
     def __init__(self,
                  data_source,
-                 device_info: DeviceInfo,
+                 device_spec: DeviceSpec,
                  parameters: Parameters,
                  seconds: int = 5,
                  refresh: int = 500,
@@ -192,11 +193,11 @@ class EEGPanel(QWidget):
         self.data_source = data_source
         self.parameters = parameters
         self.refresh_rate = refresh
-        self.samples_per_second = device_info.fs
+        self.samples_per_second = device_spec.sample_rate
         self.records_per_refresh = int(
             (self.refresh_rate / 1000) * self.samples_per_second)
 
-        self.channels = device_info.channels
+        self.channels = device_spec.channels
         self.removed_channels = ['TRG', 'timestamp']
         self.active_channel_indices = active_indices(self.channels,
                                                      self.removed_channels)
@@ -601,15 +602,15 @@ class EEGPanel(QWidget):
             ((chars - baseline_chars) * ytick_digit_width)
 
 
-def lsl_data() -> Tuple[LslDataSource, DeviceInfo, None]:
+def lsl_data() -> Tuple[LslDataSource, DeviceSpec, None]:
     """Constructs an LslDataSource, which provides data written to an LSL EEG
     stream."""
     data_source = LslDataSource(stream_type='EEG')
-    return (data_source, data_source.device_info, None)
+    return (data_source, data_source.device_spec, None)
 
 
 def file_data(path: str
-              ) -> Tuple[QueueDataSource, DeviceInfo, StoppableProcess]:
+              ) -> Tuple[QueueDataSource, DeviceSpec, StoppableProcess]:
     """Constructs a QueueDataSource from the contents of the file at the given
     path. Data is written to the datasource at the rate specified in the
     raw_data.csv metadata, so it acts as a live stream.
@@ -625,17 +626,15 @@ def file_data(path: str
             - data is not written to the QueueDataSource until the
                 FileStreamer (StoppableProcess) is started.
     """
-
-    from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
     # read metadata
     name, freq, channels = settings(path)
     queue = Queue()
     streamer = FileStreamer(path, queue)
     data_source = QueueDataSource(queue)
-    device_info = DeviceInfo(fs=freq, channels=channels, name=name)
+    device_spec = DeviceSpec(name=name, channels=channels, sample_rate=freq)
     streamer.start()
 
-    return (data_source, device_info, streamer)
+    return (data_source, device_spec, streamer)
 
 
 def main(data_file: str,
@@ -658,11 +657,11 @@ def main(data_file: str,
             (0 for primary, 1 for secondary)
         parameters - location of parameters.json file with configuration for filters.
     """
-    data_source, device_info, proc = file_data(
+    data_source, device_spec, proc = file_data(
         data_file) if data_file else lsl_data()
 
     app = QApplication(sys.argv)
-    panel = EEGPanel(data_source, device_info,
+    panel = EEGPanel(data_source, device_spec,
                      Parameters(parameters, cast_values=True), seconds,
                      refresh, yscale)
 

@@ -1,22 +1,22 @@
 """Helper functions for working with the acquisition module"""
+import logging
 import subprocess
 import time
-from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
-import bcipy.acquisition.protocols.registry as registry
-from bcipy.acquisition.client import DataAcquisitionClient
-from bcipy.acquisition.connection_method import ConnectionMethod
-from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.tcp_server import await_start
 from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition import LslAcquisitionClient, await_start, LslDataServer
+from bcipy.helpers.save import save_device_spec
+from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
+
+log = logging.getLogger(__name__)
 
 
 def init_eeg_acquisition(parameters: dict,
                          save_folder: str,
+                         export_spec: bool = False,
                          server: bool = False) -> tuple:
     """Initialize EEG Acquisition.
 
@@ -29,30 +29,30 @@ def init_eeg_acquisition(parameters: dict,
             configuration details regarding the device type and other relevant
             connection information.
              {
-               "acq_device": str,
-               "acq_connection_method": str,
-               "acq_host": str,
-               "acq_port": int,
-               "buffer_name": str,
-               "raw_data_name": str
+               "acq_device": str
              }
-        clock : Clock, optional
-            optional clock used in the client; see client for details.
+        save_folder : str
+            path to the folder where data should be saved.
+        export_spec : bool, optional
+            if True, the device spec will be exported to the save folder.
         server : bool, optional
             optionally start a mock data server that streams random data.
     Returns
     -------
         (client, server) tuple
     """
-
-    # TODO: parameter for loading devices; path to devices.json?
-    # devices.load(devices_path)
+    # devices.load(devices_path) can be used in the future to load devices and match
     device_spec = preconfigured_device(parameters['acq_device'])
 
     dataserver = False
     if server:
+        log.info(
+            f"fake data is on. Generating mock device data for {device_spec.name}"
+        )
         dataserver = LslDataServer(device_spec=device_spec)
         await_start(dataserver)
+    else:
+        log.info(f"fake data is off. Connecting to {device_spec.name}...")
 
     client = init_lsl_client(parameters, device_spec, save_folder)
     client.start_acquisition()
@@ -62,22 +62,10 @@ def init_eeg_acquisition(parameters: dict,
         start_viewer(display_screen=viewer_screen,
                      parameter_location=parameters['parameter_location'])
 
+    if export_spec:
+        save_device_spec(device_spec, save_folder, spec_name)
+
     return (client, dataserver)
-
-
-def init_client(parameters: dict, device_spec: DeviceSpec,
-                save_folder: str) -> DataAcquisitionClient:
-    """Initialize the original client."""
-
-    connector = registry.make_connector(device_spec, ConnectionMethod.LSL, {})
-
-    return DataAcquisitionClient(
-        connector=connector,
-        buffer_name=str(
-            Path(save_folder, parameters.get('buffer_name', 'raw_data.db'))),
-        delete_archive=False,
-        raw_data_file_name=Path(
-            save_folder, parameters.get('raw_data_name', 'raw_data.csv')))
 
 
 def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
@@ -86,17 +74,31 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
 
-    return LslAcquisitionClient(max_buflen=data_buffer_seconds,
+    return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
-                                raw_data_file_name=parameters.get(
-                                    'raw_data_name', None))
+                                raw_data_file_name=f'{RAW_DATA_FILENAME}.csv')
 
 
 def max_inquiry_duration(parameters: dict) -> float:
     """Computes the maximum duration of an inquiry based on the configured
-    parameters. Modes which don't use all of the settings may have shorter
-    durations.
+    parameters. Paradigms which don't use all of the settings may have shorter
+    durations. This can be used to determine the size of the data buffer.
+
+    Parameters
+    ----------
+    - parameters : dict
+        configuration details regarding the task and other relevant information.
+         {
+            "time_fixation": float,
+            "time_prompt": float,
+            "prestim_length": float,
+            "stim_length": float,
+            "stim_jitter": float,
+            "task_buffer_length": float,
+            "time_flash": float,
+
+         }
 
     Returns
     -------
@@ -108,8 +110,9 @@ def max_inquiry_duration(parameters: dict) -> float:
     stim_count = parameters['stim_length']
     stim_duration = parameters['time_flash']
     interval_duration = parameters['task_buffer_length']
+    jitter = parameters['stim_jitter']
 
-    return prestimulus_duration + target_duration + fixation_duration + (
+    return prestimulus_duration + jitter + target_duration + fixation_duration + (
         stim_count * stim_duration) + interval_duration
 
 
@@ -163,7 +166,7 @@ def start_viewer(display_screen: int, parameter_location: str) -> None:
     - display_screen : which monitor to use for display; usually 0 or 1.
     - parameter_location : path to parameters.json config file.
     """
-    viewer = 'bcipy/gui/viewer/data_viewer.py'
+    viewer = f'{BCIPY_ROOT}/gui/viewer/data_viewer.py'
     cmd = f'python {viewer} -m {display_screen} -p {parameter_location}'
     subprocess.Popen(cmd, shell=True)
 

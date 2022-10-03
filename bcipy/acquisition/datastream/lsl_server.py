@@ -3,15 +3,16 @@ using pylsl."""
 import logging
 from queue import Empty, Queue
 from typing import Generator
+import time
 import uuid
 
 from pylsl import StreamInfo, StreamOutlet
 
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.helpers.system_utils import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -69,11 +70,11 @@ class LslDataServer(StoppableThread):
                 unit = 'microvolts'
                 channel_type = 'EEG'
             meta_channels = info.desc().append_child('channels')
-            for channel in device_spec.channels:
+            for channel in device_spec.channel_specs:
                 meta_channels.append_child('channel') \
-                    .append_child_value('label', channel) \
-                    .append_child_value('unit', unit) \
-                    .append_child_value('type', channel_type)
+                    .append_child_value('label', channel.name) \
+                    .append_child_value('unit', channel.units or unit) \
+                    .append_child_value('type', channel.type or channel_type)
 
         self.outlet = StreamOutlet(info)
 
@@ -143,6 +144,28 @@ def _settings(filename):
         sample_hz = int(datafile.readline().strip().split(',')[1])
         channels = datafile.readline().strip().split(',')
         return (daq_type, sample_hz, channels)
+
+
+def await_start(dataserver: LslDataServer, max_wait: float = 2):
+    """Blocks until server is started. Raises if max_wait is exceeded before
+    server is started.
+
+    Parameters
+    ----------
+        dataserver - instantiated (unstarted) server on which to wait.
+        max_wait - the max number of seconds to wait. After this period if the
+            server has not succesfully started an exception is thrown.
+    """
+
+    dataserver.start()
+    wait = 0
+    wait_interval = 0.01
+    while not dataserver.started:
+        time.sleep(wait_interval)
+        wait += wait_interval
+        if wait >= max_wait:
+            dataserver.stop()
+            raise Exception("Server couldn't start up in time.")
 
 
 def main():

@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 from psychopy import core
 
+from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
@@ -10,7 +11,6 @@ from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_in
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
-
 from bcipy.task import Task
 
 
@@ -18,13 +18,13 @@ class MatrixCalibrationTask(Task):
     """Matrix Calibration Task.
 
     Calibration task performs an Matrix stimulus inquiry
-        to elicit an ERP. Parameters will change how many stimuli
-        and for how long they present. Parameters also change
-        color and text / image inputs.
+        to elicit an ERP. Parameters change the number of stimuli
+        (i.e. the subset of matrix) and for how long they will highlight.
+        Parameters also change color and text / image inputs.
 
     A task begins setting up variables --> initializing eeg -->
         awaiting user input to start -->
-        setting up stimuli --> presenting inquiries -->
+        setting up stimuli --> highlighting inquiries -->
         saving data
 
     PARAMETERS:
@@ -53,12 +53,11 @@ class MatrixCalibrationTask(Task):
         self.file_save = file_save
         self.trigger_handler = TriggerHandler(
             self.file_save,
-            parameters['trigger_file_name'],
+            TRIGGER_FILENAME,
             FlushFrequency.EVERY)
 
-        self.wait_screen_message = parameters['wait_screen_message']
-        self.wait_screen_message_color = parameters[
-            'wait_screen_message_color']
+        self.wait_screen_message = WAIT_SCREEN_MESSAGE
+        self.wait_screen_message_color = parameters['stim_color']
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
@@ -235,10 +234,10 @@ def init_calibration_display_task(
         info_pos=[(parameters['info_pos_x'],
                    parameters['info_pos_y'])],
         info_height=[parameters['info_height']],
-        info_font=[parameters['info_font']],
+        info_font=[parameters['font']],
         info_text=[parameters['info_text']],
     )
-    stimuli = StimuliProperties(stim_font='Arial',
+    stimuli = StimuliProperties(stim_font=parameters['font'],
                                 stim_pos=(-0.6, 0.4),
                                 stim_height=0.1,
                                 stim_inquiry=[''] * parameters['stim_length'],
@@ -250,7 +249,7 @@ def init_calibration_display_task(
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
         task_pos=(-.8, .85),
-        task_font=parameters['task_font'],
+        task_font=parameters['font'],
         task_height=parameters['task_height'],
         task_text=''
     )

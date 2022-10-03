@@ -3,10 +3,11 @@ import logging
 import os
 import sys
 import re
+from decimal import Decimal
 from enum import Enum
-from typing import Any, List
+from typing import Any, Callable, List, NamedTuple, Optional
 
-from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer
 from PyQt5.QtGui import QFont, QPixmap, QShowEvent
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
@@ -167,6 +168,38 @@ class AlertMessageResponse(Enum):
     OCE = "Okay or Cancel Exit"
 
 
+def alert_message(
+        message: str,
+        title: str = None,
+        message_type: AlertMessageType = AlertMessageType.INFO,
+        message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+        message_timeout: float = 0) -> MessageBox:
+    """Constructs an Alert Message.
+
+    Parameters
+    ----------
+        message - text to display
+        title - optional title of the GUI window
+        message_type - type of icon that is displayed
+        message_response - response buttons available to the user
+        message_time - optional timeout for displaying the alert
+    """
+
+    msg = MessageBox()
+    if title:
+        msg.setWindowTitle(title)
+    msg.setText(message)
+    msg.setIcon(message_type.value)
+    msg.setTimeout(message_timeout)
+
+    if message_response is AlertMessageResponse.OTE:
+        msg.setStandardButtons(AlertResponse.OK.value)
+    elif message_response is AlertMessageResponse.OCE:
+        msg.setStandardButtons(AlertResponse.OK.value |
+                               AlertResponse.CANCEL.value)
+    return msg
+
+
 class FormInput(QWidget):
     """A form element with a label, help tip, and input control. The default control is a text
     input. This object may be subclassed to specialize the input control or the arrangement of
@@ -198,8 +231,14 @@ class FormInput(QWidget):
         self.label_widget = self.init_label()
         self.help_tip_widget = self.init_help(help_size, help_color)
         self.control = self.init_control(value)
-
+        self.control.installEventFilter(self)
         self.init_layout()
+
+    def eventFilter(self, source, event):
+        """Event filter that suppresses the scroll wheel event."""
+        if (event.type() == QEvent.Wheel and source is self.control):
+            return True
+        return False
 
     def init_label(self) -> QWidget:
         """Initialize the label widget."""
@@ -286,8 +325,8 @@ class IntegerInput(FormInput):
     def init_control(self, value):
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
+        spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
-
         if value:
             spin_box.setValue(int(value))
         return spin_box
@@ -297,6 +336,28 @@ class IntegerInput(FormInput):
         if self.control:
             return int(self.control.text())
         return None
+
+
+class FloatInputProperties(NamedTuple):
+    """Properties used when constructing a FloatInput component. Default values
+    originate from the pyqt5 QDoubleSpinBox component defaults."""
+
+    min: float = -sys.float_info.max  # 0.0 is the component default
+    max: float = sys.float_info.max  # 99.99 is the component default
+    decimals: int = 1
+    step: float = 0.1
+
+
+def float_input_properties(value: str) -> FloatInputProperties:
+    """Given a string representation of a float value, determine suitable
+    properties for the float component used to input or update this value.
+    """
+    # Determine from the component if there is a reasonable min or max constraint
+    dec = Decimal(str(value))
+    _sign, _digits, exponent = dec.as_tuple()
+    if exponent > 0:
+        return FloatInputProperties()
+    return FloatInputProperties(decimals=abs(exponent), step=10**exponent)
 
 
 class FloatInput(FormInput):
@@ -315,7 +376,14 @@ class FloatInput(FormInput):
     def init_control(self, value):
         """Override FormInput to create a spinbox."""
         spin_box = QDoubleSpinBox()
-        spin_box.setMaximum(100000)
+
+        # Make a reasonable guess about precision and step size based on the initial value.
+        props = float_input_properties(value)
+
+        spin_box.setMinimum(props.min)
+        spin_box.setMaximum(props.max)
+        spin_box.setDecimals(props.decimals)
+        spin_box.setSingleStep(props.step)
         spin_box.setValue(float(value))
         return spin_box
 
@@ -541,6 +609,8 @@ class BCIGui(QWidget):
         self.vbox = QVBoxLayout()
         self.setStyleSheet(f'background-color: {self.background_color};')
 
+        self.timer = QTimer()
+
         self.title = title
 
         # determines height/width of window
@@ -635,11 +705,14 @@ class BCIGui(QWidget):
         self.logger.debug(sender.text() + ' was pressed')
         self.logger.debug(sender.get_id())
 
-    def add_button(self, message: str, position: list, size: list, id=-1,
+    def add_button(self,
+                   message: str,
+                   position: list,
+                   size: list,
+                   id: int = -1,
                    background_color: str = 'white',
                    text_color: str = 'default',
-                   button_type: str = None,
-                   action=None) -> PushButton:
+                   action: Optional[Callable] = None) -> PushButton:
         """Add Button."""
         btn = PushButton(message, self.window)
         btn.id = id
@@ -710,7 +783,7 @@ class BCIGui(QWidget):
                            background_color: str = 'white',
                            text_color: str = 'default',
                            size: list = None,
-                           font_family="Times",
+                           font_family='Times',
                            font_size=12,
                            wrap_text=False) -> QLabel:
         """Add Static Text."""
@@ -746,18 +819,11 @@ class BCIGui(QWidget):
                             message_response: AlertMessageResponse = AlertMessageResponse.OTE,
                             message_timeout: float = 0) -> MessageBox:
         """Throw Alert Message."""
-
-        msg = MessageBox()
-        msg.setWindowTitle(title)
-        msg.setText(message)
-        msg.setIcon(message_type.value)
-        msg.setTimeout(message_timeout)
-
-        if message_response is AlertMessageResponse.OTE:
-            msg.setStandardButtons(AlertResponse.OK.value)
-        elif message_response is AlertMessageResponse.OCE:
-            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
-
+        msg = alert_message(message,
+                            title=title,
+                            message_type=message_type,
+                            message_response=message_response,
+                            message_timeout=message_timeout)
         return msg.exec_()
 
     def get_filename_dialog(self,

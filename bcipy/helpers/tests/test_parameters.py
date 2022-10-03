@@ -5,6 +5,7 @@ import unittest
 from collections import abc
 from pathlib import Path
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.parameters import Parameters
 
 
@@ -14,7 +15,7 @@ class TestParameters(unittest.TestCase):
     def setUp(self):
         """Override; set up the needed path for load functions."""
 
-        self.parameters_location = 'bcipy/parameters/parameters.json'
+        self.parameters_location = DEFAULT_PARAMETERS_PATH
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -474,7 +475,7 @@ class TestParameters(unittest.TestCase):
             "recommended_values": ["LSL", "DSI"],
             "type": "str"
         }
-        {"acq_port": entry1, "acq_device": entry2}
+
         parameters = Parameters(source=None)
         parameters.load({"acq_port": entry1})
 
@@ -487,6 +488,69 @@ class TestParameters(unittest.TestCase):
 
         self.assertFalse(parameters.add_missing_items(new_params),
                          "Only new parameters should be added.")
+
+    def test_changed_parameters(self):
+        """Test diff calculations"""
+        entry1 = {
+            "value": "8000",
+            "section": "acquisition",
+            "readableName": "Acquisition Port",
+            "helpTip": "",
+            "recommended_values": "",
+            "type": "int"
+        }
+        entry2 = {
+            "value": "75E+6",
+            "section": "artifact_rejection",
+            "readableName": "High Voltage Threshold Value",
+            "helpTip": "Specifies the high voltage threshold (in microvolts)",
+            "recommended_values": "",
+            "type": "float"
+        }
+        entry2_same = {
+            "value": "75000000.0",
+            "section": "artifact_rejection",
+            "readableName": "High Voltage Threshold Value",
+            "helpTip": "Specifies the high voltage threshold (in microvolts)",
+            "recommended_values": "",
+            "type": "float"
+        }
+        entry3 = {
+            "value": "DSI-24",
+            "section": "acquisition",
+            "readableName": "Acquisition Device",
+            "helpTip": "",
+            "recommended_values": ["DSI-24", "DSI-VR300"],
+            "type": "str"
+        }
+        entry3_modified = {
+            "value": "DSI-VR300",
+            "section": "acquisition",
+            "readableName": "Acquisition Device",
+            "helpTip": "",
+            "recommended_values": ["DSI-24", "DSI-VR300"],
+            "type": "str"
+        }
+        parameters = Parameters(source=None)
+        parameters.load({
+            "entry_1": entry1,
+            "entry_2": entry2,
+            "entry_3": entry3
+        })
+
+        new_params = Parameters(source=None)
+        new_params.load({
+            "entry_1": entry1,
+            "entry_2": entry2_same,
+            "entry_3": entry3_modified
+        })
+        changes = new_params.diff(parameters)
+
+        self.assertEqual(len(changes.keys()), 1)
+        self.assertTrue("entry_3" in changes.keys())
+        self.assertEqual(changes["entry_3"].original_value, entry3['value'])
+        self.assertEqual(changes["entry_3"].parameter['value'],
+                         entry3_modified['value'])
 
 
 if __name__ == '__main__':

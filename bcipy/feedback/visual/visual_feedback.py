@@ -15,7 +15,7 @@ class FeedbackType(Enum):
 class VisualFeedback(Feedback):
     """Visual Feedback."""
 
-    def __init__(self, display, parameters, clock):
+    def __init__(self, display, parameters: dict, clock: Clock):
 
         # Register Feedback Type
         self.feedback_type = 'Visual Feedback'
@@ -35,7 +35,7 @@ class VisualFeedback(Feedback):
 
         self.pos_stim = (pos_x, pos_y)
 
-        self.feedback_length = self.parameters['feedback_flash_time']
+        self.feedback_length = self.parameters['feedback_duration']
         self.color = self.parameters['feedback_color']
 
         # Clock
@@ -71,7 +71,7 @@ class VisualFeedback(Feedback):
         self.display.flip()
         return time
 
-    def _resize_image(self, stimuli, display_size, stimuli_height):
+    def _resize_image(self, stimulus, display_size, stimuli_height):
         return resize_image(
             stimulus, display_size, stimuli_height)
 
@@ -94,30 +94,3 @@ class VisualFeedback(Feedback):
                 height=self.height_stim,
                 pos=pos,
                 color=fill_color)
-
-
-if __name__ == "__main__":
-    import argparse
-    from bcipy.helpers.load import load_json_parameters
-    from bcipy.display import init_display_window
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--parameters',
-                        default='bcipy/parameters/parameters.json',
-                        help='Parameter location. Must be in parameters directory. \
-                          Pass as bcipy/parameters/parameters.json')
-
-    args = parser.parse_args()
-
-    # Load a parameters file
-    parameters = load_json_parameters(args.parameters, value_cast=True)
-    display = init_display_window(parameters)
-    clock = Clock()
-    # Start Visual Feedback
-    visual_feedback = VisualFeedback(
-        display=display, parameters=parameters, clock=clock)
-    stimulus = 'Test'
-    timing = visual_feedback.administer(
-        stimulus, stimuli_type=FeedbackType.TEXT)
-    print(timing)
-    print(visual_feedback._type())

@@ -3,7 +3,8 @@ import sys
 
 from typing import List
 
-from bcipy.gui.gui_main import (
+from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_IMAGES_PATH
+from bcipy.gui.main import (
     AlertMessageResponse,
     AlertMessageType,
     AlertResponse,
@@ -14,7 +15,6 @@ from bcipy.gui.gui_main import (
     invalid_length,
 )
 from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.task import TaskType
 
 
@@ -32,7 +32,7 @@ class BCInterface(BCIGui):
     btn_height = 40
     max_length = 25
     min_length = 1
-    task_start_timeout = 2
+    timeout = 3
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -46,15 +46,28 @@ class BCInterface(BCIGui):
         self.experiment_input = None
         self.task_input = None
 
+        # These represent the current user, experiment, and task selected in the gui
         self.user = None
         self.experiment = None
         self.task = None
 
-        self.autoclose = True
+        # user names available in the dropdown menu
+        self.users = []
+
+        # setup a timer to prevent double clicking in gui
+        self.disable = False
+        self.timer.timeout.connect(self._disable_action)
+
+        self.task_start_timeout = self.timeout
+        self.button_timeout = self.timeout
+
+        self.autoclose = False
+        self.alert = True
+        self.static_font_size = 24
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
-                f'User ID must contain between {self.min_length} and {self.max_length} alphanumeric characters.'),
+             f'User ID must contain between {self.min_length} and {self.max_length} alphanumeric characters.'),
             (contains_whitespaces, 'User ID cannot contain white spaces'),
             (contains_special_characters, 'User ID cannot contain special characters')
         ]
@@ -83,7 +96,6 @@ class BCInterface(BCIGui):
 
         btn_start_width = 200
         btn_start_x = self.width - (self.padding + btn_start_width)
-        btn_start_y = 450
         self.add_button(
             message='Start Experiment Session', position=[btn_start_x, 450],
             size=[btn_start_width, self.btn_height],
@@ -105,19 +117,27 @@ class BCInterface(BCIGui):
 
         Launch the experiment registry which will be used to add new experiments for selection in the GUI.
         """
-        subprocess.call(
-            'python bcipy/gui/experiments/ExperimentRegistry.py',
-            shell=True)
+        if not self.action_disabled():
+            subprocess.call(
+                f'python {BCIPY_ROOT}/gui/experiments/ExperimentRegistry.py',
+                shell=True)
 
-        self.update_experiment_list()
+            self.update_experiment_list()
 
-    def update_user_list(self) -> None:
+    def update_user_list(self, refresh=True) -> None:
         """Updates the user_input combo box with a list of user ids based on the
         data directory configured in the current parameters."""
+        # if refresh is True, then we need to clear the list and add the default text
+        if refresh:
+            self.user_input.clear()
+            self.user_input.addItem(BCInterface.default_text)
 
-        self.user_input.clear()
-        self.user_input.addItem(BCInterface.default_text)
-        self.user_input.addItems(load_users(self.parameters['data_save_loc']))
+        # load the users from the data directory and check if they have already been added to the dropdown
+        users = load_users(self.parameters['data_save_loc'])
+        for user in users:
+            if user not in self.users:
+                self.user_input.addItem(user)
+                self.users.append(user)
 
     def update_experiment_list(self) -> None:
         """Updates the experiment_input combo box with a list of experiments based on the
@@ -195,21 +215,21 @@ class BCInterface(BCIGui):
             size=[200, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
         self.add_static_textbox(
             text='Experiment',
             position=[text_x, 205],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
         self.add_static_textbox(
             text='Task',
             position=[text_x, 305],
             size=[300, 50],
             background_color='black',
             text_color='white',
-            font_size=24)
+            font_size=self.static_font_size)
 
     def build_images(self) -> None:
         """Build Images.
@@ -217,9 +237,9 @@ class BCInterface(BCIGui):
         Build add images needed for the UI. In this case, the OHSU and NEU logos.
         """
         self.add_image(
-            path='bcipy/static/images/gui/ohsu.png', position=[self.padding, 0], size=100)
+            path=f'{STATIC_IMAGES_PATH}/gui/ohsu.png', position=[self.padding, 0], size=100)
         self.add_image(
-            path='bcipy/static/images/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
+            path=f'{STATIC_IMAGES_PATH}/gui/neu.png', position=[self.width - self.padding - 110, 0], size=100)
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -237,9 +257,7 @@ class BCInterface(BCIGui):
         self.parameter_location = path
         self.parameters = load_json_parameters(self.parameter_location,
                                                value_cast=True)
-        # update GUI options
-        if self.user_input:
-            self.update_user_list()
+        self.update_user_list(refresh=False)
 
     def select_parameters(self) -> None:
         """Select Parameters.
@@ -272,22 +290,23 @@ class BCInterface(BCIGui):
         Note that any edits to the parameters file will not be applied to this GUI until the parameters
         are reloaded.
         """
-        if self.parameter_location == DEFAULT_PARAMETERS_PATH:
-            # Don't allow the user to overwrite the defaults
-            response = self.throw_alert_message(
-                title='BciPy Alert',
-                message='The default parameters.json cannot be overridden. A copy will be used.',
-                message_type=AlertMessageType.INFO,
-                message_response=AlertMessageResponse.OCE)
+        if not self.action_disabled():
+            if self.parameter_location == DEFAULT_PARAMETERS_PATH:
+                # Don't allow the user to overwrite the defaults
+                response = self.throw_alert_message(
+                    title='BciPy Alert',
+                    message='The default parameters.json cannot be overridden. A copy will be used.',
+                    message_type=AlertMessageType.INFO,
+                    message_response=AlertMessageResponse.OCE)
 
-            if response == AlertResponse.OK.value:
-                self.parameter_location = copy_parameters()
-            else:
-                return None
+                if response == AlertResponse.OK.value:
+                    self.parameter_location = copy_parameters()
+                else:
+                    return None
 
-        subprocess.call(
-            f'python bcipy/gui/parameters/params_form.py -p {self.parameter_location}',
-            shell=True)
+            subprocess.call(
+                f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
+                shell=True)
 
     def check_input(self) -> bool:
         """Check Input.
@@ -371,7 +390,7 @@ class BCInterface(BCIGui):
         Using the inputs gathers, check for validity using the check_input method, then launch the experiment using a
             command to bcipy main and subprocess.
         """
-        if self.check_input():
+        if self.check_input() and not self.action_disabled():
             self.throw_alert_message(
                 title='BciPy Alert',
                 message='Task Starting ...',
@@ -382,6 +401,8 @@ class BCInterface(BCIGui):
                 f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
+            if self.alert:
+                cmd += ' -a'
             subprocess.Popen(cmd, shell=True)
 
             if self.autoclose:
@@ -392,8 +413,41 @@ class BCInterface(BCIGui):
 
         Run offline analysis as a script in a new process.
         """
-        cmd = 'python bcipy/signal/model/offline_analysis.py --alert'
-        subprocess.Popen(cmd, shell=True)
+        if not self.action_disabled():
+            cmd = f'python {BCIPY_ROOT}/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
+            subprocess.Popen(cmd, shell=True)
+
+    def action_disabled(self) -> bool:
+        """Action Disabled.
+
+        Method to check whether another action can take place. If not disabled, it will allow the action and
+        start a timer that will disable actions until self.timeout (seconds) has occured.
+
+        Note: the timer is registed with the private method self._disable_action, which when self.timeout has
+        been reached, resets self.disable and corresponding timeouts.
+        """
+        if self.disable:
+            return True
+        else:
+            self.disable = True
+            # set the update time to every 1000ms
+            self.timer.start(1000)
+            return False
+
+    def _disable_action(self) -> bool:
+        """Disable Action.
+
+        A private method to register with a BCIGui.timer after setting self.button_timeout.
+        """
+        if self.button_timeout > 0:
+            self.disable = True
+            self.button_timeout -= 1
+            return self.disable
+
+        self.timer.stop()
+        self.disable = False
+        self.button_timeout = self.timeout
+        return self.disable
 
 
 def start_app() -> None:

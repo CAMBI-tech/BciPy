@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from bcipy.gui.gui_main import (
+from bcipy.gui.main import (
     AlertMessageType,
     AlertMessageResponse,
     AlertResponse,
@@ -270,8 +270,8 @@ class MainPanel(QWidget):
 def start_app() -> None:
     """Start Experiment Field Collection."""
     import argparse
+    from bcipy.config import DEFAULT_EXPERIMENT_ID, EXPERIMENT_DATA_FILENAME
     from bcipy.helpers.validate import validate_experiment, validate_field_data_written
-    from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
 
     parser = argparse.ArgumentParser()
 
@@ -280,7 +280,7 @@ def start_app() -> None:
                         help='Path to save collected field data to in json format')
     parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID,
                         help='Select a valid experiment to run the task for this user')
-    parser.add_argument('-f', '--filename', default='experiment_data.json',
+    parser.add_argument('-f', '--filename', default=EXPERIMENT_DATA_FILENAME,
                         help='Provide a json filename to write the field data to. Ex, experiment_data.json')
     parser.add_argument('-v', '--validate', default=False,
                         help='Whether or not to validate the experiment before proceeding to data collection.')

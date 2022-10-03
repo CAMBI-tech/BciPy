@@ -3,6 +3,7 @@ import shutil
 import time
 import unittest
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition, max_inquiry_duration
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
@@ -13,7 +14,7 @@ class TestAcquisition(unittest.TestCase):
 
     def setUp(self):
         """set up the needed path for load functions."""
-        self.parameters_used = 'bcipy/parameters/parameters.json'
+        self.parameters_used = DEFAULT_PARAMETERS_PATH
         self.parameters = load_json_parameters(self.parameters_used,
                                                value_cast=True)
         self.data_save_path = 'data/'
@@ -31,7 +32,6 @@ class TestAcquisition(unittest.TestCase):
     def test_default_values(self):
         """Test default values."""
         self.parameters['acq_device'] = 'DSI'
-        self.parameters['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(self.parameters,
                                               self.save,
@@ -43,16 +43,15 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertEqual(client.device_info.name,
+        self.assertEqual(client.device_spec.name,
                          self.parameters['acq_device'])
-        self.assertEqual(client.device_info.fs, 300)
+        self.assertEqual(client.device_spec.sample_rate, 300)
 
     def test_lsl_client(self):
         """Test init_eeg_acquisition with LSL client."""
 
         params = self.parameters
         params['acq_device'] = 'DSI-24'
-        params['acq_connection_method'] = 'LSL'
 
         client, server = init_eeg_acquisition(params, self.save, server=True)
 
@@ -61,8 +60,8 @@ class TestAcquisition(unittest.TestCase):
         client.cleanup()
         server.stop()
 
-        self.assertEqual(client.device_info.name, 'DSI-24')
-        self.assertEqual(client.device_info.fs, 300)
+        self.assertEqual(client.device_spec.name, 'DSI-24')
+        self.assertEqual(client.device_spec.sample_rate, 300)
 
     def test_max_inquiry_duration(self):
         """Test the max inquiry duration function"""
@@ -72,7 +71,8 @@ class TestAcquisition(unittest.TestCase):
             'stim_length': 10,
             'time_flash': 0.25,
             'task_buffer_length': 0.75,
-            'prestim_length': 0
+            'prestim_length': 0,
+            'stim_jitter': 0
         }
 
         self.assertEqual(4.75, max_inquiry_duration(params))

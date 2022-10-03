@@ -1,19 +1,50 @@
 import os
 
+from bcipy.config import (
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME)
 from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
-from bcipy.helpers.exceptions import (
-    InvalidFieldException,
-    InvalidExperimentException,
-    UnregisteredExperimentException,
-    UnregisteredFieldException
-)
+from bcipy.helpers.system_utils import is_battery_powered, is_connected
+from bcipy.helpers.exceptions import (InvalidFieldException,
+                                      InvalidExperimentException,
+                                      UnregisteredExperimentException,
+                                      UnregisteredFieldException)
+from bcipy.gui.alert import confirm
+
+
+def validate_bcipy_session(parameters: dict) -> bool:
+    """Check pre-conditions for a BciPy session. If any possible problems are
+    detected, alert the user and prompt to continue.
+
+    Parameters
+    ----------
+    parameters - configuration used to check for issues
+
+    Returns
+    -------
+    True if it's okay to continue, otherwise False
+    """
+    possible_alerts = [(parameters['fake_data'], '* Fake data is on.'),
+                       (is_connected(), '* Internet is on.'),
+                       (is_battery_powered(), '* Operating on battery power')]
+    alert_messages = [
+        message for (condition, message) in possible_alerts if condition
+    ]
+    if alert_messages:
+        lines = [
+            "The following conditions may affect system behavior:\n",
+            *alert_messages, "\nDo you want to continue?"
+        ]
+        return confirm("\n".join(lines))
+    return True
 
 
 def validate_experiment(
         experiment_name: str,
-        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}',
-        field_path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}'
+        experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}',
+        field_path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}'
 ) -> bool:
     """Validate Experiment.
 

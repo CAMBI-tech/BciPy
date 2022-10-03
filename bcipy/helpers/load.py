@@ -6,16 +6,19 @@ from shutil import copyfile
 from time import localtime, strftime
 from typing import Any, Dict, List, Tuple
 
+from bcipy.config import (
+    ROOT,
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_PARAMETERS_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.system_utils import (DEFAULT_ENCODING,
-                                        DEFAULT_EXPERIMENT_PATH,
-                                        DEFAULT_FIELD_PATH,
-                                        EXPERIMENT_FILENAME,
-                                        FIELD_FILENAME)
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -45,7 +48,7 @@ def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
     return path
 
 
-def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}{EXPERIMENT_FILENAME}') -> dict:
+def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}') -> dict:
     """Load Experiments.
 
     PARAMETERS
@@ -83,7 +86,7 @@ def extract_mode(bcipy_data_directory: str) -> str:
     raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
 
 
-def load_fields(path: str = f'{DEFAULT_FIELD_PATH}{FIELD_FILENAME}') -> dict:
+def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
     """Load Fields.
 
     PARAMETERS
@@ -171,13 +174,14 @@ def load_signal_model(model_class: SignalModel,
         SignalModel: Model after loading pretrained parameters.
     """
     # use python's internal gui to call file explorers and get the filename
-
-    if not filename:
-        filename = ask_filename('*.pkl')
+    if not filename or Path(filename).is_dir():
+        filename = ask_filename('*.pkl', filename)
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)
     signal_model.load(filename)
+
+    log.info(f'Loaded signal model from {filename}')
 
     return signal_model, filename
 
@@ -246,8 +250,8 @@ def load_users(data_save_loc) -> List[str]:
         path = data_save_loc
 
     # check the directory is valid after adding bcipy, if it is, set path as data save location
-    elif os.path.isdir(f'bcipy/{data_save_loc}'):
-        path = f'bcipy/{data_save_loc}'
+    elif os.path.isdir(f'{ROOT}/{data_save_loc}'):
+        path = f'{ROOT}/{data_save_loc}'
 
     else:
         log.info(f'User save data location not found at [{data_save_loc}]! Returning empty user list.')

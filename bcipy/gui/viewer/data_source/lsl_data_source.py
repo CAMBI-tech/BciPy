@@ -1,6 +1,6 @@
 """Streams data from pylsl and puts it into a Queue."""
 import pylsl
-from bcipy.acquisition.device_info import DeviceInfo
+from bcipy.acquisition.protocols.lsl.lsl_client import device_from_metadata
 from bcipy.gui.viewer.data_source.data_source import DataSource
 
 
@@ -21,21 +21,8 @@ class LslDataSource(DataSource):
         self.stream_type = stream_type
         self.max_timeout_seconds = max_timeout_seconds
         streams = pylsl.resolve_stream('type', self.stream_type)
-        inlet = pylsl.StreamInlet(streams[0])
-        info = inlet.info()
-
-        fs = float(info.nominal_srate())
-        self.sample_rate = fs
-        print(f'Sample rate: {fs}')
-        name = info.name()
-        channel_names = []
-        ch = info.desc().child("channels").child("channel")
-        for k in range(info.channel_count()):
-            channel_names.append(ch.child_value("label"))
-            ch = ch.next_sibling()
-
-        self.device_info = DeviceInfo(fs=fs, channels=channel_names, name=name)
-        self.inlet = inlet
+        self.inlet = pylsl.StreamInlet(streams[0])
+        self.device_spec = device_from_metadata(self.inlet.info())
 
     def next(self):
         """Provide the next record."""

@@ -1,6 +1,7 @@
 from psychopy import core
 from typing import List, Tuple
 
+from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
@@ -50,12 +51,8 @@ class RSVPCalibrationTask(Task):
         self.file_save = file_save
         self.trigger_handler = TriggerHandler(
             self.file_save,
-            parameters['trigger_file_name'],
+            TRIGGER_FILENAME,
             FlushFrequency.EVERY)
-
-        self.wait_screen_message = parameters['wait_screen_message']
-        self.wait_screen_message_color = parameters[
-            'wait_screen_message_color']
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
@@ -66,10 +63,12 @@ class RSVPCalibrationTask(Task):
         self.timing = [parameters['time_prompt'],
                        parameters['time_fixation'],
                        parameters['time_flash']]
+        self.jitter = parameters['stim_jitter']
 
         self.color = [parameters['target_color'],
                       parameters['fixation_color'],
                       parameters['stim_color']]
+        self.wait_screen_message_color = self.color[-1]
 
         self.task_info_color = parameters['task_color']
 
@@ -95,6 +94,7 @@ class RSVPCalibrationTask(Task):
                                              target_positions=self.target_positions,
                                              nontarget_inquiries=self.nontarget_inquiries,
                                              timing=self.timing,
+                                             jitter=self.jitter,
                                              is_txt=self.rsvp.is_txt_stim,
                                              color=self.color)
 
@@ -118,7 +118,7 @@ class RSVPCalibrationTask(Task):
         run = True
 
         # Check user input to make sure we should be going
-        if not get_user_input(self.rsvp, self.wait_screen_message,
+        if not get_user_input(self.rsvp, WAIT_SCREEN_MESSAGE,
                               self.wait_screen_message_color,
                               first_run=True):
             run = False
@@ -136,7 +136,7 @@ class RSVPCalibrationTask(Task):
             for inquiry in range(len(task_text)):
 
                 # check user input to make sure we should be going
-                if not get_user_input(self.rsvp, self.wait_screen_message,
+                if not get_user_input(self.rsvp, WAIT_SCREEN_MESSAGE,
                                       self.wait_screen_message_color):
                     break
 
@@ -174,8 +174,7 @@ class RSVPCalibrationTask(Task):
             run = False
 
         # Say Goodbye!
-        self.rsvp.info_text = trial_complete_message(
-            self.window, self.parameters)
+        self.rsvp.info_text = trial_complete_message(self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -236,10 +235,10 @@ def init_calibration_display_task(
         info_pos=[(parameters['info_pos_x'],
                    parameters['info_pos_y'])],
         info_height=[parameters['info_height']],
-        info_font=[parameters['info_font']],
+        info_font=[parameters['font']],
         info_text=[parameters['info_text']],
     )
-    stimuli = StimuliProperties(stim_font=parameters['stim_font'],
+    stimuli = StimuliProperties(stim_font=parameters['font'],
                                 stim_pos=(parameters['stim_pos_x'],
                                           parameters['stim_pos_y']),
                                 stim_height=parameters['stim_height'],
@@ -250,7 +249,7 @@ def init_calibration_display_task(
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
         task_pos=(-.8, .85),
-        task_font=parameters['task_font'],
+        task_font=parameters['font'],
         task_height=parameters['task_height'],
         task_text=''
     )

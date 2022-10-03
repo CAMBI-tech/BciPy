@@ -7,7 +7,7 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple
+from typing import Iterator, List, Tuple, NamedTuple, Optional
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
@@ -20,6 +20,9 @@ from psychopy import core
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+from mne import Annotations, Epochs
+from mne.io import RawArray
+import mne
 
 
 log = logging.getLogger(__name__)
@@ -96,7 +99,7 @@ class InquiryReshaper:
                  trial_targetness_label: List[str],
                  timing_info: List[float],
                  eeg_data: np.ndarray,
-                 fs: int,
+                 sample_rate: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
                  channel_map: List[int] = None,
@@ -110,7 +113,7 @@ class InquiryReshaper:
             trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (List[float]): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of EEG data. If data is downsampled, the sample rate should be also be downsampled.
+            sample_rate (int): sample rate of data provided in eeg_data
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
@@ -134,11 +137,11 @@ class InquiryReshaper:
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         n_inquiry = len(timing_info) // trials_per_inquiry
-        trial_duration_samples = int(poststimulus_length * fs)
-        prestimulus_samples = int(prestimulus_length * fs)
+        trial_duration_samples = int(poststimulus_length * sample_rate)
+        prestimulus_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # First, find the longest inquiry in this experiment
         # We'll add or remove a few samples from all other inquiries, to match this length
@@ -147,7 +150,7 @@ class InquiryReshaper:
 
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
-        buffer_samples = int(transformation_buffer * fs)
+        buffer_samples = int(transformation_buffer * sample_rate)
 
         # Label for every inquiry
         labels = np.zeros(
@@ -199,7 +202,7 @@ class TrialReshaper(Reshaper):
                  trial_targetness_label: list,
                  timing_info: list,
                  eeg_data: np.ndarray,
-                 fs: int,
+                 sample_rate: int,
                  offset: float = 0,
                  channel_map: List[int] = None,
                  poststimulus_length: float = 0.5,
@@ -211,7 +214,7 @@ class TrialReshaper(Reshaper):
             trial_targetness_label (list): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (list): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
-            fs (int): sample rate of preprocessed EEG data
+            sample_rate (int): sample rate of preprocessed EEG data
             trials_per_inquiry (int, optional): unused, kept here for consistent interface with `inquiry_reshaper`
             offset (float, optional): Any calculated or hypothesized offsets in timings.
                 Defaults to 0.
@@ -230,11 +233,11 @@ class TrialReshaper(Reshaper):
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         # Number of samples we are interested per trial
-        poststim_samples = int(poststimulus_length * fs)
-        prestim_samples = int(prestimulus_length * fs)
+        poststim_samples = int(poststimulus_length * sample_rate)
+        prestim_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * fs), timing_info))
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
         targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
@@ -249,6 +252,20 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
+def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
+               trial_length: float, trigger_labels: List[int]) -> Epochs:
+    """MNE Epochs.
+
+    Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
+    each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
+    """
+    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+    mne_data.set_annotations(annotations)
+
+    events_from_annot, _ = mne.events_from_annotations(mne_data)
+    return Epochs(mne_data, events_from_annot)
+
+
 def alphabetize(stimuli: List[str]) -> List[str]:
     """Alphabetize.
 
@@ -261,6 +278,7 @@ def inq_generator(query: List[str],
                   timing: List[float] = [1, 0.2],
                   color: List[str] = ['red', 'white'],
                   inquiry_count: int = 1,
+                  stim_jitter: float = 0,
                   stim_order: StimuliOrder = StimuliOrder.RANDOM,
                   is_txt: bool = True) -> InquirySchedule:
     """ Given the query set, prepares the stimuli, color and timing
@@ -295,9 +313,9 @@ def inq_generator(query: List[str],
         sample += [i for i in query]
         samples.append(sample)
 
-        # append timing
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
+        times.append([timing[i] for i in range(len(timing) - 1)])
+        base_timing = timing[-1]
+        times[-1] += jittered_timing(base_timing, stim_jitter, stim_length)
 
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
@@ -414,6 +432,7 @@ def best_case_rsvp_inq_gen(alp: list,
 def calibration_inquiry_generator(
         alp: List[str],
         timing: List[float] = [0.5, 1, 0.2],
+        jitter: Optional[int] = None,
         color: List[str] = ['green', 'red', 'white'],
         stim_number: int = 10,
         stim_length: int = 10,
@@ -421,13 +440,14 @@ def calibration_inquiry_generator(
         target_positions: TargetPositions = TargetPositions.RANDOM,
         nontarget_inquiries: int = 10,
         is_txt: bool = True) -> InquirySchedule:
-    """Random Calibration Inquiry Generator.
+    """Calibration Inquiry Generator.
 
-    Generates random inquiries with target letters in all possible positions.
+    Generates inquiries with target letters in all possible positions.
         Args:
             alp(list[str]): stimuli
             timing(list[float]): Task specific timing for generator.
                 [target, fixation, stimuli]
+            jitter(int): jitter for stimuli timing. If None, no jitter is applied.
             color(list[str]): Task specific color for generator
                 [target, fixation, stimuli]
             stim_number(int): number of trials in a inquiry
@@ -473,12 +493,31 @@ def calibration_inquiry_generator(
         sample = [target, get_fixation(is_txt=is_txt), *inquiry]
 
         samples.append(sample)
-        times.append([timing[i] for i in range(len(timing) - 1)] +
-                     [timing[-1]] * stim_length)
+
+        # timing for fixation and prompt
+        init_timing = [timing[i] for i in range(len(timing) - 1)]
+        # pull out timing for the inquiry stimuli
+        stim_time = timing[-1]
+        if jitter:
+            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
+            inq_timing = init_timing + _inq_timing
+        else:
+            inq_timing = init_timing + [stim_time] * stim_length
+        times.append(inq_timing)
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
 
     return InquirySchedule(samples, times, colors)
+
+
+def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
+    """Jittered timing.
+
+    Using a base time and a jitter, generate a list (with length stim_count) of timing that is uniformly distributed.
+    """
+    assert time > jitter, (
+        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
+    return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
 
 def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
@@ -579,7 +618,6 @@ def play_sound(sound_file_path: str,
                track_timing: bool = False,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
-               sound_post_buffer_time: float = 1,
                experiment_clock=None,
                trigger_name: str = None,
                timing: list = []) -> list:
@@ -597,7 +635,6 @@ def play_sound(sound_file_path: str,
     :param: track_timing: whether or not to track timing of sound playin
     :param: sound_callback: trigger based callback (see MarkerWriter and NullMarkerWriter)
     :param: sound_load_buffer_time: time to wait after loading file before playing
-    :param: sound_post_buffer_time: time to wait after playing sound before returning
     :param: experiment_clock: psychopy clock to get time of sound stimuli
     :param: trigger_name: name of the sound trigger
     :param: timing: list of triggers in the form of trigger name, trigger timing
@@ -625,11 +662,9 @@ def play_sound(sound_file_path: str,
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
     # which I believe happens prior to the sound playing).
     sd.play(data, fs)
-    if sound_post_buffer_time:
-        # sd.play returns immediately (according to the docs); calculate offset
-        # so the sound_post_buffer_time accounts for the duration of the sound.
-        duration = len(data) / fs
-        core.wait(sound_post_buffer_time + duration)
+    # sd.play returns immediately (according to the docs); wait for the duration of the sound
+    duration = len(data) / fs
+    core.wait(duration)
     return timing
 
 
@@ -662,3 +697,43 @@ def get_fixation(is_txt: bool) -> str:
         return '+'
     else:
         return DEFAULT_FIXATION_PATH
+
+
+def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
+    """Convert SSVEP to Code.
+
+    Converts a SSVEP (steady state visual evoked potential; ex. 10 Hz) to a code (0,1)
+    given the refresh rate of the monitor (Hz) provided and a desired flicker rate (Hz).
+
+    Parameters:
+    -----------
+        refresh_rate: int, refresh rate of the monitor (Hz)
+        flicker_rate: int, desired flicker rate (Hz)
+    Returns:
+    --------
+        list of 0s and 1s that represent the code for the SSVEP on the monitor.
+    """
+    if flicker_rate > refresh_rate:
+        raise BciPyCoreException('flicker rate cannot be greater than refresh rate')
+    if flicker_rate <= 1:
+        raise BciPyCoreException('flicker rate must be greater than 1')
+
+    # get the number of frames per flicker
+    length_flicker = refresh_rate / flicker_rate
+
+    if length_flicker.is_integer():
+        length_flicker = int(length_flicker)
+    else:
+        err_message = f'flicker rate={flicker_rate} is not an integer multiple of refresh rate={refresh_rate}'
+        log.exception(err_message)
+        raise BciPyCoreException(err_message)
+
+    # start the first frames as off (0) for length of flicker;
+    # it will then toggle on (1)/ off (0) for length of flicker until all frames are filled for refresh rate.
+    t = 0
+    codes = []
+    for _ in range(flicker_rate):
+        codes += [t] * length_flicker
+        t = 1 - t
+
+    return codes

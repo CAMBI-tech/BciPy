@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.acquisition.devices import DeviceSpec, register
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
@@ -28,7 +29,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         cls.device_spec = DeviceSpec(name="dummy_device", channels=["1", "2", "3"], sample_rate=10)
         register(cls.device_spec)
 
-        cls.params_used = "bcipy/parameters/parameters.json"
+        cls.params_used = DEFAULT_PARAMETERS_PATH
         cls.params = load_json_parameters(cls.params_used, value_cast=True)
 
         # # Generate fake data and train a model
@@ -77,7 +78,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
-            stimuli_timing=[0.5, 0.25],
+            stim_timing=[0.5, 0.25],
         )
 
         triggers = [
@@ -182,7 +183,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
             device_channels=self.device_spec.channels,
-            stimuli_timing=[0.5, 0.25],
+            stim_timing=[0.5, 0.25],
             notch_filter_frequency=4.0,
             filter_low=1.0,
             filter_high=4.0,

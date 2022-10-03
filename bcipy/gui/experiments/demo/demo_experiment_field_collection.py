@@ -1,5 +1,5 @@
 from bcipy.helpers.session import collect_experiment_field_data
-from bcipy.helpers.system_utils import DEFAULT_EXPERIMENT_ID
+from bcipy.config import DEFAULT_EXPERIMENT_ID
 
 
 experiment_name = DEFAULT_EXPERIMENT_ID
