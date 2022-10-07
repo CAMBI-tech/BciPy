@@ -1,0 +1,980 @@
+{
+  "fake_data": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Fake EEG Data On/Off",
+    "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "acq_device": {
+    "value": "DSI-24",
+    "section": "acq_config",
+    "readableName": "Acquisition Device",
+    "helpTip": "Specifies the hardware used for EEG data collection.",
+    "recommended_values": [
+      "DSI-24",
+      "DSI-VR300",
+      "g.USBamp-1"
+    ],
+    "type": "str"
+  },
+  "acq_connection_method": {
+    "value": "LSL",
+    "section": "acq_connection_method",
+    "readableName": "Acquisition Connection Method",
+    "helpTip": "Specifies the method used to connect to the data acquisition device (LSL or TCP). Default: LSL",
+    "recommended_values": [
+      "LSL",
+      "TCP"
+    ],
+    "type": "str"
+  },
+  "acq_host": {
+    "value": "127.0.0.1",
+    "section": "acq_config",
+    "readableName": "TCP Connection Host",
+    "helpTip": "Specifies the host for a TCP connection (used when Acquisition Connection Method is set to 'TCP'). Default: 127.0.0.1",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "acq_port": {
+    "value": "9000",
+    "section": "acq_config",
+    "readableName": "TCP Connection Port",
+    "helpTip": "Specifies the port for a TCP connection (used when Acquisition Connection Method is set to ‘TCP’). Default: 9000",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trigger_type": {
+    "value": "text",
+    "section": "bci_config",
+    "readableName": "Trigger Stimulus Type",
+    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: text",
+    "recommended_values": [
+      "image",
+      "text"
+    ],
+    "type": "str"
+  },
+  "static_trigger_offset": {
+    "value": "0.10",
+    "section": "bci_config",
+    "readableName": "Static Trigger Offset",
+    "helpTip": "Specifies the static trigger offset (in seconds) used to align triggers properly with EEG data from LSL. The system includes built-in offset correction, but there is still a hardware-limited offset between EEG and trigger timing values for which the system does not account. The default value of 0.1 has been verified for OHSU hardware. The correct value may be different for other computers, and must be determined on a case-by-case basis. Default: .1",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "k_folds": {
+    "value": "10",
+    "section": "signal_config",
+    "readableName": "Number of Cross-Validation Folds",
+    "helpTip": "Specifies the number of folds used for cross-validation when calculating AUC. Default: 10",
+    "recommended_values": "[10]",
+    "type": "int"
+  },
+  "trial_length": {
+    "value": "0.50",
+    "section": "bci_config",
+    "readableName": "Data Collection Window Length",
+    "helpTip": "Specifies the length (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.5",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "prestim_length": {
+    "value": "1.00",
+    "section": "bci_config",
+    "readableName": "Prestimulus Window Length",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before inquiry presentation. Default: 1",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "offline_analysis_tone": {
+    "value": "bcipy/static/sounds/beep.wav",
+    "section": "bci_config",
+    "readableName": "Offline Analysis Alert Tone",
+    "helpTip": "Specifies the path to an audio file to be played as an alert tone when offline analysis is complete. Default: bcipy/static/sounds/beep.wav",
+    "recommended_values": "",
+    "type": "filepath"
+  },
+  "signal_model_path": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Signal Model Path",
+    "helpTip": "Directory of the pre-trained signal model. This is often the the calibration session directory.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "filter_high": {
+    "value": "20.00",
+    "section": "signal_config",
+    "readableName": "High Frequency Filter Cutoff",
+    "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",
+    "recommended_values": [
+      "20",
+      "45",
+      "50"
+    ],
+    "type": "float"
+  },
+  "filter_low": {
+    "value": "1.00",
+    "section": "signal_config",
+    "readableName": "Low Frequency Filter Cutoff",
+    "helpTip": "Specifies the frequency bound (in Hz) of the high-pass filter (low cutoff). Default: 1",
+    "recommended_values": [
+      "1",
+      "2"
+    ],
+    "type": "float"
+  },
+  "filter_order": {
+    "value": "2.00",
+    "section": "signal_config",
+    "readableName": "Filter Order",
+    "helpTip": "Specifies the slope of the low-pass and high-pass filters. Default: 2",
+    "recommended_values": [
+      "2",
+      "3"
+    ],
+    "type": "float"
+  },
+  "notch_filter_frequency": {
+    "value": "60.00",
+    "section": "signal_config",
+    "readableName": "Notch Filter Frequency",
+    "helpTip": "Specifies the frequency (in Hz) of the notch filter used to remove electrical artifact from the surrounding environment. Default: 60",
+    "recommended_values": [
+      "59",
+      "60"
+    ],
+    "type": "float"
+  },
+  "down_sampling_rate": {
+    "value": "2",
+    "section": "signal_config",
+    "readableName": "Downsampling Rate",
+    "helpTip": "Specifies the decimation factor (integer only) for downsampling of EEG data. Default: 2",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "artifact_rejection": {
+    "value": "false",
+    "section": "artifact_rejection",
+    "readableName": "Artifact Rejection On/Off",
+    "helpTip": "If ‘true’, the system will detect and reject inquiries containing unwanted artifacts (e.g. blinks). This is not implemented in the current version of the system.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "high_voltage_threshold": {
+    "value": "false",
+    "section": "artifact_rejection",
+    "readableName": "High Voltage Threshold On/Off",
+    "helpTip": "If ‘true’, an upper voltage threshold will be set for artifact rejection. Detection of values above the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "high_voltage_value": {
+    "value": "100000.00",
+    "section": "artifact_rejection",
+    "readableName": "High Voltage Threshold Value",
+    "helpTip": "Specifies the high voltage threshold (in microvolts) for artifact rejection (High Voltage Threshold must be set to ‘true’). Default: 75E+6. This is not implemented in the current version of the system.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "low_voltage_threshold": {
+    "value": "false",
+    "section": "artifact_rejection",
+    "readableName": "Low Voltage Threshold On/Off",
+    "helpTip": "If ‘true’, a lower voltage threshold will be set for artifact rejection. Detection of values below the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "low_voltage_value": {
+    "value": "0.00",
+    "section": "artifact_rejection",
+    "readableName": "LowVoltage Threshold Value",
+    "helpTip": "Specifies the low voltage threshold (in microvolts) for artifact rejection (Low Voltage Threshold must be set to ‘true’). Default: -75E-6 This is not implemented in the current version of the system.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "buffer_name": {
+    "value": "raw_data.db",
+    "section": "bci_config",
+    "readableName": "Buffer Database Filename",
+    "helpTip": "Specifies the filename for EEG buffer database storage. Default: raw_data.db",
+    "recommended_values": "",
+    "type": "filepath"
+  },
+  "raw_data_name": {
+    "value": "raw_data.csv",
+    "section": "bci_config",
+    "readableName": "Raw Data Filename",
+    "helpTip": "Specifies the filename for EEG data storage in a CSV. Default: raw_data.csv",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "experiment_data_name": {
+    "value": "experiment_data.json",
+    "section": "bci_config",
+    "readableName": "Experiment Data Filename",
+    "helpTip": "Specifies the filename for field data collected for your experiment",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "trigger_file_name": {
+    "value": "triggers",
+    "section": "bci_config",
+    "readableName": "Triggers Filename",
+    "helpTip": "Specifies the filename for an output file with trigger timing information. Default: triggers",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "session_file_name": {
+    "value": "session.json",
+    "section": "bci_config",
+    "readableName": "Session Data Filename",
+    "helpTip": "Specifies the filename for session data from a typing task or other non-calibration task. Default: session.json",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "summarize_session": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Summarize Session Data",
+    "helpTip": "If 'true', writes an Excel file which summarizes the session data by charting evidence per inquiry.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "log_name": {
+    "value": "bcipy_system_log.txt",
+    "section": "bci_config",
+    "readableName": "System Log Filename",
+    "helpTip": "Specifies the name of the main log file for each BciPy session. Default: bcipy_system_log.txt",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "trial_complete_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Trail Complete Message Color",
+    "helpTip": "Trail Complete Message Color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "trial_complete_message": {
+    "value": "Complete! Saving data...",
+    "section": "bci_config",
+    "readableName": "Trial Complete Message",
+    "helpTip": "Message that displays at the end of trial",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "parameter_location": {
+    "value": "C:/Users/tabme/Desktop/bci/BciPy/bcipy/parameters/IPC/parameters_IPC_e_LAUGH.json",
+    "section": "bci_config",
+    "readableName": "Parameter File",
+    "helpTip": "Specifies the file containing the current system parameters. Default: bcipy/parameters/parameters.json",
+    "recommended_values": [
+      "parameters/parameters.json"
+    ],
+    "type": "filepath"
+  },
+  "data_save_loc": {
+    "value": "data/",
+    "section": "bci_config",
+    "readableName": "Data Save Location",
+    "helpTip": "Specifies the location in which to save data files after each recording. This must be a directory ending with /. Default: data/",
+    "recommended_values": [
+      "data/"
+    ],
+    "type": "directorypath"
+  },
+  "full_screen": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Full Screen Mode On/Off",
+    "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "window_height": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Task Window Height",
+    "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "window_width": {
+    "value": "500",
+    "section": "bci_config",
+    "readableName": "Task Window Width",
+    "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "acq_show_viewer": {
+    "value": "false",
+    "section": "acq_config",
+    "readableName": " EEG Viewer On/Off",
+    "helpTip": "If ‘true’, the EEG signal viewer will be displayed.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "stim_screen": {
+    "value": "0",
+    "section": "bci_config",
+    "readableName": "Task Display Monitor",
+    "helpTip": "Specifies which monitor to use for task display when two monitors are in use. If ‘0’, the task will be displayed on the primary monitor (with the EEG signal viewer on the second monitor, if EEG Viewer On/Off is set to ‘true’). If ‘1’, the opposite monitor assignment will be used.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "task_buffer_length": {
+    "value": "2.00",
+    "section": "bci_config",
+    "readableName": "Inter-inquiry Interval",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "is_txt_stim": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Text Stimuli On/Off",
+    "helpTip": "If ‘true’, text stimuli will be used. If ‘false’, image stimuli will be loaded from the folder specified in Image Stimulus Folder.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "path_to_presentation_images": {
+    "value": "bcipy/static/images/rsvp/",
+    "section": "bci_config",
+    "readableName": "Image Stimulus Folder",
+    "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "stim_space_char": {
+    "value": "–",
+    "section": "bci_config",
+    "readableName": "Space Character",
+    "helpTip": "Specifies the text or Unicode character which represents a space during text-stimuli tasks. Default: –",
+    "recommended_values": [
+      "_",
+      "–",
+      "‒",
+      "□"
+    ],
+    "type": "str"
+  },
+  "stim_order": {
+    "value": "random",
+    "section": "bci_config",
+    "readableName": "Stimuli Order",
+    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is random.",
+    "recommended_values": [
+      "alphabetical",
+      "random"
+    ],
+    "type": "str"
+  },
+  "target_positions": {
+    "value": "distributed",
+    "section": "bci_config",
+    "readableName": "Target Positions",
+    "helpTip": "Specifies the positions of target stimuli in calibration task. Default is random.",
+    "recommended_values": [
+      "distributed",
+      "random"
+    ],
+    "type": "str"
+  },
+  "nontarget_inquiries": {
+    "value": "9",
+    "section": "bci_config",
+    "readableName": "Percentage of Nontarget Inquiries",
+    "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "stim_length": {
+    "value": "10",
+    "section": "bci_config",
+    "readableName": "Stimuli Per inquiry",
+    "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "time_flash": {
+    "value": "0.20",
+    "section": "bci_config",
+    "readableName": "Stimulus Presentation Duration",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in the RSVP stream.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "time_prompt": {
+    "value": "1.00",
+    "section": "bci_config",
+    "readableName": "Time Prompt Stimuli (sec)",
+    "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "time_fixation": {
+    "value": "0.50",
+    "section": "bci_config",
+    "readableName": "Time Fixation Stimuli (sec)",
+    "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_pos_x": {
+    "value": "0.00",
+    "section": "bci_config",
+    "readableName": "Stimulus Position Horizontal",
+    "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_pos_y": {
+    "value": "0.00",
+    "section": "bci_config",
+    "readableName": "Stimulus Position Vertical",
+    "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_font": {
+    "value": "Overpass Mono",
+    "section": "bci_config",
+    "readableName": "Stimulus Font",
+    "helpTip": "Specifies the font used for text stimuli. Default: Arial",
+    "recommended_values": [
+      "Courier New",
+      "Lucida Sans",
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
+    ],
+    "type": "str"
+  },
+  "stim_height": {
+    "value": "0.55",
+    "section": "bci_config",
+    "readableName": "Stimulus Size",
+    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "stim_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Stimulus Color",
+    "helpTip": "Specifies the color of text stimuli within the RSVP stream. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "target_color": {
+    "value": "yellow",
+    "section": "bci_config",
+    "readableName": "Target Color",
+    "helpTip": "Specifies the color of target characters during calibration. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "fixation_color": {
+    "value": "red",
+    "section": "bci_config",
+    "readableName": "Fixation Cross Color",
+    "helpTip": "Specifies the color of the fixation cross that appears before each inquiry. Default: red",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "alert_sounds_path": {
+    "value": "bcipy/static/sounds/rsvp/",
+    "section": "bci_config",
+    "readableName": "Alert sounds directory",
+    "helpTip": "Specifies the location of audio files to be presented with visual stimuli during the Alert Tone Calibration Task. This must be a directory ending with /. Default: bcipy/static/sounds/rsvp/",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "alert_sound_delay": {
+    "value": "0.40",
+    "section": "bci_config",
+    "readableName": "Alert Sound Delay",
+    "helpTip": "Delay (in seconds) between playing an alert tone and presenting the target during the Alert Tone Calibration Task. Default: 0.4",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "background_color": {
+    "value": "black",
+    "section": "bci_config",
+    "readableName": "Task Background Color",
+    "helpTip": "Specifies the color of the task background. Default: black",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "info_pos_x": {
+    "value": "0.00",
+    "section": "bci_config",
+    "readableName": "Position Text (X)",
+    "helpTip": "Position Text (X)",
+    "recommended_values": [
+      "0"
+    ],
+    "type": "float"
+  },
+  "info_pos_y": {
+    "value": "0.00",
+    "section": "bci_config",
+    "readableName": "Position Text (Y)",
+    "helpTip": "Position Text (Y)",
+    "recommended_values": [
+      "-0.75"
+    ],
+    "type": "float"
+  },
+  "info_text": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Text below main presentation",
+    "helpTip": "Text below main presentation",
+    "recommended_values": [
+      "",
+      "Demo Text",
+      "DEMO"
+    ],
+    "type": "str"
+  },
+  "info_height": {
+    "value": "0.10",
+    "section": "bci_config",
+    "readableName": "Text below main presentation height",
+    "helpTip": "Specifies the height of info text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended_values": [
+      "0.1"
+    ],
+    "type": "float"
+  },
+  "info_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Color Text",
+    "helpTip": "Color Text",
+    "recommended_values": [
+      "white",
+      "black",
+      "blue"
+    ],
+    "type": "str"
+  },
+  "info_font": {
+    "value": "Overpass Mono",
+    "section": "bci_config",
+    "readableName": "Font Text",
+    "helpTip": "Font Text",
+    "recommended_values": [
+      "Courier New",
+      "Lucida Sans",
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
+    ],
+    "type": "str"
+  },
+  "session_complete_message": {
+    "value": "Complete! Saving data...",
+    "section": "bci_config",
+    "readableName": "Session Complete Message",
+    "helpTip": "Specifies the message displayed at the end of an RSVP session.",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "session_complete_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Session Complete Message Color",
+    "helpTip": "Specifies the text color for the message displayed at the end of an RSVP session. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "task_font": {
+    "value": "Overpass Mono",
+    "section": "bci_config",
+    "readableName": "Task Text Font",
+    "helpTip": "Specifies the font used for task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: Arial",
+    "recommended_values": [
+      "Courier New",
+      "Lucida Sans",
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
+    ],
+    "type": "str"
+  },
+  "task_text": {
+    "value": "DO_NOT_MAKE_ME_LAUGH",
+    "section": "bci_config",
+    "readableName": "Target Phrase",
+    "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "task_height": {
+    "value": "0.10",
+    "section": "bci_config",
+    "readableName": "Task Text Size",
+    "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended_values": [
+      "0.1"
+    ],
+    "type": "float"
+  },
+  "task_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Task Text Color",
+    "helpTip": "Specifies the color of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "wait_screen_message": {
+    "value": "Press Space to start or Esc to exit",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message",
+    "helpTip": "Specifies the message displayed before starting a session and during pauses. Default: Press Space to start or Esc to exit",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "wait_screen_message_color": {
+    "value": "white",
+    "section": "bci_config",
+    "readableName": "Wait Screen Message Color",
+    "helpTip": "Specifies the text color of the message displayed before starting a session and during pauses. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "stim_number": {
+    "value": "110",
+    "section": "bci_config",
+    "readableName": "Number of Calibration inquiries",
+    "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "enable_breaks": {
+    "value": "false",
+    "section": "bci_config",
+    "readableName": "Automatic Calibration Breaks On/Off",
+    "helpTip": "If ‘true’, automatic breaks will be added to the calibration session. If ‘false’, automatic breaks will not occur, but the session can still be paused by pressing Space.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "break_len": {
+    "value": "30",
+    "section": "bci_config",
+    "readableName": "Automatic Calibration Break Length",
+    "helpTip": "Specifies the length (in seconds) of automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "trials_before_break": {
+    "value": "20",
+    "section": "bci_config",
+    "readableName": "Automatic Calibration Break Timing",
+    "helpTip": "Specifies the number of inquiries between automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "break_message": {
+    "value": "Take a break!",
+    "section": "bci_config",
+    "readableName": "Automatic Calibration Break Message",
+    "helpTip": "Specifies the message displayed during automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "min_inq_len": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Inquiry Length",
+    "helpTip": "The minimum number of inquiries to present in spelling tasks",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
+  "max_inq_len": {
+    "value": "50",
+    "section": "bci_config",
+    "readableName": "Maximum Inquiry Length",
+    "helpTip": "Specifies the maximum number of inquiries to present in copy/spelling tasks. The task will end if this number is reached.",
+    "recommended_values": [
+      "20",
+      "25"
+    ],
+    "type": "int"
+  },
+  "max_minutes": {
+    "value": "20",
+    "section": "bci_config",
+    "readableName": "Maximum Task Length (Time)",
+    "helpTip": "Specifies the time limit (in minutes) for copy/spelling tasks. The task will end if this time limit is reached.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "max_selections": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Maximum Number of Selections",
+    "helpTip": "The maximum number of selections for copy/spelling tasks. The task will end if this number is reached.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "decision_threshold": {
+    "value": "0.80",
+    "section": "bci_config",
+    "readableName": "Decision Threshold",
+    "helpTip": "Specifies the decision threshold for stimulus selection in copy/spelling class. If the posterior probability (combining EEG and language model evidence) for a stimulus reaches this threshold, it will be selected. Possible value range: 0.0-1.0. Default: 0.8",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "min_inq_per_series": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Minimum Inquiries Per Series",
+    "helpTip": "Specifies the minimum number of inquiries to present before making a decision in copy/spelling tasks. Default: 1",
+    "recommended_values": [
+      "1"
+    ],
+    "type": "int"
+  },
+  "max_inq_per_series": {
+    "value": "8",
+    "section": "bci_config",
+    "readableName": "Maximum Inquiries Per Series",
+    "helpTip": "Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks.",
+    "recommended_values": [
+      "10",
+      "15"
+    ],
+    "type": "int"
+  },
+  "backspace_always_shown": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Always Show Backspace On/Off",
+    "helpTip": "If ‘true’, the backspace character will be included in every inquiry in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in inquiries only when warranted by EEG/language model evidence.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "spelled_letters_count": {
+    "value": "15",
+    "section": "bci_config",
+    "readableName": "Pre-Selected Letters Count",
+    "helpTip": "Specifies the number of letters in the target phrase that are already typed when the task begins, e.g. if the target phrase is “THE_DOG”, setting this parameter to ‘4’ would display “THE_” as the typed string, and the user would begin typing with D. If ‘0’, the typed string will be blank.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "lang_model_type": {
+    "value": "GPT2",
+    "section": "lang_model_config",
+    "readableName": "Language Model Type",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
+    "recommended_values": [
+      "GPT2",
+      "UNIFORM"
+    ],
+    "type": "str"
+  },
+  "lm_path": {
+    "value": "C:/Users/tabme/Desktop/gpt2",
+    "section": "bci_config",
+    "readableName": "Language Model Path",
+    "helpTip": "Pretrained model name or path.",
+    "recommended_values": "",
+    "type": "directorypath"
+  },
+  "lm_backspace_prob": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Backspace Probability",
+    "helpTip": "Specifies the initial probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.05",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "show_preview_inquiry": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry On/Off",
+    "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "preview_inquiry_progress_method": {
+    "value": "1",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Progression Method",
+    "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 0 = preview only; 1 = press to confirm; 2 = press to skip to another inquiry",
+    "recommended_values": [
+      "0",
+      "1",
+      "2"
+    ],
+    "type": "int"
+  },
+  "preview_inquiry_length": {
+    "value": "5.00",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Display Length",
+    "helpTip": "Length of time in seconds to present an inquiry preview to the user.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "preview_inquiry_key_input": {
+    "value": "return",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Display Key Input Method",
+    "helpTip": "Defines the key used to engage with inquiry preview.",
+    "recommended_values": [
+      "space",
+      "escape",
+      "return"
+    ],
+    "type": "str"
+  },
+  "preview_inquiry_isi": {
+    "value": "1.00",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Inter-Stimulus Interval",
+    "helpTip": "The time between previewing an inquiry and the start of an inquiry.",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "show_feedback": {
+    "value": "true",
+    "section": "feedback_config",
+    "readableName": "Task Feedback On/Off",
+    "helpTip": "If ‘true’, feedback in tasks that support it.",
+    "recommended_values": "",
+    "type": "bool"
+  },
+  "feedback_buffer_time": {
+    "value": "1.00",
+    "section": "feedback_config",
+    "readableName": "Feedback Delay Time",
+    "helpTip": "Specifies the length of time (in seconds) between the end of a inquiry and the onset of feedback display in the feedback calibration task. Default: 1",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_flash_time": {
+    "value": "2.00",
+    "section": "feedback_config",
+    "readableName": "Feedback Display Time",
+    "helpTip": "Specifies the length of time (in seconds) feedback will be displayed after each inquiry in the feedback calibration task. Default: 2",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_pos_x": {
+    "value": "0.00",
+    "section": "feedback_config",
+    "readableName": "Feedback Position Horizontal",
+    "helpTip": "Specifies the position of the left edge of the feedback display on the screen. Possible values range from -1 to 1, with 0 representing the center. Default: -0.72",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_pos_y": {
+    "value": "0.00",
+    "section": "feedback_config",
+    "readableName": "Feedback Position Vertical",
+    "helpTip": "Specifies the position of the upper edge of the feedback display on the screen. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_stim_height": {
+    "value": "0.20",
+    "section": "feedback_config",
+    "readableName": "Feedback Stimuli Height",
+    "helpTip": "Specifies the height of the feedback stimuli. See https://www.psychopy.org/general/units.html. Default: 0.2",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_font": {
+    "value": "Overpass Mono",
+    "section": "feedback_config",
+    "readableName": "feedback_font",
+    "helpTip": "feedback_font",
+    "recommended_values": [
+      "Courier New",
+      "Lucida Sans",
+      "Consolas",
+      "Inter",
+      "Catamaran",
+      "Dongle"
+    ],
+    "type": "str"
+  },
+  "feedback_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "feedback_color",
+    "helpTip": "feedback_color",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_stim_width": {
+    "value": "0.35",
+    "section": "feedback_config",
+    "readableName": "Feedback Box Width",
+    "helpTip": "Specifies the width of the LevelFeedback boxes in pixels. Default: 0.35",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_line_width": {
+    "value": "1.00",
+    "section": "feedback_config",
+    "readableName": "Feedback Box Outline Width",
+    "helpTip": "Specifies the stroke width of the LevelFeedback box outline. Default: 1",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_line_color": {
+    "value": "white",
+    "section": "feedback_config",
+    "readableName": "Feedback Box Outline Color",
+    "helpTip": " Specifies the color of the LevelFeedback box outline. Default: white",
+    "recommended_values": "",
+    "type": "str"
+  },
+  "feedback_padding": {
+    "value": "0.37",
+    "section": "feedback_config",
+    "readableName": "Feedback Box Spacing",
+    "helpTip": "Specifies the distance between LevelFeedback boxes. Default: 0.37",
+    "recommended_values": "",
+    "type": "float"
+  },
+  "feedback_target_line_width": {
+    "value": "100",
+    "section": "feedback_config",
+    "readableName": "Feedback Target Outline Width",
+    "helpTip": "Specifies the stroke width of the target feedback box outline using LevelFeedback. Default: 100",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "psd_method": {
+    "value": "Welch",
+    "section": "bci_config",
+    "readableName": "Power Spectral Density Method",
+    "helpTip": "Specifies the method used to approximate power spectral density bands (Welch or MultiTaper). Default: Welch",
+    "recommended_values": [
+      "Welch",
+      "MutliTaper"
+    ],
+    "type": "str"
+  }
+}
