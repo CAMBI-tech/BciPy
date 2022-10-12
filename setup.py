@@ -11,9 +11,9 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.6,<3.9'
+REQUIRES_PYTHON = '~=3.8'
 
-VERSION = '2.0.0rc2'
+VERSION = '2.0.1rc2'
 
 
 # What packages are required for this module to be executed?
