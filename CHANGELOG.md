@@ -1,3 +1,7 @@
+# 2.0.1-rc.2
+
+Small patch release to fix a missing import in helpers/parameters.py
+
 # 2.0.0-rc.2
 
 ## Contributions

@@ -5,7 +5,7 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Dict, NamedTuple, Tuple
 
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
 
 class Parameter(NamedTuple):
