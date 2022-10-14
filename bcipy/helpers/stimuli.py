@@ -252,8 +252,14 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
-def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
-               trial_length: float, trigger_labels: List[int]) -> Epochs:
+def mne_epochs(mne_data: RawArray,
+               trigger_timing: List[float],
+               trial_length: float,
+               trigger_labels: List[int],
+               reject_by_annotation: bool = False,
+               channels: Optional[List[str]] = None,
+               detrend: int = 1,
+               baseline: Optional[Tuple[float, float]] = None) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
@@ -263,7 +269,15 @@ def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
     mne_data.set_annotations(annotations)
 
     events_from_annot, _ = mne.events_from_annotations(mne_data)
-    return Epochs(mne_data, events_from_annot)
+    # If 0 or 1, the data channels (MEG and EEG) will be detrended when loaded. 0 is a constant (DC) detrend
+    # 1 is a linear detrend. None is no detrending.
+    return Epochs(
+        mne_data,
+        events_from_annot,
+        reject_by_annotation=reject_by_annotation,
+        detrend=detrend,
+        baseline=baseline,
+        picks=channels)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:

@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -201,7 +201,7 @@
     "type": "directorypath"
   },
   "full_screen": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Full Screen Mode On/Off",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
@@ -645,7 +645,7 @@
     "type": "float"
   },
   "show_preview_inquiry": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Preview Inquiry On/Off",
     "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
