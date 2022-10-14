@@ -14,7 +14,7 @@
         "channels": [ "P4", "Fz", "Pz", "F7", "PO8", "PO7", "Oz", "TRG" ],
         "sample_rate": 300.0,
         "description": "Wearable Sensing DSI-VR300",
-        "excluded_from_analysis": ["TRG"]
+        "excluded_from_analysis": ["TRG", "F7"]
     },
     {
         "name": "g.USBamp-1",

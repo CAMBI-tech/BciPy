@@ -32,7 +32,7 @@
     "type": "str"
   },
   "static_trigger_offset": {
-    "value": "0.100",
+    "value": "0.093",
     "section": "bci_config",
     "readableName": "Static Trigger Offset",
     "helpTip": "Specifies the static trigger offset (in seconds) used to align triggers properly with EEG data from LSL. The system includes built-in offset correction, but there is still a hardware-limited offset between EEG and trigger timing values for which the system does not account. The default value of 0.1 has been verified for OHSU hardware. The correct value may be different for other computers, and must be determined on a case-by-case basis. Default: .1",
@@ -316,7 +316,7 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.20",
     "section": "bci_config",
     "readableName": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
@@ -364,7 +364,7 @@
     "type": "float"
   },
   "font": {
-    "value": "Consolas",
+    "value": "Overpass Mono",
     "section": "bci_config",
     "readableName": "Font",
     "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
@@ -392,7 +392,7 @@
     "type": "str"
   },
   "target_color": {
-    "value": "white",
+    "value": "yellow",
     "section": "bci_config",
     "readableName": "Target Color",
     "helpTip": "Specifies the color of target characters during calibration. Default: white",
