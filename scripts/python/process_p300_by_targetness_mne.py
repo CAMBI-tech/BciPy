@@ -30,7 +30,7 @@ from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 
 
-def main(path, percent_bad=10.0, semi_automatic_ar=True):
+def main(path, percent_bad=10.0, semi_automatic_ar=True, save_artifacts=False):
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
@@ -78,12 +78,15 @@ def main(path, percent_bad=10.0, semi_automatic_ar=True):
     # artifact handling pipeline
     mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, plot=semi_automatic_ar)
 
+    if save_artifacts:
+        mne_data.save(f'{path}/artifacts_raw.fif', overwrite=True)
+
     epochs = mne_epochs(
         mne_data,
         trigger_timing,
         poststim_length,
         labels,
-        baseline=(-0.05, 0), # note baseline here!
+        baseline=(-0.2, 0), # note baseline here!
         reject_by_annotation=True,
         channels=None)
     epochs.drop_bad()
@@ -166,8 +169,8 @@ def semi_automatic_ica(data, n_components=0.99, method='fastica'):
 
 def label_eog_events(
         raw,
-        preblink=1,
-        postblink=1,
+        preblink=.5,
+        postblink=.5,
         label='BAD blink',
         eye_channels=['Fp1', 'Fp2', 'F7', 'F8']):
     """Label EOG artifacts.
@@ -204,12 +207,12 @@ def label_eog_events(
 
 def label_voltage_events(
         raw: mne.io.RawArray,
-        preemg: float=0.5,
-        postemg: float=0.5,
+        preemg: float=0.25,
+        postemg: float=0.25,
         label: str='BAD peak',
         min_duration: float=0.05,
-        threshold: float=140e-6,
-        flat: float=1e-6,
+        threshold: float=125e-6,
+        flat: float=.5e-6,
         bad_percent_per_channel: Union[float, int]=15.0):
     """Label EMG artifacts
 
@@ -236,15 +239,10 @@ def label_voltage_events(
     (mne.Annotations, list) | None
 
     """
-    # emg_annotations, scores = mne.preprocessing.annotate_muscle_zscore(
-    #                                 raw,
-    #                                 threshold=5,
-    #                                 ch_type='eeg',
-    #                                 min_length_good=min_duration)
-    # import pdb; pdb.set_trace()
     emg_annotations, bad_channels = mne.preprocessing.annotate_amplitude(
         raw,
         min_duration=min_duration,
+        bad_percent=bad_percent_per_channel,
         peak=threshold,
         flat=flat)
 
@@ -322,15 +320,17 @@ if __name__ == "__main__":
             print(f'Processing {session}')
 
             resp = main(session, semi_automatic_ar=True)
-            import pdb; pdb.set_trace()
             if resp:
                 epochs, positions, mne_data = resp
+                # mne_data.save(f'{session}/mne_annotated_eeg.fif', overwrite=True)
                 all_epochs.append(epochs)
                 all_mne_data.append(mne_data)
-                # epochs.save(f'{session}/epochs.fif', overwrite=True)
+                epochs.save(f'{session}/target_nontarget_epochs.fif', overwrite=True)
             else:
                 all_excluded.append(session)
                 print(f'Excluding {session}')
+        
+        import pdb; pdb.set_trace()
     
     amps = determine_p300_amplitude(all_epochs, positions)
 
