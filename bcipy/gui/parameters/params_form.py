@@ -56,8 +56,10 @@ class ParamsForm(QWidget):
     def add_controls(self):
         """Add controls to layout"""
         if self.controls:
-            for _param_name, form_input in self.controls.items():
-                self.layout.addWidget(form_input)
+            for param_name, form_input in self.controls.items():
+                # Only items with a named section are user-editable.
+                if (self.params[param_name]['section']):
+                    self.layout.addWidget(form_input)
 
     def create_controls(self, params: Parameters) -> Dict[str, FormInput]:
         """Create controls (inputs, labels, etc) for each item in the
