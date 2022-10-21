@@ -8,6 +8,7 @@ from typing import Dict, Tuple
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
+from bcipy.config import BCIPY_ROOT
 from bcipy.helpers.parameters import Parameters, changes_from_default
 
 from bcipy.gui.main import (
@@ -382,7 +383,7 @@ class MainPanel(QWidget):
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             caption='Open parameters file',
-            directory='bcipy/parameters',
+            directory=f'{BCIPY_ROOT}/parameters',
             filter='JSON files (*.json)')
         if file_name:
             self.json_file = file_name
@@ -404,19 +405,24 @@ class MainPanel(QWidget):
         """Event handler for saving form data to another parameters file."""
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
+
         filename, _ = QFileDialog.getSaveFileName(
             self,
             caption='Save As',
-            directory='bcipy/parameters/',
+            directory=f'{BCIPY_ROOT}/parameters/',
             filter='JSON files (*.json)',
             options=options)
 
-        if filename and self.form.save_as(filename):
-            self.json_file = filename
-            self.edit_msg.setText(f'Editing: {self.json_file}')
-            self.save_msg.setText(f'Last saved: {datetime.now()}')
-            self.changes.update_changes(self.json_file)
-            self.repaint()
+        if filename:
+            if not filename.endswith('.json'):
+                filename += '.json'
+
+            if self.form.save_as(filename):
+                self.json_file = filename
+                self.edit_msg.setText(f'Editing: {self.json_file}')
+                self.save_msg.setText(f'Last saved: {datetime.now()}')
+                self.changes.update_changes(self.json_file)
+                self.repaint()
 
 
 def main(json_file, title='BCI Parameters', size=(450, 550)):
