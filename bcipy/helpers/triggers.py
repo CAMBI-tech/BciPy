@@ -148,7 +148,7 @@ def trigger_durations(params: Parameters) -> Dict[str, float]:
 
 class TriggerType(Enum):
     """
-    Enum for the primary types of Triggers.
+    Enum for the internal supported Triggers.
     """
 
     NONTARGET = "nontarget"
@@ -159,6 +159,7 @@ class TriggerType(Enum):
     OFFSET = "offset"
     EVENT = "event"
     PREVIEW = "preview"
+    ARTIFACT = "artifact"
 
     @classmethod
     def list(cls) -> List[str]:
