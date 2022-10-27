@@ -74,8 +74,8 @@ def artifact_rejection(
 
     if use_session_filter:
         # get signal filtering information
-        # downsample_rate = parameters.get("down_sampling_rate")
-        downsample_rate = 1 # comment out if you want to use the downsample rate from the parameters file
+        downsample_rate = parameters.get("down_sampling_rate")
+        # downsample_rate = 1 # comment out if you want to use the downsample rate from the parameters file
         notch_filter = parameters.get("notch_filter_frequency")
         filter_high = parameters.get("filter_high")
         filter_low = parameters.get("filter_low")
