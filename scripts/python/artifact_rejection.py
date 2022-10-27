@@ -1,4 +1,21 @@
-from __future__ import annotations
+"""
+Standard of Practice: 
+
++ Correct bad labels, but leave overlapping events!
++ Modify the duration of the events as needed
++ Labelling bad channels: a visual inspection of the channel in relation to all the noise present 
+
+Labels:
+
+BAD_peak: pop to electrical artifact; high amplitude artifact
+BAD_blink: eye blink activity
+BAD_eog: eye movement activity
+BAD_emg: muscle activity
+BAD_ecg: heart activity
+BAD_flat: see rules for flat
+BAD_event: we are not sure what this is, but noise is present
+"""
+
 import mne
 mne.set_log_level('WARNING')
 import os
@@ -352,7 +369,7 @@ if __name__ == "__main__":
         '--path',
         help='Path to the directory with raw_data to be converted',
         required=False)
-    parser.add_argument("--semi", dest="show", action="store_true")
+    parser.add_argument("--semi", dest="semi", action="store_true")
     parser.add_argument("--save", dest="save", action="store_true")
     parser.set_defaults(semi=False)
     parser.set_defaults(save=False)
