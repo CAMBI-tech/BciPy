@@ -180,7 +180,7 @@ def label_eog_events(
         preblink: float=.5,
         postblink: float=.5,
         label: str='BAD_blink',
-        eye_channels: List[str]=['Fp1', 'Fp2', 'F7', 'F8']) -> Optional[Tuple[mne.Annotations, mne.Events]]:
+        eye_channels: List[str]=['Fp1', 'Fp2', 'F7', 'F8']) -> Optional[Tuple[mne.Annotations, list]]:
     """Label EOG artifacts.
 
     Parameters
@@ -196,7 +196,7 @@ def label_eog_events(
 
     Returns
     -------
-    ( mne.Annotations, mne.Events) | None
+    ( mne.Annotations, list) | None
     """
     threshold = 100e-6 # a good default threshold
     print(f'Using blink threshold of {threshold}')
