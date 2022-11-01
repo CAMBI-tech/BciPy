@@ -43,6 +43,9 @@ if __name__ == "__main__":
     phrase_count = 0
     sum_per_symbol_logprob = 0.0
 
+    gpt = []
+    ken = []
+
     # Iterate over phrases
     for phrase in phrases:
         sentence = phrase.strip()
@@ -88,6 +91,9 @@ if __name__ == "__main__":
         # Phrase-level output
         if verbose >= 1:
             print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}\n")
+        
+        # Store each phrase's ppl for output to a file
+        gpt.append(pow(10,-1 * per_symbol_logprob))
         
         sum_per_symbol_logprob += per_symbol_logprob
         phrase_count += 1
@@ -138,15 +144,18 @@ if __name__ == "__main__":
 
             # Character-level output
             if verbose >= 2:
-                print(f"p( {token} | {prev} ...) = {pow(10, score):.6f} [ {score:.6f} ]")
+                print(f"p( {token} | {prev_token} ...) = {pow(10, score):.6f} [ {score:.6f} ]")
             accum += score
-            prev = token
+            prev_token = token
         
         per_symbol_logprob = accum / symbols
         
         # Phrase-level output
         if verbose >= 1:
             print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}\n")
+        
+        # Store each phrase's ppl for output to a file
+        ken.append(pow(10,-1 * per_symbol_logprob))
 
         sum_per_symbol_logprob += per_symbol_logprob
         phrase_count += 1
@@ -157,3 +166,12 @@ if __name__ == "__main__":
     print(f"phrases = {phrase_count}, \
         average per symbol logprob = {average_per_symbol_logprob:.4f}, \
         ppl = {pow(10,-1 * average_per_symbol_logprob):.4f}\n")
+
+
+    outfile = open("../out/gpt_vs_kenlm.txt", 'w')
+
+    outfile.write("GPT2,KenLM,Diff")
+    for i in range(len(ken)):
+        outfile.write("\n" + str(gpt[i]) + "," + str(ken[i]) + "," + str(gpt[i]-ken[i]))
+
+    outfile.close()
