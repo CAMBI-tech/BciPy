@@ -22,7 +22,8 @@ class UnigramLanguageModel(LanguageModel):
         self.unigram_lm[SPACE_CHAR] = self.unigram_lm.pop("SPACE_CHAR")
         self.unigram_lm[BACKSPACE_CHAR] = self.unigram_lm.pop("BACKSPACE_CHAR")
 
-                           
+        self.unigram_lm = dict(sorted(self.unigram_lm.items(), key=lambda item: item[1], reverse=True))
+
         assert set(self.unigram_lm.keys()) == set(self.symbol_set), "invalid unigram model symbol set!"
 
         self.load()
