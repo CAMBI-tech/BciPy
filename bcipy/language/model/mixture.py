@@ -11,7 +11,11 @@ from bcipy.language.model.unigram import UnigramLanguageModel
 class MixtureLanguageModel(LanguageModel):
     """Character language model that mixes GPT2 with a Unigram"""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
+    supported_lm_types = ["gpt2", "unigram"]
+
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_types: List[str] = None, 
+        lm_paths: List[str] = None, lm_weights: List[float] = None):
+        
         """
         Initialize instance variables and load the language model with given path
         Args:
@@ -19,12 +23,19 @@ class MixtureLanguageModel(LanguageModel):
             symbol_set - list of symbol strings
             lm_path - path to language model files
         """
-        super().__init__(response_type=response_type, symbol_set=symbol_set)
-        self.gpt_model = None
-        self.unigram_model = None
 
-        # interpolate / rescale coefficients
-        self.interpolate_coeff = 0.8
+        assert (lm_types == None and lm_paths == None) or (len(lm_types) == len(lm_paths)), "invalid model paths!"
+        assert (lm_paths == None and lm_weights == None) or (len(lm_paths) == len(lm_weights)), "invalid model weights!"
+
+        assert (lm_types == None or all(x in MixtureLanguageModel.supported_lm_types for x in lm_types)), "invalid model types!"
+
+        super().__init__(response_type=response_type, symbol_set=symbol_set)
+        self.models = list()
+        self.lm_types = lm_types or ["gpt2", "unigram"]
+        self.lm_paths = lm_paths or ["gpt2", "unigram"]
+        self.lm_weights = lm_weights or [0.8, 0.2]
+
+        # rescale coefficient
         self.rescale_coeff = 0.5
 
         self.load()
@@ -33,7 +44,7 @@ class MixtureLanguageModel(LanguageModel):
         return [ResponseType.SYMBOL]
 
     @staticmethod
-    def interpolate_language_models(lm1: Dict[str, float], lm2: Dict[str, float], coeff: float) -> List[Tuple]:
+    def interpolate_language_models(lms: List[Dict[str, float]], coeffs: List[float]) -> List[Tuple]:
         """
         interpolate two language models
         Args:
@@ -46,12 +57,10 @@ class MixtureLanguageModel(LanguageModel):
         """
         combined_lm = Counter()
 
-        for char in lm1:
-            combined_lm[char] = lm1[char] * coeff + lm2[char] * (1 - coeff)
+        for i, lm in enumerate(lms):
+            for char in lm:
+                combined_lm[char] += lm[char] * coeffs[i]
 
-        for char in lm2:
-            if char not in lm1:
-                combined_lm[char] = lm2[char] * (1 - coeff)
 
         return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
 
@@ -88,14 +97,15 @@ class MixtureLanguageModel(LanguageModel):
             A list of symbols with probability
         """
 
-        gpt_pred = self.gpt_model.predict(evidence)
+        pred_list = list()
 
-        unigram_pred = self.unigram_model.predict(evidence)
+        for model in self.models:
+            pred = model.predict(evidence)
+            pred_list.append(dict(pred))
         
         # interpolate language models to smooth the probability distribution returned
         # by GPT2 language model
-        next_char_pred = MixtureLanguageModel.interpolate_language_models(
-            dict(gpt_pred), dict(unigram_pred), self.interpolate_coeff)
+        next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
 
         # exponentially rescale the language model
         next_char_pred = MixtureLanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
@@ -113,9 +123,14 @@ class MixtureLanguageModel(LanguageModel):
 
         symbol_set = alphabet()
         response_type = ResponseType.SYMBOL
-        self.gpt_model = GPT2LanguageModel(response_type, symbol_set)
 
-        self.unigram_model = UnigramLanguageModel(response_type, symbol_set)
+        for lm_type, path in zip(self.lm_types, self.lm_paths):
+            if lm_type == "gpt2":
+                model = GPT2LanguageModel(response_type, symbol_set, path)
+            elif lm_type == "unigram":
+                model = UnigramLanguageModel(response_type, symbol_set, path)
+            
+            self.models.append(model)
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
