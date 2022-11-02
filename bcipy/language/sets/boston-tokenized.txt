@@ -1157,7 +1157,6 @@ h o w <sp> w o u l d <sp> y o u <sp> f e e l
 c a n <sp> i <sp> h a v e <sp> s o m e <sp> p i c k l e s
 c a n <sp> y o u <sp> p l e a s e <sp> c o m b <sp> m y <sp> h a i r
 i <sp> n e e d <sp> t o <sp> u s e <sp> t h e <sp> b a t h r o o m
-c a n <sp> y o u <sp> <sp> t a k e <sp> o u t <sp> t h e <sp> g a r b a g e
 n o <sp> t h a n k s
 l e t <sp> m e
 w h a t <sp> a n <sp> i d e a
@@ -1312,7 +1311,6 @@ t u r n <sp> i t <sp> o f f <sp> p l e a s e
 y o u <sp> b e t t e r <sp> b e l i e v e <sp> i t
 w h y <sp> d i d <sp> t h e y <sp> g o <sp> t o <sp> a l l <sp> t h a t <sp> t r o u b l e
 i <sp> j u s t <sp> w a n t e d <sp> t o <sp> f i n d <sp> o u t
-g i v e <sp> m e <sp> <sp> t h a t <sp> p l e a s e
 i <sp> d o u b t <sp> i t
 i <sp> w o u l d <sp> l i k e <sp> t o <sp> h a v e <sp> s o m e <sp> s o u p
 g i v e <sp> m e <sp> a <sp> f e w <sp> m i n u t e s
