@@ -28,7 +28,7 @@ if __name__ == "__main__":
         print("'--verbose 2'\tOutput results from each character")
 
     # Read in the phrase file
-    phrase_file = open("../sets/boston-tokenized.txt", "r")
+    phrase_file = open("../sets/boston.tokenized", "r")
     phrases = phrase_file.readlines()
     phrase_file.close()
 
