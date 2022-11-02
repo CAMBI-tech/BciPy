@@ -28,25 +28,9 @@ class GPT2LanguageModel(LanguageModel):
         self.idx_to_word = None
         self.lm_path = lm_path or "gpt2"
 
-        # Hard coding a unigram language model trained on ALS phrase dataset
-        # for smoothing purpose
-        self.unigram_lm = {'E': 0.0998, 'T': 0.096, 'O': 0.0946, 'I': 0.0835,
-                           'A': 0.0774, 'N': 0.0554, SPACE_CHAR: 0.0523, 'H': 0.0504,
-                           'S': 0.0435, 'L': 0.0408, 'R': 0.0387, 'U': 0.0379,
-                           'D': 0.0358, 'Y': 0.0324, 'W': 0.0288, 'M': 0.0266,
-                           'G': 0.0221, 'C': 0.018, 'K': 0.016, 'P': 0.0145,
-                           'F': 0.0117, 'B': 0.0113, 'V': 0.0091, 'J': 0.0016,
-                           'X': 0.0008, 'Z': 0.0005, 'Q': 0.0002, BACKSPACE_CHAR: 0.0}
-
-        assert set(self.unigram_lm.keys()) == set(self.symbol_set), "invalid unigram model symbol set!"
-
         # parameters for beam search
         self.beam_width = 20
         self.search_depth = 2
-
-        # interpolate / reslace coefficients
-        self.interpolate_coeff = 0.8
-        self.rescale_coeff = 0.5
 
         self.load()
 
@@ -240,52 +224,6 @@ class GPT2LanguageModel(LanguageModel):
 
         return all_beam_candidates
 
-    @staticmethod
-    def interpolate_language_models(lm1: Dict[str, float], lm2: Dict[str, float], coeff: float) -> List[Tuple]:
-        """
-        interpolate two language models
-        Args:
-            lm1 - the first language model (a dict with char as keys and prob as values)
-            lm2 - the second language model (same type as lm1)
-            coeff - rescale coefficient, lm1 will be scaled by coeff and lm2 will be
-            scaled by (1-coeff)
-        Response:
-            a list of (char, prob) tuples representing an interpolated language model
-        """
-        combined_lm = Counter()
-
-        for char in lm1:
-            combined_lm[char] = lm1[char] * coeff + lm2[char] * (1 - coeff)
-
-        for char in lm2:
-            if char not in lm1:
-                combined_lm[char] = lm2[char] * (1 - coeff)
-
-        return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
-
-    @staticmethod
-    def rescale(lm: Dict[str, float], coeff: float):
-        """
-        rescale a languge model with exponential coefficient
-        Args:
-            lm - the language model (a dict with char as keys and prob as values)
-            coeff - rescale coefficient
-        Response:
-            a list of (char, prob) tuples representing a rescaled language model
-        """
-        rescaled_lm = Counter()
-
-        # scale
-        for char in lm:
-            rescaled_lm[char] = lm[char] ** coeff
-
-        # normalize
-        sum_char_prob = sum(rescaled_lm.values())
-        for char in rescaled_lm:
-            rescaled_lm[char] /= sum_char_prob
-
-        return list(sorted(rescaled_lm.items(), key=lambda item: item[1], reverse=True))
-
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Given an evidence of typed string, predict the probability distribution of
@@ -308,14 +246,6 @@ class GPT2LanguageModel(LanguageModel):
 
         # get marginalized characger-level probabilities from beam search results
         next_char_pred = self.__get_char_predictions_beam_search(evidence_str, all_beam_candidates)
-
-        # interpolate with unigram language model to smooth the probability distribution returned
-        # by GPT2 language model
-        next_char_pred = GPT2LanguageModel.interpolate_language_models(
-            dict(next_char_pred), self.unigram_lm, self.interpolate_coeff)
-
-        # exponentially rescale the language model
-        next_char_pred = GPT2LanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
 
         return next_char_pred
 
