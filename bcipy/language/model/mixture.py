@@ -32,7 +32,7 @@ class MixtureLanguageModel(LanguageModel):
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.models = list()
         self.lm_types = lm_types or ["gpt2", "unigram"]
-        self.lm_paths = lm_paths or ["gpt2", "unigram"]
+        self.lm_paths = lm_paths or [None, None]
         self.lm_weights = lm_weights or [0.8, 0.2]
 
         # rescale coefficient
