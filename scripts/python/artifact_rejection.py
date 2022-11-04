@@ -21,17 +21,18 @@ mne.set_log_level('WARNING')
 import os
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
-from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME
+from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
+from mne import Annotations
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import load_raw_data
 from bcipy.signal.process import get_default_transform
-from bcipy.helpers.triggers import TriggerType
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 
 ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
 
@@ -88,6 +89,18 @@ def artifact_rejection(
 
     # using this we remove channels unrelated to the task or that are not used in the analysis
     channel_map = analysis_channels(channels, type_amp)
+    static_offset = parameters.get('static_trigger_offset')
+    trial_length = 0.5
+
+    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+        offset=static_offset,
+        trigger_path=f"{path}/{TRIGGER_FILENAME}",
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+    )
+    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
+
+    # trigger timing and labels
+    extra_labels = Annotations(trigger_timing, [trial_length] * len(trigger_timing), labels)
 
     if use_session_filter:
         # get signal filtering information
@@ -113,7 +126,7 @@ def artifact_rejection(
         mne_data = convert_to_mne(raw_data, channel_map=channel_map) # don't apply the session filters
 
     # artifact handling pipeline
-    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar)
+    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar, extra_labels=extra_labels)
 
     # if desired, save the artifact labelled data as an MNE fif file and export the annotations as a text file
     if save_artifacts:
@@ -125,7 +138,8 @@ def artifact_rejection(
 def semi_automatic_artifact_rejection(
         mne_data: mne.io.RawArray,
         percent_bad: float=50.0,
-        verify_plot: bool=True) -> mne.io.RawArray:
+        verify_plot: bool=True,
+        extra_labels: list = []) -> mne.io.RawArray:
     """Semi-automatic artifact rejection.
 
     Parameters
@@ -155,19 +169,19 @@ def semi_automatic_artifact_rejection(
             # add bad channel labels to the raw data
             mne_data.info['bads'] = bad_channels
             print(f'Bad channels detected: {bad_channels}')
-        mne_data.set_annotations(voltage_annotations)
+        mne_data.set_annotations(voltage_annotations + extra_labels)
 
     # EOG here we rely on the defaults below for thresholding. See label_eog_events for more info.
     eog = label_eog_events(mne_data)
     if eog:
         eog_annotations, eog_events = eog
         print(f'EOG events found: {len(eog_events)}')
-        mne_data.set_annotations(eog_annotations)
+        mne_data.set_annotations(eog_annotations + extra_labels)
 
     # combine the annotations here if both returned beceause set_annotations overwrites
     # and we are not garunteed any annotations
     if voltage and eog:
-        mne_data.set_annotations(voltage_annotations + eog_annotations)
+        mne_data.set_annotations(voltage_annotations + eog_annotations + extra_labels)
 
     # plot the data with annotations. This allows the user to reject bad epochs and correct annotations.
     if verify_plot:
