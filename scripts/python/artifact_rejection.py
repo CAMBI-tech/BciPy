@@ -72,6 +72,8 @@ def artifact_rejection(
         Whether to overwrite existing data. Defaults to True.
     use_session_filter : bool
         Whether to use the session filter. Defaults to True. TODO: implement custom filters.
+    session_annontations : bool
+        Whether to use the session annotations like target/nontarget. Defaults to False. 
 
 
     Returns 
@@ -98,11 +100,11 @@ def artifact_rejection(
         trigger_path=f"{path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
-    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
+    # labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
     # trigger timing and labels
     if session_annontations:
-        session_annontations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), labels)
+        session_annontations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_targetness)
 
     if use_session_filter:
         # get signal filtering information
