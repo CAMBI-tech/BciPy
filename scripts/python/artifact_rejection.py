@@ -42,7 +42,8 @@ def artifact_rejection(
         semi_automatic_ar: bool=True,
         save_artifacts: bool=False,
         overwrite: bool=True,
-        use_session_filter: bool=True) -> mne.io.RawArray:
+        use_session_filter: bool=True,
+        session_annontations: bool = False) -> mne.io.RawArray:
     """BciPy offline artifact rejection pipeline. 
     
     This pipeline is designed to be run after all data has been collected. It currently supports bcipy>=2.0.0rc1.
@@ -100,7 +101,8 @@ def artifact_rejection(
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
     # trigger timing and labels
-    extra_labels = Annotations(trigger_timing, [trial_length] * len(trigger_timing), labels)
+    if session_annontations:
+        session_annontations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), labels)
 
     if use_session_filter:
         # get signal filtering information
@@ -126,7 +128,7 @@ def artifact_rejection(
         mne_data = convert_to_mne(raw_data, channel_map=channel_map) # don't apply the session filters
 
     # artifact handling pipeline
-    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar, extra_labels=extra_labels)
+    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar, extra_labels=session_annontations)
 
     # if desired, save the artifact labelled data as an MNE fif file and export the annotations as a text file
     if save_artifacts:
@@ -158,6 +160,7 @@ def semi_automatic_artifact_rejection(
         The raw data labelled with annotations for artifacts.
     """
     
+    annotations = Annotations(0, 0, 'ignore')
     # VOLTAGE: here we rely on the defaults below for thresholding. See label_volagae_events for more info.
     voltage = label_voltage_events(
         mne_data,
@@ -169,19 +172,22 @@ def semi_automatic_artifact_rejection(
             # add bad channel labels to the raw data
             mne_data.info['bads'] = bad_channels
             print(f'Bad channels detected: {bad_channels}')
-        mne_data.set_annotations(voltage_annotations + extra_labels)
+        annotations += voltage_annotations
 
     # EOG here we rely on the defaults below for thresholding. See label_eog_events for more info.
     eog = label_eog_events(mne_data)
     if eog:
         eog_annotations, eog_events = eog
         print(f'EOG events found: {len(eog_events)}')
-        mne_data.set_annotations(eog_annotations + extra_labels)
+        annotations += eog_annotations
 
     # combine the annotations here if both returned beceause set_annotations overwrites
     # and we are not garunteed any annotations
-    if voltage and eog:
-        mne_data.set_annotations(voltage_annotations + eog_annotations + extra_labels)
+    if extra_labels:
+        annotations += extra_labels
+
+    # set the annotations on the raw data
+    mne_data.set_annotations(annotations)
 
     # plot the data with annotations. This allows the user to reject bad epochs and correct annotations.
     if verify_plot:
@@ -212,7 +218,7 @@ def label_eog_events(
     -------
     ( mne.Annotations, list) | None
     """
-    threshold = 100e-6 # a good default threshold
+    threshold = 80e-6 # a good default threshold
     print(f'Using blink threshold of {threshold}')
     eog_events = mne.preprocessing.find_eog_events(raw, ch_name=eye_channels, thresh=threshold)
 
@@ -385,8 +391,10 @@ if __name__ == "__main__":
         required=False)
     parser.add_argument("--semi", dest="semi", action="store_true")
     parser.add_argument("--save", dest="save", action="store_true")
+    parser.add_argument("--colabel", dest="colabel", action="store_true")
     parser.set_defaults(semi=False)
     parser.set_defaults(save=False)
+    parser.set_defaults(colabel=False)
     args = parser.parse_args()
 
     # if no path is provided, prompt for one using a GUI
@@ -400,5 +408,9 @@ if __name__ == "__main__":
         if session.is_dir():
             print(f'Processing {session}')
 
-            mne_data = artifact_rejection(session, semi_automatic_ar=args.semi, save_artifacts=args.save)
+            mne_data = artifact_rejection(
+                    session,
+                    semi_automatic_ar=args.semi,
+                    save_artifacts=args.save,
+                    session_annontations=args.colabel)
             import pdb; pdb.set_trace()
