@@ -12,7 +12,7 @@ venv*/
 __pycache__/
 .cache/
 
-# BciPy files and directories 
+# BciPy files and directories
 calibration.csv
 rawdata.csv
 buffer.db
@@ -26,3 +26,4 @@ build/
 dist/
 
 bcipy/parameters/parameters_*
+.bcipy_cache

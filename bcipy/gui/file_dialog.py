@@ -1,6 +1,8 @@
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
+from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QDesktopWidget
+from bcipy.gui.preferences import preferences
 
 DEFAULT_FILE_TYPES = "All Files (*)"
 
@@ -65,7 +67,14 @@ def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> s
     """
     app = QApplication(sys.argv)
     dialog = FileDialog()
+    if not directory:
+        directory = preferences.get_last_directory()
     filename = dialog.ask_file(file_types, directory)
+
+    # update last directory preference
+    path = Path(filename)
+    if path.is_file():
+        preferences.set_last_directory(str(path.parent))
 
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
@@ -84,7 +93,8 @@ def ask_directory() -> str:
 
     dialog = FileDialog()
     name = dialog.ask_directory()
-
+    if Path(name).is_dir():
+        preferences.set_last_directory(name)
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
 
