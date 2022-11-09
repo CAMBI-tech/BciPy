@@ -12,10 +12,6 @@ class UnigramLanguageModel(LanguageModel):
         self.model = None
         self.lm_path = lm_path or "../lms/unigram.json"
 
-        # Hard coding a unigram language model trained on ALS phrase dataset
-        # for smoothing purpose
-        # TODO: Load this from file
-
         with open(self.lm_path) as json_file:
             self.unigram_lm = json.load(json_file)
 

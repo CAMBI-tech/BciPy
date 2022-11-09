@@ -9,7 +9,10 @@ from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 
 class MixtureLanguageModel(LanguageModel):
-    """Character language model that mixes GPT2 with a Unigram"""
+    """
+        Character language model that mixes any combination of other models
+        By default, 80% GPT2 with 20% Unigram
+    """
 
     supported_lm_types = ["gpt2", "unigram"]
 
@@ -21,7 +24,9 @@ class MixtureLanguageModel(LanguageModel):
         Args:
             response_type - SYMBOL only
             symbol_set - list of symbol strings
-            lm_path - path to language model files
+            lm_types - list of types of models to mix
+            lm_paths - list of paths to language model files
+            lm_weights - list of weights to use when mixing the models
         """
 
         assert (lm_types == None and lm_paths == None) or (len(lm_types) == len(lm_paths)), "invalid model paths!"
@@ -46,12 +51,10 @@ class MixtureLanguageModel(LanguageModel):
     @staticmethod
     def interpolate_language_models(lms: List[Dict[str, float]], coeffs: List[float]) -> List[Tuple]:
         """
-        interpolate two language models
+        interpolate two or more language models
         Args:
-            lm1 - the first language model (a dict with char as keys and prob as values)
-            lm2 - the second language model (same type as lm1)
-            coeff - rescale coefficient, lm1 will be scaled by coeff and lm2 will be
-            scaled by (1-coeff)
+            lms - output from the language models (a list of dicts with char as keys and prob as values)
+            coeffs - list of rescale coefficients, lms[0] will be scaled by coeffs[0] and so on
         Response:
             a list of (char, prob) tuples representing an interpolated language model
         """
@@ -99,15 +102,15 @@ class MixtureLanguageModel(LanguageModel):
 
         pred_list = list()
 
+        # Generate predictions from each component language model
         for model in self.models:
             pred = model.predict(evidence)
             pred_list.append(dict(pred))
         
-        # interpolate language models to smooth the probability distribution returned
-        # by GPT2 language model
+        # Mix the component models
         next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
 
-        # exponentially rescale the language model
+        # Exponentially rescale the mixed predictions
         next_char_pred = MixtureLanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
 
         return next_char_pred
