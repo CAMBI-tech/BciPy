@@ -3,19 +3,11 @@ import unittest
 import shutil
 import tempfile
 from pathlib import Path
-from bcipy.gui.preferences import Preferences, DEFAULT_ENCODING
-
-
-def value_in_file(value: str, filename: str) -> bool:
-    """Check that the given value is in the file text."""
-    with open(filename, 'r', encoding=DEFAULT_ENCODING) as my_file:
-        contents = my_file.read()
-        return value in contents
+from bcipy.gui.preferences import Preferences
 
 
 class TestPreferences(unittest.TestCase):
     """Tests for the Preferences class."""
-
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
@@ -55,7 +47,6 @@ class TestPreferences(unittest.TestCase):
         value = 'my_pref_value'
         prefs.set('my_pref', value)
         self.assertTrue(path.is_file())
-        self.assertTrue(value_in_file(value, path))
 
     def test_set_without_persisting(self):
         """Should be able to set a property without persisting."""
@@ -76,7 +67,6 @@ class TestPreferences(unittest.TestCase):
         prefs.last_directory = self.temp_dir
 
         self.assertTrue(path.is_file())
-        self.assertTrue(value_in_file(self.temp_dir, path))
 
     def test_load(self):
         """Test loading from a file."""
