@@ -30,8 +30,10 @@ class MixtureLanguageModel(LanguageModel):
             lm_weights - list of weights to use when mixing the models
         """
 
-        assert (lm_types == None and lm_paths == None) or (len(lm_types) == len(lm_paths)), "invalid model paths!"
-        assert (lm_paths == None and lm_weights == None) or (len(lm_paths) == len(lm_weights)), "invalid model weights!"
+        if lm_paths != None:
+            assert (lm_types != None) and (len(lm_types) == len(lm_paths)), "invalid model paths!"
+        
+        assert (lm_types == None and lm_weights == None) or (len(lm_types) == len(lm_weights)), "invalid model weights!"
 
         assert (lm_types == None or all(x in MixtureLanguageModel.supported_lm_types for x in lm_types)), "invalid model types!"
 
