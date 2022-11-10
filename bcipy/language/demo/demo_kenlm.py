@@ -1,6 +1,9 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
 import kenlm
+from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.helpers.task import alphabet
+from bcipy.language.main import ResponseType
 
 if __name__ == "__main__":
     # Load a really pruned n-gram language model
@@ -66,4 +69,25 @@ if __name__ == "__main__":
         accum += score
         prev = token
     print(f"sum logprob = {accum:.4f}")
+
+    symbol_set = alphabet()
+    response_type = ResponseType.SYMBOL
+    lm = KenLMLanguageModel(response_type, symbol_set)
+
+    next_char_pred = lm.state_update(list("i_like_z"))
+    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("i_lik"))
+    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list("i_like_zebras"))
+    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
+    print(correct_char_rank)
+    next_char_pred = lm.state_update(list(""))
+    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
+    print(correct_char_rank)
 
