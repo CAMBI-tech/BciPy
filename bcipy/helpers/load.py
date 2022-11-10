@@ -176,14 +176,13 @@ def load_signal_model(model_class: SignalModel,
     """
     # use python's internal gui to call file explorers and get the filename
     if not filename or Path(filename).is_dir():
-        if not filename:
-            filename = preferences.get_signal_model_directory()
-        filename = ask_filename('*.pkl', filename)
+        directory = filename or preferences.signal_model_directory
+        filename = ask_filename('*.pkl', directory)
 
         # update preferences
         path = Path(filename)
         if path.is_file():
-            preferences.set_signal_model_directory(path.parent)
+            preferences.signal_model_directory = str(path.parent)
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)

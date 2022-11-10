@@ -27,7 +27,10 @@ class TestPreferences(unittest.TestCase):
         path = Path(self.temp_dir, 'test_prefs.json')
         prefs = Preferences(filename=path)
         self.assertFalse(path.is_file())
-        self.assertEqual(prefs.entries, Preferences.DEFAULTS)
+        self.assertEqual(prefs.entries, {})
+        self.assertTrue(
+            len(prefs.last_directory) > 0,
+            "Default properties should be available.")
 
     def test_save(self):
         """Test saving to disk"""
@@ -63,6 +66,17 @@ class TestPreferences(unittest.TestCase):
         value = 'my_pref_value'
         prefs.set('my_pref', value, persist=False)
         self.assertFalse(path.is_file())
+
+    def test_set_attribute_preferences(self):
+        """Setting preferences defined as class attributes should save."""
+        path = Path(self.temp_dir, 'test_prefs')
+        prefs = Preferences(filename=path)
+        self.assertFalse(path.is_file())
+
+        prefs.last_directory = self.temp_dir
+
+        self.assertTrue(path.is_file())
+        self.assertTrue(value_in_file(self.temp_dir, path))
 
     def test_load(self):
         """Test loading from a file."""

@@ -40,7 +40,7 @@ class FileDialog(QWidget):
                                                   options=self.options)
         return filename
 
-    def ask_directory(self) -> str:
+    def ask_directory(self, directory: str = "") -> str:
         """Opens a dialog window to select a directory.
 
         Returns
@@ -49,6 +49,7 @@ class FileDialog(QWidget):
         """
         return QFileDialog.getExistingDirectory(self,
                                                 "Select Directory",
+                                                directory=directory,
                                                 options=self.options)
 
 
@@ -67,14 +68,13 @@ def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> s
     """
     app = QApplication(sys.argv)
     dialog = FileDialog()
-    if not directory:
-        directory = preferences.get_last_directory()
+    directory = directory or preferences.last_directory
     filename = dialog.ask_file(file_types, directory)
 
     # update last directory preference
     path = Path(filename)
-    if path.is_file():
-        preferences.set_last_directory(str(path.parent))
+    if filename and path.is_file():
+        preferences.last_directory = str(path.parent)
 
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
@@ -92,9 +92,12 @@ def ask_directory() -> str:
     app = QApplication(sys.argv)
 
     dialog = FileDialog()
-    name = dialog.ask_directory()
-    if Path(name).is_dir():
-        preferences.set_last_directory(name)
+    directory = ''
+    if preferences.last_directory:
+        directory = str(Path(preferences.last_directory).parent)
+    name = dialog.ask_directory(directory)
+    if name and Path(name).is_dir():
+        preferences.last_directory = name
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
 
