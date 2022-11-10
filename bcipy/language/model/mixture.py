@@ -7,6 +7,7 @@ from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
+from bcipy.language.model.kenlm import KenLMLanguageModel
 
 class MixtureLanguageModel(LanguageModel):
     """
@@ -14,7 +15,7 @@ class MixtureLanguageModel(LanguageModel):
         By default, 80% GPT2 with 20% Unigram
     """
 
-    supported_lm_types = ["gpt2", "unigram"]
+    supported_lm_types = ["gpt2", "unigram", "kenlm"]
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_types: List[str] = None, 
         lm_paths: List[str] = None, lm_weights: List[float] = None):
@@ -132,6 +133,8 @@ class MixtureLanguageModel(LanguageModel):
                 model = GPT2LanguageModel(response_type, symbol_set, path)
             elif lm_type == "unigram":
                 model = UnigramLanguageModel(response_type, symbol_set, path)
+            elif lm_type == "kenlm":
+                model = KenLMLanguageModel(response_type, symbol_set, path)
             
             self.models.append(model)
 
