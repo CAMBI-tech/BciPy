@@ -90,4 +90,8 @@ if __name__ == "__main__":
     print(next_char_pred)
     correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
     print(correct_char_rank)
+    next_char_pred = lm.state_update(list("i_like_zebra"))
+    print(next_char_pred)
+    correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
+    print(correct_char_rank)
 
