@@ -28,6 +28,9 @@ class KenLMLanguageModel(LanguageModel):
             A list of symbols with probability
         """
 
+        if len(evidence) > 11:
+            evidence = evidence[-11:]
+
         self.model.BeginSentenceWrite(self.state)
         
         # Update the state one token at a time based on evidence, alternate states
