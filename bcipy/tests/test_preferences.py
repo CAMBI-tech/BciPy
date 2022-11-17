@@ -3,7 +3,7 @@ import unittest
 import shutil
 import tempfile
 from pathlib import Path
-from bcipy.gui.preferences import Preferences
+from bcipy.preferences import Preferences
 
 
 class TestPreferences(unittest.TestCase):

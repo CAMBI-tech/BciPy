@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
-from bcipy.gui.preferences import preferences
+from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,

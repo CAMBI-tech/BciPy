@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QDesktopWidget
-from bcipy.gui.preferences import preferences
+from bcipy.preferences import preferences
 
 DEFAULT_FILE_TYPES = "All Files (*)"
 

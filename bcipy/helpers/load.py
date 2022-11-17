@@ -15,7 +15,7 @@ from bcipy.config import (
     EXPERIMENT_FILENAME,
     FIELD_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.gui.preferences import preferences
+from bcipy.preferences import preferences
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters

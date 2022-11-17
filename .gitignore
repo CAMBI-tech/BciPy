@@ -26,4 +26,4 @@ build/
 dist/
 
 bcipy/parameters/parameters_*
-.bcipy_cache
+bcipy_cache
