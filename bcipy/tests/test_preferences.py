@@ -8,6 +8,7 @@ from bcipy.preferences import Preferences
 
 class TestPreferences(unittest.TestCase):
     """Tests for the Preferences class."""
+
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
