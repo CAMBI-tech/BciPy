@@ -91,6 +91,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
         client.stop_acquisition()
         self.assertAlmostEqual(DEVICE.sample_rate, len(samples), delta=5.0)
 
+    @pytest.mark.slow
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
         client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)

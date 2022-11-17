@@ -4,6 +4,7 @@ from typing import Tuple
 
 import numpy as np
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
+from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -168,6 +169,7 @@ def offline_analysis(
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
