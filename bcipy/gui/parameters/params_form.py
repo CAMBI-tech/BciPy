@@ -56,10 +56,8 @@ class ParamsForm(QWidget):
     def add_controls(self):
         """Add controls to layout"""
         if self.controls:
-            for param_name, form_input in self.controls.items():
-                # Only items with a named section are user-editable.
-                if (self.params[param_name]['section']):
-                    self.layout.addWidget(form_input)
+            for form_input in self.controls.values():
+                self.layout.addWidget(form_input)
 
     def create_controls(self, params: Parameters) -> Dict[str, FormInput]:
         """Create controls (inputs, labels, etc) for each item in the
@@ -98,7 +96,8 @@ class ParamsForm(QWidget):
                           help_tip=param['helpTip'],
                           options=param['recommended_values'],
                           help_size=self.help_size,
-                          help_color=self.help_color)
+                          help_color=self.help_color,
+                          should_display=bool(param['section']))
 
     def search(self, text: str) -> None:
         """Search for an input. Hides inputs which do not match.
