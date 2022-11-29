@@ -1,4 +1,4 @@
-from bcipy.language.model.gpt2 import GPT2LanguageModel
+from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.helpers.task import alphabet
 from bcipy.language.main import ResponseType
 from math import log10
@@ -7,11 +7,11 @@ from bcipy.language.uniform import (ResponseType, UniformLanguageModel,
 
 if __name__ == "__main__":
 
-    print("\nmodel = GPT2\n")
+    print("\nmodel = GPT2 / Unigram Mixture\n")
     
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = GPT2LanguageModel(response_type, symbol_set)
+    lm = MixtureLanguageModel(response_type, symbol_set)
 
     
     sentence = "i <sp> l i k e <sp> z e b r a s"
