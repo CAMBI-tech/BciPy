@@ -15,6 +15,7 @@ from bcipy.config import (
     EXPERIMENT_FILENAME,
     FIELD_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
+from bcipy.preferences import preferences
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
@@ -175,7 +176,13 @@ def load_signal_model(model_class: SignalModel,
     """
     # use python's internal gui to call file explorers and get the filename
     if not filename or Path(filename).is_dir():
-        filename = ask_filename('*.pkl', filename)
+        directory = filename or preferences.signal_model_directory
+        filename = ask_filename('*.pkl', directory)
+
+        # update preferences
+        path = Path(filename)
+        if path.is_file():
+            preferences.signal_model_directory = str(path.parent)
 
     # load the signal_model with pickle
     signal_model = model_class(**model_kwargs)
