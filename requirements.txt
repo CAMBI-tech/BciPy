@@ -21,4 +21,4 @@ py-cpuinfo==7.0.0
 pyedflib==0.1.30
 PyQt5==5.15.1
 tqdm==4.62.2
-kenlm-12gram=1.0.2
+kenlm-12gram==1.0.2
