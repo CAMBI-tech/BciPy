@@ -56,7 +56,7 @@ class ParamsForm(QWidget):
     def add_controls(self):
         """Add controls to layout"""
         if self.controls:
-            for _param_name, form_input in self.controls.items():
+            for form_input in self.controls.values():
                 self.layout.addWidget(form_input)
 
     def create_controls(self, params: Parameters) -> Dict[str, FormInput]:
@@ -96,7 +96,8 @@ class ParamsForm(QWidget):
                           help_tip=param['helpTip'],
                           options=param['recommended_values'],
                           help_size=self.help_size,
-                          help_color=self.help_color)
+                          help_color=self.help_color,
+                          should_display=bool(param['section']))
 
     def search(self, text: str) -> None:
         """Search for an input. Hides inputs which do not match.
@@ -147,6 +148,7 @@ def clear_layout(layout):
     while layout.count():
         child = layout.takeAt(0)
         if child.widget() is not None:
+            child.widget().setVisible(False)
             child.widget().deleteLater()
         elif child.layout() is not None:
             clear_layout(child.layout())
