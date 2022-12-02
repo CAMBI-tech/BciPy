@@ -25,7 +25,8 @@ stim_properties = StimuliProperties(
     stim_inquiry=['A'],
     stim_colors=[],
     stim_timing=[0.1],
-    is_txt_stim=True
+    is_txt_stim=True,
+    prompt_time=2.0
 )
 
 # Initialize Stimulus

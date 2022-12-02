@@ -145,7 +145,7 @@ class StimuliProperties:
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
-        prompt_time(float): Time to display target prompt for at the beggining of inquiry
+        prompt_time(float): Time to display target prompt for at the beginning of inquiry
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
