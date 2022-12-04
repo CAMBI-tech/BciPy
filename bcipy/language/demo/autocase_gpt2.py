@@ -9,7 +9,6 @@ if __name__ == "__main__":
     start = timer()
 
     # Load the GPT-2 model
-    # Note: Larger models seem to return positive log probs
     lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
     #lm_path = "gpt2-medium"        #  345M             24                 1024    ~3.1GB
     #lm_path = "gpt2-large"         #  762M             36                 1280    ~6.3GB
