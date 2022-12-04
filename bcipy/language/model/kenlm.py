@@ -13,6 +13,8 @@ class KenLMLanguageModel(LanguageModel):
         self.model = None
         self.lm_path = lm_path or "../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
 
+        self.cache = {}
+
         self.load()
 
     def supported_response_types(self) -> List[ResponseType]:
@@ -31,22 +33,33 @@ class KenLMLanguageModel(LanguageModel):
         if len(evidence) > 11:
             evidence = evidence[-11:]
 
-        self.model.BeginSentenceWrite(self.state)
-        
-        # Update the state one token at a time based on evidence, alternate states
-        for i, token in enumerate(evidence):
-            if i % 2 == 0:
-                self.model.BaseScore(self.state, token, self.state2)
+        evidence_str = ''.join(evidence)
+
+        cache_state = self.check_cache(evidence_str)
+
+        if cache_state is None:
+
+            self.model.BeginSentenceWrite(self.state)
+            
+            # Update the state one token at a time based on evidence, alternate states
+            for i, token in enumerate(evidence):
+                if i % 2 == 0:
+                    self.model.BaseScore(self.state, token, self.state2)
+                else:
+                    self.model.BaseScore(self.state2, token, self.state)
+
+            next_char_pred = None
+
+            # Generate the probability distribution based on the final state, save state to cache
+            if len(evidence) % 2 == 0:
+                next_char_pred = self.prob_dist(self.state)
+                self.cache[evidence_str] = self.state
             else:
-                self.model.BaseScore(self.state2, token, self.state)
+                next_char_pred = self.prob_dist(self.state2)
+                self.cache[evidence_str] = self.state2
 
-        next_char_pred = None
-
-        # Generate the probability distribution based on the final state
-        if len(evidence) % 2 == 0:
-            next_char_pred = self.prob_dist(self.state)
         else:
-            next_char_pred = self.prob_dist(self.state2)
+            next_char_pred = self.prob_dist(cache_state)
 
         return next_char_pred
 
@@ -109,3 +122,31 @@ class KenLMLanguageModel(LanguageModel):
             next_char_pred[char] = pow(10, score)
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
+
+    def clear_cache(self):
+        """Clear the internal cache of states"""
+
+        self.cache = {}
+
+    def check_cache(self, evidence_str: str) -> kenlm.State:
+        if evidence_str in self.cache.keys():
+            return self.cache[evidence_str]
+
+        if evidence_str[:-1] in self.cache.keys():
+            temp_state = self.cache[evidence_str[:-1]]
+            new_state = kenlm.State()
+            self.model.BaseScore(temp_state, evidence_str[-1], new_state)
+            self.cache[evidence_str] = new_state
+            return new_state
+
+        arr = [evidence_str[:-1] == x[1:] for x in self.cache.keys()]
+        if any(arr) and len(evidence_str) >= 11:
+
+            temp_state = list(self.cache.values())[arr.index(True)]
+            new_state = kenlm.State()
+            self.model.BaseScore(temp_state, evidence_str[-1], new_state)
+            self.cache[evidence_str] = new_state
+            return new_state
+        
+        return None
+            
