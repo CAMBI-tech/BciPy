@@ -43,7 +43,7 @@ if __name__ == "__main__":
     elif model == 3:
         lm = KenLMLanguageModel(response_type, symbol_set)
     elif model == 4:
-        lm - KenLMLanguageModel(response_type, symbol_set, '../lms/lm_dec19_char_large_12gram.arpa')
+        lm = KenLMLanguageModel(response_type, symbol_set, '../lms/lm_dec19_char_large_12gram.arpa')
     else:
         parser.print_help()
         exit()
