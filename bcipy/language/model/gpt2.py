@@ -207,12 +207,15 @@ class GPT2LanguageModel(LanguageModel):
                 candidate_text = new_evidence_str + self.tokenizer.decode(candidate_tokens_idx)
                 predicted_logit = self.__model_infer(candidate_text, False)
                 sorted_idx = predicted_logit.argsort()[::-1]
-                for i in range(beam_width):
+                # for i in range(beam_width):
+                for idx in sorted_idx:
                     # make sure that wordpieces contain only letters
-                    if self.idx_to_word[sorted_idx[i]].isalpha():
-                        new_candidate = (candidate_tokens_idx + [sorted_idx[i]],
-                                         candidate_tokens_log_prob + predicted_logit[sorted_idx[i]])
+                    if self.idx_to_word[idx].isalpha():
+                        new_candidate = (candidate_tokens_idx + [idx],
+                                         candidate_tokens_log_prob + predicted_logit[idx])
                         new_candidates.append(new_candidate)
+                        if len(new_candidates) >= beam_width:
+                            break
 
             # sort the new candidates based on likelihood and populate the beam
             ordered_candidates = sorted(new_candidates, key=lambda x: x[1], reverse=True)
