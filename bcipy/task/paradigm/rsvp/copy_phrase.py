@@ -7,6 +7,7 @@ from bcipy.config import (
     SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties, TaskDisplayProperties)
+from bcipy.display import Display
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
@@ -76,6 +77,8 @@ class RSVPCopyPhraseTask(Task):
     """
 
     TASK_NAME = 'RSVP Copy Phrase Task'
+    MODE='RSVP'
+
     PARAMETERS_USED = [
         'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
         'font', 'fixation_color', 'trigger_type',
@@ -150,12 +153,7 @@ class RSVPCopyPhraseTask(Task):
             }
         )
 
-        self.rsvp = _init_copy_phrase_display(
-            self.parameters,
-            self.window,
-            self.static_clock,
-            self.experiment_clock,
-            self.spelled_text)
+        self.rsvp = self.init_display()
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -167,13 +165,20 @@ class RSVPCopyPhraseTask(Task):
         self.session = Session(
             save_location=self.file_save,
             task='Copy Phrase',
-            mode='RSVP',
+            mode=self.MODE,
             symbol_set=self.alp,
             decision_threshold=self.parameters['decision_threshold'])
         self.write_session_data()
 
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
+
+    def init_display(self) -> Display:
+        """Initialize the display"""
+        return _init_copy_phrase_display(self.parameters, self.window,
+                                         self.static_clock,
+                                         self.experiment_clock,
+                                         self.spelled_text)
 
     def validate_parameters(self) -> None:
         """Validate.

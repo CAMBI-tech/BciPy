@@ -110,9 +110,6 @@ class TestMatrixDisplay(unittest.TestCase):
         self.assertEqual(self.matrix.stimuli_colors, self.stimuli.stim_colors)
 
     def test_do_inquiry_if_scp(self):
-        # If SCP is true, matrix should animate.
-        self.matrix.scp = True
-
         when(self.matrix).prompt_target().thenReturn(([], 'A'))
         when(self.matrix).animate_scp().thenReturn([])
         self.matrix.do_inquiry()
@@ -120,13 +117,6 @@ class TestMatrixDisplay(unittest.TestCase):
         verify(self.matrix, times=1)._trigger_pulse()
         verify(self.matrix, times=1).prompt_target()
         verify(self.matrix, times=1).animate_scp()
-
-    def test_do_inquiry_if_not_scp(self):
-        # If SCP is false, an exception should be raised as currently there is no other inquiry option available.
-        self.matrix.scp = False
-
-        with self.assertRaises(BciPyCoreException):
-            self.matrix.do_inquiry()
 
     def test_build_grid(self):
         # mock the text stims and increment_position

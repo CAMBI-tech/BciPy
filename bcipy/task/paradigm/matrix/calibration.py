@@ -7,7 +7,7 @@ from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayP
 from bcipy.display.paradigm.matrix.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
-                                   get_task_info)
+                                   get_task_info, InquirySchedule)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
@@ -72,7 +72,7 @@ class MatrixCalibrationTask(Task):
         self.is_txt_stim = parameters['is_txt_stim']
         self.enable_breaks = parameters['enable_breaks']
 
-    def generate_stimuli(self):
+    def generate_stimuli(self) -> InquirySchedule:
         """Generates the inquiries to be presented.
         Returns:
         --------
@@ -81,16 +81,15 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        samples, timing, color = calibration_inquiry_generator(self.alp,
-                                                               stim_number=self.stim_number,
-                                                               stim_length=self.stim_length,
-                                                               stim_order=self.stim_order,
-                                                               target_positions=self.target_positions,
-                                                               nontarget_inquiries=self.nontarget_inquiries,
-                                                               timing=self.timing,
-                                                               color=self.color)
-
-        return (samples, timing, color)
+        return calibration_inquiry_generator(
+            self.alp,
+            stim_number=self.stim_number,
+            stim_length=self.stim_length,
+            stim_order=self.stim_order,
+            target_positions=self.target_positions,
+            nontarget_inquiries=self.nontarget_inquiries,
+            timing=self.timing,
+            color=self.color)
 
     def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
         """Trigger Type.
@@ -160,7 +159,7 @@ class MatrixCalibrationTask(Task):
                 core.wait(self.buffer_val)
 
                 # Do the inquiry
-                timing, target = self.matrix.do_inquiry()
+                timing = self.matrix.do_inquiry()
 
                 # Write triggers for the inquiry
                 self.write_trigger_data(timing, (inquiry == 0))

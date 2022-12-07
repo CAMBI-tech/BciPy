@@ -9,7 +9,6 @@ from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
-from bcipy.helpers.exceptions import BciPyCoreException
 
 
 class MatrixDisplay(Display):
@@ -30,7 +29,8 @@ class MatrixDisplay(Display):
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False,
-            symbol_set: Optional[List[str]] = None):
+            symbol_set: Optional[List[str]] = None,
+            should_prompt_target: bool = True):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -111,13 +111,13 @@ class MatrixDisplay(Display):
         self.task_display = task_display
         self.task = task_display.build_task(self.window)
 
-        self.scp = True  # for future row / col integration
-
         self.info = info
         self.info_text = info.build_info_text(window)
 
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
+
+        self.should_prompt_target = should_prompt_target
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
@@ -136,15 +136,13 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
+        timing = []
         if self.first_run:
             self._trigger_pulse()
 
-        if self.scp:
-            timing, target = self.prompt_target()
-            timing.extend(self.animate_scp())
-            return timing, target
-
-        raise BciPyCoreException('Only SCP Matrix is available.')
+        timing.extend(self.prompt_target())
+        timing.extend(self.animate_scp())
+        return timing
 
     def build_grid(self, opacity: Optional[float] = None) -> None:
         """Build grid.
@@ -164,20 +162,26 @@ class MatrixDisplay(Display):
 
             pos = self.increment_position(pos)
 
-    def increment_position(self, pos: Tuple[float]) -> Tuple[float]:
-        x_cordinate, y_cordinate = pos
-        x_cordinate += self.position_increment
-        if x_cordinate >= self.max_grid_width:
-            y_cordinate -= self.position_increment
-            x_cordinate = self.position[0]
-        return (x_cordinate, y_cordinate)
+    def increment_position(self, pos: Tuple[float, float]) -> Tuple[float, float]:
+        x_coordinate, y_coordinate = pos
+        x_coordinate += self.position_increment
+        if x_coordinate >= self.max_grid_width:
+            y_coordinate -= self.position_increment
+            x_coordinate = self.position[0]
+        return (x_coordinate, y_coordinate)
 
     def prompt_target(self) -> List[float]:
         timing = []
 
+        if not self.should_prompt_target:
+            # TODO: more general way of destructuring an inquiry so the display doesn't need to
+            # know the relevance of the ordering.
+            self.stimuli_inquiry = self.stimuli_inquiry[1:]
+            return timing
+
+        # TODO: display should not need to know this. Refactor to pass this explicitly.
         # select target which is first in list from the defined stimuli inquiry
         target = self.stimuli_inquiry[0]
-
         # cut off first two stimuli in inquiry, the target and fixation
         self.stimuli_inquiry = self.stimuli_inquiry[2:]
 
@@ -207,7 +211,7 @@ class MatrixDisplay(Display):
         timing.append(self.trigger_callback.timing)
         self.trigger_callback.reset()
 
-        return timing, target
+        return timing
 
     def animate_scp(self) -> List[float]:
         """Animate SCP.
@@ -246,6 +250,7 @@ class MatrixDisplay(Display):
             # present stimuli and wait for self.stimuli_timing
 
             self.window.flip()
+            # TODO: Possible bug, since stimuli_inquiry was mutated but stimuli_timing was not
             core.wait(self.stimuli_timing[i])
 
             # reset the highlighted symbol and continue
