@@ -21,30 +21,33 @@ def tokenize_function(examples):
 if __name__ == "__main__":
 
     model_name = "google/bert_uncased_L-2_H-128_A-2"           # Smallest BERT model
-
     dataset = load_dataset("yelp_review_full")
-    dataset_small = dataset.shuffle(seed=42).select([range(10000)])
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=512)   # Compared to example, had to add model_max_length
-    tokenized_datasets = dataset.map(tokenize_function, batched=True)
-    small_train_dataset = tokenized_datasets["train"].shuffle(seed=42).select(range(4000))
-    small_eval_dataset = tokenized_datasets["test"].shuffle(seed=42).select(range(1000))
-
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=5)
-    training_args = TrainingArguments(output_dir="test_trainer")
-    metric = evaluate.load("accuracy")
 
     # If you have a GPU, put everything on cuda
     device = "cpu"
     # device = "cuda"   # NVidia GPU
     #device = "mps"    # M1 mac
+
+    # Take only a subset of the data
+    train_small = dataset["train"].shuffle(seed=42).select(range(4000))
+    eval_small = dataset["test"].shuffle(seed=42).select(range(1000))
+
+    # Tokenize the subsets
+    tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=512)   # Compared to example, had to add model_max_length
+    train_small_tokenized = train_small.map(tokenize_function, batched=True)
+    eval_small_tokenized = eval_small.map(tokenize_function, batched=True)
+
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=5)
     model.to(device)
+
+    training_args = TrainingArguments(output_dir="test_trainer")
+    metric = evaluate.load("accuracy")
 
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=small_train_dataset,
-        eval_dataset=small_eval_dataset,
+        train_dataset=train_small_tokenized,
+        eval_dataset=eval_small_tokenized,
         compute_metrics=compute_metrics,
     )
 
