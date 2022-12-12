@@ -3,10 +3,43 @@
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from timeit import default_timer as timer
-from bcipy.helpers.task import alphabet
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+#from bcipy.helpers.task import alphabet
+#from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
 from scipy.special import logsumexp
 from scipy.special import softmax
+
+# Hack to allow running headless
+from string import ascii_uppercase
+import os
+
+SPACE_CHAR = '_'
+BACKSPACE_CHAR = '<'
+
+def alphabet(parameters=None, include_path=True):
+    """Alphabet.
+
+    Function used to standardize the symbols we use as alphabet.
+
+    Returns
+    -------
+        array of letters.
+    """
+    if parameters and not parameters['is_txt_stim']:
+        # construct an array of paths to images
+        path = parameters['path_to_presentation_images']
+        stimulus_array = []
+        for stimulus_filename in sorted(os.listdir(path)):
+            # PLUS.png is reserved for the fixation symbol
+            if stimulus_filename.endswith(
+                    '.png') and not stimulus_filename.endswith('PLUS.png'):
+                if include_path:
+                    img = os.path.join(path, stimulus_filename)
+                else:
+                    img = os.path.splitext(stimulus_filename)[0]
+                stimulus_array.append(img)
+        return stimulus_array
+
+    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 if __name__ == "__main__":
     start = timer()
@@ -20,6 +53,7 @@ if __name__ == "__main__":
     beam_width = 256
 
     # Previous text context that we are extending
+    context = "i prob"
 
     # Notice how the predictions are much worse without proper case
     #context = "i "
@@ -33,7 +67,7 @@ if __name__ == "__main__":
     #context = "This will be hard to do programmatical"
 
     # We can now predict the s!
-    context = "i like zebra"
+    #context = "i like zebra"
 
     context_lower = context.lower()
 
@@ -64,6 +98,7 @@ if __name__ == "__main__":
     for i in range(vocab_size):
         word = tokenizer.decode([i])
         index_to_word[i] = word
+        #print(f"{i:6}: '{word}'")
         index_to_word_lower[i] = word.lower()
 
     # Get the index we use for the start or end pseudo-word
@@ -75,7 +110,7 @@ if __name__ == "__main__":
     # If you have a GPU, put everything on cuda
     device = "cpu"
     # device = "cuda"   # NVidia GPU
-    # device = "mps"    # M1 mac
+    #device = "mps"    # M1 mac
     model.to(device)
 
     start_search = timer()
@@ -117,8 +152,13 @@ if __name__ == "__main__":
             # Get the new sequence to work on
             (sequence, current_likelihood) = current.pop(0)
             tokens_tensor = torch.tensor(sequence).unsqueeze(0).to(device)
+#            print(f"DEBUG token_tensor = {tokens_tensor.shape}")
+            t100 = torch.stack((torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device)))
+#            print(f"DEBUG t2 = {t2.shape}")
+
             with torch.no_grad():
-                logits = model(tokens_tensor).logits
+                logits = model(t100).logits
+#                print(f"DEBUG logits = {logits.shape}")
                 log_probs = torch.log(torch.softmax(logits[:, -1, :].flatten(), dim=0))
 
             # Create sequence text before the search sequence, skipping start word, make it all lowercase

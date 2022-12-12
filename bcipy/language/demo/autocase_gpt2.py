@@ -9,21 +9,21 @@ if __name__ == "__main__":
     start = timer()
 
     # Load the GPT-2 model
-    lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
+    #lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
     #lm_path = "gpt2-medium"        #  345M             24                 1024    ~3.1GB
     #lm_path = "gpt2-large"         #  762M             36                 1280    ~6.3GB
-    #lm_path = "gpt2-xl"            # 1542M             48                 1600   ~12.3GB
+    lm_path = "gpt2-xl"            # 1542M             48                 1600   ~12.3GB
 
-    beam_width = 16
+    beam_width = 128
 
     # Encode the text into its subword tokens
     # Note: There seem to be multiple subword tokens for things like . ? !
     #text = "i like my iphone"
     #text = "on monday bob and i bought iphones in the usa"
     #text = "on monday bob and i bought iphones"
-    #text = "the nasa shuttle crashed"
+    text = "on wednesday the nasa shuttle crashed near bend"
     #text = "i love the nasa-tlx test"
-    text = "i like a tale of two cities by charles dickens"
+    #text = "i like a tale of two cities by charles dickens"
 
     print(f"Loading {lm_path} model")
     model = GPT2LMHeadModel.from_pretrained(lm_path)
