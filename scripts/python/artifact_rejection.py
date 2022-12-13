@@ -414,5 +414,6 @@ if __name__ == "__main__":
                     session,
                     semi_automatic_ar=args.semi,
                     save_artifacts=args.save,
-                    session_annontations=args.colabel)
+                    session_annontations=args.colabel,
+                    overwrite=True)
             import pdb; pdb.set_trace()

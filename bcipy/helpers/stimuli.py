@@ -258,7 +258,7 @@ def mne_epochs(mne_data: RawArray,
                trigger_labels: List[int],
                reject_by_annotation: bool = False,
                channels: Optional[List[str]] = None,
-               detrend: int = 1,
+               detrend: int = None,
                baseline: Optional[Tuple[float, float]] = None) -> Epochs:
     """MNE Epochs.
 
@@ -266,9 +266,11 @@ def mne_epochs(mne_data: RawArray,
     each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
     """
     annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
-    mne_data.set_annotations(annotations)
+    tmp_data = mne_data.copy()
+    # tmp_data.drop_annotations()
+    tmp_data.set_annotations(annotations)
 
-    events_from_annot, _ = mne.events_from_annotations(mne_data)
+    events_from_annot, _ = mne.events_from_annotations(tmp_data)
     # If 0 or 1, the data channels (MEG and EEG) will be detrended when loaded. 0 is a constant (DC) detrend
     # 1 is a linear detrend. None is no detrending.
     return Epochs(
