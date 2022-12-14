@@ -8,6 +8,7 @@ from math import log10
 from timeit import default_timer as timer
 from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 import argparse
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     phrase_count = 0
     sum_per_symbol_logprob = 0.0
     zero_prob = 0
-    sum_per_symbol_time = 0.0
+    overall_predict_time_arr = np.array([])
 
     # Iterate over phrases
     for phrase in phrases:
@@ -76,8 +77,7 @@ if __name__ == "__main__":
         prev_token = "<s>"
         context = ""
 
-        prediction_count = 0
-        predict_time_sum = 0
+        predict_time_arr = np.array([])
 
         # Iterate over characters in phrase
         for token in tokens:
@@ -94,8 +94,7 @@ if __name__ == "__main__":
             next_char_pred = lm.state_update(list(context))
 
             predict_time = timer() - start_predict
-            predict_time_sum += predict_time
-            prediction_count += 1
+            predict_time_arr = np.append(predict_time_arr, predict_time)
 
             # Find the probability for the correct character
             p = next_char_pred[[c[0] for c in next_char_pred].index(correct_char)][1]
@@ -117,30 +116,41 @@ if __name__ == "__main__":
                 prev_token = token
                 context += token
         
-        per_symbol_time = predict_time_sum / prediction_count
-        sum_per_symbol_time += per_symbol_time
+        # Compute summary stats on prediction times for this phrase
+        per_symbol_time = np.average(predict_time_arr)
+        phrase_std = np.std(predict_time_arr)
+        phrase_max = np.max(predict_time_arr)
+        phrase_min = np.min(predict_time_arr)
+
+        # Add this phrase's prediction times to overall array
+        overall_predict_time_arr = np.append(overall_predict_time_arr, predict_time_arr, axis=None)
 
         if accum == 1:
             if verbose >= 1:
                 print("Zero-prob event encountered, terminating phrase")
-                print(f"per-symbol prediction time = {per_symbol_time:.6f}\n")
+                print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
         else:
             per_symbol_logprob = accum / symbols
 
             # Phrase-level output
             if verbose >= 1:
                 print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
-                print(f"per-symbol prediction time = {per_symbol_time:.6f}\n")
+                print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
             
             sum_per_symbol_logprob += per_symbol_logprob
             phrase_count += 1
 
     average_per_symbol_logprob = sum_per_symbol_logprob / phrase_count
-    average_per_symbol_time = sum_per_symbol_time / len(phrases)
+
+    overall_per_symbol_time = np.average(overall_predict_time_arr)
+    overall_std_time = np.std(overall_predict_time_arr)
+    overall_min_time = np.min(overall_predict_time_arr)
+    overall_max_time = np.max(overall_predict_time_arr)
 
     # Model-level output
-    print(f"phrases = {phrase_count}, \
-        average per symbol logprob = {average_per_symbol_logprob:.4f}, \
-        ppl = {pow(10,-1 * average_per_symbol_logprob):.4f}, \
-        zero-prob events = {zero_prob}, \
-        average per symbol prediction time = {average_per_symbol_time:.6f}\n")
+    print(f"OVERALL \
+        \nphrases = {phrase_count}, \
+        \naverage per symbol logprob = {average_per_symbol_logprob:.4f}, \
+        \nppl = {pow(10,-1 * average_per_symbol_logprob):.4f}, \
+        \nzero-prob events = {zero_prob} \
+        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}]\n")
