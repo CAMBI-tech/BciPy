@@ -30,14 +30,14 @@ if __name__ == "__main__":
     dataset = load_dataset("yelp_review_full")
 
     # Take only a subset of the data
-    train_small = dataset["train"].shuffle(seed=42).select(range(1000))
+    train_small = dataset["train"].shuffle(seed=42).select(range(16000))
     eval_small = dataset["test"].shuffle(seed=42).select(range(1000))
 
     #print(f"{train_small[0]}")
     #print(f"{eval_small[0]}")
 
     # Tokenize the subsets
-    tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=512)   # Compared to example, had to add model_max_length
+    tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=256)   # Compared to example, had to add model_max_length
     train_small_tokenized = train_small.map(tokenize_function, batched=True)
     eval_small_tokenized = eval_small.map(tokenize_function, batched=True)
 
@@ -47,7 +47,10 @@ if __name__ == "__main__":
                                       save_strategy="epoch",
                                       evaluation_strategy="epoch",
                                       output_dir="out_bert",
-                                      resume_from_checkpoint="out_bert")
+                                      resume_from_checkpoint="out_bert",
+                                      per_device_train_batch_size=16,
+                                      per_device_eval_batch_size=16,
+                                      num_train_epochs=3)
 
     metric = evaluate.load("accuracy")
 
