@@ -1,5 +1,5 @@
+"""Tests for MatrixDisplay"""
 import unittest
-from bcipy.helpers.exceptions import BciPyCoreException
 
 import psychopy
 from mockito import (
@@ -10,8 +10,8 @@ from mockito import (
     unstub,
     verifyNoUnwantedInteractions
 )
-from bcipy.display.paradigm.matrix import (
-    MatrixDisplay
+from bcipy.display.paradigm.matrix.display import (
+    MatrixDisplay, SymbolDuration
 )
 from bcipy.display import (
     StimuliProperties,
@@ -57,24 +57,51 @@ class TestMatrixDisplay(unittest.TestCase):
         self.experiment_clock = mock()
         self.static_clock = mock()
         self.text_stim_mock = mock()
+        # grid item
         when(psychopy.visual).TextStim(
             win=self.window,
-            color=any(),
-            height=any(),
             text=any(),
-            font=any(),
+            opacity=any(),
             pos=any(),
-            wrapWidth=any(), colorSpace=any(),
-            opacity=any(), depth=any()
+            height=any(),
         ).thenReturn(self.text_stim_mock)
-        self.matrix = MatrixDisplay(
-            self.window,
-            self.static_clock,
-            self.experiment_clock,
-            self.stimuli,
-            self.task_display,
-            self.info)
 
+        # target
+        when(psychopy.visual).TextStim(win=self.window,
+                                       font=any(),
+                                       text=any(),
+                                       height=any(),
+                                       color=any(),
+                                       wrapWidth=any()).thenReturn(
+                                           self.text_stim_mock)
+
+        # waitscreen
+        when(psychopy.visual).TextStim(win=self.window,
+                                       font=any(),
+                                       text=any(),
+                                       height=any(),
+                                       color=any(),
+                                       pos=any(),
+                                       wrapWidth=any()).thenReturn(
+                                           self.text_stim_mock)
+        # stim make functions
+        when(psychopy.visual).TextStim(win=self.window,
+                                       color=any(),
+                                       height=any(),
+                                       text=any(),
+                                       font=any(),
+                                       pos=any(),
+                                       wrapWidth=any(),
+                                       colorSpace=any(),
+                                       opacity=any(),
+                                       depth=any()).thenReturn(
+                                           self.text_stim_mock)
+
+        self.matrix = MatrixDisplay(window=self.window,
+                                    experiment_clock=self.experiment_clock,
+                                    stimuli=self.stimuli,
+                                    task_display=self.task_display,
+                                    info=self.info)
         when(self.matrix)._trigger_pulse().thenReturn()
 
     def tearDown(self):
@@ -83,23 +110,10 @@ class TestMatrixDisplay(unittest.TestCase):
         unstub()
 
     def test_task_display_properties_set_correctly(self):
-        self.assertEqual(self.matrix.task_display, self.task_display)
         self.assertEqual(self.matrix.task, self.task_display.build_task(self.window))
 
     def test_information_properties_set_correctly(self):
-        self.assertEqual(self.matrix.info, self.info)
         self.assertEqual(self.matrix.info_text, self.info.build_info_text(self.window))
-
-    def test_stimuli_properties_set_correctly(self):
-        """Stimuli properties are set on the instance to allow easy resetting of this properties during a task."""
-        self.assertEqual(self.matrix.stimuli_inquiry, self.stimuli.stim_inquiry)
-        self.assertEqual(self.matrix.stimuli_colors, self.stimuli.stim_colors)
-        self.assertEqual(self.matrix.stimuli_timing, self.stimuli.stim_timing)
-        self.assertEqual(self.matrix.stimuli_font, self.stimuli.stim_font)
-        self.assertEqual(self.matrix.stimuli_height, self.stimuli.stim_height)
-        self.assertEqual(self.matrix.stimuli_pos, self.stimuli.stim_pos)
-        self.assertEqual(self.matrix.is_txt_stim, self.stimuli.is_txt_stim)
-        self.assertEqual(self.matrix.stim_length, self.stimuli.stim_length)
 
     def test_schedule_to(self):
         # Test schedule_to method correctly sets stim inquiry, timing, and colors to given parameters.
@@ -107,16 +121,27 @@ class TestMatrixDisplay(unittest.TestCase):
 
         self.assertEqual(self.matrix.stimuli_inquiry, self.stimuli.stim_inquiry)
         self.assertEqual(self.matrix.stimuli_timing, self.stimuli.stim_timing)
-        self.assertEqual(self.matrix.stimuli_colors, self.stimuli.stim_colors)
 
-    def test_do_inquiry_if_scp(self):
-        when(self.matrix).prompt_target().thenReturn(([], 'A'))
-        when(self.matrix).animate_scp().thenReturn([])
+    def test_do_inquiry(self):
+        stimuli = ['X', '+', 'A', 'B', 'C']
+        timing = [0.5, 1.0, 0.2, 0.2, 0.2]
+
+        target = SymbolDuration('X', 0.5)
+        fixation = SymbolDuration('+', 1.0)
+        stim_durations = [
+            SymbolDuration(*sti)
+            for sti in [('A', 0.2), ('B', 0.2), ('C', 0.2)]
+        ]
+
+        when(self.matrix).prompt_target(any()).thenReturn(0.0)
+        when(self.matrix).animate_scp(any(), any()).thenReturn([])
+
+        self.matrix.schedule_to(stimuli, timing, [])
         self.matrix.do_inquiry()
 
         verify(self.matrix, times=1)._trigger_pulse()
-        verify(self.matrix, times=1).prompt_target()
-        verify(self.matrix, times=1).animate_scp()
+        verify(self.matrix, times=1).prompt_target(target)
+        verify(self.matrix, times=1).animate_scp(fixation, stim_durations)
 
     def test_build_grid(self):
         # mock the text stims and increment_position
@@ -130,12 +155,16 @@ class TestMatrixDisplay(unittest.TestCase):
         when(self.matrix).increment_position(any()).thenReturn()
 
         sym_length = len(self.matrix.symbol_set)
-        self.matrix.build_grid()
-        # we expect the legth of the stimulus regisitry to be the same as the length of the symbol set
-        self.assertEqual(len(self.matrix.stim_registry), sym_length)
-        # verify that all of the text stims were drawn and the position was incremented each time
-        verify(self.text_stim_mock, times=sym_length).draw()
+        grid = self.matrix.build_grid()
+
+        self.assertEqual(len(grid), sym_length)
+        # verify that the position was incremented each time
         verify(self.matrix, times=sym_length).increment_position(any())
+
+    def test_draw_grid(self):
+        """Test that all items in the grid draw."""
+        self.matrix.draw_grid()
+        verify(self.text_stim_mock, times=len(self.matrix.symbol_set)).draw()
 
     def test_increment_position_increments_x_when_max_grid_width_not_met(self):
         self.matrix.position_increment = 0.2
@@ -172,7 +201,8 @@ class TestMatrixDisplay(unittest.TestCase):
         when(psychopy.core).wait(any()).thenReturn()
         when(self.matrix.trigger_callback).reset().thenReturn()
         # we expect the timing returned to be a list
-        response = self.matrix.animate_scp()
+        response = self.matrix.animate_scp(fixation=SymbolDuration('+', 1),
+                                           stimuli=[])
         self.assertIsInstance(response, list)
 
     def test_draw_static(self):

@@ -1,3 +1,5 @@
+"""Demo Matrix Display functionality related to Calibration task logic."""
+# pylint: disable=invalid-name
 from psychopy import core
 from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
 from bcipy.display.paradigm.matrix import MatrixDisplay
@@ -11,58 +13,62 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Matrix Calibration Demo'],
 )
-task_display = TaskDisplayProperties(
-    task_color=['White'],
-    task_pos=(-.8, .85),
-    task_font='Arial',
-    task_height=.1,
-    task_text='1/100'
-)
-stim_properties = StimuliProperties(
-    stim_font='Arial',
-    stim_pos=(-0.6, 0.4),
-    stim_height=0.1,
-    stim_inquiry=['A'],
-    stim_colors=[],
-    stim_timing=[0.1],
-    is_txt_stim=True,
-    prompt_time=1.0
-)
+task_display = TaskDisplayProperties(task_color=['White'],
+                                     task_pos=(-.8, .85),
+                                     task_font='Arial',
+                                     task_height=.1,
+                                     task_text='1/100')
+stim_properties = StimuliProperties(stim_font='Arial',
+                                    stim_pos=(-0.6, 0.4),
+                                    stim_height=0.1,
+                                    is_txt_stim=True)
 
 # Initialize Stimulus
 window_parameters = {
     'full_screen': False,
     'window_height': 500,
     'window_width': 500,
-    'stim_screen': 1,
+    'stim_screen': 0,
     'background_color': 'black'
 }
-static_clock = core.StaticPeriod()
+
 experiment_clock = core.Clock()
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
-matrix_display = MatrixDisplay(
-    win,
-    static_clock,
-    experiment_clock,
-    stim_properties,
-    task_display,
-    info)
+matrix_display = MatrixDisplay(win, experiment_clock, stim_properties,
+                               task_display, info)
 
+time_target = 1
+time_fixation = 2
+time_flash = 0.25
+timing = [time_target] + [time_fixation] + [time_flash] * 5
+task_buffer = 2
 
-matrix_display.schedule_to(stimuli=['A', 'B', 'C'], timing=[0.5, 0.5, 0.5], colors=[])
+matrix_display.schedule_to(stimuli=['A', '+', 'F', '<', 'A', 'B', 'C'],
+                           timing=timing,
+                           colors=[])
 matrix_display.update_task_state(text='1/100', color_list=['White'])
 matrix_display.do_inquiry()
+core.wait(task_buffer)
 
-matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
+matrix_display.schedule_to(stimuli=['B', '+', 'F', '<', 'A', 'B', 'C'],
+                           timing=timing,
+                           colors=[])
 matrix_display.update_task_state(text='2/100', color_list=['White'])
 matrix_display.do_inquiry()
+core.wait(task_buffer)
 
-matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
+matrix_display.schedule_to(stimuli=['C', '+', 'F', '<', 'A', 'B', 'C'],
+                           timing=timing,
+                           colors=[])
 matrix_display.update_task_state(text='3/100', color_list=['White'])
 matrix_display.do_inquiry()
+core.wait(task_buffer)
 
-matrix_display.schedule_to(stimuli=['X', 'F', '<', 'A', 'B', 'C'], timing=[1, 1, 1, 1, 1, 1], colors=[])
+matrix_display.schedule_to(stimuli=['<', '+', 'F', '<', 'A', 'B', 'C'],
+                           timing=timing,
+                           colors=[])
 matrix_display.update_task_state(text='4/100', color_list=['White'])
 matrix_display.do_inquiry()
+core.wait(task_buffer)
