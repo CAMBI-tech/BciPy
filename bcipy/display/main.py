@@ -131,10 +131,10 @@ class StimuliProperties:
             stim_font: str,
             stim_pos: Tuple[float, float],
             stim_height: float,
-            stim_inquiry: List[str],
-            stim_colors: List[str],
-            stim_timing: List[float],
-            is_txt_stim: bool,
+            stim_inquiry: List[str] = None,
+            stim_colors: List[str] = None,
+            stim_timing: List[float] = None,
+            is_txt_stim: bool = True,
             prompt_time: float = None):
         """Initialize Stimuli Parameters.
 
@@ -150,9 +150,9 @@ class StimuliProperties:
         self.stim_font = stim_font
         self.stim_pos = stim_pos
         self.stim_height = stim_height
-        self.stim_inquiry = stim_inquiry
-        self.stim_colors = stim_colors
-        self.stim_timing = stim_timing
+        self.stim_inquiry = stim_inquiry or []
+        self.stim_colors = stim_colors or []
+        self.stim_timing = stim_timing or []
         self.is_txt_stim = is_txt_stim
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
