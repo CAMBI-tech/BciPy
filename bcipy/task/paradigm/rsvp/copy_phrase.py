@@ -77,7 +77,7 @@ class RSVPCopyPhraseTask(Task):
     """
 
     TASK_NAME = 'RSVP Copy Phrase Task'
-    MODE='RSVP'
+    MODE = 'RSVP'
 
     PARAMETERS_USED = [
         'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
@@ -281,6 +281,21 @@ class RSVPCopyPhraseTask(Task):
         seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
+    def update_task_state(self):
+        """ Updates task state of the Display by removing letters or
+            appending to the right.
+            Args:
+                color_list(list[string]): list of colors for each
+        """
+        # Add padding to attempt aligning the task and information text.
+        # *Note:* this only works with monospaced fonts
+        padding = abs(len(self.copy_phrase) - len(self.spelled_text))
+        text = self.spelled_text + (' ' * padding)
+        static_task_pos_y = 1 - self.parameters['task_height']
+        task_pos = (0, static_task_pos_y - self.parameters['task_height'])
+
+        self.rsvp.update_task(text=text, color_list=['white'], pos=task_pos)
+
     def present_inquiry(self, inquiry_schedule: InquirySchedule
                         ) -> Tuple[List[Tuple[str, float]], bool]:
         """Present the given inquiry and return the trigger timing info.
@@ -302,18 +317,17 @@ class RSVPCopyPhraseTask(Task):
         presented in sequence.
         """
         # Update task state and reset the static
-        self.rsvp.update_task_state(text=self.spelled_text,
-                                    color_list=['white'])
+        self.update_task_state()
         self.rsvp.draw_static()
         self.window.flip()
 
         self.wait()
 
         # Setup the new stimuli
-        self.rsvp.stimuli_inquiry = inquiry_schedule.stimuli[0]
-        if self.parameters['is_txt_stim']:
-            self.rsvp.stimuli_colors = inquiry_schedule.colors[0]
-        self.rsvp.stimuli_timing = inquiry_schedule.durations[0]
+        self.rsvp.schedule_to(stimuli=inquiry_schedule.stimuli[0],
+                              timing=inquiry_schedule.durations[0],
+                              colors=inquiry_schedule.colors[0]
+                              if self.parameters['is_txt_stim'] else None)
 
         if self.parameters['show_preview_inquiry']:
             stim_times, proceed = self.rsvp.preview_inquiry()
