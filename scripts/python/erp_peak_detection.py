@@ -42,12 +42,12 @@ def determine_latency(
     if not prelabel:
         ch_name, latency = average_per_condition.get_peak(
             mode=mode, tmin=tmin, tmax=tmax)
-        print(f'{label} latency: {latency} in channel {ch_name} detected automatically.'
-           'Proceeding to semi-automatic peak detection.')
+        print(f'{label} latency: {latency} in channel {ch_name} detected automatically. \n'
+           'Proceeding to semi-automatic peak detection. \n')
     else:
         latency = prelabel
-        print(f'{label} latency: {latency} detected by prelabel.'
-           'Proceeding to semi-automatic peak detection.')
+        print(f'{label} latency: {latency} detected by prelabel. \n'
+           'Proceeding to semi-automatic peak detection. \n')
 
     if semi_automatic:
         latency = get_latency(average_per_condition, latency, label)
@@ -164,6 +164,7 @@ if __name__ == '__main__':
     
     for session in Path(path).iterdir():
         try:
+            print(f'\nProcessing {session} \n')
             # mne_data = mne.io.read_raw_fif(f'{session}/{raw_data_filename}', preload=True)
             target = mne.read_epochs(f'{session}/{target_filename}', preload=True)
             n2_target, p3_target, target_average = detection(target, condition='Target')
@@ -174,10 +175,13 @@ if __name__ == '__main__':
                 prelabel=[p3_target, n2_target])
 
             if write_output:
+                print(f'\nWriting output {session}/n2_p3_latencies.txt \n')
                 with open(f'{session}/n2_p3_latencies.txt', 'w') as f:
                     f.write(f'Label, Target, Nontarget \n')
                     f.write(f'N2, {n2_target}, {n2_nontarget} \n')
                     f.write(f'P3, {p3_target}, {p3_nontarget} \n')
+            
+            print('Complete! \n')
             
         except Exception as e:
             print(f'Could not load epochs for session {session}: [{e}]')
