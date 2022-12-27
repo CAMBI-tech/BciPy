@@ -56,7 +56,7 @@ def epoch_prelabelled_data(
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
-    poststim_length = parameters.get("trial_length")
+    poststim_length = 0.8
     # prestim_length = parameters.get("prestim_length") # used for online filtering
     # trials_per_inquiry = parameters.get("stim_length")
     trials = parameters.get("stim_number")
@@ -87,7 +87,7 @@ def epoch_prelabelled_data(
         channels=channel_list)
     epochs.drop_bad() # TODO: verify if this is necessary
     print(f'channels dropped: {epochs.info["bads"]}')
-    # epochs.info['bads'] = []
+    epochs.info['bads'] = []
 
     if epochs.info['bads']:
         print(f'Epochs dropped: {len(epochs.info["bads"])}')
@@ -100,13 +100,20 @@ def epoch_prelabelled_data(
 
     # check if we have enough good epochs to include this session in the analysis. TODO make class sensitive
     clases = [1, 2]
-    permitted_loss = trials * (1 - (percent_bad / 100))
+    # permitted_loss = trials * (1 - (percent_bad / 100))
     for pos in clases:
-        epoch_pos = epochs[f'{pos}']
-        print(f'Class {pos} has {len(epoch_pos)} epochs')
-        if len(epoch_pos) < permitted_loss:
-            print('Too many epochs rejected. This session will be excluded from analysis.')
-            return None
+        if pos == 1:
+            epoch_pos = epochs[f'{pos}']
+            print(f'Class {pos} has {len(epoch_pos)} epochs')
+            if len(epoch_pos) < 500:
+                print('Too many nontarget epochs rejected. This session will be excluded from analysis.')
+                return None
+        else:
+            epoch_pos = epochs[f'{pos}']
+            print(f'Class {pos} has {len(epoch_pos)} epochs')
+            if len(epoch_pos) < 50:
+                print('Too many target epochs rejected. This session will be excluded from analysis.')
+                return None
 
     return epochs, clases, mne_data
 
@@ -137,12 +144,13 @@ def grand_average(epochs: mne.Epochs, positions: List[int], labels: List[str]=['
         )
 
     visualize_evokeds(concat_epochs, show=True)
-    visualize_joint_average(concat_epochs, labels, show=True)
+    visualize_joint_average(concat_epochs, labels, show=True, plot_joint_times=[-0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.5, 0.6])
     return concat_epochs
 
 
 if __name__ == "__main__":
-    
+    target_filename = 'target-epo.fif'
+    nontarget_filename = 'nontarget-epo.fif'
     channel_list = ['Pz']
     path = load_experimental_data()
     
@@ -162,8 +170,8 @@ if __name__ == "__main__":
                     # target.average(method='mean') # can be mean or median
 
                     # SAVING THE EPOCHS FOR PEAK DETECTION
-                    # target.save(f'{session}/target_epochs.fif', overwrite=True)
-                    # nontarget.save(f'{session}/nontarget_epochs.fif', overwrite=True)
+                    target.save(f'{session}/{target_filename}', overwrite=True)
+                    nontarget.save(f'{session}/{nontarget_filename}', overwrite=True)
                     # epochs.save(f'{session}/all_epochs.fif', overwrite=True)
                 else:
                     all_excluded.append(session)
@@ -172,15 +180,9 @@ if __name__ == "__main__":
                 print(f'Error processing {session}: {e}')
                 all_excluded.append(session)
                 print(f'Excluding {session}')
-        
-        # debugger to ensure we should continue processing
-        # import pdb; pdb.set_trace()
+                continue
 
     # debugger to catch everything at the end and evaluate results
     import pdb; pdb.set_trace()
-    # Grand averaging TODO: figure this out!
     # grand_average = mne.grand_average(all_epochs, interpolate_bads=True)
     # grand_average(all_epochs, positions)
-
-
-    import pdb; pdb.set_trace()

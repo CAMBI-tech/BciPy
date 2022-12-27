@@ -3,16 +3,12 @@ mne.set_log_level('WARNING')
 from pathlib import Path
 from bcipy.helpers.load import (
     load_experimental_data,
-    load_json_parameters,
 )
 
 def determine_latency(
         epochs,
-        conditions,
-        raw,
         semi_automatic=True,
-        channels=None,
-        duration=0.8,
+        prelabel=False,
         label='P300',
         mode='pos',
         tmin=0.2,
@@ -23,16 +19,8 @@ def determine_latency(
     ----------
     epochs : mne.Epochs
         The epochs to process.
-    conditions : list
-        The conditions to process for amplitude differences.
-    raw : mne.io.RawArray
-        The raw data the epochs were extracted from.
     semi_automatic : bool
         If True, the user will be prompted to select the latency of the ERP response.
-    channels : list
-        The channels to include in the peak detection analysis.
-    duration : float
-        The duration of the ERP response.
     label : str
         The label to use for the ERP response annotation. e.g. 'P300'
     mode : str
@@ -48,37 +36,50 @@ def determine_latency(
     latencies: list
         The latency of the ERP response. Each condition is a key in the dictionary and the value is the latency for that condition.
     """
-    latencies = []
-    for con in conditions:
-        average_per_condition = epochs[con].average() 
+
+    average_per_condition = epochs.average()
+    
+    if not prelabel:
         ch_name, latency = average_per_condition.get_peak(
-            mode=mode, tmin=tmin, tmax=tmax, picks=channels)
+            mode=mode, tmin=tmin, tmax=tmax)
+        print(f'{label} latency: {latency} in channel {ch_name} detected automatically.'
+           'Proceeding to semi-automatic peak detection.')
+    else:
+        latency = prelabel
+        print(f'{label} latency: {latency} detected by prelabel.'
+           'Proceeding to semi-automatic peak detection.')
 
-        print(f'Peak latency for condition {con} is {latency} in channel {ch_name}')
-        
-        if semi_automatic:
-            # In order to get the correct units etc for the annotation, we need to set and retrieve them from the raw data
-            # https://mne.tools/dev/generated/mne.Epochs.html#mne.Epochs.set_annotations
-            raw.set_annotations(mne.Annotations(onset=latency, duration=duration, description=label))
-            annotate = raw.annotations
-            average_per_condition.set_annotations(annotate)
-            average_per_condition.plot(block=True)
+    if semi_automatic:
+        latency = get_latency(average_per_condition, latency, label)
+        print(f'{label} latency: {latency}')
+    return latency
 
-            latency = average_per_condition.get_annotations_per_epoch()[0][0]['onset']
-        
-        latencies.append(latency)
+def get_latency(average, latency, condition):
+    get_input = True
+    while get_input:
+        fig = average.plot(show=True, window_title=f'Average {condition}, Estimated: {latency}')
+        user_input = input(f'Is the latency=[{latency}] correct? (y/n): ')
+        if user_input == 'y':
+            get_input = False
+        elif user_input == 'n':
+            latency = input('Enter the latency in seconds: ')
+            get_input = True
+            condition += '-CONFIRM'
+        else:
+            print('Invalid input. Please enter y or n.')
+        try:
+            return float(latency)
+        except ValueError:
+            print('Invalid input. Please enter a number for latency.')
+            get_input = True
 
-    return latencies
-
-def semi_automatic_peak_detection(epochs, conditions, label, raw, duration=0.8, tmin=0.2, tmax=0.8, mode='pos', channels=None):
+def semi_automatic_peak_detection(epochs, label, prelabel=None, tmin=0.2, tmax=0.8, mode='pos'):
     """Semi-automatic peak detection.
 
     Parameters
     ----------
     epochs : mne.Epochs
         The epochs to process.
-    conditions : list
-        The conditions to process for amplitude differences.
 
     Returns
     -------
@@ -88,72 +89,98 @@ def semi_automatic_peak_detection(epochs, conditions, label, raw, duration=0.8, 
     """
     return determine_latency(
         epochs,
-        conditions,
-        raw,
+        prelabel=prelabel,
         semi_automatic=True,
         label=label,
-        duration=duration,
-        channels=channels,
         tmin=tmin,
         tmax=tmax,
         mode=mode)
 
+def detection(epochs, condition, prelabel=None):
+    """Peak detection.
+
+    Parameters
+    ----------
+    epochs : mne.Epochs
+        The epochs to process.
+    condition : str
+        The condition to process.
+    prelabel : str
+        The label to use for the ERP response annotations. First must be p300, last must be n200.
+
+    Returns
+    -------
+
+    n2 latency, p3 latency, averaged epoches : tuple
+        The latency of the ERP response. Each condition is a key in the dictionary and the value is the latency for that condition.
+    """
+
+    # P300
+    # Define the ERP response to detect
+    label = f'P300-{condition}'
+    tmin = 0.3
+    tmax = 0.8
+    # duration = 0.3
+    # Define the ERP response mode
+    mode = 'pos'
+    # Semi-automatic peak detection
+    p300_latencies = semi_automatic_peak_detection(
+        epochs,
+        label,
+        prelabel=prelabel[0] if prelabel else None,
+        tmin=tmin,
+        tmax=tmax,
+        mode=mode)
+
+    # N200
+    # Define the ERP response to detect
+    label = f'N200-{condition}'
+    # Define the ERP response mode
+    mode = 'neg'
+    # Define the ERP response time window
+    tmin = 0.2
+    tmax = 0.325
+    # duration = 0.3
+
+    # Semi-automatic peak detection
+    n200_latencies = semi_automatic_peak_detection(
+        epochs, 
+        label,
+        prelabel=prelabel[-1] if prelabel else None,
+        tmin=tmin,
+        tmax=tmax,
+        mode=mode)
+    
+    return n200_latencies, p300_latencies, epochs.average()
+
+
 if __name__ == '__main__':
-    epoch_filename = 'all_epochs.fif'
-    raw_data_filename = 'artifacts_raw.fif'
-    conditions = [1, 2] # 1 = nontarget, 2 = target
-    p300_detection = True
-    n200_detection = True
+    write_output = True
+    target_filename = 'target-epo.fif'
+    nontarget_filename = 'nontarget-epo.fif'
 
     # process the target data first and use those as the first place label for the nontarget data
-
     path = load_experimental_data()
     
-    all_epochs = []
-    all_excluded = []
-    positions = None
     for session in Path(path).iterdir():
         try:
-            epochs = mne.read_epochs(f'{session}/{epoch_filename}', preload=True)
-            raw = mne.io.read_raw_fif(f'{session}/raw.fif', preload=True)
-            if p300_detection:
-                # Define the ERP response to detect
-                label = 'P300'
+            # mne_data = mne.io.read_raw_fif(f'{session}/{raw_data_filename}', preload=True)
+            target = mne.read_epochs(f'{session}/{target_filename}', preload=True)
+            n2_target, p3_target, target_average = detection(target, condition='Target')
+            nontarget = mne.read_epochs(f'{session}/{nontarget_filename}', preload=True)
+            n2_nontarget, p3_nontarget, nontarget_average = detection(
+                nontarget,
+                condition='NonTarget',
+                prelabel=[p3_target, n2_target])
 
-                # Define the ERP response duration
-                duration = 0.8
-
-                # Define the ERP response mode
-                mode = 'pos'
-
-                # Define the ERP response time window
-                tmin = 0.2
-                tmax = 0.8
-
-                # Semi-automatic peak detection
-                p300_latencies = semi_automatic_peak_detection(epochs, conditions, label, raw, duration=duration, tmin=tmin, tmax=tmax, mode=mode)
+            if write_output:
+                with open(f'{session}/n2_p3_latencies.txt', 'w') as f:
+                    f.write(f'Label, Target, Nontarget \n')
+                    f.write(f'N2, {n2_target}, {n2_nontarget} \n')
+                    f.write(f'P3, {p3_target}, {p3_nontarget} \n')
             
-
-            if n200_detection:
-                # Define the ERP response to detect
-                label = 'N200'
-
-                # Define the ERP response duration
-                duration = 0.8
-
-                # Define the ERP response mode
-                mode = 'neg'
-
-                # Define the ERP response time window
-                tmin = 0.1
-                tmax = 0.3
-
-                # Semi-automatic peak detection
-                n200_latencies = semi_automatic_peak_detection(epochs, conditions, label, raw, duration=duration, tmin=tmin, tmax=tmax, mode=mode)
-        except:
-            print(f'Could not load epochs for session {session}')
+        except Exception as e:
+            print(f'Could not load epochs for session {session}: [{e}]')
             continue
-    
-    # N2/P3 output for each session: write as a labelled epoch file; mean activiry calculation
-    import pdb; pdb.set_trace()
 
+    

@@ -271,11 +271,13 @@ def mne_epochs(mne_data: RawArray,
     tmp_data.set_annotations(annotations)
 
     events_from_annot, _ = mne.events_from_annotations(tmp_data)
+
     # If 0 or 1, the data channels (MEG and EEG) will be detrended when loaded. 0 is a constant (DC) detrend
     # 1 is a linear detrend. None is no detrending.
     return Epochs(
         mne_data,
         events_from_annot,
+        tmax=trial_length,
         reject_by_annotation=reject_by_annotation,
         detrend=detrend,
         baseline=baseline,
