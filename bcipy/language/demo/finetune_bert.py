@@ -24,18 +24,27 @@ def tokenize_function(examples):
 
 if __name__ == "__main__":
 
-    #model_name = "google/bert_uncased_L-2_H-128_A-2"           # Smallest BERT model
+    #model_name = "google/bert_uncased_L-2_H-128_A-2"
+    #model_name = "bert-base-uncased"
     #model_name = "google/electra-small-discriminator"
-    model_name = "microsoft/mpnet-base"
+    #model_name = "google/electra-large-discriminator"
+    #model_name = "microsoft/mpnet-base"
+    #model_name = "distilbert-base-uncased"
+    #model_name = "roberta-base"
+    #model_name = "albert-base-v2"
+    #model_name = "YituTech/conv-bert-base"
+    #model_name = "microsoft/deberta-v3-xsmall"
+    model_name = "xlnet-base-cased"
 
     dataset = load_dataset("yelp_review_full")
 
     # Take only a subset of the data
-    train_small = dataset["train"].shuffle(seed=42).select(range(16000))
+    train_small = dataset["train"].shuffle(seed=42).select(range(1000))
     eval_small = dataset["test"].shuffle(seed=42).select(range(1000))
 
-    #print(f"{train_small[0]}")
-    #print(f"{eval_small[0]}")
+    #for i in range(1000):
+    #    print(f"{train_small[i]}")
+    #    print(f"{eval_small[0]}")
 
     # Tokenize the subsets
     tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=256)   # Compared to example, had to add model_max_length
