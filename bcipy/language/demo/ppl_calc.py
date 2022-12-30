@@ -59,6 +59,7 @@ if __name__ == "__main__":
     sum_per_symbol_logprob = 0.0
     zero_prob = 0
     overall_predict_time_arr = np.array([])
+    overall_predict_details_arr = np.array([])
 
     # Iterate over phrases
     for phrase in phrases:
@@ -78,9 +79,10 @@ if __name__ == "__main__":
         context = ""
 
         predict_time_arr = np.array([])
+        predict_details_arr = np.array([])
 
         # Iterate over characters in phrase
-        for token in tokens:
+        for (i, token) in enumerate(tokens):
             start_predict = timer()
             correct_char = ""
 
@@ -95,6 +97,7 @@ if __name__ == "__main__":
 
             predict_time = timer() - start_predict
             predict_time_arr = np.append(predict_time_arr, predict_time)
+            predict_details_arr = np.append(predict_details_arr, f"sentence = {sentence}, index = {i}, p( {token} | {prev_token} )")
 
             # Find the probability for the correct character
             p = next_char_pred[[c[0] for c in next_char_pred].index(correct_char)][1]
@@ -124,6 +127,7 @@ if __name__ == "__main__":
 
         # Add this phrase's prediction times to overall array
         overall_predict_time_arr = np.append(overall_predict_time_arr, predict_time_arr, axis=None)
+        overall_predict_details_arr = np.append(overall_predict_details_arr, predict_details_arr, axis=None)
 
         if accum == 1:
             if verbose >= 1:
@@ -147,10 +151,21 @@ if __name__ == "__main__":
     overall_min_time = np.min(overall_predict_time_arr)
     overall_max_time = np.max(overall_predict_time_arr)
 
+    ci_floor = overall_per_symbol_time - (3 * overall_std_time)
+    ci_ceiling = overall_per_symbol_time + (3 * overall_std_time)
+
     # Model-level output
     print(f"OVERALL \
         \nphrases = {phrase_count}, \
         \naverage per symbol logprob = {average_per_symbol_logprob:.4f}, \
         \nppl = {pow(10,-1 * average_per_symbol_logprob):.4f}, \
         \nzero-prob events = {zero_prob} \
-        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}]\n")
+        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}] \
+        \n95% CI = [{ci_floor}, {ci_ceiling}]\n")
+
+
+    for (i, time) in enumerate(overall_predict_time_arr):
+        if time < ci_floor:
+            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+        if time > ci_ceiling:
+            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
