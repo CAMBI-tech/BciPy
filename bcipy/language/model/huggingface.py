@@ -10,7 +10,7 @@ from bcipy.language.main import LanguageModel, ResponseType
 from scipy.special import logsumexp
 from scipy.special import softmax
 
-class GPT2Mk2LanguageModel(LanguageModel):
+class HuggingFaceLanguageModel(LanguageModel):
     """Character language model based on GPT2."""
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
