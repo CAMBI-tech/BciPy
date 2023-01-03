@@ -18,33 +18,40 @@ from transformers import EarlyStoppingCallback, IntervalStrategy
 import sys
 
 
-# Here is how you can create a preprocessing function to convert the list to a string, and truncate sequences to be
-# no longer than DistilGPT2's maximum input length:
-
+# In ELI, each training example has an answers.text that is an array of different answers.
+# We join these answers together into a single string separated by spaces.
+# Then we tokenize each training example into a sequence of subword tokens and a parallel array of attention masks.
 # Returns a dictionary with input_ids and attention_mask arrays.
 def preprocess_function(examples):
-    print(f"BEFORE {len(examples['answers.text'])}")
-    print(f"STRING {len([' '.join(x) for x in examples['answers.text']])}")
-    result = tokenizer([" ".join(x) for x in examples["answers.text"]], truncation=True)
-    print(f"AFTER {len(result)}")
-    print(f"AFTER input_ids {len(result['input_ids'])}")
-    print(f"AFTER input_ids {len(result['input_ids'][0])}")
-    print(f"AFTER attention_mask {len(result['attention_mask'])}")
-    print(f"AFTER attention_mask {len(result['attention_mask'][0])}")
-    return result
-#    return tokenizer([" ".join(x) for x in examples["answers.text"]], truncation=True)
+    # NOTE: Unsure about what return_special_tokens_mask does.
+    return tokenizer([" ".join(x) for x in examples["answers.text"]], truncation=True, return_special_tokens_mask=False)
 
 
+# Concatenate all the text.
+# Split the concatenated text into smaller chunks defined by block_size.
 def group_texts(examples):
+    # Not sure what this block size
     block_size = 128
 
+    # Examples is a KeysView object, dictionary with the keys 'input_ids' and 'attention_mask'.
+    # Values are the list of sequences for each training/eval sample.
+    # The following line areas a dictionary with the same keys, but the list of lists becomes a single list.
     concatenated_examples = {k: sum(examples[k], []) for k in examples.keys()}
+
+    # Find the length of the first key's list
     total_length = len(concatenated_examples[list(examples.keys())[0]])
+
+    # This will round the length down to the closest equal multiple of block_size
     total_length = (total_length // block_size) * block_size
+
+    # Take the single sequence and create a list where each element in the list if of block_size elements.
     result = {
         k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
         for k, t in concatenated_examples.items()
     }
+
+    # For casual language modeling, the label is just the input token IDs.
+    # Apparently somebody else handles shifting it so the neural network's job is to predict the next subword token.
     result["labels"] = result["input_ids"].copy()
     return result
 
@@ -85,30 +92,33 @@ if __name__ == "__main__":
 
     random.seed(args.seed)
 
-    eli5 = load_dataset("eli5", split="train_asks[:500]")
+    eli5 = load_dataset("eli5", split="train_asks[:100]")
     eli5 = eli5.train_test_split(test_size=0.2)
-#    print(f"{eli5['train'][0]}")
     eli5 = eli5.flatten()
-#    print(f"{eli5['train'][0]}")
-    print(f"SIZE TRAIN {len(eli5['train'])}")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
     physical_cores = multiprocessing.cpu_count() // 2
 
+    # First step is to tokenize the text in the sentence for each training/eval sample
     tokenized_eli5 = eli5.map(
         preprocess_function,
         batched=True,
-#        num_proc=physical_cores,
+        num_proc=physical_cores,
         remove_columns=eli5["train"].column_names,
     )
 
-    lm_dataset = tokenized_eli5.map(group_texts, batched=True, num_proc=physical_cores)
-    print(f"{lm_dataset}")
-    print(f"{lm_dataset['train'][0]}")
+    # Create sequences that are of a specific block size by merging the sequences and then splitting
+    lm_dataset = tokenized_eli5.map(
+        group_texts,
+        batched=True,
+        num_proc=physical_cores,
+    )
 
+    # https://huggingface.co/docs/transformers/v4.25.1/en/main_classes/data_collator#transformers.DataCollatorForLanguageModeling
     tokenizer.pad_token = tokenizer.eos_token
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    print(f"data collator: {data_collator}")
 
     # Optionally we load a previously trained model
     load_name = args.model_name
@@ -135,7 +145,7 @@ if __name__ == "__main__":
         save_steps = args.early_steps
         load_best_model_at_end = True
         save_total_limit = args.early_patience + 1
-        # Require increase in evaluation loss three times in a row
+        # Require increase in evaluation loss so many times in a row
         callbacks = [EarlyStoppingCallback(early_stopping_patience=args.early_patience)]
         save_strategy = IntervalStrategy.STEPS
 
