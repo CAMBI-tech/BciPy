@@ -1,4 +1,18 @@
-"""
+""" Artifact Rejection Pipeline
+
+To use, 
+
+1. Create a virtual environment with the requirements listed in requirements.txt. The bcipy version will determine what
+    python version you need installed. Currently, bcipy>=2.0.0rc1 requires python>=3.7 and <3.9.
+2. Run the script. `python artifact_rejection.py`. 
+    By default, it will prompt you for a data directory. Detect artifact automatically and quit.
+3. Run the script again using available flags. 
+    `-p <path to data directory> "C:\Users\user\data\"`
+    `--save <save data as .fif after detection for reuse later>`
+    `--semi <semi-automatic mode with gui for artifact label editing>`
+    `--colabel <colabel data with session annotations [target/nontarget]>`
+
+
 Standard of Practice: 
 
 + Correct bad labels, but leave overlapping events!
@@ -81,10 +95,9 @@ def artifact_rejection(
     mne_data : mne.io.RawArray
         The raw data labelled with annotations for artifacts.
     """
-    # pull relevant parameters
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
-    # get raw data 
+    # get raw data from session folder
     raw_data = load_raw_data(Path(path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
@@ -93,14 +106,14 @@ def artifact_rejection(
     # using this we remove channels unrelated to the task or that are not used in the analysis
     channel_map = analysis_channels(channels, type_amp)
     static_offset = parameters.get('static_trigger_offset')
-    trial_length = 0.5
+    trial_length = parameters.get('trial_length')
 
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    # get trigger information
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
-    # labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
     # trigger timing and labels
     if session_annontations:
@@ -161,9 +174,10 @@ def semi_automatic_artifact_rejection(
     mne_data : mne.io.RawArray
         The raw data labelled with annotations for artifacts.
     """
-    
+    # add any extra labels to the data in case no artifacts are detected
     annotations = Annotations(0, 0, 'ignore')
-    # VOLTAGE: here we rely on the defaults below for thresholding. See label_volagae_events for more info.
+
+    # VOLTAGE: here we rely on the defaults below for thresholding. See label_voltage_events for more info.
     voltage = label_voltage_events(
         mne_data,
         bad_percent_per_channel=percent_bad)
@@ -176,7 +190,7 @@ def semi_automatic_artifact_rejection(
             print(f'Bad channels detected: {bad_channels}')
         annotations += voltage_annotations
 
-    # EOG here we rely on the defaults below for thresholding. See label_eog_events for more info.
+    # EOG: here we rely on the defaults below for thresholding. See label_eog_events for more info.
     eog = label_eog_events(mne_data)
     if eog:
         eog_annotations, eog_events = eog
@@ -202,6 +216,7 @@ def label_eog_events(
         preblink: float=.5,
         postblink: float=.5,
         label: str='BAD_blink',
+        threshold: float=80e-6,
         eye_channels: List[str]=['Fp1', 'Fp2', 'F7', 'F8']) -> Optional[Tuple[mne.Annotations, list]]:
     """Label EOG artifacts.
 
@@ -215,12 +230,15 @@ def label_eog_events(
     label : str
         The label to use for the eog epochs. Note: The prefix
             BAD or BAD_ must be present for epoch rejection.
+    threshold : float
+        The voltage threshold to use for detecting blinks.
+    eye_channels : list
+        The channels to use for detecting blinks.
 
     Returns
     -------
     ( mne.Annotations, list) | None
     """
-    threshold = 80e-6 # a good default threshold
     print(f'Using blink threshold of {threshold}')
     eog_events = mne.preprocessing.find_eog_events(raw, ch_name=eye_channels, thresh=threshold)
 
@@ -250,8 +268,6 @@ def label_voltage_events(
         The time before the voltage to label.
     post_event : float | int
         The time after the voltage to label.
-    min_duration : float | int
-        The minimum duration of an voltage event.
     threshold : tuple
         The voltage threshold to use for peak detection. The tuple should be (threshold, min_duration, label).
     flat : tuple
@@ -385,14 +401,21 @@ if __name__ == "__main__":
     import argparse
     from pathlib import Path
 
+    # 
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-p',
         '--path',
         help='Path to the directory with raw_data to be converted',
         required=False)
+    # Semi-supervised artifact detection. 
+    # If flag used, the user will be prompted with a GUI to correct or add labels for artifacts.
     parser.add_argument("--semi", dest="semi", action="store_true")
+    # Save the data after artifact detection as .fif file.
     parser.add_argument("--save", dest="save", action="store_true")
+    # If flag used with semi, the user will be prompted to correct or add labels for 
+    # artifacts alongside the other session triggers.
     parser.add_argument("--colabel", dest="colabel", action="store_true")
     parser.set_defaults(semi=False)
     parser.set_defaults(save=False)
@@ -416,4 +439,4 @@ if __name__ == "__main__":
                     save_artifacts=args.save,
                     session_annontations=args.colabel,
                     overwrite=True)
-            import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace() # comment out to continue without stopping between sessions

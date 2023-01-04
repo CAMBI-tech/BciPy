@@ -135,7 +135,7 @@ def visualize_joint_average(
 
     figs = []
     for i, label in enumerate(labels):
-        avg = epochs[i].average()
+        avg = epochs[i + 1].average() # indexes start at 1 for epochs
         fig = avg.plot_joint(times=plot_joint_times, title=label, show=show)
         if save_path:
             fig.savefig(
@@ -145,8 +145,10 @@ def visualize_joint_average(
     return figs
 
 
-def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
-                      = None, show: Optional[bool] = False) -> List[Figure]:
+def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
+                      save_path: Optional[str] = None,
+                      show: Optional[bool] = False, 
+                      labels: Optional[List[str]]= ['Nontarget', 'Target']) -> List[Figure]:
     """Visualize Evokeds.
 
     Using MNE Epochs, generate a compare evokeds plot using the mean and showing parametric confidence
@@ -154,9 +156,8 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
 
     See: https://mne.tools/stable/generated/mne.viz.plot_compare_evokeds.html
 
-    Note: Assumes first epoch is nontarget and second is target."""
-    evokeds = dict(nontarget=list(epochs[0].iter_evoked()),
-                   target=list(epochs[1].iter_evoked()))
+    Note: Assumes first epoch is nontarget and second is target by default."""
+    evokeds = {label: list(epoch[i + 1].iter_evoked()) for i, (label, epoch) in enumerate(zip(labels, epochs))}
     fig = mne.viz.plot_compare_evokeds(evokeds, combine='mean', show=show)
     if save_path:
         fig[0].savefig(f'{save_path}/average_erp.png')
