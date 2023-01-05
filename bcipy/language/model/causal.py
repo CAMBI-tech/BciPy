@@ -10,8 +10,8 @@ from bcipy.language.main import LanguageModel, ResponseType
 from scipy.special import logsumexp
 from scipy.special import softmax
 
-class HuggingFaceLanguageModel(LanguageModel):
-    """Character language model based on GPT2."""
+class CausalLanguageModel(LanguageModel):
+    """Character language model based on a pre-trained causal model, GPT-2 by default."""
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
         """
@@ -33,7 +33,7 @@ class HuggingFaceLanguageModel(LanguageModel):
         self.symbol_set_lower = None
 
         # parameters for beam search
-        self.beam_width = 256
+        self.beam_width = 32
         # self.search_depth = 2
 
         self.load()
@@ -157,16 +157,17 @@ class HuggingFaceLanguageModel(LanguageModel):
         # print(f"Search time={timer() - start_search:.2f}, done={len(done)}")
 
         # Print out the completed alignments from most to least probable
+
         # print(f"Top hypotheses:")
-        for i in range(min(len(done), 100)):
-            hypo = done[i]
-            # print(f"{i:4}: {hypo[1]:8.2f} ", end="")
-            combined = ""
-            segmented = ""
-            for j in range(1, len(hypo[0])):
-                segmented = segmented + f"{hypo[0][j]} '{self.index_to_word[hypo[0][j]]}' "
-                combined = combined + self.index_to_word[hypo[0][j]]
-            # print(f" {combined} -> {segmented}")
+        # for i in range(min(len(done), 100)):
+        #     hypo = done[i]
+        #     print(f"{i:4}: {hypo[1]:8.2f} ", end="")
+        #     combined = ""
+        #     segmented = ""
+        #     for j in range(1, len(hypo[0])):
+        #         segmented = segmented + f"{hypo[0][j]} '{self.index_to_word[hypo[0][j]]}' "
+        #         combined = combined + self.index_to_word[hypo[0][j]]
+        #     print(f" {combined} -> {segmented}")
 
         # Index in the hypothesis string that is the next character after our context
         target_pos = len(context)

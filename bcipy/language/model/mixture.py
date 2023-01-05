@@ -8,14 +8,15 @@ from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.language.model.causal import CausalLanguageModel
 
 class MixtureLanguageModel(LanguageModel):
     """
         Character language model that mixes any combination of other models
-        By default, 80% GPT2 with 20% Unigram
+        By default, 80% GPT-2 with 20% Unigram
     """
 
-    supported_lm_types = ["gpt2", "unigram", "kenlm"]
+    supported_lm_types = ["gpt2", "unigram", "kenlm", "causal"]
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_types: List[str] = None, 
         lm_paths: List[str] = None, lm_weights: List[float] = None):
@@ -137,6 +138,8 @@ class MixtureLanguageModel(LanguageModel):
                 model = UnigramLanguageModel(response_type, symbol_set, path)
             elif lm_type == "kenlm":
                 model = KenLMLanguageModel(response_type, symbol_set, path)
+            elif lm_type == "causal":
+                model = CausalLanguageModel(response_type, symbol_set, path)
             
             self.models.append(model)
 
