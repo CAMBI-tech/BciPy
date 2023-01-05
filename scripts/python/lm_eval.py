@@ -2,7 +2,7 @@ from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
-from bcipy.language.model.huggingface import HuggingFaceLanguageModel
+from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.helpers.task import alphabet
 from bcipy.language.main import ResponseType
 from math import log10
@@ -19,7 +19,7 @@ if __name__ == "__main__":
         help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
 
     parser.add_argument('--model', dest='model', type=int, required=True,
-        help='0: Unigram\n1: GPT-2\n2: Mixture (80/20 GPT/Unigram)\n3: KenLM Tiny\n4: KenLM Large\n5: HuggingFace')
+        help='0: Unigram\n1: GPT-2\n2: Mixture (80/20 GPT/Unigram)\n3: KenLM Tiny\n4: KenLM Large\n5: Causal GPT-2')
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
         help='Phrase set filename')
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     elif model == 4:
         lm = KenLMLanguageModel(response_type, symbol_set, '../../bcipy/language/lms/lm_dec19_char_large_12gram.arpa')
     elif model == 5:
-        lm = HuggingFaceLanguageModel(response_type, symbol_set)
+        lm = CausalLanguageModel(response_type, symbol_set)
     else:
         parser.print_help()
         exit()
