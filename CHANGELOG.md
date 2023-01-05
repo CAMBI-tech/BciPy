@@ -1,4 +1,20 @@
+# 2.0.0-rc.3
+
+## Contributions
+
+- Updated GUIs
+    - Paramater GUI `save as` functionality #255
+    - Paramater GUI user editable parameters defined in `bcipy/parameters.json` #256
+    - GUI history using a `.bcipy_cache` file #257
+- Bug Fixes
+    - Missing inits and lock some dependencies #258
+- MNE updates
+    - convert to mne can now handle conversion to Volts from microvolts, and no channel map #259
+
+
 # 2.0.1-rc.2
+
+## Contributions
 
 Small patch release to fix a missing import in helpers/parameters.py
 
