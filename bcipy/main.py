@@ -19,6 +19,7 @@ from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
+from bcipy.helpers.visualization import visualize_session_data
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
@@ -31,7 +32,8 @@ def bci_main(
         user: str,
         task: TaskType,
         experiment: str = DEFAULT_EXPERIMENT_ID,
-        alert: bool = False) -> bool:
+        alert: bool = False,
+        visualize: bool = True) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -50,6 +52,7 @@ def bci_main(
         task (TaskType): registered bcipy TaskType
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
         alert (bool): whether to alert the user when the task is complete
+        visualize (bool): whether to visualize data at the end of a task
     """
     validate_experiment(experiment)
     # Load parameters
@@ -88,7 +91,12 @@ def bci_main(
     # Collect experiment field data
     collect_experiment_field_data(experiment, save_folder)
 
-    return execute_task(task, parameters, save_folder, alert)
+    if execute_task(task, parameters, save_folder, alert):
+        if visualize:
+            visualize_session_data(save_folder, parameters)
+        return True
+
+    return False
 
 
 def execute_task(
@@ -107,6 +115,9 @@ def execute_task(
         parameters (dict): parameter dictionary
         save_folder (str): path to save folder
         alert (bool): whether to alert the user when the task is complete
+
+    Returns:
+        (bool): True if the task was successfully executed, False otherwise
     """
     signal_model = None
     language_model = None

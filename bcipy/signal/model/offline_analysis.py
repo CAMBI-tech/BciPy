@@ -58,6 +58,7 @@ def offline_analysis(
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
+    save_figures: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -68,6 +69,8 @@ def offline_analysis(
         alert_finished(bool): whether or not to alert the user offline analysis complete
         estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
             estimate balanced accuracy
+        show_figures(bool): if true, shows ERP figures after training
+        save_figures(bool): if true, saves ERP figures after training to the data folder
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -78,7 +81,7 @@ def offline_analysis(
         - uses cross validation to select parameters
         - based on the parameters, trains system using all the data
     - pickle dumps model into .pkl file
-    - generates and saves ERP figure
+    - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
     """
 
@@ -190,7 +193,7 @@ def offline_analysis(
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=data_folder,
+        save_path=data_folder if save_figures else None,
         show=show_figures
     )
     if alert_finished:
@@ -213,5 +216,9 @@ if __name__ == "__main__":
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, estimate_balanced_acc=args.balanced)
+    offline_analysis(
+        args.data_folder,
+        parameters,
+        alert_finished=args.alert,
+        estimate_balanced_acc=args.balanced)
     log.info("Offline Analysis complete.")
