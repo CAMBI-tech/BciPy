@@ -73,8 +73,9 @@ class CausalLanguageModel(LanguageModel):
 
         context = context.replace(SPACE_CHAR, ' ')
         context_lower = context.lower()
-
-        start_search = timer()
+        
+        # Index in the hypothesis string that is the next character after our context
+        target_pos = len(context)
 
         # We search from the last space character in the context
         # If no space, then from the very beginning
@@ -92,18 +93,19 @@ class CausalLanguageModel(LanguageModel):
             valid = [([self.space_index], 0.0)]
             # print(f"Searching from end of text token")
 
-        # List of subword sequences that can produce the text
-        done = []
+        # Create a hash mapping each valid following character to a list of log probabilities
+        char_to_log_probs = {}
 
         # print(f"Starting search, beam={self.beam_width}, valid={valid}")
         done_best = float("-inf")
-        while len(valid) > 0: # and len(done) < 16000000:
+        while len(valid) > 0:
             # Only work on the top hypotheses from the last round of extension
             current = sorted(valid, key=lambda x: x[1], reverse=True)
             before = len(current)
+
+            # TODO: Is this the most efficient way to enforce beam width?
             while len(current) > self.beam_width:
                 current.pop(-1)
-            # print(f"current, before={before}, after={len(current)}, done={len(done)}, done_best={done_best:.2f}, {current[0]}...{current[-1]}")
 
             # Add new extended hypotheses to this list
             valid = []
@@ -138,61 +140,38 @@ class CausalLanguageModel(LanguageModel):
                         # Add the log prob of this token to the previous running total
                         likelihood = current_likelihood + float(log_probs[i])
 
-                        hypo = (hypo_seq, likelihood)
                         # If we have extended to a space following the context, then that hypothesis gets to be done
                         # This takes a lot longer that just requiring extending beyond existing context
                         #last_space_pos = hypo_str.rfind(" ")
                         #if last_space_pos >= len(context):
                         # Just require hypotheses to extend beyond the existing typed context
                         if len(hypo_str) > len(context):
-                            done.append(hypo)
                             # Track the most probable finishing hypothesis
-                            if likelihood > done_best:
-                                done_best = likelihood
-                                #print(f"NEW BEST = '{hypo_str}' {hypo}")
+                            # if likelihood > done_best:
+                            #     done_best = likelihood
+
+                            hypo_str = ""
+                            # Note: Skipping index 0 since this is the space character we forced at the start
+                            for i in range(1, len(hypo_seq)):
+                                hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
+                            #print(f"hypo_str = '{hypo_str}'")
+                            ch = hypo_str[target_pos]
+
+                            # Map any type of following whitespace character to be our space symbol
+                            if ch.isspace():
+                                ch = SPACE_CHAR
+
+                            # Only keep hypotheses that are something in our symbol set
+                            # TODO: Should we do this check earlier?
+                            if ch in self.symbol_set_lower:
+                                # Create an empty list if we haven't seen this character before
+                                if ch not in char_to_log_probs:
+                                    char_to_log_probs[ch] = []
+                                char_to_log_probs[ch].append(likelihood)
+
                         else:
+                            hypo = (hypo_seq, likelihood)
                             valid.append(hypo)
-
-        done = sorted(done, key=lambda x: x[1], reverse=True)
-        # print(f"Search time={timer() - start_search:.2f}, done={len(done)}")
-
-        # Print out the completed alignments from most to least probable
-
-        # print(f"Top hypotheses:")
-        # for i in range(min(len(done), 100)):
-        #     hypo = done[i]
-        #     print(f"{i:4}: {hypo[1]:8.2f} ", end="")
-        #     combined = ""
-        #     segmented = ""
-        #     for j in range(1, len(hypo[0])):
-        #         segmented = segmented + f"{hypo[0][j]} '{self.index_to_word[hypo[0][j]]}' "
-        #         combined = combined + self.index_to_word[hypo[0][j]]
-        #     print(f" {combined} -> {segmented}")
-
-        # Index in the hypothesis string that is the next character after our context
-        target_pos = len(context)
-
-        start_search = timer()
-        # Create a hash mapping each valid following character to a list of log probabilities
-        char_to_log_probs = {}
-        used = 0
-        for hypo in done:
-            hypo_str = ""
-            # Note: Skipping index 0 since this is the space character we forced at the start
-            for i in range(1, len(hypo[0])):
-                hypo_str = hypo_str + self.index_to_word_lower[hypo[0][i]]
-            #print(f"hypo_str = '{hypo_str}'")
-            ch = hypo_str[target_pos]
-            # Map any type of following whitespace character to be our space symbol
-            if ch.isspace():
-                ch = SPACE_CHAR
-            # Only keep hypotheses that are something in our symbol set
-            if ch in self.symbol_set_lower:
-                # Create an empty list if we haven't seen this character before
-                if ch not in char_to_log_probs:
-                    char_to_log_probs[ch] = []
-                char_to_log_probs[ch].append(hypo[1])
-                used += 1
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
@@ -204,8 +183,6 @@ class CausalLanguageModel(LanguageModel):
                 char_probs.append(float("-inf"))
         # Normalize to a distribution that sums to 1
         char_probs = softmax(char_probs)
-
-        # print(f"Marginal time={timer() - start_search:.2f}, hypotheses={len(done)}, used={used}")
 
         next_char_pred = Counter()
 
