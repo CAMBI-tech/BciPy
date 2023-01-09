@@ -207,10 +207,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
+    parser.add_argument("-s", "--save_figures", action="store_true")
+    parser.add_argument("-v", "--show_figures", action="store_true")
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
+    parser.set_defaults(save_figures=False)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
@@ -220,5 +224,7 @@ if __name__ == "__main__":
         args.data_folder,
         parameters,
         alert_finished=args.alert,
-        estimate_balanced_acc=args.balanced)
+        estimate_balanced_acc=args.balanced,
+        save_figures=args.save_figures,
+        show_figures=args.show_figures)
     log.info("Offline Analysis complete.")

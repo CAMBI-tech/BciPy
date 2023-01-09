@@ -180,6 +180,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     Input:
         session_path(str): Path to the session directory
         parameters(dict): Dictionary of parameters
+        show(bool): Whether to show the figure
 
     Output:
         Figure of Session Data
@@ -216,6 +217,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     )
     assert "nontarget" in trigger_targetness, "No nontarget triggers found."
     assert "target" in trigger_targetness, "No target triggers found."
+    assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
 
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     channel_map = analysis_channels(channels, type_amp)
