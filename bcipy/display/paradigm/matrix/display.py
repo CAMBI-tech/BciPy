@@ -5,6 +5,7 @@ import logging
 from psychopy import visual, core
 
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.task import alphabet
@@ -15,6 +16,17 @@ class SymbolDuration(NamedTuple):
     symbol: str
     duration: float
 
+class TriggerAccumulator:
+    """Accumulates trigger timing information"""
+    timing = []
+
+    def add(self, clock: Clock, stimuli: str) -> None:
+        """Add a new timing entry, using the stimuli as a label"""
+        self.timing.append([stimuli, clock.getTime()])
+
+    def reset(self):
+        """Reset the accumulator"""
+        self.timing = []
 
 class MatrixDisplay(Display):
     """Matrix Display Object for Inquiry Presentation.
@@ -81,11 +93,10 @@ class MatrixDisplay(Display):
         self.first_run = True
         self.first_stim_time = None
         self.trigger_type = trigger_type
-        self.trigger_callback = TriggerCallback()
+        self.triggers = TriggerAccumulator()
 
         self.experiment_clock = experiment_clock
 
-        self.buffer_time = 2
         self.task = task_display.build_task(self.window)
         self.info_text = info.build_info_text(window)
 
@@ -117,7 +128,7 @@ class MatrixDisplay(Display):
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
         """
-        timing = []
+        self.triggers.reset()
         symbol_durations = self.symbol_durations()
 
         if self.first_run:
@@ -125,12 +136,13 @@ class MatrixDisplay(Display):
 
         if self.should_prompt_target:
             [target, fixation, *stim] = symbol_durations
-            timing.append(self.prompt_target(target))
+            self.prompt_target(target)
         else:
             [fixation, *stim] = symbol_durations
 
-        timing.extend(self.animate_scp(fixation, stim))
-        return timing
+        self.animate_scp(fixation, stim)
+
+        return self.triggers.timing
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
         """Build grid.
@@ -163,7 +175,7 @@ class MatrixDisplay(Display):
         Parameters
         ----------
             opacity - opacity for each item in the matrix
-            hightlight - optional stim label for the item to be highlighted
+            highlight - optional stim label for the item to be highlighted
                 (rendered using the highlight_opacity).
         """
         for symbol, stim in self.stim_registry.items():
@@ -172,18 +184,15 @@ class MatrixDisplay(Display):
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
-        """Present the target for the configured length of time.
+        """Present the target for the configured length of time. Appends the
+        timing information to the configured accumulator.
 
         Parameters
         ----------
             target - (symbol, duration) tuple
-
-        Returns
-        -------
-            experiment clock time at which target was displayed
         """
         # register any timing and marker callbacks
-        self.window.callOnFlip(self.trigger_callback.callback,
+        self.window.callOnFlip(self.triggers.add,
                                self.experiment_clock, target.symbol)
 
         target_stim = visual.TextStim(win=self.window,
@@ -192,17 +201,10 @@ class MatrixDisplay(Display):
                                       height=.25,
                                       color='Green',
                                       wrapWidth=2)
-
         target_stim.draw()
         self.draw_static()
         self.window.flip()
-
         core.wait(target.duration)
-
-        timing = self.trigger_callback.timing
-        self.trigger_callback.reset()
-
-        return timing
 
     def draw(self,
              grid_opacity: float,
@@ -223,16 +225,15 @@ class MatrixDisplay(Display):
             core.wait(duration)
 
     def animate_scp(self, fixation: SymbolDuration,
-                    stimuli: List[SymbolDuration]) -> List[float]:
+                    stimuli: List[SymbolDuration]):
         """Animate the given stimuli using single character presentation.
 
         Flashes each stimuli in stimuli_inquiry for their respective flash
-        times. Note that the first SymbolDuration is assumed to be the fixation.
+        times. Adds timing information to the configured accumulator.
         """
-        timing = []
 
         # Flashing the grid at full opacity is considered fixation.
-        self.window.callOnFlip(self.trigger_callback.callback,
+        self.window.callOnFlip(self.triggers.add,
                                self.experiment_clock, fixation.symbol)
         self.draw(grid_opacity=self.full_grid_opacity,
                   duration=fixation.duration / 2)
@@ -240,19 +241,13 @@ class MatrixDisplay(Display):
                   duration=fixation.duration / 2)
 
         for stim in stimuli:
-            self.window.callOnFlip(self.trigger_callback.callback,
+            self.window.callOnFlip(self.triggers.add,
                                    self.experiment_clock, stim.symbol)
-
             self.draw(grid_opacity=self.start_opacity,
                       duration=stim.duration,
                       highlight=stim.symbol)
-
-            timing.append(self.trigger_callback.timing)
-            self.trigger_callback.reset()
-
         self.draw(self.start_opacity)
 
-        return timing
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
