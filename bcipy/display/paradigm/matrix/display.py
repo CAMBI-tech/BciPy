@@ -20,6 +20,13 @@ class MatrixDisplay(Display):
     """Matrix Display Object for Inquiry Presentation.
 
     Animates display objects in matrix grid common to any Matrix task.
+
+    NOTE: The following are recommended parameter values for matrix experiments:
+
+    time_fixation: 2
+    stim_pos_x: -0.6
+    stim_pos_y: 0.4
+    stim_height: 0.1
     """
 
     def __init__(
