@@ -187,8 +187,8 @@ class MatrixDisplay(Display):
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
-        """Present the target for the configured length of time. Appends the
-        timing information to the configured accumulator.
+        """Present the target for the configured length of time. Records the
+        stimuli timing information.
 
         Parameters
         ----------
@@ -231,7 +231,7 @@ class MatrixDisplay(Display):
         """Animate the given stimuli using single character presentation.
 
         Flashes each stimuli in stimuli_inquiry for their respective flash
-        times. Adds timing information to the configured accumulator.
+        times and records the timing information.
         """
 
         # Flashing the grid at full opacity is considered fixation.
