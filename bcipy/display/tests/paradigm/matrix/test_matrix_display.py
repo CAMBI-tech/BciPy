@@ -199,11 +199,14 @@ class TestMatrixDisplay(unittest.TestCase):
         when(self.matrix.window).flip().thenReturn()
         # skip the core wait
         when(psychopy.core).wait(any()).thenReturn()
-        when(self.matrix.trigger_callback).reset().thenReturn()
-        # we expect the timing returned to be a list
-        response = self.matrix.animate_scp(fixation=SymbolDuration('+', 1),
-                                           stimuli=[])
-        self.assertIsInstance(response, list)
+
+        self.matrix.animate_scp(
+            fixation=SymbolDuration('+', 1),
+            stimuli=[SymbolDuration('A', 1),
+                     SymbolDuration('Z', 1)])
+        verify(self.matrix.window, times=1).callOnFlip(any(), '+')
+        verify(self.matrix.window, times=1).callOnFlip(any(), 'A')
+        verify(self.matrix.window, times=1).callOnFlip(any(), 'Z')
 
     def test_draw_static(self):
         # mock the task draw and info text draw methods

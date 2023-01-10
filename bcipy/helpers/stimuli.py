@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
 DEFAULT_TEXT_FIXATION = '+'
 
+
 class StimuliOrder(Enum):
     """Stimuli Order.
 

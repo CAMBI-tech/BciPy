@@ -5,9 +5,8 @@ import logging
 from psychopy import visual, core
 
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
-from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
+from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.task import alphabet
 
 
@@ -16,17 +15,6 @@ class SymbolDuration(NamedTuple):
     symbol: str
     duration: float
 
-class TriggerAccumulator:
-    """Accumulates trigger timing information"""
-    timing = []
-
-    def add(self, clock: Clock, stimuli: str) -> None:
-        """Add a new timing entry, using the stimuli as a label"""
-        self.timing.append([stimuli, clock.getTime()])
-
-    def reset(self):
-        """Reset the accumulator"""
-        self.timing = []
 
 class MatrixDisplay(Display):
     """Matrix Display Object for Inquiry Presentation.
@@ -93,7 +81,7 @@ class MatrixDisplay(Display):
         self.first_run = True
         self.first_stim_time = None
         self.trigger_type = trigger_type
-        self.triggers = TriggerAccumulator()
+        self._timing = []
 
         self.experiment_clock = experiment_clock
 
@@ -123,12 +111,20 @@ class MatrixDisplay(Display):
             for sti in zip(self.stimuli_inquiry, self.stimuli_timing)
         ]
 
-    def do_inquiry(self) -> List[float]:
-        """Do inquiry.
+    def add_timing(self, stimuli: str):
+        """Add a new timing entry using the stimuli as a label.
 
-        Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
-        """
-        self.triggers.reset()
+        Useful as a callback function to register a marker at the time it is
+        first displayed."""
+        self._timing.append([stimuli, self.experiment_clock.getTime()])
+
+    def reset_timing(self):
+        """Reset the trigger timing."""
+        self._timing = []
+
+    def do_inquiry(self) -> List[float]:
+        """Animates an inquiry of stimuli and returns a list of stimuli trigger timing."""
+        self.reset_timing()
         symbol_durations = self.symbol_durations()
 
         if self.first_run:
@@ -142,7 +138,7 @@ class MatrixDisplay(Display):
 
         self.animate_scp(fixation, stim)
 
-        return self.triggers.timing
+        return self._timing
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
         """Build grid.
@@ -192,8 +188,7 @@ class MatrixDisplay(Display):
             target - (symbol, duration) tuple
         """
         # register any timing and marker callbacks
-        self.window.callOnFlip(self.triggers.add,
-                               self.experiment_clock, target.symbol)
+        self.window.callOnFlip(self.add_timing, target.symbol)
 
         target_stim = visual.TextStim(win=self.window,
                                       font=self.stimuli_font,
@@ -233,21 +228,18 @@ class MatrixDisplay(Display):
         """
 
         # Flashing the grid at full opacity is considered fixation.
-        self.window.callOnFlip(self.triggers.add,
-                               self.experiment_clock, fixation.symbol)
+        self.window.callOnFlip(self.add_timing, fixation.symbol)
         self.draw(grid_opacity=self.full_grid_opacity,
                   duration=fixation.duration / 2)
         self.draw(grid_opacity=self.start_opacity,
                   duration=fixation.duration / 2)
 
         for stim in stimuli:
-            self.window.callOnFlip(self.triggers.add,
-                                   self.experiment_clock, stim.symbol)
+            self.window.callOnFlip(self.add_timing, stim.symbol)
             self.draw(grid_opacity=self.start_opacity,
                       duration=stim.duration,
                       highlight=stim.symbol)
         self.draw(self.start_opacity)
-
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
