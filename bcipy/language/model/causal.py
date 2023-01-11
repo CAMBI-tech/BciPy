@@ -34,6 +34,7 @@ class CausalLanguageModel(LanguageModel):
 
         # parameters for beam search
         self.beam_width = 32
+        self.batch_size = 8
         # self.search_depth = 2
 
         self.load()
@@ -103,7 +104,7 @@ class CausalLanguageModel(LanguageModel):
             current = sorted(valid, key=lambda x: x[1], reverse=True)
             before = len(current)
 
-            # TODO: Is this the most efficient way to enforce beam width?
+            # Popping last element is O(1)
             while len(current) > self.beam_width:
                 current.pop(-1)
 
@@ -112,66 +113,78 @@ class CausalLanguageModel(LanguageModel):
 
             # Keep going until we have extended all hypotheses in the current set
             while len(current) > 0:
-                # Get the new sequence to work on
-                (sequence, current_likelihood) = current.pop(0)
-                tokens_tensor = torch.tensor(sequence).unsqueeze(0).to(self.device)
+                current_batch = 0
+                batch_tensors = []
+                batch_sequences = []
+                batch_likelihoods = []
+                while len(current) > 0 and current_batch < self.batch_size:
+                    # Get the new sequence to work on
+                    (sequence, current_likelihood) = current.pop(0)
+                    batch_tensors.append(torch.tensor(sequence).to(self.device))
+                    batch_sequences.append(sequence)
+                    batch_likelihoods.append(current_likelihood)
+                    current_batch += 1
+
+                
+                tokens_tensor = torch.stack(tuple(batch_tensors))
                 with torch.no_grad():
                     logits = self.model(tokens_tensor).logits
-                    log_probs = torch.log(torch.softmax(logits[:, -1, :].flatten(), dim=0))
+                    log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1))
 
-                # Create sequence text before the search sequence, skipping start word, make it all lowercase
-                sequence_text = ""
-                for i in range(1, len(sequence)):
-                    sequence_text = sequence_text + self.index_to_word_lower[sequence[i]]
-                #print(f"sequence_text = '{sequence_text}'")
+                for j in range(current_batch):
+                    # Create sequence text before the search sequence, skipping start word, make it all lowercase
+                    sequence_text = ""
+                    for i in range(1, len(batch_sequences[j])):
+                        sequence_text = sequence_text + self.index_to_word_lower[batch_sequences[j][i]]
+                    #print(f"sequence_text = '{sequence_text}'")
 
-                # Create a list of token indexes that are a prefix of target text
-                for i in range(logits.size()[2]):
-                    hypo_str = sequence_text + self.index_to_word_lower[i]
-                    #print(f"hypo_str = '{hypo_str}'")
+                    # Create a list of token indexes that are a prefix of target text
+                    for i in range(logits.size()[2]):
+                        hypo_str = sequence_text + self.index_to_word_lower[i]
+                        #print(f"hypo_str = '{hypo_str}'")
 
-                    # In some cases hypothesis is shorter than context, in some cases longer
-                    if hypo_str.startswith(context_lower) or context_lower.startswith(hypo_str):
-                        # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
-                        # If we are also the same length, then we must be the same string (sans case)
-                        hypo_seq = sequence.copy()
-                        hypo_seq.append(i)
+                        # In some cases hypothesis is shorter than context, in some cases longer
+                        if hypo_str.startswith(context_lower) or context_lower.startswith(hypo_str):
+                            # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
+                            # If we are also the same length, then we must be the same string (sans case)
+                            hypo_seq = batch_sequences[j].copy()
+                            hypo_seq.append(i)
 
-                        # Add the log prob of this token to the previous running total
-                        likelihood = current_likelihood + float(log_probs[i])
+                            # Add the log prob of this token to the previous running total
+                            likelihood = batch_likelihoods[j] + float(log_probs[j][i])
 
-                        # If we have extended to a space following the context, then that hypothesis gets to be done
-                        # This takes a lot longer that just requiring extending beyond existing context
-                        #last_space_pos = hypo_str.rfind(" ")
-                        #if last_space_pos >= len(context):
-                        # Just require hypotheses to extend beyond the existing typed context
-                        if len(hypo_str) > len(context):
-                            # Track the most probable finishing hypothesis
-                            # if likelihood > done_best:
-                            #     done_best = likelihood
+                            # If we have extended to a space following the context, then that hypothesis gets to be done
+                            # This takes a lot longer that just requiring extending beyond existing context
+                            #last_space_pos = hypo_str.rfind(" ")
+                            #if last_space_pos >= len(context):
+                            # Just require hypotheses to extend beyond the existing typed context
+                            if len(hypo_str) > len(context):
+                                # Track the most probable finishing hypothesis
+                                # if likelihood > done_best:
+                                #     done_best = likelihood
 
-                            hypo_str = ""
-                            # Note: Skipping index 0 since this is the space character we forced at the start
-                            for i in range(1, len(hypo_seq)):
-                                hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
-                            #print(f"hypo_str = '{hypo_str}'")
-                            ch = hypo_str[target_pos]
+                                hypo_str = ""
+                                # Note: Skipping index 0 since this is the space character we forced at the start
+                                for i in range(1, len(hypo_seq)):
+                                    hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
+                                #print(f"hypo_str = '{hypo_str}'")
+                                ch = hypo_str[target_pos]
 
-                            # Map any type of following whitespace character to be our space symbol
-                            if ch.isspace():
-                                ch = SPACE_CHAR
+                                # Map any type of following whitespace character to be our space symbol
+                                if ch.isspace():
+                                    ch = SPACE_CHAR
 
-                            # Only keep hypotheses that are something in our symbol set
-                            # TODO: Should we do this check earlier?
-                            if ch in self.symbol_set_lower:
-                                # Create an empty list if we haven't seen this character before
-                                if ch not in char_to_log_probs:
-                                    char_to_log_probs[ch] = []
-                                char_to_log_probs[ch].append(likelihood)
+                                # Only keep hypotheses that are something in our symbol set
+                                # TODO: Should we do this check earlier?
+                                if ch in self.symbol_set_lower:
+                                    # Create an empty list if we haven't seen this character before
+                                    if ch not in char_to_log_probs:
+                                        char_to_log_probs[ch] = []
+                                    char_to_log_probs[ch].append(likelihood)
 
-                        else:
-                            hypo = (hypo_seq, likelihood)
-                            valid.append(hypo)
+                            else:
+                                hypo = (hypo_seq, likelihood)
+                                valid.append(hypo)
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
