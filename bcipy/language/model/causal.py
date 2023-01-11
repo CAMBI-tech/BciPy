@@ -25,6 +25,7 @@ class CausalLanguageModel(LanguageModel):
         self.model = None
         self.tokenizer = None
         self.vocab_size = 0
+        self.valid_vocab = []
         self.index_to_word = {}
         self.index_to_word_lower = {}
         self.start_end_index = None
@@ -51,6 +52,15 @@ class CausalLanguageModel(LanguageModel):
             word = self.tokenizer.decode([i])
             self.index_to_word[i] = word
             self.index_to_word_lower[i] = word.lower()
+            valid = True
+            for ch in word.lower():
+                if ch.isspace():
+                    ch = SPACE_CHAR
+                if ch not in self.symbol_set_lower:
+                    valid = False
+                    break
+            if valid:
+                self.valid_vocab.append(i)
 
         # Get the index we use for the start or end pseudo-word
         self.start_end_index = self.tokenizer.encode("<|endoftext|>")[0]
@@ -139,7 +149,7 @@ class CausalLanguageModel(LanguageModel):
                     #print(f"sequence_text = '{sequence_text}'")
 
                     # Create a list of token indexes that are a prefix of target text
-                    for i in range(logits.size()[2]):
+                    for i in self.valid_vocab: # range(logits.size()[2]):
                         hypo_str = sequence_text + self.index_to_word_lower[i]
                         #print(f"hypo_str = '{hypo_str}'")
 
@@ -174,13 +184,10 @@ class CausalLanguageModel(LanguageModel):
                                 if ch.isspace():
                                     ch = SPACE_CHAR
 
-                                # Only keep hypotheses that are something in our symbol set
-                                # TODO: Should we do this check earlier?
-                                if ch in self.symbol_set_lower:
-                                    # Create an empty list if we haven't seen this character before
-                                    if ch not in char_to_log_probs:
-                                        char_to_log_probs[ch] = []
-                                    char_to_log_probs[ch].append(likelihood)
+                                # Create an empty list if we haven't seen this character before
+                                if ch not in char_to_log_probs:
+                                    char_to_log_probs[ch] = []
+                                char_to_log_probs[ch].append(likelihood)
 
                             else:
                                 hypo = (hypo_seq, likelihood)
@@ -227,7 +234,6 @@ class CausalLanguageModel(LanguageModel):
         self.model.eval()
         self.tokenizer = GPT2TokenizerFast.from_pretrained(self.lm_path)
         self.vocab_size = self.tokenizer.vocab_size
-        self.__build_vocab()
         
         # If you have a GPU, put everything on cuda
         self.device = "cpu"
@@ -243,6 +249,8 @@ class CausalLanguageModel(LanguageModel):
                 continue
             else:
                 self.symbol_set_lower.append(ch.lower())
+                
+        self.__build_vocab()
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
