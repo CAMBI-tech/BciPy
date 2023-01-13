@@ -33,9 +33,11 @@ class CausalLanguageModel(LanguageModel):
         self.lm_path = lm_path or "gpt2"
         self.symbol_set_lower = None
 
-        # parameters for beam search
-        self.beam_width = 32
+        # parameters for search
+        self.beam_width = 8
         self.batch_size = 8
+        self.token_backoff = -1
+
         # self.search_depth = 2
 
         self.load()
@@ -88,21 +90,29 @@ class CausalLanguageModel(LanguageModel):
         # Index in the hypothesis string that is the next character after our context
         target_pos = len(context)
 
-        # We search from the last space character in the context
+        # Remove token_backoff tokens from the end of the context
+        # If token_backoff is -1 or goes beyond a word boundary, then
+        # search from the last space character in the context
         # If no space, then from the very beginning
         valid = []
+        truncated_tokens = []
+        tokens = self.tokenizer.encode(context)
+        tokens.insert(0, self.space_index)
+
         pos = context.rfind(" ")
         if pos >= 0:
             truncated_context = context[0:pos]
-            tokens = self.tokenizer.encode(truncated_context)
-            tokens.insert(0, self.space_index)
-            valid = [(tokens, 0.0)]
-            # print(f"{tokens}")
-            # print(f"Searching from truncated context '{truncated_context}'")
+            truncated_tokens = self.tokenizer.encode(truncated_context)
+            truncated_tokens.insert(0, self.space_index)
         else:
-            truncated_context = ""
-            valid = [([self.space_index], 0.0)]
-            # print(f"Searching from end of text token")
+            truncated_tokens = [self.space_index]
+
+        if self.token_backoff == -1 or len(tokens) - self.token_backoff < len(truncated_tokens):
+            tokens = truncated_tokens
+        else:
+            tokens = tokens[:-self.token_backoff]
+        valid = [(tokens, 0.0)]
+
 
         # Create a hash mapping each valid following character to a list of log probabilities
         char_to_log_probs = {}
