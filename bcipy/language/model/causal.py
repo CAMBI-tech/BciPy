@@ -3,6 +3,7 @@ import torch
 from typing import Dict, List, Tuple
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from timeit import default_timer as timer
+import heapq
 
 from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
@@ -111,8 +112,9 @@ class CausalLanguageModel(LanguageModel):
             tokens = truncated_tokens
         else:
             tokens = tokens[:-self.token_backoff]
-        valid = [(tokens, 0.0)]
+        valid = [(0.0, tokens)]
 
+        heapq.heapify(valid)
 
         # Create a hash mapping each valid following character to a list of log probabilities
         char_to_log_probs = {}
@@ -121,15 +123,17 @@ class CausalLanguageModel(LanguageModel):
         done_best = float("-inf")
         while len(valid) > 0:
             # Only work on the top hypotheses from the last round of extension
-            current = sorted(valid, key=lambda x: x[1], reverse=True)
+            # current = sorted(valid, key=lambda x: x[1], reverse=True)
+            current = list(valid)
             before = len(current)
 
             # Popping last element is O(1)
-            while len(current) > self.beam_width:
-                current.pop(-1)
+            # while len(current) > self.beam_width:
+            #     current.pop(-1)
 
             # Add new extended hypotheses to this list
-            valid = []
+            valid.clear()
+            # valid = []
 
             # Keep going until we have extended all hypotheses in the current set
             while len(current) > 0:
@@ -139,7 +143,7 @@ class CausalLanguageModel(LanguageModel):
                 batch_likelihoods = []
                 while len(current) > 0 and current_batch < self.batch_size:
                     # Get the new sequence to work on
-                    (sequence, current_likelihood) = current.pop(0)
+                    (current_likelihood, sequence) = current.pop(0)
                     batch_tensors.append(torch.tensor(sequence).to(self.device))
                     batch_sequences.append(sequence)
                     batch_likelihoods.append(current_likelihood)
@@ -200,8 +204,14 @@ class CausalLanguageModel(LanguageModel):
                                 char_to_log_probs[ch].append(likelihood)
 
                             else:
-                                hypo = (hypo_seq, likelihood)
-                                valid.append(hypo)
+                                hypo = (likelihood, hypo_seq)
+                                # print(f"Pushed: {hypo}\n")
+                                if len(valid) < self.beam_width:
+                                    heapq.heappush(valid, hypo)
+                                    # valid.append(hypo)
+                                else:
+                                    popped = heapq.heappushpop(valid, hypo)
+                                    # print(f"Popped: {popped}\n")
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
