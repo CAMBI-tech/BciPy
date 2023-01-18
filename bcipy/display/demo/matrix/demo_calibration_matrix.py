@@ -43,7 +43,7 @@ time_target = 2
 time_fixation = 2
 time_flash = 0.25
 timing = [time_target] + [time_fixation] + [time_flash] * 5
-colors = ['green', 'red'] + ['white'] * 5
+colors = ['green', 'lightgray'] + ['white'] * 5
 task_buffer = 2
 
 matrix_display.schedule_to(stimuli=['A', '+', 'F', '<', 'A', 'B', 'C'],

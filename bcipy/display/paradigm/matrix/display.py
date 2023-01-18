@@ -184,6 +184,7 @@ class MatrixDisplay(Display):
 
     def draw_grid(self,
                   opacity: float = 1,
+                  color: Optional[str] = 'white',
                   highlight: Optional[str] = None,
                   highlight_color: Optional[str] = None):
         """Draw the grid.
@@ -191,6 +192,7 @@ class MatrixDisplay(Display):
         Parameters
         ----------
             opacity - opacity for each item in the matrix
+            color - optional color for each item in the matrix
             highlight - optional stim label for the item to be highlighted
                 (rendered using the highlight_opacity).
             highlight_color - optional color to use for rendering the
@@ -200,7 +202,7 @@ class MatrixDisplay(Display):
             stim.setOpacity(self.highlight_opacity if highlight ==
                             symbol else opacity)
             stim.setColor(highlight_color if highlight_color and
-                          highlight == symbol else self.grid_color)
+                          highlight == symbol else color)
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
@@ -220,7 +222,8 @@ class MatrixDisplay(Display):
 
     def draw(self,
              grid_opacity: float,
-             duration: float = None,
+             grid_color: Optional[str] = None,
+             duration: Optional[float] = None,
              highlight: Optional[str] = None,
              highlight_color: Optional[str] = None):
         """Draw all screen elements and flip the window.
@@ -228,12 +231,14 @@ class MatrixDisplay(Display):
         Parameters
         ----------
             grid_opacity - opacity value to use on all grid symbols
+            grid_color - optional color to use for all grid symbols
             duration - optional seconds to wait after flipping the window.
             highlight - optional symbol to highlight in the grid.
             highlight_color - optional color to use for rendering the
               highlighted stim.
         """
         self.draw_grid(opacity=grid_opacity,
+                       color=grid_color or self.grid_color,
                        highlight=highlight,
                        highlight_color=highlight_color)
         self.draw_static()
@@ -252,6 +257,7 @@ class MatrixDisplay(Display):
         # Flashing the grid at full opacity is considered fixation.
         self.window.callOnFlip(self.add_timing, fixation.symbol)
         self.draw(grid_opacity=self.full_grid_opacity,
+                  grid_color=fixation.color,
                   duration=fixation.duration / 2)
         self.draw(grid_opacity=self.start_opacity,
                   duration=fixation.duration / 2)
