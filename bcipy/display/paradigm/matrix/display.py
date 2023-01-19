@@ -257,7 +257,8 @@ class MatrixDisplay(Display):
         # Flashing the grid at full opacity is considered fixation.
         self.window.callOnFlip(self.add_timing, fixation.symbol)
         self.draw(grid_opacity=self.full_grid_opacity,
-                  grid_color=fixation.color,
+                  grid_color=(fixation.color if self.should_prompt_target else
+                              self.grid_color),
                   duration=fixation.duration / 2)
         self.draw(grid_opacity=self.start_opacity,
                   duration=fixation.duration / 2)

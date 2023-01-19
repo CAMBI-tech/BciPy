@@ -67,7 +67,10 @@ class MatrixCalibrationTask(Task):
             parameters['time_prompt'], parameters['time_fixation'],
             parameters['time_flash']
         ]
-        self.color = [parameters['stim_color']]
+        self.color = [
+            parameters['target_color'], parameters['fixation_color'],
+            parameters['stim_color']
+        ]
         self.task_info_color = parameters['task_color']
         self.stimuli_height = parameters['stim_height']
         self.is_txt_stim = parameters['is_txt_stim']
