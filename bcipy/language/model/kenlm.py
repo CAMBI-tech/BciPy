@@ -1,6 +1,6 @@
 from collections import Counter
 from typing import Dict, List, Tuple
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 import kenlm
 

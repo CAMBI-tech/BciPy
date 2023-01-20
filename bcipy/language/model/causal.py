@@ -5,7 +5,7 @@ from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from timeit import default_timer as timer
 import heapq
 
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
 
 from scipy.special import logsumexp
@@ -64,17 +64,6 @@ class CausalLanguageModel(LanguageModel):
         Build a vocabulary table mapping token index to word strings
         """
 
-        # for ch in self.symbol_set_lower:
-        #     self.vocab[ch] = []
-        #     for ch2 in self.symbol_set_lower:
-        #         self.vocab[""+ch+ch2] = []
-        #         for ch3 in self.symbol_set_lower:
-        #             self.vocab[""+ch+ch2+ch3] = []
-        #             for ch4 in self.symbol_set_lower:
-        #                 self.vocab[""+ch+ch2+ch3+ch4] = []
-        #                 for ch5 in self.symbol_set_lower:
-        #                     self.vocab[""+ch+ch2+ch3+ch4+ch5] = []
-
         for i in range(self.vocab_size):
             word = self.tokenizer.decode([i])
             word_lower = word.lower()
@@ -86,11 +75,13 @@ class CausalLanguageModel(LanguageModel):
                 if ch == SPACE_CHAR:
                     valid = False
                     break
-                if self.__convert_space(ch) not in self.symbol_set_lower:
+                if ch == ' ':
+                    continue
+                elif ch not in self.symbol_set_lower:
                     valid = False
                     break
             if valid:
-                self.valid_vocab.append(i)
+                self.valid_vocab += i,
                 length = len(word)
                 if length > self.longest_token:
                     self.longest_token = length
@@ -98,7 +89,7 @@ class CausalLanguageModel(LanguageModel):
                     key = self.__convert_space(word_lower[0:j+1])
                     if key not in self.vocab:
                         self.vocab[key] = []
-                    self.vocab[key].append(i)
+                    self.vocab[key] += i,
 
         # Get the index we use for the start or end pseudo-word
         self.start_end_index = self.tokenizer.encode("<|endoftext|>")[0]
@@ -118,9 +109,9 @@ class CausalLanguageModel(LanguageModel):
 
         assert self.model is not None, "language model does not exist!"
 
-        context = "".join(evidence)
+        converted_context = "".join(evidence)
 
-        context = context.replace(SPACE_CHAR, ' ')
+        context = converted_context.replace(SPACE_CHAR, ' ')
         context_lower = context.lower()
         
         # Index in the hypothesis string that is the next character after our context
@@ -147,7 +138,12 @@ class CausalLanguageModel(LanguageModel):
             tokens = truncated_tokens
         else:
             tokens = tokens[:-self.token_backoff]
-        valid = [(0.0, tokens)]
+
+        # Build up the sequence text for the context
+        sequence_text = ""
+        for i in range(1, len(tokens)):
+            sequence_text = sequence_text + self.index_to_word_lower[tokens[i]]
+        valid = [(0.0, tokens, sequence_text)]
 
         heapq.heapify(valid)
 
@@ -176,12 +172,14 @@ class CausalLanguageModel(LanguageModel):
                 batch_tensors = []
                 batch_sequences = []
                 batch_likelihoods = []
+                batch_seq_text = []
                 while len(current) > 0 and current_batch < self.batch_size:
                     # Get the new sequence to work on
-                    (current_likelihood, sequence) = current.pop(0)
-                    batch_tensors.append(torch.tensor(sequence).to(self.device))
-                    batch_sequences.append(sequence)
-                    batch_likelihoods.append(current_likelihood)
+                    (current_likelihood, sequence, sequence_text) = current.pop(0)
+                    batch_tensors += torch.tensor(sequence).to(self.device),
+                    batch_sequences += sequence,
+                    batch_likelihoods += current_likelihood,
+                    batch_seq_text += sequence_text,
                     current_batch += 1
                 
                 tokens_tensor = torch.stack(tuple(batch_tensors))
@@ -190,15 +188,14 @@ class CausalLanguageModel(LanguageModel):
                     log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1))
 
                 for j in range(current_batch):
-                    # Create sequence text before the search sequence, skipping start word, make it all lowercase
-                    sequence_text = ""
-                    for i in range(1, len(batch_sequences[j])):
-                        sequence_text = sequence_text + self.index_to_word_lower[batch_sequences[j][i]]
+                    sequence_text = batch_seq_text[j]
+                    # for i in range(1, len(batch_sequences[j])):
+                    #     sequence_text = sequence_text + self.index_to_word_lower[batch_sequences[j][i]]
                     #print(f"sequence_text = '{sequence_text}'")
 
                     vocab = []
 
-                    remaining_context = self.__convert_space(context[len(sequence_text):])
+                    remaining_context = converted_context[len(sequence_text):]
                     if len(remaining_context) == 0:
                         vocab = self.valid_vocab
                     else:
@@ -207,7 +204,7 @@ class CausalLanguageModel(LanguageModel):
                         for i in range(1,len(remaining_context)):
                             tokenization = self.tokenizer.encode(context[len(sequence_text):len(sequence_text)+i])
                             if len(tokenization) == 1:
-                                vocab.append(tokenization[0])
+                                vocab += tokenization[0],
 
 
                     # Create a list of token indexes that are a prefix of target text
@@ -216,7 +213,7 @@ class CausalLanguageModel(LanguageModel):
                         # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
                         
                         hypo_seq = batch_sequences[j].copy()
-                        hypo_seq.append(i)
+                        hypo_seq += i,
 
                         # Add the log prob of this token to the previous running total
                         likelihood = batch_likelihoods[j] + float(log_probs[j][i])
@@ -231,23 +228,24 @@ class CausalLanguageModel(LanguageModel):
                             # if likelihood > done_best:
                             #     done_best = likelihood
 
-                            hypo_str = ""
+                            #TODO why do we rebuild hypo_str?
+                            # hypo_str = batch_seq_text[j] + self.index_to_word_lower[hypo_seq[-1]]
                             # Note: Skipping index 0 since this is the space character we forced at the start
-                            for i in range(1, len(hypo_seq)):
-                                hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
+                            # for i in range(1, len(hypo_seq)):
+                            #     hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
                             #print(f"hypo_str = '{hypo_str}'")
                             ch = hypo_str[target_pos]
 
-                            # Map any type of following whitespace character to be our space symbol
+                            # Map a space character to be our space symbol
                             ch = self.__convert_space(ch)
 
                             # Create an empty list if we haven't seen this character before
                             if ch not in char_to_log_probs:
                                 char_to_log_probs[ch] = []
-                            char_to_log_probs[ch].append(likelihood)
+                            char_to_log_probs[ch] += likelihood,
 
                         else:
-                            hypo = (likelihood, hypo_seq)
+                            hypo = (likelihood, hypo_seq, hypo_str)
                             # print(f"Pushed: {hypo}\n")
                             if len(valid) < self.beam_width:
                                 heapq.heappush(valid, hypo)
@@ -261,9 +259,9 @@ class CausalLanguageModel(LanguageModel):
         for ch in self.symbol_set_lower:
             # Handle cases when symbols are never seen
             if ch in char_to_log_probs:
-                char_probs.append(logsumexp(char_to_log_probs[ch]))
+                char_probs += logsumexp(char_to_log_probs[ch]),
             else:
-                char_probs.append(float("-inf"))
+                char_probs += float("-inf"),
         # Normalize to a distribution that sums to 1
         char_probs = softmax(char_probs)
 

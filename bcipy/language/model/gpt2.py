@@ -6,7 +6,7 @@ from scipy.special import softmax
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 

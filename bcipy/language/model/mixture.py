@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 from scipy.special import softmax
 
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
