@@ -3,11 +3,10 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.helpers.task import alphabet
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 import argparse
 import numpy as np
 
