@@ -27,6 +27,8 @@ class CausalLanguageModel(LanguageModel):
         self.tokenizer = None
         self.vocab_size = 0
         self.valid_vocab = []
+        self.vocab = {}
+        self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
         self.start_end_index = None
@@ -37,6 +39,8 @@ class CausalLanguageModel(LanguageModel):
         # parameters for search
         self.beam_width = 8
         self.batch_size = 8
+
+        # backoff to the previous space
         self.token_backoff = -1
 
         # self.search_depth = 2
@@ -46,24 +50,55 @@ class CausalLanguageModel(LanguageModel):
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
 
+    def __convert_space(self, s: str) -> str:
+        ret = ""
+        for ch in s:
+            if ch == ' ':
+                ret += SPACE_CHAR
+            else:
+                ret += ch
+        return ret
+
     def __build_vocab(self) -> None:
         """
         Build a vocabulary table mapping token index to word strings
         """
 
+        # for ch in self.symbol_set_lower:
+        #     self.vocab[ch] = []
+        #     for ch2 in self.symbol_set_lower:
+        #         self.vocab[""+ch+ch2] = []
+        #         for ch3 in self.symbol_set_lower:
+        #             self.vocab[""+ch+ch2+ch3] = []
+        #             for ch4 in self.symbol_set_lower:
+        #                 self.vocab[""+ch+ch2+ch3+ch4] = []
+        #                 for ch5 in self.symbol_set_lower:
+        #                     self.vocab[""+ch+ch2+ch3+ch4+ch5] = []
+
         for i in range(self.vocab_size):
             word = self.tokenizer.decode([i])
+            word_lower = word.lower()
             self.index_to_word[i] = word
-            self.index_to_word_lower[i] = word.lower()
+            self.index_to_word_lower[i] = word_lower
             valid = True
-            for ch in word.lower():
-                if ch.isspace():
-                    ch = SPACE_CHAR
-                if ch not in self.symbol_set_lower:
+            for ch in word_lower:
+                # The space char is only valid once we convert spaces to the space char
+                if ch == SPACE_CHAR:
+                    valid = False
+                    break
+                if self.__convert_space(ch) not in self.symbol_set_lower:
                     valid = False
                     break
             if valid:
                 self.valid_vocab.append(i)
+                length = len(word)
+                if length > self.longest_token:
+                    self.longest_token = length
+                for j in range(length):
+                    key = self.__convert_space(word_lower[0:j+1])
+                    if key not in self.vocab:
+                        self.vocab[key] = []
+                    self.vocab[key].append(i)
 
         # Get the index we use for the start or end pseudo-word
         self.start_end_index = self.tokenizer.encode("<|endoftext|>")[0]
@@ -148,7 +183,6 @@ class CausalLanguageModel(LanguageModel):
                     batch_sequences.append(sequence)
                     batch_likelihoods.append(current_likelihood)
                     current_batch += 1
-
                 
                 tokens_tensor = torch.stack(tuple(batch_tensors))
                 with torch.no_grad():
@@ -162,56 +196,65 @@ class CausalLanguageModel(LanguageModel):
                         sequence_text = sequence_text + self.index_to_word_lower[batch_sequences[j][i]]
                     #print(f"sequence_text = '{sequence_text}'")
 
+                    vocab = []
+
+                    remaining_context = self.__convert_space(context[len(sequence_text):])
+                    if len(remaining_context) == 0:
+                        vocab = self.valid_vocab
+                    else:
+                        if remaining_context in self.vocab:
+                            vocab = self.vocab[remaining_context]
+                        for i in range(1,len(remaining_context)):
+                            tokenization = self.tokenizer.encode(context[len(sequence_text):len(sequence_text)+i])
+                            if len(tokenization) == 1:
+                                vocab.append(tokenization[0])
+
+
                     # Create a list of token indexes that are a prefix of target text
-                    for i in self.valid_vocab: # range(logits.size()[2]):
+                    for i in vocab: # range(logits.size()[2]):
                         hypo_str = sequence_text + self.index_to_word_lower[i]
-                        #print(f"hypo_str = '{hypo_str}'")
+                        # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
+                        
+                        hypo_seq = batch_sequences[j].copy()
+                        hypo_seq.append(i)
 
-                        # In some cases hypothesis is shorter than context, in some cases longer
-                        if hypo_str.startswith(context_lower) or context_lower.startswith(hypo_str):
-                            # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
-                            # If we are also the same length, then we must be the same string (sans case)
-                            hypo_seq = batch_sequences[j].copy()
-                            hypo_seq.append(i)
+                        # Add the log prob of this token to the previous running total
+                        likelihood = batch_likelihoods[j] + float(log_probs[j][i])
 
-                            # Add the log prob of this token to the previous running total
-                            likelihood = batch_likelihoods[j] + float(log_probs[j][i])
+                        # If we have extended to a space following the context, then that hypothesis gets to be done
+                        # This takes a lot longer that just requiring extending beyond existing context
+                        #last_space_pos = hypo_str.rfind(" ")
+                        #if last_space_pos >= len(context):
+                        # Just require hypotheses to extend beyond the existing typed context
+                        if len(hypo_str) > len(context):
+                            # Track the most probable finishing hypothesis
+                            # if likelihood > done_best:
+                            #     done_best = likelihood
 
-                            # If we have extended to a space following the context, then that hypothesis gets to be done
-                            # This takes a lot longer that just requiring extending beyond existing context
-                            #last_space_pos = hypo_str.rfind(" ")
-                            #if last_space_pos >= len(context):
-                            # Just require hypotheses to extend beyond the existing typed context
-                            if len(hypo_str) > len(context):
-                                # Track the most probable finishing hypothesis
-                                # if likelihood > done_best:
-                                #     done_best = likelihood
+                            hypo_str = ""
+                            # Note: Skipping index 0 since this is the space character we forced at the start
+                            for i in range(1, len(hypo_seq)):
+                                hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
+                            #print(f"hypo_str = '{hypo_str}'")
+                            ch = hypo_str[target_pos]
 
-                                hypo_str = ""
-                                # Note: Skipping index 0 since this is the space character we forced at the start
-                                for i in range(1, len(hypo_seq)):
-                                    hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
-                                #print(f"hypo_str = '{hypo_str}'")
-                                ch = hypo_str[target_pos]
+                            # Map any type of following whitespace character to be our space symbol
+                            ch = self.__convert_space(ch)
 
-                                # Map any type of following whitespace character to be our space symbol
-                                if ch.isspace():
-                                    ch = SPACE_CHAR
+                            # Create an empty list if we haven't seen this character before
+                            if ch not in char_to_log_probs:
+                                char_to_log_probs[ch] = []
+                            char_to_log_probs[ch].append(likelihood)
 
-                                # Create an empty list if we haven't seen this character before
-                                if ch not in char_to_log_probs:
-                                    char_to_log_probs[ch] = []
-                                char_to_log_probs[ch].append(likelihood)
-
+                        else:
+                            hypo = (likelihood, hypo_seq)
+                            # print(f"Pushed: {hypo}\n")
+                            if len(valid) < self.beam_width:
+                                heapq.heappush(valid, hypo)
+                                # valid.append(hypo)
                             else:
-                                hypo = (likelihood, hypo_seq)
-                                # print(f"Pushed: {hypo}\n")
-                                if len(valid) < self.beam_width:
-                                    heapq.heappush(valid, hypo)
-                                    # valid.append(hypo)
-                                else:
-                                    popped = heapq.heappushpop(valid, hypo)
-                                    # print(f"Popped: {popped}\n")
+                                popped = heapq.heappushpop(valid, hypo)
+                                # print(f"Popped: {popped}\n")
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
