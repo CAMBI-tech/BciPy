@@ -252,18 +252,47 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
-def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
-               trial_length: float, trigger_labels: List[int]) -> Epochs:
+def mne_epochs(
+        mne_data: RawArray,
+        trigger_timing: List[float],
+        trigger_labels: List[int],
+        interval: Tuple[float, float],
+        channels: Optional[List[str]] = None,
+        detrend: Optional[int] = None,
+        baseline: Optional[Tuple[float, float]] = (0, 0),
+        preload: bool = True,
+        reject_by_annotation: bool = False) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
     each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
-    """
-    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
-    mne_data.set_annotations(annotations)
 
-    events_from_annot, _ = mne.events_from_annotations(mne_data)
-    return Epochs(mne_data, events_from_annot)
+    Args:
+        mne_data (RawArray): MNE RawArray object
+        trigger_timing (List[float]): List of trigger timings in seconds
+        trigger_labels (List[int]): List of trigger labels
+        interval (Tuple[float, float]): Interval to extract data from trigger
+        channels (Optional[List[str]], optional): List of channels to extract. Defaults to None.
+        detrend (Optional[int]): Detrend order. Defaults to None.
+        baseline (Optional[Tuple[float, float]]): Baseline interval to apply to epoch. Defaults to (0, 0).
+        preload (bool, optional): Whether to preload the data into memory. Defaults to True.
+    """
+    annotations = Annotations(trigger_timing, [interval[-1]] * len(trigger_timing), trigger_labels)
+    tmp_data = mne_data.copy()
+    tmp_data.set_annotations(annotations)
+
+    events_from_annot, _ = mne.events_from_annotations(tmp_data)
+
+    return Epochs(
+        mne_data,
+        events_from_annot,
+        tmin=interval[0],
+        tmax=interval[-1],
+        detrend=detrend,
+        baseline=baseline,
+        picks=channels,
+        reject_by_annotation=reject_by_annotation,
+        preload=preload)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:

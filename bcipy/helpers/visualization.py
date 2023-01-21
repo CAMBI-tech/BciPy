@@ -49,8 +49,8 @@ def visualize_erp(
     show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
     """
-    mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
+    mne_data, _ = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
+    epochs = mne_epochs(mne_data, trigger_timing, trigger_labels, interval=[0, trial_length])
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.

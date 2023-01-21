@@ -4,14 +4,15 @@ from typing import Tuple
 
 import numpy as np
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
-from bcipy.preferences import preferences
+# from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
-from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.convert import convert_to_mne
+from bcipy.helpers.stimuli import play_sound, mne_epochs
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
@@ -21,10 +22,10 @@ from bcipy.signal.process import filter_inquiries, get_default_transform
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
+import mne
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
-
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
     """Performs a train/test split on the provided data and labels, accounting for
@@ -44,20 +45,20 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     """
     data = data.swapaxes(0, 1)
     train_data, test_data, train_labels, test_labels = train_test_split(
-        data, labels, test_size=test_size, random_state=random_state
+        data, labels, test_size=test_size, random_state=random_state, stratify=labels,
     )
     train_data = train_data.swapaxes(0, 1)
     test_data = test_data.swapaxes(0, 1)
     return train_data, test_data, train_labels, test_labels
 
-
 @report_execution_time
 def offline_analysis(
     data_folder: str = None,
     parameters: dict = {},
-    alert_finished: bool = False,
-    estimate_balanced_acc: bool = True,
-    show_figures: bool = False,
+    mne_data: mne.io.Raw = None,
+    baseline: Tuple[float, float] = (0, 0),
+    drop_bad_epochs: bool = False,
+    estimate_balanced_acc: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -65,9 +66,9 @@ def offline_analysis(
         data_folder(str): folder of the data
             save all information and load all from this folder
         parameter(dict): parameters for running offline analysis
-        alert_finished(bool): whether or not to alert the user offline analysis complete
-        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
-            estimate balanced accuracy
+        mne_data(mne.io.Raw): mne data object
+        baseline(tuple): baseline for the ERP
+        drop_bad_epochs(bool): whether or not to drop bad epochs
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -103,7 +104,7 @@ def offline_analysis(
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
-        f"\nData processing settings: \n"
+        f"\nData processing settings for [{data_folder}]: \n"
         f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
         f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
         f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s \n"
@@ -129,11 +130,11 @@ def offline_analysis(
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    k_folds = 10
+    k_folds = parameters.get("k_folds") # by default this is 10
     model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
@@ -141,62 +142,60 @@ def offline_analysis(
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, type_amp)
-    data, fs = raw_data.by_channel()
+    data, _ = raw_data.by_channel()
 
-    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        sample_rate=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=poststim_length,
-        prestimulus_length=prestim_length,
-        transformation_buffer=buffer,
-    )
+    if not mne_data:
+        # mne data
+        mne_data, _ = convert_to_mne(raw_data, channel_map, transform=default_transform)
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
-    trial_duration_samples = int(poststim_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
+    # baseline interval applied to the data 
+    # print(poststim_length)
+    epochs = mne_epochs(
+        mne_data,
+        trigger_timing,
+        trigger_targetness,
+        interval=[0, .8],
+        # baseline=(-200, 0),
+        reject_by_annotation=drop_bad_epochs)
+
+    if baseline[0] > 0:
+        epochs.apply_baseline(baseline=baseline)
+    
+    data = epochs.get_data() # (1100, 19, 76) epochs, channels, samples TODO does this work?
+    # map to channels, epochs, samples
+    data = np.transpose(data, (1, 0, 2)) # (19, 1100, 76) channels, epochs, samples
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    labels = inquiry_labels.flatten()
+    labels = []
+    for i in range(len(epochs)):
+        try:
+            epochs[i].event_id['1']
+            labels.append(0)
+        except:
+            labels.append(1)
 
-    # # train and save the model as a pkl file
+
+    # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
-    # model.fit(data, labels)
-    # log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    model.fit(data, labels)
+    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    # model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
-    # preferences.signal_model_directory = data_folder
+    model.save(f"{data_folder}/re_model_fulldatasetfilter_extra_800{model.auc:0.4f}.pkl")
 
-    # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
         train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
         dummy_model = PcaRdaKdeModel(k_folds=k_folds)
         dummy_model.fit(train_data, train_labels)
         probs = dummy_model.predict_proba(test_data)
         preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
+        ba_score = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {ba_score:0.4f}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-    # figure_handles = visualize_erp(
-    #     raw_data,
-    #     channel_map,
-    #     trigger_timing,
-    #     labels,
-    #     poststim_length,
-    #     transform=default_transform,
-    #     plot_average=False,
-    #     plot_topomaps=False,
-    #     save_path=data_folder,
-    #     show=show_figures
-    # )
-    if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    return model, score
+        return model, ba_score
+    
+    return model, None
 
 
 if __name__ == "__main__":
@@ -206,13 +205,11 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
     parser.add_argument("--alert", dest="alert", action="store_true")
-    parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, estimate_balanced_acc=args.balanced)
-    log.info("Offline Analysis complete.")
+    offline_analysis(data_folder=args.data_folder, parameters=parameters, alert_finished=args.alert)
+    log.info("AR Offline Analysis complete.")

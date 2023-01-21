@@ -159,6 +159,7 @@ class TriggerType(Enum):
     OFFSET = "offset"
     EVENT = "event"
     PREVIEW = "preview"
+    ARTIFACT = "artifact"
 
     @classmethod
     def list(cls) -> List[str]:

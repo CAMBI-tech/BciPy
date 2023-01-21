@@ -490,7 +490,7 @@ def convert_to_mne(
         channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
-        volts: bool = True) -> RawArray:
+        volts: bool = True) -> Tuple[RawArray, float]:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names
@@ -535,4 +535,4 @@ def convert_to_mne(
     if not volts:
         mne_data = mne_data.apply_function(lambda x: x * 1e-6)
 
-    return mne_data
+    return mne_data, fs
