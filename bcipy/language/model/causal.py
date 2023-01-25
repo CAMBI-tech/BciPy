@@ -1,7 +1,7 @@
 from collections import Counter
 import torch
 from typing import Dict, List, Tuple
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from timeit import default_timer as timer
 import heapq
 
@@ -291,9 +291,9 @@ class CausalLanguageModel(LanguageModel):
         """
             Load the language model and tokenizer, initialize class variables
         """
-        self.model = GPT2LMHeadModel.from_pretrained(self.lm_path)
+        self.model = AutoModelForCausalLM.from_pretrained(self.lm_path)
         self.model.eval()
-        self.tokenizer = GPT2TokenizerFast.from_pretrained(self.lm_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.lm_path, use_fast=True)
         self.vocab_size = self.tokenizer.vocab_size
         
         # If you have a GPU, put everything on cuda
