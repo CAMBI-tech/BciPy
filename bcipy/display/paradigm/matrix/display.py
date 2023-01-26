@@ -14,6 +14,7 @@ class SymbolDuration(NamedTuple):
     """Represents a symbol and its associated duration to display"""
     symbol: str
     duration: float
+    color: str = 'white'
 
 
 class MatrixDisplay(Display):
@@ -68,6 +69,7 @@ class MatrixDisplay(Display):
 
         self.stimuli_inquiry = []
         self.stimuli_timing = []
+        self.stimuli_colors = []
         self.stimuli_font = stimuli.stim_font
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
@@ -80,6 +82,7 @@ class MatrixDisplay(Display):
         self.position_increment = self.grid_stimuli_height + .05
         self.max_grid_width = 0.7
 
+        self.grid_color = 'white'
         self.start_opacity = 0.15
         self.highlight_opacity = 0.95
         self.full_grid_opacity = 0.95
@@ -106,16 +109,22 @@ class MatrixDisplay(Display):
                 timing(list[float]): list of timings of stimuli
                 colors(list[string]): list of colors
         """
-        assert len(stimuli) == len(timing), "each stimuli must have a timing value"
+        assert len(stimuli) == len(
+            timing), "each stimuli must have a timing value"
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
+        if colors:
+            assert len(stimuli) == len(colors), "each stimuli must have a color"
+            self.stimuli_colors = colors
+        else:
+            self.stimuli_colors = [self.grid_color] * len(stimuli)
 
     def symbol_durations(self) -> List[SymbolDuration]:
         """Symbols associated with their duration for the currently configured
         stimuli_inquiry."""
         return [
             SymbolDuration(*sti)
-            for sti in zip(self.stimuli_inquiry, self.stimuli_timing)
+            for sti in zip(self.stimuli_inquiry, self.stimuli_timing, self.stimuli_colors)
         ]
 
     def add_timing(self, stimuli: str):
@@ -157,6 +166,7 @@ class MatrixDisplay(Display):
         for sym in self.symbol_set:
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
+                                        color=self.grid_color,
                                         opacity=self.start_opacity,
                                         pos=pos,
                                         height=self.grid_stimuli_height)
@@ -172,18 +182,27 @@ class MatrixDisplay(Display):
             x_coordinate = self.position[0]
         return (x_coordinate, y_coordinate)
 
-    def draw_grid(self, opacity: float = 1, highlight: Optional[str] = None):
+    def draw_grid(self,
+                  opacity: float = 1,
+                  color: Optional[str] = 'white',
+                  highlight: Optional[str] = None,
+                  highlight_color: Optional[str] = None):
         """Draw the grid.
 
         Parameters
         ----------
             opacity - opacity for each item in the matrix
+            color - optional color for each item in the matrix
             highlight - optional stim label for the item to be highlighted
                 (rendered using the highlight_opacity).
+            highlight_color - optional color to use for rendering the
+              highlighted stim.
         """
         for symbol, stim in self.stim_registry.items():
             stim.setOpacity(self.highlight_opacity if highlight ==
                             symbol else opacity)
+            stim.setColor(highlight_color if highlight_color and
+                          highlight == symbol else color)
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
@@ -196,31 +215,32 @@ class MatrixDisplay(Display):
         """
         # register any timing and marker callbacks
         self.window.callOnFlip(self.add_timing, target.symbol)
-
-        target_stim = visual.TextStim(win=self.window,
-                                      font=self.stimuli_font,
-                                      text=f'Target: {target.symbol}',
-                                      height=.25,
-                                      color='Green',
-                                      wrapWidth=2)
-        target_stim.draw()
-        self.draw_static()
-        self.window.flip()
-        core.wait(target.duration)
+        self.draw(grid_opacity=self.start_opacity,
+                  duration=target.duration,
+                  highlight=target.symbol,
+                  highlight_color=target.color)
 
     def draw(self,
              grid_opacity: float,
-             duration: float = None,
-             highlight: Optional[str] = None):
+             grid_color: Optional[str] = None,
+             duration: Optional[float] = None,
+             highlight: Optional[str] = None,
+             highlight_color: Optional[str] = None):
         """Draw all screen elements and flip the window.
 
         Parameters
         ----------
             grid_opacity - opacity value to use on all grid symbols
-            duration - optioanl seconds to wait after flipping the window.
+            grid_color - optional color to use for all grid symbols
+            duration - optional seconds to wait after flipping the window.
             highlight - optional symbol to highlight in the grid.
+            highlight_color - optional color to use for rendering the
+              highlighted stim.
         """
-        self.draw_grid(opacity=grid_opacity, highlight=highlight)
+        self.draw_grid(opacity=grid_opacity,
+                       color=grid_color or self.grid_color,
+                       highlight=highlight,
+                       highlight_color=highlight_color)
         self.draw_static()
         self.window.flip()
         if duration:
@@ -237,6 +257,8 @@ class MatrixDisplay(Display):
         # Flashing the grid at full opacity is considered fixation.
         self.window.callOnFlip(self.add_timing, fixation.symbol)
         self.draw(grid_opacity=self.full_grid_opacity,
+                  grid_color=(fixation.color if self.should_prompt_target else
+                              self.grid_color),
                   duration=fixation.duration / 2)
         self.draw(grid_opacity=self.start_opacity,
                   duration=fixation.duration / 2)
@@ -245,7 +267,8 @@ class MatrixDisplay(Display):
             self.window.callOnFlip(self.add_timing, stim.symbol)
             self.draw(grid_opacity=self.start_opacity,
                       duration=stim.duration,
-                      highlight=stim.symbol)
+                      highlight=stim.symbol,
+                      highlight_color=stim.color)
         self.draw(self.start_opacity)
 
     def wait_screen(self, message: str, message_color: str) -> None:

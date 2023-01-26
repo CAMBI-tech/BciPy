@@ -61,6 +61,7 @@ class TestMatrixDisplay(unittest.TestCase):
         when(psychopy.visual).TextStim(
             win=self.window,
             text=any(),
+            color=any(),
             opacity=any(),
             pos=any(),
             height=any(),
@@ -149,6 +150,7 @@ class TestMatrixDisplay(unittest.TestCase):
             win=self.window,
             height=any(),
             text=any(),
+            color=any(),
             pos=any(),
             opacity=any()
         ).thenReturn(self.text_stim_mock)
