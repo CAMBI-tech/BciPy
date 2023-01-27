@@ -25,9 +25,11 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
 
     def init_display(self) -> Display:
         """Initialize the display"""
-        return init_calibration_display_task(
+        display = init_calibration_display_task(
             self.parameters, self.window, self.experiment_clock,
             symbols_with_photodiode_stim(self.symbol_set))
+        display.start_opacity = 0.0
+        return display
 
     def generate_stimuli(self) -> InquirySchedule:
         """Generates the inquiries to be presented.
