@@ -10,6 +10,9 @@ from bcipy.helpers.task import alphabet
 from bcipy.language.uniform import UniformLanguageModel
 # flake8: noqa
 from bcipy.language.model.gpt2 import GPT2LanguageModel
+from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.language.model.mixture import MixtureLanguageModel
+from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:

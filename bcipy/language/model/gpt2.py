@@ -10,6 +10,11 @@ from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 
+"""
+    This Model will return zero-probabilities in some instances.
+    To avoid this, use this model only as part of the mixture model!
+"""
+
 class GPT2LanguageModel(LanguageModel):
     """Character language model based on GPT2."""
 
