@@ -10,8 +10,7 @@ from scipy.stats import describe, normaltest
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.raw_data import RawData, load
 
-ALLOWABLE_TOLERANCE = 0.01
-RSVP = False
+ALLOWABLE_TOLERANCE = 0.006
 
 
 def clock_seconds(sample_rate: float, sample: int) -> float:
@@ -75,8 +74,6 @@ def calculate_latency(raw_data: RawData,
             diode_enc = False
             lengths.append(length)
             length = 0
-        # else:
-        #     print('Fail')
 
     ax.plot(trg_box_x, trg_box_y, label='TRG (trigger box)')
 
@@ -94,31 +91,14 @@ def calculate_latency(raw_data: RawData,
 
     errors = []
     diffs = []
-    x = 0
-    if (len(starts) > len(trigger_diodes_timestamps)):
-        len_diff = len(starts) - len(trigger_diodes_timestamps)
-        starts = starts[len_diff:]
 
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
 
-        # rsvp bug with fixation
-        if RSVP:
-            if x > 0:
-                if abs(diff) > ALLOWABLE_TOLERANCE:
-                    errors.append(
-                        f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}'
-                    )
-                diffs.append(diff)
-            if x == 4:
-                x = 0
-            else:
-                x += 1
-        else:
-            if abs(diff) > ALLOWABLE_TOLERANCE:
-                errors.append(
-                    f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
-            diffs.append(diff)
+        if abs(diff) > ALLOWABLE_TOLERANCE:
+            errors.append(
+                f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
+        diffs.append(diff)
 
     if recommend_static:
         # test for normality
@@ -218,7 +198,7 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--offset',
                         help='static offset applied to triggers for plotting and analysis',
-                        default=0.105)
+                        default=0.121)
 
     args = parser.parse_args()
     path = args.path

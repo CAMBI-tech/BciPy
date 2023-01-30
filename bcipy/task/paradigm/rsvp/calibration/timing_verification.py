@@ -46,7 +46,7 @@ class RSVPTimingVerificationCalibration(Task):
         color_target, color_fixation, color_stim = self._task.color
 
         target = next(letters)
-        fixation = get_fixation(is_txt=True)
+        fixation = PhotoDiodeStimuli.EMPTY.value
 
         inq_len = self._task.stim_length
         inq_stim = [target, fixation, *[next(letters) for _ in range(inq_len)]]
