@@ -35,31 +35,35 @@ class KenLMLanguageModel(LanguageModel):
 
         evidence_str = ''.join(evidence)
 
-        cache_state = self.check_cache(evidence_str)
+        for i, ch in enumerate(evidence):
+            if ch == SPACE_CHAR:
+                evidence[i] = "<sp>"
 
-        if cache_state is None:
+        # cache_state = self.check_cache(evidence_str)
 
-            self.model.BeginSentenceWrite(self.state)
-            
-            # Update the state one token at a time based on evidence, alternate states
-            for i, token in enumerate(evidence):
-                if i % 2 == 0:
-                    self.model.BaseScore(self.state, token, self.state2)
-                else:
-                    self.model.BaseScore(self.state2, token, self.state)
+        # if cache_state is None:
 
-            next_char_pred = None
-
-            # Generate the probability distribution based on the final state, save state to cache
-            if len(evidence) % 2 == 0:
-                next_char_pred = self.prob_dist(self.state)
-                self.cache[evidence_str] = self.state
+        self.model.BeginSentenceWrite(self.state)
+        
+        # Update the state one token at a time based on evidence, alternate states
+        for i, token in enumerate(evidence):
+            if i % 2 == 0:
+                self.model.BaseScore(self.state, token, self.state2)
             else:
-                next_char_pred = self.prob_dist(self.state2)
-                self.cache[evidence_str] = self.state2
+                self.model.BaseScore(self.state2, token, self.state)
 
+        next_char_pred = None
+
+        # Generate the probability distribution based on the final state, save state to cache
+        if len(evidence) % 2 == 0:
+            next_char_pred = self.prob_dist(self.state)
+            self.cache[evidence_str] = self.state
         else:
-            next_char_pred = self.prob_dist(cache_state)
+            next_char_pred = self.prob_dist(self.state2)
+            self.cache[evidence_str] = self.state2
+
+        # else:
+            # next_char_pred = self.prob_dist(cache_state)
 
         return next_char_pred
 
