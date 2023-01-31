@@ -10,7 +10,7 @@ from scipy.stats import describe, normaltest
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.raw_data import RawData, load
 
-ALLOWABLE_TOLERANCE = 0.006
+ALLOWABLE_TOLERANCE = 0.01
 
 
 def clock_seconds(sample_rate: float, sample: int) -> float:
@@ -91,6 +91,11 @@ def calculate_latency(raw_data: RawData,
 
     errors = []
     diffs = []
+
+    # This fixes an initialization diode response
+    if (len(starts) > len(trigger_diodes_timestamps)):
+        len_diff = len(starts) - len(trigger_diodes_timestamps)
+        starts = starts[len_diff:]
 
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
@@ -198,7 +203,7 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--offset',
                         help='static offset applied to triggers for plotting and analysis',
-                        default=0.121)
+                        default=0.109)
 
     args = parser.parse_args()
     path = args.path
