@@ -31,7 +31,7 @@ class CausalLanguageModel(LanguageModel):
         self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
-        self.start_end_index = None
+        self.end_text_index = None
         self.space_index = None
         self.lm_path = lm_path or "gpt2"
         self.symbol_set_lower = None
@@ -50,7 +50,7 @@ class CausalLanguageModel(LanguageModel):
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
 
-    def __convert_space(self, s: str) -> str:
+    def _convert_space(self, s: str) -> str:
         ret = ""
         for ch in s:
             if ch == ' ':
@@ -59,7 +59,7 @@ class CausalLanguageModel(LanguageModel):
                 ret += ch
         return ret
 
-    def __build_vocab(self) -> None:
+    def _build_vocab(self) -> None:
         """
         Build a vocabulary table mapping token index to word strings
         """
@@ -86,16 +86,28 @@ class CausalLanguageModel(LanguageModel):
                 if length > self.longest_token:
                     self.longest_token = length
                 for j in range(length):
-                    key = self.__convert_space(word_lower[0:j+1])
+                    key = self._convert_space(word_lower[0:j+1])
                     if key not in self.vocab:
                         self.vocab[key] = []
                     self.vocab[key] += i,
 
         # Get the index we use for the start or end pseudo-word
-        self.start_end_index = self.tokenizer.encode("<|endoftext|>")[0]
+        if self.lm_path.startswith("gpt2"):
+            self.end_text_index = self.tokenizer.encode("<|endoftext|>")[0]
+        else:
+            self.end_text_index = self.tokenizer.encode("</s>")[0]
 
         # Index of the space character
-        self.space_index = self.tokenizer.encode(" ")[0]
+        self.space_index = self._encode(" ")[0]
+
+    def _encode(self, text: str) -> List[int]:
+        tokens = self.tokenizer.encode(text)
+        if len(tokens) > 1:
+            if tokens[0] == self.end_text_index:
+                tokens = tokens[1:]
+
+        return tokens
+
 
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
@@ -123,13 +135,17 @@ class CausalLanguageModel(LanguageModel):
         # If no space, then from the very beginning
         valid = []
         truncated_tokens = []
-        tokens = self.tokenizer.encode(context)
+        tokens = self._encode(context)
+        if 2 in tokens:
+            tokens.remove(2)
         tokens.insert(0, self.space_index)
 
         pos = context.rfind(" ")
         if pos >= 0:
             truncated_context = context[0:pos]
-            truncated_tokens = self.tokenizer.encode(truncated_context)
+            truncated_tokens = self._encode(truncated_context)
+            if 2 in truncated_tokens:
+                truncated_tokens.remove(2)
             truncated_tokens.insert(0, self.space_index)
         else:
             truncated_tokens = [self.space_index]
@@ -202,7 +218,9 @@ class CausalLanguageModel(LanguageModel):
                         if remaining_context in self.vocab:
                             vocab = self.vocab[remaining_context]
                         for i in range(1,len(remaining_context)):
-                            tokenization = self.tokenizer.encode(context[len(sequence_text):len(sequence_text)+i])
+                            tokenization = self._encode(context[len(sequence_text):len(sequence_text)+i])
+                            if 2 in tokenization:
+                                tokenization.remove(2)
                             if len(tokenization) == 1:
                                 vocab += tokenization[0],
 
@@ -237,7 +255,7 @@ class CausalLanguageModel(LanguageModel):
                             ch = hypo_str[target_pos]
 
                             # Map a space character to be our space symbol
-                            ch = self.__convert_space(ch)
+                            ch = self._convert_space(ch)
 
                             # Create an empty list if we haven't seen this character before
                             if ch not in char_to_log_probs:
@@ -249,7 +267,6 @@ class CausalLanguageModel(LanguageModel):
                             # print(f"Pushed: {hypo}\n")
                             if len(valid) < self.beam_width:
                                 heapq.heappush(valid, hypo)
-                                # valid.append(hypo)
                             else:
                                 popped = heapq.heappushpop(valid, hypo)
                                 # print(f"Popped: {popped}\n")
@@ -293,7 +310,7 @@ class CausalLanguageModel(LanguageModel):
         """
         self.model = AutoModelForCausalLM.from_pretrained(self.lm_path)
         self.model.eval()
-        self.tokenizer = AutoTokenizer.from_pretrained(self.lm_path, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.lm_path, use_fast=False)
         self.vocab_size = self.tokenizer.vocab_size
         
         # If you have a GPU, put everything on cuda
@@ -311,7 +328,7 @@ class CausalLanguageModel(LanguageModel):
             else:
                 self.symbol_set_lower.append(ch.lower())
                 
-        self.__build_vocab()
+        self._build_vocab()
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
