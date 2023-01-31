@@ -154,11 +154,12 @@ def offline_analysis(
         mne_data,
         trigger_timing,
         trigger_targetness,
-        interval=[0, .8],
-        # baseline=(-200, 0),
+        interval=[0, poststim_length],
+        baseline=baseline,
         reject_by_annotation=drop_bad_epochs)
 
     if baseline[0] > 0:
+        # apply baseline correction
         epochs.apply_baseline(baseline=baseline)
     
     data = epochs.get_data() # (1100, 19, 76) epochs, channels, samples TODO does this work?
@@ -174,6 +175,10 @@ def offline_analysis(
         except:
             labels.append(1)
 
+    # breakpoint() for getting counts of labels after artifact rejection
+    # nontarget = labels.count(0)
+    # target = labels.count(1)
+
 
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
@@ -181,7 +186,7 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    model.save(f"{data_folder}/re_model_fulldatasetfilter_extra_800{model.auc:0.4f}.pkl")
+    model.save(f"{data_folder}/re_model_fulldatasetfilter_apply_baseline{model.auc:0.4f}.pkl")
 
     if estimate_balanced_acc:
         train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
@@ -195,7 +200,7 @@ def offline_analysis(
 
         return model, ba_score
     
-    return model, None
+    return target, nontarget
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from bcipy.signal.model.ar_offline import offline_analysis
-# from bcipy.signal.model.offline_analysis import offline_analysis
+# from bcipy.signal.model.ar_offline import offline_analysis
+from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 
@@ -7,7 +7,7 @@ from pathlib import Path
 import mne
 
 
-ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
+ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
 
 """
 Processing notes:
@@ -40,21 +40,20 @@ if __name__ == "__main__":
             # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
 
             try:
-                model, ba = offline_analysis(
+                model, _ = offline_analysis(
                                 # mne_data=mne_data,
                                 data_folder=str(session.resolve()),
                                 parameters=parameters,
-                                drop_bad_epochs=False,
-                                estimate_balanced_acc=True)
+                                # drop_bad_epochs=False,
+                                # baseline=(-.2, 0),
+                                estimate_balanced_acc=False)
                 aucs.append({
-                    session.name: model.auc,
-                    'BA': ba,
-                    'model': model
+                    session.name: model.auc
                 })
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 import pdb; pdb.set_trace()
     
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     print(aucs)
     import pdb; pdb.set_trace()

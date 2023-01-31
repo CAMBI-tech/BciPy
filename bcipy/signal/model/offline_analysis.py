@@ -165,12 +165,13 @@ def offline_analysis(
     # # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
-    # model.fit(data, labels)
-    # log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    model.fit(data, labels)
+    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    # model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
-    # preferences.signal_model_directory = data_folder
+    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    preferences.signal_model_directory = data_folder
 
+    score = None
     # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
         train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
@@ -182,18 +183,18 @@ def offline_analysis(
         log.info(f"Balanced acc with 80/20 split: {score}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-    # figure_handles = visualize_erp(
-    #     raw_data,
-    #     channel_map,
-    #     trigger_timing,
-    #     labels,
-    #     poststim_length,
-    #     transform=default_transform,
-    #     plot_average=False,
-    #     plot_topomaps=False,
-    #     save_path=data_folder,
-    #     show=show_figures
-    # )
+    figure_handles = visualize_erp(
+        raw_data,
+        channel_map,
+        trigger_timing,
+        labels,
+        poststim_length,
+        transform=default_transform,
+        plot_average=True,
+        plot_topomaps=False,
+        save_path=data_folder,
+        show=show_figures
+    )
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
     return model, score
