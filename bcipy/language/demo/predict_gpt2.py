@@ -45,15 +45,15 @@ if __name__ == "__main__":
     start = timer()
 
     # Load the GPT-2 model
-    #lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
+    lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
     #lm_path = "gpt2-medium"        #  345M             24                 1024    ~3.1GB
     #lm_path = "gpt2-large"         #  762M             36                 1280    ~6.3GB
     #lm_path = "gpt2-xl"            # 1542M             48                 1600   ~12.3GB
 
     # https://github.com/huggingface/transformers/tree/main/examples/research_projects/distillation
-    lm_path = "distilgpt2"          #   82M              6                  768
+    #lm_path = "distilgpt2"          #   82M              6                  768
 
-    beam_width = 256
+    beam_width = 16
 
     # Previous text context that we are extending
     context = "i prob"

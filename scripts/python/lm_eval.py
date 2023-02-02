@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 import argparse
 import numpy as np
-
+import sys
 
 if __name__ == "__main__":
 
@@ -18,15 +18,41 @@ if __name__ == "__main__":
         help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
 
     parser.add_argument('--model', dest='model', type=int, required=True,
-        help='0: Unigram\n1: GPT-2\n2: Mixture (80/20 GPT/Unigram)\n3: KenLM Tiny\n4: KenLM Large\n5: Causal GPT-2\n6: Causal Opt-125m')
+        help='0: Unigram\n1: GPT-2\n2: Mixture (80/20 GPT/Unigram)\n3: KenLM n-gram\n4: Causal Hugging Face')
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
         help='Phrase set filename')
 
+    parser.add_argument('--model-name', dest='model_name')
+    parser.add_argument("--use-mps",
+                        action="store_true",
+                        help="Use MPS Apple Silicon GPU during inference")
+    parser.add_argument("--use-cuda",
+                        action="store_true",
+                        help="Use CUDA GPU during inference")
+    parser.add_argument('--model-dir',
+                        dest='model_dir',
+                        help="Local directory to load fine-tuned causal model")
+
     args = parser.parse_args()
+
     verbose = args.verbose
     model = args.model
     phrases = args.phrases
+
+    if model == 3 and not args.model_name:
+        print(f"ERROR: For KenLM n-gram model you must specify filename of model using --model-name")
+        sys.exit(1)
+
+    if model == 4 and not args.model_name:
+        print(f"ERROR: For causal model you must specify name of model using --model-name")
+        sys.exit(1)
+
+    device = "cpu"
+    if args.use_mps:
+        device = "mps"
+    elif args.use_cuda:
+        device = "cuda"
 
     # Read in the phrase file
     phrase_file = open(phrases, "r")
@@ -46,13 +72,13 @@ if __name__ == "__main__":
     elif model == 2:
         lm = MixtureLanguageModel(response_type, symbol_set)
     elif model == 3:
-        lm = KenLMLanguageModel(response_type, symbol_set)
+        lm = KenLMLanguageModel(response_type, symbol_set, args.model_name)
     elif model == 4:
-        lm = KenLMLanguageModel(response_type, symbol_set, '../../bcipy/language/lms/lm_dec19_char_large_12gram.arpa')
-    elif model == 5:
-        lm = CausalLanguageModel(response_type, symbol_set)
-    elif model == 6:
-        lm = CausalLanguageModel(response_type, symbol_set, "facebook/opt-125m")
+        lm = CausalLanguageModel(response_type=response_type,
+                                 symbol_set=symbol_set,
+                                 model_name=args.model_name,
+                                 device=device,
+                                 model_dir=args.model_dir)
     else:
         parser.print_help()
         exit()

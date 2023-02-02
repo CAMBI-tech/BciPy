@@ -5,14 +5,13 @@ from bcipy.language.main import LanguageModel, ResponseType
 import kenlm
 
 class KenLMLanguageModel(LanguageModel):
-    """12-gram character language model based on KenLM"""
+    """Character n-gram language model using the KenLM library for querying"""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str):
         
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
-        self.lm_path = lm_path or "../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
-
+        self.lm_path = lm_path
         self.cache = {}
 
         self.load()
