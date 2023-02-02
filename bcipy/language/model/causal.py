@@ -14,13 +14,21 @@ from scipy.special import softmax
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
+    def __init__(self,
+                 response_type: ResponseType,
+                 symbol_set: List[str],
+                 model_name: str,
+                 model_dir: str = None,
+                 device: str = "cpu",
+                 ):
         """
         Initialize instance variables and load the language model with given path
         Args:
             response_type - SYMBOL only
             symbol_set - list of symbol strings
-            lm_path - path to language model files
+            model_name - name of the Hugging Face casual language model to load
+            model_dir  - load fine-tuned model from specified directory
+            device     - device to use for making predictions (cpu, mps, or cuda)
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
@@ -33,8 +41,12 @@ class CausalLanguageModel(LanguageModel):
         self.index_to_word_lower = {}
         self.end_text_index = None
         self.space_index = None
-        self.lm_path = lm_path or "gpt2"
+        self.model_name = model_name
         self.symbol_set_lower = None
+        self.device = device
+
+        # We optionally load the model from a local directory, but if this is specified, we load a Hugging Face model
+        self.model_dir = model_dir or model_name
 
         # parameters for search
         self.beam_width = 8
@@ -92,7 +104,7 @@ class CausalLanguageModel(LanguageModel):
                     self.vocab[key] += i,
 
         # Get the index we use for the start or end pseudo-word
-        if self.lm_path.startswith("gpt2"):
+        if self.model_name.startswith("gpt2"):
             self.end_text_index = self.tokenizer.encode("<|endoftext|>")[0]
         else:
             self.end_text_index = self.tokenizer.encode("</s>")[0]
@@ -308,15 +320,11 @@ class CausalLanguageModel(LanguageModel):
         """
             Load the language model and tokenizer, initialize class variables
         """
-        self.model = AutoModelForCausalLM.from_pretrained(self.lm_path)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
         self.model.eval()
-        self.tokenizer = AutoTokenizer.from_pretrained(self.lm_path, use_fast=False)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
         self.vocab_size = self.tokenizer.vocab_size
         
-        # If you have a GPU, put everything on cuda
-        self.device = "cpu"
-        # self.device = "cuda"   # NVidia GPU
-        # self.device = "mps"    # M1 mac
         self.model.to(self.device)
 
         self.symbol_set_lower = []
