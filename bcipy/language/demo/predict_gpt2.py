@@ -53,10 +53,10 @@ if __name__ == "__main__":
     # https://github.com/huggingface/transformers/tree/main/examples/research_projects/distillation
     #lm_path = "distilgpt2"          #   82M              6                  768
 
-    beam_width = 16
+    beam_width = 8
 
     # Previous text context that we are extending
-    context = "i prob"
+    context = "i ca"
 
     # Notice how the predictions are much worse without proper case
     #context = "i "

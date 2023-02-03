@@ -96,85 +96,86 @@ if __name__ == "__main__":
     # Iterate over phrases
     for phrase in phrases:
         sentence = phrase.strip()
-        accum = 0.0
-        
-        # Phrase-level output
-        if verbose >= 1:
-            print(f"sentence = '{sentence}'")
-
-        # Split into characters
-        tokens = sentence.split()
-        symbols = len(tokens)
-
-        # Initial previous token is the start symbol, initial context empty
-        prev_token = "<s>"
-        context = ""
-
-        predict_time_arr = np.array([])
-        predict_details_arr = np.array([])
-
-        # Iterate over characters in phrase
-        for (i, token) in enumerate(tokens):
-            start_predict = timer()
-            correct_char = ""
-
-            # BciPy treats space as underscore
-            if(token == "<sp>"):
-                token = SPACE_CHAR
-                correct_char = SPACE_CHAR
-            else:
-                correct_char = token.upper()
-            score = 0.0    
-            next_char_pred = lm.state_update(list(context))
-
-            predict_time = timer() - start_predict
-            predict_time_arr = np.append(predict_time_arr, predict_time)
-            predict_details_arr = np.append(predict_details_arr, f"sentence = {sentence}, index = {i}, p( {token} | {prev_token} )")
-
-            # Find the probability for the correct character
-            p = next_char_pred[[c[0] for c in next_char_pred].index(correct_char)][1]
-            if p == 0:
-                zero_prob += 1
-                accum = 1
-                if verbose >= 2:
-                    print(f"p( {token} | {prev_token} ...) = 0")
-                    print(f"prediction time = {predict_time:.6f}")
-                break
-            else:
-                score = log10(p)
-
-                # Character-level output
-                if verbose >= 2:
-                    print(f"p( {token} | {prev_token} ...) = {p:.6f} [ {score:.6f} ]")
-                    print(f"prediction time = {predict_time:.6f}")
-                accum += score
-                prev_token = token
-                context += token
-        
-        # Compute summary stats on prediction times for this phrase
-        per_symbol_time = np.average(predict_time_arr)
-        phrase_std = np.std(predict_time_arr)
-        phrase_max = np.max(predict_time_arr)
-        phrase_min = np.min(predict_time_arr)
-
-        # Add this phrase's prediction times to overall array
-        overall_predict_time_arr = np.append(overall_predict_time_arr, predict_time_arr, axis=None)
-        overall_predict_details_arr = np.append(overall_predict_details_arr, predict_details_arr, axis=None)
-
-        if accum == 1:
-            if verbose >= 1:
-                print("Zero-prob event encountered, terminating phrase")
-                print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
-        else:
-            per_symbol_logprob = accum / symbols
+        if len(sentence) > 0:
+            accum = 0.0
 
             # Phrase-level output
             if verbose >= 1:
-                print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
-                print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
-            
-            sum_per_symbol_logprob += per_symbol_logprob
-            phrase_count += 1
+                print(f"sentence = '{sentence}'")
+
+            # Split into characters
+            tokens = sentence.split()
+            symbols = len(tokens)
+
+            # Initial previous token is the start symbol, initial context empty
+            prev_token = "<s>"
+            context = ""
+
+            predict_time_arr = np.array([])
+            predict_details_arr = np.array([])
+
+            # Iterate over characters in phrase
+            for (i, token) in enumerate(tokens):
+                start_predict = timer()
+                correct_char = ""
+
+                # BciPy treats space as underscore
+                if(token == "<sp>"):
+                    token = SPACE_CHAR
+                    correct_char = SPACE_CHAR
+                else:
+                    correct_char = token.upper()
+                score = 0.0
+                next_char_pred = lm.state_update(list(context))
+
+                predict_time = timer() - start_predict
+                predict_time_arr = np.append(predict_time_arr, predict_time)
+                predict_details_arr = np.append(predict_details_arr, f"sentence = {sentence}, index = {i}, p( {token} | {prev_token} )")
+
+                # Find the probability for the correct character
+                p = next_char_pred[[c[0] for c in next_char_pred].index(correct_char)][1]
+                if p == 0:
+                    zero_prob += 1
+                    accum = 1
+                    if verbose >= 2:
+                        print(f"p( {token} | {prev_token} ...) = 0")
+                        print(f"prediction time = {predict_time:.6f}")
+                    break
+                else:
+                    score = log10(p)
+
+                    # Character-level output
+                    if verbose >= 2:
+                        print(f"p( {token} | {prev_token} ...) = {p:.6f} [ {score:.6f} ]")
+                        print(f"prediction time = {predict_time:.6f}")
+                    accum += score
+                    prev_token = token
+                    context += token
+
+            # Compute summary stats on prediction times for this phrase
+            per_symbol_time = np.average(predict_time_arr)
+            phrase_std = np.std(predict_time_arr)
+            phrase_max = np.max(predict_time_arr)
+            phrase_min = np.min(predict_time_arr)
+
+            # Add this phrase's prediction times to overall array
+            overall_predict_time_arr = np.append(overall_predict_time_arr, predict_time_arr, axis=None)
+            overall_predict_details_arr = np.append(overall_predict_details_arr, predict_details_arr, axis=None)
+
+            if accum == 1:
+                if verbose >= 1:
+                    print("Zero-prob event encountered, terminating phrase")
+                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
+            else:
+                per_symbol_logprob = accum / symbols
+
+                # Phrase-level output
+                if verbose >= 1:
+                    print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
+                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
+
+                sum_per_symbol_logprob += per_symbol_logprob
+                phrase_count += 1
 
     average_per_symbol_logprob = sum_per_symbol_logprob / phrase_count
 
