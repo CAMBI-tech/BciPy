@@ -91,6 +91,8 @@ if __name__ == "__main__":
     overall_predict_time_arr = np.array([])
     overall_predict_details_arr = np.array([])
 
+    start = timer()
+
     # Iterate over phrases
     for phrase in phrases:
         sentence = phrase.strip()
@@ -184,6 +186,12 @@ if __name__ == "__main__":
     ci_floor = overall_per_symbol_time - (3 * overall_std_time)
     ci_ceiling = overall_per_symbol_time + (3 * overall_std_time)
 
+    for (i, time) in enumerate(overall_predict_time_arr):
+        if time < ci_floor:
+            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+        if time > ci_ceiling:
+            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+
     # Model-level output
     print(f"OVERALL \
         \nphrases = {phrase_count}, \
@@ -193,9 +201,4 @@ if __name__ == "__main__":
         \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}] \
         \n95% CI = [{ci_floor}, {ci_ceiling}]\n")
 
-
-    for (i, time) in enumerate(overall_predict_time_arr):
-        if time < ci_floor:
-            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
-        if time > ci_ceiling:
-            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+    print(f"Inference time = {timer() - start:.6f}")
