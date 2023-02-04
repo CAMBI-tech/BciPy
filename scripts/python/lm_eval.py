@@ -24,15 +24,16 @@ if __name__ == "__main__":
         help='Phrase set filename')
 
     parser.add_argument('--model-name', dest='model_name')
+    parser.add_argument('--model-dir',
+                        dest='model_dir',
+                        help="Local directory to load fine-tuned causal model")
     parser.add_argument("--use-mps",
                         action="store_true",
                         help="Use MPS Apple Silicon GPU during inference")
     parser.add_argument("--use-cuda",
                         action="store_true",
                         help="Use CUDA GPU during inference")
-    parser.add_argument('--model-dir',
-                        dest='model_dir',
-                        help="Local directory to load fine-tuned causal model")
+    parser.add_argument("--left-context", help="starting left language model context", default=" ")
 
     args = parser.parse_args()
 
@@ -78,7 +79,8 @@ if __name__ == "__main__":
                                  symbol_set=symbol_set,
                                  model_name=args.model_name,
                                  device=device,
-                                 model_dir=args.model_dir)
+                                 model_dir=args.model_dir,
+                                 left_context=args.left_context)
     else:
         parser.print_help()
         exit()

@@ -20,15 +20,17 @@ class CausalLanguageModel(LanguageModel):
                  model_name: str,
                  model_dir: str = None,
                  device: str = "cpu",
+                 left_context: str = " ",
                  ):
         """
         Initialize instance variables and load the language model with given path
         Args:
             response_type - SYMBOL only
-            symbol_set - list of symbol strings
-            model_name - name of the Hugging Face casual language model to load
-            model_dir  - load fine-tuned model from specified directory
-            device     - device to use for making predictions (cpu, mps, or cuda)
+            symbol_set    - list of symbol strings
+            model_name    - name of the Hugging Face casual language model to load
+            model_dir     - load fine-tuned model from specified directory
+            device        - device to use for making predictions (cpu, mps, or cuda)
+            left_context  - text to condition start of sentence on
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
@@ -44,6 +46,7 @@ class CausalLanguageModel(LanguageModel):
         self.model_name = model_name
         self.symbol_set_lower = None
         self.device = device
+        self.left_context = left_context
 
         # We optionally load the model from a local directory, but if this is specified, we load a Hugging Face model
         self.model_dir = model_dir or model_name
@@ -112,6 +115,10 @@ class CausalLanguageModel(LanguageModel):
         # Index of the space character
         self.space_index = self._encode(" ")[0]
 
+        # Get token id(s) for the left context we condition all sentences on
+        self.left_context_tokens = self.tokenizer.encode(self.left_context)
+        print(f"left_context_tokens = {self.left_context_tokens}")
+
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
         if len(tokens) > 1:
@@ -148,19 +155,22 @@ class CausalLanguageModel(LanguageModel):
         valid = []
         truncated_tokens = []
         tokens = self._encode(context)
+        # TODO: fix hack for supporting facebook/opt
         if 2 in tokens:
             tokens.remove(2)
-        tokens.insert(0, self.space_index)
-
+        # Look for the last space in the context, or -1 if no space in context yet
         pos = context.rfind(" ")
         if pos >= 0:
             truncated_context = context[0:pos]
             truncated_tokens = self._encode(truncated_context)
+            # TODO: fix hack for supporting facebook/opt
             if 2 in truncated_tokens:
                 truncated_tokens.remove(2)
-            truncated_tokens.insert(0, self.space_index)
+            # Insert the left context tokens at the start of the sequence
+            truncated_tokens[0:0] = self.left_context_tokens
         else:
-            truncated_tokens = [self.space_index]
+            # Didn't find space so start inference with just the left context tokens
+            truncated_tokens = self.left_context_tokens
 
         if self.token_backoff == -1 or len(tokens) - self.token_backoff < len(truncated_tokens):
             tokens = truncated_tokens
@@ -168,10 +178,13 @@ class CausalLanguageModel(LanguageModel):
             tokens = tokens[:-self.token_backoff]
 
         # Build up the sequence text for the context
+        # Start after the left context tokens
         sequence_text = ""
-        for i in range(1, len(tokens)):
+        for i in range(len(self.left_context_tokens), len(tokens)):
             sequence_text = sequence_text + self.index_to_word_lower[tokens[i]]
         valid = [(0.0, tokens, sequence_text)]
+
+        print(f"valid = {valid}")
 
         heapq.heapify(valid)
 
@@ -231,6 +244,7 @@ class CausalLanguageModel(LanguageModel):
                             vocab = self.vocab[remaining_context]
                         for i in range(1,len(remaining_context)):
                             tokenization = self._encode(context[len(sequence_text):len(sequence_text)+i])
+                            # TODO: fix hack for supporting facebook/opt
                             if 2 in tokenization:
                                 tokenization.remove(2)
                             if len(tokenization) == 1:
