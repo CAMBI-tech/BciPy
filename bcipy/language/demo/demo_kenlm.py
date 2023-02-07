@@ -2,7 +2,7 @@
 
 import kenlm
 from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.language.main import ResponseType
 
 if __name__ == "__main__":

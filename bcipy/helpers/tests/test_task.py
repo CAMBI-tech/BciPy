@@ -11,10 +11,11 @@ from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.task.exceptions import InsufficientDataException
 
-from bcipy.helpers.task import (_float_val, alphabet,
+from bcipy.helpers.task import (_float_val,
                                 calculate_stimulation_freq, construct_triggers,
                                 generate_targets, get_data_for_decision,
                                 get_key_press, target_info)
+from bcipy.language.main import alphabet
 
 
 class TestAlphabet(unittest.TestCase):

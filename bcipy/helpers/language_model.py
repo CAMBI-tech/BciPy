@@ -4,7 +4,7 @@ import inspect
 from typing import Dict, List, Tuple
 import numpy as np
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 # pylint: disable=unused-import
 # flake8: noqa
 from bcipy.language.uniform import UniformLanguageModel

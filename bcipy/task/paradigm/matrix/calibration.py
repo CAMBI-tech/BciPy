@@ -6,14 +6,13 @@ from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import Display, InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
-                                   TargetPositions,
-                                   calibration_inquiry_generator,
-                                   get_task_info, InquirySchedule)
-from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
+from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
+                                   get_task_info)
+from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
 from bcipy.task import Task
+from bcipy.language.main import alphabet
 
 
 class MatrixCalibrationTask(Task):

@@ -10,7 +10,7 @@ from bcipy.display import (
 import numpy as np
 from psychopy import visual, core
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.task import SPACE_CHAR
+from bcipy.language.main import SPACE_CHAR
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 from bcipy.helpers.stimuli import resize_image, get_fixation
 

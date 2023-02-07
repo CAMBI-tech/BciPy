@@ -3,43 +3,14 @@
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from timeit import default_timer as timer
-#from bcipy.helpers.task import alphabet
-#from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.main import alphabet
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from scipy.special import logsumexp
 from scipy.special import softmax
 
 # Hack to allow running headless
 from string import ascii_uppercase
 import os
-
-SPACE_CHAR = '_'
-BACKSPACE_CHAR = '<'
-
-def alphabet(parameters=None, include_path=True):
-    """Alphabet.
-
-    Function used to standardize the symbols we use as alphabet.
-
-    Returns
-    -------
-        array of letters.
-    """
-    if parameters and not parameters['is_txt_stim']:
-        # construct an array of paths to images
-        path = parameters['path_to_presentation_images']
-        stimulus_array = []
-        for stimulus_filename in sorted(os.listdir(path)):
-            # PLUS.png is reserved for the fixation symbol
-            if stimulus_filename.endswith(
-                    '.png') and not stimulus_filename.endswith('PLUS.png'):
-                if include_path:
-                    img = os.path.join(path, stimulus_filename)
-                else:
-                    img = os.path.splitext(stimulus_filename)[0]
-                stimulus_array.append(img)
-        return stimulus_array
-
-    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 if __name__ == "__main__":
     start = timer()

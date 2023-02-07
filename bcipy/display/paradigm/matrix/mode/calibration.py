@@ -1,4 +1,5 @@
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.language.main import SPACE_CHAR
 
 
 class CalibrationDisplay(MatrixDisplay):

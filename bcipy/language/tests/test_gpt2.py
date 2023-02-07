@@ -5,9 +5,9 @@ import unittest
 from operator import itemgetter
 
 from bcipy.helpers.exceptions import UnsupportedResponseType
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.language.model.gpt2 import GPT2LanguageModel, ResponseType
-from bcipy.helpers.task import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 
 
 @pytest.mark.slow
