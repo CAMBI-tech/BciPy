@@ -31,8 +31,8 @@ class CausalLanguageModel(LanguageModel):
         self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
+        self.begin_text_index = None
         self.end_text_index = None
-        self.space_index = None
         self.lm_path = lm_path or "gpt2"
         self.symbol_set_lower = None
 
@@ -93,12 +93,10 @@ class CausalLanguageModel(LanguageModel):
 
         # Get the index we use for the start or end pseudo-word
         if self.lm_path.startswith("gpt2"):
-            self.end_text_index = self.tokenizer.encode("<|endoftext|>")[0]
+            self.begin_text_index = self.tokenizer.encode("<|endoftext|>")[0]
         else:
             self.end_text_index = self.tokenizer.encode("</s>")[0]
-
-        # Index of the space character
-        self.space_index = self._encode(" ")[0]
+            self.begin_text_index = self.end_text_index
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
@@ -136,19 +134,15 @@ class CausalLanguageModel(LanguageModel):
         valid = []
         truncated_tokens = []
         tokens = self._encode(context)
-        if 2 in tokens:
-            tokens.remove(2)
-        tokens.insert(0, self.space_index)
+        tokens.insert(0, self.begin_text_index)
 
         pos = context.rfind(" ")
         if pos >= 0:
             truncated_context = context[0:pos]
             truncated_tokens = self._encode(truncated_context)
-            if 2 in truncated_tokens:
-                truncated_tokens.remove(2)
-            truncated_tokens.insert(0, self.space_index)
+            truncated_tokens.insert(0, self.begin_text_index)
         else:
-            truncated_tokens = [self.space_index]
+            truncated_tokens = [self.begin_text_index]
 
         if self.token_backoff == -1 or len(tokens) - self.token_backoff < len(truncated_tokens):
             tokens = truncated_tokens
@@ -219,8 +213,6 @@ class CausalLanguageModel(LanguageModel):
                             vocab = self.vocab[remaining_context]
                         for i in range(1,len(remaining_context)):
                             tokenization = self._encode(context[len(sequence_text):len(sequence_text)+i])
-                            if 2 in tokenization:
-                                tokenization.remove(2)
                             if len(tokenization) == 1:
                                 vocab += tokenization[0],
 
