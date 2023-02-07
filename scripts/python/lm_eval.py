@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-cuda",
                         action="store_true",
                         help="Use CUDA GPU during inference")
-    parser.add_argument("--left-context", help="starting left language model context", default=" ")
+    parser.add_argument("--left-context", help="left language model context for causal model", default=" ")
 
     args = parser.parse_args()
 
@@ -48,6 +48,9 @@ if __name__ == "__main__":
     if model == 4 and not args.model_name:
         print(f"ERROR: For causal model you must specify name of model using --model-name")
         sys.exit(1)
+
+    # Allow passing in of space characters in the context using <sp> word
+    args.left_context = args.left_context.replace("<sp>", " ")
 
     device = "cpu"
     if args.use_mps:
