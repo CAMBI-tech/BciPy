@@ -16,10 +16,11 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
+from bcipy.helpers.task import (construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
+from bcipy.language.main import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview

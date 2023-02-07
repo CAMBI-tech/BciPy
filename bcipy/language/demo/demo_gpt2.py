@@ -1,5 +1,5 @@
 from bcipy.language.model.gpt2 import GPT2LanguageModel
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.language.main import ResponseType
 from timeit import default_timer as timer
 

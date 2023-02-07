@@ -11,7 +11,7 @@ from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.acquisition.devices import DeviceSpec, register
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.language.uniform import UniformLanguageModel
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task.data import EvidenceType

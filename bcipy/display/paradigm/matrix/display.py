@@ -5,10 +5,10 @@ from psychopy import visual, core
 
 from bcipy.acquisition.marker_writer import NullMarkerWriter, MarkerWriter
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
-from bcipy.helpers.task import SPACE_CHAR
+from bcipy.language.main import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-from bcipy.helpers.task import alphabet
+from bcipy.language.main import alphabet
 from bcipy.helpers.exceptions import BciPyCoreException
 
 
