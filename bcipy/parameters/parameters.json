@@ -623,7 +623,6 @@
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
-      "GPT2",
       "UNIFORM",
       "CAUSAL",
       "KEMLM",
