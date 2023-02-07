@@ -20,7 +20,7 @@ class CausalLanguageModel(LanguageModel):
                  model_name: str,
                  model_dir: str = None,
                  device: str = "cpu",
-                 left_context: str = " ",
+                 left_context: str = None,
                  ):
         """
         Initialize instance variables and load the language model with given path
@@ -109,13 +109,13 @@ class CausalLanguageModel(LanguageModel):
         # Get the index we use for the start or end pseudo-word
         if self.left_context is None:
             if self.model_name.startswith("gpt2"):
-                self.left_context_tokens = self.tokenizer.encode("<|endoftext|>")[0]
+                self.left_context_tokens = [self.tokenizer.encode("<|endoftext|>")[0]]
             else:
-                self.left_context_tokens = self.tokenizer.encode("</s>")[0]
+                self.left_context_tokens = [self.tokenizer.encode("</s>")[0]]
         else:
             # Get token id(s) for the left context we condition all sentences on
             self.left_context_tokens = self.tokenizer.encode(self.left_context)
-            print(f"left_context_tokens = {self.left_context_tokens}")
+        # print(f"left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
@@ -177,7 +177,7 @@ class CausalLanguageModel(LanguageModel):
             sequence_text = sequence_text + self.index_to_word_lower[tokens[i]]
         valid = [(0.0, tokens, sequence_text)]
 
-        print(f"valid = {valid}")
+        # print(f"valid = {valid}")
 
         heapq.heapify(valid)
 

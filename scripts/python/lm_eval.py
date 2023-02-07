@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-cuda",
                         action="store_true",
                         help="Use CUDA GPU during inference")
-    parser.add_argument("--left-context", help="left language model context for causal model", default=" ")
+    parser.add_argument("--left-context", help="left language model context for causal model", default=None)
 
     args = parser.parse_args()
 
@@ -50,7 +50,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Allow passing in of space characters in the context using <sp> word
-    args.left_context = args.left_context.replace("<sp>", " ")
+    if args.left_context is not None:
+        args.left_context = args.left_context.replace("<sp>", " ")
 
     device = "cpu"
     if args.use_mps:
