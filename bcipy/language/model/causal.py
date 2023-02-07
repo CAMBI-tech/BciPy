@@ -14,13 +14,23 @@ from scipy.special import softmax
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
+    def __init__(self,
+                 response_type: ResponseType,
+                 symbol_set: List[str],
+                 model_name: str,
+                 model_dir: str = None,
+                 device: str = "cpu",
+                 left_context: str = " ",
+                 ):
         """
         Initialize instance variables and load the language model with given path
         Args:
             response_type - SYMBOL only
-            symbol_set - list of symbol strings
-            lm_path - path to language model files
+            symbol_set    - list of symbol strings
+            model_name    - name of the Hugging Face casual language model to load
+            model_dir     - load fine-tuned model from specified directory
+            device        - device to use for making predictions (cpu, mps, or cuda)
+            left_context  - text to condition start of sentence on
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
@@ -33,8 +43,13 @@ class CausalLanguageModel(LanguageModel):
         self.index_to_word_lower = {}
         self.begin_text_index = None
         self.end_text_index = None
-        self.lm_path = lm_path or "gpt2"
+        self.model_name = model_name
         self.symbol_set_lower = None
+        self.device = device
+        self.left_context = left_context
+
+        # We optionally load the model from a local directory, but if this is specified, we load a Hugging Face model
+        self.model_dir = model_dir or model_name
 
         # parameters for search
         self.beam_width = 8
@@ -92,11 +107,15 @@ class CausalLanguageModel(LanguageModel):
                     self.vocab[key] += i,
 
         # Get the index we use for the start or end pseudo-word
-        if self.lm_path.startswith("gpt2"):
-            self.begin_text_index = self.tokenizer.encode("<|endoftext|>")[0]
+        if self.left_context is None:
+            if self.model_name.startswith("gpt2"):
+                self.left_context_tokens = self.tokenizer.encode("<|endoftext|>")[0]
+            else:
+                self.left_context_tokens = self.tokenizer.encode("</s>")[0]
         else:
-            self.end_text_index = self.tokenizer.encode("</s>")[0]
-            self.begin_text_index = self.end_text_index
+            # Get token id(s) for the left context we condition all sentences on
+            self.left_context_tokens = self.tokenizer.encode(self.left_context)
+            print(f"left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
@@ -134,15 +153,17 @@ class CausalLanguageModel(LanguageModel):
         valid = []
         truncated_tokens = []
         tokens = self._encode(context)
-        tokens.insert(0, self.begin_text_index)
 
+        # Look for the last space in the context, or -1 if no begin_text in context yet
         pos = context.rfind(" ")
         if pos >= 0:
             truncated_context = context[0:pos]
             truncated_tokens = self._encode(truncated_context)
-            truncated_tokens.insert(0, self.begin_text_index)
+            # Insert the left context tokens at the start of the sequence
+            truncated_tokens[0:0] = self.left_context_tokens
         else:
-            truncated_tokens = [self.begin_text_index]
+            # Didn't find space so start inference with just the left context tokens
+            truncated_tokens = self.left_context_tokens
 
         if self.token_backoff == -1 or len(tokens) - self.token_backoff < len(truncated_tokens):
             tokens = truncated_tokens
@@ -150,10 +171,13 @@ class CausalLanguageModel(LanguageModel):
             tokens = tokens[:-self.token_backoff]
 
         # Build up the sequence text for the context
+        # Start after the left context tokens
         sequence_text = ""
-        for i in range(1, len(tokens)):
+        for i in range(len(self.left_context_tokens), len(tokens)):
             sequence_text = sequence_text + self.index_to_word_lower[tokens[i]]
         valid = [(0.0, tokens, sequence_text)]
+
+        print(f"valid = {valid}")
 
         heapq.heapify(valid)
 
@@ -300,15 +324,11 @@ class CausalLanguageModel(LanguageModel):
         """
             Load the language model and tokenizer, initialize class variables
         """
-        self.model = AutoModelForCausalLM.from_pretrained(self.lm_path)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
         self.model.eval()
-        self.tokenizer = AutoTokenizer.from_pretrained(self.lm_path, use_fast=False)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
         self.vocab_size = self.tokenizer.vocab_size
         
-        # If you have a GPU, put everything on cuda
-        self.device = "cpu"
-        # self.device = "cuda"   # NVidia GPU
-        # self.device = "mps"    # M1 mac
         self.model.to(self.device)
 
         self.symbol_set_lower = []
