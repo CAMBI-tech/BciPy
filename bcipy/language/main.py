@@ -4,6 +4,8 @@ from enum import Enum
 from typing import List, Optional, Tuple
 from string import ascii_uppercase
 
+import os
+
 from bcipy.helpers.exceptions import UnsupportedResponseType
 
 SPACE_CHAR = '_'
