@@ -618,16 +618,28 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "UNIFORM",
+    "value": "CAUSAL",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
       "UNIFORM",
       "CAUSAL",
-      "KEMLM",
+      "KENLM",
       "MIXTURE",
       "UNIGRAM"
+    ],
+    "type": "str"
+  },
+  "lang_model_name": {
+    "value": "gpt2",
+    "section": "bci_config",
+    "readableName": "Language Model Name",
+    "helpTip": "Name of the HuggingFace model to load. Required for the Causal model. Default: gpt2",
+    "recommended_values": [
+      "gpt2",
+      "gpt2-medium",
+      "facebook/opt"
     ],
     "type": "str"
   },
@@ -635,8 +647,11 @@
     "value": "",
     "section": "bci_config",
     "readableName": "Language Model Path",
-    "helpTip": "Pretrained model name or path.",
-    "recommended_values": "",
+    "helpTip": "Pretrained model path. If using a causal model from HuggingFace, leave blank and use lang_model_name",
+    "recommended_values": [
+      "",
+      "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+    ],
     "type": "directorypath"
   },
   "lm_backspace_prob": {
@@ -646,6 +661,31 @@
     "helpTip": "Specifies the initial probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.05",
     "recommended_values": "",
     "type": "float"
+  },
+  "lm_device": {
+    "value": "cpu",
+    "section": "bci_config",
+    "readableName": "Language Model Device",
+    "helpTip": "The device to use for language model computation. Default: cpu",
+    "recommended_values": [
+      "cpu",
+      "cuda",
+      "mps"
+    ],
+    "type": "str"
+  },
+  "lm_left_context": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Language Model Left Context",
+    "helpTip": "The text to condition the start of a sentence on. Default: None",
+    "recommended_values": [
+      "",
+      "<sp>",
+      "</s>",
+      "<|endoftext|>"
+    ],
+    "type": "str"
   },
   "show_preview_inquiry": {
     "value": "false",

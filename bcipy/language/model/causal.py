@@ -17,20 +17,20 @@ class CausalLanguageModel(LanguageModel):
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
-                 model_name: str,
-                 model_dir: str = None,
-                 device: str = "cpu",
-                 left_context: str = None,
+                 lang_model_name: str,
+                 lm_path: str = None,
+                 lm_device: str = "cpu",
+                 lm_left_context: str = "",
                  ):
         """
         Initialize instance variables and load the language model with given path
         Args:
             response_type - SYMBOL only
             symbol_set    - list of symbol strings
-            model_name    - name of the Hugging Face casual language model to load
-            model_dir     - load fine-tuned model from specified directory
-            device        - device to use for making predictions (cpu, mps, or cuda)
-            left_context  - text to condition start of sentence on
+            lang_model_name    - name of the Hugging Face casual language model to load
+            lm_path     - load fine-tuned model from specified directory
+            lm_device        - device to use for making predictions (cpu, mps, or cuda)
+            lm_left_context  - text to condition start of sentence on
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
@@ -43,13 +43,13 @@ class CausalLanguageModel(LanguageModel):
         self.index_to_word_lower = {}
         self.begin_text_index = None
         self.end_text_index = None
-        self.lm_path = lm_path or "gpt2"
+        self.model_name = lang_model_name
         self.symbol_set_lower = None
-        self.device = device
-        self.left_context = left_context
+        self.device = lm_device
+        self.left_context = lm_left_context
 
-        # We optionally load the model from a local directory, but if this is specified, we load a Hugging Face model
-        self.model_dir = model_dir or model_name
+        # We optionally load the model from a local directory, but if this is not specified, we load a Hugging Face model
+        self.model_dir = lm_path or lang_model_name
 
         # parameters for search
         self.beam_width = 8
@@ -107,7 +107,7 @@ class CausalLanguageModel(LanguageModel):
                     self.vocab[key] += i,
 
         # Get the index we use for the start or end pseudo-word
-        if self.left_context is None:
+        if self.left_context == "":
             if self.model_name.startswith("gpt2"):
                 self.left_context_tokens = [self.tokenizer.encode("<|endoftext|>")[0]]
             else:
@@ -139,12 +139,13 @@ class CausalLanguageModel(LanguageModel):
         assert self.model is not None, "language model does not exist!"
 
         converted_context = "".join(evidence)
+        converted_context_lower = converted_context.lower()
 
         context = converted_context.replace(SPACE_CHAR, ' ')
         context_lower = context.lower()
         
         # Index in the hypothesis string that is the next character after our context
-        target_pos = len(context)
+        target_pos = len(context_lower)
 
         # Remove token_backoff tokens from the end of the context
         # If token_backoff is -1 or goes beyond a word boundary, then
@@ -152,12 +153,12 @@ class CausalLanguageModel(LanguageModel):
         # If no space, then from the very beginning
         valid = []
         truncated_tokens = []
-        tokens = self._encode(context)
-        tokens.insert(0, self.begin_text_index)
+        tokens = self._encode(context_lower)
 
-        pos = context.rfind(" ")
+        # Look for the last space in the context, or -1 if no begin_text in context yet
+        pos = context_lower.rfind(" ")
         if pos >= 0:
-            truncated_context = context[0:pos]
+            truncated_context = context_lower[0:pos]
             truncated_tokens = self._encode(truncated_context)
             truncated_tokens.insert(0, self.begin_text_index)
         else:
@@ -227,14 +228,14 @@ class CausalLanguageModel(LanguageModel):
 
                     vocab = []
 
-                    remaining_context = converted_context[len(sequence_text):]
+                    remaining_context = converted_context_lower[len(sequence_text):]
                     if len(remaining_context) == 0:
                         vocab = self.valid_vocab
                     else:
                         if remaining_context in self.vocab:
                             vocab = self.vocab[remaining_context]
                         for i in range(1,len(remaining_context)):
-                            tokenization = self._encode(context[len(sequence_text):len(sequence_text)+i])
+                            tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text)+i])
                             if len(tokenization) == 1:
                                 vocab += tokenization[0],
 
