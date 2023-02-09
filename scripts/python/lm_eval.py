@@ -41,8 +41,8 @@ if __name__ == "__main__":
     model = args.model
     phrases = args.phrases
 
-    if model == 3 and not args.model_name:
-        print(f"ERROR: For KenLM n-gram model you must specify filename of model using --model-name")
+    if model == 3 and not args.model_dir:
+        print(f"ERROR: For KenLM n-gram model you must specify filename of model using --model-dir")
         sys.exit(1)
 
     if model == 4 and not args.model_name:
@@ -77,14 +77,14 @@ if __name__ == "__main__":
     elif model == 2:
         lm = MixtureLanguageModel(response_type, symbol_set)
     elif model == 3:
-        lm = KenLMLanguageModel(response_type, symbol_set, args.model_name)
+        lm = KenLMLanguageModel(response_type, symbol_set, args.model_dir)
     elif model == 4:
         lm = CausalLanguageModel(response_type=response_type,
                                  symbol_set=symbol_set,
-                                 model_name=args.model_name,
-                                 device=device,
-                                 model_dir=args.model_dir,
-                                 left_context=args.left_context)
+                                 lang_model_name=args.model_name,
+                                 lm_device=device,
+                                 lm_path=args.model_dir,
+                                 lm_left_context=args.left_context)
     else:
         parser.print_help()
         exit()
