@@ -149,7 +149,7 @@ This demo will load in parameters and execute a demo task defined in the file. T
 
 When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test_` in order for pytest to discover it. See other module tests for examples!
 
-Development requirements must be installed before running: `pip install dev_requirements.txt`
+Development requirements must be installed before running: `pip install -r dev_requirements.txt`
 
 To run all tests, in the command line:
 
