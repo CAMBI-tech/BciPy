@@ -2,6 +2,7 @@ from collections import Counter
 from typing import Dict, List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.helpers.exceptions import InvalidModelException
 import kenlm
 
 class KenLMLanguageModel(LanguageModel):
@@ -32,7 +33,7 @@ class KenLMLanguageModel(LanguageModel):
         if len(evidence) > 11:
             evidence = evidence[-11:]
 
-        evidence_str = ''.join(evidence)
+        evidence_str = ''.join(evidence).lower()
 
         for i, ch in enumerate(evidence):
             if ch == SPACE_CHAR:
@@ -47,9 +48,9 @@ class KenLMLanguageModel(LanguageModel):
         # Update the state one token at a time based on evidence, alternate states
         for i, token in enumerate(evidence):
             if i % 2 == 0:
-                self.model.BaseScore(self.state, token, self.state2)
+                self.model.BaseScore(self.state, token.lower(), self.state2)
             else:
-                self.model.BaseScore(self.state2, token, self.state)
+                self.model.BaseScore(self.state2, token.lower(), self.state)
 
         next_char_pred = None
 
@@ -77,7 +78,10 @@ class KenLMLanguageModel(LanguageModel):
             path: language model file path
         """
         
-        self.model = kenlm.LanguageModel(self.lm_path)
+        try:
+            self.model = kenlm.LanguageModel(self.lm_path)
+        except:
+            raise InvalidModelException("A valid model path must be provided for the KenLMLanguageModel")
 
         self.state = kenlm.State()
         self.state2 = kenlm.State()
