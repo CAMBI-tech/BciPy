@@ -1,13 +1,17 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
 import kenlm
+import os
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import alphabet
 from bcipy.language.main import ResponseType
 
 if __name__ == "__main__":
+    dirname = os.path.dirname(__file__) or '.'
+    lm_path = f"{dirname}/../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
+    
     # Load a really pruned n-gram language model
-    model = kenlm.LanguageModel("../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin")
+    model = kenlm.LanguageModel(lm_path)
 
     # Sum of the log prob of the sentence: <s> i like zebras. </s>
     # Results using SRILM ngram utility:
@@ -72,7 +76,7 @@ if __name__ == "__main__":
 
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = KenLMLanguageModel(response_type, symbol_set)
+    lm = KenLMLanguageModel(response_type, symbol_set, lm_path)
 
     next_char_pred = lm.state_update(list("i_like_z"))
     print(next_char_pred)
