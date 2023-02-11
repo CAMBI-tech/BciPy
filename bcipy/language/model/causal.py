@@ -230,10 +230,10 @@ class CausalLanguageModel(LanguageModel):
 
                     remaining_context = converted_context_lower[len(sequence_text):]
                     if len(remaining_context) == 0:
-                        vocab = self.valid_vocab
+                        vocab = self.valid_vocab.copy()
                     else:
                         if remaining_context in self.vocab:
-                            vocab = self.vocab[remaining_context]
+                            vocab = self.vocab[remaining_context].copy()
                         for i in range(1,len(remaining_context)):
                             tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text)+i])
                             if len(tokenization) == 1:
@@ -243,7 +243,7 @@ class CausalLanguageModel(LanguageModel):
                     # Create a list of token indexes that are a prefix of target text
                     for i in vocab: # range(logits.size()[2]):
                         hypo_str = sequence_text + self.index_to_word_lower[i]
-                        # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}' {predictions[-1, i]:.4f}")
+                        # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}'")
                         
                         hypo_seq = batch_sequences[j].copy()
                         hypo_seq += i,
@@ -266,7 +266,7 @@ class CausalLanguageModel(LanguageModel):
                             # Note: Skipping index 0 since this is the space character we forced at the start
                             # for i in range(1, len(hypo_seq)):
                             #     hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
-                            #print(f"hypo_str = '{hypo_str}'")
+                            # print(f"hypo_str = '{hypo_str}', likelihood = {likelihood}")
                             ch = hypo_str[target_pos]
 
                             # Map a space character to be our space symbol
