@@ -44,6 +44,14 @@ class TestKenLMLanguageModel(unittest.TestCase):
             KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
                             lm_path="phonymodel.txt")
 
+    def test_identical(self):
+        """Ensure predictions are the same for subsequent queries with the same evidence."""
+        query1 = self.lmodel.predict(list("evidenc"))
+        query2 = self.lmodel.predict(list("evidenc"))
+        for ((sym1, prob1), (sym2, prob2)) in zip(query1, query2):
+            self.assertAlmostEqual(prob1, prob2, places=5)
+            self.assertEqual(sym1, sym2)
+
     def test_upper_lower_case(self):
         """Ensure predictions are the same for upper or lower case evidence."""
         lc = self.lmodel.predict(list("EVIDENC"))
