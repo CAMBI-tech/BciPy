@@ -43,8 +43,6 @@ class CausalLanguageModel(LanguageModel):
         self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
-        self.begin_text_index = None
-        self.end_text_index = None
         self.model_name = lang_model_name
         self.symbol_set_lower = None
         self.device = lm_device
@@ -111,19 +109,17 @@ class CausalLanguageModel(LanguageModel):
         # Get the index we use for the start or end pseudo-word
         if self.left_context == "":
             if self.model_name.startswith("gpt2"):
-                self.left_context_tokens = [self.tokenizer.encode("<|endoftext|>")[0]]
+                self.left_context = "<|endoftext|>"
             else:
-                self.left_context_tokens = [self.tokenizer.encode("</s>")[0]]
-        else:
-            # Get token id(s) for the left context we condition all sentences on
-            self.left_context_tokens = self.tokenizer.encode(self.left_context)
+                self.left_context = "</s>"
+        # Get token id(s) for the left context we condition all sentences on
+        self.left_context_tokens = self._encode(self.left_context)
         # print(f"left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
-        if len(tokens) > 1:
-            if tokens[0] == self.end_text_index:
-                tokens = tokens[1:]
+        if len(tokens) > 1 and self.model_name.startswith("facebook/opt"):
+            tokens = tokens[1:]
 
         return tokens
 
