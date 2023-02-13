@@ -108,7 +108,7 @@ class CausalLanguageModel(LanguageModel):
 
         # Get the index we use for the start or end pseudo-word
         if self.left_context == "":
-            if "gpt2" in self.model_name.startswith:
+            if "gpt2" in self.model_name:
                 self.left_context = "<|endoftext|>"
             else:
                 self.left_context = "</s>"
