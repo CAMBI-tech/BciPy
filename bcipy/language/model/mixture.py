@@ -5,21 +5,26 @@ from scipy.special import softmax
 
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 
+from bcipy.helpers.exceptions import InvalidModelException
+
 class MixtureLanguageModel(LanguageModel):
     """
         Character language model that mixes any combination of other models
-        By default, 80% GPT-2 with 20% Unigram
+        By default, 80% Causal GPT-2 with 20% Unigram
     """
 
-    supported_lm_types = ["gpt2", "unigram", "kenlm", "causal"]
+    supported_lm_types = ["causal", "unigram", "kenlm"]
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_types: List[str] = None, 
-        lm_paths: List[str] = None, lm_weights: List[float] = None):
+    def __init__(self, 
+                 response_type: ResponseType, 
+                 symbol_set: List[str], 
+                 lm_types: List[str] = None, 
+                 lm_weights: List[float] = None, 
+                 lm_params: List[Dict[str, str]] = None):
         
         """
         Initialize instance variables and load the language model with given path
@@ -27,22 +32,29 @@ class MixtureLanguageModel(LanguageModel):
             response_type - SYMBOL only
             symbol_set - list of symbol strings
             lm_types - list of types of models to mix
-            lm_paths - list of paths to language model files
             lm_weights - list of weights to use when mixing the models
+            lm_params - list of dictionaries to pass as parameters for each model's instantiation
         """
 
-        if lm_paths != None:
-            assert (lm_types != None) and (len(lm_types) == len(lm_paths)), "invalid model paths!"
+        if lm_params != None:
+            if (lm_types == None) or (len(lm_types) != len(lm_params)):
+                raise InvalidModelException("Length of parameters does not match length of types")
         
-        assert (lm_types == None and lm_weights == None) or (len(lm_types) == len(lm_weights)), "invalid model weights!"
+        if lm_weights != None:
+            if (lm_types == None) or (len(lm_types) != len(lm_weights)):
+                raise InvalidModelException("Length of weights does not match length of types")
 
-        assert (lm_types == None or all(x in MixtureLanguageModel.supported_lm_types for x in lm_types)), "invalid model types!"
+        if lm_types != None:
+            if not all(x in MixtureLanguageModel.supported_lm_types for x in lm_types):
+                raise InvalidModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.models = list()
-        self.lm_types = lm_types or ["gpt2", "unigram"]
-        self.lm_paths = lm_paths or [None, None]
+        self.response_type = response_type
+        self.symbol_set = symbol_set
+        self.lm_types = lm_types or ["causal", "unigram"]
         self.lm_weights = lm_weights or [0.8, 0.2]
+        self.lm_params = lm_params or [{"lang_model_name": "gpt2"}, {}]
 
         # rescale coefficient
         self.rescale_coeff = 0.5
@@ -115,7 +127,7 @@ class MixtureLanguageModel(LanguageModel):
         next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
 
         # Exponentially rescale the mixed predictions
-        next_char_pred = MixtureLanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
+        # next_char_pred = MixtureLanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
 
         return next_char_pred
 
@@ -128,18 +140,16 @@ class MixtureLanguageModel(LanguageModel):
             Load the language models to be mixed
         """
 
-        symbol_set = alphabet()
-        response_type = ResponseType.SYMBOL
-
-        for lm_type, path in zip(self.lm_types, self.lm_paths):
-            if lm_type == "gpt2":
-                model = GPT2LanguageModel(response_type, symbol_set, path)
-            elif lm_type == "unigram":
-                model = UnigramLanguageModel(response_type, symbol_set, path)
-            elif lm_type == "kenlm":
-                model = KenLMLanguageModel(response_type, symbol_set, path)
-            elif lm_type == "causal":
-                model = CausalLanguageModel(response_type, symbol_set, path)
+        for lm_type, params in zip(self.lm_types, self.lm_params):
+            try:
+                if lm_type == "causal":
+                    model = CausalLanguageModel(self.response_type, self.symbol_set, **params)
+                elif lm_type == "unigram":
+                    model = UnigramLanguageModel(self.response_type, self.symbol_set, **params)
+                elif lm_type == "kenlm":
+                    model = KenLMLanguageModel(self.response_type, self.symbol_set, **params)
+            except InvalidModelException as e:
+                raise InvalidModelException(f"Error in creation of model type {lm_type}: {e.message}")
             
             self.models.append(model)
 
