@@ -63,6 +63,18 @@ class TestCausalLanguageModel(unittest.TestCase):
             CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
                             lang_model_name="gpt2", lm_path="./phonypath/")
 
+    def test_non_mutable_evidence(self):
+        """Test that the model does not change the evidence variable passed in.
+           This could impact the mixture model if failed"""
+        evidence = list("Test_test")
+        evidence2 = list("Test_test")
+        self.gpt2_model.predict(evidence)
+        self.assertEqual(evidence, evidence2)
+
+        self.opt_model.predict(evidence)
+        self.assertEqual(evidence, evidence2)
+
+
     def test_gpt2_identical(self):
         """Ensure predictions are the same for subsequent queries with the same evidence."""
         query1 = self.gpt2_model.predict(list("evidenc"))
