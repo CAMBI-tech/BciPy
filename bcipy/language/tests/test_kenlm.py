@@ -47,8 +47,8 @@ class TestKenLMLanguageModel(unittest.TestCase):
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.
            This could impact the mixture model if failed"""
-        evidence = list("test_test")
-        evidence2 = list("test_test")
+        evidence = list("Test_test")
+        evidence2 = list("Test_test")
         self.lmodel.predict(evidence)
         self.assertEqual(evidence, evidence2)
 
