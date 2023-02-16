@@ -2,6 +2,7 @@ from collections import Counter
 from typing import Dict, List, Tuple
 import numpy as np
 from scipy.special import softmax
+from math import isclose
 
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
@@ -43,8 +44,14 @@ class MixtureLanguageModel(LanguageModel):
         if lm_weights != None:
             if (lm_types == None) or (len(lm_types) != len(lm_weights)):
                 raise InvalidModelException("Length of weights does not match length of types")
+            if not isclose(sum(lm_weights), 1.0, abs_tol=1e-05):
+                raise InvalidModelException("Weights do not sum to 1")
 
         if lm_types != None:
+            if lm_weights == None:
+                raise InvalidModelException("Model weights not provided")
+            if lm_params == None:
+                raise InvalidModelException("Model parameters not provided")
             if not all(x in MixtureLanguageModel.supported_lm_types for x in lm_types):
                 raise InvalidModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
 
