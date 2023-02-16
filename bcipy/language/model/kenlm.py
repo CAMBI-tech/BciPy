@@ -30,14 +30,17 @@ class KenLMLanguageModel(LanguageModel):
             A list of symbols with probability
         """
 
-        if len(evidence) > 11:
-            evidence = evidence[-11:]
+        # Do not modify the original parameter, could affect mixture model
+        context = evidence.copy()
 
-        evidence_str = ''.join(evidence).lower()
+        if len(context) > 11:
+            context = context[-11:]
 
-        for i, ch in enumerate(evidence):
+        evidence_str = ''.join(context).lower()
+
+        for i, ch in enumerate(context):
             if ch == SPACE_CHAR:
-                evidence[i] = "<sp>"
+                context[i] = "<sp>"
 
         # cache_state = self.check_cache(evidence_str)
 
@@ -46,7 +49,7 @@ class KenLMLanguageModel(LanguageModel):
         self.model.BeginSentenceWrite(self.state)
         
         # Update the state one token at a time based on evidence, alternate states
-        for i, token in enumerate(evidence):
+        for i, token in enumerate(context):
             if i % 2 == 0:
                 self.model.BaseScore(self.state, token.lower(), self.state2)
             else:
@@ -55,7 +58,7 @@ class KenLMLanguageModel(LanguageModel):
         next_char_pred = None
 
         # Generate the probability distribution based on the final state, save state to cache
-        if len(evidence) % 2 == 0:
+        if len(context) % 2 == 0:
             next_char_pred = self.prob_dist(self.state)
             self.cache[evidence_str] = self.state
         else:
