@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-import json
+import json, os
 
 class UnigramLanguageModel(LanguageModel):
     """Character language model based on trained unigram weights"""
@@ -10,7 +10,8 @@ class UnigramLanguageModel(LanguageModel):
         
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
-        self.lm_path = lm_path or "../lms/unigram.json"
+        dirname = os.path.dirname(__file__) or '.'
+        self.lm_path = lm_path or f"{dirname}/../lms/unigram.json"
 
         with open(self.lm_path) as json_file:
             self.unigram_lm = json.load(json_file)
