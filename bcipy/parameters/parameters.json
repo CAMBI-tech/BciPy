@@ -618,7 +618,7 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "CAUSAL",
+    "value": "MIXTURE",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: UNIFORM",
@@ -686,6 +686,41 @@
       "<|endoftext|>"
     ],
     "type": "str"
+  },
+  "lm_types": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Mixture Language Model Types",
+    "helpTip": "Defines the types of models to be used by the mixture model. Default: None",
+    "recommended_values": [
+      "",
+      "causal, unigram",
+      "causal, kenlm"
+    ],
+    "type": "List[str]"
+  },
+  "lm_weights": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Mixture Language Model Weights",
+    "helpTip": "Defines the weights of models to be used by the mixture model. Must sum to 1. Default: None",
+    "recommended_values": [
+      "",
+      "0.5, 0.5"
+    ],
+    "type": "List[float]"
+  },
+  "lm_params": {
+    "value": "",
+    "section": "bci_config",
+    "readableName": "Mixture Language Model Parameters",
+    "helpTip": "Defines the extra parameters of models to be used by the mixture model. Default: None",
+    "recommended_values": [
+      "",
+      "{'lang_model_name': 'gpt2'}, {}",
+      "{'lang_model_name': 'gpt2'}, {'lm_path': './bcipy/language/lms/lm_dec19_char_large_12gram.arpa'}"
+    ],
+    "type": "List[Dict[str, str]]"
   },
   "show_preview_inquiry": {
     "value": "false",

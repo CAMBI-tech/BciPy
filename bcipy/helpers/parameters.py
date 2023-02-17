@@ -3,7 +3,7 @@ from codecs import open as codecsopen
 from collections import abc
 from json import dump, load
 from pathlib import Path
-from typing import Any, Dict, NamedTuple, Tuple
+from typing import Any, Dict, NamedTuple, Tuple, List
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
@@ -49,7 +49,10 @@ class Parameters(dict):
             'bool': lambda val: val == 'true' or val is True,
             'str': str,
             'directorypath': str,
-            'filepath': str
+            'filepath': str,
+            'List[str]': List[str],
+            'List[float]': List[float],
+            'List[Dict[str, str]]': List[Dict[str, str]]
         }
         self.load_from_source()
 
@@ -83,7 +86,23 @@ class Parameters(dict):
     def cast_value(self, entry: dict):
         """Takes an entry with a desired type and attempts to cast it to that type."""
         cast = self.conversions[entry['type']]
-        return cast(entry['value'])
+        if cast == List[str]:
+            if entry['value'] == "":
+                return None
+            l = entry['value'].split(", ")
+            return [str(s) for s in l]
+        elif cast == List[float]:
+            if entry['value'] == "":
+                return None
+            l = entry['value'].split(", ")
+            return [float(f) for f in l]
+        elif cast == List[Dict[str, str]]:
+            if entry['value'] == "":
+                return None
+            l = entry['value'].split(", ")
+            return [eval(d) for d in l]
+        else:
+            return cast(entry['value'])
 
     def serialized_value(self, value, entry_type):
         """Convert a value back into its serialized form"""
