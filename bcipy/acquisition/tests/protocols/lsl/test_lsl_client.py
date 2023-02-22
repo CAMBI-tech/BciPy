@@ -13,7 +13,7 @@ from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.helpers.clock import Clock
 
-DEVICE_NAME = 'DSI'
+DEVICE_NAME = 'DSI-24'
 DEVICE = preconfigured_device(DEVICE_NAME)
 
 
@@ -51,7 +51,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
         client = LslAcquisitionClient(max_buffer_len=1,
-                                      device_spec=preconfigured_device('LSL'))
+                                      device_spec=preconfigured_device('DSI-VR300'))
 
         with self.assertRaises(Exception):
             client.start_acquisition()

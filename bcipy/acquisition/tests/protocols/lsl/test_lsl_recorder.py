@@ -12,7 +12,7 @@ from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 from bcipy.helpers.raw_data import TIMESTAMP_COLUMN, load
 
-DEVICE_NAME = 'DSI'
+DEVICE_NAME = 'DSI-24'
 DEVICE = preconfigured_device(DEVICE_NAME)
 
 

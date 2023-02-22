@@ -16,7 +16,7 @@ def main():
 
     parser.add_argument('-n',
                         '--name',
-                        default='LSL',
+                        default='DSI-24',
                         help='Name of the device spec to mock.')
     args = parser.parse_args()
     device_spec = preconfigured_device(args.name)

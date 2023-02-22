@@ -31,7 +31,7 @@ class TestAcquisition(unittest.TestCase):
 
     def test_default_values(self):
         """Test default values."""
-        self.parameters['acq_device'] = 'DSI'
+        self.parameters['acq_device'] = 'DSI-24'
 
         client, server = init_eeg_acquisition(self.parameters,
                                               self.save,
