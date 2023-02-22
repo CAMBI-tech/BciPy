@@ -76,7 +76,16 @@
     {
         "name": "Tobii Nano",
         "content_type": "Eyetracker",
-        "channels": ["device_ts", "system_ts", "left_x", "left_y", "left_pupil", "right_x" , "right_y", "right_pupil" ],
+        "channels": [
+            { "name": "device_ts", "label": "device_ts" },
+            { "name": "system_ts", "label": "system_ts" },
+            { "name": "left_x", "label": "left_x", "units": "screencoords", "type": "ScreenX" },
+            { "name": "left_y", "label": "left_y", "units": "screencoords", "type": "ScreenY" },
+            { "name": "left_pupil", "label": "left_pupil", "type": "pupilsize" },
+            { "name": "right_x", "label": "right_x", "units": "screencoords", "type": "ScreenX" },
+            { "name": "right_y", "label": "right_y", "units": "screencoords", "type": "ScreenY" },
+            { "name": "right_pupil", "label": "right_pupil", "type": "pupilsize" }
+        ],
         "sample_rate": 60.0,
         "description": "Tobii Nano. For use with the Tobii Pro SDK."
     }
