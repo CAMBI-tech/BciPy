@@ -13,6 +13,7 @@ from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
+from bcipy.helpers.exceptions import InvalidModelException
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
@@ -33,11 +34,67 @@ def init_language_model(parameters: dict) -> LanguageModel:
     -------
         instance of a LanguageModel
     """
+
+#   "lm_types": {
+#     "value": "",
+#     "section": "bci_config",
+#     "readableName": "Mixture Language Model Types",
+#     "helpTip": "Defines the types of models to be used by the mixture model. Default: None",
+#     "recommended_values": [
+#       "",
+#       "causal, unigram",
+#       "causal, kenlm"
+#     ],
+#     "type": "List[str]"
+#   },
+#   "lm_weights": {
+#     "value": "",
+#     "section": "bci_config",
+#     "readableName": "Mixture Language Model Weights",
+#     "helpTip": "Defines the weights of models to be used by the mixture model. Must sum to 1. Default: None",
+#     "recommended_values": [
+#       "",
+#       "0.5, 0.5"
+#     ],
+#     "type": "List[float]"
+#   },
+#   "lm_params": {
+#     "value": "",
+#     "section": "bci_config",
+#     "readableName": "Mixture Language Model Parameters",
+#     "helpTip": "Defines the extra parameters of models to be used by the mixture model. Default: None",
+#     "recommended_values": [
+#       "",
+#       "{'lang_model_name': 'gpt2'}, {}",
+#       "{'lang_model_name': 'gpt2'}, {'lm_path': './bcipy/language/lms/lm_dec19_char_large_12gram.arpa'}"
+#     ],
+#     "type": "List[Dict[str, str]]"
+#   },
+
     language_models = language_models_by_name()
     model = language_models[parameters.get("lang_model_type", "UNIFORM")]
 
     # introspect the model arguments to determine what parameters to pass.
     args = inspect.signature(model).parameters.keys()
+
+    if model == MixtureLanguageModel:
+        mixture = parameters.get("lm_mixture", "gpt2_unigram")
+
+        if mixture == "gpt2_unigram":
+            lm_types = ["causal", "unigram"]
+            lm_weights = [0.5, 0.5]
+            lm_params = [{"lang_model_name": "gpt2"}, {}]
+        elif mixture == "gpt2_kenlm":
+            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+            lm_types = ["causal", "kenlm"]
+            lm_weights = [0.5, 0.5]
+            lm_params = [{"lang_model_name": "gpt2"}, {"lm_path": kenlm_path}]
+        else:
+            raise InvalidModelException("The specified lm_mixture is not a defined configuration.")
+
+        return model(response_type=ResponseType.SYMBOL,
+                 symbol_set=alphabet(parameters),
+                 lm_types=lm_types, lm_weights=lm_weights, lm_params=lm_params)
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
