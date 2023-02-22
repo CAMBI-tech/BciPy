@@ -170,6 +170,7 @@ class RSVPCalibrationTask(Task):
 
                 core.wait(self.buffer_val)
 
+                # do inquiry and get timing information back from the display
                 timing = self.rsvp.do_inquiry(preview_calibration=self.show_preview_inquiry)
 
                 self.write_trigger_data(timing, (inquiry == 0))
