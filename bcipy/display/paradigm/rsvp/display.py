@@ -139,7 +139,7 @@ class RSVPDisplay(Display):
         if pos:
             self.task.pos = pos
 
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self, preview_calibration=False) -> List[float]:
         """Do inquiry.
 
         Animates an inquiry of flashing letters to achieve RSVP.
@@ -157,15 +157,19 @@ class RSVPDisplay(Display):
         # do the inquiry
         for idx in range(len(inquiry)):
 
+            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(inquiry[idx]['sti'])
+
+            if preview_calibration and idx == 1:
+                time, _ = self.preview_inquiry()
+                timing.extend(time)
+
             # Reset the timing clock to start presenting
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 inquiry[idx]['sti_label'])
-
-            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
-            if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(inquiry[idx]['sti'])
 
             # Draw stimulus for n frames
             inquiry[idx]['sti'].draw()
@@ -174,10 +178,7 @@ class RSVPDisplay(Display):
             core.wait(inquiry[idx]['time_to_present'])
 
             # append timing information
-            if self.is_txt_stim:
-                timing.append(self.trigger_callback.timing)
-            else:
-                timing.append(self.trigger_callback.timing)
+            timing.append(self.trigger_callback.timing)
 
             self.trigger_callback.reset()
 

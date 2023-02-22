@@ -2,7 +2,11 @@ from psychopy import core
 from typing import List, Tuple
 
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
+from bcipy.display import (
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties,
+    TaskDisplayProperties)
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
@@ -60,6 +64,8 @@ class RSVPCalibrationTask(Task):
         self.target_positions = TargetPositions(parameters['target_positions'])
         self.nontarget_inquiries = parameters['nontarget_inquiries']
 
+        self.show_preview_inquiry = parameters['show_preview_inquiry']
+
         self.timing = [parameters['time_prompt'],
                        parameters['time_fixation'],
                        parameters['time_flash']]
@@ -69,13 +75,10 @@ class RSVPCalibrationTask(Task):
                       parameters['fixation_color'],
                       parameters['stim_color']]
         self.wait_screen_message_color = self.color[-1]
-
         self.task_info_color = parameters['task_color']
 
         self.stimuli_height = parameters['stim_height']
-
         self.is_txt_stim = parameters['is_txt_stim']
-
         self.enable_breaks = parameters['enable_breaks']
 
     def generate_stimuli(self):
@@ -106,6 +109,8 @@ class RSVPCalibrationTask(Task):
         """
         if index == 0:
             return TriggerType.PROMPT
+        if symbol == 'inquiry_preview' and index == 1:
+            return TriggerType.PREVIEW
         if symbol == '+':
             return TriggerType.FIXATION
         if target == symbol:
@@ -165,8 +170,8 @@ class RSVPCalibrationTask(Task):
 
                 core.wait(self.buffer_val)
 
-                # Do the inquiry and write necessary data
-                timing = self.rsvp.do_inquiry()
+                timing = self.rsvp.do_inquiry(preview_calibration=self.show_preview_inquiry)
+
                 self.write_trigger_data(timing, (inquiry == 0))
                 core.wait(self.buffer_val)
 
@@ -253,6 +258,13 @@ def init_calibration_display_task(
         task_height=parameters['task_height'],
         task_text=''
     )
+    preview_inquiry = PreviewInquiryProperties(
+        preview_only=True,
+        preview_inquiry_length=parameters['preview_inquiry_length'],
+        preview_inquiry_progress_method=parameters['preview_inquiry_progress_method'],
+        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
+        preview_inquiry_isi=parameters['preview_inquiry_isi'])
+
     return CalibrationDisplay(
         window,
         static_clock,
@@ -260,6 +272,7 @@ def init_calibration_display_task(
         stimuli,
         task_display,
         info,
+        preview_inquiry=preview_inquiry,
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'],
         full_screen=parameters['full_screen'])
