@@ -139,7 +139,7 @@ class RSVPDisplay(Display):
         if pos:
             self.task.pos = pos
 
-    def do_inquiry(self, preview_calibration: bool=False) -> List[float]:
+    def do_inquiry(self, preview_calibration: bool = False) -> List[float]:
         """Do inquiry.
 
         Animates an inquiry of flashing letters to achieve RSVP.
@@ -148,8 +148,9 @@ class RSVPDisplay(Display):
         PARAMETERS:
         -----------
         preview_calibration(bool) default False: Whether or not to preview the upcoming inquiry stimuli. This feature
-            is used to help the participant prepare for the upcoming inquiry after a prompt. It will present after the first
-            stimulus of the inquiry (assumed to be a prompt). Not recommended for use outside of a calibration task.
+            is used to help the participant prepare for the upcoming inquiry after a prompt. It will present after
+            the first stimulus of the inquiry (assumed to be a prompt). Not recommended for use outside of a
+            calibration task.
 
         RETURNS:
         --------
