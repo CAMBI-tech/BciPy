@@ -291,6 +291,7 @@ class PreviewInquiryProperties:
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+        preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
             0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.
