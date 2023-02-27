@@ -192,11 +192,6 @@ if __name__ == "__main__":
     ci_floor = overall_per_symbol_time - (3 * overall_std_time)
     ci_ceiling = overall_per_symbol_time + (3 * overall_std_time)
 
-    for (i, time) in enumerate(overall_predict_time_arr):
-        if time < ci_floor:
-            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
-        if time > ci_ceiling:
-            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
 
     # Model-level output
     print(f"OVERALL \
@@ -208,3 +203,9 @@ if __name__ == "__main__":
         \n95% CI = [{ci_floor}, {ci_ceiling}]\n")
 
     print(f"Inference time = {timer() - start:.6f}")
+
+    for (i, time) in enumerate(overall_predict_time_arr):
+        if time < ci_floor:
+            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+        if time > ci_ceiling:
+            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
