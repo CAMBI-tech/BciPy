@@ -197,13 +197,13 @@ class CausalLanguageModel(LanguageModel):
                 while len(current) > 0 and current_batch < self.batch_size:
                     # Get the new sequence to work on
                     (current_likelihood, sequence, sequence_text) = current.pop(0)
-                    batch_tensors += torch.tensor(sequence).to(self.device),
+                    batch_tensors += torch.tensor(sequence),
                     batch_sequences += sequence,
                     batch_likelihoods += current_likelihood,
                     batch_seq_text += sequence_text,
                     current_batch += 1
                 
-                tokens_tensor = torch.stack(tuple(batch_tensors))
+                tokens_tensor = torch.stack(tuple(batch_tensors)).to(self.device)
                 with torch.no_grad():
                     logits = self.model(tokens_tensor).logits
                     log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1))
