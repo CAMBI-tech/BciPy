@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.helpers.exceptions import InvalidModelException
 import json, os
 
 class UnigramLanguageModel(LanguageModel):
@@ -18,10 +19,12 @@ class UnigramLanguageModel(LanguageModel):
 
         self.unigram_lm[SPACE_CHAR] = self.unigram_lm.pop("SPACE_CHAR")
         self.unigram_lm[BACKSPACE_CHAR] = self.unigram_lm.pop("BACKSPACE_CHAR")
+        
+        if not set(self.unigram_lm.keys()) == set(self.symbol_set):
+            raise InvalidModelException("Invalid unigram model symbol set!")
 
-        self.unigram_lm = dict(sorted(self.unigram_lm.items(), key=lambda item: item[1], reverse=True))
+        self.unigram_lm = sorted(self.unigram_lm.items(), key=lambda item: item[1], reverse=True)
 
-        assert set(self.unigram_lm.keys()) == set(self.symbol_set), "invalid unigram model symbol set!"
 
         self.load()
 
