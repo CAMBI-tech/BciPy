@@ -202,6 +202,7 @@ class CausalLanguageModel(LanguageModel):
                     current_batch += 1
                 
                 tokens_tensor = torch.stack(tuple(batch_tensors)).to(self.device)
+
                 with torch.no_grad():
                     logits = self.model(tokens_tensor).logits
                     log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1))
