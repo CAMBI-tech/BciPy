@@ -205,7 +205,8 @@ class CausalLanguageModel(LanguageModel):
 
                 with torch.no_grad():
                     logits = self.model(tokens_tensor).logits
-                    log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1))
+                    # In case we computed this on a GPU, move it to the CPU in one go
+                    log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1)).to("cpu")
 
                 for j in range(current_batch):
                     sequence_text = batch_seq_text[j]
@@ -229,7 +230,7 @@ class CausalLanguageModel(LanguageModel):
                         hypo_seq += i,
 
                         # Add the log prob of this token to the previous running total
-                        likelihood = batch_likelihoods[j] + float(log_probs[j][i])
+                        likelihood = batch_likelihoods[j] + log_probs[j][i]
 
                         # If we have extended to a space following the context, then that hypothesis gets to be done
                         # This takes a lot longer that just requiring extending beyond existing context
