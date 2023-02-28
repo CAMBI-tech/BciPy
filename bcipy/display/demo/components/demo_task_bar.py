@@ -19,7 +19,6 @@ def main(seconds: int=100):
     try:
         win = make_window()
         task_bar = TaskBar(win)
-        task_bar.stim['task_text'].text = 'HELLO_WORLD'
 
         task_bar.draw()
         win.flip()
