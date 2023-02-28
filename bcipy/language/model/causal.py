@@ -12,6 +12,7 @@ from bcipy.helpers.exceptions import InvalidModelException
 
 from scipy.special import logsumexp
 from scipy.special import softmax
+#from torch.quantization import quantize_dynamic
 
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
@@ -149,8 +150,6 @@ class CausalLanguageModel(LanguageModel):
         # If token_backoff is -1 or goes beyond a word boundary, then
         # search from the last space character in the context
         # If no space, then from the very beginning
-        valid = []
-        truncated_tokens = []
         tokens = self._encode(context_lower)
 
         # Look for the last space in the context, or -1 if no begin_text in context yet
@@ -175,29 +174,18 @@ class CausalLanguageModel(LanguageModel):
         for i in range(len(self.left_context_tokens), len(tokens)):
             sequence_text = sequence_text + self.index_to_word_lower[tokens[i]]
         valid = [(0.0, tokens, sequence_text)]
-
-        # print(f"valid = {valid}")
-
         heapq.heapify(valid)
 
         # Create a hash mapping each valid following character to a list of log probabilities
         char_to_log_probs = {}
 
-        # print(f"Starting search, beam={self.beam_width}, valid={valid}")
-        done_best = float("-inf")
         while len(valid) > 0:
             # Only work on the top hypotheses from the last round of extension
             # current = sorted(valid, key=lambda x: x[1], reverse=True)
             current = list(valid)
-            before = len(current)
-
-            # Popping last element is O(1)
-            # while len(current) > self.beam_width:
-            #     current.pop(-1)
 
             # Add new extended hypotheses to this list
             valid.clear()
-            # valid = []
 
             # Keep going until we have extended all hypotheses in the current set
             while len(current) > 0:
@@ -222,10 +210,6 @@ class CausalLanguageModel(LanguageModel):
 
                 for j in range(current_batch):
                     sequence_text = batch_seq_text[j]
-                    # for i in range(1, len(batch_sequences[j])):
-                    #     sequence_text = sequence_text + self.index_to_word_lower[batch_sequences[j][i]]
-                    #print(f"sequence_text = '{sequence_text}'")
-
                     vocab = []
 
                     remaining_context = converted_context_lower[len(sequence_text):]
@@ -234,17 +218,14 @@ class CausalLanguageModel(LanguageModel):
                     else:
                         if remaining_context in self.vocab:
                             vocab = self.vocab[remaining_context].copy()
-                        for i in range(1,len(remaining_context)):
+                        for i in range(1, len(remaining_context)):
                             tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text)+i])
                             if len(tokenization) == 1:
                                 vocab += tokenization[0],
 
-
                     # Create a list of token indexes that are a prefix of target text
-                    for i in vocab: # range(logits.size()[2]):
+                    for i in vocab:
                         hypo_str = sequence_text + self.index_to_word_lower[i]
-                        # print(f"hypo_str = '{hypo_str}', {i}: '{self.index_to_word[i]}'")
-                        
                         hypo_seq = batch_sequences[j].copy()
                         hypo_seq += i,
 
@@ -253,20 +234,8 @@ class CausalLanguageModel(LanguageModel):
 
                         # If we have extended to a space following the context, then that hypothesis gets to be done
                         # This takes a lot longer that just requiring extending beyond existing context
-                        #last_space_pos = hypo_str.rfind(" ")
-                        #if last_space_pos >= len(context):
                         # Just require hypotheses to extend beyond the existing typed context
                         if len(hypo_str) > len(context):
-                            # Track the most probable finishing hypothesis
-                            # if likelihood > done_best:
-                            #     done_best = likelihood
-
-                            #TODO why do we rebuild hypo_str?
-                            # hypo_str = batch_seq_text[j] + self.index_to_word_lower[hypo_seq[-1]]
-                            # Note: Skipping index 0 since this is the space character we forced at the start
-                            # for i in range(1, len(hypo_seq)):
-                            #     hypo_str = hypo_str + self.index_to_word_lower[hypo_seq[i]]
-                            # print(f"hypo_str = '{hypo_str}', likelihood = {likelihood}")
                             ch = hypo_str[target_pos]
 
                             # Map a space character to be our space symbol
@@ -279,12 +248,10 @@ class CausalLanguageModel(LanguageModel):
 
                         else:
                             hypo = (likelihood, hypo_seq, hypo_str)
-                            # print(f"Pushed: {hypo}\n")
                             if len(valid) < self.beam_width:
                                 heapq.heappush(valid, hypo)
                             else:
-                                popped = heapq.heappushpop(valid, hypo)
-                                # print(f"Popped: {popped}\n")
+                                heapq.heappushpop(valid, hypo)
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
@@ -332,6 +299,10 @@ class CausalLanguageModel(LanguageModel):
             self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
         except:
             raise InvalidModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
+
+#        print(torch.backends.quantized.supported_engines)
+#        self.model = quantize_dynamic(self.model, {torch.nn.Linear}, dtype=torch.qint8)
+
         self.model.eval()
         
         self.model.to(self.device)
