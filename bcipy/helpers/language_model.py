@@ -80,15 +80,20 @@ def init_language_model(parameters: dict) -> LanguageModel:
     if model == MixtureLanguageModel:
         mixture = parameters.get("lm_mixture", "gpt2_unigram")
 
-        if mixture == "gpt2_unigram":
-            lm_types = ["causal", "unigram"]
-            lm_weights = [0.5, 0.5]
-            lm_params = [{"lang_model_name": "gpt2"}, {}]
+        if mixture == "gpt2_opt":
+            lm_types = ["causal", "causal"]
+            lm_weights = [0.16, 0.84]
+            lm_params = [{"lang_model_name": "gpt2"}, {"lang_model_name": "facebook/opt-125m"}]
         elif mixture == "gpt2_kenlm":
             kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
             lm_types = ["causal", "kenlm"]
-            lm_weights = [0.5, 0.5]
+            lm_weights = [0.18, 0.82]
             lm_params = [{"lang_model_name": "gpt2"}, {"lm_path": kenlm_path}]
+        elif mixture == "opt_kenlm":
+            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+            lm_types = ["causal", "kenlm"]
+            lm_weights = [0.54, 0.46]
+            lm_params = [{"lang_model_name": "facebook/opt-125m"}, {"lm_path": kenlm_path}]
         else:
             raise InvalidModelException("The specified lm_mixture is not a defined configuration.")
 

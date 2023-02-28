@@ -639,7 +639,7 @@
     "recommended_values": [
       "gpt2",
       "gpt2-medium",
-      "facebook/opt"
+      "facebook/opt-125m"
     ],
     "type": "str"
   },
@@ -675,12 +675,13 @@
     "type": "str"
   },
   "lm_mixture": {
-    "value": "gpt2_unigram",
+    "value": "opt_kenlm",
     "section": "bci_config",
     "readableName": "Language Model Mixture",
-    "helpTip": "Specifies the configuration for the mixture language model. Default: gpt2_unigram",
+    "helpTip": "Specifies the configuration for the mixture language model. Default: gpt2_opt",
     "recommended_values": [
-      "gpt2_unigram",
+      "opt_kenlm",
+      "gpt2_opt",
       "gpt2_kenlm"
     ],
     "type": "str"
