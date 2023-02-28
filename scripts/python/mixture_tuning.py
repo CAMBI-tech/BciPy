@@ -33,7 +33,7 @@ if __name__ == "__main__":
         f.close()
 
     probs = []
-    sentence_ppl_arr = []
+    sentence_pslp_arr = []
     for line in zip(*lines):
         if line[0].startswith("sentence = "):
             for l in line:
@@ -65,14 +65,14 @@ if __name__ == "__main__":
             for p in probs:
                 l = [log10(i) for i in p]
                 logprobs.append(l)
-            sentence_ppl_arr.append([pow(10,-1 * sum(w) / len(w)) for w in zip(*logprobs)])
+            sentence_pslp_arr.append([np.average(w) for w in zip(*logprobs)])
         elif line[0].startswith("OVERALL"):
             for l in line:
                 if not l.startswith("OVERALL"):
                     print("Line mismatch. Please ensure all files were run on the same phrase set.")
                     exit()
 
-            overall_ppl_arr = [np.average(w) for w in zip(*sentence_ppl_arr)]
+            overall_ppl_arr = [pow(10, -1 * np.average(w)) for w in zip(*sentence_pslp_arr)]
             print("Weight Distribution\tAverage Char Perplexity")
             for weight, ppl in zip(weights, overall_ppl_arr):
                 print(f"{weight}\t\t{ppl:.3f}")
