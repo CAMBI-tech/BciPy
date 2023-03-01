@@ -36,16 +36,7 @@ class TaskBar:
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
-        task = visual.TextStim(win=self.layout.win,
-                               text=self.config.task_text,
-                               pos=self.layout.left_middle,
-                               units=self.layout.units,
-                               font=self.config.task_font,
-                               height=self.config.task_height,
-                               color=self.config.task_color[0],
-                               anchorVert='center',
-                               anchorHoriz='left',
-                               alignText='left')
+        task = self.text_stim()
         return {'task_text': task, 'border': self.border_stim()}
 
     def draw(self):
@@ -62,10 +53,30 @@ class TaskBar:
         return visual.rect.Rect(win=self.layout.win,
                                 units=self.layout.units,
                                 lineWidth=2,
-                                lineColor=self.config.task_color,
+                                lineColor=self.config.task_color[0],
                                 fillColor=None,
                                 pos=self.layout.center,
                                 size=(self.layout.width, self.layout.height))
+
+    def text_stim(self, **kwargs) -> visual.TextStim:
+        """Constructs a TextStim. Uses the config to set default properties
+        which may be overridden by providing keyword args.
+        """
+
+        props = {**self.default_text_props(), **kwargs}
+        return visual.TextStim(**props)
+
+    def default_text_props(self) -> dict:
+        """Default properties for constructing a TextStim."""
+        return {
+            'win': self.layout.win,
+            'text': self.config.task_text,
+            'pos': self.layout.center,
+            'units': self.layout.units,
+            'font': self.config.task_font,
+            'height': self.config.task_height,
+            'color': self.config.task_color[0]
+        }
 
 
 class CalibrationTaskBar(TaskBar):
@@ -90,15 +101,10 @@ class CalibrationTaskBar(TaskBar):
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
 
-        task = visual.TextStim(win=self.layout.win,
-                               text=self.displayed_text(),
-                               pos=self.layout.left_middle,
-                               units=self.layout.units,
-                               font=self.config.task_font,
-                               height=self.config.task_height,
-                               color=self.config.task_color[0],
-                               anchorHoriz='left',
-                               alignText='left')
+        task = self.text_stim(text=self.displayed_text(),
+                              pos=self.layout.left_middle,
+                              anchorHoriz='left',
+                              alignText='left')
 
         return {'task_text': task, 'border': self.border_stim()}
 
@@ -130,23 +136,14 @@ class CopyPhraseTaskBar(TaskBar):
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
 
-        task = visual.TextStim(win=self.layout.win,
-                               text=self.config.task_text,
-                               pos=self.layout.center,
-                               units=self.layout.units,
-                               font=self.config.task_font,
-                               height=self.config.task_height,
-                               color=self.config.task_color[0],
-                               anchorVert='bottom')
+        task = self.text_stim(text=self.config.task_text,
+                              pos=self.layout.center,
+                              anchorVert='bottom')
 
-        spelled = visual.TextStim(win=self.layout.win,
-                                  text=self.displayed_text(),
-                                  pos=self.layout.center,
-                                  units=self.layout.units,
-                                  font=self.config.task_font,
-                                  height=self.config.task_height,
-                                  color=self.config.task_color[-1],
-                                  anchorVert='top')
+        spelled = self.text_stim(text=self.displayed_text(),
+                                 pos=self.layout.center,
+                                 color=self.config.task_color[-1],
+                                 anchorVert='top')
 
         return {
             'task_text': task,

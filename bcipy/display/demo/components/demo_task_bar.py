@@ -1,9 +1,11 @@
 """Demo for the task bar component"""
 import time
-
+from typing import Callable
 from psychopy import visual
 
-from bcipy.display.components.task_bar import CalibrationTaskBar, CopyPhraseTaskBar, DEFAULT_TASK_PROPERTIES
+from bcipy.display.components.task_bar import (DEFAULT_TASK_PROPERTIES,
+                                               CalibrationTaskBar,
+                                               CopyPhraseTaskBar, TaskBar)
 
 
 def make_window():
@@ -16,67 +18,73 @@ def make_window():
                          color='black')
 
 
-def demo_calibration(seconds: int = 30):
+def demo_task_bar(win: visual.Window):
+    """Demo generic task bar."""
+    config = DEFAULT_TASK_PROPERTIES
+    config.task_text = 'Task Bar'
+    config.task_color[0] = 'magenta'
+    task_bar = TaskBar(win, config=config)
+    task_bar.draw()
+    win.flip()
+
+
+def demo_calibration(win: visual.Window):
     """Demo calibration task bar."""
-    try:
-        win = make_window()
-        task_bar = CalibrationTaskBar(win, inquiry_count=100, current_index=1)
-        task_bar.draw()
-        win.flip()
-        print(
-            f'Displaying window for {seconds}s... (Interrupt [Ctl-C] to stop)\n'
-        )
 
-        time.sleep(2)
-        task_bar.update()
-        task_bar.draw()
-        win.flip()
-
-        while True:
-            time.sleep(seconds)
-            break
-    except KeyboardInterrupt:
-        print('Keyboard Interrupt: Demo stopped')
-    except Exception as e:
-        print(f'{e}')
-        raise e
-    finally:
-        win.close()
-        print('Demo complete.')
+    task_bar = CalibrationTaskBar(win, inquiry_count=100, current_index=1)
+    task_bar.draw()
+    win.flip()
+    time.sleep(2)
+    task_bar.update()
+    task_bar.draw()
+    win.flip()
 
 
-def demo_copy_phrase(seconds: int = 30):
+def demo_copy_phrase(win: visual.Window):
     """Demo copy phrase task bar."""
+    config = DEFAULT_TASK_PROPERTIES
+    config.task_text = 'HELLO_WORLD'
+    config.task_color.append('green')
+
+    task_bar = CopyPhraseTaskBar(win, config=config, spelled_text='HELLO')
+
+    task_bar.draw()
+    win.flip()
+
+    time.sleep(1)
+    task_bar.update("HELLO_")
+    task_bar.draw()
+    win.flip()
+
+
+def run(demo: Callable[[visual.Window], None], seconds=30):
+    """Run the given function for the provided duration.
+
+    Parameters
+    ----------
+        demo - function to run; a Window object is passed to this function.
+        seconds - Window is closed after this duration.
+    """
     try:
         win = make_window()
-        config = DEFAULT_TASK_PROPERTIES
-        config.task_text = 'HELLO_WORLD'
-        task_bar = CopyPhraseTaskBar(win, config=config, spelled_text='HELLO')
-
-        task_bar.draw()
-        win.flip()
         print(
             f'Displaying window for {seconds}s... (Interrupt [Ctl-C] to stop)\n'
         )
-
-        time.sleep(1)
-        task_bar.update("HELLO_")
-        task_bar.draw()
-        win.flip()
-
+        demo(win)
         while True:
             time.sleep(seconds)
             break
     except KeyboardInterrupt:
         print('Keyboard Interrupt: Demo stopped')
-    except Exception as e:
-        print(f'{e}')
-        raise e
+    except Exception as other_exception:
+        print(f'{other_exception}')
+        raise other_exception
     finally:
         win.close()
         print('Demo complete.')
 
 
 if __name__ == '__main__':
-    # demo_copy_phrase()
-    demo_calibration()
+    # run(demo_copy_phrase)
+    # run(demo_calibration)
+    run(demo_task_bar)
