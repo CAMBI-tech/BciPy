@@ -1,6 +1,6 @@
 """Task bar component"""
 
-from typing import Dict, Tuple
+from typing import Dict
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim
 import bcipy.display.components.layout as layout
@@ -36,13 +36,16 @@ class TaskBar:
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
-
-        task = self.text_stim(text=self.config.task_text,
-                              pos=(self.layout.left,
-                                   self.layout.vertical_middle),
-                              vertical_anchor='center',
-                              horizontal_anchor='left')
-
+        task = visual.TextStim(win=self.layout.win,
+                               text=self.config.task_text,
+                               pos=self.layout.left_middle,
+                               units=self.layout.units,
+                               font=self.config.task_font,
+                               height=self.config.task_height,
+                               color=self.config.task_color[0],
+                               anchorVert='center',
+                               anchorHoriz='left',
+                               alignText='left')
         return {'task_text': task, 'border': self.border_stim()}
 
     def draw(self):
@@ -54,7 +57,7 @@ class TaskBar:
         """Update the task bar to display the given text."""
         self.stim['task_text'].text = text
 
-    def border_stim(self):
+    def border_stim(self) -> visual.rect.Rect:
         """Create the task bar outline"""
         return visual.rect.Rect(win=self.layout.win,
                                 units=self.layout.units,
@@ -63,33 +66,6 @@ class TaskBar:
                                 fillColor=None,
                                 pos=self.layout.center,
                                 size=(self.layout.width, self.layout.height))
-
-    def text_stim(self,
-                  text: str,
-                  pos: Tuple[float, float],
-                  vertical_anchor: str = 'center',
-                  horizontal_anchor: str = 'center') -> visual.TextStim:
-        """Builds a TextStim at the given position using the configured properties.
-
-        Parameters
-        ----------
-            text - content to display
-            pos - stim position (x, y) coordinate, in norm units
-            vertical_anchor - anchors text vertically at 'top', 'bottom', or 'center'.
-            horizontal_anchor - anchors text horizontally at 'left', 'right', or 'center'.
-        """
-        assert vertical_anchor in ['top', 'bottom', 'center'], "Invalid option"
-        assert horizontal_anchor in ['left', 'right',
-                                     'center'], "Invalid option"
-        return visual.TextStim(win=self.layout.win,
-                               text=text,
-                               pos=pos,
-                               units=self.layout.units,
-                               font=self.config.task_font,
-                               height=self.config.task_height,
-                               color=self.config.task_color[0],
-                               anchorVert=vertical_anchor,
-                               anchorHoriz=horizontal_anchor)
 
 
 class CalibrationTaskBar(TaskBar):
@@ -114,11 +90,15 @@ class CalibrationTaskBar(TaskBar):
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
 
-        task = self.text_stim(text=self.displayed_text(),
-                              pos=(self.layout.left,
-                                   self.layout.vertical_middle),
-                              vertical_anchor='center',
-                              horizontal_anchor='left')
+        task = visual.TextStim(win=self.layout.win,
+                               text=self.displayed_text(),
+                               pos=self.layout.left_middle,
+                               units=self.layout.units,
+                               font=self.config.task_font,
+                               height=self.config.task_height,
+                               color=self.config.task_color[0],
+                               anchorHoriz='left',
+                               alignText='left')
 
         return {'task_text': task, 'border': self.border_stim()}
 
@@ -140,7 +120,6 @@ class CopyPhraseTaskBar(TaskBar):
                  config: TaskDisplayProperties = DEFAULT_TASK_PROPERTIES,
                  spelled_text: str = ''):
 
-        # TODO: pad to length
         self.spelled_text = spelled_text
         super().__init__(win, config)
 
@@ -150,15 +129,24 @@ class CopyPhraseTaskBar(TaskBar):
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
-        task = self.text_stim(text=self.config.task_text,
-                              pos=self.layout.center,
-                              vertical_anchor='bottom',
-                              horizontal_anchor='center')
-        spelled = self.text_stim(text=self.spelled_text,
-                                 pos=self.layout.center,
-                                 vertical_anchor='top',
-                                 horizontal_anchor='center')
-        spelled.setColor(self.config.task_color[-1])
+
+        task = visual.TextStim(win=self.layout.win,
+                               text=self.config.task_text,
+                               pos=self.layout.center,
+                               units=self.layout.units,
+                               font=self.config.task_font,
+                               height=self.config.task_height,
+                               color=self.config.task_color[0],
+                               anchorVert='bottom')
+
+        spelled = visual.TextStim(win=self.layout.win,
+                                  text=self.displayed_text(),
+                                  pos=self.layout.center,
+                                  units=self.layout.units,
+                                  font=self.config.task_font,
+                                  height=self.config.task_height,
+                                  color=self.config.task_color[-1],
+                                  anchorVert='top')
 
         return {
             'task_text': task,
@@ -168,5 +156,12 @@ class CopyPhraseTaskBar(TaskBar):
 
     def update(self, text: str = ''):
         """Update the task bar to display the given text."""
-        # TODO: pad the text for alignment
-        self.stim['spelled_text'].text = text
+        self.spelled_text = text
+        self.stim['spelled_text'].text = self.displayed_text()
+
+    def displayed_text(self):
+        """Spelled text padded for alignment."""
+        diff = len(self.config.task_text) - len(self.spelled_text)
+        if (diff > 0):
+            return self.spelled_text + (' ' * diff)
+        return self.spelled_text

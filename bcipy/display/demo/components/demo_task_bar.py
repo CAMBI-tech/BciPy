@@ -3,7 +3,7 @@ import time
 
 from psychopy import visual
 
-from bcipy.display.components.task_bar import CalibrationTaskBar, CopyPhraseTaskBar
+from bcipy.display.components.task_bar import CalibrationTaskBar, CopyPhraseTaskBar, DEFAULT_TASK_PROPERTIES
 
 
 def make_window():
@@ -49,7 +49,9 @@ def demo_copy_phrase(seconds: int = 30):
     """Demo copy phrase task bar."""
     try:
         win = make_window()
-        task_bar = CopyPhraseTaskBar(win, spelled_text='HELLO')
+        config = DEFAULT_TASK_PROPERTIES
+        config.task_text = 'HELLO_WORLD'
+        task_bar = CopyPhraseTaskBar(win, config=config, spelled_text='HELLO')
 
         task_bar.draw()
         win.flip()

@@ -9,6 +9,7 @@ class Container:
     size: Tuple[float, float]
     units: str
 
+
 class WindowContainer(Container):
     """Wrapper for a Window. This is not needed in Python 3.8+ if Container is
     a subclass of typing.Protocol."""
@@ -101,11 +102,6 @@ class Layout(Container):
         return self.top - self.bottom
 
     @property
-    def center(self) -> Tuple[float, float]:
-        """Center point of the component in norm units. Returns a (x,y) tuple."""
-        return (self.horizontal_middle, self.vertical_middle)
-
-    @property
     def horizontal_middle(self) -> float:
         """x-axis value in norm units for the midpoint of this component"""
         return (self.left + self.right) / 2
@@ -114,3 +110,18 @@ class Layout(Container):
     def vertical_middle(self) -> float:
         """x-axis value in norm units for the midpoint of this component."""
         return (self.top + self.bottom) / 2
+
+    @property
+    def center(self) -> Tuple[float, float]:
+        """Center point of the component in norm units. Returns a (x,y) tuple."""
+        return (self.horizontal_middle, self.vertical_middle)
+
+    @property
+    def left_middle(self) -> Tuple[float, float]:
+        """Point centered on the left-most edge."""
+        return (self.left, self.vertical_middle)
+
+    @property
+    def right_middle(self) -> Tuple[float, float]:
+        """Point centered on the right-most edge."""
+        return (self.right, self.vertical_middle)
