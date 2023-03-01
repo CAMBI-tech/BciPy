@@ -2,7 +2,7 @@ from collections import Counter
 import torch
 from typing import Dict, List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from timeit import default_timer as timer
+import itertools
 import heapq
 
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
@@ -12,7 +12,6 @@ from bcipy.helpers.exceptions import InvalidModelException
 
 from scipy.special import logsumexp
 from scipy.special import softmax
-#from torch.quantization import quantize_dynamic
 
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
@@ -205,41 +204,40 @@ class CausalLanguageModel(LanguageModel):
 
                 with torch.no_grad():
                     logits = self.model(tokens_tensor).logits
-                    # In case we computed this on a GPU, move it to the CPU in one go
-                    log_probs = torch.log(torch.softmax(logits[:, -1, :], dim=1)).to("cpu")
+                    log_probs = torch.log_softmax(logits[:, -1, :], dim=1).to("cpu")
 
                 for j in range(current_batch):
                     sequence_text = batch_seq_text[j]
                     vocab = []
+                    extra_vocab = []
 
                     remaining_context = converted_context_lower[len(sequence_text):]
                     if len(remaining_context) == 0:
-                        vocab = self.valid_vocab.copy()
+                        vocab = self.valid_vocab
                     else:
                         if remaining_context in self.vocab:
-                            vocab = self.vocab[remaining_context].copy()
+                            vocab = self.vocab[remaining_context]
                         for i in range(1, len(remaining_context)):
                             tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text)+i])
                             if len(tokenization) == 1:
-                                vocab += tokenization[0],
+                                extra_vocab += tokenization[0],
 
                     # Create a list of token indexes that are a prefix of target text
-                    for i in vocab:
+                    # We go over all the integer IDs in the vocab and extra_vocab lists
+                    for i in itertools.chain(vocab, extra_vocab):
                         hypo_str = sequence_text + self.index_to_word_lower[i]
                         hypo_seq = batch_sequences[j].copy()
                         hypo_seq += i,
 
                         # Add the log prob of this token to the previous running total
-                        likelihood = batch_likelihoods[j] + log_probs[j][i]
+                        # For some reason the float cast makes it run faster
+                        likelihood = batch_likelihoods[j] + float(log_probs[j][i])
 
                         # If we have extended to a space following the context, then that hypothesis gets to be done
                         # This takes a lot longer that just requiring extending beyond existing context
                         # Just require hypotheses to extend beyond the existing typed context
                         if len(hypo_str) > len(context):
                             ch = hypo_str[target_pos]
-
-                            # Map a space character to be our space symbol
-                            ch = self._convert_space(ch)
 
                             # Create an empty list if we haven't seen this character before
                             if ch not in char_to_log_probs:
@@ -256,9 +254,15 @@ class CausalLanguageModel(LanguageModel):
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
         for ch in self.symbol_set_lower:
+            # Convert space to the underscore used in BciPy
+            if ch == SPACE_CHAR:
+                target_ch = ' '
+            else:
+                target_ch = ch
+
             # Handle cases when symbols are never seen
-            if ch in char_to_log_probs:
-                char_probs += logsumexp(char_to_log_probs[ch]),
+            if target_ch in char_to_log_probs:
+                char_probs += logsumexp(char_to_log_probs[target_ch]),
             else:
                 char_probs += float("-inf"),
         # Normalize to a distribution that sums to 1
