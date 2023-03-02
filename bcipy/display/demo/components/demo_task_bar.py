@@ -85,6 +85,6 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
 
 
 if __name__ == '__main__':
+    run(demo_calibration)
     # run(demo_copy_phrase)
-    # run(demo_calibration)
-    run(demo_task_bar)
+    # run(demo_task_bar)

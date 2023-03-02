@@ -115,8 +115,8 @@ class CalibrationTaskBar(TaskBar):
         self.stim['task_text'].text = self.displayed_text()
 
     def displayed_text(self) -> str:
-        """Text to display. Computed from the current_index and inquiry_count. Ex. '(2/100)'"""
-        return f"({self.current_index}/{self.inquiry_count})"
+        """Text to display. Computed from the current_index and inquiry_count. Ex. '2/100'"""
+        return f" {self.current_index}/{self.inquiry_count}"
 
 
 class CopyPhraseTaskBar(TaskBar):
