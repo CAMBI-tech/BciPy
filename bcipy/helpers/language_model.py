@@ -7,7 +7,7 @@ from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.main import alphabet
 # pylint: disable=unused-import
 # flake8: noqa
-from bcipy.language.uniform import UniformLanguageModel
+from bcipy.language.model.uniform import UniformLanguageModel
 # flake8: noqa
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
