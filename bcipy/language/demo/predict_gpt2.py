@@ -9,20 +9,20 @@ from scipy.special import logsumexp
 from scipy.special import softmax
 
 # Hack to allow running headless
-from string import ascii_uppercase
-import os
+# from string import ascii_uppercase
+# import os
 
 if __name__ == "__main__":
     start = timer()
 
     # Load the GPT-2 model
-    lm_path = "gpt2"               #  117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
-    #lm_path = "gpt2-medium"        #  345M             24                 1024    ~3.1GB
-    #lm_path = "gpt2-large"         #  762M             36                 1280    ~6.3GB
-    #lm_path = "gpt2-xl"            # 1542M             48                 1600   ~12.3GB
+    lm_path = "gpt2"  # 117M parameters, 12 layers, d_model  768    ~1.3GB memory during load
+    # lm_path = "gpt2-medium"        #  345M             24                 1024    ~3.1GB
+    # lm_path = "gpt2-large"         #  762M             36                 1280    ~6.3GB
+    # lm_path = "gpt2-xl"            # 1542M             48                 1600   ~12.3GB
 
     # https://github.com/huggingface/transformers/tree/main/examples/research_projects/distillation
-    #lm_path = "distilgpt2"          #   82M              6                  768
+    # lm_path = "distilgpt2"          #   82M              6                  768
 
     beam_width = 8
 
@@ -30,18 +30,18 @@ if __name__ == "__main__":
     context = "i ca"
 
     # Notice how the predictions are much worse without proper case
-    #context = "i "
-    #context = "I "
+    # context = "i "
+    # context = "I "
 
     # Long range dependencies, go GPT-2!
-    #context = "the space shuttle program was shutdown by n"
-    #context = "my cat felix who is very fat, furry, and super cute is having a whole lot of fun chasing a m"
+    # context = "the space shuttle program was shutdown by n"
+    # context = "my cat felix who is very fat, furry, and super cute is having a whole lot of fun chasing a m"
 
     # Really long last word, search takes a long time!
-    #context = "This will be hard to do programmatical"
+    # context = "This will be hard to do programmatical"
 
     # We can now predict the s!
-    #context = "i like zebra"
+    # context = "i like zebra"
 
     context_lower = context.lower()
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     # This is IMPORTANT to have reproducible results during evaluation!
     model.eval()
 
-    print(f"Loading tokenizer")
+    print("Loading tokenizer")
     tokenizer = GPT2TokenizerFast.from_pretrained(lm_path)
     vocab_size = tokenizer.vocab_size
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     for i in range(vocab_size):
         word = tokenizer.decode([i])
         index_to_word[i] = word
-        #print(f"{i:6}: '{word}'")
+        # print(f"{i:6}: '{word}'")
         index_to_word_lower[i] = word.lower()
 
     # Get the index we use for the start or end pseudo-word
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # If you have a GPU, put everything on cuda
     device = "cpu"
     # device = "cuda"   # NVidia GPU
-    #device = "mps"    # M1 mac
+    # device = "mps"    # M1 mac
     model.to(device)
 
     start_search = timer()
@@ -103,20 +103,22 @@ if __name__ == "__main__":
     else:
         truncated_context = ""
         valid = [([space_index], 0.0)]
-        print(f"Searching from end of text token")
+        print("Searching from end of text token")
 
     # List of subword sequences that can produce the text
     done = []
 
     print(f"Starting search, beam={beam_width}, valid={valid}")
     done_best = float("-inf")
-    while len(valid) > 0: # and len(done) < 16000000:
+    while len(valid) > 0:  # and len(done) < 16000000:
         # Only work on the top hypotheses from the last round of extension
         current = sorted(valid, key=lambda x: x[1], reverse=True)
         before = len(current)
         while len(current) > beam_width:
             current.pop(-1)
-        print(f"current, before={before}, after={len(current)}, done={len(done)}, done_best={done_best:.2f}, {current[0]}...{current[-1]}")
+        print(
+            f"current, before={before}, after={len(current)}, done={len(done)}, \
+                done_best={done_best:.2f}, {current[0]}...{current[-1]}")
 
         # Add new extended hypotheses to this list
         valid = []
@@ -126,7 +128,6 @@ if __name__ == "__main__":
             # Get the new sequence to work on
             (sequence, current_likelihood) = current.pop(0)
             tokens_tensor = torch.tensor(sequence).unsqueeze(0).to(device)
-#            t100 = torch.stack((torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device), torch.tensor(sequence).to(device)))
 
             with torch.no_grad():
                 logits = model(tokens_tensor).logits
@@ -136,12 +137,12 @@ if __name__ == "__main__":
             sequence_text = ""
             for i in range(1, len(sequence)):
                 sequence_text = sequence_text + index_to_word_lower[sequence[i]]
-            #print(f"sequence_text = '{sequence_text}'")
+            # print(f"sequence_text = '{sequence_text}'")
 
             # Create a list of token indexes that are a prefix of target text
             for i in range(logits.size()[2]):
                 hypo_str = sequence_text + index_to_word_lower[i]
-                #print(f"hypo_str = '{hypo_str}'")
+                # print(f"hypo_str = '{hypo_str}'")
 
                 # In some cases hypothesis is shorter than context, in some cases longer
                 if hypo_str.startswith(context_lower) or context_lower.startswith(hypo_str):
@@ -156,15 +157,15 @@ if __name__ == "__main__":
                     hypo = (hypo_seq, likelihood)
                     # If we have extended to a space following the context, then that hypothesis gets to be done
                     # This takes a lot longer that just requiring extending beyond existing context
-                    #last_space_pos = hypo_str.rfind(" ")
-                    #if last_space_pos >= len(context):
+                    # last_space_pos = hypo_str.rfind(" ")
+                    # if last_space_pos >= len(context):
                     # Just require hypotheses to extend beyond the existing typed context
                     if len(hypo_str) > len(context):
                         done.append(hypo)
                         # Track the most probable finishing hypothesis
                         if likelihood > done_best:
                             done_best = likelihood
-                            #print(f"NEW BEST = '{hypo_str}' {hypo}")
+                            # print(f"NEW BEST = '{hypo_str}' {hypo}")
                     else:
                         valid.append(hypo)
 
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     print(f"Search time={timer() - start_search:.2f}, done={len(done)}")
 
     # Print out the completed alignments from most to least probable
-    print(f"Top hypotheses:")
+    print("Top hypotheses:")
     for i in range(min(len(done), 100)):
         hypo = done[i]
         print(f"{i:4}: {hypo[1]:8.2f} ", end="")
@@ -195,7 +196,7 @@ if __name__ == "__main__":
         # Note: Skipping index 0 since this is the space character we forced at the start
         for i in range(1, len(hypo[0])):
             hypo_str = hypo_str + index_to_word_lower[hypo[0][i]]
-        #print(f"hypo_str = '{hypo_str}'")
+        # print(f"hypo_str = '{hypo_str}'")
         ch = hypo_str[target_pos]
         # Map any type of following whitespace character to be our space symbol
         if ch.isspace():

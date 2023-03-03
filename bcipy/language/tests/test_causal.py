@@ -2,7 +2,6 @@
 
 import pytest
 import unittest
-import os
 from operator import itemgetter
 
 from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidModelException
@@ -16,12 +15,10 @@ class TestCausalLanguageModel(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):
-        # dirname = os.path.dirname(__file__) or '.'
-        # cls.lm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.arpa"
         cls.gpt2_model = CausalLanguageModel(response_type=ResponseType.SYMBOL,
-                                        symbol_set=alphabet(), lang_model_name="gpt2")
-        cls.opt_model = CausalLanguageModel(response_type=ResponseType.SYMBOL, 
-                                        symbol_set=alphabet(), lang_model_name="facebook/opt-125m")
+                                             symbol_set=alphabet(), lang_model_name="gpt2")
+        cls.opt_model = CausalLanguageModel(response_type=ResponseType.SYMBOL,
+                                            symbol_set=alphabet(), lang_model_name="facebook/opt-125m")
 
     def test_gpt2_init(self):
         """Test default parameters for GPT-2 model"""
@@ -49,19 +46,19 @@ class TestCausalLanguageModel(unittest.TestCase):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
             CausalLanguageModel(response_type=ResponseType.WORD,
-                              symbol_set=alphabet(), lang_model_name="gpt2")
-    
+                                symbol_set=alphabet(), lang_model_name="gpt2")
+
     def test_invalid_model_name(self):
         """Test that the proper exception is thrown if given an invalid lang_model_name"""
         with self.assertRaises(InvalidModelException):
-            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lang_model_name="phonymodel")
+            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                lang_model_name="phonymodel")
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidModelException):
-            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lang_model_name="gpt2", lm_path="./phonypath/")
+            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                lang_model_name="gpt2", lm_path="./phonypath/")
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.
@@ -73,7 +70,6 @@ class TestCausalLanguageModel(unittest.TestCase):
 
         self.opt_model.predict(evidence)
         self.assertEqual(evidence, evidence2)
-
 
     def test_gpt2_identical(self):
         """Ensure predictions are the same for subsequent queries with the same evidence."""

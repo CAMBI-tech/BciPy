@@ -2,6 +2,7 @@ import unittest
 
 from bcipy.language.main import alphabet
 
+
 class TestAlphabet(unittest.TestCase):
     def test_alphabet_text(self):
         parameters = {}

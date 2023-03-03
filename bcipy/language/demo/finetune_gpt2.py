@@ -87,7 +87,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.early_stop and args.epoch_eval:
-        print(f"ERROR: --early-stop and --epoch-eval can't both be set!")
+        print("ERROR: --early-stop and --epoch-eval can't both be set!")
         sys.exit(0)
 
     random.seed(args.seed)

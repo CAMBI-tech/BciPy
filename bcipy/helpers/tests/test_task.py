@@ -16,6 +16,7 @@ from bcipy.helpers.task import (_float_val,
                                 generate_targets, get_data_for_decision,
                                 get_key_press, target_info)
 
+
 class TestCalculateStimulationFreq(unittest.TestCase):
     def test_calculate_stimulate_frequency_returns_number_less_one(self):
         flash_time = 5

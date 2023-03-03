@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 from typing import Any, List, Tuple, Union
 
@@ -73,6 +72,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
 
     # We want to know how many stimuli will present in a second
     return 1 / flash_time
+
 
 def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
     """Construct triggers from inquiry_timing data.

@@ -1,16 +1,14 @@
 from collections import Counter
 from typing import Dict, List, Tuple
-import numpy as np
-from scipy.special import softmax
 from math import isclose
 
-from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 
 from bcipy.helpers.exceptions import InvalidModelException
+
 
 class MixtureLanguageModel(LanguageModel):
     """
@@ -20,13 +18,12 @@ class MixtureLanguageModel(LanguageModel):
 
     supported_lm_types = ["causal", "unigram", "kenlm"]
 
-    def __init__(self, 
-                 response_type: ResponseType, 
-                 symbol_set: List[str], 
-                 lm_types: List[str] = None, 
-                 lm_weights: List[float] = None, 
+    def __init__(self,
+                 response_type: ResponseType,
+                 symbol_set: List[str],
+                 lm_types: List[str] = None,
+                 lm_weights: List[float] = None,
                  lm_params: List[Dict[str, str]] = None):
-        
         """
         Initialize instance variables and load the language model with given path
         Args:
@@ -37,20 +34,20 @@ class MixtureLanguageModel(LanguageModel):
             lm_params - list of dictionaries to pass as parameters for each model's instantiation
         """
 
-        if lm_params != None:
-            if (lm_types == None) or (len(lm_types) != len(lm_params)):
+        if lm_params is not None:
+            if (lm_types is None) or (len(lm_types) != len(lm_params)):
                 raise InvalidModelException("Length of parameters does not match length of types")
-        
-        if lm_weights != None:
-            if (lm_types == None) or (len(lm_types) != len(lm_weights)):
+
+        if lm_weights is not None:
+            if (lm_types is None) or (len(lm_types) != len(lm_weights)):
                 raise InvalidModelException("Length of weights does not match length of types")
             if not isclose(sum(lm_weights), 1.0, abs_tol=1e-05):
                 raise InvalidModelException("Weights do not sum to 1")
 
-        if lm_types != None:
-            if lm_weights == None:
+        if lm_types is not None:
+            if lm_weights is None:
                 raise InvalidModelException("Model weights not provided")
-            if lm_params == None:
+            if lm_params is None:
                 raise InvalidModelException("Model parameters not provided")
             if not all(x in MixtureLanguageModel.supported_lm_types for x in lm_types):
                 raise InvalidModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
@@ -86,7 +83,6 @@ class MixtureLanguageModel(LanguageModel):
         for i, lm in enumerate(lms):
             for char in lm:
                 combined_lm[char] += lm[char] * coeffs[i]
-
 
         return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
 
@@ -129,7 +125,7 @@ class MixtureLanguageModel(LanguageModel):
         for model in self.models:
             pred = model.predict(evidence)
             pred_list.append(dict(pred))
-        
+
         # Mix the component models
         next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
 
@@ -157,7 +153,7 @@ class MixtureLanguageModel(LanguageModel):
                     model = KenLMLanguageModel(self.response_type, self.symbol_set, **params)
             except InvalidModelException as e:
                 raise InvalidModelException(f"Error in creation of model type {lm_type}: {e.message}")
-            
+
             self.models.append(model)
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
