@@ -20,8 +20,8 @@ class TestMixtureLanguageModel(unittest.TestCase):
         cls.kenlm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.arpa"
         cls.lm_params = [{"lm_path": cls.kenlm_path}, {"lang_model_name": "gpt2"}]
         cls.lmodel = MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
-                            lm_types=["kenlm", "causal"], lm_weights=[0.5, 0.5], 
-                            lm_params=cls.lm_params)
+                                          lm_types=["kenlm", "causal"], lm_weights=[0.5, 0.5],
+                                          lm_params=cls.lm_params)
 
     def test_init(self):
         """Test default parameters"""
@@ -38,37 +38,37 @@ class TestMixtureLanguageModel(unittest.TestCase):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
             MixtureLanguageModel(response_type=ResponseType.WORD,
-                              symbol_set=alphabet())
-    
+                                 symbol_set=alphabet())
+
     def test_invalid_model_type(self):
         """Test that the proper exception is thrown if given an invalid lm_type"""
         with self.assertRaises(InvalidModelException):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["phony", "causal"], lm_weights=[0.5, 0.5], 
-                            lm_params=[{},{"lang_model_name": "gpt2"}])
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["phony", "causal"], lm_weights=[0.5, 0.5],
+                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
         with self.assertRaises(InvalidModelException):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["causal", "phony"], lm_weights=[0.5, 0.5], 
-                            lm_params=[{"lang_model_name": "gpt2"},{}])    
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["causal", "phony"], lm_weights=[0.5, 0.5],
+                                 lm_params=[{"lang_model_name": "gpt2"}, {}])
 
     def test_invalid_model_weights(self):
         """Test that the proper exception is thrown if given an improper number of lm_weights"""
         with self.assertRaises(InvalidModelException, msg="Exception not thrown when too few weights given"):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["unigram", "causal"], lm_weights=[0.5], 
-                            lm_params=[{},{"lang_model_name": "gpt2"}])
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["unigram", "causal"], lm_weights=[0.5],
+                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
         with self.assertRaises(InvalidModelException, msg="Exception not thrown when no weights given"):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["unigram", "causal"], lm_weights=None, 
-                            lm_params=[{},{"lang_model_name": "gpt2"}])
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["unigram", "causal"], lm_weights=None,
+                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
         with self.assertRaises(InvalidModelException, msg="Exception not thrown when too many weights given"):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["unigram", "causal"], lm_weights=[0.2, 0.3, 0.5], 
-                            lm_params=[{},{"lang_model_name": "gpt2"}])
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["unigram", "causal"], lm_weights=[0.2, 0.3, 0.5],
+                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
         with self.assertRaises(InvalidModelException, msg="Exception not thrown when weights given do not sum to 1"):
-            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_types=["unigram", "causal"], lm_weights=[0.5, 0.8], 
-                            lm_params=[{},{"lang_model_name": "gpt2"}])
+            MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                                 lm_types=["unigram", "causal"], lm_weights=[0.5, 0.8],
+                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in."""

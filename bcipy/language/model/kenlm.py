@@ -1,15 +1,16 @@
 from collections import Counter
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.helpers.exceptions import InvalidModelException
 import kenlm
 
+
 class KenLMLanguageModel(LanguageModel):
     """Character n-gram language model using the KenLM library for querying"""
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str):
-        
+
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
         self.lm_path = lm_path
@@ -47,7 +48,7 @@ class KenLMLanguageModel(LanguageModel):
         # if cache_state is None:
 
         self.model.BeginSentenceWrite(self.state)
-        
+
         # Update the state one token at a time based on evidence, alternate states
         for i, token in enumerate(context):
             if i % 2 == 0:
@@ -80,15 +81,14 @@ class KenLMLanguageModel(LanguageModel):
         Args:
             path: language model file path
         """
-        
+
         try:
             self.model = kenlm.LanguageModel(self.lm_path)
-        except:
+        except BaseException:
             raise InvalidModelException("A valid model path must be provided for the KenLMLanguageModel")
 
         self.state = kenlm.State()
         self.state2 = kenlm.State()
-
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """
@@ -119,7 +119,7 @@ class KenLMLanguageModel(LanguageModel):
             # Backspace probability under the LM is 0
             if char == BACKSPACE_CHAR:
                 next
-            
+
             score = 0.0
 
             # Replace the space character with KenLM's <sp> token
@@ -157,6 +157,5 @@ class KenLMLanguageModel(LanguageModel):
             self.model.BaseScore(temp_state, evidence_str[-1], new_state)
             self.cache[evidence_str] = new_state
             return new_state
-        
+
         return None
-            

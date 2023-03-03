@@ -1,14 +1,16 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.helpers.exceptions import InvalidModelException
-import json, os
+import json
+import os
+
 
 class UnigramLanguageModel(LanguageModel):
     """Character language model based on trained unigram weights"""
 
     def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
-        
+
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
         dirname = os.path.dirname(__file__) or '.'
@@ -19,12 +21,11 @@ class UnigramLanguageModel(LanguageModel):
 
         self.unigram_lm[SPACE_CHAR] = self.unigram_lm.pop("SPACE_CHAR")
         self.unigram_lm[BACKSPACE_CHAR] = self.unigram_lm.pop("BACKSPACE_CHAR")
-        
+
         if not set(self.unigram_lm.keys()) == set(self.symbol_set):
             raise InvalidModelException("Invalid unigram model symbol set!")
 
         self.unigram_lm = sorted(self.unigram_lm.items(), key=lambda item: item[1], reverse=True)
-
 
         self.load()
 

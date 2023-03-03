@@ -5,8 +5,8 @@ from timeit import default_timer as timer
 
 if __name__ == "__main__":
 
-    #lm_path = "google/flan-t5-small"
-    #lm_path = "google/flan-t5-large"
+    # lm_path = "google/flan-t5-small"
+    # lm_path = "google/flan-t5-large"
     lm_path = "google/flan-t5-xl"           # 20GB peak memory
     num_results = 10
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # If you have a GPU, put everything on cuda
     device = "cpu"
     # device = "cuda"   # NVidia GPU
-    #device = "mps"    # M1 mac
+    # device = "mps"    # M1 mac
     model.to(device)
 
     # Set the model in evaluation mode to deactivate the DropOut modules
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     model.eval()
 
     start = timer()
-    print(f"Loading tokenizer, ", end="")
+    print("Loading tokenizer, ", end="")
     tokenizer = AutoTokenizer.from_pretrained(lm_path)
     print(f"time {timer() - start:.2f}")
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     for i in range(vocab_size):
         word = tokenizer.decode([i])
         index_to_word[i] = word
-        #print(f"{i:6}: '{word}'")
+        # print(f"{i:6}: '{word}'")
         index_to_word_lower[i] = word.lower()
 
     # encode context the generation is conditioned on
@@ -54,7 +54,8 @@ if __name__ == "__main__":
     start = timer()
     outputs = model.generate(
         input_ids,
-        max_length=50,                       # <pad> <extra_id_0> word (but this won't handle if the current word is long)
+        # <pad> <extra_id_0> word (but this won't handle if the current word is long)
+        max_length=50,
         num_beams=num_results,
         num_return_sequences=num_results,
         early_stopping=True,
@@ -64,4 +65,6 @@ if __name__ == "__main__":
     print(f"Generate, beam {num_results}, time {timer() - start:.2f}")
 
     for i in range(len(outputs.sequences)):
-        print(f"{i:4}: {outputs.sequences_scores[i]:6.4f} {tokenizer.decode(outputs.sequences[i])} {outputs.sequences[i]}")
+        print(
+            f"{i:4}: {outputs.sequences_scores[i]:6.4f} {tokenizer.decode(outputs.sequences[i])} \
+                {outputs.sequences[i]}")

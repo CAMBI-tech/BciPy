@@ -11,6 +11,7 @@ from bcipy.helpers.exceptions import UnsupportedResponseType
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
 
+
 def alphabet(parameters=None, include_path=True):
     """Alphabet.
 
@@ -37,7 +38,7 @@ def alphabet(parameters=None, include_path=True):
 
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
-    
+
 DEFAULT_SYMBOL_SET = alphabet()
 
 

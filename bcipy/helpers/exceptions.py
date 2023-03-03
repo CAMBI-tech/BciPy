@@ -77,6 +77,7 @@ class TaskConfigurationException(BciPyCoreException):
     Thrown when attempting to run a task with invalid configurations"""
     ...
 
+
 class InvalidModelException(BciPyCoreException):
     """Invalid Model Exception.
 

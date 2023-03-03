@@ -1,17 +1,18 @@
 from collections import Counter
 import torch
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import itertools
 import heapq
 
-from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 from bcipy.helpers.exceptions import InvalidModelException
 
 from scipy.special import logsumexp
 from scipy.special import softmax
+
 
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
@@ -48,7 +49,8 @@ class CausalLanguageModel(LanguageModel):
         self.device = lm_device
         self.left_context = lm_left_context
 
-        # We optionally load the model from a local directory, but if this is not specified, we load a Hugging Face model
+        # We optionally load the model from a local directory, but if this is not
+        # specified, we load a Hugging Face model
         self.model_dir = lm_path or lang_model_name
 
         # parameters for search
@@ -101,7 +103,7 @@ class CausalLanguageModel(LanguageModel):
                 if length > self.longest_token:
                     self.longest_token = length
                 for j in range(length):
-                    key = self._convert_space(word_lower[0:j+1])
+                    key = self._convert_space(word_lower[0:j + 1])
                     if key not in self.vocab:
                         self.vocab[key] = []
                     self.vocab[key] += i,
@@ -123,7 +125,6 @@ class CausalLanguageModel(LanguageModel):
 
         return tokens
 
-
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Given an evidence of typed string, predict the probability distribution of
@@ -141,7 +142,7 @@ class CausalLanguageModel(LanguageModel):
 
         context = converted_context.replace(SPACE_CHAR, ' ')
         context_lower = context.lower()
-        
+
         # Index in the hypothesis string that is the next character after our context
         target_pos = len(context_lower)
 
@@ -199,7 +200,7 @@ class CausalLanguageModel(LanguageModel):
                     batch_likelihoods += current_likelihood,
                     batch_seq_text += sequence_text,
                     current_batch += 1
-                
+
                 tokens_tensor = torch.stack(tuple(batch_tensors)).to(self.device)
 
                 with torch.no_grad():
@@ -218,7 +219,7 @@ class CausalLanguageModel(LanguageModel):
                         if remaining_context in self.vocab:
                             vocab = self.vocab[remaining_context]
                         for i in range(1, len(remaining_context)):
-                            tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text)+i])
+                            tokenization = self._encode(context_lower[len(sequence_text):len(sequence_text) + i])
                             if len(tokenization) == 1:
                                 extra_vocab += tokenization[0],
 
@@ -275,7 +276,7 @@ class CausalLanguageModel(LanguageModel):
                 next_char_pred[ch] = char_probs[i]
             else:
                 next_char_pred[ch.upper()] = char_probs[i]
-        
+
         next_char_pred[BACKSPACE_CHAR] = 0.0
 
         # width = 120
@@ -296,19 +297,20 @@ class CausalLanguageModel(LanguageModel):
         """
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
-        except:
+        except BaseException:
             raise InvalidModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
         self.vocab_size = self.tokenizer.vocab_size
         try:
             self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
-        except:
-            raise InvalidModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
+        except BaseException:
+            raise InvalidModelException(
+                f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
 
 #        print(torch.backends.quantized.supported_engines)
 #        self.model = quantize_dynamic(self.model, {torch.nn.Linear}, dtype=torch.qint8)
 
         self.model.eval()
-        
+
         self.model.to(self.device)
 
         self.symbol_set_lower = []
@@ -319,7 +321,7 @@ class CausalLanguageModel(LanguageModel):
                 continue
             else:
                 self.symbol_set_lower.append(ch.lower())
-                
+
         self._build_vocab()
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:

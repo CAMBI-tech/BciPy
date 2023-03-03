@@ -19,7 +19,7 @@ class TestKenLMLanguageModel(unittest.TestCase):
         dirname = os.path.dirname(__file__) or '.'
         cls.lm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.arpa"
         cls.lmodel = KenLMLanguageModel(response_type=ResponseType.SYMBOL,
-                                       symbol_set=alphabet(), lm_path=cls.lm_path)
+                                        symbol_set=alphabet(), lm_path=cls.lm_path)
 
     def test_init(self):
         """Test default parameters"""
@@ -36,13 +36,13 @@ class TestKenLMLanguageModel(unittest.TestCase):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
             KenLMLanguageModel(response_type=ResponseType.WORD,
-                              symbol_set=alphabet(), lm_path=self.lm_path)
-    
+                               symbol_set=alphabet(), lm_path=self.lm_path)
+
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidModelException):
-            KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(), 
-                            lm_path="phonymodel.txt")
+            KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+                               lm_path="phonymodel.txt")
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.

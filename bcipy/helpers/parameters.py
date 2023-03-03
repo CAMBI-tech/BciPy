@@ -3,7 +3,7 @@ from codecs import open as codecsopen
 from collections import abc
 from json import dump, load
 from pathlib import Path
-from typing import Any, Dict, NamedTuple, Tuple, List
+from typing import Any, Dict, NamedTuple, Tuple
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 

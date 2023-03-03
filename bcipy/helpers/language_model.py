@@ -97,8 +97,8 @@ def init_language_model(parameters: dict) -> LanguageModel:
             raise InvalidModelException("The specified lm_mixture is not a defined configuration.")
 
         return model(response_type=ResponseType.SYMBOL,
-                 symbol_set=alphabet(parameters),
-                 lm_types=lm_types, lm_weights=lm_weights, lm_params=lm_params)
+                     symbol_set=alphabet(parameters),
+                     lm_types=lm_types, lm_weights=lm_weights, lm_params=lm_params)
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}

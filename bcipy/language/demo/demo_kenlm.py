@@ -9,7 +9,7 @@ from bcipy.language.main import ResponseType
 if __name__ == "__main__":
     dirname = os.path.dirname(__file__) or '.'
     lm_path = f"{dirname}/../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
-    
+
     # Load a really pruned n-gram language model
     model = kenlm.LanguageModel(lm_path)
 
@@ -98,4 +98,3 @@ if __name__ == "__main__":
     print(next_char_pred)
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
     print(correct_char_rank)
-
