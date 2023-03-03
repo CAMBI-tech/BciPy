@@ -30,11 +30,11 @@ TEST_STIM = StimuliProperties(
     stim_timing=[0.1],
     is_txt_stim=True)
 TEST_TASK_DISPLAY = TaskDisplayProperties(
-    task_color='W',
+    task_color='white',
     task_pos=(-.8, .85),
     task_font='Arial',
     task_height=.1,
-    task_text='1/100'
+    task_text='100'
 )
 TEST_INFO = InformationProperties(
     info_color=['White'],
@@ -51,12 +51,13 @@ class TestMatrixDisplay(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_display = TEST_TASK_DISPLAY
+        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
-        self.window = mock()
+        self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
         self.text_stim_mock = mock()
+        self.rect_stim_mock = mock()
         # grid item
         when(psychopy.visual).TextStim(
             win=self.window,
@@ -97,11 +98,12 @@ class TestMatrixDisplay(unittest.TestCase):
                                        opacity=any(),
                                        depth=any()).thenReturn(
                                            self.text_stim_mock)
-
+        when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
+        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
         self.matrix = MatrixDisplay(window=self.window,
                                     experiment_clock=self.experiment_clock,
                                     stimuli=self.stimuli,
-                                    task_display=self.task_display,
+                                    task_bar_config=self.task_bar_config,
                                     info=self.info)
         when(self.matrix)._trigger_pulse().thenReturn()
 
@@ -109,9 +111,6 @@ class TestMatrixDisplay(unittest.TestCase):
         verifyNoUnwantedInteractions()
         # verifyStubbedInvocationsAreUsed()
         unstub()
-
-    def test_task_display_properties_set_correctly(self):
-        self.assertEqual(self.matrix.task, self.task_display.build_task(self.window))
 
     def test_information_properties_set_correctly(self):
         self.assertEqual(self.matrix.info_text, self.info.build_info_text(self.window))
@@ -212,7 +211,7 @@ class TestMatrixDisplay(unittest.TestCase):
 
     def test_draw_static(self):
         # mock the task draw and info text draw methods
-        when(self.matrix.task).draw().thenReturn()
+        when(self.matrix.task_bar).draw().thenReturn()
         info_mock = mock()
         self.matrix.info_text = [info_mock]
         when(info_mock).draw().thenReturn()
@@ -220,31 +219,8 @@ class TestMatrixDisplay(unittest.TestCase):
 
         self.matrix.draw_static()
         # verify that task was drawn once and all info text ware drawn
-        verify(self.matrix.task, times=1).draw()
+        verify(self.matrix.task_bar, times=1).draw()
         verify(info_mock, times=info_text_len).draw()
-
-    def test_update_task(self):
-        self.matrix.update_task(self.task_display.task_text, self.task_display.task_color, self.task_display.task_pos)
-        # check the matrix task text, color, and position were updated
-        self.assertEqual(self.task_display.task_text, self.matrix.task.text)
-        self.assertEqual(self.task_display.task_color, self.matrix.task.color)
-        self.assertEqual(self.task_display.task_pos, self.matrix.task.pos)
-
-    def test_update_task_state(self):
-        # mock update_task()
-        when(self.matrix).update_task(
-            text=self.task_display.task_text,
-            color_list=self.task_display.task_color,
-            pos=any()).thenReturn()
-
-        self.matrix.update_task_state(self.task_display.task_text, self.task_display.task_color)
-        # verify that update_task() was called once
-        verify(
-            self.matrix,
-            times=1).update_task(
-            text=self.task_display.task_text,
-            color_list=self.task_display.task_color,
-            pos=any())
 
 
 if __name__ == '__main__':

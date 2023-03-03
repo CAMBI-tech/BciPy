@@ -35,7 +35,7 @@ TEST_TASK_DISPLAY = TaskDisplayProperties(
     task_pos=(-.5, .8),
     task_font='Arial',
     task_height=.1,
-    task_text='1/100'
+    task_text='100'
 )
 TEST_INFO = InformationProperties(
     info_color=['White'],
@@ -52,28 +52,21 @@ class TestRSVPDisplay(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_display = TEST_TASK_DISPLAY
+        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
-        self.window = mock()
+        self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
         self.text_stim_mock = mock()
-        when(psychopy.visual).TextStim(
-            win=self.window,
-            color=any(),
-            height=any(),
-            text=any(),
-            font=any(),
-            pos=any(),
-            wrapWidth=None, colorSpace='rgb',
-            opacity=1, depth=-6.0
-        ).thenReturn(self.text_stim_mock)
+        self.rect_stim_mock = mock()
+        when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
+        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
         self.rsvp = RSVPDisplay(
             self.window,
             self.static_clock,
             self.experiment_clock,
             self.stimuli,
-            self.task_display,
+            self.task_bar_config,
             self.info)
 
     def tearDown(self):
@@ -81,9 +74,8 @@ class TestRSVPDisplay(unittest.TestCase):
         verifyStubbedInvocationsAreUsed()
         unstub()
 
-    def test_task_display_properties_set_correctly(self):
-        self.assertEqual(self.rsvp.task_display, self.task_display)
-        self.assertEqual(self.rsvp.task, self.task_display.build_task(self.window))
+    def test_task_bar_config_properties_set_correctly(self):
+        self.assertEqual(self.rsvp.task_bar_config, self.task_bar_config)
 
     def test_information_properties_set_correctly(self):
         self.assertEqual(self.rsvp.info, self.info)
@@ -105,7 +97,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_display = TEST_TASK_DISPLAY
+        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
         self.preview_inquiry_length = 0.1
         self.preview_inquiry_isi = 0.1
@@ -118,26 +110,19 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
             preview_inquiry_progress_method=self.preview_inquiry_progress_method,
             preview_inquiry_key_input=self.preview_inquiry_key_input
         )
-        self.window = mock()
+        self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
         self.text_stim_mock = mock()
-        when(psychopy.visual).TextStim(
-            win=self.window,
-            color=any(),
-            height=any(),
-            text=any(),
-            font=any(),
-            pos=any(),
-            wrapWidth=None, colorSpace='rgb',
-            opacity=1, depth=-6.0
-        ).thenReturn(self.text_stim_mock)
+        self.rect_stim_mock = mock()
+        when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
+        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
         self.rsvp = RSVPDisplay(
             self.window,
             self.static_clock,
             self.experiment_clock,
             self.stimuli,
-            self.task_display,
+            self.task_bar_config,
             self.info,
             preview_inquiry=self.preview_inquiry)
 
