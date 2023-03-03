@@ -1,23 +1,12 @@
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.components.task_bar import CalibrationTaskBar, TaskBar
 
 
-class CalibrationDisplay(MatrixDisplay):
+class MatrixCalibrationDisplay(MatrixDisplay):
     """Calibration Display."""
 
-    def __init__(self,
-                 window,
-                 experiment_clock,
-                 stimuli,
-                 task_display,
-                 info,
-                 trigger_type='text',
-                 symbol_set=None):
-
-        super(CalibrationDisplay, self).__init__(
-            window,
-            experiment_clock=experiment_clock,
-            stimuli=stimuli,
-            task_display=task_display,
-            info=info,
-            trigger_type=trigger_type,
-            symbol_set=symbol_set)
+    def build_task_bar(self) -> TaskBar:
+        """Creates a TaskBar"""
+        return CalibrationTaskBar(self.window,
+                                  self.task_bar_config,
+                                  current_index=0)

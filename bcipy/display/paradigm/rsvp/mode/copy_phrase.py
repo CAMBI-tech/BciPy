@@ -1,5 +1,6 @@
 from psychopy import visual
 from bcipy.display.paradigm.rsvp.display import RSVPDisplay, BCIPY_LOGO_PATH
+from bcipy.display.components.task_bar import CopyPhraseTaskBar, TaskBar
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
 
@@ -28,47 +29,32 @@ class CopyPhraseDisplay(RSVPDisplay):
             clock,
             experiment_clock,
             stimuli,
-            task_display,
+            task_bar_config,
             info,
-            static_task_text='COPY_PHRASE',
-            static_task_color='White',
+            starting_spelled_text='',
             trigger_type='image',
             space_char=SPACE_CHAR,
             preview_inquiry=None,
             full_screen=False):
         """ Initializes Copy Phrase Task Objects """
-        self.target_text = static_task_text
-        static_task_pos = (0, 1 - task_display.task_height)
+        self.target_text = task_bar_config.task_text
+        self.starting_spelled_text = starting_spelled_text
 
-        info.info_color.append(static_task_color)
-        info.info_font.append(task_display.task_font)
-        info.info_text.append(static_task_text)
-        info.info_pos.append(static_task_pos)
-        info.info_height.append(task_display.task_height)
+        super().__init__(window,
+                         clock,
+                         experiment_clock,
+                         stimuli,
+                         task_bar_config,
+                         info,
+                         trigger_type=trigger_type,
+                         space_char=space_char,
+                         preview_inquiry=preview_inquiry,
+                         full_screen=full_screen)
 
-        super(CopyPhraseDisplay, self).__init__(
-            window, clock,
-            experiment_clock,
-            stimuli,
-            task_display,
-            info,
-            trigger_type=trigger_type,
-            space_char=space_char,
-            preview_inquiry=preview_inquiry,
-            full_screen=full_screen)
-
-    def update_task_state(self, text, color_list):
-        """ Updates task state of Copy Phrase Task by removing letters or
-            appending to the right.
-            Args:
-                text(string): new text for task state
-                color_list(list[string]): list of colors for each
-        """
-        # Add padding to attempt aligning the task and information text. *Note:* this only works with monospaced fonts
-        padding = abs(len(self.target_text) - len(text))
-        text += ' ' * padding
-        task_pos = (0, self.info.info_pos[-1][1] - self.task.height)
-        self.update_task(text=text, color_list=color_list, pos=task_pos)
+    def build_task_bar(self) -> TaskBar:
+        """Override to make a CalibrationTaskBar"""
+        return CopyPhraseTaskBar(self.window, self.task_bar_config,
+                                 self.starting_spelled_text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.

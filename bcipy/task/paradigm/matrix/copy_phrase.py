@@ -2,7 +2,7 @@
 
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.display import Display, InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.paradigm.matrix import MatrixDisplay
+from bcipy.display.paradigm.matrix.mode.copy_phrase import MatrixCopyPhraseDisplay
 
 
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
@@ -52,14 +52,12 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
     #         'preview_inquiry_progress_method'],
     #     preview_inquiry_isi=parameters['preview_inquiry_isi'])
 
-    # Includes configured info as well as the copy phrase.
     info = InformationProperties(
-        info_color=[parameters['info_color'], parameters['task_color']],
-        info_pos=[(parameters['info_pos_x'], parameters['info_pos_y']),
-                  (0, 1 - parameters['task_height'])],
-        info_height=[parameters['info_height'], parameters['info_height']],
-        info_font=[parameters['font'], parameters['font']],
-        info_text=[parameters['info_text'], parameters['task_text']],
+        info_color=[parameters['info_color']],
+        info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],
+        info_height=[parameters['info_height']],
+        info_font=[parameters['font']],
+        info_text=[parameters['info_text']],
     )
 
     stimuli = StimuliProperties(stim_font=parameters['font'],
@@ -69,21 +67,18 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters['time_prompt'])
 
-    padding = abs(len(parameters['task_text']) - len(starting_spelled_text))
-    starting_spelled_text += ' ' * padding
     task_display = TaskDisplayProperties(
         task_color=[parameters['task_color']],
-        task_pos=(0, 1 - (2 * parameters['task_height'])),
+        task_pos=None,
         task_font=parameters['font'],
         task_height=parameters['task_height'],
-        task_text=starting_spelled_text)
+        task_text=parameters['task_text'])
 
-    return MatrixDisplay(
+    return MatrixCopyPhraseDisplay(
         win,
         experiment_clock,
         stimuli,
         task_display,
         info,
         trigger_type=parameters['trigger_type'],
-        #  preview_inquiry=preview_inquiry
-        should_prompt_target=False)
+        starting_spelled_text=starting_spelled_text)

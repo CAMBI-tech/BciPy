@@ -1,6 +1,6 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from psychopy import core, visual, event
 
@@ -14,6 +14,7 @@ from bcipy.display import (
     StimuliProperties,
     TaskDisplayProperties,
 )
+from bcipy.display.components.task_bar import TaskBar
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.system_utils import get_screen_resolution
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
@@ -31,7 +32,7 @@ class RSVPDisplay(Display):
             static_clock,
             experiment_clock: Clock,
             stimuli: StimuliProperties,
-            task_display: TaskDisplayProperties,
+            task_bar_config: TaskDisplayProperties,
             info: InformationProperties,
             preview_inquiry: PreviewInquiryProperties = None,
             trigger_type: str = 'image',
@@ -50,7 +51,7 @@ class RSVPDisplay(Display):
         stimuli(StimuliProperties): attributes used for inquiries
 
         # Task
-        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+        task_bar_config(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
 
         # Info
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
@@ -98,8 +99,9 @@ class RSVPDisplay(Display):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []  # TODO force initial size definition
         self.space_char = space_char  # TODO remove and force task to define
-        self.task_display = task_display
-        self.task = task_display.build_task(self.window)
+
+        self.task_bar_config = task_bar_config
+        self.task_bar = self.build_task_bar()
 
         # Create multiple text objects based on input
         self.info = info
@@ -110,11 +112,18 @@ class RSVPDisplay(Display):
 
     def draw_static(self):
         """Draw static elements in a stimulus."""
-        self.task.draw()
+        self.task_bar.draw()
         for info in self.info_text:
             info.draw()
 
-    def schedule_to(self, stimuli=[], timing=[], colors=[]):
+    def build_task_bar(self) -> TaskBar:
+        """Build the task bar"""
+        return TaskBar(self.window, self.task_bar_config)
+
+    def schedule_to(self,
+                    stimuli: List[str] = None,
+                    timing: List[float] = None,
+                    colors: List[str] = None):
         """Schedule stimuli elements (works as a buffer).
 
         Args:
@@ -122,22 +131,9 @@ class RSVPDisplay(Display):
                 timing(list[float]): list of timings of stimuli
                 colors(list[string]): list of colors
         """
-        self.stimuli_inquiry = stimuli
-        self.stimuli_timing = timing
-        self.stimuli_colors = colors
-
-    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
-        """Update Task Object.
-
-        PARAMETERS:
-        -----------
-        text: text for task
-        color_list: list of the colors for each char
-        """
-        self.task.text = text
-        self.task.color = color_list[0]
-        if pos:
-            self.task.pos = pos
+        self.stimuli_inquiry = stimuli or []
+        self.stimuli_timing = timing or []
+        self.stimuli_colors = colors or []
 
     def do_inquiry(self, preview_calibration: bool = False) -> List[float]:
         """Do inquiry.
@@ -368,16 +364,14 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_state(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
+    def update_task_bar(self, text: str = None) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
-                color_list(list[string]): list of colors for each
-                pos(tuple): [optional] tuple of task position
         """
-        self.update_task(text=text, color_list=color_list, pos=pos)
+        self.task_bar.update(text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.

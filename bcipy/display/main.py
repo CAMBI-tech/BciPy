@@ -40,10 +40,10 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def update_task(self) -> None:
+    def update_task_bar(self, text: str = '') -> None:
         """Update Task.
 
-        Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
+        Update any taskbar-related display items not related to the inquiry. Ex. stimuli count 1/200.
         """
         ...
 

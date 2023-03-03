@@ -30,8 +30,9 @@ def demo_task_bar(win: visual.Window):
 
 def demo_calibration(win: visual.Window):
     """Demo calibration task bar."""
-
-    task_bar = CalibrationTaskBar(win, inquiry_count=100, current_index=1)
+    config = DEFAULT_TASK_PROPERTIES
+    config.task_text = '100'
+    task_bar = CalibrationTaskBar(win, config, current_index=8)
     task_bar.draw()
     win.flip()
     time.sleep(2)

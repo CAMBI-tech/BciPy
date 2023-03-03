@@ -22,6 +22,7 @@ class TaskBar:
         win - visual.Window on which to render elements
         config - properties specifying fonts, colors, height, etc.
     """
+
     def __init__(self,
                  win: visual.Window,
                  config: TaskDisplayProperties = DEFAULT_TASK_PROPERTIES):
@@ -85,16 +86,16 @@ class CalibrationTaskBar(TaskBar):
     Parameters
     ----------
         win - visual.Window on which to render elements
-        config - properties specifying fonts, colors, height, etc.
-        inquiry_count - total number of inquiries to complete
+        config - properties specifying fonts, colors, height, etc. The
+            task_text property should be set to the inquiry count.
         current_index - index of the current inquiry
     """
+
     def __init__(self,
                  win: visual.Window,
                  config: TaskDisplayProperties = DEFAULT_TASK_PROPERTIES,
-                 inquiry_count: int = 100,
                  current_index: int = 1):
-        self.inquiry_count = inquiry_count
+        self.inquiry_count = config.task_text
         self.current_index = current_index
         super().__init__(win, config)
 
@@ -110,8 +111,7 @@ class CalibrationTaskBar(TaskBar):
 
     def update(self, text: str = ''):
         """Update the displayed text"""
-        if self.current_index < self.inquiry_count:
-            self.current_index += 1
+        self.current_index += 1
         self.stim['task_text'].text = self.displayed_text()
 
     def displayed_text(self) -> str:
@@ -121,6 +121,7 @@ class CalibrationTaskBar(TaskBar):
 
 class CopyPhraseTaskBar(TaskBar):
     """Task bar for the Copy Phrase Task"""
+
     def __init__(self,
                  win: visual.Window,
                  config: TaskDisplayProperties = DEFAULT_TASK_PROPERTIES,

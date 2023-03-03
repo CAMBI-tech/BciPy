@@ -13,6 +13,7 @@ class Container:
 class WindowContainer(Container):
     """Wrapper for a Window. This is not needed in Python 3.8+ if Container is
     a subclass of typing.Protocol."""
+
     def __init__(self, win: visual.Window):
         self.win = win
 
@@ -45,6 +46,7 @@ def at_top(parent: Container, height: float):
 class Layout(Container):
     """Base class for a component with methods for positioning elements.
     """
+
     def __init__(self, parent: Container, left: float, top: float,
                  right: float, bottom: float):
 
