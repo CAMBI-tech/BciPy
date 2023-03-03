@@ -1,4 +1,3 @@
-from bcipy.language.model.gpt2 import GPT2LanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
@@ -18,7 +17,7 @@ if __name__ == "__main__":
         help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
 
     parser.add_argument('--model', dest='model', type=int, required=True,
-        help='0: Unigram\n1: GPT-2\n2: Mixture (80/20 GPT/Unigram)\n3: KenLM n-gram\n4: Causal Hugging Face')
+        help='1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: KenLM n-gram\n4: Causal Hugging Face')
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
         help='Phrase set filename')
@@ -69,10 +68,8 @@ if __name__ == "__main__":
     
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    if model == 0:
+    if model == 1:
         lm = UnigramLanguageModel(response_type, symbol_set)
-    elif model == 1:
-        lm = GPT2LanguageModel(response_type, symbol_set)
     elif model == 2:
         lm = MixtureLanguageModel(response_type, symbol_set)
     elif model == 3:
