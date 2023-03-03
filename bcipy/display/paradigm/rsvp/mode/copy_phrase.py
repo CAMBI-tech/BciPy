@@ -37,7 +37,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             preview_inquiry=None,
             full_screen=False):
         """ Initializes Copy Phrase Task Objects """
-        self.target_text = task_bar_config.task_text
+        self.target_text = task_bar_config.text
         self.starting_spelled_text = starting_spelled_text
 
         super().__init__(window,

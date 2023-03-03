@@ -7,7 +7,7 @@ from psychopy import core
 
 from bcipy.display import (init_display_window, InformationProperties,
                            StimuliProperties, TaskDisplayProperties)
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.paradigm.matrix.mode.copy_phrase import MatrixCopyPhraseDisplay
 
 info = InformationProperties(
     info_color=['White'],
@@ -18,7 +18,7 @@ info = InformationProperties(
 )
 task_height = 0.1
 task_display = TaskDisplayProperties(colors=['White'],
-                                     font='Arial',
+                                     font='Menlo',
                                      height=.1,
                                      text='COPY_PHRASE')
 
@@ -69,12 +69,12 @@ frameRate = win.getActualFrameRate()
 
 print(frameRate)
 
-display = MatrixDisplay(win,
-                        experiment_clock,
-                        stim_properties,
-                        task_display,
-                        info,
-                        should_prompt_target=False)
+display = MatrixCopyPhraseDisplay(win,
+                                  experiment_clock,
+                                  stim_properties,
+                                  task_display,
+                                  info,
+                                  starting_spelled_text='COPY_PHA')
 
 counter = 0
 

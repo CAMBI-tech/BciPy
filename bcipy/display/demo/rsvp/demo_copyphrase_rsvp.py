@@ -32,7 +32,7 @@ info = InformationProperties(
     info_text=['Dummy Message'],
 )
 task_display = TaskDisplayProperties(colors=['White'],
-                                     font='Arial',
+                                     font='Menlo',
                                      height=.1,
                                      text='COPY_PHRASE')
 

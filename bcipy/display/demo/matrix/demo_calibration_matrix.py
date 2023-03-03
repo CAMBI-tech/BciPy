@@ -2,7 +2,7 @@
 # pylint: disable=invalid-name
 from psychopy import core
 from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.paradigm.matrix import MatrixDisplay
+from bcipy.display.paradigm.matrix.mode.calibration import MatrixCalibrationDisplay
 
 from bcipy.display import init_display_window
 
@@ -16,7 +16,7 @@ info = InformationProperties(
 task_display = TaskDisplayProperties(colors=['white'],
                                      font='Arial',
                                      height=.1,
-                                     text='100')
+                                     text='4')
 stim_properties = StimuliProperties(stim_font='Arial',
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.1,
@@ -35,8 +35,8 @@ experiment_clock = core.Clock()
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
-matrix_display = MatrixDisplay(win, experiment_clock, stim_properties,
-                               task_display, info)
+matrix_display = MatrixCalibrationDisplay(win, experiment_clock,
+                                          stim_properties, task_display, info)
 
 time_target = 2
 time_fixation = 2

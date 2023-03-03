@@ -54,7 +54,7 @@ win = init_display_window(window_parameters)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
-print(frameRate)
+print(f'Frame rate: {frameRate}')
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
