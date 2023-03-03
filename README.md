@@ -141,7 +141,7 @@ For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils. Run them as a python script!
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
 
 
 ## Testing
