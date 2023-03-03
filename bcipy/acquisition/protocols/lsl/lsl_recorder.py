@@ -192,8 +192,8 @@ class LslRecordingThread(StoppableThread):
         until the `stop()` method is called.
         """
         # Note that self.stream_info does not have the channel names.
-        inlet = StreamInlet(self.stream_info)
-        full_metadata = inlet.info()
+        self.inlet = StreamInlet(self.stream_info)
+        full_metadata = self.inlet.info()
 
         log.debug("Acquiring data from data stream:")
         log.debug(full_metadata.as_xml())
@@ -207,19 +207,19 @@ class LslRecordingThread(StoppableThread):
 
         # Run loop for continuous acquisition
         while self.running():
-            self._pull_chunk(inlet)
+            self._pull_chunk(self.inlet)
             time.sleep(self.sleep_seconds)
 
         # Pull any remaining samples up to the current time.
         log.debug("Pulling remaining samples")
-        record_count = self._pull_chunk(inlet)
+        record_count = self._pull_chunk(self.inlet)
         while record_count == self.max_chunk_size:
-            record_count = self._pull_chunk(inlet)
+            record_count = self._pull_chunk(self.inlet)
 
         log.info(f"Ending data stream recording for {self.stream_info.name()}")
         log.info(f"Total recorded seconds: {self.recorded_seconds}")
         log.info(f"Total recorded samples: {self.sample_count}")
-        inlet.close_stream()
+        self.inlet.close_stream()
         self._cleanup()
 
 

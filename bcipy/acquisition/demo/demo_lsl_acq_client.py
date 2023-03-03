@@ -17,7 +17,7 @@ def main():
     client = LslAcquisitionClient(max_buffer_len=1, save_directory='.')
 
     try:
-        seconds = 3
+        seconds = 10
         client.start_acquisition()
 
         print(
@@ -27,7 +27,8 @@ def main():
         samples = client.get_latest_data()
         print(f"Last sample:\n{samples[-1]}")
         print(f"Data written to: {client.recorder.filename}")
-        client.stop_acquisition()
+        breakpoint()
+
 
     except IOError as err:
         print(f'{err.strerror}; make sure you started the server.')
