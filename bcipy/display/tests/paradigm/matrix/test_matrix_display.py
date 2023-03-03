@@ -29,13 +29,10 @@ TEST_STIM = StimuliProperties(
     stim_colors=[],
     stim_timing=[0.1],
     is_txt_stim=True)
-TEST_TASK_DISPLAY = TaskDisplayProperties(
-    task_color='white',
-    task_pos=(-.8, .85),
-    task_font='Arial',
-    task_height=.1,
-    task_text='100'
-)
+TEST_TASK_DISPLAY = TaskDisplayProperties(colors=['white'],
+                                          font='Arial',
+                                          height=.1,
+                                          text='100')
 TEST_INFO = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],

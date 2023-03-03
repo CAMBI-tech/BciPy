@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from logging import Logger
 from typing import List, Tuple, Union
 
@@ -232,50 +233,22 @@ class InformationProperties:
         return self.text_stim
 
 
+@dataclass
 class TaskDisplayProperties:
-    """"Task Dispay Properties.
+    """"Taskbar Display Properties.
 
-    An encapsulation of properties relevant to task stimuli presentation in an RSVP paradigm.
+    An encapsulation of properties relevant to task stimuli presentation.
+
+    Attrs:
+        colors(List[str]): Ordered list of colors to apply to task stimuli
+        font(str): Font to apply to all task stimuli
+        height(float): Height of all task text stimuli
+        text(str): Task text to apply to stimuli
     """
-
-    def __init__(
-            self,
-            task_color: List[str],
-            task_font: str,
-            task_pos: Tuple[float, float],
-            task_height: float,
-            task_text: str):
-        """Initialize Task Display Parameters.
-
-        task_color(List[str]): Ordered list of colors to apply to task stimuli
-        task_font(str): Font to apply to all task stimuli
-        task_pos(Tuple[float, float]): Position on the screen where to present to task text
-        task_height(float): Height of all task text stimuli
-        task_text(str): Task text to apply to stimuli
-        """
-        self.task_color = task_color
-        self.task_font = task_font
-        self.task_pos = task_pos
-        self.task_height = task_height
-        self.task_text = task_text
-        self.task = None
-
-    def build_task(self, window: visual.Window) -> visual.TextStim:
-        """"Build Task.
-
-        This method constructs the task stimuli object which can be updated later. This is more
-            performant than creating a new stimuli for each update in task state.
-        """
-        self.task = visual.TextStim(
-            win=window,
-            color=self.task_color[0],
-            height=self.task_height,
-            text=self.task_text,
-            font=self.task_font,
-            pos=self.task_pos,
-            wrapWidth=None, colorSpace='rgb',
-            opacity=1, depth=-6.0)
-        return self.task
+    colors: List[str]
+    font: str
+    height: float
+    text: str
 
 
 class PreviewInquiryProperties:

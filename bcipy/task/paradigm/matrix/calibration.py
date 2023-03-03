@@ -254,13 +254,10 @@ def init_calibration_display_task(
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters["time_prompt"])
 
-    task_display = TaskDisplayProperties(
-        task_color=[parameters['task_color']],
-        task_pos=(-.8, .85),
-        task_font=parameters['font'],
-        task_height=parameters['task_height'],
-        task_text=parameters['stim_number']
-    )
+    task_display = TaskDisplayProperties(colors=[parameters['task_color']],
+                                         font=parameters['font'],
+                                         height=parameters['task_height'],
+                                         text=parameters['stim_number'])
     return MatrixCalibrationDisplay(
         window,
         experiment_clock,

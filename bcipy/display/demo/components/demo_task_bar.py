@@ -21,8 +21,8 @@ def make_window():
 def demo_task_bar(win: visual.Window):
     """Demo generic task bar."""
     config = DEFAULT_TASK_PROPERTIES
-    config.task_text = 'Task Bar'
-    config.task_color[0] = 'magenta'
+    config.text = 'Task Bar'
+    config.colors = ['magenta']
     task_bar = TaskBar(win, config=config)
     task_bar.draw()
     win.flip()
@@ -31,7 +31,7 @@ def demo_task_bar(win: visual.Window):
 def demo_calibration(win: visual.Window):
     """Demo calibration task bar."""
     config = DEFAULT_TASK_PROPERTIES
-    config.task_text = '100'
+    config.text = '100'
     task_bar = CalibrationTaskBar(win, config, current_index=8)
     task_bar.draw()
     win.flip()
@@ -44,8 +44,8 @@ def demo_calibration(win: visual.Window):
 def demo_copy_phrase(win: visual.Window):
     """Demo copy phrase task bar."""
     config = DEFAULT_TASK_PROPERTIES
-    config.task_text = 'HELLO_WORLD'
-    config.task_color.append('green')
+    config.text = 'HELLO_WORLD'
+    config.colors.append('green')
 
     task_bar = CopyPhraseTaskBar(win, config=config, spelled_text='HELLO')
 

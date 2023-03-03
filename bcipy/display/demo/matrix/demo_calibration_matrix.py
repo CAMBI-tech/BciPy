@@ -13,11 +13,10 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Matrix Calibration Demo'],
 )
-task_display = TaskDisplayProperties(task_color=['white'],
-                                     task_pos=(-.8, .85),
-                                     task_font='Arial',
-                                     task_height=.1,
-                                     task_text='1/100')
+task_display = TaskDisplayProperties(colors=['white'],
+                                     font='Arial',
+                                     height=.1,
+                                     text='100')
 stim_properties = StimuliProperties(stim_font='Arial',
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.1,
@@ -49,27 +48,27 @@ task_buffer = 2
 matrix_display.schedule_to(stimuli=['A', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='1/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['B', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='2/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['C', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='3/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['<', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='4/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)

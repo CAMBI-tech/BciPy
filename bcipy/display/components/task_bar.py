@@ -6,11 +6,10 @@ from psychopy.visual.basevisual import BaseVisualStim
 import bcipy.display.components.layout as layout
 from bcipy.display.main import TaskDisplayProperties
 
-DEFAULT_TASK_PROPERTIES = TaskDisplayProperties(task_color=['white'],
-                                                task_font='Courier New',
-                                                task_pos=(0, 0.9),
-                                                task_height=0.1,
-                                                task_text='')
+DEFAULT_TASK_PROPERTIES = TaskDisplayProperties(colors=['white'],
+                                                font='Courier New',
+                                                height=0.1,
+                                                text='')
 
 
 class TaskBar:
@@ -33,7 +32,7 @@ class TaskBar:
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        return self.config.task_height + 0.05
+        return self.config.height + 0.05
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
@@ -54,7 +53,7 @@ class TaskBar:
         return visual.rect.Rect(win=self.layout.win,
                                 units=self.layout.units,
                                 lineWidth=2,
-                                lineColor=self.config.task_color[0],
+                                lineColor=self.config.colors[0],
                                 fillColor=None,
                                 pos=self.layout.center,
                                 size=(self.layout.width, self.layout.height))
@@ -71,12 +70,12 @@ class TaskBar:
         """Default properties for constructing a TextStim."""
         return {
             'win': self.layout.win,
-            'text': self.config.task_text,
+            'text': self.config.text,
             'pos': self.layout.center,
             'units': self.layout.units,
-            'font': self.config.task_font,
-            'height': self.config.task_height,
-            'color': self.config.task_color[0]
+            'font': self.config.font,
+            'height': self.config.height,
+            'color': self.config.colors[0]
         }
 
 
@@ -95,7 +94,7 @@ class CalibrationTaskBar(TaskBar):
                  win: visual.Window,
                  config: TaskDisplayProperties = DEFAULT_TASK_PROPERTIES,
                  current_index: int = 1):
-        self.inquiry_count = config.task_text
+        self.inquiry_count = config.text
         self.current_index = current_index
         super().__init__(win, config)
 
@@ -132,18 +131,18 @@ class CopyPhraseTaskBar(TaskBar):
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        return (self.config.task_height * 2) + 0.05
+        return (self.config.height * 2) + 0.05
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
 
-        task = self.text_stim(text=self.config.task_text,
+        task = self.text_stim(text=self.config.text,
                               pos=self.layout.center,
                               anchorVert='bottom')
 
         spelled = self.text_stim(text=self.displayed_text(),
                                  pos=self.layout.center,
-                                 color=self.config.task_color[-1],
+                                 color=self.config.colors[-1],
                                  anchorVert='top')
 
         return {
@@ -159,7 +158,7 @@ class CopyPhraseTaskBar(TaskBar):
 
     def displayed_text(self):
         """Spelled text padded for alignment."""
-        diff = len(self.config.task_text) - len(self.spelled_text)
+        diff = len(self.config.text) - len(self.spelled_text)
         if (diff > 0):
             return self.spelled_text + (' ' * diff)
         return self.spelled_text

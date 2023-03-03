@@ -246,13 +246,10 @@ def init_calibration_display_task(
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
-    task_bar_config = TaskDisplayProperties(
-        task_color=[parameters['task_color']],
-        task_pos=(-.8, .85),
-        task_font=parameters['font'],
-        task_height=parameters['task_height'],
-        task_text=parameters['stim_number']
-    )
+    task_bar_config = TaskDisplayProperties(colors=[parameters['task_color']],
+                                            font=parameters['font'],
+                                            height=parameters['task_height'],
+                                            text=parameters['stim_number'])
     preview_inquiry = PreviewInquiryProperties(
         preview_only=True,
         preview_inquiry_length=parameters['preview_inquiry_length'],

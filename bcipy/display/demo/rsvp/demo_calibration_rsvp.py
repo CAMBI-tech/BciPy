@@ -11,13 +11,10 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Calibration Demo'],
 )
-task_display = TaskDisplayProperties(
-    task_color=['White'],
-    task_pos=(-.8, .85),
-    task_font='Arial',
-    task_height=.1,
-    task_text='1/100'
-)
+task_display = TaskDisplayProperties(colors=['White'],
+                                     font='Arial',
+                                     height=.1,
+                                     text='100')
 
 # Initialize Stimulus
 is_txt_stim = True
@@ -82,7 +79,7 @@ rsvp = CalibrationDisplay(
 
 for idx_o in range(len(task_text)):
 
-    rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
+    rsvp.update_task_bar(text=task_text[idx_o])
     rsvp.draw_static()
     win.flip()
 

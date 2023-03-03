@@ -17,11 +17,10 @@ info = InformationProperties(
     info_text=['Matrix Copy Phrase Demo'],
 )
 task_height = 0.1
-task_display = TaskDisplayProperties(task_color=['White'],
-                                     task_pos=(0, 1 - (2 * task_height)),
-                                     task_font='Arial',
-                                     task_height=.1,
-                                     task_text='COPY_PHRASE')
+task_display = TaskDisplayProperties(colors=['White'],
+                                     font='Arial',
+                                     height=.1,
+                                     text='COPY_PHRASE')
 
 inter_stim_buffer = .5
 
@@ -81,8 +80,7 @@ counter = 0
 
 for idx_o in range(len(task_text)):
 
-    display.update_task_state(text=task_text[idx_o],
-                              color_list=task_color[idx_o])
+    display.update_task_bar(text=task_text[idx_o])
     display.draw_static()
     win.flip()
 
@@ -96,8 +94,8 @@ for idx_o in range(len(task_text)):
         core.wait(inter_stim_buffer)
         counter += 1
 
-    display.update_task_state(text=f"Selected: {decisions[idx_o]}",
-                              color_list=['green'])
+    # display.update_task_state(text=f"Selected: {decisions[idx_o]}",
+    #                           color_list=['green'])
     display.draw_static()
     win.flip()
     core.wait(2.0)

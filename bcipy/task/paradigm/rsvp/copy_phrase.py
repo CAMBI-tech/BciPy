@@ -857,12 +857,10 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
 
-    task_bar_config = TaskDisplayProperties(
-        task_color=[parameters['task_color']],
-        task_pos=None,
-        task_font=parameters['font'],
-        task_height=parameters['task_height'],
-        task_text=parameters['task_text'])
+    task_bar_config = TaskDisplayProperties(colors=[parameters['task_color']],
+                                            font=parameters['font'],
+                                            height=parameters['task_height'],
+                                            text=parameters['task_text'])
 
     return CopyPhraseDisplay(win,
                              static_clock,

@@ -67,12 +67,10 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters['time_prompt'])
 
-    task_display = TaskDisplayProperties(
-        task_color=[parameters['task_color']],
-        task_pos=None,
-        task_font=parameters['font'],
-        task_height=parameters['task_height'],
-        task_text=parameters['task_text'])
+    task_display = TaskDisplayProperties(colors=[parameters['task_color']],
+                                         font=parameters['font'],
+                                         height=parameters['task_height'],
+                                         text=parameters['task_text'])
 
     return MatrixCopyPhraseDisplay(
         win,

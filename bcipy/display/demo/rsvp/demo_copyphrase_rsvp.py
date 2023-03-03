@@ -31,13 +31,10 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Dummy Message'],
 )
-task_display = TaskDisplayProperties(
-    task_color=['White'],
-    task_pos=(-.8, .9),
-    task_font='Arial',
-    task_height=.1,
-    task_text='COPY_PHRASE'
-)
+task_display = TaskDisplayProperties(colors=['White'],
+                                     font='Arial',
+                                     height=.1,
+                                     text='COPY_PHRASE')
 
 # Stimuli
 time_flash = .25
@@ -108,15 +105,13 @@ rsvp = CopyPhraseDisplay(
     stimuli,
     task_display,
     info,
-    static_task_text='COPY_PHRASE',
-    static_task_color='white',
     preview_inquiry=preview_inquiry)
 
 counter = 0
 
 for idx_o in range(len(task_text)):
 
-    rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
+    rsvp.update_task_bar(text=task_text[idx_o])
     rsvp.draw_static()
     win.flip()
 
