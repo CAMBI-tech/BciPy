@@ -1,23 +1,15 @@
 """Tests for MatrixDisplay"""
 import unittest
+from unittest.mock import patch
 
 import psychopy
-from mockito import (
-    any,
-    mock,
-    verify,
-    when,
-    unstub,
-    verifyNoUnwantedInteractions
-)
-from bcipy.display.paradigm.matrix.display import (
-    MatrixDisplay, SymbolDuration
-)
-from bcipy.display import (
-    StimuliProperties,
-    InformationProperties,
-    TaskDisplayProperties,
-)
+from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+                     when)
+
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           TaskDisplayProperties)
+from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay, SymbolDuration
 
 # Define some reusable elements to test Matrix Display with
 LEN_STIM = 10
@@ -45,7 +37,8 @@ TEST_INFO = InformationProperties(
 class TestMatrixDisplay(unittest.TestCase):
     """This is Test Case for the Matrix Display"""
 
-    def setUp(self):
+    @patch('bcipy.display.paradigm.matrix.display.TaskBar')
+    def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
         self.task_bar_config = TEST_TASK_DISPLAY
@@ -53,8 +46,10 @@ class TestMatrixDisplay(unittest.TestCase):
         self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
-        self.text_stim_mock = mock()
-        self.rect_stim_mock = mock()
+        self.text_stim_mock = mock(psychopy.visual.TextStim)
+        when(self.text_stim_mock).setOpacity(...).thenReturn()
+        when(self.text_stim_mock).setColor(...).thenReturn()
+        when(self.text_stim_mock).draw(...).thenReturn()
         # grid item
         when(psychopy.visual).TextStim(
             win=self.window,
@@ -96,7 +91,8 @@ class TestMatrixDisplay(unittest.TestCase):
                                        depth=any()).thenReturn(
                                            self.text_stim_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
-        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
+        self.task_bar_mock = mock(TaskBar)
+        task_bar_mock.returnValue(self.task_bar_mock)
         self.matrix = MatrixDisplay(window=self.window,
                                     experiment_clock=self.experiment_clock,
                                     stimuli=self.stimuli,

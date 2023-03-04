@@ -1,24 +1,14 @@
 import unittest
+from unittest.mock import patch
 
 import psychopy
-from mock import patch
-from mockito import (
-    any,
-    mock,
-    when,
-    unstub,
-    verifyStubbedInvocationsAreUsed,
-    verifyNoUnwantedInteractions
-)
-from bcipy.display.paradigm.rsvp import (
-    RSVPDisplay
-)
-from bcipy.display import (
-    StimuliProperties,
-    InformationProperties,
-    TaskDisplayProperties,
-    PreviewInquiryProperties,
-)
+from mockito import (any, mock, unstub, verifyNoUnwantedInteractions,
+                     verifyStubbedInvocationsAreUsed, when)
+
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
+                           StimuliProperties, TaskDisplayProperties)
+from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.rsvp import RSVPDisplay
 
 # Define some reusable elements to test RSVPDisplay with
 LEN_STIM = 10
@@ -46,7 +36,8 @@ TEST_INFO = InformationProperties(
 class TestRSVPDisplay(unittest.TestCase):
     """This is Test Case for the RSVP Display"""
 
-    def setUp(self):
+    @patch('bcipy.display.paradigm.rsvp.display.TaskBar')
+    def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
         self.task_bar_config = TEST_TASK_DISPLAY
@@ -56,8 +47,11 @@ class TestRSVPDisplay(unittest.TestCase):
         self.static_clock = mock()
         self.text_stim_mock = mock()
         self.rect_stim_mock = mock()
+        self.task_bar_mock = mock(TaskBar)
+        task_bar_mock.returnValue(self.task_bar_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
-        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
+        # when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
+        # when(psychopy.visual.line).Line(...).thenReturn(mock())
         self.rsvp = RSVPDisplay(
             self.window,
             self.static_clock,
@@ -91,7 +85,8 @@ class TestRSVPDisplay(unittest.TestCase):
 
 
 class TestRSVPDisplayInquiryPreview(unittest.TestCase):
-    def setUp(self):
+    @patch('bcipy.display.paradigm.rsvp.display.TaskBar')
+    def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
         self.task_bar_config = TEST_TASK_DISPLAY
@@ -112,8 +107,9 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         self.static_clock = mock()
         self.text_stim_mock = mock()
         self.rect_stim_mock = mock()
+        self.task_bar_mock = mock(TaskBar)
+        task_bar_mock.returnValue(self.task_bar_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
-        when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
         self.rsvp = RSVPDisplay(
             self.window,
             self.static_clock,

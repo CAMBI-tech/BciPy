@@ -3,6 +3,7 @@
 from typing import Dict
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim
+from psychopy.visual.line import Line
 import bcipy.display.components.layout as layout
 from bcipy.display.main import TaskDisplayProperties
 
@@ -50,13 +51,11 @@ class TaskBar:
 
     def border_stim(self) -> visual.rect.Rect:
         """Create the task bar outline"""
-        return visual.rect.Rect(win=self.layout.win,
-                                units=self.layout.units,
-                                lineWidth=2,
-                                lineColor=self.config.colors[0],
-                                fillColor=None,
-                                pos=self.layout.center,
-                                size=(self.layout.width, self.layout.height))
+        return Line(win=self.layout.win,
+                    units=self.layout.units,
+                    start=(self.layout.left, self.layout.bottom),
+                    end=(self.layout.right, self.layout.bottom),
+                    lineColor=self.config.colors[0])
 
     def text_stim(self, **kwargs) -> visual.TextStim:
         """Constructs a TextStim. Uses the config to set default properties
