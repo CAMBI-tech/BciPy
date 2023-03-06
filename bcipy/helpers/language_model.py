@@ -65,7 +65,7 @@ def init_language_model(parameters: dict) -> LanguageModel:
 #     "recommended_values": [
 #       "",
 #       "{'lang_model_name': 'gpt2'}, {}",
-#       "{'lang_model_name': 'gpt2'}, {'lm_path': './bcipy/language/lms/lm_dec19_char_large_12gram.arpa'}"
+#       "{'lang_model_name': 'gpt2'}, {'lm_path': './bcipy/language/lms/lm_dec19_char_large_12gram.kenlm'}"
 #     ],
 #     "type": "List[Dict[str, str]]"
 #   },
@@ -84,12 +84,12 @@ def init_language_model(parameters: dict) -> LanguageModel:
             lm_weights = [0.32, 0.68]
             lm_params = [{"lang_model_name": "gpt2"}, {"lang_model_name": "facebook/opt-125m"}]
         elif mixture == "gpt2_kenlm":
-            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.kenlm"
             lm_types = ["causal", "kenlm"]
             lm_weights = [0.17, 0.83]
             lm_params = [{"lang_model_name": "gpt2"}, {"lm_path": kenlm_path}]
         elif mixture == "opt_kenlm":
-            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+            kenlm_path = "./bcipy/language/lms/lm_dec19_char_large_12gram.kenlm"
             lm_types = ["causal", "kenlm"]
             lm_weights = [0.30, 0.70]
             lm_params = [{"lang_model_name": "facebook/opt-125m"}, {"lm_path": kenlm_path}]
