@@ -17,7 +17,7 @@ class TestMixtureLanguageModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         dirname = os.path.dirname(__file__) or '.'
-        cls.kenlm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.arpa"
+        cls.kenlm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.kenlm"
         cls.lm_params = [{"lm_path": cls.kenlm_path}, {"lang_model_name": "gpt2"}]
         cls.lmodel = MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                           lm_types=["kenlm", "causal"], lm_weights=[0.5, 0.5],
@@ -106,7 +106,7 @@ class TestMixtureLanguageModel(unittest.TestCase):
         # self.assertEqual(0, backspace_prob)
         for prob in probs:
             self.assertTrue(0 <= prob < 1)
-        self.assertAlmostEqual(sum(probs), 1, places=3)
+        self.assertAlmostEqual(sum(probs), 1, places=5)
 
     def test_predict_middle_of_word(self):
         """Test the predict method in the middle of a word."""
@@ -118,7 +118,7 @@ class TestMixtureLanguageModel(unittest.TestCase):
             "All values should not be the same probability")
         for prob in probs:
             self.assertTrue(0 <= prob < 1)
-        self.assertAlmostEqual(sum(probs), 1, places=3)
+        self.assertAlmostEqual(sum(probs), 1, places=5)
 
         most_likely_sym, _prob = sorted(symbol_probs,
                                         key=itemgetter(1),

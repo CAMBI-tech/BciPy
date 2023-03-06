@@ -4,6 +4,7 @@ from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.helpers.exceptions import InvalidModelException
 import kenlm
+import numpy as np
 
 
 class KenLMLanguageModel(LanguageModel):
@@ -130,6 +131,10 @@ class KenLMLanguageModel(LanguageModel):
 
             # BaseScore returns log probs, convert by putting 10 to its power
             next_char_pred[char] = pow(10, score)
+
+        sum = np.sum(list(next_char_pred.values()))
+        for char in self.symbol_set:
+            next_char_pred[char] /= sum
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
 

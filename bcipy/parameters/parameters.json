@@ -650,7 +650,7 @@
     "helpTip": "Pretrained model path. If using a causal model from HuggingFace, leave blank and use lang_model_name",
     "recommended_values": [
       "",
-      "./bcipy/language/lms/lm_dec19_char_large_12gram.arpa"
+      "./bcipy/language/lms/lm_dec19_char_large_12gram.kenlm"
     ],
     "type": "directorypath"
   },
