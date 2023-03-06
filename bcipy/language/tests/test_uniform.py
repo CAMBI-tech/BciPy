@@ -3,7 +3,7 @@
 import unittest
 
 from bcipy.language.model.uniform import (ResponseType, UniformLanguageModel,
-                                    equally_probable)
+                                          equally_probable)
 
 
 class TestUniformLanguageModel(unittest.TestCase):
