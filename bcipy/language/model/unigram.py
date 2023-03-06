@@ -16,8 +16,11 @@ class UnigramLanguageModel(LanguageModel):
         dirname = os.path.dirname(__file__) or '.'
         self.lm_path = lm_path or f"{dirname}/../lms/unigram.json"
 
-        with open(self.lm_path) as json_file:
-            self.unigram_lm = json.load(json_file)
+        try:
+            with open(self.lm_path) as json_file:
+                self.unigram_lm = json.load(json_file)
+        except BaseException:
+            raise InvalidModelException("Unable to load Unigram model from file")
 
         self.unigram_lm[SPACE_CHAR] = self.unigram_lm.pop("SPACE_CHAR")
         self.unigram_lm[BACKSPACE_CHAR] = self.unigram_lm.pop("BACKSPACE_CHAR")
