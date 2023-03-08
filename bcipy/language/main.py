@@ -7,6 +7,8 @@ from string import ascii_uppercase
 import os
 
 from bcipy.helpers.exceptions import UnsupportedResponseType
+from bcipy.helpers.load import load_json_parameters
+from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
@@ -62,6 +64,7 @@ class LanguageModel(ABC):
                  symbol_set: Optional[List[str]] = None):
         self.response_type = response_type or ResponseType.SYMBOL
         self.symbol_set = symbol_set or DEFAULT_SYMBOL_SET
+        self.parameters = load_json_parameters(DEFAULT_LM_PARAMETERS_PATH, True)
 
     @classmethod
     def name(cls) -> str:

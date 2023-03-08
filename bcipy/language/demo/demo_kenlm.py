@@ -1,14 +1,13 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
 import kenlm
-import os
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import alphabet
 from bcipy.language.main import ResponseType
+from bcipy.config import LM_PATH
 
 if __name__ == "__main__":
-    dirname = os.path.dirname(__file__) or '.'
-    lm_path = f"{dirname}/../lms/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
+    lm_path = f"{LM_PATH}/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
 
     # Load a really pruned n-gram language model
     model = kenlm.LanguageModel(lm_path)
