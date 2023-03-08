@@ -3,20 +3,17 @@ from typing import Dict, List, Tuple
 from math import isclose
 
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.language.model.unigram import UnigramLanguageModel
-from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.language.model.causal import CausalLanguageModel
 
 from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.language_model import language_models_by_name
 
 
 class MixtureLanguageModel(LanguageModel):
     """
         Character language model that mixes any combination of other models
-        By default, 80% Causal GPT-2 with 20% Unigram
     """
 
-    supported_lm_types = ["causal", "unigram", "kenlm"]
+    supported_lm_types = ["CAUSAL", "UNIGRAM", "KENLM"]
 
     def __init__(self,
                  response_type: ResponseType,
@@ -56,12 +53,9 @@ class MixtureLanguageModel(LanguageModel):
         self.models = list()
         self.response_type = response_type
         self.symbol_set = symbol_set
-        self.lm_types = lm_types or ["causal", "unigram"]
-        self.lm_weights = lm_weights or [0.8, 0.2]
-        self.lm_params = lm_params or [{"lang_model_name": "gpt2"}, {}]
-
-        # rescale coefficient
-        self.rescale_coeff = 0.5
+        self.lm_types = lm_types or self.parameters.get("mixture_types")
+        self.lm_weights = lm_weights or self.parameters.get("mixture_weights")
+        self.lm_params = lm_params or self.parameters.get("mixture_params")
 
         self.load()
 
@@ -86,29 +80,6 @@ class MixtureLanguageModel(LanguageModel):
 
         return list(sorted(combined_lm.items(), key=lambda item: item[1], reverse=True))
 
-    @staticmethod
-    def rescale(lm: Dict[str, float], coeff: float):
-        """
-        rescale a languge model with exponential coefficient
-        Args:
-            lm - the language model (a dict with char as keys and prob as values)
-            coeff - rescale coefficient
-        Response:
-            a list of (char, prob) tuples representing a rescaled language model
-        """
-        rescaled_lm = Counter()
-
-        # scale
-        for char in lm:
-            rescaled_lm[char] = lm[char] ** coeff
-
-        # normalize
-        sum_char_prob = sum(rescaled_lm.values())
-        for char in rescaled_lm:
-            rescaled_lm[char] /= sum_char_prob
-
-        return list(sorted(rescaled_lm.items(), key=lambda item: item[1], reverse=True))
-
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Given an evidence of typed string, predict the probability distribution of
@@ -129,9 +100,6 @@ class MixtureLanguageModel(LanguageModel):
         # Mix the component models
         next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
 
-        # Exponentially rescale the mixed predictions
-        # next_char_pred = MixtureLanguageModel.rescale(dict(next_char_pred), self.rescale_coeff)
-
         return next_char_pred
 
     def update(self) -> None:
@@ -143,18 +111,16 @@ class MixtureLanguageModel(LanguageModel):
             Load the language models to be mixed
         """
 
+        language_models = language_models_by_name()
         for lm_type, params in zip(self.lm_types, self.lm_params):
+            model = language_models[lm_type]
+            lm = None
             try:
-                if lm_type == "causal":
-                    model = CausalLanguageModel(self.response_type, self.symbol_set, **params)
-                elif lm_type == "unigram":
-                    model = UnigramLanguageModel(self.response_type, self.symbol_set, **params)
-                elif lm_type == "kenlm":
-                    model = KenLMLanguageModel(self.response_type, self.symbol_set, **params)
+                lm = model(self.response_type, self.symbol_set, **params)
             except InvalidModelException as e:
                 raise InvalidModelException(f"Error in creation of model type {lm_type}: {e.message}")
 
-            self.models.append(model)
+            self.models.append(lm)
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
         """

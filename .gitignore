@@ -27,4 +27,5 @@ dist/
 
 bcipy/parameters/parameters_*
 bcipy/language/lms/lm_dec19_char_large_12gram.*
+bcipy/language/lms/out_*
 bcipy/language/out/

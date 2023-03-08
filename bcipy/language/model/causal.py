@@ -13,6 +13,8 @@ from bcipy.helpers.exceptions import InvalidModelException
 from scipy.special import logsumexp
 from scipy.special import softmax
 
+from bcipy.config import LM_PATH
+
 
 class CausalLanguageModel(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
@@ -20,7 +22,7 @@ class CausalLanguageModel(LanguageModel):
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
-                 lang_model_name: str,
+                 lang_model_name: str = None,
                  lm_path: str = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
@@ -44,14 +46,15 @@ class CausalLanguageModel(LanguageModel):
         self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
-        self.model_name = lang_model_name
+        self.model_name = lang_model_name or self.parameters.get("causal_model_name")
         self.symbol_set_lower = None
         self.device = lm_device
         self.left_context = lm_left_context
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
-        self.model_dir = lm_path or lang_model_name
+        local_model_path = lm_path or self.parameters.get("causal_model_path")
+        self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
         # parameters for search
         self.beam_width = 8
@@ -59,8 +62,6 @@ class CausalLanguageModel(LanguageModel):
 
         # backoff to the previous space
         self.token_backoff = -1
-
-        # self.search_depth = 2
 
         self.load()
 
@@ -235,7 +236,6 @@ class CausalLanguageModel(LanguageModel):
                         # Add the log prob of this token to the previous running total
                         # For some reason the float cast makes it run faster
                         likelihood = batch_likelihoods[j] + float(log_probs[j][i])
-
                         # If we have extended to a space following the context, then that hypothesis gets to be done
                         # This takes a lot longer that just requiring extending beyond existing context
                         # Just require hypotheses to extend beyond the existing typed context

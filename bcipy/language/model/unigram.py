@@ -3,7 +3,7 @@ from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.helpers.exceptions import InvalidModelException
 import json
-import os
+from bcipy.config import LM_PATH
 
 
 class UnigramLanguageModel(LanguageModel):
@@ -13,8 +13,7 @@ class UnigramLanguageModel(LanguageModel):
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
-        dirname = os.path.dirname(__file__) or '.'
-        self.lm_path = lm_path or f"{dirname}/../lms/unigram.json"
+        self.lm_path = lm_path or f"{LM_PATH}/unigram.json"
 
         try:
             with open(self.lm_path) as json_file:
