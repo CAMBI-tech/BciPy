@@ -5,7 +5,13 @@ from math import isclose
 from bcipy.language.main import LanguageModel, ResponseType
 
 from bcipy.helpers.exceptions import InvalidModelException
-from bcipy.helpers.language_model import language_models_by_name
+
+# pylint: disable=unused-import
+# flake8: noqa
+"""All supported models must be imported"""
+from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 class MixtureLanguageModel(LanguageModel):
@@ -14,6 +20,11 @@ class MixtureLanguageModel(LanguageModel):
     """
 
     supported_lm_types = ["CAUSAL", "UNIGRAM", "KENLM"]
+
+    @staticmethod
+    def language_models_by_name() -> Dict[str, LanguageModel]:
+        """Returns available language models indexed by name."""
+        return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
     def __init__(self,
                  response_type: ResponseType,
@@ -111,7 +122,7 @@ class MixtureLanguageModel(LanguageModel):
             Load the language models to be mixed
         """
 
-        language_models = language_models_by_name()
+        language_models = MixtureLanguageModel.language_models_by_name()
         for lm_type, params in zip(self.lm_types, self.lm_params):
             model = language_models[lm_type]
             lm = None

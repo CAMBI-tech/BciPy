@@ -21,6 +21,12 @@ class TestKenLMLanguageModel(unittest.TestCase):
         cls.lmodel = KenLMLanguageModel(response_type=ResponseType.SYMBOL,
                                         symbol_set=alphabet(), lm_path=cls.lm_path)
 
+    @pytest.mark.slow
+    def test_default_load(self):
+        """Test loading model with parameters from json
+        This test requires a valid lm_params.json file and all requisite models"""
+        lm = KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+
     def test_init(self):
         """Test default parameters"""
         self.assertEqual(self.lmodel.response_type, ResponseType.SYMBOL)
