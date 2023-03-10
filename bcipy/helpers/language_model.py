@@ -7,7 +7,14 @@ from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.main import alphabet
 # pylint: disable=unused-import
 # flake8: noqa
+
+"""Only imported models will be included in language_models_by_name"""
 from bcipy.language.model.uniform import UniformLanguageModel
+from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.language.model.mixture import MixtureLanguageModel
+from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.language.model.unigram import UnigramLanguageModel
+
 # flake8: noqa
 from bcipy.helpers.exceptions import InvalidModelException
 

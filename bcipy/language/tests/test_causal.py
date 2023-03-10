@@ -20,6 +20,12 @@ class TestCausalLanguageModel(unittest.TestCase):
         cls.opt_model = CausalLanguageModel(response_type=ResponseType.SYMBOL,
                                             symbol_set=alphabet(), lang_model_name="facebook/opt-125m")
 
+    @pytest.mark.slow
+    def test_default_load(self):
+        """Test loading model with parameters from json
+        This test requires a valid lm_params.json file and all requisite models"""
+        lm = CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+
     def test_gpt2_init(self):
         """Test default parameters for GPT-2 model"""
         self.assertEqual(self.gpt2_model.response_type, ResponseType.SYMBOL)
