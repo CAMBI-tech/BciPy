@@ -81,9 +81,8 @@ def offline_gaze_analysis(
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
 
-    breakpoint()
-    results = np.empty()
-    
+    results = []
+
     return results
 
 
@@ -102,21 +101,3 @@ if __name__ == "__main__":
         args.data_folder,
         parameters)
     log.info("Offline Analysis complete.")
-
-
-
-    # df = pd.read_csv(betts_data_path)
-    # df = df.dropna()
-    # # df = df.reset_index(drop=True)
-    # X = df[['left_x', 'left_y']].to_numpy()
-    # gm = GaussianMixture(n_components=28, random_state=0).fit(X)
-    # plt.scatter(X[:, 0], X[:, 1])
-    # plt.show()
-    # # plt.scatter(X[:, 2], X[:, 3])
-    # # plt.show()
-    # print(gm.means_)
-    # plt.scatter(gm.means_[:,0], gm.means_[:,1])
-    # plt.show()
-    # # evaluate the components’ density for each sample
-    # conditionals = gm.predict_proba(X)
-    # breakpoint()
