@@ -44,6 +44,29 @@ class RawGazeData:
         self._rows = value
         self._dataframe = None
 
+    @property
+    def channels(self) -> List[str]:
+        """Compute the list of channels. Channels are the numeric columns
+        excluding the timestamp column."""
+
+        # Start data slice at 1 to remove the timestamp column.
+        return list(self.numeric_data.columns[1:])
+    
+    @property
+    def numeric_data(self) -> pd.DataFrame:
+        """Data for columns with numeric data. This is usually comprised of the
+        timestamp column and device channels, excluding string triggers."""
+        return self.dataframe.select_dtypes(exclude=['object'])
+    
+    @property
+    def channel_data(self):
+        """Data for columns with numeric data, excluding the timestamp column."""
+        numeric_data = self.numeric_data
+
+        numeric_vals = numeric_data.values
+        numeric_column_count = numeric_vals.shape[1]
+        # Start data slice at 1 to remove the timestamp column.
+        return numeric_vals[:, 1:numeric_column_count].transpose()
 
     @property
     def dataframe(self) -> pd.DataFrame:

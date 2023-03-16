@@ -20,6 +20,7 @@ from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
+from bcipy.helpers.raw_data_gaze import RawGazeData
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -229,6 +230,19 @@ def load_raw_data(filename: str) -> RawData:
     RawData object with data held in memory
     """
     return RawData.load(filename)
+
+def load_raw_gaze_data(filename: str) -> RawData:
+    """Reads the data (.csv) file written by data acquisition.
+
+    Parameters
+    ----------
+    - filename : path to the serialized data (csv file)
+
+    Returns
+    -------
+    RawData object with data held in memory
+    """
+    return RawGazeData.load(filename)
 
 
 def load_txt_data() -> str:

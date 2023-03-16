@@ -13,6 +13,7 @@ from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
+    load_raw_gaze_data
 )
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 
@@ -20,8 +21,6 @@ from sklearn.model_selection import train_test_split
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
-
-betts_data_path = '/Users/basak/Documents/BciPy/data/MatrixEyeTracking/BP_001/BP_001_Matrix_Calibration_Wed_08_Mar_2023_12hr39min04sec_-0800/raw_data.csv'
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
     """Performs a train/test split on the provided data and labels, accounting for
@@ -72,7 +71,8 @@ def offline_gaze_analysis(
     )
         
     # Load raw data
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    gaze_data = load_raw_gaze_data(Path(data_folder, raw_data_file))
+    # TODO: Dataframe is excluding the first 2 rows. Why?
 
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -81,6 +81,7 @@ def offline_gaze_analysis(
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
 
+    breakpoint()
     results = []
 
     return results
