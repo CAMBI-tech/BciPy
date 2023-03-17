@@ -72,11 +72,14 @@ def offline_gaze_analysis(
         
     # Load raw data
     gaze_data = load_raw_gaze_data(Path(data_folder, raw_data_file))
-    # TODO: Dataframe is excluding the first 2 rows. Why?
+    channels = gaze_data.channels
+    type_amp = gaze_data.daq_type
+    sample_rate = gaze_data.sample_rate
 
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
+        remove_pre_fixation = False,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
