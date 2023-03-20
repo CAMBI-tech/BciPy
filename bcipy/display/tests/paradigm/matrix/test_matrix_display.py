@@ -92,7 +92,7 @@ class TestMatrixDisplay(unittest.TestCase):
                                            self.text_stim_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
         self.task_bar_mock = mock(TaskBar)
-        task_bar_mock.returnValue(self.task_bar_mock)
+        task_bar_mock.return_value(self.task_bar_mock)
         self.matrix = MatrixDisplay(window=self.window,
                                     experiment_clock=self.experiment_clock,
                                     stimuli=self.stimuli,
