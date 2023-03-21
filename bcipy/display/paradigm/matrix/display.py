@@ -4,7 +4,7 @@ import logging
 
 from psychopy import visual, core
 
-from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
+from bcipy.display import Display, StimuliProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.task import alphabet
@@ -36,7 +36,7 @@ class MatrixDisplay(Display):
             window: visual.Window,
             experiment_clock: core.Clock,
             stimuli: StimuliProperties,
-            task_bar_config: TaskDisplayProperties,
+            task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
@@ -53,7 +53,7 @@ class MatrixDisplay(Display):
         stimuli(StimuliProperties): attributes used for inquiries
 
         # Task
-        task_bar_config(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+        task_bar(TaskBar): used for task tracking. Ex. 1/100
 
         # Info
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
@@ -96,16 +96,11 @@ class MatrixDisplay(Display):
 
         self.experiment_clock = experiment_clock
 
-        self.task_bar_config = task_bar_config
-        self.task_bar = self.build_task_bar()
+        self.task_bar = task_bar
         self.info_text = info.build_info_text(window)
 
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
-
-    def build_task_bar(self):
-        """Creates a TaskBar"""
-        return TaskBar(self.window, self.task_bar_config)
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
@@ -316,7 +311,8 @@ class MatrixDisplay(Display):
 
     def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
-        self.task_bar.draw()
+        if self.task_bar:
+            self.task_bar.draw()
 
         for info in self.info_text:
             info.draw()
@@ -332,7 +328,8 @@ class MatrixDisplay(Display):
         color_list: list of the colors for each stimuli
         pos: position of task
         """
-        self.task_bar.update(text)
+        if self.task_bar:
+            self.task_bar.update(text)
 
     def _trigger_pulse(self) -> None:
         """Trigger Pulse.

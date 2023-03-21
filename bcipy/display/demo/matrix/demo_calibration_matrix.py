@@ -1,8 +1,9 @@
 """Demo Matrix Display functionality related to Calibration task logic."""
 # pylint: disable=invalid-name
 from psychopy import core
-from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.paradigm.matrix.mode.calibration import MatrixCalibrationDisplay
+from bcipy.display import InformationProperties, StimuliProperties
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.components.task_bar import CalibrationTaskBar
 
 from bcipy.display import init_display_window
 
@@ -13,10 +14,7 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Matrix Calibration Demo'],
 )
-task_display = TaskDisplayProperties(colors=['white'],
-                                     font='Arial',
-                                     height=.1,
-                                     text='4')
+
 stim_properties = StimuliProperties(stim_font='Arial',
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.1,
@@ -35,8 +33,12 @@ experiment_clock = core.Clock()
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
-matrix_display = MatrixCalibrationDisplay(win, experiment_clock,
-                                          stim_properties, task_display, info)
+task_bar = CalibrationTaskBar(win, inquiry_count=4, current_index=0, font='Arial')
+matrix_display = MatrixDisplay(win,
+                               experiment_clock,
+                               stim_properties,
+                               task_bar=task_bar,
+                               info=info)
 
 time_target = 2
 time_fixation = 2

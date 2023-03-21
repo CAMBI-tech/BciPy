@@ -6,9 +6,10 @@ from psychopy import core
 from bcipy.config import (
     SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties, TaskDisplayProperties)
+                           StimuliProperties)
 from bcipy.display import Display
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -857,16 +858,18 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
 
-    task_bar_config = TaskDisplayProperties(colors=[parameters['task_color']],
-                                            font=parameters['font'],
-                                            height=parameters['task_height'],
-                                            text=parameters['task_text'])
+    task_bar = CopyPhraseTaskBar(win,
+                                 task_text=parameters['task_text'],
+                                 spelled_text=starting_spelled_text,
+                                 colors=[parameters['task_color']],
+                                 font=parameters['font'],
+                                 height=parameters['task_height'])
 
     return CopyPhraseDisplay(win,
                              static_clock,
                              experiment_clock,
                              stimuli,
-                             task_bar_config,
+                             task_bar,
                              info,
                              starting_spelled_text,
                              trigger_type=parameters['trigger_type'],

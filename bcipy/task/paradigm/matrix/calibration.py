@@ -3,8 +3,9 @@ from typing import List, Tuple
 from psychopy import core
 
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import Display, InformationProperties, StimuliProperties, TaskDisplayProperties
-from bcipy.display.paradigm.matrix.mode.calibration import MatrixCalibrationDisplay
+from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
                                    TargetPositions,
@@ -254,15 +255,18 @@ def init_calibration_display_task(
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters["time_prompt"])
 
-    task_display = TaskDisplayProperties(colors=[parameters['task_color']],
-                                         font=parameters['font'],
-                                         height=parameters['task_height'],
-                                         text=parameters['stim_number'])
-    return MatrixCalibrationDisplay(
+    task_bar = CalibrationTaskBar(window,
+                                  inquiry_count=parameters['stim_number'],
+                                  current_index=0,
+                                  colors=[parameters['task_color']],
+                                  font=parameters['font'],
+                                  height=parameters['task_height'])
+
+    return MatrixDisplay(
         window,
         experiment_clock,
         stimuli,
-        task_display,
+        task_bar,
         info,
         trigger_type=parameters['trigger_type'],
         symbol_set=symbol_set)

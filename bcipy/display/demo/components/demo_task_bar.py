@@ -3,8 +3,7 @@ import time
 from typing import Callable
 from psychopy import visual
 
-from bcipy.display.components.task_bar import (DEFAULT_TASK_PROPERTIES,
-                                               CalibrationTaskBar,
+from bcipy.display.components.task_bar import (CalibrationTaskBar,
                                                CopyPhraseTaskBar, TaskBar)
 
 
@@ -20,19 +19,14 @@ def make_window():
 
 def demo_task_bar(win: visual.Window):
     """Demo generic task bar."""
-    config = DEFAULT_TASK_PROPERTIES
-    config.text = 'Task Bar'
-    config.colors = ['magenta']
-    task_bar = TaskBar(win, config=config)
+    task_bar = TaskBar(win, colors=['magenta'], text='Task Bar')
     task_bar.draw()
     win.flip()
 
 
 def demo_calibration(win: visual.Window):
     """Demo calibration task bar."""
-    config = DEFAULT_TASK_PROPERTIES
-    config.text = '100'
-    task_bar = CalibrationTaskBar(win, config, current_index=8)
+    task_bar = CalibrationTaskBar(win, inquiry_count=100, current_index=8)
     task_bar.draw()
     win.flip()
     time.sleep(2)
@@ -43,11 +37,10 @@ def demo_calibration(win: visual.Window):
 
 def demo_copy_phrase(win: visual.Window):
     """Demo copy phrase task bar."""
-    config = DEFAULT_TASK_PROPERTIES
-    config.text = 'HELLO_WORLD'
-    config.colors.append('green')
-
-    task_bar = CopyPhraseTaskBar(win, config=config, spelled_text='HELLO')
+    task_bar = CopyPhraseTaskBar(win,
+                                 task_text='HELLO_WORLD',
+                                 spelled_text='HELLO',
+                                 colors=['white', 'green'])
 
     task_bar.draw()
     win.flip()
@@ -86,6 +79,6 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
 
 
 if __name__ == '__main__':
-    run(demo_calibration)
+    # run(demo_calibration)
     # run(demo_copy_phrase)
-    # run(demo_task_bar)
+    run(demo_task_bar)

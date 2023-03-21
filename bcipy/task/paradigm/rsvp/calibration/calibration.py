@@ -5,9 +5,9 @@ from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import (
     InformationProperties,
     PreviewInquiryProperties,
-    StimuliProperties,
-    TaskDisplayProperties)
+    StimuliProperties)
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator)
 from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
@@ -246,10 +246,14 @@ def init_calibration_display_task(
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
-    task_bar_config = TaskDisplayProperties(colors=[parameters['task_color']],
-                                            font=parameters['font'],
-                                            height=parameters['task_height'],
-                                            text=parameters['stim_number'])
+
+    task_bar = CalibrationTaskBar(window,
+                                  inquiry_count=parameters['stim_number'],
+                                  current_index=0,
+                                  colors=[parameters['task_color']],
+                                  font=parameters['font'],
+                                  height=parameters['task_height'])
+
     preview_inquiry = PreviewInquiryProperties(
         preview_only=True,
         preview_inquiry_length=parameters['preview_inquiry_length'],
@@ -262,7 +266,7 @@ def init_calibration_display_task(
         static_clock,
         experiment_clock,
         stimuli,
-        task_bar_config,
+        task_bar,
         info,
         preview_inquiry=preview_inquiry,
         trigger_type=parameters['trigger_type'],

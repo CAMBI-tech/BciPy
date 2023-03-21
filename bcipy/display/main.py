@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from logging import Logger
 from typing import List, Tuple, Union
 
@@ -41,7 +40,7 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def update_task_bar(self, text: str = '') -> None:
+    def update_task_bar(self, *args, **kwargs) -> None:
         """Update Task.
 
         Update any taskbar-related display items not related to the inquiry. Ex. stimuli count 1/200.
@@ -231,24 +230,6 @@ class InformationProperties:
                 wrapWidth=None, colorSpace='rgb',
                 opacity=1, depth=-6.0))
         return self.text_stim
-
-
-@dataclass
-class TaskDisplayProperties:
-    """"Taskbar Display Properties.
-
-    An encapsulation of properties relevant to task stimuli presentation.
-
-    Attrs:
-        colors(List[str]): Ordered list of colors to apply to task stimuli
-        font(str): Font to apply to all task stimuli
-        height(float): Height of all task text stimuli
-        text(str): Task text to apply to stimuli
-    """
-    colors: List[str]
-    font: str
-    height: float
-    text: str
 
 
 class PreviewInquiryProperties:

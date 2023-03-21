@@ -1,6 +1,5 @@
 from psychopy import visual
 from bcipy.display.paradigm.rsvp.display import RSVPDisplay, BCIPY_LOGO_PATH
-from bcipy.display.components.task_bar import CopyPhraseTaskBar, TaskBar
 from bcipy.helpers.task import SPACE_CHAR
 from bcipy.helpers.stimuli import resize_image
 
@@ -29,7 +28,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             clock,
             experiment_clock,
             stimuli,
-            task_bar_config,
+            task_bar,
             info,
             starting_spelled_text='',
             trigger_type='image',
@@ -37,24 +36,18 @@ class CopyPhraseDisplay(RSVPDisplay):
             preview_inquiry=None,
             full_screen=False):
         """ Initializes Copy Phrase Task Objects """
-        self.target_text = task_bar_config.text
         self.starting_spelled_text = starting_spelled_text
 
         super().__init__(window,
                          clock,
                          experiment_clock,
                          stimuli,
-                         task_bar_config,
+                         task_bar,
                          info,
                          trigger_type=trigger_type,
                          space_char=space_char,
                          preview_inquiry=preview_inquiry,
                          full_screen=full_screen)
-
-    def build_task_bar(self) -> TaskBar:
-        """Override to make a CalibrationTaskBar"""
-        return CopyPhraseTaskBar(self.window, self.task_bar_config,
-                                 self.starting_spelled_text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.

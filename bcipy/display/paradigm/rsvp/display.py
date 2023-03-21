@@ -11,8 +11,7 @@ from bcipy.display import (
     Display,
     InformationProperties,
     PreviewInquiryProperties,
-    StimuliProperties,
-    TaskDisplayProperties,
+    StimuliProperties
 )
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.helpers.stimuli import resize_image
@@ -32,7 +31,7 @@ class RSVPDisplay(Display):
             static_clock,
             experiment_clock: Clock,
             stimuli: StimuliProperties,
-            task_bar_config: TaskDisplayProperties,
+            task_bar: TaskBar,
             info: InformationProperties,
             preview_inquiry: PreviewInquiryProperties = None,
             trigger_type: str = 'image',
@@ -51,7 +50,7 @@ class RSVPDisplay(Display):
         stimuli(StimuliProperties): attributes used for inquiries
 
         # Task
-        task_bar_config(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+        task_bar(TaskBar): used for task tracking. Ex. 1/100
 
         # Info
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
@@ -100,8 +99,7 @@ class RSVPDisplay(Display):
         self.size_list_sti = []  # TODO force initial size definition
         self.space_char = space_char  # TODO remove and force task to define
 
-        self.task_bar_config = task_bar_config
-        self.task_bar = self.build_task_bar()
+        self.task_bar = task_bar
 
         # Create multiple text objects based on input
         self.info = info
@@ -112,13 +110,10 @@ class RSVPDisplay(Display):
 
     def draw_static(self):
         """Draw static elements in a stimulus."""
-        self.task_bar.draw()
+        if self.task_bar:
+            self.task_bar.draw()
         for info in self.info_text:
             info.draw()
-
-    def build_task_bar(self) -> TaskBar:
-        """Build the task bar"""
-        return TaskBar(self.window, self.task_bar_config)
 
     def schedule_to(self,
                     stimuli: List[str] = None,
@@ -371,7 +366,8 @@ class RSVPDisplay(Display):
         Args:
                 text(string): new text for task state
         """
-        self.task_bar.update(text)
+        if self.task_bar:
+            self.task_bar.update(text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.

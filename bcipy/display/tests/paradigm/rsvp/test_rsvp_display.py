@@ -6,7 +6,7 @@ from mockito import (any, mock, unstub, verifyNoUnwantedInteractions,
                      verifyStubbedInvocationsAreUsed, when)
 
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties, TaskDisplayProperties)
+                           StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.rsvp import RSVPDisplay
 
@@ -20,10 +20,6 @@ TEST_STIM = StimuliProperties(
     stim_colors=['white'] * LEN_STIM,
     stim_timing=[3] * LEN_STIM,
     is_txt_stim=True)
-TEST_TASK_DISPLAY = TaskDisplayProperties(colors=['White'],
-                                          font='Arial',
-                                          height=.1,
-                                          text='100')
 TEST_INFO = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
@@ -40,7 +36,6 @@ class TestRSVPDisplay(unittest.TestCase):
     def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
         self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
@@ -50,14 +45,12 @@ class TestRSVPDisplay(unittest.TestCase):
         self.task_bar_mock = mock(TaskBar)
         task_bar_mock.returnValue(self.task_bar_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
-        # when(psychopy.visual.rect).Rect(...).thenReturn(self.rect_stim_mock)
-        # when(psychopy.visual.line).Line(...).thenReturn(mock())
         self.rsvp = RSVPDisplay(
             self.window,
             self.static_clock,
             self.experiment_clock,
             self.stimuli,
-            self.task_bar_config,
+            self.task_bar_mock,
             self.info)
 
     def tearDown(self):
@@ -66,7 +59,7 @@ class TestRSVPDisplay(unittest.TestCase):
         unstub()
 
     def test_task_bar_config_properties_set_correctly(self):
-        self.assertEqual(self.rsvp.task_bar_config, self.task_bar_config)
+        self.assertEqual(self.rsvp.task_bar, self.task_bar_mock)
 
     def test_information_properties_set_correctly(self):
         self.assertEqual(self.rsvp.info, self.info)
@@ -89,7 +82,6 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
     def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
         self.preview_inquiry_length = 0.1
         self.preview_inquiry_isi = 0.1
@@ -115,7 +107,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
             self.static_clock,
             self.experiment_clock,
             self.stimuli,
-            self.task_bar_config,
+            self.task_bar_mock,
             self.info,
             preview_inquiry=self.preview_inquiry)
 

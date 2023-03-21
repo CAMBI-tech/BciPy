@@ -6,8 +6,7 @@ import psychopy
 from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
                      when)
 
-from bcipy.display import (InformationProperties, StimuliProperties,
-                           TaskDisplayProperties)
+from bcipy.display import (InformationProperties, StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay, SymbolDuration
 
@@ -21,10 +20,7 @@ TEST_STIM = StimuliProperties(
     stim_colors=[],
     stim_timing=[0.1],
     is_txt_stim=True)
-TEST_TASK_DISPLAY = TaskDisplayProperties(colors=['white'],
-                                          font='Arial',
-                                          height=.1,
-                                          text='100')
+
 TEST_INFO = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
@@ -41,7 +37,6 @@ class TestMatrixDisplay(unittest.TestCase):
     def setUp(self, task_bar_mock):
         """Set up needed items for test."""
         self.info = TEST_INFO
-        self.task_bar_config = TEST_TASK_DISPLAY
         self.stimuli = TEST_STIM
         self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
@@ -92,11 +87,10 @@ class TestMatrixDisplay(unittest.TestCase):
                                            self.text_stim_mock)
         when(psychopy.visual).TextStim(...).thenReturn(self.text_stim_mock)
         self.task_bar_mock = mock(TaskBar)
-        task_bar_mock.return_value(self.task_bar_mock)
         self.matrix = MatrixDisplay(window=self.window,
                                     experiment_clock=self.experiment_clock,
                                     stimuli=self.stimuli,
-                                    task_bar_config=self.task_bar_config,
+                                    task_bar=self.task_bar_mock,
                                     info=self.info)
         when(self.matrix)._trigger_pulse().thenReturn()
 

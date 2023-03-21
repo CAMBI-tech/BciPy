@@ -8,9 +8,8 @@ from bcipy.display import (
     init_display_window,
     InformationProperties,
     PreviewInquiryProperties,
-    StimuliProperties,
-    TaskDisplayProperties
-)
+    StimuliProperties)
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.helpers.clock import Clock
 
@@ -31,10 +30,6 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Dummy Message'],
 )
-task_display = TaskDisplayProperties(colors=['White'],
-                                     font='Menlo',
-                                     height=.1,
-                                     text='COPY_PHRASE')
 
 # Stimuli
 time_flash = .25
@@ -72,7 +67,7 @@ if is_txt_stim:
 timing_sti = [[time_fixation] + [time_flash] * (len(ele_sti[0]) - 1)] * 4
 
 
-task_text = ['COPY_PHA', 'COPY_PH']
+spelled_text = ['COPY_PHA', 'COPY_PH']
 task_color = [['white'] * 5 + ['green'] * 2 + ['red'],
               ['white'] * 5 + ['green'] * 2]
 
@@ -90,28 +85,27 @@ print(frameRate)
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = Clock()
-
+task_bar = CopyPhraseTaskBar(win, task_text='COPY_PHRASE', font='Menlo')
 preview_inquiry = PreviewInquiryProperties(
     preview_only=True,
     preview_inquiry_length=preview_inquiry_length,
     preview_inquiry_key_input=preview_inquiry_key_input,
     preview_inquiry_progress_method=preview_inquiry_progress_method,
-    preview_inquiry_isi=preview_inquiry_isi
-)
+    preview_inquiry_isi=preview_inquiry_isi)
 rsvp = CopyPhraseDisplay(
     win,
     clock,
     experiment_clock,
     stimuli,
-    task_display,
+    task_bar,
     info,
     preview_inquiry=preview_inquiry)
 
 counter = 0
 
-for idx_o in range(len(task_text)):
+for idx_o in range(len(spelled_text)):
 
-    rsvp.update_task_bar(text=task_text[idx_o])
+    rsvp.update_task_bar(text=spelled_text[idx_o])
     rsvp.draw_static()
     win.flip()
 

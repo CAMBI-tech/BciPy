@@ -1,8 +1,9 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
 
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.display import Display, InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.paradigm.matrix.mode.copy_phrase import MatrixCopyPhraseDisplay
+from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 
 
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
@@ -67,16 +68,18 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters['time_prompt'])
 
-    task_display = TaskDisplayProperties(colors=[parameters['task_color']],
-                                         font=parameters['font'],
-                                         height=parameters['task_height'],
-                                         text=parameters['task_text'])
+    task_bar = CopyPhraseTaskBar(win,
+                                 task_text=parameters['task_text'],
+                                 spelled_text=starting_spelled_text,
+                                 colors=[parameters['task_color']],
+                                 font=parameters['font'],
+                                 height=parameters['task_height'])
 
-    return MatrixCopyPhraseDisplay(
+    return MatrixDisplay(
         win,
         experiment_clock,
         stimuli,
-        task_display,
+        task_bar,
         info,
         trigger_type=parameters['trigger_type'],
-        starting_spelled_text=starting_spelled_text)
+        should_prompt_target=False)
