@@ -6,7 +6,7 @@ from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import Display, InformationProperties, StimuliProperties, TaskDisplayProperties
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
+from bcipy.helpers.stimuli import (StimuliOrder, InquirySchedule, TargetPositions, calibration_inquiry_generator,
                                    get_task_info)
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
