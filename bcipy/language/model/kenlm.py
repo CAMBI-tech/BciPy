@@ -2,9 +2,12 @@ from collections import Counter
 from typing import List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException, KenLMInstallationException
 from bcipy.config import LM_PATH
-import kenlm
+try:
+    import kenlm
+except:
+    raise KenLMInstallationException("Please install the requisite kenlm package:\n'pip install kenlm --global-option=\"--max_order=12\"")
 import numpy as np
 
 

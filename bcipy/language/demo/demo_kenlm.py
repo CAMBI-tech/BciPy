@@ -1,10 +1,16 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
-import kenlm
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import alphabet
 from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
+from bcipy.helpers.exceptions import KenLMInstallationException
+
+try:
+    import kenlm
+except:
+    raise KenLMInstallationException("Please install the requisite kenlm package:\n'pip install kenlm --global-option=\"--max_order=12\"")
+
 
 if __name__ == "__main__":
     lm_path = f"{LM_PATH}/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
