@@ -4,6 +4,7 @@ from typing import Tuple
 
 import numpy as np
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
+from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -57,6 +58,7 @@ def offline_analysis(
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
+    save_figures: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -67,6 +69,8 @@ def offline_analysis(
         alert_finished(bool): whether or not to alert the user offline analysis complete
         estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
             estimate balanced accuracy
+        show_figures(bool): if true, shows ERP figures after training
+        save_figures(bool): if true, saves ERP figures after training to the data folder
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -77,7 +81,7 @@ def offline_analysis(
         - uses cross validation to select parameters
         - based on the parameters, trains system using all the data
     - pickle dumps model into .pkl file
-    - generates and saves ERP figure
+    - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
     """
 
@@ -168,6 +172,7 @@ def offline_analysis(
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
@@ -188,7 +193,7 @@ def offline_analysis(
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=data_folder,
+        save_path=data_folder if save_figures else None,
         show=show_figures
     )
     if alert_finished:
@@ -202,14 +207,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
+    parser.add_argument("-s", "--save_figures", action="store_true")
+    parser.add_argument("-v", "--show_figures", action="store_true")
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
+    parser.set_defaults(save_figures=False)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, estimate_balanced_acc=args.balanced)
+    offline_analysis(
+        args.data_folder,
+        parameters,
+        alert_finished=args.alert,
+        estimate_balanced_acc=args.balanced,
+        save_figures=args.save_figures,
+        show_figures=args.show_figures)
     log.info("Offline Analysis complete.")

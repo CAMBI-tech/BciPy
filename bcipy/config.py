@@ -28,6 +28,7 @@ STATIC_PATH = f'{BCIPY_ROOT}/static'
 STATIC_IMAGES_PATH = f'{STATIC_PATH}/images'
 STATIC_AUDIO_PATH = f'{STATIC_PATH}/sounds'
 BCIPY_LOGO_PATH = f'{STATIC_IMAGES_PATH}/gui/cambi.png'
+PREFERENCES_PATH = f'{ROOT}/.bcipy/bcipy_cache'
 LM_PATH = f'{BCIPY_ROOT}/language/lms'
 
 # core data configuration

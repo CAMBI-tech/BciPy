@@ -140,10 +140,22 @@ class RSVPDisplay(Display):
         if pos:
             self.task.pos = pos
 
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self, preview_calibration: bool = False) -> List[float]:
         """Do inquiry.
 
         Animates an inquiry of flashing letters to achieve RSVP.
+
+
+        PARAMETERS:
+        -----------
+        preview_calibration(bool) default False: Whether or not to preview the upcoming inquiry stimuli. This feature
+            is used to help the participant prepare for the upcoming inquiry after a prompt. It will present after
+            the first stimulus of the inquiry (assumed to be a prompt). Not recommended for use outside of a
+            calibration task.
+
+        RETURNS:
+        --------
+        timing(list[float]): list of timings of stimuli presented in the inquiry
         """
 
         # init an array for timing information
@@ -158,15 +170,20 @@ class RSVPDisplay(Display):
         # do the inquiry
         for idx in range(len(inquiry)):
 
+            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(inquiry[idx]['sti'])
+
+            # If previewing the inquiry, do so after the first stimulus
+            if preview_calibration and idx == 1:
+                time, _ = self.preview_inquiry()
+                timing.extend(time)
+
             # Reset the timing clock to start presenting
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 inquiry[idx]['sti_label'])
-
-            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
-            if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(inquiry[idx]['sti'])
 
             # Draw stimulus for n frames
             inquiry[idx]['sti'].draw()
@@ -175,10 +192,7 @@ class RSVPDisplay(Display):
             core.wait(inquiry[idx]['time_to_present'])
 
             # append timing information
-            if self.is_txt_stim:
-                timing.append(self.trigger_callback.timing)
-            else:
-                timing.append(self.trigger_callback.timing)
+            timing.append(self.trigger_callback.timing)
 
             self.trigger_callback.reset()
 

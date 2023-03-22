@@ -13,7 +13,7 @@ def main():
     from bcipy.acquisition.devices import preconfigured_device
     from bcipy.gui.viewer import data_viewer
 
-    device_spec = preconfigured_device('LSL')
+    device_spec = preconfigured_device('DSI-VR300')
     server = LslDataServer(device_spec=device_spec)
 
     try:

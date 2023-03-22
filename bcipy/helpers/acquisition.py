@@ -107,13 +107,14 @@ def max_inquiry_duration(parameters: dict) -> float:
     fixation_duration = parameters['time_fixation']
     target_duration = parameters['time_prompt']
     prestimulus_duration = parameters['prestim_length']
+    poststim_duration = parameters['prestim_length']
     stim_count = parameters['stim_length']
     stim_duration = parameters['time_flash']
     interval_duration = parameters['task_buffer_length']
     jitter = parameters['stim_jitter']
 
     return prestimulus_duration + jitter + target_duration + fixation_duration + (
-        stim_count * stim_duration) + interval_duration
+        stim_count * stim_duration) + poststim_duration + interval_duration
 
 
 def analysis_channels(channels: List[str], device_name: str) -> list:
