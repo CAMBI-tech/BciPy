@@ -4,7 +4,7 @@ import pytest
 import unittest
 import os
 
-from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidModelException
+from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
 from bcipy.language.main import alphabet
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.main import BACKSPACE_CHAR, ResponseType
@@ -36,12 +36,12 @@ class TestUnigramLanguageModel(unittest.TestCase):
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
-        with self.assertRaises(InvalidModelException):
+        with self.assertRaises(InvalidLanguageModelException):
             UnigramLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_path="phonymodel.txt")
 
     def test_invalid_model(self):
-        with self.assertRaises(InvalidModelException):
+        with self.assertRaises(InvalidLanguageModelException):
             dirname = os.path.dirname(__file__) or '.'
             lm_path = f"{dirname}/resources/invalid_unigram.json"
             UnigramLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),

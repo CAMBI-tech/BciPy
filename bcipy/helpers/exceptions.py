@@ -78,7 +78,7 @@ class TaskConfigurationException(BciPyCoreException):
     ...
 
 
-class InvalidModelException(BciPyCoreException):
+class InvalidLanguageModelException(BciPyCoreException):
     """Invalid Model Exception.
 
     Thrown when attempting to load a language model from an invalid path"""

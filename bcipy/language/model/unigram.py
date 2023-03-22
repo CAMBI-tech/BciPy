@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException
 import json
 from bcipy.config import LM_PATH
 
@@ -19,13 +19,13 @@ class UnigramLanguageModel(LanguageModel):
             with open(self.lm_path) as json_file:
                 self.unigram_lm = json.load(json_file)
         except BaseException:
-            raise InvalidModelException("Unable to load Unigram model from file")
+            raise InvalidLanguageModelException("Unable to load Unigram model from file")
 
         self.unigram_lm[SPACE_CHAR] = self.unigram_lm.pop("SPACE_CHAR")
         self.unigram_lm[BACKSPACE_CHAR] = self.unigram_lm.pop("BACKSPACE_CHAR")
 
         if not set(self.unigram_lm.keys()) == set(self.symbol_set):
-            raise InvalidModelException("Invalid unigram model symbol set!")
+            raise InvalidLanguageModelException("Invalid unigram model symbol set!")
 
         self.unigram_lm = sorted(self.unigram_lm.items(), key=lambda item: item[1], reverse=True)
 

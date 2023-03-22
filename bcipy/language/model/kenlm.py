@@ -2,7 +2,7 @@ from collections import Counter
 from typing import List, Tuple
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException
 from bcipy.config import LM_PATH
 import kenlm
 import numpy as np
@@ -88,7 +88,7 @@ class KenLMLanguageModel(LanguageModel):
         try:
             self.model = kenlm.LanguageModel(self.lm_path)
         except BaseException:
-            raise InvalidModelException(
+            raise InvalidLanguageModelException(
                 f"A valid model path must be provided for the KenLMLanguageModel.\nPath{self.lm_path} is not valid.")
 
         self.state = kenlm.State()

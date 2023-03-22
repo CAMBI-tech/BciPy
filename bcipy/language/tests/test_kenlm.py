@@ -5,7 +5,7 @@ import unittest
 import os
 from operator import itemgetter
 
-from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidModelException
+from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
 from bcipy.language.main import alphabet
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, ResponseType
@@ -46,7 +46,7 @@ class TestKenLMLanguageModel(unittest.TestCase):
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
-        with self.assertRaises(InvalidModelException):
+        with self.assertRaises(InvalidLanguageModelException):
             KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                lm_path="phonymodel.txt")
 

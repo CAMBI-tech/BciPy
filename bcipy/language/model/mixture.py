@@ -4,7 +4,7 @@ from math import isclose
 
 from bcipy.language.main import LanguageModel, ResponseType
 
-from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException
 
 # pylint: disable=unused-import
 # flake8: noqa
@@ -44,21 +44,21 @@ class MixtureLanguageModel(LanguageModel):
 
         if lm_params is not None:
             if (lm_types is None) or (len(lm_types) != len(lm_params)):
-                raise InvalidModelException("Length of parameters does not match length of types")
+                raise InvalidLanguageModelException("Length of parameters does not match length of types")
 
         if lm_weights is not None:
             if (lm_types is None) or (len(lm_types) != len(lm_weights)):
-                raise InvalidModelException("Length of weights does not match length of types")
+                raise InvalidLanguageModelException("Length of weights does not match length of types")
             if not isclose(sum(lm_weights), 1.0, abs_tol=1e-05):
-                raise InvalidModelException("Weights do not sum to 1")
+                raise InvalidLanguageModelException("Weights do not sum to 1")
 
         if lm_types is not None:
             if lm_weights is None:
-                raise InvalidModelException("Model weights not provided")
+                raise InvalidLanguageModelException("Model weights not provided")
             if lm_params is None:
-                raise InvalidModelException("Model parameters not provided")
+                raise InvalidLanguageModelException("Model parameters not provided")
             if not all(x in MixtureLanguageModel.supported_lm_types for x in lm_types):
-                raise InvalidModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
+                raise InvalidLanguageModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.models = list()
@@ -128,8 +128,8 @@ class MixtureLanguageModel(LanguageModel):
             lm = None
             try:
                 lm = model(self.response_type, self.symbol_set, **params)
-            except InvalidModelException as e:
-                raise InvalidModelException(f"Error in creation of model type {lm_type}: {e.message}")
+            except InvalidLanguageModelException as e:
+                raise InvalidLanguageModelException(f"Error in creation of model type {lm_type}: {e.message}")
 
             self.models.append(lm)
 
