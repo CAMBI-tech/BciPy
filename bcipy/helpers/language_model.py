@@ -16,7 +16,7 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 
 # flake8: noqa
-from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:

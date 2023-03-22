@@ -5,7 +5,7 @@ import unittest
 import os
 from operator import itemgetter
 
-from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidModelException
+from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
 from bcipy.language.main import alphabet
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, ResponseType
@@ -48,30 +48,31 @@ class TestMixtureLanguageModel(unittest.TestCase):
 
     def test_invalid_model_type(self):
         """Test that the proper exception is thrown if given an invalid lm_type"""
-        with self.assertRaises(InvalidModelException):
+        with self.assertRaises(InvalidLanguageModelException):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["PHONY", "CAUSAL"], lm_weights=[0.5, 0.5],
                                  lm_params=[{}, {"lang_model_name": "gpt2"}])
-        with self.assertRaises(InvalidModelException):
+        with self.assertRaises(InvalidLanguageModelException):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["CAUSAL", "PHONY"], lm_weights=[0.5, 0.5],
                                  lm_params=[{"lang_model_name": "gpt2"}, {}])
 
     def test_invalid_model_weights(self):
         """Test that the proper exception is thrown if given an improper number of lm_weights"""
-        with self.assertRaises(InvalidModelException, msg="Exception not thrown when too few weights given"):
+        with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when too few weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.5],
                                  lm_params=[{}, {"lang_model_name": "gpt2"}])
-        with self.assertRaises(InvalidModelException, msg="Exception not thrown when no weights given"):
+        with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when no weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["UNIGRAM", "CAUSAL"], lm_weights=None,
                                  lm_params=[{}, {"lang_model_name": "gpt2"}])
-        with self.assertRaises(InvalidModelException, msg="Exception not thrown when too many weights given"):
+        with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when too many weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.2, 0.3, 0.5],
                                  lm_params=[{}, {"lang_model_name": "gpt2"}])
-        with self.assertRaises(InvalidModelException, msg="Exception not thrown when weights given do not sum to 1"):
+        with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when weights given do not \
+                                 sum to 1"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
                                  lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.5, 0.8],
                                  lm_params=[{}, {"lang_model_name": "gpt2"}])
