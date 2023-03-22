@@ -52,13 +52,13 @@ class TaskBar:
         """Update the task bar to display the given text."""
         self.stim['task_text'].text = text
 
-    def border_stim(self) -> visual.rect.Rect:
+    def border_stim(self) -> Line:
         """Create the task bar outline"""
-        return Line(win=self.layout.win,
-                    units=self.layout.units,
-                    start=(self.layout.left, self.layout.bottom),
-                    end=(self.layout.right, self.layout.bottom),
-                    lineColor=self.colors[0])
+        return visual.line.Line(win=self.layout.win,
+                                units=self.layout.units,
+                                start=(self.layout.left, self.layout.bottom),
+                                end=(self.layout.right, self.layout.bottom),
+                                lineColor=self.colors[0])
 
     def text_stim(self, **kwargs) -> visual.TextStim:
         """Constructs a TextStim. Uses the config to set default properties

@@ -9,7 +9,7 @@ from bcipy.display.components.task_bar import (CalibrationTaskBar,
 
 def make_window():
     """Make a sample window on which to draw."""
-    return visual.Window(size=[500, 500],
+    return visual.Window(size=(500, 500),
                          fullscr=False,
                          winType='pyglet',
                          units='norm',

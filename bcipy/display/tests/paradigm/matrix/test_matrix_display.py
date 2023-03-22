@@ -1,6 +1,5 @@
 """Tests for MatrixDisplay"""
 import unittest
-from unittest.mock import patch
 
 import psychopy
 from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
@@ -33,8 +32,7 @@ TEST_INFO = InformationProperties(
 class TestMatrixDisplay(unittest.TestCase):
     """This is Test Case for the Matrix Display"""
 
-    @patch('bcipy.display.paradigm.matrix.display.TaskBar')
-    def setUp(self, task_bar_mock):
+    def setUp(self):
         """Set up needed items for test."""
         self.info = TEST_INFO
         self.stimuli = TEST_STIM
