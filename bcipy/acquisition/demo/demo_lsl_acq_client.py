@@ -12,7 +12,7 @@ def main():
     The client can be stopped with a Keyboard Interrupt (Ctl-C)."""
 
     # Start the server with the command:
-    # python bcipy/acquisition/datastream/lsl_server.py --name LSL
+    # python bcipy/acquisition/datastream/lsl_server.py --name 'DSI-24'
 
     client = LslAcquisitionClient(max_buffer_len=1, save_directory='.')
 

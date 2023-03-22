@@ -46,12 +46,12 @@ class TestBciMain(unittest.TestCase):
         unstub()
 
     def test_bci_main_default_experiment(self) -> None:
-        mock_execute_response = mock()
         when(main).validate_experiment(self.experiment).thenReturn(True)
         when(main).validate_bcipy_session(self.parameters).thenReturn(True)
         when(main).load_json_parameters(self.parameter_location, value_cast=True).thenReturn(
             self.parameters
         )
+        when(main).visualize_session_data(self.save_location, self.parameters).thenReturn(None)
         when(main).get_system_info().thenReturn(self.system_info)
         when(main).init_save_data_structure(
             self.data_save_location,
@@ -69,15 +69,16 @@ class TestBciMain(unittest.TestCase):
             self.task,
             self.parameters,
             self.save_location,
-            self.alert).thenReturn(mock_execute_response)
+            self.alert).thenReturn(True)
 
         response = bci_main(self.parameter_location, self.user, self.task)
-        self.assertEqual(response, mock_execute_response)
+        self.assertEqual(response, True)
 
         # validate all the calls happen as expected and the correct # of times
         verify(main, times=1).validate_experiment(self.experiment)
         verify(main, times=1).load_json_parameters(self.parameter_location, value_cast=True)
         verify(main, times=1).get_system_info()
+        verify(main, times=1).visualize_session_data(self.save_location, self.parameters)
         verify(main, times=1).init_save_data_structure(
             self.data_save_location,
             self.user,

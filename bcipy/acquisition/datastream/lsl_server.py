@@ -26,7 +26,7 @@ class LslDataServer(StoppableThread):
     using pylsl. See https://github.com/sccn/labstreaminglayer/wiki.
 
     In parameters.json, if the fake_data parameter is set to true and the
-    device is set to LSL, this server will be used to mock data. Alternatively,
+    device is set to DSI-24, this server will be used to mock data. Alternatively,
     fake_data can be set to false and this module can be run standalone in its
     own python instance.
 
@@ -181,7 +181,7 @@ def main():
                         help="file containing data to be streamed; "
                         "if missing, random data will be served.")
     parser.add_argument('-m', '--markers', action="store_true", default=False)
-    parser.add_argument('-n', '--name', default='LSL', help='Name of the device spec to mock.')
+    parser.add_argument('-n', '--name', default='DSI-24', help='Name of the device spec to mock.')
     args = parser.parse_args()
 
     if args.filename:

@@ -2,7 +2,7 @@
 import os
 import shutil
 import tempfile
-from typing import Tuple
+from typing import Tuple, Union
 import unittest
 import warnings
 
@@ -17,19 +17,21 @@ from bcipy.helpers.convert import (
     compress,
     convert_to_bdf,
     convert_to_edf,
+    convert_to_mne,
     decompress,
     pyedf_convert,
 )
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write, RawData
 from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
+from bcipy.signal.generator.generator import gen_random_data
 
 from mne.io import read_raw_edf, read_raw_bdf
 
 
 def create_bcipy_session_artifacts(
         write_dir: str,
-        channels: int = 3,
+        channels: Union[int, list] = 3,
         sample_rate: int = 300,
         samples: int = 5000,
         filter_settings: dict = {
@@ -46,7 +48,8 @@ def create_bcipy_session_artifacts(
     This includes a raw data file, trigger file, and a parameters file.
     """
     trg_data = MOCK_TRIGGER_DATA
-    channels = [f'ch{i}' for i in range(channels)]
+    if isinstance(channels, int):
+        channels = [f'ch{i}' for i in range(channels)]
     data = sample_data(ch_names=channels, sample_rate=sample_rate, rows=samples)
     with open(Path(write_dir, TRIGGER_FILENAME), 'w', encoding=DEFAULT_ENCODING) as trg_file:
         trg_file.write(trg_data)
@@ -465,6 +468,104 @@ class TestPyedfconvert(unittest.TestCase):
         for event in events:
             self.assertNotIn('fixation', event)
             self.assertNotIn('prompt', event)
+
+
+class TestMNEConvert(unittest.TestCase):
+    """Test the convert_to_mne function, which converts bcipy RawData into an mne format"""
+
+    def setUp(self):
+        """Set up the test case with a temporary directory and sample data"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.sample_rate = 300
+        self.filter_settings = {
+            'filter_low': 0.5,
+            'filter_high': 30,
+            'filter_order': 5,
+            'notch_filter_frequency': 60,
+            'down_sampling_rate': 3,
+            'static_trigger_offset': 0.0
+        }
+        self.channels = ['timestamp', 'O1', 'O2', 'Pz']
+        self.raw_data = RawData('SampleDevice', self.sample_rate, self.channels)
+        # generate 100 random samples of data
+        for _ in range(0, 100):
+            channel_data = gen_random_data(low=-1000,
+                                           high=1000,
+                                           channel_count=len(self.channels))
+            self.raw_data.append(channel_data)
+
+    def tearDown(self):
+        """Remove the temporary directory and its contents after each test"""
+        shutil.rmtree(self.temp_dir)
+
+    def test_convert_to_mne_defaults(self):
+        """Test the convert_to_mne function with default parameters"""
+        data = convert_to_mne(self.raw_data)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+    def test_convert_to_mne_with_channel_map(self):
+        """Test the convert_to_mne function with channel mapping"""
+        # here we know only three channels are generated, using the channel map let's only use the last one
+        channel_map = [0, 0, 1]
+        data = convert_to_mne(self.raw_data, channel_map=channel_map)
+
+        self.assertTrue(len(data) > 0)
+        self.assertTrue(len(data.ch_names) == 1)  # this is the main assertion!
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+    def test_convert_to_mne_with_channel_types(self):
+        """Test the convert_to_mne function with channel types"""
+        channel_types = ['eeg', 'eeg', 'seeg']
+        data = convert_to_mne(self.raw_data, channel_types=channel_types)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+        self.assertTrue(data.get_channel_types()[2] == 'seeg')
+
+    def test_convert_to_mne_with_transform(self):
+        """Test the convert_to_mne function with a transform"""
+        multiplier = 2
+
+        def transform(x, fs):
+            return x * multiplier, fs
+
+        data = convert_to_mne(self.raw_data, transform=transform)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+        # apply the transform to the first data point and compare to data returned
+        expected_first_data_point = self.raw_data.channel_data[0][0] * multiplier
+        self.assertTrue(data.get_data()[0][0] == expected_first_data_point)
+
+    def test_convert_to_mne_with_mv_conversion(self):
+        """Test the convert_to_mne function with a mv conversion"""
+        data = convert_to_mne(self.raw_data, volts=False)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+        # apply the transform to the first data point and compare to data returned
+        expected_first_data_point = self.raw_data.channel_data[0][0] * 1e-6
+        self.assertTrue(data.get_data()[0][0] == expected_first_data_point)
+
+    def test_convert_to_mne_with_custom_montage(self):
+        """Test the convert_to_mne function with a custom montage"""
+
+        # see https://mne.tools/stable/auto_tutorials/intro/40_sensor_locations.html
+        # for more information on montages and available defaults
+        montage_type = 'biosemi64'
+        data = convert_to_mne(self.raw_data, montage=montage_type)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
 
 
 class TestCompressionSupport(unittest.TestCase):

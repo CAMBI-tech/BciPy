@@ -1,11 +1,13 @@
 from itertools import cycle
-from bcipy.task import Task
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
+from typing import List
+from bcipy.task.paradigm.matrix.calibration import (
+    MatrixCalibrationTask, InquirySchedule, DEFAULT_TEXT_FIXATION, Display,
+    init_calibration_display_task)
 from bcipy.helpers.stimuli import PhotoDiodeStimuli
 
 
-class MatrixTimingVerificationCalibration(Task):
-    """Matrix Calibration Task.
+class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
+    """Matrix Timing Verification Task.
 
     This task is used for verifying display timing by alternating solid and empty boxes. These
         stimuli can be used with a photodiode to ensure accurate presentations.
@@ -21,62 +23,49 @@ class MatrixTimingVerificationCalibration(Task):
     """
     TASK_NAME = 'Matrix Timing Verification Task'
 
-    def __init__(self, win, daq, parameters, file_save):
-        super(MatrixTimingVerificationCalibration, self).__init__()
-        self._task = MatrixCalibrationTask(win, daq, parameters, file_save)
-        self.stimuli = PhotoDiodeStimuli.list()
-        self.create_testing_grid()
-        self._task.matrix.start_opacity = 0
-        self._task.matrix.full_grid_opacity = 0
-        self._task.matrix.grid_stimuli_height = 0.8
-        self._task.generate_stimuli = self.generate_stimuli
+    def init_display(self) -> Display:
+        """Initialize the display"""
+        display = init_calibration_display_task(
+            self.parameters, self.window, self.experiment_clock,
+            symbols_with_photodiode_stim(self.symbol_set))
+        display.start_opacity = 0.0
+        return display
 
-    def create_testing_grid(self):
-        """Create Testing Grid.
-
-        To test timing, we require the photodiode stimuli to flicker at the rate used in the execute method. The middle
-            of the existing grid is replaced with the necessary stimuli.
-        """
-        mid = int(len(self._task.matrix.symbol_set) / 2)
-
-        for i, stim in enumerate(self.stimuli):
-            self._task.matrix.symbol_set[mid + i] = stim
-
-    def generate_stimuli(self):
+    def generate_stimuli(self) -> InquirySchedule:
         """Generates the inquiries to be presented.
-        Returns:
-        --------
-            tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)
         """
         samples, times, colors = [], [], []
-        stimuli = cycle(self.stimuli)
+        [time_target, time_fixation, time_stim] = self.timing
+        stimuli = cycle(PhotoDiodeStimuli.list())
+
+        # advance iterator to start on the solid stim.
+        next(stimuli)
 
         # alternate between solid and empty boxes
-        time_stim = self._task.timing
-        color_stim = self._task.color
+        inq_stim = [PhotoDiodeStimuli.SOLID.value, DEFAULT_TEXT_FIXATION
+                    ] + [next(stimuli) for _ in range(self.stim_length)]
+        inq_times = [time_target, time_fixation
+                     ] + [time_stim] * self.stim_length
+        inq_colors = [self.color[0]] * (self.stim_length + 2)
 
-        inq_len = self._task.stim_length
-        inq_stim = [next(stimuli) for _ in range(inq_len)]
-        inq_times = [time_stim[0] for _ in range(inq_len)]
-        inq_colors = [color_stim[0] for _ in range(inq_len)]
-
-        for _ in range(self._task.stim_number):
+        for _ in range(self.stim_number):
             samples.append(inq_stim)
             times.append(inq_times)
             colors.append(inq_colors)
 
-        return (samples, times, colors)
+        return InquirySchedule(samples, times, colors)
 
-    def execute(self):
-        self.logger.debug(f'Starting {self.name()}!')
-        self._task.execute()
 
-    @classmethod
-    def label(cls):
-        return MatrixTimingVerificationCalibration.TASK_NAME
+def symbols_with_photodiode_stim(symbols: List[str]) -> List[str]:
+    """Stim symbols with the central letters swapped out for Photodiode stim.
+    """
+    mid = int(len(symbols) / 2)
 
-    def name(self):
-        return MatrixTimingVerificationCalibration.TASK_NAME
+    def sym_at_index(sym, index) -> str:
+        if index == mid:
+            return PhotoDiodeStimuli.SOLID.value
+        if index == mid + 1:
+            return PhotoDiodeStimuli.EMPTY.value
+        return sym
+
+    return [sym_at_index(sym, i) for i, sym in enumerate(symbols)]
