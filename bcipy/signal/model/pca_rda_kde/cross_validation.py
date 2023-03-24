@@ -47,8 +47,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
 
             if len(np.unique(fold_y[idx_fold])) != 2:
                 raise Exception(
-                        f'Cannot use {split}-folding in cross_validation '
-                         'or # of folds is inconsistent')
+                    f'Cannot use {split}-folding in cross_validation '
+                    'or # of folds is inconsistent')
 
         for idx_fold in range(k_folds):
             list_valid = idx_fold
