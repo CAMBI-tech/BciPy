@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import numpy as np
-from scipy.signal import butter, filtfilt, iirnotch, sosfilt
+from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt
 
 
 class Notch:
@@ -24,7 +24,7 @@ class Bandpass:
         self.sos = butter(order, [lo, hi], analog=False, btype="band", output="sos")
 
     def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
-        return sosfilt(self.sos, data), fs
+        return sosfiltfilt(self.sos, data), fs
 
 
 def filter_inquiries(inquiries, transform, sample_rate) -> Tuple[np.ndarray, float]:
