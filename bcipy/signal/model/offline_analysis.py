@@ -176,12 +176,13 @@ def offline_analysis(
 
     # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.8)
+        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
         dummy_model = PcaRdaKdeModel(k_folds=k_folds)
         dummy_model.fit(train_data, train_labels)
         probs = dummy_model.predict_proba(test_data)
         preds = probs.argmax(-1)
-        log.info(f"Balanced acc with 80/20 split: {balanced_accuracy_score(test_labels, preds)}")
+        score = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {score}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     figure_handles = visualize_erp(
