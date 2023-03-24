@@ -27,6 +27,7 @@ import mne
 
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
+DEFAULT_TEXT_FIXATION = '+'
 
 
 class StimuliOrder(Enum):
@@ -491,7 +492,7 @@ def calibration_inquiry_generator(
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)): scheduled inquiries
     """
-
+    assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
     target_indexes = []
     no_target = None
 
@@ -723,7 +724,7 @@ def get_fixation(is_txt: bool) -> str:
     Return the correct stimulus fixation given the type (text or image).
     """
     if is_txt:
-        return '+'
+        return DEFAULT_TEXT_FIXATION
     else:
         return DEFAULT_FIXATION_PATH
 

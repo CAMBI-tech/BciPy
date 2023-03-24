@@ -84,7 +84,7 @@ class CopyPhraseWrapper:
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
                  is_txt_stim: bool = True,
-                 device_name: str = 'LSL',
+                 device_name: str = 'DSI-24',
                  device_channels: List[str] = None,
                  decision_threshold: float = 0.8,
                  backspace_prob: float = 0.05,

@@ -131,10 +131,10 @@ class StimuliProperties:
             stim_font: str,
             stim_pos: Tuple[float, float],
             stim_height: float,
-            stim_inquiry: List[str],
-            stim_colors: List[str],
-            stim_timing: List[float],
-            is_txt_stim: bool,
+            stim_inquiry: List[str] = None,
+            stim_colors: List[str] = None,
+            stim_timing: List[float] = None,
+            is_txt_stim: bool = True,
             prompt_time: float = None):
         """Initialize Stimuli Parameters.
 
@@ -145,14 +145,14 @@ class StimuliProperties:
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
-        prompt_time(float): Time to display target prompt for at the beggining of inquiry
+        prompt_time(float): Time to display target prompt for at the beginning of inquiry
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
         self.stim_height = stim_height
-        self.stim_inquiry = stim_inquiry
-        self.stim_colors = stim_colors
-        self.stim_timing = stim_timing
+        self.stim_inquiry = stim_inquiry or []
+        self.stim_colors = stim_colors or []
+        self.stim_timing = stim_timing or []
         self.is_txt_stim = is_txt_stim
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
@@ -291,6 +291,7 @@ class PreviewInquiryProperties:
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+        preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
             0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.

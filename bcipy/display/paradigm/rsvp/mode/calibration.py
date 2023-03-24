@@ -13,6 +13,7 @@ class CalibrationDisplay(RSVPDisplay):
                  task_display,
                  info,
                  trigger_type='image',
+                 preview_inquiry=None,
                  space_char=SPACE_CHAR,
                  full_screen=False):
 
@@ -24,5 +25,6 @@ class CalibrationDisplay(RSVPDisplay):
             task_display,
             info,
             trigger_type=trigger_type,
+            preview_inquiry=preview_inquiry,
             space_char=space_char,
             full_screen=full_screen)

@@ -22,10 +22,9 @@ class TestDeviceSpecs(unittest.TestCase):
         backwards compatibility."""
         supported = devices.preconfigured_devices()
         self.assertTrue(len(supported.keys()) > 0)
-        self.assertTrue('LSL' in supported.keys())
-        self.assertTrue('DSI' in supported.keys())
+        self.assertTrue('DSI-24' in supported.keys())
 
-        dsi = supported['DSI']
+        dsi = supported['DSI-24']
         self.assertEqual('EEG', dsi.content_type)
 
     def test_load_from_config(self):
@@ -120,8 +119,8 @@ class TestDeviceSpecs(unittest.TestCase):
 
     def test_search_by_name(self):
         """Should be able to find a supported device by name."""
-        dsi_device = devices.preconfigured_device('DSI')
-        self.assertEqual('DSI', dsi_device.name)
+        dsi_device = devices.preconfigured_device('DSI-24')
+        self.assertEqual('DSI-24', dsi_device.name)
 
     def test_device_spec_defaults(self):
         """DeviceSpec should require minimal information with default values."""
