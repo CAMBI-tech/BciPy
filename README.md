@@ -18,7 +18,9 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python 3.7 or 3.8. All other dependencies defined in the requirements.txt.
+This project requires Python 3.7, 3.8 or 3.9. All other dependencies defined in the requirements.txt.
+
+*Note*: if you're using Python 3.9, you will need to install pyWinhook manually. See [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pywinhook) for the appropriate wheel file (`pyWinhook‑1.6.2‑cp39‑cp39‑win_amd64.whl`). Then run `pip install <path_to_wheel_file>`. We also include the 64-bit wheel file in the `.bcipy/downloads/` directory.
 
 
 ## Installation
@@ -26,14 +28,12 @@ This project requires Python 3.7 or 3.8. All other dependencies defined in the r
 
 #### BciPy Setup
 
-In order to run BciPy on your computer, first install **Python 3** [from here.](https://www.python.org/downloads/)
+In order to run BciPy on your computer, first install **Python 3** [from here.](https://www.python.org/downloads/). We currently support Python 3.7, 3.8, and 3.9. If you are using a Mac, you may need to install XCode and enable command line tools. `xcode-select --install`. 
 
 To use all the goodies locally (including the GUI and demo scripts)
 1. Git clone https://github.com/BciPy/BciPy.git
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
-4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
-5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we use in this repository!)
 
 If wanting the latest version from PyPi:
 1. `pip install bcipy`

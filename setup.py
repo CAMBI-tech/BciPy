@@ -12,7 +12,7 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.6,<3.9'
+REQUIRES_PYTHON = '>3.6,<3.10'
 
 VERSION = '2.0.1rc3'
 
@@ -102,6 +102,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     # $ setup.py publish support.
     cmdclass={
