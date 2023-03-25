@@ -169,6 +169,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
             units='height',
             stimuli_position=self.rsvp.stimuli_pos,
             mode='textbox',
+            align_text='left',
             wrap_width=any()
         ).thenReturn(stim_mock)
 

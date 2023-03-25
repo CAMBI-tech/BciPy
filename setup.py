@@ -1,6 +1,7 @@
 # Modified from https://github.com/kennethreitz/setup.py
 import os
 import sys
+import platform
 from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
@@ -13,12 +14,15 @@ EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '>3.6,<3.9'
 
-VERSION = '2.0.1rc2'
-
+VERSION = '2.0.1rc3'
 
 # What packages are required for this module to be executed?
-with open('requirements.txt', 'r', encoding='utf-8') as f:
-    REQUIRED = f.read().splitlines()
+if platform.system() == 'Linux':
+    with open('requirements-linux.txt', 'r', encoding='utf-8') as f:
+        REQUIRED = f.read().splitlines()
+else:
+    with open('requirements.txt', 'r', encoding='utf-8') as f:
+        REQUIRED = f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
