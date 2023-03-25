@@ -68,15 +68,6 @@ class CausalLanguageModel(LanguageModel):
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
 
-    def _convert_space(self, s: str) -> str:
-        ret = ""
-        for ch in s:
-            if ch == ' ':
-                ret += SPACE_CHAR
-            else:
-                ret += ch
-        return ret
-
     def _build_vocab(self) -> None:
         """
         Build a vocabulary table mapping token index to word strings
@@ -104,7 +95,7 @@ class CausalLanguageModel(LanguageModel):
                 if length > self.longest_token:
                     self.longest_token = length
                 for j in range(length):
-                    key = self._convert_space(word_lower[0:j + 1])
+                    key = word_lower[0:j + 1].replace(' ', SPACE_CHAR)
                     if key not in self.vocab:
                         self.vocab[key] = []
                     self.vocab[key] += i,
@@ -117,7 +108,6 @@ class CausalLanguageModel(LanguageModel):
                 self.left_context = "</s>"
         # Get token id(s) for the left context we condition all sentences on
         self.left_context_tokens = self._encode(self.left_context)
-        # print(f"left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
@@ -182,7 +172,6 @@ class CausalLanguageModel(LanguageModel):
 
         while len(valid) > 0:
             # Only work on the top hypotheses from the last round of extension
-            # current = sorted(valid, key=lambda x: x[1], reverse=True)
             current = list(valid)
 
             # Add new extended hypotheses to this list
@@ -281,12 +270,6 @@ class CausalLanguageModel(LanguageModel):
 
         next_char_pred[BACKSPACE_CHAR] = 0.0
 
-        # width = 120
-        # print("             " + "_" * width)
-        # for i in range(len(self.symbol_set_lower)):
-        #     print(f"{self.symbol_set_lower[i]} = {char_probs[i]:4.2e} " + "*" * int(char_probs[i] * width))
-        # print("             " + "_" * width)
-
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
 
     def update(self) -> None:
@@ -307,9 +290,6 @@ class CausalLanguageModel(LanguageModel):
         except BaseException:
             raise InvalidLanguageModelException(
                 f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
-
-#        print(torch.backends.quantized.supported_engines)
-#        self.model = quantize_dynamic(self.model, {torch.nn.Linear}, dtype=torch.qint8)
 
         self.model.eval()
 

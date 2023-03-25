@@ -13,10 +13,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # weights = []
-    # for i in range(len(args.files)):
-    #     weights.append([])
-
     step = 1.0 / args.step
     possible_weights = np.round(list(np.arange(0, 1.0 + step, step)), 5)
     perms = list(permutations(possible_weights, len(args.files)))
@@ -77,8 +73,5 @@ if __name__ == "__main__":
             for weight, ppl in zip(weights, overall_ppl_arr):
                 print(f"{weight}\t\t{ppl:.3f}")
 
-            print()
-            print(f"BEST: {weights[np.argmin(overall_ppl_arr)]} {np.min(overall_ppl_arr):.3f}")
+            print(f"\nBEST: {weights[np.argmin(overall_ppl_arr)]} {np.min(overall_ppl_arr):.3f}")
             break
-        else:
-            continue

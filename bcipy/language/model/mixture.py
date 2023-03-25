@@ -104,9 +104,7 @@ class MixtureLanguageModel(LanguageModel):
         pred_list = list()
 
         # Generate predictions from each component language model
-        for model in self.models:
-            pred = model.predict(evidence)
-            pred_list.append(dict(pred))
+        pred_list = [dict(model.predict(evidence)) for model in self.models]
 
         # Mix the component models
         next_char_pred = MixtureLanguageModel.interpolate_language_models(pred_list, self.lm_weights)
