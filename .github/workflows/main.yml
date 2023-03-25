@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -72,38 +72,14 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r dev_requirements.txt
-        pip install -e .
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 bcipy
-    - name: Unit test
-      if: always()
-      run: |
-        coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
-
-  build-windows:
-
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install dependencies for python3.9
+      if: matrix.python-version == 3.9
       run: |
         python -m pip install --upgrade pip
         pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl 
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
         pip install -r dev_requirements.txt
         pip install -e .
     - name: Lint with flake8
