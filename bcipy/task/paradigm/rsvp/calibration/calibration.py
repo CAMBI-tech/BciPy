@@ -13,7 +13,7 @@ from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_in
                                    get_task_info)
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.language.main import alphabet
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
 from bcipy.task import Task
 

@@ -5,9 +5,9 @@ import unittest
 import os
 
 from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
-from bcipy.language.main import alphabet
+from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
 from bcipy.language.model.unigram import UnigramLanguageModel
-from bcipy.language.main import BACKSPACE_CHAR, ResponseType
+from bcipy.language.main import ResponseType
 
 
 @pytest.mark.slow

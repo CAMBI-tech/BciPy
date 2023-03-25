@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Optional
 import numpy as np
 
 from bcipy.helpers.stimuli import InquirySchedule, inq_generator, StimuliOrder
-from bcipy.language.main import SPACE_CHAR, BACKSPACE_CHAR
+from bcipy.helpers.symbols import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.task.control.query import RandomStimuliAgent, StimuliAgent
 from bcipy.task.control.criteria import CriteriaEvaluator
 

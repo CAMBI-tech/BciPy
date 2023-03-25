@@ -14,7 +14,7 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
 from bcipy.task import Task
-from bcipy.language.main import alphabet
+from bcipy.helpers.symbols import alphabet
 
 
 class MatrixCalibrationTask(Task):

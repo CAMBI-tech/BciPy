@@ -6,7 +6,7 @@ from psychopy import core, visual, event
 
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.task import get_key_press
-from bcipy.language.main import SPACE_CHAR
+from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.display import (
     BCIPY_LOGO_PATH,
     Display,

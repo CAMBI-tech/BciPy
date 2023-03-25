@@ -1,5 +1,5 @@
 from bcipy.language.model.mixture import MixtureLanguageModel
-from bcipy.language.main import alphabet
+from bcipy.helpers.symbols import alphabet
 from bcipy.language.main import ResponseType
 
 

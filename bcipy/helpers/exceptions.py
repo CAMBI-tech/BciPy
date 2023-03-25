@@ -84,6 +84,7 @@ class InvalidLanguageModelException(BciPyCoreException):
     Thrown when attempting to load a language model from an invalid path"""
     ...
 
+
 class KenLMInstallationException(BciPyCoreException):
     """KenLM Installation Exception.
 

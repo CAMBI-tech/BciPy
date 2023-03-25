@@ -5,11 +5,9 @@ import logging
 from psychopy import visual, core
 
 from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
-from bcipy.language.main import SPACE_CHAR
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-from bcipy.language.main import alphabet
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.triggers import _calibration_trigger
 
 
 class SymbolDuration(NamedTuple):

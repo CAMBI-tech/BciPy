@@ -5,7 +5,7 @@ from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
-from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 import argparse
 import numpy as np
 import sys

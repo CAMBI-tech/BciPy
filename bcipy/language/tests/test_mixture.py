@@ -6,9 +6,9 @@ import os
 from operator import itemgetter
 
 from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
-from bcipy.language.main import alphabet
+from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.mixture import MixtureLanguageModel
-from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, ResponseType
+from bcipy.language.main import ResponseType
 
 
 @pytest.mark.slow

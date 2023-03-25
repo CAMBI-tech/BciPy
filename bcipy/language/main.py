@@ -2,46 +2,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
-from string import ascii_uppercase
-
-import os
 
 from bcipy.helpers.exceptions import UnsupportedResponseType
 from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.symbols import DEFAULT_SYMBOL_SET
 from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
-
-SPACE_CHAR = '_'
-BACKSPACE_CHAR = '<'
-
-
-def alphabet(parameters=None, include_path=True):
-    """Alphabet.
-
-    Function used to standardize the symbols we use as alphabet.
-
-    Returns
-    -------
-        array of letters.
-    """
-    if parameters and not parameters['is_txt_stim']:
-        # construct an array of paths to images
-        path = parameters['path_to_presentation_images']
-        stimulus_array = []
-        for stimulus_filename in sorted(os.listdir(path)):
-            # PLUS.png is reserved for the fixation symbol
-            if stimulus_filename.endswith(
-                    '.png') and not stimulus_filename.endswith('PLUS.png'):
-                if include_path:
-                    img = os.path.join(path, stimulus_filename)
-                else:
-                    img = os.path.splitext(stimulus_filename)[0]
-                stimulus_array.append(img)
-        return stimulus_array
-
-    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
-
-
-DEFAULT_SYMBOL_SET = alphabet()
 
 
 class ResponseType(Enum):

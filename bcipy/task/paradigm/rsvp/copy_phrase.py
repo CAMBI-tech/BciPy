@@ -21,7 +21,7 @@ from bcipy.helpers.task import (construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
-from bcipy.language.main import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
