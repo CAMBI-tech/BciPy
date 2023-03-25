@@ -16,13 +16,14 @@ REQUIRES_PYTHON = '>3.6,<3.10'
 
 VERSION = '2.0.1rc3'
 
+REQUIRED = []
+
 # What packages are required for this module to be executed?
 if platform.system() == 'Windows' or platform.system() == 'Darwin':
     with open('requirements-winmac.txt', 'r', encoding='utf-8') as f:
-        REQUIRED = f.read().splitlines()
-else:
-    with open('requirements.txt', 'r', encoding='utf-8') as f:
-        REQUIRED = f.read().splitlines()
+        REQUIRED += f.read().splitlines()
+with open('requirements.txt', 'r', encoding='utf-8') as f:
+    REQUIRED += f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------

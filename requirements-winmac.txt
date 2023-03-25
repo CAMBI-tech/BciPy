@@ -1,2 +1,1 @@
 WxPython==4.1.1
--r requirements.txt
