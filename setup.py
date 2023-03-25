@@ -12,16 +12,16 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.7,<3.10'
+REQUIRES_PYTHON = '>3.6,<3.10'
 
 VERSION = '2.0.1rc3'
 
 # What packages are required for this module to be executed?
-if platform.system() == 'Darwin' or platform.system() == 'Windows':
-    with open('requirements.txt', 'r', encoding='utf-8') as f:
+if platform.system() == 'Windows' or platform.system() == 'Darwin':
+    with open('requirements-winmac.txt', 'r', encoding='utf-8') as f:
         REQUIRED = f.read().splitlines()
 else:
-    with open('requirements-linux.txt', 'r', encoding='utf-8') as f:
+    with open('requirements.txt', 'r', encoding='utf-8') as f:
         REQUIRED = f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
@@ -100,7 +100,6 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
