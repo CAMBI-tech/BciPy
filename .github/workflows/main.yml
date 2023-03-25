@@ -36,6 +36,7 @@ jobs:
         sudo apt-get install libsndfile*
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
+        pip install attrdict3
         pip install -r dev_requirements.txt
         pip install -e .
     - name: Lint with flake8
