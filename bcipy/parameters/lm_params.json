@@ -1,67 +1,47 @@
 {
-  "kenlm_model": {
-    "value": "lm_dec19_char_large_12gram.kenlm",
-    "section": "lm_config",
-    "readableName": "KenLM Model File",
-    "helpTip": "Name of the pretrained model file",
-    "recommended_values": [
-      "lm_dec19_char_large_12gram.kenlm"
-    ],
-    "type": "filepath"
+  "kenlm": {
+    "model_file": {
+      "description": "Name of the pretrained model file",
+      "value": "lm_dec19_char_large_12gram.kenlm",
+      "type": "filepath"
+    }
   },
-  "causal_model_name": {
-    "value": "facebook/opt-125m",
-    "section": "lm_config",
-    "readableName": "Causal Model Name",
-    "helpTip": "Name of the HuggingFace model to load. Required for the Causal model. Default: facebook/opt-125m",
-    "recommended_values": [
-      "facebook/opt-125m",
-      "gpt2",
-      "distilgpt2"
-    ],
-    "type": "str"
-  },
-  "causal_model_path": {
-    "value": "",
-    "section": "lm_config",
-    "readableName": "Language Model Name",
-    "helpTip": "Pretrained model path, relative to causal.py directory. Leave blank if using HuggingFace model",
-    "recommended_values": [
-      "out_subtitle_distil_packed_batch4_fixed_pack_prob0.80/"
-    ],
-    "type": "directorypath"
+  "causal": {
+    "model_name": {
+      "description": "Name of the HuggingFace model to load. Required for the Causal model.",
+      "value": "facebook/opt-125m",
+      "type": "str"
+    },
+    "model_path": {
+      "description": "Pretrained model path, relative to causal.py directory. Blank if using HuggingFace model",
+      "value": "",
+      "type": "directorypath"
+    }
   },  
-  "mixture_types": {
-    "value": "CAUSAL, KENLM",
-    "section": "lm_config",
-    "readableName": "Mixture Language Model Types",
-    "helpTip": "Defines the types of models to be used by the mixture model. Default: CAUSAL, KENLM",
-    "recommended_values": [
-      "CAUSAL, KENLM",
-      "CAUSAL, KENLM"
-    ],
-    "type": "List[str]"
-  },
-  "mixture_weights": {
-    "value": "0.3, 0.7",
-    "section": "bci_config",
-    "readableName": "Mixture Language Model Weights",
-    "helpTip": "Defines the weights of models to be used by the mixture model. Must sum to 1. Default: 0.3, 0.7",
-    "recommended_values": [
-      "0.3, 0.7",
-      "0.17, 0.83"
-    ],
-    "type": "List[float]"
-  },
-  "mixture_params": {
-    "value": "{}, {}",
-    "section": "bci_config",
-    "readableName": "Mixture Language Model Parameters",
-    "helpTip": "Defines the extra parameters of models to be used by the mixture model. Default: None",
-    "recommended_values": [
-      "{}, {}",
-      "{'lang_model_name': 'gpt2'}, {}"
-    ],
-    "type": "List[Dict[str, str]]"
+  "mixture": {
+    "model_types": {
+      "description": "Defines the types of models to be used by the mixture model.",
+      "value": [
+        "CAUSAL",
+        "KENLM"
+      ],
+      "type": "List[str]"
+    },
+    "model_weights": {
+      "description": "Defines the weights of models to be used by the mixture model. Must sum to 1.",
+      "value": [
+        0.3, 
+        0.7
+      ],
+      "type": "List[float]"
+    },
+    "model_params": {
+      "description": "Defines the extra parameters of models to be used by the mixture model.",
+      "value": [
+        {}, 
+        {}
+      ],
+      "type": "List[Dict[str, str]]"
+    }
   }
 }

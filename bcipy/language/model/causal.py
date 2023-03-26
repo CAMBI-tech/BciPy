@@ -46,14 +46,17 @@ class CausalLanguageModel(LanguageModel):
         self.longest_token = 0
         self.index_to_word = {}
         self.index_to_word_lower = {}
-        self.model_name = lang_model_name or self.parameters.get("causal_model_name")
         self.symbol_set_lower = None
         self.device = lm_device
         self.left_context = lm_left_context
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
-        local_model_path = lm_path or self.parameters.get("causal_model_path")
+
+        causal_params = self.parameters['causal']
+        self.model_name = lang_model_name or causal_params['model_name']['value']
+
+        local_model_path = lm_path or causal_params['model_path']['value']
         self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
         # parameters for search

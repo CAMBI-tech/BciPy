@@ -26,6 +26,26 @@ class MixtureLanguageModel(LanguageModel):
         """Returns available language models indexed by name."""
         return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
+    @staticmethod
+    def validate_parameters(types: List[str], weights: List[float], params: List[Dict[str, str]]):
+        if params is not None:
+            if (types is None) or (len(types) != len(params)):
+                raise InvalidLanguageModelException("Length of parameters does not match length of types")
+
+        if weights is not None:
+            if (types is None) or (len(types) != len(weights)):
+                raise InvalidLanguageModelException("Length of weights does not match length of types")
+            if not isclose(sum(weights), 1.0, abs_tol=1e-05):
+                raise InvalidLanguageModelException("Weights do not sum to 1")
+
+        if types is not None:
+            if weights is None:
+                raise InvalidLanguageModelException("Model weights not provided")
+            if params is None:
+                raise InvalidLanguageModelException("Model parameters not provided")
+            if not all(x in MixtureLanguageModel.supported_lm_types for x in types):
+                raise InvalidLanguageModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
+
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
@@ -42,31 +62,19 @@ class MixtureLanguageModel(LanguageModel):
             lm_params - list of dictionaries to pass as parameters for each model's instantiation
         """
 
-        if lm_params is not None:
-            if (lm_types is None) or (len(lm_types) != len(lm_params)):
-                raise InvalidLanguageModelException("Length of parameters does not match length of types")
-
-        if lm_weights is not None:
-            if (lm_types is None) or (len(lm_types) != len(lm_weights)):
-                raise InvalidLanguageModelException("Length of weights does not match length of types")
-            if not isclose(sum(lm_weights), 1.0, abs_tol=1e-05):
-                raise InvalidLanguageModelException("Weights do not sum to 1")
-
-        if lm_types is not None:
-            if lm_weights is None:
-                raise InvalidLanguageModelException("Model weights not provided")
-            if lm_params is None:
-                raise InvalidLanguageModelException("Model parameters not provided")
-            if not all(x in MixtureLanguageModel.supported_lm_types for x in lm_types):
-                raise InvalidLanguageModelException(f"Supported model types: {MixtureLanguageModel.supported_lm_types}")
+        MixtureLanguageModel.validate_parameters(lm_types, lm_weights, lm_params)
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.models = list()
         self.response_type = response_type
         self.symbol_set = symbol_set
-        self.lm_types = lm_types or self.parameters.get("mixture_types")
-        self.lm_weights = lm_weights or self.parameters.get("mixture_weights")
-        self.lm_params = lm_params or self.parameters.get("mixture_params")
+
+        mixture_params = self.parameters['mixture']
+        self.lm_types = lm_types or mixture_params['model_types']['value']
+        self.lm_weights = lm_weights or mixture_params['model_weights']['value']
+        self.lm_params = lm_params or mixture_params['model_params']['value']
+
+        MixtureLanguageModel.validate_parameters(self.lm_types, self.lm_weights, self.lm_params)
 
         self.load()
 

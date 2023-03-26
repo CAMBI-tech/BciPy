@@ -19,7 +19,8 @@ class KenLMLanguageModel(LanguageModel):
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
-        kenlm_model = self.parameters.get("kenlm_model")
+        kenlm_params = self.parameters['kenlm']
+        kenlm_model = kenlm_params['model_file']['value']
         self.lm_path = lm_path or f"{LM_PATH}/{kenlm_model}"
         self.cache = {}
 
