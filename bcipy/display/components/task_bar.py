@@ -36,7 +36,8 @@ class TaskBar:
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        return self.height + 0.05
+        padding = 0.05  # determined by trial and error
+        return self.height + padding
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
@@ -143,7 +144,10 @@ class CopyPhraseTaskBar(TaskBar):
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        return (self.height * 2) + 0.05
+        padding = 0.05  # determined by trial and error
+        # height is doubled to account for task_text and spelled_text being on
+        # separate lines.
+        return (self.height * 2) + padding
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""

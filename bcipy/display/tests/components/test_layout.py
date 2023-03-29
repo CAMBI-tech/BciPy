@@ -50,6 +50,36 @@ class TestLayout(unittest.TestCase):
                         bottom=-1.0)
         self.assertEqual((0.0, 0.0), layout.center)
 
+    def test_invariants(self):
+        """Test invariant checks"""
+        with self.assertRaises(AssertionError, msg="Left prop out of range"):
+            Layout(parent=self.container,
+                   left=-1.1,
+                   top=1.0,
+                   right=1.0,
+                   bottom=-1.0)
+
+        with self.assertRaises(AssertionError, msg="Right prop out of range"):
+            Layout(parent=self.container,
+                   left=-1.0,
+                   top=1.0,
+                   right=1.1,
+                   bottom=-1.0)
+
+        with self.assertRaises(AssertionError, msg="Top prop out of range"):
+            Layout(parent=self.container,
+                   left=-1.0,
+                   top=1.1,
+                   right=1.0,
+                   bottom=-1.0)
+
+        with self.assertRaises(AssertionError, msg="Bottom prop out of range"):
+            Layout(parent=self.container,
+                   left=-1.0,
+                   top=1.0,
+                   right=1.0,
+                   bottom=-1.1)
+
 
 if __name__ == '__main__':
     unittest.main()
