@@ -1,4 +1,3 @@
-# Modified from https://github.com/kennethreitz/setup.py
 import os
 import sys
 import platform
@@ -12,9 +11,9 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.6,<3.10'
+REQUIRES_PYTHON = '>3.7,<3.10'
 
-VERSION = '2.0.1rc3'
+VERSION = '2.0.0rc3'
 
 REQUIRED = []
 
@@ -38,7 +37,10 @@ about = {'__version__': VERSION}
 
 
 class UploadCommand(Command):
-    """Support setup.py upload."""
+    """Support setup.py upload.
+    
+    Modified from https://github.com/kennethreitz/setup.py
+    """
 
     description = 'Build and publish the package.'
     user_options = []
