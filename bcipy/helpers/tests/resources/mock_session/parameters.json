@@ -648,7 +648,7 @@
     "value": "MIXTURE",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: UNIFORM",
+    "helpTip": "Specifies which language model to use. Default: MIXTURE",
     "recommended_values": [
       "UNIFORM",
       "CAUSAL",
