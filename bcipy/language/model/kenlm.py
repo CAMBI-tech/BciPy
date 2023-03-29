@@ -22,7 +22,6 @@ class KenLMLanguageModel(LanguageModel):
         kenlm_params = self.parameters['kenlm']
         kenlm_model = kenlm_params['model_file']['value']
         self.lm_path = lm_path or f"{LM_PATH}/{kenlm_model}"
-        self.cache = {}
 
         self.load()
 
@@ -51,10 +50,6 @@ class KenLMLanguageModel(LanguageModel):
             if ch == SPACE_CHAR:
                 context[i] = "<sp>"
 
-        # cache_state = self.check_cache(evidence_str)
-
-        # if cache_state is None:
-
         self.model.BeginSentenceWrite(self.state)
 
         # Update the state one token at a time based on evidence, alternate states
@@ -66,16 +61,11 @@ class KenLMLanguageModel(LanguageModel):
 
         next_char_pred = None
 
-        # Generate the probability distribution based on the final state, save state to cache
+        # Generate the probability distribution based on the final state
         if len(context) % 2 == 0:
             next_char_pred = self.prob_dist(self.state)
-            self.cache[evidence_str] = self.state
         else:
             next_char_pred = self.prob_dist(self.state2)
-            self.cache[evidence_str] = self.state2
-
-        # else:
-            # next_char_pred = self.prob_dist(cache_state)
 
         return next_char_pred
 
@@ -145,30 +135,3 @@ class KenLMLanguageModel(LanguageModel):
             next_char_pred[char] /= sum
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
-
-    def clear_cache(self):
-        """Clear the internal cache of states"""
-
-        self.cache = {}
-
-    def check_cache(self, evidence_str: str) -> kenlm.State:
-        if evidence_str in self.cache.keys():
-            return self.cache[evidence_str]
-
-        if evidence_str[:-1] in self.cache.keys():
-            temp_state = self.cache[evidence_str[:-1]]
-            new_state = kenlm.State()
-            self.model.BaseScore(temp_state, evidence_str[-1], new_state)
-            self.cache[evidence_str] = new_state
-            return new_state
-
-        arr = [evidence_str[:-1] == x[1:] for x in self.cache.keys()]
-        if any(arr) and len(evidence_str) >= 11:
-
-            temp_state = list(self.cache.values())[arr.index(True)]
-            new_state = kenlm.State()
-            self.model.BaseScore(temp_state, evidence_str[-1], new_state)
-            self.cache[evidence_str] = new_state
-            return new_state
-
-        return None
