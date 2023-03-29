@@ -8,7 +8,7 @@ try:
     import kenlm
 except BaseException:
     raise KenLMInstallationException(
-        "Please install the requisite kenlm package:\n'pip install kenlm --global-option=\"--max_order=12\"")
+        "Please install the requisite kenlm package:\n'pip install kenlm==0.1 --global-option=\"--max_order=12\"")
 import numpy as np
 
 

@@ -34,6 +34,7 @@ To use all the goodies locally (including the GUI and demo scripts)
 3. Run `pip install -e .`
 4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
 5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we use in this repository!)
+6. To use the KenLMLanguageModel class, you must manually install the kenlm package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
 
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
