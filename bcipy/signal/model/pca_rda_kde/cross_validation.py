@@ -41,14 +41,14 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
     fold_x, fold_y = [], []
     sc_h, y_valid_h = [], []
     if split == 'uniform':
-        for idx_fold in range(k_folds + 1):
-            fold_x.append(x[:, int(idx_fold * fold_len):int(
-                (idx_fold + 1) * fold_len), :])
-            fold_y.append(y[int(idx_fold * fold_len):int((idx_fold + 1) *
-                                                         fold_len)])
-            if len(np.unique(fold_y[idx_fold])) == 1:
-                raise Exception('Cannot use {}-folding in cross_validation '
-                                'or # of folds is inconsistent'.format(split))
+        for idx_fold in range(k_folds):
+            fold_x.append(x[:, int(idx_fold * fold_len):int((idx_fold + 1) * fold_len), :])
+            fold_y.append(y[int(idx_fold * fold_len):int((idx_fold + 1) * fold_len)])
+
+            if len(np.unique(fold_y[idx_fold])) != 2:
+                raise Exception(
+                    f'Cannot use {split}-folding in cross_validation '
+                    'or # of folds is inconsistent')
 
         for idx_fold in range(k_folds):
             list_valid = idx_fold
