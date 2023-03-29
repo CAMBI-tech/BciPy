@@ -11,13 +11,10 @@ info = InformationProperties(
     info_font=['Consolas'],
     info_text=['VEP Display Demo'],
 )
-task_display = TaskDisplayProperties(
-    task_color=['White'],
-    task_pos=(-.8, .85),
-    task_font='Consolas',
-    task_height=.1,
-    task_text='1/4'
-)
+task_display = TaskDisplayProperties(colors=['White'],
+                                     font='Consolas',
+                                     height=.1,
+                                     text='1/4')
 
 task_text = ['1/4', '2/4', '3/4', '4/4']
 task_color = [['white'], ['white'], ['white'], ['white']]

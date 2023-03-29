@@ -6,8 +6,9 @@ prior to integration.
 from psychopy import core
 
 from bcipy.display import (init_display_window, InformationProperties,
-                           StimuliProperties, TaskDisplayProperties)
+                           StimuliProperties)
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 
 info = InformationProperties(
     info_color=['White'],
@@ -17,11 +18,6 @@ info = InformationProperties(
     info_text=['Matrix Copy Phrase Demo'],
 )
 task_height = 0.1
-task_display = TaskDisplayProperties(task_color=['White'],
-                                     task_pos=(0, 1 - (2 * task_height)),
-                                     task_font='Arial',
-                                     task_height=.1,
-                                     task_text='COPY_PHRASE')
 
 inter_stim_buffer = .5
 
@@ -52,7 +48,7 @@ color_sti = [[
 
 timing_sti = [[2] + [0.25] * 10] * 4
 
-task_text = ['COPY_PHA', 'COPY_PH']
+spelled_text = ['COPY_PHA', 'COPY_PH']
 task_color = [['white'] * 5 + ['green'] * 2 + ['red'],
               ['white'] * 5 + ['green'] * 2]
 
@@ -70,19 +66,24 @@ frameRate = win.getActualFrameRate()
 
 print(frameRate)
 
+task_bar = CopyPhraseTaskBar(win,
+                             task_text='COPY_PHRASE',
+                             spelled_text='COPY_PHA',
+                             colors=['white', 'green'],
+                             font='Menlo')
+
 display = MatrixDisplay(win,
                         experiment_clock,
                         stim_properties,
-                        task_display,
+                        task_bar,
                         info,
                         should_prompt_target=False)
 
 counter = 0
 
-for idx_o in range(len(task_text)):
+for idx_o in range(len(spelled_text)):
 
-    display.update_task_state(text=task_text[idx_o],
-                              color_list=task_color[idx_o])
+    display.update_task_bar(text=spelled_text[idx_o])
     display.draw_static()
     win.flip()
 
@@ -96,8 +97,6 @@ for idx_o in range(len(task_text)):
         core.wait(inter_stim_buffer)
         counter += 1
 
-    display.update_task_state(text=f"Selected: {decisions[idx_o]}",
-                              color_list=['green'])
     display.draw_static()
     win.flip()
     core.wait(2.0)
