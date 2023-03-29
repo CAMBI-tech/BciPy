@@ -1,8 +1,9 @@
 """Demo Matrix Display functionality related to Calibration task logic."""
 # pylint: disable=invalid-name
 from psychopy import core
-from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties
-from bcipy.display.paradigm.matrix import MatrixDisplay
+from bcipy.display import InformationProperties, StimuliProperties
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display.components.task_bar import CalibrationTaskBar
 
 from bcipy.display import init_display_window
 
@@ -13,11 +14,7 @@ info = InformationProperties(
     info_font=['Arial'],
     info_text=['Matrix Calibration Demo'],
 )
-task_display = TaskDisplayProperties(task_color=['white'],
-                                     task_pos=(-.8, .85),
-                                     task_font='Arial',
-                                     task_height=.1,
-                                     task_text='1/100')
+
 stim_properties = StimuliProperties(stim_font='Arial',
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.1,
@@ -36,8 +33,12 @@ experiment_clock = core.Clock()
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
-matrix_display = MatrixDisplay(win, experiment_clock, stim_properties,
-                               task_display, info)
+task_bar = CalibrationTaskBar(win, inquiry_count=4, current_index=0, font='Arial')
+matrix_display = MatrixDisplay(win,
+                               experiment_clock,
+                               stim_properties,
+                               task_bar=task_bar,
+                               info=info)
 
 time_target = 2
 time_fixation = 2
@@ -49,27 +50,27 @@ task_buffer = 2
 matrix_display.schedule_to(stimuli=['A', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='1/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['B', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='2/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['C', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='3/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)
 
 matrix_display.schedule_to(stimuli=['<', '+', 'F', '<', 'A', 'B', 'C'],
                            timing=timing,
                            colors=colors)
-matrix_display.update_task_state(text='4/100', color_list=['white'])
+matrix_display.update_task_bar()
 matrix_display.do_inquiry()
 core.wait(task_buffer)

@@ -4,10 +4,11 @@ import logging
 
 from psychopy import visual, core
 
-from bcipy.display import Display, StimuliProperties, TaskDisplayProperties, InformationProperties, BCIPY_LOGO_PATH
+from bcipy.display import Display, StimuliProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.task import alphabet
+from bcipy.display.components.task_bar import TaskBar
 
 
 class SymbolDuration(NamedTuple):
@@ -35,7 +36,7 @@ class MatrixDisplay(Display):
             window: visual.Window,
             experiment_clock: core.Clock,
             stimuli: StimuliProperties,
-            task_display: TaskDisplayProperties,
+            task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
@@ -52,7 +53,7 @@ class MatrixDisplay(Display):
         stimuli(StimuliProperties): attributes used for inquiries
 
         # Task
-        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+        task_bar(TaskBar): used for task tracking. Ex. 1/100
 
         # Info
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
@@ -95,7 +96,7 @@ class MatrixDisplay(Display):
 
         self.experiment_clock = experiment_clock
 
-        self.task = task_display.build_task(self.window)
+        self.task_bar = task_bar
         self.info_text = info.build_info_text(window)
 
         self.stim_registry = self.build_grid()
@@ -310,12 +311,13 @@ class MatrixDisplay(Display):
 
     def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
-        self.task.draw()
+        if self.task_bar:
+            self.task_bar.draw()
 
         for info in self.info_text:
             info.draw()
 
-    def update_task(self, text: str, color_list: List[str], pos: Tuple[float, float]) -> None:
+    def update_task_bar(self, text: str = ''):
         """Update Task.
 
         Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
@@ -326,19 +328,8 @@ class MatrixDisplay(Display):
         color_list: list of the colors for each stimuli
         pos: position of task
         """
-        self.task.text = text
-        self.task.color = color_list[0]
-        self.task.pos = pos
-
-    def update_task_state(self, text: str, color_list: List[str]) -> None:
-        """Update task state.
-
-        Removes letters or appends to the right.
-        Args:
-                text(string): new text for task state
-                color_list(list[string]): list of colors for each stimuli
-        """
-        self.update_task(text=text, color_list=color_list, pos=self.task.pos)
+        if self.task_bar:
+            self.task_bar.update(text)
 
     def _trigger_pulse(self) -> None:
         """Trigger Pulse.
