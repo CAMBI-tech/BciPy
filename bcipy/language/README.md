@@ -12,37 +12,41 @@ The core methods of any `LanguageModel` include:
 
 You may of course define other methods, however all integrated BciPy experiments using your model will require those to be defined!
 
-The pretrained GPT2 language model is saved in [this folder on Google Drive](https://drive.google.com/drive/folders/1pkvwHA8SR7awxf7fj7Ds4FhY6SGxeGtX?usp=sharing). Download the files in the folder and put them in a local directory. Then use the path to the local directory to load the model. (Alternatively, just pass in the model name like "gpt2" as the language model path and the pretrained language model will be downloaded and stored in local cache)
+The language module has the following structure:
+
+> `demo` - Demo scripts utilizing the different models.
+
+> `lms` - The default location for the model resources.
+
+> `model` - The python classes for each LanguageModel subclass. Detailed descriptions of each can be found below.
+
+> `sets` - Different phrase sets that can be used to test the language model classes.
+
+> `tests` - Unit test cases for each language model class.
+
+<!-- The pretrained GPT2 language model is saved in [this folder on Google Drive](https://drive.google.com/drive/folders/1pkvwHA8SR7awxf7fj7Ds4FhY6SGxeGtX?usp=sharing). Download the files in the folder and put them in a local directory. Then use the path to the local directory to load the model. (Alternatively, just pass in the model name like "gpt2" as the language model path and the pretrained language model will be downloaded and stored in local cache) -->
 
 ## Uniform Model
 
-The UniformLanguageModel provides equal probabilities for all symbols in the symbol set. This model is useful for evaluating other aspects of the system, such as EEG signal quality, without strong influence from a language model.
+The UniformLanguageModel provides equal probabilities for all symbols in the symbol set. This model is useful for evaluating other aspects of the system, such as EEG signal quality, without any influence from a language model.
 
-## GPT2 Model
+## KenLM Model
+The KenLMLanguageModel utilizes a pretrained n-gram language model to generate probabilities for all symbols in the symbol set. N-gram models use frequencies of different character sequences to generate their predictions. Models trained on AAC-like data can be found [here](https://imagineville.org/software/lm/dec19_char/). For faster load times, it is recommended to use the binary models located at the bottom of the page. The default parameters file utilizes `lm_dec19_char_large_12gram.kenlm`.
 
-The GPT2LanguageModel utilizes Huggingface's pretrained GPT2 language model and the beam search algorithm to generate probabilities for all symbols in the symbol set. This is the model we are currently using to incorporate language model predictions into BciPy experiments.
+For models that import the kenlm module, this must be manually installed using `pip install kenlm==0.1 --global-option="max_order=12"`.
 
-For the GPT2 model, byte-pair encoding (BPE) is used for tokenization. The main idea of BPE is to create a fixed-size vocabulary that contains common English subword units. Then a less common word would be broken down into several subword units in the vocabulary. For example, the tokenization of character sequence `peanut_butter_and_jel` would be:
+## Causal Model
+The CausalLanguageModel class can use any causal language model from Huggingface, though it has only been tested with gpt2, facebook/opt, and distilgpt2 families of models. Causal language models predict the next token in a sequence of tokens. For the many of these models, byte-pair encoding (BPE) is used for tokenization. The main idea of BPE is to create a fixed-size vocabulary that contains common English subword units. Then a less common word would be broken down into several subword units in the vocabulary. For example, the tokenization of character sequence `peanut_butter_and_jel` would be:
 > *['pe', 'anut', '_butter', '_and', '_j', 'el']*
 
-Therefore, in order to generate a predictive distribution on the next character, we need to examine all the possibilities that could complete the final subword units in the input sequences. We simply take the input and remove the last (partially-typed) subword unit and make the model predict it over the entire vocabulary. Then we select the subword units with prefixes matching the partially-typed last subword from the input (in the example case above, the selected subword units should start with *'el'*). Then we renormalize the probability distribution over the selected subword units and marginalize over the first character after the matched prefix. The resulting character-level distribution would be a prediction of the next character given current input.
+Therefore, in order to generate a predictive distribution on the next character, we need to examine all the possibilities that could complete the final subword tokens in the input sequences. We must remove at least one token from the end of the context to allow the model the option of extending it, as opposed to only adding a new token. Removing more tokens allows the model more flexibility and may lead to better predictions, but at the cost of a higher prediction time. In this model we remove all of the subword tokens in the current (partially-typed) word to allow it the most flexibility. We then ask the model to estimate the likelihood of the next token and evaluate each token that matches our context. For efficiency, we only track a certain number of hypotheses at a time, known as the beam width, and each hypothesis until it surpasses the context. We can then store the likelihood for each final prediction in a list based on the character that directly follows the context. Once we have no more hypotheses to extend, we can sum the likelihoods stored for each character in our symbol set and normalize so they sum to 1, giving us our final distribution.
 
-However, predicting only the final subword units may limit the space of possible continuations of the input. To remedy that, we need to look beyond one subword unit. In such occasion, we would utilize beam search to generate multiple subword units. Beam search is a heuristic search algorithm that expands the most promising hypotheses in a selected set. In our case, the most promising hypotheses would be the top ranked subword units on the current beam. For each of these hypotheses, we would make the language model further predict the next subword unit over the entire vocabulary. Then the top ranked hypotheses returned would again be retained for further expansion. The renormalization and marginalization would be performed at the end of the beam search for all candidates on the beam. Note that the beam size and the beam search depth are hyperparameters that can be adjusted.
 
-Furthermore, we use a unigram language model trained on the ALS Phraseset to interpolate with GPT2 for smoothing purpose, since the distributions given by GPT2 can be very "sharp", where most of the probability mass falls on the top few letters. Therefore, interpolating with a unigram model could give more probability to the lower ranked letters.
-
-## Word Level Prediction
-
-Currently we think it is a good idea to extract the suggestions given by the GPT2 model to complete the last partial subword unit from the user input, without including the ones with further word piece predictions. In other words, we only need the GPT2 model to perform a beam search for subword units with a depth of 1.
-
-For example, if the user input is `peanut_butter_and_jel`, the last partial subword unit would be `_el`. Then we would like the GPT2 model to make a prediction from `peanut_butter_and` and include the top ranked subword units returned that start with `_el`. 
-
-The current code has these candidates with their log likelihood: at line 215 of language/model/gpt2.py, we populate these candidates to all_beam_candidates. We can use this data structure as a starting point to generate word level predictions. For instance, we can perform a softmax on the log likehood of the candidates and obtain a probability distribution over subword units.
+## Mixture Model
+The MixtureLanguageModel class allows for the combination of two or more supported models. The selected models are mixed according to the provided weights, which can be tuned using the Bcipy/scripts/python/mixture_tuning.py script. It is not recommended to use more than one "heavy-weight" model with long prediction times (the CausalLanguageModel) since this model will query each component model and parallelization is not currently supported.
 
 # Contact Information
 
-For GPT2 related questions, please contact Shijia Liu (liu.shij [[at](https://en.wikipedia.org/wiki/At_sign)] northeastern.edu)
-
-For other questions related to language modeling, please create an issue.
+For language model related questions, please contact Dylan Gaines (dcgaines [[at](https://en.wikipedia.org/wiki/At_sign)] mtu.edu) or create an issue.
 
 

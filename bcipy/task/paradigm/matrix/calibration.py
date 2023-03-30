@@ -11,10 +11,11 @@ from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
                                    TargetPositions,
                                    calibration_inquiry_generator,
                                    InquirySchedule)
-from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
+from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
 from bcipy.task import Task
+from bcipy.helpers.symbols import alphabet
 
 
 class MatrixCalibrationTask(Task):

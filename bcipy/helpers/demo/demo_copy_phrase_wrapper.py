@@ -1,6 +1,6 @@
 import numpy as np
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.task import alphabet
+from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 
 channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]

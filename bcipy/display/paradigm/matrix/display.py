@@ -7,7 +7,7 @@ from psychopy import visual, core
 from bcipy.display import Display, StimuliProperties, InformationProperties, BCIPY_LOGO_PATH
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.triggers import _calibration_trigger
-from bcipy.helpers.task import alphabet
+from bcipy.helpers.symbols import alphabet
 from bcipy.display.components.task_bar import TaskBar
 
 

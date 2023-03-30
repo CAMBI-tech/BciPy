@@ -9,9 +9,11 @@ from bcipy.display import (
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.helpers.clock import Clock
+
 from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator)
-from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
+from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
 from bcipy.task import Task
 

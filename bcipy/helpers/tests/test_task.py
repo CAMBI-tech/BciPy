@@ -11,38 +11,10 @@ from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.task.exceptions import InsufficientDataException
 
-from bcipy.helpers.task import (_float_val, alphabet,
+from bcipy.helpers.task import (_float_val,
                                 calculate_stimulation_freq, construct_triggers,
                                 generate_targets, get_data_for_decision,
                                 get_key_press, target_info)
-
-
-class TestAlphabet(unittest.TestCase):
-    def test_alphabet_text(self):
-        parameters = {}
-
-        parameters['is_txt_stim'] = True
-
-        alp = alphabet(parameters)
-
-        self.assertEqual(alp, [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '<', '_'
-        ])
-
-    def test_alphabet_images(self):
-        parameters = {}
-        parameters['is_txt_stim'] = False
-        parameters['path_to_presentation_images'] = ('bcipy/static/images/'
-                                                     'rsvp/')
-
-        alp = alphabet(parameters)
-
-        self.assertNotEqual(alp, [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_'
-        ])
 
 
 class TestCalculateStimulationFreq(unittest.TestCase):

@@ -2,8 +2,8 @@
 
 import unittest
 
-from bcipy.language.uniform import (ResponseType, UniformLanguageModel,
-                                    equally_probable)
+from bcipy.language.model.uniform import (ResponseType, UniformLanguageModel,
+                                          equally_probable)
 
 
 class TestUniformLanguageModel(unittest.TestCase):

@@ -38,6 +38,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r dev_requirements.txt
         pip install -e .
+        pip install kenlm==0.1 --global-option="--max_order=12"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -78,6 +79,7 @@ jobs:
         pip install -r dev_requirements.txt
         pip install WxPython==4.1.1
         pip install -e .
+        pip install kenlm==0.1 --global-option="--max_order=12"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -107,6 +109,7 @@ jobs:
         pip install -r dev_requirements.txt
         pip install WxPython==4.1.1
         pip install -e .
+        pip install kenlm==0.1 --global-option="--max_order=12"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
