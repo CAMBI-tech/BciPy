@@ -6,9 +6,10 @@ from psychopy import core
 from bcipy.config import (
     SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties, TaskDisplayProperties)
+                           StimuliProperties)
 from bcipy.display import Display
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -282,21 +283,6 @@ class RSVPCopyPhraseTask(Task):
         seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
-    def update_task_state(self):
-        """ Updates task state of the Display by removing letters or
-            appending to the right.
-            Args:
-                color_list(list[string]): list of colors for each
-        """
-        # Add padding to attempt aligning the task and information text.
-        # *Note:* this only works with monospaced fonts
-        padding = abs(len(self.copy_phrase) - len(self.spelled_text))
-        text = self.spelled_text + (' ' * padding)
-        static_task_pos_y = 1 - self.parameters['task_height']
-        task_pos = (0, static_task_pos_y - self.parameters['task_height'])
-
-        self.rsvp.update_task(text=text, color_list=['white'], pos=task_pos)
-
     def present_inquiry(self, inquiry_schedule: InquirySchedule
                         ) -> Tuple[List[Tuple[str, float]], bool]:
         """Present the given inquiry and return the trigger timing info.
@@ -318,7 +304,7 @@ class RSVPCopyPhraseTask(Task):
         presented in sequence.
         """
         # Update task state and reset the static
-        self.update_task_state()
+        self.rsvp.update_task_bar(self.spelled_text)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -639,8 +625,8 @@ class RSVPCopyPhraseTask(Task):
     def exit_display(self):
         """Close the UI and cleanup."""
         # Update task state and reset the static
-        self.rsvp.update_task_state(text=self.spelled_text,
-                                    color_list=['white'])
+        self.rsvp.update_task_bar(text=self.spelled_text)
+
         # Say Goodbye!
         self.rsvp.info_text = trial_complete_message(self.window, self.parameters)
         self.rsvp.draw_static()
@@ -872,21 +858,21 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
-    padding = abs(len(parameters['task_text']) - len(starting_spelled_text))
-    starting_spelled_text += ' ' * padding
-    task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
-                                         task_pos=(0, 1 - (2 * parameters['task_height'])),
-                                         task_font=parameters['font'],
-                                         task_height=parameters['task_height'],
-                                         task_text=starting_spelled_text)
+
+    task_bar = CopyPhraseTaskBar(win,
+                                 task_text=parameters['task_text'],
+                                 spelled_text=starting_spelled_text,
+                                 colors=[parameters['task_color']],
+                                 font=parameters['font'],
+                                 height=parameters['task_height'])
+
     return CopyPhraseDisplay(win,
                              static_clock,
                              experiment_clock,
                              stimuli,
-                             task_display,
+                             task_bar,
                              info,
-                             static_task_text=parameters['task_text'],
-                             static_task_color=parameters['task_color'],
+                             starting_spelled_text,
                              trigger_type=parameters['trigger_type'],
                              space_char=parameters['stim_space_char'],
                              preview_inquiry=preview_inquiry)
