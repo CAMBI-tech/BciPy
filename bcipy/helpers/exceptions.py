@@ -76,3 +76,17 @@ class TaskConfigurationException(BciPyCoreException):
 
     Thrown when attempting to run a task with invalid configurations"""
     ...
+
+
+class InvalidLanguageModelException(BciPyCoreException):
+    """Invalid Language Model Exception.
+
+    Thrown when attempting to load a language model from an invalid path"""
+    ...
+
+
+class KenLMInstallationException(BciPyCoreException):
+    """KenLM Installation Exception.
+
+    Thrown when attempting to import kenlm without installing the module"""
+    ...

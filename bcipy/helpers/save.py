@@ -7,7 +7,8 @@ from shutil import copyfile
 from pathlib import Path
 import json
 
-from bcipy.config import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETER_FILENAME
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETER_FILENAME,
+                          DEFAULT_LM_PARAMETERS_FILENAME, DEFAULT_LM_PARAMETERS_PATH)
 
 
 def save_json_data(data: dict, location: str, name: str) -> str:
@@ -78,6 +79,8 @@ def init_save_data_structure(data_save_path: str,
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     copyfile(parameters, Path(save_directory, DEFAULT_PARAMETER_FILENAME))
+
+    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
 
     return save_directory
 

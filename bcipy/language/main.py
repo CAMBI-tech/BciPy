@@ -2,11 +2,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
+import json
 
 from bcipy.helpers.exceptions import UnsupportedResponseType
-from bcipy.helpers.task import alphabet
-
-DEFAULT_SYMBOL_SET = alphabet()
+from bcipy.helpers.symbols import DEFAULT_SYMBOL_SET
+from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 
 
 class ResponseType(Enum):
@@ -29,6 +29,8 @@ class LanguageModel(ABC):
                  symbol_set: Optional[List[str]] = None):
         self.response_type = response_type or ResponseType.SYMBOL
         self.symbol_set = symbol_set or DEFAULT_SYMBOL_SET
+        with open(DEFAULT_LM_PARAMETERS_PATH, 'r') as params_file:
+            self.parameters = json.load(params_file)
 
     @classmethod
     def name(cls) -> str:

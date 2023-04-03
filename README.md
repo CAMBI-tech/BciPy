@@ -46,6 +46,8 @@ To install for use locally,
 1. Git clone https://github.com/BciPy/BciPy.git
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
+4. To use the KenLMLanguageModel class, you must manually install the kenlm package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+
 
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
@@ -150,7 +152,7 @@ For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils. Run them as a python script!
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
 
 
 ## Testing
