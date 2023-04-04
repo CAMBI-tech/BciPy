@@ -176,6 +176,8 @@ class InquiryReshaper:
             stop = first_trigger + num_samples_per_inq + buffer_samples
             reshaped_data.append(eeg_data[:, start:stop])
 
+        breakpoint()
+
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
     @staticmethod
@@ -197,6 +199,109 @@ class InquiryReshaper:
                 new_trials.append(inquiries[:, inquiry_idx, time:y])
         return np.stack(new_trials, 1)  # C x T x S
 
+class GazeReshaper:
+    def __call__(self,
+                 trial_targetness_label: List[str],
+                 timing_info: List[float],
+                 gaze_data: np.ndarray,
+                 sample_rate: int,
+                 trials_per_inquiry: int,
+                 offset: float = 0,
+                 channel_map: List[int] = None,
+                 poststimulus_length: float = 0.5,
+                 prestimulus_length: float = 0.0,
+                 transformation_buffer: float = 0.0,
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+        """Extract inquiry data and labels.
+
+        Args:
+            trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
+            timing_info (List[float]): Timestamp of each event in seconds
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            sample_rate (int): sample rate of data provided in eeg_data
+            trials_per_inquiry (int): number of trials in each inquiry
+            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                 Defaults to None; all channels will be used.
+            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
+            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
+            transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
+            target_label (str): label of target symbol. Defaults to "target"
+
+        Returns:
+            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
+            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
+                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                `target_label` was not present.
+            reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
+                begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
+        """
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
+        n_inquiry = len(timing_info) // trials_per_inquiry
+        trial_duration_samples = int(poststimulus_length * sample_rate)
+        prestimulus_samples = int(prestimulus_length * sample_rate)
+
+        # triggers in seconds are mapped to triggers in number of samples.
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
+
+        # First, find the longest inquiry in this experiment
+        # We'll add or remove a few samples from all other inquiries, to match this length
+        def get_inquiry_len(inq_trigs):
+            return inq_trigs[-1] - inq_trigs[0]
+
+        longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+        num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
+        buffer_samples = int(transformation_buffer * sample_rate)
+
+        # Label for every inquiry
+        labels = np.zeros(
+            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
+        )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
+        reshaped_data, reshaped_trigger_timing = [], []
+        for inquiry_idx, trials_within_inquiry in enumerate(
+            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
+        ):
+            first_trigger = trials_within_inquiry[0][1]
+
+            trial_triggers = []
+            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
+                if trial_label == target_label:
+                    labels[inquiry_idx, trial_idx] = 1
+
+                # If presimulus buffer is used, we add it here so that trigger timings will
+                # still line up with trial onset
+                trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
+            reshaped_trigger_timing.append(trial_triggers)
+            start = first_trigger - prestimulus_samples
+            stop = first_trigger + num_samples_per_inq + buffer_samples
+            reshaped_data.append(eeg_data[:, start:stop])
+
+        breakpoint()
+
+        return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
+    
+    @staticmethod
+    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):
+        """Extract Trials.
+
+        After using the InquiryReshaper, it may be necessary to futher trial the data for processing.
+        Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
+        Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
+        slicing parameters.
+        """
+        new_trials = []
+        num_inquiries = inquiries.shape[1]
+        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
+
+            for time in timing:
+                time = time // downsample_rate
+                y = time + samples_per_trial
+                new_trials.append(inquiries[:, inquiry_idx, time:y])
+        return np.stack(new_trials, 1)  # C x T x S
 
 class TrialReshaper(Reshaper):
     def __call__(self,

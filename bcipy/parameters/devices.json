@@ -87,6 +87,7 @@
             { "name": "right_pupil", "label": "right_pupil", "type": "pupilsize" }
         ],
         "sample_rate": 60.0,
-        "description": "Tobii Nano. For use with the Tobii Pro SDK."
+        "description": "Tobii Nano. For use with the Tobii Pro SDK.",
+        "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"]
     }
 ]

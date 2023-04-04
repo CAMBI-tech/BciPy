@@ -9,10 +9,10 @@ from sklearn.mixture import GaussianMixture
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME
 from bcipy.preferences import preferences
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
-    load_raw_data,
     load_raw_gaze_data
 )
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
@@ -76,16 +76,37 @@ def offline_gaze_analysis(
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate
 
+    log.info(f"Channels read from csv: {channels}")
+    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-        offset=static_offset,
         remove_pre_fixation = False,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
 
+    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
+    # The timestamp column [0] is already excluded.
     breakpoint()
+    channel_map = analysis_channels(channels, type_amp)
+
+    print(channel_map)
+    # data, fs = raw_data.by_channel()
+    # TODO: Implementation
+
+    channel_map = [0,0,0,1,1,0,1,1,0,1]  # default to use all channels in inquiry reshaper
+
+    breakpoint()
+    # reshaper!
     results = []
+
+    #TODO: 
+    # Implement reshaper. We might not need a separate reshaper function.
+    # Plotting for offset
+    # Plot the gaze data (check NSLR) fixation, saccade, blink
+    # Coordinates in Tobii for targets in each inquiry (Tobii to Psychopy units)
+
 
     return results
 
