@@ -67,6 +67,20 @@ class RawGazeData:
         numeric_column_count = numeric_vals.shape[1]
         # Start data slice at 1 to remove the timestamp column.
         return numeric_vals[:, 1:numeric_column_count].transpose()
+    
+    def by_channel(self) -> np.ndarray:
+        """Data organized by channel.
+
+        Returns
+        ----------
+        data: C x N numpy array with samples where C is the number of channels and N
+        is number of time samples
+        fs: resulting sample rate if any transformations applied"""
+
+        data = self.channel_data
+        fs = self.sample_rate
+
+        return data, fs
 
     @property
     def dataframe(self) -> pd.DataFrame:

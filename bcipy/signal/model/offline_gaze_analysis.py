@@ -88,14 +88,10 @@ def offline_gaze_analysis(
 
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
-    breakpoint()
     channel_map = analysis_channels(channels, type_amp)
+    # channel_map = [0,0,1,1,0,1,1,0,0] 
 
-    print(channel_map)
-    # data, fs = raw_data.by_channel()
-    # TODO: Implementation
-
-    channel_map = [0,0,0,1,1,0,1,1,0,1]  # default to use all channels in inquiry reshaper
+    data, fs = gaze_data.by_channel()  # no transformations applied at this stage
 
     breakpoint()
     # reshaper!
