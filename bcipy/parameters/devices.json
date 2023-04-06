@@ -74,7 +74,7 @@
         "description": "GTec g.USBamp"
     },
     {
-        "name": "Tobii Nano",
+        "name": "Tobii-P0",
         "content_type": "Eyetracker",
         "channels": [
             { "name": "device_ts", "label": "device_ts" },
