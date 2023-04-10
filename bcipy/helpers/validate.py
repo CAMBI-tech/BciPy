@@ -14,7 +14,7 @@ from bcipy.helpers.exceptions import (InvalidFieldException,
 from bcipy.gui.alert import confirm
 
 
-def validate_bcipy_session(parameters: dict) -> bool:
+def validate_bcipy_session(parameters: dict, fake_data: bool) -> bool:
     """Check pre-conditions for a BciPy session. If any possible problems are
     detected, alert the user and prompt to continue.
 
@@ -26,7 +26,7 @@ def validate_bcipy_session(parameters: dict) -> bool:
     -------
     True if it's okay to continue, otherwise False
     """
-    possible_alerts = [(parameters['fake_data'], '* Fake data is on.'),
+    possible_alerts = [(fake_data, '* Fake data is on.'),
                        (is_connected(), '* Internet is on.'),
                        (is_battery_powered(), '* Operating on battery power')]
     alert_messages = [
