@@ -179,24 +179,48 @@ class InquiryReshaper:
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
     @staticmethod
-    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1, prestimulus_samples=0):
+    def extract_trials(
+            inquiries: np.ndarray,
+            samples_per_trial: int,
+            inquiry_timing: List[List[float]],
+            downsample_rate: int=1,
+            prestimulus_samples: int=0):
         """Extract Trials.
 
         After using the InquiryReshaper, it may be necessary to further trial the data for processing.
         Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
         Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
         slicing parameters.
+
+        Parameters
+        ----------
+        inquiries : np.ndarray
+            shape (Channels, Inquiries, Samples)
+        samples_per_trial : int
+            number of samples per trial
+        inquiry_timing : List[List[float]]
+            For each inquiry, a list of the sample index where each trial begins
+        downsample_rate : int, optional
+            Downsample rate, if any applied to the data, by default 1. This is used to adjust the timing.
+        prestimulus_samples : int, optional
+            Number of samples to move the start of each trial in each inquiry, by default 0. This is used to adjust the timing.
+            This is useful if wanting to use baseline intervals before the trial onset, along with the trial data.
+
+        Returns
+        -------
+        np.ndarray
+            shape (Channels, Trials, Samples)
         """
         new_trials = []
         num_inquiries = inquiries.shape[1]
         for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
             
-            # this is time in samples from the start of the inquiry
+            # time == samples from the start of the inquiry
             for time in timing:
-                # breakpoint()
                 time = (time - prestimulus_samples) // downsample_rate
                 y = time + samples_per_trial + prestimulus_samples
                 new_trials.append(inquiries[:, inquiry_idx, time:y])
+
         return np.stack(new_trials, 1)  # C x T x S
 
 
@@ -213,7 +237,8 @@ class TrialReshaper(Reshaper):
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
         """Extract trial data and labels.
 
-        Args:
+        Parameters
+        ----------
             trial_targetness_label (list): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (list): Timestamp of each event in seconds
             eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
@@ -226,7 +251,8 @@ class TrialReshaper(Reshaper):
             poststimulus_length (float, optional): [description]. Defaults to 0.5.
             target_label (str): label of target symbol. Defaults to "target"
 
-        Returns:
+        Returns
+        -------
             trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
             labels (np.ndarray): integer label for each trial
         """
@@ -284,19 +310,22 @@ def inq_generator(query: List[str],
                   stim_jitter: float = 0,
                   stim_order: StimuliOrder = StimuliOrder.RANDOM,
                   is_txt: bool = True) -> InquirySchedule:
-    """ Given the query set, prepares the stimuli, color and timing
-        Args:
-            query(list[str]): list of queries to be shown
-            timing(list[float]): Task specific timing for generator
-            color(list[str]): Task specific color for generator
-                First element is the target, second element is the fixation
-                Observe that [-1] element represents the trial information
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
-            """
+    """Given the query set, prepares the stimuli, color and timing
+
+    Parameters
+    ----------
+        query(list[str]): list of queries to be shown
+        timing(list[float]): Task specific timing for generator
+        color(list[str]): Task specific color for generator
+            First element is the target, second element is the fixation
+            Observe that [-1] element represents the trial information
+    Return
+    ------
+        schedule_inq(tuple(
+            samples[list[list[str]]]: list of inquiries
+            timing(list[list[float]]): list of timings
+            color(list(list[str])): list of colors)): scheduled inquiries
+    """
 
     if stim_order == StimuliOrder.ALPHABETICAL:
         query = alphabetize(query)
@@ -332,17 +361,20 @@ def best_selection(selection_elements: list,
                    always_included: List[str] = None) -> list:
     """Best Selection.
 
-     given set of elements and a value function over the set, picks the len_query
+    Given set of elements and a value function over the set, picks the len_query
         number of elements with the best value.
 
-        Args:
-            selection_elements(list[str]): the set of elements
-            val(list[float]): values for the corresponding elements
-            len_query(int): number of elements to be picked from the set
-            always_included(list[str]): subset of elements that should always be
-                included in the result. Defaults to None.
-        Return:
-            best_selection(list[str]): elements from selection_elements with the best values """
+    Parameters
+    ----------
+        selection_elements(list[str]): the set of elements
+        val(list[float]): values for the corresponding elements
+        len_query(int): number of elements to be picked from the set
+        always_included(list[str]): subset of elements that should always be
+            included in the result. Defaults to None.
+    Return
+    ------
+        best_selection(list[str]): elements from selection_elements with the best values 
+    """
 
     always_included = always_included or []
     # pick the top n items sorted by value in decreasing order
@@ -370,26 +402,29 @@ def best_case_rsvp_inq_gen(alp: list,
                            inq_constants: List[str] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
-    generates RSVPKeyboard inquiry by picking n-most likely letters.
-        Args:
-            alp(list[str]): alphabet (can be arbitrary)
-            session_stimuli(ndarray[float]): quantifier metric for query selection
-                dim(session_stimuli) = card(alp)!
-            timing(list[float]): Task specific timing for generator
-            color(list[str]): Task specific color for generator
-                First element is the target, second element is the fixation
-                Observe that [-1] element represents the trial information
-            stim_number(int): number of random stimuli to be created
-            stim_length(int): number of trials in a inquiry
-            stim_order(StimuliOrder): ordering of stimuli in the inquiry
-            inq_constants(list[str]): list of letters that should always be
-                included in every inquiry. If provided, must be alp items.
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
-            """
+    Generates RSVPKeyboard inquiry by picking n-most likely letters.
+
+    Parameters
+    ----------
+        alp(list[str]): alphabet (can be arbitrary)
+        session_stimuli(ndarray[float]): quantifier metric for query selection
+            dim(session_stimuli) = card(alp)!
+        timing(list[float]): Task specific timing for generator
+        color(list[str]): Task specific color for generator
+            First element is the target, second element is the fixation
+            Observe that [-1] element represents the trial information
+        stim_number(int): number of random stimuli to be created
+        stim_length(int): number of trials in a inquiry
+        stim_order(StimuliOrder): ordering of stimuli in the inquiry
+        inq_constants(list[str]): list of letters that should always be
+            included in every inquiry. If provided, must be alp items.
+    Return
+    ------
+        schedule_inq(tuple(
+            samples[list[list[str]]]: list of inquiries
+            timing(list[list[float]]): list of timings
+            color(list(list[str])): list of colors)): scheduled inquiries
+    """
 
     if len(alp) != len(session_stimuli):
         raise BciPyCoreException((
@@ -446,24 +481,28 @@ def calibration_inquiry_generator(
     """Calibration Inquiry Generator.
 
     Generates inquiries with target letters in all possible positions.
-        Args:
-            alp(list[str]): stimuli
-            timing(list[float]): Task specific timing for generator.
-                [target, fixation, stimuli]
-            jitter(int): jitter for stimuli timing. If None, no jitter is applied.
-            color(list[str]): Task specific color for generator
-                [target, fixation, stimuli]
-            stim_number(int): number of trials in a inquiry
-            stim_length(int): number of random stimuli to be created
-            stim_order(StimuliOrder): ordering of stimuli in the inquiry
-            target_positions(TargetPositions): positioning of targets to select for the inquiries
-            nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
-            is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
-        Return:
-            schedule_inq(tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)): scheduled inquiries
+
+    Parameters
+    ----------
+        alp(list[str]): stimuli
+        timing(list[float]): Task specific timing for generator.
+            [target, fixation, stimuli]
+        jitter(int): jitter for stimuli timing. If None, no jitter is applied.
+        color(list[str]): Task specific color for generator
+            [target, fixation, stimuli]
+        stim_number(int): number of trials in a inquiry
+        stim_length(int): number of random stimuli to be created
+        stim_order(StimuliOrder): ordering of stimuli in the inquiry
+        target_positions(TargetPositions): positioning of targets to select for the inquiries
+        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+        is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
+
+    Return
+    ------
+        schedule_inq(tuple(
+            samples[list[list[str]]]: list of inquiries
+            timing(list[list[float]]): list of timings
+            color(list(list[str])): list of colors)): scheduled inquiries
     """
     assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
     target_indexes = []
@@ -530,7 +569,7 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
     Args:
         stim_number(int): Number of trials in calibration
         stim_length(int): Number of stimuli in each inquiry
-        nontarget_inquiries(int): percentage of iquiries for which target letter flashed is not in inquiry
+        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
