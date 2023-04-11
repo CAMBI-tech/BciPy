@@ -217,9 +217,10 @@ class InquiryReshaper:
             
             # time == samples from the start of the inquiry
             for time in timing:
-                time = (time - prestimulus_samples) // downsample_rate
-                y = time + samples_per_trial + prestimulus_samples
-                new_trials.append(inquiries[:, inquiry_idx, time:y])
+                corrected_time = (time // downsample_rate)
+                start = corrected_time - prestimulus_samples
+                end = corrected_time + samples_per_trial
+                new_trials.append(inquiries[:, inquiry_idx, start:end])
 
         return np.stack(new_trials, 1)  # C x T x S
 
