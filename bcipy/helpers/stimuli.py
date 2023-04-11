@@ -179,10 +179,10 @@ class InquiryReshaper:
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
     @staticmethod
-    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):
+    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1, prestimulus_samples=0):
         """Extract Trials.
 
-        After using the InquiryReshaper, it may be necessary to futher trial the data for processing.
+        After using the InquiryReshaper, it may be necessary to further trial the data for processing.
         Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
         Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
         slicing parameters.
@@ -190,10 +190,12 @@ class InquiryReshaper:
         new_trials = []
         num_inquiries = inquiries.shape[1]
         for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
-
+            
+            # this is time in samples from the start of the inquiry
             for time in timing:
-                time = time // downsample_rate
-                y = time + samples_per_trial
+                # breakpoint()
+                time = (time - prestimulus_samples) // downsample_rate
+                y = time + samples_per_trial + prestimulus_samples
                 new_trials.append(inquiries[:, inquiry_idx, time:y])
         return np.stack(new_trials, 1)  # C x T x S
 

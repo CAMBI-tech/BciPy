@@ -59,3 +59,16 @@ class ChannelWisePrincipalComponentAnalysis:
     def fit_transform(self, x, y=None):
         self.fit(x)
         return self.transform(x)
+
+
+class MockPCA:
+    def fit(self, *args, **kw):
+        pass
+
+    def transform(self, x, y=None, var_tol=None):
+        x = x.transpose([1, 0, 2])
+        x = x.reshape([x.shape[0], -1])
+        return x
+
+    def fit_transform(self, x, y=None, var_tol=None):
+        return self.transform(x, y, var_tol)
