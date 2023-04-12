@@ -2,11 +2,11 @@ import argparse
 import logging
 import multiprocessing
 
-from typing import Optional
+from typing import List
 
 from psychopy import visual
 
-from bcipy.acquisition import LslAcquisitionClient, LslDataServer
+from bcipy.acquisition import LslDataServer, ClientManager
 from bcipy.display import init_display_window
 from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition
@@ -141,8 +141,8 @@ def execute_task(
         language_model = init_language_model(parameters)
 
     # Initialize DAQ and export the device configuration
-    daq, server = init_eeg_acquisition(
-        parameters, save_folder, export_spec=True, server=fake)
+    daq, servers = init_eeg_acquisition(
+        parameters, save_folder, server=fake)
 
     # Initialize Display Window
     # We have to wait until after the prompt to load the signal model before
@@ -152,10 +152,14 @@ def execute_task(
 
     # Start Task
     try:
-        start_task(
-            display, daq, task, parameters, save_folder,
-            language_model=language_model,
-            signal_model=signal_model, fake=fake)
+        start_task(display,
+                   daq.get_client('EEG'),
+                   task,
+                   parameters,
+                   save_folder,
+                   language_model=language_model,
+                   signal_model=signal_model,
+                   fake=fake)
 
     # If exception, close all display and acquisition objects
     except Exception as e:
@@ -164,13 +168,13 @@ def execute_task(
     if alert:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
 
-    return _clean_up_session(display, daq, server)
+    return _clean_up_session(display, daq, servers)
 
 
 def _clean_up_session(
         display: visual.Window,
-        daq: LslAcquisitionClient,
-        server: Optional[LslDataServer] = None) -> bool:
+        daq: ClientManager,
+        servers: List[LslDataServer] = None) -> bool:
     """Clean up session.
 
     Closes the display window and data acquisition objects. Returns True if the session was closed successfully.
@@ -185,7 +189,7 @@ def _clean_up_session(
         daq.stop_acquisition()
         daq.cleanup()
 
-        if server:
+        for server in servers:
             server.stop()
 
         # Close the display window

@@ -296,6 +296,21 @@ class LslAcquisitionClient:
         """Perform any necessary cleanup."""
 
 
+def discover_device_spec(content_type: str) -> DeviceSpec:
+    """Finds the first LSL stream with the given content type and creates a
+    device spec from the stream's metadata."""
+    log.info(f"Waiting for {content_type} data to be streamed over LSL.")
+    streams = resolve_stream('type', content_type)
+    if not streams:
+        raise Exception(
+            f'LSL Stream not found for content type {content_type}')
+    stream_info = streams[0]
+    inlet = StreamInlet(stream_info)
+    spec = device_from_metadata(inlet.info())
+    inlet.close_stream()
+    return spec
+
+
 def device_from_metadata(metadata: StreamInfo) -> DeviceSpec:
     """Create a device_spec from the data stream metadata."""
     return DeviceSpec(name=metadata.name(),

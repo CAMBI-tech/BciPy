@@ -162,31 +162,52 @@ def make_device_spec(config: dict) -> DeviceSpec:
                           'excluded_from_analysis', []))
 
 
-def load(config_path: Path = Path(DEFAULT_CONFIG)) -> Dict[str, DeviceSpec]:
+def load(config_path: Path = Path(DEFAULT_CONFIG), replace: bool = False) -> Dict[str, DeviceSpec]:
     """Load the list of supported hardware for data acquisition from the given
-    configuration file."""
+    configuration file.
+
+    Parameters
+    ----------
+        config_path - path to the devices json file
+        replace - optional; if true, existing devices are replaced; if false,
+            values will be overwritten or appended.
+    """
     global _SUPPORTED_DEVICES
-    with open(config_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
-        specs = [make_device_spec(entry) for entry in json.load(json_file)]
-        _SUPPORTED_DEVICES = {spec.name: spec for spec in specs}
-        return _SUPPORTED_DEVICES
+
+    if config_path.is_file():
+        with open(config_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
+            specs = [make_device_spec(entry) for entry in json.load(json_file)]
+            if specs and replace:
+                _SUPPORTED_DEVICES.clear()
+            for spec in specs:
+                _SUPPORTED_DEVICES[spec.name] = spec
+    return _SUPPORTED_DEVICES
 
 
 def preconfigured_devices() -> Dict[str, DeviceSpec]:
-    """Returns the preconfigured devices keyed by name."""
+    """Returns the preconfigured devices keyed by name. If no devices have yet
+    been configured, loads and returns the DEFAULT_CONFIG."""
     global _SUPPORTED_DEVICES
     if not _SUPPORTED_DEVICES:
         load()
     return _SUPPORTED_DEVICES
 
 
-def preconfigured_device(name: str) -> DeviceSpec:
+def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
     """Retrieve the DeviceSpec with the given name. An exception is raised
     if the device is not found."""
     device = preconfigured_devices().get(name, None)
-    if not device:
+    if strict and not device:
         raise ValueError(f"Device not found: {name}")
     return device
+
+
+def with_content_type(content_type: str) -> List[DeviceSpec]:
+    """Retrieve the list of DeviceSpecs with the given content_type."""
+    return [
+        spec for spec in preconfigured_devices().values()
+        if spec.content_type == content_type
+    ]
 
 
 def register(device_spec: DeviceSpec):

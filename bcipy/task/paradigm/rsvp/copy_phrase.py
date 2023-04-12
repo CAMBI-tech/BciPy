@@ -228,19 +228,17 @@ class RSVPCopyPhraseTask(Task):
         initialized CopyPhraseWrapper
         """
 
-        self.copy_phrase_task = _init_copy_phrase_wrapper(
+        self.copy_phrase_task = CopyPhraseWrapper(
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
+            lmodel=self.language_model,
+            device_spec=self.daq.device_spec,
             signal_model=self.signal_model,
-            fs=self.daq.device_spec.sample_rate,
             k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
-            lmodel=self.language_model,
             is_txt_stim=self.parameters['is_txt_stim'],
-            device_name=self.daq.device_spec.name,
-            device_channels=self.daq.device_spec.channels,
             stim_timing=[
                 self.parameters['time_fixation'], self.parameters['time_flash']
             ],
@@ -876,35 +874,3 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                              trigger_type=parameters['trigger_type'],
                              space_char=parameters['stim_space_char'],
                              preview_inquiry=preview_inquiry)
-
-
-def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
-                              alp, evidence_names, task_list, lmodel,
-                              is_txt_stim, device_name, device_channels,
-                              stim_timing, decision_threshold,
-                              backspace_prob, backspace_always_shown,
-                              filter_high, filter_low, filter_order,
-                              notch_filter_frequency, stim_length, stim_jitter, stim_order):
-    return CopyPhraseWrapper(min_num_inq,
-                             max_num_inq,
-                             signal_model=signal_model,
-                             fs=fs,
-                             k=k,
-                             alp=alp,
-                             evidence_names=evidence_names,
-                             task_list=task_list,
-                             lmodel=lmodel,
-                             is_txt_stim=is_txt_stim,
-                             device_name=device_name,
-                             device_channels=device_channels,
-                             stim_timing=stim_timing,
-                             decision_threshold=decision_threshold,
-                             backspace_prob=backspace_prob,
-                             backspace_always_shown=backspace_always_shown,
-                             filter_high=filter_high,
-                             filter_low=filter_low,
-                             filter_order=filter_order,
-                             notch_filter_frequency=notch_filter_frequency,
-                             stim_length=stim_length,
-                             stim_jitter=stim_jitter,
-                             stim_order=stim_order)
