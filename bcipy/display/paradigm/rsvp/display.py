@@ -287,21 +287,16 @@ class RSVPDisplay(Display):
         Using the self.stimuli_inquiry list, construct a preview box to display to the user. This method
             assumes the presence of a fixation (+).
         """
-        if not self.full_screen:
-            reduce_factor = 4.85
-            wrap_width = 1.1
-        else:
-            reduce_factor = 4.75
-            wrap_width = .9
         text = ' '.join(self.stimuli_inquiry).split('+ ')[1]
 
         return self._create_stimulus(
-            self.stimuli_height / reduce_factor,
+            0.12,
             stimulus=text,
             units='height',
             stimuli_position=self.stimuli_pos,
             mode='textbox',
-            wrap_width=wrap_width)
+            align_text='left',
+            wrap_width=0.025)
 
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
@@ -425,7 +420,7 @@ class RSVPDisplay(Display):
             border=False):
         """Create Stimulus.
 
-        Returns a TextStim or ImageStim object.
+        Returns a TextStim, ImageStim or TextBox object.
         """
         if not stimuli_position:
             stimuli_position = self.stimuli_pos
@@ -465,6 +460,5 @@ class RSVPDisplay(Display):
                 letterHeight=height,
                 size=[.5, .5],
                 pos=stimuli_position,
-                anchor=align_text,
                 alignment=align_text,
             )

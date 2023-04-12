@@ -33,7 +33,8 @@ def bci_main(
         task: TaskType,
         experiment: str = DEFAULT_EXPERIMENT_ID,
         alert: bool = False,
-        visualize: bool = True) -> bool:
+        visualize: bool = True,
+        fake: bool = False) -> bool:
     """BCI Main.
 
     The BCI main function will initialize a save folder, construct needed information
@@ -53,12 +54,17 @@ def bci_main(
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
         alert (bool): whether to alert the user when the task is complete
         visualize (bool): whether to visualize data at the end of a task
+        fake (bool): whether to use fake acquisition data during the session. If None, the
+            fake data will be determined by the parameters file.
     """
     validate_experiment(experiment)
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
 
-    if not validate_bcipy_session(parameters):
+    # cli overrides parameters file for fake data if provided
+    fake = fake if fake is True else parameters['fake_data']
+
+    if not validate_bcipy_session(parameters, fake):
         return False
 
     # Update property to reflect the parameter source
@@ -91,7 +97,7 @@ def bci_main(
     # Collect experiment field data
     collect_experiment_field_data(experiment, save_folder)
 
-    if execute_task(task, parameters, save_folder, alert):
+    if execute_task(task, parameters, save_folder, alert, fake):
         if visualize:
             visualize_session_data(save_folder, parameters)
         return True
@@ -103,7 +109,8 @@ def execute_task(
         task: TaskType,
         parameters: dict,
         save_folder: str,
-        alert: bool) -> bool:
+        alert: bool,
+        fake: bool) -> bool:
     """Execute Task.
 
     Executes the desired task by setting up the display window and
@@ -115,14 +122,13 @@ def execute_task(
         parameters (dict): parameter dictionary
         save_folder (str): path to save folder
         alert (bool): whether to alert the user when the task is complete
+        fake (bool): whether to use fake acquisition data during the session
 
     Returns:
         (bool): True if the task was successfully executed, False otherwise
     """
     signal_model = None
     language_model = None
-
-    fake = parameters['fake_data']
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
@@ -206,7 +212,7 @@ def _clean_up_session(
 def bcipy_main() -> None:
     """BciPy Main.
 
-    Command line interface used for running a registered experiment task in Bcipy. To see what
+    Command line interface used for running a registered experiment task in BciPy. To see what
         is available use the --help flag.
     """
     # Needed for windows machines
@@ -232,11 +238,24 @@ def bcipy_main() -> None:
         '--alert',
         default=False,
         action='store_true',
-        help='Alert the user when the task is complete.')
+        help='Alert the user when the session is complete.')
+    parser.add_argument(
+        '-nv',
+        '--noviz',
+        default=True,
+        action='store_false',
+        help='Suppress visuals of the data after the session is complete.')
+    parser.add_argument(
+        '-f',
+        '--fake',
+        default=False,
+        action='store_true',
+        help='Use fake acquisition data for testing.')
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)), str(args.experiment), args.alert)
+    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)),
+             str(args.experiment), args.alert, args.noviz, args.fake)
 
 
 if __name__ == '__main__':
