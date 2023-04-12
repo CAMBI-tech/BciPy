@@ -19,19 +19,6 @@
     ],
     "type": "str"
   },
-  "acq_device": {
-    "value": "DSI-24",
-    "section": "acq_config",
-    "readableName": "Acquisition Device",
-    "helpTip": "Specifies the hardware used for EEG data collection.",
-    "recommended_values": [
-      "DSI-24",
-      "DSI-VR300",
-      "g.USBamp-1",
-      "Tobii Nano"
-    ],
-    "type": "str"
-  },
   "trigger_type": {
     "value": "text",
     "section": "bci_config",
