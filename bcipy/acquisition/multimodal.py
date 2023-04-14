@@ -8,11 +8,25 @@ log = logging.getLogger(__name__)
 
 
 class ClientManager():
-    """Manages multiple acquisition clients. This class can also
+    """Manages multiple acquisition clients. This class can also act as an
+    acquisition client. If used in this way, it dispatches to the managed
+    client with the default_client_type.
 
+    >>> from bcipy.acquisition import LslAcquisitionClient
+    >>> from bcipy.acquisition.devices import DeviceSpec
+    >>> spec = DeviceSpec('Testing', ['ch1', 'ch2', 'ch3'], 60.0, 'EEG')
+    >>> manager = ClientManager()
+    >>> eeg_client = LslAcquisitionClient(device_spec=spec)
+    >>> manager.add_client(eeg_client)
+    >>> manager.device_spec == spec
+    True
+
+    Parameters
+    ----------
+        default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, default_content_type='EEG'):
+    def __init__(self, default_content_type: str = 'EEG'):
         self._clients: Dict[str, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
 

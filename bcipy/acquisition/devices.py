@@ -198,7 +198,16 @@ def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
     if the device is not found."""
     device = preconfigured_devices().get(name, None)
     if strict and not device:
-        raise ValueError(f"Device not found: {name}")
+        current = ', '.join(
+            [f"'{key}'" for key, _ in preconfigured_devices().items()])
+        msg = (
+            f"Device not found: {name}."
+            "\n\n"
+            f"The current list of devices includes the following: {current}."
+            "\n"
+            "You may register new devices using the device module `register` function or in bulk"
+            " using `load`.")
+        raise ValueError(msg)
     return device
 
 
