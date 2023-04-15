@@ -183,7 +183,6 @@ class InquiryReshaper:
             inquiries: np.ndarray,
             samples_per_trial: int,
             inquiry_timing: List[List[float]],
-            downsample_rate: int=1,
             prestimulus_samples: int=0):
         """Extract Trials.
 
@@ -200,8 +199,6 @@ class InquiryReshaper:
             number of samples per trial
         inquiry_timing : List[List[float]]
             For each inquiry, a list of the sample index where each trial begins
-        downsample_rate : int, optional
-            Downsample rate, if any applied to the data, by default 1. This is used to adjust the timing.
         prestimulus_samples : int, optional
             Number of samples to move the start of each trial in each inquiry, by default 0. This is used to adjust the timing.
             This is useful if wanting to use baseline intervals before the trial onset, along with the trial data.
@@ -217,9 +214,8 @@ class InquiryReshaper:
             
             # time == samples from the start of the inquiry
             for time in timing:
-                corrected_time = (time // downsample_rate)
-                start = corrected_time - prestimulus_samples
-                end = corrected_time + samples_per_trial
+                start = time - prestimulus_samples
+                end = time + samples_per_trial
                 new_trials.append(inquiries[:, inquiry_idx, start:end])
 
         return np.stack(new_trials, 1)  # C x T x S
@@ -280,6 +276,16 @@ class TrialReshaper(Reshaper):
             reshaped_trials.append(eeg_data[:, trigger - prestim_samples: trigger + poststim_samples])
 
         return np.stack(reshaped_trials, 1), targetness_labels
+
+
+def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[List[float]]:
+    """Update inquiry timing to reflect downsampling."""
+
+    for i, inquiry in enumerate(timing):
+        for j, time in enumerate(inquiry):
+            timing[i][j] = time // downsample
+
+    return timing
 
 
 def mne_epochs(mne_data: RawArray, trigger_timing: List[float],

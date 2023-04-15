@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-import numpy as np
 from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
 from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
@@ -11,13 +10,15 @@ from bcipy.helpers.load import (
     load_json_parameters,
     load_raw_data,
 )
-from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
+
+import numpy as np
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
@@ -159,8 +160,9 @@ def offline_analysis(
     )
 
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
+    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = inquiry_labels.flatten()
