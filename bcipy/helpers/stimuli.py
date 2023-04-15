@@ -168,7 +168,7 @@ class InquiryReshaper:
                 if trial_label == target_label:
                     labels[inquiry_idx, trial_idx] = 1
 
-                # If presimulus buffer is used, we add it here so that trigger timings will
+                # If prestimulus buffer is used, we add it here so that trigger timings will
                 # still line up with trial onset
                 trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
             reshaped_trigger_timing.append(trial_triggers)
@@ -183,7 +183,7 @@ class InquiryReshaper:
             inquiries: np.ndarray,
             samples_per_trial: int,
             inquiry_timing: List[List[float]],
-            prestimulus_samples: int=0):
+            prestimulus_samples: int = 0):
         """Extract Trials.
 
         After using the InquiryReshaper, it may be necessary to further trial the data for processing.
@@ -200,7 +200,7 @@ class InquiryReshaper:
         inquiry_timing : List[List[float]]
             For each inquiry, a list of the sample index where each trial begins
         prestimulus_samples : int, optional
-            Number of samples to move the start of each trial in each inquiry, by default 0. This is used to adjust the timing.
+            Number of samples to move the start of each trial in each inquiry, by default 0.
             This is useful if wanting to use baseline intervals before the trial onset, along with the trial data.
 
         Returns
@@ -211,13 +211,19 @@ class InquiryReshaper:
         new_trials = []
         num_inquiries = inquiries.shape[1]
         for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
-            
+
             # time == samples from the start of the inquiry
             for time in timing:
                 start = time - prestimulus_samples
                 end = time + samples_per_trial
-                new_trials.append(inquiries[:, inquiry_idx, start:end])
 
+                try:
+                    new_trials.append(inquiries[:, inquiry_idx, start:end])
+                except IndexError:
+                    raise BciPyCoreException(
+                        f'InquiryReshaper.extract_trials: index out of bounds. \n'
+                        f'Inquiry: [{inquiry_idx}] from {start}:{end}. init_time: {time}, '
+                        f'prestimulus_samples: {prestimulus_samples}, samples_per_trial: {samples_per_trial} \n')
         return np.stack(new_trials, 1)  # C x T x S
 
 
@@ -380,7 +386,7 @@ def best_selection(selection_elements: list,
             included in the result. Defaults to None.
     Return
     ------
-        best_selection(list[str]): elements from selection_elements with the best values 
+        best_selection(list[str]): elements from selection_elements with the best values
     """
 
     always_included = always_included or []
