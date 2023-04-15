@@ -27,7 +27,8 @@ from bcipy.helpers.stimuli import (
     soundfiles,
     StimuliOrder,
     ssvep_to_code,
-    TargetPositions
+    TargetPositions,
+    update_inquiry_timing,
 )
 
 MOCK_FS = 44100
@@ -533,7 +534,7 @@ class TestJitteredTiming(unittest.TestCase):
         self.assertEqual(stim_number, len(resp))
         self.assertIsInstance(resp, list)
 
-    def test_jittered_timing_with_jitter_withint_defined_limits(self):
+    def test_jittered_timing_with_jitter_within_defined_limits(self):
         time = 1
         jitter = 0.25
         stim_number = 100
@@ -699,6 +700,29 @@ class TestInquiryReshaper(unittest.TestCase):
             (self.trials_per_inquiry * self.n_inquiry),
             (self.samples_per_trial + prestimulus_samples))
         self.assertTrue(response.shape == expected_shape)
+
+
+class TestUpdateInquiryTiming(unittest.TestCase):
+
+    def test_update_inquiry_timing(self):
+        initial_timing = [[100, 200]]
+        downsample = 2
+        new_timing = update_inquiry_timing(
+            timing=initial_timing,
+            downsample=downsample,
+        )
+        expected_timing = [[50, 100]]
+        self.assertTrue(new_timing == expected_timing)
+
+    def test_update_inquiry_timing_with_non_int_timing_after_correction(self):
+        initial_timing = [[100, 201]]
+        downsample = 2
+        new_timing = update_inquiry_timing(
+            timing=initial_timing,
+            downsample=downsample,
+        )
+        expected_timing = [[50, 201 // downsample]]
+        self.assertTrue(new_timing == expected_timing)
 
 
 class SSVEPStimuli(unittest.TestCase):

@@ -145,6 +145,8 @@ def offline_analysis(
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, type_amp)
+    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    log.info(f'Channels used in analysis: {channels_used}')
     data, fs = raw_data.by_channel()
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
