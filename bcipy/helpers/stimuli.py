@@ -183,7 +183,7 @@ class InquiryReshaper:
             inquiries: np.ndarray,
             samples_per_trial: int,
             inquiry_timing: List[List[float]],
-            prestimulus_samples: int = 0):
+            prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
         After using the InquiryReshaper, it may be necessary to further trial the data for processing.
