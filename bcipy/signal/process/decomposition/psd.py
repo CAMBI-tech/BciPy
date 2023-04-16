@@ -8,9 +8,11 @@ from mne.time_frequency import psd_array_multitaper
 
 from typing import Tuple
 
+from bcipy.helpers.exceptions import SignalException
+
 
 class PSD_TYPE(Enum):
-    """Power Spectal Density Type.
+    """Power Spectral Density Type.
 
     Enum used to specify the type of power spectral approximation
         to use. They each have trade-offs in terms of computational
@@ -27,7 +29,8 @@ def power_spectral_density(
         window_length: float = 4.0,
         plot: bool = False,
         method: PSD_TYPE = PSD_TYPE.WELCH,
-        relative=False):
+        window: str = 'hann',
+        relative=False) -> float:
     """Power spectral density:
 
     Many thanks to: https://raphaelvallat.github.io/bandpower.html
@@ -52,6 +55,10 @@ def power_spectral_density(
             Whether or not to express the power in a frequency band as a percentage of the
             total power of the signal.
 
+    Returns
+    -------
+        bp: float
+            Power spectral density in the specified band
     """
     band = np.asarray(band)
     low, high = band
@@ -59,12 +66,15 @@ def power_spectral_density(
     # Compute the modified periodogram (Welch)
     if method == PSD_TYPE.WELCH:
         nperseg = window_length * sampling_rate
-        freqs, psd = welch(data, sampling_rate, nperseg=nperseg)
+        freqs, psd = welch(data, sampling_rate, nperseg=nperseg, window=window)
 
     # Compute the modified periodogram (MultiTaper)
     elif method == PSD_TYPE.MULTITAPER:
         psd, freqs = psd_array_multitaper(
             data, sampling_rate, adaptive=True, normalization='full', verbose=False)
+    
+    else:
+        raise SignalException(f'Unknown PSD method: {method}')
 
     # Find index of band in frequency vector
     idx_band = np.logical_and(freqs >= low, freqs <= high)
@@ -93,16 +103,3 @@ def power_spectral_density(
         bp /= simps(psd, dx=freq_res)
 
     return bp
-
-
-if __name__ == '__main__':
-    data = np.loadtxt('bcipy/signal/process/decomposition/resources/data.txt')
-    sampling_rate = 100
-    band = (0, 100)
-    np.arange(data.size) / sampling_rate
-    power_spectral_density(
-        data,
-        band,
-        sampling_rate=sampling_rate,
-        method=PSD_TYPE.WELCH,
-        plot=True)

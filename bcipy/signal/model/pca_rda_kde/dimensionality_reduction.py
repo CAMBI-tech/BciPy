@@ -62,6 +62,8 @@ class ChannelWisePrincipalComponentAnalysis:
 
 
 class MockPCA:
+    """Mock PCA object for testing purposes."""
+
     def fit(self, *args, **kw):
         pass
 

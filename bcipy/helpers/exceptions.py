@@ -11,6 +11,18 @@ class BciPyCoreException(Exception):
         self.errors = errors
 
 
+class SignalException(BciPyCoreException):
+    """
+    Signal Exception.
+
+    Thrown when signal module encounters an error.
+    """
+
+    def __init__(self, message, errors=None):
+        super().__init__(message)
+        self.errors = errors
+
+
 class FieldException(BciPyCoreException):
     """Field Exception.
 

@@ -9,7 +9,7 @@ from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validatio
 from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
-from bcipy.signal.exceptions import SignalException
+from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 
 
