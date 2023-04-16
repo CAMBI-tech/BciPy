@@ -6,14 +6,15 @@ from bcipy.signal.process.decomposition import continuous_wavelet_transform
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 import numpy as np
 
-class TestDecomposition(unittest.TestCase):
 
+class TestDecomposition(unittest.TestCase):
 
     def setUp(self) -> None:
         self.fs = 100
         data = np.loadtxt(f'{BCIPY_ROOT}/signal/tests/process/decomposition/resources/data.txt')
         np.arange(data.size) / self.fs
         self.data = data
+        self.band = (8, 12)
 
     def test_cwt(self):
         # create test data to pass to cwt
@@ -24,7 +25,7 @@ class TestDecomposition(unittest.TestCase):
         wavelet = "cmor1.5-1.0"
         data, scales = continuous_wavelet_transform(data, freq, fs, wavelet)
         self.assertEqual(data.shape, (10, 2, 1000))
-        self.assertEqual(scales, fs/freq)
+        self.assertEqual(scales, fs / freq)
 
     def test_cwt_with_bad_wavelet(self):
         data = np.random.rand(10, 2, 1000)
@@ -34,44 +35,46 @@ class TestDecomposition(unittest.TestCase):
         with self.assertRaises(ValueError):
             continuous_wavelet_transform(data, freq, fs, wavelet)
 
-    def test_psd_welch(self):
-        # create test data to pass to psd
-        band = (8, 12)
-
+    def test_psd_relative(self):
         response = power_spectral_density(
             self.data,
-            band,
+            self.band,
+            sampling_rate=self.fs,
+            relative=True,
+            plot=False)
+
+        self.assertIsInstance(response, float)
+        self.assertTrue(0 <= response <= 1)
+
+    def test_psd_welch(self):
+        response = power_spectral_density(
+            self.data,
+            self.band,
             sampling_rate=self.fs,
             method=PSD_TYPE.WELCH,
             plot=False)
-        
+
         self.assertIsInstance(response, float)
 
     def test_psd_multitaper(self):
-        # create test data to pass to psd
-        band = (8, 12)
-
         response = power_spectral_density(
             self.data,
-            band,
+            self.band,
             sampling_rate=self.fs,
             method=PSD_TYPE.MULTITAPER,
             plot=False)
-        
-        self.assertIsInstance(response, float)
-    
-    def test_psd_bad_method(self):
-        # create test data to pass to psd
-        band = (8, 12)
 
+        self.assertIsInstance(response, float)
+
+    def test_psd_bad_method(self):
         with self.assertRaises(SignalException):
             power_spectral_density(
                 self.data,
-                band,
+                self.band,
                 sampling_rate=self.fs,
                 method="bad_method",
                 plot=False)
-    
+
     def test_psd_bad_band(self):
         # create test data to pass to psd low band > high band
         band = (12, 8)
@@ -82,16 +85,14 @@ class TestDecomposition(unittest.TestCase):
                 band,
                 sampling_rate=self.fs,
                 plot=False)
-    
+
     def test_psd_bad_data(self):
-        # create test data to pass to psd
-        band = (8, 12)
-        data = np.random.rand(10, 2, 1000) # no frequency dimension
+        data = np.random.rand(10, 2, 1000)  # no frequency dimension
 
         with self.assertRaises(IndexError):
             power_spectral_density(
                 data,
-                band,
+                self.band,
                 sampling_rate=self.fs,
                 plot=False)
 

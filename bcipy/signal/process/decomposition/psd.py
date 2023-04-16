@@ -72,7 +72,7 @@ def power_spectral_density(
     elif method == PSD_TYPE.MULTITAPER:
         psd, freqs = psd_array_multitaper(
             data, sampling_rate, adaptive=True, normalization='full', verbose=False)
-    
+
     else:
         raise SignalException(f'Unknown PSD method: {method}')
 
@@ -86,7 +86,7 @@ def power_spectral_density(
     bp = simps(psd[idx_band], dx=freq_res)
 
     # Plot the power spectrum
-    if plot:
+    if plot:  # pragma: no cover
         sns.set(font_scale=1.2, style='white')
         plt.figure(figsize=(8, 4))
         plt.plot(freqs, psd, color='k', lw=2)

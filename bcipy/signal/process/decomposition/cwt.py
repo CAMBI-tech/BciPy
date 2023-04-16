@@ -2,6 +2,7 @@ from typing import Tuple
 import numpy as np
 import pywt
 
+
 def continuous_wavelet_transform(
         data: np.ndarray, freq: int, fs: int, wavelet="cmor1.5-1.0") -> Tuple[np.ndarray, float]:
     """
@@ -13,7 +14,7 @@ def continuous_wavelet_transform(
         freq (int): frequency of wavelet to keep
         fs (int): sampling rate of data (Hz)
         wavelet (str): name of wavelet to use (see pywt.families() and pywt.wavelist())
-            default: "cmor1.5-1.0" (complex morlet wavelet) 
+            default: "cmor1.5-1.0" (complex morlet wavelet)
             https://pywavelets.readthedocs.io/en/latest/ref/cwt.html#complex-morlet-wavelets
 
     Returns:
