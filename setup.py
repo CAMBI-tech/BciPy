@@ -1,6 +1,6 @@
-# Modified from https://github.com/kennethreitz/setup.py
 import os
 import sys
+import platform
 from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
@@ -11,14 +11,18 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.6,<3.9'
+REQUIRES_PYTHON = '>3.7,<3.10'
 
-VERSION = '2.0.1rc2'
+VERSION = '2.0.0rc3'
 
+REQUIRED = []
 
 # What packages are required for this module to be executed?
+if platform.system() == 'Windows' or platform.system() == 'Darwin':
+    with open('requirements-winmac.txt', 'r', encoding='utf-8') as f:
+        REQUIRED += f.read().splitlines()
 with open('requirements.txt', 'r', encoding='utf-8') as f:
-    REQUIRED = f.read().splitlines()
+    REQUIRED += f.read().splitlines()
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -33,7 +37,10 @@ about = {'__version__': VERSION}
 
 
 class UploadCommand(Command):
-    """Support setup.py upload."""
+    """Support setup.py upload.
+    
+    Modified from https://github.com/kennethreitz/setup.py
+    """
 
     description = 'Build and publish the package.'
     user_options = []
@@ -96,8 +103,8 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     # $ setup.py publish support.
     cmdclass={

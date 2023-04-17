@@ -10,7 +10,7 @@ from bcipy.helpers.language_model import (
     with_min_prob,
 )
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder, TrialReshaper
-from bcipy.helpers.task import BACKSPACE_CHAR
+from bcipy.helpers.symbols import BACKSPACE_CHAR
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import get_default_transform
 from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
