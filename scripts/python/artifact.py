@@ -25,7 +25,7 @@ def artifact_rejection(
         save_artifacts: bool=False,
         overwrite: bool=True,
         use_session_filter: bool=True,
-        session_annontations: bool = False) -> mne.io.RawArray:
+        session_annotations: bool = False) -> mne.io.RawArray:
     """BciPy offline artifact rejection pipeline. 
     
     This pipeline is designed to be run after all data has been collected. It currently supports bcipy>=2.0.0rc1.
@@ -54,7 +54,7 @@ def artifact_rejection(
         Whether to overwrite existing data. Defaults to True.
     use_session_filter : bool
         Whether to use the session filter. Defaults to True. TODO: implement custom filters.
-    session_annontations : bool
+    session_annotations : bool
         Whether to use the session annotations like target/nontarget. Defaults to False. 
 
 
@@ -84,8 +84,8 @@ def artifact_rejection(
     )
 
     # trigger timing and labels
-    if session_annontations:
-        session_annontations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_targetness)
+    if session_annotations:
+        session_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_targetness)
 
     if use_session_filter:
         # get signal filtering information
@@ -111,7 +111,7 @@ def artifact_rejection(
         mne_data, _ = convert_to_mne(raw_data, channel_map=channel_map, volts=False) # don't apply the session filters
 
     # artifact handling pipeline
-    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar, extra_labels=session_annontations)
+    mne_data = semi_automatic_artifact_rejection(mne_data, percent_bad=percent_bad, verify_plot=semi_automatic_ar, extra_labels=session_annotations)
 
     # if desired, save the artifact labelled data as an MNE fif file and export the annotations as a text file
     if save_artifacts:
@@ -136,6 +136,18 @@ def semi_automatic_artifact_rejection(
     verify_plot : bool
         Whether to plot the data before returning. This allows for semi-automatic artifact rejection.
             Set to false to reject by detection only, no human validation. Default True.
+        Standard of Practice: 
+            + Correct bad labels, but leave overlapping events!
+            + Modify the duration of the events as needed
+            + Labelling bad channels: a visual inspection of the channel in relation to all the noise present 
+        Labels:
+            BAD_peak: pop to electrical artifact; high amplitude artifact
+            BAD_blink: eye blink activity
+            BAD_eog: eye movement activity
+            BAD_emg: muscle activity
+            BAD_ecg: heart activity
+            BAD_flat: see rules for flat
+            BAD_event: we are not sure what this is, but noise is present
 
     Returns
     -------
@@ -165,8 +177,8 @@ def semi_automatic_artifact_rejection(
         print(f'EOG events found: {len(eog_events)}')
         annotations += eog_annotations
 
-    # combine the annotations here if both returned beceause set_annotations overwrites
-    # and we are not garunteed any annotations
+    # combine the annotations here if both returned because set_annotations overwrites
+    # and we are not guaranteed any annotations
     if extra_labels:
         annotations += extra_labels
 
@@ -359,13 +371,25 @@ def write_mne_annotations(
     -------
     None
     """
-    # write the annotations to a text file where each line is [desription, bcipy_label, onset, duration]
+    # write the annotations to a text file where each line is [description, bcipy_label, onset, duration]
     with open(os.path.join(path, filename), 'w') as tmp_file:
         for annotation in annotations:
             tmp_file.write(f"{annotation['description'].split('BAD_')[-1]} {TriggerType.ARTIFACT} {annotation['onset']} {annotation['duration']}\n")
     
 
 if __name__ == "__main__":
+    """
+    To use, 
+        1. Create a virtual environment with the requirements listed in requirements.txt. The bcipy version will determine what
+            python version you need installed. Currently, bcipy>=2.0.0rc1 requires python>=3.7 and <3.9.
+        2. Run the script. `python artifact.py`. 
+            By default, it will prompt you for a data directory. Detect artifact automatically and quit.
+        3. Run the script again using available flags. 
+            `-p <path to data directory> "C:\Users\user\data\"`
+            `--save <save data as .fif after detection for reuse later>`
+            `--semi <semi-automatic mode with gui for artifact label editing>`
+            `--colabel <colabel data with session annotations [target/nontarget]>`
+    """
     import argparse
     from pathlib import Path
 
@@ -399,10 +423,14 @@ if __name__ == "__main__":
         if session.is_dir():
             print(f'Processing {session}')
 
-            mne_data = artifact_rejection(
-                    session,
-                    semi_automatic_ar=args.semi,
-                    save_artifacts=args.save,
-                    session_annontations=args.colabel,
-                    overwrite=True)
-            # import pdb; pdb.set_trace() # comment out to continue without stopping between sessions
+            prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
+            if prompt != 'skip':
+                mne_data = artifact_rejection(
+                        session,
+                        semi_automatic_ar=args.semi,
+                        save_artifacts=args.save,
+                        session_annotations=args.colabel,
+                        overwrite=True)
+            else:
+                print(f'Skipping {session}')
+            import pdb; pdb.set_trace() # comment out to continue without stopping between sessions
