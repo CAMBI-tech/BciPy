@@ -7,16 +7,15 @@
     "recommended_values": "",
     "type": "bool"
   },
-  "acq_device": {
-    "value": "DSI-24",
+  "acq_mode": {
+    "value": "EEG",
     "section": "acq_config",
-    "readableName": "Acquisition Device",
-    "helpTip": "Specifies the hardware used for EEG data collection.",
+    "readableName": "Acquisition Mode",
+    "helpTip": "Specifies the hardware device(s) used for data collection.",
     "recommended_values": [
-      "DSI-24",
-      "DSI-VR300",
-      "g.USBamp-1",
-      "Tobii Nano"
+      "EEG/DSI-24",
+      "Eyetracker",
+      "EEG+Eyetracker"
     ],
     "type": "str"
   },
