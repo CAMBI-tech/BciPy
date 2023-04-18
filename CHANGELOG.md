@@ -8,6 +8,7 @@
     - GUI history using a `.bcipy_cache` file #257
 - Acquisition
     - Set channel spec information in devices.json. Removed aliases. #266
+    - Refactor to allow multiple devices to be configured for multimodal acquisition. #277
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261
