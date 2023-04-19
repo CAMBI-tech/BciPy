@@ -16,7 +16,7 @@ from bcipy.helpers.stimuli import InquiryReshaper
 class RdaKdeModel(SignalModel):
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int, prior_type: str="uniform"):
+    def __init__(self, k_folds: int, prior_type: str = "uniform"):
         self.k_folds = k_folds
         self.prior_type = prior_type
         self.optimization_elements = 1  # number of elements to optimized (RDA)
@@ -134,7 +134,7 @@ class RdaKdeModel(SignalModel):
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
-    
+
     def predict_proba(self, data: np.array) -> np.array:
         """Converts log likelihoods from model into class probabilities.
 

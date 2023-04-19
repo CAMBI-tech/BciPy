@@ -97,8 +97,8 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
             k_folds, split = arg_op_type
 
             def cost_fun_param(b):
-                return cost_cross_validation_auc(model, opt_el, x, y, [b[0],
-                                                                       b[1]], k_folds=k_folds, split=split)[0]
+                return cost_cross_validation_auc(model, opt_el, x, y, [b[0], b[1]],
+                                                 k_folds=k_folds, split=split)[0]
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1

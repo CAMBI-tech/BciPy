@@ -24,7 +24,7 @@ class ChannelWisePrincipalComponentAnalysis:
         num_ch(int): number of channels in expected data
     """
 
-    def __init__(self, n_components: Optional[float]=None, random_state: Optional[int]=None, num_ch: int=1):
+    def __init__(self, n_components: Optional[float] = None, random_state: Optional[int] = None, num_ch: int = 1):
         self.num_ch = num_ch
         self.list_pca = [PCA(n_components=n_components, random_state=random_state) for _ in range(self.num_ch)]
         self.logger = logging.getLogger(__name__)

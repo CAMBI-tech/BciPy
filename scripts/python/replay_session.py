@@ -15,7 +15,7 @@ from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 
 logger.getLogger()

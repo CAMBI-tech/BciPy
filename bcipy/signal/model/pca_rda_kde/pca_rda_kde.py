@@ -20,7 +20,7 @@ class PcaRdaKdeModel(SignalModel):
         self.k_folds = k_folds
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
-        self.optimization_elements = 1 # number of elements to optimized (RDA)
+        self.optimization_elements = 1  # number of elements to optimized (RDA)
         # min and max values for the likelihood ratio output
         self.min = 1e-2
         self.max = 1e2
