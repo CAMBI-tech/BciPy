@@ -2,22 +2,25 @@
 import logging
 import subprocess
 import time
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
-from bcipy.acquisition.devices import DeviceSpec, preconfigured_device
-from bcipy.acquisition import LslAcquisitionClient, await_start, LslDataServer
-from bcipy.helpers.save import save_device_spec
+from bcipy.acquisition.devices import (DeviceSpec, preconfigured_device,
+                                       with_content_type)
+from bcipy.acquisition import (LslAcquisitionClient, await_start,
+                               LslDataServer, discover_device_spec,
+                               ClientManager)
+from bcipy.helpers.save import save_device_specs
 from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
 log = logging.getLogger(__name__)
 
 
-def init_eeg_acquisition(parameters: dict,
-                         save_folder: str,
-                         export_spec: bool = False,
-                         server: bool = False) -> tuple:
+def init_eeg_acquisition(
+        parameters: dict,
+        save_folder: str,
+        server: bool = False) -> Tuple[ClientManager, List[LslDataServer]]:
     """Initialize EEG Acquisition.
 
     Initializes a client that connects with the EEG data source and begins
@@ -33,43 +36,120 @@ def init_eeg_acquisition(parameters: dict,
              }
         save_folder : str
             path to the folder where data should be saved.
-        export_spec : bool, optional
-            if True, the device spec will be exported to the save folder.
         server : bool, optional
             optionally start a mock data server that streams random data.
+            For discovered devices (ex. acquisition_mode: 'EEG'), the first
+            matching preconfigured device will be mocked.
+
     Returns
     -------
-        (client, server) tuple
+        (client_manager, servers) tuple
     """
-    # devices.load(devices_path) can be used in the future to load devices and match
-    device_spec = preconfigured_device(parameters['acq_device'])
 
-    dataserver = False
-    if server:
-        log.info(
-            f"fake data is on. Generating mock device data for {device_spec.name}"
-        )
-        dataserver = LslDataServer(device_spec=device_spec)
-        await_start(dataserver)
-    else:
-        log.info(f"fake data is off. Connecting to {device_spec.name}...")
+    servers = []
+    manager = ClientManager()
 
-    client = init_lsl_client(parameters, device_spec, save_folder)
-    client.start_acquisition()
+    for stream_type in stream_types(parameters['acq_mode']):
+        content_type, device_name = parse_stream_type(stream_type)
+
+        if server:
+            server_device_spec = server_spec(content_type, device_name)
+            log.info(
+                f"Generating mock device data for {server_device_spec.name}")
+            dataserver = LslDataServer(server_device_spec)
+            servers.append(dataserver)
+            # Start the server before init_device so it is discoverable.
+            await_start(dataserver)
+
+        device_spec = init_device(content_type, device_name)
+        raw_data_name = f'{RAW_DATA_FILENAME}.csv' if content_type == 'EEG' else None
+
+        client = init_lsl_client(parameters, device_spec, save_folder,
+                                 raw_data_name)
+        manager.add_client(client)
+
+    manager.start_acquisition()
 
     if parameters['acq_show_viewer']:
         viewer_screen = 1 if int(parameters['stim_screen']) == 0 else 0
         start_viewer(display_screen=viewer_screen,
                      parameter_location=parameters['parameter_location'])
 
-    if export_spec:
-        save_device_spec(device_spec, save_folder, spec_name)
+    save_device_specs(manager.device_specs, save_folder, spec_name)
 
-    return (client, dataserver)
+    return (manager, servers)
 
 
-def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
-                    save_folder: str):
+def init_device(content_type: str,
+                device_name: Optional[str] = None) -> DeviceSpec:
+    """Initialize a DeviceSpec for the given content type.
+
+    If a device_name is provided, the DeviceSpec will be looked up from the list
+    of preconfigured devices, otherwise, BciPy will attempt to discover a device
+    with the given type streaming on the network.
+
+    If a discovered device is found in devices.json, the provided configuration
+    will override any discovered fields.
+
+    Parameters
+    ----------
+        content_type - LSL content type (EEG, Gaze, etc).
+        device_name - optional; name of the device. If provided, the DeviceSpec
+            must be a preconfigured device.
+    """
+    if device_name:
+        return preconfigured_device(device_name, strict=True)
+    discovered_spec = discover_device_spec(content_type)
+    configured_spec = preconfigured_device(discovered_spec.name, strict=False)
+    return configured_spec or discovered_spec
+
+
+def server_spec(content_type: str,
+                device_name: Optional[str] = None) -> LslDataServer:
+    """Get the device_spec definition to use for a mock data server. If the
+    device_name is provided, the matching preconfigured_device will be used.
+    Otherwise, the first matching preconfigured device with the given
+    content_type will be used.
+
+    Parameters
+    ----------
+        content_type - LSL content type (EEG, Gaze, etc).
+        device_name - optional; name of the device. If provided, the DeviceSpec
+            must be a preconfigured device.
+    """
+    if device_name:
+        return preconfigured_device(device_name, strict=True)
+    devices = with_content_type(content_type)
+    if not devices:
+        raise Exception(
+            f"No configured devices have content_type {content_type}.")
+    return devices[0]
+
+
+def parse_stream_type(stream_type: str,
+                      delimiter: str = "/") -> Tuple[str, str]:
+    """Parses the stream type into a tuple of (content_type, device_name).
+
+    Parameters
+    ----------
+        stream_type - LSL content type (EEG, Gaze, etc). If you know the name
+            of the preconfigured device it can be added 'EEG/DSI-24'
+
+    >>> parse_stream_type('EEG/DSI-24')
+    ('EEG', 'DSI-24')
+    >>> parse_stream_type('Gaze')
+    ('Gaze', None)
+    """
+    if delimiter in stream_type:
+        content_type, device_name = stream_type.split(delimiter)[0:2]
+        return (content_type, device_name)
+    return (stream_type, None)
+
+
+def init_lsl_client(parameters: dict,
+                    device_spec: DeviceSpec,
+                    save_folder: str,
+                    raw_data_file_name: str = None):
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
@@ -77,7 +157,7 @@ def init_lsl_client(parameters: dict, device_spec: DeviceSpec,
     return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
-                                raw_data_file_name=f'{RAW_DATA_FILENAME}.csv')
+                                raw_data_file_name=raw_data_file_name)
 
 
 def max_inquiry_duration(parameters: dict) -> float:
@@ -117,7 +197,7 @@ def max_inquiry_duration(parameters: dict) -> float:
         stim_count * stim_duration) + poststim_duration + interval_duration
 
 
-def analysis_channels(channels: List[str], device_name: str) -> list:
+def analysis_channels(channels: List[str], device_spec: DeviceSpec) -> list:
     """Analysis Channels.
 
     Defines the channels within a device that should be used for analysis.
@@ -126,18 +206,18 @@ def analysis_channels(channels: List[str], device_name: str) -> list:
     ----------
     - channels(list(str)): list of channel names from the raw_data
     (excluding the timestamp)
-    - device_name(str): daq_type from the raw_data file.
+    - device_spec(str): device from which the data was collected
 
     Returns
     --------
     A binary list indicating which channels should be used for analysis.
     If i'th element is 0, i'th channel in filtered_eeg is removed.
     """
-    device = preconfigured_device(device_name)
-    relevant_channels = device.analysis_channels
+
+    relevant_channels = device_spec.analysis_channels
     if not relevant_channels:
         raise Exception("Analysis channels for the given device not found: "
-                        f"{device_name}.")
+                        f"{device_spec.name}.")
     if channels is None:
         return relevant_channels
     return [int(ch in relevant_channels) for ch in channels]
@@ -174,3 +254,21 @@ def start_viewer(display_screen: int, parameter_location: str) -> None:
     # hack: wait for window to open, so it doesn't error out when the main
     # window is open fullscreen.
     time.sleep(2)
+
+
+def stream_types(acq_mode: str, delimiter: str = "+") -> List[str]:
+    """Parse the provided acquisition mode into a list of LSL stream types.
+
+    The list of supported/recommended types is available in the XDF wiki:
+    https://github.com/sccn/xdf/wiki/Meta-Data
+
+    However, some LSL driver apps deviate from this list so this function does
+    not validate that the provided modes are in this list.
+
+    Parameters
+    ----------
+        acq_mode - delimited list of stream types (ex. 'EEG+Gaze')
+        delimiter - optional delimiter; default is '+'
+    """
+    return list(
+        dict.fromkeys([mode.strip() for mode in acq_mode.split(delimiter)]))

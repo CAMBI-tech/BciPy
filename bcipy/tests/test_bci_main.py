@@ -263,7 +263,7 @@ class TestCleanUpSession(unittest.TestCase):
     def test_clean_up_no_server(self) -> None:
         daq = mock()
         display = mock()
-        server = None
+        servers = []
 
         # mock the required daq calls
         when(daq).stop_acquisition()
@@ -272,7 +272,7 @@ class TestCleanUpSession(unittest.TestCase):
         # mock the required display call
         when(display).close()
 
-        response = _clean_up_session(display, daq, server)
+        response = _clean_up_session(display, daq, servers)
         self.assertTrue(response)
 
         verify(daq, times=1).stop_acquisition()
@@ -283,6 +283,7 @@ class TestCleanUpSession(unittest.TestCase):
         daq = mock()
         display = mock()
         server = mock()
+        servers = [server]
 
         # mock the required daq calls
         when(daq).stop_acquisition()
@@ -294,7 +295,7 @@ class TestCleanUpSession(unittest.TestCase):
         # mock the required server call
         when(server).stop()
 
-        response = _clean_up_session(display, daq, server)
+        response = _clean_up_session(display, daq, servers)
         self.assertTrue(response)
 
         verify(daq, times=1).stop_acquisition()
@@ -318,7 +319,9 @@ class TestExecuteTask(unittest.TestCase):
         self.fake = True
         self.display_mock = mock()
         self.daq = mock()
-        self.server = mock()
+        self.eeg_client = mock()
+        when(self.daq).get_client('EEG').thenReturn(self.eeg_client)
+        self.server = [mock()]
 
     def tearDown(self) -> None:
         unstub()
@@ -328,8 +331,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True
+            server=self.fake
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -350,13 +352,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True)
+            server=self.fake)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -372,14 +373,13 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True
+            server=self.fake
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -394,13 +394,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True)
+            server=self.fake)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -423,9 +422,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True
-        ).thenReturn(eeg_response)
+            server=self.fake).thenReturn(eeg_response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
         when(main).load_signal_model(model_class=any(), model_kwargs={
@@ -434,7 +431,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -449,13 +446,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True)
+            server=self.fake)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -483,9 +479,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True
-        ).thenReturn(eeg_response)
+            server=self.fake).thenReturn(eeg_response)
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
@@ -494,7 +488,7 @@ class TestExecuteTask(unittest.TestCase):
         }, filename='').thenReturn(load_model_response)
         when(main).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -509,13 +503,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True)
+            server=self.fake)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -536,13 +529,12 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             server=self.fake,
-            export_spec=True
         ).thenReturn(response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,
@@ -558,13 +550,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).init_eeg_acquisition(
             self.parameters,
             self.save_folder,
-            server=self.fake,
-            export_spec=True)
+            server=self.fake)
         verify(main, times=1).init_display_window(self.parameters)
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.daq,
+            self.eeg_client,
             self.task,
             self.parameters,
             self.save_folder,

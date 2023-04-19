@@ -111,7 +111,7 @@ class TestCopyPhrase(unittest.TestCase):
             self.parameters, self.win, any(),
             any(), any()).thenReturn(self.display)
 
-        when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(
+        when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
         # mock data for initial series
         series_gen = mock_inquiry_data()
@@ -510,7 +510,7 @@ class TestCopyPhrase(unittest.TestCase):
             })
         })
 
-        when(bcipy.task.paradigm.rsvp.copy_phrase)._init_copy_phrase_wrapper(
+        when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(copy_phrase_wrapper_mock)
 
         # mock data for initial series

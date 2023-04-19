@@ -10,7 +10,8 @@ import pytest
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
                                        preconfigured_device)
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition.protocols.lsl.lsl_client import (LslAcquisitionClient,
+                                                        discover_device_spec)
 from bcipy.helpers.clock import Clock
 
 DEVICE_NAME = 'DSI-24'
@@ -34,6 +35,14 @@ class TestDataAcquisitionClient(unittest.TestCase):
         """"Stop the data server."""
         cls.eeg_server.stop()
 
+    def test_discover_device_spec(self):
+        """Test utility function for creating a DeviceSpec based on the
+        content_type."""
+        spec = discover_device_spec(content_type='EEG')
+        self.assertEqual(spec.name, DEVICE.name)
+        self.assertEqual(spec.sample_rate, DEVICE.sample_rate)
+        self.assertListEqual(spec.channels, DEVICE.channels)
+
     def test_with_specified_device(self):
         """Test functionality with a provided device_spec"""
         client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
@@ -50,8 +59,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
-        client = LslAcquisitionClient(max_buffer_len=1,
-                                      device_spec=preconfigured_device('DSI-VR300'))
+        client = LslAcquisitionClient(
+            max_buffer_len=1, device_spec=preconfigured_device('DSI-VR300'))
 
         with self.assertRaises(Exception):
             client.start_acquisition()
@@ -145,7 +154,8 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         self.assertFalse(path.exists())
 
-        client = LslAcquisitionClient(max_buffer_len=1, save_directory=temp_dir)
+        client = LslAcquisitionClient(max_buffer_len=1,
+                                      save_directory=temp_dir)
         client.start_acquisition()
         time.sleep(0.1)
         client.stop_acquisition()

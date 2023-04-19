@@ -1,7 +1,7 @@
 from itertools import cycle
 from bcipy.task import Task
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.helpers.stimuli import PhotoDiodeStimuli, get_fixation
+from bcipy.helpers.stimuli import PhotoDiodeStimuli, get_fixation, jittered_timing
 
 
 class RSVPTimingVerificationCalibration(Task):
@@ -44,13 +44,14 @@ class RSVPTimingVerificationCalibration(Task):
         letters = cycle(self.stimuli)
         time_prompt, time_fixation, time_stim = self._task.timing
         color_target, color_fixation, color_stim = self._task.color
+        inq_len = self._task.stim_length
 
+        stim_timing = jittered_timing(time_stim, self._task.jitter, inq_len)
         target = next(letters)
         fixation = get_fixation(is_txt=True)
 
-        inq_len = self._task.stim_length
         inq_stim = [target, fixation, *[next(letters) for _ in range(inq_len)]]
-        inq_times = [time_prompt, time_fixation, *[time_stim for _ in range(inq_len)]]
+        inq_times = [time_prompt, time_fixation] + stim_timing
         inq_colors = [color_target, color_fixation, *[color_stim for _ in range(inq_len)]]
 
         for _ in range(self._task.stim_number):

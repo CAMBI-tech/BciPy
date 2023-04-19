@@ -73,7 +73,7 @@ class RSVPDisplay(Display):
         self.logger = logging.getLogger(__name__)
 
         # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after defintion
+        #  easy updating after definition
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing

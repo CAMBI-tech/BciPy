@@ -20,6 +20,8 @@ from bcipy.helpers.convert import (
     convert_to_mne,
     decompress,
     pyedf_convert,
+    tobii_to_norm,
+    norm_to_tobii,
 )
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import sample_data, write, RawData
@@ -624,6 +626,64 @@ class TestCompressionSupport(unittest.TestCase):
         compress(self.tar_file_name, [self.test_file_name])
         tar_list = archive_list(self.tar_file_full_name)
         self.assertTrue(tar_list[0] == self.test_file_name)
+
+
+class TestConvertTobii(unittest.TestCase):
+
+    def test_tobii_to_norm(self):
+        """Test the tobii_to_norm function"""
+        tobii_data = (0.5, 0.5)  # center of screen in tobii coordinates
+        excepted_norm_data = (0, 0)  # center of screen in norm coordinates
+        norm_data = tobii_to_norm(tobii_data)
+        self.assertEqual(norm_data, excepted_norm_data)
+
+        tobii_data = (0, 0)  # top left of screen in tobii coordinates
+        excepted_norm_data = (-1, 1)  # top left of screen in norm coordinates
+        norm_data = tobii_to_norm(tobii_data)
+        self.assertEqual(norm_data, excepted_norm_data)
+
+        tobii_data = (1, 1)  # bottom right of screen in tobii coordinates
+        excepted_norm_data = (1, -1)  # bottom right of screen in norm coordinates
+        norm_data = tobii_to_norm(tobii_data)
+        self.assertEqual(norm_data, excepted_norm_data)
+
+    def test_tobii_to_norm_raises_error_with_invalid_units(self):
+        """Test the tobii_to_norm function raises an error with invalid units"""
+        tobii_data = (-1, 1)  # invalid tobii coordinates
+        with self.assertRaises(AssertionError):
+            tobii_to_norm(tobii_data)
+
+        tobii_data = (1, 11)  # invalid tobii coordinates
+
+        with self.assertRaises(AssertionError):
+            tobii_to_norm(tobii_data)
+
+    def test_norm_to_tobii(self):
+        """Test the norm_to_tobii function"""
+        norm_data = (0, 0)  # center of screen in norm coordinates
+        excepted_tobii_data = (0.5, 0.5)  # center of screen in tobii coordinates
+        tobii_data = norm_to_tobii(norm_data)
+        self.assertEqual(tobii_data, excepted_tobii_data)
+
+        norm_data = (-1, 1)  # top left of screen in norm coordinates
+        excepted_tobii_data = (0, 0)  # top left of screen in tobii coordinates
+        tobii_data = norm_to_tobii(norm_data)
+        self.assertEqual(tobii_data, excepted_tobii_data)
+
+        norm_data = (1, -1)  # bottom right of screen in norm coordinates
+        excepted_tobii_data = (1, 1)  # bottom right of screen in tobii coordinates
+        tobii_data = norm_to_tobii(norm_data)
+        self.assertEqual(tobii_data, excepted_tobii_data)
+
+    def test_norm_to_tobii_raises_error_with_invalid_units(self):
+        """Test the norm_to_tobii function raises an error with invalid units"""
+        norm_data = (-1.1, 1)
+        with self.assertRaises(AssertionError):
+            norm_to_tobii(norm_data)
+
+        norm_data = (1, 1.1)
+        with self.assertRaises(AssertionError):
+            norm_to_tobii(norm_data)
 
 
 if __name__ == '__main__':

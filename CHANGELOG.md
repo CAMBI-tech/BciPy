@@ -8,6 +8,7 @@
     - GUI history using a `.bcipy_cache` file #257
 - Acquisition
     - Set channel spec information in devices.json. Removed aliases. #266
+    - Refactor to allow multiple devices to be configured for multimodal acquisition. #277
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261
@@ -34,8 +35,9 @@
     - Missing inits and lock some dependencies #258 Fix Windows Builds (pin pygame version) #265 Fix Mac Os Builds (pin pyo version) #432
     - Update cross_validation.py #271
 - Documentation
-    - Update README.md with correct installation instructions for development requirements #263
-    - Update README.md with new language model installation instructions #268
+    - Update README.md with correct installation instructions for development requirements #263 and new language model installation instructions #268
+- Misc Features!
+    - Add `tobii_to_norm` and `norm_to_tobii` methods to `helpers/convert.py` #278
 
 # 2.0.1-rc.2
 

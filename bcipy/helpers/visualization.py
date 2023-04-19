@@ -5,7 +5,8 @@ from pathlib import Path
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from bcipy.config import TRIGGER_FILENAME, RAW_DATA_FILENAME
+from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
+                          DEFAULT_DEVICE_SPEC_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.convert import convert_to_mne
@@ -14,6 +15,7 @@ from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.raw_data import RawData
 from bcipy.signal.process import Composition, get_default_transform
 
+import bcipy.acquisition.devices as devices
 import mne
 from mne import Epochs
 from mne.io import read_raw_edf
@@ -197,8 +199,10 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
 
     raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
-    type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
+
+    devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     # setup filtering
     default_transform = get_default_transform(
@@ -220,7 +224,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
 
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
 
     return visualize_erp(
         raw_data,

@@ -2,7 +2,9 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
+from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
+                          RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
+                          DEFAULT_DEVICE_SPEC_FILENAME)
 from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
@@ -22,6 +24,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
+import bcipy.acquisition.devices as devices
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -120,6 +123,9 @@ def offline_analysis(
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
@@ -144,9 +150,10 @@ def offline_analysis(
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
     channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
     log.info(f'Channels used in analysis: {channels_used}')
+
     data, fs = raw_data.by_channel()
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
