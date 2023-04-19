@@ -10,14 +10,14 @@ from scipy.stats import norm
 
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
-from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.pca_rda_kde.cross_validation import cross_validation
-from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
+from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.cross_validation import cross_validation
+from bcipy.signal.model.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pipeline import Pipeline
 from bcipy.helpers.exceptions import SignalException
 
-expected_output_folder = Path(__file__).absolute().parent / "unit_test_expected_output"
+expected_output_folder = Path(__file__).absolute().parent.parent / "unit_test_expected_output"
 
 
 class ModelSetup(unittest.TestCase):

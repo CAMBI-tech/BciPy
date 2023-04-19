@@ -7,22 +7,20 @@ from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
 from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 
 
-class PcaRdaKdeModel(SignalModel):
+class RdaKdeModel(SignalModel):
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
+    def __init__(self, k_folds: int, prior_type: str="uniform"):
         self.k_folds = k_folds
         self.prior_type = prior_type
-        self.pca_n_components = pca_n_components
-        self.optimization_elements = 1 # number of elements to optimized (RDA)
-        # min and max values for the likelihood ratio output
-        self.min = 1e-2
+        self.optimization_elements = 1  # number of elements to optimized (RDA)
+        self.min = 1e-2  # min and max values for the likelihood ratio output
         self.max = 1e2
         self.model = None
         self.auc = None
@@ -39,12 +37,7 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             trained likelihood model
         """
-        model = Pipeline(
-            [
-                ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
-                RegularizedDiscriminantAnalysis(),
-            ]
-        )
+        model = Pipeline([MockPCA(), RegularizedDiscriminantAnalysis()])
 
         # Find the optimal gamma + lambda values
         arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
@@ -57,6 +50,7 @@ class PcaRdaKdeModel(SignalModel):
             model, rda_index, train_data, train_labels, arg_cv, k_folds=self.k_folds, split="uniform"
         )
         self.auc = -tmp
+
         # After finding cross validation scores do one more round to learn the
         # final RDA model
         model.fit(train_data, train_labels)
@@ -140,7 +134,7 @@ class PcaRdaKdeModel(SignalModel):
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
-
+    
     def predict_proba(self, data: np.array) -> np.array:
         """Converts log likelihoods from model into class probabilities.
 
