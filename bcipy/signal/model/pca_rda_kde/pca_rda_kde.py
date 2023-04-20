@@ -4,12 +4,12 @@ from typing import List
 
 import numpy as np
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
-from bcipy.signal.model.pca_rda_kde.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.pca_rda_kde.cross_validation import cost_cross_validation_auc, cross_validation
-from bcipy.signal.model.pca_rda_kde.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.pca_rda_kde.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.pca_rda_kde.pipeline import Pipeline
-from bcipy.signal.exceptions import SignalException
+from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pipeline import Pipeline
+from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 
 
@@ -18,10 +18,14 @@ class PcaRdaKdeModel(SignalModel):
 
     def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
-        self.model = None
-        self.auc = None
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
+        self.optimization_elements = 1  # number of elements to optimized (RDA)
+        # min and max values for the likelihood ratio output
+        self.min = 1e-2
+        self.max = 1e2
+        self.model = None
+        self.auc = None
         self._ready_to_predict = False
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
@@ -97,7 +101,8 @@ class PcaRdaKdeModel(SignalModel):
 
         lam_gam = (self.model.pipeline[1].lam, self.model.pipeline[1].gam)
         tmp, _, _ = cost_cross_validation_auc(
-            tmp_model, 1, test_data, test_labels, lam_gam, k_folds=self.k_folds, split="uniform"
+            tmp_model, self.optimization_elements, test_data, test_labels,
+            lam_gam, k_folds=self.k_folds, split="uniform"
         )
         auc = -tmp
         return ModelEvaluationReport(auc)
@@ -128,7 +133,7 @@ class PcaRdaKdeModel(SignalModel):
         log_likelihoods = self.model.transform(data)
         subset_likelihood_ratios = np.exp(log_likelihoods[:, 1] - log_likelihoods[:, 0])
         # Restrict multiplicative updates to a reasonable range
-        subset_likelihood_ratios = np.clip(subset_likelihood_ratios, 1e-2, 1e2)
+        subset_likelihood_ratios = np.clip(subset_likelihood_ratios, self.min, self.max)
 
         # Apply likelihood ratios to entire symbol set.
         likelihood_ratios = np.ones(len(symbol_set))
