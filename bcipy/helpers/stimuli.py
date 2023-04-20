@@ -284,6 +284,16 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
+def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[List[float]]:
+    """Update inquiry timing to reflect downsampling."""
+
+    for i, inquiry in enumerate(timing):
+        for j, time in enumerate(inquiry):
+            timing[i][j] = time // downsample
+
+    return timing
+
+
 def mne_epochs(
         mne_data: RawArray,
         trigger_timing: List[float],
