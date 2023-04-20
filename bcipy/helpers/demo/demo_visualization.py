@@ -13,7 +13,8 @@ To use at bcipy root,
     - - `python bcipy/helpers/demo/demo_visualization.py --save"`
         this will save the visualizations generated to the provided or selected path
 """
-from bcipy.config import TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME
+from bcipy.config import (TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME,
+                          RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.load import (
@@ -23,6 +24,7 @@ from bcipy.helpers.load import (
 )
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+import bcipy.acquisition.devices as devices
 
 
 if __name__ == '__main__':
@@ -82,7 +84,10 @@ if __name__ == '__main__':
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
-    channel_map = analysis_channels(channels, type_amp)
+
+    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    channel_map = analysis_channels(channels, device_spec)
 
     save_path = None if not args.save else path
 

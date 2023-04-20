@@ -61,6 +61,7 @@ class MatrixCalibrationTask(Task):
 
         self.stim_number = parameters['stim_number']
         self.stim_length = parameters['stim_length']
+        self.jitter = parameters['stim_jitter']
         self.stim_order = StimuliOrder(parameters['stim_order'])
         self.target_positions = TargetPositions(parameters['target_positions'])
         self.nontarget_inquiries = parameters['nontarget_inquiries']
@@ -100,6 +101,7 @@ class MatrixCalibrationTask(Task):
             stim_number=self.stim_number,
             stim_length=self.stim_length,
             stim_order=self.stim_order,
+            jitter=self.jitter,
             target_positions=self.target_positions,
             nontarget_inquiries=self.nontarget_inquiries,
             timing=self.timing,

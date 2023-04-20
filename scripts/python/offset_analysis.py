@@ -9,6 +9,7 @@ from scipy.stats import describe, normaltest
 
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.raw_data import RawData, load
+from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
 
 ALLOWABLE_TOLERANCE = 0.01
 RSVP = False
@@ -88,7 +89,7 @@ def calculate_latency(raw_data: RawData,
         plt.vlines(trigger_diodes_timestamps,
                    ymin=-1.0,
                    ymax=trg_ymax,
-                   label='triggers.txt (adjusted)',
+                   label=f'{TRIGGER_FILENAME} (adjusted)',
                    linewidth=0.5,
                    color='cyan')
 
@@ -161,7 +162,7 @@ def calculate_latency(raw_data: RawData,
 
 def read_triggers(triggers_file: str, static_offset: float):
     """Read in the triggers.txt file. Convert the timestamps to be in
-    aqcuisition clock units using the offset listed in the file (last entry).
+    acquisition clock units using the offset listed in the file (last entry).
     Returns:
     --------
         list of (symbol, targetness, stamp) tuples."""
@@ -192,8 +193,8 @@ def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105):
     """
     if recommend:
         static_offset = 0.0
-    raw_data = load(Path(data_dir, 'raw_data.csv'))
-    triggers = read_triggers(Path(data_dir, 'triggers.txt'), static_offset)
+    raw_data = load(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
+    triggers = read_triggers(Path(data_dir, f'{TRIGGER_FILENAME}'), static_offset)
 
     calculate_latency(raw_data,
                       triggers,

@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import logging
 import numpy as np
-from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.acquisition import analysis_channels, DeviceSpec
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import (
     histogram,
@@ -45,16 +45,14 @@ class CopyPhraseWrapper:
     ----------
     - min_num_inq: The minimum number of inquiries to be displayed
     - max_num_inq: The maximum number of inquiries to be displayed
+    - device_spec: Specification for the EEG device used for data collection.
     - signal_model: model trained using a calibration session of the same user.
-    - fs: sampling frequency
     - k: down sampling rate
     - alp: symbol set of the task
     - evidence_names: list of evidence types used for decision-making
     - task_list: list[(phrases, initial_states)] for the copy phrase task
     - lmodel: language model used (when 'LM') evidence type is used.
     - is_txt_stim: Whether or not the stimuli are text objects
-    - device_name: name of the EEG device
-    - device_channels: list of device channel names
     - decision_threshold: Minimum likelihood value required for a decision
     - backspace_prob: default language model probability for the
     backspace character.
@@ -74,8 +72,8 @@ class CopyPhraseWrapper:
                  min_num_inq: int,
                  max_num_inq: int,
                  lmodel: LanguageModel,
+                 device_spec: DeviceSpec,
                  signal_model: SignalModel = None,
-                 fs: int = 300,
                  k: int = 2,
                  alp: List[str] = None,
                  evidence_names: List[EvidenceType] = [
@@ -84,8 +82,6 @@ class CopyPhraseWrapper:
                  task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
                                                       'I_LOVE_')],
                  is_txt_stim: bool = True,
-                 device_name: str = 'DSI-24',
-                 device_channels: List[str] = None,
                  decision_threshold: float = 0.8,
                  backspace_prob: float = 0.05,
                  backspace_always_shown: bool = False,
@@ -133,7 +129,7 @@ class CopyPhraseWrapper:
         self.valid_targets = set(self.alp)
 
         self.signal_model = signal_model
-        self.sampling_rate = fs
+        self.sampling_rate = device_spec.sample_rate
         self.downsample_rate = k
         self.filter_high = filter_high
         self.filter_low = filter_low
@@ -142,7 +138,7 @@ class CopyPhraseWrapper:
 
         self.mode = 'copy_phrase'
         self.task_list = task_list
-        self.channel_map = analysis_channels(device_channels, device_name)
+        self.channel_map = analysis_channels(device_spec.channels, device_spec)
         self.backspace_prob = backspace_prob
 
     def evaluate_inquiry(

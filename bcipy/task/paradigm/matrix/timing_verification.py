@@ -3,7 +3,7 @@ from typing import List
 from bcipy.task.paradigm.matrix.calibration import (
     MatrixCalibrationTask, InquirySchedule, DEFAULT_TEXT_FIXATION, Display,
     init_calibration_display_task)
-from bcipy.helpers.stimuli import PhotoDiodeStimuli
+from bcipy.helpers.stimuli import PhotoDiodeStimuli, jittered_timing
 
 
 class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
@@ -37,6 +37,7 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
         samples, times, colors = [], [], []
         [time_target, time_fixation, time_stim] = self.timing
         stimuli = cycle(PhotoDiodeStimuli.list())
+        stim_timing = jittered_timing(time_stim, self.jitter, self.stim_length)
 
         # advance iterator to start on the solid stim.
         next(stimuli)
@@ -45,7 +46,7 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
         inq_stim = [PhotoDiodeStimuli.SOLID.value, DEFAULT_TEXT_FIXATION
                     ] + [next(stimuli) for _ in range(self.stim_length)]
         inq_times = [time_target, time_fixation
-                     ] + [time_stim] * self.stim_length
+                     ] + stim_timing
         inq_colors = [self.color[0]] * (self.stim_length + 2)
 
         for _ in range(self.stim_number):

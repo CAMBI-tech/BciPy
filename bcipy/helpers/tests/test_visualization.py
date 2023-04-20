@@ -19,6 +19,7 @@ class TestVisualizeSessionData(unittest.TestCase):
         self.tmp_dir = Path(tempfile.mkdtemp())
         self.parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
         self.raw_data_mock = mock()
+        self.raw_data_mock.daq_type = 'DSI-24'
         self.raw_data_mock.sample_rate = 300
         self.channel_map_mock = mock()
 
