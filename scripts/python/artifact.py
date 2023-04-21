@@ -3,18 +3,20 @@ mne.set_log_level('WARNING')
 import os
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
-from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
+from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
+from bcipy.helpers.system_utils import report_execution_time
 from mne import Annotations
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import load_raw_data
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+import bcipy.acquisition.devices as devices
 
 ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
 
@@ -71,8 +73,12 @@ def artifact_rejection(
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
+
     # using this we remove channels unrelated to the task or that are not used in the analysis
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
     static_offset = parameters.get('static_trigger_offset')
     trial_length = parameters.get('trial_length')
 
@@ -191,6 +197,7 @@ def semi_automatic_artifact_rejection(
 
     return mne_data
 
+@report_execution_time
 def label_eog_events(
         raw: mne.io.RawArray,
         preblink: float=.5,
@@ -221,6 +228,7 @@ def label_eog_events(
     """
     print(f'Using blink threshold of {threshold}')
     eog_events = mne.preprocessing.find_eog_events(raw, ch_name=eye_channels, thresh=threshold)
+    # eog_events = mne.preprocessing.ica_find_eog_events(raw)
 
     if len(eog_events) > 0:
         # Create annotations around blinks
@@ -378,18 +386,18 @@ def write_mne_annotations(
     
 
 if __name__ == "__main__":
-    """
-    To use, 
-        1. Create a virtual environment with the requirements listed in requirements.txt. The bcipy version will determine what
-            python version you need installed. Currently, bcipy>=2.0.0rc1 requires python>=3.7 and <3.9.
-        2. Run the script. `python artifact.py`. 
-            By default, it will prompt you for a data directory. Detect artifact automatically and quit.
-        3. Run the script again using available flags. 
-            `-p <path to data directory> "C:\Users\user\data\"`
-            `--save <save data as .fif after detection for reuse later>`
-            `--semi <semi-automatic mode with gui for artifact label editing>`
-            `--colabel <colabel data with session annotations [target/nontarget]>`
-    """
+    # """
+    # To use, 
+    #     1. Create a virtual environment with the requirements listed in requirements.txt. The bcipy version will determine what
+    #         python version you need installed. Currently, bcipy>=2.0.0rc1 requires python>=3.7 and <3.9.
+    #     2. Run the script. `python artifact.py`. 
+    #         By default, it will prompt you for a data directory. Detect artifact automatically and quit.
+    #     3. Run the script again using available flags. 
+    #         `-p <path to data directory> "C:\Users\user\data\"`
+    #         `--save <save data as .fif after detection for reuse later>`
+    #         `--semi <semi-automatic mode with gui for artifact label editing>`
+    #         `--colabel <colabel data with session annotations [target/nontarget]>`
+    # """
     import argparse
     from pathlib import Path
 
