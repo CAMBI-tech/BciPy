@@ -63,18 +63,14 @@ class LslDataServer(StoppableThread):
                           f'{device_spec.content_type.lower()}_{uuid.uuid1()}')
 
         if include_meta:
-            # TODO: different types of metadata depending on the content type
-            unit = 'unknown'
-            channel_type = 'unknown'
-            if self.device_spec.content_type == 'EEG':
-                unit = 'microvolts'
-                channel_type = 'EEG'
             meta_channels = info.desc().append_child('channels')
             for channel in device_spec.channel_specs:
-                meta_channels.append_child('channel') \
-                    .append_child_value('label', channel.name) \
-                    .append_child_value('unit', channel.units or unit) \
-                    .append_child_value('type', channel.type or channel_type)
+                channel_node = meta_channels.append_child('channel')
+                channel_node.append_child_value('label', channel.name)
+                if channel.units:
+                    channel_node.append_child_value('unit', channel.units)
+                if channel.type:
+                    channel_node.append_child_value('type', channel.type)
 
         self.outlet = StreamOutlet(info)
 

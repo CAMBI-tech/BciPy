@@ -9,6 +9,7 @@
 - Acquisition
     - Set channel spec information in devices.json. Removed aliases. #266 Updated default analysis channels for Wearable Sensing devices #279
     - Refactor to allow multiple devices to be configured for multimodal acquisition. #277
+    - Refinements to LSL server to use the device ChannelSpec information for generating metadata. #282
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261
