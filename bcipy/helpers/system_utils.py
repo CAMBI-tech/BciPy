@@ -49,6 +49,24 @@ def is_battery_powered() -> bool:
     ) and not psutil.sensors_battery().power_plugged
 
 
+def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
+    """Check if the screen refresh rate is sufficient for BciPy operation.
+
+    Parameters
+    ----------
+        refresh(float) - optional screen refresh rate if already collected. If not provided,
+            the current screen refresh rate is gathered using get_screen_info().
+
+    Returns
+    -------
+    True if the refresh rate is less than 120 Hz; otherwise False.
+    """
+    if refresh is None:
+        refresh = get_screen_info()[-1]
+
+    return refresh < 120
+
+
 def git_dir() -> str:
     """Git Directory.
 
