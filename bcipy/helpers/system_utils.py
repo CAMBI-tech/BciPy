@@ -108,18 +108,18 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_screen_resolution() -> Tuple[int, int]:
-    """Gets the screen resolution.
+def get_screen_info() -> Tuple[int, int, float]:
+    """Gets the screen information.
 
     Note: Use this method if only the screen resolution is needed; it is much more efficient
     than extracting that information from the dict returned by the get_system_info method.
 
     Returns
     -------
-        (width, height)
+        (width, height, rate)
      """
     screen = pyglet.canvas.get_display().get_default_screen()
-    return (screen.width, screen.height)
+    return (screen.width, screen.height, screen.get_mode().rate)
 
 
 def get_gpu_info() -> List[dict]:
@@ -141,13 +141,13 @@ def get_system_info() -> dict:
           'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version',
           'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
-    screen_width, screen_height = get_screen_resolution()
+    screen_width, screen_height, screen_rate = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
-        'resolution': [screen_width, screen_height],
+        'screen_resolution': [screen_width, screen_height],
         'memory': psutil.virtual_memory().available / 1024 / 1024,
         'bcipy_version': bcipy_version(),
         'platform': platform.system(),
@@ -157,10 +157,11 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
+        'cpu_hz': info['hz_actual_friendly'],
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
-        'hz': info['hz_actual_friendly'],
+        'screen_refresh': f"{screen_rate}Hz",
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
 

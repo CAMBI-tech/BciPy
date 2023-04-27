@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 from psychopy import visual
 
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.system_utils import get_screen_info
 
 
 class Display(ABC):
@@ -88,7 +88,7 @@ def init_display_window(parameters):
     if parameters['full_screen']:
 
         # set window attributes based on resolution
-        window_width, window_height = get_screen_resolution()
+        window_width, window_height, _ = get_screen_info()
 
         # set full screen mode to true (removes os dock, explorer etc.)
         full_screen = True

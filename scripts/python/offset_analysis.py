@@ -1,4 +1,29 @@
-"""GUI tool to visualize offset analysis when analyzing system latency."""
+"""GUI tool to visualize offset analysis when analyzing system latency.
+
+Assumptions:
+    - The raw_data.csv file is available.
+    - The raw_data.csv file contains a TRG column, which is a continuous line of 0s and values greater than 0 (indicating a photodiode trigger event).
+    - The triggers.txt file is available.
+    - All data are in the same directory and in the BciPy session data format.
+
+Usage:
+    - Run the script from the command line.
+    - Select the directory containing the raw_data.csv and triggers.txt files.
+    - The script will plot the TRG column from the raw_data.csv file, as well as the triggers.txt file. 
+    - The script will also print out the results of the analysis, including the number of violations (set using the --tolerance flag) and the recommended static offset (-r).
+
+    Example usage to recommned a static offset:
+        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ -r
+    
+    Example usage to recommend a static offset using the RSVP Time Test Calibrations:
+        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --rsvp -r
+
+    Example usage to plot the data next to photodiode results with a static offset applied:
+        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --offset 0.01
+
+    Example usage to plot the data next to photodiode results with a static offset applied and a tolerance of 10 ms:
+        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --offset 0.01 --tolerance 0.01
+"""
 from pathlib import Path
 from textwrap import wrap
 from typing import List
@@ -10,9 +35,6 @@ from scipy.stats import describe, normaltest
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.raw_data import RawData, load
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
-
-ALLOWABLE_TOLERANCE = 0.01
-RSVP = False
 
 
 def clock_seconds(sample_rate: float, sample: int) -> float:
@@ -26,7 +48,9 @@ def calculate_latency(raw_data: RawData,
                       triggers: List[tuple],
                       title: str = "",
                       recommend_static: bool = False,
-                      plot: bool = False):
+                      plot: bool = False,
+                      tolerance: float = 0.01,
+                      rsvp: bool = False):
     """Plot raw_data triggers, including the TRG_device_stream data
     (channel streamed from the device; usually populated from a trigger box),
     as well as TRG data populated from the LSL Marker Stream. Also plots data
@@ -76,8 +100,6 @@ def calculate_latency(raw_data: RawData,
             diode_enc = False
             lengths.append(length)
             length = 0
-        # else:
-        #     print('Fail')
 
     ax.plot(trg_box_x, trg_box_y, label='TRG (trigger box)')
 
@@ -104,9 +126,9 @@ def calculate_latency(raw_data: RawData,
         diff = trigger_stamp - diode_stamp
 
         # rsvp bug with fixation
-        if RSVP:
+        if rsvp:
             if x > 0:
-                if abs(diff) > ALLOWABLE_TOLERANCE:
+                if abs(diff) > tolerance:
                     errors.append(
                         f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}'
                     )
@@ -116,7 +138,7 @@ def calculate_latency(raw_data: RawData,
             else:
                 x += 1
         else:
-            if abs(diff) > ALLOWABLE_TOLERANCE:
+            if abs(diff) > tolerance:
                 errors.append(
                     f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
             diffs.append(diff)
@@ -143,7 +165,7 @@ def calculate_latency(raw_data: RawData,
                 f'Number of violations: {num_errors}')
         else:
             print(
-                f'RESULTS: Triggers and photodiode timestamps within limit of [{ALLOWABLE_TOLERANCE}s]!'
+                f'RESULTS: Triggers and photodiode timestamps within limit of [{tolerance}s]!'
             )
 
     # Add labels for TRGs
@@ -182,7 +204,7 @@ def read_triggers(triggers_file: str, static_offset: float):
         return corrected
 
 
-def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105):
+def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105, tolerance: float = 0.01, rsvp: bool = False):
     """Run the viewer gui
 
     Parameters:
@@ -200,7 +222,9 @@ def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105):
                       triggers,
                       title=Path(data_dir).name,
                       recommend_static=recommend,
-                      plot=not recommend)
+                      plot=not recommend,
+                      tolerance=tolerance,
+                      rsvp=rsvp)
 
 
 if __name__ == "__main__":
@@ -219,11 +243,19 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--offset',
                         help='static offset applied to triggers for plotting and analysis',
-                        default=0.105)
+                        default=0.114)
+    parser.add_argument('-t','--tolerance',
+                        help='Allowable tolerance between triggers and photodiode. Deafult 10 ms',
+                        default=0.01)
+    parser.add_argument('--rsvp',
+                        help='RSVP Calibration Task. Default False. Corrects for issue with fixation causing a false positive.',
+                        type=bool,
+                        default=True)
+    
 
     args = parser.parse_args()
     path = args.path
     if not path:
         path = ask_directory()
 
-    main(path, bool(args.recommend), float(args.offset))
+    main(path, bool(args.recommend), float(args.offset), float(args.tolerance), bool(args.rsvp))
