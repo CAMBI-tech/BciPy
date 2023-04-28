@@ -27,7 +27,8 @@ from bcipy.helpers.stimuli import (
     soundfiles,
     StimuliOrder,
     ssvep_to_code,
-    TargetPositions
+    TargetPositions,
+    update_inquiry_timing,
 )
 
 MOCK_FS = 44100
@@ -533,7 +534,7 @@ class TestJitteredTiming(unittest.TestCase):
         self.assertEqual(stim_number, len(resp))
         self.assertIsInstance(resp, list)
 
-    def test_jittered_timing_with_jitter_withint_defined_limits(self):
+    def test_jittered_timing_with_jitter_within_defined_limits(self):
         time = 1
         jitter = 0.25
         stim_number = 100
@@ -622,6 +623,7 @@ class TestTrialReshaper(unittest.TestCase):
 
 
 class TestInquiryReshaper(unittest.TestCase):
+
     def setUp(self):
         self.n_channel = 7
         self.trial_length = 0.5
@@ -641,16 +643,18 @@ class TestInquiryReshaper(unittest.TestCase):
             [0, 0, 1]
         ])
         self.timing_info = [
-            1.4, 1.6, 1.8,
-            2.4, 2.6, 2.8,
-            3.4, 3.6, 3.8,
-            4.4, 4.6, 4.8,
+            1.4, 2.4, 3.4,
+            28.1, 30.1, 38.1,
+            50.1, 51.1, 52.1,
+            80.1, 81.1, 82.1,
         ]
-        # Inquiry lasts from onset of first trial, to onset of last trial + trial_length
-        self.inquiry_duration_s = 1.8 - 1.4 + self.trial_length
-
-        # total duration = 3.8s + final trial_length
-        self.eeg = np.random.randn(self.n_channel, int(self.sample_rate * (4.8 + self.trial_length)))
+        # Note this value must be greater than the difference between first and last timing info per inquiry
+        # In this case there are 3 trials per inquiry and the difference between the first and last timing info is 10s
+        self.inquiry_duration_s = 10 + self.trial_length
+        self.samples_per_inquiry = int(self.sample_rate * self.inquiry_duration_s)
+        self.samples_per_trial = int(self.sample_rate * self.trial_length)
+        # We create a wealth of samples, but only use the first 4 inquiries worth
+        self.eeg = np.random.randn(self.n_channel, 10000)
         self.channel_map = [1] * self.n_channel
 
     def test_inquiry_reshaper(self):
@@ -663,11 +667,62 @@ class TestInquiryReshaper(unittest.TestCase):
             channel_map=self.channel_map,
             poststimulus_length=self.trial_length,
         )
-
-        samples_per_inquiry = int(self.sample_rate * self.inquiry_duration_s)
-        expected_shape = (self.n_channel, self.n_inquiry, samples_per_inquiry)
+        expected_shape = (self.n_channel, self.n_inquiry, self.samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
+
+    def test_inquiry_reshaper_trial_extraction(self):
+        timing = [[1, 3, 4], [1, 4, 5], [1, 2, 3], [4, 5, 6]]
+        # make a fake eeg data array (n_channels, n_inquiry, n_samples)
+        inquiries = np.random.randn(self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+
+        response = InquiryReshaper().extract_trials(
+            inquiries=inquiries,
+            samples_per_trial=self.samples_per_trial,
+            inquiry_timing=timing,
+        )
+        expected_shape = (self.n_channel, (self.trials_per_inquiry * self.n_inquiry), self.samples_per_trial)
+        self.assertTrue(response.shape == expected_shape)
+
+    def test_inquiry_reshaper_trial_extraction_with_prestimulus(self):
+        timing = [[2, 7, 10], [2, 7, 15], [2, 12, 15], [4, 5, 6]]
+        # make a fake eeg data array (n_channels, n_inquiry, n_samples)
+        inquiries = np.random.randn(self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        prestimulus_samples = 1
+        response = InquiryReshaper().extract_trials(
+            inquiries=inquiries,
+            samples_per_trial=self.samples_per_trial,
+            inquiry_timing=timing,
+            prestimulus_samples=prestimulus_samples,
+        )
+        expected_shape = (
+            self.n_channel,
+            (self.trials_per_inquiry * self.n_inquiry),
+            (self.samples_per_trial + prestimulus_samples))
+        self.assertTrue(response.shape == expected_shape)
+
+
+class TestUpdateInquiryTiming(unittest.TestCase):
+
+    def test_update_inquiry_timing(self):
+        initial_timing = [[100, 200]]
+        downsample = 2
+        new_timing = update_inquiry_timing(
+            timing=initial_timing,
+            downsample=downsample,
+        )
+        expected_timing = [[50, 100]]
+        self.assertTrue(new_timing == expected_timing)
+
+    def test_update_inquiry_timing_with_non_int_timing_after_correction(self):
+        initial_timing = [[100, 201]]
+        downsample = 2
+        new_timing = update_inquiry_timing(
+            timing=initial_timing,
+            downsample=downsample,
+        )
+        expected_timing = [[50, 201 // downsample]]
+        self.assertTrue(new_timing == expected_timing)
 
 
 class SSVEPStimuli(unittest.TestCase):

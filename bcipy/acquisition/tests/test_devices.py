@@ -27,6 +27,8 @@ class TestDeviceSpecs(unittest.TestCase):
         dsi = supported['DSI-24']
         self.assertEqual('EEG', dsi.content_type)
 
+        self.assertEqual(len(devices.with_content_type('EEG')), 3)
+
     def test_load_from_config(self):
         """Should be able to load a list of supported devices from a
         configuration file."""
@@ -45,7 +47,7 @@ class TestDeviceSpecs(unittest.TestCase):
         with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
             json.dump(my_devices, config_file)
 
-        devices.load(config_path)
+        devices.load(config_path, replace=True)
         supported = devices.preconfigured_devices()
         self.assertEqual(1, len(supported.keys()))
         self.assertTrue('DSI-VR300' in supported.keys())
@@ -87,13 +89,25 @@ class TestDeviceSpecs(unittest.TestCase):
         with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
             json.dump(my_devices, config_file)
 
+        prior_device_count = len(devices.preconfigured_devices().keys())
         devices.load(config_path)
         supported = devices.preconfigured_devices()
 
         spec = supported["Custom-Device"]
         self.assertEqual(spec.channels, ['Fz', 'Pz', 'F7'])
         self.assertEqual(spec.channel_names, ['ch1', 'ch2', 'ch3'])
+        self.assertEqual(len(supported.keys()), prior_device_count + 1)
+        shutil.rmtree(temp_dir)
 
+    def test_load_missing_config(self):
+        """Missing config should not error and should not overwrite."""
+
+        # create a config file in a temp location.
+        temp_dir = tempfile.mkdtemp()
+        devices.load(config_path=Path(temp_dir, 'does_not_exist.json'),
+                     replace=True)
+        self.assertTrue(devices.preconfigured_devices(),
+                        msg="Default devices should still be configured")
         shutil.rmtree(temp_dir)
 
     def test_device_registration(self):

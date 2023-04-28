@@ -1,0 +1,47 @@
+{
+  "kenlm": {
+    "model_file": {
+      "description": "Name of the pretrained model file",
+      "value": "lm_dec19_char_large_12gram.kenlm",
+      "type": "filepath"
+    }
+  },
+  "causal": {
+    "model_name": {
+      "description": "Name of the HuggingFace model to load. Required for the Causal model.",
+      "value": "facebook/opt-125m",
+      "type": "str"
+    },
+    "model_path": {
+      "description": "Pretrained model path, relative to causal.py directory. Blank if using HuggingFace model",
+      "value": "",
+      "type": "directorypath"
+    }
+  },  
+  "mixture": {
+    "model_types": {
+      "description": "Defines the types of models to be used by the mixture model.",
+      "value": [
+        "CAUSAL",
+        "KENLM"
+      ],
+      "type": "List[str]"
+    },
+    "model_weights": {
+      "description": "Defines the weights of models to be used by the mixture model. Must sum to 1.",
+      "value": [
+        0.3, 
+        0.7
+      ],
+      "type": "List[float]"
+    },
+    "model_params": {
+      "description": "Defines the extra parameters of models to be used by the mixture model.",
+      "value": [
+        {}, 
+        {}
+      ],
+      "type": "List[Dict[str, str]]"
+    }
+  }
+}

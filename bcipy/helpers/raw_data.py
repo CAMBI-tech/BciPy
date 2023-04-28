@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from bcipy.config import DEFAULT_ENCODING
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.signal.generator.generator import gen_random_data
 from bcipy.signal.process import Composition
 
@@ -310,12 +311,15 @@ def load(filename: str) -> RawData:
     """
     # Loading all data from a csv is faster using pandas than using the
     # RawDataReader.
-    with open(filename, mode='r', encoding=DEFAULT_ENCODING) as file_obj:
-        daq_type, sample_rate = read_metadata(file_obj)
-        dataframe = pd.read_csv(file_obj)
-        data = RawData(daq_type, sample_rate, list(dataframe.columns))
-        data.rows = dataframe.values.tolist()
-        return data
+    try:
+        with open(filename, mode='r', encoding=DEFAULT_ENCODING) as file_obj:
+            daq_type, sample_rate = read_metadata(file_obj)
+            dataframe = pd.read_csv(file_obj)
+            data = RawData(daq_type, sample_rate, list(dataframe.columns))
+            data.rows = dataframe.values.tolist()
+            return data
+    except FileNotFoundError:
+        raise BciPyCoreException(f"\nError loading BciPy RawData. Valid data not found at: {filename}")
 
 
 def read_metadata(file_obj: TextIO) -> Tuple[str, float]:

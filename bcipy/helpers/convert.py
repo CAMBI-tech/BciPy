@@ -536,3 +536,50 @@ def convert_to_mne(
         mne_data = mne_data.apply_function(lambda x: x * 1e-6)
 
     return mne_data
+
+
+def tobii_to_norm(tobii_units: Tuple[float, float]) -> Tuple[float, float]:
+    """Tobii to PsychoPy's 'norm' units.
+
+    https://developer.tobiipro.com/commonconcepts/coordinatesystems.html
+    https://www.psychopy.org/general/units.html
+
+    Tobii uses an Active Display Coordinate System.
+        The point (0, 0) denotes the upper left corner and (1, 1) the lower right corner of it.
+
+    PsychoPy uses several coordinate systems, the normalized window unit is assumed here.
+        The point (0, 0) denotes the center of the screen and (-1, -1) the upper left corner
+        and (1, 1) the lower right corner.
+
+    """
+    # check that Tobii units are within the expected range
+    assert 0 <= tobii_units[0] <= 1, "Tobii x coordinate must be between 0 and 1"
+    assert 0 <= tobii_units[1] <= 1, "Tobii y coordinate must be between 0 and 1"
+
+    # convert Tobii units to Psychopy units
+    norm_x = (tobii_units[0] - 0.5) * 2
+    norm_y = (tobii_units[1] - 0.5) * 2 * -1
+    return (norm_x, norm_y)
+
+
+def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
+    """PsychoPy's 'norm' units to Tobii.
+
+    https://developer.tobiipro.com/commonconcepts/coordinatesystems.html
+    https://www.psychopy.org/general/units.html
+
+    Tobii uses an Active Display Coordinate System.
+        The point (0, 0) denotes the upper left corner and (1, 1) the lower right corner of it.
+
+    PsychoPy uses several coordinate systems, the normalized window unit is assumed here.
+        The point (0, 0) denotes the center of the screen and (-1, -1) the upper left corner
+        and (1, 1) the lower right corner.
+    """
+    # check that the coordinates are within the bounds of the screen
+    assert norm_units[0] >= -1 and norm_units[0] <= 1, "X coordinate must be between -1 and 1"
+    assert norm_units[1] >= -1 and norm_units[1] <= 1, "Y coordinate must be between -1 and 1"
+
+    # convert PsychoPy norm units to Tobii units
+    tobii_x = (norm_units[0] / 2) + 0.5
+    tobii_y = ((norm_units[1] * -1) / 2) + 0.5
+    return (tobii_x, tobii_y)

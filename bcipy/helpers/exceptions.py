@@ -11,6 +11,18 @@ class BciPyCoreException(Exception):
         self.errors = errors
 
 
+class SignalException(BciPyCoreException):
+    """
+    Signal Exception.
+
+    Thrown when signal module encounters an error.
+    """
+
+    def __init__(self, message, errors=None):
+        super().__init__(message)
+        self.errors = errors
+
+
 class FieldException(BciPyCoreException):
     """Field Exception.
 
@@ -75,4 +87,18 @@ class TaskConfigurationException(BciPyCoreException):
     """Task Configuration Exception.
 
     Thrown when attempting to run a task with invalid configurations"""
+    ...
+
+
+class InvalidLanguageModelException(BciPyCoreException):
+    """Invalid Language Model Exception.
+
+    Thrown when attempting to load a language model from an invalid path"""
+    ...
+
+
+class KenLMInstallationException(BciPyCoreException):
+    """KenLM Installation Exception.
+
+    Thrown when attempting to import kenlm without installing the module"""
     ...

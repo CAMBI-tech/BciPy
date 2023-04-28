@@ -30,7 +30,17 @@
         ],
         "sample_rate": 300.0,
         "description": "Wearable Sensing DSI-24",
-        "excluded_from_analysis": ["TRG", "X1", "X2", "X3", "A2"]
+        "excluded_from_analysis": [
+            "TRG",
+            "X1", "X2", "X3",
+            "A2",
+            "T3", "T4",
+            "Fp1", "Fp2",
+            "F7", "F8",
+            "P3", "P4",
+            "F3", "F4",
+            "C3", "C4"
+        ]
     },
     {
         "name": "DSI-VR300",
@@ -47,7 +57,7 @@
         ],
         "sample_rate": 300.0,
         "description": "Wearable Sensing DSI-VR300",
-        "excluded_from_analysis": ["TRG"]
+        "excluded_from_analysis": ["TRG", "F7"]
     },
     {
         "name": "g.USBamp-1",

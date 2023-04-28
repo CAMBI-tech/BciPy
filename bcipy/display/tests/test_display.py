@@ -6,7 +6,7 @@ from bcipy.display.main import init_display_window
 
 
 class TestInitializeDisplayWindow(unittest.TestCase):
-    """This is Test Case for Initialzing Display Window."""
+    """This is Test Case for Initializing Display Window."""
 
     def setUp(self):
         """Set up needed items for test."""

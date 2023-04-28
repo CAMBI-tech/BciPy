@@ -1,7 +1,5 @@
 import logging
-import os
 import random
-from string import ascii_uppercase
 from typing import Any, List, Tuple, Union
 
 import numpy as np
@@ -13,9 +11,6 @@ from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(__name__)
-
-SPACE_CHAR = '_'
-BACKSPACE_CHAR = '<'
 
 
 def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
@@ -77,33 +72,6 @@ def calculate_stimulation_freq(flash_time: float) -> float:
 
     # We want to know how many stimuli will present in a second
     return 1 / flash_time
-
-
-def alphabet(parameters=None, include_path=True):
-    """Alphabet.
-
-    Function used to standardize the symbols we use as alphabet.
-
-    Returns
-    -------
-        array of letters.
-    """
-    if parameters and not parameters['is_txt_stim']:
-        # construct an array of paths to images
-        path = parameters['path_to_presentation_images']
-        stimulus_array = []
-        for stimulus_filename in sorted(os.listdir(path)):
-            # PLUS.png is reserved for the fixation symbol
-            if stimulus_filename.endswith(
-                    '.png') and not stimulus_filename.endswith('PLUS.png'):
-                if include_path:
-                    img = os.path.join(path, stimulus_filename)
-                else:
-                    img = os.path.splitext(stimulus_filename)[0]
-                stimulus_array.append(img)
-        return stimulus_array
-
-    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 
 def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
