@@ -150,7 +150,6 @@ class InquiryReshaper:
             return inq_trigs[-1] - inq_trigs[0]
 
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
-        breakpoint()
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
         buffer_samples = int(transformation_buffer * sample_rate)
 
@@ -176,8 +175,6 @@ class InquiryReshaper:
             start = first_trigger - prestimulus_samples
             stop = first_trigger + num_samples_per_inq + buffer_samples
             reshaped_data.append(eeg_data[:, start:stop])
-
-        breakpoint()
 
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 

@@ -4,7 +4,8 @@ from typing import Tuple
 
 from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
                           RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
-                          DEFAULT_DEVICE_SPEC_FILENAME)
+                          DEFAULT_DEVICE_SPEC_FILENAME,
+                          EYE_TRACKER_FILENAME_PREFIX)
 from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
@@ -99,7 +100,27 @@ def offline_analysis(
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
-    raw_data_file = f"{RAW_DATA_FILENAME}.csv"
+
+    acq_mode = parameters.get("acq_mode")
+    # handle multiple acquisition. Note: we only currently support Eyetracker + EEG
+    data_file_paths = []
+    if '+' in acq_mode:
+        if 'eyetracker' in acq_mode.lower():
+            # find the eyetracker data file with the prefix of EYE_TRACKER_FILENAME_PREFIX
+            eye_tracker_file = [ f.name for f in Path(data_folder).iterdir() if f.name.startswith(EYE_TRACKER_FILENAME_PREFIX)]
+            assert len(eye_tracker_file) == 1, f"Found {len(eye_tracker_file)} eyetracker files in {data_folder}. Expected 1."
+            data_file_paths.extend(eye_tracker_file)
+        else:
+            raise ValueError(f"Unsupported acquisition mode: {acq_mode}. Eyetracker must be included.")
+        if 'eeg' in acq_mode.lower():
+            # find the eeg data file with the prefix of EEG_FILENAME_PREFIX
+            eeg_file = [ f.name for f in Path(data_folder).iterdir() if f.name.startswith(RAW_DATA_FILENAME)]
+            assert len(eeg_file) == 1, f"Found {len(eeg_file)} EEG files in {data_folder}. Expected 1."
+            data_file_paths.extend(eeg_file)
+        else:
+            raise ValueError(f"Unsupported acquisition mode: {acq_mode}. EEG must be included.")
+    else:
+        data_file_paths = [f"{RAW_DATA_FILENAME}.csv"]
 
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
@@ -117,97 +138,105 @@ def offline_analysis(
         f"Static offset: {static_offset}"
     )
 
-    # Load raw data
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
-    channels = raw_data.channels
-    type_amp = raw_data.daq_type
-    sample_rate = raw_data.sample_rate
+    # Load raw data: [RawData(Tobii-P0), RawData(DSI-24)]
+    raw_data = load_raw_data(data_folder, data_file_paths)
 
-    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    for mode_data in raw_data:
+        devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+        device_spec = devices.preconfigured_device(mode_data.daq_type)
+        # extract relevant information from raw data object eeg
+        if device_spec.content_type == "EEG":
+            channels = mode_data.channels
+            type_amp = mode_data.daq_type
+            sample_rate = mode_data.sample_rate
 
-    # setup filtering
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=filter_low,
-        bandpass_high=filter_high,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
-    )
+            # setup filtering
+            default_transform = get_default_transform(
+                sample_rate_hz=sample_rate,
+                notch_freq_hz=notch_filter,
+                bandpass_low=filter_low,
+                bandpass_high=filter_high,
+                bandpass_order=filter_order,
+                downsample_factor=downsample_rate,
+            )
 
-    log.info(f"Channels read from csv: {channels}")
-    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+            log.info(f"Channels read from csv: {channels}")
+            log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    k_folds = parameters.get("k_folds")
-    model = PcaRdaKdeModel(k_folds=k_folds)
+            k_folds = parameters.get("k_folds")
+            model = PcaRdaKdeModel(k_folds=k_folds)
 
-    # Process triggers.txt files
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-        offset=static_offset,
-        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-    )
-    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
-    # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, device_spec)
-    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
-    log.info(f'Channels used in analysis: {channels_used}')
+            # Process triggers.txt files
+            trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+                offset=static_offset,
+                trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+            )
+            # Channel map can be checked from data.csv file or the devices.json located in the acquisition module
+            # The timestamp column [0] is already excluded.
+            channel_map = analysis_channels(channels, device_spec)
+            channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+            log.info(f'Channels used in analysis: {channels_used}')
 
-    data, fs = raw_data.by_channel()
+            data, fs = mode_data.by_channel()
 
-    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        sample_rate=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=poststim_length,
-        prestimulus_length=prestim_length,
-        transformation_buffer=buffer,
-    )
+            inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+                trial_targetness_label=trigger_targetness,
+                timing_info=trigger_timing,
+                eeg_data=data,
+                sample_rate=sample_rate,
+                trials_per_inquiry=trials_per_inquiry,
+                channel_map=channel_map,
+                poststimulus_length=poststim_length,
+                prestimulus_length=prestim_length,
+                transformation_buffer=buffer,
+            )
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
-    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
-    trial_duration_samples = int(poststim_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+            inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+            inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
+            trial_duration_samples = int(poststim_length * fs)
+            trial_data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
-    # define the training classes using integers, where 0=nontargets/1=targets
-    labels = inquiry_labels.flatten()
+            # define the training classes using integers, where 0=nontargets/1=targets
+            labels = inquiry_labels.flatten()
 
-    # train and save the model as a pkl file
-    log.info("Training model. This will take some time...")
-    model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+            # train and save the model as a pkl file
+            log.info("Training EEG model. This will take some time...")
+            model = PcaRdaKdeModel(k_folds=k_folds)
+            model.fit(trial_data, labels)
+            log.info(f"Training EEG complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
-    preferences.signal_model_directory = data_folder
+            model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+            preferences.signal_model_directory = data_folder
 
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+            # Using an 80/20 split, report on balanced accuracy
+            if estimate_balanced_acc:
+                train_data, test_data, train_labels, test_labels = subset_data(trial_data, labels, test_size=0.2)
+                dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+                dummy_model.fit(train_data, train_labels)
+                probs = dummy_model.predict_proba(test_data)
+                preds = probs.argmax(-1)
+                score = balanced_accuracy_score(test_labels, preds)
+                log.info(f"Balanced acc with 80/20 split: {score}")
+                del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-    figure_handles = visualize_erp(
-        raw_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        poststim_length,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
+            figure_handles = visualize_erp(
+                mode_data,
+                channel_map,
+                trigger_timing,
+                labels,
+                poststim_length,
+                transform=default_transform,
+                plot_average=True,
+                plot_topomaps=True,
+                save_path=data_folder if save_figures else None,
+                show=show_figures
+            )
+        if device_spec.content_type == "Eyetracker":
+            # TODO: Add eyetracker processing
+            log.info("Eyetracker data found. Processing not yet implemented.")
+            pass
+
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
     return model, figure_handles

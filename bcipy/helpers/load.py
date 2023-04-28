@@ -20,7 +20,6 @@ from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.raw_data_gaze import RawGazeData
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -218,18 +217,26 @@ def choose_csv_file(filename: str = None) -> str:
     return filename
 
 
-def load_raw_data(filename: str) -> RawData:
+def load_raw_data(data_folder: str, data_paths: List[str]) -> List[RawData]:
     """Reads the data (.csv) file written by data acquisition.
 
     Parameters
     ----------
-    - filename : path to the serialized data (csv file)
+    - data_folder : path to the serialized data location
+    - data_paths : list of paths to the serialized data (csv file)
 
     Returns
     -------
     RawData object with data held in memory
     """
-    return RawData.load(filename)
+    data = []
+    for data_path in data_paths:
+        filename = Path(data_folder, data_path)
+        if os.path.exists(filename):
+            data.append(RawData.load(filename))
+        else:
+            raise FileNotFoundError(f'Could not find {filename}')
+    return data
 
 def load_raw_gaze_data(filename: str) -> RawData:
     """Reads the data (.csv) file written by data acquisition.
