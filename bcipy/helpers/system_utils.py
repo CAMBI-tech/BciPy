@@ -19,10 +19,12 @@ from cpuinfo import get_cpu_info
 
 from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
 
+
 class ScreenInfo(NamedTuple):
     width: int
     height: int
     rate: float
+
 
 def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
     """Test for internet connectivity.

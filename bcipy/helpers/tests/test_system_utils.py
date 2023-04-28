@@ -1,7 +1,7 @@
 import unittest
 from bcipy.helpers.system_utils import (
     is_connected,
-    is_battery_powered, 
+    is_battery_powered,
     is_screen_refresh_rate_low,
     get_screen_info,
     ScreenInfo,
