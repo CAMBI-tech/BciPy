@@ -150,6 +150,7 @@ class InquiryReshaper:
             return inq_trigs[-1] - inq_trigs[0]
 
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+        breakpoint()
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
         buffer_samples = int(transformation_buffer * sample_rate)
 
@@ -217,12 +218,12 @@ class GazeReshaper:
         Args:
             trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
             timing_info (List[float]): Timestamp of each event in seconds
-            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            gaze_data (np.ndarray): shape (channels, samples) eye tracking data
             sample_rate (int): sample rate of data provided in eeg_data
             trials_per_inquiry (int): number of trials in each inquiry
             offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
-                 Defaults to None; all channels will be used.
+                Defaults to None; all channels will be used.
             poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
             prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
             transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
@@ -239,7 +240,7 @@ class GazeReshaper:
         if channel_map:
             # Remove the channels that we are not interested in
             channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
 
         n_inquiry = len(timing_info) // trials_per_inquiry
         trial_duration_samples = int(poststimulus_length * sample_rate)
@@ -248,12 +249,22 @@ class GazeReshaper:
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
+
         # First, find the longest inquiry in this experiment
         # We'll add or remove a few samples from all other inquiries, to match this length
         def get_inquiry_len(inq_trigs):
             return inq_trigs[-1] - inq_trigs[0]
-
+        
+        # Finds the longest inquiry in the experiment by subtracting the first trigger from the last trigger in each inquiry
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+
+        # What we need from gaze data is actually the shortest inquiry, not the longest
+        shortest_inquiry = min(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+        breakpoint()
+
+        # We will trim off the extra bits in each inquiry to match the shortest inquiry
+        
+
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
         buffer_samples = int(transformation_buffer * sample_rate)
 
@@ -278,7 +289,7 @@ class GazeReshaper:
             reshaped_trigger_timing.append(trial_triggers)
             start = first_trigger - prestimulus_samples
             stop = first_trigger + num_samples_per_inq + buffer_samples
-            reshaped_data.append(eeg_data[:, start:stop])
+            reshaped_data.append(gaze_data[:, start:stop])
 
         breakpoint()
 
