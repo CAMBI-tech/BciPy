@@ -48,7 +48,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def offline_gaze_analysis(
+def offline_analysis_fusion(
     data_folder: str = None,
     parameters: dict = {},
 ):
@@ -115,12 +115,7 @@ def offline_gaze_analysis(
 
 
     results = []
-
-    #TODO: 
-    # Implement reshaper. We might not need a separate reshaper function.
-    # Plotting for offset
-    # Plot the gaze data (check NSLR) fixation, saccade, blink
-    # Use Tobii to Psychopy units conversion
+    # A joint reshaper?
 
 
     return results
@@ -137,7 +132,7 @@ if __name__ == "__main__":
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_gaze_analysis(
+    offline_analysis_fusion(
         args.data_folder,
         parameters)
     log.info("Offline Analysis complete.")
