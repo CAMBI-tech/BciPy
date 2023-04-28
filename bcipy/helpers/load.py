@@ -242,7 +242,7 @@ def load_raw_gaze_data(filename: str) -> RawData:
     -------
     RawData object with data held in memory
     """
-    return RawGazeData.load(filename)
+    return RawData.load(filename)
 
 
 def load_txt_data() -> str:

@@ -30,6 +30,7 @@ PREFERENCES_PATH = f'{ROOT}/.bcipy/bcipy_cache'
 
 # core data configuration
 RAW_DATA_FILENAME = 'raw_data'
+EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
 TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
