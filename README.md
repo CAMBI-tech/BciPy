@@ -18,22 +18,36 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python 3.7 or 3.8. All other dependencies defined in the requirements.txt.
+This project requires Python 3.8 or 3.9. Please see notes below for additional OS specific dependencies before installation can be completed.
 
+### Linux
+
+You will need to install the prerequisites defined in `scripts\shell\linux_requirements.sh` as well as `pip install attrdict3`.
+
+### Windows
+
+If you are using a Windows machine, you will need to install the [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+
+*python 3.9 only!*
+You will need to install pyWinhook manually. See [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pywinhook) for the appropriate wheel file (`pyWinhook‑1.6.2‑cp39‑cp39‑win_amd64.whl`). Then run `pip install <path_to_wheel_file>`. We also include the 64-bit wheel file in the `.bcipy/downloads/` directory.
+
+### Mac
+
+If you are using a Mac, you will need to install XCode and enable command line tools. `xcode-select --install`. 
 
 ## Installation
 ---------------
 
 #### BciPy Setup
 
-In order to run BciPy on your computer, first install **Python 3** [from here.](https://www.python.org/downloads/)
+In order to run BciPy on your computer, after following the dependencies above, you will need to install the BciPy package.
 
-To use all the goodies locally (including the GUI and demo scripts)
+To install for use locally,
 1. Git clone https://github.com/BciPy/BciPy.git
 2. Change directory in your terminal to the repo
 3. Run `pip install -e .`
-4. If using Mac, you will need to install XCode and enable command line tools. `xcode-select --install`
-5. If you're on Windows, you may need to uninstall pygame (`pip uninstall pygame`). Psychopy, for historical reasons, keeps pygame but it just spams your console logs if you only want to use pyglet (which we use in this repository!)
+4. To use the KenLMLanguageModel class, you must manually install the kenlm package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+
 
 If wanting the latest version from PyPi:
 1. `pip install bcipy`
@@ -47,15 +61,12 @@ make dev-install
 
 #### Usage Locally
 
-Start by running `python bcipy/gui/BCInterface.py` in your command prompt or terminal. This will run the GUI. You may also use the command `make bci-gui`. You may also invoke the experiment directly using command line tools from bcipy.
-
-Ex. `bcipy` *this will use default parameters, user, experiment and task*
-
-You can pass it attributes with flags, if desired.
-
-Ex. `bcipy --user "bci_user" --task "RSVP Calibration"`
-
-Use the help flag to see other available input options: `bcipy --help`
+Two ways to get started using BciPy for data collection:
+	1. Run `python bcipy/gui/BCInterface.py` in your command prompt or terminal from from base BciPy directory. This will execute the main BCI GUI. You may also use the command `make bci-gui`. 
+	2. Invoke the experiment directly using command line utility `bcipy`.
+		- You can pass it attributes with flags, if desired.
+				Ex. `bcipy --user "bci_user" --task "RSVP Calibration"`
+		- Use the help flag to see other available input options: `bcipy --help`
 
 ##### Example usage as a package
 
@@ -141,7 +152,7 @@ For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except language_model, helpers, and utils. Run them as a python script!
+This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
 
 
 ## Testing
@@ -149,7 +160,7 @@ This demo will load in parameters and execute a demo task defined in the file. T
 
 When writing tests, put them in the correct module, in a tests folder, and prefix the file and test itself with `test_` in order for pytest to discover it. See other module tests for examples!
 
-Development requirements must be installed before running: `pip install dev_requirements.txt`
+Development requirements must be installed before running: `pip install -r dev_requirements.txt`
 
 To run all tests, in the command line:
 

@@ -8,6 +8,7 @@ from typing import Dict, Tuple
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
+from bcipy.config import BCIPY_ROOT
 from bcipy.helpers.parameters import Parameters, changes_from_default
 
 from bcipy.gui.main import (
@@ -31,32 +32,50 @@ class ParamsForm(QWidget):
   Parameters:
   -----------
     json_file - path of parameters file to be edited.
-    load_file - optional path of parameters file to load;
-        parameters from this file will be copied over to the json_file.
     width - optional; used to set the width of the form controls.
   """
 
-    def __init__(self, json_file: str, load_file: str = None,
-                 width: int = 400):
+    def __init__(self, json_file: str, width: int = 400):
         super().__init__()
-        self.json_file = json_file
-        self.load_file = json_file if not load_file else load_file
-        self.width = width
+
         self.help_size = 12
         self.help_color = 'darkgray'
+        self.search_text = ''
 
-        self.params = Parameters(source=self.load_file, cast_values=False)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.setFixedWidth(width)
 
-        self.controls = {}
-        self.create_controls()
-        self.do_layout()
+        self.json_file = json_file
+        self.params = Parameters(source=self.json_file, cast_values=False)
+        self.controls = self.create_controls(self.params)
+        self.add_controls()
 
-    def create_controls(self) -> None:
+        self.show()
+
+    def add_controls(self):
+        """Add controls to layout"""
+        if self.controls:
+            for form_input in self.controls.values():
+                self.layout.addWidget(form_input)
+
+    def create_controls(self, params: Parameters) -> Dict[str, FormInput]:
         """Create controls (inputs, labels, etc) for each item in the
     parameters file.
     """
-        for key, param in self.params.entries():
-            self.controls[key] = self.parameter_input(param)
+        controls = {}
+        for key, param in params.entries():
+            controls[key] = self.parameter_input(param)
+        return controls
+
+    def update(self, json_file: str):
+        """Update the form using a new json_file."""
+        clear_layout(self.layout)
+        self.json_file = json_file
+        self.params = Parameters(source=self.json_file, cast_values=False)
+        self.controls = self.create_controls(self.params)
+        self.add_controls()
+        self.search(self.search_text)
 
     def parameter_input(self, param: Dict[str, str]) -> FormInput:
         """Construct a FormInput for the given parameter based on its python type and other
@@ -70,26 +89,15 @@ class ParamsForm(QWidget):
             'directorypath': DirectoryInput
         }
         has_options = isinstance(param['recommended_values'], list)
-        form_input = type_inputs.get(param['type'],
-                                     SelectionInput if has_options else TextInput)
+        form_input = type_inputs.get(
+            param['type'], SelectionInput if has_options else TextInput)
         return form_input(label=param['readableName'],
                           value=param['value'],
                           help_tip=param['helpTip'],
                           options=param['recommended_values'],
                           help_size=self.help_size,
-                          help_color=self.help_color)
-
-    def do_layout(self) -> None:
-        """Layout the form controls."""
-        vbox = QVBoxLayout()
-
-        # Add the controls to the grid:
-        for _param_name, form_input in self.controls.items():
-            vbox.addWidget(form_input)
-
-        self.setLayout(vbox)
-        self.setFixedWidth(self.width)
-        self.show()
+                          help_color=self.help_color,
+                          should_display=bool(param['section']))
 
     def search(self, text: str) -> None:
         """Search for an input. Hides inputs which do not match.
@@ -99,6 +107,7 @@ class ParamsForm(QWidget):
         ----------
           text - text used to search; if empty all inputs are displayed.
          """
+        self.search_text = text
         for form_input in self.controls.values():
             if text == '' or form_input.matches(text):
                 form_input.show()
@@ -108,6 +117,16 @@ class ParamsForm(QWidget):
     def save(self) -> bool:
         """Save changes"""
         self.update_parameters()
+        path = Path(self.json_file)
+        self.params.save(path.parent, path.name)
+        return True
+
+    def save_as(self, filename: str) -> bool:
+        """Save parameters to another file."""
+        assert filename, "Filename is required"
+        self.update_parameters()
+
+        self.json_file = filename
         path = Path(self.json_file)
         self.params.save(path.parent, path.name)
         return True
@@ -129,6 +148,7 @@ def clear_layout(layout):
     while layout.count():
         child = layout.takeAt(0)
         if child.widget() is not None:
+            child.widget().setVisible(False)
             child.widget().deleteLater()
         elif child.layout() is not None:
             clear_layout(child.layout())
@@ -302,19 +322,13 @@ class MainPanel(QWidget):
 
         header_box = QHBoxLayout()
         header_box.addSpacing(5)
-        header_box.addWidget(
-            static_text_control(self,
-                                label=f'Editing: {self.json_file}',
-                                size=14,
-                                color='dimgray'))
+        self.edit_msg = static_text_control(self,
+                                            label=f'Editing: {self.json_file}',
+                                            size=14,
+                                            color='dimgray')
+        header_box.addWidget(self.edit_msg)
         vbox.addLayout(header_box)
 
-        self.load_msg = static_text_control(self,
-                                            label='',
-                                            size=12,
-                                            color='green')
-        vbox.addWidget(self.load_msg)
-        self.load_msg.setVisible(False)
         vbox.addWidget(SearchInput(self.search_form))
 
         self.changes_panel = QHBoxLayout()
@@ -339,7 +353,12 @@ class MainPanel(QWidget):
         save_button.clicked.connect(self.on_save)
         control_box.addWidget(save_button)
 
-        load_button = QPushButton('Load')
+        save_as_button = QPushButton('Save As')
+        save_as_button.setFixedWidth(80)
+        save_as_button.clicked.connect(self.on_save_as)
+        control_box.addWidget(save_as_button)
+
+        load_button = QPushButton('Open')
         load_button.setFixedWidth(80)
         load_button.clicked.connect(self.on_load)
         control_box.addWidget(load_button)
@@ -366,17 +385,13 @@ class MainPanel(QWidget):
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             caption='Open parameters file',
-            directory='bcipy/parameters',
+            directory=f'{BCIPY_ROOT}/parameters',
             filter='JSON files (*.json)')
         if file_name:
-            self.load_msg.setText(
-                f'Loaded from: {file_name}. Click the Save button to persist these changes.'
-            )
-            self.load_msg.setVisible(True)
-            self.form = ParamsForm(json_file=self.json_file,
-                                   load_file=file_name,
-                                   width=self.size[0])
-            self.form_panel.setWidget(self.form)
+            self.json_file = file_name
+            self.edit_msg.setText(f'Editing: {self.json_file}')
+            self.form.update(self.json_file)
+            self.changes.update_changes(self.json_file)
             self.repaint()
 
     def on_save(self):
@@ -387,6 +402,29 @@ class MainPanel(QWidget):
 
             self.changes.update_changes(self.json_file)
             self.changes.repaint()
+
+    def on_save_as(self):
+        """Event handler for saving form data to another parameters file."""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            caption='Save As',
+            directory=f'{BCIPY_ROOT}/parameters/',
+            filter='JSON files (*.json)',
+            options=options)
+
+        if filename:
+            if not filename.endswith('.json'):
+                filename += '.json'
+
+            if self.form.save_as(filename):
+                self.json_file = filename
+                self.edit_msg.setText(f'Editing: {self.json_file}')
+                self.save_msg.setText(f'Last saved: {datetime.now()}')
+                self.changes.update_changes(self.json_file)
+                self.repaint()
 
 
 def main(json_file, title='BCI Parameters', size=(450, 550)):

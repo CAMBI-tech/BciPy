@@ -486,21 +486,100 @@ def tar_name_checker(tar_file_name: str) -> str:
 
 def convert_to_mne(
         raw_data: RawData,
-        channel_map: List[int],
+        channel_map: List[int] = None,
+        channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
-        montage: str = 'standard_1020') -> RawArray:
+        montage: str = 'standard_1020',
+        volts: bool = True) -> RawArray:
     """Convert to MNE.
 
-    Returns BciPy RawData as an MNE RawArray. This assumes all data channels are eeg and channel names
-    are reflective of standard 1020 locations.
-    See https://mne.tools/dev/generated/mne.channels.make_standard_montage.html
+    Returns BciPy RawData as an MNE RawArray. This assumes all channel names
+    are reflective of provided montage locations.
+
+    Parameters
+    ----------
+        raw_data - BciPy RawData object
+        channel_map - optional list of channels to include in the MNE RawArray [1, 0, 1, 0, 1, 0, 1, 0].
+            1 indicates the channel should be included, 0 indicates it should be excluded.
+            Must be the same length as the number of channels in the raw_data.
+        channel_types - list of channel types to include in the MNE RawArray.
+            If None, all channels will be assumed to be eeg.
+            See: https://mne.tools/stable/overview/implementation.html#supported-channel-types
+        transform - optional transform to apply to the data
+        montage - name of the channel location montage to use.
+            See https://mne.tools/dev/generated/mne.channels.make_standard_montage.html
+        volts - if True, assume data is already in volts. If false, assume data is in microvolts and convert to volts.
+            MNE expects data to be in volts.
+            See: https://mne.tools/dev/overview/implementation.html#internal-representation-units
     """
+    # if no channel map provided, assume all channels are included
+    if not channel_map:
+        channel_map = [1] * len(raw_data.channels)
+
     data, channels, fs = raw_data.by_channel_map(channel_map, transform)
-    channel_types = ['eeg' for _ in channels]
+
+    # if no channel types provided, assume all channels are eeg
+    if not channel_types:
+        channel_types = ['eeg'] * len(channels)
+
+    # check that number of channel types matches number of channels in the case custom channel types are provided
+    assert len(channel_types) == len(channels), \
+        f'Number of channel types ({len(channel_types)}) must match number of channels ({len(channels)})'
 
     info = mne.create_info(channels, fs, channel_types)
     mne_data = RawArray(data, info)
     ten_twenty_montage = mne.channels.make_standard_montage(montage)
     mne_data.set_montage(ten_twenty_montage)
 
+    # convert to volts if necessary (the default for many systems is microvolts)
+    if not volts:
+        mne_data = mne_data.apply_function(lambda x: x * 1e-6)
+
     return mne_data
+
+
+def tobii_to_norm(tobii_units: Tuple[float, float]) -> Tuple[float, float]:
+    """Tobii to PsychoPy's 'norm' units.
+
+    https://developer.tobiipro.com/commonconcepts/coordinatesystems.html
+    https://www.psychopy.org/general/units.html
+
+    Tobii uses an Active Display Coordinate System.
+        The point (0, 0) denotes the upper left corner and (1, 1) the lower right corner of it.
+
+    PsychoPy uses several coordinate systems, the normalized window unit is assumed here.
+        The point (0, 0) denotes the center of the screen and (-1, -1) the upper left corner
+        and (1, 1) the lower right corner.
+
+    """
+    # check that Tobii units are within the expected range
+    assert 0 <= tobii_units[0] <= 1, "Tobii x coordinate must be between 0 and 1"
+    assert 0 <= tobii_units[1] <= 1, "Tobii y coordinate must be between 0 and 1"
+
+    # convert Tobii units to Psychopy units
+    norm_x = (tobii_units[0] - 0.5) * 2
+    norm_y = (tobii_units[1] - 0.5) * 2 * -1
+    return (norm_x, norm_y)
+
+
+def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
+    """PsychoPy's 'norm' units to Tobii.
+
+    https://developer.tobiipro.com/commonconcepts/coordinatesystems.html
+    https://www.psychopy.org/general/units.html
+
+    Tobii uses an Active Display Coordinate System.
+        The point (0, 0) denotes the upper left corner and (1, 1) the lower right corner of it.
+
+    PsychoPy uses several coordinate systems, the normalized window unit is assumed here.
+        The point (0, 0) denotes the center of the screen and (-1, -1) the upper left corner
+        and (1, 1) the lower right corner.
+    """
+    # check that the coordinates are within the bounds of the screen
+    assert norm_units[0] >= -1 and norm_units[0] <= 1, "X coordinate must be between -1 and 1"
+    assert norm_units[1] >= -1 and norm_units[1] <= 1, "Y coordinate must be between -1 and 1"
+
+    # convert PsychoPy norm units to Tobii units
+    tobii_x = (norm_units[0] / 2) + 0.5
+    tobii_y = ((norm_units[1] * -1) / 2) + 0.5
+    return (tobii_x, tobii_y)

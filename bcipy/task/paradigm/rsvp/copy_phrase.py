@@ -6,8 +6,10 @@ from psychopy import core
 from bcipy.config import (
     SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties, TaskDisplayProperties)
+                           StimuliProperties)
+from bcipy.display import Display
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -16,10 +18,11 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.task import (BACKSPACE_CHAR, alphabet, construct_triggers,
+from bcipy.helpers.task import (construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -76,6 +79,8 @@ class RSVPCopyPhraseTask(Task):
     """
 
     TASK_NAME = 'RSVP Copy Phrase Task'
+    MODE = 'RSVP'
+
     PARAMETERS_USED = [
         'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
         'font', 'fixation_color', 'trigger_type',
@@ -150,12 +155,7 @@ class RSVPCopyPhraseTask(Task):
             }
         )
 
-        self.rsvp = _init_copy_phrase_display(
-            self.parameters,
-            self.window,
-            self.static_clock,
-            self.experiment_clock,
-            self.spelled_text)
+        self.rsvp = self.init_display()
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -167,13 +167,20 @@ class RSVPCopyPhraseTask(Task):
         self.session = Session(
             save_location=self.file_save,
             task='Copy Phrase',
-            mode='RSVP',
+            mode=self.MODE,
             symbol_set=self.alp,
             decision_threshold=self.parameters['decision_threshold'])
         self.write_session_data()
 
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
+
+    def init_display(self) -> Display:
+        """Initialize the display"""
+        return _init_copy_phrase_display(self.parameters, self.window,
+                                         self.static_clock,
+                                         self.experiment_clock,
+                                         self.spelled_text)
 
     def validate_parameters(self) -> None:
         """Validate.
@@ -221,19 +228,17 @@ class RSVPCopyPhraseTask(Task):
         initialized CopyPhraseWrapper
         """
 
-        self.copy_phrase_task = _init_copy_phrase_wrapper(
+        self.copy_phrase_task = CopyPhraseWrapper(
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
+            lmodel=self.language_model,
+            device_spec=self.daq.device_spec,
             signal_model=self.signal_model,
-            fs=self.daq.device_spec.sample_rate,
             k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
-            lmodel=self.language_model,
             is_txt_stim=self.parameters['is_txt_stim'],
-            device_name=self.daq.device_spec.name,
-            device_channels=self.daq.device_spec.channels,
             stim_timing=[
                 self.parameters['time_fixation'], self.parameters['time_flash']
             ],
@@ -297,18 +302,17 @@ class RSVPCopyPhraseTask(Task):
         presented in sequence.
         """
         # Update task state and reset the static
-        self.rsvp.update_task_state(text=self.spelled_text,
-                                    color_list=['white'])
+        self.rsvp.update_task_bar(self.spelled_text)
         self.rsvp.draw_static()
         self.window.flip()
 
         self.wait()
 
         # Setup the new stimuli
-        self.rsvp.stimuli_inquiry = inquiry_schedule.stimuli[0]
-        if self.parameters['is_txt_stim']:
-            self.rsvp.stimuli_colors = inquiry_schedule.colors[0]
-        self.rsvp.stimuli_timing = inquiry_schedule.durations[0]
+        self.rsvp.schedule_to(stimuli=inquiry_schedule.stimuli[0],
+                              timing=inquiry_schedule.durations[0],
+                              colors=inquiry_schedule.colors[0]
+                              if self.parameters['is_txt_stim'] else None)
 
         if self.parameters['show_preview_inquiry']:
             stim_times, proceed = self.rsvp.preview_inquiry()
@@ -619,8 +623,8 @@ class RSVPCopyPhraseTask(Task):
     def exit_display(self):
         """Close the UI and cleanup."""
         # Update task state and reset the static
-        self.rsvp.update_task_state(text=self.spelled_text,
-                                    color_list=['white'])
+        self.rsvp.update_task_bar(text=self.spelled_text)
+
         # Say Goodbye!
         self.rsvp.info_text = trial_complete_message(self.window, self.parameters)
         self.rsvp.draw_static()
@@ -852,53 +856,21 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
-    padding = abs(len(parameters['task_text']) - len(starting_spelled_text))
-    starting_spelled_text += ' ' * padding
-    task_display = TaskDisplayProperties(task_color=[parameters['task_color']],
-                                         task_pos=(0, 1 - (2 * parameters['task_height'])),
-                                         task_font=parameters['font'],
-                                         task_height=parameters['task_height'],
-                                         task_text=starting_spelled_text)
+
+    task_bar = CopyPhraseTaskBar(win,
+                                 task_text=parameters['task_text'],
+                                 spelled_text=starting_spelled_text,
+                                 colors=[parameters['task_color']],
+                                 font=parameters['font'],
+                                 height=parameters['task_height'])
+
     return CopyPhraseDisplay(win,
                              static_clock,
                              experiment_clock,
                              stimuli,
-                             task_display,
+                             task_bar,
                              info,
-                             static_task_text=parameters['task_text'],
-                             static_task_color=parameters['task_color'],
+                             starting_spelled_text,
                              trigger_type=parameters['trigger_type'],
                              space_char=parameters['stim_space_char'],
                              preview_inquiry=preview_inquiry)
-
-
-def _init_copy_phrase_wrapper(min_num_inq, max_num_inq, signal_model, fs, k,
-                              alp, evidence_names, task_list, lmodel,
-                              is_txt_stim, device_name, device_channels,
-                              stim_timing, decision_threshold,
-                              backspace_prob, backspace_always_shown,
-                              filter_high, filter_low, filter_order,
-                              notch_filter_frequency, stim_length, stim_jitter, stim_order):
-    return CopyPhraseWrapper(min_num_inq,
-                             max_num_inq,
-                             signal_model=signal_model,
-                             fs=fs,
-                             k=k,
-                             alp=alp,
-                             evidence_names=evidence_names,
-                             task_list=task_list,
-                             lmodel=lmodel,
-                             is_txt_stim=is_txt_stim,
-                             device_name=device_name,
-                             device_channels=device_channels,
-                             stim_timing=stim_timing,
-                             decision_threshold=decision_threshold,
-                             backspace_prob=backspace_prob,
-                             backspace_always_shown=backspace_always_shown,
-                             filter_high=filter_high,
-                             filter_low=filter_low,
-                             filter_order=filter_order,
-                             notch_filter_frequency=notch_filter_frequency,
-                             stim_length=stim_length,
-                             stim_jitter=stim_jitter,
-                             stim_order=stim_order)

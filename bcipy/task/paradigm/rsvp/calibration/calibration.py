@@ -2,13 +2,18 @@ from psychopy import core
 from typing import List, Tuple
 
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import InformationProperties, StimuliProperties, TaskDisplayProperties
+from bcipy.display import (
+    InformationProperties,
+    PreviewInquiryProperties,
+    StimuliProperties)
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator,
-                                   get_task_info)
-from bcipy.helpers.task import (alphabet, get_user_input, pause_calibration,
+
+from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator)
+from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
 from bcipy.task import Task
 
@@ -60,6 +65,8 @@ class RSVPCalibrationTask(Task):
         self.target_positions = TargetPositions(parameters['target_positions'])
         self.nontarget_inquiries = parameters['nontarget_inquiries']
 
+        self.show_preview_inquiry = parameters['show_preview_inquiry']
+
         self.timing = [parameters['time_prompt'],
                        parameters['time_fixation'],
                        parameters['time_flash']]
@@ -69,13 +76,10 @@ class RSVPCalibrationTask(Task):
                       parameters['fixation_color'],
                       parameters['stim_color']]
         self.wait_screen_message_color = self.color[-1]
-
         self.task_info_color = parameters['task_color']
 
         self.stimuli_height = parameters['stim_height']
-
         self.is_txt_stim = parameters['is_txt_stim']
-
         self.enable_breaks = parameters['enable_breaks']
 
     def generate_stimuli(self):
@@ -106,6 +110,8 @@ class RSVPCalibrationTask(Task):
         """
         if index == 0:
             return TriggerType.PROMPT
+        if symbol == 'inquiry_preview' and index == 1:
+            return TriggerType.PREVIEW
         if symbol == '+':
             return TriggerType.FIXATION
         if target == symbol:
@@ -129,11 +135,8 @@ class RSVPCalibrationTask(Task):
             # Get inquiry information given stimuli parameters
             (stimuli, stimuli_timing, stimuli_color) = self.generate_stimuli()
 
-            (task_text, task_color) = get_task_info(self.stim_number,
-                                                    self.task_info_color)
-
             # Execute the RSVP inquiries
-            for inquiry in range(len(task_text)):
+            for inquiry in range(self.stim_number):
 
                 # check user input to make sure we should be going
                 if not get_user_input(self.rsvp, WAIT_SCREEN_MESSAGE,
@@ -146,9 +149,7 @@ class RSVPCalibrationTask(Task):
                                       self.parameters)
 
                 # update task state
-                self.rsvp.update_task_state(
-                    text=task_text[inquiry],
-                    color_list=task_color[inquiry])
+                self.rsvp.update_task_bar()
 
                 # Draw and flip screen
                 self.rsvp.draw_static()
@@ -165,8 +166,9 @@ class RSVPCalibrationTask(Task):
 
                 core.wait(self.buffer_val)
 
-                # Do the inquiry and write necessary data
-                timing = self.rsvp.do_inquiry()
+                # do inquiry and get timing information back from the display
+                timing = self.rsvp.do_inquiry(preview_calibration=self.show_preview_inquiry)
+
                 self.write_trigger_data(timing, (inquiry == 0))
                 core.wait(self.buffer_val)
 
@@ -246,20 +248,29 @@ def init_calibration_display_task(
                                 stim_colors=[parameters['stim_color']] * parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'])
-    task_display = TaskDisplayProperties(
-        task_color=[parameters['task_color']],
-        task_pos=(-.8, .85),
-        task_font=parameters['font'],
-        task_height=parameters['task_height'],
-        task_text=''
-    )
+
+    task_bar = CalibrationTaskBar(window,
+                                  inquiry_count=parameters['stim_number'],
+                                  current_index=0,
+                                  colors=[parameters['task_color']],
+                                  font=parameters['font'],
+                                  height=parameters['task_height'])
+
+    preview_inquiry = PreviewInquiryProperties(
+        preview_only=True,
+        preview_inquiry_length=parameters['preview_inquiry_length'],
+        preview_inquiry_progress_method=parameters['preview_inquiry_progress_method'],
+        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
+        preview_inquiry_isi=parameters['preview_inquiry_isi'])
+
     return CalibrationDisplay(
         window,
         static_clock,
         experiment_clock,
         stimuli,
-        task_display,
+        task_bar,
         info,
+        preview_inquiry=preview_inquiry,
         trigger_type=parameters['trigger_type'],
         space_char=parameters['stim_space_char'],
         full_screen=parameters['full_screen'])

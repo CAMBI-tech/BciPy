@@ -7,15 +7,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME
-
+from bcipy.config import (
+    RAW_DATA_FILENAME,
+    TRIGGER_FILENAME,
+    DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME,
+    DEFAULT_DEVICE_SPEC_FILENAME,
+)
 from bcipy.helpers.acquisition import analysis_channels
+import bcipy.acquisition.devices as devices
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper
+from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper, update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.language.main import alphabet
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.helpers.symbols import alphabet
+from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform
 
 logger.getLogger()
@@ -54,6 +59,9 @@ def comparison1(data_folder, parameters, model_path: Path):
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
     logger.info(f"Channels read from csv: {channels}")
     logger.info(f"Device type: {type_amp}")
 
@@ -76,7 +84,7 @@ def comparison1(data_folder, parameters, model_path: Path):
     )
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
 
     model = load_model(model_path, k_folds)
 
@@ -102,6 +110,7 @@ def comparison1(data_folder, parameters, model_path: Path):
     # Uncomment to filter by inquiries
     # inquiries = filter_inquiries(inquiries, default_transform, sample_rate)
     trial_duration_samples = int(trial_length * transformed_sample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, transformed_sample_rate)
     trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # "Can we get the trials from exact same time windows"
@@ -156,6 +165,9 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
     logger.info(f"Channels read from csv: {channels}")
     logger.info(f"Device type: {type_amp}")
 
@@ -167,7 +179,7 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     )
     # Channel map can be checked from raw_data.csv file.
     # The timestamp column is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
 
     model = load_model(model_path, k_folds)
 
@@ -194,7 +206,8 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     )
     inquiries, transformed_sample_rate = filter_inquiries(inquiries, default_transform, sample_rate)
     trial_duration_samples = int(trial_length * transformed_sample_rate)
-    trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, transformed_sample_rate)
+    trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     alpha = alphabet()
     outputs = {}

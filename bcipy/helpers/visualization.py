@@ -1,15 +1,21 @@
 import logging
-from typing import List, Optional, Tuple
 
+from typing import List, Optional, Tuple
+from pathlib import Path
 from matplotlib.figure import Figure
-from bcipy.helpers.raw_data import RawData
 import matplotlib.pyplot as plt
 
+from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
+                          DEFAULT_DEVICE_SPEC_FILENAME)
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
 from bcipy.helpers.stimuli import mne_epochs
-from bcipy.signal.process import Composition
+from bcipy.helpers.raw_data import RawData
+from bcipy.signal.process import Composition, get_default_transform
 
+import bcipy.acquisition.devices as devices
 import mne
 from mne import Epochs
 from mne.io import read_raw_edf
@@ -162,3 +168,73 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
         fig[0].savefig(f'{save_path}/average_erp.png')
 
     return fig
+
+
+def visualize_session_data(session_path: str, parameters: dict, show=True) -> Figure:
+    """Visualize Session Data.
+
+    This method is used to load and visualize EEG data after a session.
+
+    Currently, it plots target / nontarget ERPs. It filters out TriggerTypes event,
+    fixation, preview, and bcipy internal triggers. It uses the filter parameters
+    used during the session to filter the data before plotting.
+
+    Input:
+        session_path(str): Path to the session directory
+        parameters(dict): Dictionary of parameters
+        show(bool): Whether to show the figure
+
+    Output:
+        Figure of Session Data
+    """
+    # extract all relevant parameters
+    poststim_length = parameters.get("trial_length")
+    # get signal filtering information
+    downsample_rate = parameters.get("down_sampling_rate")
+    notch_filter = parameters.get("notch_filter_frequency")
+    filter_high = parameters.get("filter_high")
+    filter_low = parameters.get("filter_low")
+    filter_order = parameters.get("filter_order")
+    static_offset = parameters.get("static_trigger_offset")
+
+    raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
+    channels = raw_data.channels
+    sample_rate = raw_data.sample_rate
+
+    devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
+    # setup filtering
+    default_transform = get_default_transform(
+        sample_rate_hz=sample_rate,
+        notch_freq_hz=notch_filter,
+        bandpass_low=filter_low,
+        bandpass_high=filter_high,
+        bandpass_order=filter_order,
+        downsample_factor=downsample_rate,
+    )
+    # Process triggers.txt files
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
+        offset=static_offset,
+        trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+    )
+    assert "nontarget" in trigger_targetness, "No nontarget triggers found."
+    assert "target" in trigger_targetness, "No target triggers found."
+    assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
+
+    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
+    channel_map = analysis_channels(channels, device_spec)
+
+    return visualize_erp(
+        raw_data,
+        channel_map,
+        trigger_timing,
+        labels,
+        poststim_length,
+        transform=default_transform,
+        plot_average=True,
+        plot_topomaps=True,
+        save_path=session_path,
+        show=show,
+    )

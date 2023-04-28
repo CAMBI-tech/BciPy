@@ -2,24 +2,29 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-import numpy as np
-from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
+from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
+                          RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
+                          DEFAULT_DEVICE_SPEC_FILENAME)
+from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
-from bcipy.helpers.stimuli import play_sound
+from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
+
+import numpy as np
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
+import bcipy.acquisition.devices as devices
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -57,6 +62,7 @@ def offline_analysis(
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
+    save_figures: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -67,6 +73,8 @@ def offline_analysis(
         alert_finished(bool): whether or not to alert the user offline analysis complete
         estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
             estimate balanced accuracy
+        show_figures(bool): if true, shows ERP figures after training
+        save_figures(bool): if true, saves ERP figures after training to the data folder
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -77,7 +85,7 @@ def offline_analysis(
         - uses cross validation to select parameters
         - based on the parameters, trains system using all the data
     - pickle dumps model into .pkl file
-    - generates and saves ERP figure
+    - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
     """
 
@@ -115,6 +123,9 @@ def offline_analysis(
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
@@ -139,7 +150,10 @@ def offline_analysis(
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
+    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    log.info(f'Channels used in analysis: {channels_used}')
+
     data, fs = raw_data.by_channel()
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
@@ -155,8 +169,9 @@ def offline_analysis(
     )
 
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing, downsample_rate)
+    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = inquiry_labels.flatten()
@@ -168,15 +183,17 @@ def offline_analysis(
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
     model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy
     if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.8)
+        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
         dummy_model = PcaRdaKdeModel(k_folds=k_folds)
         dummy_model.fit(train_data, train_labels)
         probs = dummy_model.predict_proba(test_data)
         preds = probs.argmax(-1)
-        log.info(f"Balanced acc with 80/20 split: {balanced_accuracy_score(test_labels, preds)}")
+        score = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {score}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     figure_handles = visualize_erp(
@@ -188,7 +205,7 @@ def offline_analysis(
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=data_folder,
+        save_path=data_folder if save_figures else None,
         show=show_figures
     )
     if alert_finished:
@@ -202,14 +219,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data_folder", default=None)
     parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
+    parser.add_argument("-s", "--save_figures", action="store_true")
+    parser.add_argument("-v", "--show_figures", action="store_true")
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
+    parser.set_defaults(save_figures=False)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
 
-    offline_analysis(args.data_folder, parameters, alert_finished=args.alert, estimate_balanced_acc=args.balanced)
+    offline_analysis(
+        args.data_folder,
+        parameters,
+        alert_finished=args.alert,
+        estimate_balanced_acc=args.balanced,
+        save_figures=args.save_figures,
+        show_figures=args.show_figures)
     log.info("Offline Analysis complete.")

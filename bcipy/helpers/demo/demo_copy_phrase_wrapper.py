@@ -1,6 +1,8 @@
 import numpy as np
+from bcipy.acquisition.devices import preconfigured_device
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.task import alphabet
+from bcipy.helpers.symbols import alphabet
+from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.signal.model import PcaRdaKdeModel
 
 channel_map = [0] + [1] * 16 + [0, 0, 1, 1, 0, 1, 1, 1, 0]
@@ -39,8 +41,13 @@ def demo_copy_phrase_wrapper():
     task_list = [('I_LOVE_COOKIES', 'I_LOVE_'),
                  ('THIS_IS_A_DEMO', 'THIS_IS_A_')]
 
-    task = CopyPhraseWrapper(min_num_inq=1, max_num_inq=25, signal_model=model,
-                             fs=dim_x * 2, k=1, alp=alphabet(),
+    task = CopyPhraseWrapper(min_num_inq=1,
+                             max_num_inq=25,
+                             lmodel=UniformLanguageModel(),
+                             device_spec=preconfigured_device('DSI-24'),
+                             signal_model=model,
+                             k=1,
+                             alp=alphabet(),
                              task_list=task_list)
 
     print(task)

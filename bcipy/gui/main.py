@@ -213,6 +213,7 @@ class FormInput(QWidget):
         options - optional list of recommended values used by some controls.
         help_size - font size for the help text.
         help_color - color of the help text.
+        should_display - if False, the input is always hidden.
     """
 
     def __init__(self,
@@ -221,18 +222,23 @@ class FormInput(QWidget):
                  help_tip: str = None,
                  options: List[str] = None,
                  help_size: int = 12,
-                 help_color: str = 'darkgray'):
+                 help_color: str = 'darkgray',
+                 should_display: bool = True):
         super(FormInput, self).__init__()
 
         self.label = label
         self.help_tip = help_tip
         self.options = options
+        self.should_display = should_display
 
         self.label_widget = self.init_label()
         self.help_tip_widget = self.init_help(help_size, help_color)
         self.control = self.init_control(value)
         self.control.installEventFilter(self)
         self.init_layout()
+
+        if not should_display:
+            self.hide()
 
     def eventFilter(self, source, event):
         """Event filter that suppresses the scroll wheel event."""
@@ -294,9 +300,10 @@ class FormInput(QWidget):
 
     def show(self):
         """Show this widget, and all child widgets."""
-        for widget in self.widgets():
-            if widget:
-                widget.setVisible(True)
+        if self.should_display:
+            for widget in self.widgets():
+                if widget:
+                    widget.setVisible(True)
 
     def hide(self):
         """Hide this widget, and all child widgets."""

@@ -1,21 +1,22 @@
 import logging
 import os.path as path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from psychopy import core, visual, event
 
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.task import SPACE_CHAR, get_key_press
+from bcipy.helpers.task import get_key_press
+from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.display import (
     BCIPY_LOGO_PATH,
     Display,
     InformationProperties,
     PreviewInquiryProperties,
-    StimuliProperties,
-    TaskDisplayProperties,
+    StimuliProperties
 )
+from bcipy.display.components.task_bar import TaskBar
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.system_utils import get_screen_info
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -31,7 +32,7 @@ class RSVPDisplay(Display):
             static_clock,
             experiment_clock: Clock,
             stimuli: StimuliProperties,
-            task_display: TaskDisplayProperties,
+            task_bar: TaskBar,
             info: InformationProperties,
             preview_inquiry: PreviewInquiryProperties = None,
             trigger_type: str = 'image',
@@ -50,7 +51,7 @@ class RSVPDisplay(Display):
         stimuli(StimuliProperties): attributes used for inquiries
 
         # Task
-        task_display(TaskDisplayProperties): attributes used for task tracking. Ex. 1/100
+        task_bar(TaskBar): used for task tracking. Ex. 1/100
 
         # Info
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
@@ -72,7 +73,7 @@ class RSVPDisplay(Display):
         self.logger = logging.getLogger(__name__)
 
         # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after defintion
+        #  easy updating after definition
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
@@ -98,8 +99,8 @@ class RSVPDisplay(Display):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []  # TODO force initial size definition
         self.space_char = space_char  # TODO remove and force task to define
-        self.task_display = task_display
-        self.task = task_display.build_task(self.window)
+
+        self.task_bar = task_bar
 
         # Create multiple text objects based on input
         self.info = info
@@ -110,11 +111,15 @@ class RSVPDisplay(Display):
 
     def draw_static(self):
         """Draw static elements in a stimulus."""
-        self.task.draw()
+        if self.task_bar:
+            self.task_bar.draw()
         for info in self.info_text:
             info.draw()
 
-    def schedule_to(self, stimuli=[], timing=[], colors=[]):
+    def schedule_to(self,
+                    stimuli: List[str] = None,
+                    timing: List[float] = None,
+                    colors: List[str] = None):
         """Schedule stimuli elements (works as a buffer).
 
         Args:
@@ -122,27 +127,26 @@ class RSVPDisplay(Display):
                 timing(list[float]): list of timings of stimuli
                 colors(list[string]): list of colors
         """
-        self.stimuli_inquiry = stimuli
-        self.stimuli_timing = timing
-        self.stimuli_colors = colors
+        self.stimuli_inquiry = stimuli or []
+        self.stimuli_timing = timing or []
+        self.stimuli_colors = colors or []
 
-    def update_task(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
-        """Update Task Object.
-
-        PARAMETERS:
-        -----------
-        text: text for task
-        color_list: list of the colors for each char
-        """
-        self.task.text = text
-        self.task.color = color_list[0]
-        if pos:
-            self.task.pos = pos
-
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self, preview_calibration: bool = False) -> List[float]:
         """Do inquiry.
 
         Animates an inquiry of flashing letters to achieve RSVP.
+
+
+        PARAMETERS:
+        -----------
+        preview_calibration(bool) default False: Whether or not to preview the upcoming inquiry stimuli. This feature
+            is used to help the participant prepare for the upcoming inquiry after a prompt. It will present after
+            the first stimulus of the inquiry (assumed to be a prompt). Not recommended for use outside of a
+            calibration task.
+
+        RETURNS:
+        --------
+        timing(list[float]): list of timings of stimuli presented in the inquiry
         """
 
         # init an array for timing information
@@ -157,15 +161,20 @@ class RSVPDisplay(Display):
         # do the inquiry
         for idx in range(len(inquiry)):
 
+            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
+            if idx == 0 and callable(self.first_stim_callback):
+                self.first_stim_callback(inquiry[idx]['sti'])
+
+            # If previewing the inquiry, do so after the first stimulus
+            if preview_calibration and idx == 1:
+                time, _ = self.preview_inquiry()
+                timing.extend(time)
+
             # Reset the timing clock to start presenting
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 inquiry[idx]['sti_label'])
-
-            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
-            if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(inquiry[idx]['sti'])
 
             # Draw stimulus for n frames
             inquiry[idx]['sti'].draw()
@@ -174,10 +183,7 @@ class RSVPDisplay(Display):
             core.wait(inquiry[idx]['time_to_present'])
 
             # append timing information
-            if self.is_txt_stim:
-                timing.append(self.trigger_callback.timing)
-            else:
-                timing.append(self.trigger_callback.timing)
+            timing.append(self.trigger_callback.timing)
 
             self.trigger_callback.reset()
 
@@ -281,21 +287,16 @@ class RSVPDisplay(Display):
         Using the self.stimuli_inquiry list, construct a preview box to display to the user. This method
             assumes the presence of a fixation (+).
         """
-        if not self.full_screen:
-            reduce_factor = 4.85
-            wrap_width = 1.1
-        else:
-            reduce_factor = 4.75
-            wrap_width = .9
         text = ' '.join(self.stimuli_inquiry).split('+ ')[1]
 
         return self._create_stimulus(
-            self.stimuli_height / reduce_factor,
+            0.12,
             stimulus=text,
             units='height',
             stimuli_position=self.stimuli_pos,
             mode='textbox',
-            wrap_width=wrap_width)
+            align_text='left',
+            wrap_width=0.025)
 
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
@@ -337,7 +338,9 @@ class RSVPDisplay(Display):
                 # test whether the word will be too big for the screen
                 text_width = current_stim['sti'].boundingBox[0]
                 if text_width > self.window.size[0]:
-                    monitor_width, monitor_height = get_screen_resolution()
+                    screen_info = get_screen_info()
+                    monitor_width = screen_info.width
+                    monitor_height = screen_info.height
                     text_height = current_stim['sti'].boundingBox[1]
                     # If we are in full-screen, text size in Psychopy norm units
                     # is monitor width/monitor height
@@ -354,16 +357,15 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_state(self, text: str, color_list: List[str], pos: Optional[Tuple] = None) -> None:
+    def update_task_bar(self, text: str = None) -> None:
         """Update task state.
 
         Removes letters or appends to the right.
         Args:
                 text(string): new text for task state
-                color_list(list[string]): list of colors for each
-                pos(tuple): [optional] tuple of task position
         """
-        self.update_task(text=text, color_list=color_list, pos=pos)
+        if self.task_bar:
+            self.task_bar.update(text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
@@ -420,7 +422,7 @@ class RSVPDisplay(Display):
             border=False):
         """Create Stimulus.
 
-        Returns a TextStim or ImageStim object.
+        Returns a TextStim, ImageStim or TextBox object.
         """
         if not stimuli_position:
             stimuli_position = self.stimuli_pos
@@ -460,6 +462,5 @@ class RSVPDisplay(Display):
                 letterHeight=height,
                 size=[.5, .5],
                 pos=stimuli_position,
-                anchor=align_text,
                 alignment=align_text,
             )

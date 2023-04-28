@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 from psychopy import visual
 
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.system_utils import get_screen_resolution
+from bcipy.helpers.system_utils import get_screen_info
 
 
 class Display(ABC):
@@ -40,10 +40,10 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def update_task(self) -> None:
+    def update_task_bar(self, *args, **kwargs) -> None:
         """Update Task.
 
-        Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
+        Update any taskbar-related display items not related to the inquiry. Ex. stimuli count 1/200.
         """
         ...
 
@@ -88,7 +88,9 @@ def init_display_window(parameters):
     if parameters['full_screen']:
 
         # set window attributes based on resolution
-        window_width, window_height = get_screen_resolution()
+        screen_info = get_screen_info()
+        window_height = screen_info.height
+        window_width = screen_info.width
 
         # set full screen mode to true (removes os dock, explorer etc.)
         full_screen = True
@@ -131,10 +133,10 @@ class StimuliProperties:
             stim_font: str,
             stim_pos: Tuple[float, float],
             stim_height: float,
-            stim_inquiry: List[str],
-            stim_colors: List[str],
-            stim_timing: List[float],
-            is_txt_stim: bool,
+            stim_inquiry: List[str] = None,
+            stim_colors: List[str] = None,
+            stim_timing: List[float] = None,
+            is_txt_stim: bool = True,
             prompt_time: float = None):
         """Initialize Stimuli Parameters.
 
@@ -145,14 +147,14 @@ class StimuliProperties:
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
-        prompt_time(float): Time to display target prompt for at the beggining of inquiry
+        prompt_time(float): Time to display target prompt for at the beginning of inquiry
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
         self.stim_height = stim_height
-        self.stim_inquiry = stim_inquiry
-        self.stim_colors = stim_colors
-        self.stim_timing = stim_timing
+        self.stim_inquiry = stim_inquiry or []
+        self.stim_colors = stim_colors or []
+        self.stim_timing = stim_timing or []
         self.is_txt_stim = is_txt_stim
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
@@ -232,52 +234,6 @@ class InformationProperties:
         return self.text_stim
 
 
-class TaskDisplayProperties:
-    """"Task Dispay Properties.
-
-    An encapsulation of properties relevant to task stimuli presentation in an RSVP paradigm.
-    """
-
-    def __init__(
-            self,
-            task_color: List[str],
-            task_font: str,
-            task_pos: Tuple[float, float],
-            task_height: float,
-            task_text: str):
-        """Initialize Task Display Parameters.
-
-        task_color(List[str]): Ordered list of colors to apply to task stimuli
-        task_font(str): Font to apply to all task stimuli
-        task_pos(Tuple[float, float]): Position on the screen where to present to task text
-        task_height(float): Height of all task text stimuli
-        task_text(str): Task text to apply to stimuli
-        """
-        self.task_color = task_color
-        self.task_font = task_font
-        self.task_pos = task_pos
-        self.task_height = task_height
-        self.task_text = task_text
-        self.task = None
-
-    def build_task(self, window: visual.Window) -> visual.TextStim:
-        """"Build Task.
-
-        This method constructs the task stimuli object which can be updated later. This is more
-            performant than creating a new stimuli for each update in task state.
-        """
-        self.task = visual.TextStim(
-            win=window,
-            color=self.task_color[0],
-            height=self.task_height,
-            text=self.task_text,
-            font=self.task_font,
-            pos=self.task_pos,
-            wrapWidth=None, colorSpace='rgb',
-            opacity=1, depth=-6.0)
-        return self.task
-
-
 class PreviewInquiryProperties:
     """"Preview Inquiry Properties.
     An encapsulation of properties relevant to preview_inquiry() operation.
@@ -291,6 +247,7 @@ class PreviewInquiryProperties:
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+        preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
             0 == preview only; 1 == press to accept inquiry; 2 == press to skip inquiry.

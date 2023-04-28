@@ -2,7 +2,8 @@ from psychopy import core
 
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.display import InformationProperties, TaskDisplayProperties, StimuliProperties, init_display_window
+from bcipy.display import InformationProperties, StimuliProperties, init_display_window
+from bcipy.display.components.task_bar import CalibrationTaskBar
 
 info = InformationProperties(
     info_color=['White'],
@@ -10,13 +11,6 @@ info = InformationProperties(
     info_height=[0.1],
     info_font=['Arial'],
     info_text=['Calibration Demo'],
-)
-task_display = TaskDisplayProperties(
-    task_color=['White'],
-    task_pos=(-.8, .85),
-    task_font='Arial',
-    task_height=.1,
-    task_text='1/100'
 )
 
 # Initialize Stimulus
@@ -57,7 +51,7 @@ win = init_display_window(window_parameters)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
-print(frameRate)
+print(f'Frame rate: {frameRate}')
 
 # Initialize Clock
 clock = core.StaticPeriod(screenHz=frameRate)
@@ -71,18 +65,23 @@ stimuli = StimuliProperties(
     stim_colors=['white'] * len_stimuli,
     stim_timing=[3] * len_stimuli,
     is_txt_stim=is_txt_stim)
+
+task_bar = CalibrationTaskBar(win,
+                              inquiry_count=100,
+                              current_index=0,
+                              font='Arial')
 rsvp = CalibrationDisplay(
     win,
     clock,
     experiment_clock,
     stimuli,
-    task_display,
+    task_bar,
     info)
 
 
 for idx_o in range(len(task_text)):
 
-    rsvp.update_task_state(text=task_text[idx_o], color_list=task_color[idx_o])
+    rsvp.update_task_bar(text=task_text[idx_o])
     rsvp.draw_static()
     win.flip()
 

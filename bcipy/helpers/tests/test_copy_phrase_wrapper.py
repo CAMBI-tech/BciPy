@@ -11,8 +11,8 @@ from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.acquisition.devices import DeviceSpec, register
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.task import alphabet
-from bcipy.language.uniform import UniformLanguageModel
+from bcipy.helpers.symbols import alphabet
+from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task.data import EvidenceType
 
@@ -69,15 +69,14 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             min_num_inq=1,
             max_num_inq=50,
             lmodel=None,
+            device_spec=self.device_spec,
             signal_model=None,
-            fs=25,
+            # fs=25,
             k=2,
             alp=alp,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
-            device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
-            device_channels=self.device_spec.channels,
             stim_timing=[0.5, 0.25],
         )
 
@@ -174,15 +173,13 @@ class TestCopyPhraseWrapper(unittest.TestCase):
             min_num_inq=1,
             max_num_inq=50,
             lmodel=UniformLanguageModel(symbol_set=alp),
+            device_spec=self.device_spec,
             signal_model=self.model,
-            fs=self.device_spec.sample_rate,
             k=1,
             alp=alp,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
-            device_name=self.device_spec.name,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
-            device_channels=self.device_spec.channels,
             stim_timing=[0.5, 0.25],
             notch_filter_frequency=4.0,
             filter_low=1.0,

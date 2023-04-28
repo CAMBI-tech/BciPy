@@ -10,6 +10,7 @@ import pandas as pd
 
 from mockito import any, mock, when, verify, unstub
 
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.raw_data import (RawData, RawDataReader, RawDataWriter,
                                     load, sample_data, settings, write)
 
@@ -95,6 +96,12 @@ class TestRawData(unittest.TestCase):
         self.assertEqual(loaded_data.rows[0], self.row1)
         self.assertEqual(loaded_data.rows[1], self.row2)
         self.assertEqual(loaded_data.rows[2], self.row3)
+
+    def test_load_with_invalid_filepath(self):
+        """Test that an exception is raised when an invalid file is loaded."""
+        with self.assertRaises(BciPyCoreException):
+            path = "invalid/path/to/file.csv"
+            load(path)
 
     def test_deserialization(self):
         """Test that the load function can be accessed through a class

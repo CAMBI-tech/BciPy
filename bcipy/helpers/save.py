@@ -1,20 +1,24 @@
-from bcipy.acquisition.devices import DeviceSpec
-from bcipy.helpers.validate import validate_experiments
 import errno
-import os
-from time import localtime, strftime
-from shutil import copyfile
-from pathlib import Path
 import json
+import os
+from pathlib import Path
+from shutil import copyfile
+from time import localtime, strftime
+from typing import Any, List
 
-from bcipy.config import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETER_FILENAME
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID,
+                          DEFAULT_LM_PARAMETERS_FILENAME,
+                          DEFAULT_LM_PARAMETERS_PATH,
+                          DEFAULT_PARAMETER_FILENAME)
+from bcipy.helpers.validate import validate_experiments
 
 
-def save_json_data(data: dict, location: str, name: str) -> str:
+def save_json_data(data: Any, location: str, name: str) -> str:
     """
     Writes Parameters as a json file.
 
-        parameters[dict]: dict of configuration
+        data: any data that can be dumped as json
         location[str]: directory in which to save
         name[str]: optional name of file; default is parameters.json
 
@@ -79,10 +83,13 @@ def init_save_data_structure(data_save_path: str,
 
     copyfile(parameters, Path(save_directory, DEFAULT_PARAMETER_FILENAME))
 
+    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
+
     return save_directory
 
 
-def save_device_spec(device_spec: DeviceSpec, location: str, name: str) -> str:
+def save_device_specs(device_specs: List[DeviceSpec], location: str,
+                      name: str) -> str:
     """
     Save device spec to a json file.
 
@@ -94,7 +101,8 @@ def save_device_spec(device_spec: DeviceSpec, location: str, name: str) -> str:
     Returns:
         str: path to the saved file
     """
-    return save_json_data(device_spec.to_dict(), location, name)
+    return save_json_data([spec.to_dict() for spec in device_specs], location,
+                          name)
 
 
 def _save_session_related_data(file, session_dictionary):
