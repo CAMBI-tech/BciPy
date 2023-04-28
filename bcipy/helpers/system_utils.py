@@ -10,7 +10,7 @@ import sys
 import time
 import torch
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, NamedTuple
+from typing import Callable, List, Optional, NamedTuple
 
 import pkg_resources
 import psutil
