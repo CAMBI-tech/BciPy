@@ -88,7 +88,9 @@ def init_display_window(parameters):
     if parameters['full_screen']:
 
         # set window attributes based on resolution
-        window_width, window_height, _ = get_screen_info()
+        screen_info = get_screen_info()
+        window_height = screen_info.height
+        window_width = screen_info.width
 
         # set full screen mode to true (removes os dock, explorer etc.)
         full_screen = True

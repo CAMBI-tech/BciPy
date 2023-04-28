@@ -10,7 +10,7 @@ import sys
 import time
 import torch
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, NamedTuple
 
 import pkg_resources
 import psutil
@@ -19,6 +19,10 @@ from cpuinfo import get_cpu_info
 
 from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
 
+class ScreenInfo(NamedTuple):
+    width: int
+    height: int
+    rate: float
 
 def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
     """Test for internet connectivity.
@@ -62,7 +66,7 @@ def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
     True if the refresh rate is less than 120 Hz; otherwise False.
     """
     if refresh is None:
-        refresh = get_screen_info()[-1]
+        refresh = get_screen_info().rate
 
     return refresh < 120
 
@@ -126,7 +130,7 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_screen_info() -> Tuple[int, int, float]:
+def get_screen_info() -> ScreenInfo:
     """Gets the screen information.
 
     Note: Use this method if only the screen resolution is needed; it is much more efficient
@@ -134,10 +138,10 @@ def get_screen_info() -> Tuple[int, int, float]:
 
     Returns
     -------
-        (width, height, rate)
+        ScreenInfo(width, height, rate)
      """
     screen = pyglet.canvas.get_display().get_default_screen()
-    return (screen.width, screen.height, screen.get_mode().rate)
+    return ScreenInfo(screen.width, screen.height, screen.get_mode().rate)
 
 
 def get_gpu_info() -> List[dict]:
@@ -159,13 +163,13 @@ def get_system_info() -> dict:
           'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version',
           'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
-    screen_width, screen_height, screen_rate = get_screen_info()
+    screen_info = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
-        'screen_resolution': [screen_width, screen_height],
+        'screen_resolution': [screen_info.width, screen_info.height],
         'memory': psutil.virtual_memory().available / 1024 / 1024,
         'bcipy_version': bcipy_version(),
         'platform': platform.system(),
@@ -179,7 +183,7 @@ def get_system_info() -> dict:
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
-        'screen_refresh': f"{screen_rate}Hz",
+        'screen_refresh': f"{screen_info.rate}Hz",
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
 

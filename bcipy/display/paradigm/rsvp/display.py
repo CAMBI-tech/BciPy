@@ -338,7 +338,9 @@ class RSVPDisplay(Display):
                 # test whether the word will be too big for the screen
                 text_width = current_stim['sti'].boundingBox[0]
                 if text_width > self.window.size[0]:
-                    monitor_width, monitor_height, _ = get_screen_info()
+                    screen_info = get_screen_info()
+                    monitor_width = screen_info.width
+                    monitor_height = screen_info.height
                     text_height = current_stim['sti'].boundingBox[1]
                     # If we are in full-screen, text size in Psychopy norm units
                     # is monitor width/monitor height

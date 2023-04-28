@@ -1,5 +1,11 @@
 import unittest
-from bcipy.helpers.system_utils import is_connected, is_battery_powered, is_screen_refresh_rate_low, get_screen_info
+from bcipy.helpers.system_utils import (
+    is_connected,
+    is_battery_powered, 
+    is_screen_refresh_rate_low,
+    get_screen_info,
+    ScreenInfo,
+)
 import socket
 import psutil
 from pyglet import canvas
@@ -76,7 +82,8 @@ class TestSystemUtilsAlerts(unittest.TestCase):
         when(canvas).get_display().thenReturn(display)
         when(display).get_default_screen().thenReturn(screen)
         when(screen).get_mode().thenReturn(screen)
-        self.assertEqual(get_screen_info(), (1920, 1080, 120))
+        expected = ScreenInfo(width=1920, height=1080, rate=120)
+        self.assertEqual(get_screen_info(), expected)
         verify(display, times=1).get_default_screen()
         verify(screen, times=1).get_mode()
 
