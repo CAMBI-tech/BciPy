@@ -1,3 +1,10 @@
+# 2.0.1-rc.3
+
+## Contributions
+
+- Bug Fixes
+    - Fix for missing inits and static assets #284 catch sessions with no data #284 move experiment and field assets to parameters location #284
+
 # 2.0.0-rc.3
 
 ## Contributions
