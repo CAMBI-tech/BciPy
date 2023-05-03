@@ -1,0 +1,7 @@
+include bcipy/parameters/*.json
+include bcipy/parameters/experiment/*.json
+include bcipy/parameters/field/*.json
+include bcipy/language/lms/*
+include bcipy/language/sets/*
+include bcipy/static/images/*/*
+include bcipy/static/sounds/*/*
