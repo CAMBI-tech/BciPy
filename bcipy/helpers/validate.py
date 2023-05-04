@@ -6,7 +6,7 @@ from bcipy.config import (
     EXPERIMENT_FILENAME,
     FIELD_FILENAME)
 from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.system_utils import is_battery_powered, is_connected
+from bcipy.helpers.system_utils import is_battery_powered, is_connected, is_screen_refresh_rate_low
 from bcipy.helpers.exceptions import (InvalidFieldException,
                                       InvalidExperimentException,
                                       UnregisteredExperimentException,
@@ -28,7 +28,8 @@ def validate_bcipy_session(parameters: dict, fake_data: bool) -> bool:
     """
     possible_alerts = [(fake_data, '* Fake data is on.'),
                        (is_connected(), '* Internet is on.'),
-                       (is_battery_powered(), '* Operating on battery power')]
+                       (is_battery_powered(), '* Operating on battery power'),
+                       (is_screen_refresh_rate_low(), '* Screen refresh rate is low (< 120 Hz)')]
     alert_messages = [
         message for (condition, message) in possible_alerts if condition
     ]

@@ -617,10 +617,10 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "MIXTURE",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: MIXTURE",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
       "UNIFORM",
       "CAUSAL",

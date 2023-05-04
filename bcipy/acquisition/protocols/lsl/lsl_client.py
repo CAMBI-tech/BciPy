@@ -2,7 +2,7 @@
 import logging
 from typing import List
 
-from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream
+from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream, resolve_byprop
 
 from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec, IRREGULAR_RATE
 from bcipy.acquisition.exceptions import InvalidClockError
@@ -300,7 +300,7 @@ def discover_device_spec(content_type: str) -> DeviceSpec:
     """Finds the first LSL stream with the given content type and creates a
     device spec from the stream's metadata."""
     log.info(f"Waiting for {content_type} data to be streamed over LSL.")
-    streams = resolve_stream('type', content_type)
+    streams = resolve_byprop('type', content_type, timeout=5.0)
     if not streams:
         raise Exception(
             f'LSL Stream not found for content type {content_type}')
