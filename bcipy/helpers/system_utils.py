@@ -10,7 +10,7 @@ import sys
 import time
 import torch
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, NamedTuple
 
 import pkg_resources
 import psutil
@@ -18,6 +18,12 @@ import pyglet
 from cpuinfo import get_cpu_info
 
 from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
+
+
+class ScreenInfo(NamedTuple):
+    width: int
+    height: int
+    rate: float
 
 
 def is_connected(hostname: str = "1.1.1.1", port=80) -> bool:
@@ -47,6 +53,24 @@ def is_battery_powered() -> bool:
     power saving operations."""
     return psutil.sensors_battery(
     ) and not psutil.sensors_battery().power_plugged
+
+
+def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
+    """Check if the screen refresh rate is sufficient for BciPy operation.
+
+    Parameters
+    ----------
+        refresh(float) - optional screen refresh rate if already collected. If not provided,
+            the current screen refresh rate is gathered using get_screen_info().
+
+    Returns
+    -------
+    True if the refresh rate is less than 120 Hz; otherwise False.
+    """
+    if refresh is None:
+        refresh = get_screen_info().rate
+
+    return refresh < 120
 
 
 def git_dir() -> str:
@@ -108,18 +132,18 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_screen_resolution() -> Tuple[int, int]:
-    """Gets the screen resolution.
+def get_screen_info() -> ScreenInfo:
+    """Gets the screen information.
 
     Note: Use this method if only the screen resolution is needed; it is much more efficient
     than extracting that information from the dict returned by the get_system_info method.
 
     Returns
     -------
-        (width, height)
+        ScreenInfo(width, height, rate)
      """
     screen = pyglet.canvas.get_display().get_default_screen()
-    return (screen.width, screen.height)
+    return ScreenInfo(screen.width, screen.height, screen.get_mode().rate)
 
 
 def get_gpu_info() -> List[dict]:
@@ -141,13 +165,13 @@ def get_system_info() -> dict:
           'memory', 'bcipy_version', 'platform', 'platform-release', 'platform-version',
           'architecture', 'processor', 'cpu_count', 'hz', 'ram']
     """
-    screen_width, screen_height = get_screen_resolution()
+    screen_info = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
     return {
         'os': sys.platform,
         'py_version': sys.version,
-        'resolution': [screen_width, screen_height],
+        'screen_resolution': [screen_info.width, screen_info.height],
         'memory': psutil.virtual_memory().available / 1024 / 1024,
         'bcipy_version': bcipy_version(),
         'platform': platform.system(),
@@ -157,10 +181,11 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
+        'cpu_hz': info['hz_actual_friendly'],
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
-        'hz': info['hz_actual_friendly'],
+        'screen_refresh': f"{screen_info.rate}Hz",
         'ram': str(round(psutil.virtual_memory().total / (1024.0**3))) + " GB"
     }
 
@@ -185,7 +210,9 @@ def configure_logger(
         '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
     root_logger.addHandler(handler)
 
-    print(f'Printing all BciPy logs to: {logfile}')
+    # print to console the absolute path of the log file to aid in debugging
+    path_to_logs = os.path.abspath(logfile)
+    print(f'Printing all BciPy logs to: {path_to_logs}')
 
     if version:
         logging.info(f'Start of Session for BciPy Version: ({version})')
