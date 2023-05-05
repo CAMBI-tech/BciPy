@@ -175,6 +175,30 @@ def load_signal_model(model_class: SignalModel,
         SignalModel: Model after loading pretrained parameters.
     """
     # use python's internal gui to call file explorers and get the filename
+    filename = load_signal_model_path(filename)
+
+    # load the signal_model with pickle
+    signal_model = model_class(**model_kwargs)
+    signal_model.load(filename)
+
+    log.info(f'Loaded signal model from {filename}')
+
+    return signal_model, filename
+
+def load_signal_model_path(filename: str = None) -> str:
+    """Load signal model path.
+
+    Parameters
+    ----------
+    filename: str, optional
+        Location of pretrained model (.pkl)
+
+    Returns
+    -------
+    str
+        Location of pretrained model (.pkl).
+    """
+    # use python's internal gui to call file explorers and get the filename
     if not filename or Path(filename).is_dir():
         directory = filename or preferences.signal_model_directory
         filename = ask_filename('*.pkl', directory)
@@ -184,13 +208,7 @@ def load_signal_model(model_class: SignalModel,
         if path.is_file():
             preferences.signal_model_directory = str(path.parent)
 
-    # load the signal_model with pickle
-    signal_model = model_class(**model_kwargs)
-    signal_model.load(filename)
-
-    log.info(f'Loaded signal model from {filename}')
-
-    return signal_model, filename
+    return filename
 
 
 def choose_csv_file(filename: str = None) -> str:

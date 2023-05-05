@@ -168,7 +168,7 @@ def offline_analysis(
         transformation_buffer=buffer,
     )
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+    inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
