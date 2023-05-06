@@ -20,14 +20,14 @@ from sklearn.preprocessing import FunctionTransformer
 def reorder(data):
     return data.transpose(1, 0, 2)
 
-k_folds = 2
+k_folds = 5
 
 scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy')
 
 clfs = {
     'LR': (
         make_pipeline(Vectorizer(), LogisticRegression()),
-        {'logisticregression__C': np.exp(np.linspace(-4, 4, 5))},
+        {'logisticregression__C': np.exp(np.linspace(-4, 4, 3))},
     ),
     'LDA': (
         make_pipeline(Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
@@ -35,7 +35,7 @@ clfs = {
     ),
     'SVM': (
         make_pipeline(Vectorizer(), SVC()),
-        {'svc__C': np.exp(np.linspace(-4, 4, 5)), 'svc__kernel': ('linear', 'rbf')},
+        {'svc__C': np.exp(np.linspace(-4, 4, 3)), 'svc__kernel': ('linear', 'rbf')},
     ),
     'Xdawn LDA': (
         make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),

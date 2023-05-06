@@ -52,13 +52,13 @@ if __name__ == "__main__":
                                 estimate_balanced_acc=False)
                 
                 df = crossvalidate_record((data, labels))
-                breakpoint()
                 for name in scores:
                     results[name].append(df[f'mean_test_{name}'])
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 breakpoint()
 
+    breakpoint()
     final = df.copy()
     for name, values in results.items():
         values = np.array(values)
