@@ -11,6 +11,7 @@ from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComp
 from bcipy.signal.model.pipeline import Pipeline
 from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
+from sklearn.utils.multiclass import unique_labels
 
 
 class PcaRdaKdeModel(SignalModel):
@@ -78,6 +79,7 @@ class PcaRdaKdeModel(SignalModel):
         else:
             raise ValueError("prior_type must be 'empirical' or 'uniform'")
 
+        self.classes_ = unique_labels(train_labels)
         self._ready_to_predict = True
         return self
 
@@ -107,7 +109,7 @@ class PcaRdaKdeModel(SignalModel):
         auc = -tmp
         return ModelEvaluationReport(auc)
 
-    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    def predict_old(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
         """
         For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
         Rather than just computing an update p(e|l=+) for the seen symbol and p(e|l=-) for all unseen symbols,
@@ -140,6 +142,10 @@ class PcaRdaKdeModel(SignalModel):
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
+    
+    def predict(self, data: np.array) -> np.array:
+        probs = self.predict_proba(data)
+        return probs.argmax(-1)
 
     def predict_proba(self, data: np.array) -> np.array:
         """Converts log likelihoods from model into class probabilities.

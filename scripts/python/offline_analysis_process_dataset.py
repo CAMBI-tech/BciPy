@@ -1,10 +1,13 @@
 # from bcipy.signal.model.ar_offline import offline_analysis
 from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
+from soa_classifier import crossvalidate_record, scores
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 
 from pathlib import Path
 import mne
+import pandas as pd
+import numpy as np
 
 
 ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
@@ -32,28 +35,37 @@ if __name__ == "__main__":
     """
     path = load_experimental_data()
 
-    aucs = []
-    ba = []
+    results = {name: [] for name in scores}
     for session in Path(path).iterdir():
         if session.is_dir():
             parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
             # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
 
             try:
-                model, _ = offline_analysis(
+                # grab the data and labels
+                data, labels = offline_analysis(
                                 # mne_data=mne_data,
                                 data_folder=str(session.resolve()),
                                 parameters=parameters,
                                 # drop_bad_epochs=False,
                                 # baseline=(-.2, 0),
                                 estimate_balanced_acc=False)
-                aucs.append({
-                    session.name: model.auc
-                })
+                
+                df = crossvalidate_record((data, labels))
+                breakpoint()
+                for name in scores:
+                    results[name].append(df[f'mean_test_{name}'])
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
-                import pdb; pdb.set_trace()
+                breakpoint()
+
+    final = df.copy()
+    for name, values in results.items():
+        values = np.array(values)
+        final[f'mean_test_{name}'] = values.mean(axis=0)
+        final[f'std_test_{name}'] = values.std(axis=0)
+    # return final.sort_values('mean_test_f1', ascending=False)
     
     # import pdb; pdb.set_trace()
-    print(aucs)
+    # print(results)
     import pdb; pdb.set_trace()
