@@ -12,6 +12,7 @@ from bcipy.config import (
     TRIGGER_FILENAME,
     DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME,
+    DEVICE_SPEC_PATH,
 )
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.task.data import EvidenceType
@@ -19,11 +20,13 @@ import bcipy.acquisition.devices as devices
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data, load_experimental_data, load_signal_model_path
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
+from bcipy.helpers.session import read_session
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform, filter_inquiries
 
+from scipy import stats
 
 SYMBOLS = alphabet()
 
@@ -78,7 +81,7 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
-    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    devices.load(Path(DEVICE_SPEC_PATH))
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     print(f"Channels read from csv: {channels}")
@@ -163,33 +166,47 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
 
     # Get values computed during actual experiment from session.json
     all_target_eeg, all_nontarget_eeg = load_from_session_json(session_json)
+    
 
-    print("Length of all_target_eeg: ", len(all_target_eeg))
-    print("Length of all_nontarget_eeg: ", len(all_nontarget_eeg))
-    print("Length of outputs: ", len(trigger_timing))
+    # Check that the number of trials in triggers.txt matches the number of trials in session.json
+    print("Length of trials from triggers.txt: ", len(trigger_timing))
+    print("Length of all_target_eeg from session.json: ", len(all_target_eeg))
+    print("Length of all_nontarget_eeg from session.json: ", len(all_nontarget_eeg))
+    all_target_from_outputs = len([o["target_idx"] for o in outputs.values() if o["target_idx"] is not None])
+    print("Length of all_target_from_outputs: ", all_target_from_outputs)
+    all_nontarget_from_outputs = sum([len(o["nontarget_idx"]) for o in outputs.values()])
+    print("Length of all_nontarget_from_outputs: ", all_nontarget_from_outputs)
+    
+    # Fail the replay if the number of trials in triggers.txt does not match the number of trials in session.json
+    assert len(trigger_timing) == len(all_target_eeg) + len(all_nontarget_eeg), (
+        "Length of trigger_timing does not match length of all_target_eeg + all_nontarget_eeg")
+    assert len(trigger_timing) == all_target_from_outputs + all_nontarget_from_outputs, (
+        "Length of trigger_timing does not match length of all_target_from_outputs + all_nontarget_from_outputs")
 
     return outputs, all_target_eeg, all_nontarget_eeg
 
 
 def load_from_session_json(session_json) -> list:
-    from bcipy.helpers.session import read_session
     contents = read_session(session_json)
     series = contents.series
 
     all_target_eeg = []
     all_nontarget_eeg = []
-
     for inquiries in series:
         for inquiry in inquiries:
+            # There are cases in which an inquiry may have other evidence types but no ERP. Ex. InquiryPreview
             if len(inquiry.evidences[EvidenceType.ERP]) < 1:
-                print("Skipping empty inquiry")
+                print("Skipping Inquiry. No ERP evidence.")
                 continue
             else:
-                stim_label = inquiry.stimuli  # name of symbols presented
+                # get stimuli and targetness, remove fixation cross from first position
+                stim_label = inquiry.stimuli
                 stim_label.pop(0)
                 stim_indices = [SYMBOLS.index(sym) for sym in stim_label]
-                targetness = inquiry.target_info # targetness of stimuli
-                # target_letter = inquiry['target_letter']
+                targetness = inquiry.target_info
+                targetness.pop(0)
+
+                # get indices of target and nontarget stimuli
                 target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
                 nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
                 all_target_eeg.extend([inquiry.evidences[EvidenceType.ERP][pos] for pos in target])
@@ -259,6 +276,7 @@ def plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nonta
     plt.close()
 
     # return all target and nontarget responses
+    # return df[df["which_model"] == "new_target"].values, df[df["which_model"] == "new_nontarget"].values
     return df[df["which_model"] == "new_target"]["response_value"].values, df[df["which_model"] == "new_nontarget"]["response_value"].values
 
 
@@ -317,17 +335,22 @@ if __name__ == "__main__":
 
     # compare the outputs of the new model with the outputs of the old model statistically
     print("Comparing the outputs of the new model with the outputs of the old model statistically")
-    from scipy import stats
     target_diffs = new_targets - np.array(targets_with_old_model)
     nontarget_diffs = new_nontargets - np.array(nontargets_with_old_model)
-    breakpoint()
-    # test for normality
-    print("Testing for normality")
-    print("Target diffs")
-    print(stats.normaltest(target_diffs))
-    stats_target = stats.ttest_ind(targets_with_old_model, new_targets.tolist())
-    stats_nontarget = stats.ttest_ind(nontargets_with_old_model, new_nontargets.tolist())
 
+    normal_targets = stats.normaltest(target_diffs).pvalue > 0.05
+    print(f"Target diffs are normally distributed? {normal_targets}")
+    normal_nontargets = stats.normaltest(nontarget_diffs).pvalue > 0.05
+    print(f"Nontarget diffs are normally distributed? {normal_nontargets}")
 
+    # if not normal, set equal_var=False to use Welch's t-test
+    stats_target = stats.ttest_ind(targets_with_old_model, new_targets.tolist(), equal_var=normal_targets)
+    print(
+        f"The older model produced targets that were {stats_target.statistic} times as large as new target. "
+        f"Is this a significant difference? {stats_target.pvalue < 0.05} {stats_target.pvalue}")
+    stats_nontarget = stats.ttest_ind(nontargets_with_old_model, new_nontargets.tolist(), equal_var=normal_nontargets)
+    print(
+        f"The older model produced nontargets that were {stats_nontarget.statistic} times as large as new nontarget. "
+        f"Is this a significant difference? {stats_nontarget.pvalue < 0.05} {stats_nontarget.pvalue}")
 
     print("Replay complete.")
