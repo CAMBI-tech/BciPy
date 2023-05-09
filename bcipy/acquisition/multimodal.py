@@ -1,10 +1,39 @@
 """Functionality for managing multiple devices."""
 import logging
-from typing import Dict, List, Optional
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.exceptions import UnsupportedContentType
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 
 log = logging.getLogger(__name__)
+
+
+class ContentType(Enum):
+    """Generalized list of supported content types. Allows for case-insensitive
+    matching, as well as synonyms for some types.
+
+    >>> ContentType('Eeg') == ContentType.EEG
+    True
+    """
+
+    EEG = ('eeg', [])
+    EYETRACKER = ('eyetracker', ['gaze', 'eye_tracker'])
+    MARKERS = ('markers', ['switch'])
+
+    def __init__(self, label, synonyms):
+        self.label = label
+        self.synonyms = synonyms
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        """Lookup function used when a value is not found."""
+        value = str(value).lower()
+        for member in cls:
+            if member.label == value or value in member.synonyms:
+                return member
+        raise UnsupportedContentType("ContentType not supported")
 
 
 class ClientManager():
