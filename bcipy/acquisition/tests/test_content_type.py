@@ -8,10 +8,10 @@ from bcipy.acquisition.multimodal import ContentType
 class TestContentType(unittest.TestCase):
     """Tests for multimodal ContentType enum."""
 
-    def test_label(self):
-        """Test that labels are strings"""
-        self.assertEqual('eeg', ContentType.EEG.label)
-        self.assertEqual('eyetracker', ContentType.EYETRACKER.label)
+    def test_value(self):
+        """Test that values are autoincremented"""
+        self.assertEqual(1, ContentType.EEG.value)
+        self.assertEqual(2, ContentType.EYETRACKER.value)
 
     def test_constructor(self):
         """Test retrieving an enum by value"""
@@ -30,6 +30,7 @@ class TestContentType(unittest.TestCase):
         """Test that an unsupported type raises an exception"""
         with self.assertRaises(UnsupportedContentType):
             ContentType('FooBar')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,13 +8,14 @@ import platform
 import socket
 import sys
 import time
-import torch
+from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional, NamedTuple
+from typing import Callable, List, NamedTuple, Optional
 
 import pkg_resources
 import psutil
 import pyglet
+import torch
 from cpuinfo import get_cpu_info
 
 from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
@@ -303,3 +304,17 @@ def report_execution_time(func: Callable) -> Callable:
         log.info('{:s} method took {:0.4f}s to execute'.format(func.__name__, (time2 - time1)))
         return response
     return wrap
+
+
+class AutoNumberEnum(Enum):
+    """Enum that auto-numbers the value for each item.
+
+    See: https://docs.python.org/3/howto/enum.html
+    """
+
+    def __new__(cls, *args):
+        """Autoincrements the value of each item added to the enum."""
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj

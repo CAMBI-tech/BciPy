@@ -1,39 +1,41 @@
 """Functionality for managing multiple devices."""
 import logging
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.exceptions import UnsupportedContentType
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition.record import Record
+from bcipy.helpers.system_utils import AutoNumberEnum
 
 log = logging.getLogger(__name__)
 
 
-class ContentType(Enum):
-    """Generalized list of supported content types. Allows for case-insensitive
-    matching, as well as synonyms for some types.
+class ContentType(AutoNumberEnum):
+    """Enum of supported acquisition device (LSL) content types. Allows for
+    case-insensitive matching, as well as synonyms for some types.
 
+    >>> ContentType(1) == ContentType.EEG
+    True
     >>> ContentType('Eeg') == ContentType.EEG
     True
     """
 
-    EEG = ('eeg', [])
-    EYETRACKER = ('eyetracker', ['gaze', 'eye_tracker'])
-    MARKERS = ('markers', ['switch'])
-
-    def __init__(self, label, synonyms):
-        self.label = label
+    def __init__(self, synonyms: List[str]):
         self.synonyms = synonyms
+
+    EEG = []
+    EYETRACKER = ['gaze', 'eye_tracker']
+    MARKERS = ['switch']
 
     @classmethod
     def _missing_(cls, value: Any):
         """Lookup function used when a value is not found."""
         value = str(value).lower()
         for member in cls:
-            if member.label == value or value in member.synonyms:
+            if member.name.lower() == value or value in member.synonyms:
                 return member
-        raise UnsupportedContentType("ContentType not supported")
+        raise UnsupportedContentType(f"ContentType not supported: {value}")
 
 
 class ClientManager():
@@ -55,8 +57,8 @@ class ClientManager():
         default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, default_content_type: str = 'EEG'):
-        self._clients: Dict[str, LslAcquisitionClient] = {}
+    def __init__(self, default_content_type: ContentType = ContentType.EEG):
+        self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
 
     @property
@@ -76,9 +78,11 @@ class ClientManager():
 
     def add_client(self, client: LslAcquisitionClient):
         """Add the given client to the manager."""
-        self._clients[client.device_spec.content_type] = client
+        content_type = ContentType(client.device_spec.content_type)
+        self._clients[content_type] = client
 
-    def get_client(self, content_type: str) -> Optional[LslAcquisitionClient]:
+    def get_client(
+            self, content_type: ContentType) -> Optional[LslAcquisitionClient]:
         """Get client by content type"""
         return self._clients.get(content_type, None)
 
@@ -92,6 +96,31 @@ class ClientManager():
         """Stop acquiring data for all clients"""
         for client in self.clients:
             client.stop_acquisition()
+
+    def get_data_by_device(
+        self,
+        start: float = None,
+        seconds: float = None,
+        content_types: List[ContentType] = None
+    ) -> Dict[ContentType, List[Record]]:
+        """Get data for one or more devices. The number of samples for each
+        device depends on the sample rate and may be different for item.
+
+        Parameters
+        ----------
+            start - start time (acquisition clock) of data window
+            seconds - duration of data to return for each device
+            content_types - specifies which devices to include
+        """
+        output = {}
+        for content_type in content_types:
+            client = self.get_client(content_type)
+            count = round(seconds * client.device_spec.sample_rate)
+            log.debug(
+                f'Need {count} records for processing {content_type.name} data'
+            )
+            output[content_type] = client.get_data(start=start, limit=count)
+        return output
 
     def cleanup(self):
         """Perform any cleanup tasks"""
