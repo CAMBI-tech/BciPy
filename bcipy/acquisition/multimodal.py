@@ -115,11 +115,15 @@ class ClientManager():
         output = {}
         for content_type in content_types:
             client = self.get_client(content_type)
-            count = round(seconds * client.device_spec.sample_rate)
-            log.debug(
-                f'Need {count} records for processing {content_type.name} data'
-            )
-            output[content_type] = client.get_data(start=start, limit=count)
+            if client.device_spec.sample_rate > 0:
+                count = round(seconds * client.device_spec.sample_rate)
+                log.debug(
+                    f'Need {count} records for processing {content_type.name} data'
+                )
+                output[content_type] = client.get_data(start=start, limit=count)
+            else:
+                # Markers have an IRREGULAR_RATE.
+                output[content_type] = client.get_data(start=start, end=start+seconds)
         return output
 
     def cleanup(self):

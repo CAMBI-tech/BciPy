@@ -94,22 +94,38 @@ class TestClientManager(unittest.TestCase):
 
     def test_get_data_by_device(self):
         """Test getting data for multiple devices"""
+        # Set up switch device mock
+        switch_device_mock = Mock()
+        switch_device_mock.name = 'Test-switch-2000'
+        switch_device_mock.content_type = 'Markers'
+        switch_device_mock.sample_rate = 0.0
+
+        switch_client_mock = Mock()
+        switch_client_mock.device_spec = switch_device_mock
+        switch_client_mock.get_data = Mock()
+
         daq = ClientManager()
         daq.add_client(self.eeg_client_mock)
         daq.add_client(self.gaze_client_mock)
+        daq.add_client(switch_client_mock)
 
-        results = daq.get_data_by_device(
-            start=100,
-            seconds=5,
-            content_types=[ContentType.EEG, ContentType.EYETRACKER])
+        results = daq.get_data_by_device(start=100,
+                                         seconds=5,
+                                         content_types=[
+                                             ContentType.EEG,
+                                             ContentType.EYETRACKER,
+                                             ContentType.MARKERS
+                                         ])
 
         self.eeg_client_mock.get_data.assert_called_once_with(start=100,
                                                               limit=1500)
         self.gaze_client_mock.get_data.assert_called_once_with(start=100,
                                                                limit=300)
+        switch_client_mock.get_data.assert_called_with(start=100, end=105)
 
         self.assertTrue(ContentType.EEG in results)
         self.assertTrue(ContentType.EYETRACKER in results)
+        self.assertTrue(ContentType.MARKERS in results)
 
 
 if __name__ == '__main__':
