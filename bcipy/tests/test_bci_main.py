@@ -1,20 +1,16 @@
+import logging
 import unittest
-from mockito import any, unstub, when, mock, verify, verifyStubbedInvocationsAreUsed, verifyNoUnwantedInteractions
+
+from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+                     verifyStubbedInvocationsAreUsed, when)
 
 from bcipy import main
-from bcipy.main import (
-    bci_main,
-    _clean_up_session,
-    execute_task
-)
-from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
-
-from bcipy.helpers.exceptions import (
-    UnregisteredExperimentException,
-)
+from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
+                          STATIC_AUDIO_PATH)
+from bcipy.helpers.exceptions import UnregisteredExperimentException
+from bcipy.main import _clean_up_session, bci_main, execute_task
 from bcipy.task import TaskType
 
-import logging
 logging.disable(logging.CRITICAL)
 
 
@@ -357,7 +353,7 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -379,7 +375,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -399,7 +395,7 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -431,7 +427,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -451,7 +447,7 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -488,7 +484,7 @@ class TestExecuteTask(unittest.TestCase):
         }, filename='').thenReturn(load_model_response)
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -508,7 +504,7 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -534,7 +530,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
@@ -555,7 +551,7 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,

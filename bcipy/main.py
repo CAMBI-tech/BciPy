@@ -1,14 +1,14 @@
 import argparse
 import logging
 import multiprocessing
-
 from typing import List
 
 from psychopy import visual
 
-from bcipy.acquisition import LslDataServer, ClientManager
+from bcipy.acquisition import ClientManager, LslDataServer
+from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
+                          STATIC_AUDIO_PATH)
 from bcipy.display import init_display_window
-from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
@@ -18,7 +18,7 @@ from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
-from bcipy.helpers.validate import validate_experiment, validate_bcipy_session
+from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
@@ -159,7 +159,7 @@ def execute_task(
     # Start Task
     try:
         start_task(display,
-                   daq.get_client('EEG'),
+                   daq,
                    task,
                    parameters,
                    save_folder,

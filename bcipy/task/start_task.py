@@ -1,14 +1,15 @@
 """Code for constructing and executing registered tasks"""
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
-
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
+from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
+from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from bcipy.task.paradigm.matrix.timing_verification import \
+    MatrixTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
+    RSVPTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.task_registry import TaskType
 
 
@@ -19,7 +20,7 @@ def make_task(display_window, daq, task, parameters, file_save,
     Parameters:
     -----------
         display_window: psychopy Window
-        daq: DataAcquisitionClient
+        daq: ClientManager - manages one or more acquisition clients
         task: TaskType
         parameters: dict
         file_save: str - path to file in which to save data
