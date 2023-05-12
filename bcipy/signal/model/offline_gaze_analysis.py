@@ -7,16 +7,20 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.mixture import GaussianMixture
 
-from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME
+from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
+                          RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
+                          DEFAULT_DEVICE_SPEC_FILENAME,
+                          EYE_TRACKER_FILENAME_PREFIX)
 from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
-    load_raw_gaze_data
+    load_raw_data
 )
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model.fusion_model import GazeModel
+import bcipy.acquisition.devices as devices
 
 from sklearn.model_selection import train_test_split
 
@@ -64,15 +68,17 @@ def offline_gaze_analysis(
     # The task buffer length defines the min time between two inquiries
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
-    raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
     log.info(
         f"\nData processing settings: \n"
         f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s, Trials per inquiry: {trials_per_inquiry} \n"
     )
         
+    data_file_path = [f"{RAW_DATA_FILENAME}.csv"]
+
     # Load raw data
-    gaze_data = load_raw_gaze_data(Path(data_folder, raw_data_file))
+    data_list = load_raw_data(data_folder, data_file_path)
+    gaze_data = data_list[0]
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate

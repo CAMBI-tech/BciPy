@@ -206,7 +206,7 @@ def analysis_channels(channels: List[str], device_spec: DeviceSpec) -> list:
     ----------
     - channels(list(str)): list of channel names from the raw_data
     (excluding the timestamp)
-    - device_spec(str): device from which the data was collected
+    - device_spec: device from which the data was collected
 
     Returns
     --------

@@ -238,19 +238,6 @@ def load_raw_data(data_folder: str, data_paths: List[str]) -> List[RawData]:
             raise FileNotFoundError(f'Could not find {filename}')
     return data
 
-def load_raw_gaze_data(filename: str) -> RawData:
-    """Reads the data (.csv) file written by data acquisition.
-
-    Parameters
-    ----------
-    - filename : path to the serialized data (csv file)
-
-    Returns
-    -------
-    RawData object with data held in memory
-    """
-    return RawData.load(filename)
-
 
 def load_txt_data() -> str:
     filename = ask_filename('*.txt')  # show dialog box and return the path

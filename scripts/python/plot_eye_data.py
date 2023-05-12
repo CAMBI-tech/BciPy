@@ -2,7 +2,7 @@
 from bcipy.helpers.raw_data import load
 
 DIPSIZE = (1707, 1067)
-IMG_PATH = 'C:\\Users\\tabme\\work\\bci\\BciPy\\scripts\\python\\matrix_grid.png'
+IMG_PATH = '/Users/basak/Documents/BciPy/scripts/python/matrix_grid.png'
 
 def load_eye_tracking_data(path):
     data = load(f'{path}/eyetracker_data_tobii-p0.csv')
@@ -72,18 +72,18 @@ if __name__ == "__main__":
     # ax.plot(rx, ry, c='b', linewidth=1)
 
     # remove nan values
-    # lx = lx[~np.isnan(lx)]
-    # ly = ly[~np.isnan(ly)]
-    # rx = rx[~np.isnan(rx)]
-    # ry = ry[~np.isnan(ry)]
+    lx = lx[~np.isnan(lx)]
+    ly = ly[~np.isnan(ly)]
+    rx = rx[~np.isnan(rx)]
+    ry = ry[~np.isnan(ry)]
 
     # determine kde of the eye data
-    # ax = sns.kdeplot(lx, ly, cmap="mako", fill=False, thresh=0.05, levels=10)
+    ax = sns.kdeplot(lx, ly, cmap="mako", fill=False, thresh=0.05, levels=10, colorbar=True)
 
 
     ax.scatter(lx, ly, c='r', s=1)
     ax.scatter(rx, ry, c='b', s=1)
 
-    # plt.show()
+    plt.show()
 
     breakpoint()

@@ -233,8 +233,8 @@ def offline_analysis(
                 show=show_figures
             )
         if device_spec.content_type == "Eyetracker":
-            # TODO: Add eyetracker processing
-            log.info("Eyetracker data found. Processing not yet implemented.")
+            print(device_spec)
+            breakpoint()
             pass
 
     if alert_finished:
