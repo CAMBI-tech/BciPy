@@ -19,3 +19,7 @@ class TaskRegistryException(Exception):
     def __init__(self, message, errors=None):
         super().__init__(message)
         self.errors = errors
+
+class MissingEvidenceEvaluator(Exception):
+    """Thrown when an evidence evaluator can't be found that matches the
+    provided data content type input and evidence_type output"""

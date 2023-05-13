@@ -67,6 +67,11 @@ class ClientManager():
         return self._clients.values()
 
     @property
+    def clients_by_type(self) -> Dict[ContentType, LslAcquisitionClient]:
+        """Returns a dict of clients keyed by their content type"""
+        return self._clients
+
+    @property
     def device_specs(self) -> List[DeviceSpec]:
         """Returns a list of DeviceSpecs for all the clients."""
         return [client.device_spec for client in self.clients]

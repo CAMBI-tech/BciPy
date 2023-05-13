@@ -2,7 +2,7 @@
 import shutil
 import tempfile
 import unittest
-from collections import abc
+from collections import abc, namedtuple
 from pathlib import Path
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH
@@ -552,6 +552,42 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(changes["entry_3"].parameter['value'],
                          entry3_modified['value'])
 
+    def test_instantiate_tuple(self):
+        """Test that a namedtuple can be instantiated."""
+        sample_config = {
+            "a": {
+                "value": "1",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": "",
+                "type": "int"
+            },
+            "b": {
+                "value": "2",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": [],
+                "type": "int"
+            },
+            "c": {
+                "value": "3",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": [],
+                "type": "str"
+            }
+        }
+        parameters = Parameters(source=None, cast_values=True)
+        parameters.load(sample_config)
+
+        MyTuple = namedtuple("MyTuple", 'a c')
+        my_tuple = parameters.instantiate(MyTuple)
+        self.assertEqual(my_tuple.a, 1)
+        self.assertEqual(my_tuple.c, '3')
+        self.assertEqual((1, '3'), my_tuple)
 
 if __name__ == '__main__':
     unittest.main()
