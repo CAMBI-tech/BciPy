@@ -3,13 +3,13 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
-from bcipy.config import (
-    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
-from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties)
-from bcipy.display import Display
-from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.acquisition.multimodal import ContentType
+from bcipy.config import (SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME,
+                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.display import (Display, InformationProperties,
+                           PreviewInquiryProperties, StimuliProperties)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -18,11 +18,10 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.task import (construct_triggers,
-                                fake_copy_phrase_decision,
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
                                 get_data_for_decision, get_user_input,
                                 target_info, trial_complete_message)
-from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -482,6 +481,8 @@ class RSVPCopyPhraseTask(Task):
         --------
         - self.copy_phrase_task
         """
+        # TODO: refactor compute_eeg_evidence to compute_device_evidence
+        # for each daq client
         evidences = [
             self.compute_button_press_evidence(proceed),
             self.compute_eeg_evidence(stim_times, proceed)
@@ -666,15 +667,16 @@ class RSVPCopyPhraseTask(Task):
     def write_offset_trigger(self) -> None:
         """Append the offset to the end of the triggers file.
         """
-        if self.daq.is_calibrated:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'daq_sample_offset',
-                    TriggerType.SYSTEM,
-                    # to help support future refactoring or use of lsl timestamps only
-                    # we write only the sample offset here
-                    self.daq.offset(self.rsvp.first_stim_time)
-                )])
+        # To help support future refactoring or use of lsl timestamps only
+        # we write only the sample offset here.
+        triggers = []
+        for content_type, client in self.daq.clients_by_type.items():
+            suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
+            label = f"daq_sample_offset{suffix}"
+            time = client.offset(self.rsvp.first_stim_time)
+            triggers.append(Trigger(label, TriggerType.SYSTEM, time))
+
+        self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
     def write_trigger_data(self, stim_times: List[Tuple[str, float]], target_stimuli: str) -> None:
@@ -685,16 +687,18 @@ class RSVPCopyPhraseTask(Task):
         - stim_times : list of (stim, clock_time) tuples
         - target_stimuli : current target stimuli
         """
-        if self.first_run and self.daq.is_calibrated:
-            # write offset first
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'starting_offset',
-                    TriggerType.OFFSET,
-                    # offset will factor in true offset and time relative from beginning
-                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
-                )]
-            )
+
+        if self.first_run:
+            # offset will factor in true offset and time relative from beginning
+            offset_triggers = []
+            for content_type, client in self.daq.clients_by_type.items():
+                suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
+                label = f"starting_offset{suffix}"
+                time = client.offset(
+                    self.rsvp.first_stim_time) - self.rsvp.first_stim_time
+                offset_triggers.append(Trigger(label, TriggerType.OFFSET,
+                                               time))
+            self.trigger_handler.add_triggers(offset_triggers)
 
         triggers = convert_timing_triggers(stim_times, target_stimuli, self.trigger_type)
         self.trigger_handler.add_triggers(triggers)
