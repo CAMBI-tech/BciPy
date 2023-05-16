@@ -3,7 +3,7 @@ from bcipy.helpers.raw_data import load
 from bcipy.config import STATIC_IMAGES_PATH
 
 DIPSIZE = (1707, 1067)
-IMG_PATH = f'{STATIC_IMAGES_PATH}/matrix_grid.png'
+IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
 # IMG_PATH = f'{STATIC_IMAGES_PATH}/rsvp.png'
 TOBII_FILENAME = 'eyetracker_data_tobii-p0.csv'
 
