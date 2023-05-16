@@ -1,11 +1,14 @@
 
 from bcipy.helpers.raw_data import load
+from bcipy.config import STATIC_IMAGES_PATH
 
 DIPSIZE = (1707, 1067)
-IMG_PATH = '/Users/basak/Documents/BciPy/scripts/python/matrix_grid.png'
+IMG_PATH = f'{STATIC_IMAGES_PATH}/matrix_grid.png'
+# IMG_PATH = f'{STATIC_IMAGES_PATH}/rsvp.png'
+TOBII_FILENAME = 'eyetracker_data_tobii-p0.csv'
 
 def load_eye_tracking_data(path):
-    data = load(f'{path}/eyetracker_data_tobii-p0.csv')
+    data = load(f'{path}/{TOBII_FILENAME}')
 
     left_eye_channel_map = [0,0,1,1,0,0,0,0,0]
     left_eye_data, _, _ = data.by_channel_map(left_eye_channel_map)
