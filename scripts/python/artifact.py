@@ -3,7 +3,7 @@ mne.set_log_level('WARNING')
 import os
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
-from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
+from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -73,7 +73,7 @@ def artifact_rejection(
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
-    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
+    devices.load(Path(BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME))
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
 
