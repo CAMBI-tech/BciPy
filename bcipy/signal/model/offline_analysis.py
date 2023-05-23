@@ -16,7 +16,7 @@ from bcipy.helpers.load import (
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp
+from bcipy.helpers.visualization import visualize_erp, visualize_gaze
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
@@ -234,6 +234,12 @@ def offline_analysis(
             )
         if device_spec.content_type == "Eyetracker":
             print(device_spec)
+            figure_handles = visualize_gaze(
+                mode_data,
+                save_path=data_folder if save_figures else None,
+                show=show_figures,
+                raw_plot=True,
+            )
             breakpoint()
             pass
 

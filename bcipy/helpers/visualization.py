@@ -6,7 +6,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
-                          DEFAULT_DEVICE_SPEC_FILENAME)
+                          DEFAULT_DEVICE_SPEC_FILENAME,
+                          STATIC_IMAGES_PATH)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.convert import convert_to_mne
@@ -19,6 +20,10 @@ import bcipy.acquisition.devices as devices
 import mne
 from mne import Epochs
 from mne.io import read_raw_edf
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +73,102 @@ def visualize_erp(
         figs.extend(visualize_joint_average(epochs, ['Non-Target', 'Target'], save_path=save_path, show=show))
 
     return figs
+
+
+def visualize_gaze(
+        data,
+        left_keys=['left_x', 'left_y'],
+        right_keys=['right_x', 'right_y'],
+        save_path=None,
+        show=False,
+        img_path=None,
+        screen_size=(1920, 1080),
+        heatmap=False,
+        raw_plot=False):
+    """Visualize Eye Data.
+
+    Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
+        image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Parameters
+    ----------
+        data: RawData
+        save_path: Optional[str]
+        show: Optional[bool]
+        img_path: Optional[str]
+        screen_size: Optional[Tuple[int, int]] TODO
+    """
+
+    title = f'{data.daq_type} '
+    if heatmap:
+        title += 'Heatmap '
+    if raw_plot:
+        title += 'Raw Gaze '
+
+    if img_path is None:
+        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+    img = plt.imread(img_path)
+    channels = data.channels
+    left_eye_channel_map = [1 if channel in left_keys else 0 for channel in channels]
+    left_eye_data, _, _ = data.by_channel_map(left_eye_channel_map)
+    left_eye_x = left_eye_data[0]
+    left_eye_y = left_eye_data[1]
+
+    right_eye_channel_map = [1 if channel in right_keys else 0 for channel in channels]
+    right_eye_data, _, _ = data.by_channel_map(right_eye_channel_map)
+    right_eye_x = right_eye_data[0]
+    right_eye_y = right_eye_data[1]
+    eye_data = (left_eye_x, left_eye_y, right_eye_x, right_eye_y)
+
+    # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
+    lx = np.clip(left_eye_x, 0, 1)
+    ly = np.clip(left_eye_y, 0, 1)
+    rx = np.clip(right_eye_x, 0, 1)
+    ry = np.clip(right_eye_y, 0, 1)
+    ly = 1 - ly
+    ry = 1 - ry
+
+    # remove nan values
+    lx = lx[~np.isnan(lx)]
+    ly = ly[~np.isnan(ly)]
+    rx = rx[~np.isnan(rx)]
+    ry = ry[~np.isnan(ry)]
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[0, 1, 0, 1])
+
+    if heatmap:
+        # create a dataframe making a column for each x, y pair for both eyes and a column for the eye (left or right)
+        df = pd.DataFrame({
+            'x': np.concatenate((lx, rx)),
+            'y': np.concatenate((ly, ry)),
+            'eye': ['left'] * len(lx) + ['right'] * len(rx)
+        })
+        ax = sns.kdeplot(
+            data=df,
+            hue='eye',
+            x='x',
+            y='y',
+            fill=False,
+            thresh=0.05,
+            levels=10,
+            cmap="mako",
+            colorbar=True)
+        
+    if raw_plot:
+        ax.scatter(lx, ly, c='r', s=1)
+        ax.scatter(rx, ry, c='b', s=1)
+
+    plt.title(f'{title}Plot')
+    
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+
+    return fig
 
 
 def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):
@@ -197,6 +298,8 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
 
+    # TODO check for existence of these files and throw error if not found
+    # TODO check for other data types (tobii)
     raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
@@ -226,7 +329,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     channel_map = analysis_channels(channels, device_spec)
 
-    return visualize_erp(
+    erp = visualize_erp(
         raw_data,
         channel_map,
         trigger_timing,
@@ -238,3 +341,5 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         save_path=session_path,
         show=show,
     )
+
+    eye_data = visualize_eye_data
