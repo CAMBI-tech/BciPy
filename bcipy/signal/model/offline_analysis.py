@@ -5,13 +5,14 @@ from typing import Tuple
 from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
                           RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
                           DEFAULT_DEVICE_SPEC_FILENAME,
-                          EYE_TRACKER_FILENAME_PREFIX)
+                          EYE_TRACKER_FILENAME_PREFIX, STATIC_IMAGES_PATH)
 from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
+    load_eye_tracking_data
 )
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
@@ -19,10 +20,13 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp, visualize_gaze
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model.fusion_model import GazeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
-
 import numpy as np
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from matplotlib import image
+import seaborn as sns
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
@@ -30,6 +34,9 @@ import bcipy.acquisition.devices as devices
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
+DIPSIZE = (1707, 1067)
+IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
+# IMG_PATH = f'{STATIC_IMAGES_PATH}/main/rsvp.png'
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
     """Performs a train/test split on the provided data and labels, accounting for
@@ -240,8 +247,43 @@ def offline_analysis(
                 show=show_figures,
                 raw_plot=True,
             )
+            channels = mode_data.channels
+            type_amp = mode_data.daq_type
+            sample_rate = mode_data.sample_rate
+
+            log.info(f"Channels read from csv: {channels}")
+            log.info(f"Device type: {type_amp}, fs={sample_rate}")       
+            channel_map = analysis_channels(channels, device_spec)
+
+            channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+            log.info(f'Channels used in analysis: {channels_used}')
+
+            data, fs = mode_data.by_channel()
+
+            model = GazeModel()
             breakpoint()
-            pass
+
+            # Process triggers.txt files (again!)
+            trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+                remove_pre_fixation = False,
+                trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.OFFSET],
+            )
+           
+            inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+            trial_targetness_label=trigger_targetness,
+            timing_info=trigger_timing,
+            gaze_data=data,
+            sample_rate=sample_rate,
+            trials_per_inquiry=trials_per_inquiry,
+            channel_map=channel_map,
+            poststimulus_length=poststim_length,
+            prestimulus_length=prestim_length,
+            transformation_buffer=buffer,
+            )
+
+            breakpoint()
+
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")

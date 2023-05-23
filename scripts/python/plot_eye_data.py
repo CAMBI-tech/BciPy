@@ -1,8 +1,9 @@
-
+import os
 from bcipy.helpers.raw_data import load
 
 DIPSIZE = (1707, 1067)
 TOBII_FILENAME = 'eyetracker_data_tobii-p0.csv'
+# IMG_PATH = os.path.abspath(os.path.dirname(__file__))+ '/matrix_grid.png'
 
 def load_eye_tracking_data(path):
     data = load(f'{path}/{TOBII_FILENAME}')

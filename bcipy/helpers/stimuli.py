@@ -289,6 +289,7 @@ class GazeReshaper:
         breakpoint()
 
         # We will trim off the extra bits in each inquiry to match the shortest inquiry
+        # TODO
         
 
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
