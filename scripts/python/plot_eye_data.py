@@ -34,5 +34,5 @@ if __name__ == "__main__":
 
     data = load_eye_tracking_data(path)
 
-    # Plot the eye data
-    visualize_gaze(data, show=True, save_path=path, heatmap=True, raw_plot=False)
+    # Plot the eye data, set save_path to None to not save the plot. You can have both plots at the same time.
+    visualize_gaze(data, show=True, save_path=path, heatmap=False, raw_plot=True)
