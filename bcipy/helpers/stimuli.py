@@ -319,9 +319,11 @@ def mne_epochs(
         baseline (Optional[Tuple[float, float]]): Baseline interval to apply to epoch. Defaults to (0, 0).
         preload (bool, optional): Whether to preload the data into memory. Defaults to True.
     """
-    annotations = Annotations(trigger_timing, [interval[-1]] * len(trigger_timing), trigger_labels)
+    new_annotations = Annotations(trigger_timing, [interval[-1]] * len(trigger_timing), trigger_labels)
+    old_annotations = mne_data.annotations
+    all_annotations = new_annotations + old_annotations
     tmp_data = mne_data.copy()
-    tmp_data.set_annotations(annotations)
+    tmp_data.set_annotations(all_annotations)
 
     events_from_annot, _ = mne.events_from_annotations(tmp_data)
 

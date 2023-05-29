@@ -1,0 +1,122 @@
+,accuracy,precision,recall,f1,roc_auc,balanced_accuracy,mcc
+IP102_RSVP_Calibration_Fri_22_Jul_2022_13hr58min58sec_-0700,"0    0.748182
+Name: mean_test_accuracy, dtype: float64","0    0.216237
+Name: mean_test_precision, dtype: float64","0    0.691717
+Name: mean_test_recall, dtype: float64","0    0.32881
+Name: mean_test_f1, dtype: float64","0    0.7765
+Name: mean_test_roc_auc, dtype: float64","0    0.722977
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.280712
+Name: mean_test_mcc, dtype: float64"
+IP104_RSVP_Calibration_Thu_01_Sep_2022_09hr35min51sec_-0700,"0    0.806364
+Name: mean_test_accuracy, dtype: float64","0    0.286384
+Name: mean_test_precision, dtype: float64","0    0.724116
+Name: mean_test_recall, dtype: float64","0    0.407749
+Name: mean_test_f1, dtype: float64","0    0.803582
+Name: mean_test_roc_auc, dtype: float64","0    0.769475
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.368565
+Name: mean_test_mcc, dtype: float64"
+IP105_RSVP_Calibration_Fri_12_Aug_2022_14hr09min28sec_-0700,"0    0.766364
+Name: mean_test_accuracy, dtype: float64","0    0.254714
+Name: mean_test_precision, dtype: float64","0    0.748737
+Name: mean_test_recall, dtype: float64","0    0.376597
+Name: mean_test_f1, dtype: float64","0    0.823017
+Name: mean_test_roc_auc, dtype: float64","0    0.758412
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.338598
+Name: mean_test_mcc, dtype: float64"
+IP106_RSVP_Calibration_Fri_12_Aug_2022_09hr51min02sec_-0700,"0    0.701818
+Name: mean_test_accuracy, dtype: float64","0    0.177206
+Name: mean_test_precision, dtype: float64","0    0.612045
+Name: mean_test_recall, dtype: float64","0    0.272003
+Name: mean_test_f1, dtype: float64","0    0.718571
+Name: mean_test_roc_auc, dtype: float64","0    0.661877
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.199884
+Name: mean_test_mcc, dtype: float64"
+IP107_RSVP_Calibration_Mon_22_Aug_2022_13hr28min57sec_-0700,"0    0.73
+Name: mean_test_accuracy, dtype: float64","0    0.213205
+Name: mean_test_precision, dtype: float64","0    0.651894
+Name: mean_test_recall, dtype: float64","0    0.315884
+Name: mean_test_f1, dtype: float64","0    0.750764
+Name: mean_test_roc_auc, dtype: float64","0    0.69487
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.254583
+Name: mean_test_mcc, dtype: float64"
+IP108_RSVP_Calibration_Thu_11_Aug_2022_09hr40min37sec_-0700,"0    0.76
+Name: mean_test_accuracy, dtype: float64","0    0.224666
+Name: mean_test_precision, dtype: float64","0    0.655354
+Name: mean_test_recall, dtype: float64","0    0.331072
+Name: mean_test_f1, dtype: float64","0    0.754655
+Name: mean_test_roc_auc, dtype: float64","0    0.71313
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.27792
+Name: mean_test_mcc, dtype: float64"
+IP109_RSVP_Calibration_Fri_19_Aug_2022_09hr58min29sec_-0700,"0    0.675455
+Name: mean_test_accuracy, dtype: float64","0    0.163324
+Name: mean_test_precision, dtype: float64","0    0.628398
+Name: mean_test_recall, dtype: float64","0    0.257954
+Name: mean_test_f1, dtype: float64","0    0.709049
+Name: mean_test_roc_auc, dtype: float64","0    0.654487
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.185011
+Name: mean_test_mcc, dtype: float64"
+IP111_RSVP_Calibration_Thu_18_Aug_2022_13hr51min01sec_-0700,"0    0.701818
+Name: mean_test_accuracy, dtype: float64","0    0.186074
+Name: mean_test_precision, dtype: float64","0    0.668005
+Name: mean_test_recall, dtype: float64","0    0.288348
+Name: mean_test_f1, dtype: float64","0    0.778824
+Name: mean_test_roc_auc, dtype: float64","0    0.687057
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.229552
+Name: mean_test_mcc, dtype: float64"
+IP112_RSVP_Calibration_Mon_29_Aug_2022_14hr02min08sec_-0700,"0    0.815455
+Name: mean_test_accuracy, dtype: float64","0    0.311244
+Name: mean_test_precision, dtype: float64","0    0.782955
+Name: mean_test_recall, dtype: float64","0    0.441954
+Name: mean_test_f1, dtype: float64","0    0.879657
+Name: mean_test_roc_auc, dtype: float64","0    0.800936
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.412946
+Name: mean_test_mcc, dtype: float64"
+IP113_RSVP_Calibration_Wed_31_Aug_2022_09hr19min04sec_-0700,"0    0.707273
+Name: mean_test_accuracy, dtype: float64","0    0.172402
+Name: mean_test_precision, dtype: float64","0    0.555036
+Name: mean_test_recall, dtype: float64","0    0.258323
+Name: mean_test_f1, dtype: float64","0    0.721682
+Name: mean_test_roc_auc, dtype: float64","0    0.638314
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.178515
+Name: mean_test_mcc, dtype: float64"
+IP114_RSVP_Calibration_Wed_24_Aug_2022_12hr35min04sec_-0700,,,,,,,
+IP115_RSVP_Calibration_Thu_04_Aug_2022_09hr17min12sec_-0700,"0    0.697273
+Name: mean_test_accuracy, dtype: float64","0    0.17854
+Name: mean_test_precision, dtype: float64","0    0.628384
+Name: mean_test_recall, dtype: float64","0    0.275561
+Name: mean_test_f1, dtype: float64","0    0.688947
+Name: mean_test_roc_auc, dtype: float64","0    0.666058
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.207223
+Name: mean_test_mcc, dtype: float64"
+IP116_RSVP_Calibration_Fri_26_Aug_2022_13hr16min30sec_-0700,"0    0.473636
+Name: mean_test_accuracy, dtype: float64","0    0.09066
+Name: mean_test_precision, dtype: float64","0    0.522222
+Name: mean_test_recall, dtype: float64","0    0.1536
+Name: mean_test_f1, dtype: float64","0    0.461093
+Name: mean_test_roc_auc, dtype: float64","0    0.495309
+Name: mean_test_balanced_accuracy, dtype: float64","0   -0.003697
+Name: mean_test_mcc, dtype: float64"
+IP117_RSVP_Calibration_Wed_03_Aug_2022_10hr13min18sec_-0700,,,,,,,
+IP120_RSVP_Calibration_Wed_17_Aug_2022_10hr17min29sec_-0700,"0    0.838182
+Name: mean_test_accuracy, dtype: float64","0    0.347291
+Name: mean_test_precision, dtype: float64","0    0.862121
+Name: mean_test_recall, dtype: float64","0    0.493161
+Name: mean_test_f1, dtype: float64","0    0.929318
+Name: mean_test_roc_auc, dtype: float64","0    0.84898
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.480111
+Name: mean_test_mcc, dtype: float64"
+IP121_RSVP_Calibration_Mon_08_Aug_2022_13hr42min00sec_-0700,,,,,,,
+IP122_RSVP_Calibration_Thu_08_Sep_2022_13hr57min08sec_-0700,,,,,,,
+IP123_RSVP_Calibration_Fri_19_Aug_2022_13hr56min37sec_-0700,,,,,,,
+IP124_RSVP_Calibration_Fri_02_Sep_2022_08hr18min56sec_-0700,,,,,,,
+IP125_RSVP_Calibration_Wed_14_Sep_2022_14hr41min17sec_-0700,,,,,,,
+IP126_RSVP_Calibration_Thu_25_Aug_2022_10hr32min56sec_-0700,,,,,,,
+IP127_RSVP_Calibration_Mon_29_Aug_2022_09hr30min57sec_-0700,,,,,,,
+IP128_RSVP_Calibration_Fri_26_Aug_2022_09hr41min34sec_-0700,,,,,,,
+IP129_RSVP_Calibration_Thu_29_Sep_2022_13hr58min47sec_-0700,,,,,,,
+IP130_RSVP_Calibration_Mon_12_Sep_2022_13hr27min39sec_-0700,,,,,,,
+IP131_RSVP_Calibration_Mon_12_Sep_2022_09hr34min04sec_-0700,,,,,,,
+IP132_RSVP_Calibration_Thu_15_Sep_2022_09hr27min27sec_-0700,,,,,,,
+IP133_RSVP_Calibration_Thu_22_Sep_2022_13hr44min19sec_-0700,,,,,,,
+IP134_RSVP_Calibration_Mon_19_Sep_2022_13hr42min55sec_-0700,,,,,,,
+IP135_RSVP_Calibration_Fri_30_Sep_2022_13hr18min41sec_-0700,,,,,,,

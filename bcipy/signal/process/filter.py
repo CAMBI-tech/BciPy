@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import numpy as np
-from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt
+from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt, sosfilt
 
 
 class Notch:

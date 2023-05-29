@@ -18,7 +18,7 @@ from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
 
-ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
+ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
 
 def artifact_rejection(
         path: str,
@@ -430,15 +430,19 @@ if __name__ == "__main__":
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
             print(f'Processing {session}')
-
-            prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
-            if prompt != 'skip':
-                mne_data = artifact_rejection(
-                        session,
-                        semi_automatic_ar=args.semi,
-                        save_artifacts=args.save,
-                        session_annotations=args.colabel,
-                        overwrite=True)
+            # check if the session has already been processed and a fif file exists
+            if os.path.exists(f'{session}/{ARTIFACT_LABELLED_FILENAME}'):
+                print(f'Artifact detection already run for {session}')
+                continue
             else:
-                print(f'Skipping {session}')
+                prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
+                if prompt != 'skip':
+                    mne_data = artifact_rejection(
+                            session,
+                            semi_automatic_ar=args.semi,
+                            save_artifacts=args.save,
+                            session_annotations=args.colabel,
+                            overwrite=True)
+                else:
+                    print(f'Skipping {session}')
             import pdb; pdb.set_trace() # comment out to continue without stopping between sessions

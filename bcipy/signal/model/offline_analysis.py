@@ -178,26 +178,26 @@ def offline_analysis(
     data = np.transpose(data, (1, 0, 2))
     return data, labels
 
-    # # # train and save the model as a pkl file
-    # log.info("Training model. This will take some time...")
-    # model = PcaRdaKdeModel(k_folds=k_folds)
-    # model.fit(data, labels)
-    # log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    # # train and save the model as a pkl file
+    log.info("Training model. This will take some time...")
+    model = PcaRdaKdeModel(k_folds=k_folds)
+    model.fit(data, labels)
+    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    # model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
-    # preferences.signal_model_directory = data_folder
+    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    preferences.signal_model_directory = data_folder
 
-    # score = None
-    # # Using an 80/20 split, report on balanced accuracy
-    # if estimate_balanced_acc:
-    #     train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-    #     dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-    #     dummy_model.fit(train_data, train_labels)
-    #     probs = dummy_model.predict_proba(test_data)
-    #     preds = probs.argmax(-1)
-    #     score = balanced_accuracy_score(test_labels, preds)
-    #     log.info(f"Balanced acc with 80/20 split: {score}")
-    #     del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+    score = None
+    # Using an 80/20 split, report on balanced accuracy
+    if estimate_balanced_acc:
+        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+        dummy_model.fit(train_data, train_labels)
+        probs = dummy_model.predict_proba(test_data)
+        preds = probs.argmax(-1)
+        score = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {score}")
+        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     # figure_handles = visualize_erp(
     #     raw_data,
@@ -211,9 +211,9 @@ def offline_analysis(
     #     save_path=data_folder if save_figures else None,
     #     show=show_figures
     # )
-    # if alert_finished:
-    #     play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    # return model, score
+    if alert_finished:
+        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
+    return model, score
 
 
 if __name__ == "__main__":

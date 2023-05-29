@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, STATIC_AUDIO_PATH
+from bcipy.config import DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
 # from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
@@ -14,6 +14,7 @@ from bcipy.helpers.load import (
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.stimuli import play_sound, mne_epochs
 from bcipy.helpers.system_utils import report_execution_time
+import bcipy.acquisition.devices as devices
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.base_model import SignalModel
@@ -59,7 +60,7 @@ def offline_analysis(
     baseline: Tuple[float, float] = (0, 0),
     drop_bad_epochs: bool = False,
     estimate_balanced_acc: bool = False,
-) -> Tuple[SignalModel, Figure]:
+) -> tuple:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
     Args:
@@ -117,6 +118,9 @@ def offline_analysis(
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
 
+    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
@@ -141,14 +145,13 @@ def offline_analysis(
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, type_amp)
+    channel_map = analysis_channels(channels, device_spec)
     data, _ = raw_data.by_channel()
 
     if not mne_data:
         # mne data
         mne_data, _ = convert_to_mne(raw_data, channel_map, transform=default_transform)
 
-    # baseline interval applied to the data 
     # print(poststim_length)
     epochs = mne_epochs(
         mne_data,
@@ -162,10 +165,11 @@ def offline_analysis(
         # apply baseline correction
         epochs.apply_baseline(baseline=baseline)
     
-    data = epochs.get_data() # (1100, 19, 76) epochs, channels, samples TODO does this work?
+    data = epochs.get_data() # (1100, 19, 76) epochs, channels, samples
     # map to channels, epochs, samples
-    data = np.transpose(data, (1, 0, 2)) # (19, 1100, 76) channels, epochs, samples
-
+    # data = np.transpose(data, (1, 0, 2)) # (19, 1100, 76) channels, epochs, samples
+    # data = np.transpose(data, (1, 0, 2)) # (1100, 19, 76) epochs, channels, samples
+    # breakpoint()
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = []
     for i in range(len(epochs)):
@@ -176,9 +180,20 @@ def offline_analysis(
             labels.append(1)
 
     # breakpoint() for getting counts of labels after artifact rejection
-    # nontarget = labels.count(0)
-    # target = labels.count(1)
+    nontarget = labels.count(0)
+    target = labels.count(1)
 
+    # get the count of the original labels
+    nontarget_orig = trigger_targetness.count('nontarget')
+    target_orig = trigger_targetness.count('target')
+    print(f"nontarget: {nontarget}, target: {target}")
+
+    if nontarget < 500 or target < 50:
+        log.info("Not enough data to train model")
+        breakpoint()
+        raise Exception("Not enough data to train model")
+
+    return data, labels, {'nontarget': nontarget, 'target': target, 'nontarget_orig': nontarget_orig, 'target_orig': target_orig}
 
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
@@ -186,7 +201,7 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    model.save(f"{data_folder}/re_model_fulldatasetfilter_apply_baseline{model.auc:0.4f}.pkl")
+    model.save(f"{data_folder}/re_model_fulldatasetfilter_{model.auc:0.4f}.pkl")
 
     if estimate_balanced_acc:
         train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)

@@ -7,7 +7,8 @@ from bcipy.signal.model import PcaRdaKdeModel, RdaKdeModel
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score, matthews_corrcoef
 from sklearn.svm import SVC
 
 from pyriemann.estimation import ERPCovariances
@@ -20,40 +21,54 @@ from sklearn.preprocessing import FunctionTransformer
 def reorder(data):
     return data.transpose(1, 0, 2)
 
-k_folds = 5
+k_folds = 10
+mcc = make_scorer(matthews_corrcoef)
 
-scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy')
+scores = {
+    'accuracy': 'accuracy',
+    'precision': 'precision',
+    'recall': 'recall',
+    'f1': 'f1',
+    'roc_auc': 'roc_auc',
+    'balanced_accuracy': 'balanced_accuracy',
+    'mcc': mcc,
+}
+
+# scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy', mcc)
 
 clfs = {
-    'LR': (
-        make_pipeline(Vectorizer(), LogisticRegression()),
-        {'logisticregression__C': np.exp(np.linspace(-4, 4, 3))},
-    ),
-    'LDA': (
-        make_pipeline(Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
-        {},
-    ),
-    'SVM': (
-        make_pipeline(Vectorizer(), SVC()),
-        {'svc__C': np.exp(np.linspace(-4, 4, 3)), 'svc__kernel': ('linear', 'rbf')},
-    ),
-    'Xdawn LDA': (
-        make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
-        {},
-    ),
-    'ERPCov TS LR': (
-        make_pipeline(ERPCovariances(estimator='oas'), TangentSpace(), LogisticRegression()),
-        {'erpcovariances__estimator': ('lwf', 'oas')},
-    ),
+    # 'LR': (
+    #     make_pipeline(Vectorizer(), LogisticRegression(penalty='l2', solver='lbfgs', C=0.0183, random_state=42)),
+    #     {},
+    # ),
+    # 'NN': (
+    #     make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=42, alpha=54.5982)),
+    #     {},
+    # ),
+    # # 'LDA': (
+    # #     make_pipeline(Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
+    # #     {},
+    # # ),
+    # 'SVM': (
+    #     make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=42, gamma=0.00001, C=54.5982)),
+    #     {},
+    # ),
+    # 'Xdawn LDA': (
+    #     make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
+    #     {},
+    # ),
+    # 'ERPCov TS LR': (
+    #     make_pipeline(ERPCovariances(estimator='oas'), TangentSpace(), LogisticRegression()),
+    #     {'erpcovariances__estimator': ('lwf', 'oas')},
+    # ),
     'PCA_RDA_KDE': (
-        make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=k_folds)),
+        make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=10)),
         {},
     ),
-    'RDA_KDE': (
-        make_pipeline(FunctionTransformer(reorder), RdaKdeModel(k_folds=k_folds)),
-        {},
-    ),
-        
+    # 'RDA_KDE': (
+    #     make_pipeline(FunctionTransformer(reorder), RdaKdeModel(k_folds=k_folds)),
+    #     {},
+    # ),
 }
 
 def crossvalidate_record(record, clfs=clfs, scores=scores):
