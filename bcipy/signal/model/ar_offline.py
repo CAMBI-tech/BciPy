@@ -12,7 +12,7 @@ from bcipy.helpers.load import (
     load_raw_data,
 )
 from bcipy.helpers.convert import convert_to_mne
-from bcipy.helpers.stimuli import play_sound, mne_epochs
+from bcipy.helpers.stimuli import play_sound, mne_epochs, TrialReshaper, InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 import bcipy.acquisition.devices as devices
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
@@ -57,7 +57,7 @@ def offline_analysis(
     data_folder: str = None,
     parameters: dict = {},
     mne_data: mne.io.Raw = None,
-    baseline: Tuple[float, float] = (0, 0),
+    baseline: Tuple[float, float] = (None, 0),
     drop_bad_epochs: bool = False,
     estimate_balanced_acc: bool = False,
 ) -> tuple:
@@ -148,24 +148,26 @@ def offline_analysis(
     channel_map = analysis_channels(channels, device_spec)
     data, _ = raw_data.by_channel()
 
-    if not mne_data:
-        # mne data
-        mne_data, _ = convert_to_mne(raw_data, channel_map, transform=default_transform)
+    annotations = mne_data.annotations
+    new_mne_data, fs = convert_to_mne(raw_data, channel_map, transform=default_transform, volts=False)
+    new_mne_data.set_annotations(annotations)
+    # remove any ignore annotations from the mn_data
+    new_mne_data.annotations.delete(mne_data.annotations.description == 'ignore')
 
     # print(poststim_length)
     epochs = mne_epochs(
         mne_data,
         trigger_timing,
         trigger_targetness,
-        interval=[0, poststim_length],
-        baseline=baseline,
+        interval=[0, .5],
+        # baseline=baseline,
         reject_by_annotation=drop_bad_epochs)
 
-    if baseline[0] > 0:
-        # apply baseline correction
-        epochs.apply_baseline(baseline=baseline)
-    
-    data = epochs.get_data() # (1100, 19, 76) epochs, channels, samples
+    # if baseline[0] > 0:
+    #     # apply baseline correction
+    #     epochs.apply_baseline(baseline=baseline)
+    breakpoint()
+    data = epochs.get_data(units='uV') # (1100, 19, 76) epochs, channels, samples
     # map to channels, epochs, samples
     # data = np.transpose(data, (1, 0, 2)) # (19, 1100, 76) channels, epochs, samples
     # data = np.transpose(data, (1, 0, 2)) # (1100, 19, 76) epochs, channels, samples

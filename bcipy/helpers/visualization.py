@@ -46,8 +46,8 @@ def visualize_erp(
     ----------
     raw_data(RawData): BciPy RawData
     channel_map(List[int]): Map of channels to remove (0) or keep (1)
-    trigger_timing: list of trigger timing
-    trigger_labels: list of trigger labels
+    trigger_timing: list of trigger timing in seconds
+    trigger_labels: list of trigger labels [0, 1] corresponding to non-target and target
     trial_length: length of trials described in trigger_timing / labels in seconds
     transform(Composition): Optional BciPy composition to apply to data before visualization
     plot_average: Optional[boolean]: whether or not to average over all channels. Default: True
@@ -55,8 +55,8 @@ def visualize_erp(
     show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
     """
-    mne_data, _ = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trigger_labels, interval=[0, trial_length])
+    mne_data, _ = convert_to_mne(raw_data, channel_map=channel_map, transform=transform, volts=False)
+    epochs = mne_epochs(mne_data, trigger_timing, trigger_labels, trial_length)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
@@ -67,7 +67,7 @@ def visualize_erp(
     if plot_topomaps:
         figs.extend(visualize_joint_average(epochs, ['Non-Target', 'Target'], save_path=save_path, show=show))
 
-    return figs
+    return epochs, figs
 
 
 def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):

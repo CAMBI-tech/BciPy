@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
+import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import (DeviceSpec, preconfigured_device,
                                        with_content_type)
 from bcipy.acquisition import (LslAcquisitionClient, await_start,

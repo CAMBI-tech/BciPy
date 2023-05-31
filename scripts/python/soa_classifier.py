@@ -14,6 +14,8 @@ from sklearn.svm import SVC
 from pyriemann.estimation import ERPCovariances
 from pyriemann.tangentspace import TangentSpace
 from pyriemann.spatialfilters import Xdawn
+from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import KFold
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -29,30 +31,28 @@ scores = {
     'precision': 'precision',
     'recall': 'recall',
     'f1': 'f1',
+    # 'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
     'roc_auc': 'roc_auc',
     'balanced_accuracy': 'balanced_accuracy',
     'mcc': mcc,
 }
 
 # scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy', mcc)
-
+# TODO try class weight and other sampling stradegies!! https://vitalflux.com/class-imbalance-class-weight-python-sklearn/#:~:text=Class%20weighting%3A%20Using%20class%20weight,represented%20relative%20to%20the%20other.
+# TODO try scaling ChannellwiseScaler(StandardScaler())
 clfs = {
-    # 'LR': (
-    #     make_pipeline(Vectorizer(), LogisticRegression(penalty='l2', solver='lbfgs', C=0.0183, random_state=42)),
-    #     {},
-    # ),
-    # 'NN': (
-    #     make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=42, alpha=54.5982)),
-    #     {},
-    # ),
-    # # 'LDA': (
-    # #     make_pipeline(Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
-    # #     {},
-    # # ),
-    # 'SVM': (
-    #     make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=42, gamma=0.00001, C=54.5982)),
-    #     {},
-    # ),
+    'LR': (
+        make_pipeline(Vectorizer(), LogisticRegression(penalty='l2', solver='lbfgs', C=0.0183, random_state=42)),
+        {},
+    ),
+    'NN': (
+        make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=41, alpha=54.5982)),
+        {},
+    ),
+    'SVM': (
+        make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=40, gamma=0.00001, C=54.5982)),
+        {},
+    ),
     # 'Xdawn LDA': (
     #     make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
     #     {},
@@ -65,6 +65,10 @@ clfs = {
         make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=10)),
         {},
     ),
+    'Random Model': (
+        make_pipeline(DummyClassifier(strategy='uniform', random_state=39)),
+        {}
+    )
     # 'RDA_KDE': (
     #     make_pipeline(FunctionTransformer(reorder), RdaKdeModel(k_folds=k_folds)),
     #     {},
@@ -82,6 +86,7 @@ def crossvalidate_record(record, clfs=clfs, scores=scores):
             n_jobs=-1,
             refit=False,
             cv=k_folds,
+            return_train_score=False,
         )
         cv.fit(record[0], record[1])
         headers = [

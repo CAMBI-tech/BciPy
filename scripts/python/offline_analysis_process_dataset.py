@@ -1,8 +1,16 @@
-from bcipy.signal.model.ar_offline import offline_analysis
-# from bcipy.signal.model.offline_analysis import offline_analysis
+from bcipy.helpers.visualization import visualize_erp, visualize_evokeds, visualize_joint_average
+from bcipy.helpers.process import load_data_inquiries, load_data_trials, load_data_mne
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
 from soa_classifier import crossvalidate_record, scores
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
+
+from mne import grand_average
+
+def group_average(target_evoked, nontarget_evoked):
+    """Given a list of target and nontarget evokeds, return a grand average of both."""
+    target_evoked = grand_average(target_evoked)
+    nontarget_evoked = grand_average(nontarget_evoked)
+    return target_evoked, nontarget_evoked
 
 from pathlib import Path
 import mne
@@ -16,16 +24,11 @@ ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
 """
 Processing notes:
 
-- The data is loaded into mne and then passed to offline_analysis. Done, this is significantly different than training on inquiry filtered data though. See auc_analysis.xlsx.
-- *NEW* The data is loaded into mne, epochs are done with inquiry filtered data, then passed to offline_analysis.
-- The data is loaded into mne with baseline interval and then passed to offline_analysis. Not done
-- The data is loaded into mne with baseline interval applied, not passed in, and then passed to offline_analysis. Not done
-- The data is loaded from mne AR and then passed to offline_analysis. Done
-- the data is loaded from mne AR, bad epochs dropped and then passed to offline_analysis. *Done, but errors in training, meeting with @basak to discuss*
-    ** Spoke with @basak and adjusted k-folds to 5 to account for potentially imbalanced classes. Re-running all sessions with lower k-folds to get baseline auc. This still doens't work for everyone.
-- *NEW* The data is loaded into mne, epochs are done with inquiry filtered data, bad inquiries dropped, then passed to offline_analysis.
-- The data is loaded into mne, labelled automatically for artifacts, dropped, then passed to offline_analysis. Not done
+- OF: The data is loaded, reshaped to inquiries, filtered, then reshaped to trials. load_data_inquiries() is used.
+- CF: The data is loaded, filtered, then reshaped to trials. load_data_trials() is used.
 
+TODO:
+load data in MNE and train on PCA / other models (needed for artifact rejection comparison)
 """
 
 if __name__ == "__main__":
@@ -38,6 +41,8 @@ if __name__ == "__main__":
 
     results = {}
     dropped = {}
+    non_target = []
+    target = []
     for session in Path(path).iterdir():
         if session.is_dir():
             parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
@@ -48,26 +53,50 @@ if __name__ == "__main__":
                 results[session.name] = {}
 
                 # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
-                data, labels, dropped = offline_analysis(
-                                mne_data=mne_data,
-                                data_folder=str(session.resolve()),
-                                parameters=parameters,
-                                drop_bad_epochs=False,
-                                # baseline=(-.2, 0),
-                                estimate_balanced_acc=True)
-                # results[session.name]['ba'] = score
-                # results[session.name]['auc'] = model.auc
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, dt, dl = load_data_mne(
+                    data_folder=str(session.resolve()),
+                    mne_data_annotations=mne_data.annotations,
+                    drop_artifacts=True,
+                    )
+                # epochs, figs = visualize_erp(
+                #     raw_data,
+                #     channel_map,
+                #     trigger_timing,
+                #     labels,
+                #     poststim_length,
+                #     transform=dt)
+                # # average the epochs
+                # non_target.append(epochs[0])
+                # target.append(epochs[1])
+
+                # train the models and get the results
                 df = crossvalidate_record((data, labels))
                 for name in scores:
                     results[session.name][name] = df[f'mean_test_{name}']
-                dropped[session.name] = dropped
+                    results[session.name][f'std_{name}'] = df[f'std_test_{name}']
+
+                dropped[session.name] = dl
+
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
-                breakpoint()
+                pass
     print(results)
-    file_name = 'scikit_cf_results_pca.csv'
+    print(dropped)
+    file_name = 'cf_AAR_all_models.csv'
     export = pd.DataFrame.from_dict(results).transpose()
     export.to_csv(file_name)
+    export = pd.DataFrame.from_dict(dropped)
+    export.to_csv('cf_AAR_all_models_dropped.csv')
+
+    # average across participants using grand_average
+    # target_ga, non_target_ga = group_average(target, non_target)
+
+    # add all the non-targets and targets to a list
+    # epochs = non_target[0]
+    # for nt in non_target[1:]: epochs += nt
+    # visualize_evokeds((non_target, target), show=True)
+    # visualize_joint_average((non_target, target), ['Non-Target', 'Target'], show=True)
+
 
     breakpoint()
     # final = df.copy()

@@ -19,6 +19,7 @@ from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
+from bcipy.signal.process.transform import dummy_transform
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -143,7 +144,7 @@ def offline_analysis(
     model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
@@ -160,7 +161,7 @@ def offline_analysis(
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
         eeg_data=data,
-        sample_rate=sample_rate,
+        sample_rate=fs,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=poststim_length,
@@ -168,14 +169,14 @@ def offline_analysis(
         transformation_buffer=buffer,
     )
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
+    inquiries, fs = filter_inquiries(inquiries, dummy_transform, fs)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = inquiry_labels.flatten()
-    data = np.transpose(data, (1, 0, 2))
+    data = np.transpose(data, (1, 0, 2)) # (epochs, channels, samples)
     return data, labels
 
     # # train and save the model as a pkl file
@@ -199,18 +200,18 @@ def offline_analysis(
         log.info(f"Balanced acc with 80/20 split: {score}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-    # figure_handles = visualize_erp(
-    #     raw_data,
-    #     channel_map,
-    #     trigger_timing,
-    #     labels,
-    #     poststim_length,
-    #     transform=default_transform,
-    #     plot_average=True,
-    #     plot_topomaps=True,
-    #     save_path=data_folder if save_figures else None,
-    #     show=show_figures
-    # )
+    figure_handles = visualize_erp(
+        raw_data,
+        channel_map,
+        trigger_timing,
+        labels,
+        poststim_length,
+        transform=default_transform,
+        plot_average=True,
+        plot_topomaps=True,
+        save_path=data_folder if save_figures else None,
+        show=show_figures
+    )
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
     return model, score

@@ -7,7 +7,7 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple, Optional
+from typing import Iterator, List, Tuple, NamedTuple, Optional, Union
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
@@ -298,10 +298,10 @@ def mne_epochs(
         mne_data: RawArray,
         trigger_timing: List[float],
         trigger_labels: List[int],
-        interval: Tuple[float, float],
+        trial_length: float,
         channels: Optional[List[str]] = None,
         detrend: Optional[int] = None,
-        baseline: Optional[Tuple[float, float]] = (0, 0),
+        baseline: Union[Tuple[float, float], None] = (-.2, 0.0),
         preload: bool = True,
         reject_by_annotation: bool = False) -> Epochs:
     """MNE Epochs.
@@ -319,22 +319,20 @@ def mne_epochs(
         baseline (Optional[Tuple[float, float]]): Baseline interval to apply to epoch. Defaults to (0, 0).
         preload (bool, optional): Whether to preload the data into memory. Defaults to True.
     """
-    new_annotations = Annotations(trigger_timing, [interval[-1]] * len(trigger_timing), trigger_labels)
+    new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     old_annotations = mne_data.annotations
     all_annotations = new_annotations + old_annotations
     tmp_data = mne_data.copy()
     tmp_data.set_annotations(all_annotations)
 
     events_from_annot, _ = mne.events_from_annotations(tmp_data)
-
     return Epochs(
         mne_data,
         events_from_annot,
-        tmin=interval[0],
-        tmax=interval[-1],
+        picks=channels,
         detrend=detrend,
         baseline=baseline,
-        picks=channels,
+        proj=False,
         reject_by_annotation=reject_by_annotation,
         preload=preload)
 
