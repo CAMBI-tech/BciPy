@@ -9,7 +9,7 @@ from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
                                    TargetPositions,
-                                   calibration_inquiry_generator,
+                                   mini_calibration_inquiry_generator,
                                    InquirySchedule)
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
@@ -96,7 +96,7 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return calibration_inquiry_generator(
+        return mini_calibration_inquiry_generator(
             self.symbol_set,
             stim_number=self.stim_number,
             stim_length=self.stim_length,

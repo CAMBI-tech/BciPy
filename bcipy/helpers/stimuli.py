@@ -678,6 +678,107 @@ def calibration_inquiry_generator(
 
     return InquirySchedule(samples, times, colors)
 
+def mini_calibration_inquiry_generator(
+        alp: List[str],
+        timing: List[float] = [0.5, 1, 0.2],
+        jitter: Optional[int] = None,
+        color: List[str] = ['green', 'red', 'white'],
+        stim_number: int = 10,
+        stim_length: int = 10,
+        stim_order: StimuliOrder = StimuliOrder.RANDOM,
+        target_positions: TargetPositions = TargetPositions.RANDOM,
+        nontarget_inquiries: int = 10,
+        is_txt: bool = True) -> InquirySchedule:
+    """Calibration Inquiry Generator.
+
+    Generates inquiries with target letters in all possible positions.
+
+    Parameters
+    ----------
+        alp(list[str]): stimuli
+        timing(list[float]): Task specific timing for generator.
+            [target, fixation, stimuli]
+        jitter(int): jitter for stimuli timing. If None, no jitter is applied.
+        color(list[str]): Task specific color for generator
+            [target, fixation, stimuli]
+        stim_number(int): number of trials in a inquiry
+        stim_length(int): number of random stimuli to be created
+        stim_order(StimuliOrder): ordering of stimuli in the inquiry
+        target_positions(TargetPositions): positioning of targets to select for the inquiries
+        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+        is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
+
+    Return
+    ------
+        schedule_inq(tuple(
+            samples[list[list[str]]]: list of inquiries
+            timing(list[list[float]]): list of timings
+            color(list(list[str])): list of colors)): scheduled inquiries
+    """
+    assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
+    target_indexes = []
+    no_target = None
+
+    if (target_positions == target_positions.DISTRIBUTED):
+        target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
+    else:
+        # make list of random targets with correct number of non-target inquiries
+        # num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
+        num_nontarget_inquiry = 0 #this should technically be 0 so we don't get any that aren't the targets right? 
+        num_target_inquiry = stim_number - num_nontarget_inquiry
+        target_indexes = [no_target] * num_nontarget_inquiry
+        target_indexes.extend(random.choices(range(stim_length), k=num_target_inquiry))
+        random.shuffle(target_indexes)
+
+    samples, times, colors = [], [], []
+    
+    pre_cal_targets = np.array(['A', 'F', 'Y', 'X', 'O'])
+    np.random.shuffle(pre_cal_targets)
+    alp = np.array(alp)
+
+    for i in range(len(pre_cal_targets)): #should i replace stim_number with length of pre_cal_targets 
+
+        new_alp =  np.delete(np.array(alp), np.where(alp == pre_cal_targets[i]))
+        new_alp = np.array(new_alp)
+        inquiry = np.concatenate((np.array([pre_cal_targets[i]]), np.array(np.random.choice(new_alp, size = stim_length-1, replace=False))))
+        inquiry.flatten()
+          ## TODO!!
+        # you can also try np.stack
+        np.random.shuffle(inquiry) 
+        print(inquiry)
+
+        if stim_order == StimuliOrder.ALPHABETICAL:
+            inquiry = alphabetize(inquiry)
+
+        target_index = target_indexes[i]
+        if target_index is no_target:
+            target = random.choice(list(set(alp) - set(inquiry)))
+        else:
+            #target = inquiry[target_index]
+            target = pre_cal_targets[i]
+            print(target)
+
+        sample = [target, get_fixation(is_txt=is_txt), *inquiry]
+
+        samples.append(sample)
+
+        # timing for fixation and prompt
+        init_timing = [timing[i] for i in range(len(timing) - 1)]
+        # pull out timing for the inquiry stimuli
+        stim_time = timing[-1]
+        if jitter:
+            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
+            inq_timing = init_timing + _inq_timing
+        else:
+            inq_timing = init_timing + [stim_time] * stim_length
+        times.append(inq_timing)
+        colors.append([color[i] for i in range(len(color) - 1)] +
+                      [color[-1]] * stim_length)
+        
+        print(samples)
+
+    return InquirySchedule(samples, times, colors)
+
 
 def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
     """Jittered timing.

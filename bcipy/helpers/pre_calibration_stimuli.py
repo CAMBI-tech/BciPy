@@ -922,12 +922,12 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
     return codes
 
 
-if __name__ == '__main__':
-    alp = [
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        '<', '_'
-    ]
+# if __name__ == '__main__':
+#     alp = [
+#         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+#         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+#         '<', '_'
+#     ]
 
 
-calibration_inquiry_generator(alp, nontarget_inquiries = 0)
+# calibration_inquiry_generator(alp, nontarget_inquiries = 0)
