@@ -23,11 +23,10 @@ class EvidenceEvaluator:
     def produces(self) -> EvidenceType:
         """Type of evidence that is output"""
 
-    def evaluate(self, *args, **kwargs):
+    def evaluate(self, **kwargs):
         """Evaluate the evidence"""
 
 
-# TODO: can this go in the signal module?
 class FilterParams(NamedTuple):
     """Parameters used to filter signal data"""
     notch_filter_frequency: int = 60
@@ -94,7 +93,6 @@ class EegEvaluator(EvidenceEvaluator):
 
         return self.signal_model.predict(reshaped_data, symbols,
                                          self.symbol_set)
-
 
 def get_evaluator(data_source: ContentType,
                   evidence_type: EvidenceType) -> EvidenceEvaluator:

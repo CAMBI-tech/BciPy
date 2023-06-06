@@ -6,20 +6,15 @@ from shutil import copyfile
 from time import localtime, strftime
 from typing import Any, Dict, List, Tuple
 
-from bcipy.config import (
-    ROOT,
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME)
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
+                          DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.preferences import preferences
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
+from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -191,6 +186,10 @@ def load_signal_model(model_class: SignalModel,
     log.info(f'Loaded signal model from {filename}')
 
     return signal_model, filename
+
+def load_signal_models(directory: str = None) -> List[SignalModel]:
+    """Load all signal models in a given directory"""
+    # TODO:
 
 
 def choose_csv_file(filename: str = None) -> str:

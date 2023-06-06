@@ -3,20 +3,23 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-from bcipy.signal.model import ModelEvaluationReport, SignalModel
-from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
-from bcipy.signal.model.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
-from bcipy.signal.model.pipeline import Pipeline
+
 from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
+from bcipy.signal.model import ModelEvaluationReport, SignalModel
+from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,
+                                                 cross_validation)
+from bcipy.signal.model.density_estimation import KernelDensityEstimate
+from bcipy.signal.model.dimensionality_reduction import \
+    ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.pipeline import Pipeline
 
 
 class PcaRdaKdeModel(SignalModel):
     reshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
+    def __init__(self, k_folds: int = 10, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
