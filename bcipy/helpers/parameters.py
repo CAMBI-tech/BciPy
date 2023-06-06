@@ -3,6 +3,7 @@ from codecs import open as codecsopen
 from collections import abc
 from json import dump, load
 from pathlib import Path
+from re import fullmatch
 from typing import Any, Dict, NamedTuple, Tuple
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
@@ -22,6 +23,44 @@ class ParameterChange(NamedTuple):
     """Represents a Parameter that has been modified from a different value."""
     parameter: Parameter
     original_value: Any
+
+
+def parse_range(range_str: str) -> Tuple:
+    """Parse the range description into a tuple of (low, high).
+
+    If either value can be parsed as a float the resulting tuple will have
+    float values, otherwise they will be ints.
+
+    Parameters
+    ----------
+        range_str - range description formatted 'low:high'
+
+    >>> parse_range("1:10")
+    (1, 10)
+    """
+    assert ':' in range_str, "Invalid range format; values must be separated by ':'"
+    low, high = range_str.split(':')
+    int_pattern = "-?\\d+"
+    if fullmatch(int_pattern, low) and fullmatch(int_pattern, high):
+        low = int(low)
+        high = int(high)
+    else:
+        low = float(low)
+        high = float(high)
+
+    assert low < high, "Low value must be less that the high value"
+    return (low, high)
+
+
+def serialize_value(value_type: str, value: any) -> str:
+    """Serialize the given value to a string. Serialized values should be able
+    to be cast using the conversions."""
+    if value_type == 'bool':
+        return str(value).lower()
+    if value_type == 'range':
+        low, high = value
+        return f"{low}:{high}"
+    return str(value)
 
 
 class Parameters(dict):
@@ -49,7 +88,8 @@ class Parameters(dict):
             'bool': lambda val: val == 'true' or val is True,
             'str': str,
             'directorypath': str,
-            'filepath': str
+            'filepath': str,
+            'range': parse_range
         }
         self.load_from_source()
 
@@ -63,7 +103,7 @@ class Parameters(dict):
         params = Parameters(source=None, cast_values=True)
         for key, val in kwargs.items():
             value_type = type(val).__name__
-            value_str = str(val).lower() if value_type == 'bool' else str(val)
+            value_str = serialize_value(value_type, val)
             params.add_entry(
                 key, {
                     'value': value_str,
