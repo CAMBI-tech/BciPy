@@ -85,8 +85,8 @@ class TestEegEvaluator(unittest.TestCase):
             channel_map=channel_map,
             poststimulus_length=window_length)
 
-        self.signal_model_mock.assert_called_once_with(reshaped_data, symbols,
-                                                       self.symbol_set)
+        self.signal_model_mock.predict.assert_called_once_with(
+            reshaped_data, symbols, self.symbol_set)
 
 
 if __name__ == '__main__':
