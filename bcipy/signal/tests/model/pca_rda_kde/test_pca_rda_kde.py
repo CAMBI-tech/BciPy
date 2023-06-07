@@ -8,14 +8,15 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
+from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import cross_validation
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.dimensionality_reduction import \
+    ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.helpers.exceptions import SignalException
 
 expected_output_folder = Path(__file__).absolute().parent.parent / "unit_test_expected_output"
 
@@ -235,6 +236,11 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
 
         self.assertTrue(np.allclose(output_before, output_after))
 
+        try:
+            other_model.predict_proba(self.x)
+        except Exception:
+            pytest.fail("Should be able to compute predict_proba after loading a model")
+
     def test_predict_before_fit(self):
         model = PcaRdaKdeModel(k_folds=10)
         with self.assertRaises(SignalException):
@@ -244,6 +250,11 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         model = PcaRdaKdeModel(k_folds=10)
         with self.assertRaises(SignalException):
             model.evaluate(self.x, self.y)
+
+    def test_predict_proba_before_fit(self):
+        model = PcaRdaKdeModel(k_folds=10)
+        with self.assertRaises(SignalException):
+            model.predict_proba(self.x)
 
 
 if __name__ == "__main__":

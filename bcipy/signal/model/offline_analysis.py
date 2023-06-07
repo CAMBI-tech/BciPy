@@ -2,29 +2,27 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
-                          RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
-                          DEFAULT_DEVICE_SPEC_FILENAME)
-from bcipy.preferences import preferences
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.load import (
-    load_experimental_data,
-    load_json_parameters,
-    load_raw_data,
-)
-from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
-from bcipy.helpers.system_utils import report_execution_time
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp
-from bcipy.signal.model.base_model import SignalModel
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import filter_inquiries, get_default_transform
-
 import numpy as np
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
+
 import bcipy.acquisition.devices as devices
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, RAW_DATA_FILENAME,
+                          STATIC_AUDIO_PATH, TRIGGER_FILENAME)
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
+                                load_raw_data)
+from bcipy.helpers.save import save_model
+from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
+from bcipy.helpers.system_utils import report_execution_time
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.visualization import visualize_erp
+from bcipy.preferences import preferences
+from bcipy.signal.model.base_model import SignalModel
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.process import filter_inquiries, get_default_transform
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -182,7 +180,8 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    # model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    save_model(model, data_folder + f"/model_{model.auc:0.4f}.pkl")
     preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy

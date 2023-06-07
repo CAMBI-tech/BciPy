@@ -29,7 +29,11 @@ class PcaRdaKdeModel(SignalModel):
         self.max = 1e2
         self.model = None
         self.auc = None
-        self._ready_to_predict = False
+
+    @property
+    def ready_to_predict(self) -> bool:
+        """Returns True if a model has been trained"""
+        return bool(self.model)
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
         """
@@ -81,7 +85,6 @@ class PcaRdaKdeModel(SignalModel):
         else:
             raise ValueError("prior_type must be 'empirical' or 'uniform'")
 
-        self._ready_to_predict = True
         return self
 
     def evaluate(self, test_data: np.array, test_labels: np.array) -> ModelEvaluationReport:
@@ -97,7 +100,7 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             ModelEvaluationReport: stores AUC
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.evaluate()")
 
         tmp_model = Pipeline([self.model.pipeline[0], self.model.pipeline[1]])
@@ -129,7 +132,7 @@ class PcaRdaKdeModel(SignalModel):
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
 
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
@@ -151,7 +154,7 @@ class PcaRdaKdeModel(SignalModel):
             posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
                 probability for the two labels.
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
@@ -177,4 +180,4 @@ class PcaRdaKdeModel(SignalModel):
         """Load pretrained model weights from `path`"""
         with open(path, "rb") as f:
             self.model = pickle.load(f)
-        self._ready_to_predict = True
+
