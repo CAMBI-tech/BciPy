@@ -192,8 +192,9 @@ def load_signal_model(model_class: SignalModel,
 def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     """Load all signal models in a given directory.
 
-    Models should be serialized as pickled files. Note that reading pickled
-    files is a potential security concern so only load from trusted
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
     directories.
 
     Args:

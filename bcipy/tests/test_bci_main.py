@@ -413,7 +413,7 @@ class TestExecuteTask(unittest.TestCase):
         signal_model = mock()
         language_model = mock()
         file_name = 'test'
-        load_model_response = (signal_model, file_name)
+        load_model_response = [signal_model]
         eeg_response = (self.daq, self.server)
         when(main).init_eeg_acquisition(
             self.parameters,
@@ -421,9 +421,7 @@ class TestExecuteTask(unittest.TestCase):
             server=self.fake).thenReturn(eeg_response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename=model_path).thenReturn(load_model_response)
+        when(main).load_signal_models(directory=model_path).thenReturn(load_model_response)
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
@@ -455,9 +453,7 @@ class TestExecuteTask(unittest.TestCase):
             signal_model=signal_model,
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename=model_path)
+        verify(main, times=1).load_signal_models(directory=model_path)
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
     def test_execute_language_model_enabled(self) -> None:
@@ -468,7 +464,7 @@ class TestExecuteTask(unittest.TestCase):
         signal_model = mock()
         file_name = 'test'
         language_model = mock()
-        load_model_response = (signal_model, file_name)
+        load_model_response = [signal_model]
 
         # mock the behavior of execute task
         eeg_response = (self.daq, self.server)
@@ -479,9 +475,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename='').thenReturn(load_model_response)
+        when(main).load_signal_models(directory='').thenReturn(load_model_response)
         when(main).start_task(
             self.display_mock,
             self.daq,
@@ -512,9 +506,7 @@ class TestExecuteTask(unittest.TestCase):
             signal_model=signal_model,
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename='')
+        verify(main, times=1).load_signal_models(directory='')
         verify(main, times=1).init_language_model(self.parameters)
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 

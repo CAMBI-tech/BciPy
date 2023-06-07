@@ -9,6 +9,8 @@ import pytest
 from scipy.stats import norm
 
 from bcipy.helpers.exceptions import SignalException
+from bcipy.helpers.load import load_signal_models
+from bcipy.helpers.save import save_model
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
@@ -229,9 +231,12 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         output_before = self.model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         checkpoint_path = self.tmp_dir / "model.pkl"
-        self.model.save(checkpoint_path)
-        other_model = PcaRdaKdeModel(k_folds=self.model.k_folds)
-        other_model.load(checkpoint_path)
+        save_model(self.model, checkpoint_path)
+
+        loaded_models = load_signal_models(self.tmp_dir)
+        self.assertEqual(1, len(loaded_models))
+        other_model = loaded_models[0]
+        self.assertEqual(self.model.k_folds, other_model.k_folds)
         output_after = other_model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         self.assertTrue(np.allclose(output_before, output_after))

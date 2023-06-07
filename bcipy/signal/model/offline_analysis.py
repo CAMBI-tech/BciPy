@@ -180,8 +180,7 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    # model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
-    save_model(model, data_folder + f"/model_{model.auc:0.4f}.pkl")
+    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy

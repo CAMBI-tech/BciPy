@@ -12,7 +12,7 @@ from bcipy.display import init_display_window
 from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
-                                load_signal_model)
+                                load_signal_models)
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.stimuli import play_sound
@@ -20,7 +20,6 @@ from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
-from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
 
@@ -136,13 +135,13 @@ def execute_task(
         # Try loading in our signal_model and starting a langmodel(if enabled)
         if not fake:
             try:
-                signal_model, _filename = load_signal_model(
-                    model_class=PcaRdaKdeModel,
-                    model_kwargs={'k_folds': parameters['k_folds']},
-                    filename=parameters['signal_model_path'])
-            except Exception as e:
-                log.exception(f'Cannot load signal model. Exiting. {e}')
-                raise e
+                model_dir = parameters['signal_model_path']
+                signal_models = load_signal_models(directory=model_dir)
+                assert signal_models, f"No signal models found in {model_dir}"
+                signal_model = signal_models[0]
+            except Exception as error:
+                log.exception(f'Cannot load signal model. Exiting. {error}')
+                raise error
 
         language_model = init_language_model(parameters)
 

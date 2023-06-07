@@ -5,7 +5,7 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, List
+from typing import Any, List, Union
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID,
@@ -152,7 +152,7 @@ def _save_session_related_data(file, session_dictionary):
     json.dump(session_dictionary, file, indent=2)
     return file
 
-def save_model(model: SignalModel, path: Path):
+def save_model(model: SignalModel, path: Union[Path, str]):
     """Save model weights (e.g. after training) to `path`
 
     Parameters
@@ -161,7 +161,7 @@ def save_model(model: SignalModel, path: Path):
         path - path to the file which will be created. If the path does not
             have the SIGNAL_MODEL_FILE_SUFFIX then that will be appended.
     """
-    path = path.with_suffix(SIGNAL_MODEL_FILE_SUFFIX)
+    path = Path(path).with_suffix(SIGNAL_MODEL_FILE_SUFFIX)
     with open(path, "wb") as file:
         # Protocol 4 is the default in Python 3.8, but supported as low as 3.4.
         # It supports very large objects and some data format optimizations
