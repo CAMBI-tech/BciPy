@@ -14,15 +14,17 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.preferences import preferences
-from bcipy.signal.model.base_model import SignalModel
+from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import filter_inquiries, get_default_transform
+from bcipy.signal.process import (TransformParams, filter_inquiries,
+                                  get_default_transform)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -56,7 +58,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
 @report_execution_time
 def offline_analysis(
     data_folder: str = None,
-    parameters: dict = {},
+    parameters: Parameters = None,
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
@@ -86,7 +88,7 @@ def offline_analysis(
     - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
     """
-
+    assert parameters, "Parameters are required"
     if not data_folder:
         data_folder = load_experimental_data()
 
@@ -100,17 +102,13 @@ def offline_analysis(
     raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
     # get signal filtering information
-    downsample_rate = parameters.get("down_sampling_rate")
-    notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = parameters.get("filter_high")
-    filter_low = parameters.get("filter_low")
-    filter_order = parameters.get("filter_order")
+    transform_params = parameters.instantiate(TransformParams)
+    downsample_rate = transform_params.down_sampling_rate
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
         f"\nData processing settings: \n"
-        f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
-        f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
+        f"{str(transform_params)} \n"
         f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s \n"
         f"Static offset: {static_offset}"
     )
@@ -127,11 +125,11 @@ def offline_analysis(
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=filter_low,
-        bandpass_high=filter_high,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
+        notch_freq_hz=transform_params.notch_filter,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
     )
 
     log.info(f"Channels read from csv: {channels}")
@@ -178,6 +176,8 @@ def offline_analysis(
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
+    model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                         transform=default_transform)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
