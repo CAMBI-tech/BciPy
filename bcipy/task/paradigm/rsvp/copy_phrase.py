@@ -65,8 +65,7 @@ class RSVPCopyPhraseTask(Task):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_model : loaded pickle file,
-            trained signal model.
+        signal_models : list of trained signal models.
         language_model: object,
             trained language model.
         fake : boolean, optional
@@ -96,7 +95,7 @@ class RSVPCopyPhraseTask(Task):
         'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
-    def __init__(self, win, daq, parameters, file_save, signal_model,
+    def __init__(self, win, daq, parameters, file_save, signal_models,
                  language_model, fake):
         super(RSVPCopyPhraseTask, self).__init__()
 
@@ -126,7 +125,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.fake = fake
         self.language_model = language_model
-        self.signal_model = signal_model
+        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = 5
 
         self.feedback = VisualFeedback(

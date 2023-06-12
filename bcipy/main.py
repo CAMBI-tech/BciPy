@@ -126,7 +126,7 @@ def execute_task(
     Returns:
         (bool): True if the task was successfully executed, False otherwise
     """
-    signal_model = None
+    signal_models = []
     language_model = None
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
@@ -138,7 +138,6 @@ def execute_task(
                 model_dir = parameters['signal_model_path']
                 signal_models = load_signal_models(directory=model_dir)
                 assert signal_models, f"No signal models found in {model_dir}"
-                signal_model = signal_models[0]
             except Exception as error:
                 log.exception(f'Cannot load signal model. Exiting. {error}')
                 raise error
@@ -163,7 +162,7 @@ def execute_task(
                    parameters,
                    save_folder,
                    language_model=language_model,
-                   signal_model=signal_model,
+                   signal_models=signal_models,
                    fake=fake)
 
     # If exception, close all display and acquisition objects

@@ -14,7 +14,7 @@ from bcipy.task.task_registry import TaskType
 
 
 def make_task(display_window, daq, task, parameters, file_save,
-              signal_model=None, language_model=None, fake=True) -> Task:
+              signal_models=None, language_model=None, fake=True) -> Task:
     """Creates a Task based on the provided parameters.
 
     Parameters:
@@ -24,7 +24,7 @@ def make_task(display_window, daq, task, parameters, file_save,
         task: TaskType
         parameters: dict
         file_save: str - path to file in which to save data
-        signal_model
+        signal_models - list of trained models
         language_model - language model
         fake: boolean - true if eeg stream is randomly generated
     Returns:
@@ -39,7 +39,7 @@ def make_task(display_window, daq, task, parameters, file_save,
 
     if task is TaskType.RSVP_COPY_PHRASE:
         return RSVPCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_model,
+            display_window, daq, parameters, file_save, signal_models,
             language_model, fake=fake)
 
     if task is TaskType.RSVP_TIMING_VERIFICATION_CALIBRATION:
@@ -55,15 +55,15 @@ def make_task(display_window, daq, task, parameters, file_save,
 
     if task is TaskType.MATRIX_COPY_PHRASE:
         return MatrixCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_model,
+            display_window, daq, parameters, file_save, signal_models,
             language_model, fake=fake)
     raise TaskRegistryException(
         'The provided experiment type is not registered.')
 
 
 def start_task(display_window, daq, task, parameters, file_save,
-               signal_model=None, language_model=None, fake=True):
+               signal_models=None, language_model=None, fake=True):
     """Creates a Task and starts execution."""
     task = make_task(display_window, daq, task, parameters, file_save,
-                     signal_model, language_model, fake)
+                     signal_models, language_model, fake)
     task.execute()
