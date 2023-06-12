@@ -5,10 +5,9 @@ from typing import List, Optional
 import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
-from bcipy.helpers.acquisition import DeviceSpec, analysis_channels
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.stimuli import TrialReshaper
 from bcipy.signal.model import SignalModel
-from bcipy.signal.process import TransformParams, get_default_transform
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
 
@@ -48,15 +47,12 @@ class EvidenceEvaluator:
 
 
 class EegEvaluator(EvidenceEvaluator):
-    """Extracts symbol likelihoods from raw EEG data
+    """Extracts symbol likelihoods from raw EEG data.
 
     Parameters
     ----------
         symbol_set: set of possible symbols presented
-        signal_model: model trained using a calibration session of the same user.
-        device_spec: Specification for the device providing data.
-        filter_params: configuration for the data transfor; values here should
-            match the values used when training the model.
+        signal_model: trained signal model
     """
     consumes = ContentType.EEG
     produces = EvidenceType.ERP
@@ -115,60 +111,10 @@ class EegEvaluator(EvidenceEvaluator):
         return self.signal_model.predict(data, symbols, self.symbol_set)
 
 
-class EegPreprocessor:
-    """Preprocesses EEG data for model prediction"""
-    content_type = ContentType.EEG
-
-    def __init__(self, device_spec: DeviceSpec,
-                 filter_params: TransformParams):
-        assert ContentType(
-            device_spec.content_type
-        ) == self.content_type, "processor is not compatible with device"
-
-        self.device_spec = device_spec
-        self.channel_map = analysis_channels(device_spec.channels, device_spec)
-
-        self.transform = get_default_transform(
-            sample_rate_hz=device_spec.sample_rate,
-            notch_freq_hz=filter_params.notch_filter_frequency,
-            bandpass_low=filter_params.filter_low,
-            bandpass_high=filter_params.filter_high,
-            bandpass_order=filter_params.filter_order,
-            downsample_factor=filter_params.down_sampling_rate,
-        )
-
-        self.reshape = TrialReshaper()
-
-    def preprocess(self, raw_data: np.array, times: List[float],
-                   target_info: List[str], window_length: float) -> np.ndarray:
-        """Preprocess the inquiry data.
-
-        Parameters
-        ----------
-            raw_data - C x L eeg data where C is number of channels and L is the
-                signal length
-            times - timestamps associated with each symbol in the inquiry
-            target_info - target information about the stimuli;
-                ex. ['nontarget', 'nontarget', ...]
-            window_length - The length of the time between stimuli presentation
-        """
-        transformed_data, transform_sample_rate = self.transform(
-            raw_data, self.device_spec.sample_rate)
-
-        # The data from DAQ is assumed to have offsets applied
-        reshaped_data, _lbls = self.reshape(trial_targetness_label=target_info,
-                                            timing_info=times,
-                                            eeg_data=transformed_data,
-                                            sample_rate=transform_sample_rate,
-                                            channel_map=self.channel_map,
-                                            poststimulus_length=window_length)
-        return reshaped_data
-
-
 def get_evaluator(
         data_source: ContentType,
         evidence_type: Optional[EvidenceType] = None) -> EvidenceEvaluator:
-    """Returns the matching evaluator.
+    """Returns the matching evaluator class.
 
     Parameters
     ----------
@@ -183,9 +129,10 @@ def get_evaluator(
     if matches:
         return matches[0]
     else:
-        raise MissingEvidenceEvaluator(
-            f"Evidence Evaluator not found for {data_source.name} -> {evidence_type.name}"
-        )
+        msg = f"Evidence Evaluator not found for {data_source.name}"
+        if evidence_type:
+            msg += f" -> {evidence_type.name}"
+        raise MissingEvidenceEvaluator(msg)
 
 
 def find_matching_evaluator(signal_model: SignalModel) -> EvidenceEvaluator:
