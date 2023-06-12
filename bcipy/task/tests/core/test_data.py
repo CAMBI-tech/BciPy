@@ -1,7 +1,8 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.task.data import Session, Inquiry, EvidenceType
+
+from bcipy.task.data import EvidenceType, Inquiry, Session
 
 
 def sample_stim_seq(include_evidence: bool = False):
@@ -60,6 +61,23 @@ def sample_stim_seq(include_evidence: bool = False):
             0.03534192083878387
         ]
     return stim_seq
+
+
+class TestEvidenceType(unittest.TestCase):
+    """Tests for EvidenceType enum"""
+
+    def test_str(self):
+        """Test string representation"""
+        self.assertEqual('BTN', str(EvidenceType.BTN))
+
+    def test_serialization(self):
+        """Test serialization / deserialization"""
+
+        self.assertEqual(
+            EvidenceType.ERP,
+            EvidenceType.deserialized(EvidenceType.ERP.serialized))
+        self.assertEqual(EvidenceType.LM,
+                         EvidenceType.deserialized(EvidenceType.LM.serialized))
 
 
 class TestSessionData(unittest.TestCase):
