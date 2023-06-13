@@ -77,6 +77,12 @@ class ClientManager():
         return [client.device_spec for client in self.clients]
 
     @property
+    def device_content_types(self) -> List[ContentType]:
+        """Returns a list of ContentTypes provided by the configured devices.
+        """
+        return self._clients.keys()
+
+    @property
     def default_client(self) -> Optional[LslAcquisitionClient]:
         """Returns the default client."""
         return self.get_client(self.default_content_type)
@@ -125,10 +131,12 @@ class ClientManager():
                 log.debug(
                     f'Need {count} records for processing {content_type.name} data'
                 )
-                output[content_type] = client.get_data(start=start, limit=count)
+                output[content_type] = client.get_data(start=start,
+                                                       limit=count)
             else:
                 # Markers have an IRREGULAR_RATE.
-                output[content_type] = client.get_data(start=start, end=start+seconds)
+                output[content_type] = client.get_data(start=start,
+                                                       end=start + seconds)
         return output
 
     def cleanup(self):

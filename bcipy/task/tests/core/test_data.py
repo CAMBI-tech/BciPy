@@ -6,6 +6,7 @@ from bcipy.task.data import EvidenceType, Inquiry, Session
 
 
 def sample_stim_seq(include_evidence: bool = False):
+    """Generates a sample Inquiry."""
     stim_seq = Inquiry(
         stimuli=["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"],
         timing=[0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
@@ -99,7 +100,7 @@ class TestSessionData(unittest.TestCase):
 
         for key in expected_keys:
             self.assertTrue(key in serialized)
-            self.assertEqual(serialized[key], stim_seq.__getattribute__(key))
+            self.assertEqual(serialized[key], getattr(stim_seq, key))
 
         for key in ['lm_evidence', 'erp_evidence', 'likelihood']:
             self.assertFalse(key in serialized)
@@ -108,7 +109,7 @@ class TestSessionData(unittest.TestCase):
         """Test that a stim sequence can be deserialized from a dict."""
         stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
-        self.assertTrue('lm_evidence' in serialized.keys())
+        self.assertTrue('lm_evidence' in serialized)
         self.assertEqual(serialized['lm_evidence'],
                          stim_seq.evidences[EvidenceType.LM])
 
@@ -209,8 +210,8 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(1, serialized['total_selections'])
         self.assertEqual(3, serialized['inquiries_per_selection'])
 
-        self.assertTrue('1' in serialized['series'].keys())
-        self.assertTrue('2' in serialized['series'].keys())
+        self.assertTrue('1' in serialized['series'])
+        self.assertTrue('2' in serialized['series'])
 
         self.assertEqual(2, len(serialized['series']['1'].keys()))
         self.assertEqual(1, len(serialized['series']['2'].keys()))
@@ -272,11 +273,11 @@ class TestSessionData(unittest.TestCase):
     def test_task_summary(self):
         """Test that arbitrary data can be added."""
         session = Session(save_location=".")
-        self.assertFalse('task_summary' in session.as_dict().keys())
+        self.assertFalse('task_summary' in session.as_dict())
 
         session.task_summary = {"typing_accuracy": 22}
         serialized = session.as_dict()
-        self.assertTrue('task_summary' in serialized.keys())
+        self.assertTrue('task_summary' in serialized)
         self.assertEqual(serialized['task_summary']['typing_accuracy'], 22)
 
     def test_has_evidence(self):

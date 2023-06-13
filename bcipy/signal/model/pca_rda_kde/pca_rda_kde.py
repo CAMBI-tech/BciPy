@@ -180,4 +180,3 @@ class PcaRdaKdeModel(SignalModel):
         """Load pretrained model weights from `path`"""
         with open(path, "rb") as f:
             self.model = pickle.load(f)
-

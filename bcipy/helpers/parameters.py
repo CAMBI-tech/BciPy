@@ -317,8 +317,6 @@ class Parameters(dict):
         return named_tuple_class(*vals)
 
 
-
-
 def changes_from_default(source: str) -> Dict[str, ParameterChange]:
     """Determines which parameters have changed from the default params.
 

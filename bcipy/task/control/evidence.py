@@ -1,6 +1,6 @@
 """Classes and functions for extracting evidence from raw device data."""
 import logging
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import numpy as np
 
@@ -15,13 +15,14 @@ log = logging.getLogger(__name__)
 
 
 class EvidenceEvaluator:
-    """Base class
+    """Base class for a class that can evaluate raw device data using a
+    signal_model. EvidenceEvaluators are responsible for performing necessary
+    preprocessing steps such as filtering and reshaping.
 
     Parameters
     ----------
         symbol_set: set of possible symbols presented
         signal_model: model trained using a calibration session of the same user.
-        device_spec: Specification for the device providing data.
     """
 
     def __init__(self, symbol_set: List[str], signal_model: SignalModel):
@@ -47,7 +48,7 @@ class EvidenceEvaluator:
 
 
 class EegEvaluator(EvidenceEvaluator):
-    """Extracts symbol likelihoods from raw EEG data.
+    """EvidenceEvaluator that extracts symbol likelihoods from raw EEG data.
 
     Parameters
     ----------
@@ -113,7 +114,8 @@ class EegEvaluator(EvidenceEvaluator):
 
 def get_evaluator(
         data_source: ContentType,
-        evidence_type: Optional[EvidenceType] = None) -> EvidenceEvaluator:
+        evidence_type: Optional[EvidenceType] = None
+) -> Type[EvidenceEvaluator]:
     """Returns the matching evaluator class.
 
     Parameters
@@ -135,7 +137,8 @@ def get_evaluator(
         raise MissingEvidenceEvaluator(msg)
 
 
-def find_matching_evaluator(signal_model: SignalModel) -> EvidenceEvaluator:
+def find_matching_evaluator(
+        signal_model: SignalModel) -> Type[EvidenceEvaluator]:
     """Find the first EvidenceEvaluator compatible with the given signal
     model."""
     content_type = ContentType(signal_model.metadata.device_spec.content_type)
@@ -150,3 +153,11 @@ def find_matching_evaluator(signal_model: SignalModel) -> EvidenceEvaluator:
             log.error(f"Unsupported evidence type: {model_output}")
 
     return get_evaluator(content_type, evidence_type)
+
+
+def init_evidence_evaluator(symbol_set: List[str],
+                            signal_model: SignalModel) -> EvidenceEvaluator:
+    """Find an EvidenceEvaluator that matches the given signal_model and
+    initialize it."""
+    evaluator_class = find_matching_evaluator(signal_model)
+    return evaluator_class(symbol_set, signal_model)

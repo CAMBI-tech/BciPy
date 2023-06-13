@@ -338,7 +338,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -358,7 +358,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -380,7 +380,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -400,7 +400,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -430,7 +430,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -450,7 +450,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         verify(main, times=1).load_signal_models(directory=model_path)
@@ -483,7 +483,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -503,7 +503,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         verify(main, times=1).load_signal_models(directory='')
@@ -527,7 +527,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -548,7 +548,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)

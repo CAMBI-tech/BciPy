@@ -20,6 +20,12 @@ class TaskRegistryException(Exception):
         super().__init__(message)
         self.errors = errors
 
+
 class MissingEvidenceEvaluator(Exception):
     """Thrown when an evidence evaluator can't be found that matches the
     provided data content type input and evidence_type output"""
+
+
+class DuplicateModelEvidence(Exception):
+    """Thrown from a task when more than one of the provided models produces
+    the same type of evidence"""

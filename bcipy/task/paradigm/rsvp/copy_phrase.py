@@ -26,7 +26,10 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
+from bcipy.task.control.evidence import (EvidenceEvaluator,
+                                         init_evidence_evaluator)
 from bcipy.task.data import EvidenceType, Inquiry, Session
+from bcipy.task.exceptions import DuplicateModelEvidence
 
 
 class Decision(NamedTuple):
@@ -98,7 +101,7 @@ class RSVPCopyPhraseTask(Task):
     def __init__(self, win, daq, parameters, file_save, signal_models,
                  language_model, fake):
         super(RSVPCopyPhraseTask, self).__init__()
-
+        self.logger = logging.getLogger(__name__)
         self.window = win
         self.daq = daq
         self.parameters = parameters
@@ -113,7 +116,12 @@ class RSVPCopyPhraseTask(Task):
         self.alp = alphabet(self.parameters)
 
         self.button_press_error_prob = 0.05
-        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
+
+        self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
+
+        self.evidence_types = [EvidenceType.LM]
+        self.evidence_types.extend(
+            [evaluator.produces for evaluator in self.evidence_evaluators])
         if self.parameters['show_preview_inquiry']:
             self.evidence_types.append(EvidenceType.BTN)
 
@@ -125,6 +133,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.fake = fake
         self.language_model = language_model
+        # TODO: remove this
         self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = 5
 
@@ -154,6 +163,32 @@ class RSVPCopyPhraseTask(Task):
         )
 
         self.rsvp = self.init_display()
+
+    def init_evidence_evaluators(self,
+                                 signal_models) -> List[EvidenceEvaluator]:
+        """Initializes the evidence evaluators from the provided signal models.
+
+        Returns a list of evaluators for active devices. Raises an exception if
+        more than one evaluator provides the same type of evidence.
+        """
+        evidence_types = []
+        evaluators = []
+        for model in signal_models:
+            evaluator = init_evidence_evaluator(self.alp, model)
+            content_type = evaluator.consumes
+            evidence_type = evaluator.produces
+            if content_type in self.daq.device_content_types:
+                evaluators.append(evaluator)
+                if evidence_type in evidence_types:
+                    raise DuplicateModelEvidence(
+                        f"More than one model produces {evidence_type} evidence"
+                    )
+                evidence_types.append(evidence_type)
+            else:
+                self.logger.info(
+                    f"SignalModel not used: there is no active device of type: {content_type}"
+                )
+        return evaluators
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -226,6 +261,7 @@ class RSVPCopyPhraseTask(Task):
         initialized CopyPhraseWrapper
         """
 
+        # TODO: remove signal_model
         self.copy_phrase_task = CopyPhraseWrapper(
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
@@ -480,12 +516,14 @@ class RSVPCopyPhraseTask(Task):
         --------
         - self.copy_phrase_task
         """
-        # TODO: refactor compute_eeg_evidence to compute_device_evidence
-        # for each daq client
         evidences = [
-            self.compute_button_press_evidence(proceed),
-            self.compute_eeg_evidence(stim_times, proceed)
+            self.compute_button_press_evidence(proceed)
         ]
+
+        for evidence_evaluator in self.evidence_evaluators:
+            evidences.append(
+                self.compute_device_evidence(evidence_evaluator, stim_times))
+
         evidence_types = []
         for evidence in evidences:
             if evidence:
@@ -519,6 +557,50 @@ class RSVPCopyPhraseTask(Task):
                                             self.button_press_error_prob,
                                             proceed)
         return (EvidenceType.BTN, probs)
+
+    def compute_device_evidence(
+            self,
+            evidence_evaluator: EvidenceEvaluator,
+            stim_times: List[List],
+            proceed: bool = True
+    ) -> Optional[Tuple[EvidenceType, List[float]]]:
+        """Evaluate the evidence using the provided evaluator but
+        don't yet attempt a decision.
+
+        Parameters
+        ----------
+        - stim_times : list of stimuli returned from the display
+        - proceed : whether or not to evaluate the evidence, if `False` returns
+        empty values.
+
+        Returns
+        -------
+        tuple of (evidence type, evidence)
+        """
+        if not proceed or self.fake:
+            return None
+
+        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
+        post_stim_buffer = self.parameters['prestim_length']
+
+        raw_data, triggers = get_data_for_decision(
+            inquiry_timing=self.stims_for_decision(stim_times),
+            daq=self.daq.get_client(evidence_evaluator.consumes),
+            offset=self.parameters['static_trigger_offset'],
+            prestim=self.parameters['prestim_length'],
+            poststim=post_stim_buffer + self.parameters['trial_length'])
+
+        # we assume all are nontargets at this point
+        labels = ['nontarget'] * len(triggers)
+        letters, times, filtered_labels = self.copy_phrase_task.letter_info(
+            triggers, labels)
+        probs = evidence_evaluator.evaluate(
+            raw_data=raw_data,
+            symbols=letters,
+            times=times,
+            target_info=filtered_labels,
+            window_length=self.parameters['trial_length'])
+        return (evidence_evaluator.produces, probs)
 
     def compute_eeg_evidence(self,
                              stim_times: List[List],

@@ -189,6 +189,7 @@ def load_signal_model(model_class: SignalModel,
 
     return signal_model, filename
 
+
 def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     """Load all signal models in a given directory.
 

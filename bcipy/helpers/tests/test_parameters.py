@@ -614,5 +614,6 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(my_tuple.c, '3')
         self.assertEqual((1, '3'), my_tuple)
 
+
 if __name__ == '__main__':
     unittest.main()

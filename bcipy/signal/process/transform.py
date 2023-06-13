@@ -29,6 +29,7 @@ class Downsample:
         else:
             return data[:, :: self.factor], None
 
+
 class TransformParams(NamedTuple):
     """Parameters used for the default transform."""
     notch_filter_frequency: int = 60

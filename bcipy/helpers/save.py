@@ -152,6 +152,7 @@ def _save_session_related_data(file, session_dictionary):
     json.dump(session_dictionary, file, indent=2)
     return file
 
+
 def save_model(model: SignalModel, path: Union[Path, str]):
     """Save model weights (e.g. after training) to `path`
 
