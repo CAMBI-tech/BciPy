@@ -125,7 +125,7 @@ def offline_analysis(
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
-        notch_freq_hz=transform_params.notch_filter,
+        notch_freq_hz=transform_params.notch_filter_frequency,
         bandpass_low=transform_params.filter_low,
         bandpass_high=transform_params.filter_high,
         bandpass_order=transform_params.filter_order,
