@@ -261,14 +261,10 @@ class RSVPCopyPhraseTask(Task):
         initialized CopyPhraseWrapper
         """
 
-        # TODO: remove signal_model
         self.copy_phrase_task = CopyPhraseWrapper(
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
             lmodel=self.language_model,
-            device_spec=self.daq.device_spec,
-            signal_model=self.signal_model,
-            k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
@@ -279,10 +275,6 @@ class RSVPCopyPhraseTask(Task):
             decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
             backspace_always_shown=self.parameters['backspace_always_shown'],
-            filter_high=self.parameters['filter_high'],
-            filter_low=self.parameters['filter_low'],
-            filter_order=self.parameters['filter_order'],
-            notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
             stim_jitter=self.parameters['stim_jitter'],
             stim_order=StimuliOrder(self.parameters['stim_order']))
@@ -601,42 +593,6 @@ class RSVPCopyPhraseTask(Task):
             target_info=filtered_labels,
             window_length=self.parameters['trial_length'])
         return (evidence_evaluator.produces, probs)
-
-    def compute_eeg_evidence(self,
-                             stim_times: List[List],
-                             proceed: bool = True
-                             ) -> Optional[Tuple[EvidenceType, List[float]]]:
-        """Evaluate the EEG evidence and add it to the copy_phrase_task, but
-        don't yet attempt a decision.
-
-        Parameters
-        ----------
-        - stim_times : list of stimuli returned from the display
-        - proceed : whether or not to evaluate the evidence, if `False` returns
-        empty values.
-
-        Returns
-        -------
-        tuple of (evidence type, evidence)
-        """
-        if not proceed or self.fake:
-            return None
-
-        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
-        post_stim_buffer = self.parameters['prestim_length']
-        raw_data, triggers = get_data_for_decision(
-            inquiry_timing=self.stims_for_decision(stim_times),
-            daq=self.daq,
-            offset=self.parameters['static_trigger_offset'],
-            prestim=self.parameters['prestim_length'],
-            poststim=post_stim_buffer + self.parameters['trial_length'])
-
-        # we assume all are nontargets at this point
-        labels = ['nontarget'] * len(triggers)
-
-        probs = self.copy_phrase_task.evaluate_eeg_evidence(
-            raw_data, triggers, labels, self.parameters['trial_length'])
-        return (EvidenceType.ERP, probs)
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
         """The stim_timings from the display may include non-letter stimuli
