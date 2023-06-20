@@ -3,7 +3,8 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.acquisition.exceptions import UnsupportedContentType
+from bcipy.acquisition.exceptions import (InsufficientDataException,
+                                          UnsupportedContentType)
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.helpers.system_utils import AutoNumberEnum
@@ -112,7 +113,8 @@ class ClientManager():
         self,
         start: float = None,
         seconds: float = None,
-        content_types: List[ContentType] = None
+        content_types: List[ContentType] = None,
+        strict: bool = True
     ) -> Dict[ContentType, List[Record]]:
         """Get data for one or more devices. The number of samples for each
         device depends on the sample rate and may be different for item.
@@ -121,18 +123,26 @@ class ClientManager():
         ----------
             start - start time (acquisition clock) of data window
             seconds - duration of data to return for each device
-            content_types - specifies which devices to include
+            content_types - specifies which devices to include; if not
+                unspecified, data for all types is returned.
+            strict - if True, raises an exception if the returned rows is
+                less than the requested number of records.
         """
         output = {}
+        if not content_types:
+            content_types = self.device_content_types
         for content_type in content_types:
+            name = content_type.name
             client = self.get_client(content_type)
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
-                log.debug(
-                    f'Need {count} records for processing {content_type.name} data'
-                )
+                log.debug(f'Need {count} records for processing {name} data')
                 output[content_type] = client.get_data(start=start,
                                                        limit=count)
+                data_count = len(output[content_type])
+                if strict and data_count < count:
+                    msg = f'Needed {count} {name} records but received {data_count}'
+                    raise InsufficientDataException(msg)
             else:
                 # Markers have an IRREGULAR_RATE.
                 output[content_type] = client.get_data(start=start,

@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
+from bcipy.acquisition.exceptions import InsufficientDataException
 from bcipy.acquisition.multimodal import ClientManager, ContentType
 
 
@@ -16,7 +17,9 @@ class TestClientManager(unittest.TestCase):
 
         self.eeg_client_mock = Mock()
         self.eeg_client_mock.device_spec = self.eeg_device_mock
-        self.eeg_client_mock.get_data = Mock()
+        self.eeg_data_mock = Mock()
+        self.eeg_client_mock.get_data = MagicMock(
+            return_value=self.eeg_data_mock)
 
         self.gaze_device_mock = Mock()
         self.gaze_device_mock.content_type = 'Eyetracker'
@@ -102,7 +105,15 @@ class TestClientManager(unittest.TestCase):
 
         switch_client_mock = Mock()
         switch_client_mock.device_spec = switch_device_mock
-        switch_client_mock.get_data = Mock()
+        switch_data_mock = Mock()
+        switch_data_mock.__len__ = lambda self: 5
+        switch_client_mock.get_data = MagicMock(return_value=switch_data_mock)
+
+        gaze_data_mock = Mock()
+        gaze_data_mock.__len__ = lambda self: 300
+        self.gaze_client_mock.get_data = MagicMock(return_value=gaze_data_mock)
+
+        self.eeg_data_mock.__len__ = lambda self: 1500
 
         daq = ClientManager()
         daq.add_client(self.eeg_client_mock)
@@ -126,6 +137,34 @@ class TestClientManager(unittest.TestCase):
         self.assertTrue(ContentType.EEG in results)
         self.assertTrue(ContentType.EYETRACKER in results)
         self.assertTrue(ContentType.MARKERS in results)
+
+    def test_insufficient_data(self):
+        """Test insufficient data exception in strict mode."""
+
+        gaze_data_mock = Mock()
+        gaze_data_mock.__len__ = lambda self: 299
+        self.gaze_client_mock.get_data = MagicMock(return_value=gaze_data_mock)
+
+        daq = ClientManager()
+        daq.add_client(self.gaze_client_mock)
+
+        with self.assertRaises(InsufficientDataException):
+            daq.get_data_by_device(start=100, seconds=5)
+
+    def test_non_strict_data_request(self):
+        """Test data request in non-strict mode."""
+
+        gaze_data_mock = Mock()
+        gaze_data_mock.__len__ = lambda self: 299
+        self.gaze_client_mock.get_data = MagicMock(return_value=gaze_data_mock)
+
+        daq = ClientManager()
+        daq.add_client(self.gaze_client_mock)
+
+        results = daq.get_data_by_device(start=100, seconds=5, strict=False)
+        self.gaze_client_mock.get_data.assert_called_once_with(start=100,
+                                                               limit=300)
+        self.assertTrue(ContentType.EYETRACKER in results)
 
 
 if __name__ == '__main__':
