@@ -16,6 +16,7 @@ from pyriemann.tangentspace import TangentSpace
 from pyriemann.spatialfilters import Xdawn
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import KFold
+import pickle
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -38,7 +39,7 @@ scores = {
 }
 
 # scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy', mcc)
-# TODO try class weight and other sampling stradegies!! https://vitalflux.com/class-imbalance-class-weight-python-sklearn/#:~:text=Class%20weighting%3A%20Using%20class%20weight,represented%20relative%20to%20the%20other.
+# TODO try class weight and other sampling strategies!! https://vitalflux.com/class-imbalance-class-weight-python-sklearn/#:~:text=Class%20weighting%3A%20Using%20class%20weight,represented%20relative%20to%20the%20other.
 # TODO try scaling ChannellwiseScaler(StandardScaler())
 clfs = {
     'LR': (
@@ -53,10 +54,10 @@ clfs = {
         make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=40, gamma=0.00001, C=54.5982)),
         {},
     ),
-    # 'Xdawn LDA': (
-    #     make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
-    #     {},
-    # ),
+    'Xdawn LDA': (
+        make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
+        {},
+    ),
     # 'ERPCov TS LR': (
     #     make_pipeline(ERPCovariances(estimator='oas'), TangentSpace(), LogisticRegression()),
     #     {'erpcovariances__estimator': ('lwf', 'oas')},
@@ -75,7 +76,7 @@ clfs = {
     # ),
 }
 
-def crossvalidate_record(record, clfs=clfs, scores=scores):
+def crossvalidate_record(record, clfs=clfs, scores=scores, session_name=None):
     """Cross validate a record using the given classifiers and scores."""
     df = pd.DataFrame()
     for name, (clf, params) in clfs.items():
@@ -84,9 +85,9 @@ def crossvalidate_record(record, clfs=clfs, scores=scores):
             params,
             scoring=scores,
             n_jobs=-1,
-            refit=False,
+            refit='mcc',
             cv=k_folds,
-            return_train_score=False,
+            return_train_score=True,
         )
         cv.fit(record[0], record[1])
         headers = [
@@ -96,4 +97,6 @@ def crossvalidate_record(record, clfs=clfs, scores=scores):
         results = pd.DataFrame(cv.cv_results_)[headers]
         results['classifier'] = name
         df = pd.concat((df, results), sort=False)
+        with open(f'{session_name}/model_{name}.pkl', 'wb') as f:
+            pickle.dump(cv.best_estimator_, f)
     return df.reindex(sorted(df.columns), axis=1)

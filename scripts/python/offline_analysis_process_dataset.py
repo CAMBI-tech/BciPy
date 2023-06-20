@@ -45,18 +45,16 @@ if __name__ == "__main__":
     target = []
     for session in Path(path).iterdir():
         if session.is_dir():
-            parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
-            mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+            # parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
+            # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
 
             try:
                 # grab the data and labels
                 results[session.name] = {}
 
                 # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, dt, dl = load_data_mne(
-                    data_folder=str(session.resolve()),
-                    mne_data_annotations=mne_data.annotations,
-                    drop_artifacts=True,
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, dt = load_data_inquiries(
+                    data_folder=str(session.resolve())
                     )
                 # epochs, figs = visualize_erp(
                 #     raw_data,
@@ -70,23 +68,24 @@ if __name__ == "__main__":
                 # target.append(epochs[1])
 
                 # train the models and get the results
-                df = crossvalidate_record((data, labels))
+                df = crossvalidate_record((data, labels), session_name=str(session.resolve()))
                 for name in scores:
                     results[session.name][name] = df[f'mean_test_{name}']
                     results[session.name][f'std_{name}'] = df[f'std_test_{name}']
+                # breakpoint()
 
-                dropped[session.name] = dl
+                # dropped[session.name] = dl
 
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 pass
     print(results)
     print(dropped)
-    file_name = 'cf_AAR_all_models.csv'
-    export = pd.DataFrame.from_dict(results).transpose()
-    export.to_csv(file_name)
-    export = pd.DataFrame.from_dict(dropped)
-    export.to_csv('cf_AAR_all_models_dropped.csv')
+    # file_name = 'cf_AAR_all_models.csv'
+    # export = pd.DataFrame.from_dict(results).transpose()
+    # export.to_csv(file_name)
+    # export = pd.DataFrame.from_dict(dropped)
+    # export.to_csv('cf_AAR_all_models_dropped.csv')
 
     # average across participants using grand_average
     # target_ga, non_target_ga = group_average(target, non_target)
