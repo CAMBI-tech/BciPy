@@ -20,8 +20,9 @@ from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
-                                get_data_for_decision, get_user_input,
-                                target_info, trial_complete_message)
+                                get_device_data_for_decision, get_user_input,
+                                relative_triggers, target_info,
+                                trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -495,6 +496,9 @@ class RSVPCopyPhraseTask(Task):
                      proceed: bool = True) -> List[EvidenceType]:
         """Add all evidence used to make a decision.
 
+        Evaluates evidence from various sources (button press, devices,
+        language model) and adds it to the CopyPhraseWrapper for evaluation.
+
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
@@ -511,10 +515,8 @@ class RSVPCopyPhraseTask(Task):
         evidences = [
             self.compute_button_press_evidence(proceed)
         ]
-
-        for evidence_evaluator in self.evidence_evaluators:
-            evidences.append(
-                self.compute_device_evidence(evidence_evaluator, stim_times))
+        # evidence from one or more devices
+        evidences.extend(self.compute_device_evidence(stim_times, proceed))
 
         evidence_types = []
         for evidence in evidences:
@@ -552,47 +554,56 @@ class RSVPCopyPhraseTask(Task):
 
     def compute_device_evidence(
             self,
-            evidence_evaluator: EvidenceEvaluator,
             stim_times: List[List],
-            proceed: bool = True
-    ) -> Optional[Tuple[EvidenceType, List[float]]]:
-        """Evaluate the evidence using the provided evaluator but
+            proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
+        """Get inquiry data from all devices and evaluate the evidence, but
         don't yet attempt a decision.
 
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
         - proceed : whether or not to evaluate the evidence, if `False` returns
-        empty values.
+            an empty array.
 
         Returns
         -------
-        tuple of (evidence type, evidence)
+            list of (evidence type, evidence) tuples
         """
         if not proceed or self.fake:
-            return None
+            return []
 
-        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
+        # currently prestim_length is used as a buffer for filter application;
+        # use the same at the end of the inquiry
         post_stim_buffer = self.parameters['prestim_length']
+        prestim = self.parameters['prestim_length']
+        inquiry_timing = self.stims_for_decision(stim_times)
 
-        raw_data, triggers = get_data_for_decision(
-            inquiry_timing=self.stims_for_decision(stim_times),
-            daq=self.daq.get_client(evidence_evaluator.consumes),
+        # Get all data at once so we don't redundantly query devices which are
+        # used in more than one signal model.
+        device_data = get_device_data_for_decision(
+            inquiry_timing=inquiry_timing,
+            daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
-            prestim=self.parameters['prestim_length'],
+            prestim=prestim,
             poststim=post_stim_buffer + self.parameters['trial_length'])
 
+        triggers = relative_triggers(inquiry_timing, prestim)
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
         letters, times, filtered_labels = self.copy_phrase_task.letter_info(
             triggers, labels)
-        probs = evidence_evaluator.evaluate(
-            raw_data=raw_data,
-            symbols=letters,
-            times=times,
-            target_info=filtered_labels,
-            window_length=self.parameters['trial_length'])
-        return (evidence_evaluator.produces, probs)
+
+        evidences = []
+        for evidence_evaluator in self.evidence_evaluators:
+            probs = evidence_evaluator.evaluate(
+                raw_data=device_data[evidence_evaluator.consumes],
+                symbols=letters,
+                times=times,
+                target_info=filtered_labels,
+                window_length=self.parameters['trial_length'])
+            evidences.append((evidence_evaluator.produces, probs))
+
+        return evidences
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
         """The stim_timings from the display may include non-letter stimuli

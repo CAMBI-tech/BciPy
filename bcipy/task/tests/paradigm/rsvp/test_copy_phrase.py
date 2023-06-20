@@ -236,7 +236,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_fake_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
@@ -275,7 +275,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_max_inq_len(self, process_data_mock, message_mock,
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
@@ -314,7 +314,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_spelling_complete(self, process_data_mock,
                                message_mock, user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -369,7 +369,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertEqual(task.starting_spelled_letters(), 0)
 
     def test_stims_for_eeg(self):
-        """The correct stims should be sent to get_data_for_decision"""
+        """The correct stims should be sent to get_device_data_for_decision"""
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
@@ -415,7 +415,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_next_letter(self, process_data_mock, message_mock,
                          user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -444,7 +444,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_fake_data_with_preview(self, process_data_mock, message_mock,
                                             user_input_mock):
         """Test that preview is displayed"""
@@ -480,7 +480,7 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.init_evidence_evaluator')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_real_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock, init_evaluator_mock):
         """Test that fake data does not use the decision maker"""
@@ -660,16 +660,17 @@ def mock_inquiry_timings():
 
 
 def mock_process_data():
-    """Generator that yields data mocking the get_data_for_decision helper"""
-    raw_data = None
-    triggers = [('+', 0.0), ('H', 0.4680980280973017),
-                ('C', 0.6852016930934042), ('D', 0.9016020260751247),
-                ('<', 1.1184057840146124), ('I', 1.335060202050954),
-                ('E', 1.552058998029679), ('B', 1.7685756811406463),
-                ('F', 1.9853776029776782), ('A', 2.202271921094507),
-                ('G', 2.4189279531128705)]
-    return (raw_data, triggers)
+    """Generator that yields data mocking the get_device_data_for_decision helper"""
+    return {ContentType.EEG: None}
 
+
+def mock_triggers():
+    """Mocks data from the task relative_triggers helper"""
+    return [('+', 0.0), ('H', 0.4680980280973017), ('C', 0.6852016930934042),
+            ('D', 0.9016020260751247), ('<', 1.1184057840146124),
+            ('I', 1.335060202050954), ('E', 1.552058998029679),
+            ('B', 1.7685756811406463), ('F', 1.9853776029776782),
+            ('A', 2.202271921094507), ('G', 2.4189279531128705)]
 
 if __name__ == '__main__':
     unittest.main()
