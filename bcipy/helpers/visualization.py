@@ -342,4 +342,4 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         show=show,
     )
 
-    eye_data = visualize_eye_data
+    # eye_data = visualize_gaze

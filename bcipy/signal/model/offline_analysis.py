@@ -247,6 +247,7 @@ def offline_analysis(
                 show=show_figures,
                 raw_plot=True,
             )
+            plt.show()
             channels = mode_data.channels
             type_amp = mode_data.daq_type
             sample_rate = mode_data.sample_rate
@@ -261,7 +262,6 @@ def offline_analysis(
             data, fs = mode_data.by_channel()
 
             model = GazeModel()
-            breakpoint()
 
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(

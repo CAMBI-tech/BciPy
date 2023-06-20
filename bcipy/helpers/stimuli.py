@@ -275,6 +275,8 @@ class GazeReshaper:
         # triggers in seconds are mapped to triggers in number of samples.
         triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
+        inquiry_triggers = list(map(lambda x: int(x * sample_rate), timing_info))
+
 
         # First, find the longest inquiry in this experiment
         # We'll add or remove a few samples from all other inquiries, to match this length
@@ -284,12 +286,11 @@ class GazeReshaper:
         # Finds the longest inquiry in the experiment by subtracting the first trigger from the last trigger in each inquiry
         longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
 
-        # What we need from gaze data is actually the shortest inquiry, not the longest
-        shortest_inquiry = min(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
-        breakpoint()
+        # What we need is to find the shortest distance from 1st letter to last in each inquiry
+        shortest_inquiry = min(grouper(triggers, inquiry_triggers, trials_per_inquiry, fillvalue='x'))
 
         # We will trim off the extra bits in each inquiry to match the shortest inquiry
-        # TODO
+        
         
 
         num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
