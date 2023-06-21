@@ -231,7 +231,7 @@ def session_excel(session: Session,
 
     # Write rows
     inq_background = next(backgrounds_iter)
-    alp_len = None
+    alp_len = len(session.symbol_set)
     for i, record in enumerate(evidence_records(session)):
         rownum = i + 2  # Excel is 1-indexed; also account for column row.
         border = default_border
@@ -244,10 +244,6 @@ def session_excel(session: Session,
 
         if record.inquiry != inquiry:
             inquiry = record.inquiry
-
-            # Set the alphabet length used for chart data ranges.
-            if not alp_len and i > 0:
-                alp_len = i
             chart_data[f"Series {series} inquiry {inquiry}"] = rownum
 
             # Toggle the background for each inquiry for easier viewing.

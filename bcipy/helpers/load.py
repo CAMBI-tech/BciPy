@@ -212,7 +212,9 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     models = []
     for file_path in path.glob(f"*{SIGNAL_MODEL_FILE_SUFFIX}"):
         with open(file_path, "rb") as file:
-            models.append(pickle.load(file))
+            model = pickle.load(file)
+            log.info(f"Loading model {model}")
+            models.append(model)
     return models
 
 
