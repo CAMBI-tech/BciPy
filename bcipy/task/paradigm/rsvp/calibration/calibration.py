@@ -1,20 +1,20 @@
-from psychopy import core
 from typing import List, Tuple
 
-from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import (
-    InformationProperties,
-    PreviewInquiryProperties,
-    StimuliProperties)
-from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.helpers.clock import Clock
+from psychopy import core
 
-from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator)
+from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
+                           StimuliProperties)
+from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions,
+                                   generate_calibration_inquiries)
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.symbols import alphabet
-from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, convert_timing_triggers)
 from bcipy.task import Task
 
 
@@ -91,16 +91,16 @@ class RSVPCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return calibration_inquiry_generator(self.alp,
-                                             stim_number=self.stim_number,
-                                             stim_length=self.stim_length,
-                                             stim_order=self.stim_order,
-                                             target_positions=self.target_positions,
-                                             nontarget_inquiries=self.nontarget_inquiries,
-                                             timing=self.timing,
-                                             jitter=self.jitter,
-                                             is_txt=self.rsvp.is_txt_stim,
-                                             color=self.color)
+        return generate_calibration_inquiries(self.alp,
+                                              inquiry_count=self.stim_number,
+                                              stim_per_inquiry=self.stim_length,
+                                              stim_order=self.stim_order,
+                                              target_positions=self.target_positions,
+                                              percentage_without_target=self.nontarget_inquiries,
+                                              timing=self.timing,
+                                              jitter=self.jitter,
+                                              is_txt=self.rsvp.is_txt_stim,
+                                              color=self.color)
 
     def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
         """Trigger Type.

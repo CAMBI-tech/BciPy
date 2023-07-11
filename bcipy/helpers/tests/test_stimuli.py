@@ -1,38 +1,42 @@
+import collections as cnt
 import glob
 import unittest
-
 from os import path
-from mockito import any, mock, unstub, verify, when
 
-from psychopy import core
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+from mockito import any, mock, unstub, verify, when
+from psychopy import core
 
-import collections as cnt
 from bcipy.helpers.exceptions import BciPyCoreException
-
-from bcipy.helpers.stimuli import (
-    alphabetize,
-    best_case_rsvp_inq_gen,
-    best_selection,
-    calibration_inquiry_generator,
-    DEFAULT_FIXATION_PATH,
-    get_fixation,
-    TrialReshaper,
-    InquiryReshaper,
-    jittered_timing,
-    play_sound,
-    distributed_target_positions,
-    soundfiles,
-    StimuliOrder,
-    ssvep_to_code,
-    TargetPositions,
-    update_inquiry_timing,
-)
+from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
+                                   StimuliOrder, TargetPositions,
+                                   TrialReshaper, alphabetize,
+                                   best_case_rsvp_inq_gen, best_selection,
+                                   generate_calibration_inquiries,
+                                   distributed_target_positions, get_fixation,
+                                   jittered_timing, play_sound, soundfiles,
+                                   ssvep_to_code, target_index,
+                                   update_inquiry_timing)
 
 MOCK_FS = 44100
 
+
+def is_uniform_distribution(inquiry_count: int, stim_per_inquiry: int,
+                            pct_without_target: int,
+                            counter: cnt.Counter) -> bool:
+    """Determine if the counts in the provided counter are distributed
+    uniformly."""
+
+    count_without_target = (int)(inquiry_count * (pct_without_target / 100))
+    target_inquiries = inquiry_count - count_without_target
+    num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
+
+    return all(
+        num_target_inquiries <= counter[i] <= num_target_inquiries + 1
+        for i in counter if counter[i] is not None
+    )
 
 class TestStimuliGeneration(unittest.TestCase):
     """This is Test Case for Stimuli Generated via BciPy."""
@@ -47,34 +51,34 @@ class TestStimuliGeneration(unittest.TestCase):
         unstub()
 
     def test_calibration_inquiry_generator_with_jitter(self):
-        stim_number = 10
-        stim_length = 10
+        inquiry_count = 10
+        stim_per_inquiry = 10
         stim_timing = [0.5, 1, 2]
         stim_jitter = 1
 
         max_jitter = stim_timing[-1] + stim_jitter
         min_jitter = stim_timing[-1] - stim_jitter
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
             timing=stim_timing,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             jitter=stim_jitter)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -96,28 +100,28 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_calibration_inquiry_generator_random_order(self):
         """Test generation of random inquiries"""
-        stim_number = 10
-        stim_length = 10
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiry_count = 10
+        stim_per_inquiry = 10
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             stim_order=StimuliOrder.RANDOM)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -129,28 +133,28 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_calibration_inquiry_generator_alphabetical_order(self):
         """Test generation of random inquiries"""
-        stim_number = 10
-        stim_length = 10
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiry_count = 10
+        stim_per_inquiry = 10
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             stim_order=StimuliOrder.ALPHABETICAL)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
             self.assertEqual(alphabetize(choices), choices)
 
@@ -161,33 +165,42 @@ class TestStimuliGeneration(unittest.TestCase):
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
 
+    def test_target_index(self):
+        """Test target_index function"""
+        inquiry = ['T', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+        self.assertEqual(target_index(inquiry), 6)
+
+        inquiry = ['A', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+        self.assertEqual(target_index(inquiry), None)
+
+
     def test_calibration_inquiry_generator_distributed_targets(self):
         """Test generation of inquiries with distributed target positions"""
-        stim_number = 10
-        stim_length = 10
-        nontarget_inquiries = 10
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiry_count = 10
+        stim_per_inquiry = 10
+        percentage_without_target = 10
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             stim_order=StimuliOrder.RANDOM,
             target_positions=TargetPositions.DISTRIBUTED,
-            nontarget_inquiries=nontarget_inquiries)
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -197,33 +210,45 @@ class TestStimuliGeneration(unittest.TestCase):
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
 
+        # Test distribution
+        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
+        target_inquiries = inquiry_count - nontarget_inquiry
+        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
+
+        indices = [target_index(inq) for inq in inquiries]
+        counter = cnt.Counter(indices)
+        for i in counter:
+            self.assertTrue(
+                num_target_inquiries <= counter[i] <= num_target_inquiries + 1)
+
+
     def test_calibration_inquiry_generator_distributed_targets_alphabetical(self):
         """Test generation of inquiries with distributed target positions"""
-        stim_number = 10
-        stim_length = 10
-        nontarget_inquiries = 20
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiry_count = 10
+        stim_per_inquiry = 10
+        percentage_without_target = 20
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             stim_order=StimuliOrder.ALPHABETICAL,
             target_positions=TargetPositions.DISTRIBUTED,
-            nontarget_inquiries=nontarget_inquiries)
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -235,31 +260,31 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_calibration_inquiry_generator_distributed_targets_no_nontargets(self):
         """Test generation of inquiries with distributed target positions and no nontarget inquiries."""
-        stim_number = 10
-        stim_length = 10
-        nontarget_inquiries = 0
-        inquiries, inq_timings, inq_colors = calibration_inquiry_generator(
+        inquiry_count = 10
+        stim_per_inquiry = 10
+        percentage_without_target = 0
+        inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
             self.alp,
-            stim_number=stim_number,
-            stim_length=stim_length,
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
             stim_order=StimuliOrder.RANDOM,
             target_positions=TargetPositions.DISTRIBUTED,
-            nontarget_inquiries=nontarget_inquiries)
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(inquiries), stim_number,
+            len(inquiries), inquiry_count,
             'Should have produced the correct number of inquiries')
-        self.assertEqual(len(inq_timings), stim_number)
-        self.assertEqual(len(inq_colors), stim_number)
+        self.assertEqual(len(inq_timings), inquiry_count)
+        self.assertEqual(len(inq_colors), inquiry_count)
 
         inq_strings = []
         for inq in inquiries:
             self.assertEqual(
-                len(inq), stim_length + 2,
+                len(inq), stim_per_inquiry + 2,
                 ('inquiry should include the correct number of choices as ',
                  'well as the target and cross.'))
             choices = inq[2:]
-            self.assertEqual(stim_length, len(set(choices)),
+            self.assertEqual(stim_per_inquiry, len(set(choices)),
                              'All choices should be unique')
 
             # create a string of the options
@@ -269,29 +294,31 @@ class TestStimuliGeneration(unittest.TestCase):
             len(inquiries), len(set(inq_strings)),
             'All inquiries should be different')
 
+        # Ensure all inquiries include the target
+        for inq in inquiries:
+            self.assertIsNotNone(target_index(inq))
+
     def test_calibration_inquiry_generator_distributed_targets_positions(self):
         """Test generation of distributed target positions with nontarget inquiries."""
 
-        stim_number = 11
-        stim_length = 10
-        nontarget_inquiries = 10
+        inquiry_count = 11
+        stim_per_inquiry = 10
+        percentage_without_target = 10
 
-        nontarget_inquiry = (int)(stim_number * (nontarget_inquiries / 100))
-        target_inquiries = stim_number - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_length)
+        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
+        target_inquiries = inquiry_count - nontarget_inquiry
+        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
 
-        targets = distributed_target_positions(stim_number=stim_number,
-                                               stim_length=stim_length,
-                                               nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(inquiry_count=inquiry_count,
+                                               stim_per_inquiry=stim_per_inquiry,
+                                               percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), stim_number,
+            len(targets), inquiry_count,
             'Should have produced the correct number of targets for inquiries.')
 
         # count how many times each target position is used
-        count = cnt.Counter()
-        for pos in targets:
-            count[pos] += 1
+        count = cnt.Counter(targets)
 
         # make sure position counts are equally distributed, including non-target
         for i in count:
@@ -300,26 +327,24 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_calibration_inquiry_generator_distributed_targets_positions_half_nontarget(self):
         """Test generation of distributed target positions with half being nontarget inquiries."""
 
-        stim_number = 120
-        stim_length = 9
-        nontarget_inquiries = 50
+        inquiry_count = 120
+        stim_per_inquiry = 9
+        percentage_without_target = 50
 
-        nontarget_inquiry = (int)(stim_number * (nontarget_inquiries / 100))
-        target_inquiries = stim_number - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_length)
+        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
+        target_inquiries = inquiry_count - nontarget_inquiry
+        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
 
-        targets = distributed_target_positions(stim_number=stim_number,
-                                               stim_length=stim_length,
-                                               nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(inquiry_count=inquiry_count,
+                                               stim_per_inquiry=stim_per_inquiry,
+                                               percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), stim_number,
+            len(targets), inquiry_count,
             'Should have produced the correct number of targets for inquiries.')
 
         # count how many times each target position is used
-        count = cnt.Counter()
-        for pos in targets:
-            count[pos] += 1
+        count = cnt.Counter(targets)
 
         # make sure target position counts are equally distributed
         for i in count:
@@ -333,26 +358,24 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_calibration_inquiry_generator_distributed_targets_positions_no_nontargets(self):
         """Test generation of distributed target positions with no nontarget inquiries."""
 
-        stim_number = 50
-        stim_length = 11
-        nontarget_inquiries = 0
+        inquiry_count = 50
+        stim_per_inquiry = 11
+        percentage_without_target = 0
 
-        nontarget_inquiry = (int)(stim_number * (nontarget_inquiries / 100))
-        target_inquiries = stim_number - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_length)
+        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
+        target_inquiries = inquiry_count - nontarget_inquiry
+        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
 
-        targets = distributed_target_positions(stim_number=stim_number,
-                                               stim_length=stim_length,
-                                               nontarget_inquiries=nontarget_inquiries)
+        targets = distributed_target_positions(inquiry_count=inquiry_count,
+                                               stim_per_inquiry=stim_per_inquiry,
+                                               percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), stim_number,
+            len(targets), inquiry_count,
             'Should have produced the correct number of targets for inquiries.')
 
         # count how many times each target position is used
-        count = cnt.Counter()
-        for pos in targets:
-            count[pos] += 1
+        count = cnt.Counter(targets)
 
         # make sure target position counts are equally distributed
         for i in count:
@@ -366,21 +389,21 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_calibration_inquiry_generator_distributed_targets_all_nontargets(self):
         """Test generation of distributed target positions with all inquiries being non-target."""
 
-        stim_number = 100
-        stim_length = 6
-        nontarget_inquiries = 100
+        inquiry_count = 100
+        stim_per_inquiry = 6
+        percentage_without_target = 100
 
-        nontarget_inquiry = (int)(stim_number * (nontarget_inquiries / 100))
-        target_inquiries = stim_number - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_length)
+        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
+        target_inquiries = inquiry_count - nontarget_inquiry
+        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
 
         targets = distributed_target_positions(
-            stim_number=stim_number,
-            stim_length=stim_length,
-            nontarget_inquiries=nontarget_inquiries)
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), stim_number,
+            len(targets), inquiry_count,
             'Should have produced the correct number of targets for inquiries.')
 
         # count how many times each target position is used
@@ -394,7 +417,7 @@ class TestStimuliGeneration(unittest.TestCase):
                 self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
 
         # make sure all inquries are non-target inquiries
-        self.assertEqual(count[None], stim_number,
+        self.assertEqual(count[None], inquiry_count,
                          'Should have produced all non-target positions.')
 
     def test_best_selection(self):

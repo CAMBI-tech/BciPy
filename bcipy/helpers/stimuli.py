@@ -3,27 +3,26 @@ import itertools
 import logging
 import random
 import re
-
 from abc import ABC, abstractmethod
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple, Optional
+from typing import Iterator, List, NamedTuple, Optional, Tuple
+
+from PIL import Image
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
 
-from PIL import Image
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
-from psychopy import core
+import mne
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
 from mne import Annotations, Epochs
 from mne.io import RawArray
-import mne
-
+from psychopy import core
 
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
@@ -426,8 +425,8 @@ def best_case_rsvp_inq_gen(alp: list,
         color(list[str]): Task specific color for generator
             First element is the target, second element is the fixation
             Observe that [-1] element represents the trial information
-        stim_number(int): number of random stimuli to be created
-        stim_length(int): number of trials in a inquiry
+        inquiry_count(int): number of random stimuli to be created
+        stim_per_inquiry(int): number of trials in a inquiry
         stim_order(StimuliOrder): ordering of stimuli in the inquiry
         inq_constants(list[str]): list of letters that should always be
             included in every inquiry. If provided, must be alp items.
@@ -480,19 +479,18 @@ def best_case_rsvp_inq_gen(alp: list,
     return InquirySchedule(samples, times, colors)
 
 
-def calibration_inquiry_generator(
+def generate_calibration_inquiries(
         alp: List[str],
-        timing: List[float] = [0.5, 1, 0.2],
+        timing: List[float] = None,
         jitter: Optional[int] = None,
-        color: List[str] = ['green', 'red', 'white'],
-        stim_number: int = 10,
-        stim_length: int = 10,
+        color: List[str] = None,
+        inquiry_count: int = 10,
+        stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
-        nontarget_inquiries: int = 10,
+        percentage_without_target: int = 10,
         is_txt: bool = True) -> InquirySchedule:
-    """Calibration Inquiry Generator.
-
+    """
     Generates inquiries with target letters in all possible positions.
 
     Parameters
@@ -503,12 +501,12 @@ def calibration_inquiry_generator(
         jitter(int): jitter for stimuli timing. If None, no jitter is applied.
         color(list[str]): Task specific color for generator
             [target, fixation, stimuli]
-        stim_number(int): number of trials in a inquiry
-        stim_length(int): number of random stimuli to be created
+        inquiry_count(int): number of inquiries in a calibration
+        stim_per_inquiry(int): number of stimuli in each inquiry
         stim_order(StimuliOrder): ordering of stimuli in the inquiry
         target_positions(TargetPositions): positioning of targets to select for the inquiries
-        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
-        is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
+        percentage_without_target(int): percentage of inquiries for which target letter flashed is not in inquiry
+        is_txt(bool): whether the stimuli type is text. False would be an image stimuli.
 
     Return
     ------
@@ -517,24 +515,28 @@ def calibration_inquiry_generator(
             timing(list[list[float]]): list of timings
             color(list(list[str])): list of colors)): scheduled inquiries
     """
+    if timing is None:
+        timing = [0.5, 1, 0.2]
+    if color is None:
+        color = ['green', 'red', 'white']
     assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
     target_indexes = []
     no_target = None
 
-    if (target_positions == target_positions.DISTRIBUTED):
-        target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
+    if target_positions == TargetPositions.DISTRIBUTED:
+        target_indexes = distributed_target_positions(inquiry_count, stim_per_inquiry, percentage_without_target)
     else:
         # make list of random targets with correct number of non-target inquiries
-        num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
-        num_target_inquiry = stim_number - num_nontarget_inquiry
+        num_nontarget_inquiry = int((percentage_without_target / 100) * inquiry_count)
+        num_target_inquiry = inquiry_count - num_nontarget_inquiry
         target_indexes = [no_target] * num_nontarget_inquiry
-        target_indexes.extend(random.choices(range(stim_length), k=num_target_inquiry))
+        target_indexes.extend(random.choices(range(stim_per_inquiry), k=num_target_inquiry))
         random.shuffle(target_indexes)
 
     samples, times, colors = [], [], []
 
-    for i in range(stim_number):
-        inquiry = random.sample(alp, k=stim_length)
+    for i in range(inquiry_count):
+        inquiry = random.sample(alp, k=stim_per_inquiry)
 
         if stim_order == StimuliOrder.ALPHABETICAL:
             inquiry = alphabetize(inquiry)
@@ -554,13 +556,13 @@ def calibration_inquiry_generator(
         # pull out timing for the inquiry stimuli
         stim_time = timing[-1]
         if jitter:
-            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
+            _inq_timing = jittered_timing(stim_time, jitter, stim_per_inquiry)
             inq_timing = init_timing + _inq_timing
         else:
-            inq_timing = init_timing + [stim_time] * stim_length
+            inq_timing = init_timing + [stim_time] * stim_per_inquiry
         times.append(inq_timing)
         colors.append([color[i] for i in range(len(color) - 1)] +
-                      [color[-1]] * stim_length)
+                      [color[-1]] * stim_per_inquiry)
 
     return InquirySchedule(samples, times, colors)
 
@@ -575,14 +577,14 @@ def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
     return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
 
-def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
+def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int, percentage_without_target: int) -> list:
     """Distributed Target Positions.
 
     Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
     Args:
-        stim_number(int): Number of trials in calibration
-        stim_length(int): Number of stimuli in each inquiry
-        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+        inquiry_count(int): Number of inquiries in calibration
+        stim_per_inquiry(int): Number of stimuli in each inquiry
+        percentage_without_target(int): percentage of inquiries for which target letter flashed is not in inquiry
 
     Return distributed_target_positions(list): targets: array of target indexes to be chosen
     """
@@ -591,21 +593,21 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
     no_target = None
 
     # find number of target and nontarget inquiries
-    num_nontarget_inquiry = int(stim_number * (nontarget_inquiries / 100))
-    num_target_inquiry = stim_number - num_nontarget_inquiry
+    num_nontarget_inquiry = int(inquiry_count * (percentage_without_target / 100))
+    num_target_inquiry = inquiry_count - num_nontarget_inquiry
 
     # find number each target position is repeated, and remaining number
-    num_pos = (int)(num_target_inquiry / stim_length)
-    num_rem_pos = (num_target_inquiry % stim_length)
+    num_pos = (int)(num_target_inquiry / stim_per_inquiry)
+    num_rem_pos = (num_target_inquiry % stim_per_inquiry)
 
     # add correct number of None's for nontarget inquiries
     targets = [no_target] * num_nontarget_inquiry
 
     # add distributed list of target positions
-    targets.extend(list(range(stim_length)) * num_pos)
+    targets.extend(list(range(stim_per_inquiry)) * num_pos)
 
     # pick leftover positions randomly
-    rem_pos = list(range(stim_length))
+    rem_pos = list(range(stim_per_inquiry))
     random.shuffle(rem_pos)
     rem_pos = rem_pos[0:num_rem_pos]
     targets.extend(rem_pos)
@@ -615,6 +617,27 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
 
     return targets
 
+def target_index(inquiry: List[str]) -> int:
+    """Given an inquiry, return the index of the target within the choices and
+    None if the target is not included as a choice.
+
+    Parameters
+    ----------
+        inquiry - list of [target, fixation, *choices]
+
+    >>> inquiry = ['T', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+    >>> target_index(inquiry)
+    6
+    >>> inquiry = ['A', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+    >>> target_index(inquiry)
+    None
+    """
+    assert len(inquiry) > 3, "Not enough choices"
+    target, _fixation, *choices = inquiry
+    try:
+        return choices.index(target)
+    except ValueError:
+        return None
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.
