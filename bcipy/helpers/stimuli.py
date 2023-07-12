@@ -478,6 +478,7 @@ def best_case_rsvp_inq_gen(alp: list,
                       [color[-1]] * stim_length)
     return InquirySchedule(samples, times, colors)
 
+NO_TARGET_INDEX = None
 
 def generate_calibration_inquiries(
         alp: List[str],
@@ -520,18 +521,15 @@ def generate_calibration_inquiries(
     if color is None:
         color = ['green', 'red', 'white']
     assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
-    target_indexes = []
-    no_target = None
 
+    target_indexes = []
     if target_positions == TargetPositions.DISTRIBUTED:
-        target_indexes = distributed_target_positions(inquiry_count, stim_per_inquiry, percentage_without_target)
+        target_indexes = distributed_target_positions(
+            inquiry_count, stim_per_inquiry, percentage_without_target)
     else:
-        # make list of random targets with correct number of non-target inquiries
-        num_nontarget_inquiry = int((percentage_without_target / 100) * inquiry_count)
-        num_target_inquiry = inquiry_count - num_nontarget_inquiry
-        target_indexes = [no_target] * num_nontarget_inquiry
-        target_indexes.extend(random.choices(range(stim_per_inquiry), k=num_target_inquiry))
-        random.shuffle(target_indexes)
+        target_indexes = random_target_positions(inquiry_count,
+                                                 stim_per_inquiry,
+                                                 percentage_without_target)
 
     samples, times, colors = [], [], []
 
@@ -542,13 +540,12 @@ def generate_calibration_inquiries(
             inquiry = alphabetize(inquiry)
 
         target_index = target_indexes[i]
-        if target_index is no_target:
+        if target_index is NO_TARGET_INDEX:
             target = random.choice(list(set(alp) - set(inquiry)))
         else:
             target = inquiry[target_index]
 
         sample = [target, get_fixation(is_txt=is_txt), *inquiry]
-
         samples.append(sample)
 
         # timing for fixation and prompt
@@ -590,7 +587,6 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int, perc
     """
 
     targets = []
-    no_target = None
 
     # find number of target and nontarget inquiries
     num_nontarget_inquiry = int(inquiry_count * (percentage_without_target / 100))
@@ -601,7 +597,7 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int, perc
     num_rem_pos = (num_target_inquiry % stim_per_inquiry)
 
     # add correct number of None's for nontarget inquiries
-    targets = [no_target] * num_nontarget_inquiry
+    targets = [NO_TARGET_INDEX] * num_nontarget_inquiry
 
     # add distributed list of target positions
     targets.extend(list(range(stim_per_inquiry)) * num_pos)
@@ -616,6 +612,30 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int, perc
     random.shuffle(targets)
 
     return targets
+
+
+def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                            percentage_without_target: int) -> list:
+    """Generates randomly distributed target positions, including target letter
+    not flashed at all, and shuffles them.
+
+    Args:
+        inquiry_count(int): Number of inquiries in calibration
+        stim_per_inquiry(int): Number of stimuli in each inquiry
+        percentage_without_target(int): percentage of inquiries for which
+            target letter flashed is not in inquiry
+
+    Return list of target indexes to be chosen
+    """
+    target_indexes = []
+    num_nontarget_inquiry = int(
+        (percentage_without_target / 100) * inquiry_count)
+    num_target_inquiry = inquiry_count - num_nontarget_inquiry
+    target_indexes = [NO_TARGET_INDEX] * num_nontarget_inquiry
+    target_indexes.extend(
+        random.choices(range(stim_per_inquiry), k=num_target_inquiry))
+    random.shuffle(target_indexes)
+    return target_indexes
 
 def target_index(inquiry: List[str]) -> int:
     """Given an inquiry, return the index of the target within the choices and

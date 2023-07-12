@@ -1,6 +1,6 @@
-import collections as cnt
 import glob
 import unittest
+from collections import Counter
 from os import path
 
 import numpy as np
@@ -14,9 +14,10 @@ from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    StimuliOrder, TargetPositions,
                                    TrialReshaper, alphabetize,
                                    best_case_rsvp_inq_gen, best_selection,
+                                   distributed_target_positions,
                                    generate_calibration_inquiries,
-                                   distributed_target_positions, get_fixation,
-                                   jittered_timing, play_sound, soundfiles,
+                                   get_fixation, jittered_timing, play_sound,
+                                   random_target_positions, soundfiles,
                                    ssvep_to_code, target_index,
                                    update_inquiry_timing)
 
@@ -24,27 +25,27 @@ MOCK_FS = 44100
 
 
 def is_uniform_distribution(inquiry_count: int, stim_per_inquiry: int,
-                            pct_without_target: int,
-                            counter: cnt.Counter) -> bool:
+                            percentage_without_target: int,
+                            counter: Counter) -> bool:
     """Determine if the counts in the provided counter are distributed
     uniformly."""
 
-    count_without_target = (int)(inquiry_count * (pct_without_target / 100))
-    target_inquiries = inquiry_count - count_without_target
-    num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
+    nontarget_inquiries = (int)(inquiry_count *
+                                (percentage_without_target / 100))
+    target_inquiries = inquiry_count - nontarget_inquiries
+    expected_targets_per_position = (int)(target_inquiries / stim_per_inquiry)
 
-    return all(
-        num_target_inquiries <= counter[i] <= num_target_inquiries + 1
-        for i in counter if counter[i] is not None
-    )
+    return all(expected_targets_per_position <= counter[pos] <=
+               expected_targets_per_position + 1 for pos in counter
+               if pos is not None)
+
 
 class TestStimuliGeneration(unittest.TestCase):
     """This is Test Case for Stimuli Generated via BciPy."""
 
     alp = [
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        '<', '_'
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+        'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '<', '_'
     ]
 
     def tearDown(self):
@@ -88,15 +89,15 @@ class TestStimuliGeneration(unittest.TestCase):
         for j in inq_timings:
             inq_timing = j[2:]  # remove the target presentaion and cross
             for inq_time in inq_timing:
-                self.assertTrue(min_jitter <= inq_time <= max_jitter,
-                                'Timing should be jittered and within the correct range')
+                self.assertTrue(
+                    min_jitter <= inq_time <= max_jitter,
+                    'Timing should be jittered and within the correct range')
 
             self.assertTrue(
                 len(set(inq_timing)) > 1, 'All choices should be unique')
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
     def test_calibration_inquiry_generator_random_order(self):
         """Test generation of random inquiries"""
@@ -127,9 +128,8 @@ class TestStimuliGeneration(unittest.TestCase):
             # create a string of the options
             inq_strings.append(''.join(choices))
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
     def test_calibration_inquiry_generator_alphabetical_order(self):
         """Test generation of random inquiries"""
@@ -161,9 +161,8 @@ class TestStimuliGeneration(unittest.TestCase):
             # create a string of the options
             inq_strings.append(''.join(choices))
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
     def test_target_index(self):
         """Test target_index function"""
@@ -173,10 +172,9 @@ class TestStimuliGeneration(unittest.TestCase):
         inquiry = ['A', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
         self.assertEqual(target_index(inquiry), None)
 
-
     def test_calibration_inquiry_generator_distributed_targets(self):
         """Test generation of inquiries with distributed target positions"""
-        inquiry_count = 10
+        inquiry_count = 100
         stim_per_inquiry = 10
         percentage_without_target = 10
         inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
@@ -206,25 +204,19 @@ class TestStimuliGeneration(unittest.TestCase):
             # create a string of the options
             inq_strings.append(''.join(choices))
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
         # Test distribution
-        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
-        target_inquiries = inquiry_count - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
+        counter = Counter(target_index(inq) for inq in inquiries)
+        self.assertTrue(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
 
-        indices = [target_index(inq) for inq in inquiries]
-        counter = cnt.Counter(indices)
-        for i in counter:
-            self.assertTrue(
-                num_target_inquiries <= counter[i] <= num_target_inquiries + 1)
-
-
-    def test_calibration_inquiry_generator_distributed_targets_alphabetical(self):
+    def test_calibration_inquiry_generator_distributed_targets_alphabetical(
+            self):
         """Test generation of inquiries with distributed target positions"""
-        inquiry_count = 10
+        inquiry_count = 100
         stim_per_inquiry = 10
         percentage_without_target = 20
         inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
@@ -254,13 +246,13 @@ class TestStimuliGeneration(unittest.TestCase):
             # create a string of the options
             inq_strings.append(''.join(choices))
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
-    def test_calibration_inquiry_generator_distributed_targets_no_nontargets(self):
+    def test_calibration_inquiry_generator_distributed_targets_no_nontargets(
+            self):
         """Test generation of inquiries with distributed target positions and no nontarget inquiries."""
-        inquiry_count = 10
+        inquiry_count = 100
         stim_per_inquiry = 10
         percentage_without_target = 0
         inquiries, inq_timings, inq_colors = generate_calibration_inquiries(
@@ -290,9 +282,8 @@ class TestStimuliGeneration(unittest.TestCase):
             # create a string of the options
             inq_strings.append(''.join(choices))
 
-        self.assertEqual(
-            len(inquiries), len(set(inq_strings)),
-            'All inquiries should be different')
+        self.assertEqual(len(inquiries), len(set(inq_strings)),
+                         'All inquiries should be different')
 
         # Ensure all inquiries include the target
         for inq in inquiries:
@@ -305,119 +296,204 @@ class TestStimuliGeneration(unittest.TestCase):
         stim_per_inquiry = 10
         percentage_without_target = 10
 
-        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
-        target_inquiries = inquiry_count - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
-
-        targets = distributed_target_positions(inquiry_count=inquiry_count,
-                                               stim_per_inquiry=stim_per_inquiry,
-                                               percentage_without_target=percentage_without_target)
+        target_positions = distributed_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), inquiry_count,
-            'Should have produced the correct number of targets for inquiries.')
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
 
-        # count how many times each target position is used
-        count = cnt.Counter(targets)
+        self.assertTrue(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target,
+                                    Counter(target_positions)))
 
-        # make sure position counts are equally distributed, including non-target
-        for i in count:
-            self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
-
-    def test_calibration_inquiry_generator_distributed_targets_positions_half_nontarget(self):
+    def test_calibration_inquiry_generator_distributed_targets_positions_half_nontarget(
+            self):
         """Test generation of distributed target positions with half being nontarget inquiries."""
 
         inquiry_count = 120
         stim_per_inquiry = 9
         percentage_without_target = 50
 
-        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
-        target_inquiries = inquiry_count - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
+        nontarget_inquiries = (int)(inquiry_count *
+                                    (percentage_without_target / 100))
 
-        targets = distributed_target_positions(inquiry_count=inquiry_count,
-                                               stim_per_inquiry=stim_per_inquiry,
-                                               percentage_without_target=percentage_without_target)
+        target_positions = distributed_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), inquiry_count,
-            'Should have produced the correct number of targets for inquiries.')
-
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
         # count how many times each target position is used
-        count = cnt.Counter(targets)
-
-        # make sure target position counts are equally distributed
-        for i in count:
-            if i is not None:
-                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
+        counter = Counter(target_positions)
 
         # make sure correct number of non-target inquiries
-        self.assertEqual(count[None], nontarget_inquiry,
-                         'Should have produced 50 percent of 120 non-target positions.')
+        self.assertEqual(
+            counter[None], nontarget_inquiries,
+            'Should have produced 50 percent of 120 non-target positions.')
 
-    def test_calibration_inquiry_generator_distributed_targets_positions_no_nontargets(self):
+        self.assertTrue(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
+
+    def test_calibration_inquiry_generator_distributed_targets_positions_no_nontargets(
+            self):
         """Test generation of distributed target positions with no nontarget inquiries."""
 
         inquiry_count = 50
         stim_per_inquiry = 11
         percentage_without_target = 0
 
-        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
-        target_inquiries = inquiry_count - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
-
-        targets = distributed_target_positions(inquiry_count=inquiry_count,
-                                               stim_per_inquiry=stim_per_inquiry,
-                                               percentage_without_target=percentage_without_target)
+        target_positions = distributed_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), inquiry_count,
-            'Should have produced the correct number of targets for inquiries.')
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
 
         # count how many times each target position is used
-        count = cnt.Counter(targets)
+        counter = Counter(target_positions)
 
-        # make sure target position counts are equally distributed
-        for i in count:
-            if i is not None:
-                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
+        self.assertTrue(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
 
         # make sure there are no non-target inquiries
-        self.assertEqual(count[None], 0,
+        self.assertEqual(counter[None], 0,
                          'Should have produced no non-target positions.')
 
-    def test_calibration_inquiry_generator_distributed_targets_all_nontargets(self):
+    def test_calibration_inquiry_generator_distributed_targets_all_nontargets(
+            self):
         """Test generation of distributed target positions with all inquiries being non-target."""
 
         inquiry_count = 100
         stim_per_inquiry = 6
         percentage_without_target = 100
 
-        nontarget_inquiry = (int)(inquiry_count * (percentage_without_target / 100))
-        target_inquiries = inquiry_count - nontarget_inquiry
-        num_target_inquiries = (int)(target_inquiries / stim_per_inquiry)
-
-        targets = distributed_target_positions(
+        target_positions = distributed_target_positions(
             inquiry_count=inquiry_count,
             stim_per_inquiry=stim_per_inquiry,
             percentage_without_target=percentage_without_target)
 
         self.assertEqual(
-            len(targets), inquiry_count,
-            'Should have produced the correct number of targets for inquiries.')
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
 
         # count how many times each target position is used
-        count = cnt.Counter()
-        for pos in targets:
-            count[pos] += 1
+        counter = Counter(target_positions)
 
-        # make sure target position counts are equally distributed
-        for i in count:
-            if i is not None:
-                self.assertTrue(num_target_inquiries <= count[i] <= num_target_inquiries + 1)
+        self.assertTrue(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
 
         # make sure all inquries are non-target inquiries
-        self.assertEqual(count[None], inquiry_count,
+        self.assertEqual(counter[None], inquiry_count,
+                         'Should have produced all non-target positions.')
+
+    def test_random_target_positions(self):
+        """Test generation of random target positions with nontarget inquiries."""
+
+        inquiry_count = 100
+        stim_per_inquiry = 10
+        percentage_without_target = 10
+
+        target_positions = random_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
+
+        self.assertEqual(
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
+        counter = Counter(target_positions)
+        print(counter)
+        self.assertFalse(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target,
+                                    counter))
+
+    def test_random_target_positions_half_nontarget(self):
+        """Test generation of random target positions with half being nontarget inquiries."""
+
+        inquiry_count = 120
+        stim_per_inquiry = 9
+        percentage_without_target = 50
+
+        target_positions = random_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
+
+        self.assertEqual(
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
+        # count how many times each target position is used
+        counter = Counter(target_positions)
+
+        # make sure correct number of non-target inquiries
+        self.assertEqual(
+            counter[None], 60,
+            'Should have produced 50 percent of 120 non-target positions.')
+
+        self.assertFalse(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
+
+    def test_random_target_positions_no_nontargets(self):
+        """Test generation of random target positions with no nontarget inquiries."""
+
+        inquiry_count = 50
+        stim_per_inquiry = 11
+        percentage_without_target = 0
+
+        target_positions = random_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=stim_per_inquiry,
+            percentage_without_target=percentage_without_target)
+
+        self.assertEqual(
+            len(target_positions), inquiry_count,
+            'Should have produced the correct number of target_positions for inquiries.'
+        )
+
+        # count how many times each target position is used
+        counter = Counter(target_positions)
+
+        self.assertFalse(
+            is_uniform_distribution(inquiry_count, stim_per_inquiry,
+                                    percentage_without_target, counter))
+
+        # make sure there are no non-target inquiries
+        self.assertEqual(counter[None], 0,
+                         'Should have produced no non-target positions.')
+
+    def test_random_target_positions_all_nontargets(self):
+        """Test generation of random target positions with all inquiries being non-target."""
+        inquiry_count = 100
+
+        target_positions = random_target_positions(
+            inquiry_count=inquiry_count,
+            stim_per_inquiry=6,
+            percentage_without_target=100)
+
+        # count how many times each target position is used
+        counter = Counter(target_positions)
+
+        # make sure all inquries are non-target inquiries
+        self.assertEqual(counter[None], inquiry_count,
                          'Should have produced all non-target positions.')
 
     def test_best_selection(self):
@@ -439,20 +515,18 @@ class TestStimuliGeneration(unittest.TestCase):
         # Test always included
         self.assertEqual(
             ['a', 'c', 'd'],
-            best_selection(
-                selection_elements=['a', 'b', 'c', 'd', 'e'],
-                val=[0.3, 0.1, 0.3, 0.1, 0.2],
-                len_query=3,
-                always_included=['d']),
+            best_selection(selection_elements=['a', 'b', 'c', 'd', 'e'],
+                           val=[0.3, 0.1, 0.3, 0.1, 0.2],
+                           len_query=3,
+                           always_included=['d']),
             'Included item should bump out the best item with the lowest val.')
 
         self.assertEqual(
             ['a', 'b', 'c'],
-            best_selection(
-                selection_elements=['a', 'b', 'c', 'd', 'e'],
-                val=[0.5, 0.4, 0.1, 0.0, 0.0],
-                len_query=3,
-                always_included=['b']),
+            best_selection(selection_elements=['a', 'b', 'c', 'd', 'e'],
+                           val=[0.5, 0.4, 0.1, 0.0, 0.0],
+                           len_query=3,
+                           always_included=['b']),
             'Included item should retain its position if already present')
 
         self.assertEqual(['a', 'b', 'e'],
@@ -473,11 +547,11 @@ class TestStimuliGeneration(unittest.TestCase):
 
         self.assertEqual(['a', 'b', 'c'],
                          best_selection(
-            selection_elements=['a', 'b', 'c', 'd', 'e'],
-            val=[0.5, 0.4, 0.1, 0.0, 0.0],
-            len_query=3,
-            always_included=['<']),
-            'should ignore items not in the set.')
+                             selection_elements=['a', 'b', 'c', 'd', 'e'],
+                             val=[0.5, 0.4, 0.1, 0.0, 0.0],
+                             len_query=3,
+                             always_included=['<']),
+                         'should ignore items not in the set.')
 
     def test_best_case_inquiry_gen(self):
         """Test best_case_rsvp_inq_gen"""
@@ -513,8 +587,8 @@ class TestStimuliGeneration(unittest.TestCase):
         alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
         n = 5
 
-        with self.assertRaises(
-                Exception, msg='Constants should be in the alphabet'):
+        with self.assertRaises(Exception,
+                               msg='Constants should be in the alphabet'):
             best_case_rsvp_inq_gen(
                 alp=alp,
                 session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2],
@@ -570,13 +644,15 @@ class TestJitteredTiming(unittest.TestCase):
         for r in resp:
             self.assertTrue(min_jitter <= r <= max_jitter)
 
-    def test_jittered_timing_throw_exception_when_jitter_greater_than_time(self):
+    def test_jittered_timing_throw_exception_when_jitter_greater_than_time(
+            self):
         # to prevent 0 values we prevent the jitter from being greater than the time
         time = 1
         jitter = 1.5
         stim_number = 100
 
-        with self.assertRaises(Exception, msg='Jitter should be less than stimuli time'):
+        with self.assertRaises(Exception,
+                               msg='Jitter should be less than stimuli time'):
             jittered_timing(time, jitter, stim_number)
 
 
@@ -618,6 +694,7 @@ class TestAlphabetize(unittest.TestCase):
 
 
 class TestTrialReshaper(unittest.TestCase):
+
     def setUp(self):
         self.target_info = ['target', 'nontarget', 'nontarget']
         self.timing_info = [1.001, 1.2001, 1.4001]
@@ -640,7 +717,8 @@ class TestTrialReshaper(unittest.TestCase):
             channel_map=self.channel_map,
             poststimulus_length=trial_length_s)
         trial_length_samples = int(sample_rate * trial_length_s)
-        expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
+        expected_shape = (self.channel_number, len(self.target_info),
+                          trial_length_samples)
         self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
 
@@ -654,27 +732,40 @@ class TestInquiryReshaper(unittest.TestCase):
         self.n_inquiry = 4
         self.sample_rate = 10
         self.target_info = [
-            "target", "nontarget", "nontarget",
-            "nontarget", "nontarget", "nontarget",
-            "nontarget", "target", "nontarget",
-            "nontarget", "nontarget", "target",
+            "target",
+            "nontarget",
+            "nontarget",
+            "nontarget",
+            "nontarget",
+            "nontarget",
+            "nontarget",
+            "target",
+            "nontarget",
+            "nontarget",
+            "nontarget",
+            "target",
         ]
-        self.true_labels = np.array([
-            [1, 0, 0],
-            [0, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        self.true_labels = np.array([[1, 0, 0], [0, 0, 0], [0, 1, 0],
+                                     [0, 0, 1]])
         self.timing_info = [
-            1.4, 2.4, 3.4,
-            28.1, 30.1, 38.1,
-            50.1, 51.1, 52.1,
-            80.1, 81.1, 82.1,
+            1.4,
+            2.4,
+            3.4,
+            28.1,
+            30.1,
+            38.1,
+            50.1,
+            51.1,
+            52.1,
+            80.1,
+            81.1,
+            82.1,
         ]
         # Note this value must be greater than the difference between first and last timing info per inquiry
         # In this case there are 3 trials per inquiry and the difference between the first and last timing info is 10s
         self.inquiry_duration_s = 10 + self.trial_length
-        self.samples_per_inquiry = int(self.sample_rate * self.inquiry_duration_s)
+        self.samples_per_inquiry = int(self.sample_rate *
+                                       self.inquiry_duration_s)
         self.samples_per_trial = int(self.sample_rate * self.trial_length)
         # We create a wealth of samples, but only use the first 4 inquiries worth
         self.eeg = np.random.randn(self.n_channel, 10000)
@@ -690,27 +781,32 @@ class TestInquiryReshaper(unittest.TestCase):
             channel_map=self.channel_map,
             poststimulus_length=self.trial_length,
         )
-        expected_shape = (self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        expected_shape = (self.n_channel, self.n_inquiry,
+                          self.samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
 
     def test_inquiry_reshaper_trial_extraction(self):
         timing = [[1, 3, 4], [1, 4, 5], [1, 2, 3], [4, 5, 6]]
         # make a fake eeg data array (n_channels, n_inquiry, n_samples)
-        inquiries = np.random.randn(self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        inquiries = np.random.randn(self.n_channel, self.n_inquiry,
+                                    self.samples_per_inquiry)
 
         response = InquiryReshaper().extract_trials(
             inquiries=inquiries,
             samples_per_trial=self.samples_per_trial,
             inquiry_timing=timing,
         )
-        expected_shape = (self.n_channel, (self.trials_per_inquiry * self.n_inquiry), self.samples_per_trial)
+        expected_shape = (self.n_channel,
+                          (self.trials_per_inquiry * self.n_inquiry),
+                          self.samples_per_trial)
         self.assertTrue(response.shape == expected_shape)
 
     def test_inquiry_reshaper_trial_extraction_with_prestimulus(self):
         timing = [[2, 7, 10], [2, 7, 15], [2, 12, 15], [4, 5, 6]]
         # make a fake eeg data array (n_channels, n_inquiry, n_samples)
-        inquiries = np.random.randn(self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        inquiries = np.random.randn(self.n_channel, self.n_inquiry,
+                                    self.samples_per_inquiry)
         prestimulus_samples = 1
         response = InquiryReshaper().extract_trials(
             inquiries=inquiries,
@@ -718,10 +814,9 @@ class TestInquiryReshaper(unittest.TestCase):
             inquiry_timing=timing,
             prestimulus_samples=prestimulus_samples,
         )
-        expected_shape = (
-            self.n_channel,
-            (self.trials_per_inquiry * self.n_inquiry),
-            (self.samples_per_trial + prestimulus_samples))
+        expected_shape = (self.n_channel,
+                          (self.trials_per_inquiry * self.n_inquiry),
+                          (self.samples_per_trial + prestimulus_samples))
         self.assertTrue(response.shape == expected_shape)
 
 
@@ -758,19 +853,22 @@ class SSVEPStimuli(unittest.TestCase):
     def test_ssvep_to_codes_returns_the_length_of_refresh_rate(self):
         refresh_rate = 40
         flicker_rate = 2
-        response = ssvep_to_code(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
+        response = ssvep_to_code(flicker_rate=flicker_rate,
+                                 refresh_rate=refresh_rate)
         self.assertTrue(len(response) == refresh_rate)
         self.assertEqual(response[0], 0)
         self.assertEqual(response[-1], 1)
 
-    def test_ssvep_to_code_raises_exception_when_refresh_rate_less_than_flicker_rate(self):
+    def test_ssvep_to_code_raises_exception_when_refresh_rate_less_than_flicker_rate(
+            self):
         flicker_rate = 300
         refresh_rate = 1
 
         with self.assertRaises(BciPyCoreException):
             ssvep_to_code(refresh_rate, flicker_rate)
 
-    def test_when_division_of_refresh_rate_by_flicker_rate_raise_exception_if_noninteger(self):
+    def test_when_division_of_refresh_rate_by_flicker_rate_raise_exception_if_noninteger(
+            self):
         flicker_rate = 11
         refresh_rate = 60
 
@@ -780,11 +878,13 @@ class SSVEPStimuli(unittest.TestCase):
     def test_ssvep_to_code_returns_expected_codes(self):
         flicker_rate = 2
         refresh_rate = 4
-        response = ssvep_to_code(flicker_rate=flicker_rate, refresh_rate=refresh_rate)
+        response = ssvep_to_code(flicker_rate=flicker_rate,
+                                 refresh_rate=refresh_rate)
         expected_output = [0, 0, 1, 1]
         self.assertEqual(response, expected_output)
 
-    def test_ssvep_to_code_raises_exception_when_flicker_rate_one_or_less(self):
+    def test_ssvep_to_code_raises_exception_when_flicker_rate_one_or_less(
+            self):
         flicker_rate = 1
         refresh_rate = 2
         with self.assertRaises(BciPyCoreException):
@@ -806,8 +906,8 @@ class TestSoundStimuli(unittest.TestCase):
         sound_file_path = 'test_sound_file_path'
 
         # mock the other library interactions
-        when(sf).read(
-            sound_file_path, dtype='float32').thenReturn(('data', MOCK_FS))
+        when(sf).read(sound_file_path, dtype='float32').thenReturn(
+            ('data', MOCK_FS))
         when(sd).play(any(), any()).thenReturn(None)
         when(core).wait(any()).thenReturn(None)
 
@@ -827,8 +927,8 @@ class TestSoundStimuli(unittest.TestCase):
         sound_file_path = 'test_sound_file_path'
 
         # mock the other library interactions
-        when(sf).read(
-            sound_file_path, dtype='float32').thenRaise(Exception(''))
+        when(sf).read(sound_file_path,
+                      dtype='float32').thenRaise(Exception(''))
 
         # assert it raises the exception
         with self.assertRaises(Exception):
@@ -850,8 +950,8 @@ class TestSoundStimuli(unittest.TestCase):
             self.assertEqual(stimuli, self.test_timing[0])
 
         # mock the other library interactions
-        when(sf).read(
-            sound_file_path, dtype='float32').thenReturn(('data', MOCK_FS))
+        when(sf).read(sound_file_path, dtype='float32').thenReturn(
+            ('data', MOCK_FS))
         when(sd).play(any(), any()).thenReturn(None)
         when(core).wait(any()).thenReturn(None)
         when(experiment_clock).getTime().thenReturn(test_trigger_time)
@@ -878,10 +978,8 @@ class TestSoundStimuli(unittest.TestCase):
             path.join(directory, '1.wav'),
             path.join(directory, '2.wav')
         ]
-        when(glob).glob(
-            path.join(
-                directory,
-                '*.wav')).thenReturn(soundfile_paths)
+        when(glob).glob(path.join(directory,
+                                  '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
 
         gen = soundfiles(directory)
@@ -901,10 +999,8 @@ class TestSoundStimuli(unittest.TestCase):
             path.join(directory, '1.wav'),
             path.join(directory, '2.wav')
         ]
-        when(glob).glob(
-            path.join(
-                directory,
-                '*.wav')).thenReturn(soundfile_paths)
+        when(glob).glob(path.join(directory,
+                                  '*.wav')).thenReturn(soundfile_paths)
         when(path).isdir(directory).thenReturn(True)
         gen = soundfiles(directory)
         self.assertEqual(next(gen), soundfile_paths[0])
