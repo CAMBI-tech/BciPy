@@ -521,75 +521,133 @@ def generate_calibration_inquiries(
     if color is None:
         color = ['green', 'red', 'white']
     assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
+    time_target, time_fixation, time_stim = timing
+    fixation = get_fixation(is_txt)
 
-    target_indexes = []
-    if target_positions == TargetPositions.DISTRIBUTED:
-        target_indexes = distributed_target_positions(
-            inquiry_count, stim_per_inquiry, percentage_without_target)
-    else:
-        target_indexes = random_target_positions(inquiry_count,
-                                                 stim_per_inquiry,
-                                                 percentage_without_target)
+    target_indexes = generate_target_positions(inquiry_count, stim_per_inquiry,
+                                               percentage_without_target,
+                                               target_positions)
 
-    samples, times, colors = [], [], []
-
+    samples, times = [], []
     for i in range(inquiry_count):
-        inquiry = random.sample(alp, k=stim_per_inquiry)
+        inquiry = generate_inquiry(symbols=alp,
+                                   length=stim_per_inquiry,
+                                   stim_order=stim_order)
+        target = inquiry_target(inquiry, target_position=target_indexes[i], symbols=alp)
+        samples.append([target, fixation, *inquiry])
 
-        if stim_order == StimuliOrder.ALPHABETICAL:
-            inquiry = alphabetize(inquiry)
+        stim_timing = generate_inquiry_stim_timing(time_stim, stim_per_inquiry, jitter)
+        times.append([time_target, time_fixation, *stim_timing])
 
-        target_index = target_indexes[i]
-        if target_index is NO_TARGET_INDEX:
-            target = random.choice(list(set(alp) - set(inquiry)))
-        else:
-            target = inquiry[target_index]
-
-        sample = [target, get_fixation(is_txt=is_txt), *inquiry]
-        samples.append(sample)
-
-        # timing for fixation and prompt
-        init_timing = [timing[i] for i in range(len(timing) - 1)]
-        # pull out timing for the inquiry stimuli
-        stim_time = timing[-1]
-        if jitter:
-            _inq_timing = jittered_timing(stim_time, jitter, stim_per_inquiry)
-            inq_timing = init_timing + _inq_timing
-        else:
-            inq_timing = init_timing + [stim_time] * stim_per_inquiry
-        times.append(inq_timing)
-        colors.append([color[i] for i in range(len(color) - 1)] +
-                      [color[-1]] * stim_per_inquiry)
+    inquiry_colors = color[0:2] + [color[-1]] * stim_per_inquiry
+    colors = [inquiry_colors for _ in range(inquiry_count)]
 
     return InquirySchedule(samples, times, colors)
 
 
+def generate_inquiry(symbols: List[str], length: int,
+                     stim_order: StimuliOrder) -> List[str]:
+    """Generate an inquiry from the list of symbols. No symbols are repeated
+    in the output list.
+
+    Args:
+        symbols - values from which to select
+        length - number of items in the return list
+        stim_order - ordering of results
+    """
+    inquiry = random.sample(symbols, k=length)
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        inquiry = alphabetize(inquiry)
+    return inquiry
+
+def inquiry_target(inquiry: List[str], target_position: Optional[int],
+                   symbols: List[str]) -> str:
+    """Returns the target for the given inquiry. If the optional
+    target position is not provided a target will randomly be selected from
+    the list of symbols and will not be in the inquiry.
+
+    Args:
+        inquiry - list of symbols to be presented
+        target_position - optional position within the list of the target sym
+        symbols - used if position is not provided to select a random symbol
+            as the target.
+
+    Returns target symbol
+    """
+    if target_position is None:
+        return random.choice(list(set(symbols) - set(inquiry)))
+    return inquiry[target_position]
+
+def generate_inquiry_stim_timing(time_stim: float, length: int,
+                                 jitter: bool) -> List[float]:
+    """Generate stimuli timing values for a given inquiry.
+
+    Args:
+        time_stim: seconds to display each stimuli
+        length: Number of timings to generate
+        jitter: whether the timing should be jittered.
+
+    Returns list of times (in seconds)
+    """
+    if jitter:
+        return jittered_timing(time_stim, jitter, length)
+
+    return [time_stim] * length
+
 def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
     """Jittered timing.
 
-    Using a base time and a jitter, generate a list (with length stim_count) of timing that is uniformly distributed.
+    Using a base time and a jitter, generate a list (with length stim_count) of
+    timing that is uniformly distributed.
     """
     assert time > jitter, (
         f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
     return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
 
-def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int, percentage_without_target: int) -> list:
+def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                              percentage_without_target: int,
+                              distribution: TargetPositions) -> List[int]:
+    """
+    Generates target positions distributed according to the provided parameter.
+
+    Args:
+        inquiry_count: Number of inquiries in calibration
+        stim_per_inquiry: Number of stimuli in each inquiry
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+        distribution: specifies how targets should be distributed
+
+    Returns list of indexes
+    """
+    if distribution is TargetPositions.DISTRIBUTED:
+        return distributed_target_positions(inquiry_count, stim_per_inquiry,
+                                            percentage_without_target)
+    return random_target_positions(inquiry_count, stim_per_inquiry,
+                                   percentage_without_target)
+
+def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                                 percentage_without_target: int) -> list:
     """Distributed Target Positions.
 
-    Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
+    Generates evenly distributed target positions, including target letter
+    not flashed at all, and shuffles them.
+
     Args:
         inquiry_count(int): Number of inquiries in calibration
         stim_per_inquiry(int): Number of stimuli in each inquiry
-        percentage_without_target(int): percentage of inquiries for which target letter flashed is not in inquiry
+        percentage_without_target(int): percentage of inquiries for which
+            target letter flashed is not in inquiry
 
-    Return distributed_target_positions(list): targets: array of target indexes to be chosen
+    Return distributed_target_positions(list): targets: array of target
+    indexes to be chosen
     """
 
     targets = []
 
     # find number of target and nontarget inquiries
-    num_nontarget_inquiry = int(inquiry_count * (percentage_without_target / 100))
+    num_nontarget_inquiry = int(inquiry_count *
+                                (percentage_without_target / 100))
     num_target_inquiry = inquiry_count - num_nontarget_inquiry
 
     # find number each target position is repeated, and remaining number

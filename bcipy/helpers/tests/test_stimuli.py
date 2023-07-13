@@ -16,7 +16,8 @@ from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    best_case_rsvp_inq_gen, best_selection,
                                    distributed_target_positions,
                                    generate_calibration_inquiries,
-                                   get_fixation, jittered_timing, play_sound,
+                                   generate_inquiry, get_fixation,
+                                   inquiry_target, jittered_timing, play_sound,
                                    random_target_positions, soundfiles,
                                    ssvep_to_code, target_index,
                                    update_inquiry_timing)
@@ -496,6 +497,35 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual(counter[None], inquiry_count,
                          'Should have produced all non-target positions.')
 
+    def test_inquiry_target(self):
+        """Test inquiry target"""
+
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = ['C', 'A', 'F', 'E']
+        self.assertEqual(inquiry_target(inquiry, 0, symbols), 'C')
+        self.assertEqual(inquiry_target(inquiry, 3, symbols), 'E')
+
+        target = inquiry_target(inquiry, None, symbols)
+        self.assertTrue(target not in inquiry)
+        self.assertTrue(target in symbols)
+
+    def test_generate_inquiry(self):
+        """Test generation of a single inquiry"""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = generate_inquiry(symbols=symbols,
+                                   length=3,
+                                   stim_order=StimuliOrder.RANDOM)
+
+        # NOTE: it's possible an inquiry in Random order will be in alphabetical order
+        self.assertEqual(3, len(inquiry))
+        for sym in inquiry:
+            self.assertTrue(sym in symbols)
+
+        inquiry = generate_inquiry(symbols=symbols,
+                                   length=3,
+                                   stim_order=StimuliOrder.ALPHABETICAL)
+        self.assertEqual(inquiry, sorted(inquiry))
+
     def test_best_selection(self):
         """Test best_selection"""
 
@@ -687,9 +717,9 @@ class TestAlphabetize(unittest.TestCase):
 
     def test_alphabetize_special_characters_at_end(self):
         character = '<'
+        stimuli = ['Z', character, 'Q', 'A', 'G']
         expected = ['A', 'G', 'Q', 'Z', character]
-        self.list_to_alphabetize.insert(1, character)
-        response = alphabetize(self.list_to_alphabetize)
+        response = alphabetize(stimuli)
         self.assertEqual(expected, response)
 
 
