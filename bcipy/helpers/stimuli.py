@@ -4,10 +4,12 @@ import logging
 import random
 import re
 from abc import ABC, abstractmethod
+from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, NamedTuple, Optional, Tuple
+from typing import Dict, Iterator, List, NamedTuple, Optional, Tuple
 
+from pandas import Series
 from PIL import Image
 
 from bcipy.helpers.exceptions import BciPyCoreException
@@ -485,7 +487,7 @@ def generate_calibration_inquiries(
         timing: List[float] = None,
         jitter: Optional[int] = None,
         color: List[str] = None,
-        inquiry_count: int = 10,
+        inquiry_count: int = 100,
         stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
@@ -493,6 +495,13 @@ def generate_calibration_inquiries(
         is_txt: bool = True) -> InquirySchedule:
     """
     Generates inquiries with target letters in all possible positions.
+
+    This function attempts to display all symbols as targets an equal number of
+    times when stim_order is RANDOM. When the stim_order is ALPHABETICAL there
+    is much more variation in the counts (target distribution takes priority)
+    and some symbols may not appear as targets depending on the inquiry_count.
+    The frequency that each symbol is displayed as a nontarget should follow a
+    uniform distribution.
 
     Parameters
     ----------
@@ -527,17 +536,28 @@ def generate_calibration_inquiries(
     target_indexes = generate_target_positions(inquiry_count, stim_per_inquiry,
                                                percentage_without_target,
                                                target_positions)
-
-    samples, times = [], []
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        targets = None
+    else:
+        targets = generate_targets(alp, inquiry_count, percentage_without_target)
+    inquiries = generate_inquiries(alp, inquiry_count, stim_per_inquiry,
+                                   stim_order)
+    samples = []
+    target = None
     for i in range(inquiry_count):
-        inquiry = generate_inquiry(symbols=alp,
-                                   length=stim_per_inquiry,
-                                   stim_order=stim_order)
-        target = inquiry_target(inquiry, target_position=target_indexes[i], symbols=alp)
+        inquiry = inquiries[i]
+        target_pos = target_indexes[i]
+        target = inquiry_target(inquiry,
+                                target_pos,
+                                symbols=alp,
+                                next_targets=targets,
+                                last_target=target)
         samples.append([target, fixation, *inquiry])
 
-        stim_timing = generate_inquiry_stim_timing(time_stim, stim_per_inquiry, jitter)
-        times.append([time_target, time_fixation, *stim_timing])
+    times = [[
+        time_target, time_fixation,
+        *generate_inquiry_stim_timing(time_stim, stim_per_inquiry, jitter)
+    ] for _ in range(inquiry_count)]
 
     inquiry_colors = color[0:2] + [color[-1]] * stim_per_inquiry
     colors = [inquiry_colors for _ in range(inquiry_count)]
@@ -545,10 +565,74 @@ def generate_calibration_inquiries(
     return InquirySchedule(samples, times, colors)
 
 
+def inquiry_target_counts(inquiries: List[List[str]], symbols: List[str]) -> dict:
+    """Count the number of times each symbol was presented as a target.
+
+    Args:
+        inquiries - list of inquiries where each inquiry is structured as
+            [target, fixation, *stim]
+        symbols - list of all possible symbols
+    """
+    target_presentations = [inq[0] for inq in inquiries if inq[0] in inq[2:]]
+    counter = dict.fromkeys(symbols, 0)
+    for target in target_presentations:
+        counter[target] += 1
+    return counter
+
+
+def inquiry_nontarget_counts(inquiries: List[List[str]], symbols: List[str]) -> dict:
+    """Count the number of times each symbol was presented as a nontarget."""
+    counter = dict.fromkeys(symbols, 0)
+    for inq in inquiries:
+        target, _fixation, *stimuli = inq
+        for stim in stimuli:
+            if stim != target:
+                counter[stim] += 1
+    return counter
+
+
+def inquiry_stats(inquiries: List[List[str]],
+                  symbols: List[str]) -> Dict[str, Dict[str, float]]:
+    """Descriptive stats for the number of times each target and nontarget
+    symbol is shown in the inquiries"""
+
+    target_stats = dict(
+        Series(Counter(inquiry_target_counts(inquiries, symbols))).describe())
+
+    nontarget_stats = dict(
+        Series(Counter(inquiry_nontarget_counts(inquiries,
+                                                symbols))).describe())
+
+    return {
+        'target_symbols': target_stats,
+        'nontarget_symbols': nontarget_stats
+    }
+
+
+
+def generate_inquiries(symbols: List[str], inquiry_count: int,
+                       stim_per_inquiry: int, stim_order: StimuliOrder) -> List[List[str]]:
+    """Generate a list of inquiries. For each inquiry no symbols are repeated.
+    Inquiries do not include the target or fixation. Symbols should be
+    distributed uniformly across inquiries.
+
+    Args:
+
+        symbols - values from which to select
+        inquiry_count - total number of inquiries to generate
+        stim_per_inquiry - length of each inquiry
+        stim_order - ordering of results
+    """
+    return [
+        generate_inquiry(symbols=symbols,
+                         length=stim_per_inquiry,
+                         stim_order=stim_order) for _ in range(inquiry_count)
+    ]
+
 def generate_inquiry(symbols: List[str], length: int,
                      stim_order: StimuliOrder) -> List[str]:
     """Generate an inquiry from the list of symbols. No symbols are repeated
-    in the output list.
+    in the output list. Output does not include the target or fixation.
 
     Args:
         symbols - values from which to select
@@ -560,8 +644,9 @@ def generate_inquiry(symbols: List[str], length: int,
         inquiry = alphabetize(inquiry)
     return inquiry
 
+
 def inquiry_target(inquiry: List[str], target_position: Optional[int],
-                   symbols: List[str]) -> str:
+                    symbols: List[str], next_targets: List[str] = None, last_target: str = None) -> str:
     """Returns the target for the given inquiry. If the optional
     target position is not provided a target will randomly be selected from
     the list of symbols and will not be in the inquiry.
@@ -571,11 +656,44 @@ def inquiry_target(inquiry: List[str], target_position: Optional[int],
         target_position - optional position within the list of the target sym
         symbols - used if position is not provided to select a random symbol
             as the target.
+        next_targets - list of targets from which to select
+        last_target - target from the previous inquiry; used to avoid selecting
+            the same target consecutively.
 
     Returns target symbol
     """
     if target_position is None:
         return random.choice(list(set(symbols) - set(inquiry)))
+
+    if next_targets:
+        # select the next target from the symbols in the current inquiry.
+        # if none of the symbols in the current inquiry are in the choices, the
+        # target is determined strictly from the target_position.
+        choice_index = None
+        symbol_inquiry_position = None
+        target = None
+        for position, symbol in enumerate(inquiry):
+            # avoid repeating targets
+            if symbol == last_target:
+                continue
+            try:
+                symbol_index = next_targets.index(symbol)
+                if choice_index is None or symbol_index < choice_index:
+                    choice_index = symbol_index
+                    symbol_inquiry_position = position
+                    target = symbol
+            except ValueError:
+                continue
+
+        if target is not None:
+            # update next_targets list
+            next_targets.remove(target)  # removes first occurrence of value
+
+            # update inquiry to set the target at the expected position.
+            symbol_at_target_position = inquiry[target_position]
+            inquiry[symbol_inquiry_position] = symbol_at_target_position
+            inquiry[target_position] = target
+
     return inquiry[target_position]
 
 def generate_inquiry_stim_timing(time_stim: float, length: int,
@@ -604,6 +722,22 @@ def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
         f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
     return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
 
+
+def num_inquiries_with_targets(
+        inquiry_count: int, percentage_without_target: int) -> Tuple[int, int]:
+    """Determine the number of inquiries that should display targets.
+
+    Args:
+        inquiry_count: Number of inquiries in calibration
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+
+    Returns tuple of num_nontarget_inquiry, num_target_inquiry
+    """
+    num_nontarget_inquiry = int(inquiry_count *
+                                (percentage_without_target / 100))
+    num_target_inquiry = inquiry_count - num_nontarget_inquiry
+    return num_target_inquiry, num_nontarget_inquiry
 
 def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
                               percentage_without_target: int,
@@ -670,6 +804,30 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
     random.shuffle(targets)
 
     return targets
+
+def generate_targets(symbols: List[str], inquiry_count: int,
+                                percentage_without_target: int) -> List[str]:
+    """Generates list of target symbols. Generates an equal number of each
+    target. The resulting list may be less than the inquiry_count. Used for
+    sampling without replacement to get approximately equal numbers of each
+    target.
+
+    Args:
+        symbols:
+        inquiry_count: number of inquiries in calibration
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+    """
+    nontarget_count = int(inquiry_count *
+                                (percentage_without_target / 100))
+    target_count = inquiry_count - nontarget_count
+
+    # each symbol should appear at least once
+    symbol_count = int(target_count / len(symbols)) or 1
+    targets = symbols * symbol_count
+    random.shuffle(targets)
+    return targets
+
 
 
 def random_target_positions(inquiry_count: int, stim_per_inquiry: int,

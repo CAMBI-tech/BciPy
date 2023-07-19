@@ -16,8 +16,10 @@ from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    best_case_rsvp_inq_gen, best_selection,
                                    distributed_target_positions,
                                    generate_calibration_inquiries,
-                                   generate_inquiry, get_fixation,
-                                   inquiry_target, jittered_timing, play_sound,
+                                   generate_inquiry, generate_targets,
+                                   get_fixation, inquiry_nontarget_counts,
+                                   inquiry_target, inquiry_target_counts,
+                                   jittered_timing, play_sound,
                                    random_target_positions, soundfiles,
                                    ssvep_to_code, target_index,
                                    update_inquiry_timing)
@@ -497,17 +499,91 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual(counter[None], inquiry_count,
                          'Should have produced all non-target positions.')
 
-    def test_inquiry_target(self):
-        """Test inquiry target"""
+    def test_generate_targets(self):
+        """Test target generation"""
+        symbols = ['A', 'B', 'C', 'D']
+        targets = generate_targets(symbols, inquiry_count = 9, percentage_without_target=0)
+        self.assertEqual(len(targets), 8)
+        self.assertTrue(all(val == 2 for val in Counter(targets).values()))
 
+        targets = generate_targets(symbols, inquiry_count = 9, percentage_without_target=50)
+        self.assertEqual(len(targets), 4)
+        self.assertTrue(all(val == 1 for val in Counter(targets).values()))
+
+    def test_inquiry_target(self):
+        """Test inquiry target behavior."""
         symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         inquiry = ['C', 'A', 'F', 'E']
-        self.assertEqual(inquiry_target(inquiry, 0, symbols), 'C')
-        self.assertEqual(inquiry_target(inquiry, 3, symbols), 'E')
+        next_targets = ['Q', 'F', 'A']
+        target = inquiry_target(inquiry,
+                                target_position=0,
+                                symbols=symbols,
+                                next_targets=next_targets)
 
-        target = inquiry_target(inquiry, None, symbols)
+        self.assertEqual(
+            target, 'F',
+            'the inquiry symbol next in order in the target choices should have been selected'
+        )
+        self.assertSequenceEqual(inquiry, ['F', 'A', 'C', 'E'],
+                                 'inquiry should have been re-ordered')
+        self.assertSequenceEqual(
+            next_targets, ['Q', 'A'],
+            'list of next targets should have been modified')
+
+    def test_inquiry_target_with_none_position(self):
+        """Test inquiry target with position of None."""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = ['C', 'A', 'F', 'E']
+        next_targets = ['Q', 'F', 'A']
+        target = inquiry_target(inquiry, None, symbols, next_targets)
         self.assertTrue(target not in inquiry)
         self.assertTrue(target in symbols)
+        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+
+    def test_inquiry_target_missing(self):
+        """Test inquiry target where none of the next_targets are present in
+        the current inquiry."""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = ['C', 'A', 'F', 'E']
+        next_targets = ['Q', 'D']
+        target = inquiry_target(inquiry,
+                                target_position=0,
+                                symbols=symbols,
+                                next_targets=next_targets)
+        self.assertTrue(target in inquiry)
+        self.assertTrue(target not in next_targets)
+        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+        self.assertSequenceEqual(next_targets, ['Q', 'D'], 'next_targets should not have changed')
+
+    def test_inquiry_target_no_targets(self):
+        """Test inquiry_target when no next_targets are provided"""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = ['C', 'A', 'F', 'E']
+        next_targets = ['Q', 'D']
+        target = inquiry_target(inquiry,
+                                target_position=0,
+                                symbols=symbols,
+                                next_targets=next_targets)
+        self.assertEqual(target, 'C', 'should have used the target_position to get the target')
+        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+
+    def test_inquiry_target_last_target(self):
+        """Test inquiry target behavior."""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        inquiry = ['C', 'A', 'F', 'E']
+        next_targets = ['Q', 'F', 'A']
+        target = inquiry_target(inquiry,
+                                target_position=0,
+                                symbols=symbols,
+                                next_targets=next_targets,
+                                last_target='F')
+
+        self.assertEqual(target, 'A', 'last_target should have been skipped')
+        self.assertSequenceEqual(inquiry, ['A', 'C', 'F', 'E'],
+                                 'inquiry should have been re-ordered')
+        self.assertSequenceEqual(
+            next_targets, ['Q', 'F'],
+            'list of next targets should have been modified')
 
     def test_generate_inquiry(self):
         """Test generation of a single inquiry"""
@@ -525,6 +601,34 @@ class TestStimuliGeneration(unittest.TestCase):
                                    length=3,
                                    stim_order=StimuliOrder.ALPHABETICAL)
         self.assertEqual(inquiry, sorted(inquiry))
+
+    def test_inquiry_target_counts(self):
+        """Test inquiry_target_counts"""
+        inquiries = [['D', '+', 'Z', 'Q', 'T', 'C', 'D'],
+                     ['Q', '+', 'L', 'Q', 'B', 'J', 'N'],
+                     ['W', '+', 'Q', 'F', 'M', 'W', 'N'],
+                     ['Q', '+', 'X', 'G', 'Z', 'J', 'V']]
+
+        targeted = ['D', 'Q', 'W']
+        not_targeted =  list(set(self.alp) - set(targeted))
+        target_counts = inquiry_target_counts(inquiries, symbols=self.alp)
+        self.assertTrue(all(target_counts[sym] == 1 for sym in targeted))
+        self.assertTrue(all(target_counts[sym] == 0 for sym in not_targeted))
+
+    def test_inquiry_nontarget_counts(self):
+        """Test inquiry_nontarget_counts"""
+        symbols = ['A', 'B', 'C', 'D', 'E', 'F']
+        inquiries = [['C', '+', 'B', 'E', 'C'],
+                     ['E', '+', 'B', 'F', 'E'],
+                     ['E', '+', 'A', 'C', 'E'],
+                     ['B', '+', 'D', 'E', 'B'],
+                     ['C', '+', 'F', 'B', 'C']]
+
+
+        expected = {'A': 1, 'B': 3, 'C': 1, 'D': 1, 'E': 2, 'F': 2}
+        counts = inquiry_nontarget_counts(inquiries, symbols=symbols)
+        self.assertDictEqual(counts, expected)
+
 
     def test_best_selection(self):
         """Test best_selection"""
