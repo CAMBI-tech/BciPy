@@ -482,6 +482,7 @@ def best_case_rsvp_inq_gen(alp: list,
 
 NO_TARGET_INDEX = None
 
+
 def generate_calibration_inquiries(
         alp: List[str],
         timing: List[float] = None,
@@ -529,7 +530,9 @@ def generate_calibration_inquiries(
         timing = [0.5, 1, 0.2]
     if color is None:
         color = ['green', 'red', 'white']
-    assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
+    assert len(
+        timing
+    ) == 3, "timing must include values for [target, fixation, stimuli]"
     time_target, time_fixation, time_stim = timing
     fixation = get_fixation(is_txt)
 
@@ -539,7 +542,8 @@ def generate_calibration_inquiries(
     if stim_order == StimuliOrder.ALPHABETICAL:
         targets = None
     else:
-        targets = generate_targets(alp, inquiry_count, percentage_without_target)
+        targets = generate_targets(alp, inquiry_count,
+                                   percentage_without_target)
     inquiries = generate_inquiries(alp, inquiry_count, stim_per_inquiry,
                                    stim_order)
     samples = []
@@ -565,7 +569,8 @@ def generate_calibration_inquiries(
     return InquirySchedule(samples, times, colors)
 
 
-def inquiry_target_counts(inquiries: List[List[str]], symbols: List[str]) -> dict:
+def inquiry_target_counts(inquiries: List[List[str]],
+                          symbols: List[str]) -> dict:
     """Count the number of times each symbol was presented as a target.
 
     Args:
@@ -580,7 +585,8 @@ def inquiry_target_counts(inquiries: List[List[str]], symbols: List[str]) -> dic
     return counter
 
 
-def inquiry_nontarget_counts(inquiries: List[List[str]], symbols: List[str]) -> dict:
+def inquiry_nontarget_counts(inquiries: List[List[str]],
+                             symbols: List[str]) -> dict:
     """Count the number of times each symbol was presented as a nontarget."""
     counter = dict.fromkeys(symbols, 0)
     for inq in inquiries:
@@ -609,9 +615,9 @@ def inquiry_stats(inquiries: List[List[str]],
     }
 
 
-
 def generate_inquiries(symbols: List[str], inquiry_count: int,
-                       stim_per_inquiry: int, stim_order: StimuliOrder) -> List[List[str]]:
+                       stim_per_inquiry: int,
+                       stim_order: StimuliOrder) -> List[List[str]]:
     """Generate a list of inquiries. For each inquiry no symbols are repeated.
     Inquiries do not include the target or fixation. Symbols should be
     distributed uniformly across inquiries.
@@ -629,6 +635,7 @@ def generate_inquiries(symbols: List[str], inquiry_count: int,
                          stim_order=stim_order) for _ in range(inquiry_count)
     ]
 
+
 def generate_inquiry(symbols: List[str], length: int,
                      stim_order: StimuliOrder) -> List[str]:
     """Generate an inquiry from the list of symbols. No symbols are repeated
@@ -645,8 +652,11 @@ def generate_inquiry(symbols: List[str], length: int,
     return inquiry
 
 
-def inquiry_target(inquiry: List[str], target_position: Optional[int],
-                    symbols: List[str], next_targets: List[str] = None, last_target: str = None) -> str:
+def inquiry_target(inquiry: List[str],
+                   target_position: Optional[int],
+                   symbols: List[str],
+                   next_targets: List[str] = None,
+                   last_target: str = None) -> str:
     """Returns the target for the given inquiry. If the optional
     target position is not provided a target will randomly be selected from
     the list of symbols and will not be in the inquiry.
@@ -696,6 +706,7 @@ def inquiry_target(inquiry: List[str], target_position: Optional[int],
 
     return inquiry[target_position]
 
+
 def generate_inquiry_stim_timing(time_stim: float, length: int,
                                  jitter: bool) -> List[float]:
     """Generate stimuli timing values for a given inquiry.
@@ -712,15 +723,20 @@ def generate_inquiry_stim_timing(time_stim: float, length: int,
 
     return [time_stim] * length
 
-def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
+
+def jittered_timing(time: float, jitter: float,
+                    stim_count: int) -> List[float]:
     """Jittered timing.
 
     Using a base time and a jitter, generate a list (with length stim_count) of
     timing that is uniformly distributed.
     """
     assert time > jitter, (
-        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
-    return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
+        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.'
+    )
+    return np.random.uniform(low=time - jitter,
+                             high=time + jitter,
+                             size=(stim_count, )).tolist()
 
 
 def num_inquiries_with_targets(
@@ -738,6 +754,7 @@ def num_inquiries_with_targets(
                                 (percentage_without_target / 100))
     num_target_inquiry = inquiry_count - num_nontarget_inquiry
     return num_target_inquiry, num_nontarget_inquiry
+
 
 def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
                               percentage_without_target: int,
@@ -759,6 +776,7 @@ def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
                                             percentage_without_target)
     return random_target_positions(inquiry_count, stim_per_inquiry,
                                    percentage_without_target)
+
 
 def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
                                  percentage_without_target: int) -> list:
@@ -805,30 +823,6 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
 
     return targets
 
-def generate_targets(symbols: List[str], inquiry_count: int,
-                                percentage_without_target: int) -> List[str]:
-    """Generates list of target symbols. Generates an equal number of each
-    target. The resulting list may be less than the inquiry_count. Used for
-    sampling without replacement to get approximately equal numbers of each
-    target.
-
-    Args:
-        symbols:
-        inquiry_count: number of inquiries in calibration
-        percentage_without_target: percentage of inquiries for which
-            target letter flashed is not in inquiry
-    """
-    nontarget_count = int(inquiry_count *
-                                (percentage_without_target / 100))
-    target_count = inquiry_count - nontarget_count
-
-    # each symbol should appear at least once
-    symbol_count = int(target_count / len(symbols)) or 1
-    targets = symbols * symbol_count
-    random.shuffle(targets)
-    return targets
-
-
 
 def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
                             percentage_without_target: int) -> list:
@@ -852,6 +846,29 @@ def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
         random.choices(range(stim_per_inquiry), k=num_target_inquiry))
     random.shuffle(target_indexes)
     return target_indexes
+
+
+def generate_targets(symbols: List[str], inquiry_count: int,
+                     percentage_without_target: int) -> List[str]:
+    """Generates list of target symbols. Generates an equal number of each
+    target. The resulting list may be less than the inquiry_count. Used for
+    sampling without replacement to get approximately equal numbers of each
+    target.
+
+    Args:
+        symbols:
+        inquiry_count: number of inquiries in calibration
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+    """
+    nontarget_count = int(inquiry_count * (percentage_without_target / 100))
+    target_count = inquiry_count - nontarget_count
+
+    # each symbol should appear at least once
+    symbol_count = int(target_count / len(symbols)) or 1
+    targets = symbols * symbol_count
+    random.shuffle(targets)
+    return targets
 
 def target_index(inquiry: List[str]) -> int:
     """Given an inquiry, return the index of the target within the choices and
