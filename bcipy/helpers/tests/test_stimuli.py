@@ -33,9 +33,9 @@ def is_uniform_distribution(inquiry_count: int, stim_per_inquiry: int,
     """Determine if the counts in the provided counter are distributed
     uniformly."""
 
-    nontarget_inquiries = (int)(inquiry_count *
+    no_target_inquiries = (int)(inquiry_count *
                                 (percentage_without_target / 100))
-    target_inquiries = inquiry_count - nontarget_inquiries
+    target_inquiries = inquiry_count - no_target_inquiries
     expected_targets_per_position = (int)(target_inquiries / stim_per_inquiry)
 
     return all(expected_targets_per_position <= counter[pos] <=
@@ -502,11 +502,11 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_generate_targets(self):
         """Test target generation"""
         symbols = ['A', 'B', 'C', 'D']
-        targets = generate_targets(symbols, inquiry_count = 9, percentage_without_target=0)
+        targets = generate_targets(symbols, inquiry_count=9, percentage_without_target=0)
         self.assertEqual(len(targets), 8)
         self.assertTrue(all(val == 2 for val in Counter(targets).values()))
 
-        targets = generate_targets(symbols, inquiry_count = 9, percentage_without_target=50)
+        targets = generate_targets(symbols, inquiry_count=9, percentage_without_target=50)
         self.assertEqual(len(targets), 4)
         self.assertTrue(all(val == 1 for val in Counter(targets).values()))
 
@@ -610,7 +610,7 @@ class TestStimuliGeneration(unittest.TestCase):
                      ['Q', '+', 'X', 'G', 'Z', 'J', 'V']]
 
         targeted = ['D', 'Q', 'W']
-        not_targeted =  list(set(self.alp) - set(targeted))
+        not_targeted = list(set(self.alp) - set(targeted))
         target_counts = inquiry_target_counts(inquiries, symbols=self.alp)
         self.assertTrue(all(target_counts[sym] == 1 for sym in targeted))
         self.assertTrue(all(target_counts[sym] == 0 for sym in not_targeted))
@@ -624,11 +624,9 @@ class TestStimuliGeneration(unittest.TestCase):
                      ['B', '+', 'D', 'E', 'B'],
                      ['C', '+', 'F', 'B', 'C']]
 
-
         expected = {'A': 1, 'B': 3, 'C': 1, 'D': 1, 'E': 2, 'F': 2}
         counts = inquiry_nontarget_counts(inquiries, symbols=symbols)
         self.assertDictEqual(counts, expected)
-
 
     def test_best_selection(self):
         """Test best_selection"""

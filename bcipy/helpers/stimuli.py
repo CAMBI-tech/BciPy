@@ -480,6 +480,7 @@ def best_case_rsvp_inq_gen(alp: list,
                       [color[-1]] * stim_length)
     return InquirySchedule(samples, times, colors)
 
+
 NO_TARGET_INDEX = None
 
 
@@ -739,21 +740,21 @@ def jittered_timing(time: float, jitter: float,
                              size=(stim_count, )).tolist()
 
 
-def num_inquiries_with_targets(
-        inquiry_count: int, percentage_without_target: int) -> Tuple[int, int]:
-    """Determine the number of inquiries that should display targets.
+def compute_counts(inquiry_count: int,
+                   percentage_without_target: int) -> Tuple[int, int]:
+    """Determine the number of inquiries that should display targets and the
+    number that should not.
 
     Args:
         inquiry_count: Number of inquiries in calibration
         percentage_without_target: percentage of inquiries for which
             target letter flashed is not in inquiry
 
-    Returns tuple of num_nontarget_inquiry, num_target_inquiry
+    Returns tuple of (target_count, no_target_count)
     """
-    num_nontarget_inquiry = int(inquiry_count *
-                                (percentage_without_target / 100))
-    num_target_inquiry = inquiry_count - num_nontarget_inquiry
-    return num_target_inquiry, num_nontarget_inquiry
+    no_target_count = int(inquiry_count * (percentage_without_target / 100))
+    target_count = inquiry_count - no_target_count
+    return target_count, no_target_count
 
 
 def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
@@ -797,17 +798,16 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
 
     targets = []
 
-    # find number of target and nontarget inquiries
-    num_nontarget_inquiry = int(inquiry_count *
-                                (percentage_without_target / 100))
-    num_target_inquiry = inquiry_count - num_nontarget_inquiry
+    # find number of target and no_target inquiries
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
 
     # find number each target position is repeated, and remaining number
-    num_pos = (int)(num_target_inquiry / stim_per_inquiry)
-    num_rem_pos = (num_target_inquiry % stim_per_inquiry)
+    num_pos = (int)(target_count / stim_per_inquiry)
+    num_rem_pos = (target_count % stim_per_inquiry)
 
     # add correct number of None's for nontarget inquiries
-    targets = [NO_TARGET_INDEX] * num_nontarget_inquiry
+    targets = [NO_TARGET_INDEX] * no_target_count
 
     # add distributed list of target positions
     targets.extend(list(range(stim_per_inquiry)) * num_pos)
@@ -837,13 +837,12 @@ def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
 
     Return list of target indexes to be chosen
     """
-    target_indexes = []
-    num_nontarget_inquiry = int(
-        (percentage_without_target / 100) * inquiry_count)
-    num_target_inquiry = inquiry_count - num_nontarget_inquiry
-    target_indexes = [NO_TARGET_INDEX] * num_nontarget_inquiry
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
+
+    target_indexes = [NO_TARGET_INDEX] * no_target_count
     target_indexes.extend(
-        random.choices(range(stim_per_inquiry), k=num_target_inquiry))
+        random.choices(range(stim_per_inquiry), k=target_count))
     random.shuffle(target_indexes)
     return target_indexes
 
@@ -861,14 +860,15 @@ def generate_targets(symbols: List[str], inquiry_count: int,
         percentage_without_target: percentage of inquiries for which
             target letter flashed is not in inquiry
     """
-    nontarget_count = int(inquiry_count * (percentage_without_target / 100))
-    target_count = inquiry_count - nontarget_count
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
 
     # each symbol should appear at least once
     symbol_count = int(target_count / len(symbols)) or 1
     targets = symbols * symbol_count
     random.shuffle(targets)
     return targets
+
 
 def target_index(inquiry: List[str]) -> int:
     """Given an inquiry, return the index of the target within the choices and
@@ -891,6 +891,7 @@ def target_index(inquiry: List[str]) -> int:
         return choices.index(target)
     except ValueError:
         return None
+
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
     """Get Task Info.
