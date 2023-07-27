@@ -2,16 +2,18 @@
 import logging
 from typing import List
 
-from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream, resolve_byprop
+from pylsl import (StreamInfo, StreamInlet, local_clock, resolve_byprop,
+                   resolve_stream)
 
-from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec, IRREGULAR_RATE
+from bcipy.acquisition.devices import (DEFAULT_DEVICE_TYPE, IRREGULAR_RATE,
+                                       DeviceSpec)
 from bcipy.acquisition.exceptions import InvalidClockError
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
-from bcipy.helpers.clock import Clock
 from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
 
@@ -101,13 +103,15 @@ class LslAcquisitionClient:
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        log.debug("Stopping Acquisition...")
-        if self.inlet:
-            self.inlet.close_stream()
-            self.inlet = None
+        log.debug(f"Stopping Acquisition from {self.device_spec.name} ...")
         if self.recorder:
+            log.debug(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
+        if self.inlet:
+            log.debug("Closing LSL connection")
+            self.inlet.close_stream()
+            self.inlet = None
 
         self.buffer = None
 

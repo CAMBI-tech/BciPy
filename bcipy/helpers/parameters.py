@@ -307,6 +307,15 @@ class Parameters(dict):
                                              original_value=None)
         return diffs
 
+    def instantiate(self, named_tuple_class: type) -> NamedTuple:
+        """Instantiate a namedtuple whose fields represent a subset of the
+        parameters."""
+        vals = [
+            self.cast_value(self.get_entry(key))
+            for key in named_tuple_class._fields
+        ]
+        return named_tuple_class(*vals)
+
 
 def changes_from_default(source: str) -> Dict[str, ParameterChange]:
     """Determines which parameters have changed from the default params.

@@ -3,13 +3,13 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
-from bcipy.config import (
-    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
-from bcipy.display import (InformationProperties, PreviewInquiryProperties,
-                           StimuliProperties)
-from bcipy.display import Display
-from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.acquisition.multimodal import ContentType
+from bcipy.config import (SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME,
+                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.display import (Display, InformationProperties,
+                           PreviewInquiryProperties, StimuliProperties)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
@@ -18,16 +18,19 @@ from bcipy.helpers.list import destutter
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.task import (construct_triggers,
-                                fake_copy_phrase_decision,
-                                get_data_for_decision, get_user_input,
-                                target_info, trial_complete_message)
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
+                                get_device_data_for_decision, get_user_input,
+                                relative_triggers, target_info,
+                                trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
+from bcipy.task.control.evidence import (EvidenceEvaluator,
+                                         init_evidence_evaluator)
 from bcipy.task.data import EvidenceType, Inquiry, Session
+from bcipy.task.exceptions import DuplicateModelEvidence
 
 
 class Decision(NamedTuple):
@@ -66,8 +69,7 @@ class RSVPCopyPhraseTask(Task):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_model : loaded pickle file,
-            trained signal model.
+        signal_models : list of trained signal models.
         language_model: object,
             trained language model.
         fake : boolean, optional
@@ -97,10 +99,10 @@ class RSVPCopyPhraseTask(Task):
         'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
-    def __init__(self, win, daq, parameters, file_save, signal_model,
+    def __init__(self, win, daq, parameters, file_save, signal_models,
                  language_model, fake):
         super(RSVPCopyPhraseTask, self).__init__()
-
+        self.logger = logging.getLogger(__name__)
         self.window = win
         self.daq = daq
         self.parameters = parameters
@@ -115,7 +117,12 @@ class RSVPCopyPhraseTask(Task):
         self.alp = alphabet(self.parameters)
 
         self.button_press_error_prob = 0.05
-        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
+
+        self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
+
+        self.evidence_types = [EvidenceType.LM]
+        self.evidence_types.extend(
+            [evaluator.produces for evaluator in self.evidence_evaluators])
         if self.parameters['show_preview_inquiry']:
             self.evidence_types.append(EvidenceType.BTN)
 
@@ -127,7 +134,8 @@ class RSVPCopyPhraseTask(Task):
 
         self.fake = fake
         self.language_model = language_model
-        self.signal_model = signal_model
+        # TODO: remove this
+        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = 5
 
         self.feedback = VisualFeedback(
@@ -156,6 +164,32 @@ class RSVPCopyPhraseTask(Task):
         )
 
         self.rsvp = self.init_display()
+
+    def init_evidence_evaluators(self,
+                                 signal_models) -> List[EvidenceEvaluator]:
+        """Initializes the evidence evaluators from the provided signal models.
+
+        Returns a list of evaluators for active devices. Raises an exception if
+        more than one evaluator provides the same type of evidence.
+        """
+        evidence_types = []
+        evaluators = []
+        for model in signal_models:
+            evaluator = init_evidence_evaluator(self.alp, model)
+            content_type = evaluator.consumes
+            evidence_type = evaluator.produces
+            if content_type in self.daq.device_content_types:
+                evaluators.append(evaluator)
+                if evidence_type in evidence_types:
+                    raise DuplicateModelEvidence(
+                        f"More than one model produces {evidence_type} evidence"
+                    )
+                evidence_types.append(evidence_type)
+            else:
+                self.logger.info(
+                    f"SignalModel not used: there is no active device of type: {content_type}"
+                )
+        return evaluators
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -232,9 +266,6 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
             lmodel=self.language_model,
-            device_spec=self.daq.device_spec,
-            signal_model=self.signal_model,
-            k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
@@ -245,10 +276,6 @@ class RSVPCopyPhraseTask(Task):
             decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
             backspace_always_shown=self.parameters['backspace_always_shown'],
-            filter_high=self.parameters['filter_high'],
-            filter_low=self.parameters['filter_low'],
-            filter_order=self.parameters['filter_order'],
-            notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
             stim_jitter=self.parameters['stim_jitter'],
             stim_order=StimuliOrder(self.parameters['stim_order']))
@@ -469,6 +496,9 @@ class RSVPCopyPhraseTask(Task):
                      proceed: bool = True) -> List[EvidenceType]:
         """Add all evidence used to make a decision.
 
+        Evaluates evidence from various sources (button press, devices,
+        language model) and adds it to the CopyPhraseWrapper for evaluation.
+
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
@@ -483,9 +513,11 @@ class RSVPCopyPhraseTask(Task):
         - self.copy_phrase_task
         """
         evidences = [
-            self.compute_button_press_evidence(proceed),
-            self.compute_eeg_evidence(stim_times, proceed)
+            self.compute_button_press_evidence(proceed)
         ]
+        # evidence from one or more devices
+        evidences.extend(self.compute_device_evidence(stim_times, proceed))
+
         evidence_types = []
         for evidence in evidences:
             if evidence:
@@ -520,41 +552,58 @@ class RSVPCopyPhraseTask(Task):
                                             proceed)
         return (EvidenceType.BTN, probs)
 
-    def compute_eeg_evidence(self,
-                             stim_times: List[List],
-                             proceed: bool = True
-                             ) -> Optional[Tuple[EvidenceType, List[float]]]:
-        """Evaluate the EEG evidence and add it to the copy_phrase_task, but
+    def compute_device_evidence(
+            self,
+            stim_times: List[List],
+            proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
+        """Get inquiry data from all devices and evaluate the evidence, but
         don't yet attempt a decision.
 
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
         - proceed : whether or not to evaluate the evidence, if `False` returns
-        empty values.
+            an empty array.
 
         Returns
         -------
-        tuple of (evidence type, evidence)
+            list of (evidence type, evidence) tuples
         """
         if not proceed or self.fake:
-            return None
+            return []
 
-        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
+        # currently prestim_length is used as a buffer for filter application;
+        # use the same at the end of the inquiry
         post_stim_buffer = self.parameters['prestim_length']
-        raw_data, triggers = get_data_for_decision(
-            inquiry_timing=self.stims_for_decision(stim_times),
+        prestim = self.parameters['prestim_length']
+        inquiry_timing = self.stims_for_decision(stim_times)
+
+        # Get all data at once so we don't redundantly query devices which are
+        # used in more than one signal model.
+        device_data = get_device_data_for_decision(
+            inquiry_timing=inquiry_timing,
             daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
-            prestim=self.parameters['prestim_length'],
+            prestim=prestim,
             poststim=post_stim_buffer + self.parameters['trial_length'])
 
+        triggers = relative_triggers(inquiry_timing, prestim)
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
+        letters, times, filtered_labels = self.copy_phrase_task.letter_info(
+            triggers, labels)
 
-        probs = self.copy_phrase_task.evaluate_eeg_evidence(
-            raw_data, triggers, labels, self.parameters['trial_length'])
-        return (EvidenceType.ERP, probs)
+        evidences = []
+        for evidence_evaluator in self.evidence_evaluators:
+            probs = evidence_evaluator.evaluate(
+                raw_data=device_data[evidence_evaluator.consumes],
+                symbols=letters,
+                times=times,
+                target_info=filtered_labels,
+                window_length=self.parameters['trial_length'])
+            evidences.append((evidence_evaluator.produces, probs))
+
+        return evidences
 
     def stims_for_decision(self, stim_times: List[List]) -> List[List]:
         """The stim_timings from the display may include non-letter stimuli
@@ -666,15 +715,16 @@ class RSVPCopyPhraseTask(Task):
     def write_offset_trigger(self) -> None:
         """Append the offset to the end of the triggers file.
         """
-        if self.daq.is_calibrated:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'daq_sample_offset',
-                    TriggerType.SYSTEM,
-                    # to help support future refactoring or use of lsl timestamps only
-                    # we write only the sample offset here
-                    self.daq.offset(self.rsvp.first_stim_time)
-                )])
+        # To help support future refactoring or use of lsl timestamps only
+        # we write only the sample offset here.
+        triggers = []
+        for content_type, client in self.daq.clients_by_type.items():
+            suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
+            label = f"daq_sample_offset{suffix}"
+            time = client.offset(self.rsvp.first_stim_time)
+            triggers.append(Trigger(label, TriggerType.SYSTEM, time))
+
+        self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
     def write_trigger_data(self, stim_times: List[Tuple[str, float]], target_stimuli: str) -> None:
@@ -685,16 +735,18 @@ class RSVPCopyPhraseTask(Task):
         - stim_times : list of (stim, clock_time) tuples
         - target_stimuli : current target stimuli
         """
-        if self.first_run and self.daq.is_calibrated:
-            # write offset first
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'starting_offset',
-                    TriggerType.OFFSET,
-                    # offset will factor in true offset and time relative from beginning
-                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
-                )]
-            )
+
+        if self.first_run:
+            # offset will factor in true offset and time relative from beginning
+            offset_triggers = []
+            for content_type, client in self.daq.clients_by_type.items():
+                suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
+                label = f"starting_offset{suffix}"
+                time = client.offset(
+                    self.rsvp.first_stim_time) - self.rsvp.first_stim_time
+                offset_triggers.append(Trigger(label, TriggerType.OFFSET,
+                                               time))
+            self.trigger_handler.add_triggers(offset_triggers)
 
         triggers = convert_timing_triggers(stim_times, target_stimuli, self.trigger_type)
         self.trigger_handler.add_triggers(triggers)

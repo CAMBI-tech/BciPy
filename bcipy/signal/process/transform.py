@@ -1,7 +1,8 @@
-from typing import Optional, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 import numpy as np
-from bcipy.signal.process.filter import Notch, Bandpass
+
+from bcipy.signal.process.filter import Bandpass, Notch
 
 
 class Composition:
@@ -27,6 +28,23 @@ class Downsample:
             return data[:, :: self.factor], fs // self.factor
         else:
             return data[:, :: self.factor], None
+
+
+class ERPTransformParams(NamedTuple):
+    """Parameters used for the default transform."""
+    notch_filter_frequency: int = 60
+    filter_low: int = 2
+    filter_high: int = 45
+    filter_order: int = 2
+    down_sampling_rate: int = 2
+
+    def __str__(self):
+        return ', '.join([
+            f"Filter: [{self.filter_low}-{self.filter_high}]"
+            f"Order: {self.filter_order}",
+            f"Notch: {self.notch_filter_frequency}",
+            f"Downsample: {self.down_sampling_rate}"
+        ])
 
 
 def get_default_transform(
