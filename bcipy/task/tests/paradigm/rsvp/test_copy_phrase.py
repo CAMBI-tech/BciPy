@@ -8,17 +8,18 @@ import numpy as np
 from mock import patch
 from mockito import any, mock, unstub, verify, when
 
-from bcipy.config import DEFAULT_ENCODING
 import bcipy.display.paradigm.rsvp.mode.copy_phrase
-from bcipy.helpers.triggers import TriggerHandler
-from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.multimodal import ContentType
+from bcipy.config import DEFAULT_ENCODING
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.data import Session, EvidenceType
 from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.helpers.triggers import TriggerHandler
+from bcipy.task.data import EvidenceType, Session
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
 class TestCopyPhrase(unittest.TestCase):
@@ -88,16 +89,31 @@ class TestCopyPhrase(unittest.TestCase):
         device_spec = DeviceSpec(name='Testing',
                                  channels=['a', 'b', 'c'],
                                  sample_rate=300.0)
+        self.eeg_client_mock = mock(
+            {
+                'device_spec': device_spec,
+                'is_calibrated': True,
+                'offset': lambda x: 0.0,
+            },
+            spec=LslAcquisitionClient)
         self.daq = mock(
             {
                 'device_spec': device_spec,
                 'is_calibrated': True,
-                'offset': lambda x: 0.0
-            },
-            spec=LslAcquisitionClient)
-
+                'offset': lambda x: 0.0,
+                'device_content_types': [ContentType.EEG],
+                'clients_by_type': {
+                    ContentType.EEG: self.eeg_client_mock
+                }
+            })
+        when(self.daq).get_client(ContentType.EEG).thenReturn(self.eeg_client_mock)
         self.temp_dir = tempfile.mkdtemp()
-        self.signal_model = mock()
+        self.model_metadata = mock({
+            'device_spec': device_spec,
+            'transform': mock(),
+            'evidence_type': 'ERP'
+        })
+        self.signal_model = mock({'metadata': self.model_metadata})
         self.language_model = mock()
 
         decision_maker = mock()
@@ -132,7 +148,7 @@ class TestCopyPhrase(unittest.TestCase):
             daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
-            signal_model=self.signal_model,
+            signal_models=[self.signal_model],
             language_model=self.language_model,
             fake=True)
 
@@ -142,7 +158,7 @@ class TestCopyPhrase(unittest.TestCase):
             daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
-            signal_model=self.signal_model,
+            signal_models=[self.signal_model],
             language_model=self.language_model,
             fake=True)
 
@@ -157,7 +173,7 @@ class TestCopyPhrase(unittest.TestCase):
                 daq=self.daq,
                 parameters=parameters,
                 file_save=self.temp_dir,
-                signal_model=self.signal_model,
+                signal_models=[self.signal_model],
                 language_model=self.language_model,
                 fake=True)
 
@@ -170,7 +186,7 @@ class TestCopyPhrase(unittest.TestCase):
                 daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
-                signal_model=self.signal_model,
+                signal_models=[self.signal_model],
                 language_model=self.language_model,
                 fake=True)
 
@@ -183,7 +199,7 @@ class TestCopyPhrase(unittest.TestCase):
                 daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
-                signal_model=self.signal_model,
+                signal_models=[self.signal_model],
                 language_model=self.language_model,
                 fake=True)
 
@@ -197,7 +213,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
@@ -220,7 +236,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_fake_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
@@ -229,7 +245,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
@@ -259,7 +275,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_max_inq_len(self, process_data_mock, message_mock,
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
@@ -268,7 +284,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
@@ -298,7 +314,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_spelling_complete(self, process_data_mock,
                                message_mock, user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -309,7 +325,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
@@ -346,19 +362,19 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
         self.assertEqual(task.starting_spelled_letters(), 0)
 
     def test_stims_for_eeg(self):
-        """The correct stims should be sent to get_data_for_decision"""
+        """The correct stims should be sent to get_device_data_for_decision"""
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
         timings1 = [['calibration_trigger', 2.0539278959913645],
@@ -399,7 +415,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_next_letter(self, process_data_mock, message_mock,
                          user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
@@ -408,7 +424,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
         task.spelled_text = 'H'
@@ -428,7 +444,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_fake_data_with_preview(self, process_data_mock, message_mock,
                                             user_input_mock):
         """Test that preview is displayed"""
@@ -437,7 +453,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=True)
 
@@ -461,12 +477,15 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.copy_phrase_wrapper, times=1).add_evidence(EvidenceType.BTN, ...)
         self.assertEqual(self.temp_dir, result)
 
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.init_evidence_evaluator')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
-    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_data_for_decision')
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_execute_real_data_single_inquiry(self, process_data_mock, message_mock,
-                                              user_input_mock):
+                                              user_input_mock, init_evaluator_mock):
         """Test that fake data does not use the decision maker"""
+        evaluator_mock = mock()
+        init_evaluator_mock.return_value = evaluator_mock
 
         conjugator_mock = mock({
             'latest_evidence': {
@@ -536,20 +555,32 @@ class TestCopyPhrase(unittest.TestCase):
                      'white', 'white', 'white', 'white', 'white'
                  ]])))
 
-        when(self.display).do_inquiry().thenReturn(
-            [['calibration_trigger', 2.5866074122022837],
-             ['+', 4.274230484152213], ['<', 4.741131300106645],
-             ['G', 4.957655837060884], ['A', 5.1744828461669385],
-             ['E', 5.391295877052471], ['H', 5.608199302107096],
-             ['D', 5.8250101080629975], ['F', 6.04189362609759],
-             ['I', 6.258658453123644], ['B', 6.475744977127761],
-             ['C', 6.692347120027989]])
+        triggers = [['calibration_trigger', 2.5866074122022837],
+                    ['+', 4.274230484152213], ['<', 4.741131300106645],
+                    ['G', 4.957655837060884], ['A', 5.1744828461669385],
+                    ['E', 5.391295877052471], ['H', 5.608199302107096],
+                    ['D', 5.8250101080629975], ['F', 6.04189362609759],
+                    ['I', 6.258658453123644], ['B', 6.475744977127761],
+                    ['C', 6.692347120027989]]
+        when(self.display).do_inquiry().thenReturn(triggers)
+
+        when(copy_phrase_wrapper_mock).letter_info(any(), any()).thenReturn(
+            (['<', 'G', 'A', 'E', 'H', 'D', 'F', 'I', 'B', 'C'], [
+                4.741131300106645, 4.957655837060884, 5.1744828461669385,
+                5.391295877052471, 5.608199302107096, 5.8250101080629975,
+                6.04189362609759, 6.258658453123644, 6.475744977127761,
+                6.692347120027989
+            ], [
+                'nontarget', 'nontarget', 'nontarget', 'nontarget',
+                'nontarget', 'nontarget', 'nontarget', 'nontarget',
+                'nontarget', 'nontarget'
+            ]))
 
         task = RSVPCopyPhraseTask(win=self.win,
                                   daq=self.daq,
                                   parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  signal_model=self.signal_model,
+                                  signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=False)
 
@@ -629,15 +660,17 @@ def mock_inquiry_timings():
 
 
 def mock_process_data():
-    """Generator that yields data mocking the get_data_for_decision helper"""
-    raw_data = None
-    triggers = [('+', 0.0), ('H', 0.4680980280973017),
-                ('C', 0.6852016930934042), ('D', 0.9016020260751247),
-                ('<', 1.1184057840146124), ('I', 1.335060202050954),
-                ('E', 1.552058998029679), ('B', 1.7685756811406463),
-                ('F', 1.9853776029776782), ('A', 2.202271921094507),
-                ('G', 2.4189279531128705)]
-    return (raw_data, triggers)
+    """Generator that yields data mocking the get_device_data_for_decision helper"""
+    return {ContentType.EEG: None}
+
+
+def mock_triggers():
+    """Mocks data from the task relative_triggers helper"""
+    return [('+', 0.0), ('H', 0.4680980280973017), ('C', 0.6852016930934042),
+            ('D', 0.9016020260751247), ('<', 1.1184057840146124),
+            ('I', 1.335060202050954), ('E', 1.552058998029679),
+            ('B', 1.7685756811406463), ('F', 1.9853776029776782),
+            ('A', 2.202271921094507), ('G', 2.4189279531128705)]
 
 
 if __name__ == '__main__':

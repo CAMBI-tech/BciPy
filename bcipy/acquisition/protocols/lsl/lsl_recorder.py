@@ -7,7 +7,8 @@ from typing import List, Tuple
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names, check_device
+from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
+                                                           check_device)
 from bcipy.acquisition.util import StoppableThread
 from bcipy.helpers.raw_data import RawDataWriter
 
@@ -220,6 +221,7 @@ class LslRecordingThread(StoppableThread):
         log.info(f"Total recorded seconds: {self.recorded_seconds}")
         log.info(f"Total recorded samples: {self.sample_count}")
         inlet.close_stream()
+        inlet = None
         self._cleanup()
 
 
@@ -243,6 +245,7 @@ def main(path: str, seconds: int = 5, debug: bool = False):
 
 if __name__ == '__main__':
     import argparse
+
     # pylint: disable=invalid-name
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', default='.')

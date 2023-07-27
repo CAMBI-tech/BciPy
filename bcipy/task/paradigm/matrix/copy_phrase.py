@@ -1,9 +1,9 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
 
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.display import Display, InformationProperties, StimuliProperties
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
@@ -23,8 +23,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_model : loaded pickle file,
-            trained signal model.
+        signal_models : list of trained signal models.
         language_model: object,
             trained language model.
         fake : boolean, optional

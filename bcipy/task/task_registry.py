@@ -1,7 +1,6 @@
 """Task Registry ; used to provide task options to the GUI and command line
 tools. User defined tasks can be added to the Registry."""
 
-
 # NOTE:
 # In the future we may want to consider dynamically retrieving all subclasses
 # of Task and use these to populate a registry. We could also provide
@@ -13,13 +12,13 @@ tools. User defined tasks can be added to the Registry."""
 # the Task subclasses causes pygame (a psychopy dependency) to create a GUI,
 # which seems to prevent our other GUI code from working.
 
-from enum import Enum
 from typing import List
 
 from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.system_utils import AutoNumberEnum
 
 
-class TaskType(Enum):
+class TaskType(AutoNumberEnum):
     """Enum of the registered experiment types (Tasks), along with the label
     used for display in the GUI and command line tools. Values are looked up
     by their (1-based) index.
@@ -39,13 +38,6 @@ class TaskType(Enum):
     MATRIX_TIMING_VERIFICATION_CALIBRATION = 'Matrix Time Test Calibration'
     MATRIX_COPY_PHRASE = 'Matrix Copy Phrase'
 
-    def __new__(cls, *args, **kwds):
-        """Autoincrements the value of each item added to the enum."""
-        value = len(cls.__members__) + 1
-        obj = object.__new__(cls)
-        obj._value_ = value
-        return obj
-
     def __init__(self, label):
         self.label = label
 
@@ -60,9 +52,10 @@ class TaskType(Enum):
 
     @classmethod
     def calibration_tasks(cls) -> List['TaskType']:
-        return [task for task in cls
-                if task.name.endswith('CALIBRATION') and 'COPY_PHRASE'
-                not in task.name]
+        return [
+            task for task in cls if task.name.endswith('CALIBRATION') and
+            'COPY_PHRASE' not in task.name
+        ]
 
     @classmethod
     def list(cls) -> List[str]:
