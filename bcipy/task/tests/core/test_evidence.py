@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from bcipy.acquisition.multimodal import ContentType
-from bcipy.task.control.evidence import (EegEvaluator, find_matching_evaluator,
+from bcipy.task.control.evidence import (EEGEvaluator, find_matching_evaluator,
                                          get_evaluator)
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
@@ -15,8 +15,8 @@ class TestEvidence(unittest.TestCase):
 
     def test_get_evaluator(self):
         """Test getting an evaluator"""
-        self.assertEqual(EegEvaluator, get_evaluator(ContentType.EEG))
-        self.assertEqual(EegEvaluator,
+        self.assertEqual(EEGEvaluator, get_evaluator(ContentType.EEG))
+        self.assertEqual(EEGEvaluator,
                          get_evaluator(ContentType.EEG, EvidenceType.ERP))
 
     def test_missing_evaluator(self):
@@ -36,7 +36,7 @@ class TestEvidence(unittest.TestCase):
         meta_mock.device_spec = device_mock
         signal_model_mock.metadata = meta_mock
 
-        self.assertEqual(EegEvaluator,
+        self.assertEqual(EEGEvaluator,
                          find_matching_evaluator(signal_model_mock))
 
     def test_match_with_bad_evidence_type(self):
@@ -49,7 +49,7 @@ class TestEvidence(unittest.TestCase):
         meta_mock.evidence_type = 'NOT_AN_EVIDENCE_TYPE'
         signal_model_mock.metadata = meta_mock
 
-        self.assertEqual(EegEvaluator,
+        self.assertEqual(EEGEvaluator,
                          find_matching_evaluator(signal_model_mock),
                          "should ignore the evidence type")
 

@@ -23,7 +23,7 @@ from bcipy.helpers.visualization import visualize_erp
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import (TransformParams, filter_inquiries,
+from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
 
 log = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ def offline_analysis(
     raw_data_file = f"{RAW_DATA_FILENAME}.csv"
 
     # get signal filtering information
-    transform_params = parameters.instantiate(TransformParams)
+    transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
     static_offset = parameters.get("static_trigger_offset")
 

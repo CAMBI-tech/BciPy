@@ -47,7 +47,7 @@ class EvidenceEvaluator:
         """Evaluate the evidence"""
 
 
-class EegEvaluator(EvidenceEvaluator):
+class EEGEvaluator(EvidenceEvaluator):
     """EvidenceEvaluator that extracts symbol likelihoods from raw EEG data.
 
     Parameters

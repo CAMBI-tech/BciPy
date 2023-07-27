@@ -1,6 +1,6 @@
 from bcipy.signal.process.filter import filter_inquiries
 from bcipy.signal.process.transform import (Composition, Downsample,
-                                            TransformParams,
+                                            ERPTransformParams,
                                             get_default_transform)
 
 __all__ = [
@@ -8,5 +8,5 @@ __all__ = [
     "get_default_transform",
     "Downsample",
     "Composition",
-    "TransformParams"
+    "ERPTransformParams"
 ]

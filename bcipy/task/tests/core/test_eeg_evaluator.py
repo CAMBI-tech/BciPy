@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from bcipy.task.control.evidence import EegEvaluator
+from bcipy.task.control.evidence import EEGEvaluator
 
 
 class TestEegEvaluator(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestEegEvaluator(unittest.TestCase):
     @patch('bcipy.task.control.evidence.analysis_channels')
     def test_init(self, analysis_channels_mock):
         """Test initialization"""
-        EegEvaluator(self.symbol_set, self.signal_model_mock)
+        EEGEvaluator(self.symbol_set, self.signal_model_mock)
         analysis_channels_mock.assert_called_with(self.device_mock.channels,
                                                   self.device_mock)
 
@@ -60,7 +60,7 @@ class TestEegEvaluator(unittest.TestCase):
         window_length = 0.5
 
         # Run the code
-        evaluator = EegEvaluator(self.symbol_set, self.signal_model_mock)
+        evaluator = EEGEvaluator(self.symbol_set, self.signal_model_mock)
         evaluator.evaluate(raw_data, symbols, times, target_info,
                            window_length)
 

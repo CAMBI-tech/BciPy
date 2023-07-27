@@ -30,7 +30,7 @@ class Downsample:
             return data[:, :: self.factor], None
 
 
-class TransformParams(NamedTuple):
+class ERPTransformParams(NamedTuple):
     """Parameters used for the default transform."""
     notch_filter_frequency: int = 60
     filter_low: int = 2
