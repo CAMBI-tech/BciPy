@@ -493,7 +493,7 @@ def generate_calibration_inquiries(
         stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
-        percentage_without_target: int = 10,
+        percentage_without_target: int = 0,
         is_txt: bool = True) -> InquirySchedule:
     """
     Generates inquiries with target letters in all possible positions.
