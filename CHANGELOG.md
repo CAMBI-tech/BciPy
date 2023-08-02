@@ -1,3 +1,19 @@
+# 2.0.0-rc.4
+
+Our last release candidate before the official 2.0 release!
+
+## Contributions
+
+- Multimodal Acquisition and Querying
+    - Support for multiple devices in online querying #286
+- Stimuli
+    - Updates to ensure stimuli are presented at the same frequency #287
+- Parameters
+    - Add a Range type parameter #285
+- Cleanup
+    - Change default log level to INFO to prevent too many messages in the experiment logs #288
+
+
 # 2.0.0-rc.3
 
 ## Contributions
