@@ -706,7 +706,7 @@ class BCIGui(QWidget):
     def __init__(self, title: str, width: int, height: int,
                  background_color: str):
         super(BCIGui, self).__init__()
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.INFO,
                             format='%(name)s - %(levelname)s - %(message)s')
         self.logger = logging
 

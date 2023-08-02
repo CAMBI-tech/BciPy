@@ -117,7 +117,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    log.debug('Press Ctrl + C to exit!')
+    log.info('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()

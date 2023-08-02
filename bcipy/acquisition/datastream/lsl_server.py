@@ -54,7 +54,7 @@ class LslDataServer(StoppableThread):
         self.device_spec = device_spec
         self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
 
-        log.debug("Starting LSL server for device: %s", device_spec.name)
+        log.info("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
         info = StreamInfo(device_spec.name,
                           device_spec.content_type, device_spec.channel_count,
@@ -82,8 +82,7 @@ class LslDataServer(StoppableThread):
             # "gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) +
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
-            log.debug("Creating marker stream")
-            print(f"Marker channel name: {marker_stream_name}")
+            log.info(f"Creating marker stream {marker_stream_name}")
             markers_info = StreamInfo(marker_stream_name,
                                       "Markers", 1, 0, 'string',
                                       "uid12345_markers")
@@ -93,7 +92,7 @@ class LslDataServer(StoppableThread):
     def stop(self):
         """Stop the thread and cleanup resources."""
 
-        log.debug("[*] Stopping data server")
+        log.info("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
         # Allows pylsl to cleanup; The outlet will no longer be discoverable
@@ -129,7 +128,7 @@ class LslDataServer(StoppableThread):
                     # deleted in another thread.
                     break
 
-        log.debug("[*] No longer pushing data")
+        log.info("[*] No longer pushing data")
 
 
 def _settings(filename):
@@ -194,9 +193,9 @@ def main():
     try:
         server = LslDataServer(device_spec=device_spec, generator=generator, add_markers=markers)
 
-        log.debug("New server created")
+        log.info("New server created")
         server.start()
-        log.debug("Server started")
+        log.info("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
