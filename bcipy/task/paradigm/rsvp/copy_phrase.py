@@ -373,19 +373,19 @@ class RSVPCopyPhraseTask(Task):
 
         if (self.inq_counter + 1) >= self.parameters['max_inq_len']:
             self.logger.info('Max tries exceeded: to allow for more tries'
-                              ' adjust the Maximum inquiry Length '
-                              '(max_inq_len) parameter.')
+                             ' adjust the Maximum inquiry Length '
+                             '(max_inq_len) parameter.')
             return False
 
         if self.session.total_time_spent >= (self.parameters['max_minutes'] *
                                              60):
             self.logger.info('Max time exceeded. To allow for more time '
-                              'adjust the max_minutes parameter.')
+                             'adjust the max_minutes parameter.')
             return False
 
         if self.session.total_number_decisions >= self.parameters['max_selections']:
             self.logger.info('Max number of selections reached '
-                              '(configured with the max_selections parameter)')
+                             '(configured with the max_selections parameter)')
             return False
 
         return True

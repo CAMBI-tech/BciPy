@@ -152,7 +152,7 @@ class LslAcquisitionClient:
             return []
 
         log.info((f'{len(data)} records available '
-                   f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
+                  f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
         start = start or data[0].timestamp
         end = end or data[-1].timestamp
         limit = limit or -1
