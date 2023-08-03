@@ -59,9 +59,9 @@ def main():
     """Create an run an lsl_server"""
     try:
         server = eye_tracker_server()
-        log.debug("New server created")
+        log.info("New server created")
         server.start()
-        log.debug("Server started")
+        log.info("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

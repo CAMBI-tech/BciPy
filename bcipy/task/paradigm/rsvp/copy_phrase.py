@@ -243,7 +243,7 @@ class RSVPCopyPhraseTask(Task):
         """Number of letters already spelled at the start of the task."""
         spelled_letters_count = self.parameters['spelled_letters_count']
         if spelled_letters_count > len(self.copy_phrase):
-            self.logger.debug('Already spelled letters exceeds phrase length.')
+            self.logger.info('Already spelled letters exceeds phrase length.')
             spelled_letters_count = 0
         return spelled_letters_count
 
@@ -294,7 +294,7 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['stim_color'],
             first_run=self.first_run)
         if not should_continue:
-            self.logger.debug('User wants to exit.')
+            self.logger.info('User wants to exit.')
         return should_continue
 
     def wait(self, seconds: float = None):
@@ -368,24 +368,24 @@ class RSVPCopyPhraseTask(Task):
         should continue.
         """
         if self.copy_phrase == self.spelled_text:
-            self.logger.debug('Spelling complete')
+            self.logger.info('Spelling complete')
             return False
 
         if (self.inq_counter + 1) >= self.parameters['max_inq_len']:
-            self.logger.debug('Max tries exceeded: to allow for more tries'
-                              ' adjust the Maximum inquiry Length '
-                              '(max_inq_len) parameter.')
+            self.logger.info('Max tries exceeded: to allow for more tries'
+                             ' adjust the Maximum inquiry Length '
+                             '(max_inq_len) parameter.')
             return False
 
         if self.session.total_time_spent >= (self.parameters['max_minutes'] *
                                              60):
-            self.logger.debug('Max time exceeded. To allow for more time '
-                              'adjust the max_minutes parameter.')
+            self.logger.info('Max time exceeded. To allow for more time '
+                             'adjust the max_minutes parameter.')
             return False
 
         if self.session.total_number_decisions >= self.parameters['max_selections']:
-            self.logger.debug('Max number of selections reached '
-                              '(configured with the max_selections parameter)')
+            self.logger.info('Max number of selections reached '
+                             '(configured with the max_selections parameter)')
             return False
 
         return True
@@ -405,7 +405,7 @@ class RSVPCopyPhraseTask(Task):
         -------
         data save location (triggers.txt, session.json)
         """
-        self.logger.debug('Starting Copy Phrase Task!')
+        self.logger.info('Starting Copy Phrase Task!')
         run = True
         self.wait()  # buffer for data processing
 

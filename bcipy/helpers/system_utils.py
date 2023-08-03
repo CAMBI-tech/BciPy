@@ -194,7 +194,7 @@ def get_system_info() -> dict:
 def configure_logger(
         save_folder: str,
         log_name=LOG_FILENAME,
-        log_level=logging.DEBUG,
+        log_level=logging.INFO,
         version=None) -> None:
     """Configure Logger.
 

@@ -154,7 +154,7 @@ def get_data_for_decision(inquiry_timing,
 
     # Define the amount of data required for any processing to occur.
     data_limit = round((time2 - time1 + poststim) * daq.device_spec.sample_rate)
-    log.debug(f'Need {data_limit} records for processing')
+    log.info(f'Need {data_limit} records for processing')
 
     # Query for raw data
     raw_data = daq.get_data(start=time1, limit=data_limit)

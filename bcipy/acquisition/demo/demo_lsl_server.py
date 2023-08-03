@@ -23,9 +23,9 @@ def main():
     try:
         server = LslDataServer(device_spec=device_spec)
 
-        log.debug("New server created")
+        log.info("New server created")
         server.start()
-        log.debug("Server started")
+        log.info("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

@@ -155,7 +155,7 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
 
 def load_experimental_data() -> str:
     filename = ask_directory()  # show dialog box and return the path
-    log.debug("Loaded Experimental Data From: %s" % filename)
+    log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
 

@@ -204,7 +204,7 @@ class CopyPhraseWrapper:
             ]
 
             # display histogram of LM probabilities
-            log.debug(histogram(lm_letter_prior))
+            log.info(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
