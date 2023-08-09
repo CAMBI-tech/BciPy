@@ -572,11 +572,15 @@ class RSVPCopyPhraseTask(Task):
         if not proceed or self.fake:
             return []
 
-        # currently prestim_length is used as a buffer for filter application;
-        # use the same at the end of the inquiry
-        post_stim_buffer = self.parameters['prestim_length']
-        prestim = self.parameters['prestim_length']
+        # currently prestim_length is used as a buffer for filter application
+        post_stim_buffer = int(self.parameters.get("task_buffer_length") / 2)
+        prestim_buffer = self.parameters['prestim_length']
+        trial_window = self.parameters['trial_window']
+        window_length = trial_window[1] - trial_window[0]
         inquiry_timing = self.stims_for_decision(stim_times)
+
+        # update the inquiry timing list (stim, time) based on the trial window first time value
+        inquiry_timing = [(stim, time + trial_window[0]) for stim, time in inquiry_timing]  
 
         # Get all data at once so we don't redundantly query devices which are
         # used in more than one signal model.
@@ -584,10 +588,10 @@ class RSVPCopyPhraseTask(Task):
             inquiry_timing=inquiry_timing,
             daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
-            prestim=prestim,
-            poststim=post_stim_buffer + self.parameters['trial_length'])
+            prestim=prestim_buffer,
+            poststim=post_stim_buffer + window_length)
 
-        triggers = relative_triggers(inquiry_timing, prestim)
+        triggers = relative_triggers(inquiry_timing, prestim_buffer)
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
         letters, times, filtered_labels = self.copy_phrase_task.letter_info(
@@ -600,7 +604,7 @@ class RSVPCopyPhraseTask(Task):
                 symbols=letters,
                 times=times,
                 target_info=filtered_labels,
-                window_length=self.parameters['trial_length'])
+                window_length=window_length)
             evidences.append((evidence_evaluator.produces, probs))
 
         return evidences

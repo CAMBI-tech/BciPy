@@ -28,7 +28,7 @@ def visualize_erp(
         channel_map: List[int],
         trigger_timing: List[float],
         trigger_labels: List[int],
-        trial_length: float,
+        trial_window: Tuple[float, float],
         transform: Optional[Composition] = None,
         plot_average: Optional[bool] = True,
         plot_topomaps: Optional[bool] = True,
@@ -55,8 +55,17 @@ def visualize_erp(
     show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
     """
+    # check for trial length in seconds
+    trial_length = trial_window[1] - 0.0
+    
+    # check for baseline interval
+    if trial_window[0] < 0:
+        baseline = (trial_window[0], 0)
+    else:
+        baseline = (None, 0)
+
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
+    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels, baseline=baseline)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
@@ -65,7 +74,18 @@ def visualize_erp(
     if plot_average:
         figs.extend(visualize_evokeds(epochs, save_path=save_path, show=show))
     if plot_topomaps:
-        figs.extend(visualize_joint_average(epochs, ['Non-Target', 'Target'], save_path=save_path, show=show))
+        # make a list of equally spaced times to plot topomaps using the time window
+        # defined in the task parameters
+        times = [round(trial_window[0] + i * (trial_window[1] - trial_window[0]) / 5, 1) for i in range(6)]
+
+        # clip any times that are out of bounds of the time window or zero
+        times = [time for time in times if trial_window[0] <= time <= trial_window[1] and time != 0]
+
+        figs.extend(visualize_joint_average(
+            epochs, ['Non-Target', 'Target'],
+            save_path=save_path,
+            show=show,
+            plot_joint_times=times))
 
     return figs
 
