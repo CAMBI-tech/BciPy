@@ -76,7 +76,7 @@ def visualize_erp(
     if plot_topomaps:
         # make a list of equally spaced times to plot topomaps using the time window
         # defined in the task parameters
-        times = [round(trial_window[0] + i * (trial_window[1] - trial_window[0]) / 5, 1) for i in range(6)]
+        times = [round(trial_window[0] + i * (trial_window[1] - trial_window[0]) / 5, 1) for i in range(7)]
 
         # clip any times that are out of bounds of the time window or zero
         times = [time for time in times if trial_window[0] <= time <= trial_window[1] and time != 0]
