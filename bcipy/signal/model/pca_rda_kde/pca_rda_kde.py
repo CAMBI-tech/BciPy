@@ -171,12 +171,14 @@ class PcaRdaKdeModel(SignalModel):
         posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
         return posterior
 
-    def save(self, path: Path):
+    def save(self, path: Path) -> None:
         """Save model weights (e.g. after training) to `path`"""
         with open(path, "wb") as f:
             pickle.dump(self.model, f)
 
-    def load(self, path: Path):
-        """Load pretrained model weights from `path`"""
+    def load(self, path: Path) -> SignalModel:
+        """Load pretrained model from `path`"""
         with open(path, "rb") as f:
-            self.model = pickle.load(f)
+            model = pickle.load(f)
+        
+        return model

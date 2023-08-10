@@ -29,6 +29,7 @@ from psychopy import core
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
 DEFAULT_TEXT_FIXATION = '+'
+NO_TARGET_INDEX = None
 
 
 class StimuliOrder(Enum):
@@ -482,9 +483,6 @@ def best_case_rsvp_inq_gen(alp: list,
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
     return InquirySchedule(samples, times, colors)
-
-
-NO_TARGET_INDEX = None
 
 
 def generate_calibration_inquiries(
