@@ -1,9 +1,10 @@
 """Defines common functionality for GUI layouts."""
-from typing import Tuple
+from typing import Protocol, Tuple
+
 from psychopy import visual
 
 
-class Container:
+class Container(Protocol):
     """Protocol for an enclosing container with units and size."""
     win: visual.Window
     size: Tuple[float, float]
@@ -26,21 +27,6 @@ class WindowContainer(Container):
     def units(self):
         """Window units"""
         return self.win.units
-
-
-def at_top(parent: Container, height: float):
-    """Constructs a layout of a given height that spans the full width of the
-    window and is positioned at the top.
-
-    Parameters
-    ----------
-        height - value in 'norm' units
-    """
-    return Layout(parent=parent,
-                  left=-1.0,
-                  top=1.0,
-                  right=1.0,
-                  bottom=1.0 - height)
 
 
 class Layout(Container):
@@ -127,3 +113,66 @@ class Layout(Container):
     def right_middle(self) -> Tuple[float, float]:
         """Point centered on the right-most edge."""
         return (self.right, self.vertical_middle)
+
+    def above(self, y_coordinate: float, amount: float) -> float:
+        """Returns a new y_coordinate value that is above the provided value
+        by the given amount."""
+        # assert self.bottom <= y_coordinate <= self.top, "y_coordinate out of range"
+        assert amount >= 0, 'Amount must be positive'
+        return y_coordinate + amount
+
+    def below(self, y_coordinate: float, amount: float) -> float:
+        """Returns a new y_coordinate value that is below the provided value
+        by the given amount."""
+        # assert self.bottom <= y_coordinate <= self.top, "y_coordinate out of range"
+        assert amount >= 0, 'Amount must be positive'
+        return y_coordinate - amount
+
+    def right_of(self, x_coordinate: float, amount: float) -> float:
+        """Returns a new x_coordinate value that is to the right of the
+        provided value by the given amount."""
+        # assert self.left <= x_coordinate <= self.right, "y_coordinate out of range"
+        assert amount >= 0, 'Amount must be positive'
+        return x_coordinate + amount
+
+    def left_of(self, x_coordinate: float, amount: float) -> float:
+        """Returns a new x_coordinate value that is to the left of the
+        provided value by the given amount."""
+        # assert self.left <= x_coordinate <= self.right, "y_coordinate out of range"
+        assert amount >= 0, 'Amount must be positive'
+        return x_coordinate - amount
+
+
+def at_top(parent: Container, height: float):
+    """Constructs a layout of a given height that spans the full width of the
+    window and is positioned at the top.
+
+    Parameters
+    ----------
+        height - value in 'norm' units
+    """
+    return Layout(parent=parent,
+                  left=-1.0,
+                  top=1.0,
+                  right=1.0,
+                  bottom=1.0 - height)
+
+
+def centered(parent: Container, width: float = None, height: float = None):
+    """Constructs a centered layout"""
+
+
+def below(layout: Layout, width: float = None, height: float = None):
+    """Constructs a layout below another layout.
+
+    Parameters
+    ----------
+        layout - another layout relative to the one constructed. Other
+            properties will be copied from this one.
+    """
+    # TODO: account for height
+    return Layout(parent=layout.parent,
+                  left=-1.0,
+                  top=layout.bottom,
+                  right=1.0,
+                  bottom=-1.0)
