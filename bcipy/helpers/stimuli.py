@@ -176,6 +176,8 @@ class InquiryReshaper:
             stop = first_trigger + num_samples_per_inq + buffer_samples
             reshaped_data.append(eeg_data[:, start:stop])
 
+            breakpoint()
+
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
     @staticmethod
@@ -229,7 +231,8 @@ class InquiryReshaper:
 class GazeReshaper:
     def __call__(self,
                  trial_targetness_label: List[str],
-                 timing_info: List[float],
+                 inq_start_times: List[float],
+                 target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
                  trials_per_inquiry: int,
@@ -238,7 +241,8 @@ class GazeReshaper:
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+                 target_label: str = 'target'
+                 ) -> Tuple[np.ndarray, np.ndarray]:
         """Extract inquiry data and labels.
 
         Args:
@@ -268,38 +272,17 @@ class GazeReshaper:
             channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
             gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
 
-        n_inquiry = len(timing_info) // trials_per_inquiry
-        trial_duration_samples = int(poststimulus_length * sample_rate)
+        n_inquiry = len(inq_start_times)
         prestimulus_samples = int(prestimulus_length * sample_rate)
 
+
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
-
-        inquiry_triggers = list(map(lambda x: int(x * sample_rate), timing_info))
-
-
-        # First, find the longest inquiry in this experiment
-        # We'll add or remove a few samples from all other inquiries, to match this length
-        def get_inquiry_len(inq_trigs):
-            return inq_trigs[-1] - inq_trigs[0]
-        
-        # Finds the longest inquiry in the experiment by subtracting the first trigger from the last trigger in each inquiry
-        longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
-
-        # What we need is to find the shortest distance from 1st letter to last in each inquiry
-        shortest_inquiry = min(grouper(triggers, inquiry_triggers, trials_per_inquiry, fillvalue='x'))
-
-        # We will trim off the extra bits in each inquiry to match the shortest inquiry
-        
-        
-
-        num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
-        buffer_samples = int(transformation_buffer * sample_rate)
+        triggers = list(map(lambda x: int(x * sample_rate), inq_start_times))
+        # TODO: This ends up adding ~300ms shift to the triggers. Why?
 
         # Label for every inquiry
-        labels = np.zeros(
-            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
-        )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
+        labels = target_symbols
+
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
             grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
@@ -308,15 +291,13 @@ class GazeReshaper:
 
             trial_triggers = []
             for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
-                if trial_label == target_label:
-                    labels[inquiry_idx, trial_idx] = 1
-
                 # If presimulus buffer is used, we add it here so that trigger timings will
                 # still line up with trial onset
+                breakpoint()
                 trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
             reshaped_trigger_timing.append(trial_triggers)
-            start = first_trigger - prestimulus_samples
-            stop = first_trigger + num_samples_per_inq + buffer_samples
+            start = first_trigger
+            stop = first_trigger + (sample_rate * 3)    # (60 samples * 3 seconds)
             reshaped_data.append(gaze_data[:, start:stop])
 
         breakpoint()

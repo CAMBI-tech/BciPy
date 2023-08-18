@@ -2,22 +2,24 @@ from bcipy.helpers.raw_data import load
 from bcipy.config import STATIC_IMAGES_PATH
 
 DIPSIZE = (1707, 1067)
-IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
+IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix.png'
 TOBII_FILENAME = 'eyetracker_data_tobii-p0.csv'
 
 def load_eye_tracking_data(path):
     data = load(f'{path}/{TOBII_FILENAME}')
 
-    left_eye_channel_map = [0,0,1,1,0,0,0,0,0]
+    left_eye_channel_map = [0,0,1,1,1,0,0,0,0]
     left_eye_data, _, _ = data.by_channel_map(left_eye_channel_map)
     left_eye_x = left_eye_data[0]
     left_eye_y = left_eye_data[1]
+    left_pupil = left_eye_data[2]
 
-    right_eye_channel_map = [0,0,0,0,0,1,1,0,0]
+    right_eye_channel_map = [0,0,0,0,0,1,1,1,0]
     right_eye_data, _, _ = data.by_channel_map(right_eye_channel_map)
     right_eye_x = right_eye_data[0]
     right_eye_y = right_eye_data[1]
-    return left_eye_x, left_eye_y, right_eye_x, right_eye_y
+    right_pupil = right_eye_data[2]
+    return left_eye_x, left_eye_y, left_pupil, right_eye_x, right_eye_y, right_pupil
 
 
 if __name__ == "__main__":
@@ -44,7 +46,8 @@ if __name__ == "__main__":
         path = load_experimental_data()
 
     data = load_eye_tracking_data(path)
-    lx, ly, rx, ry = data
+    lx, ly, lp, rx, ry, rp = data
+   
 
     dpi = 100
 
@@ -73,32 +76,17 @@ if __name__ == "__main__":
     # ax.plot(rx, ry, c='b', linewidth=1)
 
     # # remove nan values
-    # lx = lx[~np.isnan(lx)]
-    # ly = ly[~np.isnan(ly)]
-    # rx = rx[~np.isnan(rx)]
-    # ry = ry[~np.isnan(ry)]
+    lx = lx[~np.isnan(lx)]
+    ly = ly[~np.isnan(ly)]
+    rx = rx[~np.isnan(rx)]
+    ry = ry[~np.isnan(ry)]
 
     # determine kde of the eye data
     # ax = sns.kdeplot(rx, ry, cmap="mako", fill=False, thresh=0.05, levels=10)
 
-    lx_inq = lx[48368:48535]
-    ly_inq = ly[48368:48535]
-    rx_inq = rx[48368:48535]
-    ry_inq = ry[48368:48535]
 
-    # remove nan values
-    lx_inq = lx_inq[~np.isnan(lx_inq)]
-    ly_inq = ly_inq[~np.isnan(ly_inq)]
-    rx_inq = rx_inq[~np.isnan(rx_inq)]
-    ry_inq = ry_inq[~np.isnan(ry_inq)]
-
-
-    ax.scatter(lx_inq, ly_inq, c='r', s=1)
-    ax.scatter(rx_inq, ry_inq, c='b', s=1)
-
-
-    # ax.scatter(lx, ly, c='r', s=1)
-    # ax.scatter(rx, ry, c='b', s=1)
+    ax.scatter(lx, ly, c='r', s=1)
+    ax.scatter(rx, ry, c='b', s=1)
 
     plt.show()
 

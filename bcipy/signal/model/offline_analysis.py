@@ -267,22 +267,33 @@ def offline_analysis(
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
                 remove_pre_fixation = False,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.OFFSET],
+                #exclusion=[TriggerType.PREVIEW, TriggerType.EVENT]
+                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
             )
+            ''' Trigger_timing includes PROMPT and excludes FIXATION '''
            
+            # Use trigger_timing to generate time windows for each letter flashing
+            # Take every 10th trigger as the start point of timing. x = list(range(1000)), x[0::10] does that!
+            # trigger_targetness keeps the PROMPT info, use it to find the target symbol!
+            target_symbols = trigger_symbols[0::11]  # target symbols
+            inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
+            breakpoint()
+
+            # Need to calculate the starting index, using inq_start.           
             inquiries, inquiry_labels, inquiry_timing = model.reshaper(
             trial_targetness_label=trigger_targetness,
-            timing_info=trigger_timing,
+            inq_start_times=inq_start,
+            target_symbols = target_symbols,
             gaze_data=data,
             sample_rate=sample_rate,
             trials_per_inquiry=trials_per_inquiry,
             channel_map=channel_map,
             poststimulus_length=poststim_length,
             prestimulus_length=prestim_length,
-            transformation_buffer=buffer,
+            transformation_buffer=buffer
             )
 
-            breakpoint()
+            # Merge subset of time windows if they have the same target symbol:
 
 
     if alert_finished:
