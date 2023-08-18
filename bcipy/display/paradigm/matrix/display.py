@@ -1,14 +1,15 @@
 """Display for presenting stimuli in a grid."""
-from typing import Dict, List, Optional, Tuple, NamedTuple
 import logging
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
-from psychopy import visual, core
+from psychopy import core, visual
 
-from bcipy.display import Display, StimuliProperties, InformationProperties, BCIPY_LOGO_PATH
-from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import _calibration_trigger
-from bcipy.helpers.symbols import alphabet
+from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
+                           StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.triggers import _calibration_trigger
 
 
 class SymbolDuration(NamedTuple):
@@ -79,7 +80,7 @@ class MatrixDisplay(Display):
 
         # Set position and parameters for grid of alphabet
         self.position = stimuli.stim_pos
-        self.grid_stimuli_height = .17
+        self.grid_stimuli_height = stimuli.stim_height
         self.position_increment = self.grid_stimuli_height + .05
         self.max_grid_width = 0.7
 
@@ -163,16 +164,24 @@ class MatrixDisplay(Display):
         Builds a 7x4 matrix of stimuli.
         """
         grid = {}
-        pos = self.position
-        for sym in self.symbol_set:
+        positions = self.symbol_positions()
+        for i, sym in enumerate(self.symbol_set):
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,
-                                        pos=pos,
+                                        pos=positions[i],
                                         height=self.grid_stimuli_height)
-            pos = self.increment_position(pos)
         return grid
+
+    def symbol_positions(self) -> List[Tuple[float, float]]:
+        """Compute the symbol positions"""
+        positions = []
+        pos = self.position
+        for _sym in self.symbol_set:
+            positions.append(pos)
+            pos = self.increment_position(pos)
+        return positions
 
     def increment_position(self, pos: Tuple[float, float]) -> Tuple[float, float]:
         """Computes the position of the next symbol in the matrix."""
