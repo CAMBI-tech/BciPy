@@ -4,9 +4,11 @@ from typing import Dict, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
+import bcipy.display.components.layout as layout
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
@@ -39,6 +41,7 @@ class MatrixDisplay(Display):
             stimuli: StimuliProperties,
             task_bar: TaskBar,
             info: InformationProperties,
+            rows:int=5, columns:int=6,
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
             should_prompt_target: bool = True):
@@ -73,16 +76,19 @@ class MatrixDisplay(Display):
         self.stimuli_timing = []
         self.stimuli_colors = []
         self.stimuli_font = stimuli.stim_font
+        # self.symbol_positions = stimuli.stim_pos
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
         self.symbol_set = symbol_set or alphabet()
 
         # Set position and parameters for grid of alphabet
-        self.position = stimuli.stim_pos
         self.grid_stimuli_height = stimuli.stim_height
-        self.position_increment = self.grid_stimuli_height + .05
-        self.max_grid_width = 0.7
+
+        display_container = layout.below(task_bar.layout,
+                                         width_pct=0.7,
+                                         alignment=layout.Alignment.CENTERED)
+        self.positions = symbol_positions(display_container, rows, columns)
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
@@ -164,33 +170,15 @@ class MatrixDisplay(Display):
         Builds a 7x4 matrix of stimuli.
         """
         grid = {}
-        positions = self.symbol_positions()
         for i, sym in enumerate(self.symbol_set):
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,
-                                        pos=positions[i],
+                                        pos=self.positions[i],
                                         height=self.grid_stimuli_height)
         return grid
 
-    def symbol_positions(self) -> List[Tuple[float, float]]:
-        """Compute the symbol positions"""
-        positions = []
-        pos = self.position
-        for _sym in self.symbol_set:
-            positions.append(pos)
-            pos = self.increment_position(pos)
-        return positions
-
-    def increment_position(self, pos: Tuple[float, float]) -> Tuple[float, float]:
-        """Computes the position of the next symbol in the matrix."""
-        x_coordinate, y_coordinate = pos
-        x_coordinate += self.position_increment
-        if x_coordinate >= self.max_grid_width:
-            y_coordinate -= self.position_increment
-            x_coordinate = self.position[0]
-        return (x_coordinate, y_coordinate)
 
     def draw_grid(self,
                   opacity: float = 1,

@@ -1,4 +1,5 @@
 """Defines common functionality for GUI layouts."""
+from enum import Enum
 from typing import Protocol, Tuple
 
 from psychopy import visual
@@ -29,12 +30,22 @@ class WindowContainer(Container):
         return self.win.units
 
 
+DEFAULT_LEFT = -1.0
+DEFAULT_TOP = 1.0
+DEFAULT_RIGHT = 1.0
+DEFAULT_BOTTOM = -1.0
+
+
 class Layout(Container):
-    """Base class for a component with methods for positioning elements.
+    """Class with methods for positioning elements within a parent container.
     """
 
-    def __init__(self, parent: Container, left: float, top: float,
-                 right: float, bottom: float):
+    def __init__(self,
+                 parent: Container,
+                 left: float = DEFAULT_LEFT,
+                 top: float = DEFAULT_TOP,
+                 right: float = DEFAULT_RIGHT,
+                 bottom: float = DEFAULT_BOTTOM):
 
         self.parent = parent
         self.top = top
@@ -143,7 +154,13 @@ class Layout(Container):
         return x_coordinate - amount
 
 
-def at_top(parent: Container, height: float):
+class Alignment(Enum):
+    CENTERED = 1
+    LEFT = 2
+    RIGHT = 3
+
+
+def at_top(parent: Container, height: float) -> Layout:
     """Constructs a layout of a given height that spans the full width of the
     window and is positioned at the top.
 
@@ -151,28 +168,64 @@ def at_top(parent: Container, height: float):
     ----------
         height - value in 'norm' units
     """
+    top = DEFAULT_TOP
     return Layout(parent=parent,
-                  left=-1.0,
-                  top=1.0,
-                  right=1.0,
-                  bottom=1.0 - height)
+                  left=DEFAULT_LEFT,
+                  top=top,
+                  right=DEFAULT_RIGHT,
+                  bottom=top - height)
+
+def at_bottom(parent: Container, height: float) -> Layout:
+    """Constructs a layout of a given height that spans the full width of the
+    window and is positioned at the bottom"""
+    bottom = DEFAULT_BOTTOM
+    return Layout(parent=parent,
+                  left=DEFAULT_LEFT,
+                  top=DEFAULT_BOTTOM + height,
+                  right=DEFAULT_RIGHT,
+                  bottom=bottom)
 
 
-def centered(parent: Container, width: float = None, height: float = None):
-    """Constructs a centered layout"""
+def horizontally_aligned(parent: Layout,
+                         alignment: Alignment,
+                         width: float = None) -> Tuple[float, float]:
+    """Returns a tuple of (left, right), indicating the values to be used"""
+
+    left = parent.left
+    right = parent.right
+    if width:
+        margin = parent.width - width
+        if alignment == Alignment.CENTERED:
+            half_margin = margin / 2
+            left = left + half_margin
+            right = right - half_margin
+        elif alignment == Alignment.LEFT:
+            right = right - margin
+        elif alignment == Alignment.RIGHT:
+            left = left + margin
+    return left, right
 
 
-def below(layout: Layout, width: float = None, height: float = None):
-    """Constructs a layout below another layout.
+def below(layout: Layout,
+          width_pct: float = 1.0,
+          alignment: Alignment = Alignment.CENTERED):
+    """Constructs a layout immediately below another layout.
 
     Parameters
     ----------
         layout - another layout relative to the one constructed. Other
             properties will be copied from this one.
+        width_pct - percentage of the available width.
     """
-    # TODO: account for height
+    width = layout.width * width_pct
+
+    left, right = horizontally_aligned(layout, alignment, width)
+    top = layout.bottom
+    # bottom = top - height if height else DEFAULT_BOTTOM
+    bottom = DEFAULT_BOTTOM
+
     return Layout(parent=layout.parent,
-                  left=-1.0,
-                  top=layout.bottom,
-                  right=1.0,
-                  bottom=-1.0)
+                  left=left,
+                  top=top,
+                  right=right,
+                  bottom=bottom)
