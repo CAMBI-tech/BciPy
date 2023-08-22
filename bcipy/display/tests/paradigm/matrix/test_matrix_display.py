@@ -138,20 +138,16 @@ class TestMatrixDisplay(unittest.TestCase):
             pos=any(),
             opacity=any()
         ).thenReturn(self.text_stim_mock)
-        when(self.matrix).increment_position(any()).thenReturn()
 
         sym_length = len(self.matrix.symbol_set)
         grid = self.matrix.build_grid()
 
         self.assertEqual(len(grid), sym_length)
-        # verify that the position was incremented each time
-        verify(self.matrix, times=sym_length).increment_position(any())
 
     def test_draw_grid(self):
         """Test that all items in the grid draw."""
         self.matrix.draw_grid()
         verify(self.text_stim_mock, times=len(self.matrix.symbol_set)).draw()
-
 
     def test_animate_scp(self):
         # mock the text stims and window

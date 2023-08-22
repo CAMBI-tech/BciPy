@@ -1,6 +1,6 @@
 """Display for presenting stimuli in a grid."""
 import logging
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional
 
 from psychopy import core, visual
 
@@ -41,7 +41,7 @@ class MatrixDisplay(Display):
             stimuli: StimuliProperties,
             task_bar: TaskBar,
             info: InformationProperties,
-            rows:int=5, columns:int=6,
+            rows: int = 5, columns: int = 6,
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
             should_prompt_target: bool = True):
@@ -85,9 +85,7 @@ class MatrixDisplay(Display):
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = stimuli.stim_height
 
-        display_container = layout.below(task_bar.layout,
-                                         width_pct=0.7,
-                                         alignment=layout.Alignment.CENTERED)
+        display_container = layout.centered(width_pct=0.7)
         self.positions = symbol_positions(display_container, rows, columns)
 
         self.grid_color = 'white'
@@ -165,10 +163,7 @@ class MatrixDisplay(Display):
         return self._timing
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
-        """Build grid.
-
-        Builds a 7x4 matrix of stimuli.
-        """
+        """Build the text stimuli to populate the grid."""
         grid = {}
         for i, sym in enumerate(self.symbol_set):
             grid[sym] = visual.TextStim(win=self.window,
@@ -178,7 +173,6 @@ class MatrixDisplay(Display):
                                         pos=self.positions[i],
                                         height=self.grid_stimuli_height)
         return grid
-
 
     def draw_grid(self,
                   opacity: float = 1,

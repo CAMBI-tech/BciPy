@@ -3,7 +3,7 @@ import unittest
 
 from mockito import mock
 
-from bcipy.display.components.layout import Layout, WindowContainer
+from bcipy.display.components.layout import Layout
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 
 
@@ -13,7 +13,7 @@ class TestMatrixLayout(unittest.TestCase):
     def setUp(self):
         """Set up needed items for test."""
         self.window = mock({"size": (500, 500), "units": "norm"})
-        self.container = WindowContainer(win=self.window)
+        self.container = self.window
         self.layout = Layout(parent=self.container,
                              left=-1.0,
                              top=1.0,
