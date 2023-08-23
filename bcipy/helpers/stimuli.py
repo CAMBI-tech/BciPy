@@ -11,6 +11,7 @@ from typing import Iterator, List, Tuple, NamedTuple, Optional
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
+from bcipy.helpers.symbols import alphabet
 
 from PIL import Image
 # Prevents pillow from filling the console with debug info
@@ -127,7 +128,7 @@ class InquiryReshaper:
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                a label of [0, K-1] indicates the position of `target_label`, or label of [0 ... 0] indicates
                 `target_label` was not present.
             reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
                 begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
@@ -176,7 +177,6 @@ class InquiryReshaper:
             stop = first_trigger + num_samples_per_inq + buffer_samples
             reshaped_data.append(eeg_data[:, start:stop])
 
-            breakpoint()
 
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
@@ -241,8 +241,7 @@ class GazeReshaper:
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = 'target'
-                 ) -> Tuple[np.ndarray, np.ndarray]:
+                 ) -> dict:
         """Extract inquiry data and labels.
 
         Args:
@@ -257,52 +256,55 @@ class GazeReshaper:
             poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
             prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
             transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
-            target_label (str): label of target symbol. Defaults to "target"
 
         Returns:
-            reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
-            labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
-                `target_label` was not present.
-            reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
-                begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
+            reshaped_data (np.ndarray): inquiry data of shape (Inquiries, Channels, Samples)
+            labels (List[str]): Target letter in each inquiry.
+
+            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
+            for each symbol. dict[Key] = list of shape (Channels, Samples)
         """
         if channel_map:
             # Remove the channels that we are not interested in
             channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
             gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
+        
+        # Find the value closest to (& greater than) inq_start_times
+        gaze_data_timing = gaze_data[-1,:].tolist() 
+        
+        start_times = []
+        for times in inq_start_times:
+            start_times.append(list(filter(lambda x: x > times, gaze_data_timing))[0])
 
-        n_inquiry = len(inq_start_times)
-        prestimulus_samples = int(prestimulus_length * sample_rate)
-
-
-        # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int(x * sample_rate), inq_start_times))
-        # TODO: This ends up adding ~300ms shift to the triggers. Why?
+        triggers = []
+        for val in start_times:
+            triggers.append(gaze_data_timing.index(val))
 
         # Label for every inquiry
         labels = target_symbols
 
-        reshaped_data, reshaped_trigger_timing = [], []
-        for inquiry_idx, trials_within_inquiry in enumerate(
-            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
-        ):
-            first_trigger = trials_within_inquiry[0][1]
+        symbol_set = alphabet()
 
-            trial_triggers = []
-            for trial_idx, (trial_label, trigger) in enumerate(trials_within_inquiry):
-                # If presimulus buffer is used, we add it here so that trigger timings will
-                # still line up with trial onset
-                breakpoint()
-                trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
-            reshaped_trigger_timing.append(trial_triggers)
-            start = first_trigger
-            stop = first_trigger + (sample_rate * 3)    # (60 samples * 3 seconds)
+        # Create a dictionary with symbols as keys and data as values
+        # 'A': [], 'B': [] ...
+        data_by_targets = {}
+        for symbol in symbol_set:
+            data_by_targets[symbol] = []
+
+        reshaped_data = []
+        # Merge the inquiries if they have the same target letter:
+        for i, inquiry_index in enumerate(triggers):
+            start = inquiry_index
+            stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds) 
             reshaped_data.append(gaze_data[:, start:stop])
 
-        breakpoint()
+            # Create a dictionary:
+            for symbol in symbol_set:
+                if symbol == labels[i]:
+                    data_by_targets[symbol].append(gaze_data[:, start:stop])
 
-        return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
+        # return np.stack(reshaped_data, 0), labels
+        return data_by_targets
     
     @staticmethod
     def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):

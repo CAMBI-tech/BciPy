@@ -16,8 +16,9 @@ from bcipy.helpers.load import (
 )
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp, visualize_gaze
+from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiries
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.fusion_model import GazeModel
@@ -263,9 +264,14 @@ def offline_analysis(
 
             model = GazeModel()
 
+            # Add back the system offset: 
+            system_offset = 926453.0228878
+            # TODO: This is handled in TriggerHandler. Remove automatic addition off system offset!
+
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
                 remove_pre_fixation = False,
+                offset = system_offset,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
                 #exclusion=[TriggerType.PREVIEW, TriggerType.EVENT]
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
@@ -277,24 +283,35 @@ def offline_analysis(
             # trigger_targetness keeps the PROMPT info, use it to find the target symbol!
             target_symbols = trigger_symbols[0::11]  # target symbols
             inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
-            breakpoint()
 
-            # Need to calculate the starting index, using inq_start.           
-            inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+            # Find the inquiries starting by the inq_start_times, (9, 100, 180):           
+            inquiries = model.reshaper(
             trial_targetness_label=trigger_targetness,
             inq_start_times=inq_start,
             target_symbols = target_symbols,
             gaze_data=data,
             sample_rate=sample_rate,
             trials_per_inquiry=trials_per_inquiry,
-            channel_map=channel_map,
             poststimulus_length=poststim_length,
             prestimulus_length=prestim_length,
             transformation_buffer=buffer
             )
 
-            # Merge subset of time windows if they have the same target symbol:
+            # Plot samples for each target symbol:
+            symbol_set = alphabet()
+            for i in symbol_set:
+                figure_handles = visualize_gaze_inquiries(
+                    inquiries[i],
+                    save_path=None,
+                    show=show_figures,
+                    raw_plot=True,
+                    )
+                # plt.show()
+                                
 
+            breakpoint()
+
+            
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
