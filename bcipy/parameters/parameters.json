@@ -225,7 +225,7 @@
     "type": "int"
   },
   "matrix_rows": {
-    "value": "6",
+    "value": "5",
     "section": "bci_config",
     "readableName": "Matrix Rows",
     "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
@@ -233,7 +233,7 @@
     "type": "int"
   },
   "matrix_columns": {
-    "value": "5",
+    "value": "6",
     "section": "bci_config",
     "readableName": "Matrix Columns",
     "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
