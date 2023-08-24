@@ -57,7 +57,7 @@ def visualize_erp(
     """
     # check for trial length in seconds from stimuli start (0.0)
     trial_length = trial_window[1] - 0.0
-    
+
     # check for a baseline interval or set to None
     if trial_window[0] < 0:
         baseline = (trial_window[0], 0)
@@ -190,9 +190,9 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     interval in shaded region.
 
     See: https://mne.tools/stable/generated/mne.viz.plot_compare_evokeds.html
-    
+
     Parameters:
-    
+
         epochs(Tuple[Epochs]): MNE Epochs Note: Assumes first epoch is nontarget and second is target.
         save_path(Optional[str]): Path to save the figures
         show(Optional[bool]): Whether to show the figures

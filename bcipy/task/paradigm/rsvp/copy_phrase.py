@@ -230,7 +230,7 @@ class RSVPCopyPhraseTask(Task):
         # ensure data / query parameters are set correctly
         buffer_len = self.parameters['task_buffer_length']
         prestim = self.parameters['prestim_length']
-        poststim = self.parameters['trial_window'][1] - self.parameters['trial_window'][0] 
+        poststim = self.parameters['trial_window'][1] - self.parameters['trial_window'][0]
         if buffer_len < prestim:
             raise TaskConfigurationException(
                 f'task_buffer_length=[{buffer_len}] must be greater than prestim_length=[{prestim}]')
@@ -580,7 +580,7 @@ class RSVPCopyPhraseTask(Task):
         inquiry_timing = self.stims_for_decision(stim_times)
 
         # update the inquiry timing list (stim, time) based on the trial window first time value
-        inquiry_timing = [(stim, time + trial_window[0]) for stim, time in inquiry_timing]  
+        inquiry_timing = [(stim, time + trial_window[0]) for stim, time in inquiry_timing]
 
         # Get all data at once so we don't redundantly query devices which are
         # used in more than one signal model.

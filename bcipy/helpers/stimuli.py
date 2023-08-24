@@ -311,6 +311,7 @@ def mne_epochs(mne_data: RawArray,
     events_from_annot, _ = mne.events_from_annotations(mne_data)
     return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
 
+
 def alphabetize(stimuli: List[str]) -> List[str]:
     """Alphabetize.
 
