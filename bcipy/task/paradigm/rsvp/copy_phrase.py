@@ -84,7 +84,7 @@ class RSVPCopyPhraseTask(Task):
     MODE = 'RSVP'
 
     PARAMETERS_USED = [
-        'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_window',
         'font', 'fixation_color', 'trigger_type',
         'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
         'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
@@ -230,7 +230,7 @@ class RSVPCopyPhraseTask(Task):
         # ensure data / query parameters are set correctly
         buffer_len = self.parameters['task_buffer_length']
         prestim = self.parameters['prestim_length']
-        poststim = self.parameters['trial_length']
+        poststim = self.parameters['trial_window'][1] - self.parameters['trial_window'][0] 
         if buffer_len < prestim:
             raise TaskConfigurationException(
                 f'task_buffer_length=[{buffer_len}] must be greater than prestim_length=[{prestim}]')

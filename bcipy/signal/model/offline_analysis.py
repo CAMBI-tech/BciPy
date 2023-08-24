@@ -34,13 +34,15 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     """Performs a train/test split on the provided data and labels, accounting for
     the current shape convention (channel dimension in front, instead of batch dimension in front).
 
-    Args:
+    Parameters:
+    -----------
         data (np.ndarray): Shape (channels, items, time)
         labels (np.ndarray): Shape (items,)
         test_size (float): fraction of data to be used for testing
         random_state (int, optional): fixed random seed
 
     Returns:
+    --------
         train_data (np.ndarray): Shape (channels, train_items, time)
         test_data (np.ndarray): Shape (channels, test_items, time)
         train_labels (np.ndarray): Shape (train_items,)
@@ -66,15 +68,6 @@ def offline_analysis(
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
-    Args:
-        data_folder(str): folder of the data
-            save all information and load all from this folder
-        parameter(dict): parameters for running offline analysis
-        alert_finished(bool): whether or not to alert the user offline analysis complete
-        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
-            estimate balanced accuracy
-        show_figures(bool): if true, shows ERP figures after training
-        save_figures(bool): if true, saves ERP figures after training to the data folder
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -87,8 +80,24 @@ def offline_analysis(
     - pickle dumps model into .pkl file
     - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
+
+    Parameters:
+    ----------
+        data_folder(str): folder of the data
+            save all information and load all from this folder
+        parameter(dict): parameters for running offline analysis
+        alert_finished(bool): whether or not to alert the user offline analysis complete
+        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy
+        show_figures(bool): if true, shows ERP figures after training
+        save_figures(bool): if true, saves ERP figures after training to the data folder
+
+    Returns:
+    --------
+        model (SignalModel): trained model
+        figure_handles (Figure): handles to the ERP figures
     """
-    assert parameters, "Parameters are required"
+    assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
 
@@ -142,7 +151,7 @@ def offline_analysis(
     model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],

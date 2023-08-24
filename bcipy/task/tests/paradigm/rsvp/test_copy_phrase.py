@@ -79,7 +79,7 @@ class TestCopyPhrase(unittest.TestCase):
             'time_fixation': 0.5,
             'time_flash': 0.25,
             'time_prompt': 1.0,
-            'trial_length': 0.5,
+            'trial_window': (0.0, 0.5),
             'trigger_type': 'image',
         }
         self.parameters = Parameters.from_cast_values(**parameters)
@@ -190,8 +190,8 @@ class TestCopyPhrase(unittest.TestCase):
                 language_model=self.language_model,
                 fake=True)
 
-    def test_validate_parameters_throws_task_exception_excess_trial_length(self):
-        self.parameters['trial_length'] = 1000
+    def test_validate_parameters_throws_task_exception_excess_trial_window(self):
+        self.parameters['trial_window'] = "0.0:1000.0"
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(

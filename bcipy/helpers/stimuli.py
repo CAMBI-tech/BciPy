@@ -300,18 +300,16 @@ def mne_epochs(mne_data: RawArray,
                trigger_timing: List[float],
                trial_length: float,
                trigger_labels: List[int],
-               baseline: Tuple[float, float] = (None, 0.0),
-               epoch_buffer=0.1) -> Epochs:
+               baseline: Tuple[float, float] = (None, 0)) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
     each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
     """
-    plot_length = trial_length + epoch_buffer
-    annotations = Annotations(trigger_timing, [plot_length] * len(trigger_timing), trigger_labels)
+    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     mne_data.set_annotations(annotations)
     events_from_annot, _ = mne.events_from_annotations(mne_data)
-    return Epochs(mne_data, events_from_annot, tmax=plot_length, baseline=baseline)
+    return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
 
 def alphabetize(stimuli: List[str]) -> List[str]:
     """Alphabetize.

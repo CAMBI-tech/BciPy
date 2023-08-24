@@ -48,11 +48,15 @@
     "type": "int"
   },
   "trial_window": {
-    "value": "0.2:0.8",
+    "value": "0.0:0.5",
     "section": "bci_config",
     "readableName": "Trial Classification Window Length",
     "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
-    "recommended_values": "",
+    "recommended_values": [
+      "0.0:0.5",
+      "0.0:0.8",
+      "0.2:0.8"
+    ],
     "type": "range"
   },
   "prestim_length": {
@@ -618,7 +622,7 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "MIXTURE",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: MIXTURE",
