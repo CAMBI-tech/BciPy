@@ -87,6 +87,9 @@ class MatrixDisplay(Display):
 
         display_container = layout.centered(width_pct=width_pct)
         self.positions = symbol_positions(display_container, rows, columns)
+        self.logger.info(
+            f"Symbol positions ({display_container.units} units): {self.positions}"
+        )
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
