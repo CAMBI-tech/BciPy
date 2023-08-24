@@ -13,6 +13,7 @@
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261
+    - Matrix displays can be parameterized with a given number of rows and columns. #289
 - RSVP
     - RSVP Calibration pulls out inquiry preview parameters and calls the display with them if enabled
     - RSVP Display `do_inquiry` accepts a preview_calibration argument that will present the full inquiry to come if True after the prompt and before the fixation

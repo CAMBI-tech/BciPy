@@ -240,7 +240,7 @@
     "recommended_values": "",
     "type": "int"
   },
-  "matrix_width_pct": {
+  "matrix_width": {
     "value": "0.7",
     "section": "bci_config",
     "readableName": "Matrix Width (%)",

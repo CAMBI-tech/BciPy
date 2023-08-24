@@ -82,6 +82,6 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
         info,
         rows=parameters['matrix_rows'],
         columns=parameters['matrix_columns'],
-        width_pct=parameters['matrix_width_pct'],
+        width_pct=parameters['matrix_width'],
         trigger_type=parameters['trigger_type'],
         should_prompt_target=False)

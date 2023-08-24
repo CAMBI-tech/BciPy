@@ -273,6 +273,6 @@ def init_calibration_display_task(
         info,
         rows=parameters['matrix_rows'],
         columns=parameters['matrix_columns'],
-        width_pct=parameters['matrix_width_pct'],
+        width_pct=parameters['matrix_width'],
         trigger_type=parameters['trigger_type'],
         symbol_set=symbol_set)
