@@ -274,7 +274,9 @@ class GazeReshaper:
         
         start_times = []
         for times in inq_start_times:
-            start_times.append(list(filter(lambda x: x > times, gaze_data_timing))[0])
+            temp = list(filter(lambda x: x > times, gaze_data_timing))
+            if len(temp) > 0: 
+                start_times.append(temp[0])
 
         triggers = []
         for val in start_times:
@@ -307,23 +309,38 @@ class GazeReshaper:
         return data_by_targets
     
     @staticmethod
-    def extract_trials(inquiries, samples_per_trial, inquiry_timing, downsample_rate=1):
-        """Extract Trials.
-
-        After using the InquiryReshaper, it may be necessary to futher trial the data for processing.
-        Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
-        Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
-        slicing parameters.
+    def extract_eye_info(data):
+        """ Rearrange the dimensions of gaze inquiry data and reshape it to num_channels x num_samples
+        Extract Left and Right Eye info from data.
+        
+        Args:
+            data (List(float)): Data in shape of num_targetness x num_channels x num_samples
+        
+        Returns:
+            left_eye (np.ndarray), left_pupil (List(float))
+            right_eye (np.ndarray), right_pupil (List(float))
         """
-        new_trials = []
-        num_inquiries = inquiries.shape[1]
-        for inquiry_idx, timing in zip(range(num_inquiries), inquiry_timing):  # C x I x S
 
-            for time in timing:
-                time = time // downsample_rate
-                y = time + samples_per_trial
-                new_trials.append(inquiries[:, inquiry_idx, time:y])
-        return np.stack(new_trials, 1)  # C x T x S
+        temp_data = np.transpose(np.array(data), (1,0,2))
+        inq_data = np.reshape(temp_data, (len(temp_data), -1))   # num_channels x num_samples
+
+        # Extract samples from channels
+        lx = inq_data[2,:]
+        ly = inq_data[3,:]
+        left_pupil = inq_data[4,:]
+
+        rx = inq_data[5,:]
+        ry = inq_data[6,:]
+        right_pupil = inq_data[7,:]
+
+        left_eye =  np.vstack((np.array(lx), np.array(ly))).T 
+        right_eye = np.vstack((np.array(rx), np.array(ry))).T
+
+        # Remove blinks (i.e. Nan values)
+        left_eye = left_eye[~np.isnan(left_eye).any(axis=1)]
+        right_eye = right_eye[~np.isnan(right_eye).any(axis=1)]
+
+        return left_eye, left_pupil, right_eye, right_pupil
 
 class TrialReshaper(Reshaper):
     def __call__(self,

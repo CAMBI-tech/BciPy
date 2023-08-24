@@ -12,12 +12,11 @@ from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
-    load_eye_tracking_data
 )
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.symbols import alphabet
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.triggers import TriggerType, trigger_decoder, TriggerHandler
 from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiries
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
@@ -264,23 +263,24 @@ def offline_analysis(
 
             model = GazeModel()
 
-            # Add back the system offset: 
-            system_offset = 926453.0228878
-            # TODO: This is handled in TriggerHandler. Remove automatic addition off system offset!
+            # Add back the starting offset: 
+            # This is handled in TriggerHandler. Remove automatic addition off system offset:
+            trigx, starting_offset = TriggerHandler.read_text_file(f"{data_folder}/{TRIGGER_FILENAME}")
+            # TODO: I access TriggerHandler directly to not cause an issue during EEG analysis.
+            # There's probably a smarter way to discard starting_offset
 
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
                 remove_pre_fixation = False,
-                offset = system_offset,
+                offset = starting_offset*-1,  # cancel out the starting_offset
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-                #exclusion=[TriggerType.PREVIEW, TriggerType.EVENT]
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
             )
             ''' Trigger_timing includes PROMPT and excludes FIXATION '''
            
             # Use trigger_timing to generate time windows for each letter flashing
-            # Take every 10th trigger as the start point of timing. x = list(range(1000)), x[0::10] does that!
-            # trigger_targetness keeps the PROMPT info, use it to find the target symbol!
+            # Take every 10th trigger as the start point of timing.
+            # trigger_targetness keeps the PROMPT info, use it to find the target symbol.
             target_symbols = trigger_symbols[0::11]  # target symbols
             inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
@@ -297,19 +297,38 @@ def offline_analysis(
             transformation_buffer=buffer
             )
 
-            # Plot samples for each target symbol:
             symbol_set = alphabet()
+            # Train the model for each target label and each eye separately.
             for i in symbol_set:
+                # Do more preprocesssing to extract eye info:
+                left_eye, left_pupil, right_eye, right_pupil = model.reshaper.extract_eye_info(inquiries[i])
+            
+                # Train test split:
+                test_size = int(len(right_eye) * 0.2)
+                train_size = len(right_eye) - test_size
+                train_right_eye = right_eye[:train_size]
+                test_right_eye = right_eye[train_size:]
+
+                train_left_eye = left_eye[:train_size]
+                test_left_eye = left_eye[train_size:]
+
+                # Fit the model:
+                model.fit(train_right_eye)
+
+                predictions, means = model.predict(test_right_eye)
+                # print(predictions)
+
+                # Visualize the results:
                 figure_handles = visualize_gaze_inquiries(
-                    inquiries[i],
+                    left_eye,
+                    right_eye,
                     save_path=None,
                     show=show_figures,
                     raw_plot=True,
-                    )
-                # plt.show()
-                                
+                )
+                plt.show()       
 
-            breakpoint()
+                breakpoint()
 
             
 
