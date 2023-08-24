@@ -4,8 +4,10 @@ from typing import List, Tuple
 from bcipy.display.components.layout import Layout
 
 
-def symbol_positions(container: Layout, rows: int,
-                     columns: int) -> List[Tuple[float, float]]:
+def symbol_positions(container: Layout,
+                     rows: int,
+                     columns: int,
+                     spacing: float = None) -> List[Tuple[float, float]]:
     """Compute the positions for arranging a number of symbols in a grid
     layout.
 
@@ -14,6 +16,8 @@ def symbol_positions(container: Layout, rows: int,
         container - container in which the grid should be placed
         rows - number of rows in the grid
         columns - number of columns in the grid
+        spacing - optional value to specify the space between positions
+            (in the same units of the container)
 
     Returns
     -------
@@ -21,10 +25,11 @@ def symbol_positions(container: Layout, rows: int,
     """
     assert rows >= 1 and columns >= 1, "There must be at least one row and one column"
 
-    # compute the spacing (in container units) from the container width and height
-    horizontal_spacing = container.width / (rows + 1)
-    vertical_spacing = container.height / (columns + 1)
-    spacing = min(horizontal_spacing, vertical_spacing)
+    if not spacing:
+        # compute the spacing (in container units) from the container width and height
+        horizontal_spacing = container.width / (rows + 1)
+        vertical_spacing = container.height / (columns + 1)
+        spacing = min(horizontal_spacing, vertical_spacing)
     half_space = spacing / 2
 
     # Work back from center to compute the starting position

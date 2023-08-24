@@ -78,6 +78,31 @@ class TestMatrixLayout(unittest.TestCase):
                                abs(self.layout.bottom - positions[-1][1]),
                                msg="should have the same top and bottom gap")
 
+    def test_spacing(self):
+        """Test grid spacing"""
+        positions = symbol_positions(self.layout, rows=2, columns=2)
+        self.assertEqual(len(positions), 4)
+
+        top_left = positions[0]
+        top_right = positions[1]
+        bottom_left = positions[2]
+        bottom_right = positions[3]
+        self.assertEqual(top_left[0], bottom_left[0],
+                         "values in left column should have the same x-coord")
+        self.assertEqual(
+            top_right[0], bottom_right[0],
+            "values in right column should have the same x-coord")
+        self.assertEqual(top_left[1], top_right[1],
+                         "Top row values should have the same y-coord")
+        self.assertEqual(bottom_left[1], bottom_right[1],
+                         "Bottom row values should have the same y-coord")
+
+        row_spacing = abs(top_left[1] - bottom_left[1])
+        column_spacing = abs(top_right[0] - top_left[0])
+
+        self.assertEqual(row_spacing, column_spacing,
+                         "Rows and columns should have the same spacing")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -224,6 +224,30 @@
     "recommended_values": "",
     "type": "int"
   },
+  "matrix_rows": {
+    "value": "6",
+    "section": "bci_config",
+    "readableName": "Matrix Rows",
+    "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_columns": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Matrix Columns",
+    "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_width_pct": {
+    "value": "0.7",
+    "section": "bci_config",
+    "readableName": "Matrix Width (%)",
+    "helpTip": "Specifies the max percentage of the display that the matrix grid should utilize. Must be between 0 and 1",
+    "recommended_values": "",
+    "type": "float"
+  },
   "acq_show_viewer": {
     "value": "false",
     "section": "acq_config",
@@ -618,7 +642,7 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "MIXTURE",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: MIXTURE",

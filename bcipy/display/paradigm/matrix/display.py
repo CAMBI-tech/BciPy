@@ -34,17 +34,18 @@ class MatrixDisplay(Display):
     stim_height: 0.1
     """
 
-    def __init__(
-            self,
-            window: visual.Window,
-            experiment_clock: core.Clock,
-            stimuli: StimuliProperties,
-            task_bar: TaskBar,
-            info: InformationProperties,
-            rows: int = 5, columns: int = 6,
-            trigger_type: str = 'text',
-            symbol_set: Optional[List[str]] = None,
-            should_prompt_target: bool = True):
+    def __init__(self,
+                 window: visual.Window,
+                 experiment_clock: core.Clock,
+                 stimuli: StimuliProperties,
+                 task_bar: TaskBar,
+                 info: InformationProperties,
+                 rows: int = 5,
+                 columns: int = 6,
+                 width_pct: float = 0.7,
+                 trigger_type: str = 'text',
+                 symbol_set: Optional[List[str]] = None,
+                 should_prompt_target: bool = True):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -76,16 +77,15 @@ class MatrixDisplay(Display):
         self.stimuli_timing = []
         self.stimuli_colors = []
         self.stimuli_font = stimuli.stim_font
-        # self.symbol_positions = stimuli.stim_pos
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
         self.symbol_set = symbol_set or alphabet()
 
         # Set position and parameters for grid of alphabet
-        self.grid_stimuli_height = stimuli.stim_height
+        self.grid_stimuli_height = 0.17  # stimuli.stim_height
 
-        display_container = layout.centered(width_pct=0.7)
+        display_container = layout.centered(width_pct=width_pct)
         self.positions = symbol_positions(display_container, rows, columns)
 
         self.grid_color = 'white'
