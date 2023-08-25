@@ -315,13 +315,13 @@ def offline_analysis(
                 # Fit the model:
                 model.fit(train_right_eye)
 
-                predictions, means = model.predict(test_right_eye)
+                predictions, means, covs = model.predict(test_right_eye)
                 # print(predictions)
 
                 # Visualize the results:
                 figure_handles = visualize_gaze_inquiries(
-                    left_eye,
-                    right_eye,
+                    left_eye, right_eye,
+                    means, covs,
                     save_path=None,
                     show=show_figures,
                     raw_plot=True,

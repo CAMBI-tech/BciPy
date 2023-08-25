@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional, Tuple
 from pathlib import Path
 from matplotlib.figure import Figure
+from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 
 from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
@@ -22,6 +23,7 @@ from mne import Epochs
 from mne.io import read_raw_edf
 import numpy as np
 import seaborn as sns
+from scipy import linalg
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -173,6 +175,8 @@ def visualize_gaze(
 def visualize_gaze_inquiries(
         left_eye, 
         right_eye,
+        means=None,
+        covs=None,
         save_path=None,
         show=False,
         img_path=None,
@@ -186,7 +190,8 @@ def visualize_gaze_inquiries(
 
     Parameters
     ----------
-        left eye, right eye: Raw gaze data (np.ndarray)
+        left eye, right eye: (np.ndarray): Raw gaze data, plotting both eyes is optional
+        means, covs: Optional(np.ndarray): Means and covariances of the Gaussian Mixture Model
         save_path: Optional[str]
         show: Optional[bool]
         img_path: Optional[str]
@@ -211,6 +216,11 @@ def visualize_gaze_inquiries(
     ry = np.clip(right_eye_y, 0, 1)
     ly = 1 - ly
     ry = 1 - ry
+
+    if means is not None:
+        means[:,0] = np.clip(means[:,0], 0, 1)
+        means[:,1] = np.clip(means[:,1], 0, 1)
+        means[:,1] = 1 - means[:,1]
 
     # remove nan values
     # lx = lx[~np.isnan(lx)]
@@ -241,8 +251,25 @@ def visualize_gaze_inquiries(
             colorbar=True)
         
     if raw_plot:
-        ax.scatter(lx, ly, c='r', s=1)
-        ax.scatter(rx, ry, c='b', s=1)
+        # ax.scatter(lx, ly, c='lightcoral', s=1)
+        ax.scatter(rx, ry, c='bisque', s=1)
+
+    if means is not None:
+        for i, (mean, cov) in enumerate(zip(means, covs)):
+            v, w = linalg.eigh(cov)
+            v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
+
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180.0 * angle / np.pi  # convert to degrees
+            ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+            ell.set_clip_box(ax)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
+ 
+        # ax.scatter(means[:,0], means[:,1], c='yellow', s=20, marker='^')
+
 
     plt.title(f'{title}Plot')
     

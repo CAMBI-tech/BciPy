@@ -258,11 +258,11 @@ class GazeReshaper:
             transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
 
         Returns:
-            reshaped_data (np.ndarray): inquiry data of shape (Inquiries, Channels, Samples)
+            reshaped_data (List[float]): inquiry data of shape (Inquiries, Channels, Samples)
             labels (List[str]): Target letter in each inquiry.
 
             data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
-            for each symbol. dict[Key] = list of shape (Channels, Samples)
+            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
         """
         if channel_map:
             # Remove the channels that we are not interested in
@@ -298,12 +298,26 @@ class GazeReshaper:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
             stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds) 
-            reshaped_data.append(gaze_data[:, start:stop])
+            # Check if the data exists for the inquiry:
+            if stop > len(gaze_data[0,:]):
+                continue
+            
+            reshaped_data.append(gaze_data[:, start:stop])  
+            # (Optional) extracted data (Inquiries x Channels x Samples)
 
-            # Create a dictionary:
-            for symbol in symbol_set:
-                if symbol == labels[i]:
-                    data_by_targets[symbol].append(gaze_data[:, start:stop])
+            # Populate the dict by appending the inquiry to the correct key:
+            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+        
+        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
+        for symbol in symbol_set:
+            if len(data_by_targets[symbol]) > 0:
+                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1,0,2))
+                data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
+
+            # TODO: Note that this is a workaround to the issue of having different number of targetness in
+            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
+            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
+            # This is not ideal, but it works for now. 
 
         # return np.stack(reshaped_data, 0), labels
         return data_by_targets
@@ -314,24 +328,21 @@ class GazeReshaper:
         Extract Left and Right Eye info from data.
         
         Args:
-            data (List(float)): Data in shape of num_targetness x num_channels x num_samples
+            data (np.ndarray): Data in shape of num_channels x num_samples
         
         Returns:
             left_eye (np.ndarray), left_pupil (List(float))
             right_eye (np.ndarray), right_pupil (List(float))
         """
 
-        temp_data = np.transpose(np.array(data), (1,0,2))
-        inq_data = np.reshape(temp_data, (len(temp_data), -1))   # num_channels x num_samples
-
         # Extract samples from channels
-        lx = inq_data[2,:]
-        ly = inq_data[3,:]
-        left_pupil = inq_data[4,:]
+        lx = data[2,:]
+        ly = data[3,:]
+        left_pupil = data[4,:]
 
-        rx = inq_data[5,:]
-        ry = inq_data[6,:]
-        right_pupil = inq_data[7,:]
+        rx = data[5,:]
+        ry = data[6,:]
+        right_pupil = data[7,:]
 
         left_eye =  np.vstack((np.array(lx), np.array(ly))).T 
         right_eye = np.vstack((np.array(rx), np.array(ry))).T

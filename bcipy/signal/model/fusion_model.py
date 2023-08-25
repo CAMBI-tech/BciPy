@@ -24,8 +24,9 @@ class GazeModel():
     def predict(self, test_data: np.array):
         predictions = self.model.predict_proba(test_data)
         means = self.model.means_
+        covs = self.model.covariances_
         
-        return predictions, means
+        return predictions, means, covs
 
 
 
