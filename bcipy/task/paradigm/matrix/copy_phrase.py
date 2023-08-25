@@ -44,13 +44,6 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
 
 def init_display(parameters, win, experiment_clock, starting_spelled_text):
     """Constructs a new Matrix display"""
-    # preview_inquiry = PreviewInquiryProperties(
-    #     preview_only=parameters['preview_only'],
-    #     preview_inquiry_length=parameters['preview_inquiry_length'],
-    #     preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
-    #     preview_inquiry_progress_method=parameters[
-    #         'preview_inquiry_progress_method'],
-    #     preview_inquiry_isi=parameters['preview_inquiry_isi'])
 
     info = InformationProperties(
         info_color=[parameters['info_color']],

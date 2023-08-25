@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
-    poststim_length = parameters.get("trial_length")
+    trial_window = parameters.get("trial_window")
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
@@ -96,7 +96,7 @@ if __name__ == '__main__':
         channel_map,
         trigger_timing,
         labels,
-        poststim_length,
+        trial_window,
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,

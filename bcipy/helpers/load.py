@@ -5,7 +5,7 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
@@ -159,37 +159,6 @@ def load_experimental_data() -> str:
     return filename
 
 
-def load_signal_model(model_class: SignalModel,
-                      model_kwargs: Dict[str, Any], filename: str = None) -> Tuple[SignalModel, str]:
-    """Construct the specified model and load pretrained parameters.
-
-    Args:
-        model_class (SignalModel, optional): Model class to construct.
-        model_kwargs (dict, optional): Keyword arguments for constructing model.
-        filename (str, optional): Location of pretrained model parameters.
-
-    Returns:
-        SignalModel: Model after loading pretrained parameters.
-    """
-    # use python's internal gui to call file explorers and get the filename
-    if not filename or Path(filename).is_dir():
-        directory = filename or preferences.signal_model_directory
-        filename = ask_filename('*.pkl', directory)
-
-        # update preferences
-        path = Path(filename)
-        if path.is_file():
-            preferences.signal_model_directory = str(path.parent)
-
-    # load the signal_model with pickle
-    signal_model = model_class(**model_kwargs)
-    signal_model.load(filename)
-
-    log.info(f'Loaded signal model from {filename}')
-
-    return signal_model, filename
-
-
 def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     """Load all signal models in a given directory.
 
@@ -211,8 +180,8 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
 
     models = []
     for file_path in path.glob(f"*{SIGNAL_MODEL_FILE_SUFFIX}"):
-        with open(file_path, "rb") as file:
-            model = pickle.load(file)
+        with open(file_path, "rb") as signal_file:
+            model = pickle.load(signal_file)
             log.info(f"Loading model {model}")
             models.append(model)
     return models

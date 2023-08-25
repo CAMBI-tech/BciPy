@@ -103,6 +103,9 @@ class Parameters(dict):
         params = Parameters(source=None, cast_values=True)
         for key, val in kwargs.items():
             value_type = type(val).__name__
+            # Convert tuple to range
+            if value_type == 'tuple':
+                value_type = 'range'
             value_str = serialize_value(value_type, val)
             params.add_entry(
                 key, {
