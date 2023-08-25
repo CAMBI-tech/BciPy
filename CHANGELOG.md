@@ -8,6 +8,8 @@ Our last release candidate before the official 2.0 release!
     - Support for multiple devices in online querying #286
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287
+- Dynamic Selection Window
+    - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Parameters
     - Add a Range type parameter #285
 - Cleanup

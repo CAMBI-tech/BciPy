@@ -27,6 +27,7 @@ from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTra
 
 logger.getLogger().setLevel(logger.INFO)
 
+
 def load_model(model_path: Path, k_folds: int, model_class=PcaRdaKdeModel):
     """Load the model at the given path"""
     with open(model_path, "rb") as f:
@@ -43,7 +44,7 @@ def generate_replay_outputs(
         symbol_set=alphabet(),
         write_output=False) -> Tuple[dict, list, list]:
     """Replay a session and generate outputs for the provided model.
-    
+
     Parameters
     ----------
     data_folder: Path
@@ -58,7 +59,7 @@ def generate_replay_outputs(
         List of symbols to use for the replay session. By default, this is the alphabet.
     write_output: bool
         Whether or not to write the output to a file. By default, this is False.
-    
+
     Returns
     -------
     tuple - new_model_outputs, old_model_target_output, old_model_nontarget_output
@@ -76,7 +77,7 @@ def generate_replay_outputs(
         trial_length = trial_window[1] - trial_window[0]
         adjust_trials_by_window = True
         logger.info(f"Trial Window: {trial_window[0]}-{trial_window[1]}s")
-        
+
     trials_per_inquiry = parameters.get("stim_length")
     prestim_length = parameters.get("prestim_length", trial_length)
     buffer_length = int(parameters.get("task_buffer_length") / 2)
@@ -176,7 +177,6 @@ def generate_replay_outputs(
         with open(data_folder / "replay_outputs.json", "w") as f:
             json.dump(outputs, f, indent=2)
 
-    # TODO separate this from the method
     # Get values computed during actual experiment from session.json for comparison
     session_json = data_folder / SESSION_DATA_FILENAME
     all_target_eeg, all_nontarget_eeg = load_eeg_evidence_from_session_json(session_json, symbol_set)
@@ -186,7 +186,7 @@ def generate_replay_outputs(
 
 def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list, list]:
     """Load EEG evidence from session.json file for comparison with replay outputs.
-    
+
     Parameters
     ----------
     session_json : str
@@ -214,10 +214,10 @@ def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list,
                 continue
             else:
                 stim_label = inquiry["stimuli"][0]  # name of symbols presented
-                stim_label.pop(0) # remove fixation cross
+                stim_label.pop(0)  # remove fixation cross
                 stim_indices = [symbol_set.index(sym) for sym in stim_label]
                 targetness = inquiry["target_info"]  # targetness of stimuli
-                targetness.pop(0) # remove fixation cross
+                targetness.pop(0)  # remove fixation cross
                 target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
                 nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
                 all_target_eeg.extend([inquiry["eeg_evidence"][pos] for pos in target])
@@ -358,7 +358,7 @@ if __name__ == "__main__":
         targets_with_old_model,
         nontargets_with_old_model,
         args.outdir)
-    
-    breakpoint()
+
+    # breakpoint()
 
     logger.info("Replay complete.")
