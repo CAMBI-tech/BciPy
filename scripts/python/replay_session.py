@@ -32,7 +32,6 @@ def load_model(model_path: Path, k_folds: int, model_class=PcaRdaKdeModel):
     """Load the model at the given path"""
     with open(model_path, "rb") as f:
         model = pickle.load(f)
-    breakpoint()
     return model
 
 
