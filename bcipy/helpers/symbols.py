@@ -1,6 +1,7 @@
 """Defines helper methods and variables related to input symbols"""
 import os
 from string import ascii_uppercase
+from typing import Callable
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
@@ -31,6 +32,31 @@ def alphabet(parameters=None, include_path=True):
         return stimulus_array
 
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
+
+
+def qwerty_order(is_txt_stim: bool = True) -> Callable:
+    """Returns a function that can be used to sort the alphabet symbols
+    in QWERTY order. Note that sorting only works for text stim.
+    """
+    if not is_txt_stim:
+        raise NotImplementedError('QWERTY ordering not implemented for images')
+
+    # Optionally, consider using the following:
+    # f"QWERTYUIOPASDFGHJKL ZXCVBNM{BACKSPACE_CHAR}{SPACE_CHAR}".index
+    row1 = "QWERTYUIOP"
+    row2 = "ASDFGHJKL<"
+    row3 = " ZXCV_BNM "
+    return f"{row1}{row2}{row3}".index
+
+
+def frequency_order(is_txt_stim: bool = True) -> Callable:
+    """Returns a function that can be used to sort the alphabet symbols
+    in most frequently used order in the English language.
+    """
+    if not is_txt_stim:
+        raise NotImplementedError(
+            'Frequency ordering not implemented for images')
+    return f"ETAOINSHRDLCUMWFGYPBVKJXQZ{BACKSPACE_CHAR}{SPACE_CHAR}".index
 
 
 DEFAULT_SYMBOL_SET = alphabet()

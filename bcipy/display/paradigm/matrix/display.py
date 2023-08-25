@@ -1,6 +1,6 @@
 """Display for presenting stimuli in a grid."""
 import logging
-from typing import Dict, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 from psychopy import core, visual
 
@@ -45,7 +45,8 @@ class MatrixDisplay(Display):
                  width_pct: float = 0.7,
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
-                 should_prompt_target: bool = True):
+                 should_prompt_target: bool = True,
+                 sort_order: Callable = None):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -68,6 +69,8 @@ class MatrixDisplay(Display):
         symbol_set default = none : subset of stimuli to be highlighted during an inquiry
         should_prompt_target(bool): when True prompts for the target symbol. Assumes that this is
             the first symbol of each inquiry. For example: [target, fixation, *stim].
+        sort_order - optional function to define the position index for each
+            symbol. Using a custom function it is possible to skip a position.
         """
         self.window = window
 
@@ -81,7 +84,7 @@ class MatrixDisplay(Display):
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
         self.symbol_set = symbol_set or alphabet()
-
+        self.sort_order = sort_order or self.symbol_set.index
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = 0.17  # stimuli.stim_height
 
@@ -168,12 +171,13 @@ class MatrixDisplay(Display):
     def build_grid(self) -> Dict[str, visual.TextStim]:
         """Build the text stimuli to populate the grid."""
         grid = {}
-        for i, sym in enumerate(self.symbol_set):
+        for sym in self.symbol_set:
+            pos_index = self.sort_order(sym)
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,
-                                        pos=self.positions[i],
+                                        pos=self.positions[pos_index],
                                         height=self.grid_stimuli_height)
         return grid
 
