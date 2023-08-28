@@ -244,10 +244,10 @@ def offline_analysis(
             figure_handles = visualize_gaze(
                 mode_data,
                 save_path=data_folder if save_figures else None,
-                show=show_figures,
+                show=True,
                 raw_plot=True,
             )
-            plt.show()
+           
             channels = mode_data.channels
             type_amp = mode_data.daq_type
             sample_rate = mode_data.sample_rate
@@ -300,6 +300,9 @@ def offline_analysis(
             symbol_set = alphabet()
             # Train the model for each target label and each eye separately.
             for i in symbol_set:
+                # Skip if there's no evidence for this symbol:
+                if len(inquiries[i]) == 0:
+                    continue
                 # Do more preprocesssing to extract eye info:
                 left_eye, left_pupil, right_eye, right_pupil = model.reshaper.extract_eye_info(inquiries[i])
             
@@ -323,12 +326,11 @@ def offline_analysis(
                     left_eye, right_eye,
                     means, covs,
                     save_path=None,
-                    show=show_figures,
+                    show=False,
                     raw_plot=True,
-                )
-                plt.show()       
+                )                     
 
-                breakpoint()
+            breakpoint()
 
             
 

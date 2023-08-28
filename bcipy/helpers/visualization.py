@@ -180,7 +180,6 @@ def visualize_gaze_inquiries(
         save_path=None,
         show=False,
         img_path=None,
-        screen_size=(1920, 1080),
         heatmap=False,
         raw_plot=False):
     """Visualize Eye Data.
@@ -195,7 +194,6 @@ def visualize_gaze_inquiries(
         save_path: Optional[str]
         show: Optional[bool]
         img_path: Optional[str]
-        screen_size: Optional[Tuple[int, int]] TODO
     """
 
     title = 'Raw Gaze Inquiries '
@@ -204,16 +202,11 @@ def visualize_gaze_inquiries(
         img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
     img = plt.imread(img_path)
 
-    left_eye_x = left_eye[:,0]
-    left_eye_y = left_eye[:,1]
-    right_eye_x = right_eye[:,0]
-    right_eye_y = right_eye[:,1]
-
     # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
-    lx = np.clip(left_eye_x, 0, 1)
-    ly = np.clip(left_eye_y, 0, 1)
-    rx = np.clip(right_eye_x, 0, 1)
-    ry = np.clip(right_eye_y, 0, 1)
+    lx = np.clip(left_eye[:,0], 0, 1)
+    ly = np.clip(left_eye[:,1], 0, 1)
+    rx = np.clip(right_eye[:,0], 0, 1)
+    ry = np.clip(right_eye[:,1], 0, 1)
     ly = 1 - ly
     ry = 1 - ry
 
@@ -221,12 +214,6 @@ def visualize_gaze_inquiries(
         means[:,0] = np.clip(means[:,0], 0, 1)
         means[:,1] = np.clip(means[:,1], 0, 1)
         means[:,1] = 1 - means[:,1]
-
-    # remove nan values
-    # lx = lx[~np.isnan(lx)]
-    # ly = ly[~np.isnan(ly)]
-    # rx = rx[~np.isnan(rx)]
-    # ry = ry[~np.isnan(ry)]
 
     # scale the eye data to the image
     fig, ax = plt.subplots()
@@ -278,6 +265,8 @@ def visualize_gaze_inquiries(
 
     if show:
         plt.show()
+    else:
+        plt.close()
 
     return fig
 
