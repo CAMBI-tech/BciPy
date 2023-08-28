@@ -272,18 +272,22 @@ class GazeReshaper:
         # Find the value closest to (& greater than) inq_start_times
         gaze_data_timing = gaze_data[-1,:].tolist() 
         
-        start_times = []
-        for times in inq_start_times:
-            temp = list(filter(lambda x: x > times, gaze_data_timing))
-            if len(temp) > 0: 
-                start_times.append(temp[0])
+        # start_times = []
+        # for times in inq_start_times:
+        #     temp = list(filter(lambda x: x > times, gaze_data_timing))
+        #     if len(temp) > 0: 
+        #         start_times.append(temp[0])
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), inq_start_times))
 
-        triggers = []
-        for val in start_times:
-            triggers.append(gaze_data_timing.index(val))
-
+        # triggers = []
+        # for val in start_times:
+        #     try:
+        #         triggers.append(gaze_data_timing.index(val))
+        #     except ValueError:
+        #         continue
         # Label for every inquiry
         labels = target_symbols
+        # breakpoint()
 
         symbol_set = alphabet()
 

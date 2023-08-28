@@ -271,9 +271,9 @@ def offline_analysis(
 
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-                remove_pre_fixation = False,
-                offset = starting_offset*-1,  # cancel out the starting_offset
+                remove_pre_fixation = False,  # cancel out the starting_offset
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                offset = 0,
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
             )
             ''' Trigger_timing includes PROMPT and excludes FIXATION '''
@@ -283,7 +283,7 @@ def offline_analysis(
             # trigger_targetness keeps the PROMPT info, use it to find the target symbol.
             target_symbols = trigger_symbols[0::11]  # target symbols
             inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
-
+            offset = 0.4
             # Find the inquiries starting by the inq_start_times, (9, 100, 180):           
             inquiries = model.reshaper(
             trial_targetness_label=trigger_targetness,
@@ -291,6 +291,7 @@ def offline_analysis(
             target_symbols = target_symbols,
             gaze_data=data,
             sample_rate=sample_rate,
+            offset=offset,
             trials_per_inquiry=trials_per_inquiry,
             poststimulus_length=poststim_length,
             prestimulus_length=prestim_length,
@@ -326,7 +327,7 @@ def offline_analysis(
                     left_eye, right_eye,
                     means, covs,
                     save_path=None,
-                    show=False,
+                    show=True,
                     raw_plot=True,
                 )                     
 
