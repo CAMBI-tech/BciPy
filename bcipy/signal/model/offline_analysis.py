@@ -136,6 +136,7 @@ def offline_analysis(
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
+    flash_rate = parameters.get("time_flash")
 
     log.info(
         f"\nData processing settings: \n"
@@ -295,7 +296,7 @@ def offline_analysis(
                 gaze_data=data,
                 sample_rate=sample_rate,
                 offset=offset,
-                poststimulus_length=3,
+                poststimulus_length=trials_per_inquiry*flash_rate,
             )
 
             symbol_set = alphabet()
