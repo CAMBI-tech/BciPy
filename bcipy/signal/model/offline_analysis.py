@@ -17,7 +17,7 @@ from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder, TriggerHandler
-from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiries
+from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiry, visualize_gaze_inquiries
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.model.fusion_model import GazeModel
@@ -273,9 +273,10 @@ def offline_analysis(
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
                 remove_pre_fixation = False,  # cancel out the starting_offset
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-                offset = 0,
+                apply_system_offset=True,
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
             )
+            print(starting_offset)
             ''' Trigger_timing includes PROMPT and excludes FIXATION '''
            
             # Use trigger_timing to generate time windows for each letter flashing
@@ -283,23 +284,23 @@ def offline_analysis(
             # trigger_targetness keeps the PROMPT info, use it to find the target symbol.
             target_symbols = trigger_symbols[0::11]  # target symbols
             inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
+
+            # only applied if using the samples instead of lsl index
             offset = 0.4
             # Find the inquiries starting by the inq_start_times, (9, 100, 180):           
             inquiries = model.reshaper(
-            trial_targetness_label=trigger_targetness,
-            inq_start_times=inq_start,
-            target_symbols = target_symbols,
-            gaze_data=data,
-            sample_rate=sample_rate,
-            offset=offset,
-            trials_per_inquiry=trials_per_inquiry,
-            poststimulus_length=poststim_length,
-            prestimulus_length=prestim_length,
-            transformation_buffer=buffer
+                trial_targetness_label=trigger_targetness,
+                inq_start_times=inq_start,
+                target_symbols = target_symbols,
+                gaze_data=data,
+                sample_rate=sample_rate,
+                offset=offset,
+                poststimulus_length=3,
             )
 
             symbol_set = alphabet()
             # Train the model for each target label and each eye separately.
+            left_eyes, right_eyes, all_means, all_covs = [], [], [], []
             for i in symbol_set:
                 # Skip if there's no evidence for this symbol:
                 if len(inquiries[i]) == 0:
@@ -321,16 +322,28 @@ def offline_analysis(
 
                 predictions, means, covs = model.predict(test_right_eye)
                 # print(predictions)
+                left_eyes.append(left_eye)
+                right_eyes.append(right_eye)
+                all_means.append(means)
+                all_covs.append(covs)
 
                 # Visualize the results:
-                figure_handles = visualize_gaze_inquiries(
+                figure_handles = visualize_gaze_inquiry(
                     left_eye, right_eye,
                     means, covs,
                     save_path=None,
-                    show=True,
+                    show=False,
                     raw_plot=True,
                 )                     
 
+            breakpoint()
+            figure_handles = visualize_gaze_inquiries(
+                    left_eyes, right_eyes,
+                    all_means, all_covs,
+                    save_path=None,
+                    show=True,
+                    raw_plot=True,
+                )
             breakpoint()
 
             

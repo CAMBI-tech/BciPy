@@ -286,6 +286,7 @@ class TriggerHandler:
     @staticmethod
     def load(path: str,
              offset: Optional[float] = 0.0,
+             apply_system_offset: bool = True,
              exclusion: Optional[List[TriggerType]] = None) -> List[Trigger]:
         """
         Loads a list of triggers from a .txt of triggers.
@@ -316,7 +317,12 @@ class TriggerHandler:
         # Checking for file with given path, with or without .txt
         triggers, system_offset = TriggerHandler.read_text_file(path)
         excluded_types = exclusion or []
-        total_offset = offset + system_offset
+
+        if apply_system_offset:
+            total_offset = offset + system_offset
+        else:
+            total_offset = offset
+
         return [
             trg.with_offset(total_offset) for trg in triggers
             if trg.type not in excluded_types
@@ -354,7 +360,7 @@ def convert_timing_triggers(timing: List[tuple], target_stimuli: str, trigger_ty
 
 
 def trigger_decoder(trigger_path: str, remove_pre_fixation: bool = True, offset: float = 0.0,
-                    exclusion: List[TriggerType] = []) -> Tuple[list, list, list]:
+                    exclusion: List[TriggerType] = [], apply_system_offset: bool = True) -> Tuple[list, list, list]:
     """Trigger Decoder.
 
     Given a path to trigger data, this method loads valid Triggers and returns their type, timing and label.
@@ -372,7 +378,7 @@ def trigger_decoder(trigger_path: str, remove_pre_fixation: bool = True, offset:
         exclusion += [TriggerType.FIXATION, TriggerType.PROMPT, TriggerType.SYSTEM, TriggerType.OFFSET]
     else:
         exclusion += [TriggerType.SYSTEM]
-    triggers = TriggerHandler.load(trigger_path, offset=offset, exclusion=exclusion)
+    triggers = TriggerHandler.load(trigger_path, offset=offset, exclusion=exclusion, apply_system_offset=apply_system_offset)
 
     # from the stimuli array, pull out the symbol information
     trigger_type = [trigger.type.value for trigger in triggers]

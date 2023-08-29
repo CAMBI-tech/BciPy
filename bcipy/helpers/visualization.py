@@ -172,7 +172,7 @@ def visualize_gaze(
 
     return fig
 
-def visualize_gaze_inquiries(
+def visualize_gaze_inquiry(
         left_eye, 
         right_eye,
         means=None,
@@ -196,7 +196,7 @@ def visualize_gaze_inquiries(
         img_path: Optional[str]
     """
 
-    title = 'Raw Gaze Inquiries '
+    title = 'Raw Gaze Inquiry'
 
     if img_path is None:
         img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
@@ -238,10 +238,14 @@ def visualize_gaze_inquiries(
             colorbar=True)
         
     if raw_plot:
-        # ax.scatter(lx, ly, c='lightcoral', s=1)
+        ax.scatter(lx, ly, c='lightcoral', s=1)
         ax.scatter(rx, ry, c='bisque', s=1)
 
     if means is not None:
+        if means is not None:
+            means[:,0] = np.clip(means[:,0], 0, 1)
+            means[:,1] = np.clip(means[:,1], 0, 1)
+            means[:,1] = 1 - means[:,1]
         for i, (mean, cov) in enumerate(zip(means, covs)):
             v, w = linalg.eigh(cov)
             v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
@@ -269,6 +273,99 @@ def visualize_gaze_inquiries(
         plt.close()
 
     return fig
+
+def visualize_gaze_inquiries(
+        left: List[np.ndarray],
+        right: List[np.ndarray],
+        means=None,
+        covs=None,
+        save_path=None,
+        show=False,
+        img_path=None,
+        heatmap=False,
+        raw_plot=False):
+    """Visualize Eye Data."""
+    title = 'Raw Gaze Inquiries '
+
+    if img_path is None:
+        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+    img = plt.imread(img_path)
+
+    # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
+    lx = []
+    ly = []
+    rx = []
+    ry = []
+    for le, re in zip(left, right):
+        lx.append(np.clip(le[:,0], 0, 1))
+        ly.append(1 - np.clip(le[:,1], 0, 1))
+        rx.append(np.clip(re[:,0], 0, 1))
+        ry.append(1 - np.clip(re[:,1], 0, 1))
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[0, 1, 0, 1])
+
+    if heatmap:
+        # create a dataframe making a column for each x, y pair for both eyes and a column for the eye (left or right)
+        df = pd.DataFrame({
+            'x': np.concatenate((lx, rx)),
+            'y': np.concatenate((ly, ry)),
+            'eye': ['left'] * len(lx) + ['right'] * len(rx)
+        })
+        ax = sns.kdeplot(
+            data=df,
+            hue='eye',
+            x='x',
+            y='y',
+            fill=False,
+            thresh=0.05,
+            levels=10,
+            cmap="mako",
+            colorbar=True)
+        
+    if raw_plot:
+        for i in range(len(left)):
+            ax.scatter(lx[i], ly[i], c='lightcoral', s=1)
+            ax.scatter(rx[i], ry[i], c='bisque', s=1)
+
+    if means is not None and covs is not None:
+        for mean in means:
+            mean[:,0] = np.clip(mean[:,0], 0, 1)
+            mean[:,1] = np.clip(mean[:,1], 0, 1)
+            mean[:,1] = 1 - mean[:,1]
+        
+        # flatten the means and covs
+        means = np.concatenate(means)
+        covs = np.concatenate(covs)
+
+        for i, (mean, cov) in enumerate(zip(means, covs)):
+            v, w = linalg.eigh(cov)
+            v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
+
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180.0 * angle / np.pi
+            ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+            ell.set_clip_box(ax)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
+
+        # ax.scatter(means[:,0], means[:,1], c='yellow', s=20, marker='^')
+
+    plt.title(f'{title}Plot')
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return fig
+
 
 
 def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):

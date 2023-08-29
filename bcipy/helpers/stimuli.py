@@ -235,12 +235,9 @@ class GazeReshaper:
                  target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
-                 trials_per_inquiry: int,
                  offset: float = 0,
                  channel_map: List[int] = None,
                  poststimulus_length: float = 0.5,
-                 prestimulus_length: float = 0.0,
-                 transformation_buffer: float = 0.0,
                  ) -> dict:
         """Extract inquiry data and labels.
 
@@ -269,22 +266,23 @@ class GazeReshaper:
             channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
             gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
         
-        # Find the value closest to (& greater than) inq_start_times
+        # Grab the LSL labels
         gaze_data_timing = gaze_data[-1,:].tolist() 
         
-        # start_times = []
-        # for times in inq_start_times:
-        #     temp = list(filter(lambda x: x > times, gaze_data_timing))
-        #     if len(temp) > 0: 
-        #         start_times.append(temp[0])
-        triggers = list(map(lambda x: int((x + offset) * sample_rate), inq_start_times))
+        start_times = []
+        for times in inq_start_times:
+            temp = list(filter(lambda x: x > times, gaze_data_timing))
+            if len(temp) > 0: 
+                start_times.append(temp[0])
 
-        # triggers = []
-        # for val in start_times:
-        #     try:
-        #         triggers.append(gaze_data_timing.index(val))
-        #     except ValueError:
-        #         continue
+        triggers = []
+        for val in start_times:
+            try:
+                triggers.append(gaze_data_timing.index(val))
+            except ValueError:
+                continue
+        # uncomment to use the samples instead of the lsl index
+        triggers = list(map(lambda x: int((x + offset) * sample_rate), inq_start_times))
         # Label for every inquiry
         labels = target_symbols
         # breakpoint()
@@ -301,7 +299,7 @@ class GazeReshaper:
         # Merge the inquiries if they have the same target letter:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
-            stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds) 
+            stop = int(inquiry_index + (sample_rate * poststimulus_length))   # (60 samples * 3 seconds) 
             # Check if the data exists for the inquiry:
             if stop > len(gaze_data[0,:]):
                 continue
