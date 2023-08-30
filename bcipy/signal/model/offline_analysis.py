@@ -34,13 +34,15 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     """Performs a train/test split on the provided data and labels, accounting for
     the current shape convention (channel dimension in front, instead of batch dimension in front).
 
-    Args:
+    Parameters:
+    -----------
         data (np.ndarray): Shape (channels, items, time)
         labels (np.ndarray): Shape (items,)
         test_size (float): fraction of data to be used for testing
         random_state (int, optional): fixed random seed
 
     Returns:
+    --------
         train_data (np.ndarray): Shape (channels, train_items, time)
         test_data (np.ndarray): Shape (channels, test_items, time)
         train_labels (np.ndarray): Shape (train_items,)
@@ -66,15 +68,6 @@ def offline_analysis(
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
-    Args:
-        data_folder(str): folder of the data
-            save all information and load all from this folder
-        parameter(dict): parameters for running offline analysis
-        alert_finished(bool): whether or not to alert the user offline analysis complete
-        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
-            estimate balanced accuracy
-        show_figures(bool): if true, shows ERP figures after training
-        save_figures(bool): if true, saves ERP figures after training to the data folder
 
     How it Works:
     - reads data and information from a .csv calibration file
@@ -87,13 +80,31 @@ def offline_analysis(
     - pickle dumps model into .pkl file
     - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
+
+    Parameters:
+    ----------
+        data_folder(str): folder of the data
+            save all information and load all from this folder
+        parameter(dict): parameters for running offline analysis
+        alert_finished(bool): whether or not to alert the user offline analysis complete
+        estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy
+        show_figures(bool): if true, shows ERP figures after training
+        save_figures(bool): if true, saves ERP figures after training to the data folder
+
+    Returns:
+    --------
+        model (SignalModel): trained model
+        figure_handles (Figure): handles to the ERP figures
     """
-    assert parameters, "Parameters are required"
+    assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
 
     # extract relevant session information from parameters file
-    poststim_length = parameters.get("trial_length")
+    trial_window = parameters.get("trial_window")
+    window_length = trial_window[1] - trial_window[0]
+
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
@@ -109,7 +120,8 @@ def offline_analysis(
     log.info(
         f"\nData processing settings: \n"
         f"{str(transform_params)} \n"
-        f"Poststimulus: {poststim_length}s, Prestimulus: {prestim_length}s, Buffer: {buffer}s \n"
+        f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
+        f"Prestimulus Buffer: {prestim_length}s, Poststimulus Buffer: {buffer}s \n"
         f"Static offset: {static_offset}"
     )
 
@@ -139,11 +151,15 @@ def offline_analysis(
     model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
+
+    # update the trigger timing list to account for the initial trial window
+    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, device_spec)
@@ -154,19 +170,19 @@ def offline_analysis(
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
         trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
+        timing_info=corrected_trigger_timing,
         eeg_data=data,
         sample_rate=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
-        poststimulus_length=poststim_length,
+        poststimulus_length=window_length,
         prestimulus_length=prestim_length,
         transformation_buffer=buffer,
     )
 
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
-    trial_duration_samples = int(poststim_length * fs)
+    trial_duration_samples = int(window_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
@@ -194,12 +210,13 @@ def offline_analysis(
         log.info(f"Balanced acc with 80/20 split: {score}")
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
+    # this should have uncorrected trigger timing for display purposes
     figure_handles = visualize_erp(
         raw_data,
         channel_map,
         trigger_timing,
         labels,
-        poststim_length,
+        trial_window,
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,

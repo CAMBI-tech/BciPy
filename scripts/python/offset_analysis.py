@@ -2,27 +2,29 @@
 
 Assumptions:
     - The raw_data.csv file is available.
-    - The raw_data.csv file contains a TRG column, which is a continuous line of 0s and values greater than 0 (indicating a photodiode trigger event).
+    - The raw_data.csv file contains a TRG column, which is a continuous line of 0s and values greater than 0
+        (indicating a photodiode trigger event).
     - The triggers.txt file is available.
     - All data are in the same directory and in the BciPy session data format.
 
 Usage:
     - Run the script from the command line.
     - Select the directory containing the raw_data.csv and triggers.txt files.
-    - The script will plot the TRG column from the raw_data.csv file, as well as the triggers.txt file. 
-    - The script will also print out the results of the analysis, including the number of violations (set using the --tolerance flag) and the recommended static offset (-r).
+    - The script will plot the TRG column from the raw_data.csv file, as well as the triggers.txt file.
+    - The script will also print out the results of the analysis, including the number of violations
+        (set using the --tolerance flag) and the recommended static offset (-r).
 
-    Example usage to recommned a static offset:
-        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ -r
-    
+    Example usage to recommend a static offset:
+        python offset_analysis.py -p 'C:/Users/test_data/test_offset_analysis_session/' -r
+
     Example usage to recommend a static offset using the RSVP Time Test Calibrations:
-        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --rsvp -r
+        python offset_analysis.py -p 'C:/Users/test_data/test_offset_analysis_session/' --rsvp -r
 
     Example usage to plot the data next to photodiode results with a static offset applied:
-        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --offset 0.01
+        python offset_analysis.py -p 'C:/Users/test_data/test_offset_analysis_session/' --offset 0.01
 
     Example usage to plot the data next to photodiode results with a static offset applied and a tolerance of 10 ms:
-        python offset_analysis.py -p C:/Users/bcipy/Documents/BCI-Project/bcipy/bcipy/tests/test_data/test_offset_analysis/ --offset 0.01 --tolerance 0.01
+        python offset_analysis.py -p 'C:/Users/test_data/test_offset_analysis_session/' --offset 0.01 --tolerance 0.01
 """
 from pathlib import Path
 from textwrap import wrap
@@ -204,7 +206,8 @@ def read_triggers(triggers_file: str, static_offset: float):
         return corrected
 
 
-def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105, tolerance: float = 0.01, rsvp: bool = False):
+def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105,
+         tolerance: float = 0.01, rsvp: bool = False):
     """Run the viewer gui
 
     Parameters:
@@ -231,8 +234,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=
-        "Graphs trigger data from a bcipy session to visualize system latency")
+        description="Graphs trigger data from a bcipy session to visualize system latency")
     parser.add_argument('-p',
                         '--path',
                         help='path to the data directory',
@@ -244,14 +246,14 @@ if __name__ == "__main__":
     parser.add_argument('--offset',
                         help='static offset applied to triggers for plotting and analysis',
                         default=0.114)
-    parser.add_argument('-t','--tolerance',
+    parser.add_argument('-t', '--tolerance',
                         help='Allowable tolerance between triggers and photodiode. Deafult 10 ms',
                         default=0.01)
     parser.add_argument('--rsvp',
-                        help='RSVP Calibration Task. Default False. Corrects for issue with fixation causing a false positive.',
+                        help=('RSVP Calibration Task. Default False. '
+                              'Corrects for issue with fixation causing a false positive.'),
                         type=bool,
                         default=True)
-    
 
     args = parser.parse_args()
     path = args.path

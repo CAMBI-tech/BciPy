@@ -39,11 +39,11 @@ class ERPTransformParams(NamedTuple):
     down_sampling_rate: int = 2
 
     def __str__(self):
-        return ', '.join([
-            f"Filter: [{self.filter_low}-{self.filter_high}]"
-            f"Order: {self.filter_order}",
-            f"Notch: {self.notch_filter_frequency}",
-            f"Downsample: {self.down_sampling_rate}"
+        return ' '.join([
+            f"Filter: [{self.filter_low}-{self.filter_high}] Hz \n"
+            f"Order: {self.filter_order} \n",
+            f"Notch: {self.notch_filter_frequency} Hz \n",
+            f"Downsample: {self.down_sampling_rate} \n"
         ])
 
 

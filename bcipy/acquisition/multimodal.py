@@ -136,7 +136,7 @@ class ClientManager():
             client = self.get_client(content_type)
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
-                log.debug(f'Need {count} records for processing {name} data')
+                log.info(f'Need {count} records for processing {name} data')
                 output[content_type] = client.get_data(start=start,
                                                        limit=count)
                 data_count = len(output[content_type])

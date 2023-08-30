@@ -29,6 +29,7 @@ from psychopy import core
 log = logging.getLogger(__name__)
 DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
 DEFAULT_TEXT_FIXATION = '+'
+NO_TARGET_INDEX = None
 
 
 class StimuliOrder(Enum):
@@ -295,8 +296,11 @@ def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[Li
     return timing
 
 
-def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
-               trial_length: float, trigger_labels: List[int]) -> Epochs:
+def mne_epochs(mne_data: RawArray,
+               trigger_timing: List[float],
+               trial_length: float,
+               trigger_labels: List[int],
+               baseline: Tuple[float, float] = (None, 0)) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
@@ -304,9 +308,8 @@ def mne_epochs(mne_data: RawArray, trigger_timing: List[float],
     """
     annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     mne_data.set_annotations(annotations)
-
     events_from_annot, _ = mne.events_from_annotations(mne_data)
-    return Epochs(mne_data, events_from_annot)
+    return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:
@@ -479,9 +482,6 @@ def best_case_rsvp_inq_gen(alp: list,
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
     return InquirySchedule(samples, times, colors)
-
-
-NO_TARGET_INDEX = None
 
 
 def generate_calibration_inquiries(

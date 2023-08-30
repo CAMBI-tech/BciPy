@@ -84,7 +84,7 @@ class RSVPCopyPhraseTask(Task):
     MODE = 'RSVP'
 
     PARAMETERS_USED = [
-        'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_window',
         'font', 'fixation_color', 'trigger_type',
         'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
         'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
@@ -230,7 +230,7 @@ class RSVPCopyPhraseTask(Task):
         # ensure data / query parameters are set correctly
         buffer_len = self.parameters['task_buffer_length']
         prestim = self.parameters['prestim_length']
-        poststim = self.parameters['trial_length']
+        poststim = self.parameters['trial_window'][1] - self.parameters['trial_window'][0]
         if buffer_len < prestim:
             raise TaskConfigurationException(
                 f'task_buffer_length=[{buffer_len}] must be greater than prestim_length=[{prestim}]')
@@ -243,7 +243,7 @@ class RSVPCopyPhraseTask(Task):
         """Number of letters already spelled at the start of the task."""
         spelled_letters_count = self.parameters['spelled_letters_count']
         if spelled_letters_count > len(self.copy_phrase):
-            self.logger.debug('Already spelled letters exceeds phrase length.')
+            self.logger.info('Already spelled letters exceeds phrase length.')
             spelled_letters_count = 0
         return spelled_letters_count
 
@@ -294,7 +294,7 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['stim_color'],
             first_run=self.first_run)
         if not should_continue:
-            self.logger.debug('User wants to exit.')
+            self.logger.info('User wants to exit.')
         return should_continue
 
     def wait(self, seconds: float = None):
@@ -368,24 +368,24 @@ class RSVPCopyPhraseTask(Task):
         should continue.
         """
         if self.copy_phrase == self.spelled_text:
-            self.logger.debug('Spelling complete')
+            self.logger.info('Spelling complete')
             return False
 
         if (self.inq_counter + 1) >= self.parameters['max_inq_len']:
-            self.logger.debug('Max tries exceeded: to allow for more tries'
-                              ' adjust the Maximum inquiry Length '
-                              '(max_inq_len) parameter.')
+            self.logger.info('Max tries exceeded: to allow for more tries'
+                             ' adjust the Maximum inquiry Length '
+                             '(max_inq_len) parameter.')
             return False
 
         if self.session.total_time_spent >= (self.parameters['max_minutes'] *
                                              60):
-            self.logger.debug('Max time exceeded. To allow for more time '
-                              'adjust the max_minutes parameter.')
+            self.logger.info('Max time exceeded. To allow for more time '
+                             'adjust the max_minutes parameter.')
             return False
 
         if self.session.total_number_decisions >= self.parameters['max_selections']:
-            self.logger.debug('Max number of selections reached '
-                              '(configured with the max_selections parameter)')
+            self.logger.info('Max number of selections reached '
+                             '(configured with the max_selections parameter)')
             return False
 
         return True
@@ -405,7 +405,7 @@ class RSVPCopyPhraseTask(Task):
         -------
         data save location (triggers.txt, session.json)
         """
-        self.logger.debug('Starting Copy Phrase Task!')
+        self.logger.info('Starting Copy Phrase Task!')
         run = True
         self.wait()  # buffer for data processing
 
@@ -572,11 +572,15 @@ class RSVPCopyPhraseTask(Task):
         if not proceed or self.fake:
             return []
 
-        # currently prestim_length is used as a buffer for filter application;
-        # use the same at the end of the inquiry
-        post_stim_buffer = self.parameters['prestim_length']
-        prestim = self.parameters['prestim_length']
+        # currently prestim_length is used as a buffer for filter application
+        post_stim_buffer = int(self.parameters.get("task_buffer_length") / 2)
+        prestim_buffer = self.parameters['prestim_length']
+        trial_window = self.parameters['trial_window']
+        window_length = trial_window[1] - trial_window[0]
         inquiry_timing = self.stims_for_decision(stim_times)
+
+        # update the inquiry timing list (stim, time) based on the trial window first time value
+        inquiry_timing = [(stim, time + trial_window[0]) for stim, time in inquiry_timing]
 
         # Get all data at once so we don't redundantly query devices which are
         # used in more than one signal model.
@@ -584,10 +588,10 @@ class RSVPCopyPhraseTask(Task):
             inquiry_timing=inquiry_timing,
             daq=self.daq,
             offset=self.parameters['static_trigger_offset'],
-            prestim=prestim,
-            poststim=post_stim_buffer + self.parameters['trial_length'])
+            prestim=prestim_buffer,
+            poststim=post_stim_buffer + window_length)
 
-        triggers = relative_triggers(inquiry_timing, prestim)
+        triggers = relative_triggers(inquiry_timing, prestim_buffer)
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
         letters, times, filtered_labels = self.copy_phrase_task.letter_info(
@@ -600,7 +604,7 @@ class RSVPCopyPhraseTask(Task):
                 symbols=letters,
                 times=times,
                 target_info=filtered_labels,
-                window_length=self.parameters['trial_length'])
+                window_length=window_length)
             evidences.append((evidence_evaluator.produces, probs))
 
         return evidences

@@ -103,13 +103,13 @@ class LslAcquisitionClient:
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        log.debug(f"Stopping Acquisition from {self.device_spec.name} ...")
+        log.info(f"Stopping Acquisition from {self.device_spec.name} ...")
         if self.recorder:
-            log.debug(f"Closing  {self.device_spec.name} data recorder")
+            log.info(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
         if self.inlet:
-            log.debug("Closing LSL connection")
+            log.info("Closing LSL connection")
             self.inlet.close_stream()
             self.inlet = None
 
@@ -140,7 +140,7 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.debug(f"Getting data from: {start} to: {end} limit: {limit}")
+        log.info(f"Getting data from: {start} to: {end} limit: {limit}")
 
         # Only data in the current buffer is available to query;
         # requests for data outside of this will fail. Buffer size is
@@ -148,11 +148,11 @@ class LslAcquisitionClient:
         data = self.get_latest_data()
 
         if not data:
-            log.debug('No records available')
+            log.info('No records available')
             return []
 
-        log.debug((f'{len(data)} records available '
-                   f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
+        log.info((f'{len(data)} records available '
+                  f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
         start = start or data[0].timestamp
         end = end or data[-1].timestamp
         limit = limit or -1
@@ -163,7 +163,7 @@ class LslAcquisitionClient:
         data_slice = [
             record for record in data if start <= record.timestamp <= end
         ][0:limit]
-        log.debug(f'{len(data_slice)} records returned')
+        log.info(f'{len(data_slice)} records returned')
         return data_slice
 
     @property
@@ -293,7 +293,7 @@ class LslAcquisitionClient:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
         offset_from_stim = first_stim_time - self.first_sample_time
-        log.debug(f"Acquisition offset: {offset_from_stim}")
+        log.info(f"Acquisition offset: {offset_from_stim}")
         return offset_from_stim
 
     def cleanup(self):

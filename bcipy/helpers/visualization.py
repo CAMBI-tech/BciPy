@@ -13,7 +13,7 @@ from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.raw_data import RawData
-from bcipy.signal.process import Composition, get_default_transform
+from bcipy.signal.process import Composition, get_default_transform, ERPTransformParams
 
 import bcipy.acquisition.devices as devices
 import mne
@@ -28,7 +28,7 @@ def visualize_erp(
         channel_map: List[int],
         trigger_timing: List[float],
         trigger_labels: List[int],
-        trial_length: float,
+        trial_window: Tuple[float, float],
         transform: Optional[Composition] = None,
         plot_average: Optional[bool] = True,
         plot_topomaps: Optional[bool] = True,
@@ -48,15 +48,24 @@ def visualize_erp(
     channel_map(List[int]): Map of channels to remove (0) or keep (1)
     trigger_timing: list of trigger timing
     trigger_labels: list of trigger labels
-    trial_length: length of trials described in trigger_timing / labels in seconds
+    trial_window: Tuple[float, float]: time window to plot
     transform(Composition): Optional BciPy composition to apply to data before visualization
     plot_average: Optional[boolean]: whether or not to average over all channels. Default: True
     plot_topomap: Optional[boolean]: whether or not to plot all channels across target/nontarget. Default: True
     show: Optional[boolean]: whether or not to show the figures generated. Default: False
     save_path: optional path to a save location of the figure generated
     """
+    # check for trial length in seconds from stimuli start (0.0)
+    trial_length = trial_window[1] - 0.0
+
+    # check for a baseline interval or set to None
+    if trial_window[0] < 0:
+        baseline = (trial_window[0], 0)
+    else:
+        baseline = (None, 0)
+
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels)
+    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels, baseline=baseline)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
@@ -65,7 +74,18 @@ def visualize_erp(
     if plot_average:
         figs.extend(visualize_evokeds(epochs, save_path=save_path, show=show))
     if plot_topomaps:
-        figs.extend(visualize_joint_average(epochs, ['Non-Target', 'Target'], save_path=save_path, show=show))
+        # make a list of equally spaced times to plot topomaps using the time window
+        # defined in the task parameters
+        times = [round(trial_window[0] + i * (trial_window[1] - trial_window[0]) / 5, 1) for i in range(7)]
+
+        # clip any times that are out of bounds of the time window or zero
+        times = [time for time in times if trial_window[0] <= time <= trial_window[1] and time != 0]
+
+        figs.extend(visualize_joint_average(
+            epochs, ['Non-Target', 'Target'],
+            save_path=save_path,
+            show=show,
+            plot_joint_times=times))
 
     return figs
 
@@ -117,7 +137,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    log.debug('Press Ctrl + C to exit!')
+    log.info('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()
@@ -135,7 +155,17 @@ def visualize_joint_average(
 
     See: https://mne.tools/dev/generated/mne.Evoked.html#mne.Evoked.plot_joint
 
+    Parameters:
+        epochs(Tuple[Epochs]): MNE Epochs
+        labels(List[str]): List of labels for each Epoch
+        plot_joint_times(List[float]): List of times to plot topomaps
+        save_path(Optional[str]): Path to save the figures
+        show(Optional[bool]): Whether to show the figures
+
     Note: assumes the number of Epochs (passed as a tuple) is equal to the number of labels provided
+
+    Returns:
+        List of figures generated
     """
     assert len(epochs) == len(labels), "The number of epochs must match labels in Visualize Joint Average"
 
@@ -151,8 +181,9 @@ def visualize_joint_average(
     return figs
 
 
-def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
-                      = None, show: Optional[bool] = False) -> List[Figure]:
+def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
+                      save_path: Optional[str] = None,
+                      show: Optional[bool] = False) -> List[Figure]:
     """Visualize Evokeds.
 
     Using MNE Epochs, generate a compare evokeds plot using the mean and showing parametric confidence
@@ -160,7 +191,12 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs], save_path: Optional[str]
 
     See: https://mne.tools/stable/generated/mne.viz.plot_compare_evokeds.html
 
-    Note: Assumes first epoch is nontarget and second is target."""
+    Parameters:
+
+        epochs(Tuple[Epochs]): MNE Epochs Note: Assumes first epoch is nontarget and second is target.
+        save_path(Optional[str]): Path to save the figures
+        show(Optional[bool]): Whether to show the figures
+    """
     evokeds = dict(nontarget=list(epochs[0].iter_evoked()),
                    target=list(epochs[1].iter_evoked()))
     fig = mne.viz.plot_compare_evokeds(evokeds, combine='mean', show=show)
@@ -188,18 +224,14 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         Figure of Session Data
     """
     # extract all relevant parameters
-    poststim_length = parameters.get("trial_length")
-    # get signal filtering information
-    downsample_rate = parameters.get("down_sampling_rate")
-    notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = parameters.get("filter_high")
-    filter_low = parameters.get("filter_low")
-    filter_order = parameters.get("filter_order")
+    trial_window = parameters.get("trial_window")
     static_offset = parameters.get("static_trigger_offset")
 
     raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
+
+    transform_params = parameters.instantiate(ERPTransformParams)
 
     devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
     device_spec = devices.preconfigured_device(raw_data.daq_type)
@@ -207,11 +239,11 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=filter_low,
-        bandpass_high=filter_high,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
+        notch_freq_hz=transform_params.notch_filter_frequency,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
     )
     # Process triggers.txt files
     trigger_targetness, trigger_timing, _ = trigger_decoder(
@@ -231,7 +263,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         channel_map,
         trigger_timing,
         labels,
-        poststim_length,
+        trial_window,
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
