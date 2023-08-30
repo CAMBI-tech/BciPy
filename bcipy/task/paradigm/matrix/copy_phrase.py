@@ -73,5 +73,8 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
         stimuli,
         task_bar,
         info,
+        rows=parameters['matrix_rows'],
+        columns=parameters['matrix_columns'],
+        width_pct=parameters['matrix_width'],
         trigger_type=parameters['trigger_type'],
         should_prompt_target=False)
