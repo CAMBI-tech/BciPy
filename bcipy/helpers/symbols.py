@@ -34,18 +34,18 @@ def alphabet(parameters=None, include_path=True):
     return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
 
 
-def qwerty_order(is_txt_stim: bool = True) -> Callable:
+def qwerty_order(is_txt_stim: bool = True,
+                 space: str = SPACE_CHAR,
+                 backspace: str = BACKSPACE_CHAR) -> Callable:
     """Returns a function that can be used to sort the alphabet symbols
     in QWERTY order. Note that sorting only works for text stim.
     """
     if not is_txt_stim:
         raise NotImplementedError('QWERTY ordering not implemented for images')
 
-    # Optionally, consider using the following:
-    # f"QWERTYUIOPASDFGHJKL ZXCVBNM{BACKSPACE_CHAR}{SPACE_CHAR}".index
     row1 = "QWERTYUIOP"
-    row2 = "ASDFGHJKL<"
-    row3 = " ZXCV_BNM "
+    row2 = f"ASDFGHJKL{backspace}"
+    row3 = f" ZXCV{space}BNM "
     return f"{row1}{row2}{row3}".index
 
 
