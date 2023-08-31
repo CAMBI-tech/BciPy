@@ -461,7 +461,7 @@ def start_app() -> None:
 
     ex.show_gui()
 
-    sys.exit(bcipy_gui.exec_())
+    sys.exit(bcipy_gui.exec())
 
 
 if __name__ == '__main__':

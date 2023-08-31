@@ -7,9 +7,9 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
-from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSlot
-from PyQt5.QtGui import QFont, QPixmap, QShowEvent
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox,
+from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSlot
+from PyQt6.QtGui import QFont, QPixmap, QShowEvent, QWheelEvent
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QScrollArea,
                              QSpinBox, QVBoxLayout, QWidget)
@@ -19,7 +19,7 @@ from bcipy.helpers.parameters import parse_range
 
 def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
     """Create a Font object with the given parameters."""
-    return QFont(font_family, size, QFont.Normal)
+    return QFont(font_family, size, weight=0)
 
 
 def invalid_length(min=1, max=25) -> bool:
@@ -68,10 +68,10 @@ class AlertMessageType(Enum):
 
     Custom enum used to abstract PyQT message types from downstream users.
     """
-    WARN = QMessageBox.Warning
-    QUESTION = QMessageBox.Question
-    INFO = QMessageBox.Information
-    CRIT = QMessageBox.Critical
+    WARN = QMessageBox.Icon.Warning
+    QUESTION = QMessageBox.Icon.Question
+    INFO = QMessageBox.Icon.Information
+    CRIT = QMessageBox.Icon.Critical
 
 
 class AlertResponse(Enum):
@@ -79,10 +79,10 @@ class AlertResponse(Enum):
 
     Custom enum used to abstract PyQT alert responses from downstream users.
     """
-    OK = QMessageBox.Ok
-    CANCEL = QMessageBox.Cancel
-    YES = QMessageBox.Yes
-    NO = QMessageBox.No
+    OK = QMessageBox.StandardButton.Ok
+    CANCEL = QMessageBox.StandardButton.Cancel
+    YES = QMessageBox.StandardButton.Yes
+    NO = QMessageBox.StandardButton.No
 
 
 class PushButton(QPushButton):
@@ -245,7 +245,7 @@ class FormInput(QWidget):
 
     def eventFilter(self, source, event):
         """Event filter that suppresses the scroll wheel event."""
-        if (event.type() == QEvent.Wheel and source is self.control):
+        if (event.type() == QWheelEvent and source is self.control):
             return True
         return False
 
@@ -948,7 +948,7 @@ class BCIGui(QWidget):
                             message_type=message_type,
                             message_response=message_response,
                             message_timeout=message_timeout)
-        return msg.exec_()
+        return msg.exec()
 
     def get_filename_dialog(self,
                             message: str = 'Open File',
@@ -983,8 +983,8 @@ class ScrollableFrame(QWidget):
 
         # create the scrollable are
         self.frame = QScrollArea()
-        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.frame.setWidgetResizable(True)
         self.frame.setFixedWidth(self.width)
         self.setFixedHeight(self.height)
@@ -1109,7 +1109,7 @@ def start_app() -> None:
                            message_response=AlertMessageResponse.OCE,
                            message_timeout=5)
 
-    sys.exit(bcipy_gui.exec_())
+    sys.exit(bcipy_gui.exec())
 
 
 if __name__ == '__main__':
