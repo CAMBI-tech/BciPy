@@ -263,16 +263,10 @@ def offline_analysis(
 
             model = GazeModel()
 
-            # Add back the starting offset: 
-            # This is handled in TriggerHandler. Remove automatic addition off system offset:
-            trigx, starting_offset = TriggerHandler.read_text_file(f"{data_folder}/{TRIGGER_FILENAME}")
-            # TODO: I access TriggerHandler directly to not cause an issue during EEG analysis.
-            # There's probably a smarter way to discard starting_offset
-
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
                 remove_pre_fixation = False,
-                offset = starting_offset*-1,  # cancel out the starting_offset
+                apply_system_offset=False,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
             )
@@ -318,15 +312,15 @@ def offline_analysis(
                 # Fit the model:
                 model.fit(train_right_eye)
 
-                predictions, means, covs = model.predict(test_right_eye)
-                # print(predictions)
+                scores, means, covs = model.get_scores(test_right_eye)
+                # print(scores)
 
                 # Visualize the results:
                 figure_handles = visualize_gaze_inquiries(
                     left_eye, right_eye,
                     means, covs,
                     save_path=None,
-                    show=False,
+                    show=True,
                     raw_plot=True,
                 )                     
 

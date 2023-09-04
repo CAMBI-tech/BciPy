@@ -21,12 +21,26 @@ class GazeModel():
 
         return self
     
-    def predict(self, test_data: np.array):
-        predictions = self.model.predict_proba(test_data)
+    def get_scores(self, test_data: np.array):
+        '''
+        Compute the log-likelihood of each sample.
+        Compute the mean and covariance of each mixture component.
+        '''
+        
+        scores = self.model.score_samples(test_data)
         means = self.model.means_
         covs = self.model.covariances_
         
-        return predictions, means, covs
+        return scores, means, covs
+    
+    def predict(self, scores: np.array):
+        '''
+        Predict the labels for the test data.
+        '''
+        # Compute over log-likelihood scores
+        # Get the argmax of the scores
+        
+        #return predictions
 
 
 
