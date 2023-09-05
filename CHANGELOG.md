@@ -28,6 +28,7 @@ Our last release candidate before the official 2.0 release!
     - Set channel spec information in devices.json. Removed aliases. #266 Updated default analysis channels for Wearable Sensing devices #279
     - Refactor to allow multiple devices to be configured for multimodal acquisition. #277
     - Refinements to LSL server to use the device ChannelSpec information for generating metadata. #282
+    - Updated data consumers to explicitly set a chunk size. Refinements to LSL server to simulate different chunk sizes. #292
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261

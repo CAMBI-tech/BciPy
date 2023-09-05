@@ -193,7 +193,7 @@ class LslRecordingThread(StoppableThread):
         until the `stop()` method is called.
         """
         # Note that self.stream_info does not have the channel names.
-        inlet = StreamInlet(self.stream_info)
+        inlet = StreamInlet(self.stream_info, max_chunklen=1)
         full_metadata = inlet.info()
 
         log.info("Acquiring data from data stream:")

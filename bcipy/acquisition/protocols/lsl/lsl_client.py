@@ -74,7 +74,9 @@ class LslAcquisitionClient:
                 f'LSL Stream not found for content type {content_type}')
         stream_info = streams[0]
 
-        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buffer_len)
+        self.inlet = StreamInlet(stream_info,
+                                 max_buflen=self.max_buffer_len,
+                                 max_chunklen=1)
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
