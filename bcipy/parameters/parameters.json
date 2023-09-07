@@ -1,6 +1,6 @@
 {
   "fake_data": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "readableName": "Fake EEG Data On/Off",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
@@ -622,7 +622,7 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "UNIFORM",
+    "value": "KENLM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: MIXTURE",

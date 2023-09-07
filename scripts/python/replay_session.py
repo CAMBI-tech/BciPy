@@ -17,22 +17,18 @@ from bcipy.config import (
 )
 from bcipy.helpers.acquisition import analysis_channels
 import bcipy.acquisition.devices as devices
+from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.session import session_data, read_session, evidence_records
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
+from bcipy.language.model import kenlm
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
 
 logger.getLogger().setLevel(logger.INFO)
-
-
-def load_model(model_path: Path, k_folds: int, model_class=PcaRdaKdeModel):
-    """Load the model at the given path"""
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-    return model
 
 
 def generate_replay_outputs(
@@ -41,7 +37,7 @@ def generate_replay_outputs(
         model_path: Path,
         model_class=PcaRdaKdeModel,
         symbol_set=alphabet(),
-        write_output=False) -> Tuple[dict, list, list]:
+        write_output=False) -> Tuple[dict, list, list, list]:
     """Replay a session and generate outputs for the provided model.
 
     Parameters
@@ -63,8 +59,12 @@ def generate_replay_outputs(
     -------
     tuple - new_model_outputs, old_model_target_output, old_model_nontarget_output
     """
-    k_folds = parameters.get("k_folds")
-    model = load_model(model_path, k_folds, model_class)
+    # k_folds =
+    # model = load_model(model_path, k_folds, model_class)
+
+    base_model = PcaRdaKdeModel(parameters.get("k_folds"))
+    model = base_model.load(model_path)
+
     logger.info(f"Loaded model from {model_path}")
 
     # get trial information; to make backwards compatible, we will try to get the trial length
@@ -83,7 +83,6 @@ def generate_replay_outputs(
 
     # get signal filtering information
     static_offset = parameters.get("static_trigger_offset")
-    k_folds = parameters.get("k_folds")
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
 
@@ -153,7 +152,7 @@ def generate_replay_outputs(
     inquiry_worth_of_trials = np.split(trials, inquiries.shape[1], 1)
     inquiry_worth_of_letters = grouper(trigger_symbols, trials_per_inquiry, incomplete="ignore")
     for i, (inquiry_trials, this_inquiry_letters, this_inquiry_labels) in enumerate(
-        zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
+            zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
     ):
         response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
         if np.any(this_inquiry_labels == 1):
@@ -176,53 +175,82 @@ def generate_replay_outputs(
         with open(data_folder / "replay_outputs.json", "w") as f:
             json.dump(outputs, f, indent=2)
 
-    # Get values computed during actual experiment from session.json for comparison
-    session_json = data_folder / SESSION_DATA_FILENAME
-    all_target_eeg, all_nontarget_eeg = load_eeg_evidence_from_session_json(session_json, symbol_set)
+    # Get target and nontarget eeg values from actual experiment in session.json for comparison
+    session_records = evidence_records(read_session(data_folder / SESSION_DATA_FILENAME))
+    all_target_eeg = [record.eeg for record in session_records if record.is_target == 1]
+    all_nontarget_eeg = [record.eeg for record in session_records if record.is_target == 0]
 
-    return outputs, all_target_eeg, all_nontarget_eeg
+    # loading lm values from experiment and comparing with diff lm models
+    # lm_evidences = load_lm_evidence_from_session_json(session_json, parameters)
+    # print(f"f len of lm_evidences  {len(lm_evidences)}, should be equal to number of series")
 
+    return outputs, all_target_eeg, all_nontarget_eeg, None
 
-def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list, list]:
-    """Load EEG evidence from session.json file for comparison with replay outputs.
-
-    Parameters
-    ----------
-    session_json : str
-        Path to session.json file
-    symbol_set : list
-        List of symbols used in experiment
-
-    Returns
-    -------
-    all_target_eeg : list
-        List of EEG evidence for target stimuli
-    all_nontarget_eeg : list
-        List of EEG evidence for nontarget stimuli
-    """
+def load_lm_evidence_from_session_json(session_json, parameters, symbol_set=alphabet()):
     with open(session_json, "r") as f:
         contents = json.load(f)
     series = contents["series"]
 
-    all_target_eeg = []
-    all_nontarget_eeg = []
+    lm_evidences = []
+    lm_model = init_language_model(parameters)
 
-    for inquiries in series.values():
-        for inquiry in inquiries.values():
-            if len(inquiry["eeg_evidence"]) < 1:
-                continue
-            else:
-                stim_label = inquiry["stimuli"][0]  # name of symbols presented
-                stim_label.pop(0)  # remove fixation cross
-                stim_indices = [symbol_set.index(sym) for sym in stim_label]
-                targetness = inquiry["target_info"]  # targetness of stimuli
-                targetness.pop(0)  # remove fixation cross
-                target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
-                nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
-                all_target_eeg.extend([inquiry["eeg_evidence"][pos] for pos in target])
-                all_nontarget_eeg.extend([inquiry["eeg_evidence"][pos] for pos in nontarget])
+    for i, inquiries in enumerate(series.values()):
+        init_inquiry = inquiries["0"]
 
-    return all_target_eeg, all_nontarget_eeg
+        # calculating new prediction for current_text
+        old_lm_evidence = init_inquiry.get('lm_evidence')
+        curr_pred = lm_model.predict(list(init_inquiry['current_text']))
+
+        # unsorting the predictions to fit session json format
+        temp_dic = dict(curr_pred)
+        curr_pred_formatted = [temp_dic[char] for char in symbol_set]
+
+        lm_evidence = {"old_lm_evidence": old_lm_evidence, "new_lm_evidence": curr_pred_formatted,
+                       "target_letter": init_inquiry['target_letter'], "current_text": init_inquiry['current_text']}
+
+        lm_evidences.append(lm_evidence)
+        print(f"top prediction for series {i} - {init_inquiry['current_text']} - ", curr_pred[0])
+
+    return lm_evidences
+
+
+def plot_comparison_records(records, outdir, title="response_values", y_scale="log"):
+    df = pd.DataFrame.from_records(records)
+    logger.info(f"{df.describe()}")
+    ax = sns.stripplot(
+        x="which_model",
+        y="response_value",
+        data=df,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+    sns.boxplot(
+        showmeans=True,
+        meanline=True,
+        meanprops={"color": "k", "ls": "-", "lw": 2},
+        medianprops={"visible": False},
+        whiskerprops={"visible": False},
+        zorder=10,
+        x="which_model",
+        y="response_value",
+        data=df,
+        showfliers=False,
+        showbox=False,
+        showcaps=False,
+        ax=ax,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+
+    ax.set(yscale=y_scale)
+    plt.savefig(outdir / f"{title}.stripplot.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    ax = sns.boxplot(
+        x="which_model",
+        y="response_value",
+        data=df,
+        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
+    )
+    ax.set(yscale=y_scale)
+    plt.savefig(outdir / f"{title}.boxplot.png", dpi=150, bbox_inches="tight")
 
 
 def plot_collected_outputs(
@@ -264,42 +292,33 @@ def plot_collected_outputs(
     for nontarget_response in nontargets_with_old_model:
         records.append({"which_model": "old_nontarget", "response_value": nontarget_response})
 
-    df = pd.DataFrame.from_records(records)
-    logger.info(f"{df.describe()}")
-    ax = sns.stripplot(
-        x="which_model",
-        y="response_value",
-        data=df,
-        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
-    )
-    sns.boxplot(
-        showmeans=True,
-        meanline=True,
-        meanprops={"color": "k", "ls": "-", "lw": 2},
-        medianprops={"visible": False},
-        whiskerprops={"visible": False},
-        zorder=10,
-        x="which_model",
-        y="response_value",
-        data=df,
-        showfliers=False,
-        showbox=False,
-        showcaps=False,
-        ax=ax,
-        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
-    )
+    plot_comparison_records(records, outdir, y_scale="log")
 
-    ax.set(yscale="log")
-    plt.savefig(outdir / "response_values.stripplot.png", dpi=150, bbox_inches="tight")
-    plt.close()
-    ax = sns.boxplot(
-        x="which_model",
-        y="response_value",
-        data=df,
-        order=["old_target", "new_target", "old_nontarget", "new_nontarget"],
-    )
-    ax.set(yscale="log")
-    plt.savefig(outdir / "response_values.boxplot.png", dpi=150, bbox_inches="tight")
+def plot_lm_outputs(lm_evidences, outdir, symbol_set=alphabet()):
+    def format_records(values, which_model):
+        return [{"which_model": which_model, "response_value": val} for val in values]
+
+    records = []
+    for lm_series_content in lm_evidences:  # each session
+        target_evidence_idx = symbol_set.index(lm_series_content['target_letter'])
+        old_vals, new_vals = lm_series_content['old_lm_evidence'], lm_series_content['new_lm_evidence']
+
+        old_target_val = old_vals[target_evidence_idx]
+        new_target_val = new_vals[target_evidence_idx]
+
+        old_non_target_vals = np.delete(old_vals, target_evidence_idx)
+        new_non_target_vals = np.delete(new_vals, target_evidence_idx)
+
+        records.extend(format_records([old_target_val], "old_target"))
+        records.extend(format_records([new_target_val], "new_target"))
+        records.extend(format_records(old_non_target_vals, "old_nontarget"))
+        records.extend(format_records(new_non_target_vals, "new_nontarget"))
+
+    df = pd.DataFrame(records)
+
+    df.to_csv('records.csv', index=False)
+
+    plot_comparison_records(records, outdir, title="LM_responses", y_scale="linear")
 
 
 if __name__ == "__main__":
@@ -344,8 +363,10 @@ if __name__ == "__main__":
         logger.info(f"Loading params from {params_file}")
         params = load_json_parameters(params_file, value_cast=True)
 
+        # breakpoint()
+
         # Generate replay outputs using the model provided against the session data in data_folder
-        outputs, all_target_eeg, all_nontarget_eeg = generate_replay_outputs(
+        outputs, all_target_eeg, all_nontarget_eeg, lm_evidences = generate_replay_outputs(
             data_folder, params, args.model_file, write_output=False
         )
         outputs_with_new_model.append(outputs)
@@ -358,6 +379,6 @@ if __name__ == "__main__":
         nontargets_with_old_model,
         args.outdir)
 
-    # breakpoint()
+    # plot_lm_outputs(lm_evidences, args.outdir)
 
     logger.info("Replay complete.")
