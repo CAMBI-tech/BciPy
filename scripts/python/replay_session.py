@@ -37,7 +37,7 @@ def generate_replay_outputs(
         model_path: Path,
         model_class=PcaRdaKdeModel,
         symbol_set=alphabet(),
-        write_output=False) -> Tuple[dict, list, list, list]:
+        write_output=False) -> Tuple[dict, list, list]:
     """Replay a session and generate outputs for the provided model.
 
     Parameters
@@ -180,40 +180,7 @@ def generate_replay_outputs(
     all_target_eeg = [record.eeg for record in session_records if record.is_target == 1]
     all_nontarget_eeg = [record.eeg for record in session_records if record.is_target == 0]
 
-    # loading lm values from experiment and comparing with diff lm models
-    # lm_evidences = load_lm_evidence_from_session_json(session_json, parameters)
-    # print(f"f len of lm_evidences  {len(lm_evidences)}, should be equal to number of series")
-
-    return outputs, all_target_eeg, all_nontarget_eeg, None
-
-def load_lm_evidence_from_session_json(session_json, parameters, symbol_set=alphabet()):
-    with open(session_json, "r") as f:
-        contents = json.load(f)
-    series = contents["series"]
-
-    lm_evidences = []
-    lm_model = init_language_model(parameters)
-
-    for i, inquiries in enumerate(series.values()):
-        init_inquiry = inquiries["0"]
-
-        # calculating new prediction for current_text
-        old_lm_evidence = init_inquiry.get('lm_evidence')
-        curr_pred = lm_model.predict(list(init_inquiry['current_text']))
-
-        # unsorting the predictions to fit session json format
-        temp_dic = dict(curr_pred)
-        curr_pred_formatted = [temp_dic[char] for char in symbol_set]
-
-        lm_evidence = {"old_lm_evidence": old_lm_evidence, "new_lm_evidence": curr_pred_formatted,
-                       "target_letter": init_inquiry['target_letter'], "current_text": init_inquiry['current_text']}
-
-        lm_evidences.append(lm_evidence)
-        print(f"top prediction for series {i} - {init_inquiry['current_text']} - ", curr_pred[0])
-
-    return lm_evidences
-
-
+    return outputs, all_target_eeg, all_nontarget_eeg
 def plot_comparison_records(records, outdir, title="response_values", y_scale="log"):
     df = pd.DataFrame.from_records(records)
     logger.info(f"{df.describe()}")
@@ -294,33 +261,6 @@ def plot_collected_outputs(
 
     plot_comparison_records(records, outdir, y_scale="log")
 
-def plot_lm_outputs(lm_evidences, outdir, symbol_set=alphabet()):
-    def format_records(values, which_model):
-        return [{"which_model": which_model, "response_value": val} for val in values]
-
-    records = []
-    for lm_series_content in lm_evidences:  # each session
-        target_evidence_idx = symbol_set.index(lm_series_content['target_letter'])
-        old_vals, new_vals = lm_series_content['old_lm_evidence'], lm_series_content['new_lm_evidence']
-
-        old_target_val = old_vals[target_evidence_idx]
-        new_target_val = new_vals[target_evidence_idx]
-
-        old_non_target_vals = np.delete(old_vals, target_evidence_idx)
-        new_non_target_vals = np.delete(new_vals, target_evidence_idx)
-
-        records.extend(format_records([old_target_val], "old_target"))
-        records.extend(format_records([new_target_val], "new_target"))
-        records.extend(format_records(old_non_target_vals, "old_nontarget"))
-        records.extend(format_records(new_non_target_vals, "new_nontarget"))
-
-    df = pd.DataFrame(records)
-
-    df.to_csv('records.csv', index=False)
-
-    plot_comparison_records(records, outdir, title="LM_responses", y_scale="linear")
-
-
 if __name__ == "__main__":
     import argparse
 
@@ -366,7 +306,7 @@ if __name__ == "__main__":
         # breakpoint()
 
         # Generate replay outputs using the model provided against the session data in data_folder
-        outputs, all_target_eeg, all_nontarget_eeg, lm_evidences = generate_replay_outputs(
+        outputs, all_target_eeg, all_nontarget_eeg = generate_replay_outputs(
             data_folder, params, args.model_file, write_output=False
         )
         outputs_with_new_model.append(outputs)
@@ -378,7 +318,5 @@ if __name__ == "__main__":
         targets_with_old_model,
         nontargets_with_old_model,
         args.outdir)
-
-    # plot_lm_outputs(lm_evidences, args.outdir)
 
     logger.info("Replay complete.")
