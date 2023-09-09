@@ -1,8 +1,7 @@
 import logging
 import os
-from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -165,12 +164,20 @@ class TriggerType(Enum):
         """Returns all enum values as a list"""
         return list(map(lambda c: c.value, cls))
 
+    @classmethod
+    def pre_fixation(cls) -> List:
+        """Returns the subset of TriggerTypes that occur before and including
+        the FIXATION trigger."""
+        return [
+            TriggerType.FIXATION, TriggerType.PROMPT, TriggerType.SYSTEM,
+            TriggerType.OFFSET
+        ]
+
     def __str__(self) -> str:
         return f'{self.value}'
 
 
-@dataclass(frozen=True)
-class Trigger:
+class Trigger(NamedTuple):
     """
     Object that encompasses data for a single trigger instance.
     """
@@ -343,40 +350,154 @@ class TriggerHandler:
         return self.triggers
 
 
-def convert_timing_triggers(timing: List[tuple], target_stimuli: str, trigger_type: Callable) -> List[Trigger]:
+def read_data(lines: Iterable[str]) -> List[Trigger]:
+    """Read raw trigger data from the given source.
+
+    Parameters
+    ----------
+        data - iterable object where each item is a str with data for a single
+            trigger.
+
+    Returns
+    -------
+        list of all Triggers in the data.
+    """
+    triggers = []
+    for i, line in enumerate(lines):
+        try:
+            trg = Trigger.from_list(line.split())
+            triggers.append(trg)
+        except (AssertionError, ValueError) as trg_error:
+            raise BciPyCoreException(
+                f'Error reading trigger from line {i+1}: {trg_error}'
+            ) from trg_error
+    return triggers
+
+
+def find_starting_offset(triggers: List[Trigger], device_type: str = None) -> Trigger:
+    """Given a list of raw trigger data, determine the starting offset for the
+    given device. The returned trigger has the timestamp of the first sample
+    recorded for the device.
+
+    If no device is provided the EEG offset will be used. If there are
+    no offset triggers in the given data a Trigger with offset of 0.0 will be
+    returned.
+
+    Parameters
+    ----------
+        triggers - list of trigger data; should include Triggers of
+          TriggerType.OFFSET
+        device_type - each device will generally have a different offset. This
+            parameter is used to determine which trigger to use. If not given
+            the EEG offset will be used by default. Ex. 'EYETRACKER'
+    Returns
+    -------
+        The Trigger for the first matching offset for the given device, or a
+            Trigger with offset of 0.0 if a matching offset was not found.
+    """
+    label = 'starting_offset'
+    if device_type and device_type != 'EEG':
+        label += f"_{device_type}"
+    for trg in triggers:
+        if trg.type == TriggerType.OFFSET and trg.label == label:
+            return trg
+    log.info(f"Offset not found (device_type: {device_type}); using 0.0")
+    return Trigger('starting_offset', TriggerType.OFFSET, 0.0)
+
+
+def read(path: str) -> List[Trigger]:
+    """Read all Triggers from the given text file.
+
+    Parameters
+    ----------
+        path - trigger (.txt) file to read
+    Returns
+    -------
+        triggers
+    """
+    if not path.endswith('.txt') or not os.path.exists(path):
+        raise FileNotFoundError(
+            f'Valid triggers .txt file not found at [{path}].')
+    with open(path, encoding=DEFAULT_ENCODING) as raw_txt:
+        triggers = read_data(raw_txt)
+    return triggers
+
+
+def apply_offsets(triggers: List[Trigger],
+                  starting_offset: Trigger,
+                  static_offset: float = 0.0) -> List[Trigger]:
+    """Returns a list of triggers with timestamps adjusted relative to the
+    device start time. Offset triggers are filtered out if present.
+
+    Parameters
+    ----------
+        triggers - list of triggers
+        starting_offset - offset from the device start time.
+        static_offset - the measured static system offset
+
+    Returns
+    -------
+        a list of triggers with timestamps relative to the starting_offset
+    """
+    total_offset = starting_offset.time + static_offset
+    return [
+        trg.with_offset(total_offset) for trg in triggers
+        if trg.type != TriggerType.OFFSET
+    ]
+
+
+def exclude_types(triggers: List[Trigger],
+                  types: List[TriggerType] = None) -> List[Trigger]:
+    """Filter the list of triggers to exclude the provided types"""
+    if not types:
+        return triggers
+    return [trg for trg in triggers if trg.type not in types]
+
+
+def convert_timing_triggers(timing: List[tuple], target_stimuli: str,
+                            trigger_type: Callable) -> List[Trigger]:
     """Convert Stimuli Times to Triggers.
 
     Using the stimuli presentation times provided by the display, convert them into BciPy Triggers.
     """
     return [
-        Trigger(symbol, trigger_type(symbol, target_stimuli, i), time) for i, (symbol, time) in enumerate(timing)
+        Trigger(symbol, trigger_type(symbol, target_stimuli, i), time)
+        for i, (symbol, time) in enumerate(timing)
     ]
 
 
-def trigger_decoder(trigger_path: str, remove_pre_fixation: bool = True, offset: float = 0.0,
-                    exclusion: List[TriggerType] = []) -> Tuple[list, list, list]:
+def trigger_decoder(trigger_path: str,
+                    remove_pre_fixation: bool = True,
+                    offset: float = 0.0,
+                    exclusion: List[TriggerType] = None,
+                    device_type: str = None) -> Tuple[list, list, list]:
     """Trigger Decoder.
 
     Given a path to trigger data, this method loads valid Triggers and returns their type, timing and label.
 
-    PARAMETERS
+    Parameters
     ----------
-    :param: trigger_path: path to triggers file
-    :param: remove_pre_fixation: boolean to determine whether any stimuli before a fixation + system should be removed
-    :param: offset: additional offset value to apply to triggers. If a valid 'starting_offset' present in the trigger
-        file this will be applied be default.
-    :param: exclusion [Optional]: any TriggerTypes to be filtered from data returned
-    :return: tuple: trigger_type, trigger_timing, trigger_label
+        trigger_path: path to triggers file
+        remove_pre_fixation: boolean to determine whether any stimuli before a fixation + system should be removed
+        offset: static offset value to apply to triggers.
+        exclusion: any TriggerTypes to be filtered from data returned
+        device_type: used to determine which starting_offset value to use; if
+            a 'starting_offset' trigger is found it will be applied.
+
+    Returns
+    -------
+        tuple: trigger_type, trigger_timing, trigger_label
     """
-    if remove_pre_fixation:
-        exclusion += [TriggerType.FIXATION, TriggerType.PROMPT, TriggerType.SYSTEM, TriggerType.OFFSET]
-    else:
-        exclusion += [TriggerType.SYSTEM]
-    triggers = TriggerHandler.load(trigger_path, offset=offset, exclusion=exclusion)
+    excluded_types = exclusion or []
+    excluded_types += TriggerType.pre_fixation() if remove_pre_fixation else [
+        TriggerType.SYSTEM
+    ]
 
-    # from the stimuli array, pull out the symbol information
-    trigger_type = [trigger.type.value for trigger in triggers]
-    trigger_label = [trigger.label for trigger in triggers]
-    trigger_timing = [trigger.time for trigger in triggers]
+    triggers = read(trigger_path)
+    starting_offset = find_starting_offset(triggers, device_type)
 
-    return trigger_type, trigger_timing, trigger_label
+    filtered = exclude_types(triggers, excluded_types)
+    corrected = apply_offsets(filtered, starting_offset, static_offset=offset)
+
+    labels, types, times = zip(*corrected)
+    return list(map(str, types)), list(times), list(labels)
