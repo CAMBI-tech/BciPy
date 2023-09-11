@@ -203,29 +203,41 @@ class TestTriggerHandler(unittest.TestCase):
 
         verify(self.handler, times=1).write()
 
-    def test_load_returns_list_of_triggers(self):
-        trg = Trigger('A', TriggerType.NONTARGET, 1)
-        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_returns_list_of_triggers(self, path_exists_mock):
+        """Test static load method"""
+        path_exists_mock.returnValue = True
+        trg_data = '''A nontarget 1.0'''
 
-        response = self.handler.load('test_path_not_real')
-        self.assertEqual(response[0], trg)
+        trg = Trigger('A', TriggerType.NONTARGET, 1.0)
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt')
+            self.assertEqual(response[0], trg)
 
-    def test_load_applies_offset(self):
-        trg = Trigger('A', TriggerType.NONTARGET, 1)
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_applies_offset(self, path_exists_mock):
+        """Test that static load method applies offsets"""
+        path_exists_mock.returnValue = True
+        trg_data = '''starting_offset offset 0.5
+                    A nontarget 1.0'''
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt', offset=1)
+            self.assertEqual(response[0].time, 2.5)
 
-        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
-        response = self.handler.load('test_path_not_real', offset=1)
-        self.assertEqual(response[0].time, 2)
-
-    def test_load_exclusion(self):
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_exclusion(self, path_exists_mock):
+        """Test that static load can exclude trigger types"""
+        path_exists_mock.returnValue = True
+        trg_data = '''A nontarget 1
+                      + fixation 2'''
         fixation_trg = Trigger('+', TriggerType.FIXATION, 2)
-        trg_list = [Trigger('A', TriggerType.NONTARGET, 1), fixation_trg]
-
-        when(TriggerHandler).read_text_file(any()).thenReturn((trg_list, 0.0))
-
-        response = self.handler.load('test_path_not_real',
-                                     exclusion=[TriggerType.NONTARGET])
-        self.assertEqual(response[0], fixation_trg)
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt',
+                                         exclusion=[TriggerType.NONTARGET])
+            self.assertEqual(response[0], fixation_trg)
 
     @patch('bcipy.helpers.triggers.os.path.exists')
     def test_read_data(self, path_exists_mock):
