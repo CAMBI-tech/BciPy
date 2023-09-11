@@ -6,6 +6,7 @@ Our last release candidate before the official 2.0 release!
 
 - Multimodal Acquisition and Querying
     - Support for multiple devices in online querying #286
+    - Support for trigger handling relative to a given device #293
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287
 - Dynamic Selection Window
