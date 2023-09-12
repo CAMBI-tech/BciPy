@@ -9,7 +9,9 @@ from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, _calibration_trigger,
                                     apply_offsets, exclude_types,
-                                    find_starting_offset, read, read_data,
+                                    find_starting_offset, offset_device,
+                                    offset_label, read, read_data,
+                                    starting_offsets_by_device,
                                     trigger_decoder)
 
 
@@ -333,6 +335,36 @@ class TestTriggerHandler(unittest.TestCase):
 class TestTriggerFunctions(unittest.TestCase):
     """Test module functions"""
 
+    def test_starting_offset_label(self):
+        """Test functions for generating offset labels"""
+        self.assertEqual(offset_label(), 'starting_offset')
+        self.assertEqual(offset_label('EEG'), 'starting_offset')
+        self.assertEqual(offset_label('EYETRACKER'),
+                         'starting_offset_EYETRACKER')
+
+        self.assertEqual(offset_label(prefix='daq_offset'), 'daq_offset')
+        self.assertEqual(offset_label(device_type='EEG', prefix='daq_offset'),
+                         'daq_offset')
+        self.assertEqual(
+            offset_label(device_type='EYETRACKER', prefix='daq_offset'),
+            'daq_offset_EYETRACKER')
+
+    def test_offset_device_type(self):
+        """Test functions for generating offset labels"""
+        self.assertEqual(offset_device('starting_offset'), 'EEG')
+        self.assertEqual(offset_device('starting_offset_EEG'), 'EEG')
+        self.assertEqual(offset_device('starting_offset_EYETRACKER'),
+                         'EYETRACKER')
+        self.assertEqual(offset_device('starting_offset_EYE_TRACKER'),
+                         'EYE_TRACKER')
+
+        self.assertEqual(
+            offset_device('daq_offset_EYE_TRACKER', prefix='daq_offset'),
+            'EYE_TRACKER')
+
+        with self.assertRaises(AssertionError):
+            offset_device('offset', prefix='starting_offset')
+
     def test_read_data(self):
         """Test reading data from a given source"""
         trg_data = '''starting_offset offset 3.47
@@ -423,6 +455,34 @@ class TestTriggerFunctions(unittest.TestCase):
         offset = find_starting_offset(triggers, device_type='EYETRACKER')
         self.assertEqual(offset.label, 'starting_offset_EYETRACKER')
         self.assertEqual(offset.time, 4.47)
+
+    def test_starting_offsets_by_device(self):
+        """Test default behavior for starting_offsets_by_device"""
+        triggers = read_data('''starting_offset offset 3.47
+            starting_offset_EYETRACKER offset 4.47
+            J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers)
+        self.assertEqual(len(offsets), 2)
+        self.assertEqual(offsets['EEG'].time, 3.47)
+        self.assertEqual(offsets['EYETRACKER'].time, 4.47)
+
+    def test_starting_offsets_by_device_no_offset(self):
+        """Test default behavior for starting_offsets_by_device with no offsets
+        """
+        triggers = read_data('''J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers)
+        self.assertFalse(offsets)
+
+    def test_starting_offsets_by_device_defaults(self):
+        """Test default values"""
+        triggers = read_data('''J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers, device_types=['EEG', 'EYETRACKER'])
+        self.assertEqual(len(offsets), 2)
+        self.assertEqual(offsets['EEG'].time, 0.0)
+        self.assertEqual(offsets['EYETRACKER'].time, 0.0)
 
     def test_apply_offsets_without_static(self):
         """Test application of offsets without a static offset"""

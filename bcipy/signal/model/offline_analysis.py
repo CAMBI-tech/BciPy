@@ -155,6 +155,7 @@ def offline_analysis(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        device_type='EEG'
     )
 
     # update the trigger timing list to account for the initial trial window

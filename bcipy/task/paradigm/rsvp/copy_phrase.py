@@ -3,7 +3,6 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core
 
-from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME,
                           TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
 from bcipy.display import (Display, InformationProperties,
@@ -24,7 +23,8 @@ from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
                                 relative_triggers, target_info,
                                 trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers)
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
 from bcipy.task.control.evidence import (EvidenceEvaluator,
@@ -723,8 +723,7 @@ class RSVPCopyPhraseTask(Task):
         # we write only the sample offset here.
         triggers = []
         for content_type, client in self.daq.clients_by_type.items():
-            suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
-            label = f"daq_sample_offset{suffix}"
+            label = offset_label(content_type.name, prefix='daq_sample_offset')
             time = client.offset(self.rsvp.first_stim_time)
             triggers.append(Trigger(label, TriggerType.SYSTEM, time))
 
@@ -744,8 +743,7 @@ class RSVPCopyPhraseTask(Task):
             # offset will factor in true offset and time relative from beginning
             offset_triggers = []
             for content_type, client in self.daq.clients_by_type.items():
-                suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
-                label = f"starting_offset{suffix}"
+                label = offset_label(content_type.name)
                 time = client.offset(
                     self.rsvp.first_stim_time) - self.rsvp.first_stim_time
                 offset_triggers.append(Trigger(label, TriggerType.OFFSET,
