@@ -1,18 +1,17 @@
 import logging
-from typing import List, Tuple, Optional
-from bcipy.display import (
-    BCIPY_LOGO_PATH,
-    Display,
-    InformationProperties,
-    VEPStimuliProperties,
-    TaskDisplayProperties,
-)
+from typing import List, Tuple
+
 import numpy as np
-from psychopy import visual, core
+from psychopy import core, visual
+from psychopy.visual.grating import GratingStim
+
+from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
+                           VEPStimuliProperties)
+from bcipy.display.components.task_bar import TaskBar
 from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import get_fixation, resize_image
 from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-from bcipy.helpers.stimuli import resize_image, get_fixation
 
 
 def create_vep_codes(length=32, count=4) -> List[List[int]]:
@@ -31,11 +30,11 @@ class VEPBox:
     """A class to represent a VEP box.
 
     Attributes:
-        flicker: A list of two visual.GratingStim objects, one for on and one for off.
+        flicker: A list of two GratingStim objects, one for on and one for off.
         code: A list of integers representing the VEP code for this box.
     """
 
-    def __init__(self, flicker: List[Tuple[visual.GratingStim, visual.GratingStim]], code: List[int]) -> None:
+    def __init__(self, flicker: List[Tuple[GratingStim, GratingStim]], code: List[int]) -> None:
         self.flicker = flicker
         self.code = code
 
@@ -49,13 +48,13 @@ class VEPBox:
 
 
 class VEPDisplay(Display):
-
+    """Display for VEP paradigm"""
     def __init__(
             self,
             window: visual.Window,
             experiment_clock: Clock,
             stimuli: VEPStimuliProperties,
-            task_display: TaskDisplayProperties,
+            task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
             space_char: str = SPACE_CHAR,
@@ -104,8 +103,8 @@ class VEPDisplay(Display):
 
         # Task parameters
         self.space_char = space_char
-        self.task_display = task_display
-        self.task = task_display.build_task(self.window)
+
+        self.task_bar = task_bar
 
         # Information parameters
         self.info = info
@@ -125,6 +124,7 @@ class VEPDisplay(Display):
         self.vep_box_size = .1
 
         self.animation_duration = 2
+
 
     def do_fixation(self) -> None:
         # draw fixation cross
@@ -234,17 +234,26 @@ class VEPDisplay(Display):
         return self.trigger_callback.timing
 
     def draw_static(self) -> None:
-        """Draw static elements for the display."""
-        self.task.draw()
+        """Draw static elements in a stimulus."""
+        if self.task_bar:
+            self.task_bar.draw()
+
         for info in self.info_text:
             info.draw()
 
-    def update_task(self, text: str, color: str, pos: Optional[Tuple] = None) -> None:
-        """Update the task display which is displayed using the draw_static function."""
-        self.task.text = text
-        self.task.color = color
-        if pos:
-            self.task.pos = pos
+    def update_task_bar(self, text: str = ''):
+        """Update Task.
+
+        Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
+
+        PARAMETERS:
+
+        text: text for task
+        color_list: list of the colors for each stimuli
+        pos: position of task
+        """
+        if self.task_bar:
+            self.task_bar.update(text)
 
     def _build_inquiry_stimuli(self) -> None:
         """Build the inquiry stimuli."""
@@ -268,7 +277,7 @@ class VEPDisplay(Display):
             pos: Tuple[float, float],
             codes: List[int],
             colors: List[Tuple[str]],
-            box_size: float) -> List[visual.GratingStim]:
+            box_size: float) -> List[GratingStim]:
         """Build the corner stimuli for the VEP.
 
         Args:
@@ -285,7 +294,7 @@ class VEPDisplay(Display):
             position: Tuple[float],
             size: float,
             color: str,
-            code: List[int]) -> List[visual.GratingStim]:
+            code: List[int]) -> List[GratingStim]:
         """Build a 1x1 VEP grid.
 
         Args:
@@ -295,16 +304,16 @@ class VEPDisplay(Display):
             code: code to be used with the flicking box
 
         Returns:
-            list of visual.GratingStim objects
+            list of GratingStim objects
 
         """
         assert len(code) >= self.refresh_rate, 'Code must be longer than refresh rate'
-        pattern1 = visual.GratingStim(win=self.window, name=f'1x1-1-{position}', units='height',
+        pattern1 = GratingStim(win=self.window, name=f'1x1-1-{position}', units='height',
                                       tex=None, mask=None,
                                       ori=0, pos=position, size=size, sf=1, phase=0.0,
                                       color=color[0], colorSpace='rgb', opacity=1,
                                       texRes=256, interpolate=True, depth=-1.0)
-        pattern2 = visual.GratingStim(win=self.window, name=f'1x1-2-{position}', units='height',
+        pattern2 = GratingStim(win=self.window, name=f'1x1-2-{position}', units='height',
                                       tex=None, mask=None,
                                       ori=0, pos=position, size=size, sf=1, phase=0,
                                       color=color[1], colorSpace='rgb', opacity=1,
@@ -317,7 +326,7 @@ class VEPDisplay(Display):
                             position: Tuple[float],
                             size: float,
                             color: str,
-                            code: List[int]) -> List[visual.GratingStim]:
+                            code: List[int]) -> List[GratingStim]:
         """Build a 2x2 VEP grid.
 
         Args:
@@ -327,7 +336,7 @@ class VEPDisplay(Display):
             code: code to be used with the flicking box
 
         Returns:
-            list of visual.GratingStim objects
+            list of GratingStim objects
         """
 
         assert len(code) >= self.refresh_rate, 'Code must be longer than refresh rate'
@@ -340,12 +349,12 @@ class VEPDisplay(Display):
         ]
         box = []
         for pos in positions:
-            pattern1 = visual.GratingStim(win=self.window, name=f'2x2-1-{pos}', units='height',
+            pattern1 = GratingStim(win=self.window, name=f'2x2-1-{pos}', units='height',
                                           tex=None, mask=None,
                                           ori=0, pos=pos, size=size, sf=1, phase=0.0,
                                           color=color[0], colorSpace='rgb', opacity=1,
                                           texRes=256, interpolate=True, depth=-1.0)
-            pattern2 = visual.GratingStim(win=self.window, name=f'2x2-2-{pos}', units='height',
+            pattern2 = GratingStim(win=self.window, name=f'2x2-2-{pos}', units='height',
                                           tex=None, mask=None,
                                           ori=0, pos=pos, size=size, sf=1, phase=0,
                                           color=color[1], colorSpace='rgb', opacity=1,
@@ -390,10 +399,10 @@ class VEPDisplay(Display):
         # generate the inquiry stimuli
         assert len(
             self.stimuli_colors) == self.vep_type, (
-                f"stmuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
+                f"stimuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
         assert len(
             self.stimuli_pos) == self.vep_type, (
-                f"stmuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}")
+                f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}")
 
         self.text_boxes = []
         inc_q = int(self.vep_type / 2)
