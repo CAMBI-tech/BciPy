@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 from psychopy import core
 
-from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties)
@@ -15,7 +14,8 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers)
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
 from bcipy.task import Task
 
 
@@ -204,8 +204,7 @@ class RSVPCalibrationTask(Task):
         if first_run:
             triggers = []
             for content_type, client in self.daq.clients_by_type.items():
-                suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
-                label = f"starting_offset{suffix}"
+                label = offset_label(content_type.name)
                 time = client.offset(
                     self.rsvp.first_stim_time) - self.rsvp.first_stim_time
                 triggers.append(Trigger(label, TriggerType.OFFSET, time))
@@ -221,8 +220,7 @@ class RSVPCalibrationTask(Task):
         # we write only the sample offset here.
         triggers = []
         for content_type, client in self.daq.clients_by_type.items():
-            suffix = '' if content_type == ContentType.EEG else '_' + content_type.name
-            label = f"daq_sample_offset{suffix}"
+            label = offset_label(content_type.name, prefix='daq_sample_offset')
             time = client.offset(self.rsvp.first_stim_time)
             triggers.append(Trigger(label, TriggerType.SYSTEM, time))
 
