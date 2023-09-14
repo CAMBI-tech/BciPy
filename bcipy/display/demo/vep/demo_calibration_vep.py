@@ -9,7 +9,7 @@ info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
     info_height=[0.1],
-    info_font=['Consolas'],
+    info_font=['Arial'],
     info_text=['VEP Display Demo'],
 )
 
@@ -37,7 +37,7 @@ print(f'Monitor refresh rate: {frameRate} Hz')
 experiment_clock = Clock()
 len_stimuli = 10
 stimuli = VEPStimuliProperties(
-    stim_color=[['white'] * num_boxes],
+    stim_color=[['blue'], ['purple'], ['red'], ['green']],
     stim_pos=start_positions_for_boxes,
     stim_height=0.1,
     stim_font='Arial',
@@ -56,7 +56,7 @@ wait_seconds = 2
 for (txt, color) in zip(task_text, task_color):
     vep.update_task_bar(txt)
     vep.schedule_to([['A', 'B'], ['Z'], ['P'], ['R', 'W']], [1, 0.5, 5],
-                    [['blue'], ['purple'], ['red'], ['white']])
+                    [['blue'], ['purple'], ['red'], ['green']])
     timing += vep.do_inquiry()
 
     # show the wait screen, this will only happen once

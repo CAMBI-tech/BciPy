@@ -57,8 +57,6 @@ class VEPDisplay(Display):
             task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
-            space_char: str = SPACE_CHAR,
-            full_screen: bool = False,
             codes: List[int] = None):
         self.window = window
         self.window_size = self.window.size  # [w, h]
@@ -66,27 +64,25 @@ class VEPDisplay(Display):
 
         self.logger = logging.getLogger(__name__)
 
+        # number of VEP text areas; TODO: make this configurable
+        self.vep_type = 4
+
         # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after defintion
+        # easy updating after definition
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
         self.stimuli_font = stimuli.stim_font
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
-        self.logger.info(self.stimuli_pos)
         self.is_txt_stim = stimuli.is_txt_stim
         self.stim_length = stimuli.stim_length
-        self.sti = []
-        self.fixation = visual.TextStim(
-            self.window,
-            text=get_fixation(True),
-            color='red',
-            height=self.stimuli_height,
-            units='height',
-            pos=[0, 0])
 
-        self.full_screen = full_screen
+        self.logger.info(self.stimuli_pos)
+        self.check_configuration()
+
+        self.sti = []
+        self.fixation = self._build_fixation()
 
         self.static_clock = core.Clock()
 
@@ -101,33 +97,30 @@ class VEPDisplay(Display):
         self.first_stim_callback = lambda _sti: None
         self.size_list_sti = []
 
-        # Task parameters
-        self.space_char = space_char
-
         self.task_bar = task_bar
-
-        # Information parameters
-        self.info = info
         self.info_text = info.build_info_text(window)
 
-        self.colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
-        if not codes:
-            self.codes = create_vep_codes(length=self.refresh_rate, count=4)
-        else:
-            self.codes = codes
-
         # build the VEP stimuli
-        self.vep = []
-        self.text_boxes = []
-        self.vep_type = 4
-        assert self.vep_type == 4, 'Only 4 stimuli are supported in VEP display at this time!'
-        self.vep_box_size = .1
+        if not codes:
+            codes = create_vep_codes(length=self.refresh_rate, count=self.vep_type)
+        vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
+        vep_box_size = .1
+        self.vep = self._build_vep_corner_stimuli(self.stimuli_pos, codes, vep_colors, vep_box_size)
+        self.text_boxes = self._build_text_boxes(vep_box_size)
 
         self.animation_duration = 2
 
+    def check_configuration(self):
+        """Check that configured properties are consistent"""
+        assert len(
+            self.stimuli_colors) == self.vep_type, (
+                f"stimuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
+        assert len(
+            self.stimuli_pos) == self.vep_type, (
+                f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}")
 
     def do_fixation(self) -> None:
-        # draw fixation cross
+        """Draw fixation cross"""
         self.fixation.draw()
         self.draw_static()
         self.window.flip()
@@ -138,11 +131,9 @@ class VEPDisplay(Display):
 
         timing = []
 
-        # if this is the first run, calibrate using the trigger pulse and setup the VEP and text boxes
+        # if this is the first run, calibrate using the trigger pulse
         if self.first_run:
             self._trigger_pulse()
-            self._build_vep_corner_stimuli(self.stimuli_pos, self.codes, self.colors, self.vep_box_size)
-            self._build_text_boxes()
 
         # fixation --> animation / prompting --> VEP stimulate
         self.do_fixation()
@@ -255,6 +246,15 @@ class VEPDisplay(Display):
         if self.task_bar:
             self.task_bar.update(text)
 
+    def _build_fixation(self) -> visual.TextStim:
+        """Build the fixation stim"""
+        return visual.TextStim(self.window,
+                               text=get_fixation(self.is_txt_stim),
+                               color='red',
+                               height=self.stimuli_height,
+                               units='height',
+                               pos=[0, 0])
+
     def _build_inquiry_stimuli(self) -> None:
         """Build the inquiry stimuli."""
         all_letters = []
@@ -277,7 +277,7 @@ class VEPDisplay(Display):
             pos: Tuple[float, float],
             codes: List[int],
             colors: List[Tuple[str]],
-            box_size: float) -> List[GratingStim]:
+            box_size: float) -> List[VEPBox]:
         """Build the corner stimuli for the VEP.
 
         Args:
@@ -294,7 +294,7 @@ class VEPDisplay(Display):
             position: Tuple[float],
             size: float,
             color: str,
-            code: List[int]) -> List[GratingStim]:
+            code: List[int]) -> List[VEPBox]:
         """Build a 1x1 VEP grid.
 
         Args:
@@ -319,14 +319,13 @@ class VEPDisplay(Display):
                                       color=color[1], colorSpace='rgb', opacity=1,
                                       texRes=256, interpolate=True, depth=-2.0)
         box = [VEPBox(flicker=[pattern1, pattern2], code=code)]
-        self.vep += box
         return box
 
     def _build_2x2_vep_grid(self,
                             position: Tuple[float],
                             size: float,
                             color: str,
-                            code: List[int]) -> List[GratingStim]:
+                            code: List[int]) -> List[VEPBox]:
         """Build a 2x2 VEP grid.
 
         Args:
@@ -362,7 +361,6 @@ class VEPDisplay(Display):
             color = (color[1], color[0])
             box += [VEPBox(flicker=[pattern1, pattern2], code=code)]
 
-        self.vep += box
         return box
 
     def _trigger_pulse(self) -> None:
@@ -389,26 +387,18 @@ class VEPDisplay(Display):
         """
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
-        self.stimuli_colors = colors
+        assert colors is None or colors == self.stimuli_colors, "Colors must match the pre-configured values"
 
-    def _build_text_boxes(self) -> List[visual.TextBox2]:
+    def _build_text_boxes(self, vep_box_size: float) -> List[visual.TextBox2]:
         """Build the text boxes for the experiment.
 
         This assumes that vep_type is 4 using a 2x2 grid. Additional configurations can be added in the future.
         """
-        # generate the inquiry stimuli
-        assert len(
-            self.stimuli_colors) == self.vep_type, (
-                f"stimuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
-        assert len(
-            self.stimuli_pos) == self.vep_type, (
-                f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}")
-
-        self.text_boxes = []
+        text_boxes = []
         inc_q = int(self.vep_type / 2)
-        size = self.vep_box_size * inc_q
+        size = vep_box_size * inc_q
         inc = 0  # get the last box in the grating stim per vep
-        for color in self.stimuli_colors:
+        for i, color in enumerate(self.stimuli_colors):
             text = ' '
             first = self.vep[inc].flicker[0].pos
             best_neighbor = self.vep[inc + inc_q].flicker[0].pos
@@ -416,7 +406,8 @@ class VEPDisplay(Display):
             # the textbox requires the pos to be centered on the middle of the box, so
             # we need to calculate the center of the vep stimulus boxes
             pos = (first[0] + best_neighbor[0]) / 2, (first[1] + best_neighbor[1]) / 2
-            self.text_boxes += [visual.TextBox2(
+            print(f"Position of {color} text area (#{i}): {pos}")
+            text_boxes += [visual.TextBox2(
                 win=self.window,
                 text=text,
                 font=self.stimuli_font,
@@ -428,10 +419,10 @@ class VEPDisplay(Display):
                 alignment='center',
                 anchor='center',
                 borderWidth=2,
-                borderColor='white',
+                borderColor=color,
                 letterHeight=self.stimuli_height / 2)]
             inc += self.vep_type
-        return self.text_boxes
+        return text_boxes
 
     def _reset_text_boxes(self) -> None:
         """Reset text boxes.
@@ -449,10 +440,10 @@ class VEPDisplay(Display):
         # generate the inquiry stimuli
         assert len(
             self.stimuli_inquiry) == self.vep_type, (
-                f"stmuli inquiry {len(self.stimuli_inquiry)} must be the same length as vep type {self.vep_type}")
+                f"stimuli inquiry {len(self.stimuli_inquiry)} must be the same length as vep type {self.vep_type}")
         assert len(
             self.stimuli_colors) == self.vep_type, (
-                f"stmuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
+                f"stimuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
         for box_content, color, box in zip(self.stimuli_inquiry, self.stimuli_colors, self.text_boxes):
             text = ' '.join(box_content)
             box.text = text
