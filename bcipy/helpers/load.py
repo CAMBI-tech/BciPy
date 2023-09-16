@@ -163,12 +163,12 @@ def load_experimental_data() -> str:
 
 
 def load_eye_tracking_data(gaze_data: RawData):
-    left_eye_channel_map = [0,0,1,1,0,0,0,0,0]
+    left_eye_channel_map = [0, 0, 1, 1, 0, 0, 0, 0, 0]
     left_eye_data, _, _ = gaze_data.by_channel_map(left_eye_channel_map)
     left_eye_x = left_eye_data[0]
     left_eye_y = left_eye_data[1]
 
-    right_eye_channel_map = [0,0,0,0,0,1,1,0,0]
+    right_eye_channel_map = [0, 0, 0, 0, 0, 1, 1, 0, 0]
     right_eye_data, _, _ = gaze_data.by_channel_map(right_eye_channel_map)
     right_eye_x = right_eye_data[0]
     right_eye_y = right_eye_data[1]

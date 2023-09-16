@@ -1,3 +1,10 @@
+# 2.0.1-rc.4
+
+## Contributions
+
+- Signal Model
+    - Offline analysis of multimodal fusion. First version of gaze model is completed #294 Gaze reshaper is updated #294 Visualization for the gaze classification is added #294
+
 # 2.0.1-rc.3
 
 ## Contributions

@@ -183,7 +183,7 @@ class RawData:
 
     def __str__(self) -> str:
         return f"RawData({self.daq_type})"
-    
+
     def __repr__(self) -> str:
         return f"RawData({self.daq_type})"
 

@@ -177,7 +177,6 @@ class InquiryReshaper:
             stop = first_trigger + num_samples_per_inq + buffer_samples
             reshaped_data.append(eeg_data[:, start:stop])
 
-
         return np.stack(reshaped_data, 1), labels, reshaped_trigger_timing
 
     @staticmethod
@@ -228,6 +227,7 @@ class InquiryReshaper:
                         f'prestimulus_samples: {prestimulus_samples}, samples_per_trial: {samples_per_trial} \n')
         return np.stack(new_trials, 1)  # C x T x S
 
+
 class GazeReshaper:
     def __call__(self,
                  trial_targetness_label: List[str],
@@ -268,14 +268,14 @@ class GazeReshaper:
             # Remove the channels that we are not interested in
             channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
             gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
-        
+
         # Find the value closest to (& greater than) inq_start_times
-        gaze_data_timing = gaze_data[-1,:].tolist() 
-        
+        gaze_data_timing = gaze_data[-1, :].tolist()
+
         start_times = []
         for times in inq_start_times:
             temp = list(filter(lambda x: x > times, gaze_data_timing))
-            if len(temp) > 0: 
+            if len(temp) > 0:
                 start_times.append(temp[0])
 
         triggers = []
@@ -297,58 +297,58 @@ class GazeReshaper:
         # Merge the inquiries if they have the same target letter:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
-            stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds) 
+            stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds)
             # Check if the data exists for the inquiry:
-            if stop > len(gaze_data[0,:]):
+            if stop > len(gaze_data[0, :]):
                 continue
-            
-            reshaped_data.append(gaze_data[:, start:stop])  
+
+            reshaped_data.append(gaze_data[:, start:stop])
             # (Optional) extracted data (Inquiries x Channels x Samples)
 
             # Populate the dict by appending the inquiry to the correct key:
             data_by_targets[labels[i]].append(gaze_data[:, start:stop])
-        
+
         # After populating, flatten the arrays in the dictionary to (Channels x Samples):
         for symbol in symbol_set:
             if len(data_by_targets[symbol]) > 0:
-                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1,0,2))
+                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
                 data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
 
             # TODO: Note that this is a workaround to the issue of having different number of targetness in
             # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
             # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
-            # This is not ideal, but it works for now. 
+            # This is not ideal, but it works for now.
 
         # return np.stack(reshaped_data, 0), labels
         return data_by_targets
-    
+
     @staticmethod
     def extract_eye_info(data):
         """ Rearrange the dimensions of gaze inquiry data and reshape it to num_channels x num_samples
         Extract Left and Right Eye info from data. Remove all blinks, do necessary preprocessing.
-        
+
         Args:
             data (np.ndarray): Data in shape of num_channels x num_samples
-        
+
         Returns:
             left_eye (np.ndarray), left_pupil (List(float))
             right_eye (np.ndarray), right_pupil (List(float))
         """
 
         # Extract samples from channels
-        lx = data[2,:]
-        ly = data[3,:]
-        left_pupil = data[4,:]  # Use if needed
+        lx = data[2, :]
+        ly = data[3, :]
+        left_pupil = data[4, :]  # Use if needed
 
-        rx = data[5,:]
-        ry = data[6,:]
-        right_pupil = data[7,:]
+        rx = data[5, :]
+        ry = data[6, :]
+        right_pupil = data[7, :]
 
-        left_eye =  np.vstack((np.array(lx), np.array(ly))).T 
+        left_eye = np.vstack((np.array(lx), np.array(ly))).T
         right_eye = np.vstack((np.array(rx), np.array(ry))).T
 
-        # Remove ALL blinks (i.e. Nan values) regardless of which eye it occurs.        
-        # Make sure that the number of samples are the same for both eyes 
+        # Remove ALL blinks (i.e. Nan values) regardless of which eye it occurs.
+        # Make sure that the number of samples are the same for both eyes
         left_eye_nan_idx = np.isnan(left_eye).any(axis=1)
         left_eye = left_eye[~left_eye_nan_idx]
         right_eye = right_eye[~left_eye_nan_idx]
@@ -361,9 +361,10 @@ class GazeReshaper:
             len(left_eye) != len(right_eye)
         except AssertionError:
             raise SignalException(
-                f'Number of samples for left and right eye are not the same.')
+                'Number of samples for left and right eye are not the same.')
 
         return left_eye, right_eye
+
 
 class TrialReshaper(Reshaper):
     def __call__(self,

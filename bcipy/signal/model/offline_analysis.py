@@ -16,7 +16,7 @@ from bcipy.helpers.load import (
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.symbols import alphabet
-from bcipy.helpers.triggers import TriggerType, trigger_decoder, TriggerHandler
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiries
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
@@ -24,9 +24,6 @@ from bcipy.signal.model.fusion_model import GazeModel
 from bcipy.signal.process import filter_inquiries, get_default_transform
 import numpy as np
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from matplotlib import image
-import seaborn as sns
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
@@ -37,6 +34,7 @@ logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][
 DIPSIZE = (1707, 1067)
 IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
 # IMG_PATH = f'{STATIC_IMAGES_PATH}/main/rsvp.png'
+
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
     """Performs a train/test split on the provided data and labels, accounting for
@@ -114,14 +112,16 @@ def offline_analysis(
     if '+' in acq_mode:
         if 'eyetracker' in acq_mode.lower():
             # find the eyetracker data file with the prefix of EYE_TRACKER_FILENAME_PREFIX
-            eye_tracker_file = [ f.name for f in Path(data_folder).iterdir() if f.name.startswith(EYE_TRACKER_FILENAME_PREFIX)]
-            assert len(eye_tracker_file) == 1, f"Found {len(eye_tracker_file)} eyetracker files in {data_folder}. Expected 1."
+            eye_tracker_file = [f.name for f in Path(data_folder).iterdir()
+                                if f.name.startswith(EYE_TRACKER_FILENAME_PREFIX)]
+            assert len(
+                eye_tracker_file) == 1, f"Found {len(eye_tracker_file)} eyetracker files in {data_folder}. Expected 1."
             data_file_paths.extend(eye_tracker_file)
         else:
             raise ValueError(f"Unsupported acquisition mode: {acq_mode}. Eyetracker must be included.")
         if 'eeg' in acq_mode.lower():
             # find the eeg data file with the prefix of EEG_FILENAME_PREFIX
-            eeg_file = [ f.name for f in Path(data_folder).iterdir() if f.name.startswith(RAW_DATA_FILENAME)]
+            eeg_file = [f.name for f in Path(data_folder).iterdir() if f.name.startswith(RAW_DATA_FILENAME)]
             assert len(eeg_file) == 1, f"Found {len(eeg_file)} EEG files in {data_folder}. Expected 1."
             data_file_paths.extend(eeg_file)
         else:
@@ -247,13 +247,13 @@ def offline_analysis(
                 show=True,
                 raw_plot=True,
             )
-           
+
             channels = mode_data.channels
             type_amp = mode_data.daq_type
             sample_rate = mode_data.sample_rate
 
             log.info(f"Channels read from csv: {channels}")
-            log.info(f"Device type: {type_amp}, fs={sample_rate}")       
+            log.info(f"Device type: {type_amp}, fs={sample_rate}")
             channel_map = analysis_channels(channels, device_spec)
 
             channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
@@ -265,42 +265,47 @@ def offline_analysis(
 
             # Process triggers.txt files (again!)
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-                remove_pre_fixation = False,
+                remove_pre_fixation=False,
                 apply_system_offset=False,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION, TriggerType.SYSTEM, TriggerType.OFFSET]
+                exclusion=[
+                    TriggerType.PREVIEW,
+                    TriggerType.EVENT,
+                    TriggerType.FIXATION,
+                    TriggerType.SYSTEM,
+                    TriggerType.OFFSET]
             )
             ''' Trigger_timing includes PROMPT and excludes FIXATION '''
-           
+
             # Use trigger_timing to generate time windows for each letter flashing
             # Take every 10th trigger as the start point of timing.
             # trigger_targetness keeps the PROMPT info, use it to find the target symbol.
             target_symbols = trigger_symbols[0::11]  # target symbols
             inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
-            # Find the inquiries starting by the inq_start_times, (9, 100, 180):           
+            # Find the inquiries starting by the inq_start_times, (9, 100, 180):
             inquiries = model.reshaper(
-            trial_targetness_label=trigger_targetness,
-            inq_start_times=inq_start,
-            target_symbols = target_symbols,
-            gaze_data=data,
-            sample_rate=sample_rate,
-            trials_per_inquiry=trials_per_inquiry,
-            poststimulus_length=poststim_length,
-            prestimulus_length=prestim_length,
-            transformation_buffer=buffer
+                trial_targetness_label=trigger_targetness,
+                inq_start_times=inq_start,
+                target_symbols=target_symbols,
+                gaze_data=data,
+                sample_rate=sample_rate,
+                trials_per_inquiry=trials_per_inquiry,
+                poststimulus_length=poststim_length,
+                prestimulus_length=prestim_length,
+                transformation_buffer=buffer
             )
 
             symbol_set = alphabet()
 
-            # Extract the data for each target label and each eye separately. 
+            # Extract the data for each target label and each eye separately.
             # Apply preprocessing:
             preprocessed_data = {i: [] for i in symbol_set}
             for i in symbol_set:
                 # Skip if there's no evidence for this symbol:
                 if len(inquiries[i]) == 0:
                     continue
-                
+
                 left_eye, right_eye = model.reshaper.extract_eye_info(inquiries[i])
                 preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
 
@@ -326,8 +331,7 @@ def offline_analysis(
                     save_path=None,
                     show=True,
                     raw_plot=True,
-                )                     
-            
+                )
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")

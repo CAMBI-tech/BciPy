@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
-import matplotlib.pyplot as plt
 
 from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
                           DEFAULT_DEVICE_SPEC_FILENAME,
@@ -157,13 +156,13 @@ def visualize_gaze(
             levels=10,
             cmap="mako",
             colorbar=True)
-        
+
     if raw_plot:
         ax.scatter(lx, ly, c='r', s=1)
         ax.scatter(rx, ry, c='b', s=1)
 
     plt.title(f'{title}Plot')
-    
+
     if save_path is not None:
         plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
@@ -172,8 +171,9 @@ def visualize_gaze(
 
     return fig
 
+
 def visualize_gaze_inquiries(
-        left_eye, 
+        left_eye,
         right_eye,
         means=None,
         covs=None,
@@ -203,17 +203,17 @@ def visualize_gaze_inquiries(
     img = plt.imread(img_path)
 
     # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
-    lx = np.clip(left_eye[:,0], 0, 1)
-    ly = np.clip(left_eye[:,1], 0, 1)
-    rx = np.clip(right_eye[:,0], 0, 1)
-    ry = np.clip(right_eye[:,1], 0, 1)
+    lx = np.clip(left_eye[:, 0], 0, 1)
+    ly = np.clip(left_eye[:, 1], 0, 1)
+    rx = np.clip(right_eye[:, 0], 0, 1)
+    ry = np.clip(right_eye[:, 1], 0, 1)
     ly = 1 - ly
     ry = 1 - ry
 
     if means is not None:
-        means[:,0] = np.clip(means[:,0], 0, 1)
-        means[:,1] = np.clip(means[:,1], 0, 1)
-        means[:,1] = 1 - means[:,1]
+        means[:, 0] = np.clip(means[:, 0], 0, 1)
+        means[:, 1] = np.clip(means[:, 1], 0, 1)
+        means[:, 1] = 1 - means[:, 1]
 
     # scale the eye data to the image
     fig, ax = plt.subplots()
@@ -236,7 +236,7 @@ def visualize_gaze_inquiries(
             levels=10,
             cmap="mako",
             colorbar=True)
-        
+
     if raw_plot:
         # ax.scatter(lx, ly, c='lightcoral', s=1)
         ax.scatter(rx, ry, c='bisque', s=1)
@@ -254,12 +254,11 @@ def visualize_gaze_inquiries(
             ell.set_clip_box(ax)
             ell.set_alpha(0.5)
             ax.add_artist(ell)
- 
+
         # ax.scatter(means[:,0], means[:,1], c='yellow', s=20, marker='^')
 
-
     plt.title(f'{title}Plot')
-    
+
     if save_path is not None:
         plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
