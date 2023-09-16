@@ -292,14 +292,18 @@ def offline_analysis(
             )
 
             symbol_set = alphabet()
-            # Train the model for each target label and each eye separately.
+
+            # Extract the data for each target label and each eye separately. 
+            # Apply preprocessing:
+            preprocessed_data = {i: [] for i in symbol_set}
             for i in symbol_set:
                 # Skip if there's no evidence for this symbol:
                 if len(inquiries[i]) == 0:
                     continue
-                # Do more preprocesssing to extract eye info:
-                left_eye, left_pupil, right_eye, right_pupil = model.reshaper.extract_eye_info(inquiries[i])
-            
+                
+                left_eye, right_eye = model.reshaper.extract_eye_info(inquiries[i])
+                preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
+
                 # Train test split:
                 test_size = int(len(right_eye) * 0.2)
                 train_size = len(right_eye) - test_size
@@ -323,9 +327,6 @@ def offline_analysis(
                     show=True,
                     raw_plot=True,
                 )                     
-
-            breakpoint()
-
             
 
     if alert_finished:
