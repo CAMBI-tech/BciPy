@@ -1,0 +1,24 @@
+{
+  "sim_task": {
+    "value": "RSVP_COPY_PHRASE",
+    "section": "sim_config",
+    "readableName": "Simulation Task",
+    "helpTip": "Specifies Task to simulate",
+    "recommended_values": [
+      "RSVP_COPY_PHRASE",
+      "RSVP_CALIBRATION"
+    ],
+    "type": "str"
+  },
+  "sim_sample_mode": {
+    "value": "0",
+    "section": "sim_config",
+    "readableName": "Simulation Sample Mode",
+    "helpTip": "Specifies method for sampling based on sampling registry",
+    "recommended_values": [
+      "0",
+      "1"
+    ],
+    "type": "str"
+  }
+}

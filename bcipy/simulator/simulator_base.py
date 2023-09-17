@@ -1,0 +1,36 @@
+import logging
+
+from abc import ABC, abstractmethod
+
+
+class Simulator(ABC):
+    """Simulator.
+
+    Base class for BciPy Simulations.
+
+    Requirements:
+    - run closed loop simulation of {TaskType} with {data} with {simulation_params}
+    """
+
+    def __init__(self):
+        super(Simulator, self).__init__()
+        self.logger = logging.getLogger(__name__)
+
+    @abstractmethod
+    def run(self):
+        ...
+
+    @abstractmethod
+    def get_param(self, name):
+        ...
+
+
+class SimulatorData(ABC):
+
+    @abstractmethod
+    def next(self):
+        ...
+
+    @abstractmethod
+    def is_end(self) -> bool:
+        ...
