@@ -1,6 +1,6 @@
 """Defines common functionality for GUI layouts."""
 from enum import Enum
-from typing import Protocol, Tuple
+from typing import Optional, Protocol, Tuple
 
 
 class Container(Protocol):
@@ -8,7 +8,7 @@ class Container(Protocol):
     size: Tuple[float, float]
     units: str
 
-
+# for norm units
 DEFAULT_LEFT = -1.0
 DEFAULT_TOP = 1.0
 DEFAULT_RIGHT = 1.0
@@ -43,8 +43,9 @@ class Layout(Container):
                  left: float = DEFAULT_LEFT,
                  top: float = DEFAULT_TOP,
                  right: float = DEFAULT_RIGHT,
-                 bottom: float = DEFAULT_BOTTOM):
-        self.units = "norm"
+                 bottom: float = DEFAULT_BOTTOM,
+                 units: float = "norm"):
+        self.units = units
         self.parent = parent
         self.top = top
         self.left = left
@@ -54,25 +55,45 @@ class Layout(Container):
 
     def check_invariants(self):
         """Check that all invariants hold true."""
-        # TODO: units could be configurable; min and max depends on units.
         # https://psychopy.org/general/units.html#units
-        assert self.units == "norm", "Position calculations assume norm units."
-
-        assert (0.0 <= self.height <= 2.0), "Height must be in norm units."
-        assert (0.0 <= self.width <= 2.0), "Width must be in norm units."
-        assert (-1.0 <= self.top <= 1.0), "Top must be a y-value in norm units"
-        assert (-1.0 <= self.left <=
-                1.0), "Left must be an x-value in norm units"
-        assert (-1.0 <= self.bottom <=
-                1.0), "Bottom must be a y-value in norm units"
-        assert (-1.0 <= self.right <=
-                1.0), "Right must be an x-value in norm units"
+        assert self.units in ['height', 'norm'], "Units must be 'height' or 'norm'"
+        if self.units == "norm":
+            assert (0.0 <= self.height <= 2.0), "Height must be in norm units."
+            assert (0.0 <= self.width <= 2.0), "Width must be in norm units."
+            assert (-1.0 <= self.top <= 1.0), "Top must be a y-value in norm units"
+            assert (-1.0 <= self.left <=
+                    1.0), "Left must be an x-value in norm units"
+            assert (-1.0 <= self.bottom <=
+                    1.0), "Bottom must be a y-value in norm units"
+            assert (-1.0 <= self.right <=
+                    1.0), "Right must be an x-value in norm units"
+        if self.units == "height":
+            assert (0.0 <= self.height <= 1.0), "Height must be in height units."
+            assert (-0.5 <= self.top <= 0.5), "Top must be a y-value in height units"
+            assert (-0.5 <= self.bottom <= 0.5), "Bottom must be a y-value in height units"
 
         if self.parent:
             assert 0 < self.width <= self.parent.size[
                 0], "Width must be greater than 0 and fit within the parent width."
             assert 0 < self.height <= self.parent.size[
                 1], "Height must be greater than 0 and fit within the parent height."
+
+    def scaled_size(self, height: float, window_size: Optional[Tuple[float, float]] = None) -> Tuple[float, float]:
+        """Returns the value scaled to reflect the aspect ratio of a
+        visual.Window. Used for creating squared stimulus"""
+        if self.units == 'height':
+            width = height
+            return (width, height)
+
+        # norm units
+        if window_size is not None:
+            win_width, win_height = window_size
+        elif self.parent:
+            win_width, win_height = self.parent.size
+        else:
+            raise ValueError("window_size or parent is required")
+        width = (win_height / win_width) * height
+        return (width, height)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -88,6 +109,16 @@ class Layout(Container):
     def height(self) -> float:
         """Height in norm units of this component."""
         return self.top - self.bottom
+
+    @property
+    def left_top(self) -> float:
+        """Top left position"""
+        return (self.left, self.top)
+
+    @property
+    def right_bottom(self) -> float:
+        """Bottom right position"""
+        return (self.right, self.bottom)
 
     @property
     def horizontal_middle(self) -> float:
@@ -249,3 +280,16 @@ def centered(width_pct: float = 1.0, height_pct: float = 1.0) -> Layout:
     container.resize_width(width_pct, alignment=Alignment.CENTERED)
     container.resize_height(height_pct, alignment=Alignment.CENTERED)
     return container
+
+def height_units(window_size: Tuple[float, float]):
+    """Constructs a layout with height units using the given Window
+    dimensions
+
+    for an aspect ratio of 4:3
+    4 widths / 3 height = 1.333
+    1.333 / 2 = 0.667
+    so, left is -0.667 and right is 0.667
+    """
+    win_width, win_height = window_size
+    right = (win_width / win_height) / 2
+    return Layout(left=-right, top=0.5, right=right, bottom=-0.5, units='height')
