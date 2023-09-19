@@ -1,4 +1,5 @@
 import logging
+from itertools import cycle
 from typing import List, Tuple
 
 import numpy as np
@@ -8,9 +9,11 @@ from psychopy.visual.grating import GratingStim
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.vep.layout import (BoxConfiguration,
+                                               CheckerboardSquare,
+                                               checkerboard)
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation, resize_image
-from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -24,6 +27,8 @@ def create_vep_codes(length=32, count=4) -> List[List[int]]:
     """
     np.random.seed(1)
     return [np.random.randint(2, size=length) for _ in range(count)]
+
+
 
 
 class VEPBox:
@@ -57,15 +62,16 @@ class VEPDisplay(Display):
             task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
-            codes: List[int] = None):
+            codes: List[int] = None,
+            box_config: BoxConfiguration = None):
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round(window.getActualFrameRate())
 
         self.logger = logging.getLogger(__name__)
 
-        # number of VEP text areas; TODO: make this configurable
-        self.vep_type = 4
+        # number of VEP text areas
+        self.vep_type = box_config.num_boxes
 
         # Stimuli parameters, these are set on display in order to allow
         # easy updating after definition
@@ -104,9 +110,18 @@ class VEPDisplay(Display):
         if not codes:
             codes = create_vep_codes(length=self.refresh_rate, count=self.vep_type)
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
-        vep_box_size = .1
-        self.vep = self._build_vep_corner_stimuli(self.stimuli_pos, codes, vep_colors, vep_box_size)
-        self.text_boxes = self._build_text_boxes(vep_box_size)
+
+        # vep_box_size = box_config.layout.scaled_size(0.1, self.window_size)
+        # self.vep = self._build_vep_corner_stimuli(box_config.positions, codes, vep_colors, vep_box_size)
+
+        vep_stim_size = box_config.layout.scaled_size(0.2, self.window_size)
+        self.vep = self.build_vep_stimuli(box_config=box_config,
+                                          codes=codes,
+                                          colors=cycle(vep_colors),
+                                          stim_size=vep_stim_size,
+                                          num_squares=25)
+
+        self.text_boxes = self._build_text_boxes(box_config)
 
         self.animation_duration = 2
 
@@ -272,22 +287,114 @@ class VEPDisplay(Display):
 
         return self.sti
 
+    def grating_stim(self, square: CheckerboardSquare) -> GratingStim:
+        """Construct a grating stim from a checkerboard square"""
+        return GratingStim(win=self.window,
+                           name=f"{square.color} square at {square.pos}",
+                           tex=None,
+                           pos=square.pos,
+                           size=square.size,
+                           sf=1,
+                           phase=0.0,
+                           color=square.color,
+                           colorSpace='rgb',
+                           opacity=1,
+                           texRes=256,
+                           interpolate=True,
+                           depth=-1.0)
+
+    def build_vep_stimuli(self,
+                          box_config: BoxConfiguration,
+                          codes: List[int],
+                          colors: List[Tuple[str]],
+                          stim_size: Tuple[float, float],
+                          num_squares: int = 25) -> List[VEPBox]:
+        """Build the VEP flashing checkerboard squares"""
+        stim = []
+        for pos, code, color in zip(box_config.positions, codes, colors):
+            board = checkerboard(box_config.layout,
+                                 squares=num_squares,
+                                 colors=color,
+                                 center=pos,
+                                 board_size=stim_size)
+            for square in board:
+                pattern1 = self.grating_stim(square)
+                pattern2 = self.grating_stim(square.inverse(color))
+                stim.append(VEPBox(flicker=[pattern1, pattern2], code=code))
+        return stim
+
     def _build_vep_corner_stimuli(
             self,
-            pos: Tuple[float, float],
+            positions: List[Tuple[float, float]],
             codes: List[int],
             colors: List[Tuple[str]],
-            box_size: float) -> List[VEPBox]:
+            box_size: Tuple[float, float]) -> List[VEPBox]:
         """Build the corner stimuli for the VEP.
 
         Args:
             window: psychopy window object
         """
-        corner_stim = []
-        for pos, code, color in zip(pos, codes, colors):
-            corner_stim += self._build_2x2_vep_grid(pos, box_size, color, code)
+        stim = []
 
-        return corner_stim
+        for pos, code, color in zip(positions, codes, colors):
+            # border = Rect(self.window, pos=pos, size=box_size, lineColor='white', anchor=anchor)
+            stim.extend(self.build_vep_grid(pos, color,
+                                            box_size, code))
+        return stim
+        # corner_stim = []
+        # for pos, code, color in zip(pos, codes, colors):
+        #     corner_stim += self._build_2x2_vep_grid(pos, box_size, color, code)
+
+        # return corner_stim
+
+    def build_vep_grid(self, pos: Tuple[float, float],
+                        color: Tuple[str, str], size: Tuple[float, float], code: List[int]) -> List[VEPBox]:
+        """Build a 2x2 VEP grid.
+
+        Args:
+            position: center position of the flickering box
+            size: size of the box
+            color: colors that the box will alternate between
+            code: specifies the flicker pattern
+
+        Returns:
+            list of VEPBox objects, each of which represents a box in a grid."""
+        anchor_points = ['right_bottom', 'left_bottom', 'left_top', 'right_top']
+        quadrants = []
+        for anchor, color in zip(
+                    anchor_points,
+                    cycle([color,
+                        tuple(reversed(color))])):
+            pattern1 = GratingStim(win=self.window,
+                                name=f'2x2-1-{pos}-{anchor}',
+                                tex=None,
+                                pos=pos,
+                                size=size,
+                                sf=1,
+                                phase=0.0,
+                                color=color[0],
+                                colorSpace='rgb',
+                                opacity=1,
+                                texRes=256,
+                                interpolate=True,
+                                depth=-1.0,
+                                anchor=anchor)
+            pattern2 = GratingStim(win=self.window,
+                                name=f'2x2-2-{pos}-{anchor}',
+                                tex=None,
+                                pos=pos,
+                                size=size,
+                                sf=1,
+                                phase=0.0,
+                                color=color[1],
+                                colorSpace='rgb',
+                                opacity=1,
+                                texRes=256,
+                                interpolate=True,
+                                depth=-1.0,
+                                anchor=anchor)
+            quadrants.append(VEPBox(flicker=[pattern1, pattern2], code=code))
+        return quadrants
 
     def _build_1x1_vep_grid(
             self,
@@ -389,40 +496,30 @@ class VEPDisplay(Display):
         self.stimuli_timing = timing
         assert colors is None or colors == self.stimuli_colors, "Colors must match the pre-configured values"
 
-    def _build_text_boxes(self, vep_box_size: float) -> List[visual.TextBox2]:
-        """Build the text boxes for the experiment.
-
-        This assumes that vep_type is 4 using a 2x2 grid. Additional configurations can be added in the future.
+    def _build_text_boxes(self, box_config: BoxConfiguration) -> List[visual.TextBox2]:
+        """Build the text boxes for the experiment. These are the areas into
+        which the symbols are partitioned. Each text_box will have an
+        associated VEP Box.
         """
-        text_boxes = []
-        inc_q = int(self.vep_type / 2)
-        size = vep_box_size * inc_q
-        inc = 0  # get the last box in the grating stim per vep
-        for i, color in enumerate(self.stimuli_colors):
-            text = ' '
-            first = self.vep[inc].flicker[0].pos
-            best_neighbor = self.vep[inc + inc_q].flicker[0].pos
+        positions = box_config.positions
+        size = box_config.box_size()
+        return [
+            visual.TextBox2(win=self.window,
+                            text=" ",
+                            font=self.stimuli_font,
+                            pos=pos,
+                            units=box_config.units,
+                            color=color,
+                            colorSpace='rgb',
+                            size=size,
+                            alignment='center',
+                            anchor='center',
+                            borderWidth=2,
+                            borderColor=color,
+                            letterHeight=self.stimuli_height)
+            for pos, color in zip(positions, cycle(self.stimuli_colors))
+        ]
 
-            # the textbox requires the pos to be centered on the middle of the box, so
-            # we need to calculate the center of the vep stimulus boxes
-            pos = (first[0] + best_neighbor[0]) / 2, (first[1] + best_neighbor[1]) / 2
-            print(f"Position of {color} text area (#{i}): {pos}")
-            text_boxes += [visual.TextBox2(
-                win=self.window,
-                text=text,
-                font=self.stimuli_font,
-                units='height',
-                pos=pos,
-                color=color[0],
-                colorSpace='rgb',
-                size=[size, size],
-                alignment='center',
-                anchor='center',
-                borderWidth=2,
-                borderColor=color,
-                letterHeight=self.stimuli_height / 2)]
-            inc += self.vep_type
-        return text_boxes
 
     def _reset_text_boxes(self) -> None:
         """Reset text boxes.
