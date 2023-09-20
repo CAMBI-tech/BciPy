@@ -16,7 +16,7 @@ info = InformationProperties(
 )
 
 task_text = ['1/4'] #, '2/4', '3/4', '4/4']
-num_boxes = 6
+num_boxes = 4
 
 win = visual.Window(size=[700, 700],
                     fullscr=False,
@@ -48,7 +48,7 @@ stimuli = VEPStimuliProperties(
     stim_pos=box_config.positions,
     stim_height=0.1,
     stim_font='Arial',
-    timing=(1, 0.5, 4),  # prompt, fixation, stimuli
+    timing=(1, 0.5, 2, 4),  # prompt, fixation, stimuli
     stim_length=1,  # how many times to stimuli
 )
 task_bar = CalibrationTaskBar(win,
@@ -66,7 +66,7 @@ for txt in task_text:
         stim = [['A', 'B'], ['Z'], ['P'], ['R', 'W']]
     if num_boxes == 6:
         stim = [['A'], ['B'], ['Z'], ['P'], ['R'], ['W']]
-    vep.schedule_to(stim, [1, 0.5, 5], stim_color)
+    vep.schedule_to(stimuli=stim)
     timing += vep.do_inquiry()
 
     # show the wait screen, this will only happen once

@@ -163,7 +163,7 @@ def demo_vep(win: visual.Window):
     layout = centered(width_pct=0.9, height_pct=0.9)
     layout.parent = win
 
-    box_config = BoxConfiguration(layout, num_boxes=4, height_pct=0.28)
+    box_config = BoxConfiguration(layout, num_boxes=6, height_pct=0.28)
     size = box_config.box_size()
     positions = box_config.positions
 
@@ -204,10 +204,10 @@ def demo_checkerboard(win: visual.Window):
     layout = centered(width_pct=0.9, height_pct=0.9)
     layout.parent = win
     board = checkerboard(layout,
-                         squares=16,
+                         squares=25,
                          colors=('red', 'green'),
                          center=(0, 0),
-                         board_size=layout.scaled_size(0.4))
+                         board_size=layout.scaled_size(0.6))
     for square in board:
         Rect(win,
              pos=square.pos,
@@ -284,7 +284,7 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
         print('Demo complete.')
 
 
-# run(demo_vep)
+run(demo_vep)
 # run(demo_height_units)
 # run(show_layout_coords)
-run(demo_checkerboard)
+# run(demo_checkerboard)
