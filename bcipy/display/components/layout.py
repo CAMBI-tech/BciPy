@@ -1,12 +1,13 @@
 """Defines common functionality for GUI layouts."""
 from enum import Enum
-from typing import Optional, Protocol, Tuple
+from typing import List, Optional, Protocol, Tuple
 
 
 class Container(Protocol):
     """Protocol for an enclosing container with units and size."""
     size: Tuple[float, float]
     units: str
+
 
 # for norm units
 DEFAULT_LEFT = -1.0
@@ -56,11 +57,13 @@ class Layout(Container):
     def check_invariants(self):
         """Check that all invariants hold true."""
         # https://psychopy.org/general/units.html#units
-        assert self.units in ['height', 'norm'], "Units must be 'height' or 'norm'"
+        assert self.units in ['height',
+                              'norm'], "Units must be 'height' or 'norm'"
         if self.units == "norm":
             assert (0.0 <= self.height <= 2.0), "Height must be in norm units."
             assert (0.0 <= self.width <= 2.0), "Width must be in norm units."
-            assert (-1.0 <= self.top <= 1.0), "Top must be a y-value in norm units"
+            assert (-1.0 <= self.top <=
+                    1.0), "Top must be a y-value in norm units"
             assert (-1.0 <= self.left <=
                     1.0), "Left must be an x-value in norm units"
             assert (-1.0 <= self.bottom <=
@@ -68,9 +71,12 @@ class Layout(Container):
             assert (-1.0 <= self.right <=
                     1.0), "Right must be an x-value in norm units"
         if self.units == "height":
-            assert (0.0 <= self.height <= 1.0), "Height must be in height units."
-            assert (-0.5 <= self.top <= 0.5), "Top must be a y-value in height units"
-            assert (-0.5 <= self.bottom <= 0.5), "Bottom must be a y-value in height units"
+            assert (0.0 <= self.height <=
+                    1.0), "Height must be in height units."
+            assert (-0.5 <= self.top <=
+                    0.5), "Top must be a y-value in height units"
+            assert (-0.5 <= self.bottom <=
+                    0.5), "Bottom must be a y-value in height units"
 
         if self.parent:
             assert 0 < self.width <= self.parent.size[
@@ -78,8 +84,12 @@ class Layout(Container):
             assert 0 < self.height <= self.parent.size[
                 1], "Height must be greater than 0 and fit within the parent height."
 
-    def scaled_size(self, height: float, window_size: Optional[Tuple[float, float]] = None) -> Tuple[float, float]:
-        """Returns the value scaled to reflect the aspect ratio of a
+    def scaled_size(
+        self,
+        height: float,
+        window_size: Optional[Tuple[float,
+                                    float]] = None) -> Tuple[float, float]:
+        """Returns the (w,h ) value scaled to reflect the aspect ratio of a
         visual.Window. Used for creating squared stimulus"""
         if self.units == 'height':
             width = height
@@ -281,6 +291,20 @@ def centered(width_pct: float = 1.0, height_pct: float = 1.0) -> Layout:
     container.resize_height(height_pct, alignment=Alignment.CENTERED)
     return container
 
+
+def envelope(layout: Layout, pos: Tuple[float, float],
+             size: Tuple[float, float]) -> List[Tuple[float, float]]:
+    """Compute the vertices for the envelope of a shape centered at pos with
+    the given size."""
+    width, height = size
+    half_w = width / 2
+    half_h = height / 2
+    return [(layout.left_of(pos[0], half_w), layout.above(pos[1], half_h)),
+            (layout.right_of(pos[0], half_w), layout.above(pos[1], half_h)),
+            (layout.right_of(pos[0], half_w), layout.below(pos[1], half_h)),
+            (layout.left_of(pos[0], half_w), layout.below(pos[1], half_h))]
+
+
 def height_units(window_size: Tuple[float, float]):
     """Constructs a layout with height units using the given Window
     dimensions
@@ -292,4 +316,8 @@ def height_units(window_size: Tuple[float, float]):
     """
     win_width, win_height = window_size
     right = (win_width / win_height) / 2
-    return Layout(left=-right, top=0.5, right=right, bottom=-0.5, units='height')
+    return Layout(left=-right,
+                  top=0.5,
+                  right=right,
+                  bottom=-0.5,
+                  units='height')

@@ -13,6 +13,12 @@ class CheckerboardSquare(NamedTuple):
     color: str
     size: Tuple[float, float]
 
+    def inverse_color(self, colors: Tuple[str, str]) -> str:
+        """Get the inverse color of this square"""
+        if self.color == colors[0]:
+            return colors[1]
+        return colors[0]
+
     def inverse(self, colors: Tuple[str, str]) -> 'CheckerboardSquare':
         """Returns a new CheckerboardSquare whose color is the inverse
         of the current one.

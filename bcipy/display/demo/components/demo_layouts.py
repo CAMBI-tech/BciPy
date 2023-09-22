@@ -1,16 +1,15 @@
 """Useful for viewing computed positions in a window"""
 import time
-from itertools import cycle
 from typing import Callable, List, Tuple, Union
 
 from psychopy import visual
 from psychopy.visual.circle import Circle
-from psychopy.visual.grating import GratingStim
 from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
+from psychopy.visual.shape import ShapeStim
 
 from bcipy.display.components.layout import (Layout, at_top, centered,
-                                             height_units)
+                                             envelope, height_units)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
 
 
@@ -123,47 +122,12 @@ def show_layout_coords(win: visual.Window):
     win.flip()
 
 
-def vep_box_quadrant(win: visual.Window, pos: Tuple[float, float], anchor: str,
-                     color: Tuple[str, str], size: Tuple[float, float]):
-
-    pattern1 = GratingStim(win=win,
-                           name=f'2x2-1-{pos}-{anchor}',
-                           tex=None,
-                           pos=pos,
-                           size=size,
-                           sf=1,
-                           phase=0.0,
-                           color=color[0],
-                           colorSpace='rgb',
-                           opacity=1,
-                           texRes=256,
-                           interpolate=True,
-                           depth=-1.0,
-                           anchor=anchor)
-    pattern2 = GratingStim(win=win,
-                           name=f'2x2-2-{pos}-{anchor}',
-                           tex=None,
-                           pos=pos,
-                           size=size,
-                           sf=1,
-                           phase=0.0,
-                           color=color[1],
-                           colorSpace='rgb',
-                           opacity=1,
-                           texRes=256,
-                           interpolate=True,
-                           depth=-1.0,
-                           anchor=anchor)
-    border = Rect(win, pos=pos, size=size, lineColor='white', anchor=anchor)
-    return [pattern1, pattern2, border]
-
-
 def demo_vep(win: visual.Window):
     """Demo layout elements for VEP display"""
     layout = centered(width_pct=0.9, height_pct=0.9)
     layout.parent = win
 
-    box_config = BoxConfiguration(layout, num_boxes=6, height_pct=0.28)
+    box_config = BoxConfiguration(layout, num_boxes=4, height_pct=0.28)
     size = box_config.box_size()
     positions = box_config.positions
 
@@ -176,19 +140,20 @@ def demo_vep(win: visual.Window):
     vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
                   ('orange', 'green'), ('white', 'black'), ('red', 'green')]
     colors = ['#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232']
-    # draw boxes
-    anchor_points = ['right_bottom', 'left_bottom', 'left_top', 'right_top']
 
     for i, pos in enumerate(positions):
-        gradient_colors: Tuple[str, str] = vep_colors[i]
-
-        for anchor, color in zip(
-                anchor_points,
-                cycle([gradient_colors,
-                       tuple(reversed(gradient_colors))])):
-            for stim in vep_box_quadrant(win, pos, anchor, color,
-                                         layout.scaled_size(0.1)):
-                stim.draw()
+        color_tup: Tuple[str, str] = vep_colors[i]
+        board = checkerboard(layout,
+                             squares=16,
+                             colors=color_tup,
+                             center=pos,
+                             board_size=layout.scaled_size(0.2))
+        for square in board:
+            Rect(win,
+                 pos=square.pos,
+                 size=square.size,
+                 lineColor='white',
+                 fillColor=square.color).draw()
 
         rect = visual.TextBox2(win,
                                text=' ',
@@ -204,7 +169,7 @@ def demo_checkerboard(win: visual.Window):
     layout = centered(width_pct=0.9, height_pct=0.9)
     layout.parent = win
     board = checkerboard(layout,
-                         squares=25,
+                         squares=16,
                          colors=('red', 'green'),
                          center=(0, 0),
                          board_size=layout.scaled_size(0.6))
@@ -256,6 +221,45 @@ def demo_height_units(win: visual.Window):
     win.flip()
 
 
+def demo_checkerboard2(win: visual.Window):
+    """Demo checkerboard rendered using a complex shapestim"""
+    layout = centered(width_pct=0.9, height_pct=0.9)
+    layout.parent = win
+
+    board_pos = (0, 0)
+    board_size = layout.scaled_size(0.6)
+
+    colors = ('red', 'green')
+    board = checkerboard(layout,
+                         squares=25,
+                         colors=colors,
+                         center=board_pos,
+                         board_size=board_size)
+    board_boundaries = envelope(layout, pos=board_pos, size=board_size)
+
+    evens = []
+    odds = []
+    for square in board:
+        square_boundary = envelope(layout, pos=square.pos, size=square.size)
+        if square.color == colors[0]:
+            evens.append(square_boundary)
+        else:
+            odds.append(square_boundary)
+
+    rect = ShapeStim(win,
+                     lineColor='green',
+                     fillColor='green',
+                     vertices=board_boundaries)
+    rect.draw()
+    stim = ShapeStim(win,
+                     lineWidth=0,
+                     fillColor=colors[0],
+                     closeShape=True,
+                     vertices=[board_boundaries, *evens])
+    stim.draw()
+    win.flip()
+
+
 def run(demo: Callable[[visual.Window], None], seconds=30):
     """Run the given function for the provided duration.
 
@@ -284,7 +288,8 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
         print('Demo complete.')
 
 
-run(demo_vep)
+# run(demo_vep)
 # run(demo_height_units)
 # run(show_layout_coords)
 # run(demo_checkerboard)
+run(demo_checkerboard2)
