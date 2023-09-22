@@ -9,6 +9,7 @@ from psychopy.visual.rect import Rect
 
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
+from bcipy.display.components.layout import Layout
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.vep.layout import (BoxConfiguration,
                                                CheckerboardSquare,
@@ -38,22 +39,32 @@ class VEPStim:
     ----------
         window - used to build the stimulus
         code - A list of integers representing the VEP code for each box
-        squares - list of CheckerboardSquares with a defined position
-            and size
+        colors - tuple of colors for the checkerboard pattern
+        center - center position of the checkerboard
+        size - size of the checkerboard, in layout units
+        num_squares - number of squares in the checkerboard
     """
 
-    def __init__(self, window: visual.Window, code: List[int],
-                 squares: List[CheckerboardSquare]):
-        self.window = window
+    def __init__(self,
+                 layout: Layout,
+                 code: List[int],
+                 colors: Tuple[str, str],
+                 center: Tuple[float, float],
+                 size: Tuple[float, float],
+                 num_squares: int = 4):
+        assert isinstance(layout.parent,
+                          visual.Window), 'Layout must have a Window parent'
+        self.window = layout.parent
         self.code = code
-        self.colors = squares[0].color, squares[1].color
-        self.squares = squares
-        self.stim = self.build_stim(squares[0])
+        squares = checkerboard(layout,
+                               squares=num_squares,
+                               colors=colors,
+                               center=center,
+                               board_size=size)
 
-        self.on_stim = [self.build_stim(square) for square in self.squares]
+        self.on_stim = [self.build_stim(square) for square in squares]
         self.off_stim = [
-            self.build_stim(square.inverse(self.colors))
-            for square in self.squares
+            self.build_stim(square.inverse(colors)) for square in squares
         ]
 
     def build_stim(self, square: CheckerboardSquare) -> GratingStim:
@@ -322,21 +333,6 @@ class VEPDisplay(Display):
 
         return self.sti
 
-    def vep_square_stim(self, square: CheckerboardSquare) -> GratingStim:
-        """Construct a stim from a checkerboard square"""
-        return GratingStim(win=self.window,
-                           name=f"{square.color} square at {square.pos}",
-                           tex=None,
-                           pos=square.pos,
-                           size=square.size,
-                           sf=1,
-                           phase=0.0,
-                           color=square.color,
-                           colorSpace='rgb',
-                           opacity=1,
-                           texRes=256,
-                           interpolate=True,
-                           depth=-1.0)
 
     def build_vep_stimuli(self,
                           box_config: BoxConfiguration,
@@ -347,12 +343,13 @@ class VEPDisplay(Display):
         """Build the VEP flashing checkerboard squares"""
         stim = []
         for pos, code, color in zip(box_config.positions, codes, colors):
-            board = checkerboard(box_config.layout,
-                                 squares=num_squares,
-                                 colors=color,
-                                 center=pos,
-                                 board_size=stim_size)
-            stim.append(VEPStim(self.window, code, board))
+            stim.append(
+                VEPStim(box_config.layout,
+                        code,
+                        color,
+                        center=pos,
+                        size=stim_size,
+                        num_squares=num_squares))
         return stim
 
 
