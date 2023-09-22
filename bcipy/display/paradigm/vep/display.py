@@ -30,25 +30,64 @@ def create_vep_codes(length=32, count=4) -> List[List[int]]:
     return [np.random.randint(2, size=length) for _ in range(count)]
 
 
-class VEPBox:
-    """A class to represent a VEP box.
+class VEPStim:
+    """Represents a checkerboard of squares that can be flashed at a rate.
+    Flashing is accomplished by inverting the colors of each square.
 
-    Attributes:
-        flicker: A list of two GratingStim objects, one for on and one for off.
-        code: A list of integers representing the VEP code for this box.
+    Parameters
+    ----------
+        window - used to build the stimulus
+        code - A list of integers representing the VEP code for each box
+        squares - list of CheckerboardSquares with a defined position
+            and size
     """
 
-    def __init__(self, flicker: List[Tuple[GratingStim, GratingStim]], code: List[int]) -> None:
-        self.flicker = flicker
+    def __init__(self, window: visual.Window, code: List[int],
+                 squares: List[CheckerboardSquare]):
+        self.window = window
         self.code = code
+        self.colors = squares[0].color, squares[1].color
+        self.squares = squares
+        self.stim = self.build_stim(squares[0])
+
+        self.on_stim = [self.build_stim(square) for square in self.squares]
+        self.off_stim = [
+            self.build_stim(square.inverse(self.colors))
+            for square in self.squares
+        ]
+
+    def build_stim(self, square: CheckerboardSquare) -> GratingStim:
+        """Constructs a single re-usable stim"""
+        return GratingStim(win=self.window,
+                           tex=None,
+                           pos=square.pos,
+                           size=square.size,
+                           sf=1,
+                           phase=0.0,
+                           color=square.color,
+                           colorSpace='rgb',
+                           opacity=1,
+                           texRes=256,
+                           interpolate=True,
+                           depth=-1.0)
+
+    def render_frame(self, frame: int) -> None:
+        """Render a given frame number, where frame refers to a code index"""
+        if self.code[frame] == 1:
+            self.frame_on()
+        else:
+            self.frame_off()
 
     def frame_on(self) -> None:
-        """Frame On. Draw the frame for the first grating stim on the screen."""
-        self.flicker[0].draw()
+        """Each square is set to a starting color and draw."""
+        for stim in self.on_stim:
+            stim.draw()
 
     def frame_off(self) -> None:
-        """Frame Off. Draw the frame for the second grating stim on the screen."""
-        self.flicker[1].draw()
+        """Invert each square from its starting color and draw."""
+        for stim in self.off_stim:
+            stim.draw()
+
 
 
 class VEPDisplay(Display):
@@ -220,19 +259,18 @@ class VEPDisplay(Display):
             self.experiment_clock,
             'VEP_STIMULATE')
         self.static_clock.reset()
+        first_frame = True
         while self.static_clock.getTime() < self.timing_stimuli:
-            # TODO: check exit condition within the for loop
             for frame in range(self.refresh_rate):
-                for box in self.vep:
-                    if box.code[frame] == 1:
-                        box.frame_on()
-                    else:
-                        box.frame_off()
+                for stim in self.vep:
+                    stim.render_frame(frame)
 
-                # flicker!
                 self.draw_boxes()
                 self.draw_static()
                 self.window.flip()
+            if first_frame:
+                first_frame = False
+                print(f"Frame duration: {self.static_clock.getTime()}")
         self.logger.debug(
             f"Stimulate expected run time: {self.timing_stimuli}; actual run time: {self.static_clock.getTime()}"
         )
@@ -305,7 +343,7 @@ class VEPDisplay(Display):
                           codes: List[int],
                           colors: List[Tuple[str]],
                           stim_size: Tuple[float, float],
-                          num_squares: int) -> List[VEPBox]:
+                          num_squares: int) -> List[VEPStim]:
         """Build the VEP flashing checkerboard squares"""
         stim = []
         for pos, code, color in zip(box_config.positions, codes, colors):
@@ -314,10 +352,7 @@ class VEPDisplay(Display):
                                  colors=color,
                                  center=pos,
                                  board_size=stim_size)
-            for square in board:
-                pattern1 = self.vep_square_stim(square)
-                pattern2 = self.vep_square_stim(square.inverse(color))
-                stim.append(VEPBox(flicker=[pattern1, pattern2], code=code))
+            stim.append(VEPStim(self.window, code, board))
         return stim
 
 
