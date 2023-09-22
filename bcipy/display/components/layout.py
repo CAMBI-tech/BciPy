@@ -78,7 +78,7 @@ def envelope(pos: Tuple[float, float],
 
 
 def scaled_size(height: float,
-                window_size: [Tuple[float, float]],
+                window_size: Tuple[float, float],
                 units: str = 'norm') -> Tuple[float, float]:
     """Scales the provided height value to reflect the aspect ratio of a
     visual.Window. Used for creating squared stimulus. Returns (w,h) tuple"""
@@ -89,6 +89,17 @@ def scaled_size(height: float,
     win_width, win_height = window_size
     width = (win_height / win_width) * height
     return (width, height)
+
+
+def scaled_height(width: float,
+                  window_size: Tuple[float, float],
+                  units: str = 'norm') -> float:
+    """Given a width, find the equivalent height scaled to the aspect ratio of
+    a window with the given size"""
+    if units == 'height':
+        return width
+    win_width, win_height = window_size
+    return width / (win_height / win_width)
 
 
 class Layout(Container):
