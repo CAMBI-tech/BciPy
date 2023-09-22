@@ -6,10 +6,11 @@ import numpy as np
 from psychopy import core, visual
 from psychopy.visual.grating import GratingStim
 from psychopy.visual.rect import Rect
+from psychopy.visual.shape import ShapeStim
 
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
-from bcipy.display.components.layout import Layout
+from bcipy.display.components.layout import Layout, envelope
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.vep.layout import (BoxConfiguration,
                                                CheckerboardSquare,
@@ -56,15 +57,51 @@ class VEPStim:
                           visual.Window), 'Layout must have a Window parent'
         self.window = layout.parent
         self.code = code
+
         squares = checkerboard(layout,
                                squares=num_squares,
                                colors=colors,
                                center=center,
                                board_size=size)
+        board_boundary = envelope(layout, pos=center, size=size)
 
-        self.on_stim = [self.build_stim(square) for square in squares]
+        frame1_holes = []
+        frame2_holes = []
+        for square in squares:
+            square_boundary = envelope(layout, pos=square.pos, size=square.size)
+            # squares define the holes in the polygon
+            if square.color == colors[0]:
+                frame2_holes.append(square_boundary)
+            elif square.color == colors[1]:
+                frame1_holes.append(square_boundary)
+
+        # checkerboard is represented as a polygon with holes, backed by a
+        # simple square with the alternating color.
+        self.on_stim = [
+            # background
+            ShapeStim(self.window,
+                      lineColor=colors[1],
+                      fillColor=colors[1],
+                      vertices=board_boundary),
+            # polygon with holes
+            ShapeStim(self.window,
+                      lineWidth=0,
+                      fillColor=colors[0],
+                      closeShape=True,
+                      vertices=[board_boundary, *frame1_holes])
+        ]
         self.off_stim = [
-            self.build_stim(square.inverse(colors)) for square in squares
+            # background
+            ShapeStim(self.window,
+                      lineColor=colors[1],
+                      fillColor=colors[1],
+                      vertices=board_boundary),
+            # polygon with holes
+            ShapeStim(self.window,
+                      lineWidth=0,
+                      fillColor=colors[0],
+                      closeShape=True,
+                      vertices=[board_boundary, *frame2_holes])
         ]
 
     def build_stim(self, square: CheckerboardSquare) -> GratingStim:
@@ -164,7 +201,7 @@ class VEPDisplay(Display):
                                           codes=codes,
                                           colors=cycle(vep_colors),
                                           stim_size=vep_stim_size,
-                                          num_squares=4)
+                                          num_squares=25)
 
         self.text_boxes = self._build_text_boxes(box_config)
 
@@ -270,21 +307,19 @@ class VEPDisplay(Display):
             self.experiment_clock,
             'VEP_STIMULATE')
         self.static_clock.reset()
-        first_frame = True
         while self.static_clock.getTime() < self.timing_stimuli:
             for frame in range(self.refresh_rate):
                 for stim in self.vep:
                     stim.render_frame(frame)
 
                 self.draw_boxes()
-                self.draw_static()
+                # self.draw_static()
                 self.window.flip()
-            if first_frame:
-                first_frame = False
-                print(f"Frame duration: {self.static_clock.getTime()}")
+        ended_at = self.static_clock.getTime()
         self.logger.debug(
-            f"Stimulate expected run time: {self.timing_stimuli}; actual run time: {self.static_clock.getTime()}"
+            f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
+        self.logger.debug(f"Average frame duration: {ended_at/self.timing_stimuli}")
 
         return self.trigger_callback.timing
 
@@ -340,7 +375,7 @@ class VEPDisplay(Display):
                           colors: List[Tuple[str]],
                           stim_size: Tuple[float, float],
                           num_squares: int) -> List[VEPStim]:
-        """Build the VEP flashing checkerboard squares"""
+        """Build the VEP flashing checkerboards"""
         stim = []
         for pos, code, color in zip(box_config.positions, codes, colors):
             stim.append(
