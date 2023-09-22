@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from psychopy import core, visual
 
 from bcipy.display import InformationProperties, VEPStimuliProperties
@@ -6,6 +9,12 @@ from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+root.addHandler(handler)
 
 info = InformationProperties(
     info_color=['White'],
@@ -16,7 +25,7 @@ info = InformationProperties(
 )
 
 task_text = ['1/4'] #, '2/4', '3/4', '4/4']
-num_boxes = 4
+num_boxes = 6
 
 win = visual.Window(size=[700, 700],
                     fullscr=False,
@@ -39,7 +48,9 @@ start_positions_for_boxes =  [(-.3, -.3), (.3, -.3), (.3, .3), (-.3, .3)]
 box_colors = ['#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232']
 stim_color = [[color] for i, color in enumerate(box_colors) if i < num_boxes]
 
-box_config = BoxConfiguration(layout=centered(width_pct=0.95, height_pct=0.80), num_boxes=num_boxes)
+layout=centered(width_pct=0.95, height_pct=0.80)
+layout.parent = win
+box_config = BoxConfiguration(layout, num_boxes=num_boxes)
 
 experiment_clock = Clock()
 len_stimuli = 10

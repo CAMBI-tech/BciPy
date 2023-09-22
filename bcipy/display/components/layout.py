@@ -35,6 +35,62 @@ class Alignment(Enum):
         return [Alignment.CENTERED, Alignment.TOP, Alignment.BOTTOM]
 
 
+# Positioning functions
+def above(y_coordinate: float, amount: float) -> float:
+    """Returns a new y_coordinate value that is above the provided value
+    by the given amount."""
+    assert amount >= 0, 'Amount must be positive'
+    return y_coordinate + amount
+
+
+def below(y_coordinate: float, amount: float) -> float:
+    """Returns a new y_coordinate value that is below the provided value
+    by the given amount."""
+    assert amount >= 0, 'Amount must be positive'
+    return y_coordinate - amount
+
+
+def right_of(x_coordinate: float, amount: float) -> float:
+    """Returns a new x_coordinate value that is to the right of the
+    provided value by the given amount."""
+    assert amount >= 0, 'Amount must be positive'
+    return x_coordinate + amount
+
+
+def left_of(x_coordinate: float, amount: float) -> float:
+    """Returns a new x_coordinate value that is to the left of the
+    provided value by the given amount."""
+    assert amount >= 0, 'Amount must be positive'
+    return x_coordinate - amount
+
+
+def envelope(pos: Tuple[float, float],
+             size: Tuple[float, float]) -> List[Tuple[float, float]]:
+    """Compute the vertices for the envelope of a shape centered at pos with
+    the given size."""
+    width, height = size
+    half_w = width / 2
+    half_h = height / 2
+    return [(left_of(pos[0], half_w), above(pos[1], half_h)),
+            (right_of(pos[0], half_w), above(pos[1], half_h)),
+            (right_of(pos[0], half_w), below(pos[1], half_h)),
+            (left_of(pos[0], half_w), below(pos[1], half_h))]
+
+
+def scaled_size(height: float,
+                window_size: [Tuple[float, float]],
+                units: str = 'norm') -> Tuple[float, float]:
+    """Scales the provided height value to reflect the aspect ratio of a
+    visual.Window. Used for creating squared stimulus. Returns (w,h) tuple"""
+    if units == 'height':
+        width = height
+        return (width, height)
+
+    win_width, win_height = window_size
+    width = (win_height / win_width) * height
+    return (width, height)
+
+
 class Layout(Container):
     """Class with methods for positioning elements within a parent container.
     """
@@ -84,26 +140,14 @@ class Layout(Container):
             assert 0 < self.height <= self.parent.size[
                 1], "Height must be greater than 0 and fit within the parent height."
 
-    def scaled_size(
-        self,
-        height: float,
-        window_size: Optional[Tuple[float,
-                                    float]] = None) -> Tuple[float, float]:
-        """Returns the (w,h ) value scaled to reflect the aspect ratio of a
+    def scaled_size(self, height: float) -> Tuple[float, float]:
+        """Returns the (w,h) value scaled to reflect the aspect ratio of a
         visual.Window. Used for creating squared stimulus"""
         if self.units == 'height':
             width = height
             return (width, height)
-
-        # norm units
-        if window_size is not None:
-            win_width, win_height = window_size
-        elif self.parent:
-            win_width, win_height = self.parent.size
-        else:
-            raise ValueError("window_size or parent is required")
-        width = (win_height / win_width) * height
-        return (width, height)
+        assert self.parent is not None, 'Parent must be configured'
+        return scaled_size(height, self.parent.size, self.units)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -154,34 +198,6 @@ class Layout(Container):
     def right_middle(self) -> Tuple[float, float]:
         """Point centered on the right-most edge."""
         return (self.right, self.vertical_middle)
-
-    def above(self, y_coordinate: float, amount: float) -> float:
-        """Returns a new y_coordinate value that is above the provided value
-        by the given amount."""
-        # assert self.bottom <= y_coordinate <= self.top, "y_coordinate out of range"
-        assert amount >= 0, 'Amount must be positive'
-        return y_coordinate + amount
-
-    def below(self, y_coordinate: float, amount: float) -> float:
-        """Returns a new y_coordinate value that is below the provided value
-        by the given amount."""
-        # assert self.bottom <= y_coordinate <= self.top, "y_coordinate out of range"
-        assert amount >= 0, 'Amount must be positive'
-        return y_coordinate - amount
-
-    def right_of(self, x_coordinate: float, amount: float) -> float:
-        """Returns a new x_coordinate value that is to the right of the
-        provided value by the given amount."""
-        # assert self.left <= x_coordinate <= self.right, "y_coordinate out of range"
-        assert amount >= 0, 'Amount must be positive'
-        return x_coordinate + amount
-
-    def left_of(self, x_coordinate: float, amount: float) -> float:
-        """Returns a new x_coordinate value that is to the left of the
-        provided value by the given amount."""
-        # assert self.left <= x_coordinate <= self.right, "y_coordinate out of range"
-        assert amount >= 0, 'Amount must be positive'
-        return x_coordinate - amount
 
     def resize_width(self,
                      width_pct: float,
@@ -247,6 +263,7 @@ class Layout(Container):
         self.check_invariants()
 
 
+# Factory functions
 def at_top(parent: Container, height: float) -> Layout:
     """Constructs a layout of a given height that spans the full width of the
     window and is positioned at the top.
@@ -292,20 +309,7 @@ def centered(width_pct: float = 1.0, height_pct: float = 1.0) -> Layout:
     return container
 
 
-def envelope(layout: Layout, pos: Tuple[float, float],
-             size: Tuple[float, float]) -> List[Tuple[float, float]]:
-    """Compute the vertices for the envelope of a shape centered at pos with
-    the given size."""
-    width, height = size
-    half_w = width / 2
-    half_h = height / 2
-    return [(layout.left_of(pos[0], half_w), layout.above(pos[1], half_h)),
-            (layout.right_of(pos[0], half_w), layout.above(pos[1], half_h)),
-            (layout.right_of(pos[0], half_w), layout.below(pos[1], half_h)),
-            (layout.left_of(pos[0], half_w), layout.below(pos[1], half_h))]
-
-
-def height_units(window_size: Tuple[float, float]):
+def height_units(window_size: Tuple[float, float]) -> Layout:
     """Constructs a layout with height units using the given Window
     dimensions
 

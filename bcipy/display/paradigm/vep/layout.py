@@ -4,7 +4,8 @@ from itertools import cycle
 from math import sqrt
 from typing import List, NamedTuple, Optional, Tuple
 
-from bcipy.display.components.layout import Layout
+from bcipy.display.components.layout import (Layout, above, below, left_of,
+                                             right_of)
 
 
 class CheckerboardSquare(NamedTuple):
@@ -34,8 +35,8 @@ class CheckerboardSquare(NamedTuple):
         return CheckerboardSquare(self.pos, color, self.size)
 
 
-def checkerboard(layout: Layout, squares: int, colors: Tuple[str, str],
-                 center: Tuple[float, float],
+def checkerboard(squares: int, colors: Tuple[str, str], center: Tuple[float,
+                                                                      float],
                  board_size: Tuple[float, float]) -> List[CheckerboardSquare]:
     """Computes positions and colors for squares used to represent a
     checkerboard pattern. Returned positions are the center point of
@@ -43,8 +44,6 @@ def checkerboard(layout: Layout, squares: int, colors: Tuple[str, str],
 
     Parameters
     ----------
-        layout - layout in which the checkerboard will be rendered. Used for
-            positioning and scale.
         squares - total number of squares in the board; must be a perfect
             square (ex. 4, 9, 16, 25)
         colors - tuple of color names between which to alternate
@@ -65,22 +64,22 @@ def checkerboard(layout: Layout, squares: int, colors: Tuple[str, str],
     if squares % 2 == 0:
         # with an even number the center is on a vertex; adjust by half a box
         move_count -= 0.5
-    left = layout.left_of(center_x, square_width * move_count)
-    top = layout.above(center_y, square_height * move_count)
+    left = left_of(center_x, square_width * move_count)
+    top = above(center_y, square_height * move_count)
 
     # iterate starting at the top left and proceeding in a zig zag
     # pattern to correspond with alternating checkerboard colors.
     positions = []
     for row in range(boxes_per_row):
         if row > 0:
-            top = layout.below(top, square_height)
+            top = below(top, square_height)
         for col in range(boxes_per_row):
             positions.append((left, top))
             if col < boxes_per_row - 1:
                 if row % 2 == 0:
-                    left = layout.right_of(left, square_width)
+                    left = right_of(left, square_width)
                 else:
-                    left = layout.left_of(left, square_width)
+                    left = left_of(left, square_width)
     return [
         CheckerboardSquare(*args)
         for args in zip(positions, cycle(colors), cycle([square_size]))
@@ -153,15 +152,14 @@ class BoxConfiguration():
         """
         self.validate()
 
-        # size = box_size(num, layout, spacing_pct)
         width, height = self.box_size(validate=False)
 
         layout = self.layout
-        top = layout.below(layout.top, (height / 2))
-        bottom = layout.above(layout.bottom, (height / 2))
+        top = below(layout.top, (height / 2))
+        bottom = above(layout.bottom, (height / 2))
 
-        left = layout.right_of(layout.left, width / 2)
-        right = layout.left_of(layout.right, width / 2)
+        left = right_of(layout.left, width / 2)
+        right = left_of(layout.right, width / 2)
 
         positions = [(left, top), (right, top), (left, bottom),
                      (right, bottom)]

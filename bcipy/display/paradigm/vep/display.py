@@ -4,17 +4,13 @@ from typing import List, Tuple
 
 import numpy as np
 from psychopy import core, visual
-from psychopy.visual.grating import GratingStim
-from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
-from bcipy.display.components.layout import Layout, envelope
+from bcipy.display.components.layout import envelope, scaled_size
 from bcipy.display.components.task_bar import TaskBar
-from bcipy.display.paradigm.vep.layout import (BoxConfiguration,
-                                               CheckerboardSquare,
-                                               checkerboard)
+from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation, resize_image
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
@@ -33,12 +29,12 @@ def create_vep_codes(length=32, count=4) -> List[List[int]]:
 
 
 class VEPStim:
-    """Represents a checkerboard of squares that can be flashed at a rate.
-    Flashing is accomplished by inverting the colors of each square.
+    """Represents a checkerboard of squares that can be flashed at a given
+    rate. Flashing is accomplished by inverting the colors of each square.
 
     Parameters
     ----------
-        window - used to build the stimulus
+        layout - used to build the stimulus
         code - A list of integers representing the VEP code for each box
         colors - tuple of colors for the checkerboard pattern
         center - center position of the checkerboard
@@ -47,28 +43,25 @@ class VEPStim:
     """
 
     def __init__(self,
-                 layout: Layout,
+                 win: visual.Window,
                  code: List[int],
                  colors: Tuple[str, str],
                  center: Tuple[float, float],
                  size: Tuple[float, float],
                  num_squares: int = 4):
-        assert isinstance(layout.parent,
-                          visual.Window), 'Layout must have a Window parent'
-        self.window = layout.parent
+        self.window = win
         self.code = code
 
-        squares = checkerboard(layout,
-                               squares=num_squares,
+        squares = checkerboard(squares=num_squares,
                                colors=colors,
                                center=center,
                                board_size=size)
-        board_boundary = envelope(layout, pos=center, size=size)
+        board_boundary = envelope(pos=center, size=size)
 
         frame1_holes = []
         frame2_holes = []
         for square in squares:
-            square_boundary = envelope(layout, pos=square.pos, size=square.size)
+            square_boundary = envelope(pos=square.pos, size=square.size)
             # squares define the holes in the polygon
             if square.color == colors[0]:
                 frame2_holes.append(square_boundary)
@@ -77,12 +70,12 @@ class VEPStim:
 
         # checkerboard is represented as a polygon with holes, backed by a
         # simple square with the alternating color.
+        background = ShapeStim(self.window,
+                               lineColor=colors[1],
+                               fillColor=colors[1],
+                               vertices=board_boundary)
         self.on_stim = [
-            # background
-            ShapeStim(self.window,
-                      lineColor=colors[1],
-                      fillColor=colors[1],
-                      vertices=board_boundary),
+            background,
             # polygon with holes
             ShapeStim(self.window,
                       lineWidth=0,
@@ -91,11 +84,7 @@ class VEPStim:
                       vertices=[board_boundary, *frame1_holes])
         ]
         self.off_stim = [
-            # background
-            ShapeStim(self.window,
-                      lineColor=colors[1],
-                      fillColor=colors[1],
-                      vertices=board_boundary),
+            background,
             # polygon with holes
             ShapeStim(self.window,
                       lineWidth=0,
@@ -103,21 +92,6 @@ class VEPStim:
                       closeShape=True,
                       vertices=[board_boundary, *frame2_holes])
         ]
-
-    def build_stim(self, square: CheckerboardSquare) -> GratingStim:
-        """Constructs a single re-usable stim"""
-        return GratingStim(win=self.window,
-                           tex=None,
-                           pos=square.pos,
-                           size=square.size,
-                           sf=1,
-                           phase=0.0,
-                           color=square.color,
-                           colorSpace='rgb',
-                           opacity=1,
-                           texRes=256,
-                           interpolate=True,
-                           depth=-1.0)
 
     def render_frame(self, frame: int) -> None:
         """Render a given frame number, where frame refers to a code index"""
@@ -196,8 +170,8 @@ class VEPDisplay(Display):
         if not codes:
             codes = create_vep_codes(length=self.refresh_rate, count=self.vep_type)
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
-        vep_stim_size = box_config.layout.scaled_size(0.2, self.window_size)
-        self.vep = self.build_vep_stimuli(box_config=box_config,
+        vep_stim_size = scaled_size(0.2, self.window_size)
+        self.vep = self.build_vep_stimuli(positions=box_config.positions,
                                           codes=codes,
                                           colors=cycle(vep_colors),
                                           stim_size=vep_stim_size,
@@ -316,6 +290,7 @@ class VEPDisplay(Display):
                 # self.draw_static()
                 self.window.flip()
         ended_at = self.static_clock.getTime()
+        # TODO: should we have a trigger for VEP_STIM_END?
         self.logger.debug(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
@@ -370,16 +345,16 @@ class VEPDisplay(Display):
 
 
     def build_vep_stimuli(self,
-                          box_config: BoxConfiguration,
+                          positions: List[Tuple[float, float]],
                           codes: List[int],
                           colors: List[Tuple[str]],
                           stim_size: Tuple[float, float],
                           num_squares: int) -> List[VEPStim]:
         """Build the VEP flashing checkerboards"""
         stim = []
-        for pos, code, color in zip(box_config.positions, codes, colors):
+        for pos, code, color in zip(positions, codes, colors):
             stim.append(
-                VEPStim(box_config.layout,
+                VEPStim(self.window,
                         code,
                         color,
                         center=pos,

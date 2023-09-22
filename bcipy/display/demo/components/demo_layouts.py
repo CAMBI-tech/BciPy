@@ -9,7 +9,8 @@ from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 
 from bcipy.display.components.layout import (Layout, at_top, centered,
-                                             envelope, height_units)
+                                             envelope, height_units,
+                                             scaled_size)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
 
 
@@ -143,8 +144,7 @@ def demo_vep(win: visual.Window):
 
     for i, pos in enumerate(positions):
         color_tup: Tuple[str, str] = vep_colors[i]
-        board = checkerboard(layout,
-                             squares=16,
+        board = checkerboard(squares=16,
                              colors=color_tup,
                              center=pos,
                              board_size=layout.scaled_size(0.2))
@@ -166,13 +166,10 @@ def demo_vep(win: visual.Window):
 
 def demo_checkerboard(win: visual.Window):
     """Demo checkerboard"""
-    layout = centered(width_pct=0.9, height_pct=0.9)
-    layout.parent = win
-    board = checkerboard(layout,
-                         squares=16,
+    board = checkerboard(squares=16,
                          colors=('red', 'green'),
                          center=(0, 0),
-                         board_size=layout.scaled_size(0.6))
+                         board_size=scaled_size(0.6, win.size))
     for square in board:
         Rect(win,
              pos=square.pos,
@@ -223,24 +220,20 @@ def demo_height_units(win: visual.Window):
 
 def demo_checkerboard2(win: visual.Window):
     """Demo checkerboard rendered using a complex shapestim"""
-    layout = centered(width_pct=0.9, height_pct=0.9)
-    layout.parent = win
-
     board_pos = (0, 0)
-    board_size = layout.scaled_size(0.6)
+    board_size = scaled_size(0.6, win.size)
 
     colors = ('red', 'green')
-    board = checkerboard(layout,
-                         squares=25,
+    board = checkerboard(squares=25,
                          colors=colors,
                          center=board_pos,
                          board_size=board_size)
-    board_boundaries = envelope(layout, pos=board_pos, size=board_size)
+    board_boundaries = envelope(pos=board_pos, size=board_size)
 
     evens = []
     odds = []
     for square in board:
-        square_boundary = envelope(layout, pos=square.pos, size=square.size)
+        square_boundary = envelope(pos=square.pos, size=square.size)
         if square.color == colors[0]:
             evens.append(square_boundary)
         else:
