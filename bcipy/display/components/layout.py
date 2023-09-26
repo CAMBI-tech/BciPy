@@ -107,7 +107,7 @@ class Layout(Container):
     """
 
     def __init__(self,
-                 parent: Container = None,
+                 parent: Optional[Container] = None,
                  left: float = DEFAULT_LEFT,
                  top: float = DEFAULT_TOP,
                  right: float = DEFAULT_RIGHT,
@@ -318,6 +318,16 @@ def centered(width_pct: float = 1.0, height_pct: float = 1.0) -> Layout:
     container.resize_width(width_pct, alignment=Alignment.CENTERED)
     container.resize_height(height_pct, alignment=Alignment.CENTERED)
     return container
+
+
+def from_envelope(verts: List[Tuple[float, float]]) -> Layout:
+    """Constructs a layout from a list of vertices which comprise a shape's
+    envelope."""
+    x_coords, y_coords = zip(*verts)
+    return Layout(left=min(x_coords),
+                  top=max(y_coords),
+                  right=max(x_coords),
+                  bottom=min(y_coords))
 
 
 def height_units(window_size: Tuple[float, float]) -> Layout:

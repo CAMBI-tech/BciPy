@@ -111,9 +111,9 @@ class VEPStim:
             stim.draw()
 
 
-
 class VEPDisplay(Display):
     """Display for VEP paradigm"""
+
     def __init__(
             self,
             window: visual.Window,
@@ -178,7 +178,6 @@ class VEPDisplay(Display):
                                           num_squares=25)
 
         self.text_boxes = self._build_text_boxes(box_config)
-
 
     def check_configuration(self):
         """Check that configured properties are consistent"""
@@ -343,7 +342,6 @@ class VEPDisplay(Display):
 
         return self.sti
 
-
     def build_vep_stimuli(self,
                           positions: List[Tuple[float, float]],
                           codes: List[int],
@@ -361,7 +359,6 @@ class VEPDisplay(Display):
                         size=stim_size,
                         num_squares=num_squares))
         return stim
-
 
     def _trigger_pulse(self) -> None:
         """Trigger Pulse.
@@ -382,7 +379,8 @@ class VEPDisplay(Display):
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
 
-    def schedule_to(self, stimuli: List[List[str]], timing: List[List[float]]=None, colors: List[List[str]]=None) -> None:
+    def schedule_to(self, stimuli: List[List[str]], timing: List[List[float]]
+                    = None, colors: List[List[str]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
         """
         self.stimuli_inquiry = stimuli
@@ -395,7 +393,7 @@ class VEPDisplay(Display):
         associated VEP Box.
         """
         positions = box_config.positions
-        size = box_config.box_size()
+        size = box_config.box_size
         return [
             visual.TextBox2(win=self.window,
                             text=" ",
@@ -412,7 +410,6 @@ class VEPDisplay(Display):
                             letterHeight=self.stimuli_height)
             for pos, color in zip(positions, cycle(self.stimuli_colors))
         ]
-
 
     def _reset_text_boxes(self) -> None:
         """Reset text boxes.

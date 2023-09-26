@@ -122,7 +122,7 @@ class BoxConfiguration():
         assert self.num_boxes == 4 or self.num_boxes == 6, 'Number of boxes must be 4 or 6'
         assert self.height_pct <= 0.5, "Rows can't take more than 50% of the height"
 
-    def box_size(self, validate: bool = True) -> Tuple[float, float]:
+    def _box_size(self, validate: bool = True) -> Tuple[float, float]:
         """Computes the size of each box"""
         if validate:
             self.validate()
@@ -140,6 +140,11 @@ class BoxConfiguration():
         return (width, height)
 
     @property
+    def box_size(self) -> Tuple[float, float]:
+        """Size of each box"""
+        return self._box_size()
+
+    @property
     def units(self) -> str:
         """Position units"""
         return self.layout.units
@@ -152,7 +157,7 @@ class BoxConfiguration():
         """
         self.validate()
 
-        width, height = self.box_size(validate=False)
+        width, height = self._box_size(validate=False)
 
         layout = self.layout
         top = below(layout.top, (height / 2))

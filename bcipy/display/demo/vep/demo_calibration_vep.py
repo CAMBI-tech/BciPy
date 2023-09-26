@@ -24,7 +24,7 @@ info = InformationProperties(
     info_text=['VEP Display Demo'],
 )
 
-task_text = ['1/4'] #, '2/4', '3/4', '4/4']
+task_text = ['1/4']  # , '2/4', '3/4', '4/4']
 num_boxes = 6
 
 win = visual.Window(size=[700, 700],
@@ -43,19 +43,19 @@ frameRate = win.getActualFrameRate()
 
 print(f'Monitor refresh rate: {frameRate} Hz')
 
-start_positions_for_boxes =  [(-.3, -.3), (.3, -.3), (.3, .3), (-.3, .3)]
+start_positions_for_boxes = [(-.3, -.3), (.3, -.3), (.3, .3), (-.3, .3)]
 
 box_colors = ['#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232']
 stim_color = [[color] for i, color in enumerate(box_colors) if i < num_boxes]
 
-layout=centered(width_pct=0.95, height_pct=0.80)
+layout = centered(width_pct=0.95, height_pct=0.80)
 layout.parent = win
 box_config = BoxConfiguration(layout, num_boxes=num_boxes)
 
 experiment_clock = Clock()
 len_stimuli = 10
 stimuli = VEPStimuliProperties(
-    stim_color = stim_color,
+    stim_color=stim_color,
     stim_pos=box_config.positions,
     stim_height=0.1,
     stim_font='Arial',

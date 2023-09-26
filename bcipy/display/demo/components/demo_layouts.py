@@ -129,7 +129,7 @@ def demo_vep(win: visual.Window):
     layout.parent = win
 
     box_config = BoxConfiguration(layout, num_boxes=4, height_pct=0.28)
-    size = box_config.box_size()
+    size = box_config.box_size
     positions = box_config.positions
 
     draw_boundary(win, layout, color='gray', line_px=2)
@@ -281,8 +281,8 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
         print('Demo complete.')
 
 
-# run(demo_vep)
+run(demo_vep)
 # run(demo_height_units)
 # run(show_layout_coords)
 # run(demo_checkerboard)
-run(demo_checkerboard2)
+# run(demo_checkerboard2)
