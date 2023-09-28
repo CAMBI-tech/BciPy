@@ -31,7 +31,7 @@ EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '>3.7,<3.10'
 
-VERSION = '2.0.1rc3'
+VERSION = '2.0.0rc4'
 
 REQUIRED = []
 

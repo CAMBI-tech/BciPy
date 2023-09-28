@@ -1,9 +1,11 @@
 """Task bar component"""
 
 from typing import Dict, List
+
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim
 from psychopy.visual.line import Line
+
 import bcipy.display.components.layout as layout
 
 
@@ -26,12 +28,12 @@ class TaskBar:
                  font: str = 'Courier New',
                  height: float = 0.1,
                  text: str = ''):
+        self.win = win
         self.colors = colors or ['white']
         self.font = font
         self.height = height
         self.text = text
-        self.layout = layout.at_top(layout.WindowContainer(win),
-                                    self.compute_height())
+        self.layout = layout.at_top(win, self.compute_height())
         self.stim = self.init_stim()
 
     def compute_height(self):
@@ -55,7 +57,7 @@ class TaskBar:
 
     def border_stim(self) -> Line:
         """Create the task bar outline"""
-        return visual.line.Line(win=self.layout.win,
+        return visual.line.Line(win=self.win,
                                 units=self.layout.units,
                                 start=(self.layout.left, self.layout.bottom),
                                 end=(self.layout.right, self.layout.bottom),
@@ -72,7 +74,7 @@ class TaskBar:
     def default_text_props(self) -> dict:
         """Default properties for constructing a TextStim."""
         return {
-            'win': self.layout.win,
+            'win': self.win,
             'text': self.text,
             'pos': self.layout.center,
             'units': self.layout.units,

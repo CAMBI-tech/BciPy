@@ -2,16 +2,18 @@
 import logging
 from typing import List
 
-from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream, resolve_byprop
+from pylsl import (StreamInfo, StreamInlet, local_clock, resolve_byprop,
+                   resolve_stream)
 
-from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec, IRREGULAR_RATE
+from bcipy.acquisition.devices import (DEFAULT_DEVICE_TYPE, IRREGULAR_RATE,
+                                       DeviceSpec)
 from bcipy.acquisition.exceptions import InvalidClockError
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
-from bcipy.helpers.clock import Clock
 from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +74,9 @@ class LslAcquisitionClient:
                 f'LSL Stream not found for content type {content_type}')
         stream_info = streams[0]
 
-        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buffer_len)
+        self.inlet = StreamInlet(stream_info,
+                                 max_buflen=self.max_buffer_len,
+                                 max_chunklen=1)
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -101,13 +105,15 @@ class LslAcquisitionClient:
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        log.debug("Stopping Acquisition...")
-        if self.inlet:
-            self.inlet.close_stream()
-            self.inlet = None
+        log.info(f"Stopping Acquisition from {self.device_spec.name} ...")
         if self.recorder:
+            log.info(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
+        if self.inlet:
+            log.info("Closing LSL connection")
+            self.inlet.close_stream()
+            self.inlet = None
 
         self.buffer = None
 
@@ -136,7 +142,7 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.debug(f"Getting data from: {start} to: {end} limit: {limit}")
+        log.info(f"Getting data from: {start} to: {end} limit: {limit}")
 
         # Only data in the current buffer is available to query;
         # requests for data outside of this will fail. Buffer size is
@@ -144,11 +150,11 @@ class LslAcquisitionClient:
         data = self.get_latest_data()
 
         if not data:
-            log.debug('No records available')
+            log.info('No records available')
             return []
 
-        log.debug((f'{len(data)} records available '
-                   f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
+        log.info((f'{len(data)} records available '
+                  f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
         start = start or data[0].timestamp
         end = end or data[-1].timestamp
         limit = limit or -1
@@ -159,7 +165,7 @@ class LslAcquisitionClient:
         data_slice = [
             record for record in data if start <= record.timestamp <= end
         ][0:limit]
-        log.debug(f'{len(data_slice)} records returned')
+        log.info(f'{len(data_slice)} records returned')
         return data_slice
 
     @property
@@ -289,7 +295,7 @@ class LslAcquisitionClient:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
         offset_from_stim = first_stim_time - self.first_sample_time
-        log.debug(f"Acquisition offset: {offset_from_stim}")
+        log.info(f"Acquisition offset: {offset_from_stim}")
         return offset_from_stim
 
     def cleanup(self):

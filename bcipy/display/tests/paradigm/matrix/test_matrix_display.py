@@ -5,7 +5,7 @@ import psychopy
 from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
                      when)
 
-from bcipy.display import (InformationProperties, StimuliProperties)
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay, SymbolDuration
 
@@ -138,35 +138,16 @@ class TestMatrixDisplay(unittest.TestCase):
             pos=any(),
             opacity=any()
         ).thenReturn(self.text_stim_mock)
-        when(self.matrix).increment_position(any()).thenReturn()
 
         sym_length = len(self.matrix.symbol_set)
         grid = self.matrix.build_grid()
 
         self.assertEqual(len(grid), sym_length)
-        # verify that the position was incremented each time
-        verify(self.matrix, times=sym_length).increment_position(any())
 
     def test_draw_grid(self):
         """Test that all items in the grid draw."""
         self.matrix.draw_grid()
         verify(self.text_stim_mock, times=len(self.matrix.symbol_set)).draw()
-
-    def test_increment_position_increments_x_when_max_grid_width_not_met(self):
-        self.matrix.position_increment = 0.2
-        self.matrix.max_grid_width = 0.7
-        self.matrix.position = (0, 0)
-        # response should be 0,0 incremented by 0.2 in the x direction because 0.7 was not reached
-        response = self.matrix.increment_position(self.matrix.position)
-        self.assertEqual(response, (self.matrix.position_increment, 0))
-
-    def test_increment_position_increments_y_when_max_grid_width_is_reached(self):
-        self.matrix.position_increment = 0.2
-        self.matrix.max_grid_width = 0.2
-        self.matrix.position = (0, 0)
-        # response should be 0,0 incremented by -0.2 in the y direction because 0.2 was reached
-        response = self.matrix.increment_position(self.matrix.position)
-        self.assertEqual(response, (0, -self.matrix.position_increment))
 
     def test_animate_scp(self):
         # mock the text stims and window

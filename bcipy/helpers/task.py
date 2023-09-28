@@ -1,10 +1,11 @@
 import logging
 import random
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from psychopy import core, event, visual
 
+from bcipy.acquisition.multimodal import ClientManager, ContentType
 from bcipy.config import SESSION_COMPLETE_MESSAGE
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
@@ -153,7 +154,7 @@ def get_data_for_decision(inquiry_timing,
 
     # Define the amount of data required for any processing to occur.
     data_limit = round((time2 - time1 + poststim) * daq.device_spec.sample_rate)
-    log.debug(f'Need {data_limit} records for processing')
+    log.info(f'Need {data_limit} records for processing')
 
     # Query for raw data
     raw_data = daq.get_data(start=time1, limit=data_limit)
@@ -172,6 +173,78 @@ def get_data_for_decision(inquiry_timing,
         dtype=np.float64).transpose()
 
     return raw_data, triggers
+
+
+def get_device_data_for_decision(
+        inquiry_timing: List[Tuple],
+        daq: ClientManager,
+        offset: float = 0.0,
+        prestim: float = 0.0,
+        poststim: float = 0.0) -> Dict[ContentType, np.ndarray]:
+    """Queries the acquisition client manager for a slice of data from each
+    device and processes the resulting raw data into a form that can be passed
+    to signal processing and classifiers.
+
+    Parameters
+    ----------
+    - inquiry_timing(list): list of tuples containing stimuli timing and labels.
+    - daq (ClientManager): bcipy data acquisition client manager
+    - offset (float): offset present in the system which should be accounted for when creating data for classification.
+        This is determined experimentally.
+    - prestim (float): length of data needed before the first sample to reshape and apply transformations
+    - poststim (float): length of data needed after the last sample in order to reshape and apply transformations
+
+    Returns
+    -------
+        a dict mapping device content_type to the data;
+            data has shape C x L where C is number of channels and L is the
+            signal length.
+    """
+    _, first_stim_time = inquiry_timing[0]
+    _, last_stim_time = inquiry_timing[-1]
+
+    # adjust for offsets
+    time1 = first_stim_time + offset - prestim
+    time2 = last_stim_time + offset
+
+    if time2 < time1:
+        raise InsufficientDataException(
+            f'Invalid data query [{time1}-{time2}] with parameters:'
+            f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]'
+        )
+
+    data = daq.get_data_by_device(start=time1,
+                                  seconds=(time2 - time1 + poststim),
+                                  strict=True)
+    for content_type in data.keys():
+        # Take only the sensor data from raw data and transpose it.
+        # TODO: Does this apply to all content types? If not this step could be
+        # moved to the evidence evaluators.
+        data[content_type] = np.array([
+            np.array([_float_val(col) for col in record.data])
+            for record in data[content_type]
+        ],
+            dtype=np.float64).transpose()
+
+    return data
+
+
+def relative_triggers(inquiry_timing: List[Tuple[str, float]],
+                      prestim: float) -> List[Tuple[str, float]]:
+    """Adjust the provided inquiry_timing triggers for processing. The new
+    timing values are relative to the first stim time, rather than using
+    absolute clock times.
+
+    Parameters
+    ----------
+        inquiry_timing - list of (symbol, timestamp) pairs for each trigger in
+            an inquiry
+        prestim - seconds of data needed before the first sample to reshape and
+            apply transformations
+    """
+    _, first_stim_time = inquiry_timing[0]
+    return [(symbol, (timestamp - first_stim_time) + prestim)
+            for symbol, timestamp in inquiry_timing]
 
 
 def _float_val(col: Any) -> float:

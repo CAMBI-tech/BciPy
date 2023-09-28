@@ -5,10 +5,10 @@ prior to integration.
 
 from psychopy import core
 
-from bcipy.display import (init_display_window, InformationProperties,
-                           StimuliProperties)
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
 info = InformationProperties(
     info_color=['White'],
@@ -23,7 +23,7 @@ inter_stim_buffer = .5
 
 stim_properties = StimuliProperties(stim_font='Arial',
                                     stim_pos=(-0.6, 0.4),
-                                    stim_height=0.1,
+                                    stim_height=0.17,
                                     is_txt_stim=True)
 
 # Initialize Stimulus

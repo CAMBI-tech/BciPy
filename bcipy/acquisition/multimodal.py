@@ -1,10 +1,42 @@
 """Functionality for managing multiple devices."""
 import logging
-from typing import Dict, List, Optional
-from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from typing import Any, Dict, List, Optional
+
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.exceptions import (InsufficientDataException,
+                                          UnsupportedContentType)
+from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
+from bcipy.acquisition.record import Record
+from bcipy.helpers.system_utils import AutoNumberEnum
 
 log = logging.getLogger(__name__)
+
+
+class ContentType(AutoNumberEnum):
+    """Enum of supported acquisition device (LSL) content types. Allows for
+    case-insensitive matching, as well as synonyms for some types.
+
+    >>> ContentType(1) == ContentType.EEG
+    True
+    >>> ContentType('Eeg') == ContentType.EEG
+    True
+    """
+
+    def __init__(self, synonyms: List[str]):
+        self.synonyms = synonyms
+
+    EEG = []
+    EYETRACKER = ['gaze', 'eye_tracker']
+    MARKERS = ['switch']
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        """Lookup function used when a value is not found."""
+        value = str(value).lower()
+        for member in cls:
+            if member.name.lower() == value or value in member.synonyms:
+                return member
+        raise UnsupportedContentType(f"ContentType not supported: {value}")
 
 
 class ClientManager():
@@ -26,8 +58,8 @@ class ClientManager():
         default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, default_content_type: str = 'EEG'):
-        self._clients: Dict[str, LslAcquisitionClient] = {}
+    def __init__(self, default_content_type: ContentType = ContentType.EEG):
+        self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
 
     @property
@@ -36,9 +68,20 @@ class ClientManager():
         return self._clients.values()
 
     @property
+    def clients_by_type(self) -> Dict[ContentType, LslAcquisitionClient]:
+        """Returns a dict of clients keyed by their content type"""
+        return self._clients
+
+    @property
     def device_specs(self) -> List[DeviceSpec]:
         """Returns a list of DeviceSpecs for all the clients."""
         return [client.device_spec for client in self.clients]
+
+    @property
+    def device_content_types(self) -> List[ContentType]:
+        """Returns a list of ContentTypes provided by the configured devices.
+        """
+        return self._clients.keys()
 
     @property
     def default_client(self) -> Optional[LslAcquisitionClient]:
@@ -47,9 +90,11 @@ class ClientManager():
 
     def add_client(self, client: LslAcquisitionClient):
         """Add the given client to the manager."""
-        self._clients[client.device_spec.content_type] = client
+        content_type = ContentType(client.device_spec.content_type)
+        self._clients[content_type] = client
 
-    def get_client(self, content_type: str) -> Optional[LslAcquisitionClient]:
+    def get_client(
+            self, content_type: ContentType) -> Optional[LslAcquisitionClient]:
         """Get client by content type"""
         return self._clients.get(content_type, None)
 
@@ -63,6 +108,46 @@ class ClientManager():
         """Stop acquiring data for all clients"""
         for client in self.clients:
             client.stop_acquisition()
+
+    def get_data_by_device(
+        self,
+        start: float = None,
+        seconds: float = None,
+        content_types: List[ContentType] = None,
+        strict: bool = True
+    ) -> Dict[ContentType, List[Record]]:
+        """Get data for one or more devices. The number of samples for each
+        device depends on the sample rate and may be different for item.
+
+        Parameters
+        ----------
+            start - start time (acquisition clock) of data window
+            seconds - duration of data to return for each device
+            content_types - specifies which devices to include; if not
+                unspecified, data for all types is returned.
+            strict - if True, raises an exception if the returned rows is
+                less than the requested number of records.
+        """
+        output = {}
+        if not content_types:
+            content_types = self.device_content_types
+        for content_type in content_types:
+            name = content_type.name
+            client = self.get_client(content_type)
+            if client.device_spec.sample_rate > 0:
+                count = round(seconds * client.device_spec.sample_rate)
+                log.info(f'Need {count} records for processing {name} data')
+                output[content_type] = client.get_data(start=start,
+                                                       limit=count)
+                data_count = len(output[content_type])
+                if strict and data_count < count:
+                    msg = f'Needed {count} {name} records but received {data_count}'
+                    raise InsufficientDataException(msg)
+            else:
+                # Markers have an IRREGULAR_RATE.
+                output[content_type] = client.get_data(start=start,
+                                                       end=start + seconds)
+        return output
 
     def cleanup(self):
         """Perform any cleanup tasks"""

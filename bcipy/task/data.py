@@ -21,6 +21,7 @@ class EvidenceType(Enum):
     LM = 'LM'  # Language Model
     ERP = 'ERP'  # Event-Related Potential using EEG signals
     BTN = 'BTN'  # Button
+    EYE = 'EYE'  # Eyetracker
 
     @classmethod
     def list(cls) -> List[str]:

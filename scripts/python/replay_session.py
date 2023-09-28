@@ -1,7 +1,9 @@
 """Script that will replay sessions and allow us to simulate new model predictions on that data."""
 import json
 import logging as logger
+from typing import Tuple
 from pathlib import Path
+import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,215 +19,152 @@ from bcipy.helpers.acquisition import analysis_channels
 import bcipy.acquisition.devices as devices
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.stimuli import InquiryReshaper, TrialReshaper, update_inquiry_timing
+from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.signal.process import get_default_transform
+from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
 
-logger.getLogger()
-
-SYMBOLS = alphabet()
+logger.getLogger().setLevel(logger.INFO)
 
 
-def load_model(model_path: Path, k_folds: int):
-    """Load the PcaRdaKdeModel model at the given path"""
-    model = PcaRdaKdeModel(k_folds=k_folds)
-    model.load(model_path)
+def load_model(model_path: Path, k_folds: int, model_class=PcaRdaKdeModel):
+    """Load the model at the given path"""
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
     return model
 
 
-def comparison1(data_folder, parameters, model_path: Path):
-    """Check that we get trials from correct positions"""
+def generate_replay_outputs(
+        data_folder,
+        parameters,
+        model_path: Path,
+        model_class=PcaRdaKdeModel,
+        symbol_set=alphabet(),
+        write_output=False) -> Tuple[dict, list, list]:
+    """Replay a session and generate outputs for the provided model.
 
-    # extract relevant session information from parameters file
-    trial_length = parameters.get("trial_length")
+    Parameters
+    ----------
+    data_folder: Path
+        Path to the data folder containing the session data (session.json, raw_data.csv, triggers.txt)
+    parameters: dict
+        Parameters to use for the replay session.
+    model_path: Path
+        Path to the model to use for the replay session.
+    model_class: class
+        Class of the model to use for the replay session. By default, this is PcaRdaKdeModel.
+    symbol_set: list
+        List of symbols to use for the replay session. By default, this is the alphabet.
+    write_output: bool
+        Whether or not to write the output to a file. By default, this is False.
+
+    Returns
+    -------
+    tuple - new_model_outputs, old_model_target_output, old_model_nontarget_output
+    """
+    k_folds = parameters.get("k_folds")
+    model = load_model(model_path, k_folds, model_class)
+    logger.info(f"Loaded model from {model_path}")
+
+    # get trial information; to make backwards compatible, we will try to get the trial length
+    # from the parameters file (old), but if it's not there, we use the trial window and adjust timing (>2.0).
+    adjust_trials_by_window = False
+    trial_length = parameters.get("trial_length", None)
+    if trial_length is None:
+        trial_window = parameters.get("trial_window")
+        trial_length = trial_window[1] - trial_window[0]
+        adjust_trials_by_window = True
+        logger.info(f"Trial Window: {trial_window[0]}-{trial_window[1]}s")
+
     trials_per_inquiry = parameters.get("stim_length")
     prestim_length = parameters.get("prestim_length", trial_length)
-    # time_flash = parameters.get("time_flash")
+    buffer_length = int(parameters.get("task_buffer_length") / 2)
 
     # get signal filtering information
-    downsample_rate = parameters.get("down_sampling_rate")
-    notch_filter = parameters.get("notch_filter_frequency")
-    hp_filter = parameters.get("filter_high")
-    lp_filter = parameters.get("filter_low")
-    filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
     k_folds = parameters.get("k_folds")
+    transform_params = parameters.instantiate(ERPTransformParams)
+    downsample_rate = transform_params.down_sampling_rate
 
-    # Load raw data
+    logger.info(
+        f"\nData processing settings: \n"
+        f"{str(transform_params)} \n"
+        f"Trial Length: {trial_length}s, Trials per Inquiry: {trials_per_inquiry} \n"
+        f"Prestimulus Buffer: {prestim_length}s, Poststimulus Buffer: {buffer_length}s \n"
+        f"Static offset: {static_offset}"
+    )
+
     raw_data = load_raw_data(Path(data_folder, f"{RAW_DATA_FILENAME}.csv"))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
-
     devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
     device_spec = devices.preconfigured_device(raw_data.daq_type)
-
-    logger.info(f"Channels read from csv: {channels}")
-    logger.info(f"Device type: {type_amp}")
-
-    # data = raw_data.by_channel()
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=lp_filter,
-        bandpass_high=hp_filter,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
-    )
-    data, transformed_sample_rate = default_transform(raw_data.by_channel(), sample_rate)
-
-    # Process triggers.txt
-    trigger_targetness, trigger_timing, trigger_labels = trigger_decoder(
-        offset=static_offset,
-        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
-    )
-    # Channel map can be checked from raw_data.csv file.
-    # The timestamp column is already excluded.
     channel_map = analysis_channels(channels, device_spec)
 
-    model = load_model(model_path, k_folds)
+    # extract the raw data for the channels we care about. The channel map will further reduce this if necessary.
+    # by default, only the sample number and internal trigger channels are excluded.
+    raw_data, _ = raw_data.by_channel()
 
-    # data , [0: 1, 0, 1], [0, ... , n]
-    inquiries, _, inquiry_timing = InquiryReshaper()(
-        trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        sample_rate=transformed_sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=trial_length,
-        prestimulus_length=prestim_length,
-        transformation_buffer=trial_length,  # use this to add time to the end of the Inquiry for processing!
-    )
-
-    # NOTE -
-    # If doing: Raw -> filter -> inquiries -> InquiryReshaper.extract_trials
-    # Then do: use downsample_rate=1 during InquiryReshaper.extract_trials
-    # If doing:  Raw -> inquiries -> filter -> InquiryReshaper.extract_trials
-    # Then do: use downsample_rate=2 during InquiryReshaper.extract_trials
-
-    # Uncomment to filter by inquiries
-    # inquiries = filter_inquiries(inquiries, default_transform, sample_rate)
-    trial_duration_samples = int(trial_length * transformed_sample_rate)
-    inquiry_timing = update_inquiry_timing(inquiry_timing, transformed_sample_rate)
-    trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
-
-    # "Can we get the trials from exact same time windows"
-    # 1a:   raw data -> filtered data -> TrialReshaper
-    # 1b:   raw data -> filtered -> InquiryReshaper -> TrialReshaper
-    # Note that we're not doing the same kind of preprocessing
-    # as we do "online".
-    # uncomment to validate against the trial reshaper. Note: check reshape parameters are set correctly!
-    validate_response = validate_inquiry_based_trials_against_trial_reshaper(
-        raw_data,
-        raw_data.sample_rate,
-        model,
-        default_transform,
-        trigger_targetness,
-        trigger_timing,
-        trials_per_inquiry,
-        channel_map,
-        trial_length,
-        trials,
-    )
-    logger.info(f"Inquiry trials == trial reshaper? {validate_response}")
-    assert validate_response
-
-
-def generate_replay_outputs(data_folder, parameters, model_path: Path, write_output=False):
-    """Try running a previous model as follows. Shouldn't get errors.
-
-    # 2a (real, online model): raw -> inquiries -> filter -> trials -> model preds
-    # 2b (trying to replay):  raw data -> InquiryReshaper -> filtered -> TrialReshaper
-
-    raw data -> inquiries -> filter -> trials -> run model
-    """
-
-    # extract relevant session information from parameters file
-    trial_length = parameters.get("trial_length")
-    trials_per_inquiry = parameters.get("stim_length")
-    prestim_length = parameters.get("prestim_length", trial_length)
-    # time_flash = parameters.get("time_flash")
-
-    # get signal filtering information
-    downsample_rate = parameters.get("down_sampling_rate")
-    notch_filter = parameters.get("notch_filter_frequency")
-    hp_filter = parameters.get("filter_high")
-    lp_filter = parameters.get("filter_low")
-    filter_order = parameters.get("filter_order")
-    static_offset = parameters.get("static_trigger_offset")
-    k_folds = parameters.get("k_folds")
-
-    # Load raw data
-    raw_data = load_raw_data(Path(data_folder, f"{RAW_DATA_FILENAME}.csv"))
-    channels = raw_data.channels
-    type_amp = raw_data.daq_type
-    sample_rate = raw_data.sample_rate
-
-    devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
-
-    logger.info(f"Channels read from csv: {channels}")
     logger.info(f"Device type: {type_amp}")
+    logger.info(f"Channels read from csv: {channels}")
+    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    logger.info(f'Channels used in analysis: {channels_used}')
 
-    # Process triggers.txt
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
     )
-    # Channel map can be checked from raw_data.csv file.
-    # The timestamp column is already excluded.
-    channel_map = analysis_channels(channels, device_spec)
 
-    model = load_model(model_path, k_folds)
+    # Adjust trigger timing by trial window if necessary
+    if adjust_trials_by_window:
+        trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    # data , [0: 1, 0, 1], [0, ... , n]
     inquiries, inquiry_labels, inquiry_timing = InquiryReshaper()(
         trial_targetness_label=trigger_targetness,
         timing_info=trigger_timing,
-        eeg_data=raw_data.by_channel(),
-        fs=sample_rate,
+        eeg_data=raw_data,
+        sample_rate=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
         channel_map=channel_map,
         poststimulus_length=trial_length,
         prestimulus_length=prestim_length,
-        transformation_buffer=trial_length,  # use this to add time to the end of the Inquiry for processing!
+        transformation_buffer=buffer_length,
     )
 
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=lp_filter,
-        bandpass_high=hp_filter,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
+        notch_freq_hz=transform_params.notch_filter_frequency,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
     )
+
     inquiries, transformed_sample_rate = filter_inquiries(inquiries, default_transform, sample_rate)
     trial_duration_samples = int(trial_length * transformed_sample_rate)
-    inquiry_timing = update_inquiry_timing(inquiry_timing, transformed_sample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trials = InquiryReshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
-    alpha = alphabet()
+    # get the model outputs using the reshaped data
     outputs = {}
     inquiry_worth_of_trials = np.split(trials, inquiries.shape[1], 1)
     inquiry_worth_of_letters = grouper(trigger_symbols, trials_per_inquiry, incomplete="ignore")
     for i, (inquiry_trials, this_inquiry_letters, this_inquiry_labels) in enumerate(
         zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
     ):
-        response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=alpha)
+        response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
         if np.any(this_inquiry_labels == 1):
             index_of_target_trial = np.argwhere(this_inquiry_labels == 1)[0][0]
             target_letter = this_inquiry_letters[index_of_target_trial]
-            target_index_in_alphabet = alpha.index(target_letter)
+            target_index_in_alphabet = symbol_set.index(target_letter)
 
-            nontarget_idx_in_alphabet = [alpha.index(q) for q in this_inquiry_letters if q != target_letter]
+            nontarget_idx_in_alphabet = [symbol_set.index(q) for q in this_inquiry_letters if q != target_letter]
         else:
             target_index_in_alphabet = None
-            nontarget_idx_in_alphabet = [alpha.index(q) for q in this_inquiry_letters]
+            nontarget_idx_in_alphabet = [symbol_set.index(q) for q in this_inquiry_letters]
 
         outputs[i] = {
             "eeg_evidence": list(response),
@@ -237,14 +176,30 @@ def generate_replay_outputs(data_folder, parameters, model_path: Path, write_out
         with open(data_folder / "replay_outputs.json", "w") as f:
             json.dump(outputs, f, indent=2)
 
-    # Get values computed during actual experiment from session.json
+    # Get values computed during actual experiment from session.json for comparison
     session_json = data_folder / SESSION_DATA_FILENAME
-    all_target_eeg, all_nontarget_eeg = load_from_session_json(session_json)
+    all_target_eeg, all_nontarget_eeg = load_eeg_evidence_from_session_json(session_json, symbol_set)
 
     return outputs, all_target_eeg, all_nontarget_eeg
 
 
-def load_from_session_json(session_json) -> list:
+def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list, list]:
+    """Load EEG evidence from session.json file for comparison with replay outputs.
+
+    Parameters
+    ----------
+    session_json : str
+        Path to session.json file
+    symbol_set : list
+        List of symbols used in experiment
+
+    Returns
+    -------
+    all_target_eeg : list
+        List of EEG evidence for target stimuli
+    all_nontarget_eeg : list
+        List of EEG evidence for nontarget stimuli
+    """
     with open(session_json, "r") as f:
         contents = json.load(f)
     series = contents["series"]
@@ -258,10 +213,10 @@ def load_from_session_json(session_json) -> list:
                 continue
             else:
                 stim_label = inquiry["stimuli"][0]  # name of symbols presented
-                stim_label.pop(0)
-                stim_indices = [SYMBOLS.index(sym) for sym in stim_label]
+                stim_label.pop(0)  # remove fixation cross
+                stim_indices = [symbol_set.index(sym) for sym in stim_label]
                 targetness = inquiry["target_info"]  # targetness of stimuli
-                # target_letter = inquiry['target_letter']
+                targetness.pop(0)  # remove fixation cross
                 target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
                 nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
                 all_target_eeg.extend([inquiry["eeg_evidence"][pos] for pos in target])
@@ -270,49 +225,27 @@ def load_from_session_json(session_json) -> list:
     return all_target_eeg, all_nontarget_eeg
 
 
-def validate_inquiry_based_trials_against_trial_reshaper(
-    raw_data,
-    sample_rate,
-    model,
-    transform,
-    trigger_targetness,
-    trigger_timing,
-    trials_per_inquiry,
-    channel_map,
-    trial_length,
-    inquiry_trials,
-):
-    """Add np.allclose(new_trials, trials)"""
-    data, sample_rate = transform(raw_data.by_channel(), sample_rate)
-    # because the reshapers can change timing with offsets, we should still return the timing that updated
-    trials, _targetness_labels = TrialReshaper()(
-        trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
-        eeg_data=data,
-        sample_rate=sample_rate,
-        channel_map=channel_map,
-        poststimulus_length=trial_length,
-    )
+def plot_collected_outputs(
+        outputs_with_new_model: dict,
+        targets_with_old_model: list,
+        nontargets_with_old_model: list,
+        outdir: str) -> None:
+    """Plot collected outputs from replay experiment.
 
-    logger.info(f"is finite (trials): {np.all(np.isfinite(trials))}")
-    logger.info(f"is finite (inquiry_trials): {np.all(np.isfinite(inquiry_trials))}")
-    is_allclose = np.allclose(trials, inquiry_trials)
-    logger.info(f"Is allclose: {is_allclose}")
-    return is_allclose
-
-
-def filter_inquiries(inquiries, transform, sample_rate):
-    old_shape = inquiries.shape  # (C, I, 699)
-    inq_flatten = inquiries.reshape(-1, old_shape[-1])  # (C*I, 699)
-    inq_flatten_filtered, transformed_sample_rate = transform(inq_flatten, sample_rate)
-    inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])  # (C, I, ...)
-    return inquiries, transformed_sample_rate
-
-
-def plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nontargets_with_old_model, outdir):
+    Parameters
+    ----------
+    outputs_with_new_model : dict
+        List of outputs from replay experiment using new model
+    targets_with_old_model : list
+        List of outputs from the session data using old model for target stimuli
+    nontargets_with_old_model : list
+        List of outputs from the session using old model for nontarget stimuli
+    outdir : str
+        Path to directory to save plots
+    """
     records = []
     for output in outputs_with_new_model:  # each session
-        for inquiry_idx, inquiry_contents in output.items():  # each inquiry
+        for _, inquiry_contents in output.items():  # each inquiry
             target_idx = inquiry_contents["target_idx"]
             if target_idx is not None:
                 records.append(
@@ -373,30 +306,58 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data_folders", action="append", type=Path, default=None)
+    parser.add_argument(
+        "-d",
+        "--data_folders",
+        action="append",
+        type=Path,
+        required=True,
+        help="Session data folders to be processed. This argument can be repeated to accumulate sessions data.")
     parser.add_argument("-m", "--model_file", required=True)
-    outdir = Path(__file__).resolve().parent
-    logger.info(f"Outdir: {outdir}")
+    parser.add_argument("-o", "--outdir", type=Path, default=None)
+    parser.add_argument(
+        "-p",
+        "--parameter_file",
+        type=Path,
+        default=None,
+        help="Parameter file to be used for replay. If none, the session parameter file will be used.")
+
     args = parser.parse_args()
 
     assert len(set(args.data_folders)) == len(args.data_folders), "Duplicated data folders"
+
+    if args.outdir is None:
+        args.outdir = Path(__file__).resolve().parent
+
+    logger.info(f"Outdir: {args.outdir}")
 
     outputs_with_new_model = []
     targets_with_old_model = []
     nontargets_with_old_model = []
     for data_folder in args.data_folders:
         logger.info(f"Processing {data_folder}")
-        params_file = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
+
+        if args.parameter_file is not None:
+            params_file = args.parameter_file
+        else:
+            params_file = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
         logger.info(f"Loading params from {params_file}")
         params = load_json_parameters(params_file, value_cast=True)
-        comparison1(data_folder, params, args.model_file)
+
+        # Generate replay outputs using the model provided against the session data in data_folder
         outputs, all_target_eeg, all_nontarget_eeg = generate_replay_outputs(
-            data_folder, params, args.model_file, write_output=True
+            data_folder, params, args.model_file, write_output=False
         )
         outputs_with_new_model.append(outputs)
         targets_with_old_model.extend(all_target_eeg)
         nontargets_with_old_model.extend(all_nontarget_eeg)
 
-    plot_collected_outputs(outputs_with_new_model, targets_with_old_model, nontargets_with_old_model, outdir)
+    plot_collected_outputs(
+        outputs_with_new_model,
+        targets_with_old_model,
+        nontargets_with_old_model,
+        args.outdir)
+
+    # breakpoint()
 
     logger.info("Replay complete.")

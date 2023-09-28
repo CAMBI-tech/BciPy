@@ -1,18 +1,20 @@
 # pylint: disable=E0611
 import logging
 import os
-import sys
 import re
+import sys
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, List, NamedTuple, Optional
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
-from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer
+from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSlot
 from PyQt5.QtGui import QFont, QPixmap, QShowEvent
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
-                             QFileDialog, QHBoxLayout, QSpinBox, QLabel, QLineEdit,
-                             QMessageBox, QPushButton, QScrollArea,
-                             QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox,
+                             QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
+                             QLineEdit, QMessageBox, QPushButton, QScrollArea,
+                             QSpinBox, QVBoxLayout, QWidget)
+
+from bcipy.helpers.parameters import parse_range
 
 
 def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
@@ -36,7 +38,8 @@ def contains_whitespaces(string: str) -> bool:
     return re.match(r'^(?=.*[\s])', string)
 
 
-def contains_special_characters(string: str, regex: str = '[^0-9a-zA-Z_]+') -> bool:
+def contains_special_characters(string: str,
+                                regex: str = '[^0-9a-zA-Z_]+') -> bool:
     """Contains Special Characters.
 
     Checks for the presence of special chracters in a string. By default it will allow underscores.
@@ -433,6 +436,23 @@ class BoolInput(FormInput):
         return 'true' if self.control.isChecked() else 'false'
 
 
+class RangeInput(FormInput):
+    """FormInput to select a range of values (low, high).
+
+    Serializes to 'low_value:high_value'. Appropriate boundaries are determined
+    from the starting value and list of recommended_values if provided.
+    """
+
+    def init_control(self, value) -> QWidget:
+        """Initialize the form control widget.
+
+        Parameter:
+        ---------
+            value - initial value
+        """
+        return RangeWidget(value, self.options)
+
+
 class SelectionInput(FormInput):
     """FormInput to select from a list of options. The options keyword
     parameter is required for this input.
@@ -447,7 +467,8 @@ class SelectionInput(FormInput):
         help_color - color of the help text."""
 
     def __init__(self, **kwargs):
-        assert isinstance(kwargs['options'], list), f"options are required for {kwargs['label']}"
+        assert isinstance(kwargs['options'],
+                          list), f"options are required for {kwargs['label']}"
         super(SelectionInput, self).__init__(**kwargs)
 
     def init_control(self, value) -> QWidget:
@@ -550,6 +571,92 @@ class DirectoryInput(FileInput):
         return QFileDialog.getExistingDirectory(caption='Select a path')
 
 
+class RangeWidget(QWidget):
+    """Input widget that allows the user to provide a high and low value
+    (min/max).
+
+    Serializes to 'low_value:high_value'. Appropriate boundaries are determined
+    from the list of options, which should each be formatted as 'low:high' values.
+    """
+
+    def __init__(self,
+                 value: Tuple[int, int],
+                 options: List[str] = None,
+                 label_low: str = "Low:",
+                 label_high="High:"):
+        super(RangeWidget, self).__init__()
+
+        self.low, self.high = parse_range(value)
+        self.input_min = None
+        self.input_max = None
+        if options:
+            ranges = [parse_range(rng) for rng in options]
+            mins = [rng[0] for rng in ranges] + [self.low]
+            maxes = [rng[1] for rng in ranges] + [self.high]
+            self.input_min = min(mins)
+            self.input_max = max(maxes)
+
+        self.cast = int if isinstance(self.low, int) else float
+
+        self.low_input = self.create_input(self.low)
+        self.high_input = self.create_input(self.high)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(static_text_control(None, label=label_low))
+        hbox.addWidget(self.low_input)
+
+        hbox.addWidget(static_text_control(None, label=label_high))
+        hbox.addWidget(self.high_input)
+
+        self.setLayout(hbox)
+
+    def create_input(self, value: Union[int, float]) -> QWidget:
+        """Construct an input widget for the given numeric value"""
+        if isinstance(value, int):
+            return self.int_input(value)
+        return self.float_input(value)
+
+    def float_input(self, value: float) -> QWidget:
+        """Construct a float input"""
+        spin_box = QDoubleSpinBox()
+
+        # Make a reasonable guess about precision and step size based on the initial value.
+        props = float_input_properties(value)
+
+        spin_box.setMinimum(
+            props.min if self.input_min is None else self.input_min)
+        spin_box.setMaximum(
+            props.max if self.input_max is None else self.input_max)
+        spin_box.setDecimals(props.decimals)
+        spin_box.setSingleStep(props.step)
+        spin_box.setValue(value)
+        return spin_box
+
+    def int_input(self, value: int) -> QWidget:
+        """Construct an int input."""
+        spin_box = QSpinBox()
+
+        spin_box.setMinimum(
+            -100000 if self.input_min is None else self.input_min)
+        spin_box.setMaximum(
+            100000 if self.input_max is None else self.input_max)
+        if value:
+            spin_box.setValue(value)
+        return spin_box
+
+    def text(self):
+        """Text value"""
+        low = self.low_input.text() or self.low
+        high = self.high_input.text() or self.high
+        # only update the values if valid
+        if self.cast(low) < self.cast(high):
+            self.low = self.cast(low)
+            self.high = self.cast(high)
+        self.low_input.setValue(self.low)
+        self.high_input.setValue(self.high)
+        return f"{self.low}:{self.high}"
+
+
 class SearchInput(QWidget):
     """Search input widget. Consists of a text input field and a Clear button.
     Text changes to the input are passed to the on_search action.
@@ -596,11 +703,11 @@ class BCIGui(QWidget):
     Primary GUI for downstream abstraction. Convenient handling of widgets and asset creation.
     """
 
-    def __init__(self, title: str, width: int, height: int, background_color: str):
+    def __init__(self, title: str, width: int, height: int,
+                 background_color: str):
         super(BCIGui, self).__init__()
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(level=logging.INFO,
+                            format='%(name)s - %(levelname)s - %(message)s')
         self.logger = logging
 
         self.buttons = []
@@ -637,7 +744,8 @@ class BCIGui(QWidget):
         Construct the main window for display of assets.
         """
         self.window_layout = QHBoxLayout()
-        self.window.setStyleSheet(f'background-color: {self.background_color};')
+        self.window.setStyleSheet(
+            f'background-color: {self.background_color};')
         self.window_layout.addWidget(self.window)
         self.vbox.addLayout(self.window_layout)
 
@@ -726,7 +834,8 @@ class BCIGui(QWidget):
         btn.move(position[0], position[1])
         btn.resize(size[0], size[1])
 
-        btn.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+        btn.setStyleSheet(
+            f'background-color: {background_color}; color: {text_color};')
 
         if action:
             btn.clicked.connect(action)
@@ -736,9 +845,14 @@ class BCIGui(QWidget):
         self.buttons.append(btn)
         return btn
 
-    def add_combobox(self, position: list, size: list, items: list, background_color='default',
+    def add_combobox(self,
+                     position: list,
+                     size: list,
+                     items: list,
+                     background_color='default',
                      text_color='default',
-                     action=None, editable=False) -> QComboBox:
+                     action=None,
+                     editable=False) -> QComboBox:
         """Add combobox."""
 
         combobox = QComboBox(self.window)
@@ -750,7 +864,8 @@ class BCIGui(QWidget):
         else:
             combobox.currentTextChanged.connect(self.default_on_dropdown)
 
-        combobox.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+        combobox.setStyleSheet(
+            f'background-color: {background_color}; color: {text_color};')
 
         if editable:
             combobox.setEditable(True)
@@ -799,7 +914,8 @@ class BCIGui(QWidget):
         static_text.setText(text)
         if wrap_text:
             static_text.setWordWrap(True)
-        static_text.setStyleSheet(f'background-color: {background_color}; color: {text_color};')
+        static_text.setStyleSheet(
+            f'background-color: {background_color}; color: {text_color};')
         static_text.move(position[0], position[1])
 
         text_settings = QFont(font_family, font_size)
@@ -819,12 +935,13 @@ class BCIGui(QWidget):
         self.input_text.append(textbox)
         return textbox
 
-    def throw_alert_message(self,
-                            title: str,
-                            message: str,
-                            message_type: AlertMessageType = AlertMessageType.INFO,
-                            message_response: AlertMessageResponse = AlertMessageResponse.OTE,
-                            message_timeout: float = 0) -> MessageBox:
+    def throw_alert_message(
+            self,
+            title: str,
+            message: str,
+            message_type: AlertMessageType = AlertMessageType.INFO,
+            message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+            message_timeout: float = 0) -> MessageBox:
         """Throw Alert Message."""
         msg = alert_message(message,
                             title=title,
@@ -838,7 +955,8 @@ class BCIGui(QWidget):
                             file_type: str = 'All Files (*)',
                             location: str = "") -> str:
         """Get Filename Dialog."""
-        file_name, _ = QFileDialog.getOpenFileName(self.window, message, location, file_type)
+        file_name, _ = QFileDialog.getOpenFileName(self.window, message,
+                                                   location, file_type)
         return file_name
 
 
@@ -848,7 +966,11 @@ class ScrollableFrame(QWidget):
     A QWidget that constructs a scrollable frame and accepts another widget to display within the scrollable area.
     """
 
-    def __init__(self, height: int, width: int, background_color: str = 'black', widget: QWidget = None):
+    def __init__(self,
+                 height: int,
+                 width: int,
+                 background_color: str = 'black',
+                 widget: QWidget = None):
         super().__init__()
 
         self.height = height
@@ -943,7 +1065,8 @@ class LineItems(QWidget):
                 color = item[item_label][key]['color']
                 action = item[item_label][key]['action']
                 button = PushButton(key)
-                button.setStyleSheet(f'background-color: {color}; color: {text_color};')
+                button.setStyleSheet(
+                    f'background-color: {color}; color: {text_color};')
                 button.clicked.connect(action)
 
                 if item[item_label][key].get('id'):
@@ -964,7 +1087,10 @@ def app(args) -> QApplication:
 def start_app() -> None:
     """Start BCIGui."""
     bcipy_gui = app(sys.argv)
-    ex = BCIGui(title='BCI GUI', height=650, width=650, background_color='white')
+    ex = BCIGui(title='BCI GUI',
+                height=650,
+                width=650,
+                background_color='white')
 
     # ex.get_filename_dialog()
     # ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
@@ -978,7 +1104,10 @@ def start_app() -> None:
     # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
     # ex.add_text_input(position=[100, 100], size=[100, 100])
     ex.show_gui()
-    ex.throw_alert_message(title='title', message='test', message_response=AlertMessageResponse.OCE, message_timeout=5)
+    ex.throw_alert_message(title='title',
+                           message='test',
+                           message_response=AlertMessageResponse.OCE,
+                           message_timeout=5)
 
     sys.exit(bcipy_gui.exec_())
 

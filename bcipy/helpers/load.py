@@ -1,25 +1,22 @@
 import json
 import logging
 import os
+import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, Dict, List, Tuple
+from typing import List, Optional
 
-from bcipy.config import (
-    ROOT,
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME)
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
+                          DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
+                          SIGNAL_MODEL_FILE_SUFFIX)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.preferences import preferences
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
+from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
 log = logging.getLogger(__name__)
@@ -158,7 +155,7 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
 
 def load_experimental_data() -> str:
     filename = ask_directory()  # show dialog box and return the path
-    log.debug("Loaded Experimental Data From: %s" % filename)
+    log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
@@ -175,35 +172,32 @@ def load_eye_tracking_data(gaze_data: RawData):
     return left_eye_x, left_eye_y, right_eye_x, right_eye_y
 
 
-def load_signal_model(model_class: SignalModel,
-                      model_kwargs: Dict[str, Any], filename: str = None) -> Tuple[SignalModel, str]:
-    """Construct the specified model and load pretrained parameters.
+def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
+    """Load all signal models in a given directory.
+
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
+    directories.
 
     Args:
-        model_class (SignalModel, optional): Model class to construct.
-        model_kwargs (dict, optional): Keyword arguments for constructing model.
-        filename (str, optional): Location of pretrained model parameters.
-
-    Returns:
-        SignalModel: Model after loading pretrained parameters.
+        dirname (str, optional): Location of pretrained models. If not
+            provided the user will be prompted for a location.
     """
-    # use python's internal gui to call file explorers and get the filename
-    if not filename or Path(filename).is_dir():
-        directory = filename or preferences.signal_model_directory
-        filename = ask_filename('*.pkl', directory)
+    if not directory or Path(directory).is_file():
+        directory = ask_directory()
 
-        # update preferences
-        path = Path(filename)
-        if path.is_file():
-            preferences.signal_model_directory = str(path.parent)
+    # update preferences
+    path = Path(directory)
+    preferences.signal_model_directory = str(path)
 
-    # load the signal_model with pickle
-    signal_model = model_class(**model_kwargs)
-    signal_model.load(filename)
-
-    log.info(f'Loaded signal model from {filename}')
-
-    return signal_model, filename
+    models = []
+    for file_path in path.glob(f"*{SIGNAL_MODEL_FILE_SUFFIX}"):
+        with open(file_path, "rb") as signal_file:
+            model = pickle.load(signal_file)
+            log.info(f"Loading model {model}")
+            models.append(model)
+    return models
 
 
 def choose_csv_file(filename: str = None) -> str:

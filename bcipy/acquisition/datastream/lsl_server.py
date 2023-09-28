@@ -1,18 +1,18 @@
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
-from queue import Empty, Queue
-from typing import Generator
 import time
 import uuid
+from queue import Empty, Queue
+from typing import Generator
 
 from pylsl import StreamInfo, StreamOutlet
 
-from bcipy.config import DEFAULT_ENCODING
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
+from bcipy.config import DEFAULT_ENCODING
 
 log = logging.getLogger(__name__)
 
@@ -45,10 +45,16 @@ class LslDataServer(StoppableThread):
             channel at a fixed frequency.
         marker_stream_name: str, optional
             name of the sample marker stream
+        chunk_size: int, optional chunk size.
     """
 
-    def __init__(self, device_spec: DeviceSpec, generator: Generator = None, include_meta: bool = True,
-                 add_markers: bool = False, marker_stream_name: str = MARKER_STREAM_NAME):
+    def __init__(self,
+                 device_spec: DeviceSpec,
+                 generator: Generator = None,
+                 include_meta: bool = True,
+                 add_markers: bool = False,
+                 marker_stream_name: str = MARKER_STREAM_NAME,
+                 chunk_size: int = 0):
         super(LslDataServer, self).__init__()
 
         self.device_spec = device_spec
@@ -56,6 +62,7 @@ class LslDataServer(StoppableThread):
 
         log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
+        print(f"Chunk size: {chunk_size}")
         info = StreamInfo(device_spec.name,
                           device_spec.content_type, device_spec.channel_count,
                           device_spec.sample_rate,
@@ -72,7 +79,7 @@ class LslDataServer(StoppableThread):
                 if channel.type:
                     channel_node.append_child_value('type', channel.type)
 
-        self.outlet = StreamOutlet(info)
+        self.outlet = StreamOutlet(info, chunk_size=chunk_size)
 
         self.add_markers = add_markers
         if add_markers:
@@ -166,7 +173,6 @@ def await_start(dataserver: LslDataServer, max_wait: float = 2):
 
 def main():
     """Initialize and start the server."""
-    import time
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator
@@ -178,6 +184,7 @@ def main():
                         "if missing, random data will be served.")
     parser.add_argument('-m', '--markers', action="store_true", default=False)
     parser.add_argument('-n', '--name', default='DSI-24', help='Name of the device spec to mock.')
+    parser.add_argument('-c', '--chunk_size', default=0, type=int, help='Chunk size')
     args = parser.parse_args()
 
     if args.filename:
@@ -192,7 +199,10 @@ def main():
 
     markers = True if args.markers else False
     try:
-        server = LslDataServer(device_spec=device_spec, generator=generator, add_markers=markers)
+        server = LslDataServer(device_spec=device_spec,
+                               generator=generator,
+                               add_markers=markers,
+                               chunk_size=args.chunk_size)
 
         log.debug("New server created")
         server.start()

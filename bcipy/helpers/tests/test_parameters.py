@@ -2,11 +2,11 @@
 import shutil
 import tempfile
 import unittest
-from collections import abc
+from collections import abc, namedtuple
 from pathlib import Path
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.parameters import Parameters, parse_range
 
 
 class TestParameters(unittest.TestCase):
@@ -103,6 +103,22 @@ class TestParameters(unittest.TestCase):
         with self.assertRaises(Exception):
             parameters.load(data_with_unsupported_type)
 
+    def test_parse_range(self):
+        """Test function to parse a range into low, high values"""
+        self.assertEqual(parse_range("1:10"), (1, 10))
+        self.assertEqual(parse_range("1 : 10"), (1, 10))
+        self.assertEqual(parse_range("1.0:10"), (1.0, 10.0))
+        self.assertEqual(parse_range("1.3:10.2"), (1.3, 10.2))
+        self.assertEqual(parse_range("-1:1"), (-1, 1))
+        self.assertEqual(parse_range("-75E-6:75E+6"), (-75E-6, 75E+6))
+        self.assertEqual(parse_range("-5:10"), (-5, 10))
+
+        with self.assertRaises(Exception):
+            parse_range("1 - 10")
+
+        with self.assertRaises(Exception):
+            parse_range("10:1")
+
     def test_cast_values(self):
         """Test cast_values."""
 
@@ -139,6 +155,14 @@ class TestParameters(unittest.TestCase):
                 "recommended_values": "",
                 "type": "str"
             },
+            "my_int_range": {
+                "value": "5:10",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": "",
+                "type": "range"
+            }
         }
         parameters = Parameters(source=None, cast_values=True)
         parameters.load(sample_config)
@@ -157,6 +181,7 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(parameters['mystr'], 'hello')
         self.assertEqual(parameters.get('mystr'), 'hello')
         self.assertFalse(parameters.get('missing_param', False))
+        self.assertEqual(parameters['my_int_range'], (5, 10))
 
         parameters.cast_values = False
         self.assertEqual(parameters['myint']['value'], '1')
@@ -551,6 +576,43 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(changes["entry_3"].original_value, entry3['value'])
         self.assertEqual(changes["entry_3"].parameter['value'],
                          entry3_modified['value'])
+
+    def test_instantiate_tuple(self):
+        """Test that a namedtuple can be instantiated."""
+        sample_config = {
+            "a": {
+                "value": "1",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": "",
+                "type": "int"
+            },
+            "b": {
+                "value": "2",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": [],
+                "type": "int"
+            },
+            "c": {
+                "value": "3",
+                "section": "",
+                "readableName": "",
+                "helpTip": "",
+                "recommended_values": [],
+                "type": "str"
+            }
+        }
+        parameters = Parameters(source=None, cast_values=True)
+        parameters.load(sample_config)
+
+        MyTuple = namedtuple("MyTuple", 'a c')
+        my_tuple = parameters.instantiate(MyTuple)
+        self.assertEqual(my_tuple.a, 1)
+        self.assertEqual(my_tuple.c, '3')
+        self.assertEqual((1, '3'), my_tuple)
 
 
 if __name__ == '__main__':

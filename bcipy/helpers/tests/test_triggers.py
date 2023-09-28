@@ -1,18 +1,18 @@
 import os
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
-from mockito import any, mock, when, verify, unstub
 import psychopy
+from mockito import any, mock, unstub, verify, when
 
 from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.triggers import (
-    _calibration_trigger,
-    FlushFrequency,
-    TriggerType,
-    Trigger,
-    TriggerHandler
-)
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, _calibration_trigger,
+                                    apply_offsets, exclude_types,
+                                    find_starting_offset, offset_device,
+                                    offset_label, read, read_data,
+                                    starting_offsets_by_device,
+                                    trigger_decoder)
 
 
 class TestCalibrationTrigger(unittest.TestCase):
@@ -205,29 +205,41 @@ class TestTriggerHandler(unittest.TestCase):
 
         verify(self.handler, times=1).write()
 
-    def test_load_returns_list_of_triggers(self):
-        trg = Trigger('A', TriggerType.NONTARGET, 1)
-        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_returns_list_of_triggers(self, path_exists_mock):
+        """Test static load method"""
+        path_exists_mock.returnValue = True
+        trg_data = '''A nontarget 1.0'''
 
-        response = self.handler.load('test_path_not_real')
-        self.assertEqual(response[0], trg)
+        trg = Trigger('A', TriggerType.NONTARGET, 1.0)
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt')
+            self.assertEqual(response[0], trg)
 
-    def test_load_applies_offset(self):
-        trg = Trigger('A', TriggerType.NONTARGET, 1)
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_applies_offset(self, path_exists_mock):
+        """Test that static load method applies offsets"""
+        path_exists_mock.returnValue = True
+        trg_data = '''starting_offset offset 0.5
+                    A nontarget 1.0'''
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt', offset=1)
+            self.assertEqual(response[0].time, 2.5)
 
-        when(TriggerHandler).read_text_file(any()).thenReturn(([trg], 0.0))
-        response = self.handler.load('test_path_not_real', offset=1)
-        self.assertEqual(response[0].time, 2)
-
-    def test_load_exclusion(self):
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_load_exclusion(self, path_exists_mock):
+        """Test that static load can exclude trigger types"""
+        path_exists_mock.returnValue = True
+        trg_data = '''A nontarget 1
+                      + fixation 2'''
         fixation_trg = Trigger('+', TriggerType.FIXATION, 2)
-        trg_list = [Trigger('A', TriggerType.NONTARGET, 1), fixation_trg]
-
-        when(TriggerHandler).read_text_file(any()).thenReturn((trg_list, 0.0))
-
-        response = self.handler.load('test_path_not_real',
-                                     exclusion=[TriggerType.NONTARGET])
-        self.assertEqual(response[0], fixation_trg)
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            response = self.handler.load('test_path_not_real.txt',
+                                         exclusion=[TriggerType.NONTARGET])
+            self.assertEqual(response[0], fixation_trg)
 
     @patch('bcipy.helpers.triggers.os.path.exists')
     def test_read_data(self, path_exists_mock):
@@ -318,6 +330,268 @@ class TestTriggerHandler(unittest.TestCase):
             self.assertEqual(triggers[1].type, TriggerType.PROMPT)
             self.assertEqual(triggers[1].time, 6.15)
             self.assertEqual(offset, 3.47)
+
+
+class TestTriggerFunctions(unittest.TestCase):
+    """Test module functions"""
+
+    def test_starting_offset_label(self):
+        """Test functions for generating offset labels"""
+        self.assertEqual(offset_label(), 'starting_offset')
+        self.assertEqual(offset_label('EEG'), 'starting_offset')
+        self.assertEqual(offset_label('EYETRACKER'),
+                         'starting_offset_EYETRACKER')
+
+        self.assertEqual(offset_label(prefix='daq_offset'), 'daq_offset')
+        self.assertEqual(offset_label(device_type='EEG', prefix='daq_offset'),
+                         'daq_offset')
+        self.assertEqual(
+            offset_label(device_type='EYETRACKER', prefix='daq_offset'),
+            'daq_offset_EYETRACKER')
+
+    def test_offset_device_type(self):
+        """Test functions for generating offset labels"""
+        self.assertEqual(offset_device('starting_offset'), 'EEG')
+        self.assertEqual(offset_device('starting_offset_EEG'), 'EEG')
+        self.assertEqual(offset_device('starting_offset_EYETRACKER'),
+                         'EYETRACKER')
+        self.assertEqual(offset_device('starting_offset_EYE_TRACKER'),
+                         'EYE_TRACKER')
+
+        self.assertEqual(
+            offset_device('daq_offset_EYE_TRACKER', prefix='daq_offset'),
+            'EYE_TRACKER')
+
+        with self.assertRaises(AssertionError):
+            offset_device('offset', prefix='starting_offset')
+
+    def test_read_data(self):
+        """Test reading data from a given source"""
+        trg_data = '''starting_offset offset 3.47
+                    J prompt 6.15
+                    + fixation 8.11
+                    F nontarget 8.58
+                    D nontarget 8.88
+                    J target 9.18
+                    T nontarget 9.49
+                    K nontarget 9.79
+                    _ nontarget 11.30'''
+        triggers = read_data(trg_data.split('\n'))
+        self.assertEqual(len(triggers), 9)
+        self.assertEqual(triggers[1].label, 'J')
+        self.assertEqual(triggers[1].type, TriggerType.PROMPT)
+        self.assertEqual(triggers[1].time, 6.15)
+
+    def test_read_data_exception(self):
+        """Invalid triggers should throw an exception"""
+        trg_data = '''starting_offset offset 3.47
+                    J prompt 6.15
+                    + fixation 8.11
+                    foobarbaz'''
+        with self.assertRaises(BciPyCoreException):
+            read_data(trg_data.split('\n'))
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_read_from_file(self, path_exists_mock):
+        """Test reading triggers from a file"""
+        trg_data = '''starting_offset offset 3.47
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data), create=True):
+            triggers = read('triggers.txt')
+            self.assertEqual(len(triggers), 9)
+            self.assertEqual(triggers[1].label, 'J')
+            self.assertEqual(triggers[1].type, TriggerType.PROMPT)
+            self.assertEqual(triggers[1].time, 6.15)
+
+    def test_find_starting_offset_default(self):
+        """Test default behavior for find_starting_offset"""
+        triggers = read_data('''J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''.split('\n'))
+        offset = find_starting_offset(triggers)
+        self.assertEqual(offset.time, 0.0)
+
+    def test_find_starting_offset_default_device(self):
+        """Test behavior for find_starting_offset when not given a device"""
+        triggers = read_data('''starting_offset offset 3.47
+            starting_offset_EYETRACKER offset 4.47
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''.split('\n'))
+        offset = find_starting_offset(triggers)
+        self.assertEqual(offset.label, 'starting_offset')
+        self.assertEqual(offset.time, 3.47)
+
+    def test_find_starting_offset_for_device(self):
+        """Test behavior for find_starting_offset given a device"""
+        triggers = read_data('''starting_offset offset 3.47
+            starting_offset_EYETRACKER offset 4.47
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''.split('\n'))
+        offset = find_starting_offset(triggers, device_type='EYETRACKER')
+        self.assertEqual(offset.label, 'starting_offset_EYETRACKER')
+        self.assertEqual(offset.time, 4.47)
+
+    def test_starting_offsets_by_device(self):
+        """Test default behavior for starting_offsets_by_device"""
+        triggers = read_data('''starting_offset offset 3.47
+            starting_offset_EYETRACKER offset 4.47
+            J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers)
+        self.assertEqual(len(offsets), 2)
+        self.assertEqual(offsets['EEG'].time, 3.47)
+        self.assertEqual(offsets['EYETRACKER'].time, 4.47)
+
+    def test_starting_offsets_by_device_no_offset(self):
+        """Test default behavior for starting_offsets_by_device with no offsets
+        """
+        triggers = read_data('''J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers)
+        self.assertFalse(offsets)
+
+    def test_starting_offsets_by_device_defaults(self):
+        """Test default values"""
+        triggers = read_data('''J prompt 6.15
+            + fixation 8.11'''.split('\n'))
+        offsets = starting_offsets_by_device(triggers, device_types=['EEG', 'EYETRACKER'])
+        self.assertEqual(len(offsets), 2)
+        self.assertEqual(offsets['EEG'].time, 0.0)
+        self.assertEqual(offsets['EYETRACKER'].time, 0.0)
+
+    def test_apply_offsets_without_static(self):
+        """Test application of offsets without a static offset"""
+        triggers = read_data('''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18'''.split('\n'))
+        offset = Trigger('starting_offset_EYETRACKER', TriggerType.OFFSET,
+                         -4.45)
+        corrected = apply_offsets(triggers, offset)
+        self.assertEqual(len(corrected), 5,
+                         "offset triggers should be excluded from the result")
+        self.assertEqual(corrected[0].label, 'J')
+        self.assertAlmostEqual(corrected[0].time, 1.7)
+        self.assertEqual(corrected[-1].label, 'J')
+        self.assertAlmostEqual(corrected[-1].time, 4.73)
+
+    def test_apply_offsets_with_static(self):
+        """Test application of offsets with a static offset"""
+        triggers = read_data('''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18'''.split('\n'))
+        offset = Trigger('starting_offset_EYETRACKER', TriggerType.OFFSET,
+                         -4.45)
+        corrected = apply_offsets(triggers, offset, static_offset=0.1)
+        self.assertEqual(len(corrected), 5,
+                         "offset triggers should be excluded from the result")
+        self.assertEqual(corrected[0].label, 'J')
+        self.assertAlmostEqual(corrected[0].time, 1.8)
+        self.assertEqual(corrected[-1].label, 'J')
+        self.assertAlmostEqual(corrected[-1].time, 4.83)
+
+    def test_exclude_types(self):
+        """Test exclude types"""
+        triggers = read_data('''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18'''.split('\n'))
+        self.assertListEqual(triggers, exclude_types(triggers, []))
+
+        filtered = exclude_types(
+            triggers,
+            [TriggerType.OFFSET, TriggerType.PROMPT, TriggerType.FIXATION])
+        self.assertTrue(
+            all(trg.type in [TriggerType.NONTARGET, TriggerType.TARGET]
+                for trg in filtered))
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_trigger_decoder_defaults(self, path_exists_mock):
+        """Test trigger decoder"""
+        trg_data = '''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            types, times, labels = trigger_decoder('triggers.txt')
+
+            self.assertListEqual(types, [
+                'nontarget', 'nontarget', 'target', 'nontarget', 'nontarget',
+                'nontarget'
+            ])
+            self.assertListEqual(labels, ['F', 'D', 'J', 'T', 'K', '_'])
+            self.assertAlmostEqual(times[0], 5.11)
+            self.assertAlmostEqual(times[-1], 7.83)
+
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_trigger_decoder_with_device(self, path_exists_mock):
+        """Test trigger decoder"""
+        trg_data = '''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            types, times, labels = trigger_decoder('triggers.txt',
+                                                   device_type='EYETRACKER')
+
+            self.assertListEqual(types, [
+                'nontarget', 'nontarget', 'target', 'nontarget', 'nontarget',
+                'nontarget'
+            ])
+            self.assertListEqual(labels, ['F', 'D', 'J', 'T', 'K', '_'])
+            self.assertAlmostEqual(times[0], 4.13)
+            self.assertAlmostEqual(times[-1], 6.85)
 
 
 if __name__ == '__main__':

@@ -131,7 +131,7 @@ class StimuliProperties:
     def __init__(
             self,
             stim_font: str,
-            stim_pos: Tuple[float, float],
+            stim_pos: Union[Tuple[float, float], List[Tuple[float, float]]],
             stim_height: float,
             stim_inquiry: List[str] = None,
             stim_colors: List[str] = None,
@@ -142,6 +142,7 @@ class StimuliProperties:
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
         stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
+            or a list of positions (ex. for matrix displays)
         stim_height(float): Height of all stimuli
         stim_inquiry(List[str]): Ordered list of text to build stimuli with
         stim_colors(List[str]): Ordered list of colors to apply to stimuli

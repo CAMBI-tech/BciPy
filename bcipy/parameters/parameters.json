@@ -13,6 +13,7 @@
     "readableName": "Acquisition Mode",
     "helpTip": "Specifies the hardware device(s) used for data collection.",
     "recommended_values": [
+      "EEG",
       "EEG/DSI-24",
       "Eyetracker",
       "EEG+Eyetracker"
@@ -46,13 +47,17 @@
     "recommended_values": "[10]",
     "type": "int"
   },
-  "trial_length": {
-    "value": "0.5",
+  "trial_window": {
+    "value": "0.0:0.5",
     "section": "bci_config",
-    "readableName": "Data Collection Window Length",
-    "helpTip": "Specifies the length (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.5",
-    "recommended_values": "",
-    "type": "float"
+    "readableName": "Trial Classification Window Length",
+    "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
+    "recommended_values": [
+      "0.0:0.5",
+      "0.0:0.8",
+      "0.2:0.8"
+    ],
+    "type": "range"
   },
   "prestim_length": {
     "value": "1",
@@ -222,6 +227,30 @@
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended_values": "",
     "type": "int"
+  },
+  "matrix_rows": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Matrix Rows",
+    "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_columns": {
+    "value": "6",
+    "section": "bci_config",
+    "readableName": "Matrix Columns",
+    "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_width": {
+    "value": "0.7",
+    "section": "bci_config",
+    "readableName": "Matrix Width (%)",
+    "helpTip": "Specifies the max percentage of the display that the matrix grid should utilize. Must be between 0 and 1",
+    "recommended_values": "",
+    "type": "float"
   },
   "acq_show_viewer": {
     "value": "false",
