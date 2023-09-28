@@ -24,7 +24,7 @@ info = InformationProperties(
     info_text=['VEP Display Demo'],
 )
 
-task_text = ['1/4']  # , '2/4', '3/4', '4/4']
+task_text = ['1/4', '2/4', '3/4', '4/4']
 num_boxes = 6
 
 win = visual.Window(size=[700, 700],
@@ -43,13 +43,10 @@ frameRate = win.getActualFrameRate()
 
 print(f'Monitor refresh rate: {frameRate} Hz')
 
-start_positions_for_boxes = [(-.3, -.3), (.3, -.3), (.3, .3), (-.3, .3)]
-
 box_colors = ['#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232']
 stim_color = [[color] for i, color in enumerate(box_colors) if i < num_boxes]
 
 layout = centered(width_pct=0.95, height_pct=0.80)
-layout.parent = win
 box_config = BoxConfiguration(layout, num_boxes=num_boxes)
 
 experiment_clock = Clock()
@@ -59,7 +56,7 @@ stimuli = VEPStimuliProperties(
     stim_pos=box_config.positions,
     stim_height=0.1,
     stim_font='Arial',
-    timing=(1, 0.5, 2, 4),  # prompt, fixation, stimuli
+    timing=(1, 0.5, 2, 4),  # prompt, fixation, animation, stimuli
     stim_length=1,  # how many times to stimuli
 )
 task_bar = CalibrationTaskBar(win,
@@ -76,7 +73,7 @@ for txt in task_text:
     if num_boxes == 4:
         stim = [['A', 'B'], ['Z'], ['P'], ['R', 'W']]
     if num_boxes == 6:
-        stim = [['A'], ['B'], ['Z'], ['P'], ['R'], ['W']]
+        stim = [['A'], ['B'], ['Z', 'X'], ['P', 'I'], ['R'], ['W', 'C']]
     vep.schedule_to(stimuli=stim)
     timing += vep.do_inquiry()
 
