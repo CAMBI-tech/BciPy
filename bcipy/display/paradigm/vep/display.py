@@ -68,8 +68,10 @@ class VEPStim:
             elif square.color == colors[1]:
                 frame1_holes.append(square_boundary)
 
-        # checkerboard is represented as a polygon with holes, backed by a
+        # Checkerboard is represented as a polygon with holes, backed by a
         # simple square with the alternating color.
+        # This technique renders more efficiently and scales better than using
+        # separate shapes (Rect or Gradient) for each square.
         background = ShapeStim(self.window,
                                lineColor=colors[1],
                                fillColor=colors[1],
@@ -127,7 +129,6 @@ class VEPDisplay(Display):
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round(window.getActualFrameRate())
-        print(f"Refresh rate: {self.refresh_rate}")
         self.logger = logging.getLogger(__name__)
 
         # number of VEP text areas
