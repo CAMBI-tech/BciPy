@@ -232,32 +232,21 @@ class InquiryReshaper:
 
 class GazeReshaper:
     def __call__(self,
-                 trial_targetness_label: List[str],
                  inq_start_times: List[float],
                  target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
-                 trials_per_inquiry: int,
-                 offset: float = 0,
                  channel_map: List[int] = None,
-                 poststimulus_length: float = 0.5,
-                 prestimulus_length: float = 0.0,
-                 transformation_buffer: float = 0.0,
                  ) -> dict:
         """Extract inquiry data and labels.
 
         Args:
-            trial_targetness_label (List[str]): labels each trial as "target", "non-target", "first_pres_target", etc
-            timing_info (List[float]): Timestamp of each event in seconds
+            inq_start_times (List[float]): Timestamp of each event in seconds
+            target_symbols (List[str]): Prompted symbol in each inquiry
             gaze_data (np.ndarray): shape (channels, samples) eye tracking data
             sample_rate (int): sample rate of data provided in eeg_data
-            trials_per_inquiry (int): number of trials in each inquiry
-            offset (float, optional): Any calculated or hypothesized offsets in timings. Defaults to 0.
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to None; all channels will be used.
-            poststimulus_length (float, optional): time in seconds needed after the last trial in an inquiry.
-            prestimulus_length (float, optional): time in seconds needed before the first trial in an inquiry.
-            transformation_buffer (float, optional): time in seconds to buffer the end of the inquiry. Defaults to 0.0.
 
         Returns:
             reshaped_data (List[float]): inquiry data of shape (Inquiries, Channels, Samples)
@@ -295,11 +284,13 @@ class GazeReshaper:
         for symbol in symbol_set:
             data_by_targets[symbol] = []
 
+        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
-            stop = int(inquiry_index + (sample_rate * 3))   # (60 samples * 3 seconds)
+            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
             # Check if the data exists for the inquiry:
             if stop > len(gaze_data[0, :]):
                 continue
@@ -316,7 +307,7 @@ class GazeReshaper:
                 data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
                 data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
 
-            # TODO: Note that this is a workaround to the issue of having different number of targetness in
+            # Note that this is a workaround to the issue of having different number of targetness in
             # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
             # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
             # This is not ideal, but it works for now.

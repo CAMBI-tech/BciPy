@@ -282,7 +282,8 @@ def starting_offsets_by_device(
 
 
 def find_starting_offset(triggers: List[Trigger],
-                         device_type: Optional[str] = None) -> Trigger:
+                         device_type: Optional[str] = None,
+                         apply_system_offset: Optional[bool] = True) -> Trigger:
     """Given a list of raw trigger data, determine the starting offset for the
     given device. The returned trigger has the timestamp of the first sample
     recorded for the device.
@@ -298,16 +299,20 @@ def find_starting_offset(triggers: List[Trigger],
         device_type - each device will generally have a different offset. This
             parameter is used to determine which trigger to use. If not given
             the EEG offset will be used by default. Ex. 'EYETRACKER'
+        apply_system_offset (Optional bool) - if True, applies the system offset loaded from the triggers file.
+            If False, returns a Trigger with offset of 0.0.
     Returns
     -------
         The Trigger for the first matching offset for the given device, or a
             Trigger with offset of 0.0 if a matching offset was not found.
     """
     label = offset_label(device_type)
-    for trg in triggers:
-        if trg.type == TriggerType.OFFSET and trg.label == label:
-            return trg
-    log.info(f"Offset not found (device_type: {device_type}); using 0.0")
+
+    if apply_system_offset:
+        for trg in triggers:
+            if trg.type == TriggerType.OFFSET and trg.label == label:
+                return trg
+    log.info(f"Offset not found, or not used (device_type: {device_type}); using 0.0")
     return Trigger(label, TriggerType.OFFSET, 0.0)
 
 
@@ -456,10 +461,8 @@ class TriggerHandler:
         """
         excluded_types = exclusion or []
 
-        starting_offset = 0.0
-        if apply_system_offset:
-            triggers = read(path)
-            starting_offset = find_starting_offset(triggers, device_type)
+        triggers = read(path)
+        starting_offset = find_starting_offset(triggers, device_type, apply_system_offset)
 
         return apply_offsets(exclude_types(triggers, excluded_types),
                              starting_offset.time,
@@ -516,6 +519,8 @@ def trigger_decoder(
         exclusion: any TriggerTypes to be filtered from data returned
         device_type: used to determine which starting_offset value to use; if
             a 'starting_offset' trigger is found it will be applied.
+        apply_system_offset: if True, keeps the 'starting_offset' value from the triggers file. 
+            If False, sets it to 0.0.
 
     Returns
     -------
@@ -527,10 +532,7 @@ def trigger_decoder(
     ]
 
     triggers = read(trigger_path)
-
-    starting_offset = 0.0
-    if apply_system_offset:
-        starting_offset = find_starting_offset(triggers, device_type)
+    starting_offset = find_starting_offset(triggers, device_type, apply_system_offset)
 
     filtered = exclude_types(triggers, excluded_types)
     corrected = apply_offsets(filtered, starting_offset, static_offset=offset)

@@ -6,7 +6,6 @@ from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
                           RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
                           DEFAULT_DEVICE_SPEC_FILENAME,
                           STATIC_IMAGES_PATH, EYE_TRACKER_FILENAME_PREFIX)
-from bcipy.preferences import preferences
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
@@ -23,7 +22,6 @@ from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
 from bcipy.signal.model.fusion_model import GazeModel
-from bcipy.signal.process import filter_inquiries, get_default_transform
 import numpy as np
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
@@ -167,190 +165,189 @@ def offline_analysis(
             type_amp = mode_data.daq_type
             sample_rate = mode_data.sample_rate
 
-    # setup filtering
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=transform_params.notch_filter_frequency,
-        bandpass_low=transform_params.filter_low,
-        bandpass_high=transform_params.filter_high,
-        bandpass_order=transform_params.filter_order,
-        downsample_factor=transform_params.down_sampling_rate,
-    )
+            # setup filtering
+            default_transform = get_default_transform(
+                sample_rate_hz=sample_rate,
+                notch_freq_hz=transform_params.notch_filter_frequency,
+                bandpass_low=transform_params.filter_low,
+                bandpass_high=transform_params.filter_high,
+                bandpass_order=transform_params.filter_order,
+                downsample_factor=transform_params.down_sampling_rate,
+            )
 
-    log.info(f"Channels read from csv: {channels}")
-    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+            log.info(f"Channels read from csv: {channels}")
+            log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    k_folds = parameters.get("k_folds")
-    model = PcaRdaKdeModel(k_folds=k_folds)
+            k_folds = parameters.get("k_folds")
+            model = PcaRdaKdeModel(k_folds=k_folds)
 
-    # Process triggers.txt files
-    trigger_targetness, trigger_timing, _ = trigger_decoder(
-        offset=static_offset,
-        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-        device_type='EEG'
-    )
+            # Process triggers.txt files
+            trigger_targetness, trigger_timing, _ = trigger_decoder(
+                offset=static_offset,
+                trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+                device_type='EEG',
+                apply_system_offset=True
+            )
 
-    # update the trigger timing list to account for the initial trial window
-    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+            # update the trigger timing list to account for the initial trial window
+            corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
-    # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, device_spec)
-    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
-    log.info(f'Channels used in analysis: {channels_used}')
+            # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
+            # The timestamp column [0] is already excluded.
+            channel_map = analysis_channels(channels, device_spec)
+            channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+            log.info(f'Channels used in analysis: {channels_used}')
 
-    data, fs = mode_data.by_channel()
+            data, fs = mode_data.by_channel()
 
-    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        timing_info=corrected_trigger_timing,
-        eeg_data=data,
-        sample_rate=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=window_length,
-        prestimulus_length=prestim_length,
-        transformation_buffer=buffer,
-    )
+            inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+                trial_targetness_label=trigger_targetness,
+                timing_info=corrected_trigger_timing,
+                eeg_data=data,
+                sample_rate=sample_rate,
+                trials_per_inquiry=trials_per_inquiry,
+                channel_map=channel_map,
+                poststimulus_length=window_length,
+                prestimulus_length=prestim_length,
+                transformation_buffer=buffer,
+            )
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
-    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
-    trial_duration_samples = int(window_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+            inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+            inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
+            trial_duration_samples = int(window_length * fs)
+            data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
-    # define the training classes using integers, where 0=nontargets/1=targets
-    labels = inquiry_labels.flatten()
+            # define the training classes using integers, where 0=nontargets/1=targets
+            labels = inquiry_labels.flatten()
 
-    # train and save the model as a pkl file
-    log.info("Training model. This will take some time...")
-    model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+            # train and save the model as a pkl file
+            log.info("Training model. This will take some time...")
+            model = PcaRdaKdeModel(k_folds=k_folds)
+            model.fit(data, labels)
+            model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                                 transform=default_transform)
+            log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
-    preferences.signal_model_directory = data_folder
+            save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
+            preferences.signal_model_directory = data_folder
 
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+            # Using an 80/20 split, report on balanced accuracy
+            if estimate_balanced_acc:
+                train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+                dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+                dummy_model.fit(train_data, train_labels)
+                probs = dummy_model.predict_proba(test_data)
+                preds = probs.argmax(-1)
+                score = balanced_accuracy_score(test_labels, preds)
+                log.info(f"Balanced acc with 80/20 split: {score}")
+                del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-    # this should have uncorrected trigger timing for display purposes
-    figure_handles = visualize_erp(
-        mode_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
+            # this should have uncorrected trigger timing for display purposes
+            figure_handles = visualize_erp(
+                mode_data,
+                channel_map,
+                trigger_timing,
+                labels,
+                trial_window,
+                transform=default_transform,
+                plot_average=True,
+                plot_topomaps=True,
+                save_path=data_folder if save_figures else None,
+                show=show_figures
+            )
 
-    if device_spec.content_type == "Eyetracker":
-        print(device_spec)
-        figure_handles = visualize_gaze(
-            mode_data,
-            save_path=data_folder if save_figures else None,
-            show=True,
-            raw_plot=True,
-        )
-
-        channels = mode_data.channels
-        type_amp = mode_data.daq_type
-        sample_rate = mode_data.sample_rate
-
-        log.info(f"Channels read from csv: {channels}")
-        log.info(f"Device type: {type_amp}, fs={sample_rate}")
-        channel_map = analysis_channels(channels, device_spec)
-
-        channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
-        log.info(f'Channels used in analysis: {channels_used}')
-
-        data, fs = mode_data.by_channel()
-
-        model = GazeModel()
-
-        # Process triggers.txt files (again!)
-        trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-            remove_pre_fixation=False,
-            apply_system_offset=False,
-            trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-            exclusion=[
-                TriggerType.PREVIEW,
-                TriggerType.EVENT,
-                TriggerType.FIXATION,
-                TriggerType.SYSTEM,
-                TriggerType.OFFSET]
-        )
-        ''' Trigger_timing includes PROMPT and excludes FIXATION '''
-
-        # Use trigger_timing to generate time windows for each letter flashing
-        # Take every 10th trigger as the start point of timing.
-        # trigger_targetness keeps the PROMPT info, use it to find the target symbol.
-        target_symbols = trigger_symbols[0::11]  # target symbols
-        inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
-
-        # Find the inquiries starting by the inq_start_times, (9, 100, 180):
-        inquiries = model.reshaper(
-            trial_targetness_label=trigger_targetness,
-            inq_start_times=inq_start,
-            target_symbols=target_symbols,
-            gaze_data=data,
-            sample_rate=sample_rate,
-            trials_per_inquiry=trials_per_inquiry,
-            poststimulus_length=window_length,
-            prestimulus_length=prestim_length,
-            transformation_buffer=buffer
-        )
-
-        symbol_set = alphabet()
-
-        # Extract the data for each target label and each eye separately.
-        # Apply preprocessing:
-        preprocessed_data = {i: [] for i in symbol_set}
-        for i in symbol_set:
-            # Skip if there's no evidence for this symbol:
-            if len(inquiries[i]) == 0:
-                continue
-
-            left_eye, right_eye = model.reshaper.extract_eye_info(inquiries[i])
-            preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
-
-            # Train test split:
-            test_size = int(len(right_eye) * 0.2)
-            train_size = len(right_eye) - test_size
-            train_right_eye = right_eye[:train_size]
-            test_right_eye = right_eye[train_size:]
-
-            train_left_eye = left_eye[:train_size]
-            test_left_eye = left_eye[train_size:]
-
-            # Fit the model:
-            model.fit(train_right_eye)
-
-            scores, means, covs = model.get_scores(test_right_eye)
-            # print(scores)
-
-            # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                left_eye, right_eye,
-                means, covs,
-                save_path=None,
+        if device_spec.content_type == "Eyetracker":
+            print(device_spec)
+            figure_handles = visualize_gaze(
+                mode_data,
+                save_path=data_folder if save_figures else None,
                 show=True,
                 raw_plot=True,
             )
+
+            channels = mode_data.channels
+            type_amp = mode_data.daq_type
+            sample_rate = mode_data.sample_rate
+
+            log.info(f"Channels read from csv: {channels}")
+            log.info(f"Device type: {type_amp}, fs={sample_rate}")
+            channel_map = analysis_channels(channels, device_spec)
+
+            channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+            log.info(f'Channels used in analysis: {channels_used}')
+
+            data, fs = mode_data.by_channel()
+
+            model = GazeModel()
+
+            # Extract all Triggers info
+            trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+                remove_pre_fixation=False,
+                apply_system_offset=False,
+                trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                exclusion=[
+                    TriggerType.PREVIEW,
+                    TriggerType.EVENT,
+                    TriggerType.FIXATION,
+                    TriggerType.SYSTEM,
+                    TriggerType.OFFSET],
+                device_type='EYETRACKER'
+            )
+            ''' Trigger_timing includes PROMPT and excludes FIXATION '''
+
+            # Use trigger_timing to generate time windows for each letter flashing
+            # Take every 10th trigger as the start point of timing.
+            # trigger_symbols keeps the PROMPT info, use it to find the target symbol.
+            target_symbols = trigger_symbols[0::11]  # target symbols
+            inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
+
+            # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
+            inquiries = model.reshaper(
+                inq_start_times=inq_start,
+                target_symbols=target_symbols,
+                gaze_data=data,
+                sample_rate=sample_rate
+            )
+
+            symbol_set = alphabet()
+
+            # Extract the data for each target label and each eye separately.
+            # Apply preprocessing:
+            preprocessed_data = {i: [] for i in symbol_set}
+            for i in symbol_set:
+                # Skip if there's no evidence for this symbol:
+                if len(inquiries[i]) == 0:
+                    continue
+
+                left_eye, right_eye = model.reshaper.extract_eye_info(inquiries[i])
+                preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
+
+                # Train test split:
+                test_size = int(len(right_eye) * 0.2)
+                train_size = len(right_eye) - test_size
+                train_right_eye = right_eye[:train_size]
+                test_right_eye = right_eye[train_size:]
+
+                train_left_eye = left_eye[:train_size]
+                test_left_eye = left_eye[train_size:]
+
+                # Fit the model:
+                model.fit(train_right_eye)
+
+                scores, means, covs = model.get_scores(test_right_eye)
+                # print(scores)
+
+                # Visualize the results:
+                figure_handles = visualize_gaze_inquiries(
+                    left_eye, right_eye,
+                    means, covs,
+                    save_path=None,
+                    show=True,
+                    raw_plot=True,
+                )
+
+                breakpoint()
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
