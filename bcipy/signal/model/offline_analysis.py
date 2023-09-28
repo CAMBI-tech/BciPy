@@ -18,7 +18,7 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import filter_inquiries, get_default_transform
+from bcipy.signal.process import filter_inquiries, get_default_transform, get_fir_transform
 from bcipy.signal.process.transform import dummy_transform
 
 import numpy as np
@@ -128,12 +128,22 @@ def offline_analysis(
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     # setup filtering
-    default_transform = get_default_transform(
+    # default_transform = get_default_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=notch_filter,
+    #     bandpass_low=filter_low,
+    #     bandpass_high=filter_high,
+    #     bandpass_order=filter_order,
+    #     downsample_factor=downsample_rate,
+    # )
+    default_transform = get_fir_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
-        bandpass_low=filter_low,
-        bandpass_high=filter_high,
-        bandpass_order=filter_order,
+        low=filter_low,
+        high=filter_high,
+        fir_design='firwin',
+        fir_window='hamming',
+        phase='zero-double',
         downsample_factor=downsample_rate,
     )
 
@@ -169,15 +179,15 @@ def offline_analysis(
         transformation_buffer=buffer,
     )
 
-    inquiries, fs = filter_inquiries(inquiries, dummy_transform, fs)
+    inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = inquiry_labels.flatten()
-    data = np.transpose(data, (1, 0, 2)) # (epochs, channels, samples)
-    return data, labels
+    # data = np.transpose(data, (1, 0, 2)) # (epochs, channels, samples)
+    # return data, labels
 
     # # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
@@ -185,7 +195,7 @@ def offline_analysis(
     model.fit(data, labels)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
-    model.save(data_folder + f"/model_{model.auc:0.4f}.pkl")
+    model.save(data_folder + f"/model_fir_{model.auc:0.4f}.pkl")
     preferences.signal_model_directory = data_folder
 
     score = None

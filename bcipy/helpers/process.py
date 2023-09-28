@@ -13,7 +13,7 @@ import mne
 
 from bcipy.helpers.stimuli import TrialReshaper, InquiryReshaper, update_inquiry_timing, mne_epochs
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.signal.process import filter_inquiries, get_default_transform
+from bcipy.signal.process import filter_inquiries, get_default_transform, get_fir_transform
 from bcipy.helpers.load import load_raw_data, load_json_parameters
 from bcipy.helpers.convert import convert_to_mne
 
@@ -23,7 +23,11 @@ import logging
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
-def load_data_inquiries(data_folder: Path, trial_length=None, pre_stim=0.0):
+def load_data_inquiries(
+        data_folder: Path,
+        trial_length=None,
+        pre_stim=0.0,
+        apply_filter=True):
     """Loads raw data, and performs preprocessing by notch filtering, bandpass filtering, and downsampling.
 
     Args:
@@ -81,6 +85,17 @@ def load_data_inquiries(data_folder: Path, trial_length=None, pre_stim=0.0):
         downsample_factor=downsample_rate,
     )
 
+    # default_transform = get_fir_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=notch_filter,
+    #     low=filter_low,
+    #     high=filter_high,
+    #     fir_design='firwin',
+    #     fir_window='hamming',
+    #     phase='zero-double',
+    #     downsample_factor=downsample_rate,
+    # )
+
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")
 
@@ -108,7 +123,8 @@ def load_data_inquiries(data_folder: Path, trial_length=None, pre_stim=0.0):
         transformation_buffer=buffer,
     )
 
-    inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
+    if apply_filter:
+        inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(poststim_length * fs)
     trial_data = InquiryReshaper().extract_trials(
@@ -172,6 +188,17 @@ def load_data_mne(
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
+
+    # default_transform = get_fir_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=notch_filter,
+    #     low=filter_low,
+    #     high=filter_high,
+    #     fir_design='firwin',
+    #     fir_window='hamming',
+    #     phase='zero-double',
+    #     downsample_factor=downsample_rate,
+    # )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")

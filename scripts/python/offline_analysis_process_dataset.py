@@ -53,12 +53,13 @@ if __name__ == "__main__":
                 # grab the data and labels
                 results[session.name] = {}
 
-                # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
+                # # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
                 # raw_data, data, labels, trigger_timing, channel_map, poststim_length, dt = load_data_inquiries(
                 #     data_folder=session_folder
                 #     )
                 
-                raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=True)
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
+                    data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=False)
                 # epochs, figs = visualize_erp(
                 #     raw_data,
                 #     channel_map,
@@ -71,10 +72,10 @@ if __name__ == "__main__":
                 # target.append(epochs[1])
 
                 # train the models and get the results
-                # df = crossvalidate_record((data, labels), session_name=str(session.resolve()))
-                # for name in scores:
-                #     results[session.name][name] = df[f'mean_test_{name}']
-                #     results[session.name][f'std_{name}'] = df[f'std_test_{name}']
+                df = crossvalidate_record((data, labels), session_name=str(session.resolve()))
+                for name in scores:
+                    results[session.name][name] = df[f'mean_test_{name}']
+                    results[session.name][f'std_{name}'] = df[f'std_test_{name}']
                 # breakpoint()
 
                 dropped[session.name] = dl
@@ -82,13 +83,14 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 pass
-    # print(results)
+    print(results)
     # print(dropped)
-    # file_name = 'cf_AAR_all_models.csv'
-    # export = pd.DataFrame.from_dict(results).transpose()
-    # export.to_csv(file_name)
-    # export = pd.DataFrame.from_dict(dropped)
-    # export.to_csv('cf_AAR_all_models_dropped.csv')
+    condition = 'WD_NAR_IIR'
+    file_name = f'{condition}_all_models.csv'
+    export = pd.DataFrame.from_dict(results).transpose()
+    export.to_csv(file_name)
+    export = pd.DataFrame.from_dict(dropped)
+    export.to_csv(f'{condition}_all_models_dropped.csv')
 
     # average across participants using grand_average
     # target_ga, non_target_ga = group_average(target, non_target)

@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import numpy as np
-from bcipy.signal.process.filter import Notch, Bandpass
+from bcipy.signal.process.filter import Notch, Bandpass, FiniteImpulseResponse
 
 
 class Composition:
@@ -74,6 +74,24 @@ def get_default_transform(
     return Composition(
         Notch(sample_rate_hz, notch_freq_hz, notch_quality_factor),
         Bandpass(bandpass_low, bandpass_high, sample_rate_hz, bandpass_order),
+        Downsample(downsample_factor)
+    )
+
+
+def get_fir_transform(
+    sample_rate_hz: int,
+    notch_freq_hz: int,
+    low: int,
+    high: int,
+    fir_design: str,
+    fir_window: str,
+    phase: str,
+    downsample_factor: int,
+    notch_quality_factor: int = 30,
+) -> Composition:
+    return Composition(
+        Notch(sample_rate_hz, notch_freq_hz, notch_quality_factor),
+        FiniteImpulseResponse(low, high, sample_rate_hz, fir_design, fir_window, phase),
         Downsample(downsample_factor)
     )
 
