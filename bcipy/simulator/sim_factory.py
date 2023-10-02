@@ -26,4 +26,4 @@ class SimulationFactory:
             return SimulatorCopyPhraseReplay(parameter_path, out_dir, smodel_files, lmodel_files, data_folders[0],
                                              verbose=kwargs.get('verbose', False))
 
-    # parameter_path, save_dir, signal_models: [tuple], language_models, replay_data_path=None,
+        # TODO refactor for sampling simulator

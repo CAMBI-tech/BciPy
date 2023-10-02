@@ -10,7 +10,7 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.simulator.helpers.signal_helpers import process_raw_data_for_model, ExtractedExperimentData
 from bcipy.simulator.helpers.sim_viz import plot_replay_comparison
-from bcipy.simulator.simulator_base import Simulator, SimulatorData
+from bcipy.simulator.simulator_base import Simulator
 
 
 class SimulatorCopyPhraseReplay(Simulator):
@@ -36,7 +36,7 @@ class SimulatorCopyPhraseReplay(Simulator):
         self.write_output = False
         self.data_loader = None
 
-        self.signal_models_classes = [PcaRdaKdeModel for m in self.signal_models] # Hardcoded rn
+        self.signal_models_classes = [PcaRdaKdeModel for m in self.signal_models]  # Hardcoded rn
 
     def run(self):
         self.init_data_loader()
@@ -44,7 +44,7 @@ class SimulatorCopyPhraseReplay(Simulator):
         self.logger.info(f"Initialized data loader")
 
         # TODO need to support multimodal and language models
-        model_file, model_class = self.signal_models[0], self.signal_models_classes[0] # hardcoded rn
+        model_file, model_class = self.signal_models[0], self.signal_models_classes[0]  # hardcoded rn
         model = model_class(self.parameters.get("k_folds"))
         model = model.load(model_file)
 
@@ -105,7 +105,7 @@ class SimulatorCopyPhraseReplay(Simulator):
         return parameters
 
 
-class ReplayDataLoader(SimulatorData):
+class ReplayDataLoader:
 
     def __init__(self, source_path, parameters):
         self.source_path = source_path

@@ -30,7 +30,7 @@ log = logger.getLogger(__name__)
 
 
 @dataclass()
-class ExtractedExperimentData: # TODO clean up design
+class ExtractedExperimentData:  # TODO clean up design
     inquiries: np.ndarray
     trials: np.ndarray
     labels: list
@@ -40,7 +40,6 @@ class ExtractedExperimentData: # TODO clean up design
 
 
 def process_raw_data_for_model(data_folder, parameters, model_class=PcaRdaKdeModel) -> ExtractedExperimentData:
-
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()

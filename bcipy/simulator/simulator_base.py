@@ -23,14 +23,3 @@ class Simulator(ABC):
     @abstractmethod
     def get_param(self, name):
         ...
-
-
-class SimulatorData(ABC):
-
-    @abstractmethod
-    def next(self):
-        ...
-
-    @abstractmethod
-    def is_end(self) -> bool:
-        ...

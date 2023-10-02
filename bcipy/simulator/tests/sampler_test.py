@@ -8,9 +8,9 @@ from bcipy.helpers import load
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.simulator.interfaces import SessionState, Sampler
-from bcipy.simulator.sim_factory import SimulationFactory
-from bcipy.simulator.sim_sampler import RawDataEngine, SimpleLetterSampler
+from bcipy.simulator.helpers.sampler import Sampler, SimpleLetterSampler
+from bcipy.simulator.interfaces import SimSessionState
+from bcipy.simulator.sim_sampler import RawDataEngine
 
 if __name__ == "__main__":
     args = dict()
@@ -27,8 +27,8 @@ if __name__ == "__main__":
     target_symbol = "H"
 
     display_alp = random.sample(alphabet(), 10)
-    state: SessionState = SessionState(target_symbol=target_symbol, inquiry_n=0, series_n=0, target_sentence=target_phrase,
-                                       current_sentence="", display_alphabet=display_alp)
+    state: SimSessionState = SimSessionState(target_symbol=target_symbol, inquiry_n=0, series_n=0, target_sentence=target_phrase,
+                                             current_sentence="", display_alphabet=display_alp)
 
     sampler: Sampler = SimpleLetterSampler(data_engine)
     sample: np.ndarray = sampler.sample(state)
