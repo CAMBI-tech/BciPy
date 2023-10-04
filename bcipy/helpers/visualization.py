@@ -28,6 +28,22 @@ import pandas as pd
 
 log = logging.getLogger(__name__)
 
+def clip_to_display(data, screen_limits):
+    """Clip to Display. This function is used to clip the eye data to the display size. Removes
+    > 1 values and < 0 values. Removes nan values.
+
+    Input:
+        data (np.ndarray): Eye data
+        screen_limits (tuple): Screen limits
+
+    Output:
+        clipped_data (np.ndarray): Clipped eye data 
+    """
+    clipped_data = np.clip(data, screen_limits[0], screen_limits[1])
+    clipped_data = clipped_data[~np.isnan(clipped_data)]
+    
+    return clipped_data
+
 
 def visualize_erp(
         raw_data: RawData,
@@ -140,20 +156,18 @@ def visualize_gaze(
     right_eye_x = right_eye_data[0]
     right_eye_y = right_eye_data[1]
     eye_data = (left_eye_x, left_eye_y, right_eye_x, right_eye_y)
+    
+    # Transform the eye data to fit the display. Remove values < 1 & > 0, remove nan values
+    screen_limits = (0, 1)
+    clipped_data = []
+    for i in eye_data:
+        clipped_data.append(clip_to_display(i, screen_limits))
+    
+    lx, ly, rx, ry = clipped_data
 
-    # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
-    lx = np.clip(left_eye_x, 0, 1)
-    ly = np.clip(left_eye_y, 0, 1)
-    rx = np.clip(right_eye_x, 0, 1)
-    ry = np.clip(right_eye_y, 0, 1)
+    # Flip y axis
     ly = 1 - ly
     ry = 1 - ry
-
-    # remove nan values
-    lx = lx[~np.isnan(lx)]
-    ly = ly[~np.isnan(ly)]
-    rx = rx[~np.isnan(rx)]
-    ry = ry[~np.isnan(ry)]
 
     # scale the eye data to the image
     fig, ax = plt.subplots()
@@ -427,8 +441,6 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     trial_window = parameters.get("trial_window")
     static_offset = parameters.get("static_trigger_offset")
 
-    # TODO check for existence of these files and throw error if not found
-    # TODO check for other data types (tobii)
     raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate

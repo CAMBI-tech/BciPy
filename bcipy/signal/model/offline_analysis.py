@@ -20,7 +20,7 @@ from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
-                                  get_default_transform)
+                                  get_default_transform, extract_eye_info)
 from bcipy.signal.model.fusion_model import GazeModel
 import numpy as np
 from matplotlib.figure import Figure
@@ -153,7 +153,7 @@ def offline_analysis(
         f"Static offset: {static_offset}"
     )
 
-    # Load raw data: [RawData(Tobii-P0), RawData(DSI-24)]
+    # raw_data: [RawData(EyeTracker, RawData(EEG)]
     raw_data = load_raw_data(data_folder, data_file_paths)
 
     for mode_data in raw_data:
@@ -258,7 +258,6 @@ def offline_analysis(
             )
 
         if device_spec.content_type == "Eyetracker":
-            print(device_spec)
             figure_handles = visualize_gaze(
                 mode_data,
                 save_path=data_folder if save_figures else None,
@@ -320,7 +319,7 @@ def offline_analysis(
                 if len(inquiries[i]) == 0:
                     continue
 
-                left_eye, right_eye = model.reshaper.extract_eye_info(inquiries[i])
+                left_eye, right_eye = extract_eye_info(inquiries[i])
                 preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
 
                 # Train test split:
@@ -336,7 +335,6 @@ def offline_analysis(
                 model.fit(train_right_eye)
 
                 scores, means, covs = model.get_scores(test_right_eye)
-                # print(scores)
 
                 # Visualize the results:
                 figure_handles = visualize_gaze_inquiries(

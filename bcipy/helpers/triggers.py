@@ -519,7 +519,7 @@ def trigger_decoder(
         exclusion: any TriggerTypes to be filtered from data returned
         device_type: used to determine which starting_offset value to use; if
             a 'starting_offset' trigger is found it will be applied.
-        apply_system_offset: if True, keeps the 'starting_offset' value from the triggers file. 
+        apply_system_offset: if True, keeps the 'starting_offset' value from the triggers file.
             If False, sets it to 0.0.
 
     Returns
