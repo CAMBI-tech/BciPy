@@ -1,28 +1,20 @@
-import json
 import logging as logger
 from dataclasses import dataclass
-from typing import Tuple
 from pathlib import Path
+from typing import List
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sns
+
+import bcipy.acquisition.devices as devices
 from bcipy.config import (
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,
-    DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME,
 )
 from bcipy.helpers.acquisition import analysis_channels
-import bcipy.acquisition.devices as devices
-from bcipy.helpers.list import grouper
-from bcipy.helpers.load import load_json_parameters, load_raw_data, load_experimental_data
-from bcipy.helpers.session import read_session, evidence_records
-from bcipy.helpers.stimuli import update_inquiry_timing
+from bcipy.helpers.load import load_raw_data, load_experimental_data
+from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.symbols import alphabet
-from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
 
 logger.getLogger().setLevel(logger.INFO)
@@ -33,13 +25,13 @@ log = logger.getLogger(__name__)
 class ExtractedExperimentData:  # TODO clean up design
     inquiries: np.ndarray
     trials: np.ndarray
-    labels: list
-    inquiry_timing: list
+    labels: List
+    inquiry_timing: List
 
     decoded_triggers: tuple
 
 
-def process_raw_data_for_model(data_folder, parameters, model_class=PcaRdaKdeModel) -> ExtractedExperimentData:
+def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
@@ -90,9 +82,6 @@ def process_raw_data_for_model(data_folder, parameters, model_class=PcaRdaKdeMod
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    k_folds = parameters.get("k_folds")
-    model = model_class(k_folds=k_folds)
-
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
@@ -111,7 +100,7 @@ def process_raw_data_for_model(data_folder, parameters, model_class=PcaRdaKdeMod
 
     data, fs = raw_data.by_channel()
 
-    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+    inquiries, inquiry_labels, inquiry_timing = reshaper(
         trial_targetness_label=trigger_targetness,
         timing_info=corrected_trigger_timing,
         eeg_data=data,
@@ -126,7 +115,7 @@ def process_raw_data_for_model(data_folder, parameters, model_class=PcaRdaKdeMod
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
-    trials = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+    trials = reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     # labels = inquiry_labels.flatten()

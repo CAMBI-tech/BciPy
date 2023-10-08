@@ -51,8 +51,6 @@ class SimulatorCopyPhrase(Simulator):
         self.verbose = verbose
         self.visualize = visualize
 
-        # self.signal_models_classes = [PcaRdaKdeModel for m in self.signal_models]  # Hardcoded rn
-
     def run(self):
         while not self.state_manager.is_done():
             self.state_manager.add_state('display_alphabet', self.__get_inquiry_alp_subset(self.state_manager.get_state()))
@@ -61,7 +59,7 @@ class SimulatorCopyPhrase(Simulator):
 
             self.state_manager.update(evidence)
 
-        # TODO visualize results
+        # TODO visualize result metrics
 
     def __get_inquiry_alp_subset(self, state: SimSessionState):
         # TODO put this in own file or object

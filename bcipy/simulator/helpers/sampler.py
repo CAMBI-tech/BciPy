@@ -1,9 +1,10 @@
 from abc import ABC
-from typing import Callable
+from typing import Callable, List
 
 import numpy as np
 import pandas as pd
 
+from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
@@ -22,12 +23,11 @@ class Sampler(ABC):
 
 class SimpleLetterSampler(Sampler):
 
-    def __init__(self, data_engine: RawDataEngine, params=None):
+    def __init__(self, data_engine: RawDataEngine, params: List[Parameters] = None):
         self.data_engine: RawDataEngine = data_engine
-        self.params: Parameters = params if params else self.data_engine.parameters
+        self.parameter_files: List[Parameters] = params if params else self.data_engine.parameter_files
         self.model_input_reshaper: Callable = self.__default_reshaper
-
-        self.alphabet: list[str] = params.get('symbol_set') if params else alphabet()
+        self.alphabet: List[str] = params[0].get('symbol_set') if params else alphabet()
         self.data: pd.DataFrame = self.data_engine.transform().get_data()
 
     def sample(self, state: SimSessionState) -> np.ndarray:
@@ -45,16 +45,12 @@ class SimpleLetterSampler(Sampler):
         for symbol in inquiry_letter_subset:
             is_target = int(symbol == target_letter)
             filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
-            row = filtered_data.sample(
-                1) if len(filtered_data) else None  # TODO figure out what to do when no sample is found. e.g no eeg data for nontarget symbol of 'x'
+            if not len(filtered_data):
+                raise TaskConfigurationException(message="No eeg sample found with provided data and query")
 
-            if row is None:
-                print("row is None")
-                breakpoint()
-
+            row = filtered_data.sample(1)
             eeg_responses.append(row['eeg'])
 
-        print(inquiry_letter_subset)
         return self.model_input_reshaper(eeg_responses)
 
     def set_reshaper(self, reshaper: Callable):
@@ -68,6 +64,5 @@ class SimpleLetterSampler(Sampler):
                 channels_eeg[c_i].append(channel_eeg)
 
         return np.array(channels_eeg[0])
-
 
 # TODO ReplaySampler
