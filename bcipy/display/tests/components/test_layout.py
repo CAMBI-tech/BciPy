@@ -4,7 +4,9 @@ import unittest
 from mockito import mock
 
 from bcipy.display.components.layout import (Alignment, Layout, at_bottom,
-                                             at_top, centered)
+                                             at_top, centered, envelope,
+                                             from_envelope, scaled_height,
+                                             scaled_size)
 
 
 class TestLayout(unittest.TestCase):
@@ -154,6 +156,45 @@ class TestLayout(unittest.TestCase):
         layout.resize_height(0.5, alignment=Alignment.BOTTOM)
         self.assertEqual(0.0, layout.top)
         self.assertEqual(-1.0, layout.bottom)
+
+    def test_envelope(self):
+        """Test calculation of a shape's envelope"""
+        pos = (0, 0)
+        width = 0.2
+        height = 0.1
+        verts = envelope(pos=pos, size=(width, height))
+        self.assertEqual(len(verts), 4)
+        self.assertTrue((-0.1, 0.05) in verts)
+        self.assertTrue((-0.1, -0.05) in verts)
+        self.assertTrue((0.1, -0.05) in verts)
+        self.assertTrue((0.1, 0.05) in verts)
+
+    def test_from_envelope(self):
+        """Test constructing a layout from an envelope"""
+        verts = envelope(pos=(0, 0), size=(0.2, 0.1))
+        layout = from_envelope(verts)
+        self.assertEqual(layout.top, 0.05)
+        self.assertEqual(layout.bottom, -0.05)
+        self.assertEqual(layout.left, -0.1)
+        self.assertEqual(layout.right, 0.1)
+        self.assertEqual(layout.center, (0, 0))
+
+    def test_scaled_size(self):
+        """Test scaling the size to make shapes that display as squares"""
+        self.assertEqual(
+            scaled_size(height=0.2, window_size=(500, 500)), (0.2, 0.2),
+            msg="Height and width should be the same in a square window")
+        self.assertEqual(
+            scaled_size(height=0.2, window_size=(800, 500)), (0.125, 0.2),
+            msg="Width should be proportional to the window aspect")
+
+        self.assertEqual(
+            scaled_size(height=0.2, window_size=(800, 500), units='height'), (0.2, 0.2),
+            msg="Width should be the same in 'height' units")
+
+    def test_scaled_height(self):
+        """Test calculation of scaled height based on width"""
+        self.assertEqual(scaled_height(0.125, window_size=(800, 500)), 0.2)
 
 
 if __name__ == '__main__':
