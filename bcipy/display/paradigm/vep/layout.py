@@ -105,16 +105,15 @@ class BoxConfiguration():
                  num_boxes: int,
                  spacing_pct: Optional[float] = None,
                  height_pct: float = 0.25):
-        assert num_boxes == 4 or num_boxes == 6, 'Number of boxes must be 4 or 6'
-        assert height_pct <= 0.5, "Rows can't take more than 50% of the height"
-        self.num_boxes = num_boxes
         self.layout = layout
+        self.num_boxes = num_boxes
+        self.height_pct = height_pct
+        self.validate()
 
         default_spacing = {4: 0.1, 6: 0.05}
         if not spacing_pct:
             spacing_pct = default_spacing[num_boxes]
         self.spacing_pct = spacing_pct
-        self.height_pct = height_pct
         self._row_count = 2
 
     def validate(self):

@@ -3,7 +3,8 @@ import sys
 
 from psychopy import core, visual
 
-from bcipy.display import InformationProperties, VEPStimuliProperties
+from bcipy.display import (InformationProperties, VEPStimuliProperties,
+                           init_display_window)
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.vep.display import VEPDisplay
@@ -16,28 +17,26 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 root.addHandler(handler)
 
+font = 'Courier New'
 info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
     info_height=[0.1],
-    info_font=['Arial'],
+    info_font=[font],
     info_text=['VEP Display Demo'],
 )
 
 task_text = ['1/4', '2/4', '3/4', '4/4']
 num_boxes = 6
 
-win = visual.Window(size=[700, 700],
-                    fullscr=False,
-                    screen=1,
-                    allowGUI=False,
-                    allowStencil=False,
-                    monitor='testMonitor',
-                    color='black',
-                    colorSpace='rgb',
-                    blendMode='avg',
-                    waitBlanking=False,
-                    winType='pyglet')
+window_parameters = {
+    'full_screen': False,
+    'window_height': 700,
+    'window_width': 700,
+    'stim_screen': 1,
+    'background_color': 'black'
+}
+win = init_display_window(window_parameters)
 win.recordFrameIntervals = True
 frameRate = win.getActualFrameRate()
 
@@ -55,14 +54,14 @@ stimuli = VEPStimuliProperties(
     stim_color=stim_color,
     stim_pos=box_config.positions,
     stim_height=0.1,
-    stim_font='Arial',
+    stim_font=font,
     timing=(1, 0.5, 2, 4),  # prompt, fixation, animation, stimuli
     stim_length=1,  # how many times to stimuli
 )
 task_bar = CalibrationTaskBar(win,
                               inquiry_count=4,
                               current_index=0,
-                              font='Arial')
+                              font=font)
 vep = VEPDisplay(win, experiment_clock, stimuli, task_bar, info, box_config=box_config)
 timing = []
 wait_seconds = 2
