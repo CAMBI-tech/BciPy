@@ -8,13 +8,13 @@ from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.interfaces import SimSessionState
+from bcipy.simulator.interfaces import SimState
 
 
 class Sampler(ABC):
     """ Interface to generate sample of data usable by a model """
 
-    def sample(self, state: SimSessionState):
+    def sample(self, state: SimState):
         ...
 
     def set_reshaper(self, reshaper: Callable):
@@ -30,7 +30,7 @@ class SimpleLetterSampler(Sampler):
         self.alphabet: List[str] = params[0].get('symbol_set') if params else alphabet()
         self.data: pd.DataFrame = self.data_engine.transform().get_data()
 
-    def sample(self, state: SimSessionState) -> np.ndarray:
+    def sample(self, state: SimState) -> np.ndarray:
         """
             - query eeg response by letter
             - reshape for signal model input

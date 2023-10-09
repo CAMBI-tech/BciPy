@@ -8,7 +8,33 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.sampler import Sampler, SimpleLetterSampler
-from bcipy.simulator.interfaces import SimSessionState
+from bcipy.simulator.helpers.sim_state import StateManagerImpl, StateManager, SimState
+from bcipy.simulator.interfaces import ModelHandler, MetricReferee
+from bcipy.simulator.sim_sampler import SimulatorCopyPhrase
+
+
+class DummyModelHandler(ModelHandler):
+
+    def __init__(self, model_file):
+        self.model_file = model_file
+
+    def generate_evidence(self, state: SimState, features):
+        model = PcaRdaKdeModel()
+        model = model.load(self.model_file)
+
+        stimuli = state.display_alphabet
+        alp = alphabet()
+        eeg_evidence = model.predict(features, stimuli, alp)
+
+        return eeg_evidence
+
+    def get_model(self, key=None):
+        pass
+
+
+class DummyRef(MetricReferee):
+    pass
+
 
 if __name__ == "__main__":
     args = dict()
@@ -19,23 +45,25 @@ if __name__ == "__main__":
     sim_parameters = load_json_parameters("bcipy/simulator/sim_parameters.json", value_cast=True)
 
     data_engine = RawDataEngine(args['data_folders'])
-    target_phrase = "HELLO_WORLD"
-    target_symbol = "H"
 
     display_alp = random.sample(alphabet(), 10)
-    state: SimSessionState = SimSessionState(target_symbol=target_symbol, inquiry_n=0, series_n=0, target_sentence=target_phrase,
-                                             current_sentence="", display_alphabet=display_alp)
+
+    stateManager: StateManager = StateManagerImpl(sim_parameters)
+    stateManager.mutate_state("display_alphabet", display_alp)
+    print(stateManager.get_state())
 
     sampler: Sampler = SimpleLetterSampler(data_engine)
-    sample: np.ndarray = sampler.sample(state)
+    sample: np.ndarray = sampler.sample(stateManager.get_state())
 
-    model = PcaRdaKdeModel()
-    model = model.load(model_file)
+    # model = PcaRdaKdeModel()
+    # model = model.load(model_file)
+    #
+    # eeg_evidence = model.predict(sample, stateManager.get_state().display_alphabet, alphabet())
+    #
+    # print(eeg_evidence.shape)
+    # print(eeg_evidence)
 
-    breakpoint()
-    eeg_evidence = model.predict(sample, state.display_alphabet, alphabet())
-
-    print(eeg_evidence.shape)
-    print(eeg_evidence)
-
+    model_handler = DummyModelHandler(model_file)
+    sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, DummyRef())
+    sim.run()
     breakpoint()

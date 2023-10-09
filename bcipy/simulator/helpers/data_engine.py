@@ -23,6 +23,9 @@ class DataEngine(ABC):
     def get_data(self):
         ...
 
+    def get_parameters(self) -> List[Parameters]:
+        ...
+
 
 class RawDataEngine(DataEngine):
     """
@@ -49,7 +52,8 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
-        self.parameter_files = [load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for data_folder in self.source_dirs]
+        self.parameter_files = [load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for data_folder in
+                                self.source_dirs]
 
         assert len(self.source_dirs) == len(self.parameter_files)  # TODO more general parameter validation function
 
@@ -106,5 +110,8 @@ class RawDataEngine(DataEngine):
 
     def get_data(self):
         return self.schema.copy() if self.schema is not None else self.data
+
+    def get_parameters(self):
+        return self.parameter_files
 
 # TODO ReplaySessionDataEngine

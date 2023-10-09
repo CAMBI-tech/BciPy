@@ -1,10 +1,12 @@
 import random
+from time import sleep
 
 from bcipy.helpers import load
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.sampler import Sampler
-from bcipy.simulator.helpers.sim_state import StateManager, SimSessionState
+from bcipy.simulator.helpers.sim_state import StateManager, SimState
+from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.simulator.interfaces import MetricReferee, ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 
@@ -31,11 +33,10 @@ class SimulatorCopyPhrase(Simulator):
     - run closed loop simulation of {TaskType} with {data} with {simulation_params}
     """
 
-    def __init__(self, parameter_path: str, save_dir: str, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, verbose=False, visualize=False):
+    def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
+                 state_manager: StateManager, referee: MetricReferee, parameter_path: str = None, save_dir: str = None, verbose=False, visualize=False):
         super(SimulatorCopyPhrase, self).__init__()
 
-        self.parameters = self.load_parameters(parameter_path)
         self.save_dir: str = save_dir
         self.model_handler: ModelHandler = model_handler
         self.sampler: Sampler = sampler
@@ -44,34 +45,46 @@ class SimulatorCopyPhrase(Simulator):
 
         self.data_engine: DataEngine = data_engine
 
+        self.parameters = self.load_parameters(parameter_path)
+
         self.symbol_set = alphabet()
         self.write_output = False
-        self.data_loader = None
 
         self.verbose = verbose
         self.visualize = visualize
 
     def run(self):
         while not self.state_manager.is_done():
-            self.state_manager.add_state('display_alphabet', self.__get_inquiry_alp_subset(self.state_manager.get_state()))
+            print(f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n}")
+            self.state_manager.mutate_state('display_alphabet', self.__get_inquiry_alp_subset(self.state_manager.get_state()))
             sampled_data = self.sampler.sample(self.state_manager.get_state())
             evidence = self.model_handler.generate_evidence(self.state_manager.get_state(), sampled_data)
 
-            self.state_manager.update(evidence)
+            print(f"Evidence for stimuli {self.state_manager.get_state().display_alphabet} \n {evidence}")
 
+            inq_record: InquiryResult = self.state_manager.update(evidence)
+
+            if inq_record.decision:
+                print(f"Decided {inq_record.decision} for target {inq_record.target} for sentence {self.state_manager.get_state().target_sentence}")
+
+            print("\n")
+            sleep(.1)
         # TODO visualize result metrics
 
-    def __get_inquiry_alp_subset(self, state: SimSessionState):
+    def __get_inquiry_alp_subset(self, state: SimState):
         # TODO put this in own file or object
         subset_length = 10
         return random.sample(self.symbol_set, subset_length)
 
     def load_parameters(self, path):
         # TODO validate parameters
-        parameters = load.load_json_parameters(path, value_cast=True)
+        if not path:
+            parameters = self.data_engine.get_parameters()[0]  # TODO fix this parameter logic. for now assuming one parameter file speaks for all
+        else:
+            parameters = load.load_json_parameters(path, value_cast=True)
+
         sim_parameters = load.load_json_parameters(
             "bcipy/simulator/sim_parameters.json", value_cast=True)
-
         parameters.add_missing_items(sim_parameters)
         return parameters
 
