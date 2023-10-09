@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from psychopy import core, visual
+from psychopy import core
 
 from bcipy.display import (InformationProperties, VEPStimuliProperties,
                            init_display_window)
