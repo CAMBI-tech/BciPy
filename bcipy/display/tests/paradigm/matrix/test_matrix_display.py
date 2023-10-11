@@ -39,10 +39,11 @@ class TestMatrixDisplay(unittest.TestCase):
         self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
-        self.text_stim_mock = mock(psychopy.visual.TextStim)
+        self.text_stim_mock = mock({'pos': (0, 0)}, spec=psychopy.visual.TextStim)
         when(self.text_stim_mock).setOpacity(...).thenReturn()
         when(self.text_stim_mock).setColor(...).thenReturn()
         when(self.text_stim_mock).draw(...).thenReturn()
+
         # grid item
         when(psychopy.visual).TextStim(
             win=self.window,
