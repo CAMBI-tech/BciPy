@@ -28,6 +28,7 @@ import pandas as pd
 
 log = logging.getLogger(__name__)
 
+
 def clip_to_display(data, screen_limits):
     """Clip to Display. This function is used to clip the eye data to the display size. Removes
     > 1 values and < 0 values. Removes nan values.
@@ -37,11 +38,11 @@ def clip_to_display(data, screen_limits):
         screen_limits (tuple): Screen limits
 
     Output:
-        clipped_data (np.ndarray): Clipped eye data 
+        clipped_data (np.ndarray): Clipped eye data
     """
     clipped_data = np.clip(data, screen_limits[0], screen_limits[1])
     clipped_data = clipped_data[~np.isnan(clipped_data)]
-    
+
     return clipped_data
 
 
@@ -156,13 +157,13 @@ def visualize_gaze(
     right_eye_x = right_eye_data[0]
     right_eye_y = right_eye_data[1]
     eye_data = (left_eye_x, left_eye_y, right_eye_x, right_eye_y)
-    
+
     # Transform the eye data to fit the display. Remove values < 1 & > 0, remove nan values
     screen_limits = (0, 1)
     clipped_data = []
     for i in eye_data:
         clipped_data.append(clip_to_display(i, screen_limits))
-    
+
     lx, ly, rx, ry = clipped_data
 
     # Flip y axis
@@ -334,27 +335,29 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
         Figure of Triggers
     """
     # Load in CSV
-    data = load_raw_data(choose_csv_file())
-    raw_data = data.by_channel()
+    filename = choose_csv_file()
+    raw_data_list = load_raw_data(filename, [filename])
+    for mode_data in raw_data_list:
+        raw_data = mode_data.by_channel()
 
-    # Pull out the triggers
-    if not trigger_col:
-        triggers = raw_data[-1]
-    else:
-        triggers = raw_data[trigger_col]
+        # Pull out the triggers
+        if not trigger_col:
+            triggers = raw_data[-1]
+        else:
+            triggers = raw_data[trigger_col]
 
-    # Plot the triggers
-    plt.plot(triggers)
+        # Plot the triggers
+        plt.plot(triggers)
 
-    # Add some titles and labels to the figure
-    plt.title('Trigger Signal')
-    plt.ylabel('Trigger Value')
-    plt.xlabel('Samples')
+        # Add some titles and labels to the figure
+        plt.title('Trigger Signal')
+        plt.ylabel('Trigger Value')
+        plt.xlabel('Samples')
 
-    log.info('Press Ctrl + C to exit!')
-    # Show us the figure! Depending on your OS / IDE this may not close when
-    #  The window is closed, see the message above
-    plt.show()
+        log.info('Press Ctrl + C to exit!')
+        # Show us the figure! Depending on your OS / IDE this may not close when
+        #  The window is closed, see the message above
+        plt.show()
 
 
 def visualize_joint_average(
@@ -441,48 +444,48 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     trial_window = parameters.get("trial_window")
     static_offset = parameters.get("static_trigger_offset")
 
-    raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
-    channels = raw_data.channels
-    sample_rate = raw_data.sample_rate
+    raw_data_list = load_raw_data(session_path, [f'{RAW_DATA_FILENAME}.csv'])
 
-    transform_params = parameters.instantiate(ERPTransformParams)
+    for mode_data in raw_data_list:
+        channels = mode_data.channels
+        sample_rate = mode_data.sample_rate
 
-    devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
+        transform_params = parameters.instantiate(ERPTransformParams)
 
-    # setup filtering
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=transform_params.notch_filter_frequency,
-        bandpass_low=transform_params.filter_low,
-        bandpass_high=transform_params.filter_high,
-        bandpass_order=transform_params.filter_order,
-        downsample_factor=transform_params.down_sampling_rate,
-    )
-    # Process triggers.txt files
-    trigger_targetness, trigger_timing, _ = trigger_decoder(
-        offset=static_offset,
-        trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-    )
-    assert "nontarget" in trigger_targetness, "No nontarget triggers found."
-    assert "target" in trigger_targetness, "No target triggers found."
-    assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
+        devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
+        device_spec = devices.preconfigured_device(mode_data.daq_type)
 
-    labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
-    channel_map = analysis_channels(channels, device_spec)
+        # setup filtering
+        default_transform = get_default_transform(
+            sample_rate_hz=sample_rate,
+            notch_freq_hz=transform_params.notch_filter_frequency,
+            bandpass_low=transform_params.filter_low,
+            bandpass_high=transform_params.filter_high,
+            bandpass_order=transform_params.filter_order,
+            downsample_factor=transform_params.down_sampling_rate,
+        )
+        # Process triggers.txt files
+        trigger_targetness, trigger_timing, _ = trigger_decoder(
+            offset=static_offset,
+            trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
+            exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        )
+        assert "nontarget" in trigger_targetness, "No nontarget triggers found."
+        assert "target" in trigger_targetness, "No target triggers found."
+        assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
 
-    erp = visualize_erp(
-        raw_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=session_path,
-        show=show,
-    )
+        labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
+        channel_map = analysis_channels(channels, device_spec)
 
-    # eye_data = visualize_gaze
+        erp = visualize_erp(
+            mode_data,
+            channel_map,
+            trigger_timing,
+            labels,
+            trial_window,
+            transform=default_transform,
+            plot_average=True,
+            plot_topomaps=True,
+            save_path=session_path,
+            show=show,
+        )

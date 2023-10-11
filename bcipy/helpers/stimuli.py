@@ -240,7 +240,7 @@ class GazeReshaper:
                  ) -> dict:
         """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
         the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
-        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and 
+        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
         the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
         Optional outputs:
         reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended

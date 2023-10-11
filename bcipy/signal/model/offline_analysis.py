@@ -34,6 +34,7 @@ logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][
 DIPSIZE = (1707, 1067)
 IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
 # IMG_PATH = f'{STATIC_IMAGES_PATH}/main/rsvp.png'
+# TODO: Update images to contain the path to directory of the respective calibration session.
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
@@ -144,6 +145,10 @@ def offline_analysis(
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
     static_offset = parameters.get("static_trigger_offset")
+    if trial_window is None:
+        trial_window = [0.0, 0.5]
+    # NOTE: Had to add it manually for offline analysis of multimodal datasets,
+    # since the trial_window information was not available in the parameters file.
 
     log.info(
         f"\nData processing settings: \n"

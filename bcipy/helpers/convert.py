@@ -170,7 +170,9 @@ def pyedf_convert(data_dir: str,
 
     params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
                                   value_cast=True)
-    data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
+    data_list = load_raw_data(data_dir, [f'{RAW_DATA_FILENAME}.csv'])
+    # NOTE: With the current inputs this function only loads the EEG data. Update needed for eyetracker data.
+    data = data_list[0]
     fs = data.sample_rate
     if pre_filter:
         default_transform = get_default_transform(
