@@ -1,6 +1,6 @@
 """Display for presenting stimuli in a grid."""
 import logging
-from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -93,9 +93,6 @@ class MatrixDisplay(Display):
                                             width_pct=width_pct,
                                             height_pct=height_pct)
         self.positions = symbol_positions(display_container, rows, columns)
-        self.logger.info(
-            f"Symbol positions ({display_container.units} units): {self.positions}"
-        )
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
@@ -115,6 +112,20 @@ class MatrixDisplay(Display):
 
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
+
+        self.logger.info(
+            f"Symbol positions ({display_container.units} units):\n{self._stim_positions}"
+        )
+        self.logger.info(f"Matrix center position: {display_container.center}")
+
+    @property
+    def _stim_positions(self) -> Dict[str, Tuple[float, float]]:
+        """Returns a dict with the position for each stim"""
+        assert self.stim_registry, "stim_registry not yet initialized"
+        return {
+            sym: tuple(stim.pos)
+            for sym, stim in self.stim_registry.items()
+        }
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
