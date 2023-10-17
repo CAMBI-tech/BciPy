@@ -1,3 +1,6 @@
+import os
+import warnings
+warnings.filterwarnings('ignore')
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
 import numpy as np
 import pandas as pd
@@ -88,6 +91,7 @@ def crossvalidate_record(record, clfs=clfs, scores=scores, session_name=None):
             refit='mcc',
             cv=k_folds,
             return_train_score=True,
+            verbose=False
         )
         cv.fit(record[0], record[1])
         headers = [
@@ -97,6 +101,12 @@ def crossvalidate_record(record, clfs=clfs, scores=scores, session_name=None):
         results = pd.DataFrame(cv.cv_results_)[headers]
         results['classifier'] = name
         df = pd.concat((df, results), sort=False)
-        with open(f'{session_name}/model_{name}.pkl', 'wb') as f:
-            pickle.dump(cv.best_estimator_, f)
+
+        # save the best model
+        if session_name is not None:
+            # create a models folder if it doesn't exist
+            if not os.path.exists(f'{session_name}/models'):
+                os.makedirs(f'{session_name}/models')
+            with open(f'{session_name}/models/model_{name}.pkl', 'wb') as f:
+                pickle.dump(cv.best_estimator_, f)
     return df.reindex(sorted(df.columns), axis=1)

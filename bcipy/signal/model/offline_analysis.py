@@ -28,7 +28,7 @@ from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.WARNING, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
