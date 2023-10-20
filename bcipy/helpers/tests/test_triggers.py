@@ -593,6 +593,33 @@ class TestTriggerFunctions(unittest.TestCase):
             self.assertAlmostEqual(times[0], 4.13)
             self.assertAlmostEqual(times[-1], 6.85)
 
+    @patch('bcipy.helpers.triggers.os.path.exists')
+    def test_trigger_decoder_without_starting_offset(self, path_exists_mock):
+        """Test trigger decoder"""
+        trg_data = '''starting_offset offset -3.47
+            starting_offset_EYETRACKER offset -4.45
+            J prompt 6.15
+            + fixation 8.11
+            F nontarget 8.58
+            D nontarget 8.88
+            J target 9.18
+            T nontarget 9.49
+            K nontarget 9.79
+            _ nontarget 11.30'''
+        path_exists_mock.returnValue = True
+        with patch('builtins.open', mock_open(read_data=trg_data),
+                   create=True):
+            types, times, labels = trigger_decoder('triggers.txt',
+                                                   device_type='EYETRACKER',
+                                                   apply_starting_offset=False)
+
+            self.assertListEqual(types, [
+                'nontarget', 'nontarget', 'target', 'nontarget', 'nontarget',
+                'nontarget'
+            ])
+            self.assertListEqual(labels, ['F', 'D', 'J', 'T', 'K', '_'])
+            self.assertAlmostEqual(times[0], 8.58)
+            self.assertAlmostEqual(times[-1], 11.30)
 
 if __name__ == '__main__':
     unittest.main()

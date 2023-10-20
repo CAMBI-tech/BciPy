@@ -2,31 +2,33 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-from bcipy.config import (DEFAULT_PARAMETERS_PATH, TRIGGER_FILENAME,
+import numpy as np
+from matplotlib.figure import Figure
+from sklearn.metrics import balanced_accuracy_score
+from sklearn.model_selection import train_test_split
+
+import bcipy.acquisition.devices as devices
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, EYE_TRACKER_FILENAME_PREFIX,
                           RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
-                          DEFAULT_DEVICE_SPEC_FILENAME,
-                          STATIC_IMAGES_PATH, EYE_TRACKER_FILENAME_PREFIX)
+                          STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
-from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp, visualize_gaze, visualize_gaze_inquiries
+from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
+                                         visualize_gaze_inquiries)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
-                                  get_default_transform, extract_eye_info)
 from bcipy.signal.model.fusion_model import GazeModel
-import numpy as np
-from matplotlib.figure import Figure
-from sklearn.metrics import balanced_accuracy_score
-from sklearn.model_selection import train_test_split
-import bcipy.acquisition.devices as devices
+from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
+                                  filter_inquiries, get_default_transform)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -188,11 +190,10 @@ def offline_analysis(
 
             # Process triggers.txt files
             trigger_targetness, trigger_timing, _ = trigger_decoder(
-                offset=static_offset,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
                 exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-                device_type='EEG',
-                apply_system_offset=True
+                offset=static_offset,
+                device_type='EEG'
             )
 
             # update the trigger timing list to account for the initial trial window
@@ -287,16 +288,16 @@ def offline_analysis(
 
             # Extract all Triggers info
             trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-                remove_pre_fixation=False,
-                apply_system_offset=False,
                 trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+                remove_pre_fixation=False,
                 exclusion=[
                     TriggerType.PREVIEW,
                     TriggerType.EVENT,
                     TriggerType.FIXATION,
                     TriggerType.SYSTEM,
                     TriggerType.OFFSET],
-                device_type='EYETRACKER'
+                device_type='EYETRACKER',
+                apply_starting_offset=False
             )
             ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
