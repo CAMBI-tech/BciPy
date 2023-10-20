@@ -1,6 +1,6 @@
 """Utility functions for list processing."""
-from typing import Callable, List
 from itertools import zip_longest
+from typing import Any, Callable, List, Optional, Union
 
 
 def destutter(items: List, key: Callable = lambda x: x) -> List:
@@ -34,3 +34,23 @@ def grouper(iterable, chunk_size, incomplete="fill", fillvalue=None):
         return zip(*chunks)
 
     raise ValueError("Expected fill or ignore")
+
+
+def find_index(iterable: List,
+               match_item: Union[Any, Callable],
+               key: Callable = lambda x: x) -> Optional[int]:
+    """Find the index of the first item in the iterable which matches."""
+    for i, value in enumerate(iterable):
+        if callable(match_item):
+            result = match_item(value)
+        else:
+            result = key(value) == match_item
+        if result:
+            return i
+    return None
+
+def swapped(lst: List, index1: int, index2: int) -> None:
+    """Creates a copy of the provided list with elements at the given indices
+    swapped."""
+    replacements = { index1: lst[index2], index2: lst[index1] }
+    return [replacements.get(i, val) for i, val in enumerate(lst)]
