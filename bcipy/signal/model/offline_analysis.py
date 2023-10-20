@@ -9,10 +9,9 @@ from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, EYE_TRACKER_FILENAME_PREFIX,
-                          RAW_DATA_FILENAME, STATIC_AUDIO_PATH,
+                          DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
-from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
 from bcipy.helpers.parameters import Parameters
@@ -120,29 +119,6 @@ def offline_analysis(
     # We use half of that time here to buffer during transforms
     buffer = int(parameters.get("task_buffer_length") / 2)
 
-    acq_mode = parameters.get("acq_mode")
-    # handle multiple acquisition. Note: we only currently support Eyetracker + EEG
-    data_file_paths = []
-    if '+' in acq_mode:
-        if 'eyetracker' in acq_mode.lower():
-            # find the eyetracker data file with the prefix of EYE_TRACKER_FILENAME_PREFIX
-            eye_tracker_file = [f.name for f in Path(data_folder).iterdir()
-                                if f.name.startswith(EYE_TRACKER_FILENAME_PREFIX)]
-            assert len(
-                eye_tracker_file) == 1, f"Found {len(eye_tracker_file)} eyetracker files in {data_folder}. Expected 1."
-            data_file_paths.extend(eye_tracker_file)
-        else:
-            raise ValueError(f"Unsupported acquisition mode: {acq_mode}. Eyetracker must be included.")
-        if 'eeg' in acq_mode.lower():
-            # find the eeg data file with the prefix of EEG_FILENAME_PREFIX
-            eeg_file = [f.name for f in Path(data_folder).iterdir() if f.name.startswith(RAW_DATA_FILENAME)]
-            assert len(eeg_file) == 1, f"Found {len(eeg_file)} EEG files in {data_folder}. Expected 1."
-            data_file_paths.extend(eeg_file)
-        else:
-            raise ValueError(f"Unsupported acquisition mode: {acq_mode}. EEG must be included.")
-    else:
-        data_file_paths = [f"{RAW_DATA_FILENAME}.csv"]
-
     # get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
@@ -160,12 +136,19 @@ def offline_analysis(
         f"Static offset: {static_offset}"
     )
 
+    devices_by_name = devices.load(
+        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+    data_file_paths = [
+        path for path in (Path(data_folder, raw_data_filename(device_spec))
+                          for device_spec in devices_by_name.values())
+        if path.exists()
+    ]
+
     # raw_data: [RawData(EyeTracker, RawData(EEG)]
     raw_data = load_raw_data(data_folder, data_file_paths)
 
     for mode_data in raw_data:
-        devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
-        device_spec = devices.preconfigured_device(mode_data.daq_type)
+        device_spec = devices_by_name.get(mode_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
             channels = mode_data.channels
@@ -351,7 +334,6 @@ def offline_analysis(
                     raw_plot=True,
                 )
 
-                breakpoint()
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")

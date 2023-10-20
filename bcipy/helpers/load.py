@@ -226,7 +226,7 @@ def load_raw_data(data_folder: str, data_paths: List[str]) -> List[RawData]:
     data = []
     for data_path in data_paths:
         filename = Path(data_folder, data_path)
-        if os.path.exists(filename):
+        if filename.exists():
             data.append(RawData.load(filename))
         else:
             raise FileNotFoundError(f'Could not find {filename}')

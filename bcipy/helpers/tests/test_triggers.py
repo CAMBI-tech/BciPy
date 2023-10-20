@@ -621,5 +621,6 @@ class TestTriggerFunctions(unittest.TestCase):
             self.assertAlmostEqual(times[0], 8.58)
             self.assertAlmostEqual(times[-1], 11.30)
 
+
 if __name__ == '__main__':
     unittest.main()

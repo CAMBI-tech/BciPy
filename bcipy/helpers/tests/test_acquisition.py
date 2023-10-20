@@ -4,10 +4,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.acquisition import (init_device, init_eeg_acquisition,
+from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, init_device,
+                                       init_eeg_acquisition,
                                        max_inquiry_duration, parse_stream_type,
-                                       server_spec, stream_types)
+                                       raw_data_filename, server_spec,
+                                       stream_types)
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
 
@@ -165,6 +168,24 @@ class TestAcquisition(unittest.TestCase):
         device_spec = server_spec(content_type='EEG')
         with_content_type_mock.assert_called_with('EEG')
         self.assertEqual(device_spec, device1)
+
+    def test_raw_data_filename_eeg(self):
+        """Test generation of filename for EEG devices"""
+        device = DeviceSpec(name='DSI-24',
+                            channels=[],
+                            sample_rate=300.0,
+                            content_type='EEG')
+        self.assertEqual(raw_data_filename(device), f'{RAW_DATA_FILENAME}.csv')
+
+    def test_raw_data_filename(self):
+        """Test generation of filename"""
+
+        device = DeviceSpec(name='Tobii-P0',
+                            channels=[],
+                            sample_rate=60,
+                            content_type='EYETRACKER')
+        self.assertEqual(raw_data_filename(device),
+                         'eyetracker_data_tobii-p0.csv')
 
 
 if __name__ == '__main__':
