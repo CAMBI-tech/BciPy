@@ -211,26 +211,18 @@ def choose_csv_file(filename: str = None) -> str:
     return filename
 
 
-def load_raw_data(data_folder: str, data_paths: List[str]) -> List[RawData]:
+def load_raw_data(filename: str) -> RawData:
     """Reads the data (.csv) file written by data acquisition.
 
     Parameters
     ----------
-    - data_folder : path to the serialized data location
-    - data_paths : list of paths to the serialized data (csv file)
+    - filename : path to the serialized data (csv file)
 
     Returns
     -------
     RawData object with data held in memory
     """
-    data = []
-    for data_path in data_paths:
-        filename = Path(data_folder, data_path)
-        if filename.exists():
-            data.append(RawData.load(filename))
-        else:
-            raise FileNotFoundError(f'Could not find {filename}')
-    return data
+    return RawData.load(filename)
 
 
 def load_txt_data() -> str:

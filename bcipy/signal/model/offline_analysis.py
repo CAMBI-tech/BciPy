@@ -144,16 +144,14 @@ def offline_analysis(
         if path.exists()
     ]
 
-    # raw_data: [RawData(EyeTracker, RawData(EEG)]
-    raw_data = load_raw_data(data_folder, data_file_paths)
-
-    for mode_data in raw_data:
-        device_spec = devices_by_name.get(mode_data.daq_type)
+    for raw_data_path in data_file_paths:
+        raw_data = load_raw_data(raw_data_path)
+        device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            channels = mode_data.channels
-            type_amp = mode_data.daq_type
-            sample_rate = mode_data.sample_rate
+            channels = raw_data.channels
+            type_amp = raw_data.daq_type
+            sample_rate = raw_data.sample_rate
 
             # setup filtering
             default_transform = get_default_transform(
@@ -188,7 +186,7 @@ def offline_analysis(
             channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
             log.info(f'Channels used in analysis: {channels_used}')
 
-            data, fs = mode_data.by_channel()
+            data, fs = raw_data.by_channel()
 
             inquiries, inquiry_labels, inquiry_timing = model.reshaper(
                 trial_targetness_label=trigger_targetness,
@@ -234,7 +232,7 @@ def offline_analysis(
 
             # this should have uncorrected trigger timing for display purposes
             figure_handles = visualize_erp(
-                mode_data,
+                raw_data,
                 channel_map,
                 trigger_timing,
                 labels,
@@ -248,15 +246,15 @@ def offline_analysis(
 
         if device_spec.content_type == "Eyetracker":
             figure_handles = visualize_gaze(
-                mode_data,
+                raw_data,
                 save_path=data_folder if save_figures else None,
                 show=True,
                 raw_plot=True,
             )
 
-            channels = mode_data.channels
-            type_amp = mode_data.daq_type
-            sample_rate = mode_data.sample_rate
+            channels = raw_data.channels
+            type_amp = raw_data.daq_type
+            sample_rate = raw_data.sample_rate
 
             log.info(f"Channels read from csv: {channels}")
             log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -265,7 +263,7 @@ def offline_analysis(
             channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
             log.info(f'Channels used in analysis: {channels_used}')
 
-            data, fs = mode_data.by_channel()
+            data, fs = raw_data.by_channel()
 
             model = GazeModel()
 
@@ -333,7 +331,6 @@ def offline_analysis(
                     show=True,
                     raw_plot=True,
                 )
-
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")

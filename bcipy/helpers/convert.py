@@ -3,22 +3,20 @@ import logging
 import os
 import tarfile
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-
-import numpy as np
-
-from pyedflib import FILETYPE_EDFPLUS, EdfWriter, FILETYPE_BDFPLUS
-from tqdm import tqdm
-
-from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
-from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.raw_data import RawData
-from bcipy.signal.process import Composition, get_default_transform
-from bcipy.helpers.triggers import trigger_decoder, trigger_durations
+from typing import Dict, List, Optional, Tuple
 
 import mne
+import numpy as np
 from mne.io import RawArray
+from pyedflib import FILETYPE_BDFPLUS, FILETYPE_EDFPLUS, EdfWriter
+from tqdm import tqdm
 
+from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.raw_data import RawData
+from bcipy.helpers.triggers import trigger_decoder, trigger_durations
+from bcipy.signal.process import Composition, get_default_transform
 
 logger = logging.getLogger(__name__)
 
@@ -170,9 +168,7 @@ def pyedf_convert(data_dir: str,
 
     params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
                                   value_cast=True)
-    data_list = load_raw_data(data_dir, [f'{RAW_DATA_FILENAME}.csv'])
-    # NOTE: With the current inputs this function only loads the EEG data. Update needed for eyetracker data.
-    data = data_list[0]
+    data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
     fs = data.sample_rate
     if pre_filter:
         default_transform = get_default_transform(
