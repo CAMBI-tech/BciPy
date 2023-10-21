@@ -248,7 +248,7 @@ def offline_analysis(
             figure_handles = visualize_gaze(
                 raw_data,
                 save_path=data_folder if save_figures else None,
-                show=True,
+                show=show_figures,
                 raw_plot=True,
             )
 
@@ -328,9 +328,16 @@ def offline_analysis(
                     left_eye, right_eye,
                     means, covs,
                     save_path=None,
-                    show=True,
+                    show=show_figures,
                     raw_plot=True,
                 )
+
+            model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                                 transform=None)
+            log.info("Training complete for Eyetracker model. Saving data...")
+            save_model(
+                model,
+                Path(data_folder, f"model_{device_spec.content_type}.pkl"))
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
