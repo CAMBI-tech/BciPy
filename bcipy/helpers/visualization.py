@@ -113,27 +113,36 @@ def visualize_erp(
 
 
 def visualize_gaze(
-        data,
-        left_keys=['left_x', 'left_y'],
-        right_keys=['right_x', 'right_y'],
-        save_path=None,
-        show=False,
-        img_path=None,
-        screen_size=(1920, 1080),
-        heatmap=False,
-        raw_plot=False) -> Figure:
+        data: RawData,
+        left_keys: List[str] = ['left_x', 'left_y'],
+        right_keys: List[str] = ['right_x', 'right_y'],
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
     """Visualize Eye Data.
 
     Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
-        image used is for the matrix calibration task on a 1920x1080 screen.
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of tasks. Given a set of 
+    trailed data, the gaze distribution are plotted and may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
 
     Parameters
     ----------
-        data: RawData
-        save_path: Optional[str]
-        show: Optional[bool]
-        img_path: Optional[str]
-        screen_size: Optional[Tuple[int, int]] TODO
+    data: RawData: Gaze RawData
+    left_keys: Optional[List[str]]: List of channels for the left eye data. Default: ['left_x', 'left_y']
+    right_keys: Optional[List[str]]: List of channels for the right eye data. Default: ['right_x', 'right_y']
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy Phrase tasks. Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
 
     title = f'{data.daq_type} '
@@ -207,27 +216,40 @@ def visualize_gaze(
 
 
 def visualize_gaze_inquiries(
-        left_eye,
-        right_eye,
-        means=None,
-        covs=None,
-        save_path=None,
-        show=False,
-        img_path=None,
-        heatmap=False,
-        raw_plot=False) -> Figure:
-    """Visualize Eye Data.
+        left_eye: np.ndarray,
+        right_eye: np.ndarray,
+        means: Optional[np.ndarray] = None,
+        covs: Optional[np.ndarray] = None,
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
+    """Visualize Gaze Inquiries.
 
     Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
-        image used is for the matrix calibration task on a 1920x1080 screen.
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of 
+    trailed data (left & right eye), the gaze distribution for each prompted symbol are plotted, along 
+    with the contour plots of mean and covariances calculated by the Gaussian Mixture Model. 
+    The figures may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
 
     Parameters
     ----------
-        left eye, right eye: (np.ndarray): Raw gaze data, plotting both eyes is optional
-        means, covs: Optional(np.ndarray): Means and covariances of the Gaussian Mixture Model
-        save_path: Optional[str]
-        show: Optional[bool]
-        img_path: Optional[str]
+    left_eye: (np.ndarray): Data array for the left eye data.
+    right_eye: (np.ndarray): Data array for the right eye data.
+    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
+    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy Phrase tasks. Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
 
     title = 'Raw Gaze Inquiries '
