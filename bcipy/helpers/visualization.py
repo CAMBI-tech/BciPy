@@ -127,7 +127,7 @@ def visualize_gaze(
     Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
     image used is for the matrix calibration task on a 1920x1080 screen.
 
-    Generates a comparative matrix figure following the execution of tasks. Given a set of 
+    Generates a comparative matrix figure following the execution of tasks. Given a set of
     trailed data, the gaze distribution are plotted and may be saved or shown in a window.
 
     Returns a list of the figure handles created.
@@ -140,7 +140,8 @@ def visualize_gaze(
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
-    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy Phrase tasks. Default: (1920, 1080)
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
+        Phrase tasks. Default: (1920, 1080)
     heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
     raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
@@ -231,9 +232,9 @@ def visualize_gaze_inquiries(
     Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
     image used is for the matrix calibration task on a 1920x1080 screen.
 
-    Generates a comparative matrix figure following the execution of offline analysis. Given a set of 
-    trailed data (left & right eye), the gaze distribution for each prompted symbol are plotted, along 
-    with the contour plots of mean and covariances calculated by the Gaussian Mixture Model. 
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of
+    trailed data (left & right eye), the gaze distribution for each prompted symbol are plotted, along
+    with the contour plots of mean and covariances calculated by the Gaussian Mixture Model.
     The figures may be saved or shown in a window.
 
     Returns a list of the figure handles created.
@@ -247,7 +248,8 @@ def visualize_gaze_inquiries(
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
-    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy Phrase tasks. Default: (1920, 1080)
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
+        Phrase tasks. Default: (1920, 1080)
     heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
     raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
