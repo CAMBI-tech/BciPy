@@ -106,7 +106,7 @@ class ProbThresholdSim(SimDecisionCriteria):
         self.tau = threshold
 
     def decide(self, series: List[InquiryResult]):
-        current_distribution = series[-1].evidence_likelihoods
+        current_distribution = series[-1].fused_likelihood
         if np.max(current_distribution) > self.tau:
             log.info("Committing to decision: posterior exceeded threshold.")
             return True

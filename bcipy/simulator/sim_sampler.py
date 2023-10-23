@@ -55,14 +55,17 @@ class SimulatorCopyPhrase(Simulator):
 
     def run(self):
         while not self.state_manager.is_done():
-            print(f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n}")
+            print(f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n} | Target {self.state_manager.get_state().target_symbol}")
             self.state_manager.mutate_state('display_alphabet', self.__get_inquiry_alp_subset(self.state_manager.get_state()))
             sampled_data = self.sampler.sample(self.state_manager.get_state())
-            evidence = self.model_handler.generate_evidence(self.state_manager.get_state(), sampled_data)
+            evidence = self.model_handler.generate_evidence(self.state_manager.get_state(),
+                                                            sampled_data)  # TODO make this evidence be a dict (mapping of evidence type to evidence)
 
             print(f"Evidence for stimuli {self.state_manager.get_state().display_alphabet} \n {evidence}")
 
             inq_record: InquiryResult = self.state_manager.update(evidence)
+
+            print(f"Fused Likelihoods {[str(round(p, 3)) for p in inq_record.fused_likelihood]}")
 
             if inq_record.decision:
                 print(f"Decided {inq_record.decision} for target {inq_record.target} for sentence {self.state_manager.get_state().target_sentence}")

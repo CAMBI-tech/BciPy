@@ -1,7 +1,7 @@
 import copy
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import numpy as np
 
@@ -9,8 +9,10 @@ from bcipy.helpers.exceptions import FieldException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
+from bcipy.simulator.helpers.evidence_fuser import MultipyFuser, EvidenceFuser
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.task.control.criteria import DecisionCriteria, MaxIterationsCriteria, ProbThresholdCriteria
+from bcipy.task.control.handler import EvidenceFusion
 
 
 @dataclass
@@ -23,7 +25,7 @@ class SimState:
     inquiry_n: int
     series_n: int
     series_results: List[List[InquiryResult]]
-
+    # TODO store the fused results
     decision_criterion: List[SimDecisionCriteria]
 
     def total_inquiry_count(self):
@@ -36,7 +38,7 @@ class SimState:
 
 class StateManager(ABC):
 
-    def update(self, evidence: np.ndarray):
+    def update(self, evidence: np.ndarray):  # TODO change evidence type to dictionary or some dataclass
         raise NotImplementedError()
 
     def is_done(self) -> bool:
@@ -51,32 +53,40 @@ class StateManager(ABC):
 
 class StateManagerImpl(StateManager):
 
-    def __init__(self, parameters: Parameters):
+    def __init__(self, parameters: Parameters, fuser_class=MultipyFuser):
         self.state: SimState = self.initial_state()
         self.parameters = parameters
+        self.fuser_class: EvidenceFuser.__class__ = fuser_class
 
-        self.stop_inq = 50  # TODO pull from parameters
+        self.max_inq_len = self.parameters.get('max_inq_len', 50)
+        # TODO add stoppage criterion, Stoppage criterion is seperate from decision. Decision should we go on to next letter or not
 
     def is_done(self) -> bool:
 
-        return self.state.total_inquiry_count() > self.stop_inq or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
+        return self.state.total_inquiry_count() > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
 
-    def update(self, evidence: np.ndarray) -> InquiryResult:
+    def update(self, evidence) -> InquiryResult:
 
-        temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
-                                            evidence_likelihoods=list(evidence), decision=None)
+        fuser = self.fuser_class()
+        current_series: List[InquiryResult] = self.state.series_results[self.state.series_n]
+        prior_likelihood: Optional[np.ndarray] = current_series.pop().fused_likelihood if current_series else None  # most recent likelihood
+        evidence_dict = {"SM": evidence}  # TODO create wrapper object for Evidences
+        fused_likelihood = fuser.fuse(prior_likelihood, evidence_dict)
+
 
         # finding out whether max iterations is hit or prob threshold is hit
+        temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
+                                            evidence_likelihoods=list(evidence), fused_likelihood=fused_likelihood,  # TODO change to use evidence_dict
+                                            decision=None)
+
         temp_series = copy.deepcopy(self.get_state().series_results)
         temp_series[-1].append(temp_inquiry_result)
         is_decidable = any([decider.decide(temp_series[-1]) for decider in self.state.decision_criterion])
         decision = None
-        # TODO what to do when max inquiry count is reached?
 
         new_state = self.get_state().__dict__
         if is_decidable:
             decision = alphabet()[np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
-
             if decision == self.state.target_symbol:  # correct decision
                 new_state['series_n'] += 1  # TODO abstract out into reset function
                 new_state['series_results'].append([])
@@ -99,7 +109,7 @@ class StateManagerImpl(StateManager):
             new_state['inquiry_n'] += 1
 
         new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
-                                           evidence_likelihoods=list(evidence), decision=decision)
+                                           evidence_likelihoods=list(evidence), decision=decision, fused_likelihood=fused_likelihood)
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
 
@@ -122,8 +132,11 @@ class StateManagerImpl(StateManager):
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:
         sentence = "HELLO_WORLD"  # TODO abstract out with sim_parameters.json
-        target_symbol = sentence[0]
+        target_symbol = sentence[0]  # TODO use parameters.get('spelled_letters_count')
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
+
+        evidence_types = parameters.get(
+            'evidence_types') if parameters else None  # TODO make new parameter and create default series_likelihoods object based off that
 
         return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence, display_alphabet=[], inquiry_n=0, series_n=0,
                         series_results=[[]], decision_criterion=default_criterion)
