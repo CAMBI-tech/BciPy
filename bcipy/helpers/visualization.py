@@ -206,6 +206,11 @@ def visualize_gaze(
         ax.scatter(lx, ly, c='r', s=1)
         ax.scatter(rx, ry, c='b', s=1)
 
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
     plt.title(f'{title}Plot')
 
     if save_path is not None:
@@ -317,6 +322,11 @@ def visualize_gaze_inquiries(
 
         # ax.scatter(means[:,0], means[:,1], c='yellow', s=20, marker='^')
 
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
     plt.title(f'{title}Plot')
 
     if save_path is not None:
@@ -402,6 +412,11 @@ def visualize_centralized_data(
     if raw_plot:
         ax.scatter(lx, ly, c='r', s=1)
         ax.scatter(rx, ry, c='b', s=1)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
 
     plt.title(f'{title}Plot')
 

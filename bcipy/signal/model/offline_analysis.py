@@ -333,7 +333,6 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             model.fit(train_re)
 
             scores, means, covs = model.get_scores(test_re)
-            print(means)
 
             # Visualize the results:
             figure_handles = visualize_gaze_inquiries(
