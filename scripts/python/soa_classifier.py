@@ -1,6 +1,4 @@
 import os
-import warnings
-warnings.filterwarnings('ignore')
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
 import numpy as np
 import pandas as pd
@@ -23,6 +21,8 @@ import pickle
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
+import warnings
+warnings.filterwarnings('ignore')
 
 def reorder(data):
     return data.transpose(1, 0, 2)

@@ -2,6 +2,8 @@ from bcipy.helpers.visualization import visualize_erp, visualize_evokeds, visual
 from bcipy.helpers.process import load_data_inquiries, load_data_trials, load_data_mne
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
 from soa_classifier import crossvalidate_record, scores
+import warnings
+warnings.filterwarnings('ignore')
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 
 from mne import grand_average
@@ -17,10 +19,11 @@ import mne
 import pandas as pd
 import numpy as np
 import csv
-import tqdm
+from tqdm import tqdm
 
 
-ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
+# ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
+ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
 
 """
 Processing notes:
@@ -34,7 +37,17 @@ Processing notes:
 - FIR: FIR filtering is performed
 
 TODO:
-load data in MNE and train on PCA / other models (needed for artifact rejection comparison)
+
++ test the new progress bar - works but warnings should be muted still...
++ ensure the AAR is AAR and not SAR
++ check how the cohen's kappa is calculated and write up the formula
++ calculate the AAR / SAR for the FIR filter
++ calculate the AAR or SAR for the IIR filter
++ input into spreadsheet
++ calculate the t-tests for all observations
++ generate the graphs for all observations
++ generate the graphs for the grand averages
++ write up paper D;
 """
 
 if __name__ == "__main__":
@@ -49,8 +62,13 @@ if __name__ == "__main__":
     dropped = {}
     non_target = []
     target = []
-    progress_bar = tqdm(Path(path).iterdir())
-    for session in progress_bar:
+    progress_bar = tqdm(
+        Path(path).iterdir(),
+        desc="Processing Artifact Dataset... \n",
+        total=len(list(Path(path).iterdir())),
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n", # can I do math in this and calculate iteration average time?
+        colour='green')
+    for session in progress_bar:                               
         if session.is_dir():
             # parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
             # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
@@ -59,17 +77,17 @@ if __name__ == "__main__":
             try:
                 # grab the data and labels
                 results[session.name] = {}
-                progress_bar.set_description(f"Processing {session.name}... \n")
+                progress_bar.set_description(f"Processing {session.name}...")
 
                 # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
-                    data_folder=session_folder
-                    )
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
+                #     data_folder=session_folder
+                #     )
                 
                 # If using artifact labelled data, uncomment these lines
-                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
-                #     data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=False)
+                mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
+                    data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=True)
      
 
                 # train the models and get the results
@@ -85,7 +103,7 @@ if __name__ == "__main__":
                 pass
     
     # export the results!
-    condition = 'OF_NAR_FIR'
+    condition = 'WD_SAR_FIR'
     file_name = f'{condition}_all_models.csv'
     export = pd.DataFrame.from_dict(results).transpose()
     export.to_csv(file_name)

@@ -1,23 +1,15 @@
-from bcipy.config import (TRIGGER_FILENAME,
-                          RAW_DATA_FILENAME,
-                          DEFAULT_DEVICE_SPEC_FILENAME)
+
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
     load_json_parameters,
     load_raw_data,
 )
+from bcipy.helpers.process import load_data_inquiries, load_data_mne
 from bcipy.helpers.visualization import visualize_erp, visualize_evokeds, visualize_joint_average
-from bcipy.config import DEFAULT_PARAMETER_FILENAME
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
-
-import bcipy.acquisition.devices as devices
-from bcipy.signal.process.transform import dummy_transform
-from bcipy.signal.process import filter_inquiries, get_default_transform
-from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.helpers.stimuli import update_inquiry_timing
 
 from mne import grand_average
+from mne.viz import plot_compare_evokeds
 
 
 from pathlib import Path
@@ -37,30 +29,37 @@ if __name__ == "__main__":
     This script is intended to be run from the command line with the following command:
         python offline_analysis_process_dataset.py
     """
-    path = load_experimental_data()
-    plot_joint_times = [-0.1, 0, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5]
+    data_path = load_experimental_data()
+    plot_joint_times = [-0.1, 0, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6]
 
     non_target = []
     target = []
-    for session in Path(path).iterdir():
+    for session in Path(data_path).iterdir():
         if session.is_dir():
 
             try:
-                data, labels, trigger_timing, channel_map, poststim_length = load_data(
+                # TODO visualize without artifact handling
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, def_transform, _ = load_data_inquiries(
                                     data_folder=str(session.resolve()))
             
-                epochs, figs = visualize_erp(data, labels, trigger_timing, channel_map, poststim_length)
+                epochs, figs = visualize_erp(raw_data, channel_map, trigger_timing, labels, 0.8, def_transform, show=False)
                 # average the epochs
-                non_target.append(epochs['1'].average())
-                target.append(epochs['2'].average())
+                non_target.extend(list(epochs[0].iter_evoked()))
+                target.append(list(epochs[1].iter_evoked()))
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 breakpoint()
         
     # plot the averages using grand_average
-    target, non_target = group_average(target, non_target)
+    target_evoked, non_target_evoked = group_average(target, non_target)
+    breakpoint()
 
-    # visualize_evokeds((non_target, target), show=True)
+    # Show a ERP of the two events using gfp by default and no CI?
+    # plot_compare_evokeds([target, non_target])
+
+    # Shows a heatmaps of activation in mv by channel
+    # target_evoked.plot_image()
+    # non_target_evoked.plot_image()
 
     # plot the joint average
     # visualize_joint_average((non_target, target), ['Non-Target', 'Target'], show=True, times=plot_joint_times)

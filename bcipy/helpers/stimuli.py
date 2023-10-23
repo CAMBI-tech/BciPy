@@ -301,7 +301,7 @@ def mne_epochs(
         trial_length: float,
         channels: Optional[List[str]] = None,
         detrend: Optional[int] = None,
-        baseline: Union[Tuple[float, float], None] = (-.2, 0.0),
+        baseline: Union[Tuple[float, float], None] = None,
         preload: bool = True,
         reject_by_annotation: bool = False) -> Epochs:
     """MNE Epochs.

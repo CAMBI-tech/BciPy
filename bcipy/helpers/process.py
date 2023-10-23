@@ -82,25 +82,25 @@ def load_data_inquiries(
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     # setup filtering
-    # default_transform = get_default_transform(
-    #     sample_rate_hz=sample_rate,
-    #     notch_freq_hz=notch_filter,
-    #     bandpass_low=filter_low,
-    #     bandpass_high=filter_high,
-    #     bandpass_order=filter_order,
-    #     downsample_factor=downsample_rate,
-    # )
-
-    default_transform = get_fir_transform(
+    default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
-        low=filter_low,
-        high=filter_high,
-        fir_design='firwin',
-        fir_window='hamming',
-        phase='zero-double',
+        bandpass_low=filter_low,
+        bandpass_high=filter_high,
+        bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
+
+    # default_transform = get_fir_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=notch_filter,
+    #     low=filter_low,
+    #     high=filter_high,
+    #     fir_design='firwin',
+    #     fir_window='hamming',
+    #     phase='zero-double',
+    #     downsample_factor=downsample_rate,
+    # )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")
@@ -191,25 +191,25 @@ def load_data_mne(
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     # setup filtering
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=notch_filter,
-        bandpass_low=filter_low,
-        bandpass_high=filter_high,
-        bandpass_order=filter_order,
-        downsample_factor=downsample_rate,
-    )
-
-    # default_transform = get_fir_transform(
+    # default_transform = get_default_transform(
     #     sample_rate_hz=sample_rate,
     #     notch_freq_hz=notch_filter,
-    #     low=filter_low,
-    #     high=filter_high,
-    #     fir_design='firwin',
-    #     fir_window='hamming',
-    #     phase='zero-double',
+    #     bandpass_low=filter_low,
+    #     bandpass_high=filter_high,
+    #     bandpass_order=filter_order,
     #     downsample_factor=downsample_rate,
     # )
+
+    default_transform = get_fir_transform(
+        sample_rate_hz=sample_rate,
+        notch_freq_hz=notch_filter,
+        low=filter_low,
+        high=filter_high,
+        fir_design='firwin',
+        fir_window='hamming',
+        phase='zero-double',
+        downsample_factor=downsample_rate,
+    )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")
