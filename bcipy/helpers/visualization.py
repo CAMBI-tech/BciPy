@@ -141,7 +141,8 @@ def visualize_gaze(
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
     screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
-        Phrase tasks. Default: (1920, 1080)
+        Phrase tasks.
+        Default: (1920, 1080)
     heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
     raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
@@ -249,7 +250,8 @@ def visualize_gaze_inquiries(
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
     screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
-        Phrase tasks. Default: (1920, 1080)
+        Phrase tasks.
+        Default: (1920, 1080)
     heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
     raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
@@ -324,6 +326,90 @@ def visualize_gaze_inquiries(
         plt.show()
     else:
         plt.close()
+
+    return fig
+
+
+def visualize_centralized_data(
+        left_eye: np.ndarray,
+        right_eye: np.ndarray,
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
+    """Visualize centralized data for each symbol.
+
+    Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of
+    trailed data (left & right eye), the gaze distribution for ALL prompted symbols are plotted after
+    the data has been centralized (i.e., mid coordinates of each symbol is subtracted from corresponding
+    symbol data to populate all data around (0,0) on the screen).
+    The figures may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
+
+    Parameters
+    ----------
+    left_eye: (np.ndarray): Data array for the centralized left eye data.
+    right_eye: (np.ndarray): Data array for the centralized right eye data.
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy Phrase tasks.
+        Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
+    """
+    title = 'Centralized Data for All Symbols '
+
+    if img_path is None:
+        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+    img = plt.imread(img_path)
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+
+    # Transform the eye data to fit the display. Clip values > 1 and < -1
+    # The idea here is to have the center at (0,0)
+    lx = np.clip(left_eye[:, 0], -1, 1)
+    ly = np.clip(left_eye[:, 1], -1, 1)
+    rx = np.clip(right_eye[:, 0], -1, 1)
+    ry = np.clip(right_eye[:, 1], -1, 1)
+    ax.imshow(img, extent=[-1, 1, -1, 1])
+
+    if heatmap:
+        # create a dataframe making a column for each x, y pair for both eyes and a column for the eye (left or right)
+        df = pd.DataFrame({
+            'x': np.concatenate((lx, rx)),
+            'y': np.concatenate((ly, ry)),
+            'eye': ['left'] * len(lx) + ['right'] * len(rx)
+        })
+        ax = sns.kdeplot(
+            data=df,
+            hue='eye',
+            x='x',
+            y='y',
+            fill=False,
+            thresh=0.05,
+            levels=10,
+            cmap="mako",
+            colorbar=True)
+
+    if raw_plot:
+        ax.scatter(lx, ly, c='r', s=1)
+        ax.scatter(rx, ry, c='b', s=1)
+
+    plt.title(f'{title}Plot')
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
 
     return fig
 

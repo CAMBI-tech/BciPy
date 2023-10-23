@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Tuple
+import json
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -8,7 +9,7 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, ROOT,
                           DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
@@ -21,10 +22,10 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
-                                         visualize_gaze_inquiries)
+                                         visualize_gaze_inquiries, visualize_centralized_data)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.fusion_model import GazeModel
+from bcipy.signal.model.fusion_model import GazeModel, GazeModel_AllSymbols
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
@@ -38,7 +39,7 @@ IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
 # TODO: Update images to contain the path to directory of the respective calibration session.
 
 
-def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state=0):
+def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
     """Performs a train/test split on the provided data and labels, accounting for
     the current shape convention (channel dimension in front, instead of batch dimension in front).
 
@@ -48,6 +49,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
         labels (np.ndarray): Shape (items,)
         test_size (float): fraction of data to be used for testing
         random_state (int, optional): fixed random seed
+        swap_axes (bool, optional): if true, swaps the axes of the data before splitting
 
     Returns:
     --------
@@ -56,16 +58,22 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
         train_labels (np.ndarray): Shape (train_items,)
         test_labels (np.ndarray): Shape (test_items,)
     """
-    data = data.swapaxes(0, 1)
-    train_data, test_data, train_labels, test_labels = train_test_split(
-        data, labels, test_size=test_size, random_state=random_state
-    )
-    train_data = train_data.swapaxes(0, 1)
-    test_data = test_data.swapaxes(0, 1)
+    if swap_axes:
+        data = data.swapaxes(0, 1)
+        train_data, test_data, train_labels, test_labels = train_test_split(
+            data, labels, test_size=test_size, random_state=random_state
+        )
+        train_data = train_data.swapaxes(0, 1)
+        test_data = test_data.swapaxes(0, 1)
+
+    else:
+        train_data, test_data, train_labels, test_labels = train_test_split(
+            data, labels, test_size=test_size, random_state=random_state
+        )
     return train_data, test_data, train_labels, test_labels
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc, 
+def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                 save_figures=True, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
@@ -75,6 +83,17 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     Fit the model to the data. Use cross validation to select parameters.
     Pickle dump model into .pkl file
     Generate and [optional] save/show ERP figures.
+
+    Parameters:
+    -----------
+        erp_data (RawData): RawData object containing the data to be analyzed.
+        parameters (Parameters): Parameters object retireved from parameters.json.
+        device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
+        data_folder (str): Path to the folder containing the data to be analyzed.
+        estimate_balanced_acc (bool): If true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy.
+        save_figures (bool): If true, saves ERP figures after training to the data folder.
+        show_figures (bool): If true, shows ERP figures after training.
     """
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
@@ -166,7 +185,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
     model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                            transform=default_transform)
+                                         transform=default_transform)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
@@ -198,15 +217,26 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     )
 
 
-def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_figures=False):
+def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_figures=False, model_type="Individual"):
     """Analyze gaze data and return/save the gaze model.
-    Extract relevant information from gaze data object. 
+    Extract relevant information from gaze data object.
     Extract timing information from trigger file.
     Apply preprocessing on the raw data. Extract the data for each target label and each eye separately.
     Extract inquiries dictionary with keys as target symbols and values as inquiry windows.
-    Fit the model to the data.
+    Based on the model type, fit the model to the data.
     Pickle dump model into .pkl file
     Generate and [optional] save/show gaze figures.
+
+    Parameters:
+    -----------
+        gaze_data (RawData): RawData object containing the data to be analyzed.
+        device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
+        data_folder (str): Path to the folder containing the data to be analyzed.
+        save_figures (bool): If true, saves ERP figures after training to the data folder.
+        show_figures (bool): If true, shows ERP figures after training.
+        model_type (str): Type of gaze model to be used. Options are:
+            "Individual": Fits a separate Gaussian for each symbol. Default model
+            "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
     figure_handles = visualize_gaze(
         gaze_data,
@@ -228,7 +258,10 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
 
     data, fs = gaze_data.by_channel()
 
-    model = GazeModel()
+    if model_type == "Individual":
+        model = GazeModel()
+    elif model_type == "Centralized":
+        model = GazeModel_AllSymbols()
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -271,34 +304,87 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
         left_eye, right_eye = extract_eye_info(inquiries[i])
         preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
 
+    centralized_data_left = []
+    centralized_data_right = []
+    test_dict = {}
+    for sym in symbol_set:
+        le = preprocessed_data[sym][0]
+        re = preprocessed_data[sym][1]
+
         # Train test split:
-        test_size = int(len(right_eye) * 0.2)
-        train_size = len(right_eye) - test_size
-        train_right_eye = right_eye[:train_size]
-        test_right_eye = right_eye[train_size:]
+        labels = np.array([sym] * len(le))  # Labels are the same for both eyes
+        train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
+        train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
+        test_dict[sym] = [test_le, test_re]
 
-        train_left_eye = left_eye[:train_size]
-        test_left_eye = left_eye[train_size:]
+        if model_type == "Centralized":
+            # Centralize the data using symbol positions:
+            # Load json file.
+            # TODO: move this to a helper function, or get the symbol positions from the build_grid method
+            with open(f"{ROOT}/symbol_positions.json", 'r') as params_file:
+                symbol_positions = json.load(params_file)
+            # Subtract the symbol positions from the data:
+            centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
+            centralized_data_right.append(model.reshaper.centralize_all_data(train_re, symbol_positions[sym]))
 
-        # Fit the model:
-        model.fit(train_right_eye)
+        # Fit the model based on model type.
+        # Model 1: Fit Gaussian mixture (comp=2) on each symbol and each eye separately
+        if model_type == "Individual":
+            model.fit(train_re)
 
-        scores, means, covs = model.get_scores(test_right_eye)
+            scores, means, covs = model.get_scores(test_re)
+            print(means)
+
+            # Visualize the results:
+            figure_handles = visualize_gaze_inquiries(
+                le, re,
+                means, covs,
+                save_path=None,
+                show=show_figures,
+                raw_plot=True,
+            )
+            breakpoint()
+
+    if model_type == "Centralized":
+        # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
+        cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
+        cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
 
         # Visualize the results:
-        figure_handles = visualize_gaze_inquiries(
-            left_eye, right_eye,
-            means, covs,
+        figure_handles = visualize_centralized_data(
+            cent_left, cent_right,
             save_path=None,
             show=show_figures,
             raw_plot=True,
         )
+
+        # Fit the model:
+        model.fit(cent_left)
+
+        # Add the means back to the symbol positions.
+        # Calculate scores for the test set.
+        for sym in symbol_set:
+            scores, means, covs = model.get_scores(test_dict[sym][0], symbol_positions[sym])
+
+            le = preprocessed_data[sym][0]
+            re = preprocessed_data[sym][1]
+            # Visualize the results:
+            figure_handles = visualize_gaze_inquiries(
+                le, re,
+                means, covs,
+                save_path=None,
+                show=show_figures,
+                raw_plot=True,
+            )
+
+            breakpoint()
+
     model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                            transform=None)
+                                         transform=None)
     log.info("Training complete for Eyetracker model. Saving data...")
     save_model(
         model,
-        Path(data_folder, f"model_{device_spec.content_type}.pkl"))
+        Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
 
 
 @report_execution_time
@@ -358,11 +444,12 @@ def offline_analysis(
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            analyze_erp(raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, 
+            analyze_erp(raw_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                         save_figures, show_figures)
 
         if device_spec.content_type == "Eyetracker":
-            analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures)
+            analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures,
+                         model_type="Centralized")
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
