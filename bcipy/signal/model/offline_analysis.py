@@ -343,7 +343,6 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
                 show=show_figures,
                 raw_plot=True,
             )
-            breakpoint()
 
     if model_type == "Centralized":
         # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
@@ -376,8 +375,6 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
                 show=show_figures,
                 raw_plot=True,
             )
-
-            breakpoint()
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)

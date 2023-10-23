@@ -89,5 +89,3 @@ if __name__ == "__main__":
     ax.scatter(rx, ry, c='b', s=1)
 
     plt.show()
-
-    breakpoint()
