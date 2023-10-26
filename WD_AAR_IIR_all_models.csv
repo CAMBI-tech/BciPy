@@ -1,0 +1,2551 @@
+,accuracy,std_accuracy,precision,std_precision,recall,std_recall,f1,std_f1,roc_auc,std_roc_auc,balanced_accuracy,std_balanced_accuracy,mcc,std_mcc
+IP102_RSVP_Calibration_Fri_22_Jul_2022_13hr58min58sec_-0700,"0    0.830431
+0    0.925059
+0    0.932980
+0    0.915098
+0         NaN
+0    0.518667
+Name: mean_test_accuracy, dtype: float64","0    0.039195
+0    0.019272
+0    0.009329
+0    0.028157
+0         NaN
+0    0.037104
+Name: std_test_accuracy, dtype: float64","0    0.071071
+0    0.150000
+0    0.000000
+0    0.236667
+0         NaN
+0    0.080000
+Name: mean_test_precision, dtype: float64","0    0.098360
+0    0.320156
+0    0.000000
+0    0.342685
+0         NaN
+0    0.043818
+Name: std_test_precision, dtype: float64","0    0.183333
+0    0.058333
+0    0.000000
+0    0.141667
+0         NaN
+0    0.566667
+Name: mean_test_recall, dtype: float64","0    0.260342
+0    0.118145
+0    0.000000
+0    0.182764
+0         NaN
+0    0.268225
+Name: std_test_recall, dtype: float64","0    0.101722
+0    0.083333
+0    0.000000
+0    0.169365
+0         NaN
+0    0.139901
+Name: mean_test_f1, dtype: float64","0    0.141205
+0    0.170783
+0    0.000000
+0    0.223398
+0         NaN
+0    0.075128
+Name: std_test_f1, dtype: float64","0    0.590765
+0    0.660520
+0    0.682861
+0    0.639362
+0         NaN
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.159381
+0    0.160148
+0    0.159767
+0    0.174299
+0         NaN
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.530230
+0    0.522806
+0    0.500000
+0    0.555984
+0         NaN
+0    0.540248
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.123273
+0    0.060368
+0    0.000000
+0    0.093138
+0         NaN
+0    0.143945
+Name: std_test_balanced_accuracy, dtype: float64","0    0.027667
+0    0.071304
+0    0.000000
+0    0.141246
+0         NaN
+0    0.045533
+Name: mean_test_mcc, dtype: float64","0    0.167649
+0    0.194121
+0    0.000000
+0    0.244214
+0         NaN
+0    0.144603
+Name: std_test_mcc, dtype: float64"
+IP104_RSVP_Calibration_Thu_01_Sep_2022_09hr35min51sec_-0700,"0    0.824172
+0    0.916586
+0    0.921596
+0    0.926636
+0    0.815131
+0    0.498455
+Name: mean_test_accuracy, dtype: float64","0    0.035913
+0    0.018563
+0    0.017327
+0    0.013483
+0    0.032356
+0    0.027433
+Name: std_test_accuracy, dtype: float64","0    0.217407
+0    0.535238
+0    0.707381
+0    0.655952
+0    0.281915
+0    0.088000
+Name: mean_test_precision, dtype: float64","0    0.114194
+0    0.193575
+0    0.252539
+0    0.152404
+0    0.061045
+0    0.029933
+Name: std_test_precision, dtype: float64","0    0.427778
+0    0.319444
+0    0.227778
+0    0.379167
+0    0.722092
+0    0.500000
+Name: mean_test_recall, dtype: float64","0    0.222378
+0    0.136366
+0    0.170579
+0    0.132644
+0    0.159959
+0    0.158723
+Name: std_test_recall, dtype: float64","0    0.287316
+0    0.395284
+0    0.314345
+0    0.464947
+0    0.403203
+0    0.149620
+Name: mean_test_f1, dtype: float64","0    0.149819
+0    0.153261
+0    0.179572
+0    0.113034
+0    0.082717
+0    0.050380
+Name: std_test_f1, dtype: float64","0    0.715075
+0    0.771388
+0    0.825044
+0    0.817996
+0    0.856454
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.126670
+0    0.054827
+0    0.063139
+0    0.079905
+0    0.062801
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.645079
+0    0.646523
+0    0.607839
+0    0.679107
+0    0.773494
+0    0.498913
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.112386
+0    0.071396
+0    0.085084
+0    0.064646
+0    0.084976
+0    0.086979
+Name: std_test_balanced_accuracy, dtype: float64","0    0.214469
+0    0.370103
+0    0.348462
+0    0.455199
+0    0.368704
+0    0.000377
+Name: mean_test_mcc, dtype: float64","0    0.173091
+0    0.164527
+0    0.165427
+0    0.109745
+0    0.110149
+0    0.096707
+Name: std_test_mcc, dtype: float64"
+IP105_RSVP_Calibration_Fri_12_Aug_2022_14hr09min28sec_-0700,"0    0.869458
+0    0.935834
+0    0.935822
+0    0.923817
+0    0.864047
+0    0.500502
+Name: mean_test_accuracy, dtype: float64","0    0.029047
+0    0.018417
+0    0.014061
+0    0.021789
+0    0.040329
+0    0.034114
+Name: std_test_accuracy, dtype: float64","0    0.367244
+0    0.777381
+0    0.896667
+0    0.691984
+0    0.401162
+0    0.104255
+Name: mean_test_precision, dtype: float64","0    0.098328
+0    0.163060
+0    0.130128
+0    0.208510
+0    0.098227
+0    0.036170
+Name: std_test_precision, dtype: float64","0    0.533333
+0    0.484722
+0    0.380556
+0    0.412500
+0    0.734271
+0    0.556944
+Name: mean_test_recall, dtype: float64","0    0.170353
+0    0.125838
+0    0.115068
+0    0.121088
+0    0.106862
+0    0.177262
+Name: std_test_recall, dtype: float64","0    0.433619
+0    0.582893
+0    0.519970
+0    0.505006
+0    0.510738
+0    0.175584
+Name: mean_test_f1, dtype: float64","0    0.123863
+0    0.129404
+0    0.131534
+0    0.126571
+0    0.091042
+0    0.060142
+Name: std_test_f1, dtype: float64","0    0.833513
+0    0.858777
+0    0.880382
+0    0.882385
+0    0.886441
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.062653
+0    0.074685
+0    0.055852
+0    0.068623
+0    0.070428
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.719170
+0    0.733956
+0    0.687266
+0    0.694819
+0    0.806525
+0    0.525489
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.089950
+0    0.063844
+0    0.057166
+0    0.062460
+0    0.060269
+0    0.098177
+Name: std_test_balanced_accuracy, dtype: float64","0    0.371620
+0    0.575079
+0    0.549288
+0    0.491144
+0    0.473103
+0    0.031636
+Name: mean_test_mcc, dtype: float64","0    0.144436
+0    0.124465
+0    0.111758
+0    0.142655
+0    0.101133
+0    0.114748
+Name: std_test_mcc, dtype: float64"
+IP106_RSVP_Calibration_Fri_12_Aug_2022_09hr51min02sec_-0700,"0    0.867646
+0    0.923524
+0    0.930394
+0    0.918979
+0    0.784274
+0    0.491954
+Name: mean_test_accuracy, dtype: float64","0    0.033996
+0    0.019052
+0    0.012770
+0    0.019886
+0    0.038674
+0    0.034677
+Name: std_test_accuracy, dtype: float64","0    0.232741
+0    0.496667
+0    0.741667
+0    0.469524
+0    0.197162
+0    0.080000
+Name: mean_test_precision, dtype: float64","0    0.156323
+0    0.387642
+0    0.354436
+0    0.352410
+0    0.095792
+0    0.034712
+Name: std_test_precision, dtype: float64","0    0.316667
+0    0.190476
+0    0.161905
+0    0.202381
+0    0.566667
+0    0.533333
+Name: mean_test_recall, dtype: float64","0    0.187491
+0    0.127331
+0    0.076636
+0    0.158383
+0    0.272354
+0    0.227926
+Name: std_test_recall, dtype: float64","0    0.260384
+0    0.262309
+0    0.256991
+0    0.255969
+0    0.290905
+0    0.139065
+Name: mean_test_f1, dtype: float64","0    0.156270
+0    0.173052
+0    0.114145
+0    0.178947
+0    0.140111
+0    0.060148
+Name: std_test_f1, dtype: float64","0    0.692973
+0    0.727033
+0    0.743782
+0    0.747507
+0    0.714340
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.082713
+0    0.119263
+0    0.122940
+0    0.085959
+0    0.169942
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.614483
+0    0.587213
+0    0.577866
+0    0.590079
+0    0.683288
+0    0.510795
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.087901
+0    0.063519
+0    0.038357
+0    0.077233
+0    0.141472
+0    0.123439
+Name: std_test_balanced_accuracy, dtype: float64","0    0.198216
+0    0.271699
+0    0.318715
+0    0.256494
+0    0.240211
+0    0.012507
+Name: mean_test_mcc, dtype: float64","0    0.164709
+0    0.200360
+0    0.144005
+0    0.190606
+0    0.176863
+0    0.129531
+Name: std_test_mcc, dtype: float64"
+IP107_RSVP_Calibration_Mon_22_Aug_2022_13hr28min57sec_-0700,"0    0.763315
+0    0.901328
+0    0.913819
+0    0.901328
+0    0.785531
+0    0.510577
+Name: mean_test_accuracy, dtype: float64","0    0.043237
+0    0.018265
+0    0.015328
+0    0.012971
+0    0.037394
+0    0.030030
+Name: std_test_accuracy, dtype: float64","0    0.162704
+0    0.458770
+0    0.573333
+0    0.441190
+0    0.262578
+0    0.094118
+Name: mean_test_precision, dtype: float64","0    0.067164
+0    0.230633
+0    0.265748
+0    0.139926
+0    0.064627
+0    0.031373
+Name: std_test_precision, dtype: float64","0    0.372222
+0    0.268889
+0    0.187778
+0    0.258889
+0    0.696338
+0    0.495556
+Name: mean_test_recall, dtype: float64","0    0.159803
+0    0.143999
+0    0.139793
+0    0.134444
+0    0.108611
+0    0.166681
+Name: std_test_recall, dtype: float64","0    0.225402
+0    0.323495
+0    0.269207
+0    0.311498
+0    0.379883
+0    0.158142
+Name: mean_test_f1, dtype: float64","0    0.094468
+0    0.147901
+0    0.164459
+0    0.130820
+0    0.081329
+0    0.052706
+Name: std_test_f1, dtype: float64","0    0.675975
+0    0.749285
+0    0.787332
+0    0.780010
+0    0.821747
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.093015
+0    0.114614
+0    0.084108
+0    0.079199
+0    0.063063
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.587869
+0    0.617541
+0    0.588083
+0    0.613084
+0    0.745250
+0    0.503858
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.086445
+0    0.070639
+0    0.069238
+0    0.062880
+0    0.063396
+0    0.091375
+Name: std_test_balanced_accuracy, dtype: float64","0    0.124682
+0    0.294101
+0    0.287911
+0    0.282083
+0    0.332041
+0    0.004363
+Name: mean_test_mcc, dtype: float64","0    0.121790
+0    0.160238
+0    0.162766
+0    0.125407
+0    0.097105
+0    0.105747
+Name: std_test_mcc, dtype: float64"
+IP108_RSVP_Calibration_Thu_11_Aug_2022_09hr40min37sec_-0700,"0    0.757764
+0    0.911967
+0    0.927847
+0    0.920621
+0    0.750331
+0    0.544161
+Name: mean_test_accuracy, dtype: float64","0    0.052678
+0    0.019870
+0    0.000474
+0    0.014860
+0    0.060988
+0    0.037326
+Name: std_test_accuracy, dtype: float64","0    0.104587
+0    0.100000
+0    0.000000
+0    0.316667
+0    0.164266
+0    0.099376
+Name: mean_test_precision, dtype: float64","0    0.092012
+0    0.200000
+0    0.000000
+0    0.229129
+0    0.093194
+0    0.036158
+Name: std_test_precision, dtype: float64","0    0.330000
+0    0.060000
+0    0.000000
+0    0.185000
+0    0.591071
+0    0.680000
+Name: mean_test_recall, dtype: float64","0    0.275862
+0    0.128062
+0    0.000000
+0    0.141510
+0    0.245683
+0    0.256125
+Name: std_test_recall, dtype: float64","0    0.155474
+0    0.073016
+0    0.000000
+0    0.230159
+0    0.246248
+0    0.173309
+Name: mean_test_f1, dtype: float64","0    0.134671
+0    0.150283
+0    0.000000
+0    0.169617
+0    0.124031
+0    0.063123
+Name: std_test_f1, dtype: float64","0    0.594159
+0    0.634106
+0    0.674841
+0    0.744822
+0    0.718043
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.147486
+0    0.129500
+0    0.074163
+0    0.096949
+0    0.132879
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.560337
+0    0.518353
+0    0.499231
+0    0.580865
+0    0.678020
+0    0.607115
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.137986
+0    0.064146
+0    0.002308
+0    0.070375
+0    0.131769
+0    0.138498
+Name: std_test_balanced_accuracy, dtype: float64","0    0.072354
+0    0.042040
+0   -0.003008
+0    0.205612
+0    0.204763
+0    0.108374
+Name: mean_test_mcc, dtype: float64","0    0.177107
+0    0.156565
+0    0.009025
+0    0.175091
+0    0.151066
+0    0.140185
+Name: std_test_mcc, dtype: float64"
+IP109_RSVP_Calibration_Fri_19_Aug_2022_09hr58min29sec_-0700,"0    0.827785
+0    0.887577
+0    0.904430
+0    0.890800
+0    0.690329
+0    0.471623
+Name: mean_test_accuracy, dtype: float64","0    0.045932
+0    0.021700
+0    0.009729
+0    0.021910
+0    0.080393
+0    0.015312
+Name: std_test_accuracy, dtype: float64","0    0.219352
+0    0.284524
+0    0.140000
+0    0.288690
+0    0.188525
+0    0.055319
+Name: mean_test_precision, dtype: float64","0    0.121380
+0    0.297116
+0    0.215407
+0    0.201877
+0    0.059234
+0    0.017021
+Name: std_test_precision, dtype: float64","0    0.326389
+0    0.119444
+0    0.047222
+0    0.162500
+0    0.694636
+0    0.304167
+Name: mean_test_recall, dtype: float64","0    0.177566
+0    0.112010
+0    0.080556
+0    0.119323
+0    0.132842
+0    0.091382
+Name: std_test_recall, dtype: float64","0    0.255653
+0    0.150742
+0    0.067133
+0    0.194991
+0    0.292187
+0    0.093571
+Name: mean_test_f1, dtype: float64","0    0.135070
+0    0.128306
+0    0.107574
+0    0.128493
+0    0.080106
+0    0.028616
+Name: std_test_f1, dtype: float64","0    0.686072
+0    0.755833
+0    0.680058
+0    0.729095
+0    0.756814
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.119962
+0    0.101462
+0    0.110729
+0    0.064183
+0    0.081013
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.601580
+0    0.541251
+0    0.517837
+0    0.562224
+0    0.692897
+0    0.396029
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.095502
+0    0.055887
+0    0.036896
+0    0.055034
+0    0.081935
+0    0.049927
+Name: std_test_balanced_accuracy, dtype: float64","0    0.172758
+0    0.119333
+0    0.052919
+0    0.157408
+0    0.235164
+0   -0.118073
+Name: mean_test_mcc, dtype: float64","0    0.156579
+0    0.151154
+0    0.114721
+0    0.134892
+0    0.105607
+0    0.054697
+Name: std_test_mcc, dtype: float64"
+IP111_RSVP_Calibration_Thu_18_Aug_2022_13hr51min01sec_-0700,"0    0.821414
+0    0.914222
+0    0.924323
+0    0.935384
+0    0.842545
+0    0.508576
+Name: mean_test_accuracy, dtype: float64","0    0.041796
+0    0.015838
+0    0.018742
+0    0.019326
+0    0.037152
+0    0.027482
+Name: std_test_accuracy, dtype: float64","0    0.248838
+0    0.475952
+0    0.578095
+0    0.687381
+0    0.320512
+0    0.100000
+Name: mean_test_precision, dtype: float64","0    0.089786
+0    0.205001
+0    0.401585
+0    0.183411
+0    0.072299
+0    0.030984
+Name: std_test_precision, dtype: float64","0    0.508333
+0    0.279167
+0    0.245833
+0    0.495833
+0    0.746252
+0    0.568056
+Name: mean_test_recall, dtype: float64","0    0.217591
+0    0.163447
+0    0.207689
+0    0.189221
+0    0.240432
+0    0.158413
+Name: std_test_recall, dtype: float64","0    0.329463
+0    0.341575
+0    0.324396
+0    0.558164
+0    0.446038
+0    0.170018
+Name: mean_test_f1, dtype: float64","0    0.119652
+0    0.175350
+0    0.246090
+0    0.164324
+0    0.114339
+0    0.051915
+Name: std_test_f1, dtype: float64","0    0.747063
+0    0.789845
+0    0.825635
+0    0.907711
+0    0.870736
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.115322
+0    0.097316
+0    0.090150
+0    0.055701
+0    0.096528
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.680064
+0    0.627416
+0    0.617953
+0    0.736873
+0    0.799422
+0    0.535163
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.108850
+0    0.079917
+0    0.102828
+0    0.093346
+0    0.122253
+0    0.086702
+Name: std_test_balanced_accuracy, dtype: float64","0    0.264611
+0    0.319164
+0    0.337475
+0    0.543127
+0    0.417262
+0    0.041689
+Name: mean_test_mcc, dtype: float64","0    0.151068
+0    0.175094
+0    0.257890
+0    0.167937
+0    0.155413
+0    0.097532
+Name: std_test_mcc, dtype: float64"
+IP112_RSVP_Calibration_Mon_29_Aug_2022_14hr02min08sec_-0700,"0    0.877895
+0    0.923158
+0    0.934737
+0    0.925263
+0    0.765263
+0    0.510526
+Name: mean_test_accuracy, dtype: float64","0    0.030941
+0    0.018859
+0    0.013965
+0    0.016610
+0    0.039118
+0    0.029492
+Name: std_test_accuracy, dtype: float64","0    0.323586
+0    0.602381
+0    0.763333
+0    0.637500
+0    0.225973
+0    0.089362
+Name: mean_test_precision, dtype: float64","0    0.159196
+0    0.235474
+0    0.317438
+0    0.223646
+0    0.060027
+0    0.031270
+Name: std_test_precision, dtype: float64","0    0.389286
+0    0.351786
+0    0.325000
+0    0.289286
+0    0.744246
+0    0.528571
+Name: mean_test_recall, dtype: float64","0    0.194929
+0    0.163478
+0    0.187083
+0    0.156859
+0    0.185970
+0    0.178607
+Name: std_test_recall, dtype: float64","0    0.345160
+0    0.416508
+0    0.419360
+0    0.376425
+0    0.346205
+0    0.152862
+Name: mean_test_f1, dtype: float64","0    0.156476
+0    0.172441
+0    0.204391
+0    0.160356
+0    0.090214
+0    0.053243
+Name: std_test_f1, dtype: float64","0    0.776909
+0    0.814838
+0    0.832104
+0    0.822962
+0    0.839549
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.095650
+0    0.101029
+0    0.086049
+0    0.078806
+0    0.115871
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.655628
+0    0.663262
+0    0.657328
+0    0.636029
+0    0.755553
+0    0.518603
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.101920
+0    0.080711
+0    0.089727
+0    0.077612
+0    0.102367
+0    0.097340
+Name: std_test_balanced_accuracy, dtype: float64","0    0.285480
+0    0.406375
+0    0.450559
+0    0.383031
+0    0.317005
+0    0.021407
+Name: mean_test_mcc, dtype: float64","0    0.176873
+0    0.166199
+0    0.190104
+0    0.158477
+0    0.126936
+0    0.107148
+Name: std_test_mcc, dtype: float64"
+IP113_RSVP_Calibration_Wed_31_Aug_2022_09hr19min04sec_-0700,"0    0.809489
+0    0.896124
+0    0.911120
+0    0.890337
+0    0.749399
+0    0.480299
+Name: mean_test_accuracy, dtype: float64","0    0.028702
+0    0.019714
+0    0.010091
+0    0.026417
+0    0.049048
+0    0.032510
+Name: std_test_accuracy, dtype: float64","0    0.173960
+0    0.365000
+0    0.400000
+0    0.370833
+0    0.212975
+0    0.091111
+Name: mean_test_precision, dtype: float64","0    0.093073
+0    0.235991
+0    0.489898
+0    0.304167
+0    0.053827
+0    0.030551
+Name: std_test_precision, dtype: float64","0    0.290278
+0    0.170833
+0    0.062500
+0    0.158333
+0    0.608268
+0    0.500000
+Name: mean_test_recall, dtype: float64","0    0.171510
+0    0.113694
+0    0.083853
+0    0.105079
+0    0.174307
+0    0.169535
+Name: std_test_recall, dtype: float64","0    0.215154
+0    0.227489
+0    0.106667
+0    0.213149
+0    0.309085
+0    0.154088
+Name: mean_test_f1, dtype: float64","0    0.118251
+0    0.144541
+0    0.139417
+0    0.145886
+0    0.070392
+0    0.051685
+Name: std_test_f1, dtype: float64","0    0.650180
+0    0.713368
+0    0.738576
+0    0.760928
+0    0.745049
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.118378
+0    0.069776
+0    0.077987
+0    0.090880
+0    0.097317
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.576825
+0    0.571371
+0    0.531250
+0    0.562589
+0    0.686847
+0    0.489135
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.081847
+0    0.056896
+0    0.041926
+0    0.056100
+0    0.079022
+0    0.093952
+Name: std_test_balanced_accuracy, dtype: float64","0    0.120716
+0    0.199454
+0    0.149804
+0    0.186251
+0    0.244273
+0   -0.012810
+Name: mean_test_mcc, dtype: float64","0    0.131836
+0    0.159195
+0    0.187608
+0    0.178943
+0    0.098048
+0    0.109203
+Name: std_test_mcc, dtype: float64"
+IP114_RSVP_Calibration_Wed_24_Aug_2022_12hr35min04sec_-0700,"0    0.694460
+0    0.901696
+0    0.904704
+0    0.869878
+0    0.467458
+0    0.537019
+Name: mean_test_accuracy, dtype: float64","0    0.037661
+0    0.020415
+0    0.006714
+0    0.027338
+0    0.100281
+0    0.020302
+Name: std_test_accuracy, dtype: float64","0    0.067639
+0    0.250000
+0    0.000000
+0    0.025000
+0    0.071689
+0    0.109173
+Name: mean_test_precision, dtype: float64","0    0.044183
+0    0.403113
+0    0.000000
+0    0.075000
+0    0.039942
+0    0.024824
+Name: std_test_precision, dtype: float64","0    0.176190
+0    0.064286
+0    0.000000
+0    0.014286
+0    0.405714
+0    0.538095
+Name: mean_test_recall, dtype: float64","0    0.118187
+0    0.108614
+0    0.000000
+0    0.042857
+0    0.211453
+0    0.111778
+Name: std_test_recall, dtype: float64","0    0.097206
+0    0.100794
+0    0.000000
+0    0.018182
+0    0.120470
+0    0.181402
+Name: mean_test_f1, dtype: float64","0    0.063788
+0    0.167159
+0    0.000000
+0    0.054545
+0    0.064573
+0    0.040378
+Name: std_test_f1, dtype: float64","0    0.441230
+0    0.458970
+0    0.532599
+0    0.519545
+0    0.459428
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.131023
+0    0.096479
+0    0.138630
+0    0.133131
+0    0.096812
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.462700
+0    0.527100
+0    0.500000
+0    0.487016
+0    0.439176
+0    0.537437
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.062389
+0    0.056424
+0    0.000000
+0    0.023926
+0    0.075824
+0    0.061173
+Name: std_test_balanced_accuracy, dtype: float64","0   -0.051972
+0    0.099603
+0    0.000000
+0   -0.038849
+0   -0.073574
+0    0.044368
+Name: mean_test_mcc, dtype: float64","0    0.085202
+0    0.206601
+0    0.000000
+0    0.058962
+0    0.092741
+0    0.072343
+Name: std_test_mcc, dtype: float64"
+IP115_RSVP_Calibration_Thu_04_Aug_2022_09hr17min12sec_-0700,"0    0.789301
+0    0.899738
+0    0.910861
+0    0.892959
+0    0.669064
+0    0.495955
+Name: mean_test_accuracy, dtype: float64","0    0.034627
+0    0.029659
+0    0.012897
+0    0.015248
+0    0.075881
+0    0.041544
+Name: std_test_accuracy, dtype: float64","0    0.153279
+0    0.333333
+0    0.250000
+0    0.216667
+0    0.161905
+0    0.093478
+Name: mean_test_precision, dtype: float64","0    0.062731
+0    0.387298
+0    0.403113
+0    0.163299
+0    0.042864
+0    0.041304
+Name: std_test_precision, dtype: float64","0    0.319643
+0    0.092857
+0    0.041071
+0    0.117857
+0    0.668333
+0    0.544643
+Name: mean_test_recall, dtype: float64","0    0.137268
+0    0.104674
+0    0.062907
+0    0.093882
+0    0.171846
+0    0.231214
+Name: std_test_recall, dtype: float64","0    0.204982
+0    0.144848
+0    0.070000
+0    0.149600
+0    0.258548
+0    0.159539
+Name: mean_test_f1, dtype: float64","0    0.083195
+0    0.164366
+0    0.107703
+0    0.113729
+0    0.064073
+0    0.070108
+Name: std_test_f1, dtype: float64","0    0.612042
+0    0.637461
+0    0.648569
+0    0.700433
+0    0.738258
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.101673
+0    0.091115
+0    0.089562
+0    0.082929
+0    0.060080
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.576804
+0    0.534836
+0    0.517487
+0    0.542435
+0    0.667941
+0    0.517729
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.064225
+0    0.060307
+0    0.032481
+0    0.045138
+0    0.066054
+0    0.127410
+Name: std_test_balanced_accuracy, dtype: float64","0    0.111610
+0    0.134326
+0    0.083418
+0    0.110289
+0    0.199716
+0    0.021675
+Name: mean_test_mcc, dtype: float64","0    0.096801
+0    0.216367
+0    0.157635
+0    0.117128
+0    0.083398
+0    0.142834
+Name: std_test_mcc, dtype: float64"
+IP116_RSVP_Calibration_Fri_26_Aug_2022_13hr16min30sec_-0700,"0    0.744737
+0    0.893968
+0    0.911022
+0    0.891353
+0    0.390243
+0    0.506442
+Name: mean_test_accuracy, dtype: float64","0    0.030808
+0    0.012381
+0    0.007516
+0    0.014473
+0    0.067088
+0    0.030832
+Name: std_test_accuracy, dtype: float64","0    0.081315
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.095148
+0    0.092105
+Name: mean_test_precision, dtype: float64","0    0.038152
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.015145
+0    0.031688
+Name: std_test_precision, dtype: float64","0    0.192857
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.707857
+0    0.519048
+Name: mean_test_recall, dtype: float64","0    0.096685
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.133715
+0    0.166939
+Name: std_test_recall, dtype: float64","0    0.113949
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.167442
+0    0.156364
+Name: mean_test_f1, dtype: float64","0    0.054275
+0    0.000000
+0    0.000000
+0    0.000000
+0    0.026602
+0    0.053198
+Name: std_test_f1, dtype: float64","0    0.463829
+0    0.527073
+0    0.509990
+0    0.506619
+0    0.519063
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.095944
+0    0.105926
+0    0.109126
+0    0.100438
+0    0.052319
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.495207
+0    0.489969
+0    0.499286
+0    0.488509
+0    0.532981
+0    0.512019
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.044002
+0    0.007962
+0    0.002143
+0    0.007370
+0    0.030816
+0    0.092259
+Name: std_test_balanced_accuracy, dtype: float64","0   -0.008409
+0   -0.034470
+0   -0.003627
+0   -0.039876
+0    0.041286
+0    0.014441
+Name: mean_test_mcc, dtype: float64","0    0.062679
+0    0.023955
+0    0.010882
+0    0.022051
+0    0.037723
+0    0.104375
+Name: std_test_mcc, dtype: float64"
+IP117_RSVP_Calibration_Wed_03_Aug_2022_10hr13min18sec_-0700,"0    0.791111
+0    0.898792
+0    0.911884
+0    0.894396
+0    0.547971
+0    0.488986
+Name: mean_test_accuracy, dtype: float64","0    0.062890
+0    0.019525
+0    0.000947
+0    0.028760
+0    0.141368
+0    0.030248
+Name: std_test_accuracy, dtype: float64","0    0.129286
+0    0.233333
+0    0.000000
+0    0.275000
+0    0.085998
+0    0.082609
+Name: mean_test_precision, dtype: float64","0    0.156767
+0    0.326599
+0    0.000000
+0    0.333437
+0    0.055152
+0    0.030435
+Name: std_test_precision, dtype: float64","0    0.175000
+0    0.100000
+0    0.000000
+0    0.175000
+0    0.433333
+0    0.475000
+Name: mean_test_recall, dtype: float64","0    0.195256
+0    0.122474
+0    0.000000
+0    0.195256
+0    0.274469
+0    0.175000
+Name: std_test_recall, dtype: float64","0    0.143975
+0    0.135238
+0    0.000000
+0    0.195476
+0    0.141325
+0    0.140741
+Name: mean_test_f1, dtype: float64","0    0.164099
+0    0.167619
+0    0.000000
+0    0.209292
+0    0.087734
+0    0.051852
+Name: std_test_f1, dtype: float64","0    0.619120
+0    0.616739
+0    0.533319
+0    0.703252
+0    0.531975
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.163907
+0    0.197246
+0    0.148265
+0    0.123321
+0    0.145276
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.512790
+0    0.537950
+0    0.500000
+0    0.569382
+0    0.494937
+0    0.482651
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.115783
+0    0.061822
+0    0.000000
+0    0.093303
+0    0.112570
+0    0.095439
+Name: std_test_balanced_accuracy, dtype: float64","0    0.035609
+0    0.111064
+0    0.000000
+0    0.165724
+0   -0.007040
+0   -0.019596
+Name: mean_test_mcc, dtype: float64","0    0.197880
+0    0.192204
+0    0.000000
+0    0.225315
+0    0.134309
+0    0.108020
+Name: std_test_mcc, dtype: float64"
+IP120_RSVP_Calibration_Wed_17_Aug_2022_10hr17min29sec_-0700,"0    0.910526
+0    0.947368
+0    0.944211
+0    0.948421
+0    0.900000
+0    0.486316
+Name: mean_test_accuracy, dtype: float64","0    0.013521
+0    0.021573
+0    0.015648
+0    0.017895
+0    0.018977
+0    0.028557
+Name: std_test_accuracy, dtype: float64","0    0.533924
+0    0.768810
+0    0.905357
+0    0.847172
+0    0.486791
+0    0.076596
+Name: mean_test_precision, dtype: float64","0    0.063336
+0    0.122651
+0    0.105357
+0    0.170678
+0    0.069655
+0    0.028861
+Name: std_test_precision, dtype: float64","0    0.655556
+0    0.633333
+0    0.477778
+0    0.622222
+0    0.913889
+0    0.400000
+Name: mean_test_recall, dtype: float64","0    0.135628
+0    0.172491
+0    0.192771
+0    0.142292
+0    0.076779
+0    0.150718
+Name: std_test_recall, dtype: float64","0    0.578138
+0    0.686668
+0    0.593974
+0    0.693236
+0    0.631527
+0    0.128571
+Name: mean_test_f1, dtype: float64","0    0.053035
+0    0.142415
+0    0.175413
+0    0.091808
+0    0.062594
+0    0.048445
+Name: std_test_f1, dtype: float64","0    0.911240
+0    0.953618
+0    0.969380
+0    0.956977
+0    0.961663
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.041778
+0    0.033945
+0    0.024616
+0    0.033418
+0    0.036540
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.796382
+0    0.806783
+0    0.735401
+0    0.802390
+0    0.906345
+0    0.447674
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.059009
+0    0.087888
+0    0.094364
+0    0.066407
+0    0.038692
+0    0.083246
+Name: std_test_balanced_accuracy, dtype: float64","0    0.539309
+0    0.666680
+0    0.615418
+0    0.689177
+0    0.620789
+0   -0.061298
+Name: mean_test_mcc, dtype: float64","0    0.062102
+0    0.148573
+0    0.139805
+0    0.093870
+0    0.062879
+0    0.097520
+Name: std_test_mcc, dtype: float64"
+IP121_RSVP_Calibration_Mon_08_Aug_2022_13hr42min00sec_-0700,"0    0.903447
+0    0.914689
+0    0.928743
+0    0.934297
+0    0.860280
+0    0.498589
+Name: mean_test_accuracy, dtype: float64","0    0.024491
+0    0.017619
+0    0.013527
+0    0.029962
+0    0.050369
+0    0.022230
+Name: std_test_accuracy, dtype: float64","0    0.489055
+0    0.532998
+0    0.667381
+0    0.725595
+0    0.382794
+0    0.070588
+Name: mean_test_precision, dtype: float64","0    0.153712
+0    0.233848
+0    0.280654
+0    0.238029
+0    0.124491
+0    0.023529
+Name: std_test_precision, dtype: float64","0    0.460000
+0    0.355556
+0    0.324444
+0    0.445556
+0    0.697955
+0    0.371111
+Name: mean_test_recall, dtype: float64","0    0.134917
+0    0.160093
+0    0.181883
+0    0.218154
+0    0.158785
+0    0.119381
+Name: std_test_recall, dtype: float64","0    0.463009
+0    0.415444
+0    0.422844
+0    0.537438
+0    0.487774
+0    0.118579
+Name: mean_test_f1, dtype: float64","0    0.117359
+0    0.171903
+0    0.203771
+0    0.219242
+0    0.130143
+0    0.039262
+Name: std_test_f1, dtype: float64","0    0.809038
+0    0.830733
+0    0.817113
+0    0.833631
+0    0.845608
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.080936
+0    0.071382
+0    0.064759
+0    0.078456
+0    0.081767
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.703711
+0    0.662829
+0    0.656552
+0    0.714015
+0    0.787010
+0    0.441226
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.068084
+0    0.078620
+0    0.089043
+0    0.113944
+0    0.089870
+0    0.065818
+Name: std_test_balanced_accuracy, dtype: float64","0    0.417029
+0    0.387480
+0    0.430852
+0    0.529893
+0    0.445829
+0   -0.067601
+Name: mean_test_mcc, dtype: float64","0    0.130458
+0    0.180540
+0    0.202992
+0    0.228678
+0    0.151970
+0    0.076522
+Name: std_test_mcc, dtype: float64"
+IP122_RSVP_Calibration_Thu_08_Sep_2022_13hr57min08sec_-0700,"0    0.896219
+0    0.946898
+0    0.939460
+0    0.955525
+0    0.945633
+0    0.499336
+Name: mean_test_accuracy, dtype: float64","0    0.038644
+0    0.022091
+0    0.019426
+0    0.011261
+0    0.024160
+0    0.029590
+Name: std_test_accuracy, dtype: float64","0    0.503716
+0    0.801310
+0    0.705000
+0    0.856429
+0    0.706429
+0    0.100122
+Name: mean_test_precision, dtype: float64","0    0.152688
+0    0.178605
+0    0.362710
+0    0.107739
+0    0.145021
+0    0.031512
+Name: std_test_precision, dtype: float64","0    0.680357
+0    0.628571
+0    0.446429
+0    0.667857
+0    0.833810
+0    0.523214
+Name: mean_test_recall, dtype: float64","0    0.116401
+0    0.238351
+0    0.265466
+0    0.100445
+0    0.148231
+0    0.157720
+Name: std_test_recall, dtype: float64","0    0.568799
+0    0.676469
+0    0.527787
+0    0.741705
+0    0.748780
+0    0.168034
+Name: mean_test_f1, dtype: float64","0    0.121334
+0    0.166358
+0    0.285826
+0    0.065337
+0    0.105158
+0    0.052489
+Name: std_test_f1, dtype: float64","0    0.882822
+0    0.909122
+0    0.887495
+0    0.904617
+0    0.931319
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.051354
+0    0.069829
+0    0.089242
+0    0.059280
+0    0.065466
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.799869
+0    0.804724
+0    0.719105
+0    0.827089
+0    0.896413
+0    0.509895
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.063790
+0    0.116753
+0    0.129453
+0    0.047980
+0    0.071242
+0    0.086760
+Name: std_test_balanced_accuracy, dtype: float64","0    0.526403
+0    0.670122
+0    0.531771
+0    0.729591
+0    0.732215
+0    0.012303
+Name: mean_test_mcc, dtype: float64","0    0.135030
+0    0.171257
+0    0.278373
+0    0.069536
+0    0.112864
+0    0.102406
+Name: std_test_mcc, dtype: float64"
+IP123_RSVP_Calibration_Fri_19_Aug_2022_13hr56min37sec_-0700,"0    0.843022
+0    0.913354
+0    0.918418
+0    0.913354
+0    0.731377
+0    0.498180
+Name: mean_test_accuracy, dtype: float64","0    0.044017
+0    0.030800
+0    0.010294
+0    0.025032
+0    0.054341
+0    0.018504
+Name: std_test_accuracy, dtype: float64","0    0.246378
+0    0.563333
+0    0.300000
+0    0.561667
+0    0.200118
+0    0.087500
+Name: mean_test_precision, dtype: float64","0    0.134859
+0    0.297191
+0    0.458258
+0    0.213964
+0    0.074465
+0    0.020156
+Name: std_test_precision, dtype: float64","0    0.342857
+0    0.285714
+0    0.071429
+0    0.314286
+0    0.649484
+0    0.500000
+Name: mean_test_recall, dtype: float64","0    0.193781
+0    0.202031
+0    0.115175
+0    0.139971
+0    0.135834
+0    0.115175
+Name: std_test_recall, dtype: float64","0    0.274090
+0    0.354872
+0    0.113889
+0    0.384227
+0    0.299699
+0    0.148936
+Name: mean_test_f1, dtype: float64","0    0.148739
+0    0.205444
+0    0.181068
+0    0.145693
+0    0.096394
+0    0.034307
+Name: std_test_f1, dtype: float64","0    0.681578
+0    0.774622
+0    0.782029
+0    0.775166
+0    0.767116
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.143895
+0    0.108383
+0    0.102500
+0    0.120389
+0    0.100378
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.617024
+0    0.629758
+0    0.535714
+0    0.642674
+0    0.694845
+0    0.498982
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.097461
+0    0.103710
+0    0.057588
+0    0.071132
+0    0.079955
+0    0.062100
+Name: std_test_balanced_accuracy, dtype: float64","0    0.201592
+0    0.347619
+0    0.139754
+0    0.368169
+0    0.243514
+0   -0.001029
+Name: mean_test_mcc, dtype: float64","0    0.166318
+0    0.224325
+0    0.217139
+0    0.154986
+0    0.108101
+0    0.070485
+Name: std_test_mcc, dtype: float64"
+IP124_RSVP_Calibration_Fri_02_Sep_2022_08hr18min56sec_-0700,"0    0.901587
+0    0.920635
+0    0.931746
+0    0.917460
+0    0.687302
+0    0.553968
+Name: mean_test_accuracy, dtype: float64","0    0.033895
+0    0.028395
+0    0.007274
+0    0.024385
+0    0.069207
+0    0.027902
+Name: std_test_accuracy, dtype: float64","0    0.278571
+0    0.250000
+0    0.000000
+0    0.206667
+0    0.120416
+0    0.103333
+Name: mean_test_precision, dtype: float64","0    0.307327
+0    0.403113
+0    0.000000
+0    0.225979
+0    0.074158
+0    0.031447
+Name: std_test_precision, dtype: float64","0    0.220000
+0    0.075000
+0    0.000000
+0    0.165000
+0    0.522381
+0    0.720000
+Name: mean_test_recall, dtype: float64","0    0.235797
+0    0.114564
+0    0.000000
+0    0.180347
+0    0.278944
+0    0.202731
+Name: std_test_recall, dtype: float64","0    0.216450
+0    0.113333
+0    0.000000
+0    0.176667
+0    0.192625
+0    0.180504
+Name: mean_test_f1, dtype: float64","0    0.202368
+0    0.173973
+0    0.000000
+0    0.189766
+0    0.114019
+0    0.053966
+Name: std_test_f1, dtype: float64","0    0.646768
+0    0.622677
+0    0.643197
+0    0.697344
+0    0.585824
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.169662
+0    0.182068
+0    0.131652
+0    0.124491
+0    0.177155
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.586096
+0    0.528938
+0    0.500000
+0    0.568838
+0    0.608726
+0    0.630880
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.117636
+0    0.061887
+0    0.000000
+0    0.084751
+0    0.133308
+0    0.108777
+Name: std_test_balanced_accuracy, dtype: float64","0    0.182414
+0    0.108981
+0    0.000000
+0    0.149360
+0    0.130941
+0    0.132242
+Name: mean_test_mcc, dtype: float64","0    0.232249
+0    0.217736
+0    0.000000
+0    0.187107
+0    0.150987
+0    0.109960
+Name: std_test_mcc, dtype: float64"
+IP125_RSVP_Calibration_Wed_14_Sep_2022_14hr41min17sec_-0700,"0    0.846261
+0    0.932406
+0    0.925872
+0    0.935690
+0    0.885583
+0    0.501720
+Name: mean_test_accuracy, dtype: float64","0    0.025929
+0    0.013499
+0    0.014294
+0    0.023511
+0    0.036892
+0    0.029386
+Name: std_test_accuracy, dtype: float64","0    0.331671
+0    0.766190
+0    0.875000
+0    0.726310
+0    0.456424
+0    0.104255
+Name: mean_test_precision, dtype: float64","0    0.057407
+0    0.143051
+0    0.201556
+0    0.184313
+0    0.109855
+0    0.029250
+Name: std_test_precision, dtype: float64","0    0.637500
+0    0.437500
+0    0.250000
+0    0.495833
+0    0.839755
+0    0.579167
+Name: mean_test_recall, dtype: float64","0    0.131388
+0    0.162832
+0    0.088497
+0    0.176236
+0    0.094198
+0    0.172921
+Name: std_test_recall, dtype: float64","0    0.434172
+0    0.529644
+0    0.379860
+0    0.578376
+0    0.580158
+0    0.176623
+Name: mean_test_f1, dtype: float64","0    0.074574
+0    0.122349
+0    0.115994
+0    0.172053
+0    0.086189
+0    0.049905
+Name: std_test_f1, dtype: float64","0    0.845167
+0    0.858931
+0    0.928625
+0    0.918150
+0    0.944706
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.057193
+0    0.059703
+0    0.037115
+0    0.054479
+0    0.041225
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.752628
+0    0.710352
+0    0.622598
+0    0.738300
+0    0.865355
+0    0.536593
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.067785
+0    0.077917
+0    0.044907
+0    0.090239
+0    0.045617
+0    0.094050
+Name: std_test_balanced_accuracy, dtype: float64","0    0.382539
+0    0.532841
+0    0.436419
+0    0.562914
+0    0.561570
+0    0.041862
+Name: mean_test_mcc, dtype: float64","0    0.094045
+0    0.101374
+0    0.119003
+0    0.178094
+0    0.083581
+0    0.107419
+Name: std_test_mcc, dtype: float64"
+IP126_RSVP_Calibration_Thu_25_Aug_2022_10hr32min56sec_-0700,"0    0.835047
+0    0.926832
+0    0.921940
+0    0.914154
+0    0.790120
+0    0.514154
+Name: mean_test_accuracy, dtype: float64","0    0.025322
+0    0.014577
+0    0.016370
+0    0.010417
+0    0.034928
+0    0.032719
+Name: std_test_accuracy, dtype: float64","0    0.244185
+0    0.686905
+0    0.598333
+0    0.517323
+0    0.264454
+0    0.092000
+Name: mean_test_precision, dtype: float64","0    0.075487
+0    0.204197
+0    0.366549
+0    0.119344
+0    0.070611
+0    0.033705
+Name: std_test_precision, dtype: float64","0    0.433333
+0    0.322222
+0    0.222222
+0    0.311111
+0    0.756057
+0    0.511111
+Name: mean_test_recall, dtype: float64","0    0.168142
+0    0.182236
+0    0.157135
+0    0.155556
+0    0.099370
+0    0.187248
+Name: std_test_recall, dtype: float64","0    0.309036
+0    0.411014
+0    0.311492
+0    0.371161
+0    0.389342
+0    0.155932
+Name: mean_test_f1, dtype: float64","0    0.101303
+0    0.179198
+0    0.206478
+0    0.129640
+0    0.088408
+0    0.057126
+Name: std_test_f1, dtype: float64","0    0.758310
+0    0.827039
+0    0.849607
+0    0.807598
+0    0.856784
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.088610
+0    0.083614
+0    0.064347
+0    0.080697
+0    0.051345
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.653506
+0    0.653619
+0    0.605752
+0    0.641651
+0    0.774347
+0    0.512774
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.078843
+0    0.089132
+0    0.079048
+0    0.072896
+0    0.055257
+0    0.102500
+Name: std_test_balanced_accuracy, dtype: float64","0    0.238056
+0    0.421486
+0    0.325767
+0    0.350846
+0    0.359590
+0    0.014491
+Name: mean_test_mcc, dtype: float64","0    0.117056
+0    0.164696
+0    0.222566
+0    0.123360
+0    0.093402
+0    0.116122
+Name: std_test_mcc, dtype: float64"
+IP127_RSVP_Calibration_Mon_29_Aug_2022_09hr30min57sec_-0700,"0    0.803115
+0    0.921452
+0    0.922686
+0    0.925096
+0    0.781325
+0    0.508463
+Name: mean_test_accuracy, dtype: float64","0    0.031139
+0    0.023884
+0    0.015554
+0    0.015208
+0    0.021354
+0    0.029797
+Name: std_test_accuracy, dtype: float64","0    0.226096
+0    0.695238
+0    0.733333
+0    0.580357
+0    0.250891
+0    0.107475
+Name: mean_test_precision, dtype: float64","0    0.054436
+0    0.285923
+0    0.292973
+0    0.154844
+0    0.032041
+0    0.029782
+Name: std_test_precision, dtype: float64","0    0.521429
+0    0.267857
+0    0.210714
+0    0.407143
+0    0.793690
+0    0.646429
+Name: mean_test_recall, dtype: float64","0    0.110887
+0    0.134818
+0    0.093746
+0    0.169182
+0    0.134645
+0    0.173830
+Name: std_test_recall, dtype: float64","0    0.313068
+0    0.364026
+0    0.316061
+0    0.467146
+0    0.379267
+0    0.184264
+Name: mean_test_f1, dtype: float64","0    0.068637
+0    0.160939
+0    0.122663
+0    0.155171
+0    0.044353
+0    0.050730
+Name: std_test_f1, dtype: float64","0    0.720292
+0    0.733721
+0    0.754796
+0    0.835737
+0    0.850101
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.037426
+0    0.092247
+0    0.092094
+0    0.065842
+0    0.073567
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.675513
+0    0.625315
+0    0.600076
+0    0.690370
+0    0.787096
+0    0.570916
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.055376
+0    0.069472
+0    0.049084
+0    0.083418
+0    0.060547
+0    0.095020
+Name: std_test_balanced_accuracy, dtype: float64","0    0.247138
+0    0.382754
+0    0.356037
+0    0.443033
+0    0.359816
+0    0.079847
+Name: mean_test_mcc, dtype: float64","0    0.081685
+0    0.169883
+0    0.146151
+0    0.156541
+0    0.063409
+0    0.106276
+Name: std_test_mcc, dtype: float64"
+IP128_RSVP_Calibration_Fri_26_Aug_2022_09hr41min34sec_-0700,"0    0.766152
+0    0.884742
+0    0.903971
+0    0.887015
+0    0.513113
+0    0.465462
+Name: mean_test_accuracy, dtype: float64","0    0.046978
+0    0.011117
+0    0.005342
+0    0.015059
+0    0.040339
+0    0.029820
+Name: std_test_accuracy, dtype: float64","0    0.100147
+0    0.025000
+0    0.000000
+0    0.033333
+0    0.083618
+0    0.072319
+Name: mean_test_precision, dtype: float64","0    0.078720
+0    0.075000
+0    0.000000
+0    0.100000
+0    0.031583
+0    0.032208
+Name: std_test_precision, dtype: float64","0    0.152778
+0    0.011111
+0    0.000000
+0    0.011111
+0    0.419769
+0    0.388889
+Name: mean_test_recall, dtype: float64","0    0.091287
+0    0.033333
+0    0.000000
+0    0.033333
+0    0.142126
+0    0.165971
+Name: std_test_recall, dtype: float64","0    0.117024
+0    0.015385
+0    0.000000
+0    0.016667
+0    0.138464
+0    0.121916
+Name: mean_test_f1, dtype: float64","0    0.076222
+0    0.046154
+0    0.000000
+0    0.050000
+0    0.050362
+0    0.053888
+Name: std_test_f1, dtype: float64","0    0.517608
+0    0.459306
+0    0.469280
+0    0.502801
+0    0.456199
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.064354
+0    0.077736
+0    0.073449
+0    0.093685
+0    0.082594
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.491520
+0    0.493688
+0    0.499375
+0    0.494946
+0    0.471493
+0    0.431019
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.058833
+0    0.015619
+0    0.001875
+0    0.018095
+0    0.069954
+0    0.090748
+Name: std_test_balanced_accuracy, dtype: float64","0   -0.005584
+0   -0.027520
+0   -0.003390
+0   -0.017750
+0   -0.033807
+0   -0.079899
+Name: mean_test_mcc, dtype: float64","0    0.098398
+0    0.048042
+0    0.010171
+0    0.059700
+0    0.086172
+0    0.105747
+Name: std_test_mcc, dtype: float64"
+IP129_RSVP_Calibration_Thu_29_Sep_2022_13hr58min47sec_-0700,"0    0.881731
+0    0.921154
+0    0.931731
+0    0.915385
+0    0.867308
+0    0.520192
+Name: mean_test_accuracy, dtype: float64","0    0.029496
+0    0.028132
+0    0.018471
+0    0.026086
+0    0.028459
+0    0.033156
+Name: std_test_accuracy, dtype: float64","0    0.403812
+0    0.652857
+0    0.773333
+0    0.599444
+0    0.401129
+0    0.105882
+Name: mean_test_precision, dtype: float64","0    0.116480
+0    0.251692
+0    0.292043
+0    0.289832
+0    0.065811
+0    0.034187
+Name: std_test_precision, dtype: float64","0    0.475556
+0    0.385556
+0    0.344444
+0    0.354444
+0    0.836692
+0    0.556667
+Name: mean_test_recall, dtype: float64","0    0.108616
+0    0.144106
+0    0.160401
+0    0.163333
+0    0.139506
+0    0.173735
+Name: std_test_recall, dtype: float64","0    0.432913
+0    0.478263
+0    0.466236
+0    0.427652
+0    0.540466
+0    0.177869
+Name: mean_test_f1, dtype: float64","0    0.108708
+0    0.172593
+0    0.196312
+0    0.191024
+0    0.084274
+0    0.057055
+Name: std_test_f1, dtype: float64","0    0.825775
+0    0.841127
+0    0.862316
+0    0.860355
+0    0.894015
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.064233
+0    0.084276
+0    0.091068
+0    0.051768
+0    0.071139
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.699631
+0    0.681109
+0    0.668510
+0    0.663975
+0    0.853634
+0    0.536553
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.061868
+0    0.078402
+0    0.080651
+0    0.082871
+0    0.072618
+0    0.096027
+Name: std_test_balanced_accuracy, dtype: float64","0    0.371790
+0    0.459950
+0    0.483721
+0    0.410610
+0    0.519318
+0    0.042527
+Name: mean_test_mcc, dtype: float64","0    0.122393
+0    0.194873
+0    0.204568
+0    0.203127
+0    0.104145
+0    0.112855
+Name: std_test_mcc, dtype: float64"
+IP130_RSVP_Calibration_Mon_12_Sep_2022_13hr27min39sec_-0700,"0    0.786585
+0    0.897350
+0    0.908989
+0    0.897432
+0    0.726940
+0    0.508279
+Name: mean_test_accuracy, dtype: float64","0    0.069133
+0    0.020746
+0    0.007692
+0    0.040157
+0    0.061833
+0    0.049117
+Name: std_test_accuracy, dtype: float64","0    0.238737
+0    0.287500
+0    0.000000
+0    0.503571
+0    0.216124
+0    0.082759
+Name: mean_test_precision, dtype: float64","0    0.091261
+0    0.252907
+0    0.000000
+0    0.322311
+0    0.084803
+0    0.053864
+Name: std_test_precision, dtype: float64","0    0.540000
+0    0.213333
+0    0.000000
+0    0.286667
+0    0.712381
+0    0.430000
+Name: mean_test_recall, dtype: float64","0    0.198774
+0    0.210924
+0    0.000000
+0    0.164114
+0    0.171219
+0    0.275459
+Name: std_test_recall, dtype: float64","0    0.322352
+0    0.233665
+0    0.000000
+0    0.344341
+0    0.326824
+0    0.138655
+Name: mean_test_f1, dtype: float64","0    0.110285
+0    0.212707
+0    0.000000
+0    0.199029
+0    0.104934
+0    0.089869
+Name: std_test_f1, dtype: float64","0    0.750076
+0    0.752070
+0    0.750148
+0    0.818796
+0    0.776413
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.118399
+0    0.153005
+0    0.118150
+0    0.139564
+0    0.105120
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.675354
+0    0.589310
+0    0.500000
+0    0.622407
+0    0.720661
+0    0.472778
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.106018
+0    0.099262
+0    0.000000
+0    0.088931
+0    0.100193
+0    0.151166
+Name: std_test_balanced_accuracy, dtype: float64","0    0.252832
+0    0.196461
+0    0.000000
+0    0.316638
+0    0.277900
+0   -0.029401
+Name: mean_test_mcc, dtype: float64","0    0.146330
+0    0.213031
+0    0.000000
+0    0.226813
+0    0.134505
+0    0.172512
+Name: std_test_mcc, dtype: float64"
+IP131_RSVP_Calibration_Mon_12_Sep_2022_09hr34min04sec_-0700,"0    0.891142
+0    0.926025
+0    0.930280
+0    0.927100
+0    0.859339
+0    0.513751
+Name: mean_test_accuracy, dtype: float64","0    0.021525
+0    0.014111
+0    0.019446
+0    0.018433
+0    0.031331
+0    0.035129
+Name: std_test_accuracy, dtype: float64","0    0.427764
+0    0.650577
+0    0.745357
+0    0.658532
+0    0.392570
+0    0.106383
+Name: mean_test_precision, dtype: float64","0    0.108811
+0    0.103906
+0    0.152972
+0    0.118877
+0    0.076678
+0    0.035603
+Name: std_test_precision, dtype: float64","0    0.500000
+0    0.500000
+0    0.422222
+0    0.544444
+0    0.835159
+0    0.555556
+Name: mean_test_recall, dtype: float64","0    0.180876
+0    0.173916
+0    0.163299
+0    0.188889
+0    0.119700
+0    0.185924
+Name: std_test_recall, dtype: float64","0    0.456533
+0    0.547152
+0    0.522370
+0    0.573318
+0    0.528824
+0    0.178571
+Name: mean_test_f1, dtype: float64","0    0.137702
+0    0.131710
+0    0.151662
+0    0.131827
+0    0.082491
+0    0.059761
+Name: std_test_f1, dtype: float64","0    0.841345
+0    0.871406
+0    0.905048
+0    0.918428
+0    0.907263
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.070043
+0    0.065716
+0    0.035213
+0    0.033438
+0    0.058349
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.716135
+0    0.735410
+0    0.702944
+0    0.755875
+0    0.848624
+0    0.532449
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.090387
+0    0.082903
+0    0.082315
+0    0.089758
+0    0.056196
+0    0.102565
+Name: std_test_balanced_accuracy, dtype: float64","0    0.401011
+0    0.523657
+0    0.519449
+0    0.550213
+0    0.507877
+0    0.038115
+Name: mean_test_mcc, dtype: float64","0    0.149565
+0    0.124391
+0    0.144512
+0    0.128474
+0    0.086124
+0    0.120343
+Name: std_test_mcc, dtype: float64"
+IP132_RSVP_Calibration_Thu_15_Sep_2022_09hr27min27sec_-0700,"0    0.786963
+0    0.904542
+0    0.913858
+0    0.895253
+0    0.676347
+0    0.484241
+Name: mean_test_accuracy, dtype: float64","0    0.040948
+0    0.021305
+0    0.005625
+0    0.025390
+0    0.110344
+0    0.028330
+Name: std_test_accuracy, dtype: float64","0    0.114102
+0    0.433333
+0    0.000000
+0    0.262857
+0    0.157067
+0    0.088990
+Name: mean_test_precision, dtype: float64","0    0.091673
+0    0.359011
+0    0.000000
+0    0.256463
+0    0.081399
+0    0.027951
+Name: std_test_precision, dtype: float64","0    0.200000
+0    0.119643
+0    0.000000
+0    0.150000
+0    0.515476
+0    0.541071
+Name: mean_test_recall, dtype: float64","0    0.158074
+0    0.088946
+0    0.000000
+0    0.154069
+0    0.156768
+0    0.169229
+Name: std_test_recall, dtype: float64","0    0.142815
+0    0.179697
+0    0.000000
+0    0.185009
+0    0.231985
+0    0.152763
+Name: mean_test_f1, dtype: float64","0    0.111476
+0    0.128621
+0    0.000000
+0    0.181584
+0    0.104377
+0    0.047807
+Name: std_test_f1, dtype: float64","0    0.574247
+0    0.620555
+0    0.684608
+0    0.689290
+0    0.654130
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.128914
+0    0.126879
+0    0.120027
+0    0.100551
+0    0.113118
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.521073
+0    0.549013
+0    0.500000
+0    0.557814
+0    0.604215
+0    0.510012
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.087415
+0    0.049504
+0    0.000000
+0    0.079042
+0    0.096556
+0    0.092112
+Name: std_test_balanced_accuracy, dtype: float64","0    0.036604
+0    0.183997
+0    0.000000
+0    0.145858
+0    0.139794
+0    0.011015
+Name: mean_test_mcc, dtype: float64","0    0.134486
+0    0.167763
+0    0.000000
+0    0.197624
+0    0.133553
+0    0.103365
+Name: std_test_mcc, dtype: float64"
+IP133_RSVP_Calibration_Thu_22_Sep_2022_13hr44min19sec_-0700,"0    0.879747
+0    0.930380
+0    0.932911
+0    0.924051
+0    0.856962
+0    0.494937
+Name: mean_test_accuracy, dtype: float64","0    0.021370
+0    0.018124
+0    0.017030
+0    0.017901
+0    0.027762
+0    0.016456
+Name: std_test_accuracy, dtype: float64","0    0.310685
+0    0.703690
+0    0.696667
+0    0.594524
+0    0.329997
+0    0.082500
+Name: mean_test_precision, dtype: float64","0    0.102314
+0    0.243925
+0    0.384838
+0    0.193916
+0    0.084459
+0    0.019526
+Name: std_test_precision, dtype: float64","0    0.373810
+0    0.378571
+0    0.285714
+0    0.409524
+0    0.742500
+0    0.504762
+Name: mean_test_recall, dtype: float64","0    0.162202
+0    0.200184
+0    0.218996
+0    0.176833
+0    0.163402
+0    0.096890
+Name: std_test_recall, dtype: float64","0    0.328611
+0    0.447860
+0    0.371840
+0    0.453751
+0    0.451298
+0    0.141721
+Name: mean_test_f1, dtype: float64","0    0.106802
+0    0.171192
+0    0.241710
+0    0.149215
+0    0.098319
+0    0.032519
+Name: std_test_f1, dtype: float64","0    0.803387
+0    0.847902
+0    0.870722
+0    0.836176
+0    0.848122
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.076915
+0    0.079898
+0    0.090109
+0    0.076609
+0    0.082804
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.649671
+0    0.678936
+0    0.638034
+0    0.690302
+0    0.804998
+0    0.499289
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.075311
+0    0.096546
+0    0.108163
+0    0.085604
+0    0.080138
+0    0.052925
+Name: std_test_balanced_accuracy, dtype: float64","0    0.271807
+0    0.457855
+0    0.400552
+0    0.438063
+0    0.428201
+0    0.000019
+Name: mean_test_mcc, dtype: float64","0    0.118559
+0    0.157884
+0    0.244427
+0    0.140629
+0    0.112898
+0    0.058919
+Name: std_test_mcc, dtype: float64"
+IP134_RSVP_Calibration_Mon_19_Sep_2022_13hr42min55sec_-0700,"0    0.854545
+0    0.919604
+0    0.909462
+0    0.919573
+0    0.810957
+0    0.512678
+Name: mean_test_accuracy, dtype: float64","0    0.020252
+0    0.017452
+0    0.002997
+0    0.028702
+0    0.055031
+0    0.031855
+Name: std_test_accuracy, dtype: float64","0    0.303450
+0    0.571746
+0    0.100000
+0    0.587529
+0    0.310210
+0    0.105388
+Name: mean_test_precision, dtype: float64","0    0.090763
+0    0.142294
+0    0.300000
+0    0.167917
+0    0.087265
+0    0.032150
+Name: std_test_precision, dtype: float64","0    0.500000
+0    0.433333
+0    0.011111
+0    0.477778
+0    0.796901
+0    0.577778
+Name: mean_test_recall, dtype: float64","0    0.223607
+0    0.168142
+0    0.033333
+0    0.205180
+0    0.164275
+0    0.177778
+Name: std_test_recall, dtype: float64","0    0.372429
+0    0.482410
+0    0.020000
+0    0.507682
+0    0.440956
+0    0.178258
+Name: mean_test_f1, dtype: float64","0    0.127370
+0    0.155294
+0    0.060000
+0    0.181664
+0    0.104317
+0    0.054448
+Name: std_test_f1, dtype: float64","0    0.804222
+0    0.874346
+0    0.803260
+0    0.904732
+0    0.918289
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.086979
+0    0.056154
+0    0.057518
+0    0.042758
+0    0.041305
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.695175
+0    0.700999
+0    0.505556
+0    0.720968
+0    0.804448
+0    0.541960
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.104755
+0    0.082967
+0    0.016667
+0    0.103204
+0    0.081701
+0    0.097431
+Name: std_test_balanced_accuracy, dtype: float64","0    0.311374
+0    0.451303
+0    0.031929
+0    0.478552
+0    0.415961
+0    0.048333
+Name: mean_test_mcc, dtype: float64","0    0.149435
+0    0.155244
+0    0.095788
+0    0.184742
+0    0.121919
+0    0.112365
+Name: std_test_mcc, dtype: float64"
+IP135_RSVP_Calibration_Fri_30_Sep_2022_13hr18min41sec_-0700,"0    0.946719
+0    0.941050
+0    0.948979
+0    0.955771
+0    0.903562
+0    0.499987
+Name: mean_test_accuracy, dtype: float64","0    0.021559
+0    0.020805
+0    0.023425
+0    0.019306
+0    0.023060
+0    0.023146
+Name: std_test_accuracy, dtype: float64","0    0.728254
+0    0.705635
+0    0.807500
+0    0.792327
+0    0.478137
+0    0.097295
+Name: mean_test_precision, dtype: float64","0    0.152161
+0    0.124280
+0    0.188136
+0    0.152518
+0    0.085037
+0    0.026442
+Name: std_test_precision, dtype: float64","0    0.678571
+0    0.562500
+0    0.575000
+0    0.717857
+0    0.892262
+0    0.566071
+Name: mean_test_recall, dtype: float64","0    0.093814
+0    0.198246
+0    0.197852
+0    0.134059
+0    0.055357
+0    0.135773
+Name: std_test_recall, dtype: float64","0    0.695548
+0    0.613049
+0    0.654015
+0    0.740717
+0    0.619225
+0    0.165992
+Name: mean_test_f1, dtype: float64","0    0.099183
+0    0.146324
+0    0.159533
+0    0.107316
+0    0.082016
+0    0.044326
+Name: std_test_f1, dtype: float64","0    0.931849
+0    0.934180
+0    0.949903
+0    0.967336
+0    0.940740
+0    0.500000
+Name: mean_test_roc_auc, dtype: float64","0    0.049509
+0    0.028606
+0    0.032273
+0    0.027448
+0    0.050499
+0    0.000000
+Name: std_test_roc_auc, dtype: float64","0    0.825605
+0    0.770062
+0    0.780023
+0    0.848350
+0    0.898336
+0    0.529641
+Name: mean_test_balanced_accuracy, dtype: float64","0    0.050750
+0    0.099730
+0    0.100117
+0    0.066523
+0    0.032940
+0    0.074043
+Name: std_test_balanced_accuracy, dtype: float64","0    0.671038
+0    0.593630
+0    0.647813
+0    0.725170
+0    0.608806
+0    0.034940
+Name: mean_test_mcc, dtype: float64","0    0.113036
+0    0.153418
+0    0.168791
+0    0.116239
+0    0.080149
+0    0.083141
+Name: std_test_mcc, dtype: float64"

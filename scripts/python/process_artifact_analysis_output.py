@@ -2,11 +2,11 @@ import csv
 import pandas as pd
 from bcipy.helpers.load import load_experimental_data
 
-FILENAME = 'WD_NAR_IIR_all_models.csv'
-PREFIX = 'WD_NAR_IIR'
+FILENAME = 'WD_SAR_FIR_all_models.csv'
+PREFIX = 'WD_SAR_FIR'
 EXPORT_NAME = f'{PREFIX}_flat_all_models.csv'
 MODELS = ['LR', 'NN', 'SVM', 'LDA', 'PRK', 'RF']
-HEADERS = [f'WD_NAR_IIR_{model}' for model in MODELS]
+HEADERS = [f'WD_SAR_FIR_{model}' for model in MODELS]
 
 def export_flattened_csv(data_path):
 
@@ -17,6 +17,7 @@ def export_flattened_csv(data_path):
         
         for i, participant in enumerate(metric_data):
             
+            # initialize the export for this metric if it doesn't exist already
             try:
                 export[i]
             except:
@@ -29,7 +30,14 @@ def export_flattened_csv(data_path):
                 model_results = participant.split('Name')[0].split('0   ')[1:]
                 assert len(model_results) == len(MODELS), "The number of models does not equal the data processed from csv"
                 for j, (header, result) in enumerate(zip(HEADERS, model_results)):
-                    export[i][f'{header}_{metric}'] = float(result.split('\n')[0])
+                    parsed_result = result.split('\n')[0]
+
+                    # catch NaN values
+                    try:
+                        cast_result = float(parsed_result)
+                    except:
+                        cast_result = 0.0
+                    export[i][f'{header}_{metric}'] = cast_result
 
     new_data = pd.DataFrame.from_dict(export).transpose()
     new_data.to_csv(EXPORT_NAME)

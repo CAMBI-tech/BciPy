@@ -9,6 +9,7 @@ from bcipy.signal.model import PcaRdaKdeModel, RdaKdeModel
 from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.neural_network import MLPClassifier
+
 from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score, matthews_corrcoef
 from sklearn.svm import SVC
 
@@ -21,8 +22,9 @@ import pickle
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import parallel_backend
+from sklearn.exceptions import ConvergenceWarning
 import warnings
-warnings.filterwarnings('ignore')
 
 def reorder(data):
     return data.transpose(1, 0, 2)

@@ -38,11 +38,9 @@ Processing notes:
 
 TODO:
 
-+ test the new progress bar - works but warnings should be muted still...
-+ ensure the AAR is AAR and not SAR
++ ensure the AAR is AAR and not SAR; From the old spreadsheet it was SAR
 + check how the cohen's kappa is calculated and write up the formula
-+ calculate the AAR / SAR for the FIR filter
-+ calculate the AAR or SAR for the IIR filter
+
 + input into spreadsheet
 + calculate the t-tests for all observations
 + generate the graphs for all observations
@@ -80,14 +78,14 @@ if __name__ == "__main__":
                 progress_bar.set_description(f"Processing {session.name}...")
 
                 # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
-                #     data_folder=session_folder
-                #     )
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
+                    data_folder=session_folder
+                    )
                 
                 # If using artifact labelled data, uncomment these lines
-                mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
-                    data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=True)
+                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
+                #     data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=True)
      
 
                 # train the models and get the results
@@ -103,7 +101,7 @@ if __name__ == "__main__":
                 pass
     
     # export the results!
-    condition = 'WD_SAR_FIR'
+    condition = 'OF_NAR_IIR'
     file_name = f'{condition}_all_models.csv'
     export = pd.DataFrame.from_dict(results).transpose()
     export.to_csv(file_name)
