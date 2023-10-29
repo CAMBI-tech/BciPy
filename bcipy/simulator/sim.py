@@ -1,11 +1,15 @@
 import random
 from time import sleep
+from typing import Optional
 
-from bcipy.helpers import load
+import numpy as np
+
+from bcipy.helpers import load, stimuli, symbols
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
+from bcipy.simulator.helpers.evidence_fuser import EvidenceFuser
 from bcipy.simulator.helpers.sampler import Sampler
-from bcipy.simulator.helpers.sim_state import StateManager, SimState
+from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.simulator.interfaces import MetricReferee, ModelHandler
 from bcipy.simulator.simulator_base import Simulator
@@ -55,8 +59,9 @@ class SimulatorCopyPhrase(Simulator):
 
     def run(self):
         while not self.state_manager.is_done():
-            print(f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n} | Target {self.state_manager.get_state().target_symbol}")
-            self.state_manager.mutate_state('display_alphabet', self.__get_inquiry_alp_subset(self.state_manager.get_state()))
+            print(
+                f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n} | Target {self.state_manager.get_state().target_symbol}")
+            self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(self.state_manager.get_state()))
             sampled_data = self.sampler.sample(self.state_manager.get_state())
             evidence = self.model_handler.generate_evidence(self.state_manager.get_state(),
                                                             sampled_data)  # TODO make this evidence be a dict (mapping of evidence type to evidence)
@@ -74,10 +79,16 @@ class SimulatorCopyPhrase(Simulator):
             sleep(.5)
         # TODO visualize result metrics
 
-    def __get_inquiry_alp_subset(self, state: SimState):
-        # TODO put this in own file or object
+    def __make_stimuli(self, state: SimState):
+        # TODO abstract out
         subset_length = 10
-        return random.sample(self.symbol_set, subset_length)
+        val_func: Optional[np.ndarray] = state.get_current_likelihood()
+        always_in_stimuli = [symbols.SPACE_CHAR, symbols.BACKSPACE_CHAR]
+
+        if val_func is not None:
+            return stimuli.best_selection(self.symbol_set, list(val_func), subset_length, always_included=always_in_stimuli)
+        else:
+            return random.sample(self.symbol_set, subset_length)
 
     def load_parameters(self, path):
         # TODO validate parameters
@@ -93,5 +104,3 @@ class SimulatorCopyPhrase(Simulator):
 
     def get_param(self, name):
         pass
-
-# TODO add stronger typing hints

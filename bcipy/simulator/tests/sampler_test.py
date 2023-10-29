@@ -8,9 +8,9 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.signal.model import PcaRdaKdeModel
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.sampler import Sampler, SimpleLetterSampler
-from bcipy.simulator.helpers.sim_state import StateManagerImpl, StateManager, SimState
+from bcipy.simulator.helpers.state_manager import StateManagerImpl, StateManager, SimState
 from bcipy.simulator.interfaces import ModelHandler, MetricReferee
-from bcipy.simulator.sim_sampler import SimulatorCopyPhrase
+from bcipy.simulator.sim import SimulatorCopyPhrase
 
 
 class DummyModelHandler(ModelHandler):

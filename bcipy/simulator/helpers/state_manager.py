@@ -25,7 +25,6 @@ class SimState:
     inquiry_n: int
     series_n: int
     series_results: List[List[InquiryResult]]
-    # TODO store the fused results
     decision_criterion: List[SimDecisionCriteria]
 
     def total_inquiry_count(self):
@@ -34,6 +33,13 @@ class SimState:
             count += len(series)
 
         return count
+
+    def get_current_likelihood(self) -> Optional[np.ndarray]:
+        cur_likelihood = None
+        if self.inquiry_n:
+            cur_likelihood = self.series_results[-1][-1].fused_likelihood
+
+        return cur_likelihood
 
 
 class StateManager(ABC):
@@ -71,7 +77,6 @@ class StateManagerImpl(StateManager):
         prior_likelihood: Optional[np.ndarray] = current_series.pop().fused_likelihood if current_series else None  # most recent likelihood
         evidence_dict = {"SM": evidence}  # TODO create wrapper object for Evidences
         fused_likelihood = fuser.fuse(prior_likelihood, evidence_dict)
-
 
         # finding out whether max iterations is hit or prob threshold is hit
         temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
