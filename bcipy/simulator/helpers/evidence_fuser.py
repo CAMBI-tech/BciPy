@@ -11,7 +11,7 @@ class EvidenceFuser(ABC):
         ...
 
 
-class MultipyFuser(EvidenceFuser):
+class MultiplyFuser(EvidenceFuser):
 
     def __init__(self):
         pass

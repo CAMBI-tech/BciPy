@@ -71,7 +71,7 @@ class SimulatorCopyPhrase(Simulator):
                 print(f"Decided {inq_record.decision} for target {inq_record.target} for sentence {self.state_manager.get_state().target_sentence}")
 
             print("\n")
-            sleep(.1)
+            sleep(.5)
         # TODO visualize result metrics
 
     def __get_inquiry_alp_subset(self, state: SimState):

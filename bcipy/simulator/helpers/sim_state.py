@@ -9,7 +9,7 @@ from bcipy.helpers.exceptions import FieldException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
-from bcipy.simulator.helpers.evidence_fuser import MultipyFuser, EvidenceFuser
+from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.task.control.criteria import DecisionCriteria, MaxIterationsCriteria, ProbThresholdCriteria
 from bcipy.task.control.handler import EvidenceFusion
@@ -53,16 +53,15 @@ class StateManager(ABC):
 
 class StateManagerImpl(StateManager):
 
-    def __init__(self, parameters: Parameters, fuser_class=MultipyFuser):
+    def __init__(self, parameters: Parameters, fuser_class=MultiplyFuser):
         self.state: SimState = self.initial_state()
         self.parameters = parameters
         self.fuser_class: EvidenceFuser.__class__ = fuser_class
 
         self.max_inq_len = self.parameters.get('max_inq_len', 50)
-        # TODO add stoppage criterion, Stoppage criterion is seperate from decision. Decision should we go on to next letter or not
 
     def is_done(self) -> bool:
-
+        # TODO add stoppage criterion, Stoppage criterion is seperate from decision. Decision should we go on to next letter or not
         return self.state.total_inquiry_count() > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
 
     def update(self, evidence) -> InquiryResult:
