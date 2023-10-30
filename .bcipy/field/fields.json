@@ -2,9 +2,5 @@
   "age": {
     "help_text": "Age (in years) of user.",
     "type": "int"
-  },
-  "tst": {
-    "help_text": "d",
-    "type": "int"
   }
 }

@@ -2,22 +2,5 @@
   "default": {
     "fields": [],
     "summary": "Default experiment to test various BciPy features without registering a full experiment."
-  },
-  "test": {
-    "fields": [
-      {
-        "age": {
-          "required": "true",
-          "anonymize": "true"
-        }
-      },
-      {
-        "tst": {
-          "required": "false",
-          "anonymize": "true"
-        }
-      }
-    ],
-    "summary": "asdfasdf"
   }
 }
