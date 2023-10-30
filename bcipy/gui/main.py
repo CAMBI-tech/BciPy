@@ -7,7 +7,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
-from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSlot
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot
 from PyQt6.QtGui import QFont, QPixmap, QShowEvent, QWheelEvent
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
@@ -827,6 +827,7 @@ class BCIGui(QWidget):
                    id: int = -1,
                    background_color: str = 'white',
                    text_color: str = 'default',
+                   font_family: str = 'Times',
                    action: Optional[Callable] = None) -> PushButton:
         """Add Button."""
         btn = PushButton(message, self.window)
@@ -835,7 +836,7 @@ class BCIGui(QWidget):
         btn.resize(size[0], size[1])
 
         btn.setStyleSheet(
-            f'background-color: {background_color}; color: {text_color};')
+            f'background-color: {background_color}; color: {text_color}; font-family: {font_family};')
 
         if action:
             btn.clicked.connect(action)

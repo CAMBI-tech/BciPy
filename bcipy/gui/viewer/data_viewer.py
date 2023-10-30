@@ -5,7 +5,6 @@ from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
 from PyQt6.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
-# pylint: disable=no-name-in-module
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
@@ -14,7 +13,6 @@ import matplotlib
 import matplotlib.ticker as ticker
 import numpy as np
 matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
