@@ -2,9 +2,7 @@ from bcipy.helpers.visualization import visualize_erp, visualize_evokeds, visual
 from bcipy.helpers.process import load_data_inquiries, load_data_trials, load_data_mne
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
 from soa_classifier import crossvalidate_record, scores
-import warnings
-warnings.filterwarnings('ignore')
-from bcipy.config import DEFAULT_PARAMETER_FILENAME
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 
 from mne import grand_average
 
@@ -22,8 +20,9 @@ import csv
 from tqdm import tqdm
 
 
-# ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
-ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
+ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
+# ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
+FILTER_NOISE = ['BAD_blink', 'BAD_emg']
 
 """
 Processing notes:
@@ -38,18 +37,23 @@ Processing notes:
 
 TODO:
 
-+ ensure the AAR is AAR and not SAR; From the old spreadsheet it was SAR
 + check how the cohen's kappa is calculated and write up the formula
 
 + input into spreadsheet
-+ calculate the t-tests for all observations
++ calculate the t-tests for all observations NEW Wilks-Shapiro test for normality should be done.
 + generate the graphs for all observations
 + generate the graphs for the grand averages
 + write up paper D;
+    + Introduction
+        + Consolodate the handling information and give more background on strategies tried to date
+    + Methods
+        + Describe the data collection and processing
+        + Describe the models used
+
 """
 
 if __name__ == "__main__":
-    """Process all sessions in a data folder and print the AUCs.
+    """Process all sessions in a data folder and print the AUCs. 
     
     This script is intended to be run from the command line with the following command:
         python offline_analysis_process_dataset.py
@@ -60,16 +64,15 @@ if __name__ == "__main__":
     dropped = {}
     non_target = []
     target = []
+    parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
     progress_bar = tqdm(
         Path(path).iterdir(),
-        desc="Processing Artifact Dataset... \n",
+        # desc="Processing Artifact Dataset... \n",
         total=len(list(Path(path).iterdir())),
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n", # can I do math in this and calculate iteration average time?
-        colour='green')
+        colour='MAGENTA')
     for session in progress_bar:                               
         if session.is_dir():
-            # parameters = load_json_parameters(session / DEFAULT_PARAMETER_FILENAME, value_cast=True)
-            # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
             session_folder = str(session.resolve())
 
             try:
@@ -78,17 +81,34 @@ if __name__ == "__main__":
                 progress_bar.set_description(f"Processing {session.name}...")
 
                 # comment out training to use the same data for all sessions. Use ar_offline.py to train for CF.
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
-                    data_folder=session_folder
-                    )
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
+                #     data_folder=session_folder
+                #     )
                 
                 # If using artifact labelled data, uncomment these lines
-                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl  = load_data_mne(
-                #     data_folder=session_folder, mne_data_annotations=mne_data.annotations, drop_artifacts=True)
-     
+                mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+                all_annotations = mne_data.annotations
+                new_annotation_onset = []
+                new_annotation_duration = []
+                new_annotation_description = []
+                for t in all_annotations:
+                    if t['description'] in FILTER_NOISE:
+                        new_annotation_onset.append(t['onset'])
+                        new_annotation_duration.append(t['duration'])
+                        new_annotation_description.append('BAD_noise')
+                
+                filtered_annotations = mne.Annotations(
+                    new_annotation_onset,
+                    new_annotation_duration,
+                    new_annotation_description)
+                # mne_data.set_annotations(new_annotations)
+                # breakpoint()
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _  = load_data_mne(
+                    data_folder=session_folder, mne_data_annotations=filtered_annotations, drop_artifacts=True, parameters=parameters)
 
-                # train the models and get the results
+                # breakpoint()
+
+                # # train the models and get the results
                 df = crossvalidate_record((data, labels), session_name=str(session.resolve()))
                 for name in scores:
                     results[session.name][name] = df[f'mean_test_{name}']
@@ -101,12 +121,12 @@ if __name__ == "__main__":
                 pass
     
     # export the results!
-    condition = 'OF_NAR_IIR'
+    condition = 'WD_blinkemg_SAR_IIR'
     file_name = f'{condition}_all_models.csv'
     export = pd.DataFrame.from_dict(results).transpose()
     export.to_csv(file_name)
     export = pd.DataFrame.from_dict(dropped)
     export.to_csv(f'{condition}_all_models_dropped.csv')
 
-    import pdb; pdb.set_trace()
+    # # import pdb; pdb.set_trace()
     progress_bar.close()

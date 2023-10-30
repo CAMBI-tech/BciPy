@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 from bcipy.helpers.load import load_experimental_data
 
+DATA_PATH = 'C:/Users/tabme/work/bci/BciPy'
 FILENAME = 'WD_SAR_FIR_all_models.csv'
 PREFIX = 'WD_SAR_FIR'
 EXPORT_NAME = f'{PREFIX}_flat_all_models.csv'
@@ -22,22 +23,30 @@ def export_flattened_csv(data_path):
                 export[i]
             except:
                 export[i] = {}
+            # breakpoint()
+            try:
+                if 'RSVP' in participant:
+                    # print(participant)
+                    export[i]['ID'] = participant.split("_")[0]
+                else:
+                    model_results = participant.split('Name')[0].split('0   ')[1:]
+                    assert len(model_results) == len(MODELS), "The number of models does not equal the data processed from csv"
+                    for j, (header, result) in enumerate(zip(HEADERS, model_results)):
+                        parsed_result = result.split('\n')[0]
 
-            if 'RSVP' in participant:
-                # print(participant)
-                export[i]['ID'] = participant.split("_")[0]
-            else:
-                model_results = participant.split('Name')[0].split('0   ')[1:]
-                assert len(model_results) == len(MODELS), "The number of models does not equal the data processed from csv"
-                for j, (header, result) in enumerate(zip(HEADERS, model_results)):
-                    parsed_result = result.split('\n')[0]
-
-                    # catch NaN values
-                    try:
-                        cast_result = float(parsed_result)
-                    except:
-                        cast_result = 0.0
-                    export[i][f'{header}_{metric}'] = cast_result
+                        # catch NaN values
+                        try:
+                            cast_result = float(parsed_result)
+                        except:
+                            cast_result = 0.0
+                        export[i][f'{header}_{metric}'] = cast_result
+            except Exception as e:
+                print(e)
+                # breakpoint()
+                print(f"Error processing: {export[i]['ID']}. Likely not enough samples to train a model.")
+                for header in HEADERS:
+                    export[i][f'{header}_{metric}'] = 0.0
+                pass
 
     new_data = pd.DataFrame.from_dict(export).transpose()
     new_data.to_csv(EXPORT_NAME)
@@ -61,7 +70,7 @@ if __name__ == '__main__':
     path = args.path
     filename = args.filename
     if not path:
-        path = load_experimental_data()
+        path = DATA_PATH
 
     resp = export_flattened_csv(f'{path}/{filename}')
-    breakpoint()
+    print("Done!")

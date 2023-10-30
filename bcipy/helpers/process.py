@@ -153,11 +153,12 @@ def load_data_mne(
         mne_data_annotations=None,
         trial_length=None,
         pre_stim=0.0,
-        drop_artifacts=False):
+        drop_artifacts=False,
+        parameters=None):
     """Loads raw data, filters using default transform with parameters, and reshapes into trials."""
     # Load parameters
-    parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
-    poststim_length = trial_length
+    parameters = parameters if parameters else load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
+    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length")
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
     trials_per_inquiry = parameters.get("stim_length")
@@ -174,7 +175,7 @@ def load_data_mne(
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
 
-    log.info(
+    log.error(
         f"\nData processing settings: \n"
         f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
         f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
@@ -190,7 +191,7 @@ def load_data_mne(
     devices.load(Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME))
     device_spec = devices.preconfigured_device(raw_data.daq_type)
 
-    # setup filtering
+    # # setup filtering
     default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
@@ -240,7 +241,7 @@ def load_data_mne(
         trigger_timing,
         trigger_labels,
         poststim_length,
-        baseline=(0, 0),
+        baseline=(None, 0),
         reject_by_annotation=drop_artifacts)
     
     # TODO use the epoch drop log? write to the session? Then we can use it via the inquiry based method
