@@ -102,6 +102,15 @@ def scaled_height(width: float,
     return width / (win_height / win_width)
 
 
+def scaled_width(height: float,
+                 window_size: Tuple[float, float],
+                 units: str = 'norm'):
+    """Given a height, find the equivalent width scaled to the aspect ratio of
+    a window with the given size"""
+    width, _height = scaled_size(height, window_size, units)
+    return width
+
+
 class Layout(Container):
     """Class with methods for positioning elements within a parent container.
     """
@@ -302,19 +311,22 @@ def at_bottom(parent: Container, height: float) -> Layout:
                   bottom=bottom)
 
 
-def centered(width_pct: float = 1.0, height_pct: float = 1.0) -> Layout:
+def centered(parent: Optional[Container] = None,
+             width_pct: float = 1.0,
+             height_pct: float = 1.0) -> Layout:
     """Constructs a layout that is centered on the screen. Default size is
     fullscreen but optional parameters can be used to adjust the width and
     height.
 
     Parameters
     ----------
+        parent - optional parent
         width_pct - optional; sets the width to a given percentage of
           fullscreen.
         height_pct - optional; sets the height to a given percentage of
           fullscreen.
     """
-    container = Layout()
+    container = Layout(parent=parent)
     container.resize_width(width_pct, alignment=Alignment.CENTERED)
     container.resize_height(height_pct, alignment=Alignment.CENTERED)
     return container

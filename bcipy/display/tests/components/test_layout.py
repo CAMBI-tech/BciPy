@@ -6,7 +6,7 @@ from mockito import mock
 from bcipy.display.components.layout import (Alignment, Layout, at_bottom,
                                              at_top, centered, envelope,
                                              from_envelope, scaled_height,
-                                             scaled_size)
+                                             scaled_size, scaled_width)
 
 
 class TestLayout(unittest.TestCase):
@@ -195,6 +195,12 @@ class TestLayout(unittest.TestCase):
     def test_scaled_height(self):
         """Test calculation of scaled height based on width"""
         self.assertEqual(scaled_height(0.125, window_size=(800, 500)), 0.2)
+
+    def test_scaled_width(self):
+        """Test calculation of a scaled width based on height"""
+        self.assertEqual(scaled_width(height=0.2, window_size=(500, 500)), 0.2)
+        self.assertEqual(scaled_width(height=0.2, window_size=(800, 500)),
+                         0.125)
 
 
 if __name__ == '__main__':
