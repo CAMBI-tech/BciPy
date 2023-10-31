@@ -103,6 +103,23 @@ class TestMatrixLayout(unittest.TestCase):
         self.assertEqual(row_spacing, column_spacing,
                          "Rows and columns should have the same spacing")
 
+    def test_max_spacing(self):
+        """Test max_spacing parameter"""
+        max_spacing = 0.1
+        positions = symbol_positions(self.layout,
+                                     rows=2,
+                                     columns=2,
+                                     max_spacing=max_spacing)
+
+        top_left = positions[0]
+        top_right = positions[1]
+        bottom_left = positions[2]
+
+        row_spacing = abs(top_left[1] - bottom_left[1])
+        column_spacing = abs(top_right[0] - top_left[0])
+        self.assertEqual(row_spacing, max_spacing)
+        self.assertEqual(column_spacing, max_spacing)
+
 
 if __name__ == '__main__':
     unittest.main()

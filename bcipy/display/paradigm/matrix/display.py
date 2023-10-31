@@ -1,6 +1,6 @@
 """Display for presenting stimuli in a grid."""
 import logging
-from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -42,7 +42,8 @@ class MatrixDisplay(Display):
                  info: InformationProperties,
                  rows: int = 5,
                  columns: int = 6,
-                 width_pct: float = 0.7,
+                 width_pct: float = 0.75,
+                 height_pct: float = 0.8,
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
                  should_prompt_target: bool = True,
@@ -88,11 +89,10 @@ class MatrixDisplay(Display):
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = 0.17  # stimuli.stim_height
 
-        display_container = layout.centered(width_pct=width_pct)
+        display_container = layout.centered(parent=window,
+                                            width_pct=width_pct,
+                                            height_pct=height_pct)
         self.positions = symbol_positions(display_container, rows, columns)
-        self.logger.info(
-            f"Symbol positions ({display_container.units} units): {self.positions}"
-        )
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
@@ -112,6 +112,20 @@ class MatrixDisplay(Display):
 
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
+
+        self.logger.info(
+            f"Symbol positions ({display_container.units} units):\n{self._stim_positions}"
+        )
+        self.logger.info(f"Matrix center position: {display_container.center}")
+
+    @property
+    def _stim_positions(self) -> Dict[str, Tuple[float, float]]:
+        """Returns a dict with the position for each stim"""
+        assert self.stim_registry, "stim_registry not yet initialized"
+        return {
+            sym: tuple(stim.pos)
+            for sym, stim in self.stim_registry.items()
+        }
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).

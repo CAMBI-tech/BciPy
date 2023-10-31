@@ -1,4 +1,6 @@
 """Useful for viewing computed positions in a window"""
+import logging
+import sys
 import time
 from typing import Callable, List, Tuple, Union
 
@@ -11,7 +13,9 @@ from psychopy.visual.shape import ShapeStim
 from bcipy.display.components.layout import (Layout, at_top, centered,
                                              envelope, height_units,
                                              scaled_size)
+from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
+from bcipy.helpers.symbols import alphabet
 
 
 def make_window():
@@ -253,6 +257,26 @@ def demo_checkerboard2(win: visual.Window):
     win.flip()
 
 
+def demo_matrix_positions(win: visual.Window):
+    """Demo matrix positions. Useful for visualizing how adjustments to layout
+    dimensions as well as the number of rows and columns affects positioning.
+    """
+    # norm_layout = centered(parent=win, width_pct=1., height_pct=0.5)
+    norm_layout = centered(parent=win, width_pct=0.75, height_pct=1)
+    positions = symbol_positions(norm_layout, rows=5, columns=6)
+
+    for sym, pos in zip(alphabet(), positions):
+        stim = visual.TextStim(win,
+                               text=sym,
+                               pos=pos,
+                               color='white',
+                               height=0.17)
+        stim.draw()
+    draw_boundary(win, norm_layout, line_px=5, color='gray')
+    draw_positions(win, positions, size=scaled_size(0.025, win.size))
+    win.flip()
+
+
 def run(demo: Callable[[visual.Window], None], seconds=30):
     """Run the given function for the provided duration.
 
@@ -261,6 +285,12 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
         demo - function to run; a Window object is passed to this function.
         seconds - Window is closed after this duration.
     """
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    root.addHandler(handler)
+
     try:
         win = make_window()
         print(
@@ -281,8 +311,9 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
         print('Demo complete.')
 
 
-run(demo_vep)
+# run(demo_vep)
 # run(demo_height_units)
 # run(show_layout_coords)
 # run(demo_checkerboard)
 # run(demo_checkerboard2)
+run(demo_matrix_positions)

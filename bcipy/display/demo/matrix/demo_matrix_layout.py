@@ -47,6 +47,7 @@ matrix_display = MatrixDisplay(win,
                                info=info,
                                rows=3,
                                columns=10,
+                               width_pct=0.9,
                                sort_order=qwerty_order(is_txt_stim=True))
 
 matrix_display.draw(grid_opacity=matrix_display.full_grid_opacity,
