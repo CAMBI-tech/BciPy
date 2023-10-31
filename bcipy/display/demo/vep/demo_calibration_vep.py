@@ -42,38 +42,68 @@ frameRate = win.getActualFrameRate()
 
 print(f'Monitor refresh rate: {frameRate} Hz')
 
-box_colors = ['#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232']
-stim_color = [[color] for i, color in enumerate(box_colors) if i < num_boxes]
+stim_color = [
+    'green', 'red', '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3',
+    '#FF8232'
+]
 
 layout = centered(width_pct=0.95, height_pct=0.80)
 box_config = BoxConfiguration(layout, num_boxes=num_boxes)
 
 experiment_clock = Clock()
 len_stimuli = 10
-stimuli = VEPStimuliProperties(
+stim_props = VEPStimuliProperties(
     stim_color=stim_color,
     stim_pos=box_config.positions,
     stim_height=0.1,
     stim_font=font,
-    timing=(1, 0.5, 2, 4),  # prompt, fixation, animation, stimuli
+    timing=[1, 0.5, 4],  # prompt, fixation, stimuli
     stim_length=1,  # how many times to stimuli
 )
 task_bar = CalibrationTaskBar(win,
                               inquiry_count=4,
                               current_index=0,
                               font=font)
-vep = VEPDisplay(win, experiment_clock, stimuli, task_bar, info, box_config=box_config)
-timing = []
+vep = VEPDisplay(win,
+                 experiment_clock,
+                 stim_props,
+                 task_bar,
+                 info,
+                 box_config=box_config,
+                 should_prompt_target=True)
 wait_seconds = 2
 
+inquiries = [['U',
+  '+',
+  ['C', 'M', 'S'],
+  ['D', 'P', 'X', '_'],
+  ['L', 'U', 'Y'],
+  ['E', 'K', 'O'],
+  ['<', 'A', 'F', 'H', 'I', 'J', 'N', 'Q', 'R', 'V', 'Z'],
+  ['B', 'G', 'T', 'W']],
+ ['D',
+  '+',
+  ['O', 'X'],
+  ['D'],
+  ['P', 'U'],
+  ['<', 'B', 'E', 'G', 'H', 'J', 'K', 'L', 'R', 'T'],
+  ['A', 'C', 'F', 'I', 'M', 'N', 'Q', 'V', 'Y', '_'],
+  ['S', 'W', 'Z']],
+ ['S',
+  '+',
+  ['A', 'J', 'K', 'T', 'V', 'W'],
+  ['S'],
+  ['_'],
+  ['E', 'G', 'M', 'R'],
+  ['<', 'B', 'C', 'D', 'H', 'I', 'L', 'N', 'O', 'P', 'Q', 'U', 'X', 'Z'],
+  ['F', 'Y']]]
+
+timing = []
 # loop over the text and colors, present the stimuli and record the timing
-for txt in task_text:
+for i, txt in enumerate(task_text):
     vep.update_task_bar(txt)
-    if num_boxes == 4:
-        stim = [['A', 'B'], ['Z'], ['P'], ['R', 'W']]
-    if num_boxes == 6:
-        stim = [['A'], ['B'], ['Z', 'X'], ['P', 'I'], ['R'], ['W', 'C']]
-    vep.schedule_to(stimuli=stim)
+
+    vep.schedule_to(stimuli=inquiries[i])
     timing += vep.do_inquiry()
 
     # show the wait screen, this will only happen once

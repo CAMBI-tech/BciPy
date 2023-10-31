@@ -49,8 +49,32 @@ def find_index(iterable: List,
             return i
     return None
 
+
 def swapped(lst: List, index1: int, index2: int) -> None:
     """Creates a copy of the provided list with elements at the given indices
     swapped."""
-    replacements = { index1: lst[index2], index2: lst[index1] }
+    replacements = {index1: lst[index2], index2: lst[index1]}
     return [replacements.get(i, val) for i, val in enumerate(lst)]
+
+
+def expanded(lst: List,
+             length: int,
+             fill: Union[Any, Callable] = lambda x: x[-1]) -> List:
+    """Creates a copy of the provided list expanded to the given length. By
+    default the last item is used as the fill item.
+
+    Parameters
+    ----------
+        lst - list of items to copy
+        length - expands list to this length
+        fill - optional; used to determine which element to use for
+            the fill, given the list. Defaults to the last element.
+
+    >>> expand([1,2,3], length=5)
+    [1,2,3,3,3]
+    """
+    times = length - len(lst)
+    if lst and times > 0:
+        item = fill(lst) if callable(fill) else fill
+        return lst + ([item] * times)
+    return lst

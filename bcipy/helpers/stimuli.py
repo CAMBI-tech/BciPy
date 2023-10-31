@@ -1070,60 +1070,80 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
 
     return codes
 
-# def generate_vep_calibration_inquiries(
-#         alp: List[str],
-#         timing: List[float] = None,
-#         color: List[str] = None,
-#         inquiry_count: int = 100,
-#         num_boxes: int = 4,
-#         is_txt: bool = True) -> InquirySchedule:
-#     """
-#     Generates VEP inquiries with target letters in all possible positions.
 
-#     In the VEP paradigm, all stimuli in the alphabet are displayed in each
-#     inquiry. The symbols with the highest likelihoods are displayed alone
-#     while those with lower likelihoods occur together.
+def generate_vep_calibration_inquiries(alp: List[str],
+                                       timing: List[float] = None,
+                                       color: List[str] = None,
+                                       inquiry_count: int = 100,
+                                       num_boxes: int = 4,
+                                       is_txt: bool = True) -> InquirySchedule:
+    """
+    Generates VEP inquiries with target letters in all possible positions.
 
-#     Parameters
-#     ----------
-#         alp(list[str]): stimuli
-#         timing(list[float]): Task specific timing for generator.
-#             [target, fixation, stimuli]
-#         color(list[str]): Task specific color for generator
-#             [target, fixation, stimuli]
-#         inquiry_count(int): number of inquiries in a calibration
-#         num_boxes(int): number of display boxes
-#         is_txt(bool): whether the stimuli type is text. False would be an image stimuli.
+    In the VEP paradigm, all stimuli in the alphabet are displayed in each
+    inquiry. The symbols with the highest likelihoods are displayed alone
+    while those with lower likelihoods occur together.
 
-#     Return
-#     ------
-#         schedule_inq(tuple(
-#             samples[list[list[str]]]: list of inquiries
-#             timing(list[list[float]]): list of timings
-#             color(list(list[str])): list of colors)): scheduled inquiries
-#     """
-#     if timing is None:
-#         timing = [0.5, 1, 2]
-#     # if color is None:
-#     #     color = ['green', 'red', 'white']
-#     assert len(
-#         timing
-#     ) == 3, "timing must include values for [target, fixation, stimuli]"
-#     time_target, time_fixation, time_stim = timing
-#     fixation = get_fixation(is_txt)
+    Parameters
+    ----------
+        alp(list[str]): stimuli
+        timing(list[float]): Task specific timing for generator.
+            [target, fixation, stimuli]
+        color(list[str]): Task specific color for generator
+            [target, fixation, stimuli]
+        inquiry_count(int): number of inquiries in a calibration
+        num_boxes(int): number of display boxes
+        is_txt(bool): whether the stimuli type is text. False would be an image stimuli.
 
-#     inquiries = generate_vep_inquiries(alp, inquiry_count, num_boxes)
+    Return
+    ------
+        schedule_inq(tuple(
+            samples[list[list[str]]]: list of inquiries
+            timing(list[list[float]]): list of timings
+            color(list(list[str])): list of colors)): scheduled inquiries
+    """
+    if timing is None:
+        timing = [0.5, 1, 2]
+    default_colors = [
+        '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
+    ]
+    if color is None:
+        box_colors = list(
+            itertools.islice(itertools.cycle(default_colors), num_boxes))
+        color = ['green', 'red'] + box_colors
+    assert len(
+        timing
+    ) == 3, "timing must include values for [target, fixation, stimuli]"
+
+    inquiries = generate_vep_inquiries(alp, num_boxes, inquiry_count, is_txt)
+    times = [timing for _ in range(inquiry_count)]
+    colors = [color for _ in range(inquiry_count)]
+
+    return InquirySchedule(inquiries, times, colors)
 
 
-#     return InquirySchedule(samples, times, colors)
-
-def generate_vep_inquiries(alphabet: List[str], num_boxes: int=6, inquiry_count: int=100):
+def generate_vep_inquiries(symbols: List[str],
+                           num_boxes: int = 6,
+                           inquiry_count: int = 20,
+                           is_txt: bool = True):
     """Generates inquiries"""
+    fixation = get_fixation(is_txt)
+    target_indices = random_target_positions(inquiry_count,
+                                             stim_per_inquiry=num_boxes,
+                                             percentage_without_target=0)
+    targets = generate_targets(symbols,
+                               inquiry_count,
+                               percentage_without_target=0.0)
+    return [[target, fixation] + generate_vep_inquiry(alphabet=symbols,
+                                                      num_boxes=num_boxes,
+                                                      target=target,
+                                                      target_pos=target_pos)
+            for target, target_pos in zip(targets, target_indices)]
 
 
 def stim_per_box(num_symbols: int,
                  num_boxes: int = 6,
-                 max_empty_boxes: int = 1,
+                 max_empty_boxes: int = 0,
                  max_single_sym_boxes: int = 4) -> List[int]:
     """Determine the number of stimuli per vep box.
 
@@ -1223,9 +1243,7 @@ def generate_vep_inquiry(alphabet: List[str],
     if target:
         # Move the target to the front so it gets put in the lowest count box
         # greater than 0.
-        syms = swapped(syms,
-                       index1=0,
-                       index2=syms.index(target))
+        syms = swapped(syms, index1=0, index2=syms.index(target))
     # Put syms in boxes
     boxes = []
     sym_index = 0
@@ -1234,7 +1252,7 @@ def generate_vep_inquiry(alphabet: List[str],
         for _i in range(count):
             box.append(syms[sym_index])
             sym_index += 1
-        box.sort() # sort stim within box
+        box.sort()  # sort stim within box
         boxes.append(box)
 
     random.shuffle(boxes)
