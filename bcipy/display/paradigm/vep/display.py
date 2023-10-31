@@ -164,7 +164,7 @@ class VEPDisplay(Display):
         self.sort_order = self.symbol_set.index
 
         # Build starting list of symbols
-        display_container = layout.centered(width_pct=0.7)
+        display_container = layout.centered(parent=self.window, width_pct=0.7)
         self.starting_positions = symbol_positions(display_container,
                                                    rows=3,
                                                    columns=10)
