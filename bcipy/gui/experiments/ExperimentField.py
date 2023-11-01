@@ -5,8 +5,8 @@ import sys
 
 from typing import List
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QScrollArea,
@@ -210,7 +210,7 @@ class ExperimentFieldCollection(QWidget):
         elif message_response is AlertMessageResponse.OCE:
             msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
-        return msg.exec_()
+        return msg.exec()
 
 
 class MainPanel(QWidget):
@@ -240,8 +240,8 @@ class MainPanel(QWidget):
         vbox = QVBoxLayout()
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.form_panel.setWidgetResizable(True)
         self.form_panel.setFixedWidth(self.width)
         self.form_panel.setWidget(self.form)
@@ -307,7 +307,7 @@ def start_app() -> None:
         save_path=save_path,
         file_name=file_name
     )
-    bcipy_gui.exec_()
+    bcipy_gui.exec()
 
     if validate:
         if validate_field_data_written(save_path, file_name):

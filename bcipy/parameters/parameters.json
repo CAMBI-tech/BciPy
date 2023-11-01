@@ -153,7 +153,7 @@
     "type": "bool"
   },
   "high_voltage_value": {
-    "value": "75E+6",
+    "value": "75000000.0",
     "section": "artifact_rejection",
     "readableName": "High Voltage Threshold Value",
     "helpTip": "Specifies the high voltage threshold (in microvolts) for artifact rejection (High Voltage Threshold must be set to ‘true’). Default: 75E+6. This is not implemented in the current version of the system.",
@@ -169,7 +169,7 @@
     "type": "bool"
   },
   "low_voltage_value": {
-    "value": "-75E-6",
+    "value": "-0.000075",
     "section": "artifact_rejection",
     "readableName": "LowVoltage Threshold Value",
     "helpTip": "Specifies the low voltage threshold (in microvolts) for artifact rejection (Low Voltage Threshold must be set to ‘true’). Default: -75E-6 This is not implemented in the current version of the system.",
