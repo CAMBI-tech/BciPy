@@ -25,8 +25,7 @@ class FileDialog(QWidget):
 
         # The native dialog may prevent the selection from closing after a
         # directory is selected.
-        self.options = QFileDialog.Options()
-        self.options |= QFileDialog.DontUseNativeDialog
+        self.options = QFileDialog.Option(3)
 
     def ask_file(self, file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
         """Opens a file dialog window.
