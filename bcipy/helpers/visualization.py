@@ -320,8 +320,6 @@ def visualize_gaze_inquiries(
             ell.set_alpha(0.5)
             ax.add_artist(ell)
 
-        # ax.scatter(means[:,0], means[:,1], c='yellow', s=20, marker='^')
-
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
@@ -425,6 +423,123 @@ def visualize_centralized_data(
 
     if show:
         plt.show()
+
+    return fig
+
+
+def visualize_results_all_symbols(
+        left_eye_all: List[np.ndarray],
+        right_eye_all: List[np.ndarray],
+        means_all: List[np.ndarray],
+        covs_all: List[np.ndarray],
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
+    """Visualize results for all symbols.
+
+    Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of
+    trailed data (left & right eye), the gaze distribution for all prompted symbols are shown in a
+    single image, along with mean-cov contours of gaze distribution with respect to each symbol.
+    The figures may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
+
+    Parameters
+    ----------
+    left_eye: (np.ndarray): Data array for the left eye data.
+    right_eye: (np.ndarray): Data array for the right eye data.
+    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
+    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
+        Phrase tasks.
+        Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
+    """
+
+    title = 'Map of Gaze Data and Contours '
+
+    if img_path is None:
+        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+    img = plt.imread(img_path)
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[0, 1, 0, 1])
+
+    for _, (left_eye, right_eye, means, covs) in enumerate(zip(left_eye_all, right_eye_all, means_all, covs_all)):
+        # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
+        lx = np.clip(left_eye[:, 0], 0, 1)
+        ly = np.clip(left_eye[:, 1], 0, 1)
+        rx = np.clip(right_eye[:, 0], 0, 1)
+        ry = np.clip(right_eye[:, 1], 0, 1)
+        ly = 1 - ly
+        ry = 1 - ry
+
+        if means is not None:
+            means[:, 0] = np.clip(means[:, 0], 0, 1)
+            means[:, 1] = np.clip(means[:, 1], 0, 1)
+
+        if heatmap:
+            # create a dataframe making a column for each x, y pair for both eyes and
+            # a column for the eye (left or right)
+            df = pd.DataFrame({
+                'x': np.concatenate((lx, rx)),
+                'y': np.concatenate((ly, ry)),
+                'eye': ['left'] * len(lx) + ['right'] * len(rx)
+            })
+            ax = sns.kdeplot(
+                data=df,
+                hue='eye',
+                x='x',
+                y='y',
+                fill=False,
+                thresh=0.05,
+                levels=10,
+                cmap="mako",
+                colorbar=True)
+
+        if raw_plot:
+            # ax.scatter(lx, ly, c='lightcoral', s=1)
+            ax.scatter(rx, ry, c='bisque', s=1)
+
+        if means is not None:
+            for i, (mean, cov) in enumerate(zip(means, covs)):
+                v, w = linalg.eigh(cov)
+                v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+                u = w[0] / linalg.norm(w[0])
+
+                # Plot an ellipse to show the Gaussian component
+                angle = np.arctan(u[1] / u[0])
+                angle = 180.0 * angle / np.pi  # convert to degrees
+                ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+                ell.set_clip_box(ax)
+                ell.set_alpha(0.5)
+                ax.add_artist(ell)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    plt.title(f'{title}Plot')
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
     return fig
 

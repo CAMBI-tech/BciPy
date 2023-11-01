@@ -9,7 +9,7 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, ROOT,
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
@@ -22,7 +22,8 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
-                                         visualize_gaze_inquiries, visualize_centralized_data)
+                                         visualize_gaze_inquiries, visualize_centralized_data,
+                                         visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.fusion_model import GazeModel, GazeModel_AllSymbols
@@ -97,8 +98,6 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     """
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
-    # This parameter does not exist in parameters files for Multimodal datasets. Adding manually.
-    # TODO: Update parameters files for multimodal datasets.
     if trial_window is None:
         trial_window = [0.0, 0.5]
     window_length = trial_window[1] - trial_window[0]
@@ -307,6 +306,11 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
     centralized_data_left = []
     centralized_data_right = []
     test_dict = {}
+
+    left_eye_all = []
+    right_eye_all = []
+    means_all = []
+    covs_all = []
     for sym in symbol_set:
         le = preprocessed_data[sym][0]
         re = preprocessed_data[sym][1]
@@ -321,7 +325,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             # Centralize the data using symbol positions:
             # Load json file.
             # TODO: move this to a helper function, or get the symbol positions from the build_grid method
-            with open(f"{ROOT}/symbol_positions.json", 'r') as params_file:
+            with open(f"{DEFAULT_PARAMETERS_PATH}/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
             centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
@@ -342,6 +346,10 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
                 show=show_figures,
                 raw_plot=True,
             )
+            left_eye_all.append(le)
+            right_eye_all.append(re)
+            means_all.append(means)
+            covs_all.append(covs)
 
     if model_type == "Centralized":
         # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
@@ -374,6 +382,18 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
                 show=show_figures,
                 raw_plot=True,
             )
+            left_eye_all.append(le)
+            right_eye_all.append(re)
+            means_all.append(means)
+            covs_all.append(covs)
+
+    fig_handles = visualize_results_all_symbols(
+        left_eye_all, right_eye_all,
+        means_all, covs_all,
+        save_path=None,
+        show=True,
+        raw_plot=True,
+    )
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -445,7 +465,7 @@ def offline_analysis(
 
         if device_spec.content_type == "Eyetracker":
             analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures,
-                         model_type="Centralized")
+                         model_type="Individual")
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
@@ -466,7 +486,7 @@ if __name__ == "__main__":
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=False)
-    parser.set_defaults(show_figures=True)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
