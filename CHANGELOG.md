@@ -14,7 +14,7 @@ Our last release candidate before the official 2.0 release!
 - Parameters
     - Add a Range type parameter #285
 - Cleanup
-    - Change default log level to INFO to prevent too many messages in the experiment logs #288
+    - Change default log level to INFO to prevent too many messages in the experiment logs #288 Upgrade requirements for m1/2 chips #299/#300
 
 
 # 2.0.0-rc.3
