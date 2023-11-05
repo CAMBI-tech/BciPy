@@ -169,6 +169,7 @@ def get_system_info() -> dict:
     screen_info = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
+
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -182,7 +183,6 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
-        'cpu_hz': info['hz_actual_friendly'],
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
