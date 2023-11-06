@@ -488,6 +488,7 @@ def visualize_results_all_symbols(
         if means is not None:
             means[:, 0] = np.clip(means[:, 0], 0, 1)
             means[:, 1] = np.clip(means[:, 1], 0, 1)
+            means[:, 1] = 1 - means[:, 1]
 
         if heatmap:
             # create a dataframe making a column for each x, y pair for both eyes and

@@ -9,7 +9,7 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT,
                           DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
@@ -325,7 +325,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             # Centralize the data using symbol positions:
             # Load json file.
             # TODO: move this to a helper function, or get the symbol positions from the build_grid method
-            with open(f"{DEFAULT_PARAMETERS_PATH}/symbol_positions.json", 'r') as params_file:
+            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
             centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
@@ -339,13 +339,13 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             scores, means, covs = model.get_scores(test_re)
 
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                means, covs,
-                save_path=None,
-                show=show_figures,
-                raw_plot=True,
-            )
+            # figure_handles = visualize_gaze_inquiries(
+            #     le, re,
+            #     means, covs,
+            #     save_path=None,
+            #     show=show_figures,
+            #     raw_plot=True,
+            # )
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
@@ -375,13 +375,13 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                means, covs,
-                save_path=None,
-                show=show_figures,
-                raw_plot=True,
-            )
+            # figure_handles = visualize_gaze_inquiries(
+            #     le, re,
+            #     means, covs,
+            #     save_path=None,
+            #     show=show_figures,
+            #     raw_plot=True,
+            # )
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
@@ -465,7 +465,7 @@ def offline_analysis(
 
         if device_spec.content_type == "Eyetracker":
             analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures,
-                         model_type="Individual")
+                         model_type="Centralized")
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
@@ -486,7 +486,7 @@ if __name__ == "__main__":
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=False)
-    parser.set_defaults(show_figures=False)
+    parser.set_defaults(show_figures=True)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
