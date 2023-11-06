@@ -199,13 +199,13 @@ class VEPDisplay(Display):
             codes = create_vep_codes(length=self.refresh_rate, count=self.vep_type)
             self.logger.info(f"VEP Codes: {codes}")
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
-        vep_stim_size = scaled_size(0.2, self.window_size)
+        vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
                                           codes=codes,
                                           colors=cycle(vep_colors),
                                           stim_size=vep_stim_size,
                                           num_squares=25)
-
+        self.box_border_width = 4
         self.text_boxes = self._build_text_boxes(box_config)
 
     @property
@@ -237,6 +237,13 @@ class VEPDisplay(Display):
                              self.stimuli_colors)
         ]
 
+    def box_index(self, stim_groups: List[StimProps], sym: str) -> int:
+        """Box index for the given symbol"""
+        for i, group in enumerate(stim_groups):
+            if sym in group.symbol:
+                return i
+        raise Exception(f"Symbol not found: {sym}")
+
     def do_inquiry(self) -> List[float]:
         """Do the inquiry."""
         self.reset_timing()
@@ -251,14 +258,14 @@ class VEPDisplay(Display):
         if self.should_prompt_target:
             [target, fixation, *stim] = self.stim_properties()
             self.set_stimuli_colors(stim)
-            self.prompt_target(target)
+            self.prompt_target(target, target_box_index=self.box_index(stim, target.symbol))
         else:
             [fixation, *stim] = self.stim_properties()
             self.set_stimuli_colors(stim)
 
-        # fixation --> animation / prompting --> VEP stimulate
-        self.do_fixation(fixation)
+        # self.do_fixation(fixation)
         self.animate_inquiry(stim)
+        core.wait(self.timing_fixation)
         self.stimulate()
 
         # clear everything expect static stimuli
@@ -272,7 +279,7 @@ class VEPDisplay(Display):
         pos_index = self.sort_order(sym)
         return self.starting_positions[pos_index]
 
-    def prompt_target(self, target: StimProps) -> float:
+    def prompt_target(self, target: StimProps, target_box_index: int = None) -> float:
         """Present the target for the configured length of time. Records the
         stimuli timing information.
 
@@ -286,7 +293,7 @@ class VEPDisplay(Display):
             pos_index = self.sort_order(sym)
             sti = self.sti[sym]
             sti.pos = self.starting_positions[pos_index]
-            sti.setOpacity(0.25)
+            sti.setOpacity(0.5)
             sti.draw()
         self.draw_static()
         self.draw_boxes()
@@ -303,25 +310,50 @@ class VEPDisplay(Display):
         for sti in self.sti.values():
             sti.draw()
 
+        if target_box_index:
+            self.highlight_target_box(target_box_index)
+
         self.draw_static()
         self.draw_boxes()
 
         self.window.flip()
         core.wait(target.duration / 2)
 
+    def highlight_target_box(self, target_box_index: int) -> None:
+        """Emphasize the box at the given index"""
+        for i, box in enumerate(self.text_boxes):
+            if i == target_box_index:
+                box.borderWidth = self.box_border_width + 4
+                box.setOpacity(1.0)
+            else:
+                box.borderWidth = self.box_border_width - 2
+                box.setOpacity(0.8)
+
     def do_fixation(self, fixation: StimProps) -> None:
-        """Show all boxes at full opacity before animating."""
+        """Show all symbols before animating."""
         duration = fixation.duration or self.timing_fixation
 
+        starting_opacity = {}
         for sym in self.symbol_set:
             sti = self.sti[sym]
+            starting_opacity[sym] = sti.opacity
             sti.setOpacity(1.0)
             sti.draw()
-
         self.draw_static()
         self.draw_boxes()
         self.window.flip()
-        core.wait(duration)
+        core.wait(duration / 2)
+
+        # reset to starting opacity
+        for sym in self.symbol_set:
+            sti = self.sti[sym]
+            sti.setOpacity(starting_opacity[sym])
+            sti.draw()
+        self.draw_static()
+        self.draw_boxes()
+        self.window.flip()
+        core.wait(duration / 2)
+
 
     def animate_inquiry(self, stimuli: List[StimProps]) -> None:
         """Display the inquiry.
@@ -340,7 +372,7 @@ class VEPDisplay(Display):
         self.draw_boxes()
         self.draw_static()
         self.window.flip()
-        core.wait(self.timing_prompt)
+
 
     def set_stimuli_colors(self, stim_groups: List[StimProps]) -> None:
         """Update the colors of the stimuli associated with each symbol to
@@ -524,7 +556,7 @@ class VEPDisplay(Display):
                             size=size,
                             alignment='center',
                             anchor='center',
-                            borderWidth=4,
+                            borderWidth=self.box_border_width,
                             borderColor=color,
                             letterHeight=self.stimuli_height)
             for pos, color in zip(positions, cycle(self.box_colors))
@@ -537,6 +569,8 @@ class VEPDisplay(Display):
         """
         for text_box in self.text_boxes:
             text_box.setText(' ')
+            text_box.setOpacity(1.0)
+            text_box.borderWidth = self.box_border_width
 
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
         """Set the correct inquiry text for each text boxes.

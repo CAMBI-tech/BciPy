@@ -48,7 +48,7 @@ stim_color = [
 ]
 
 layout = centered(width_pct=0.95, height_pct=0.80)
-box_config = BoxConfiguration(layout, num_boxes=num_boxes)
+box_config = BoxConfiguration(layout, num_boxes=num_boxes, height_pct=0.30)
 
 experiment_clock = Clock()
 len_stimuli = 10
