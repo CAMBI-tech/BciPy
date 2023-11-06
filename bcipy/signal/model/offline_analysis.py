@@ -22,7 +22,7 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
-                                         visualize_gaze_inquiries, visualize_centralized_data,
+                                         visualize_centralized_data,
                                          visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
