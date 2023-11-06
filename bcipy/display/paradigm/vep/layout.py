@@ -165,9 +165,26 @@ class BoxConfiguration():
         left = right_of(layout.left, width / 2)
         right = left_of(layout.right, width / 2)
 
-        positions = [(left, top), (right, top), (left, bottom),
-                     (right, bottom)]
-        if self.num_boxes == 6:
-            positions += [(layout.horizontal_middle, top),
-                          (layout.horizontal_middle, bottom)]
-        return positions
+
+        if self.num_boxes == 4:
+            return [(left, top), (right, top), (left, bottom), (right, bottom)]
+
+        middle = layout.horizontal_middle
+        return [(left, top), (middle, top), (right, top),
+                (left, bottom), (middle, bottom), (right, bottom)]
+
+
+def animation_path(start_pos: Tuple[float, float], end_pos: Tuple[float,
+                                                                  float],
+                   frames: int) -> List[Tuple[float, float]]:
+    """Computes the animation path from start_pos to end_pos"""
+    x1, y1 = start_pos
+    x2, y2 = end_pos
+    xdiff = x2 - x1
+    ydiff = y2 - y1
+    positions = []
+    for i in range(frames):
+        from_start = (i + 1) / frames
+        pos = (x1 + (from_start * xdiff), y1 + (from_start * ydiff))
+        positions.append(pos)
+    return positions

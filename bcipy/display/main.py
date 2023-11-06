@@ -272,7 +272,8 @@ class VEPStimuliProperties(StimuliProperties):
             timing: Tuple[float, float, float] = None,
             stim_color: List[List[str]] = None,
             inquiry: List[List[str]] = None,
-            stim_length: int = 1):
+            stim_length: int = 1,
+            animation_seconds: float = 1.0):
         """Initialize VEP Stimuli Parameters.
         stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
         stim_font(str): Font to apply to all VEP stimuli
@@ -292,6 +293,7 @@ class VEPStimuliProperties(StimuliProperties):
         # dynamic properties, must be a a list of lists where each list is a different box
         self.stim_colors = stim_color
         self.stim_inquiry = inquiry
+        self.animation_seconds = animation_seconds
 
     def build_init_stimuli(self, window: visual.Window) -> None:
         """"Build Initial Stimuli."""

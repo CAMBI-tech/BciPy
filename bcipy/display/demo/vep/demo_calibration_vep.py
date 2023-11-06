@@ -57,8 +57,9 @@ stim_props = VEPStimuliProperties(
     stim_pos=box_config.positions,
     stim_height=0.1,
     stim_font=font,
-    timing=[1, 0.5, 4],  # prompt, fixation, stimuli
+    timing=[4, 0.5, 4],  # target, fixation, stimuli
     stim_length=1,  # how many times to stimuli
+    animation_seconds=1.0
 )
 task_bar = CalibrationTaskBar(win,
                               inquiry_count=4,
@@ -107,10 +108,10 @@ for i, txt in enumerate(task_text):
     timing += vep.do_inquiry()
 
     # show the wait screen, this will only happen once
-    while wait_seconds > 0:
-        wait_seconds -= 1
-        vep.wait_screen(f"Waiting for {wait_seconds}s", color='white')
-        core.wait(1)
+    # while wait_seconds > 0:
+    #     wait_seconds -= 1
+    #     vep.wait_screen(f"Waiting for {wait_seconds}s", color='white')
+    #     core.wait(1)
 
 print(timing)
 win.close()
