@@ -918,6 +918,20 @@ class TestInquiryReshaper(unittest.TestCase):
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
 
+    def test_inquiry_reshaper_with_no_channel_map(self):
+        reshaped_data, labels, _ = InquiryReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            sample_rate=self.sample_rate,
+            trials_per_inquiry=self.trials_per_inquiry,
+            channel_map=None,
+            poststimulus_length=self.trial_length
+        )
+        expected_shape = (self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        self.assertTrue(reshaped_data.shape == expected_shape)
+        self.assertTrue(np.all(labels == self.true_labels))
+
     def test_inquiry_reshaper_trial_extraction(self):
         timing = [[1, 3, 4], [1, 4, 5], [1, 2, 3], [4, 5, 6]]
         # make a fake eeg data array (n_channels, n_inquiry, n_samples)
