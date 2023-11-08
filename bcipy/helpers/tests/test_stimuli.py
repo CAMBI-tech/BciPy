@@ -854,6 +854,21 @@ class TestTrialReshaper(unittest.TestCase):
         self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
 
+    def test_trial_reshaper_with_no_channel_map(self):
+        sample_rate = 256
+        trial_length_s = 0.5
+        reshaped_trials, labels = TrialReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            sample_rate=sample_rate,
+            channel_map=None,
+            poststimulus_length=trial_length_s
+        )
+        trial_length_samples = int(sample_rate * trial_length_s)
+        expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
+        self.assertTrue(np.all(labels== [1, 0, 0]))
+        self.assertTrue(reshaped_trials.shape == expected_shape)
 
 class TestInquiryReshaper(unittest.TestCase):
 
