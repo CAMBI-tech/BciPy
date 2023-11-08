@@ -713,6 +713,22 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 
+    def test_best_case_inquiry_gen_invalid_alp(self):
+        """Test best_case_rsvp_inq_gen throws error when passed invalid alp shape"""
+        alp = ['a', 'b', 'c', 'd']
+        session_stimuli = [0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2]
+        n = 5
+        with self.assertRaises(BciPyCoreException, msg='Missing information about the alphabet.'):
+            best_case_rsvp_inq_gen(
+                alp=alp,
+                session_stimuli=session_stimuli,
+                timing=[1, 0.2],
+                color=['red', 'white'],
+                stim_number=1,
+                stim_length=n,
+                is_txt=True
+            )
+
     def test_best_case_inquiry_gen_with_inq_constants(self):
         """Test best_case_rsvp_inq_gen with inquiry constants"""
 
