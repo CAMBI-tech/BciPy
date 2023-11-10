@@ -178,7 +178,7 @@ def execute_task(
 def _clean_up_session(
         display: visual.Window,
         daq: ClientManager,
-        servers: List[LslDataServer] = None) -> bool:
+        servers: List[LslDataServer] = []) -> bool:
     """Clean up session.
 
     Closes the display window and data acquisition objects. Returns True if the session was closed successfully.

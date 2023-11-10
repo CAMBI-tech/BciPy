@@ -1,6 +1,6 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import List
+from typing import Optional, List
 
 from pylsl import (StreamInfo, StreamInlet, local_clock, resolve_byprop,
                    resolve_stream)
@@ -37,25 +37,23 @@ class LslAcquisitionClient:
         raw_data_file_name: if present, uses this name for the data file.
     """
 
+    inlet: StreamInlet = None
+    recorder: LslRecordingThread = None
+    buffer: RingBuffer = None
+    _first_sample_time: float = None
+    experiment_clock: Clock = None
+
     def __init__(self,
                  max_buffer_len: float = 1,
-                 device_spec: DeviceSpec = None,
-                 save_directory: str = None,
-                 raw_data_file_name: str = None):
+                 device_spec: Optional[DeviceSpec] = None,
+                 save_directory: Optional[str] = None,
+                 raw_data_file_name: Optional[str] = None):
         super().__init__()
+
         self.device_spec = device_spec
         self.max_buffer_len = max_buffer_len
-
-        self.experiment_clock = None
-
-        self.inlet = None
-        self._first_sample_time = None
-
         self.save_directory = save_directory
         self.raw_data_file_name = raw_data_file_name
-
-        self.recorder = None
-        self.buffer = None
 
     def start_acquisition(self) -> bool:
         """Connect to the datasource and start acquiring data.
@@ -74,9 +72,10 @@ class LslAcquisitionClient:
                 f'LSL Stream not found for content type {content_type}')
         stream_info = streams[0]
 
-        self.inlet = StreamInlet(stream_info,
-                                 max_buflen=self.max_buffer_len,
-                                 max_chunklen=1)
+        self.inlet = StreamInlet(
+            stream_info,
+            max_buflen=self.max_buffer_len,
+            max_chunklen=1)
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -84,10 +83,11 @@ class LslAcquisitionClient:
             self.device_spec = device_from_metadata(self.inlet.info())
 
         if self.save_directory:
-            self.recorder = LslRecordingThread(stream_info,
-                                               self.save_directory,
-                                               self.raw_data_file_name,
-                                               self.device_spec)
+            self.recorder = LslRecordingThread(
+                stream_info,
+                self.save_directory,
+                self.raw_data_file_name,
+                self.device_spec)
             self.recorder.start()
 
         if self.max_buffer_len and self.max_buffer_len > 0:
@@ -127,9 +127,9 @@ class LslAcquisitionClient:
         self.stop_acquisition()
 
     def get_data(self,
-                 start: float = None,
-                 end: float = None,
-                 limit: int = None) -> List[Record]:
+                 start: Optional[float] = None,
+                 end: Optional[float] = None,
+                 limit: Optional[int] = None) -> List[Record]:
         """Get data in time range.
 
         Parameters
@@ -237,7 +237,7 @@ class LslAcquisitionClient:
         if True, uses a 0 offset; if False forces the calculation.
         """
 
-    def clock_offset(self, experiment_clock: Clock = None) -> float:
+    def clock_offset(self, experiment_clock: Optional[Clock] = None) -> float:
         """
         Offset in seconds from the experiment clock to the acquisition local clock.
 

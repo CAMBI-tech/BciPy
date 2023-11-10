@@ -27,7 +27,7 @@ class Bandpass:
         return sosfiltfilt(self.sos, data), fs
 
 
-def filter_inquiries(inquiries, transform, sample_rate) -> Tuple[np.ndarray, float]:
+def filter_inquiries(inquiries: np.ndarray, transform, sample_rate: int) -> Tuple[np.ndarray, int]:
     """Filter Inquiries.
 
     The shape of data after reshaping into inquiries requires a bit of pre-processing to apply the

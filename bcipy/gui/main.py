@@ -173,7 +173,7 @@ class AlertMessageResponse(Enum):
 
 def alert_message(
         message: str,
-        title: str = None,
+        title: Optional[str] = None,
         message_type: AlertMessageType = AlertMessageType.INFO,
         message_response: AlertMessageResponse = AlertMessageResponse.OTE,
         message_timeout: float = 0) -> MessageBox:
@@ -222,8 +222,8 @@ class FormInput(QWidget):
     def __init__(self,
                  label: str,
                  value: str,
-                 help_tip: str = None,
-                 options: List[str] = None,
+                 help_tip: Optional[str] = None,
+                 options: Optional[List[str]] = None,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
@@ -581,7 +581,7 @@ class RangeWidget(QWidget):
 
     def __init__(self,
                  value: Tuple[int, int],
-                 options: List[str] = None,
+                 options: Optional[List[str]] = None,
                  label_low: str = "Low:",
                  label_high="High:"):
         super(RangeWidget, self).__init__()
@@ -905,7 +905,7 @@ class BCIGui(QWidget):
                            position: list,
                            background_color: str = 'white',
                            text_color: str = 'default',
-                           size: list = None,
+                           size: Optional[list] = None,
                            font_family='Times',
                            font_size=12,
                            wrap_text=False) -> QLabel:
@@ -971,7 +971,7 @@ class ScrollableFrame(QWidget):
                  height: int,
                  width: int,
                  background_color: str = 'black',
-                 widget: QWidget = None):
+                 widget: Optional[QWidget] = None):
         super().__init__()
 
         self.height = height

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type"
 import glob
 import itertools
 import logging
@@ -7,28 +8,27 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Dict, Iterator, List, NamedTuple, Optional, Tuple
-
-from pandas import Series
-from PIL import Image
-
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.list import grouper
-
-# Prevents pillow from filling the console with debug info
-logging.getLogger('PIL').setLevel(logging.WARNING)
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple, Union
 
 import mne
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+
 from mne import Annotations, Epochs
 from mne.io import RawArray
+from pandas import Series
+from PIL import Image
 from psychopy import core
 
+from bcipy.config import DEFAULT_TEXT_FIXATION, DEFAULT_FIXATION_PATH
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.list import grouper
+
+# Prevents pillow from filling the console with debug info
+logging.getLogger('PIL').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
-DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
-DEFAULT_TEXT_FIXATION = '+'
+
 NO_TARGET_INDEX = None
 
 
@@ -85,15 +85,15 @@ class InquirySchedule(NamedTuple):
     - durations: `List[List[float]]`
     - colors: `List[List[str]]`
     """
-    stimuli: List[List[str]]
-    durations: List[List[float]]
-    colors: List[List[str]]
+    stimuli: Union[List[List[str]], List[str]]
+    durations: Union[List[List[float]], List[float]]
+    colors: Union[List[List[str]], List[str]]
 
 
 class Reshaper(ABC):
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self, *args, **kwargs) -> Any:
         ...
 
 
@@ -105,11 +105,11 @@ class InquiryReshaper:
                  sample_rate: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray, List[List[float]]]:
         """Extract inquiry data and labels.
 
         Args:
@@ -157,7 +157,7 @@ class InquiryReshaper:
 
         # Label for every inquiry
         labels = np.zeros(
-            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
+            (n_inquiry, trials_per_inquiry), dtype=np.longlong
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
@@ -184,7 +184,7 @@ class InquiryReshaper:
     def extract_trials(
             inquiries: np.ndarray,
             samples_per_trial: int,
-            inquiry_timing: List[List[float]],
+            inquiry_timing: List[List[int]],
             prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
@@ -199,7 +199,7 @@ class InquiryReshaper:
             shape (Channels, Inquiries, Samples)
         samples_per_trial : int
             number of samples per trial
-        inquiry_timing : List[List[float]]
+        inquiry_timing : List[List[int]]
             For each inquiry, a list of the sample index where each trial begins
         prestimulus_samples : int, optional
             Number of samples to move the start of each trial in each inquiry, by default 0.
@@ -236,7 +236,7 @@ class TrialReshaper(Reshaper):
                  eeg_data: np.ndarray,
                  sample_rate: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
@@ -274,7 +274,7 @@ class TrialReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
-        targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
+        targetness_labels = np.zeros(len(triggers), dtype=np.longlong)
         reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
             if trial_label == target_label:
@@ -375,7 +375,7 @@ def inq_generator(query: List[str],
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
-                   always_included: List[str] = None) -> list:
+                   always_included: Optional[List[str]] = None) -> list:
     """Best Selection.
 
     Given set of elements and a value function over the set, picks the len_query
@@ -416,7 +416,7 @@ def best_case_rsvp_inq_gen(alp: list,
                            stim_length: int = 10,
                            stim_order: StimuliOrder = StimuliOrder.RANDOM,
                            is_txt: bool = True,
-                           inq_constants: List[str] = None) -> InquirySchedule:
+                           inq_constants: Optional[List[str]] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
     Generates RSVPKeyboard inquiry by picking n-most likely letters.
@@ -486,9 +486,9 @@ def best_case_rsvp_inq_gen(alp: list,
 
 def generate_calibration_inquiries(
         alp: List[str],
-        timing: List[float] = None,
+        timing: Optional[List[float]] = None,
         jitter: Optional[int] = None,
-        color: List[str] = None,
+        color: Optional[List[str]] = None,
         inquiry_count: int = 100,
         stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
@@ -656,8 +656,8 @@ def generate_inquiry(symbols: List[str], length: int,
 def inquiry_target(inquiry: List[str],
                    target_position: Optional[int],
                    symbols: List[str],
-                   next_targets: List[str] = None,
-                   last_target: str = None) -> str:
+                   next_targets: Optional[List[str]] = None,
+                   last_target: Optional[str] = None) -> str:
     """Returns the target for the given inquiry. If the optional
     target position is not provided a target will randomly be selected from
     the list of symbols and will not be in the inquiry.
@@ -908,14 +908,14 @@ def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], L
     """
 
     # Do list comprehensions to get the arrays for the task we need.
-    task_text = ['%s/%s' % (stim + 1, experiment_length)
-                 for stim in range(experiment_length)]
-    task_color = [[str(task_color)] for stim in range(experiment_length)]
+    task_text_list = ['%s/%s' % (stim + 1, experiment_length)
+                      for stim in range(experiment_length)]
+    task_color_list = [str(task_color) for _ in range(experiment_length)]
 
-    return (task_text, task_color)
+    return (task_text_list, task_color_list)
 
 
-def resize_image(image_path: str, screen_size: tuple, sti_height: int) -> Tuple[float, float]:
+def resize_image(image_path: str, screen_size: tuple, sti_height: float) -> Tuple[float, float]:
     """Resize Image.
 
     Returns the width and height that a given image should be displayed at
@@ -951,7 +951,7 @@ def play_sound(sound_file_path: str,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
                experiment_clock=None,
-               trigger_name: str = None,
+               trigger_name: Optional[str] = None,
                timing: list = []) -> list:
     """Play Sound.
 

@@ -1,7 +1,7 @@
 from itertools import cycle
 from typing import List
 from bcipy.task.paradigm.matrix.calibration import (
-    MatrixCalibrationTask, InquirySchedule, DEFAULT_TEXT_FIXATION, Display,
+    MatrixCalibrationTask, InquirySchedule, DEFAULT_TEXT_FIXATION, MatrixDisplay,
     init_calibration_display_task)
 from bcipy.helpers.stimuli import PhotoDiodeStimuli, jittered_timing
 
@@ -23,7 +23,7 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
     """
     TASK_NAME = 'Matrix Timing Verification Task'
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the display"""
         display = init_calibration_display_task(
             self.parameters, self.window, self.experiment_clock,

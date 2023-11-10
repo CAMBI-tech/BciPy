@@ -6,6 +6,8 @@ This includes the default parameters, static paths and core experiment configura
 from pathlib import Path
 
 DEFAULT_ENCODING = 'utf-8'
+DEFAULT_EVIDENCE_PRECISION = 5  # number of decimal places to round evidence to by default
+MARKER_STREAM_NAME = 'TRG_device_stream'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
@@ -31,6 +33,9 @@ BCIPY_LOGO_PATH = f'{STATIC_IMAGES_PATH}/gui/cambi.png'
 PREFERENCES_PATH = f'{ROOT}/.bcipy/bcipy_cache'
 LM_PATH = f'{BCIPY_ROOT}/language/lms'
 SIGNAL_MODEL_FILE_SUFFIX = '.pkl'
+
+DEFAULT_FIXATION_PATH = f'{STATIC_IMAGES_PATH}/main/PLUS.png'
+DEFAULT_TEXT_FIXATION = '+'
 
 # core data configuration
 RAW_DATA_FILENAME = 'raw_data'

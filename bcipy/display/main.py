@@ -1,6 +1,7 @@
+# mypy: disable-error-code="assignment"
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import List, Tuple, Union
+from typing import Optional, List, Tuple, Union
 
 from psychopy import visual
 
@@ -133,11 +134,11 @@ class StimuliProperties:
             stim_font: str,
             stim_pos: Union[Tuple[float, float], List[Tuple[float, float]]],
             stim_height: float,
-            stim_inquiry: List[str] = None,
-            stim_colors: List[str] = None,
-            stim_timing: List[float] = None,
+            stim_inquiry: Optional[List[str]] = None,
+            stim_colors: Optional[List[str]] = None,
+            stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: float = None):
+            prompt_time: Optional[float] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
@@ -269,9 +270,9 @@ class VEPStimuliProperties(StimuliProperties):
             stim_font: str,
             stim_pos: List[Tuple[float, float]],
             stim_height: float,
-            timing: Tuple[float, float, float] = None,
-            stim_color: List[List[str]] = None,
-            inquiry: List[List[str]] = None,
+            timing: Optional[Tuple[float, float, float]] = None,
+            stim_color: Optional[List[List[str]]] = None,
+            inquiry: Optional[List[List[str]]] = None,
             stim_length: int = 1):
         """Initialize VEP Stimuli Parameters.
         stim_color(List[str]): Ordered list of colors to apply to VEP stimuli

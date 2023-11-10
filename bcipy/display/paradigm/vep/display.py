@@ -1,6 +1,6 @@
 import logging
 from itertools import cycle
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 
 import numpy as np
 from psychopy import core, visual
@@ -124,8 +124,8 @@ class VEPDisplay(Display):
             task_bar: TaskBar,
             info: InformationProperties,
             trigger_type: str = 'text',
-            codes: List[int] = None,
-            box_config: BoxConfiguration = None):
+            codes: Optional[List[int]] = None,
+            box_config: Optional[BoxConfiguration] = None):
         self.window = window
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round(window.getActualFrameRate())
@@ -379,8 +379,8 @@ class VEPDisplay(Display):
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
 
-    def schedule_to(self, stimuli: List[List[str]], timing: List[List[float]]
-                    = None, colors: List[List[str]] = None) -> None:
+    def schedule_to(self, stimuli: List[List[str]], timing: Optional[List[List[float]]]
+                    = None, colors: Optional[List[List[str]]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
         """
         self.stimuli_inquiry = stimuli

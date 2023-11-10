@@ -1,6 +1,7 @@
+# mypy: disable-error-code="attr-defined,union-attr"
+# needed for the ERPTransformParams
 import logging
-
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from pathlib import Path
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ from bcipy.config import (TRIGGER_FILENAME, RAW_DATA_FILENAME,
                           DEFAULT_DEVICE_SPEC_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
 from bcipy.helpers.stimuli import mne_epochs
@@ -121,7 +123,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     """
     # Load in CSV
     data = load_raw_data(choose_csv_file())
-    raw_data = data.by_channel()
+    raw_data, _ = data.by_channel()
 
     # Pull out the triggers
     if not trigger_col:
@@ -206,7 +208,7 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: dict, show=True) -> Figure:
+def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -227,7 +229,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     trial_window = parameters.get("trial_window")
     static_offset = parameters.get("static_trigger_offset")
 
-    raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
+    raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
 
@@ -250,6 +252,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         offset=static_offset,
         trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        device_type='EEG',
     )
     assert "nontarget" in trigger_targetness, "No nontarget triggers found."
     assert "target" in trigger_targetness, "No target triggers found."

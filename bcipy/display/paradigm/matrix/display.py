@@ -47,7 +47,7 @@ class MatrixDisplay(Display):
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
                  should_prompt_target: bool = True,
-                 sort_order: Callable = None):
+                 sort_order: Optional[Callable] = None):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:

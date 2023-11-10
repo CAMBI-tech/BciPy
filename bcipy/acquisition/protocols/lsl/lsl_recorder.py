@@ -2,7 +2,7 @@
 import logging
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import Optional, List
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
@@ -25,13 +25,14 @@ class LslRecorder:
     Devices without an entry will use a naming convention.
     """
 
-    def __init__(self, path: str, filenames: dict = None):
+    streams: List['LslRecordingThread'] = None
+
+    def __init__(self, path: str, filenames: Optional[dict] = None) -> None:
         super().__init__()
         self.path = path
-        self.streams = None
         self.filenames = filenames or {}
 
-    def start(self):
+    def start(self) -> None:
         """Start recording all streams currently on the network."""
 
         if not self.streams:
@@ -50,7 +51,7 @@ class LslRecorder:
             for stream in self.streams:
                 stream.start()
 
-    def stop(self, wait: bool = False):
+    def stop(self, wait: bool = False) -> None:
         """Stop recording.
 
         Parameters
@@ -76,11 +77,13 @@ class LslRecordingThread(StoppableThread):
         from here.
     """
 
+    writer: RawDataWriter = None
+
     def __init__(self,
                  stream_info: StreamInfo,
                  directory: str,
-                 filename: str = None,
-                 device_spec: DeviceSpec = None):
+                 filename: Optional[str] = None,
+                 device_spec: Optional[DeviceSpec] = None) -> None:
         super().__init__()
         self.stream_info = stream_info
         self.directory = directory
@@ -92,7 +95,6 @@ class LslRecordingThread(StoppableThread):
 
         # seconds to sleep between data pulls from LSL
         self.sleep_seconds = 0.2
-        self.writer = None
 
         self.filename = filename if filename else self.default_filename()
         self.first_sample_time = None
@@ -126,7 +128,7 @@ class LslRecordingThread(StoppableThread):
             check_device(self.device_spec, stream_info)
             channels = self.device_spec.channels
 
-        path = Path(self.directory, self.filename)
+        path = str(Path(self.directory, self.filename))
         log.info(f"Writing data to {path}")
         self.writer = RawDataWriter(
             path,
@@ -157,7 +159,7 @@ class LslRecordingThread(StoppableThread):
             chunk.append([self.sample_count] + sample + [timestamps[i]])
         self.writer.writerows(chunk)
 
-    def _pull_chunk(self, inlet: StreamInlet) -> Tuple[int, float]:
+    def _pull_chunk(self, inlet: StreamInlet) -> int:
         """Pull a chunk of data and persist. Updates first_sample_time,
         last_sample_time, and sample_count.
 
@@ -173,7 +175,7 @@ class LslRecordingThread(StoppableThread):
         # available.
         data, timestamps = inlet.pull_chunk(timeout=0.0,
                                             max_samples=self.max_chunk_size)
-        if timestamps:
+        if timestamps and data:
             if not self.first_sample_time:
                 self.first_sample_time = timestamps[0]
             self.last_sample_time = timestamps[-1]

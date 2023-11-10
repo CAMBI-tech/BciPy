@@ -20,7 +20,7 @@ def eye_tracker_device() -> DeviceSpec:
                           'leftPupilArea', 'rightPupilArea',
                           'pixelsPerDegreeX', 'pixelsPerDegreeY'
                       ],
-                      sample_rate=500.0,
+                      sample_rate=500,
                       content_type='Gaze')
 
 

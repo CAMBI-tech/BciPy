@@ -1,6 +1,8 @@
+# mypy: disable-error-code="attr-defined"
+# needed for the ERPTransformParams
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -59,8 +61,8 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
 
 @report_execution_time
 def offline_analysis(
-    data_folder: str = None,
-    parameters: Parameters = None,
+    data_folder: Optional[str] = None,
+    parameters: Optional[Parameters] = None,
     alert_finished: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
@@ -126,7 +128,7 @@ def offline_analysis(
     )
 
     # Load raw data
-    raw_data = load_raw_data(Path(data_folder, raw_data_file))
+    raw_data = load_raw_data(str(Path(data_folder, raw_data_file)))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
@@ -187,7 +189,7 @@ def offline_analysis(
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    labels = inquiry_labels.flatten()
+    labels = inquiry_labels.flatten().tolist()
 
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")

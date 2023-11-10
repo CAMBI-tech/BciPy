@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
-                    destination: str = None) -> str:
+                    destination: Optional[str] = None) -> str:
     """Creates a copy of the given configuration (parameters.json) to the
     given directory and returns the path.
 
@@ -187,7 +187,7 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     return models
 
 
-def choose_csv_file(filename: str = None) -> str:
+def choose_csv_file(filename: Optional[str] = None) -> str:
     """GUI prompt to select a csv file from the file system.
 
     Parameters
@@ -236,7 +236,7 @@ def load_txt_data() -> str:
     return filename
 
 
-def load_users(data_save_loc) -> List[str]:
+def load_users(data_save_loc: str) -> List[str]:
     """Load Users.
 
     Loads user directory names below experiments from the data path defined and returns them as a list.
@@ -244,7 +244,7 @@ def load_users(data_save_loc) -> List[str]:
     have been run yet.
     """
     # build a saved users list, pull out the data save location from parameters
-    saved_users = []
+    saved_users: List[str] = []
 
     # check the directory is valid, if it is, set path as data save location
     if os.path.isdir(data_save_loc):

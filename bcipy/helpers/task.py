@@ -1,11 +1,12 @@
 import logging
 import random
-from typing import Any, Dict, List, Tuple, Union
+from typing import Optional, Any, Dict, List, Tuple, Union
 
 import numpy as np
 from psychopy import core, event, visual
 
 from bcipy.acquisition.multimodal import ClientManager, ContentType
+from bcipy.acquisition.record import Record
 from bcipy.config import SESSION_COMPLETE_MESSAGE
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
@@ -14,7 +15,7 @@ from bcipy.task.exceptions import InsufficientDataException
 log = logging.getLogger(__name__)
 
 
-def fake_copy_phrase_decision(copy_phrase, target_letter, text_task):
+def fake_copy_phrase_decision(copy_phrase: str, target_letter: str, text_task: str) -> Tuple[str, str, bool]:
     """Fake Copy Phrase Decision.
 
     Parameters
@@ -75,7 +76,7 @@ def calculate_stimulation_freq(flash_time: float) -> float:
     return 1 / flash_time
 
 
-def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
+def construct_triggers(inquiry_timing: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     """Construct triggers from inquiry_timing data.
 
     Parameters
@@ -95,7 +96,7 @@ def construct_triggers(inquiry_timing: List[List]) -> List[Tuple[str, float]]:
 
 
 def target_info(triggers: List[Tuple[str, float]],
-                target_letter: str = None,
+                target_letter: Optional[str] = None,
                 is_txt: bool = True) -> List[str]:
     """Targetness for each item in triggers.
 
@@ -114,11 +115,11 @@ def target_info(triggers: List[Tuple[str, float]],
     return [labels.get(trg[0], 'nontarget') for trg in triggers]
 
 
-def get_data_for_decision(inquiry_timing,
-                          daq,
-                          offset=0.0,
-                          prestim=0.0,
-                          poststim=0.0):
+def get_data_for_decision(inquiry_timing: List[Tuple[str, float]],
+                          daq: ClientManager,
+                          offset: float = 0.0,
+                          prestim: float = 0.0,
+                          poststim: float = 0.0) -> Tuple[np.ndarray, List[Tuple[str, float]]]:
     """Queries the acquisition client for a slice of data and processes the
     resulting raw data into a form that can be passed to signal processing and
     classifiers.
@@ -176,11 +177,11 @@ def get_data_for_decision(inquiry_timing,
 
 
 def get_device_data_for_decision(
-        inquiry_timing: List[Tuple],
+        inquiry_timing: List[Tuple[str, float]],
         daq: ClientManager,
         offset: float = 0.0,
         prestim: float = 0.0,
-        poststim: float = 0.0) -> Dict[ContentType, np.ndarray]:
+        poststim: float = 0.0) -> Dict[ContentType, List[Record]]:
     """Queries the acquisition client manager for a slice of data from each
     device and processes the resulting raw data into a form that can be passed
     to signal processing and classifiers.
