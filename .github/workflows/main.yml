@@ -61,7 +61,7 @@ jobs:
     - name: type-check
       run: |
         mypy bcipy
-    - name: line
+    - name: lint
       run: |
         flake8 bcipy
 
