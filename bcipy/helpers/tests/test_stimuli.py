@@ -883,8 +883,9 @@ class TestTrialReshaper(unittest.TestCase):
         )
         trial_length_samples = int(sample_rate * trial_length_s)
         expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
-        self.assertTrue(np.all(labels== [1, 0, 0]))
+        self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
+
 
 class TestInquiryReshaper(unittest.TestCase):
 
