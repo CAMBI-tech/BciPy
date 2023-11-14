@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from psychopy import visual
 
@@ -32,7 +32,7 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def wait_screen(self) -> None:
+    def wait_screen(self, *args, **kwargs) -> None:
         """Wait Screen.
 
         Define what happens on the screen when a user pauses a session.
@@ -264,16 +264,15 @@ class PreviewInquiryProperties:
 
 class VEPStimuliProperties(StimuliProperties):
 
-    def __init__(
-            self,
-            stim_font: str,
-            stim_pos: List[Tuple[float, float]],
-            stim_height: float,
-            timing: Tuple[float, float, float] = None,
-            stim_color: List[List[str]] = None,
-            inquiry: List[List[str]] = None,
-            stim_length: int = 1,
-            animation_seconds: float = 1.0):
+    def __init__(self,
+                 stim_font: str,
+                 stim_pos: List[Tuple[float, float]],
+                 stim_height: float,
+                 timing: List[float],
+                 stim_color: List[str],
+                 inquiry: List[List[Any]],
+                 stim_length: int = 1,
+                 animation_seconds: float = 1.0):
         """Initialize VEP Stimuli Parameters.
         stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
         stim_font(str): Font to apply to all VEP stimuli

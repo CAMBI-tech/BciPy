@@ -121,7 +121,7 @@ class Layout(Container):
                  top: float = DEFAULT_TOP,
                  right: float = DEFAULT_RIGHT,
                  bottom: float = DEFAULT_BOTTOM,
-                 units: float = "norm"):
+                 units: str = "norm"):
         self.units = units
         self.parent = parent
         self.top = top

@@ -60,7 +60,7 @@ def checkerboard(squares: int, colors: Tuple[str, str], center: Tuple[float,
     center_x, center_y = center
 
     # find the center position of the left_top square
-    move_count = int(boxes_per_row / 2)
+    move_count = float(int(boxes_per_row / 2))
     if squares % 2 == 0:
         # with an even number the center is on a vertex; adjust by half a box
         move_count -= 0.5
@@ -164,7 +164,6 @@ class BoxConfiguration():
 
         left = right_of(layout.left, width / 2)
         right = left_of(layout.right, width / 2)
-
 
         if self.num_boxes == 4:
             return [(left, top), (right, top), (left, bottom), (right, bottom)]
