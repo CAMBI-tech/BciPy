@@ -1,13 +1,14 @@
 import glob
 import itertools
 import logging
+import math
 import random
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Dict, Iterator, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
 from pandas import Series
 from PIL import Image
@@ -1125,15 +1126,18 @@ def generate_vep_calibration_inquiries(alp: List[str],
 def generate_vep_inquiries(symbols: List[str],
                            num_boxes: int = 6,
                            inquiry_count: int = 20,
-                           is_txt: bool = True):
+                           is_txt: bool = True) -> List[List[Any]]:
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
     target_indices = random_target_positions(inquiry_count,
                                              stim_per_inquiry=num_boxes,
                                              percentage_without_target=0)
-    targets = generate_targets(symbols,
-                               inquiry_count,
-                               percentage_without_target=0.0)
+
+    # repeat the symbols as necessary to ensure an adequate size for sampling
+    # without replacement.
+    population = symbols * math.ceil(inquiry_count / len(symbols))
+    targets = random.sample(population, inquiry_count)
+
     return [[target, fixation] + generate_vep_inquiry(alphabet=symbols,
                                                       num_boxes=num_boxes,
                                                       target=target,
@@ -1183,6 +1187,10 @@ def stim_per_box(num_symbols: int,
     # 1, 1, 1, 20, 3, 2],
     # 1, 1, 1, 4, 21, 0]]
 
+    if max_empty_boxes + max_single_sym_boxes >= num_boxes:
+        max_empty_boxes = 0
+        max_single_sym_boxes = num_boxes - 1
+
     # no more than 1 empty box
     empty_boxes = [0] * random.choice(range(max_empty_boxes + 1))
 
@@ -1207,14 +1215,14 @@ def stim_per_box(num_symbols: int,
 
     # last box
     boxes.append(remaining_symbols)
-    # random.shuffle(boxes)
+
     return sorted(boxes)
 
 
 def generate_vep_inquiry(alphabet: List[str],
                          num_boxes: int = 6,
-                         target: str = None,
-                         target_pos: int = None) -> List[List[str]]:
+                         target: Optional[str] = None,
+                         target_pos: Optional[int] = None) -> List[List[str]]:
     """Generates a single random inquiry.
 
     Parameters
@@ -1236,7 +1244,7 @@ def generate_vep_inquiry(alphabet: List[str],
     """
 
     box_counts = stim_per_box(num_symbols=len(alphabet), num_boxes=num_boxes)
-
+    assert len(box_counts) == num_boxes
     syms = [sym for sym in alphabet]
     random.shuffle(syms)
 
