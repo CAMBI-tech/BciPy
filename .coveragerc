@@ -6,7 +6,7 @@ omit =
         *tests*
         *test*
         *demo*
-        *gui/*
+        */gui/*
 
 [report]
 exclude_lines =
