@@ -221,7 +221,7 @@ class InquiryReshaper:
 
                 try:
                     new_trials.append(inquiries[:, inquiry_idx, start:end])
-                except IndexError:
+                except IndexError:  # pragma: no cover
                     raise BciPyCoreException(
                         f'InquiryReshaper.extract_trials: index out of bounds. \n'
                         f'Inquiry: [{inquiry_idx}] from {start}:{end}. init_time: {time}, '
