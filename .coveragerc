@@ -12,6 +12,8 @@ omit =
 exclude_lines =
     pragma: no cover
     def __repr__
+    def __str__
     raise NotImplementedError
+    @abstract
     if __name__ == .__main__.:
-    ...
+    log = logging.getLogger(__name__)
