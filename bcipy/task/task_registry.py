@@ -37,6 +37,7 @@ class TaskType(AutoNumberEnum):
     MATRIX_CALIBRATION = 'Matrix Calibration'
     MATRIX_TIMING_VERIFICATION_CALIBRATION = 'Matrix Time Test Calibration'
     MATRIX_COPY_PHRASE = 'Matrix Copy Phrase'
+    VEP_CALIBRATION = 'VEP Calibration'
 
     def __init__(self, label):
         self.label = label
