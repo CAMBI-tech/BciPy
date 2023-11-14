@@ -717,7 +717,7 @@ class TestStimuliGeneration(unittest.TestCase):
         """Test best_case_rsvp_inq_gen throws error when passed invalid alp shape"""
         alp = ['a', 'b', 'c', 'd']
         session_stimuli = [0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2]
-        n = 5
+        stim_length = 5
         with self.assertRaises(BciPyCoreException, msg='Missing information about the alphabet.'):
             best_case_rsvp_inq_gen(
                 alp=alp,
@@ -725,7 +725,7 @@ class TestStimuliGeneration(unittest.TestCase):
                 timing=[1, 0.2],
                 color=['red', 'white'],
                 stim_number=1,
-                stim_length=n,
+                stim_length=stim_length,
                 is_txt=True
             )
 
