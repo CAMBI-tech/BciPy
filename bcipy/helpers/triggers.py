@@ -66,7 +66,7 @@ def _calibration_trigger(experiment_clock: Clock,
                          trigger_name: str = 'calibration',
                          trigger_time: float = 1,
                          display=None,
-                         on_trigger=None) -> List[tuple]:
+                         on_trigger=None) -> List:
     """Calibration Trigger.
 
     Outputs triggers for the purpose of calibrating data and stimuli.

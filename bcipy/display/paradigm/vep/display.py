@@ -3,38 +3,28 @@ from itertools import cycle
 from typing import (Any, Dict, Iterable, List, NamedTuple, Optional, Tuple,
                     Union)
 
-import numpy as np
-from psychopy import core, visual
-from psychopy.visual.shape import ShapeStim
+from psychopy import core, visual  # type: ignore
 
 import bcipy.display.components.layout as layout
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
-from bcipy.display.components.layout import envelope, scaled_size
+from bcipy.display.components.layout import scaled_size
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
-from bcipy.display.paradigm.vep.layout import (BoxConfiguration,
-                                               animation_path, checkerboard)
+from bcipy.display.paradigm.vep.codes import create_vep_codes
+from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
+from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.list import expanded
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
 
-# Should only be two elements, but a list rather than a Tuple
-StimTime = List[Union[str, float]]
 
-
-def create_vep_codes(length=32, count=4) -> List[List[int]]:
-    """Create a list of random VEP codes.
-
-    length - how many bits in each code. This should be greater than or equal to the refresh rate
-        if using these to flicker. For example, if the refresh rate is 60Hz, then the length should
-        be at least 60.
-    count - how many codes to generate, each will be unique.
-    """
-    np.random.seed(1)
-    return [np.random.randint(2, size=length) for _ in range(count)]
+class StimTime(NamedTuple):
+    """Represents the time that the given symbol was displayed"""
+    symbol: str
+    time: float
 
 
 class StimProps(NamedTuple):
@@ -42,91 +32,6 @@ class StimProps(NamedTuple):
     symbol: Union[str, List[str]]
     duration: float
     color: str
-
-
-class VEPStim:
-    """Represents a checkerboard of squares that can be flashed at a given
-    rate. Flashing is accomplished by inverting the colors of each square.
-
-    Parameters
-    ----------
-        layout - used to build the stimulus
-        code - A list of integers representing the VEP code for each box
-        colors - tuple of colors for the checkerboard pattern
-        center - center position of the checkerboard
-        size - size of the checkerboard, in layout units
-        num_squares - number of squares in the checkerboard
-    """
-
-    def __init__(self,
-                 win: visual.Window,
-                 code: List[int],
-                 colors: Tuple[str, str],
-                 center: Tuple[float, float],
-                 size: Tuple[float, float],
-                 num_squares: int = 4):
-        self.window = win
-        self.code = code
-
-        squares = checkerboard(squares=num_squares,
-                               colors=colors,
-                               center=center,
-                               board_size=size)
-        board_boundary = envelope(pos=center, size=size)
-
-        frame1_holes = []
-        frame2_holes = []
-        for square in squares:
-            square_boundary = envelope(pos=square.pos, size=square.size)
-            # squares define the holes in the polygon
-            if square.color == colors[0]:
-                frame2_holes.append(square_boundary)
-            elif square.color == colors[1]:
-                frame1_holes.append(square_boundary)
-
-        # Checkerboard is represented as a polygon with holes, backed by a
-        # simple square with the alternating color.
-        # This technique renders more efficiently and scales better than using
-        # separate shapes (Rect or Gradient) for each square.
-        background = ShapeStim(self.window,
-                               lineColor=colors[1],
-                               fillColor=colors[1],
-                               vertices=board_boundary)
-        self.on_stim = [
-            background,
-            # polygon with holes
-            ShapeStim(self.window,
-                      lineWidth=0,
-                      fillColor=colors[0],
-                      closeShape=True,
-                      vertices=[board_boundary, *frame1_holes])
-        ]
-        self.off_stim = [
-            background,
-            # polygon with holes
-            ShapeStim(self.window,
-                      lineWidth=0,
-                      fillColor=colors[0],
-                      closeShape=True,
-                      vertices=[board_boundary, *frame2_holes])
-        ]
-
-    def render_frame(self, frame: int) -> None:
-        """Render a given frame number, where frame refers to a code index"""
-        if self.code[frame] == 1:
-            self.frame_on()
-        else:
-            self.frame_off()
-
-    def frame_on(self) -> None:
-        """Each square is set to a starting color and draw."""
-        for stim in self.on_stim:
-            stim.draw()
-
-    def frame_off(self) -> None:
-        """Invert each square from its starting color and draw."""
-        for stim in self.off_stim:
-            stim.draw()
 
 
 class VEPDisplay(Display):
@@ -181,7 +86,6 @@ class VEPDisplay(Display):
             f"Symbol starting positions ({str(display_container.units)} units): {self.starting_positions}"
         )
 
-        self.fixation = self._build_fixation()
         self.starting_color = 'white'
         self.sti = self._build_inquiry_stimuli()
 
@@ -196,8 +100,6 @@ class VEPDisplay(Display):
         # Callback used on presentation of first stimulus.
         self.first_run = True
         self.first_stim_callback = lambda _sti: None
-        # TODO: needed?
-        # self.size_list_sti = []
 
         self.task_bar = task_bar
         self.info_text = info.build_info_text(window)
@@ -267,14 +169,14 @@ class VEPDisplay(Display):
         self.reset_symbol_positions()
 
         if self.should_prompt_target:
-            [target, fixation, *stim] = self.stim_properties()
+            [target, _fixation, *stim] = self.stim_properties()
             if isinstance(target.symbol, str):
                 self.set_stimuli_colors(stim)
                 self.prompt_target(target,
                                    target_box_index=self.box_index(
                                        stim, target.symbol))
         else:
-            [fixation, *stim] = self.stim_properties()
+            [_fixation, *stim] = self.stim_properties()
             self.set_stimuli_colors(stim)
 
         # self.do_fixation(fixation)
@@ -476,19 +378,11 @@ class VEPDisplay(Display):
 
         Useful as a callback function to register a marker at the time it is
         first displayed."""
-        self._timing.append([stimuli, self.experiment_clock.getTime()])
+        self._timing.append(StimTime(stimuli, self.experiment_clock.getTime()))
 
     def reset_timing(self):
         """Reset the trigger timing."""
         self._timing = []
-
-    def _build_fixation(self) -> visual.TextStim:
-        """Build the fixation stim"""
-        return visual.TextStim(self.window,
-                               text='+',
-                               color='red',
-                               height=self.stimuli_height,
-                               pos=[0, 0])
 
     def _build_inquiry_stimuli(self) -> Dict[str, visual.TextStim]:
         """Build the inquiry stimuli."""
@@ -534,14 +428,12 @@ class VEPDisplay(Display):
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
             correction may be required.
         """
-        calibration_time: StimTime = _calibration_trigger(  # type: ignore
-            self.experiment_clock,
-            trigger_type=self.trigger_type,
-            display=self.window)
-
-        # set the first stim time if not present and first_run to False
+        trg = _calibration_trigger(self.experiment_clock,
+                                   trigger_type=self.trigger_type,
+                                   display=self.window)
+        calibration_time = StimTime(*trg)
         if not self.first_stim_time:
-            self.first_stim_time = calibration_time[-1]  # type: ignore
+            self.first_stim_time = calibration_time.time
             self.first_run = False
 
     def schedule_to(self,

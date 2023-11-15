@@ -12,7 +12,7 @@ from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, InquirySchedule,
+from bcipy.helpers.stimuli import (InquirySchedule,
                                    generate_vep_calibration_inquiries)
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import get_user_input, trial_complete_message
@@ -22,19 +22,15 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
 from bcipy.task import Task
 
 
-def trigger_type(symbol: str, target: str, index: int) -> TriggerType:
+def trigger_type(symbol: str, target: str, _index: int) -> TriggerType:
     """Trigger Type.
 
     This method is passed to convert_timing_triggers to properly assign TriggerTypes
         to the timing of stimuli presented.
     """
-    if index == 0:
-        return TriggerType.PROMPT
-    if symbol == DEFAULT_TEXT_FIXATION:
-        return TriggerType.FIXATION
     if target == symbol:
         return TriggerType.TARGET
-    return TriggerType.NONTARGET
+    return TriggerType.EVENT
 
 
 class VEPCalibrationTask(Task):
@@ -112,7 +108,7 @@ class VEPCalibrationTask(Task):
             is_txt=self.is_txt_stim)
 
     def execute(self):
-
+        """Main task loop"""
         self.logger.info(f'Starting {self.name()}!')
         run = True
 
@@ -133,7 +129,6 @@ class VEPCalibrationTask(Task):
             (stimuli_labels, _timing, _colors) = self.generate_stimuli()
 
             for inquiry in range(self.stim_number):
-
                 # check user input to make sure we should be going
                 if not get_user_input(self.display, self.wait_screen_message,
                                       self.wait_screen_message_color):
@@ -147,7 +142,7 @@ class VEPCalibrationTask(Task):
                 self.window.flip()
 
                 self.display.schedule_to(stimuli_labels[inquiry])
-                # Schedule a inquiry
+                # Schedule an inquiry
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -156,7 +151,7 @@ class VEPCalibrationTask(Task):
                 timing = self.display.do_inquiry()
 
                 # Write triggers for the inquiry
-                self.write_trigger_data(timing, (inquiry == 0))
+                self.write_trigger_data(timing, first_run=(inquiry == 0))
 
                 # Wait for a time
                 core.wait(self.buffer_val)
@@ -172,7 +167,6 @@ class VEPCalibrationTask(Task):
 
         # Allow for some training data to be collected
         core.wait(self.buffer_val)
-
         self.write_offset_trigger()
 
         return self.file_save
@@ -184,30 +178,21 @@ class VEPCalibrationTask(Task):
         Using the timing provided from the display and calibration information
         from the data acquisition client, write trigger data in the correct
         format.
-
-        *Note on offsets*: we write the full offset value which can be used to
-        transform all stimuli to the time since session start (t = 0) for all
-        values (as opposed to most system clocks which start much higher).
-        We do not write the calibration trigger used to generate this offset
-        from the display. See display _trigger_pulse() for more information.
         """
+        triggers = []
         if first_run:
             assert self.display.first_stim_time, "First stim time not set"
-            triggers = []
             for content_type, client in self.daq.clients_by_type.items():
                 label = offset_label(content_type.name)
-                time = client.offset(self.display.first_stim_time
-                                     ) - self.display.first_stim_time
+                time = client.offset(self.display.first_stim_time) - self.display.first_stim_time
                 triggers.append(Trigger(label, TriggerType.OFFSET, time))
-            self.trigger_handler.add_triggers(triggers)
 
-        # make sure triggers are written for the inquiry
-        self.trigger_handler.add_triggers(
-            convert_timing_triggers(timing, timing[0][0], trigger_type))
+        target = timing[0][0]
+        triggers.extend(convert_timing_triggers(timing, target, trigger_type))
+        self.trigger_handler.add_triggers(triggers)
 
     def write_offset_trigger(self) -> None:
-        """Append an offset value to the end of the trigger file.
-        """
+        """Append an offset value to the end of the trigger file."""
         assert self.display.first_stim_time, "First stim time not set"
         triggers = []
         for content_type, client in self.daq.clients_by_type.items():
