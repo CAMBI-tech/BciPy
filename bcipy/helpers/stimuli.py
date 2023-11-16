@@ -129,7 +129,7 @@ class InquiryReshaper:
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                a label of [0, K-1] indicates the position of `target_label`, or label of [0 ... 0] indicates
                 `target_label` was not present.
             reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
                 begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
@@ -227,6 +227,111 @@ class InquiryReshaper:
                         f'Inquiry: [{inquiry_idx}] from {start}:{end}. init_time: {time}, '
                         f'prestimulus_samples: {prestimulus_samples}, samples_per_trial: {samples_per_trial} \n')
         return np.stack(new_trials, 1)  # C x T x S
+
+
+class GazeReshaper:
+    def __call__(self,
+                 inq_start_times: List[float],
+                 target_symbols: List[str],
+                 gaze_data: np.ndarray,
+                 sample_rate: int,
+                 symbol_set: List[str],
+                 channel_map: List[int] = None,
+                 ) -> dict:
+        """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
+        the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
+        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
+        the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
+        Optional outputs:
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended
+        in chronological order. labels returns the list of target symbols in each inquiry.
+
+        Args:
+            inq_start_times (List[float]): Timestamp of each event in seconds
+            target_symbols (List[str]): Prompted symbol in each inquiry
+            gaze_data (np.ndarray): shape (channels, samples) eye tracking data
+            sample_rate (int): sample rate of data provided in eeg_data
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
+
+        Returns:
+            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
+            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
+
+            reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
+            labels (List[str]) [optional] : Target symbol in each inquiry.
+        """
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
+
+        # Find the value closest to (& greater than) inq_start_times
+        gaze_data_timing = gaze_data[-1, :].tolist()
+
+        start_times = []
+        for times in inq_start_times:
+            temp = list(filter(lambda x: x > times, gaze_data_timing))
+            if len(temp) > 0:
+                start_times.append(temp[0])
+
+        triggers = []
+        for val in start_times:
+            triggers.append(gaze_data_timing.index(val))
+
+        # Label for every inquiry
+        labels = target_symbols
+
+        # Create a dictionary with symbols as keys and data as values
+        # 'A': [], 'B': [] ...
+        data_by_targets = {}
+        for symbol in symbol_set:
+            data_by_targets[symbol] = []
+
+        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+
+        reshaped_data = []
+        # Merge the inquiries if they have the same target letter:
+        for i, inquiry_index in enumerate(triggers):
+            start = inquiry_index
+            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
+            # Check if the data exists for the inquiry:
+            if stop > len(gaze_data[0, :]):
+                continue
+
+            reshaped_data.append(gaze_data[:, start:stop])
+            # (Optional) extracted data (Inquiries x Channels x Samples)
+
+            # Populate the dict by appending the inquiry to the correct key:
+            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+
+        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
+        for symbol in symbol_set:
+            if len(data_by_targets[symbol]) > 0:
+                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
+                data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
+
+            # Note that this is a workaround to the issue of having different number of targetness in
+            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
+            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
+            # This is not ideal, but it works for now.
+
+        # return np.stack(reshaped_data, 0), labels
+        return data_by_targets
+
+    @staticmethod
+    def centralize_all_data(data, symbol_pos):
+        """ Using the symbol locations in matrix, centralize all data (in Tobii units).
+        This data will only be used in certain model types.
+        Args:
+            data (np.ndarray): Data in shape of num_channels x num_samples
+            symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
+        Returns:
+            data (np.ndarray): Centralized data in shape of num_channels x num_samples
+        """
+        for i in range(len(data)):
+            data[i] = data[i] - symbol_pos
+        return data
 
 
 class TrialReshaper(Reshaper):

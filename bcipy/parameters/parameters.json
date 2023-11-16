@@ -11,7 +11,7 @@
     "value": "EEG",
     "section": "acq_config",
     "readableName": "Acquisition Mode",
-    "helpTip": "Specifies the hardware device(s) used for data collection.",
+    "helpTip": "Specifies the hardware device(s) used for data collection. Default: EEG",
     "recommended_values": [
       "EEG",
       "EEG/DSI-24",
@@ -649,7 +649,7 @@
     "value": "UNIFORM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: MIXTURE",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
       "UNIFORM",
       "CAUSAL",

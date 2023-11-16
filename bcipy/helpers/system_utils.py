@@ -211,7 +211,9 @@ def configure_logger(
         '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
     root_logger.addHandler(handler)
 
-    print(f'Printing all BciPy logs to: {logfile}')
+    # print to console the absolute path of the log file to aid in debugging
+    path_to_logs = os.path.abspath(logfile)
+    print(f'Printing all BciPy logs to: {path_to_logs}')
 
     if version:
         logging.info(f'Start of Session for BciPy Version: ({version})')

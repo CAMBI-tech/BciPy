@@ -181,6 +181,12 @@ class RawData:
         self._rows.append(row)
         self._dataframe = None
 
+    def __str__(self) -> str:
+        return f"RawData({self.daq_type})"
+
+    def __repr__(self) -> str:
+        return f"RawData({self.daq_type})"
+
 
 def maybe_float(val):
     """Attempt to convert the given value to float. If conversion fails return
@@ -323,7 +329,7 @@ def load(filename: str) -> RawData:
 
 
 def read_metadata(file_obj: TextIO) -> Tuple[str, float]:
-    """Reads the metadata from an open raw data file and retuns the result as
+    """Reads the metadata from an open raw data file and returns the result as
     a tuple. Increments the reader.
 
     Parameters
