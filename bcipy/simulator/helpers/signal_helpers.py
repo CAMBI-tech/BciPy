@@ -17,7 +17,6 @@ from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
 
-logger.getLogger().setLevel(logger.INFO)
 log = logger.getLogger(__name__)
 
 
@@ -33,9 +32,8 @@ class ExtractedExperimentData:  # TODO clean up design
 
 def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
     assert parameters, "Parameters are required for offline analysis."
-    if not data_folder:
-        data_folder = load_experimental_data()
 
+    log.debug(f"Processing raw data for {data_folder}")
     # extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
     window_length = trial_window[1] - trial_window[0]
@@ -52,7 +50,7 @@ def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshape
     downsample_rate = transform_params.down_sampling_rate
     static_offset = parameters.get("static_trigger_offset")
 
-    log.info(
+    log.debug(
         f"\nData processing settings: \n"
         f"{str(transform_params)} \n"
         f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
@@ -79,8 +77,8 @@ def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshape
         downsample_factor=transform_params.down_sampling_rate,
     )
 
-    log.info(f"Channels read from csv: {channels}")
-    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+    log.debug(f"Channels read from csv: {channels}")
+    log.debug(f"Device type: {type_amp}, fs={sample_rate}")
 
     # Process triggers.txt files
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -96,7 +94,7 @@ def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshape
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, device_spec)
     channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
-    log.info(f'Channels used in analysis: {channels_used}')
+    log.debug(f'Channels used in analysis: {channels_used}')
 
     data, fs = raw_data.by_channel()
 

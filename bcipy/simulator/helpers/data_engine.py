@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from pathlib import Path
 from typing import Optional, List
@@ -10,6 +11,8 @@ from bcipy.helpers import load
 from bcipy.helpers.list import grouper
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers.signal_helpers import ExtractedExperimentData, process_raw_data_for_model
+
+log = logging.getLogger(__name__)
 
 
 class DataEngine(ABC):
@@ -42,6 +45,7 @@ class RawDataEngine(DataEngine):
         self.symbols_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
         self.labels_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
         self.schema: Optional[pd.DataFrame] = None
+
         self.load()
 
     def load(self) -> DataEngine:
@@ -52,6 +56,8 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
+        log.debug(f"Loading data from {len(self.source_dirs)} source directories")
+
         self.parameter_files = [load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for data_folder in
                                 self.source_dirs]
 
@@ -69,6 +75,7 @@ class RawDataEngine(DataEngine):
 
             self.labels_by_inquiry.append(data_source.labels)
 
+        log.info("Finished loading all data")
         return self
 
     def transform(self) -> DataEngine:
@@ -84,7 +91,7 @@ class RawDataEngine(DataEngine):
             self for chaining
         """
 
-        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]
+        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]  # TODO store how good evidence was in session
         types = [int, int, int, str, int, np.ndarray]
 
         rows = []
@@ -105,6 +112,7 @@ class RawDataEngine(DataEngine):
                 rows.extend(symbol_rows)
 
         self.schema = pd.DataFrame(rows)
+        # breakpoint()
 
         return self
 

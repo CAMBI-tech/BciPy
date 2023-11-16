@@ -14,7 +14,6 @@ class Simulator(ABC):
 
     def __init__(self):
         super(Simulator, self).__init__()
-        self.logger = logging.getLogger(__name__)
 
     @abstractmethod
     def run(self):

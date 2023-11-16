@@ -1,3 +1,5 @@
+import datetime
+import logging
 import random
 from time import sleep
 from typing import Optional
@@ -7,12 +9,13 @@ import numpy as np
 from bcipy.helpers import load, stimuli, symbols
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
-from bcipy.simulator.helpers.evidence_fuser import EvidenceFuser
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.simulator.interfaces import MetricReferee, ModelHandler
 from bcipy.simulator.simulator_base import Simulator
+
+log = logging.getLogger(__name__)
 
 
 class SimulatorCopyPhrase(Simulator):
@@ -58,25 +61,33 @@ class SimulatorCopyPhrase(Simulator):
         self.visualize = visualize
 
     def run(self):
+        log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
+
         while not self.state_manager.is_done():
-            print(
-                f"Series {self.state_manager.get_state().series_n} | Inquiry {self.state_manager.get_state().inquiry_n} | Target {self.state_manager.get_state().target_symbol}")
-            self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(self.state_manager.get_state()))
-            sampled_data = self.sampler.sample(self.state_manager.get_state())
-            evidence = self.model_handler.generate_evidence(self.state_manager.get_state(),
+            curr_state = self.state_manager.get_state()
+            log.info(f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | Target {curr_state.target_symbol}")
+
+            self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(curr_state))
+            sampled_data = self.sampler.sample(curr_state)
+            evidence = self.model_handler.generate_evidence(curr_state,
                                                             sampled_data)  # TODO make this evidence be a dict (mapping of evidence type to evidence)
 
-            print(f"Evidence for stimuli {self.state_manager.get_state().display_alphabet} \n {evidence}")
+            log.debug(f"Evidence for stimuli {curr_state.display_alphabet} \n {evidence}")
 
             inq_record: InquiryResult = self.state_manager.update(evidence)
-
-            print(f"Fused Likelihoods {[str(round(p, 3)) for p in inq_record.fused_likelihood]}")
+            updated_state = self.state_manager.get_state()
+            log.debug(f"Fused Likelihoods {[str(round(p, 3)) for p in inq_record.fused_likelihood]}")
 
             if inq_record.decision:
-                print(f"Decided {inq_record.decision} for target {inq_record.target} for sentence {self.state_manager.get_state().target_sentence}")
+                log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
 
-            print("\n")
+            log.info(f"Current typed: {updated_state.current_sentence}")
             sleep(.5)
+
+        final_state = self.state_manager.get_state()
+        log.info(f"SIM END")
+        log.debug(f"Final State: {final_state}")
+
         # TODO visualize result metrics
 
     def __make_stimuli(self, state: SimState):

@@ -28,12 +28,12 @@ class MultiplyFuser(EvidenceFuser):
 
         for value in evidence.values():
             ret_likelihood *= value[:]
-        ret_likelihood = self.__clean_likelihood(ret_likelihood)
+        ret_likelihood = self.__normalize_likelihood(ret_likelihood)
 
         return ret_likelihood
 
 
-    def __clean_likelihood(self, likelihood):
+    def __normalize_likelihood(self, likelihood):
 
         cleaned_likelihood = likelihood.copy()
         if np.isinf(np.sum(likelihood)):

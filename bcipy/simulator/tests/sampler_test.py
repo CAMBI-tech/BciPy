@@ -38,7 +38,10 @@ class DummyRef(MetricReferee):
 
 if __name__ == "__main__":
     args = dict()
-    args['data_folders'] = ["/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_18hr58min16sec_-0700"]
+    args['data_folders'] = ["/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_18hr58min16sec_-0700",
+                            # "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_19hr07min50sec_-0700",
+                            # "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_19hr15min29sec_-0700"
+                            ]
     args['out_dir'] = Path(__file__).resolve().parent
     model_file = Path(
         "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Calibration_Thu_24_Aug_2023_18hr41min37sec_-0700/model_0.9524_200_800.pkl")
@@ -66,4 +69,3 @@ if __name__ == "__main__":
     model_handler = DummyModelHandler(model_file)
     sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, DummyRef())
     sim.run()
-    breakpoint()

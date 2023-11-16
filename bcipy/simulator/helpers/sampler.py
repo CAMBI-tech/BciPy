@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from typing import Callable, List
 
@@ -9,6 +10,8 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.interfaces import SimState
+
+log = logging.getLogger(__name__)
 
 
 class Sampler(ABC):
@@ -41,28 +44,36 @@ class SimpleLetterSampler(Sampler):
 
         inquiry_letter_subset = state.display_alphabet
         target_letter = state.target_symbol
-        eeg_responses = []
+        sample_rows = []
         for symbol in inquiry_letter_subset:
             is_target = int(symbol == target_letter)
-            filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
+            # filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
+            filtered_data = self.data.query(f'target == {is_target}')
             if not len(filtered_data):
                 raise TaskConfigurationException(message="No eeg sample found with provided data and query")
 
             row = filtered_data.sample(1)
-            eeg_responses.append(row['eeg'])
+            sample_rows.append(row)
 
-        return self.model_input_reshaper(eeg_responses)
+        log.debug(f"EEG Samples: \n {', '.join([r.to_string() for r in sample_rows])}")
+        eeg_responses = [r['eeg'].to_numpy()[0] for r in sample_rows]
+        sample = self.model_input_reshaper(eeg_responses)
+
+        return sample
 
     def set_reshaper(self, reshaper: Callable):
         self.model_input_reshaper = reshaper
 
-    def __default_reshaper(self, eeg_response) -> np.ndarray:
+    def __default_reshaper(self, eeg_responses: List[np.ndarray]) -> np.ndarray:
+        # returns (channel_n, trial_n, sample_n)
 
-        channels_eeg = [[] for i in range(len(eeg_response[0]))]
-        for t_i, trial_channels_eeg in enumerate(eeg_response):
+        channels_eeg = [[] for i in range(len(eeg_responses[0]))]
+
+        for t_i, trial_channels_eeg in enumerate(eeg_responses):
             for c_i, channel_eeg in enumerate(trial_channels_eeg):
                 channels_eeg[c_i].append(channel_eeg)
 
-        return np.array(channels_eeg[0])
+        # TODO make sure this returns (7, 10, 90)
+        return np.array(channels_eeg)
 
 # TODO ReplaySampler
