@@ -284,7 +284,7 @@ class GazeReshaper:
 
         # Create a dictionary with symbols as keys and data as values
         # 'A': [], 'B': [] ...
-        data_by_targets = {}
+        data_by_targets: Dict[str, list] = {}
         for symbol in symbol_set:
             data_by_targets[symbol] = []
 
