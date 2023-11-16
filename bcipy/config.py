@@ -16,8 +16,8 @@ FIELD_FILENAME = 'fields.json'
 EXPERIMENT_DATA_FILENAME = 'experiment_data.json'
 BCIPY_ROOT = Path(__file__).resolve().parent
 ROOT = BCIPY_ROOT.parent
-DEFAULT_EXPERIMENT_PATH = f'{ROOT}/.bcipy/experiment'
-DEFAULT_FIELD_PATH = f'{ROOT}/.bcipy/field'
+DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'
+DEFAULT_FIELD_PATH = f'{BCIPY_ROOT}/parameters/field'
 
 DEFAULT_PARAMETER_FILENAME = 'parameters.json'
 DEFAULT_PARAMETERS_PATH = f'{BCIPY_ROOT}/parameters/{DEFAULT_PARAMETER_FILENAME}'
@@ -30,7 +30,7 @@ STATIC_PATH = f'{BCIPY_ROOT}/static'
 STATIC_IMAGES_PATH = f'{STATIC_PATH}/images'
 STATIC_AUDIO_PATH = f'{STATIC_PATH}/sounds'
 BCIPY_LOGO_PATH = f'{STATIC_IMAGES_PATH}/gui/cambi.png'
-PREFERENCES_PATH = f'{ROOT}/.bcipy/bcipy_cache'
+PREFERENCES_PATH = f'{ROOT}/bcipy_cache'
 LM_PATH = f'{BCIPY_ROOT}/language/lms'
 SIGNAL_MODEL_FILE_SUFFIX = '.pkl'
 
@@ -39,6 +39,7 @@ DEFAULT_TEXT_FIXATION = '+'
 
 # core data configuration
 RAW_DATA_FILENAME = 'raw_data'
+EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
 TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'

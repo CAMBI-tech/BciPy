@@ -496,7 +496,8 @@ def trigger_decoder(
         remove_pre_fixation: bool = True,
         offset: float = 0.0,
         exclusion: Optional[List[TriggerType]] = None,
-        device_type: Optional[str] = None) -> Tuple[list, list, list]:
+        device_type: Optional[str] = None,
+        apply_starting_offset: bool = True) -> Tuple[list, list, list]:
     """Trigger Decoder.
 
     Given a path to trigger data, this method loads valid Triggers and returns their type, timing and label.
@@ -509,7 +510,8 @@ def trigger_decoder(
         exclusion: any TriggerTypes to be filtered from data returned
         device_type: used to determine which starting_offset value to use; if
             a 'starting_offset' trigger is found it will be applied.
-
+        apply_starting_offset: if False, does not apply the starting offset for
+            the given device_type.
     Returns
     -------
         tuple: trigger_type, trigger_timing, trigger_label
@@ -520,7 +522,9 @@ def trigger_decoder(
     ]
 
     triggers = read(trigger_path)
-    starting_offset = find_starting_offset(triggers, device_type)
+    starting_offset = Trigger('', TriggerType.OFFSET, 0.0)
+    if apply_starting_offset:
+        starting_offset = find_starting_offset(triggers, device_type)
 
     filtered = exclude_types(triggers, excluded_types)
     corrected = apply_offsets(filtered, starting_offset, static_offset=offset)

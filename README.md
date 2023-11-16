@@ -105,7 +105,7 @@ This a list of the major modules and their functionality. Each module will conta
 
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
-- `signal`: eeg signal models, filters, processing, evaluators and viewers.
+- `signal`: eeg signal models, gaze signal models, filters, processing, evaluators and viewers.
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization.
 - `language`: gives probabilities of next symbols during typing.

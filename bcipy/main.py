@@ -98,7 +98,12 @@ def bci_main(
 
     if execute_task(task, parameters, save_folder, alert, fake):
         if visualize:
-            visualize_session_data(save_folder, parameters)
+
+            # Visualize session data and fail silently if it errors
+            try:
+                visualize_session_data(save_folder, parameters)
+            except Exception as e:
+                log.info(f'Error visualizing session data: {e}')
         return True
 
     return False

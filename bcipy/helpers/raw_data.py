@@ -182,6 +182,12 @@ class RawData:
         self._rows.append(row)
         self._dataframe = None
 
+    def __str__(self) -> str:
+        return f"RawData({self.daq_type})"
+
+    def __repr__(self) -> str:
+        return f"RawData({self.daq_type})"
+
 
 def maybe_float(val: Any) -> Union[float, Any]:
     """Attempt to convert the given value to float. If conversion fails return

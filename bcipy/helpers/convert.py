@@ -6,20 +6,18 @@ import tarfile
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Union
 
+import mne
 import numpy as np
-
-from pyedflib import FILETYPE_EDFPLUS, EdfWriter, FILETYPE_BDFPLUS
+from mne.io import RawArray
+from pyedflib import FILETYPE_BDFPLUS, FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
-from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
+from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
-from bcipy.signal.process import Composition, get_default_transform
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
-
-import mne
-from mne.io import RawArray
-
+from bcipy.signal.process import Composition, get_default_transform
 
 logger = logging.getLogger(__name__)
 
