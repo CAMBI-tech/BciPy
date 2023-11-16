@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT,
                           DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
-                          STATIC_IMAGES_PATH, TRIGGER_FILENAME)
+                          TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
@@ -22,23 +22,19 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
+                                         visualize_gaze_inquiries,
                                          visualize_centralized_data,
                                          visualize_results_all_symbols,
                                          visualize_gaze_accuracies)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.fusion_model import GazeModel, GazeModel_AllSymbols
+from bcipy.signal.model.gaussian_mixture import GazeModelIndividual, GazeModelCombined
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
-
-DIPSIZE = (1707, 1067)
-IMG_PATH = f'{STATIC_IMAGES_PATH}/main/matrix_grid.png'
-# IMG_PATH = f'{STATIC_IMAGES_PATH}/main/rsvp.png'
-# TODO: Update images to contain the path to directory of the respective calibration session.
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
@@ -215,9 +211,17 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         save_path=data_folder if save_figures else None,
         show=show_figures
     )
+    return model, figure_handles
 
 
-def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_figures=False, model_type="Individual"):
+def analyze_gaze(
+        gaze_data,
+        parameters,
+        device_spec,
+        data_folder,
+        save_figures=False,
+        show_figures=False,
+        model_type="Individual"):
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
     Extract timing information from trigger file.
@@ -230,6 +234,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
     Parameters:
     -----------
         gaze_data (RawData): RawData object containing the data to be analyzed.
+        parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
         save_figures (bool): If true, saves ERP figures after training to the data folder.
@@ -238,12 +243,14 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
+    figures = []
     figure_handles = visualize_gaze(
         gaze_data,
         save_path=data_folder if save_figures else None,
         show=show_figures,
         raw_plot=True,
     )
+    figures.extend(figure_handles)
 
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -256,12 +263,12 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
     channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
     log.info(f'Channels used in analysis: {channels_used}')
 
-    data, fs = gaze_data.by_channel()
+    data, _fs = gaze_data.by_channel()
 
     if model_type == "Individual":
-        model = GazeModel()
+        model = GazeModelIndividual()
     elif model_type == "Centralized":
-        model = GazeModel_AllSymbols()
+        model = GazeModelCombined()
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -334,25 +341,26 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             means, covs = model.evaluate(test_re)
 
             # Visualize the results:
-            # figure_handles = visualize_gaze_inquiries(
-            #     le, re,
-            #     means, covs,
-            #     save_path=None,
-            #     show=show_figures,
-            #     raw_plot=True,
-            # )
+            figure_handles = visualize_gaze_inquiries(
+                le, re,
+                means, covs,
+                save_path=None,
+                show=show_figures,
+                raw_plot=True,
+            )
+            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
 
+            # TODO: Calculate scores for the test set.
             # scores, predictions = model.predict(test_re)
 
         # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
         if model_type == "Centralized":
             # Centralize the data using symbol positions:
             # Load json file.
-            # TODO: move this to a helper function, or get the symbol positions from the build_grid method
             with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
@@ -371,10 +379,13 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             if len(test_dict[sym]) == 0:
                 acc_all_symbols[sym] = 0
                 continue
-            likelihoods, predictions = model.predict(test_dict[sym], np.squeeze(np.array(means_all)), np.squeeze(np.array(covs_all)))
+            likelihoods, predictions = model.predict(
+                test_dict[sym], np.squeeze(
+                    np.array(means_all)), np.squeeze(
+                    np.array(covs_all)))
             acc_all_symbols[sym] = np.sum(predictions == counter) / len(predictions) * 100
             accuracy += np.sum(predictions == counter) / len(predictions) * 100
-            print(f"""Correct predictions for {sym}: {np.sum(predictions == counter)} / {len(predictions)}, 
+            print(f"""Correct predictions for {sym}: {np.sum(predictions == counter)} / {len(predictions)},
                 Accuracy {sym}: {np.sum(predictions == counter) / len(predictions) * 100:.2f}""")
             counter += 1
         accuracy /= counter
@@ -382,7 +393,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
 
         # Plot all accuracies as bar plot:
         figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
-
+        figures.extend(figure_handles)
 
     if model_type == "Centralized":
         cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
@@ -395,6 +406,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             show=show_figures,
             raw_plot=True,
         )
+        figures.extend(figure_handles)
 
         # Fit the model:
         model.fit(cent_left)
@@ -407,18 +419,18 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             # Visualize the results:
-            # figure_handles = visualize_gaze_inquiries(
-            #     le, re,
-            #     means, covs,
-            #     save_path=None,
-            #     show=show_figures,
-            #     raw_plot=True,
-            # )
+            figure_handles = visualize_gaze_inquiries(
+                le, re,
+                means, covs,
+                save_path=None,
+                show=show_figures,
+                raw_plot=True,
+            )
+            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
-
 
     fig_handles = visualize_results_all_symbols(
         left_eye_all, right_eye_all,
@@ -427,6 +439,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
         show=True,
         raw_plot=True,
     )
+    figures.extend(fig_handles)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -434,6 +447,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
     save_model(
         model,
         Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
+    return model, figures
 
 
 @report_execution_time
@@ -488,22 +502,27 @@ def offline_analysis(
         if path.exists()
     ]
 
+    models = []
+    figure_handles = []
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            analyze_erp(raw_data, parameters, device_spec, data_folder, estimate_balanced_acc,
-                        save_figures, show_figures)
+            erp_model, erp_figure_handles = analyze_erp(
+                raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+            models.append(erp_model)
+            figure_handles.extend(erp_figure_handles)
 
         if device_spec.content_type == "Eyetracker":
-            analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures,
-                         model_type="Individual")
+            et_model, et_figure_handles = analyze_gaze(
+                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
+            models.append(et_model)
+            figure_handles.extend(et_figure_handles)
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    # return model, figure_handles
-    return
+    return models, figure_handles
 
 
 if __name__ == "__main__":

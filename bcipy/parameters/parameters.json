@@ -8,10 +8,10 @@
     "type": "bool"
   },
   "acq_mode": {
-    "value": "EEG+Eyetracker",
+    "value": "EEG",
     "section": "acq_config",
     "readableName": "Acquisition Mode",
-    "helpTip": "Specifies the hardware device(s) used for data collection.",
+    "helpTip": "Specifies the hardware device(s) used for data collection. Default: EEG",
     "recommended_values": [
       "EEG",
       "EEG/DSI-24",

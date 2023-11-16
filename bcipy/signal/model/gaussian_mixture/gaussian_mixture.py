@@ -11,20 +11,20 @@ import scipy.stats as stats
 from typing import Optional
 
 
-class GazeModel(SignalModel):
+class GazeModelIndividual(SignalModel):
     reshaper = GazeReshaper()
 
     def __init__(self, num_components=2):
         self.num_components = num_components   # number of gaussians to fit
 
-    def fit(self, train_data: np.array):
+    def fit(self, train_data: np.ndarray) -> 'GazeModelIndividual':
         model = GaussianMixture(n_components=1, random_state=0, init_params='kmeans')
         model.fit(train_data)
         self.model = model
 
         return self
 
-    def evaluate(self, test_data: np.array):
+    def evaluate(self, test_data: np.ndarray):
         '''
         Compute mean and covariance of each mixture component.
         '''
@@ -34,7 +34,7 @@ class GazeModel(SignalModel):
 
         return means, covs
 
-    def predict(self, test_data: np.array, means: np.array, covs: np.array):
+    def predict(self, test_data: np.ndarray, means: np.ndarray, covs: np.ndarray):
         '''
         Compute log-likelihood of each sample.
         Predict the labels for the test data.
@@ -54,7 +54,7 @@ class GazeModel(SignalModel):
                 mu = means[k]
                 sigma = covs[k]
 
-                likelihoods[i,k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
+                likelihoods[i, k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
 
             # Find the argmax of the likelihoods to get the predictions
             predictions[i] = np.argmax(likelihoods[i])
@@ -77,21 +77,21 @@ class GazeModel(SignalModel):
         ...
 
 
-class GazeModel_AllSymbols(SignalModel):
+class GazeModelCombined(SignalModel):
     '''Gaze model that uses all symbols to fit a single Gaussian '''
     reshaper = GazeReshaper()
 
     def __init__(self, num_components=1):
         self.num_components = num_components   # number of gaussians to fit
 
-    def fit(self, train_data: np.array):
+    def fit(self, train_data: np.ndarray):
         model = GaussianMixture(n_components=1, random_state=0, init_params='kmeans')
         model.fit(train_data)
         self.model = model
 
         return self
 
-    def evaluate(self, test_data: np.array, sym_pos: np.array):
+    def evaluate(self, test_data: np.ndarray, sym_pos: np.ndarray):
         '''
         Return mean and covariance of each mixture component.
 
@@ -104,7 +104,7 @@ class GazeModel_AllSymbols(SignalModel):
 
         return means, covs
 
-    def predict(self, test_data: np.array):
+    def predict(self, test_data: np.ndarray):
         '''
         Compute log-likelihood of each sample.
         Predict the labels for the test data.
@@ -116,12 +116,11 @@ class GazeModel_AllSymbols(SignalModel):
 
         # return predictions
 
-    def calculate_acc(self, test_data: np.ndarray, sym_pos: np.array):
+    def calculate_acc(self, test_data: np.ndarray, sym_pos: np.ndarray):
         '''
         Compute model performance characteristics on the provided test data and labels.
         '''
 
-        
         # return accuracy
 
     def save(self, path: Path):

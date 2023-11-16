@@ -733,12 +733,12 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
                               show: Optional[bool] = False) -> Figure:
     """
     Visualize Gaze Accuracies.
-    
+
     Plot the accuracies of each symbol using a bar plot.
 
     Returns a list of the figure handles created.
     """
-    
+
     fig, ax = plt.subplots()
     ax.bar(accuracy_dict.keys(), accuracy_dict.values())
     ax.set_xlabel('Symbol')
