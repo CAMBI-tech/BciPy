@@ -177,8 +177,8 @@ class TestAcquisition(unittest.TestCase):
                             content_type='EEG')
         self.assertEqual(raw_data_filename(device), f'{RAW_DATA_FILENAME}.csv')
 
-    def test_raw_data_filename(self):
-        """Test generation of filename"""
+    def test_raw_data_filename_eye_tracker(self):
+        """Test generation of filename for EyeTracker devices"""
 
         device = DeviceSpec(name='Tobii-P0',
                             channels=[],
