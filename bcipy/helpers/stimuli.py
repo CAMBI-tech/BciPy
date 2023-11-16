@@ -14,7 +14,6 @@ from PIL import Image
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
-from bcipy.helpers.symbols import alphabet
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)

@@ -300,7 +300,6 @@ def analyze_gaze(
         symbol_set=symbol_set
     )
 
-
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
     preprocessed_data = {i: [] for i in symbol_set}
