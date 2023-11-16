@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import mne
@@ -725,3 +725,24 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         save_path=session_path,
         show=show,
     )
+
+
+def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
+                              accuracy: float,
+                              save_path: Optional[str] = None,
+                              show: Optional[bool] = False) -> Figure:
+    """
+    Visualize Gaze Accuracies.
+    
+    Plot the accuracies of each symbol using a bar plot.
+
+    Returns a list of the figure handles created.
+    """
+    
+    fig, ax = plt.subplots()
+    ax.bar(accuracy_dict.keys(), accuracy_dict.values())
+    ax.set_xlabel('Symbol')
+    ax.set_ylabel('Accuracy')
+    ax.set_title('Overall Accuracy: ' + str(round(accuracy, 2)))
+
+    return fig

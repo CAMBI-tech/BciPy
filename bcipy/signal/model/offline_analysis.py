@@ -23,7 +23,8 @@ from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
                                          visualize_centralized_data,
-                                         visualize_results_all_symbols)
+                                         visualize_results_all_symbols,
+                                         visualize_gaze_accuracies)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.fusion_model import GazeModel, GazeModel_AllSymbols
@@ -312,6 +313,10 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
     means_all = []
     covs_all = []
     for sym in symbol_set:
+        # Skip if there's no evidence for this symbol:
+        if len(inquiries[sym]) == 0:
+            test_dict[sym] = []
+            continue
         le = preprocessed_data[sym][0]
         re = preprocessed_data[sym][1]
 
@@ -319,24 +324,14 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
         labels = np.array([sym] * len(le))  # Labels are the same for both eyes
         train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
         train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-        test_dict[sym] = [test_le, test_re]
-
-        if model_type == "Centralized":
-            # Centralize the data using symbol positions:
-            # Load json file.
-            # TODO: move this to a helper function, or get the symbol positions from the build_grid method
-            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
-                symbol_positions = json.load(params_file)
-            # Subtract the symbol positions from the data:
-            centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
-            centralized_data_right.append(model.reshaper.centralize_all_data(train_re, symbol_positions[sym]))
+        test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
 
         # Fit the model based on model type.
         # Model 1: Fit Gaussian mixture (comp=2) on each symbol and each eye separately
         if model_type == "Individual":
             model.fit(train_re)
 
-            scores, means, covs = model.get_scores(test_re)
+            means, covs = model.evaluate(test_re)
 
             # Visualize the results:
             # figure_handles = visualize_gaze_inquiries(
@@ -351,8 +346,45 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             means_all.append(means)
             covs_all.append(covs)
 
-    if model_type == "Centralized":
+            # scores, predictions = model.predict(test_re)
+
         # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
+        if model_type == "Centralized":
+            # Centralize the data using symbol positions:
+            # Load json file.
+            # TODO: move this to a helper function, or get the symbol positions from the build_grid method
+            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
+                symbol_positions = json.load(params_file)
+            # Subtract the symbol positions from the data:
+            centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
+            centralized_data_right.append(model.reshaper.centralize_all_data(train_re, symbol_positions[sym]))
+
+    if model_type == "Individual":
+        # Takes in all means and covs from individual symbols, and
+        # calculates the likelihoods and predictions for each test point.
+        # Convert test_dict to a list of arrays:
+        accuracy = 0
+        acc_all_symbols = {}
+        counter = 0
+        for sym in symbol_set:
+            # Skip if test_dict is empty for certain symbols:
+            if len(test_dict[sym]) == 0:
+                acc_all_symbols[sym] = 0
+                continue
+            likelihoods, predictions = model.predict(test_dict[sym], np.squeeze(np.array(means_all)), np.squeeze(np.array(covs_all)))
+            acc_all_symbols[sym] = np.sum(predictions == counter) / len(predictions) * 100
+            accuracy += np.sum(predictions == counter) / len(predictions) * 100
+            print(f"""Correct predictions for {sym}: {np.sum(predictions == counter)} / {len(predictions)}, 
+                Accuracy {sym}: {np.sum(predictions == counter) / len(predictions) * 100:.2f}""")
+            counter += 1
+        accuracy /= counter
+        print(f"Overall accuracy: {accuracy:.2f}")
+
+        # Plot all accuracies as bar plot:
+        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
+
+
+    if model_type == "Centralized":
         cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
         cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
 
@@ -370,7 +402,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
         # Add the means back to the symbol positions.
         # Calculate scores for the test set.
         for sym in symbol_set:
-            scores, means, covs = model.get_scores(test_dict[sym][0], symbol_positions[sym])
+            means, covs = model.evaluate(test_dict[sym][0], symbol_positions[sym])
 
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
@@ -386,6 +418,7 @@ def analyze_gaze(gaze_data, device_spec, data_folder, save_figures=False, show_f
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
+
 
     fig_handles = visualize_results_all_symbols(
         left_eye_all, right_eye_all,
@@ -465,7 +498,7 @@ def offline_analysis(
 
         if device_spec.content_type == "Eyetracker":
             analyze_gaze(raw_data, device_spec, data_folder, save_figures, show_figures,
-                         model_type="Centralized")
+                         model_type="Individual")
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
@@ -484,7 +517,7 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=False)
+    parser.set_defaults(balanced=True)
     parser.set_defaults(save_figures=False)
     parser.set_defaults(show_figures=True)
     args = parser.parse_args()
