@@ -6,7 +6,6 @@ from sklearn.mixture import GaussianMixture
 from bcipy.helpers.stimuli import GazeReshaper
 from sklearn.model_selection import cross_val_score  # noqa
 from sklearn.utils.estimator_checks import check_estimator  # noqa
-import cvxpy as cp
 import scipy.stats as stats
 
 from typing import Optional
