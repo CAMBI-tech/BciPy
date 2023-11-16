@@ -291,14 +291,15 @@ def analyze_gaze(
     inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
+    symbol_set = alphabet()
     inquiries = model.reshaper(
         inq_start_times=inq_start,
         target_symbols=target_symbols,
         gaze_data=data,
-        sample_rate=sample_rate
+        sample_rate=sample_rate,
+        symbol_set=symbol_set
     )
 
-    symbol_set = alphabet()
 
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:

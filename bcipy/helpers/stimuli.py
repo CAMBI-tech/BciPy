@@ -236,6 +236,7 @@ class GazeReshaper:
                  target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
+                 symbol_set: List[str],
                  channel_map: List[int] = None,
                  ) -> dict:
         """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
@@ -281,8 +282,6 @@ class GazeReshaper:
 
         # Label for every inquiry
         labels = target_symbols
-
-        symbol_set = alphabet()
 
         # Create a dictionary with symbols as keys and data as values
         # 'A': [], 'B': [] ...
@@ -333,8 +332,6 @@ class GazeReshaper:
         """
         for i in range(len(data)):
             data[i] = data[i] - symbol_pos
-            # TODO: List comprehension
-
         return data
 
 
