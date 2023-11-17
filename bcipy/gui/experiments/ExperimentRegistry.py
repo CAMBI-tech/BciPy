@@ -461,7 +461,7 @@ def start_app() -> None:
         width=600,
         background_color='black')
 
-    sys.exit(bcipy_gui.exec_())
+    sys.exit(bcipy_gui.exec())
 
 
 if __name__ == '__main__':

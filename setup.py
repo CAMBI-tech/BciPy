@@ -1,3 +1,21 @@
+"""Setup for bcipy package.
+
+Installation:
+    To install locally, run:
+        pip install -e .
+    To install as a package, run:
+        python setup.py install
+    To create a distribution, run:
+        python setup.py sdist bdist_wheel
+
+Release:
+    *credentials required*
+    PyPi: https://pypi.org/project/bcipy/
+    GitHub: https://github.com/CAMBI-tech/BciPy
+    To upload to PyPi and create git tags, run:
+        python setup.py upload
+"""
+
 import os
 import sys
 import platform
@@ -23,11 +41,6 @@ if platform.system() == 'Windows' or platform.system() == 'Darwin':
         REQUIRED += f.read().splitlines()
 with open('requirements.txt', 'r', encoding='utf-8') as f:
     REQUIRED += f.read().splitlines()
-
-# The rest you shouldn't have to touch too much :)
-# ------------------------------------------------
-# Except, perhaps the License and Trove Classifiers!
-# If you do change the License, remember to change the Trove Classifier for that!
 
 here = os.path.abspath(os.path.dirname(__file__))
 

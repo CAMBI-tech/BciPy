@@ -16,6 +16,10 @@ This model involves the following stages:
 
 6. In order to make a Bayesian update, we need to compute the ratio of the generative likelihood terms for the presented letter (`p(eeg | +)` and `p(eeg | -)`). This ratio is obtained from the final kernel density estimation step and is used in the final decision rule. See `pca_rda_kde/pca_rda_kde.py`.
 
+## Gaze Model!
+
+We have one! Documentation to come...
+
 ## RDA/KDE Model
 
 This model involves the following stages:

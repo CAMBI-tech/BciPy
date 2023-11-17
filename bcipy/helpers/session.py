@@ -12,8 +12,10 @@ import openpyxl
 from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
-from openpyxl.styles.colors import BLACK, WHITE, YELLOW
-
+from openpyxl.styles.colors import COLOR_INDEX
+BLACK = COLOR_INDEX[0]
+WHITE = COLOR_INDEX[1]
+YELLOW = COLOR_INDEX[5]
 from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
                           DEFAULT_PARAMETER_FILENAME, EXPERIMENT_DATA_FILENAME,
                           SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
