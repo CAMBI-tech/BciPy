@@ -367,6 +367,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "time_vep_animation": {
+    "value": "1.0",
+    "section": "bci_config",
+    "readableName": "Time VEP Animation (sec)",
+    "helpTip": "The amount of time in seconds for the animation moving symbols to boxes.",
+    "recommended_values": "",
+    "type": "float"
+  },
   "stim_jitter": {
     "value": "0.0",
     "section": "bci_config",
