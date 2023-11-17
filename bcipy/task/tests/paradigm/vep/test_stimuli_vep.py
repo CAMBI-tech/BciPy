@@ -1,8 +1,8 @@
 import unittest
 
-from bcipy.helpers.stimuli import (generate_vep_calibration_inquiries,
-                                   generate_vep_inquiry, stim_per_box)
 from bcipy.helpers.symbols import alphabet
+from bcipy.task.paradigm.vep.stim_generation import (
+    generate_vep_calibration_inquiries, generate_vep_inquiry, stim_per_box)
 
 
 class SSVEPStimuli(unittest.TestCase):

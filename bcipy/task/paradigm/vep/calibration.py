@@ -1,7 +1,7 @@
 """VEP Calibration task-related code"""
 from typing import List, Tuple
 
-from psychopy import core, visual
+from psychopy import core, visual  # type: ignore
 
 from bcipy.acquisition.multimodal import ClientManager
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
@@ -12,14 +12,14 @@ from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import (InquirySchedule,
-                                   generate_vep_calibration_inquiries)
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import get_user_input, trial_complete_message
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
 from bcipy.task import Task
+from bcipy.task.paradigm.vep.stim_generation import (
+    InquirySchedule, generate_vep_calibration_inquiries)
 
 
 def trigger_type(symbol: str, target: str, _index: int) -> TriggerType:

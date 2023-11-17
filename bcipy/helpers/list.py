@@ -50,16 +50,16 @@ def find_index(iterable: List,
     return None
 
 
-def swapped(lst: List, index1: int, index2: int) -> None:
+def swapped(lst: List[Any], index1: int, index2: int) -> List[Any]:
     """Creates a copy of the provided list with elements at the given indices
     swapped."""
     replacements = {index1: lst[index2], index2: lst[index1]}
     return [replacements.get(i, val) for i, val in enumerate(lst)]
 
 
-def expanded(lst: List,
+def expanded(lst: List[Any],
              length: int,
-             fill: Union[Any, Callable] = lambda x: x[-1]) -> List:
+             fill: Union[Any, Callable] = lambda x: x[-1]) -> List[Any]:
     """Creates a copy of the provided list expanded to the given length. By
     default the last item is used as the fill item.
 

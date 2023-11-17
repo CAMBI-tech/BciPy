@@ -169,8 +169,18 @@ class BoxConfiguration():
             return [(left, top), (right, top), (left, bottom), (right, bottom)]
 
         middle = layout.horizontal_middle
-        return [(left, top), (middle, top), (right, top),
-                (left, bottom), (middle, bottom), (right, bottom)]
+        return [(left, top), (middle, top), (right, top), (left, bottom),
+                (middle, bottom), (right, bottom)]
+
+    @property
+    def names(self) -> List[str]:
+        """Box names for each position."""
+        if self.num_boxes == 4:
+            return ['LEFT_TOP', 'RIGHT_TOP', 'LEFT_BOTTOM', 'RIGHT_BOTTOM']
+        return [
+            'LEFT_TOP', 'MIDDLE_TOP', 'RIGHT_TOP', 'LEFT_BOTTOM',
+            'MIDDLE_BOTTOM', 'RIGHT_BOTTOM'
+        ]
 
 
 def animation_path(start_pos: Tuple[float, float], end_pos: Tuple[float,

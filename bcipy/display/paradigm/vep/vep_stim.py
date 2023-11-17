@@ -1,3 +1,4 @@
+"""Display components for VEP"""
 from typing import List, Tuple
 
 from psychopy import visual  # type: ignore
