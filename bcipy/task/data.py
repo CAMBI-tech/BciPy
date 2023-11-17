@@ -78,7 +78,7 @@ class Inquiry:
                  target_text: Optional[str] = None,
                  selection: Optional[str] = None,
                  next_display_state: Optional[str] = None,
-                 likelihood: Optional[List[float]] = None):
+                 likelihood: Optional[List[float]] = None) -> None:
         super().__init__()
         self.stimuli = stimuli
         self.timing = timing
@@ -96,12 +96,12 @@ class Inquiry:
         self.precision: int = 0
 
     @property
-    def lm_evidence(self):
+    def lm_evidence(self) -> List[float]:
         """Language model evidence"""
         return self.evidences.get(EvidenceType.LM, [])
 
     @property
-    def eeg_evidence(self):
+    def eeg_evidence(self) -> List[float]:
         """EEG evidence"""
         return self.evidences.get(EvidenceType.ERP, [])
 
@@ -118,7 +118,7 @@ class Inquiry:
         return False
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Inquiry':
         """Deserializes from a dict
 
         Parameters:
@@ -208,10 +208,10 @@ class Session:
 
     def __init__(self,
                  save_location: str,
+                 symbol_set: List[str],
                  task: str = 'Copy Phrase',
                  mode: str = 'RSVP',
-                 symbol_set: Optional[List[str]] = None,
-                 decision_threshold: Optional[float] = None):
+                 decision_threshold: Optional[float] = None) -> None:
         super().__init__()
         self.save_location = save_location
         self.task = task
@@ -257,12 +257,12 @@ class Session:
         """Tests whether any inquiries have evidence."""
         return any(inq.evidences for inq in self.all_inquiries)
 
-    def add_series(self):
+    def add_series(self) -> None:
         """Add another series unless the last one is empty"""
         if self.last_series():
             self.series.append([])
 
-    def add_sequence(self, inquiry: Inquiry, new_series: bool = False):
+    def add_sequence(self, inquiry: Inquiry, new_series: bool = False) -> None:
         """Append sequence information
 
         Parameters:
@@ -326,7 +326,7 @@ class Session:
         return info
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Session':
         """Deserialize from a dict.
 
         Parameters:

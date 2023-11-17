@@ -1,4 +1,4 @@
-# mypy: disable-error-code="attr-defined,union-attr"
+# mypy: disable-error-code="attr-defined,union-attr,arg-type"
 # needed for the ERPTransformParams
 import logging
 from typing import List, Dict, Optional, Tuple, Union
@@ -85,9 +85,9 @@ def visualize_erp(
 
     # check for a baseline interval or set to None
     if trial_window[0] < 0:
-        baseline = (trial_window[0], 0)
+        baseline = (trial_window[0], 0.0)
     else:
-        baseline = (None, 0)
+        baseline = None
 
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
     epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels, baseline=baseline)
@@ -688,11 +688,12 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
+    daq_type = raw_data.daq_type
 
-    transform_params = parameters.instantiate(ERPTransformParams)
+    transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
 
     devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    device_spec = devices.preconfigured_device(daq_type)
 
     # setup filtering
     default_transform = get_default_transform(

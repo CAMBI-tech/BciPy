@@ -48,7 +48,7 @@ class CalibrationType(Enum):
 
 
 class TriggerCallback:
-    timing: Tuple[str, float] = None
+    timing: Optional[Tuple[str, float]] = None
     first_time: bool = True
 
     def callback(self, clock: Clock, stimuli: str) -> None:
@@ -130,6 +130,9 @@ def _calibration_trigger(experiment_clock: Clock,
         display.flip()
 
     core.wait(trigger_time)
+    if trigger_callback.timing is None:
+        log.warning(f'No trigger found for [{trigger_name}]')
+        return trigger_name, 0.0
     return trigger_callback.timing
 
 
@@ -421,7 +424,7 @@ class TriggerHandler:
 
     @staticmethod
     def load(path: str,
-             offset: Optional[float] = 0.0,
+             offset: float = 0.0,
              exclusion: Optional[List[TriggerType]] = None,
              device_type: Optional[str] = None) -> List[Trigger]:
         """

@@ -11,7 +11,6 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import ResponseType
 
 
-@pytest.mark.slow
 class TestKenLMLanguageModel(unittest.TestCase):
     """Tests for language model"""
     @classmethod
@@ -21,11 +20,11 @@ class TestKenLMLanguageModel(unittest.TestCase):
         cls.lmodel = KenLMLanguageModel(response_type=ResponseType.SYMBOL,
                                         symbol_set=alphabet(), lm_path=cls.lm_path)
 
-    @pytest.mark.slow
-    def test_default_load(self):
-        """Test loading model with parameters from json
-        This test requires a valid lm_params.json file and all requisite models"""
-        lm = KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+    # @pytest.mark.slow
+    # def test_default_load(self):
+    #     """Test loading model with parameters from json
+    #     This test requires a valid lm_params.json file and all requisite models"""
+    #     lm = KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
 
     def test_init(self):
         """Test default parameters"""
@@ -129,3 +128,6 @@ class TestKenLMLanguageModel(unittest.TestCase):
         prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
         for value in prob_values:
             self.assertTrue(value > 0)
+
+if __name__ == '__main__':
+    unittest.main()

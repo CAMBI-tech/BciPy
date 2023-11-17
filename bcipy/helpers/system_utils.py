@@ -75,7 +75,7 @@ def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
     return refresh < 120
 
 
-def git_dir() -> str:
+def git_dir() -> Optional[str]:
     """Git Directory.
 
     Returns the root directory with the .git folder. If this source code

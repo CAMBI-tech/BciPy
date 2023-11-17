@@ -52,7 +52,7 @@ def fake_copy_phrase_decision(copy_phrase: str, target_letter: str, text_task: s
     # else, end the run
     else:
         run = False
-        next_target_letter = None
+        next_target_letter = ''
         text_task = copy_phrase
 
     return next_target_letter, text_task, run

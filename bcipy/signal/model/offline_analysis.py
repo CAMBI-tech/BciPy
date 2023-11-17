@@ -74,7 +74,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
 
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
-                save_figures=True, show_figures=False):
+                save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
     Extract timing information from trigger file.
@@ -98,7 +98,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
     if trial_window is None:
-        trial_window = [0.0, 0.5]
+        trial_window = (0.0, 0.5)
     window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")

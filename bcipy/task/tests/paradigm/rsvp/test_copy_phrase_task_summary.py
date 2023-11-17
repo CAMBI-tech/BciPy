@@ -8,6 +8,12 @@ from bcipy.helpers.triggers import Trigger
 from bcipy.task.data import EvidenceType, Inquiry, Session
 from bcipy.task.paradigm.rsvp.copy_phrase import TaskSummary
 
+SYMBOL_SET = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '<', '_'
+]
+
 
 def mock_inquiry(target_letter="",
                  current_text="",
@@ -34,7 +40,7 @@ def mock_inquiry(target_letter="",
 
 def session_no_preview() -> Session:
     """Mock session"""
-    session = Session(".")
+    session = Session(".", symbol_set=SYMBOL_SET)
 
     seq1 = [{
         'target_letter': "E",
@@ -73,7 +79,7 @@ def session_no_preview() -> Session:
 
 def session_btn() -> Session:
     """Mock session with button press evidence."""
-    session = Session(".")
+    session = Session(".", symbol_set=SYMBOL_SET)
     seq1 = [{
         'selection': "",
         'btn_evidence': True,

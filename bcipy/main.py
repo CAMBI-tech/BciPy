@@ -122,7 +122,7 @@ def execute_task(
         which will initialize experiment.
 
     Input:
-        (str): registered bcipy TaskType
+        task(TaskType): Task that should be registered in TaskType
         parameters (dict): parameter dictionary
         save_folder (str): path to save folder
         alert (bool): whether to alert the user when the task is complete
@@ -198,8 +198,10 @@ def _clean_up_session(
         daq.stop_acquisition()
         daq.cleanup()
 
-        for server in servers:
-            server.stop()
+        # Stop Servers
+        if servers:
+            for server in servers:
+                server.stop()
 
         # Close the display window
         # NOTE: There is currently a bug in psychopy when attempting to shutdown

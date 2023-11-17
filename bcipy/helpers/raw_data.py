@@ -18,18 +18,13 @@ class RawData:
     """Represents the raw data format used by BciPy. Used primarily for loading
     a raw data file into memory."""
 
-    def __init__(self,
-                 daq_type: Optional[str] = None,
-                 sample_rate: Optional[int] = None,
-                 columns: Optional[List[str]] = None,
-                 column_types: Optional[List[str]] = None):
+    def __init__(self, daq_type: str, sample_rate: int, columns: List[str]) -> None:
         self.daq_type = daq_type
         self.sample_rate = sample_rate
-        self.columns = columns or []
-        # accept a custom column type definition or default to all eeg type
-        self.column_types = column_types
+        self.columns = columns
+
+        self._dataframe: Optional[pd.DataFrame] = None
         self._rows: List[Any] = []
-        self._dataframe = None
 
     @classmethod
     def load(cls, filename: str):

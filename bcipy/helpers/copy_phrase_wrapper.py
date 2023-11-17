@@ -1,7 +1,7 @@
 # mypy: disable-error-code="arg-type, assignment"
 """Defines the CopyPhraseWrapper."""
 import logging
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class CopyPhraseWrapper:
                  min_num_inq: int,
                  max_num_inq: int,
                  lmodel: LanguageModel,
-                 alp: Optional[List[str]] = None,
+                 alp: List[str],
                  evidence_names: List[EvidenceType] = [
                      EvidenceType.LM, EvidenceType.ERP
                  ],

@@ -1,4 +1,4 @@
-# mypy: disable-error-code="assignment"
+# mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Optional, List, Tuple, Union

@@ -236,7 +236,7 @@ class GazeReshaper:
                  gaze_data: np.ndarray,
                  sample_rate: int,
                  symbol_set: List[str],
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  ) -> dict:
         """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
         the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
@@ -405,7 +405,7 @@ def mne_epochs(mne_data: RawArray,
                trigger_timing: List[float],
                trial_length: float,
                trigger_labels: List[int],
-               baseline: Tuple[float, float] = (None, 0)) -> Epochs:
+               baseline: Optional[Tuple[float, float]] = None) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
@@ -414,6 +414,8 @@ def mne_epochs(mne_data: RawArray,
     annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     mne_data.set_annotations(annotations)
     events_from_annot, _ = mne.events_from_annotations(mne_data)
+    if not baseline:
+        baseline = (None, 0.0)
     return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
 
 
@@ -786,7 +788,6 @@ def inquiry_target(inquiry: List[str],
         # if none of the symbols in the current inquiry are in the choices, the
         # target is determined strictly from the target_position.
         choice_index = None
-        symbol_inquiry_position = None
         target = None
         for position, symbol in enumerate(inquiry):
             # avoid repeating targets
@@ -975,7 +976,7 @@ def generate_targets(symbols: List[str], inquiry_count: int,
     return targets
 
 
-def target_index(inquiry: List[str]) -> int:
+def target_index(inquiry: List[str]) -> Optional[int]:
     """Given an inquiry, return the index of the target within the choices and
     None if the target is not included as a choice.
 

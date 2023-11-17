@@ -139,7 +139,7 @@ def server_spec(content_type: str,
 
 
 def parse_stream_type(stream_type: str,
-                      delimiter: str = "/") -> Tuple[str, str]:
+                      delimiter: str = "/") -> Tuple[str, Optional[str]]:
     """Parses the stream type into a tuple of (content_type, device_name).
 
     Parameters

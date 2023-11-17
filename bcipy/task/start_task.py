@@ -1,4 +1,7 @@
 """Code for constructing and executing registered tasks"""
+from typing import List, Optional
+from psychopy import visual
+
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
@@ -12,9 +15,21 @@ from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.task_registry import TaskType
 
+from bcipy.acquisition import ClientManager
+from bcipy.helpers.parameters import Parameters
+from bcipy.signal.model import SignalModel
+from bcipy.language import LanguageModel
 
-def make_task(display_window, daq, task, parameters, file_save,
-              signal_models=None, language_model=None, fake=True) -> Task:
+
+def make_task(
+        display_window: visual.Window,
+        daq: ClientManager,
+        task: TaskType,
+        parameters: Parameters,
+        file_save: str,
+        signal_models: Optional[List[SignalModel]] = None,
+        language_model: Optional[LanguageModel] = None,
+        fake: bool = True) -> Task:
     """Creates a Task based on the provided parameters.
 
     Parameters:
@@ -61,9 +76,23 @@ def make_task(display_window, daq, task, parameters, file_save,
         'The provided experiment type is not registered.')
 
 
-def start_task(display_window, daq, task, parameters, file_save,
-               signal_models=None, language_model=None, fake=True):
+def start_task(
+        display_window: visual.Window,
+        daq: ClientManager,
+        task: TaskType,
+        parameters: Parameters,
+        file_save: str,
+        signal_models: Optional[List[SignalModel]] = None,
+        language_model: Optional[LanguageModel] = None,
+        fake: bool = True) -> str:
     """Creates a Task and starts execution."""
-    task = make_task(display_window, daq, task, parameters, file_save,
-                     signal_models, language_model, fake)
-    task.execute()
+    bcipy_task = make_task(
+        display_window,
+        daq,
+        task,
+        parameters,
+        file_save,
+        signal_models,
+        language_model,
+        fake)
+    return bcipy_task.execute()

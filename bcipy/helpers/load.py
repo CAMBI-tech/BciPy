@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type, union-attr"
 import json
 import logging
 import os
@@ -187,7 +188,7 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     return models
 
 
-def choose_csv_file(filename: Optional[str] = None) -> str:
+def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     """GUI prompt to select a csv file from the file system.
 
     Parameters

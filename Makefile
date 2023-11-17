@@ -36,6 +36,9 @@ lint-fix:
 type:
 	mypy bcipy
 
+type-html:
+	mypy bcipy --html-report type-report 
+
 clean:
 	find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
 	find . -path "*/*.pyo"  -delete
