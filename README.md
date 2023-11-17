@@ -219,6 +219,28 @@ Alternately, if Make is installed, you may run the follow command to run autopep
 make lint
 ```
 
+## Type Checking
+----------------
+
+This project enforces `mypy` type checking. The typing project configuration is found in the mypy.ini file. To run type checking, run the following command:
+
+```sh
+mypy bcipy
+```
+
+To generate a report, run the following command:
+
+```sh
+mypy --html-report bcipy
+```
+
+Alternately, if Make is installed, you may run the follow command to run mypy:
+
+```sh
+make type
+```
+
+
 ### Contributions Welcome!
 
 If you want to be added to the development team slack or have additional questions, please reach out to us at support@cambi.tech!
