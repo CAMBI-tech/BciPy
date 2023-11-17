@@ -405,7 +405,7 @@ def mne_epochs(mne_data: RawArray,
                trigger_timing: List[float],
                trial_length: float,
                trigger_labels: List[int],
-               baseline: Optional[Tuple[float, float]] = None) -> Epochs:
+               baseline: Optional[Tuple[Any, float]] = None) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
