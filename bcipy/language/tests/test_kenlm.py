@@ -10,7 +10,7 @@ from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import ResponseType
 
-
+@pytest.mark.slow
 class TestKenLMLanguageModel(unittest.TestCase):
     """Tests for language model"""
     @classmethod
