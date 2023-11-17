@@ -23,11 +23,11 @@ class TestMixtureLanguageModel(unittest.TestCase):
                                           lm_types=["KENLM", "CAUSAL"], lm_weights=[0.5, 0.5],
                                           lm_params=cls.lm_params)
 
-    # @pytest.mark.slow
-    # def test_default_load(self):
-    #     """Test loading model with parameters from json
-    #     This test requires a valid lm_params.json file and all referenced models"""
-    #     lm = MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+    @pytest.mark.slow
+    def test_default_load(self):
+        """Test loading model with parameters from json
+        This test requires a valid lm_params.json file and all referenced models"""
+        lm = MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
 
     def test_init(self):
         """Test default parameters"""
