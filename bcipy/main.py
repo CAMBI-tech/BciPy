@@ -1,7 +1,7 @@
 import argparse
 import logging
 import multiprocessing
-from typing import List
+from typing import List, Optional
 
 from psychopy import visual
 
@@ -183,7 +183,7 @@ def execute_task(
 def _clean_up_session(
         display: visual.Window,
         daq: ClientManager,
-        servers: List[LslDataServer] = []) -> bool:
+        servers: Optional[List[LslDataServer]] = None) -> bool:
     """Clean up session.
 
     Closes the display window and data acquisition objects. Returns True if the session was closed successfully.

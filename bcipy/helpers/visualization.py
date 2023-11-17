@@ -1,10 +1,8 @@
 # mypy: disable-error-code="attr-defined,union-attr"
 # needed for the ERPTransformParams
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union
 from pathlib import Path
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import mne
@@ -21,7 +19,6 @@ import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
