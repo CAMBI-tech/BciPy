@@ -9,6 +9,7 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
+from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    StimuliOrder, TargetPositions,
                                    TrialReshaper, alphabetize,
