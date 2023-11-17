@@ -10,6 +10,7 @@ from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.main import ResponseType
 
+
 @pytest.mark.slow
 class TestKenLMLanguageModel(unittest.TestCase):
     """Tests for language model"""
@@ -128,6 +129,7 @@ class TestKenLMLanguageModel(unittest.TestCase):
         prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
         for value in prob_values:
             self.assertTrue(value > 0)
+
 
 if __name__ == '__main__':
     unittest.main()
